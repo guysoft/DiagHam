@@ -123,7 +123,8 @@ noinst_LIBRARIES = libVector.a
 
 libVector_a_SOURCES = ComplexVector.cc \
 RealVector.cc \
-Vector.cc
+Vector.cc \
+DelocalizedRealVector.cc
 
 subdir = src/Vector
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -135,13 +136,14 @@ LIBRARIES = $(noinst_LIBRARIES)
 libVector_a_AR = $(AR) cru
 libVector_a_LIBADD =
 am_libVector_a_OBJECTS = ComplexVector.$(OBJEXT) RealVector.$(OBJEXT) \
-	Vector.$(OBJEXT)
+	Vector.$(OBJEXT) DelocalizedRealVector.$(OBJEXT)
 libVector_a_OBJECTS = $(am_libVector_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ComplexVector.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/DelocalizedRealVector.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RealVector.Po ./$(DEPDIR)/Vector.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -185,6 +187,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexVector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DelocalizedRealVector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealVector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Vector.Po@am__quote@
 

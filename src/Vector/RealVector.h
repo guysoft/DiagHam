@@ -56,6 +56,7 @@ class ComplexVector;
 class RealVector : public Vector
 {
 
+  friend class DelocalizedRealVector;
   friend class ComplexVector;
   friend class AbstractHamiltonian;
   friend class RealMatrix;
@@ -184,14 +185,14 @@ class RealVector : public Vector
   //
   // V1 = source vector
   // return value = new vector
-  friend RealVector operator - (const RealVector& V1);
+  friend RealVector operator - (RealVector& V1);
 
   // scalar product between two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = result of scalar product
-  friend double operator * (const RealVector& V1, const RealVector& V2);
+  friend double operator * (RealVector& V1, RealVector& V2);
 
   // do part of the scalar product between two vectors in a given range of indices
   //
@@ -200,53 +201,53 @@ class RealVector : public Vector
   // nbrComponent = number of components to consider
   // step = increment between to consecutive indices to consider
   // return value = result of the partial scalar product
-  double PartialScalarProduct (const RealVector& vRight, int firstComponent, int nbrComponent, int step = 1);
+  double PartialScalarProduct (RealVector& vRight, int firstComponent, int nbrComponent, int step = 1);
 
   // sum two vectors
   //
   // V1 = vector to add
   // return value = reference on current vector
-  RealVector& operator += (const RealVector& V1);
+  RealVector& operator += (RealVector& V1);
 
   // sum two vectors
   //
   // vector = vector to add
   // return value = reference on current vector
-  Vector& operator += (const Vector& vector);
+  Vector& operator += (Vector& vector);
 
   // substract two vectors
   //
   // V1 = first vector
   // return value = reference on current vector
-  RealVector& operator -= (const RealVector& V1);
+  RealVector& operator -= (RealVector& V1);
 
   // sum two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = resulting vector
-  friend RealVector operator + (const RealVector& V1, const RealVector& V2);
+  friend RealVector operator + (RealVector& V1, RealVector& V2);
 
   // substract two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = resulting vector
-  friend RealVector operator - (const RealVector& V1, const RealVector& V2);
+  friend RealVector operator - (RealVector& V1, RealVector& V2);
 
   // add a linear combination to a given vector
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector
-  RealVector& AddLinearCombination (const double& x, const RealVector& V);
+  RealVector& AddLinearCombination (const double& x, RealVector& V);
 
   // add a linear combination to a given vector, for a given range of indices
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector
-  RealVector& AddLinearCombination (double x, const RealVector& V, int firstComponent, int nbrComponent);
+  RealVector& AddLinearCombination (double x, RealVector& V, int firstComponent, int nbrComponent);
 
   // add a linear combination of two vectors to a given vector
   //
@@ -255,7 +256,7 @@ class RealVector : public Vector
   // x2 = multiplicative coefficient of first vector
   // v2 = first vector to add
   // return value = reference on current vector
-  RealVector& AddLinearCombination (double x1, const RealVector& v1, double x2, const RealVector& v2);
+  RealVector& AddLinearCombination (double x1, RealVector& v1, double x2, RealVector& v2);
 
   // add a linear combination of two vectors to a given vector, for a given range of indices
   //
@@ -266,22 +267,22 @@ class RealVector : public Vector
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on current vector
-  RealVector& AddLinearCombination (double x1, const RealVector& v1, double x2, 
-				    const RealVector& v2, int firstComponent, int nbrComponent);
+  RealVector& AddLinearCombination (double x1, RealVector& v1, double x2, 
+				    RealVector& v2, int firstComponent, int nbrComponent);
 
   // multiply a vector with a real number on the right hand side
   //
   // V1 = vector to multiply
   // d = real to use
   // return value = resulting vector
-  friend RealVector operator * (const RealVector& V1, double d);
+  friend RealVector operator * (RealVector& V1, double d);
 
   // multiply a vector with a real number on the left hand side
   //
   // V1 = vector to multiply
   // d = real to use
   // return value = resulting vector
-  friend RealVector operator * (double d, const RealVector& V1);
+  friend RealVector operator * (double d, RealVector& V1);
 
   // multiply a vector with a real number on the right hand side
   //
@@ -824,7 +825,7 @@ class RealVector : public Vector
   // firstCoordinate = Coordinate where merge has to begin
   // step = distance to the next coordinate in the destination vector (1 means to take the following)
   // return value = reference to the current Vector
-  RealVector& Merge(const RealVector& V, int firstCoordinate, int step = 1);
+  RealVector& Merge(RealVector& V, int firstCoordinate, int step = 1);
   
   // write vector in a file 
   //
@@ -849,7 +850,7 @@ class RealVector : public Vector
   // str = reference on output stream
   // v = vector to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& str, const RealVector& v);
+  friend ostream& operator << (ostream& str, RealVector& v);
 
   // output file stream overload
   //

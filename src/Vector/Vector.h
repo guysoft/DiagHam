@@ -50,6 +50,7 @@ class Vector
 
   friend class RealVector;
   friend class ComplexVector;
+  friend class DelocalizedRealVector;
 
  protected:
 
@@ -134,21 +135,21 @@ class Vector
   //
   // vector = vector to add
   // return value = reference on current vector
-  virtual Vector& operator += (const Vector& vector);
+  virtual Vector& operator += (Vector& vector);
 
   // add a linear combination to a given vector
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector
-  Vector& AddLinearCombination (double x, const Vector& V);
+  Vector& AddLinearCombination (double x, Vector& V);
 
   // add a linear combination to a given vector, for a given range of indices
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector
-  Vector& AddLinearCombination (double x, const Vector& V, int firstComponent, int nbrComponent);
+  Vector& AddLinearCombination (double x, Vector& V, int firstComponent, int nbrComponent);
 
   // add a linear combination of two vectors to a given vector
   //
@@ -157,7 +158,7 @@ class Vector
   // x2 = multiplicative coefficient of first vector
   // v2 = first vector to add
   // return value = reference on current vector
-  Vector& AddLinearCombination (double x1, const Vector& v1, double x2, const Vector& v2);
+  Vector& AddLinearCombination (double x1, Vector& v1, double x2, Vector& v2);
 
   // add a linear combination of two vectors to a given vector, for a given range of indices
   //
@@ -168,15 +169,24 @@ class Vector
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on current vector
-  Vector& AddLinearCombination (double x1, const Vector& v1, double x2, 
-				const Vector& v2, int firstComponent, int nbrComponent);
+  Vector& AddLinearCombination (double x1, Vector& v1, double x2, 
+				Vector& v2, int firstComponent, int nbrComponent);
 
   // Output Stream overload
   //
   // str = reference on output stream
   // v = vector to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& str, const Vector& v);
+  friend ostream& operator << (ostream& str, Vector& v);
+
+  // localize the current vector to the current process
+  // 
+  virtual void Localize();
+
+  // delocalize the current vector from the current process
+  // 
+  // transfertFlag = indicates if the current vector datas have to sent to the vector real location
+  virtual void Delocalize(bool transfertFlag = false);
 
 #ifdef __MPI__
 
@@ -257,6 +267,20 @@ inline void Vector::SetVectorId(int id)
   this->VectorId = id;
 }
 
+
+// localize the current vector on the current process
+// 
+inline void Vector::Localize()
+{
+}
+
+// delocalize the current vector on the current process
+// 
+// transfertFlag = indicates if the current vector datas have to sent to the vector real location
+
+inline void Vector::Delocalize(bool transfertFlag)
+{
+}
 
 
 #endif

@@ -119,47 +119,47 @@ class TensorProductRealVector : public TensorProductVector
   //
   // V1 = source vector
   // return value = new vector
-  friend TensorProductRealVector operator - (const TensorProductRealVector& V1);
+  friend TensorProductRealVector operator - (TensorProductRealVector& V1);
 
   // scalar product between two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = result of scalar product
-  friend double operator * (const TensorProductRealVector& V1, const TensorProductRealVector& V2);
+  friend double operator * (TensorProductRealVector& V1, TensorProductRealVector& V2);
 
   // sum two vectors
   //
   // V1 = vector to add
   // return value = reference on current vector
-  TensorProductRealVector& operator += (const TensorProductRealVector& V1);
+  TensorProductRealVector& operator += (TensorProductRealVector& V1);
 
   // substract two vectors
   //
   // V1 = first vector
   // return value = reference on current vector
-  TensorProductRealVector& operator -= (const TensorProductRealVector& V1);
+  TensorProductRealVector& operator -= (TensorProductRealVector& V1);
 
   // sum two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = resulting vector
-  friend TensorProductRealVector operator + (const TensorProductRealVector& V1, const TensorProductRealVector& V2);
+  friend TensorProductRealVector operator + (TensorProductRealVector& V1, TensorProductRealVector& V2);
 
   // substract two vectors
   //
   // V1 = first vector
   // V2 = second vector
   // return value = resulting vector
-  friend TensorProductRealVector operator - (const TensorProductRealVector& V1, const TensorProductRealVector& V2);
+  friend TensorProductRealVector operator - (TensorProductRealVector& V1, TensorProductRealVector& V2);
 
   // add a linear combination to a given vector
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector
-  TensorProductRealVector& AddLinearCombination (double x, const TensorProductRealVector& V);
+  TensorProductRealVector& AddLinearCombination (double x, TensorProductRealVector& V);
 
   // add a linear combination of two vectors to a given vector
   //
@@ -168,22 +168,22 @@ class TensorProductRealVector : public TensorProductVector
   // x2 = multiplicative coefficient of first vector
   // v2 = first vector to add
   // return value = reference on current vector
-  TensorProductRealVector& AddLinearCombination (double x1, const TensorProductRealVector& v1, double x2, 
-						 const TensorProductRealVector& v2);
+  TensorProductRealVector& AddLinearCombination (double x1, TensorProductRealVector& v1, double x2, 
+						 TensorProductRealVector& v2);
 
   // multiply a vector with a real number on the right hand side
   //
   // V1 = vector to multiply
   // d = real to use
   // return value = resulting vector
-  friend TensorProductRealVector operator * (const TensorProductRealVector& V1, double d);
+  friend TensorProductRealVector operator * (TensorProductRealVector& V1, double d);
 
   // multiply a vector with a real number on the left hand side
   //
   // V1 = vector to multiply
   // d = real to use
   // return value = resulting vector
-  friend TensorProductRealVector operator * (double d, const TensorProductRealVector& V1);
+  friend TensorProductRealVector operator * (double d, TensorProductRealVector& V1);
 
   // multiply a vector with a real number on the right hand side
   //

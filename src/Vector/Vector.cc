@@ -98,7 +98,7 @@ Vector& Vector::ClearVector ()
 // vector = vector to add
 // return value = reference on current vector
 
-Vector& Vector::operator += (const Vector& vector)
+Vector& Vector::operator += (Vector& vector)
 {
   return *this;
 }
@@ -109,7 +109,7 @@ Vector& Vector::operator += (const Vector& vector)
 // V = vector to add
 // return value = reference on current vector
 
-Vector& Vector::AddLinearCombination (double x, const Vector& V)
+Vector& Vector::AddLinearCombination (double x, Vector& V)
 {
   switch ((V.VectorType & this->VectorType))
     {
@@ -131,7 +131,7 @@ Vector& Vector::AddLinearCombination (double x, const Vector& V)
 // V = vector to add
 // return value = reference on current vector
 
-Vector& Vector::AddLinearCombination (double x, const Vector& V, int firstComponent, int nbrComponent)
+Vector& Vector::AddLinearCombination (double x, Vector& V, int firstComponent, int nbrComponent)
 {
   switch ((V.VectorType & this->VectorType))
     {
@@ -155,7 +155,7 @@ Vector& Vector::AddLinearCombination (double x, const Vector& V, int firstCompon
 // v2 = first vector to add
 // return value = reference on current vector
 
-Vector& Vector::AddLinearCombination (double x1, const Vector& v1, double x2, const Vector& v2)
+Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, Vector& v2)
 {
   switch (((v1.VectorType & this->VectorType) & v2.VectorType))
     {
@@ -181,8 +181,8 @@ Vector& Vector::AddLinearCombination (double x1, const Vector& v1, double x2, co
 // nbrComponent = number of components to evaluate
 // return value = reference on current vector
 
-Vector& Vector::AddLinearCombination (double x1, const Vector& v1, double x2, 
-				      const Vector& v2, int firstComponent, int nbrComponent)
+Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, 
+				      Vector& v2, int firstComponent, int nbrComponent)
 {
   switch (((v1.VectorType & this->VectorType) & v2.VectorType))
     {
@@ -204,7 +204,7 @@ Vector& Vector::AddLinearCombination (double x1, const Vector& v1, double x2,
 // v = vector to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& str, const Vector& v)
+ostream& operator << (ostream& str, Vector& v)
 {
   switch (v.VectorType)
     {

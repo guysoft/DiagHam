@@ -154,7 +154,7 @@ void TensorProductRealVector::ResizeAndClean (AbstractTensorProductStructure* st
 
 TensorProductRealVector& TensorProductRealVector::operator - () 
 {
-  -this->GlobalVector;
+  this->GlobalVector *= -1.0;
   return *this;
 }
 
@@ -173,7 +173,7 @@ TensorProductRealVector operator - (const TensorProductRealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (const TensorProductRealVector& V1, const TensorProductRealVector& V2) 
+double operator * (TensorProductRealVector& V1, TensorProductRealVector& V2) 
 {
   return (V1.GlobalVector * V2.GlobalVector);
 }
@@ -183,7 +183,7 @@ double operator * (const TensorProductRealVector& V1, const TensorProductRealVec
 // V1 = vector to add
 // return value = reference on current vector
 
-TensorProductRealVector& TensorProductRealVector::operator += (const TensorProductRealVector& V1) 
+TensorProductRealVector& TensorProductRealVector::operator += (TensorProductRealVector& V1) 
 {
   if (this->Structure != V1.Structure)
     return *this;
@@ -196,7 +196,7 @@ TensorProductRealVector& TensorProductRealVector::operator += (const TensorProdu
 // V1 = first vector
 // return value = reference on current vector
 
-TensorProductRealVector& TensorProductRealVector::operator -= (const TensorProductRealVector& V1) 
+TensorProductRealVector& TensorProductRealVector::operator -= (TensorProductRealVector& V1) 
 {
   if (this->Structure != V1.Structure)
     return *this;
@@ -210,7 +210,7 @@ TensorProductRealVector& TensorProductRealVector::operator -= (const TensorProdu
 // V2 = second vector
 // return value = resulting vector
 
-TensorProductRealVector operator + (const TensorProductRealVector& V1, const TensorProductRealVector& V2) 
+TensorProductRealVector operator + (TensorProductRealVector& V1, TensorProductRealVector& V2) 
 {
 }
 
@@ -220,7 +220,7 @@ TensorProductRealVector operator + (const TensorProductRealVector& V1, const Ten
 // V2 = second vector
 // return value = resulting vector
 
-TensorProductRealVector operator - (const TensorProductRealVector& V1, const TensorProductRealVector& V2) 
+TensorProductRealVector operator - (TensorProductRealVector& V1, TensorProductRealVector& V2) 
 {
 }
 
@@ -230,7 +230,7 @@ TensorProductRealVector operator - (const TensorProductRealVector& V1, const Ten
 // V = vector to add
 // return value = reference on current vector
 
-TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x, const TensorProductRealVector& V) 
+TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x, TensorProductRealVector& V) 
 {
   if (this->Structure != V.Structure)
     return *this;
@@ -246,8 +246,8 @@ TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x
 // v2 = first vector to add
 // return value = reference on current vector
 
-TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x1, const TensorProductRealVector& v1, double x2, 
-									const TensorProductRealVector& v2)
+TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x1, TensorProductRealVector& v1, double x2, 
+									TensorProductRealVector& v2)
 {
   if ((this->Structure != v1.Structure) || (this->Structure != v2.Structure))
     return *this;
@@ -261,7 +261,7 @@ TensorProductRealVector& TensorProductRealVector::AddLinearCombination (double x
 // d = real to use
 // return value = resulting vector
 
-TensorProductRealVector operator * (const TensorProductRealVector& V1, double d) 
+TensorProductRealVector operator * (TensorProductRealVector& V1, double d) 
 {
   RealVector Tmp = V1.GlobalVector * d;
   return TensorProductRealVector(V1.Structure, Tmp);
@@ -273,7 +273,7 @@ TensorProductRealVector operator * (const TensorProductRealVector& V1, double d)
 // d = real to use
 // return value = resulting vector
 
-TensorProductRealVector operator * (double d, const TensorProductRealVector& V1) 
+TensorProductRealVector operator * (double d, TensorProductRealVector& V1) 
 {
   RealVector Tmp = V1.GlobalVector * d;
   return TensorProductRealVector(V1.Structure, Tmp);

@@ -256,16 +256,17 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	      ++Pos;
 	      PosMod = this->FastMultiplicationStep - PosMod;
 	    }
-	  int k =  PosMod + firstComponent + this->PrecalculationShift;
+	  int l =  PosMod + firstComponent + this->PrecalculationShift;
 	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
 	    {
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
 	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      Coefficient = vSource[k];
+	      Coefficient = vSource[l];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[k++] += this->HamiltonianShift * Coefficient;
+	      vDestination[l] += this->HamiltonianShift * Coefficient;
+	      l += this->FastMultiplicationStep;
 	      ++Pos;
 	    }
 	  int Index;

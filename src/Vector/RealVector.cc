@@ -321,8 +321,12 @@ RealVector& RealVector::Copy (RealVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)
     this->Resize(vector.Dimension);
+  this->Localize();
+  vector.Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] = vector.Components[i] * coefficient;
+  this->Delocalize();
+  vector.Delocalize();
   return *this;
 }
 
@@ -342,8 +346,10 @@ Vector* RealVector::EmptyClone(bool zeroFlag)
 
 Vector& RealVector::ClearVector ()
 {
+  this->Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] = 0.0;  
+  this->Delocalize(true);
   return *this;
 }
 
@@ -353,10 +359,12 @@ Vector& RealVector::ClearVector ()
 
 RealVector& RealVector::operator - ()
 {
+  this->Localize();
   for (int i = 0; i < this->Dimension; i++)
     {
       this->Components[i] *= -1;
     }
+  this->Delocalize(true);
   return *this;
 }
 
@@ -365,13 +373,15 @@ RealVector& RealVector::operator - ()
 // V1 = source vector
 // return value = new vector
 
-RealVector operator - (const RealVector& V1)
+RealVector operator - (RealVector& V1)
 {
   if (V1.Dimension != 0)
     {
+      V1.Localize();
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = -V1.Components[i];
+      V1.Delocalize();
       return RealVector(TmpComponents, V1.Dimension);
     }
   else
@@ -384,16 +394,15 @@ RealVector operator - (const RealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (const RealVector& V1, const RealVector& V2)
+double operator * (RealVector& V1, RealVector& V2)
 {
-/*  int min = V1.Dimension;
-  if (min > V2.Dimension)
-    min = V2.Dimension;
-  if (min == 0)
-    return 0.0;*/
+  V1.Localize();
+  V2.Localize();
   double x = V1.Components[0] * V2.Components[0];
   for (int i = 1; i < V1.Dimension; i++)
     x += V1.Components[i] * V2.Components[i];
+  V1.Delocalize();
+  V2.Delocalize();
   return x;
 }
 
@@ -405,14 +414,18 @@ double operator * (const RealVector& V1, const RealVector& V2)
 // step = increment between to consecutive indices to consider
 // return value = result of the partial scalar product
 
-double RealVector::PartialScalarProduct (const RealVector& vRight, int firstComponent, int nbrComponent, int step)
+double RealVector::PartialScalarProduct (RealVector& vRight, int firstComponent, int nbrComponent, int step)
 {
+  this->Localize();
+  vRight.Localize();
   double x = this->Components[firstComponent] * vRight.Components[firstComponent];
   nbrComponent *= step;
   nbrComponent += firstComponent;
   firstComponent += step;
   for (; firstComponent < nbrComponent; firstComponent += step)
     x += this->Components[firstComponent] * vRight.Components[firstComponent];
+  this->Delocalize();
+  vRight.Delocalize();
   return x;
 }
 
@@ -421,12 +434,16 @@ double RealVector::PartialScalarProduct (const RealVector& vRight, int firstComp
 // V1 = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::operator += (const RealVector& V1)
+RealVector& RealVector::operator += (RealVector& V1)
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
+  this->Localize();
+  V1.Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] += V1.Components[i];
+  this->Delocalize(true);
+  V1.Delocalize();
   return *this;
 }
 
@@ -435,7 +452,7 @@ RealVector& RealVector::operator += (const RealVector& V1)
 // vector = vector to add
 // return value = reference on current vector
 
-Vector& RealVector::operator += (const Vector& vector)
+Vector& RealVector::operator += (Vector& vector)
 {
   if (vector.VectorType == Vector::RealDatas)
     return (*this += ((RealVector&) vector));
@@ -447,12 +464,16 @@ Vector& RealVector::operator += (const Vector& vector)
 // V1 = first vector
 // return value = reference on current vector
 
-RealVector& RealVector::operator -= (const RealVector& V1)
+RealVector& RealVector::operator -= (RealVector& V1)
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
+  this->Localize();
+  V1.Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] -= V1.Components[i];
+  this->Delocalize(true);
+  V1.Delocalize();
   return *this;
 }
 
@@ -462,13 +483,17 @@ RealVector& RealVector::operator -= (const RealVector& V1)
 // V2 = second vector
 // return value = resulting vector
 
-RealVector operator + (const RealVector& V1, const RealVector& V2)
+RealVector operator + (RealVector& V1, RealVector& V2)
 {
   if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
     {
+      V1.Localize();
+      V2.Localize();
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] + V2.Components[i];
+      V1.Delocalize();
+      V2.Delocalize();
       return RealVector(TmpComponents, V1.Dimension);
     }
   else
@@ -481,13 +506,17 @@ RealVector operator + (const RealVector& V1, const RealVector& V2)
 // V2 = second vector
 // return value = resulting vector
 
-RealVector operator - (const RealVector& V1, const RealVector& V2)
+RealVector operator - (RealVector& V1, RealVector& V2)
 {
   if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
     {
+      V1.Localize();
+      V2.Localize();
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] - V2.Components[i];
+      V1.Delocalize();
+      V2.Delocalize();
       return RealVector(TmpComponents, V1.Dimension);
     }
   else
@@ -500,12 +529,16 @@ RealVector operator - (const RealVector& V1, const RealVector& V2)
 // V = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (const double& x, const RealVector& V)
+RealVector& RealVector::AddLinearCombination (const double& x, RealVector& V)
 {
   if ((V.Dimension != this->Dimension))
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] += V.Components[i] * x;
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -515,15 +548,18 @@ RealVector& RealVector::AddLinearCombination (const double& x, const RealVector&
 // V = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x, const RealVector& V, int firstComponent, 
+RealVector& RealVector::AddLinearCombination (double x, RealVector& V, int firstComponent, 
 					      int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-//  cout << "summing from " << firstComponent << " to " << LastComponent << endl;
   if ((LastComponent > this->Dimension) || (LastComponent > V.Dimension))
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = firstComponent; i < LastComponent; ++i)
     this->Components[i] += V.Components[i] * x;
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -535,13 +571,19 @@ RealVector& RealVector::AddLinearCombination (double x, const RealVector& V, int
 // v2 = first vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, double x2, 
-					      const RealVector& v2)
+RealVector& RealVector::AddLinearCombination (double x1, RealVector& v1, double x2, 
+					      RealVector& v2)
 {
   if ((v1.Dimension != this->Dimension) || (v2.Dimension != this->Dimension))
     return *this;
+  this->Localize();
+  v1.Localize();
+  v2.Localize();
   for (int i = 0; i < this->Dimension; ++i)
     this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  this->Delocalize(true);
+  v1.Delocalize();
+  v2.Delocalize();
   return *this;
 }
 
@@ -555,16 +597,22 @@ RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, d
 // nbrComponent = number of components to evaluate
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, double x2, 
-					      const RealVector& v2, int firstComponent, 
+RealVector& RealVector::AddLinearCombination (double x1, RealVector& v1, double x2, 
+					      RealVector& v2, int firstComponent, 
 					      int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if ((LastComponent > this->Dimension) || (LastComponent > v2.Dimension) || 
       (LastComponent > v1.Dimension))
     return *this;
+  this->Localize();
+  v1.Localize();
+  v2.Localize();
   for (int i = firstComponent; i < LastComponent; i++)
     this->Components[i] += v1.Components[i] * x1 + v2.Components[i] * x2;
+  this->Delocalize(true);
+  v1.Delocalize();
+  v2.Delocalize();
   return *this;
 }
 
@@ -574,13 +622,15 @@ RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, d
 // d = real to use
 // return value = resulting vector
 
-RealVector operator * (const RealVector& V1, double d)
+RealVector operator * (RealVector& V1, double d)
 {
   if (V1.Dimension != 0)
     {
+      V1.Localize();
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] * d ;
+      V1.Delocalize();
       return RealVector(TmpComponents, V1.Dimension);
     }
   else
@@ -593,13 +643,15 @@ RealVector operator * (const RealVector& V1, double d)
 // d = real to use
 // return value = resulting vector
 
-RealVector operator * (double d, const RealVector& V1)
+RealVector operator * (double d, RealVector& V1)
 {
   if (V1.Dimension != 0)
     {
+      V1.Localize();
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] * d ;
+      V1.Delocalize();
       return RealVector(TmpComponents, V1.Dimension);
     }
   else
@@ -613,8 +665,10 @@ RealVector operator * (double d, const RealVector& V1)
 
 RealVector& RealVector::operator *= (double d)
 {
+  this->Localize();
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] *= d;
+  this->Delocalize(true);
   return *this;
 }
 
@@ -625,9 +679,11 @@ RealVector& RealVector::operator *= (double d)
 
 RealVector& RealVector::operator /= (double d)
 {
+  this->Localize();
   double tmp = 1.0 / d;
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] *= tmp;
+  this->Delocalize(true);
   return *this;
 }
 
@@ -640,6 +696,7 @@ RealVector& RealVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
 {
   if ((this->Dimension != M.NbrRow) || (this->Dimension == 0))
     return *this;
+  this->Localize();
   int ReducedDim = this->Dimension - 1;
   double Tmp1 = this->Components[0];
   double Tmp2;
@@ -655,6 +712,7 @@ RealVector& RealVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
     }
   this->Components[this->Dimension - 1] *= M.DiagonalElements[this->Dimension - 1];
   this->Components[this->Dimension - 1] += Tmp1 * M.UpperDiagonalElements[this->Dimension - 2];
+  this->Delocalize(true);
   return *this;
 }
 
@@ -667,6 +725,7 @@ RealVector& RealVector::operator *= (const RealSymmetricMatrix&  M)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
   double* tmp = new double [this->Dimension + 1];
   for (int i = 0; i < this->Dimension; i++)
     {
@@ -697,6 +756,7 @@ RealVector& RealVector::operator *= (const RealSymmetricMatrix&  M)
     }
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
+  this->Delocalize(true);
   return *this;
 }
 
@@ -711,6 +771,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = 0; i < this->Dimension; i++)
     {
       this->Components[i] = M.DiagonalElements[i] * V.Components[i];
@@ -726,6 +788,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V)
       for (; j < this->Dimension; j++)
 	this->Components[i] += M.OffDiagonalElements[pos++] * V.Components[j];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -745,6 +809,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -799,6 +865,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
       ++Pos3;
       this->Components[i] = x;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -820,6 +888,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   int pos;
   int j;
@@ -850,6 +920,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
       this->Components[pos3] = x;
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -872,6 +944,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   int pos;
   int j;
@@ -902,6 +976,8 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
       this->Components[pos3] = x;
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -915,6 +991,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn) || (V.Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = 0;
   int Inc = M.NbrRow + M.Increment - 2;
   for (int i = 0; i < M.NbrRow; i++)
@@ -936,6 +1014,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 	}
       pos3++;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -955,6 +1035,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1009,6 +1091,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
       ++Pos3;
       this->Components[i] += x;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1028,6 +1112,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos;
   int j;
   int pos3 = destStart;
@@ -1058,6 +1144,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
       this->Components[pos3] += x;
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1078,6 +1166,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos;
   int j;
   int pos3 = destStart;
@@ -1108,6 +1198,8 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
       this->Components[pos3] += x;
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1121,6 +1213,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = 0; i < this->Dimension; i++)
     {
       this->Components[i] = 0.0;
@@ -1136,6 +1230,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
       for (; j < this->Dimension; j++)
 	this->Components[i] += M.OffDiagonalElements[pos++] * V.Components[j];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1155,6 +1251,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1208,6 +1306,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
       ++Pos3;
       this->Components[i] = x;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1227,6 +1327,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   for (int i = 0; i < M.NbrRow; i++)
     {
@@ -1250,6 +1352,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 	}
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1270,6 +1374,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   for (int i = 0; i < M.NbrRow; i++)
     {
@@ -1293,6 +1399,8 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 	}
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1306,6 +1414,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrRow) || (V.Dimension != M.NbrColumn))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = 0;
   for (int i = 0; i < M.NbrRow; i++)
     {
@@ -1326,6 +1436,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 	}
       pos3++;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1345,6 +1457,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
     {
       return *this;
     }
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1398,6 +1512,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
       ++Pos3;
       this->Components[i] += x;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1417,6 +1533,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   for (int i = 0; i < M.NbrRow; i++)
     {
@@ -1439,6 +1557,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 	}
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1459,6 +1579,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
       (V.Dimension < ((M.NbrRow - 1) * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int pos3 = destStart;
   for (int i = 0; i < M.NbrRow; i++)
     {
@@ -1481,6 +1603,8 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 	}
       pos3 += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1494,6 +1618,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn))
     return *this;
+  this->Localize();
+  V.Localize();
   if (this->Dimension != M.NbrRow)
    this->Resize(M.NbrRow);
   for (int i = 0; i < V.Dimension; i ++)
@@ -1502,6 +1628,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
       for (int j = 1; j < this->Dimension; j++)
 	this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1519,6 +1647,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
       || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   int j = sourceStart;
   for (int i = 0; i < this->Dimension; ++i)
@@ -1531,6 +1661,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 	  this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
 	}
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1549,6 +1681,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   for (int i = 0; i < M.NbrRow; i ++)
     {
@@ -1562,6 +1696,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 	}
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1582,6 +1718,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int Last = sourceNbrComponent / sourceStep + 1;
   for (int i = 0; i < Last; i ++)
@@ -1596,6 +1734,8 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 	}
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1614,6 +1754,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   for (int i = 0; i < M.NbrRow; i ++)
     {
@@ -1625,6 +1767,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 	}
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1642,6 +1786,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
       || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   for (int i = 0; i < this->Dimension; ++i)
     {
@@ -1650,6 +1796,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 	  this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
 	}
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1670,6 +1818,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int Last = sourceNbrComponent / sourceStep + 1;
   if (Last > M.NbrRow)
@@ -1684,6 +1834,8 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 	}
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1697,12 +1849,16 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
+  this->Localize();
+  V.Localize();
   if (V.Dimension != M.NbrRow)
     V.Resize(M.NbrRow);
   for (int i = 0; i < V.Dimension; ++i)
     {
       this->Components[i] = M.DiagonalElements[i] * V.Components[i];
      }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1724,6 +1880,8 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
     {
       this->Components[i] =  M.DiagonalElements[i] * V.Components[i];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1742,6 +1900,8 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   for (int i = 0; i < M.NbrColumn; ++i)
@@ -1750,6 +1910,8 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
       SourcePos += sourceStep;
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1770,6 +1932,8 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   int Last = sourceNbrComponent / sourceStep + 1;
@@ -1781,7 +1945,9 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
       SourcePos += sourceStep;
       DestPos += destStep;
     }
-  return *this;
+  this->Delocalize(true);
+  V.Delocalize();
+ return *this;
 }
 
 // left multiply a vector with a real diagonal matrix and add result to the current vector
@@ -1794,10 +1960,14 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = 0; i < V.Dimension; ++i)
     {
       this->Components[i] += M.DiagonalElements[i] * V.Components[i];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1814,11 +1984,15 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
       || (this->Dimension != M.NbrRow))
     return *this;
+  this->Localize();
+  V.Localize();
   int Last = sourceStart + sourceNbrComponent;
   for (int i = sourceStart; i < Last; ++i)
     {
       this->Components[i] +=  M.DiagonalElements[i] * V.Components[i];
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1837,6 +2011,8 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   for (int i = 0; i < M.NbrColumn; ++i)
@@ -1845,6 +2021,8 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
       SourcePos += sourceStep;
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1865,6 +2043,8 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   int Last = sourceNbrComponent / sourceStep + 1;
@@ -1876,6 +2056,8 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
       SourcePos += sourceStep;
       DestPos += destStep;
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1890,6 +2072,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
+  this->Localize();
+  V.Localize();
   if (V.Dimension != M.NbrRow)
     V.Resize(M.NbrRow);
   int SourcePos = 0;
@@ -1902,6 +2086,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V)
       SourcePos += (*TmpM)->GetNbrColumn();
       DestPos += (*TmpM)->GetNbrRow();
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1922,6 +2108,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   Matrix** TmpM;
@@ -1932,6 +2120,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
       SourcePos += (*TmpM)->GetNbrColumn() * sourceStep;
       DestPos += (*TmpM)->GetNbrRow() * destStep;
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1953,6 +2143,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   Matrix** TmpM;
@@ -1963,6 +2155,8 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
       SourcePos += (*TmpM)->GetNbrColumn() * sourceStep;
       DestPos += (*TmpM)->GetNbrRow() * destStep;
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -1976,6 +2170,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
+  this->Localize();
+  V.Localize();
   if (V.Dimension != M.NbrRow)
     V.Resize(M.NbrRow);
   int SourcePos = 0;
@@ -1988,6 +2184,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
       SourcePos += (*TmpM)->GetNbrColumn();
       DestPos += (*TmpM)->GetNbrRow();
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -2007,6 +2205,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   Matrix** TmpM;
@@ -2017,6 +2217,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
       SourcePos += (*TmpM)->GetNbrColumn() * sourceStep;
       DestPos += (*TmpM)->GetNbrRow() * destStep;
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -2037,6 +2239,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
     return *this;
+  this->Localize();
+  V.Localize();
   int DestPos = destStart;
   int SourcePos = sourceStart;
   Matrix** TmpM;
@@ -2047,6 +2251,8 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
       SourcePos += (*TmpM)->GetNbrColumn() * sourceStep;
       DestPos += (*TmpM)->GetNbrRow() * destStep;
     } 
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
 
@@ -2357,12 +2563,14 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int source
 
 double RealVector::Norm()
 {
+  this->Localize();
   double x = 0.0;
   if (this->Dimension != 0)
     {
       for (int i = 0; i < this->Dimension; ++i)
 	x += this->Components[i] * this->Components[i];
     }
+  this->Delocalize();
   return sqrt(x);
 }
   
@@ -2372,12 +2580,14 @@ double RealVector::Norm()
 
 double RealVector::SqrNorm ()
 {
+  this->Localize();
   double x = 0.0;
   if (this->Dimension != 0)
     {
       for (int i = 0; i < this->Dimension; i++)
 	x += this->Components[i] * this->Components[i];
     }
+  this->Delocalize();
   return x;
 }
   
@@ -2387,6 +2597,7 @@ double RealVector::SqrNorm ()
 
 RealVector& RealVector::Normalize()
 {
+  this->Localize();
   double tmp = this->Components[0] * this->Components[0];
   for (int i = 1; i < this->Dimension; i ++)
     tmp += this->Components[i] * this->Components[i];
@@ -2395,6 +2606,7 @@ RealVector& RealVector::Normalize()
     {
       this->Components[i++] *= tmp;
     }
+  this->Delocalize(true);
   return *this;
 }
   
@@ -2421,12 +2633,14 @@ RealVector RealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step
 {
   if (this->Dimension == 0)
     return RealVector();
+  this->Localize();
   RealVector TmpV ((int) ((LastCoordinate - FirstCoordinate + 1) / Step));
   for (int i = 0; i < TmpV.Dimension; i++)
     {
       TmpV.Components[i] = this->Components[FirstCoordinate];
       FirstCoordinate += Step;
     }
+  this->Delocalize();
   return TmpV ; 
 }
   
@@ -2437,19 +2651,23 @@ RealVector RealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step
 // step = distance to the next coordinate in the destination vector (1 means to take the following)
 // return value = reference to the current Vector
 
-RealVector& RealVector::Merge(const RealVector& V, int firstCoordinate, int step)
+RealVector& RealVector::Merge(RealVector& V, int firstCoordinate, int step)
 {
   if ((this->Dimension == 0) || (V.Dimension == 0))
     return *this;
   int Max = firstCoordinate + (V.Dimension * step);
   if (Max > this->Dimension)
     return *this;
+  this->Localize();
+  V.Localize();
   for (int i = firstCoordinate; i < Max; i += step)
     {
       this->Components[i] = V.Components[i - firstCoordinate];
       i++;
       this->Components[i] = V.Components[i - firstCoordinate];      
     }
+  this->Delocalize(true);
+  V.Delocalize();
   return *this;
 }
   
@@ -2459,12 +2677,14 @@ RealVector& RealVector::Merge(const RealVector& V, int firstCoordinate, int step
 // v = vector to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& str, const RealVector& v)
+ostream& operator << (ostream& str, RealVector& v)
 {
+  v.Localize();
   for (int i = 0; i < v.Dimension; ++i)
     {
       str << v.Components[i] << endl;
     }
+  v.Delocalize();
   return str;
 }
 
@@ -2488,12 +2708,14 @@ ostream& operator << (ostream& str, const RealVector& v)
 
 bool RealVector::WriteVector (char* fileName)
 {
+  this->Localize();
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
   File.write ((char*) &(this->Dimension), sizeof(int));
   for (int i = 0; i < this->Dimension; ++i)
     File.write ((char*) (&(this->Components[i])), sizeof(double));
   File.close();
+  this->Delocalize();
   return true;
 }
 
@@ -2504,6 +2726,7 @@ bool RealVector::WriteVector (char* fileName)
 
 bool RealVector::WriteAsciiVector (char* fileName)
 {
+  this->Localize();
   ofstream File;
   File.precision(14);
   File.open(fileName, ios::binary | ios::out);
@@ -2512,6 +2735,7 @@ bool RealVector::WriteAsciiVector (char* fileName)
     File << this->Components[i] << " ";
   File << this->Components[ReducedDimension] << endl;  
   File.close();
+  this->Delocalize();
   return true;
 }
 

@@ -38,7 +38,7 @@ my $TmpFile;
 foreach $TmpFile (<*>)
   {
     if (($TmpFile =~ /bosons\_delta\_n\_$NbrBosons.*\_l\.dat/ ) || ($TmpFile =~ /bosons\_coulomb\_n\_$NbrBosons.*\_l\.dat/) || 
-	($TmpFile =~ /bosons\_dipolar\_n\_$NbrBosons.*\_l\.dat/))
+	($TmpFile =~ /bosons\_dipolar\_n\_$NbrBosons.*\_l\.dat/) || ($TmpFile =~ /bosons\_v2\_n\_$NbrBosons.*\_l\.dat/))
       {
 	push (@ListFiles, $TmpFile);
       }

@@ -16,7 +16,8 @@ my @ListLzFiles;
 my $TmpFile;
 foreach $TmpFile (<*>)
   {
-    if (($TmpFile =~ /bosons\_delta\_n\_$NbrBosons.*\_lz\./ ) || ($TmpFile =~ /bosons\_coulomb\_n\_$NbrBosons.*\_lz\./ ))
+    if (($TmpFile =~ /bosons\_delta\_n\_$NbrBosons.*\_lz\./ ) || ($TmpFile =~ /bosons\_coulomb\_n\_$NbrBosons.*\_lz\./ ) || 
+	($TmpFile =~ /bosons\_v2\_n\_$NbrBosons.*\_lz\./ ))
       {
 	push (@ListLzFiles, $TmpFile);
       }
@@ -27,7 +28,7 @@ foreach $TmpFile (@ListLzFiles)
     my $TmpFile2 = $TmpFile;
     $TmpFile2 =~ s/\_lz/\_l/;
     print "$TmpFile\n";
-    `/home/regnault/development/DMRG/SpectrumTools/LzToL $TmpFile > $TmpFile2`;
+    `/home/regnault/development/DMRG/DiagHam/src/Programs/QHE/LzToL $TmpFile > $TmpFile2`;
     push (@ListFiles, $TmpFile2);
   }
 

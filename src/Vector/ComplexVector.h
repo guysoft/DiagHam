@@ -52,6 +52,7 @@ class ComplexVector : public Vector
 {
 
   friend class RealVector;
+  friend class DelocalizedRealVector;
   friend class AbstractHamiltonian;
   friend class ComplexMatrix;
   friend class HermitianMatrix;
