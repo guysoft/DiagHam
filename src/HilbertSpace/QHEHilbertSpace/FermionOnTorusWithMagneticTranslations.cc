@@ -621,7 +621,8 @@ int FermionOnTorusWithMagneticTranslations::FindStateIndex(unsigned long stateDe
   PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+//  cout << PosMin << " " << PosMid << " " << PosMax << " " << hex << CurrentState << " " << stateDescription << dec << endl;
+  while ((PosMin != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
 	{
@@ -637,7 +638,7 @@ int FermionOnTorusWithMagneticTranslations::FindStateIndex(unsigned long stateDe
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    return PosMax;
 }
 
 // print a given State
