@@ -31,6 +31,7 @@
 #include "GeneralTools/ListIterator.h"
 
 #include <iostream>
+#include <string.h>
 
 
 using std::cout;
@@ -42,6 +43,23 @@ using std::endl;
 
 AbstractOption::~AbstractOption()
 {
+}
+
+// test if a string matches the option name
+//
+// optionName = string to test
+// return value = true if the string matches the option name
+
+bool AbstractOption::IsOptionName (char* optionName)
+{
+  if (strncmp(optionName, &(this->OptionName[1]), strlen(this->OptionName) - 1) != 0)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
 }
 
 // Proceed running options 

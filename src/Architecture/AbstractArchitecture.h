@@ -54,7 +54,12 @@ class AbstractPrecalculationOperation;
 class AbstractArchitecture
 {
 
-public:
+ protected:
+
+  // dimension of the Hilbert space on which the architecture has to work
+  long HilbertSpaceDimension;
+
+ public:
   
   // destructor
   //
@@ -91,12 +96,17 @@ public:
   // return value = pointer to the requested vector (zero if an error occurs)
   virtual ComplexVector* GetNewComplexVector (long dimension, bool zeroFlag = false);
   
+  // set dimension of the Hilbert space on which the architecture has to work
+  // 
+  // dimension = dimension of the Hilbert space
+  virtual void SetDimension (long dimension);
+
   // multiply a vector by an hamiltonian and store the result in another vector
   //
   // hamiltonian = pointer to the hamiltonian to use
   // vSource = vector to multiply 
   // vDestination = vector where result has to be stored 
-  virtual void Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination) = 0;
+  virtual void Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination);
 
   // execute an architecture-dependent operation
   //

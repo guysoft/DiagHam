@@ -5,9 +5,9 @@
 //                  Copyright (C) 1998-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of running option                          //
+//                            class of option manager                         //
 //                                                                            //
-//                        last modification : 19/08/2001                      //
+//                        last modification : 19/05/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,8 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTOPTION_H
-#define ABSTRACTOPTION_H
+#ifndef OPTIONMANAGER_H
+#define OPTIONMANAGER_H
 
 
 #include "config.h"
@@ -40,79 +40,63 @@
 using std::ostream;
 
 
-class AbstractOption
+class OptionGroup;
+class AbstractOption;
+
+class OptionManager
 {
 
  protected:
   
-  // standalone character used for otion
-  char OptionCode;
+  // ordered list containing all option groups which have to be handled by the option manager
+  List<OptionGroup*> Groups;
 
-  // option full name
-  char* OptionName;
+  // program name 
+  char* ProgramName;
+ 
+  // string containing program version
+  char* ProgramVersion;
 
-  // string describing option (used for -h option)
-  char* OptionDescription;
-
-  // error code used dor print error method
-  int ErrorCode;
+  // an optional string that can be displayed with help
+  char* ProgramAdditionalInformations;
 
  public:
 
-
-  // virtual destructor
+  // constructor
   //
-  virtual ~AbstractOption();
+  // groupName = group full name
+  OptionManager(char* programName, char* programVersion = 0, char* programAdditionalInformations = 0);
 
-  // test if a string matches the option name
+  // destructor
   //
-  // optionName = string to test
-  // return value = true if the string matches the option name
-  virtual bool IsOptionName (char* optionName);
+  ~OptionManager();
 
-  // Test if an argument corresponds to the current option and read its content
+  // add an option group to the manager
+  // 
+  // group = pointer to the option group to add 
+  // return value = reference on the current option manager
+  OptionManager& operator += (OptionGroup* group);
+
+  // get option from its name
+  //
+  // optionName = string containing option name
+  // return value = poitner to the option if it has been found, 0 either
+  AbstractOption* operator[] (char* optionName);
+
+  // Proceed running options from command line arguments
   //
   // argumentValues = string array of arguments
   // nbrArgument = number of arguments in argumentValues array
-  // argumentPosition = position of the first argument to read
-  // return value = number of arguments that have been read (-1 if an error occured)
-  virtual int ReadOption(char** argumentValues, int nbrArgument, int argumentPosition) = 0;
+  // output = reference on output stream used to display errors
+  // return value = true if proceeding succeded, false if an error occurs
+  bool ProceedOptions (char** argumentValues, int nbrArgument, ostream& output);
 
-  // print error message on output stream
+  // print help concerning current option group
   //
   // output = reference on output stream;
   // return value = reference on current output stream
-  virtual ostream& PrintError (ostream& output) = 0;
-
-  // print help concerning current option
-  //
-  // output = reference on output stream;
-  // return value = reference on current output stream
-  virtual ostream& DisplayHelp (ostream& output) = 0;
-
-  // display help
-  //
-  // options = option list
-  // str = reference on output stream to use
-  // programName = string containing the program name
-  // return value = true if proceeding succeded
-  friend void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName);
+  ostream& DisplayHelp (ostream& output);
 
 };
-
-// Proceed running options 
-//
-// argumentValues = string array of arguments
-// nbrArgument = number of arguments in argumentValues array
-// options = option list
-// return value = true if proceeding succeded
-bool ProceedOptions (char** argumentValues, int nbrArgument, List<AbstractOption*>& option);
-
-// display help
-//
-// options = option list
-// str = reference on output stream to use
-// return value = true if proceeding succeded
-void DisplayHelp (List<AbstractOption*>& option, ostream& str);
 
 #endif

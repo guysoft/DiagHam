@@ -25,9 +25,15 @@ my $Options = `$ARGV[0] --help`;
 my @TmpLines = split (/\n/, $Options);
 my $TmpLine;
 print "<?xml version=\"1.0\" ?>
-  <name>".$ProgramName."</name>
+<program name=\"".$ProgramName."\">
   <location>".$Path."</location>
-  <authors name=\"\"></authors>
+  <authors name=\"\">
+    <email></email>
+    <homepage></homepage>
+  </authors>
+  <optiongroupsort></optiongroupsort>
+  <optiongroup name=\"misc options\">
+  <optiongroup name=\"\">
 ";
 foreach $TmpLine (@TmpLines)
   {
@@ -63,8 +69,19 @@ foreach $TmpLine (@TmpLines)
 	print "  </option>\n"
       }
   }
-print "  <shortdescription></shortdescription>
+print "  </optiongroup>
+
+  <shortdescription></shortdescription>
+
   <longdescription></longdescription>
+
   <accuracy></accuracy>
-  <relatedprog></relatedprog>
-  <remarks></remarks>\n";
+
+  <relatedprog name=\"\" type=\"\">
+    <location></location>
+    <usage></usage>
+    <description></description>
+  </relatedprog>
+
+  <remarks></remarks>
+</program>\n";

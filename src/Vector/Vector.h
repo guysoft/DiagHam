@@ -155,6 +155,12 @@ class Vector
   // return value = reference on output stream
   friend ostream& operator << (ostream& str, const Vector& v);
 
+#ifdef __MPI__
+
+  // send a vector 
+
+#endif
+
 };
  
 // Get Vector dimension

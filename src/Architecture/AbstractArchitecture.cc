@@ -28,6 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include "config.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
@@ -37,6 +38,7 @@
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Hamiltonian/AbstractHamiltonian.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
 
 #include "Vector/RealVector.h"
@@ -102,6 +104,26 @@ ComplexVector* AbstractArchitecture::GetNewComplexVector (long dimension, bool z
   return new ComplexVector (dimension, zeroFlag);
 }
   
+// set dimension of the Hilbert space on which the architecture has to work
+// 
+// dimension = dimension of the Hilbert space
+
+void AbstractArchitecture::SetDimension (long dimension)
+{
+  this->HilbertSpaceDimension = dimension;
+}
+
+// multiply a vector by an hamiltonian and store the result in another vector
+//
+// hamiltonian = pointer to the hamiltonian to use
+// vSource = vector to multiply 
+// vDestination = vector where result has to be stored 
+
+void AbstractArchitecture::Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination)
+{
+  hamiltonian->Multiply(vSource, vDestination);
+}
+
 // execute an architecture-dependent operation
 //
 // operation = pointer to the operation to execute

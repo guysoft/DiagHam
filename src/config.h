@@ -26,9 +26,12 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
+
+#include "config_ac.h"
 
 // all options
 
@@ -44,7 +47,10 @@
 // 64 bits architecture
 //#define __64_BITS__
 
-
+// MPI flag
+#ifdef HAVE_MPI
+#define __MPI__
+#endif
 
 
 // architecture dependant options

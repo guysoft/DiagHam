@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                     class of MonoProcessor Architecture                    //
+//                       class of simple MPI Architecture                     //
 //                                                                            //
-//                        last modification : 30/04/2002                      //
+//                        last modification : 17/05/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,28 +28,64 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef MONOPROCEESORARCHITECTURE_H
-#define MONOPROCEESORARCHITECTURE_H
+#ifndef SIMPLEMPIARCHITECTURE_H
+#define SIMPLEMPIARCHITECTURE_H
 
 
 #include "config.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/GenericOperation.h"
 
 
-class MonoProcessorArchitecture : public AbstractArchitecture
+class AbstractArchitectureOperation;
+
+
+class SimpleMPIArchitecture : public AbstractArchitecture
 {
 
-public:
+ private:
+
+  // total number of MPI nodes
+  int NbrMPINodes;
+  // rank of the current MPI node
+  int MPIRank;
+
+  // pointer to the architecture used for local operation
+  AbstractArchitecture* LocalArchitecture;
+
+  // current node performance index
+  double PerformanceIndex;
+  // cluster total performance index
+  double TotalPerformanceIndex;
+  // array containing performance index of each node
+  double* ClusterPerformanceArray;
+
+  // minimum index on which the current MPI node can act
+  long MinimumIndex;
+  // maximum index on which the current MPI node can act
+  long MaximumIndex;
+
+ public:
   
   // constructor
   //
-  MonoProcessorArchitecture();
+  SimpleMPIArchitecture();
   
   // destructor
   //
-  ~MonoProcessorArchitecture();
+  ~SimpleMPIArchitecture();
   
+  // get typical range of indices on which the local architecture acts
+  //
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  void GetTypicalRange (long& minIndex, long& maxIndex);
+  
+  // set dimension of the Hilbert space on which the architecture has to work
+  // 
+  // dimension = dimension of the Hilbert space
+  void SetDimension (long dimension);
+
   // execute an architecture-dependent vector hamiltonian multiplication operation
   //
   // operation = pointer to the operation to execute
@@ -61,7 +97,7 @@ public:
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (AddRealLinearCombinationOperation* operation);
-  
+
   // execute an architecture-dependent add complex linear combination operation
   //
   // operation = pointer to the operation to execute
@@ -85,7 +121,7 @@ public:
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
-
+    
   // execute an architecture-dependent abstract hamiltonian precalculation operation
   //
   // operation = pointer to the operation to execute
