@@ -46,12 +46,14 @@ int main(int argc, char** argv)
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
@@ -63,6 +65,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleIntegerOption ('\n', "full-diag", 
 					      "maximum Hilbert space dimension for which full diagonalization is applied", 
 					      500, true, 100);
+
   (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
@@ -72,6 +75,9 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
 
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
 
@@ -111,7 +117,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_disk_delta_n_%d_lz_%d", NbrBosons, MMax);
+	  sprintf (EigenvectorName, "bosons_disk_delta_n_%d_lz_%d", NbrBosons, L);
 	}
       QHEOnDiskMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
