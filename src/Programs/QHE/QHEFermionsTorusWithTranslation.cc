@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 	  HermitianMatrix HRep2 (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep2);
 	  Complex Zero;
-//	  HRep2.SetMatrixElement(0, 5, Zero);
+//	  HRep2.SetMatrixElement(0, 1, Zero);
 //	  HRep2.SetMatrixElement(1, 5, Zero);
 	  cout << HRep2 << endl;	  
 	  RealSymmetricMatrix HRep (HRep2.ConvertToSymmetricMatrix());

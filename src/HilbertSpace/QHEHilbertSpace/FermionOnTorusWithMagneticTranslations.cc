@@ -468,15 +468,17 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 {
   nbrTranslation = 0;
   unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;
   int index = 1;  
-  while (index < this->MomentumModulo)
+  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+  while ((index < this->MomentumModulo) && (stateDescriptionReference != stateDescription))
     {
-      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
       if (stateDescription < CanonicalState)
 	{
 	  CanonicalState = stateDescription;
 	  nbrTranslation = index;
 	}
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
       ++index;
     }
   if (nbrTranslation != 0)
@@ -488,6 +490,7 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 	  --maxMomentum;
 	  stateDescription >>= 1;
 	}
+      nbrTranslation = index - nbrTranslation;
     }
   return CanonicalState;
 }
@@ -749,7 +752,8 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 			    }
 			  if (TmpNbrParticle & 1)
 			    {			 
-			      TmpReorderingSign |= ((TmpReorderingSign << 1) ^ (((unsigned long) 0x1) << k));
+//			      TmpReorderingSign |= ((TmpReorderingSign << 1) ^ (((unsigned long) 0x1) << k));
+			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
 			      ++TmpSignature;
 			    }
 			  else
