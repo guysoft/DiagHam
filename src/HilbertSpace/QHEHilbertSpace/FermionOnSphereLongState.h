@@ -415,9 +415,9 @@ inline void FermionOnSphereLongState::UnsetOccupation (const int& stateIndex)
 inline unsigned long FermionOnSphereLongState::GetOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  return (this->StateDescription[stateIndex >> 6] & (~(((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f)))));
+  return (this->StateDescription[stateIndex >> 6] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))));
 #else
-  return (this->StateDescription[stateIndex >> 5] & (~(((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f)))));
+  return (this->StateDescription[stateIndex >> 5] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f))));
 #endif
 }
 
@@ -442,19 +442,19 @@ inline void FermionOnSphereLongState::IncrementOccupation (const int& stateIndex
 inline bool FermionOnSphereLongState::TestAndIncrementOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  if ((this->StateDescription[stateIndex >> 6] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) != 0)
+  if ((this->StateDescription[stateIndex >> 6] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f)))) != 0)
     return false;
   else
     {
-      this->StateDescription[stateIndex >> 6] |=  ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f));
+      this->StateDescription[stateIndex >> 6] |=  (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f)));
       return true;
     }
 #else
-  if ((this->StateDescription[stateIndex >> 5] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f))) != 0)
+  if ((this->StateDescription[stateIndex >> 5] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f)))) != 0)
     return false;
   else
     {
-      this->StateDescription[stateIndex >> 5] |=  ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f));
+      this->StateDescription[stateIndex >> 5] |=  (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f)));
       return true;
     }
 #endif
@@ -481,19 +481,19 @@ inline void FermionOnSphereLongState::DecrementOccupation (const int& stateIndex
 inline bool FermionOnSphereLongState::TestAndDecrementOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  if ((this->StateDescription[stateIndex >> 6] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) != 0)
+  if ((this->StateDescription[stateIndex >> 6] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) == 0)
     return false;
   else
     {
-      this->StateDescription[stateIndex >> 6] &=  ~((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f));
+      this->StateDescription[stateIndex >> 6] &=  ~(((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f)));
       return true;
     }
 #else
-  if ((this->StateDescription[stateIndex >> 5] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f))) != 0)
+  if ((this->StateDescription[stateIndex >> 5] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f)))) == 0)
     return false;
   else
     {
-      this->StateDescription[stateIndex >> 5] &=  ~((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f));
+      this->StateDescription[stateIndex >> 5] &=  ~(((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f)));
       return true;
     }
 #endif
@@ -545,8 +545,10 @@ inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int red
 #else
   stateIndex &= 0x1f;
   Mask = (this->StateDescription[tmp] >> stateIndex) & ((unsigned long) 0xffff);
+  cout << Mask << endl;
   coefficient *= signLookUpTable[Mask];
   Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & ((unsigned long) 0xffff);
+  cout << Mask << endl;
   coefficient *= signLookUpTable[Mask];
 #endif
 }
