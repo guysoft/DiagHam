@@ -6,10 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a sphere with        //
-//                       coulombian and delta interaction                     //
+//                      class of matrix main task operation                   //
 //                                                                            //
-//                        last modification : 24/03/2003                      //
+//                        last modification : 10/06/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,77 +28,80 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHERECOULOMBDELTAHAMILTONIAN_H
-#define PARTICLEONSPHERECOULOMBDELTAHAMILTONIAN_H
+#ifndef MAINTASKOPERATION_H
+#define MAINTASKOPERATION_H
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereHamiltonian.h"
-
-#include <iostream>
+#include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 
 
-using std::ostream;
+class AbstractMainTask;
 
 
-class MathematicaOutput;
-class AbstractArchitecture;
-
-
-class ParticleOnSphereCoulombDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
+class MainTaskOperation: public AbstractArchitectureOperation
 {
 
-
-  friend class QHEParticlePrecalculationOperation;
-
  protected:
 
-  // ratio between coulombian interaction and delta interaction
-  double Ratio;
+  // pointer to the main task
+  AbstractMainTask* Task;
 
  public:
-
-  // constructor from default datas
+  
+  // constructor 
   //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // lzmax = maximum Lz value reached by a particle in the state
-  // ratio = ratio between coulombian interaction and delta interaction
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnSphereCoulombDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double ratio, AbstractArchitecture* architecture, 
-					  long memory = -1);
+  // task = pointer to the main task
+  MainTaskOperation(AbstractMainTask* task);
 
+  // copy constructor 
+  //
+  // operation = reference on operation to copy
+  MainTaskOperation(const MainTaskOperation& operation);
+  
   // destructor
   //
-  ~ParticleOnSphereCoulombDeltaHamiltonian();
+  ~MainTaskOperation();
+  
+  // set range of indices
+  // 
+  // firstComponent = index of the first component
+  // nbrComponent = number of component
+  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
-  // clone hamiltonian without duplicating datas
+  // clone operation
   //
-  // return value = pointer to cloned hamiltonian
-  AbstractHamiltonian* Clone ();
-
-  // Output Stream overload
+  // return value = pointer to cloned operation
+  AbstractArchitectureOperation* Clone();
+  
+  // get the main task
   //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnSphereCoulombDeltaHamiltonian& H);
+  // return value = pointer to the main task
+  AbstractMainTask* GetMainTask();
 
-  // Mathematica Output Stream overload
+  // apply operation
   //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereCoulombDeltaHamiltonian& H);
-
- protected:
- 
-  // evaluate all interaction factors
-  //   
-  void EvaluateInteractionFactors();
-
+  // return value = true if no error occurs
+  bool ApplyOperation();
+  
 };
+
+// set range of indices
+// 
+// firstComponent = index of the first component
+// nbrComponent = number of component
+
+inline void MainTaskOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
+{
+}
+
+// get the main task
+//
+// return value = pointer to the main task
+
+inline AbstractMainTask* MainTaskOperation::GetMainTask()
+{
+  return this->Task;
+}
 
 #endif

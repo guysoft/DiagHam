@@ -11,4 +11,5 @@ AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
 QHEParticlePrecalculationOperation.cc \
-NDMAPPrecalculationOperation.cc
+NDMAPPrecalculationOperation.cc \
+MainTaskOperation.cc

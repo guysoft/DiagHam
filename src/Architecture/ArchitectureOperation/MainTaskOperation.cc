@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of Abstract architecture operation                 //
+//                      class of matrix main task operation                   //
 //                                                                            //
-//                        last modification : 23/10/2002                      //
+//                        last modification : 10/06/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,69 +28,54 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTARCHITECTUREOPERATION_H
-#define ABSTRACTARCHITECTUREOPERATION_H
-
-
 #include "config.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "MainTask/AbstractMainTask.h"
 
 
-class AbstractArchitectureOperation
-{
-
- protected:
-
-  int OperationType;
-
- public:
-  
-  enum Operation
-    {
-      VectorHamiltonianMultiply = 0x1,
-      AddRealLinearCombination = 0x2,
-      MultipleRealScalarProduct = 0x4,      
-      MatrixMatrixMultiply = 0x8,
-      AddComplexLinearCombination = 0x10,
-      MultipleComplexScalarProduct = 0x20,
-      Generic = 0x100,
-      HamiltonianPrecalculation = 0x200,
-      QHEOperation = 0x10000,
-      SpinOperation = 0x20000,
-      QHEParticlePrecalculation = 0x200,
-      NDMAPPrecalculation = 0x400,
-      MainTask = 0x1000
-    };
-
-  // destructor
-  //
-  virtual ~AbstractArchitectureOperation();
-  
-  // clone operation
-  //
-  // return value = pointer to cloned operation
-  virtual AbstractArchitectureOperation* Clone() = 0;
-  
-  // apply operation
-  //
-  // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
-  
-  // get operation type
-  //
-  // return value = code corresponding to the operation
-  int GetOperationType ();
-
-};
-
-// get operation type
+// constructor 
 //
-// return value = code corresponding to the operation
+// task = pointer to the main task
 
-inline int AbstractArchitectureOperation::GetOperationType ()
+MainTaskOperation::MainTaskOperation(AbstractMainTask* task)
 {
-  return this->OperationType;
+  this->Task = task;
 }
 
 
+// copy constructor 
+//
+// operation = reference on operation to copy
 
-#endif
+MainTaskOperation::MainTaskOperation(const MainTaskOperation& operation)
+{
+  this->Task = operation.Task;
+}
+
+// destructor
+//
+MainTaskOperation::~MainTaskOperation()
+{
+}
+
+// clone operation
+//
+// return value = pointer to cloned operation
+
+AbstractArchitectureOperation* MainTaskOperation::Clone()
+{
+  return new MainTaskOperation(*this);
+}
+  
+// apply operation
+//
+// return value = true if no error occurs
+
+bool MainTaskOperation::ApplyOperation()
+{
+  if (this->Task->ExecuteMainTask() != 0)
+    return false;
+  else
+    return true;
+}
+ 

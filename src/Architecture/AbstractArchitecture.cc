@@ -37,9 +37,12 @@
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
+
+#include "MainTask/AbstractMainTask.h"
 
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
@@ -151,6 +154,9 @@ bool AbstractArchitecture::ExecuteOperation (AbstractArchitectureOperation* oper
     case AbstractArchitectureOperation::MatrixMatrixMultiply:
       return this->ExecuteOperation((MatrixMatrixMultiplyOperation*) operation);
       break;
+    case AbstractArchitectureOperation::MainTask:
+      return this->ExecuteOperation((MainTaskOperation*) operation);
+      break;
 //    case AbstractArchitectureOperation::Generic:
 //      return this->ExecuteOperation((GenericOperation*) operation);
 //      break;
@@ -228,5 +234,16 @@ bool AbstractArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* oper
 bool AbstractArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
   return false;
+}
+    
+// execute an architecture-dependent main task operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool AbstractArchitecture::ExecuteOperation (MainTaskOperation* operation)
+{
+  operation->GetMainTask()->SetArchitecture(this);
+  return operation->ApplyOperation();
 }
     

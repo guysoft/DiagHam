@@ -93,6 +93,7 @@ int AbstractQHEOnSphereHamiltonian::GetHilbertSpaceDimension ()
 
 void AbstractQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->HamiltonianShift = shift;
 }
   
 // evaluate matrix element
@@ -225,15 +226,15 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	  double* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
+	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
-	  int k = firstComponent + this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-	      Coefficient = vSource[i + this->PrecalculationShift];
+	      Coefficient = vSource[k];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 	      vDestination[k++] += this->HamiltonianShift * Coefficient;
@@ -261,7 +262,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
 	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      Coefficient = vSource[i + this->PrecalculationShift];
+	      Coefficient = vSource[k];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
 	      vDestination[k++] += this->HamiltonianShift * Coefficient;

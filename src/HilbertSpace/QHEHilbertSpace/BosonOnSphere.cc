@@ -97,7 +97,13 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
-
+  this->Keys = bosons.Keys;
+  this->KeyMultiplicationTable = bosons.KeyMultiplicationTable;
+  this->LzMaxPosition = bosons.LzMaxPosition;
+  this->KeyInvertSectorSize = bosons.KeyInvertSectorSize;
+  this->KeyInvertTable = bosons.KeyInvertTable;
+  this->KeyInvertTableNbrIndices = bosons.KeyInvertTableNbrIndices;
+  this->KeyInvertIndices = bosons.KeyInvertIndices;
 }
 
 // destructor
@@ -156,6 +162,13 @@ BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
+  this->Keys = bosons.Keys;
+  this->KeyMultiplicationTable = bosons.KeyMultiplicationTable;
+  this->LzMaxPosition = bosons.LzMaxPosition;
+  this->KeyInvertSectorSize = bosons.KeyInvertSectorSize;
+  this->KeyInvertTable = bosons.KeyInvertTable;
+  this->KeyInvertTableNbrIndices = bosons.KeyInvertTableNbrIndices;
+  this->KeyInvertIndices = bosons.KeyInvertIndices;
 
   return *this;
 }

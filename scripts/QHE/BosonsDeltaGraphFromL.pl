@@ -161,7 +161,7 @@ sub CreatePostScript
 set yrange [".$Min.":".$Max."]\n");
     if ($XFigFlag >= 1)
       {
-	$OutputFile =~ s/\.dat/\.fig/;
+	$OutputFile =~ s/\_l\.dat/\.fig/;
 	print OUTFILE ("set xlabel \"L\" \"default,14\"
 set ylabel \"energy[g]\" \"default,14\"
 set size 1.0, 1.5
@@ -172,7 +172,7 @@ plot \"".$FileName."\" using 1:2 title \"".$Title."\" with points pt 2\n");
       }
     else
       {
-	$OutputFile =~ s/\.dat/\.ps/;
+	$OutputFile =~ s/\_l\.dat/\.ps/;
 print OUTFILE ("set xlabel \"L\"
 set ylabel \"energy[g]\"
 set size 1.0, 0.6

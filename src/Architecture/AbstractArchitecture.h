@@ -49,6 +49,7 @@ class MultipleRealScalarProductOperation;
 class MultipleComplexScalarProductOperation;
 class MatrixMatrixMultiplyOperation;
 class AbstractPrecalculationOperation;
+class MainTaskOperation;
 
 
 class AbstractArchitecture
@@ -155,6 +156,12 @@ class AbstractArchitecture
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
   virtual bool ExecuteOperation (AbstractPrecalculationOperation* operation);
+
+  // execute an architecture-dependent main task operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  virtual bool ExecuteOperation (MainTaskOperation* operation);
 
   // request a given amount of memory for an array of Type element
   //

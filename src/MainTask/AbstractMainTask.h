@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of Abstract architecture operation                 //
+//                         class of abstract main task                        //
 //                                                                            //
-//                        last modification : 23/10/2002                      //
+//                        last modification : 09/06/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,69 +28,40 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTARCHITECTUREOPERATION_H
-#define ABSTRACTARCHITECTUREOPERATION_H
+#ifndef ABSTRACTMAINTASK_H
+#define ABSTRACTMAINTASK_H
 
 
 #include "config.h"
 
 
-class AbstractArchitectureOperation
+class AbstractArchitecture;
+
+
+class AbstractMainTask
 {
 
  protected:
 
-  int OperationType;
+  // pointer to the architecture 
+  AbstractArchitecture* Architecture;
 
  public:
-  
-  enum Operation
-    {
-      VectorHamiltonianMultiply = 0x1,
-      AddRealLinearCombination = 0x2,
-      MultipleRealScalarProduct = 0x4,      
-      MatrixMatrixMultiply = 0x8,
-      AddComplexLinearCombination = 0x10,
-      MultipleComplexScalarProduct = 0x20,
-      Generic = 0x100,
-      HamiltonianPrecalculation = 0x200,
-      QHEOperation = 0x10000,
-      SpinOperation = 0x20000,
-      QHEParticlePrecalculation = 0x200,
-      NDMAPPrecalculation = 0x400,
-      MainTask = 0x1000
-    };
 
-  // destructor
-  //
-  virtual ~AbstractArchitectureOperation();
+  // virtual destructor
+  //  
+  virtual ~AbstractMainTask();
   
-  // clone operation
-  //
-  // return value = pointer to cloned operation
-  virtual AbstractArchitectureOperation* Clone() = 0;
-  
-  // apply operation
-  //
-  // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
-  
-  // get operation type
-  //
-  // return value = code corresponding to the operation
-  int GetOperationType ();
+  // execute the main task
+  // 
+  // return value = 0 if no error occurs, else return error code
+  virtual int ExecuteMainTask() = 0;
+
+  // set architecture binded to the task
+  // 
+  // architecture = pointer to the architecture to use
+  virtual void SetArchitecture(AbstractArchitecture* architecture);
 
 };
-
-// get operation type
-//
-// return value = code corresponding to the operation
-
-inline int AbstractArchitectureOperation::GetOperationType ()
-{
-  return this->OperationType;
-}
-
-
 
 #endif

@@ -20,7 +20,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../../..
+top_builddir = ../..
 
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
@@ -117,57 +117,33 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = 
+SUBDIRS = QHEMainTask
 
-noinst_LIBRARIES = libQuantumDotHamiltonian.a
+noinst_LIBRARIES = libMainTask.a
 
-libQuantumDotHamiltonian_a_SOURCES = Periodic1DHamiltonian.cc \
-QuantumDots3DHamiltonian.cc \
-PeriodicQuantumDots3DHamiltonian.cc \
-XYReflexionSymmetricPeriodic3DHamiltonian.cc \
-ReflexionSymmetricPeriodic3DHamiltonian.cc \
-PeriodicQuantumDots3DHamiltonianInMagneticField.cc \
-CylindricalHamiltonianInMagneticField.cc \
-CylindricalQuantumDots3DHamiltonian.cc
-
-subdir = src/Hamiltonian/QuantumDotHamiltonian
+libMainTask_a_SOURCES = AbstractMainTask.cc
+subdir = src/MainTask
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/src/config_ac.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
-libQuantumDotHamiltonian_a_AR = $(AR) cru
-libQuantumDotHamiltonian_a_LIBADD =
-am_libQuantumDotHamiltonian_a_OBJECTS = Periodic1DHamiltonian.$(OBJEXT) \
-	QuantumDots3DHamiltonian.$(OBJEXT) \
-	PeriodicQuantumDots3DHamiltonian.$(OBJEXT) \
-	XYReflexionSymmetricPeriodic3DHamiltonian.$(OBJEXT) \
-	ReflexionSymmetricPeriodic3DHamiltonian.$(OBJEXT) \
-	PeriodicQuantumDots3DHamiltonianInMagneticField.$(OBJEXT) \
-	CylindricalHamiltonianInMagneticField.$(OBJEXT) \
-	CylindricalQuantumDots3DHamiltonian.$(OBJEXT)
-libQuantumDotHamiltonian_a_OBJECTS = \
-	$(am_libQuantumDotHamiltonian_a_OBJECTS)
+libMainTask_a_AR = $(AR) cru
+libMainTask_a_LIBADD =
+am_libMainTask_a_OBJECTS = AbstractMainTask.$(OBJEXT)
+libMainTask_a_OBJECTS = $(am_libMainTask_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = \
-@AMDEP_TRUE@	./$(DEPDIR)/CylindricalHamiltonianInMagneticField.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/CylindricalQuantumDots3DHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Periodic1DHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PeriodicQuantumDots3DHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PeriodicQuantumDots3DHamiltonianInMagneticField.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/QuantumDots3DHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ReflexionSymmetricPeriodic3DHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodic3DHamiltonian.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractMainTask.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-DIST_SOURCES = $(libQuantumDotHamiltonian_a_SOURCES)
+DIST_SOURCES = $(libMainTask_a_SOURCES)
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	ps-recursive install-info-recursive uninstall-info-recursive \
@@ -176,7 +152,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = Makefile.am Makefile.in
 DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(libQuantumDotHamiltonian_a_SOURCES)
+SOURCES = $(libMainTask_a_SOURCES)
 
 all: all-recursive
 
@@ -184,7 +160,7 @@ all: all-recursive
 .SUFFIXES: .cc .o .obj
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/Hamiltonian/QuantumDotHamiltonian/Makefile
+	  $(AUTOMAKE) --gnu  src/MainTask/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
@@ -192,10 +168,10 @@ AR = ar
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libQuantumDotHamiltonian.a: $(libQuantumDotHamiltonian_a_OBJECTS) $(libQuantumDotHamiltonian_a_DEPENDENCIES) 
-	-rm -f libQuantumDotHamiltonian.a
-	$(libQuantumDotHamiltonian_a_AR) libQuantumDotHamiltonian.a $(libQuantumDotHamiltonian_a_OBJECTS) $(libQuantumDotHamiltonian_a_LIBADD)
-	$(RANLIB) libQuantumDotHamiltonian.a
+libMainTask.a: $(libMainTask_a_OBJECTS) $(libMainTask_a_DEPENDENCIES) 
+	-rm -f libMainTask.a
+	$(libMainTask_a_AR) libMainTask.a $(libMainTask_a_OBJECTS) $(libMainTask_a_LIBADD)
+	$(RANLIB) libMainTask.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -203,14 +179,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylindricalHamiltonianInMagneticField.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylindricalQuantumDots3DHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic1DHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicQuantumDots3DHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicQuantumDots3DHamiltonianInMagneticField.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuantumDots3DHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ReflexionSymmetricPeriodic3DHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodic3DHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractMainTask.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -363,7 +332,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-top_distdir = ../../..
+top_distdir = ../..
 distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)

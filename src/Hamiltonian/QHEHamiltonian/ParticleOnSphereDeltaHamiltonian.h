@@ -88,11 +88,6 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
 
   // evaluate matrix element
   //
@@ -108,82 +103,6 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   // return value = corresponding matrix element
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
- 
   // return a list of left interaction operators
   //
   // return value = list of left interaction operators

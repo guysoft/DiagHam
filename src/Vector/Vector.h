@@ -63,7 +63,9 @@ class Vector
   enum Type
     {
       RealDatas = 0x01,
-      ComplexDatas = 0x02
+      ComplexDatas = 0x02,
+      NonLocalDatas = 0x10,
+      DistributedDatas = 0x20
     };
 
   // virtual destructor
