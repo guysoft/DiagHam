@@ -37,9 +37,6 @@ using std::endl;
 using std::ofstream;
 
 
-Complex LaughlinWaveFunction(RealVector& position, int nbrBosons);
-
-
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -177,6 +174,7 @@ int main(int argc, char** argv)
       ErrorNormalization += Tmp2 * Tmp2;// *  Factor * Factor;
       if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
 	{
+	  cout << " i = " << i << endl;
 	  Complex Tmp4 = Overlap / ((double) i);
 	  cout << (Tmp4 * Factor);
 //	  Complex Tmp5 (sqrt((((ErrorOverlap.Re / ((double) (i))) - (Overlap.Re * Overlap.Re)) / ((double) (i))) / Factor),
@@ -202,21 +200,28 @@ int main(int argc, char** argv)
 	  cout << "-----------------------------------------------" << endl;
 	}
     } 
+  cout << " final results :" << endl;
+  Complex Tmp4 = Overlap / ((double) NbrIter);
+  cout << (Tmp4 * Factor);
+  Complex Tmp5 (sqrt( ((ErrorOverlap.Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+		sqrt( ((ErrorOverlap.Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+  cout << " +/- " << (Tmp5 * Factor) << endl;
+  double Tmp6 = Normalization / ((double) NbrIter);
+  cout << Factor * Tmp6;
+  double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
+  cout << " +/- " << (Tmp7  * Factor) << endl;	  
+  Tmp5.Re /= Tmp4.Re;
+  Tmp5.Im /= Tmp4.Im;
+  Tmp5.Re = fabs(Tmp5.Re);
+  Tmp5.Im = fabs(Tmp5.Im);
+  Tmp5.Re += (Tmp7 / Tmp6);
+  Tmp5.Im += (Tmp7 / Tmp6);
+  Tmp4 *= sqrt(Factor / Tmp6);	  
+  Tmp5.Re *= Tmp4.Re;
+  Tmp5.Im *= Tmp4.Im;
+  cout << Tmp4 << " " << Tmp5 << endl;
+  cout << "-----------------------------------------------" << endl;
  return 0;
 }
 
 
-Complex LaughlinWaveFunction(RealVector& position, int nbrBosons)
-{
-  Complex Value (1.0, 0.0);
-  Complex Tmp;
-  for (int i = 0; i < (nbrBosons - 1); ++i)
-    for (int j = i + 1; j < nbrBosons; ++j)
-      {
-	Tmp.Re = sin(0.5 * (position[j << 1] - position[i << 1])) * cos(0.5 * (position[1 + (i << 1)] - position[1 + (j << 1)]));
-	Tmp.Im = sin(0.5 * (position[i << 1] + position[j << 1])) * sin(0.5 * (position[1 + (i << 1)] - position[1 + (j << 1)]));
-	Value *= Tmp;
-	Value *= Tmp;
-      }
-  return Value;
-}

@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure laplacian delta if 0)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure delta if 0)", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
