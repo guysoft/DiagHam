@@ -62,17 +62,23 @@ if (defined($ARGV[1]))
       {
 	my $Array = $Spectrum{$TmpLine};
 	my $Array3 = $Spectrum2{$TmpLine};
+	my @Array1 = sort {$a <=> $b} (@$Array);
 	my @Array2 = sort {$a <=> $b} (@$Array3);
-	my $Value;
 	my $Index = 0;
-	foreach $Value (sort {$a <=> $b} (@$Array))
+	my $Max = $#Array1;
+	if ($Max > $#Array2)
 	  {
-	    print $TmpLine." ".$Value." ".$Array2[$Index]." ";
-	    my $Error = abs($Array2[$Index] - $Value);
-	    if ($Error > (1e-13 * abs($Value)))
+	    $Max = $#Array2;
+	  }
+	$Max++;
+	while ($Index < $Max)
+	  {
+	    print $TmpLine." ".$Array1[$Index]." ".$Array2[$Index]." ";
+	    my $Error = abs($Array2[$Index] - $Array1[$Index]);
+	    if ($Error > (1e-13 * abs($Array1[$Index])))
 	      {
 		print $Error;
-		print STDERR $TmpLine." ".$Value." ".$Array2[$Index]." ".$Error."\n";
+		print STDERR $TmpLine." ".$Array1[$Index]." ".$Array2[$Index]." ".$Error."\n";
 	      }
 	    else
 	      {

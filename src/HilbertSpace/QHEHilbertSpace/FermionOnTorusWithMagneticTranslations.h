@@ -48,11 +48,11 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   int NbrFermions;
   // number of fermions plus 1
   int IncNbrFermions;
+
   // maximum momentum value reached by a fermion
   int MaxMomentum;
   // number of momentum values in a state (= MaxMomentum +1)
   int NbrMomentum;
-
   // GCD of MaxMomentum and NbrFermions (momemta are defined modulo MomentumModulo)
   int MomentumModulo;
   // momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
@@ -100,10 +100,10 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // sign due to state reordering when applying translation operator 
   unsigned long* ReorderingSign;
   // array of unsigned long where each bit describes sign associated to each translation of the orbit representant (0 for +, 1 for -) with respect to N-body ordering convention
-  int* StateSignature;
+//  int* StateSignature;
 
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
-  unsigned long* TranslationSign;
+//  unsigned long* TranslationSign;
 
  public:
 
@@ -114,17 +114,6 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // xMomentum = momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
   // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)
   FermionOnTorusWithMagneticTranslations (int nbrFermions, int maxMomentum, int xMomentum, int yMomentum);
-
-  // constructor from full datas
-  // 
-  // nbrFermions = number of fermions
-  // maxMomentum = momentum maximum value for a fermion
-  // xMomentum = momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
-  // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)
-  // hilbertSpaceDimension = Hilbert space dimension
-  // stateDescription = array describing each state
-  FermionOnTorusWithMagneticTranslations (int nbrFermions, int maxMomentum, int xMomentum, int yMomentum, int hilbertSpaceDimension, 
-					  unsigned long* stateDescription);
 
   // copy constructor (without duplicating datas)
   //

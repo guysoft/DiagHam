@@ -126,7 +126,6 @@ Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (Co
   int m2;
   int m3;
   int m4;
-  unsigned long Signature;
   Complex TmpZ;
   Complex Z (0.0, 0.0);
   double TmpInteraction;
@@ -137,7 +136,6 @@ Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (Co
       m2 = this->M2Value[j];
       m3 = this->M3Value[j];
       m4 = this->M4Value[j];
-      Signature = this->IndexPermutationSign[j];
       TmpInteraction = this->InteractionFactors[j];
       for (int i = 0; i < Dim; ++i)
 	{
@@ -157,7 +155,6 @@ Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (Co
   m2 = this->M2Value[ReducedNbrInteractionFactors];
   m3 = this->M3Value[ReducedNbrInteractionFactors];
   m4 = this->M4Value[ReducedNbrInteractionFactors];
-  Signature = this->IndexPermutationSign[ReducedNbrInteractionFactors];
   TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
   for (int i = 0; i < Dim; ++i)
     {
@@ -301,7 +298,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
       int m2;
       int m3;
       int m4;
-      unsigned long Signature;
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
       for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
@@ -310,7 +306,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Signature = this->IndexPermutationSign[j];
 	  TmpInteraction = this->InteractionFactors[j];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
@@ -329,7 +324,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
       m2 = this->M2Value[ReducedNbrInteractionFactors];
       m3 = this->M3Value[ReducedNbrInteractionFactors];
       m4 = this->M4Value[ReducedNbrInteractionFactors];
-      Signature = this->IndexPermutationSign[ReducedNbrInteractionFactors];
       TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
@@ -345,53 +339,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
 	}
-/*	  cout << endl << endl << "--------------------------------------" << endl << endl << endl;
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
-	    {
-	      m1 = this->M1Value[j];
-	      m2 = this->M2Value[j];
-	      m3 = this->M3Value[j];
-	      m4 = this->M4Value[j];
-	      Signature = this->IndexPermutationSign[j];
-	      TmpInteraction = this->InteractionFactors[j];
-	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	      if (Index < Dim)
-		{
-//		  if (vSource.Re(i) != 0.0)
-//		    cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
-		  Coefficient *= TmpInteraction;
-		  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
-		  Sinus = Coefficient * this->SinusTable[NbrTranslation];
-//		  if (vSource.Re(i) != 0.0)
-//		    cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
-		  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
-		  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
-		}
-	    }
-	  m1 = this->M1Value[ReducedNbrInteractionFactors];
-	  m2 = this->M2Value[ReducedNbrInteractionFactors];
-	  m3 = this->M3Value[ReducedNbrInteractionFactors];
-	  m4 = this->M4Value[ReducedNbrInteractionFactors];
-	  Signature = this->IndexPermutationSign[ReducedNbrInteractionFactors];
-	  TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < Dim)
-	    {
-//	      if (vSource.Re(i) != 0.0)
-//		cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
-	      Coefficient *= TmpInteraction;
-	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
-	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
-//	      if (vSource.Re(i) != 0.0)
-//		cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
-	      vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
-	      vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
-	    }
-	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
-	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
-	}*/
     }
   else
     {
@@ -467,7 +414,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  int m2;
 	  int m3;
 	  int m4;
-	  unsigned long Signature;
 	  double TmpInteraction;
 	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
@@ -479,7 +425,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		    m2 = this->M2Value[j];
 		    m3 = this->M3Value[j];
 		    m4 = this->M4Value[j];
-		    Signature = this->IndexPermutationSign[j];
 		    TmpInteraction = this->InteractionFactors[j];
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
@@ -498,7 +443,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		m2 = this->M2Value[ReducedNbrInteractionFactors];
 		m3 = this->M3Value[ReducedNbrInteractionFactors];
 		m4 = this->M4Value[ReducedNbrInteractionFactors];
-		Signature = this->IndexPermutationSign[ReducedNbrInteractionFactors];
 		TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
 		m4 = m1 + m2 - m3;
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
@@ -620,7 +564,6 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplic
   int m2;
   int m3;
   int m4;
-  unsigned long Signature;
   int LastComponent = lastComponent + firstComponent;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
@@ -630,7 +573,6 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialFastMultiplic
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Signature = this->IndexPermutationSign[j];
 	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
@@ -655,7 +597,6 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplica
   int m2;
   int m3;
   int m4;
-  unsigned long Signature;
   int* TmpIndexArray;
   int NbrTranslation;
   double* TmpCoefficientArray;
@@ -689,7 +630,6 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplica
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Signature = this->IndexPermutationSign[j];
 	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
@@ -723,7 +663,6 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
   int m2;
   int m3;
   int m4;
-  unsigned long Signature;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int* TmpNbrTranslationArray;
@@ -746,7 +685,6 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Signature = this->IndexPermutationSign[j];
 	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
@@ -759,64 +697,6 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
     }
 }
 
-
-
-// evaluate sign of each operator when applying translation and reordering
-//
-// momentumIncrement = momentum increment to add to each one particle state to reach the next state in the orbit
-
-void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateIndexPermutationSign (int momentumIncrement)
-{
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  this->IndexPermutationSign = new unsigned long[this->NbrInteractionFactors];
-  unsigned long TmpSign = (unsigned long) 0;
-  unsigned long TmpSign2 = (unsigned long) 0;
-  for (int i = 0; i < this->NbrInteractionFactors; ++i) 
-    {
-      TmpSign = (unsigned long) 0;
-      m1 = this->M1Value[i];
-      m2 = this->M2Value[i];
-      m3 = this->M3Value[i];
-      m4 = this->M4Value[i];
-      for (int j = 1; j < this->MomentumModulo; ++j)
-	{
-	  TmpSign2 = (unsigned long) 0;
-	  m1 += momentumIncrement;
-	  if (m1 >= this->MaxMomentum)
-	    m1 -= this->MaxMomentum;
-	  m2 += momentumIncrement;
-	  if (m2 >= this->MaxMomentum)
-	    m2 -= this->MaxMomentum;
-	  m3 += momentumIncrement;
-	  if (m3 >= this->MaxMomentum)
-	    m3 -= this->MaxMomentum;
-	  m4 += momentumIncrement;
-	  if (m4 >= this->MaxMomentum)
-	    m4 -= this->MaxMomentum;
-//	  cout << m1 << " " << m2 << " " << m3 << " " << m4  << " ";
-	  if (m1 < m2)
-	    {
-	      int Tmp = m1;
-	      m1 = m2;
-	      m2 = Tmp;
-	      TmpSign2 = (unsigned long) 0x1;
-	    }
-	  if (m3 < m4)
-	    {
-	      int Tmp = m3;
-	      m3 = m4;
-	      m4 = Tmp;
-	      TmpSign2 = (~TmpSign2) & ((unsigned long) 0x1);
-	    }
-//	  cout <<  TmpSign2 << endl;
-	  TmpSign |= TmpSign2 << j;
-	}
-      this->IndexPermutationSign[i] = TmpSign;
-    }
-}
 
 // save precalculations in a file
 // 

@@ -37,6 +37,7 @@
 
 
 using std::cout;
+using std::cin;
 using std::endl;
 using std::ofstream;
 using std::ios;
@@ -166,8 +167,8 @@ int main(int argc, char** argv)
 	    cout << i << " = ";
 	    TotalSpace.PrintState(cout, i) << endl;
 	  }
-	cout << endl << endl;*/
-
+	cout << endl << endl;
+	exit(0);*/
 /*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	{
 	  cout << "---------------------------------------------" << endl;
@@ -198,7 +199,7 @@ int main(int argc, char** argv)
 	Architecture = new SMPArchitecture(NbrProcessor);
 //      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XRatio);
       AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XMomentum, XRatio,
-													Architecture);
+													Architecture, (500 << 20));
       if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
 	{
 	  HermitianMatrix HRep2 (Hamiltonian->GetHilbertSpaceDimension());
@@ -300,6 +301,7 @@ int main(int argc, char** argv)
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
+	  delete Lanczos;
 	}
       cout << "----------------------------------------------------------------" << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;
