@@ -104,9 +104,9 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 500);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);  
 
-  (*AdditionalGroup) += new SingleIntegerOption ('\n', "below-barrier", "number of barrier layers just below the WL", 0);
-  (*AdditionalGroup) += new SingleIntegerOption ('\n', "above-barrier", "number of barrier layers just above the dot", 0);
-  (*AdditionalGroup) += new SingleDoubleOption ('\n', "barrier-potential", "potential in the barrier (in eV unit)", 0);
+  (*AdditionalGroup) += new SingleIntegerOption ('\n', "down-barrier", "number of barrier layers just below the WL", 0);
+  (*AdditionalGroup) += new SingleIntegerOption ('\n', "up-barrier", "number of barrier layers just above the dot", 0);
+  (*AdditionalGroup) += new SingleDoubleOption ('\n', "potential", "potential in the barrier (in eV unit)", 0);
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
   (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false);
@@ -157,9 +157,9 @@ int main(int argc, char** argv)
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
 
-  int BelowBarrier = ((SingleIntegerOption*) Manager["below-barrier"])->GetInteger();  
-  int AboveBarrier = ((SingleIntegerOption*) Manager["above-barrier"])->GetInteger();  
-  double BarrierPotential = ((SingleDoubleOption*) Manager["barrier-potential"])->GetDouble();
+  int BelowBarrier = ((SingleIntegerOption*) Manager["down-barrier"])->GetInteger();  
+  int AboveBarrier = ((SingleIntegerOption*) Manager["up-barrier"])->GetInteger();  
+  double BarrierPotential = ((SingleDoubleOption*) Manager["potential"])->GetDouble();
 
   bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
 
