@@ -41,6 +41,7 @@
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
 
 #ifdef __SMP__
 #include <pthread.h>
@@ -170,6 +171,34 @@ bool SMPArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* oper
   return true;
 }
   
+// execute an architecture-dependent vector abstact scalar sum operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+  
+bool SMPArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
+{
+  int Step = operation->GetDimension() / this->NbrProcesses;
+  int FirstComponent = 0;
+  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  for (int i = 0; i < ReducedNbrProcesses; ++i)
+    {
+      this->ThreadParameters[i].Operation = operation->Clone();
+      ((AbstractScalarSumOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      FirstComponent += Step;
+    }
+  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
+  ((AbstractScalarSumOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent,
+													   operation->GetDimension() - FirstComponent);
+  this->SendJobs();
+  for (int i = 1; i < this->NbrProcesses; ++i)
+    {
+      operation->GetScalar() += ((AbstractScalarSumOperation*) (this->ThreadParameters[i].Operation))->GetScalar();
+      delete this->ThreadParameters[i].Operation;
+    }
+  return true;
+}
+
 // execute an architecture-dependent add real linear combination operation
 //
 // operation = pointer to the operation to execute

@@ -820,10 +820,10 @@ Complex ComplexMatrix::Permanent()
 // evaluate permanent associated to the (square) matrix using Ryser algorithm using precalculation array (faster)
 //
 // changeBit = array indicating which bit is changed at the i-th iteration of the Gray code
-// changeBitSign = array with -1 if the changed bit is from 1 to 0, +1 either
+// changeBitSign = array with 0 if the changed bit is from 1 to 0, +1 either
 // return value = permanent associated to the matrix
                                                                                                                                           
-Complex ComplexMatrix::FastPermanent(int* changeBit, double* changeBitSign)
+Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
 {
   Complex Perm;
   double Sign = 1.0;
@@ -834,18 +834,24 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, double* changeBitSign)
   int Lim = 1 << this->NbrColumn;
   for (int i = 0; i < this->NbrColumn; ++i)
     Tmp[i] = 0.0;
-  int GrayCode = 0;
-  int ChangedBit;
-  int Index;
-  double TmpSign;
   for (int k = 1; k < Lim; ++k)
     {
       ComplexVector& TmpColumn = this->Columns[changeBit[k]];
-      TmpSign = changeBitSign[k];
-      for (int i = 0; i < this->NbrColumn; ++i)
+      if (changeBitSign[k])
 	{
-	  Tmp[i].Re += TmpSign * TmpColumn.RealComponents[i];
-	  Tmp[i].Im += TmpSign * TmpColumn.ImaginaryComponents[i];	  
+	  for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+	      Tmp[i].Re -= TmpColumn.RealComponents[i];
+	      Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];	  
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+	      Tmp[i].Re += TmpColumn.RealComponents[i];
+	      Tmp[i].Im += TmpColumn.ImaginaryComponents[i];	  
+	    }
 	}
       Tmp2 = Tmp[0];
       for (int i = 1; i < this->NbrColumn; ++i)
@@ -861,27 +867,27 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, double* changeBitSign)
 // evaluate precalculation array  neede for the fast permanent calculation
 //
 // changeBit = reference on the array indicating which bit is changed at the i-th iteration of the Gray code
-// changeBitSign = reference on array with -1 if the changed bit is from 1 to 0, +1 either
+// changeBitSign = reference on array with 0 if the changed bit is from 1 to 0, +1 either
 
-void ComplexMatrix::EvaluateFastPermanentPrecalculationArray(int*& changeBit, double*& changeBitSign)
+void ComplexMatrix::EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign)
 {
   int Lim = 1 << this->NbrColumn;
   int GrayCode = 0;
   int ChangedBit;
   int Index;
   changeBit = new int [Lim];
-  changeBitSign = new double [Lim];
+  changeBitSign = new int [Lim];
   for (int k = 1; k < Lim; ++k)
     {
       ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
       GrayCode = k ^ (k >> 1);
       if ((GrayCode & ChangedBit) == 0)
 	{
-	  changeBitSign[k] = -1.0;
+	  changeBitSign[k] = 0;
 	}
       else
 	{
-	  changeBitSign[k] = 1.0;
+	  changeBitSign[k] = 1;
 	}
       Index = 0;
       while (ChangedBit != 1)

@@ -39,6 +39,7 @@
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
 
 
 // constructor
@@ -65,6 +66,16 @@ bool MonoProcessorArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOpera
   return operation->ApplyOperation();
 }
   
+
+// execute an architecture-dependent vector abstact scalar sum operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully    
+
+bool MonoProcessorArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
+{
+  return operation->ApplyOperation();
+}
 
 // execute an architecture-dependent add real linear combination operation
 //

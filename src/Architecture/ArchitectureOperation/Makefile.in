@@ -131,6 +131,8 @@ MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
 QHEParticlePrecalculationOperation.cc \
 NDMAPPrecalculationOperation.cc \
+AbstractScalarSumOperation.cc \
+QHEParticleWaveFunctionOperation.cc \
 MainTaskOperation.cc
 
 subdir = src/Architecture/ArchitectureOperation
@@ -153,6 +155,8 @@ am_libArchitectureOperation_a_OBJECTS = \
 	AbstractPrecalculationOperation.$(OBJEXT) \
 	QHEParticlePrecalculationOperation.$(OBJEXT) \
 	NDMAPPrecalculationOperation.$(OBJEXT) \
+	AbstractScalarSumOperation.$(OBJEXT) \
+	QHEParticleWaveFunctionOperation.$(OBJEXT) \
 	MainTaskOperation.$(OBJEXT)
 libArchitectureOperation_a_OBJECTS = \
 	$(am_libArchitectureOperation_a_OBJECTS)
@@ -162,6 +166,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractArchitectureOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractPrecalculationOperation.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/AbstractScalarSumOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AddComplexLinearCombinationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AddRealLinearCombinationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MainTaskOperation.Po \
@@ -170,6 +175,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleRealScalarProductOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/NDMAPPrecalculationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEParticlePrecalculationOperation.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/VectorHamiltonianMultiplyOperation.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -214,6 +220,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractArchitectureOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractPrecalculationOperation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractScalarSumOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddComplexLinearCombinationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddRealLinearCombinationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MainTaskOperation.Po@am__quote@
@@ -222,6 +229,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleRealScalarProductOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NDMAPPrecalculationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticlePrecalculationOperation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VectorHamiltonianMultiplyOperation.Po@am__quote@
 
 .cc.o:

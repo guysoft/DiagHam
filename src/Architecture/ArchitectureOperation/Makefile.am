@@ -12,4 +12,6 @@ MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
 QHEParticlePrecalculationOperation.cc \
 NDMAPPrecalculationOperation.cc \
+AbstractScalarSumOperation.cc \
+QHEParticleWaveFunctionOperation.cc \
 MainTaskOperation.cc

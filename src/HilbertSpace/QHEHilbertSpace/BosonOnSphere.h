@@ -161,6 +161,17 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = wave function evaluated at the given location
   Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
 
+  // evaluate wave function in real space using a given basis and only for agiven range of components
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = wave function evaluated at the given location
+  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+				int firstComponent, int nbrComponent);
+
  private:
 
   // find state index

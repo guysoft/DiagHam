@@ -9,6 +9,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
 
 #include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
 
@@ -96,7 +97,10 @@ int main(int argc, char** argv)
       //  Location[4] = Location[0];
       //  Location[5] = Location[1];
       ParticleOnSphereFunctionBasis Basis(LzMax);
-      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
+      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
+      Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
+      Complex ValueExact (Operation.GetScalar());
+      //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
       Complex ValueLaughlin = LaughlinWaveFunction(Location, NbrBosons) * 0.36563112422012;
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;  
       

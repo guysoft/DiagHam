@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of Abstract architecture operation                 //
+//           class of QHE particle wave function evaluation operation         //
 //                                                                            //
-//                        last modification : 23/10/2002                      //
+//                        last modification : 29/07/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,71 +28,83 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTARCHITECTUREOPERATION_H
-#define ABSTRACTARCHITECTUREOPERATION_H
+#ifndef QHEPARTICLEWAVEFUNCTIONOPERATION_H
+#define QHEPARTICLEWAVEFUNCTIONOPERATION_H
 
 
 #include "config.h"
+#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 
 
-class AbstractArchitectureOperation
+class AbstractFunctionBasis;
+class RealVector;
+
+
+class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
 {
 
  protected:
 
-  int OperationType;
+  // pointer to the Hilbert space
+  ParticleOnSphere* HilbertSpace;
+  // vector corresponding to the state in the Fock basis  
+  RealVector* State;
+  // vector whose components give coordinates of the point where the wave function has to be evaluated
+  RealVector* Position;
+  // one body real space basis to use
+  AbstractFunctionBasis* Basis;
+
 
  public:
   
-  enum Operation
-    {
-      VectorHamiltonianMultiply = 0x1,
-      AddRealLinearCombination = 0x2,
-      MultipleRealScalarProduct = 0x4,      
-      MatrixMatrixMultiply = 0x8,
-      AddComplexLinearCombination = 0x10,
-      MultipleComplexScalarProduct = 0x20,
-      Generic = 0x100,
-      HamiltonianPrecalculation = 0x200,
-      QHEOperation = 0x10000,
-      SpinOperation = 0x20000,
-      QHEParticlePrecalculation = 0x200,
-      NDMAPPrecalculation = 0x400,
-      ScalarSum = 0x800,
-      QHEParticleWaveFunction = 0x800,
-      MainTask = 0x1000
-    };
+  // constructor 
+  //
+  // space = pointer to the Hilbert space to use
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  QHEParticleWaveFunctionOperation(ParticleOnSphere* space, RealVector* state, RealVector* position, AbstractFunctionBasis* basis);
 
+  // copy constructor 
+  //
+  // operation = reference on operation to copy
+  QHEParticleWaveFunctionOperation(const QHEParticleWaveFunctionOperation& operation);
+  
   // destructor
   //
-  virtual ~AbstractArchitectureOperation();
+  ~QHEParticleWaveFunctionOperation();
   
+  // set range of indices
+  // 
+  // firstComponent = index of the first component
+  // nbrComponent = number of component
+  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
+
+  // get dimension (i.e. Hilbert space dimension)
+  //
+  // return value = dimension
+  int GetDimension ();
+
   // clone operation
   //
   // return value = pointer to cloned operation
-  virtual AbstractArchitectureOperation* Clone() = 0;
+  AbstractArchitectureOperation* Clone();
   
   // apply operation
   //
   // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
+  bool ApplyOperation();
   
-  // get operation type
-  //
-  // return value = code corresponding to the operation
-  int GetOperationType ();
-
 };
 
-// get operation type
+// get dimension (i.e. Hilbert space dimension)
 //
-// return value = code corresponding to the operation
+// return value = dimension
 
-inline int AbstractArchitectureOperation::GetOperationType ()
+inline int QHEParticleWaveFunctionOperation::GetDimension ()
 {
-  return this->OperationType;
+  return this->HilbertSpace->GetHilbertSpaceDimension();
 }
-
-
 
 #endif

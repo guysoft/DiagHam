@@ -125,6 +125,12 @@ class SMPArchitecture : public AbstractArchitecture
   // return value = unused pointer (null)
   friend void* ThreadMain(void* param);
 
+  // execute an architecture-dependent vector abstact scalar sum operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  bool ExecuteOperation (AbstractScalarSumOperation* operation);
+
   // execute an architecture-dependent add real linear combination operation
   //
   // operation = pointer to the operation to execute

@@ -39,6 +39,7 @@
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
 
@@ -157,6 +158,9 @@ bool AbstractArchitecture::ExecuteOperation (AbstractArchitectureOperation* oper
     case AbstractArchitectureOperation::MainTask:
       return this->ExecuteOperation((MainTaskOperation*) operation);
       break;
+    case AbstractArchitectureOperation::ScalarSum:
+      return this->ExecuteOperation((AbstractScalarSumOperation*) operation);
+      break;
 //    case AbstractArchitectureOperation::Generic:
 //      return this->ExecuteOperation((GenericOperation*) operation);
 //      break;
@@ -176,6 +180,16 @@ bool AbstractArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation*
   return false;
 }
 
+// execute an architecture-dependent vector abstact scalar sum operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool AbstractArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
+{
+  return false;
+}
+                                                                                                                                                                                  
 // execute an architecture-dependent add real linear combination operation
 //
 // operation = pointer to the operation to execute

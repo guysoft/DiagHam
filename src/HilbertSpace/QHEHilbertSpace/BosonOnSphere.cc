@@ -792,6 +792,21 @@ int BosonOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax
 
 Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
 {
+  return this->EvaluateWaveFunction(state, position, basis, 0, this->HilbertSpaceDimension);
+}
+
+// evaluate wave function in real space using a given basis and only for agiven range of components
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = wave function evaluated at the given location
+
+Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+					     int firstComponent, int nbrComponent)
+{
   Complex Value;
   Complex Tmp;
   ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
@@ -817,11 +832,12 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
   for (int i = 2; i <= this->NbrBosons; ++i)
     Factors[i] = Factors[i - 1] / sqrt((double) i);
   double TmpFactor;
-  double* ChangeBitSign;
+  int* ChangeBitSign;
   int* ChangeBit;
   int TmpStateDescription;
   Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
-  for (int k = 0; k < this->HilbertSpaceDimension; ++k)
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
     {
       Pos = 0;
       Lz = 0;
@@ -849,9 +865,6 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
 	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
-//      cout << Perm << endl;
-//      this->PrintState(cout, k) << endl;
-//      cout << Perm.Permanent() << " " << state[k] << endl << endl;
       Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
     }
   delete[] ChangeBitSign;
@@ -859,4 +872,3 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
   delete[] Factors;
   return Value;
 }
-

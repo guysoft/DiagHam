@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of Abstract architecture operation                 //
+//                   class of abstract scalar sum  operation                  //
 //                                                                            //
-//                        last modification : 23/10/2002                      //
+//                        last modification : 29/07/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,71 +28,59 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTARCHITECTUREOPERATION_H
-#define ABSTRACTARCHITECTUREOPERATION_H
+#ifndef ABSTRACTSCALARSUMOPERATION_H
+#define ABSTRACTSCALARSUMOPERATION_H
 
 
 #include "config.h"
+#include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
+#include "Complex.h"
 
 
-class AbstractArchitectureOperation
+class AbstractScalarSumOperation: public AbstractArchitectureOperation
 {
 
  protected:
 
-  int OperationType;
+  // index of the first component
+  int FirstComponent;
+  // number of component 
+  int NbrComponent;
+  // complex scalar used to store the results
+  Complex Scalar;
 
  public:
   
-  enum Operation
-    {
-      VectorHamiltonianMultiply = 0x1,
-      AddRealLinearCombination = 0x2,
-      MultipleRealScalarProduct = 0x4,      
-      MatrixMatrixMultiply = 0x8,
-      AddComplexLinearCombination = 0x10,
-      MultipleComplexScalarProduct = 0x20,
-      Generic = 0x100,
-      HamiltonianPrecalculation = 0x200,
-      QHEOperation = 0x10000,
-      SpinOperation = 0x20000,
-      QHEParticlePrecalculation = 0x200,
-      NDMAPPrecalculation = 0x400,
-      ScalarSum = 0x800,
-      QHEParticleWaveFunction = 0x800,
-      MainTask = 0x1000
-    };
-
   // destructor
   //
-  virtual ~AbstractArchitectureOperation();
+  virtual ~AbstractScalarSumOperation();
   
-  // clone operation
+  // set range of indices
+  // 
+  // firstComponent = index of the first component
+  // nbrComponent = number of component
+  virtual void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
+
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...)
+  // 
+  // return value = dimension  
+  virtual int GetDimension () = 0;
+
+  // return scalar corresponding to the result of the operation
   //
-  // return value = pointer to cloned operation
-  virtual AbstractArchitectureOperation* Clone() = 0;
-  
-  // apply operation
-  //
-  // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
-  
-  // get operation type
-  //
-  // return value = code corresponding to the operation
-  int GetOperationType ();
+  // return value = reference ont the scalar used to store the operation
+  virtual Complex& GetScalar();
 
 };
 
-// get operation type
+
+// return scalar corresponding to the result of the operation
 //
-// return value = code corresponding to the operation
+// return value = reference ont the scalar used to store the operation
 
-inline int AbstractArchitectureOperation::GetOperationType ()
+inline Complex& AbstractScalarSumOperation::GetScalar()
 {
-  return this->OperationType;
-}
-
-
+  return this->Scalar;
+}                                                                                                                                                                                  
 
 #endif
