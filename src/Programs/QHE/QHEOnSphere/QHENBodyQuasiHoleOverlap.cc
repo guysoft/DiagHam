@@ -132,9 +132,9 @@ int main(int argc, char** argv)
 	NbrSortedTestVectors[l] = 0;
 
       RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
+      BosonOnSphere Space (NbrParticles, Lz, LzMax);
       if (Degeneracy[i] > 1)
 	{
-	  BosonOnSphere Space (NbrParticles, Lz, LzMax);
 	  RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
 	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
 	  for (int k = 0; k < Degeneracy[i]; ++k)
@@ -157,13 +157,14 @@ int main(int argc, char** argv)
 	  int TmpAngularMomentum;
 	  for (int k = 0; k < Degeneracy[i]; ++k)	    
 	    {
-	      TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)))
+	      TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
 	      cout << TmpAngularMomentum << " ";	      
 	      NbrSortedTestVectors[TmpAngularMomentum]++;
 	    }
 	  
 	  cout << endl;
 	  DiagonalBasis.Multiply(TmpEigenvector);
+
 	}
 
       for (int j = 0; j < Degeneracy[i]; ++j)
@@ -177,27 +178,34 @@ int main(int argc, char** argv)
 	      cout << "error while reading " << InputVectors << endl;
 	      return -1;
 	    }
-	  BestOverlaps[j] = 0.0;
 	  
-	  for (int k = 0; k < Degeneracy[i]; ++k)
+	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+	  int AngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * oper.MatrixElement(ReferenceVector, ReferenceVector).Re) + 1.0) - 1.0)));
+	  cout << "angular momentum = " << AngularMomentum << endl;
+	 
+	  if ((AngularMomentum > MaxNbrLz) || ())
 	    {
-	      if (ReferenceVector.GetVectorDimension() != DiagonalBasis[k].GetVectorDimension())
-		{
-		  sprintf (OutputVectors2, "%d.%d.vec", Lz, k);
-		  cout << "dimension mismatch between " << InputVectors << " and " << OutputVectors << endl;
-		  return -1;
-		}
+	      BestOverlaps[j] = 0.0;
 	      
-	      double Scalar = ReferenceVector * DiagonalBasis[k];
-	      Overlaps[j][k] = Scalar;
-	      if (fabs(Scalar) > OrthogonalityError)
-		cout << "    " << OutputVectors << "  = " << Scalar << endl;
-	      BestOverlaps[j] += Scalar * Scalar;
+	      for (int k = 0; k < Degeneracy[i]; ++k)
+		{
+		  if (ReferenceVector.GetVectorDimension() != DiagonalBasis[k].GetVectorDimension())
+		    {
+		      sprintf (OutputVectors2, "%d.%d.vec", Lz, k);
+		      cout << "dimension mismatch between " << InputVectors << " and " << OutputVectors << endl;
+		      return -1;
+		    }
+		  
+		  double Scalar = ReferenceVector * DiagonalBasis[k];
+		  Overlaps[j][k] = Scalar;
+		  if (fabs(Scalar) > OrthogonalityError)
+		    cout << "    " << OutputVectors << "  = " << Scalar << endl;
+		  BestOverlaps[j] += Scalar * Scalar;
+		}
+	      BestOverlaps[j] = sqrt(BestOverlaps[j]);
+	      cout << endl << "best overlap = " << BestOverlaps[j] << endl;
 	    }
-	  BestOverlaps[j] = sqrt(BestOverlaps[j]);
-	  cout << endl << "best overlap = " << BestOverlaps[j] << endl;
 	}
-      
       SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
       cout << endl << "overlaps = " << endl;
       for (int j = 0; j < Degeneracy[i]; ++j)
