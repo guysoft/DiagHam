@@ -122,8 +122,6 @@ int main(int argc, char** argv)
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;
-  if (argc >= 4)
-    L = atoi (argv[3]);
   Max = L;
 
   RealVector TextVector1 (5);

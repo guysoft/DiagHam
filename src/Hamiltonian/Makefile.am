@@ -14,9 +14,11 @@ PeriodicDMRGHamiltonian.cc \
 OpenDiamondSpinChainHamiltonian.cc \
 PeriodicSpinChainHamiltonian.cc \
 PeriodicAnisotropicSpinChainHamiltonian.cc \
+PeriodicSandGlassSpinChainHamiltonian.cc \
 PeriodicXXZSpinChainHamiltonian.cc \
 SpinChainHamiltonian.cc \
 SpinChainHamiltonianWithTranslations.cc \
+SandGlassSpinChainHamiltonian.cc \
 MultipleSpinChainHamiltonian.cc \
 TriangleSpinChainHamiltonian.cc \
 V15Hamiltonian.cc \

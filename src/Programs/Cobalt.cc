@@ -73,10 +73,22 @@ int main(int argc, char** argv)
     BInc = (BMax - B) / (double) (NbrB - 1);
   else
     BInc = 1.0;
+
+/*  HermitianMatrix HMatrix(3, 3);
+  HMatrix.SetMatrixElement(0, 0, Complex (2, 0));
+  HMatrix.SetMatrixElement(1, 1, Complex (4, 0));
+  HMatrix.SetMatrixElement(2, 2, Complex (6, 0));
+  HMatrix.SetMatrixElement(0, 1, Complex (1, 3));
+  HMatrix.SetMatrixElement(0, 2, Complex (5, 7));
+  HMatrix.SetMatrixElement(1, 2, Complex (9, 11));
+  cout << HMatrix << endl;
+  RealSymmetricMatrix RMatrix = HMatrix.ConvertToSymmetricMatrix();
+  cout << RMatrix << endl;*/
+
 //  for (;B <= BMax; B += BInc)
     {
       cout << "B = " << B << endl;
-      double BField = (0.9274078)/(1.380662) * 0.1;// 0.2;//-0.6717 * B ;//(0.9274078)/(1.380662) * B; 
+      double BField = 0;//(0.9274078)/(1.380662) * 0.1;// 0.2;//-0.6717 * B ;//(0.9274078)/(1.380662) * B; 
       double JX = 0.0;
       double JY = 0.0;
       double JZ = 400.0;
@@ -106,8 +118,8 @@ int main(int argc, char** argv)
 //	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 9.0 * BField, Dummy, Dummy, 
 //				      CouplingConstantsGZ[i], Dummy,
 //				      CouplingConstantsGX[i], CouplingConstantsGY[i]);
-	      CouplingConstantsGX[i] = 2.0;
-	      CouplingConstantsGY[i] = 2.0;
+	      CouplingConstantsGX[i] = 2.0 * BField;
+	      CouplingConstantsGY[i] = 2.0 * BField;
 	      CouplingConstantsGZ[i] = 2.0 * BField;
 	      ++i;
 	      
@@ -129,15 +141,17 @@ int main(int argc, char** argv)
 						 CouplingConstantsGX, CouplingConstantsGY, CouplingConstantsGZ);
 
       // Exact diagonalization
-/*      RealSymmetricMatrix HRep (Chain.GetHilbertSpaceDimension());
-      RealTriDiagonalSymmetricMatrix TmpTriDiag (Chain.GetHilbertSpaceDimension());
+
+      HermitianMatrix HRep(Chain.GetHilbertSpaceDimension());
       H.GetHamiltonian(HRep);
-      HRep.Householder(TmpTriDiag, 1e-14);
+      RealSymmetricMatrix RealHRep = HRep.ConvertToSymmetricMatrix();
+      RealTriDiagonalSymmetricMatrix TmpTriDiag (2 * Chain.GetHilbertSpaceDimension());
+      RealHRep.Householder(TmpTriDiag, 1e-14);
       TmpTriDiag.Diagonalize();
       TmpTriDiag.SortMatrixUpOrder();
       for (int j = 0; j < Chain.GetHilbertSpaceDimension(); j++)
-	cout << TmpTriDiag.DiagonalElement(j) << " ";
-      cout << endl;*/
+	cout << TmpTriDiag.DiagonalElement(2 * j) << " ";
+      cout << endl;
 //	  return 0;
       // Lanczos method
       //  BasicLanczosAlgorithm Lanczos;

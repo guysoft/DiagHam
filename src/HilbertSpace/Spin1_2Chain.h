@@ -287,6 +287,13 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = number of generated states
   int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription, int currentSz);
 
+  // evaluate Hilbert space dimension
+  //
+  // nbrSpins = number of spins
+  // sz = twice the z projection of the total momentum
+  // return value = Hilbert space dimension
+  int EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
+
 };
 
 #endif

@@ -73,6 +73,12 @@ class HermitianMatrix : public Matrix
   //
   HermitianMatrix();
 
+  // constructor for an empty matrix
+  //
+  // dimension = matrix dimension
+  // zero = true if matrix has to be filled with zeros
+  HermitianMatrix(int dimension, bool zero = false); 
+
   // constructor from matrix elements (without duplicating datas)
   //
   // diagonal = pointer to diagonal element array
@@ -326,6 +332,11 @@ class HermitianMatrix : public Matrix
   // Q = matrix where transformation matrix has to be stored
   // return value = reference on real tridiagonal symmetric matrix
   RealTriDiagonalSymmetricMatrix& Householder (RealTriDiagonalSymmetricMatrix& M, double err, ComplexMatrix& Q);
+
+  // store hermitian matrix into a real symmetric matrix (real part as block diagonal element and imaginary part as block off-diagonal element )
+  //
+  // return value = real symmetric matrix associated to the hermitian matrix
+  RealSymmetricMatrix ConvertToSymmetricMatrix();
 
   // Output Stream overload
   //

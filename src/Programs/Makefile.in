@@ -70,7 +70,7 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-bin_PROGRAMS = Cobalt Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin MultipleSpinChain QHEBosonsDelta QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsTorusDMRG GetBosonsDimension ExplicitMatrixExample QuantumDot QuantumDot2D
+bin_PROGRAMS = Cobalt Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin MultipleSpinChain QHEBosonsDelta QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsTorusDMRG GetBosonsDimension ExplicitMatrixExample QuantumDot QuantumDot2D SandGlassSpinChain
 
 Cobalt_SOURCES = Cobalt.cc
 
@@ -107,6 +107,8 @@ QHEBosonsTorus_SOURCES = QHEBosonsTorus.cc
 ApproximateQHE_SOURCES = ApproximateQHE.cc
 
 MultipleSpinChain_SOURCES = MultipleSpinChain.cc
+
+SandGlassSpinChain_SOURCES = SandGlassSpinChain.cc
 
 ExplicitMatrixExample_SOURCES = ExplicitMatrixExample.cc
 
@@ -185,6 +187,10 @@ MultipleSpinChain_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Arc
 ExplicitMatrixExample_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
 ExplicitMatrixExample_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lHamiltonian -lOperator -lTensorProduct -lTensor -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+
+SandGlassSpinChain_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
+
+SandGlassSpinChain_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lHamiltonian -lOperator -lTensorProduct -lTensor -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
 PROGRAMS =  $(bin_PROGRAMS)
@@ -232,6 +238,8 @@ QuantumDot_OBJECTS =  3DQuantumDot.o
 QuantumDot_LDFLAGS = 
 QuantumDot2D_OBJECTS =  2DQuantumDot.o
 QuantumDot2D_LDFLAGS = 
+SandGlassSpinChain_OBJECTS =  SandGlassSpinChain.o
+SandGlassSpinChain_LDFLAGS = 
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
@@ -249,9 +257,10 @@ DEP_FILES =  .deps/2DQuantumDot.P .deps/3DQuantumDot.P \
 .deps/QHEBosonsDelta.P .deps/QHEBosonsDeltaGround.P \
 .deps/QHEBosonsTorus.P .deps/QHEFermions.P .deps/QHEFermionsCircle.P \
 .deps/QHEFermionsCoulomb.P .deps/QHEFermionsTorus.P \
-.deps/QHEFermionsTorusDMRG.P .deps/QHEFermionsTorusWithSpin.P
-SOURCES = $(Cobalt_SOURCES) $(Bosons_SOURCES) $(QHEFermions_SOURCES) $(QHEBosons_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEBosonsTorus_SOURCES) $(ApproximateQHE_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(MultipleSpinChain_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(GetBosonsDimension_SOURCES) $(ExplicitMatrixExample_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES)
-OBJECTS = $(Cobalt_OBJECTS) $(Bosons_OBJECTS) $(QHEFermions_OBJECTS) $(QHEBosons_OBJECTS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsCircle_OBJECTS) $(QHEBosonsTorus_OBJECTS) $(ApproximateQHE_OBJECTS) $(QHEFermionsTorusWithSpin_OBJECTS) $(MultipleSpinChain_OBJECTS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsCoulomb_OBJECTS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsTorusDMRG_OBJECTS) $(GetBosonsDimension_OBJECTS) $(ExplicitMatrixExample_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS)
+.deps/QHEFermionsTorusDMRG.P .deps/QHEFermionsTorusWithSpin.P \
+.deps/SandGlassSpinChain.P
+SOURCES = $(Cobalt_SOURCES) $(Bosons_SOURCES) $(QHEFermions_SOURCES) $(QHEBosons_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEBosonsTorus_SOURCES) $(ApproximateQHE_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(MultipleSpinChain_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(GetBosonsDimension_SOURCES) $(ExplicitMatrixExample_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(SandGlassSpinChain_SOURCES)
+OBJECTS = $(Cobalt_OBJECTS) $(Bosons_OBJECTS) $(QHEFermions_OBJECTS) $(QHEBosons_OBJECTS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsCircle_OBJECTS) $(QHEBosonsTorus_OBJECTS) $(ApproximateQHE_OBJECTS) $(QHEFermionsTorusWithSpin_OBJECTS) $(MultipleSpinChain_OBJECTS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsCoulomb_OBJECTS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsTorusDMRG_OBJECTS) $(GetBosonsDimension_OBJECTS) $(ExplicitMatrixExample_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS) $(SandGlassSpinChain_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -380,6 +389,10 @@ QuantumDot: $(QuantumDot_OBJECTS) $(QuantumDot_DEPENDENCIES)
 QuantumDot2D: $(QuantumDot2D_OBJECTS) $(QuantumDot2D_DEPENDENCIES)
 	@rm -f QuantumDot2D
 	$(CXXLINK) $(QuantumDot2D_LDFLAGS) $(QuantumDot2D_OBJECTS) $(QuantumDot2D_LDADD) $(LIBS)
+
+SandGlassSpinChain: $(SandGlassSpinChain_OBJECTS) $(SandGlassSpinChain_DEPENDENCIES)
+	@rm -f SandGlassSpinChain
+	$(CXXLINK) $(SandGlassSpinChain_LDFLAGS) $(SandGlassSpinChain_OBJECTS) $(SandGlassSpinChain_LDADD) $(LIBS)
 .cc.o:
 	$(CXXCOMPILE) -c $<
 

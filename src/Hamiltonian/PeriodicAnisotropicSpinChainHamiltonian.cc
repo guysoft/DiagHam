@@ -135,7 +135,8 @@ AbstractHilbertSpace* PeriodicAnisotropicSpinChainHamiltonian::GetHilbertSpace (
 PeriodicAnisotropicSpinChainHamiltonian& PeriodicAnisotropicSpinChainHamiltonian::SetChain(AbstractSpinChain* chain)
 {  
   delete[] this->SzSzContributions;
-  this->Chain = chain;                                                                                                                        this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->Chain = chain;  
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   return *this;  
 }

@@ -34,12 +34,12 @@
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "MathTools/FactorialCoefficient.h"
 #include <iostream.h>
 
 
 #define M_SQRT3 1.73205080756888
 #define M_SQRT6 2.44948974278318
-#define MAXHILBERTSPACEDIMENSION 4194304
 
 
 // default constructor
@@ -109,7 +109,7 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int sz, int memorySize)
   this->FixedQuantumNumberFlag = true;
   this->Sz = sz;
 
-  this->HilbertSpaceDimension = MAXHILBERTSPACEDIMENSION;
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->ChainLength, this->Sz);
 
   this->LookUpPosition = 0;
   this->LookUpTableSize = 1;
@@ -859,3 +859,20 @@ ostream& Spin1_2Chain::PrintState (ostream& Str, int state)
     }
   return Str;
 }
+
+// evaluate Hilbert space dimension
+//
+// nbrSpins = number of spins
+// sz = twice the z projection of the total momentum
+// return value = Hilbert space dimension
+
+int Spin1_2Chain::EvaluateHilbertSpaceDimension(int nbrSpins, int szMax)
+{
+   FactorialCoefficient Coef;
+   Coef.SetToOne();
+   Coef.FactorialMultiply(nbrSpins);
+   Coef.FactorialDivide((nbrSpins + szMax) / 2);
+   Coef.FactorialDivide((nbrSpins - szMax) / 2);
+   return Coef.GetIntegerValue();
+}
+

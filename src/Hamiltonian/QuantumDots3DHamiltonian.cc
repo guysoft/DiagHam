@@ -262,14 +262,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 <= i1; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k1][k2][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k2][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 				}	 
 			    }     
 			}
@@ -279,14 +279,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 < this->NbrStateX; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k1][k2][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k2][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 				}	 
 			    }     
 			}
@@ -300,14 +300,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 <= i1; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor =  this->WaveFunctionOverlapZ[k1][k2][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k2][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 				}	 
 			    }     
 			}
@@ -317,14 +317,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 < this->NbrStateX; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor =  this->WaveFunctionOverlapZ[k1][k2][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k2][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 				}	 
 			    }     
 			}
@@ -341,15 +341,15 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		for (; i2 <= i1; ++i2)
 		  {
 		    Tmp = 0.0;
-		    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		      {
 			for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			  {
-			    Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			    Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			      {
-				Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
-				}	 
+				Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
+			      }	 
 			  }     
 		      }
 		    vDestination[Index1] += Tmp * vSource[Index2];
@@ -358,14 +358,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		for (; i2 < this->NbrStateX; ++i2)
 		  {
 		    Tmp = 0.0;
-		    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		      {
 			for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			  {
-			    Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			    Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			      {
-				Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
+				Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 			      }	 
 			  }     
 		      }
@@ -378,14 +378,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 	      for (; i2 < i1; ++i2)
 		{
 		  Tmp = 0.0;
-		  for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		  for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		    {
 		      for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			{
-			  Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j1][j1][CellY];
-			  for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			  Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j1][j1][CellY];
+			  for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			    {
-			      Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
+			      Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 			    }	 
 			}     
 		    }
@@ -397,14 +397,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 	      for (; i2 < this->NbrStateX; ++i2)
 		{
 		    Tmp = 0.0;
-		    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		      {
 			for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			  {
-			    Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j1][j1][CellY];
-			    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			    Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j1][j1][CellY];
+			    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			      {
-				Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
+				Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 			      }	 
 			  }     
 		      }
@@ -420,14 +420,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		for (; i2 <= i1; ++i2)
 		  {
 		    Tmp = 0.0;
-		    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		      {
 			for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			  {
-			    Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			    Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			      {
-				Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
+				Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 			      }	 
 			  }     
 		      }
@@ -437,14 +437,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		for (; i2 < this->NbrStateX; ++i2)
 		  {
 		    Tmp = 0.0;
-		    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		      {
 			for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			  {
-			    Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			    for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			    Factor = this->WaveFunctionOverlapZ[k1][k1][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			    for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			      {
-				Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k1][k1][CellZ];
+				Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 			      }	 
 			  }     
 		      }
@@ -463,14 +463,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 <= i1; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k2][k1][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k2][k1][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 				}	 
 			    }     
 			}
@@ -480,14 +480,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 < this->NbrStateX; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j1][j2][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k2][k1][CellZ] * this->WaveFunctionOverlapY[j1][j2][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k2][k1][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 				}	 
 			    }     
 			}
@@ -501,14 +501,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 <= i1; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i1][i2][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k2][k1][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k2][k1][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i1][i2][CellX];
 				}	 
 			    }     
 			}
@@ -518,14 +518,14 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 		  for (; i2 < this->NbrStateX; ++i2)
 		    {
 		      Tmp = 0.0;
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 			{
 			  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 			    {
-			      Factor = this->WaveFunctionOverlapX[i2][i1][CellX] * this->WaveFunctionOverlapY[j2][j1][CellY];
-			      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+			      Factor = this->WaveFunctionOverlapZ[k2][k1][CellZ] * this->WaveFunctionOverlapY[j2][j1][CellY];
+			      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 				{
-				  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k2][k1][CellZ];
+				  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i2][i1][CellX];
 				}	 
 			    }     
 			}
@@ -800,17 +800,17 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
 	      TmpElement = FactorY +  ((double) ((k + 1) * (k + 1))) * InvZFactor;
-	      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+	      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		{
 		  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		    {
-		      Factor = this->WaveFunctionOverlapX[i][i][CellX] * this->WaveFunctionOverlapY[j][j][CellY];
-		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+		      Factor = this->WaveFunctionOverlapZ[k][k][CellZ + 1] * this->WaveFunctionOverlapY[j][j][CellY];
+		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			{
-			  TmpElement += this->InteractionFactors[CellX][CellY][CellZ] * Factor * this->WaveFunctionOverlapZ[k][k][CellZ + 1];
+			  TmpElement += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i][i][CellX];
 			}	 
 		    }     
-		}
+		}	    
 	      TmpElement += this->PostConstantRegionPotential * this->WaveFunctionOverlapZ[k][k][IncNbrCellZ];
 	      this->DiagonalElements[TotalIndex] = TmpElement;
 	      ++TotalIndex;
@@ -914,6 +914,7 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
       this->Partial2DPrecalculatedHamiltonian = new double** [Dim];
       this->Partial2DDiagonalPrecalculatedHamiltonian = new double* [Dim];
       double Tmp;
+      double Tmp2;
       double* TmpWaveFunctionOverlapX;
       double* TmpWaveFunctionOverlapY;
       double* TmpPrecalculatedHamiltonian;
@@ -940,11 +941,12 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 	      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		{
 		  Tmp = 0.0;
-		  for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+		  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		    {
-		      for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
+		      Tmp2 = TmpWaveFunctionOverlapY[CellY];
+		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
 			{
-			  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * TmpWaveFunctionOverlapX[CellX] * TmpWaveFunctionOverlapY[CellY];
+			  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX] * Tmp2;
 			}			      
 		    } 
 		  TmpPrecalculatedHamiltonian[CellZ] = Tmp;  

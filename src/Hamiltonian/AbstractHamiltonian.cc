@@ -59,17 +59,20 @@ AbstractHamiltonian::~AbstractHamiltonian()
 //
 // M = reference on matrix where Hamiltonian has to be stored
 // return value = reference on  corresponding hermitian matrix
+
 HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
 {
   ComplexVector TmpV1 (this->GetHilbertSpaceDimension(), true);
   ComplexVector TmpV2 (this->GetHilbertSpaceDimension(), true);
   for (int i = 0; i < this->GetHilbertSpaceDimension(); i++)
     {
-      TmpV1[i] = Complex(1.0, 0.0);
+      TmpV1.Re(i) = 1.0;
       this->LowLevelMultiply(TmpV1, TmpV2);
       for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
-	M.SetMatrixElement(i, j, TmpV2[j]);
-      TmpV1[i] = Complex(0.0, 0.0);	
+	{
+	  M.SetMatrixElement(i, j, TmpV2[j]);
+	}
+      TmpV1.Re(i) = 0.0;
     }
   return M;
 }

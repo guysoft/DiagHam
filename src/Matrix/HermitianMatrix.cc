@@ -32,6 +32,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 #include <stdlib.h>
 
@@ -53,6 +54,39 @@ HermitianMatrix::HermitianMatrix()
   this->TrueNbrColumn = this->NbrColumn;
   this->Increment = 0;
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+}
+
+// constructor for an empty matrix
+//
+// dimension = matrix dimension
+// zero = true if matrix has to be filled with zeros
+
+HermitianMatrix::HermitianMatrix(int dimension, bool zero) 
+{
+  this->NbrRow = dimension;
+  this->NbrColumn = dimension;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->RealOffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  this->ImaginaryOffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  if (zero == true)
+    {
+      int pos = 0;
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  this->DiagonalElements[i] = 0.0;
+	  for (int j = i + 1; j < this->NbrRow; j++)
+	    {
+	      this->RealOffDiagonalElements[pos] = 0.0;
+	      this->ImaginaryOffDiagonalElements[pos] = 0.0;
+	      pos++;
+	    }
+	}
+    }
 }
 
 // constructor from matrix elements (without duplicating datas)
@@ -199,8 +233,13 @@ void HermitianMatrix::SetMatrixElement(int i, int j, double x)
 
 void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
 {
-  if ((i == j) || (i >= this->NbrRow) || (j >= this->NbrColumn))
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
     return;
+  if (i == j)
+    {
+      this->DiagonalElements[i] = x.Re;      
+      return;
+    }
   else
     {
       if (i > j)
@@ -1027,7 +1066,7 @@ ostream& operator << (ostream& Str, const HermitianMatrix& P)
 {
   for (int i = 0; i < P.NbrRow; i++)
     {
-      int pos = 2 * (i - 1);
+      int pos = (i - 1);
       for (int j = 0; j < i; ++j)
 	{
 	  Str << P.RealOffDiagonalElements[pos];
@@ -1052,7 +1091,7 @@ ostream& operator << (ostream& Str, const HermitianMatrix& P)
 	      Str << "+" << P.ImaginaryOffDiagonalElements[pos] << "i    ";
 	    else
 	      Str << "    ";
-	  pos += 2;
+	  ++pos;
 	}
       Str << endl;
     }
@@ -1422,5 +1461,33 @@ RealTriDiagonalSymmetricMatrix& HermitianMatrix::Householder (RealTriDiagonalSym
   delete[] TmpVRe;
   delete[] TmpVIm;
   return M;
+}
+
+// store hermitian matrix into a real symmetric matrix (real part as block diagonal element and imaginary part as block off-diagonal element )
+//
+// return value = real symmetric matrix associated to the hermitian matrix
+
+RealSymmetricMatrix HermitianMatrix::ConvertToSymmetricMatrix()
+{
+  RealSymmetricMatrix TmpMatrix (this->NbrRow * 2, this->NbrColumn * 2);
+  int PosReal = 0;
+  int PosIm = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      TmpMatrix(i, i) = this->DiagonalElements[i];
+      TmpMatrix(i + this->NbrRow, i + this->NbrRow) = this->DiagonalElements[i];
+      for (int j = i + 1; j < this->NbrColumn; ++j)
+	{
+	  TmpMatrix(i, j) = this->RealOffDiagonalElements[PosReal];
+	  TmpMatrix(i + this->NbrRow, j + this->NbrRow) = this->RealOffDiagonalElements[PosReal];
+	  TmpMatrix(i, j + this->NbrRow) = -this->ImaginaryOffDiagonalElements[PosIm];
+	  TmpMatrix(j, i + this->NbrRow) = this->ImaginaryOffDiagonalElements[PosIm];
+	  ++PosReal;
+	  ++PosIm;
+	}
+      PosReal += this->Increment;
+      PosIm += this->Increment;
+    }
+  return TmpMatrix;
 }
 

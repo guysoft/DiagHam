@@ -37,8 +37,6 @@
 #include <ostream.h>
 
 
-class ostream;
-
 class AbstractOption
 {
 
