@@ -70,7 +70,7 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-bin_PROGRAMS = Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsTorusDMRG GetBosonsDimension
+bin_PROGRAMS = Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation
 
 Bosons_SOURCES = Bosons.cc
 
@@ -99,6 +99,8 @@ QHEFermionsTorusWithSpin_SOURCES = QHEFermionsTorusWithSpin.cc
 QHEBosonsTorus_SOURCES = QHEBosonsTorus.cc
 
 ApproximateQHE_SOURCES = ApproximateQHE.cc
+
+QHEFermionsTorusWithTranslation_SOURCES = QHEFermionsTorusWithTranslation.cc
 
 Bosons_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a  @top_srcdir@/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
@@ -152,6 +154,10 @@ QHEFermionsTorusWithSpin_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchite
 
 QHEFermionsTorusWithSpin_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QHEHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QHEHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 
+QHEFermionsTorusWithTranslation_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a  @top_srcdir@/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
+
+QHEFermionsTorusWithTranslation_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QHEHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QHEHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+
 QHEFermionsCircle_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a  @top_srcdir@/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
 QHEFermionsCircle_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QHEHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QHEHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
@@ -192,6 +198,9 @@ QHEFermionsTorusDMRG_OBJECTS =  QHEFermionsTorusDMRG.o
 QHEFermionsTorusDMRG_LDFLAGS = 
 GetBosonsDimension_OBJECTS =  GetBosonsDimension.o
 GetBosonsDimension_LDFLAGS = 
+QHEFermionsTorusWithTranslation_OBJECTS =  \
+QHEFermionsTorusWithTranslation.o
+QHEFermionsTorusWithTranslation_LDFLAGS = 
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
@@ -207,9 +216,10 @@ DEP_FILES =  .deps/ApproximateQHE.P .deps/Bosons.P \
 .deps/QHEBosonsDelta.P .deps/QHEBosonsDeltaGround.P \
 .deps/QHEBosonsTorus.P .deps/QHEFermions.P .deps/QHEFermionsCircle.P \
 .deps/QHEFermionsCoulomb.P .deps/QHEFermionsTorus.P \
-.deps/QHEFermionsTorusDMRG.P .deps/QHEFermionsTorusWithSpin.P
-SOURCES = $(Bosons_SOURCES) $(QHEFermions_SOURCES) $(QHEBosons_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEBosonsTorus_SOURCES) $(ApproximateQHE_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(GetBosonsDimension_SOURCES)
-OBJECTS = $(Bosons_OBJECTS) $(QHEFermions_OBJECTS) $(QHEBosons_OBJECTS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsCircle_OBJECTS) $(QHEBosonsTorus_OBJECTS) $(ApproximateQHE_OBJECTS) $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsCoulomb_OBJECTS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsTorusDMRG_OBJECTS) $(GetBosonsDimension_OBJECTS)
+.deps/QHEFermionsTorusDMRG.P .deps/QHEFermionsTorusWithSpin.P \
+.deps/QHEFermionsTorusWithTranslation.P
+SOURCES = $(Bosons_SOURCES) $(QHEFermions_SOURCES) $(QHEBosons_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEBosonsTorus_SOURCES) $(ApproximateQHE_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(GetBosonsDimension_SOURCES) $(QHEFermionsTorusWithTranslation_SOURCES)
+OBJECTS = $(Bosons_OBJECTS) $(QHEFermions_OBJECTS) $(QHEBosons_OBJECTS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsCircle_OBJECTS) $(QHEBosonsTorus_OBJECTS) $(ApproximateQHE_OBJECTS) $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsCoulomb_OBJECTS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsTorusDMRG_OBJECTS) $(GetBosonsDimension_OBJECTS) $(QHEFermionsTorusWithTranslation_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -318,6 +328,10 @@ QHEFermionsTorusDMRG: $(QHEFermionsTorusDMRG_OBJECTS) $(QHEFermionsTorusDMRG_DEP
 GetBosonsDimension: $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_DEPENDENCIES)
 	@rm -f GetBosonsDimension
 	$(CXXLINK) $(GetBosonsDimension_LDFLAGS) $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_LDADD) $(LIBS)
+
+QHEFermionsTorusWithTranslation: $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_DEPENDENCIES)
+	@rm -f QHEFermionsTorusWithTranslation
+	$(CXXLINK) $(QHEFermionsTorusWithTranslation_LDFLAGS) $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_LDADD) $(LIBS)
 .cc.o:
 	$(CXXCOMPILE) -c $<
 
