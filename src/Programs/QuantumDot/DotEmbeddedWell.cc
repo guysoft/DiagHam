@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   OptionGroup* PotentialGroup = new OptionGroup ("potential options");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* AdditionalGroup = new OptionGroup ("additional options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
   Manager += PotentialGroup;
   Manager += HilbertSpaceGroup;
   Manager += LanczosGroup;
+  Manager += AdditionalGroup;
   Manager += MiscGroup;
 
   (*PotentialGroup) += new SingleIntegerOption ('M', "M-cell", "number of cells in the x direction", 161);
@@ -80,8 +82,8 @@ int main(int argc, char** argv)
   (*PotentialGroup) += new SingleIntegerOption ('\n', "height", "height of dot in cell unit", 3);
   (*PotentialGroup) += new SingleIntegerOption ('\n', "top", "top radius in cell unit", 13);
   (*PotentialGroup) += new SingleDoubleOption ('a', "anisotropy", "anisotropy factor", 0.0);
-  (*PotentialGroup) += new SingleDoubleOption ('\n', "well", "potential in the well", 1.079);
-  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot", "potential in the dot", -0.4);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "well", "potential in the well (in eV unit)", 1.079);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot", "potential in the dot (in eV unit)", -0.4);
 
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.07);
@@ -101,6 +103,10 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 500);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);  
+
+  (*AdditionalGroup) += new SingleIntegerOption ('\n', "below-barrier", "number of barrier layers just below the WL", 0);
+  (*AdditionalGroup) += new SingleIntegerOption ('\n', "above-barrier", "number of barrier layers just above the dot", 0);
+  (*AdditionalGroup) += new SingleDoubleOption ('\n', "barrier-potential", "potential in the barrier (in eV unit)", 0);
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
   (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false);
@@ -151,6 +157,10 @@ int main(int argc, char** argv)
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
 
+  int BelowBarrier = ((SingleIntegerOption*) Manager["below-barrier"])->GetInteger();  
+  int AboveBarrier = ((SingleIntegerOption*) Manager["above-barrier"])->GetInteger();  
+  double BarrierPotential = ((SingleDoubleOption*) Manager["barrier-potential"])->GetDouble();
+
   bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
 
   time_t rawtime;
@@ -174,6 +184,7 @@ int main(int argc, char** argv)
   // ConstructPotential(double wellPotential, double dotPotential, double anisotropy = 0.0)
   potential->ConstructPotential(WellPotential, DotPotential, Anisotropy);
   //potential->LoadPotential("DotPotential.txt");
+  potential->AddBarrierPotential (BelowBarrier, AboveBarrier, BarrierPotential);
 
   // define Hilbert space    
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);

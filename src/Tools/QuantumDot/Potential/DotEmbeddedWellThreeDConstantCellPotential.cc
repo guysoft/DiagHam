@@ -137,6 +137,31 @@ void DotEmbeddedWellThreeDConstantCellPotential::ConstructPotential(double wellP
 	}
 }
 
+// add two barriers of the same potential just below and above the dot + WL (for Vienna experimenters)
+//
+// belowBarrier = number of barrier layers just below the WL
+// aboveBarrier = number of barrier layers just above  the dot
+// potential = potential to add in these barriers (in eV unit)
+
+void DotEmbeddedWellThreeDConstantCellPotential::AddBarrierPotential (int belowBarrier, int aboveBarrier, double potential)
+{
+  if ((belowBarrier > this->BelowWettingLayer) || (aboveBarrier > (this->NumberZ - this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight)))
+    {
+      cout << "The barrier potential inserted is too thick. Try another thinner one" << endl;
+      return;
+    }
+     
+  for (int k = this->UnderBarrier + this->BelowWettingLayer - belowBarrier; k <  (this->UnderBarrier + this->BelowWettingLayer); ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	this->PotentialValue[k][j][i] += potential;
+  
+  for (int k = this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight; k <  (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight + aboveBarrier); ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	this->PotentialValue[k][j][i] += potential;
+  return;
+}
 
 // shift the potential with a given quantity
 //

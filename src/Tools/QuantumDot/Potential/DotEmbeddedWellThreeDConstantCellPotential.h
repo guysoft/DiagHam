@@ -84,6 +84,14 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
   // anisotropy = anisotropy of the dot, equal to Ry / Rx
   void ConstructPotential(double wellPotential, double dotPotential, double anisotropy = 0.0);
 
+  // add two barriers of the same potential just below and above the dot + WL (for Vienna experimenters)
+  //
+  // belowBarrier = number of barrier layers just below the WL
+  // aboveBarrier = number of barrier layers just above  the dot
+  // potential = potential to add in these barriers (in eV unit)
+  
+  void AddBarrierPotential (int belowBarrier, int aboveBarrier, double potential);
+
   // shift the potential with a given quantity
   //
   // delta = shift value
