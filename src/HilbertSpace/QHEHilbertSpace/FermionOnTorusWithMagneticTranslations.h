@@ -90,6 +90,13 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // number of state in each orbit
   int* NbrStateInOrbit;
 
+  // sign due to state reordering when applying translation operator 
+  double** ReorderingSign;
+  // array of unsigned long where each bit describes sign associated to each translation of the orbit representant (0 for +, 1 for -) with respect to N-body ordering convention
+  unsigned long* StateSignature;
+  // sign signature obtained during previous application of a n-points operator
+  unsigned long CurrentSignature;
+  
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
 
@@ -259,6 +266,24 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
   return ParticleOnTorusWithMagneticTranslations::FermionicStatistic;
 }
 
+
+// check 
+//
+// signature = 
+// return value = 0 if 
+
+/*inline unsigned long FermionOnTorusWithMagneticTranslations::Check ()
+{
+  signature ^= this->CurrentSignature;
+  this->CurrentSignature = (unsigned long) 0;
+  for (int i = 0; i < ; ++i)
+    {
+      this->CurrentSignature ^= signature;
+      signature >>= this->CurrentNbrStateInOrbit;
+    }
+  return (this->CurrentSignature & ((unsigned long) 0x1));
+}
+*/
 #endif
 
 

@@ -83,6 +83,8 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   int* M2Value;
   int* M3Value;
   int* M4Value;
+  // array of unsigned long where each bit describes sign associated to each translation of the interaction factor (0 for +, 1 for -) with respect to ordering convention (fermionic case only)
+  unsigned long* IndexPermutationSign;
 
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
@@ -262,6 +264,11 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
   // nbrJob = number of jobs that proceed the fast multiplication evaluation
   virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
+
+  // evaluate sign of each operator when applying translation and reordering
+  //
+  // momentumIncrement = momentum increment to add to each one particle state to reach the next state in the orbit
+  void EvaluateIndexPermutationSign (int momentumIncrement);
 
   // load precalculations from a file
   // 

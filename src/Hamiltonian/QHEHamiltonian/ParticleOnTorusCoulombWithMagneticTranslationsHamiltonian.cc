@@ -89,9 +89,11 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   this->SinusTable = new double [this->MaxMomentum];
   for (int i = 0; i < this->MaxMomentum; ++i)
     {
-      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
-      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
-      cout << this->CosinusTable[i] << " cossin " << this->SinusTable[i] << endl;
+//      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
+//      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
+      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+//      cout << this->CosinusTable[i] << " cossin " << this->SinusTable[i] << endl;
     }
   if (precalculationFileName == 0)
     {

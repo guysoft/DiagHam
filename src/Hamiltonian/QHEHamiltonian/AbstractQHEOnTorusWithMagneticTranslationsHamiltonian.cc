@@ -298,7 +298,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
       int m4;
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+/*      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	{
 	  m1 = this->M1Value[j];
 	  m2 = this->M2Value[j];
@@ -336,10 +336,10 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	    }
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
-	}
-/*      for (int i = firstComponent; i < LastComponent; ++i)
+	}*/
+	  cout << endl << endl << "--------------------------------------" << endl << endl << endl;
+      for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  cout << endl << endl << "--------------------------------------" << endl << "i = " << i << endl << endl;
 	  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	    {
 	      m1 = this->M1Value[j];
@@ -350,10 +350,13 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	      if (Index < Dim)
 		{
+		  if (vSource.Re(i) != 0.0)
+		    cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << endl;
 		  Coefficient *= TmpInteraction;
 		  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
 		  Sinus = Coefficient * this->SinusTable[NbrTranslation];
-		  cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+		  if (vSource.Re(i) != 0.0)
+		    cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
 		  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 		  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
 		}
@@ -366,16 +369,19 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < Dim)
 	    {
+	      if (vSource.Re(i) != 0.0)
+		cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << endl;
 	      Coefficient *= TmpInteraction;
 	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
 	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
-	      cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+	      if (vSource.Re(i) != 0.0)
+		cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
 	      vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 	      vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
 	    }
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
-	}*/
+	}
     }
   else
     {
@@ -731,6 +737,63 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
 	      ++Pos;
 	    }
 	}
+    }
+}
+
+
+
+// evaluate sign of each operator when applying translation and reordering
+//
+// momentumIncrement = momentum increment to add to each one particle state to reach the next state in the orbit
+
+void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateIndexPermutationSign (int momentumIncrement)
+{
+  int m1;
+  int m2;
+  int m3;
+  int m4;
+  this->IndexPermutationSign = new unsigned long[this->NbrInteractionFactors];
+  unsigned long TmpSign = (unsigned long) 0;
+  unsigned long TmpSign2 = (unsigned long) 0;
+  int NbrTranslations = this->MaxMomentum / MaxMomentum;
+  for (int i = 0; i < this->NbrInteractionFactors; ++i) 
+    {
+      TmpSign2 = (unsigned long) 0;
+      m1 = this->M1Value[i];
+      m2 = this->M2Value[i];
+      m3 = this->M3Value[i];
+      m4 = this->M4Value[i];
+      for (int j = 0; j < NbrTranslations; ++j)
+	{
+	  m1 += momentumIncrement;
+	  if (m1 > this->MaxMomentum)
+	    m1 -= this->MaxMomentum;
+	  m2 += momentumIncrement;
+	  if (m2 > this->MaxMomentum)
+	    m2 -= this->MaxMomentum;
+	  m3 += momentumIncrement;
+	  if (m3 > this->MaxMomentum)
+	    m3 -= this->MaxMomentum;
+	  m4 += momentumIncrement;
+	  if (m4 > this->MaxMomentum)
+	    m4 -= this->MaxMomentum;
+	  if (m1 < m2)
+	    {
+	      int Tmp = m1;
+	      m1 = m2;
+	      m2 = Tmp;
+	      TmpSign2 = (unsigned long) 0x1;
+	    }
+	  if (m3 < m4)
+	    {
+	      int Tmp = m3;
+	      m3 = m4;
+	      m4 = Tmp;
+	      TmpSign2 = (~TmpSign2) & ((unsigned long) 0x1);
+	    }
+	  TmpSign |= TmpSign2 << j;
+	}
+      this->IndexPermutationSign[i] = TmpSign;
     }
 }
 
