@@ -2,5 +2,7 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQHEMainTask.a
 
-libQHEMainTask_a_SOURCES=QHEOnSphereMainTask.cc
+libQHEMainTask_a_SOURCES=QHEOnSphereMainTask.cc \
+QHEOnDiskMainTask.cc
+
 

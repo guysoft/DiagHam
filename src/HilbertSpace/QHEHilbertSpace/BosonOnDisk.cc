@@ -90,8 +90,11 @@ BosonOnDisk::BosonOnDisk(const BosonOnDisk& bosons)
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
+  this->LzMaxPosition = bosons.LzMaxPosition;
+  this->Keys =  bosons.Keys;
   this->Flag = bosons.Flag;
   this->TemporaryState = new int [this->TotalLz + 1];
+  this->KeyMultiplicationTable = bosons.KeyMultiplicationTable;
 }
 
 // destructor
@@ -106,6 +109,9 @@ BosonOnDisk::~BosonOnDisk ()
 	delete[] this->StateDescription[i];
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
+      delete[] this->Keys;
+      delete[] this->LzMaxPosition;
+      delete[] this->KeyMultiplicationTable;
     }
 }
 
@@ -253,7 +259,6 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
   coefficient = 1.0;
   for (i = nbrIndices; i >= 0; --i)
     {
-      cout << n[i] << endl;
       if (this->TemporaryState[n[i]] == 0)
 	{
 	  coefficient = 0.0;
@@ -264,7 +269,6 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
     }
   for (i = nbrIndices; i >= 0; --i)
     {
-      cout << m[i] << endl;
       ++this->TemporaryState[m[i]];
       coefficient *= (double) this->TemporaryState[m[i]];
       if (m[i] > NewLzMax)
@@ -273,12 +277,6 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
   coefficient = sqrt(coefficient);
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  i = 0;
-  for (; i <= NewLzMax; ++i)
-    cout << this->TemporaryState[i] << " ";
-  for (; i <= this->TotalLz; ++i)
-    cout << "0 ";
-  cout << endl;
   int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }

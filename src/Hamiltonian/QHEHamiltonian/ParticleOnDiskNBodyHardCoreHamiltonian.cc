@@ -220,9 +220,11 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    Coef.SetToOne();
 		    Coef.FactorialMultiply(MinSum);
 		    for (int l = 0; l < k; ++l)
-		      Coef.FactorialDivide(TmpMIndices[l]);
+		      {
+			Coef.FactorialDivide(TmpMIndices[l]);
+		      }
 		    Coef.PowerNDivide(k, MinSum);
-		    TmpNBodyInteractionFactors[i] = sqrt(Coef.GetNumericalValue() * TmpSymmetryFactors[i] * Factor);
+		    TmpNBodyInteractionFactors[i] = sqrt(Coef.GetNumericalValue() * Factor) * TmpSymmetryFactors[i];
 		    TmpMIndices += k;
 		  }
 	      }

@@ -121,7 +121,9 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQHEMainTask.a
 
-libQHEMainTask_a_SOURCES = QHEOnSphereMainTask.cc
+libQHEMainTask_a_SOURCES = QHEOnSphereMainTask.cc \
+QHEOnDiskMainTask.cc
+
 subdir = src/MainTask/QHEMainTask
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -131,13 +133,15 @@ LIBRARIES = $(noinst_LIBRARIES)
 
 libQHEMainTask_a_AR = $(AR) cru
 libQHEMainTask_a_LIBADD =
-am_libQHEMainTask_a_OBJECTS = QHEOnSphereMainTask.$(OBJEXT)
+am_libQHEMainTask_a_OBJECTS = QHEOnSphereMainTask.$(OBJEXT) \
+	QHEOnDiskMainTask.$(OBJEXT)
 libQHEMainTask_a_OBJECTS = $(am_libQHEMainTask_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/QHEOnSphereMainTask.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/QHEOnDiskMainTask.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEOnSphereMainTask.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -179,6 +183,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnDiskMainTask.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnSphereMainTask.Po@am__quote@
 
 .cc.o:

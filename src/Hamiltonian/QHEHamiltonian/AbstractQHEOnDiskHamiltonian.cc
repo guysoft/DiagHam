@@ -93,6 +93,7 @@ int AbstractQHEOnDiskHamiltonian::GetHilbertSpaceDimension ()
 
 void AbstractQHEOnDiskHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->HamiltonianShift = shift;
 }
   
 // evaluate matrix element

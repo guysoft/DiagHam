@@ -5,7 +5,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
-#include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
+#include "MainTask/QHEMainTask/QHEOnDiskMainTask.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
   (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 0, true, 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  sprintf (EigenvectorName, "bosons_disk_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, MMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnDiskMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
       delete Hamiltonian;
