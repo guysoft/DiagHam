@@ -124,7 +124,7 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
-  for (int i = 6; i < MaxNbrLz; ++i)
+  for (int i = 8; i < MaxNbrLz; ++i)
     {
       int Lz = i << 1;
       cout << "Lz = " << i << endl;
@@ -189,10 +189,13 @@ int main(int argc, char** argv)
 	  TmpTriDiag.Diagonalize();
 	  TmpTriDiag.SortMatrixUpOrder();
 	  cout << "eigenvalues = " << endl;
+	  double Sum = 0.0;
 	  for (int k = 0; k < Degeneracy[i]; ++k)	    
 	    {
 	      cout << TmpTriDiag.DiagonalElement(k) << endl;
+	      Sum += TmpTriDiag.DiagonalElement(k);
 	    }
+	  cout << "Sum = " << Sum << endl;
 	  return 0;
 
 	}

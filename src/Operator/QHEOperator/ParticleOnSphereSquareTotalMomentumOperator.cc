@@ -57,7 +57,7 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
   this->Shift = 0.25 * ((double) (this->TotalLz * this->TotalLz));
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * (2 * i - this->LzMax + 2))))));
+      double TmpCoefficient = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
       for (int j = 0; j <= this->LzMax; ++j)
 	{
      	  this->Coefficients(i, j) = TmpCoefficient;
@@ -65,10 +65,10 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
     }
   for (int i = 0; i <= this->LzMax; ++i)
     {
-      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * (2 * i - this->LzMax - 2))))));
+      double TmpCoefficient = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax - 2))))));
       for (int j = 0; j <= this->LzMax; ++j)
 	{
-     	  this->Coefficients(j, i) *= TmpCoefficient;
+     	  this->Coefficients(j, i) *= 0.5 * TmpCoefficient;
 	}
     }
   cout << this->Coefficients << endl;
@@ -147,26 +147,26 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& 
   for (int i = 0; i < Dim; ++i)
     {
       int k = 1;
-      for (; k <= this->LzMax; ++k)
+/*      for (; k <= this->LzMax; ++k)
 	{
 	  Index = this->Particle->AdAdAA(i, k - 1, 1, k, 0, Coefficient);
 	  if (Index != this->Particle->GetHilbertSpaceDimension())
 	    {
 	      Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(0, k);		  
 	    }
-	}
-      for (int j = 1; j < this->LzMax; ++j)
+	}*/
+      for (int j = 0; j < this->LzMax; ++j)
 	{
 	  k = 1;
-	  for (; k < j; ++k)
+/*	  for (; k < j; ++k)
 	    {
 	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
 	      if (Index != this->Particle->GetHilbertSpaceDimension())
 		{
 		  Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
 		}
-	    }
-	  ++k;
+	    }*/
+//	  ++k;
 	  for (; k <= this->LzMax; ++k)
 	    {
 	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
@@ -176,7 +176,8 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& 
 		}
 	    }
 	}
-      Coefficient = 0.0;
+      Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
+      Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
       for (int k = 1; k < this->LzMax; ++k)
 	Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
       Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
