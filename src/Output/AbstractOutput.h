@@ -32,20 +32,32 @@
 #define ABSTRACTOUTPUT_H
 
 
-#include <iostream>
-#include <strstream>
+#include "config.h"
 
+#include <iostream>
+#ifdef __SSTREAM_STYLE__
+#include <sstream>
+#else
+#include <strstream>
+#endif
 
 using std::ostream;
+#ifdef __SSTREAM_STYLE__
+using std::stringstream;
+#else
 using std::strstream;
-
+#endif
 
 class AbstractOutput
 {
 
  protected:
 
+#ifdef __SSTREAM_STYLE__
+  stringstream File;
+#else
   strstream File;
+#endif
 
  public:
 

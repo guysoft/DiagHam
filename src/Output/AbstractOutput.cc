@@ -62,8 +62,11 @@ bool AbstractOutput::Save(char* FileName)
     return false;
   ofstream RealFile;
   RealFile.open(FileName, ios::binary | ios::out);
-//  RealFile << this->File;
+#ifdef __SSTREAM_STYLE__
+  RealFile << this->File;
+#else
   RealFile.write (this->File.str(), this->File.pcount()); 
+#endif
   RealFile.close();
   return true;
 }
@@ -148,7 +151,11 @@ AbstractOutput& operator << (AbstractOutput& Out, ostream& Str)
 
 ostream& operator << (ostream& Str, AbstractOutput& Out)
 {
+#ifdef __SSTREAM_STYLE__
+  Str << Out.File;
+#else
   Str.write (Out.File.str(), Out.File.pcount());
+#endif
   return Str;
 }
 
@@ -160,6 +167,10 @@ ostream& operator << (ostream& Str, AbstractOutput& Out)
 
 AbstractOutput& operator << (AbstractOutput& Out1, AbstractOutput& Out2) 
 {
+#ifdef __SSTREAM_STYLE__
+  Out1 << Out2;
+#else
   Out1.File.write(Out2.File.str(), Out2.File.pcount());
+#endif
   return Out1;
 }

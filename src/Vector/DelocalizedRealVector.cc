@@ -67,6 +67,8 @@ DelocalizedRealVector::DelocalizedRealVector()
   this->LocalizationId = 0;
   this->LocalId = 0;
   this->Architecture = 0;
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
 }
 
 // constructor for an empty real vector (all coordinates set to zero)
@@ -88,6 +90,8 @@ DelocalizedRealVector::DelocalizedRealVector(int size, AbstractClusterArchitectu
   this->LocalizationId = localizationId;
   this->LocalId = this->Architecture->GetProcessId();
   this->VectorId = vectorId;
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
   if (this->LocalizationId == this->LocalId)
     {
       this->Components = new double [this->Dimension + 1]; 
@@ -110,10 +114,14 @@ DelocalizedRealVector::DelocalizedRealVector(int size, AbstractClusterArchitectu
 
 DelocalizedRealVector::DelocalizedRealVector(const DelocalizedRealVector& vector, bool duplicateFlag)
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
   this->VectorId = vector.VectorId;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->Architecture = vector.Architecture;
+  this->DummyElementPosition = vector.DummyElementPosition;
+  this->DummyElement = vector.DummyElement;
+  this->FlushDummyElement();
   if (duplicateFlag == false)
     {
       this->Components = vector.Components;
@@ -123,7 +131,6 @@ DelocalizedRealVector::DelocalizedRealVector(const DelocalizedRealVector& vector
     {
       if (vector.Dimension > 0)
 	{
-	  this->Flag.Initialize();
 	  this->Components = new double [this->TrueDimension + 1]; 
 	  for (int i = 0; i < this->Dimension; i++)
 	    this->Components[i] = vector.Components[i];
@@ -132,18 +139,61 @@ DelocalizedRealVector::DelocalizedRealVector(const DelocalizedRealVector& vector
 	{
 	  this->Components = 0;
 	}
+      this->Flag.Initialize();
+    }
+}
+
+// copy constructor
+//
+// vector = vector to copy
+// architecture = pointer to the cluster architecture in use
+// DuplicateFlag = true if datas have to be duplicated
+
+DelocalizedRealVector::DelocalizedRealVector(const RealVector& vector, AbstractClusterArchitecture* architecture, bool duplicateFlag)
+{
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
+  this->VectorId = vector.VectorId;
+  this->Dimension = vector.Dimension;
+  this->TrueDimension = vector.TrueDimension;
+  this->Architecture = architecture;
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
+  if (duplicateFlag == false)
+    {
+      this->Components = vector.Components;
+      this->Flag = vector.Flag;
+    }
+  else
+    {
+      if (vector.Dimension > 0)
+	{
+	  this->Components = new double [this->TrueDimension + 1]; 
+	  for (int i = 0; i < this->Dimension; i++)
+	    this->Components[i] = vector.Components[i];
+	}
+      else
+	{
+	  this->Components = 0;
+	}
+      this->Flag.Initialize();
     }
 }
 
 // copy constructor from a complex vector (keep only real part and datas are duplicated)
 //
 // vector = vector to copy
+// architecture = pointer to the cluster architecture in use
 
-DelocalizedRealVector::DelocalizedRealVector(const ComplexVector& vector)
+DelocalizedRealVector::DelocalizedRealVector(const ComplexVector& vector, AbstractClusterArchitecture* architecture)
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
+  this->Architecture = architecture;
+  this->LocalId = this->Architecture->GetProcessId();
+  this->LocalizationId = this->LocalId;
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
   this->VectorId = 0;
   if (this->Dimension > 0)
     {
@@ -161,18 +211,59 @@ DelocalizedRealVector::DelocalizedRealVector(const ComplexVector& vector)
 // copy constructor from a vector (duplicate datas if necessary)
 //
 // vector = vector to copy
+// architecture = pointer to the cluster architecture in use
 
-DelocalizedRealVector::DelocalizedRealVector(const Vector& vector)
+DelocalizedRealVector::DelocalizedRealVector(const Vector& vector, AbstractClusterArchitecture* architecture)
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
-  this->VectorId = vector.VectorId;
+  this->Architecture = architecture;
+  this->LocalId = this->Architecture->GetProcessId();
+  switch (vector.VectorType)
+    {
+    case (Vector::RealDatas):
+      {
+	this->VectorId = vector.VectorId;
+	this->LocalizationId = this->LocalId;
+	this->Components = ((RealVector&) vector).Components;
+	this->Flag = ((RealVector&) vector).Flag;
+	this->DummyElementPosition = new int;
+	(*(this->DummyElementPosition)) = -1;
+      }
+      break;
+    case (Vector::RealDatas | Vector::NonLocalDatas):
+      {
+ 	this->VectorId = vector.VectorId;
+	this->LocalizationId = ((DelocalizedRealVector&) vector).LocalId;
+	this->DummyElementPosition = ((DelocalizedRealVector&) vector).DummyElementPosition;
+	this->DummyElement = ((DelocalizedRealVector&) vector).DummyElement;
+	this->FlushDummyElement();
+	this->Components = ((DelocalizedRealVector&) vector).Components;
+	this->Flag = ((DelocalizedRealVector&) vector).Flag;
+      }
+      break;
+    case (Vector::ComplexDatas):
+      {
+	this->DummyElementPosition = new int;
+	(*(this->DummyElementPosition)) = -1;
+	this->VectorId = 0;
+	if (this->Dimension > 0)
+	  {
+	    this->Components = new double[this->Dimension + 1];
+	    for (int i = 0; i < this->Dimension; ++i)
+	      {
+		this->Components[i] = ((ComplexVector&) vector).RealComponents[i];
+	      }
+	  }
+	else
+	  this->Components = 0;
+      }
+      break;
+    }
   if (vector.VectorType == Vector::RealDatas)
     {
       this->VectorType = Vector::RealDatas;
-      this->Components = ((DelocalizedRealVector&) vector).Components;
-      this->Flag = ((DelocalizedRealVector&) vector).Flag;
     }
   else
     if (vector.VectorType == Vector::ComplexDatas)
@@ -201,9 +292,12 @@ DelocalizedRealVector::DelocalizedRealVector(const Vector& vector)
 
 DelocalizedRealVector::~DelocalizedRealVector ()
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  this->FlushDummyElement();
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Components;
+      if (this->Dimension != 0)
+	delete[] this->Components;
+      delete this->DummyElementPosition;
     }
 }
 
@@ -214,10 +308,16 @@ DelocalizedRealVector::~DelocalizedRealVector ()
 
 DelocalizedRealVector& DelocalizedRealVector::operator = (const DelocalizedRealVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  this->FlushDummyElement();
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Components;
+      if (this->Dimension != 0)
+	delete[] this->Components;
+      delete this->DummyElementPosition;
     }
+  this->DummyElementPosition = vector.DummyElementPosition;
+  this->DummyElement = vector.DummyElement;
+  this->FlushDummyElement();
   this->Flag = vector.Flag;
   this->VectorId = vector.VectorId;
   this->LocalizationId = vector.LocalizationId;
@@ -234,10 +334,15 @@ DelocalizedRealVector& DelocalizedRealVector::operator = (const DelocalizedRealV
 
 DelocalizedRealVector& DelocalizedRealVector::operator = (const RealVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  this->FlushDummyElement();
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Components;
+      if (this->Dimension != 0)
+	delete[] this->Components;
+      delete this->DummyElementPosition;
     }
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
   this->Flag = vector.Flag;
   this->VectorId = vector.VectorId;
   this->Components = vector.Components;
@@ -254,15 +359,20 @@ DelocalizedRealVector& DelocalizedRealVector::operator = (const RealVector& vect
 
 DelocalizedRealVector& DelocalizedRealVector::operator = (const ComplexVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  this->FlushDummyElement();
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->Components;
+      if (this->Dimension != 0)
+	delete[] this->Components;
+      delete this->DummyElementPosition;
     }
   this->LocalizationId = this->LocalId;
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
   this->Components = new double[this->Dimension + 1];
   this->VectorId = 0;
+  this->DummyElementPosition = new int;
+  (*(this->DummyElementPosition)) = -1;
   for (int i = 0; i < this->Dimension; ++i)
     {
       this->Components[i] = vector.RealComponents[i];
@@ -304,6 +414,7 @@ void DelocalizedRealVector::Resize (int dimension)
       this->Dimension = dimension;
       return;
     }
+  this->FlushDummyElement();
   if (this->LocalizationId == this->LocalId)
     {
       double* TmpVector = new double [dimension + 1];
@@ -313,6 +424,8 @@ void DelocalizedRealVector::Resize (int dimension)
 	{
 	  delete[] this->Components;
 	}
+      this->DummyElementPosition = new int;
+      (*(this->DummyElementPosition)) = -1;
       this->Dimension = dimension;
       this->TrueDimension = dimension;
       this->Components = TmpVector;
@@ -347,6 +460,7 @@ void DelocalizedRealVector::ResizeAndClean (int dimension)
       this->Dimension = dimension;
       return;
     }
+  this->FlushDummyElement();
   if (this->LocalizationId == this->LocalId)
     {
       double* TmpVector = new double [dimension + 1];
@@ -390,6 +504,7 @@ void DelocalizedRealVector::ResizeAndClean (int dimension)
 
 Vector* DelocalizedRealVector::EmptyClone(bool zeroFlag)
 {
+  this->FlushDummyElement();
   return new DelocalizedRealVector(this->Dimension, this->Architecture, this->VectorId, this->LocalizationId, zeroFlag);
 }
 
@@ -400,11 +515,29 @@ void DelocalizedRealVector::Localize()
 {
   if (this->LocalizationId != this->LocalId)
     {
+      this->FlushDummyElement();
       int TmpLocalizationId = this->LocalizationId;
       RealVector TmpVector (this->Architecture->GetRealVector(this->VectorId));
       TmpVector.SetVectorId(this->VectorId);
       *this = TmpVector;
       this->LocalizationId = TmpLocalizationId;
+    }
+}
+
+// delocalize the current vector from the current process
+// 
+// transfertFlag = indicates if the current vector datas have to sent to the vector real location
+
+void DelocalizedRealVector::Delocalize(bool transfertFlag)
+{
+  if (this->LocalizationId != this->LocalId)
+    {
+      this->FlushDummyElement();
+      if (transfertFlag == true)
+	{
+	  this->Architecture->SetRealVector(*this, this->VectorId);
+	}
+      delete[] this->Components;
     }
 }
 
@@ -472,21 +605,5 @@ ifstream& operator >> (ifstream& file, DelocalizedRealVector& vector)
       vector.Resize(TmpRealVector.GetVectorDimension());
    }
   return file;
-}
-
-// delocalize the current vector from the current process
-// 
-// transfertFlag = indicates if the current vector datas have to sent to the vector real location
-
-void DelocalizedRealVector::Delocalize(bool transfertFlag)
-{
-  if (this->LocalizationId != this->LocalId)
-    {
-      if (transfertFlag == true)
-	{
-	  this->Architecture->SetRealVector(*this, this->VectorId);
-	}
-      delete[] this->Components;
-    }
 }
 

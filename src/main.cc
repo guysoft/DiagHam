@@ -107,13 +107,13 @@ int main(int argc, char** argv)
   //  MonoProcessorArchitecture Architecture;
   SMPArchitecture Architecture(2);
   int* Test;
-  New(Architecture, Test, 10);
+  Architecture.New(Test, 10);
   for (int i = 0; i < 10; ++i)
     Test[i] = i;
   for (int i = 0; i < 10; ++i)
     cout << i << " ";
   cout << endl;
-  Delete(Architecture, Test);
+  Architecture.Delete(Test);
   return 0;
 
   int dimM = 10;

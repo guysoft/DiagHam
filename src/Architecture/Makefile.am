@@ -1,4 +1,4 @@
-SUBDIRS=ArchitectureOperation
+SUBDIRS=ArchitectureOperation ClusterArchitecture
 
 noinst_LIBRARIES=libArchitecture.a
 

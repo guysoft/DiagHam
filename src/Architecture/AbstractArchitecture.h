@@ -170,15 +170,28 @@ class AbstractArchitecture
   // size = number of elements of type Type
   // return value = reference on the pointer
   template <class Type>
-  friend Type*& New (AbstractArchitecture& architecture, Type*& pointer,  unsigned long size);
+  Type*& New (Type*& pointer,  unsigned long size);
   
   // delete an array that has been requested by the New function
   //
   // architecture = reference on the architecture to which memory has been asked
   // pointer = reference on pointer that of the memory allocation
   template <class Type>
-  friend void Delete (AbstractArchitecture& architecture, Type*& pointer);
+  void Delete (Type*& pointer);
   
+ protected:
+
+  // indicate an allocation of memory to the architecture
+  //
+  // pointer = pointer to the memory zone which will be allocated
+  // memory = amount of requested memory in bytes
+  virtual void AllocateMemory (void* pointer, unsigned long memory);
+
+  // indicate an deallocation of memory to the architecture
+  //
+  // pointer = pointer to the memory zone which will be free
+  virtual void DeallocateMemory (void* pointer);
+
 };
 
 
@@ -189,10 +202,11 @@ class AbstractArchitecture
 // return value = reference on the pointer
 
 template <class Type>
-inline Type*& New (AbstractArchitecture& architecture, Type*& pointer, unsigned long size)
+inline Type*& AbstractArchitecture::New (Type*& pointer, unsigned long size)
 {
   pointer = new Type [size];
-  return pointer;
+  this->AllocateMemory(pointer, size * sizeof(Type));
+ return pointer;
 }
   
 // delete an array that has been requested by the New function
@@ -201,10 +215,27 @@ inline Type*& New (AbstractArchitecture& architecture, Type*& pointer, unsigned 
 // pointer = reference on pointer that of the memory allocation
 
 template <class Type>
-inline void Delete (AbstractArchitecture& architecture, Type*& pointer)
+inline void AbstractArchitecture::Delete (Type*& pointer)
 {
   delete[] pointer;
+  this->DeallocateMemory(pointer);
 }
   
+// indicate an allocation of memory to the architecture
+//
+// pointer = pointer to the memory zone which will be allocated
+// memory = amount of requested memory in bytes
+
+inline void AbstractArchitecture::AllocateMemory (void* pointer, unsigned long memory)
+{
+}
+
+// indicate an deallocation of memory to the architecture
+//
+// pointer = pointer to the memory zone which will be free
+
+inline void AbstractArchitecture::DeallocateMemory (void* pointer)
+{
+}
 
 #endif

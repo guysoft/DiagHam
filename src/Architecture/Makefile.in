@@ -117,7 +117,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = ArchitectureOperation
+SUBDIRS = ArchitectureOperation ClusterArchitecture
 
 noinst_LIBRARIES = libArchitecture.a
 

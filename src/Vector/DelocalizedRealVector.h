@@ -74,6 +74,8 @@ class DelocalizedRealVector : public RealVector
 
   // a dummy element used when passing cevtor element as reference
   double DummyElement;
+  // pointer to an index of the component correponding to the dummy element
+  int* DummyElementPosition;
 
  public:
 
@@ -100,17 +102,17 @@ class DelocalizedRealVector : public RealVector
   //
   // vector = vector to copy
   // duplicateFlag = true if datas have to be duplicated
-  DelocalizedRealVector(const RealVector& vector, bool duplicateFlag = false);
+  DelocalizedRealVector(const RealVector& vector, AbstractClusterArchitecture* architecture, bool duplicateFlag = false);
 
   // copy constructor from a complex vector (keep only real part and datas are duplicated)
   //
   // vector = vector to copy
-  DelocalizedRealVector(const ComplexVector& vector);
+  DelocalizedRealVector(const ComplexVector& vector, AbstractClusterArchitecture* architecture);
 
   // copy constructor from a vector (duplicate datas if necessary)
   //
   // vector = vector to copy
-  DelocalizedRealVector(const Vector& vector);
+  DelocalizedRealVector(const Vector& vector, AbstractClusterArchitecture* architecture);
 
   // destructor
   //
@@ -190,6 +192,12 @@ class DelocalizedRealVector : public RealVector
   // transfertFlag = indicates if the current vector datas have to sent to the vector real location
   void Delocalize(bool transfertFlag = false);
 
+ private: 
+
+  // flush dummy element to take into account last change
+  //
+  void FlushDummyElement();
+
 };
 
 // return vector i-th coordinate (without testing if position is valid)
@@ -204,11 +212,29 @@ inline double& DelocalizedRealVector::operator [] (int i)
     }
   else
     {
+      if ((*(this->DummyElementPosition)) != -1)
+	{
+	  this->Architecture->SetRealVectorElement(this->DummyElement, this->VectorId, (*(this->DummyElementPosition)));	  
+	}
       this->DummyElement = this->Architecture->RequestRealVectorElement(this->VectorId, i);
+      (*(this->DummyElementPosition)) = i;
       return this->DummyElement;
     }
 }
  
+
+
+// flush dummy element to take into account last change
+//
+
+inline void DelocalizedRealVector::FlushDummyElement()
+{
+  if ((this->LocalId != this->LocalizationId) && ((*(this->DummyElementPosition)) != -1))
+    {
+      this->Architecture->SetRealVectorElement(this->DummyElement, this->VectorId, (*(this->DummyElementPosition)));
+    }
+  (*(this->DummyElementPosition)) = -1;
+}
 
 #endif
 

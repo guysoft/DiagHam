@@ -125,7 +125,11 @@ ostream& operator << (ostream& Str, MathematicaOutput& Out)
 
 MathematicaOutput& operator << (MathematicaOutput& Out1, MathematicaOutput& Out2) 
 {
+#ifdef __SSTREAM_STYLE__
+  Out1 << Out2;
+#else
   Out1.File.write(Out2.File.str(), Out2.File.pcount());
+#endif
   return Out1;
 }
 
