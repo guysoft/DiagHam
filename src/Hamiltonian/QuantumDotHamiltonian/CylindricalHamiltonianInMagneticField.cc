@@ -39,6 +39,7 @@ using std::cout;
 using std::endl;
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
+#define BLOCH_FACTOR 7.644
 #define ENERGY_FACTOR 1.16e-4
 #define LENGTH_FACTOR 256.8
 
@@ -49,9 +50,10 @@ using std::endl;
 // mur = effective mass in plane
 // muz = effective mass in Z direction
 // bz = Z magnetic field component
+// waveVectorZ = wave vector of Bloch function in Z direction
 // PotentialInput = pointer to a 3D potential with constant value in a cell
 
-CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, ThreeDConstantCylinderPotential* PotentialInput)
+CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput)
 {
   this->Space = space;
   int nbrCylinder = PotentialInput->GetNbrCylinderZ();
@@ -66,7 +68,7 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(Ver
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
 
   cout << "Evaluating confinement potential ..." << endl;
-  this->EvaluateInteractionFactors(bz, PotentialInput);
+  this->EvaluateInteractionFactors(bz, waveVectorZ, PotentialInput);
   cout << "End of confinement potential evaluation." << endl;
 }
 
@@ -288,7 +290,78 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
     return this->LowLevelAddMultiply(vSource, vDestination);
   else
     {
-      int lastComponent = firstComponent + nbrComponent;      
+      int* TotalIndex = new int [this->NbrStateR];
+      for (int n = 0; n < this->NbrStateR; ++n)	
+	TotalIndex[n] = n * this->NbrStateZ;
+
+      int lastComponent = firstComponent + nbrComponent;   
+      int n1, n2, p1;
+      int IndexZ;
+      double* TmpRealHamiltonian;
+      double* TmpImaginaryHamiltonian;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      int Index1 = firstComponent; int Index2 = 0; int tmpIndexZ = 0;
+      n1 = Index1 / this->NbrStateZ;
+      p1 = Index1 - n1 * this->NbrStateZ;
+      
+      for (; Index1 < lastComponent; ++Index1)
+	{
+	  TmpRe = 0.0; TmpIm = 0.0;
+	  for (n2 = 0; n2 < n1; ++n2)
+	    {
+	      TmpRealHamiltonian = this->RealHamiltonian[n1][n2];
+	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1][n2];
+	      Index2 = TotalIndex[n2];
+	      //for (p2 = 0; p2 < p1; ++p2)
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{		      
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      tmpIndexZ = this->NbrStateZ - p1;
+	      //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+	      for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		{		      
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	    }
+	  for (n2 = n1; n2 < this->NbrStateR; ++n2)
+	    {
+	      TmpRealHamiltonian = this->RealHamiltonian[n2][n1];
+	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n2][n1];
+	      Index2 = TotalIndex[n2];
+	      //for (p2 = 0; p2 < p1; ++p2)
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{		      
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      tmpIndexZ = this->NbrStateZ - p1;
+	      //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+	      for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		{		      
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	    }	  
+
+	  TmpRe += this->PartialDiagonalElement[Index1] * vSource.Re(Index1);
+	  TmpIm += this->PartialDiagonalElement[Index1] * vSource.Im(Index1);
+	  vDestination.Re(Index1) += TmpRe;
+	  vDestination.Im(Index1) += TmpIm;
+	  ++p1;
+	  if (p1 == this->NbrStateZ)
+	    {
+	      p1 = 0;
+	      ++n1;
+	    }
+	}
+   
       return vDestination;
     }
   return vDestination;
@@ -297,9 +370,10 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 // evaluate all interaction factors
 //
 // Bz = magnetic field component in Z direction
+// waveVectorZ = wave vector of Bloch function in Z direction
 // potential = pointer to the potential
 
-void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz, ThreeDConstantCylinderPotential* &potential)
+void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz, double waveVectorZ, ThreeDConstantCylinderPotential* &potential)
 {
   double PlaneQuantum = ENERGY_FACTOR * Bz / this->Mur;
   double OrbitRadius = LENGTH_FACTOR / sqrt(Bz);
@@ -375,8 +449,6 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   for (int n = 0; n < (this->NbrStateR + addition); ++n)
     {
       LaguerreCoefficient[n] = new double [n + 1];      
-      //LaguerreCoefficient[n][0] = 1.0;
-      //cout << LaguerreCoefficient[n][0] << " ";
       for (int m = 0; m <= n; ++m)
 	{
 	  FactorialCoefficient* TmpLaguerre = new FactorialCoefficient(1) ;	  
@@ -454,6 +526,8 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
   //cout << "Plane quantum: " << PlaneQuantum << endl;
   //cout << "Partial diagonal terms:" << endl;
+  double ShiftSquareKz = BLOCH_FACTOR * waveVectorZ * waveVectorZ / (2.0 * this->Muz);
+  double ShiftKz = BLOCH_FACTOR * waveVectorZ * 2.0 * M_PI/ (this->Muz * this->ZSize);
   for (int n = 0; n < this->NbrStateR; ++n)
     {
       TmpE = PlaneQuantum * (0.5 + double(n));
@@ -462,10 +536,13 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
       for (int p = 0; p < this->NbrStateZ; ++p)
 	{
 	  this->PartialDiagonalElement[Index] = TmpE + double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor; 
+	  this->PartialDiagonalElement[Index] += (ShiftSquareKz + ShiftKz * double(p + this->LowerImpulsionZ));
 	  //cout << TmpE << " " << double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor << " " << this->PartialDiagonalElement[Index] << endl;
   	  ++Index;
 	}
     }  
+
+  delete[] RealWaveFunctionOverlapZ; delete[] ImaginaryWaveFunctionOverlapZ; delete[] Integral; delete[] LaguerreCoefficient; 
 }
 
 // evaluate the plane wave function overlap

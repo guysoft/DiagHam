@@ -62,7 +62,7 @@ class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
 
   // destructor
   //
-  ~ XYReflexionSymmetricPeriodic3DOneParticle();
+  ~XYReflexionSymmetricPeriodic3DOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //

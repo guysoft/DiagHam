@@ -41,9 +41,10 @@ XYReflexionSymmetricPeriodic3DOneParticle::XYReflexionSymmetricPeriodic3DOnePart
 
 // constructor
 //
-// nbrStateX = wave function basis dimension in the x direction
-// nbrStateY = wave function basis dimension in the y direction
+// maxX = maximal wave function basis dimension in the x direction
+// maxY = maximal wave function basis dimension in the y direction
 // nbrStateZ = wave function basis dimension in the z direction
+// lowZ = lower bound of basis dimension in the z direction
 
 XYReflexionSymmetricPeriodic3DOneParticle::XYReflexionSymmetricPeriodic3DOneParticle(int maxX, int maxY, int nbrStateZ, int lowZ)
 {

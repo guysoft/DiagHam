@@ -84,8 +84,9 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // mur = effective mass in plane
   // muz = effective mass in Z direction
   // bz = Z magnetic field component
+  // waveVectorZ = wave vector of Bloch function in Z direction
   // PotentialInput = pointer to a 3D potential with constant value in a cell
-  CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, ThreeDConstantCylinderPotential* PotentialInput);
+  CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
@@ -187,8 +188,9 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // evaluate all interaction factors
   //
   // Bz = magnetic field component in Z direction
+  // waveVectorZ = wave vector of Bloch function in Z direction
   // potential = pointer to the potential
-  void EvaluateInteractionFactors(double Bz, ThreeDConstantCylinderPotential* &potential);
+  void EvaluateInteractionFactors(double Bz, double waveVectorZ, ThreeDConstantCylinderPotential* &potential);
 
   // evaluate the plane wave function overlap
   //

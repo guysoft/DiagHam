@@ -127,7 +127,8 @@ class PeriodicQuantumDots3DHamiltonianInMagneticField : public AbstractHamiltoni
   // by = Y magnetic field component
   // bz = Z magnetic field component
   // PotentialInput = pointer to a 3D potential with constant value in a cell
-  PeriodicQuantumDots3DHamiltonianInMagneticField(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput);
+  // waveVectorZ = wave vector of Bloch function in Z direction
+  PeriodicQuantumDots3DHamiltonianInMagneticField(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ = 0.0);
 
   // copy constructor (without duplicating datas)
   //
@@ -227,8 +228,9 @@ class PeriodicQuantumDots3DHamiltonianInMagneticField : public AbstractHamiltoni
  private:
   
   // evaluate confinement potential factors
-  // 
-  void EvaluateConfinementPotentialFactors();
+  //
+  // waveVectorZ = wave vector of Bloch function in Z direction 
+  void EvaluateConfinementPotentialFactors(double waveVectorZ);
 
   // evaluate magnetic field factors
   //

@@ -45,6 +45,7 @@ using std::endl;
 
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
+#define BLOCH_FACTOR 7.644
 
 
 // constructor from data
@@ -62,8 +63,9 @@ using std::endl;
 // nbrCellY = number of steps in Y direction
 // nbrCellZ = number of steps in Z direction
 // PotentielInput = pointer to a 3D potential with constant value in a cell
+// waveVectorZ = wave vector of Bloch function in Z direction
 
-XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
+XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -108,7 +110,7 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
     }
   cout << "Hamiltonian dimension: " << this->Space->GetHilbertSpaceDimension () << endl;
   cout << "Evaluation of Hamiltionian elements ..." << endl;
-  this->EvaluateInteractionFactors(pairX, pairY);
+  this->EvaluateInteractionFactors(pairX, pairY, waveVectorZ);
   cout << "Evaluation finished ..." << endl;
 }
 
@@ -607,8 +609,8 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		}
 	    }
 
-	  TmpRe += KineticElements[Index1] * vSource.Re(Index1);
-	  TmpIm += KineticElements[Index1] * vSource.Im(Index1);
+	  TmpRe += this->KineticElements[Index1] * vSource.Re(Index1);
+	  TmpIm += this->KineticElements[Index1] * vSource.Im(Index1);
 	  
 	  vDestination.Re(Index1) += TmpRe; 
 	  vDestination.Im(Index1) += TmpIm; 
@@ -634,8 +636,9 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 // 
 // pairX = whether basis is pair in X direction, if not impair
 // pairY = whether basis is pair in Y direction, if not impair
+// waveVectorZ = wave vector of Bloch function in Z direction
 
-void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool pairX, bool pairY)
+void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool pairX, bool pairY, double waveVectorZ)
 {
   if (pairX)    
     this->WaveFunctionOverlapX = this->EvaluateCosinusWaveFunctionOverlap(this->XSize, this->NbrCellX, this->NbrStateX);
@@ -655,7 +658,8 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool 
   double InvXFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Mux * this->XSize * this->XSize);
   double InvYFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muy * this->YSize * this->YSize);
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
-  
+  double ShiftSquareKz = BLOCH_FACTOR * waveVectorZ * waveVectorZ / (2.0 * this->Muz);
+  double ShiftKz = BLOCH_FACTOR * waveVectorZ * 2.0 * M_PI/ (this->Muz * this->ZSize); 
   this->KineticElements = new double[this->Space->GetHilbertSpaceDimension()];
   // this->NbrStateX * this->NbrStateY * this->NbrStateZ this->Space->GetHilbertSpaceDimension()
   double FactorX = 0.0, FactorY = 0.0;
@@ -669,6 +673,7 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool 
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
 	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;
+	      this->KineticElements[TotalIndex] += (ShiftSquareKz + ShiftKz * double(k + this->LowerImpulsionZ));
 	      ++TotalIndex;
 	    }
 	}

@@ -93,7 +93,7 @@ void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPot
   this->PotentialValue[1] = dotPotential;
   for (int k = 0; k < this->NbrCylinderDot; ++k)
     this->PotentialValue[k + 2] = dotPotential;
-  this->PotentialValue[this->NumberZ] = 0.0;
+  this->PotentialValue[this->NumberZ - 1] = 0.0;
 }
 
 // save the whole diagram presentation in a bitmap file

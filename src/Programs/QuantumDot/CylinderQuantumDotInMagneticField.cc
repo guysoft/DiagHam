@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.4);
   SingleDoubleOption MagneticFieldOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
+  SingleDoubleOption WaveVectorOption('w', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
   BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);
@@ -91,6 +92,7 @@ int main(int argc, char** argv)
   OptionList += &ZMassOption;
   OptionList += &DotPotentialOption;
   OptionList += &MagneticFieldOption;
+  OptionList += &WaveVectorOption;
   OptionList += &VectorMemoryOption;
   OptionList += &DiskOption;
   OptionList += &ResumeOption;
@@ -125,6 +127,7 @@ int main(int argc, char** argv)
   double Muz = ZMassOption.GetDouble();
   double DotPotential = DotPotentialOption.GetDouble();
   double MagneticField = MagneticFieldOption.GetDouble();
+  double WaveVector= WaveVectorOption.GetDouble();
   int VectorMemory = VectorMemoryOption.GetInteger();
   bool ResumeFlag = ResumeOption.GetBoolean();
   bool DiskFlag = DiskOption.GetBoolean();
@@ -148,8 +151,8 @@ int main(int argc, char** argv)
   cout << "Minimal impulsions:       " << Space->GetLowerImpulsionZ() << endl;
   cout << "Hilbert space dimension: " << Space->GetHilbertSpaceDimension() << endl;
   
-  // CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, ThreeDConstantCylinderPotential* PotentialInput);
-  CylindricalHamiltonianInMagneticField Hamiltonian(Space, Mur, Muz, MagneticField, potential);
+  // CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVector, ThreeDConstantCylinderPotential* PotentialInput);
+  CylindricalHamiltonianInMagneticField Hamiltonian(Space, Mur, Muz, MagneticField, WaveVector, potential);
   
   gettimeofday (&(PrecalculationEndingTime), 0);
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
@@ -243,13 +246,14 @@ int main(int argc, char** argv)
         {
           ofstream OutputFile;
           OutputFile.precision(14);
-          OutputFile.open("eigenvalues", ios::binary | ios::out);
+          OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
+	  OutputFile << MagneticField << " ";
           for (int i = 0; i < NbrEigenvalue; ++i)
             OutputFile << Eigenvalues[i] << " ";
           OutputFile << endl;
           OutputFile.close();
         }
-      
+      /*
       if ((EigenstateFlag == true) && (Eigenstates != 0))
         {
           char* TmpFileName = new char[256];
@@ -260,7 +264,7 @@ int main(int argc, char** argv)
             }
           delete[] TmpFileName;
         }
-            
+      */      
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
     }

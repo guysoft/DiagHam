@@ -45,6 +45,7 @@ using std::endl;
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 #define PARAMAGNETIC_FACTOR         3.642e-4
 #define DIAMAGNETIC_FACTOR          2.198e-10
+#define BLOCH_FACTOR 7.644
 
 
 // constructor from data
@@ -59,9 +60,10 @@ using std::endl;
 // nbrCellX = number of steps in X direction
 // nbrCellY = number of steps in Y direction
 // nbrCellZ = number of steps in Z direction
-// PotentielInput = pointer to a 3D potential with constant value in a cell
+// PotentialInput = pointer to a 3D potential with constant value in a cell
+// waveVectorZ = wave vector of Bloch function in Z direction
 
-PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonianInMagneticField(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput)
+PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonianInMagneticField(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -94,7 +96,7 @@ PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonia
 	}
     }
   cout << "Evaluating confinement potential ..." << endl;
-  this->EvaluateConfinementPotentialFactors();
+  this->EvaluateConfinementPotentialFactors(waveVectorZ);
   cout << "End of confinement potential evaluation." << endl;
   cout << "Evaluating magnetic field factors ..." << endl;
   this->EvaluateMagneticFieldFactors();
@@ -434,8 +436,9 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
 
 // evaluate confinement potential factors
 //   
+// waveVectorZ = wave vector of Bloch function in Z direction 
 
-void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotentialFactors()
+void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotentialFactors(double waveVectorZ)
 {
   double** RealWaveFunctionOverlapX; double** RealWaveFunctionOverlapY; double** RealWaveFunctionOverlapZ; 
   double** ImaginaryWaveFunctionOverlapX; double** ImaginaryWaveFunctionOverlapY; double** ImaginaryWaveFunctionOverlapZ; 
@@ -450,7 +453,8 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotenti
   double InvXFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Mux * this->XSize * this->XSize);
   double InvYFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muy * this->YSize * this->YSize);
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
-  
+  double ShiftSquareKz = BLOCH_FACTOR * waveVectorZ * waveVectorZ / (2.0 * this->Muz);
+  double ShiftKz = BLOCH_FACTOR * waveVectorZ * 2.0 * M_PI/ (this->Muz * this->ZSize); 
   this->KineticElements = new double[this->Space->GetHilbertSpaceDimension ()];
 
   double FactorX = 0.0, FactorY = 0.0;
@@ -463,7 +467,8 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotenti
 	  FactorY = double((j + this->LowerImpulsionY) * (j + this->LowerImpulsionY)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {	      
-	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;	      
+	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor; 
+	      this->KineticElements[TotalIndex] += (ShiftSquareKz + ShiftKz * double(k + this->LowerImpulsionZ));
 	      ++TotalIndex;
 	    }
 	}

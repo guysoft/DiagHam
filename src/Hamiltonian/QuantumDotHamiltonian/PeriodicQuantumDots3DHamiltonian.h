@@ -127,8 +127,11 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // nbrCellX = number of steps in X direction
   // nbrCellY = number of steps in Y direction
   // nbrCellZ = number of steps in Z direction
-  // PotentielInput = pointer to a 3D potential with constant value in a cell
-  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
+  // PotentialInput = pointer to a 3D potential with constant value in a cell
+  // waveVectorX = wave vector of Bloch function in X direction
+  // waveVectorY = wave vector of Bloch function in Y direction
+  // waveVectorZ = wave vector of Bloch function in Z direction
+  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX = 0.0, double waveVectorY = 0.0, double waveVectorZ = 0.0);
 
   // copy constructor (without duplicating datas)
   //
@@ -229,7 +232,10 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
 
   // evaluate all interaction factors
   // 
-  void EvaluateInteractionFactors();
+  // waveVectorX = wave vector of Bloch function in X direction
+  // waveVectorY = wave vector of Bloch function in Y direction
+  // waveVectorZ = wave vector of Bloch function in Z direction
+  void EvaluateInteractionFactors(double waveVectorX, double waveVectorY, double waveVectorZ);
   
   // evaluate the wave function overlap
   //

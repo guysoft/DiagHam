@@ -43,6 +43,7 @@ using std::endl;
 
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
+#define BLOCH_FACTOR 7.644
 
 
 // constructor from data
@@ -57,9 +58,12 @@ using std::endl;
 // nbrCellX = number of steps in X direction
 // nbrCellY = number of steps in Y direction
 // nbrCellZ = number of steps in Z direction
-// PotentielInput = pointer to a 3D potential with constant value in a cell
+// PotentialInput = pointer to a 3D potential with constant value in a cell
+// waveVectorX = wave vector of Bloch function in X direction
+// waveVectorY = wave vector of Bloch function in Y direction
+// waveVectorZ = wave vector of Bloch function in Z direction
 
-PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
+PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX, double waveVectorY, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -88,7 +92,7 @@ PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOne
 	    this->InteractionFactors[k][j][i] = PotentialInput->GetPotential(i, j, k);
 	}
     }
-  this->EvaluateInteractionFactors();
+  this->EvaluateInteractionFactors(waveVectorX, waveVectorY, waveVectorZ);
 }
 
 
@@ -372,8 +376,14 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
       return vDestination;
     }
 }
-  
-void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
+
+// evaluate all interaction factors
+// 
+// waveVectorX = wave vector of Bloch function in X direction
+// waveVectorY = wave vector of Bloch function in Y direction
+// waveVectorZ = wave vector of Bloch function in Z direction  
+
+void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors(double waveVectorX, double waveVectorY, double waveVectorZ)
 {
   if (!this->EvaluateWaveFunctionOverlap(this->NbrCellX, this->NbrStateX, this->RealWaveFunctionOverlapX, this->ImaginaryWaveFunctionOverlapX))
     cout << "Error in evaluation of function overlap in X direction. Stop!" << endl;  
@@ -385,7 +395,11 @@ void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
   double InvXFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Mux * this->XSize * this->XSize);
   double InvYFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muy * this->YSize * this->YSize);
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
-  
+
+  double ShiftSquareK = BLOCH_FACTOR * (waveVectorX * waveVectorX / (2.0 * this->Mux) + waveVectorY * waveVectorY / (2.0 * this->Muy) + waveVectorZ * waveVectorZ / (2.0 * this->Muz));
+  double ShiftKx = BLOCH_FACTOR * waveVectorX * 2.0 * M_PI/ (this->Mux * this->XSize); 
+  double ShiftKy = BLOCH_FACTOR * waveVectorY * 2.0 * M_PI/ (this->Muy * this->YSize); 
+  double ShiftKz = BLOCH_FACTOR * waveVectorZ * 2.0 * M_PI/ (this->Muz * this->ZSize); 
   this->KineticElements = new double[this->Space->GetHilbertSpaceDimension ()];
 
   double FactorX = 0.0, FactorY = 0.0;
@@ -398,7 +412,8 @@ void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
 	  FactorY = double((j + this->LowerImpulsionY) * (j + this->LowerImpulsionY)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {	      
-	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;	      
+	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;	  
+	      this->KineticElements[TotalIndex] += (ShiftSquareK + ShiftKx * double(i + this->LowerImpulsionX) + ShiftKy * double(j + this->LowerImpulsionY) + ShiftKz * double(k + this->LowerImpulsionZ));
 	      ++TotalIndex;
 	    }
 	}

@@ -5,5 +5,6 @@ noinst_LIBRARIES=libQuantumDotHamiltonian.a
 libQuantumDotHamiltonian_a_SOURCES=QuantumDots3DHamiltonian.cc \
 PeriodicQuantumDots3DHamiltonian.cc \
 XYReflexionSymmetricPeriodic3DHamiltonian.cc \
+ReflexionSymmetricPeriodic3DHamiltonian.cc \
 PeriodicQuantumDots3DHamiltonianInMagneticField.cc \
 CylindricalHamiltonianInMagneticField.cc

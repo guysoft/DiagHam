@@ -12,8 +12,10 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/InPlaneReflexionSymmetricPeriodic3DOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
+#include "Hamiltonian/QuantumDotHamiltonian/ReflexionSymmetricPeriodic3DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
@@ -152,7 +154,9 @@ int main(int argc, char** argv)
   // ConstructPotential(double wellPotential, double dotPotential)
   potential->ConstructPotential(WellPotential, DotPotential);
   //potential->LoadPotential("DotPotential.txt");
-  
+
+  InPlaneReflexionSymmetricPeriodic3DOneParticle* Space = new InPlaneReflexionSymmetricPeriodic3DOneParticle(PairX, M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);
+  /*
   // define Hilbert space
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
@@ -166,7 +170,7 @@ int main(int argc, char** argv)
       Space = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);     
     else
       Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);    
-  
+  */
   //Periodic3DOneParticle* Space = new Periodic3DOneParticle((M / 4) * 2 + 1, -M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);
 
   timeval PrecalculationStartingTime;
@@ -178,7 +182,8 @@ int main(int argc, char** argv)
   cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
   cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
 
-  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  ReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);  
+  // XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
   //PeriodicQuantumDots3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
 
   cout << endl;

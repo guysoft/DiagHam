@@ -4,6 +4,7 @@ noinst_LIBRARIES=libQuantumDotHilbertSpace.a
 
 libQuantumDotHilbertSpace_a_SOURCES=Confined3DOneParticle.cc \
 Periodic3DOneParticle.cc \
+InPlaneReflexionSymmetricPeriodic3DOneParticle.cc \
 XYReflexionSymmetricPeriodic3DOneParticle.cc \
 ImpairXImpairYPeriodic3DOneParticle.cc \
 ImpairXPairYPeriodic3DOneParticle.cc \
