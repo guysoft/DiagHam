@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/SpinHamiltonian/SpinChainHamiltonianWithTranslations.h"
+#include "Hamiltonian/SpinHamiltonian/NDMAPSpinChainHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -47,17 +47,26 @@ using std::ostream;
 
 // constructor from default datas
 //
-// chain = reference on Hilbert space of the associated system
+// chain = pointer to Hilbert space of the associated system
 // nbrSpin = number of spin
-// j = coupling constant between spin
+// j = coupling constants between spins
+// jz = coupling constants between spins in the z direction
+// parallelMagneticField = magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction parallel to the chain
+// perpendicularMagneticField = magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction perpendicular to the chain
+// d = single ion anisotropy constant
 
-SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j)
+NDMAPSpinChainHamiltonian::NDMAPSpinChainHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double jz, double parallelMagneticField, 
+						     double perpendicularMagneticField, double d)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->J = j;
   this->HalfJ = this->J * 0.5;
-  this->Jz = this->J;
+  this->Jz = jz;
+  this->ParallelMagneticField = parallelMagneticField;
+  this->HalfParallelMagneticField = 0.5 * this->ParallelMagneticField;
+  this->PerpendicularMagneticField = perpendicularMagneticField;
+  this->D = d;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
   this->EvaluateCosinusTable();
@@ -66,7 +75,7 @@ SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(Abstr
 // destructor
 //
 
-SpinChainHamiltonianWithTranslations::~SpinChainHamiltonianWithTranslations() 
+NDMAPSpinChainHamiltonian::~NDMAPSpinChainHamiltonian() 
 {
   delete[] this->SzSzContributions;
   delete[] this->CosinusTable;
@@ -77,7 +86,7 @@ SpinChainHamiltonianWithTranslations::~SpinChainHamiltonianWithTranslations()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void SpinChainHamiltonianWithTranslations::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void NDMAPSpinChainHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->SzSzContributions;
   this->Chain = (AbstractSpinChainWithTranslations*) hilbertSpace;
@@ -89,7 +98,7 @@ void SpinChainHamiltonianWithTranslations::SetHilbertSpace (AbstractHilbertSpace
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* SpinChainHamiltonianWithTranslations::GetHilbertSpace ()
+AbstractHilbertSpace* NDMAPSpinChainHamiltonian::GetHilbertSpace ()
 {
   return this->Chain;
 }
@@ -99,7 +108,7 @@ AbstractHilbertSpace* SpinChainHamiltonianWithTranslations::GetHilbertSpace ()
 // chain = reference on Hilbert space of the associated system
 // return value = reference on current Hamiltonian
 
-SpinChainHamiltonianWithTranslations& SpinChainHamiltonianWithTranslations::SetChain(AbstractSpinChainWithTranslations* chain)
+NDMAPSpinChainHamiltonian& NDMAPSpinChainHamiltonian::SetChain(AbstractSpinChainWithTranslations* chain)
 {  
   delete[] this->SzSzContributions;
   this->Chain = chain;
@@ -112,7 +121,7 @@ SpinChainHamiltonianWithTranslations& SpinChainHamiltonianWithTranslations::SetC
 //
 // return value = corresponding matrix elementdimension
 
-int SpinChainHamiltonianWithTranslations::GetHilbertSpaceDimension ()
+int NDMAPSpinChainHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Chain->GetHilbertSpaceDimension();
 }
@@ -121,7 +130,7 @@ int SpinChainHamiltonianWithTranslations::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void SpinChainHamiltonianWithTranslations::ShiftHamiltonian (double shift)
+void NDMAPSpinChainHamiltonian::ShiftHamiltonian (double shift)
 {
   for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i ++)
     this->SzSzContributions[i] += shift;
@@ -133,7 +142,7 @@ void SpinChainHamiltonianWithTranslations::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex SpinChainHamiltonianWithTranslations::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex NDMAPSpinChainHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   return Complex(0);
 }
@@ -144,7 +153,7 @@ Complex SpinChainHamiltonianWithTranslations::MatrixElement (RealVector& V1, Rea
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex SpinChainHamiltonianWithTranslations::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex NDMAPSpinChainHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   Complex Z (0.0, 0.0);
   Complex TmpZ;
@@ -180,13 +189,33 @@ Complex SpinChainHamiltonianWithTranslations::MatrixElement (ComplexVector& V1, 
 				(V2.Im(i) * this->CosinusTable[NbrTranslation]));
 	      Z += Conj(V1[pos]) * TmpZ;
 	    }
+/*	  pos = this->Chain->SpiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	      TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	      Z += Conj(V1[pos]) * TmpZ;
+	    }
+	  pos = this->Chain->SmiSmj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+				(V2.Im(i) * this->SinusTable[NbrTranslation]));
+	      TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+				(V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	      Z += Conj(V1[pos]) * TmpZ;
+	    }*/
 	}    
       pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
       if (pos != this->Chain->GetHilbertSpaceDimension())
 	{
 	  Coef *= this->HalfJ;
-	  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
-			    (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	  TmpZ.Re =Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+			   (V2.Im(i) * this->SinusTable[NbrTranslation]));
 	  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
 			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
 	  Z += Conj(V1[pos]) * TmpZ;
@@ -201,6 +230,55 @@ Complex SpinChainHamiltonianWithTranslations::MatrixElement (ComplexVector& V1, 
 			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
 	  Z += Conj(V1[pos]) * TmpZ;
 	}      
+/*      pos = this->Chain->SpiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  TmpZ.Re =Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+			   (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	  Z += Conj(V1[pos]) * TmpZ;
+	}
+      pos = this->Chain->SmiSmj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  TmpZ.Re = Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+			    (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	  TmpZ.Im = Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+			    (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	  Z += Conj(V1[pos]) * TmpZ;
+	}      */
+    }
+  if (this->ParallelMagneticField != 0.0)
+    {
+      for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i++)
+	{
+	  for (int j = 0; j < this->NbrSpin; j++)
+	    {
+	      pos = this->Chain->Spi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  TmpZ.Re = Coef * ((this->CosinusTable[NbrTranslation] * V2.Re(i))
+				    - (this->SinusTable[NbrTranslation] * V2.Im(i)));
+		  TmpZ.Im = Coef * ((this->SinusTable[NbrTranslation] * V2.Re(i))
+				    + (this->CosinusTable[NbrTranslation] * V2.Im(i)));
+		  Z += Conj(V1[pos]) * TmpZ;
+		}
+	      pos = this->Chain->Smi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  TmpZ.Re = Coef * ((this->CosinusTable[NbrTranslation] * V2.Re(i))
+				    - (this->SinusTable[NbrTranslation] * V2.Im(i)));
+		  TmpZ.Im = Coef * ((this->SinusTable[NbrTranslation] * V2.Re(i))
+				    + (this->CosinusTable[NbrTranslation] * V2.Im(i)));
+		  Z += Conj(V1[pos]) * TmpZ;
+		}
+	    }
+	}
     }
   return Z;
 }
@@ -214,7 +292,7 @@ Complex SpinChainHamiltonianWithTranslations::MatrixElement (ComplexVector& V1, 
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& NDMAPSpinChainHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
   double Coef;
@@ -246,9 +324,27 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVec
 	      Coef *= this->HalfJ;
 	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
 					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	      vDestination.Im(pos) +=Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					     (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
 	    }
+/*	  pos = this->Chain->SmiSmj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	  pos = this->Chain->SpiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }*/
 	}    
       pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
       if (pos != this->Chain->GetHilbertSpaceDimension())
@@ -268,6 +364,51 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVec
 	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
 					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
 	}      
+/*      pos = this->Chain->SpiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}
+      pos = this->Chain->SmiSmj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}      */
+    }
+  if (this->ParallelMagneticField != 0.0)
+    {
+      for (int i = firstComponent; i < Last; i++)
+	{
+	  for (int j = 0; j < this->NbrSpin; j++)
+	    {
+	      pos = this->Chain->Spi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  vDestination.Re(pos) += Coef * ((this->CosinusTable[NbrTranslation] * vSource.Re(i))
+						  - (this->SinusTable[NbrTranslation] * vSource.Im(i)));
+		  vDestination.Im(pos) += Coef * ((this->SinusTable[NbrTranslation] * vSource.Re(i))
+						  + (this->CosinusTable[NbrTranslation] * vSource.Im(i)));
+		}
+	      pos = this->Chain->Smi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  vDestination.Re(pos) += Coef * ((this->CosinusTable[NbrTranslation] * vSource.Re(i))
+						  - (this->SinusTable[NbrTranslation] * vSource.Im(i)));
+		  vDestination.Im(pos) += Coef * ((this->SinusTable[NbrTranslation] * vSource.Re(i))
+						  + (this->CosinusTable[NbrTranslation] * vSource.Im(i)));
+		}
+	    }
+	}
     }
   return vDestination;
 }
@@ -281,7 +422,7 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVec
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& NDMAPSpinChainHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 									 int firstComponent, int nbrComponent)
 {
   double Coef;
@@ -291,13 +432,13 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(Complex
   int Last = firstComponent + nbrComponent;
   for (int i = firstComponent; i < Last; i++)
     {
-       vDestination.Re(i) += this->SzSzContributions[i] * vSource.Re(i);
-       vDestination.Im(i) += this->SzSzContributions[i] * vSource.Im(i);
-     for (int j = 0; j < MaxPos; j++)
+      vDestination.Re(i) += this->SzSzContributions[i] * vSource.Re(i);
+      vDestination.Im(i) += this->SzSzContributions[i] * vSource.Im(i);
+      for (int j = 0; j < MaxPos; j++)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
-	  if (pos != this->Chain->GetHilbertSpaceDimension())
-	    {
+	   pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	   if (pos != this->Chain->GetHilbertSpaceDimension())
+	     {
 	      Coef *= this->HalfJ;
 	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
 					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
@@ -313,16 +454,25 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(Complex
 	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
 					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
 	    }
+/*	  pos = this->Chain->SpiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	  pos = this->Chain->SmiSmj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      Coef *= this->;
+	      vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }*/
 	}    
-      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
-      if (pos != this->Chain->GetHilbertSpaceDimension())
-	{
-	  Coef *= this->HalfJ;
-	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
-					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
-	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
-					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
-	}
       pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
       if (pos != this->Chain->GetHilbertSpaceDimension())
 	{
@@ -331,7 +481,61 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(Complex
 					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
 	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
 					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->HalfJ;
+	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
 	}      
+/*      pos = this->Chain->SpiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}
+      pos = this->Chain->SmiSmj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  Coef *= this->;
+	  vDestination.Re(pos) += Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}      */
+    }
+  if (this->ParallelMagneticField != 0.0)
+    {
+      for (int i = firstComponent; i < Last; i++)
+	{
+	  for (int j = 0; j < this->NbrSpin; j++)
+	    {
+	      pos = this->Chain->Spi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  vDestination.Re(pos) += Coef * ((this->CosinusTable[NbrTranslation] * vSource.Re(i))
+						  - (this->SinusTable[NbrTranslation] * vSource.Im(i)));
+		  vDestination.Im(pos) += Coef * ((this->SinusTable[NbrTranslation] * vSource.Re(i))
+						  + (this->CosinusTable[NbrTranslation] * vSource.Im(i)));
+		}
+	      pos = this->Chain->Smi(j, i, Coef, NbrTranslation);
+	      if (pos != this->Chain->GetHilbertSpaceDimension())
+		{
+		  Coef *= this->HalfParallelMagneticField;
+		  vDestination.Re(pos) += Coef * ((this->CosinusTable[NbrTranslation] * vSource.Re(i))
+						  - (this->SinusTable[NbrTranslation] * vSource.Im(i)));
+		  vDestination.Im(pos) += Coef * ((this->SinusTable[NbrTranslation] * vSource.Re(i))
+						  + (this->CosinusTable[NbrTranslation] * vSource.Im(i)));
+		}
+	    }
+	}
     }
   return vDestination;
 }
@@ -340,7 +544,7 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(Complex
 //
 // return value = list of left interaction operators
 
-List<Matrix*> SpinChainHamiltonianWithTranslations::LeftInteractionOperators()
+List<Matrix*> NDMAPSpinChainHamiltonian::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -350,7 +554,7 @@ List<Matrix*> SpinChainHamiltonianWithTranslations::LeftInteractionOperators()
 //
 // return value = list of right interaction operators
 
-List<Matrix*> SpinChainHamiltonianWithTranslations::RightInteractionOperators()
+List<Matrix*> NDMAPSpinChainHamiltonian::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -359,7 +563,7 @@ List<Matrix*> SpinChainHamiltonianWithTranslations::RightInteractionOperators()
 // evaluate all cosinus/sinus that are needed when computing matrix elements
 //
 
-void SpinChainHamiltonianWithTranslations::EvaluateCosinusTable()
+void NDMAPSpinChainHamiltonian::EvaluateCosinusTable()
 {
   this->CosinusTable = new double [this->NbrSpin];
   this->SinusTable = new double [this->NbrSpin];
@@ -374,10 +578,10 @@ void SpinChainHamiltonianWithTranslations::EvaluateCosinusTable()
 // evaluate diagonal matrix elements
 // 
 
-void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
+void NDMAPSpinChainHamiltonian::EvaluateDiagonalMatrixElements()
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
-
+  double HalfMagneticField = 0.5 * this->PerpendicularMagneticField;
   for (int i = 0; i < dim; i++)
     {
       this->SzSzContributions[i] = 0.0;
@@ -387,6 +591,8 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 	}
       this->SzSzContributions[i] += this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
       this->SzSzContributions[i] *= this->Jz;
+      this->SzSzContributions[i] += HalfMagneticField * ((double) this->Chain->TotalSz(i));
+      this->SzSzContributions[i] += this->D * this->Chain->TotalSzSz(i);      
     }
 }
 
@@ -396,7 +602,7 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H) 
+ostream& operator << (ostream& Str, NDMAPSpinChainHamiltonian& H) 
 {
   ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
   ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];
@@ -429,7 +635,7 @@ ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H)
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonianWithTranslations& H) 
+MathematicaOutput& operator << (MathematicaOutput& Str, NDMAPSpinChainHamiltonian& H) 
 {
   ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
   ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];

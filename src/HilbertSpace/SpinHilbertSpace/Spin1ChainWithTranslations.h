@@ -67,7 +67,7 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   int* NbrStateInOrbit;
 
   // flag to indicate if the total sz component is fixed
-  bool FixedQuantumNumberFlag;
+  bool FixedSpinProjectionFlag;
   //  total sz component (if fixed)
   int Sz;
   
@@ -140,6 +140,12 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = pointer to corresponding quantum number
   AbstractQuantumNumber* GetQuantumNumber (int index);
 
+  // return value of the value of the sum of the square of spin projection on (Oz) 
+  //
+  // index = index of the state to test
+  // return value = twice spin projection on (Oz)
+  double TotalSzSz (int index);
+
   // get the momentum of each state in the current Hilbert space
   //
   // return value = momentum value
@@ -169,6 +175,24 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = index of resulting state
   int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation);
 
+  // return index of resulting state from application of S+_i operator on a given state (only valid if there is no constraint on total Sz)
+  //
+  // i = operator position
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  int Spi (int i, int state, double& coefficient, int& nbrTranslation);
+
+  // return index of resulting state from application of S-_i operator on a given state (only valid if there is no constraint on total Sz)
+  //
+  // i = operator position
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  int Smi (int i, int state, double& coefficient, int& nbrTranslation);
+    
   // return index of resulting state from application of S+_i S+_j operator on a given state
   //
   // i = position of first S+ operator

@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libSpinHamiltonian.a
 
-libSpinHamiltonian_a_SOURCES = AnisotropicSpinChainHamiltonian.cc AKLTHamiltonian.cc DiamondSpinChainHamiltonian.cc DoubleTriangleSpinChainHamiltonian.cc Mn12Hamiltonian.cc OpenDiamondSpinChainHamiltonian.cc PeriodicSpinChainHamiltonian.cc PeriodicAnisotropicSpinChainHamiltonian.cc PeriodicSandGlassSpinChainHamiltonian.cc PeriodicXXZSpinChainHamiltonian.cc SpinChainHamiltonian.cc SpinChainHamiltonianWithTranslations.cc SandGlassSpinChainHamiltonian.cc MultipleSpinChainHamiltonian.cc TriangleSpinChainHamiltonian.cc V15Hamiltonian.cc XXZSpinChainHamiltonian.cc PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc SpinChainHamiltonianWithTranslations
+libSpinHamiltonian_a_SOURCES = AnisotropicSpinChainHamiltonian.cc AKLTHamiltonian.cc DiamondSpinChainHamiltonian.cc DoubleTriangleSpinChainHamiltonian.cc Mn12Hamiltonian.cc OpenDiamondSpinChainHamiltonian.cc PeriodicSpinChainHamiltonian.cc PeriodicAnisotropicSpinChainHamiltonian.cc PeriodicSandGlassSpinChainHamiltonian.cc PeriodicXXZSpinChainHamiltonian.cc SpinChainHamiltonian.cc SpinChainHamiltonianWithTranslations.cc SandGlassSpinChainHamiltonian.cc MultipleSpinChainHamiltonian.cc TriangleSpinChainHamiltonian.cc V15Hamiltonian.cc XXZSpinChainHamiltonian.cc PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc SpinChainHamiltonianWithTranslations.cc NDMAPSpinChainHamiltonian.cc 
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -94,7 +94,8 @@ PeriodicXXZSpinChainHamiltonian.o SpinChainHamiltonian.o \
 SpinChainHamiltonianWithTranslations.o SandGlassSpinChainHamiltonian.o \
 MultipleSpinChainHamiltonian.o TriangleSpinChainHamiltonian.o \
 V15Hamiltonian.o XXZSpinChainHamiltonian.o \
-PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.o
+PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.o \
+SpinChainHamiltonianWithTranslations.o NDMAPSpinChainHamiltonian.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -110,7 +111,7 @@ DEP_FILES =  .deps/AKLTHamiltonian.P \
 .deps/AnisotropicSpinChainHamiltonian.P \
 .deps/DiamondSpinChainHamiltonian.P \
 .deps/DoubleTriangleSpinChainHamiltonian.P .deps/Mn12Hamiltonian.P \
-.deps/MultipleSpinChainHamiltonian.P \
+.deps/MultipleSpinChainHamiltonian.P .deps/NDMAPSpinChainHamiltonian.P \
 .deps/OpenDiamondSpinChainHamiltonian.P \
 .deps/PeriodicAnisotropicSpinChainHamiltonian.P \
 .deps/PeriodicSandGlassSpinChainHamiltonian.P \

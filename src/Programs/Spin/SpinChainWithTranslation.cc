@@ -69,14 +69,14 @@ int main(int argc, char** argv)
   int NbrProcessor = SMPNbrProcessorOption.GetInteger();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-/*  for (int i = 0; i < NbrSpinPerChain; ++i)
+/*  for (int i = 0; i < NbrSpin; ++i)
     {
       Spin1ChainWithTranslations Chain(NbrSpin, i, 0, 10000000, 10000000);
       cout << "--------------------------------------------" << endl;
       cout << "momentum = " << i << endl;
       cout << "dimension = " << Chain.GetHilbertSpaceDimension() << endl;
-//      for (int i = 0; i < Chain.GetHilbertSpaceDimension(); ++i)
-//	Chain.PrintState(cout, i) << endl;
+      for (int j = 0; j < Chain.GetHilbertSpaceDimension(); ++j)
+	Chain.PrintState(cout, j) << " " << Chain.TotalSzSz(j) << endl;
     }*/
   double* CouplingConstants = new double[NbrSpin + 1];
   for (int i = 0; i <= NbrSpin; ++i)

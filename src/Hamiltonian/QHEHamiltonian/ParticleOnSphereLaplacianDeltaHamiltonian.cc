@@ -456,7 +456,7 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   Coef.FactorialMultiply(this->LzMax + 1);
   Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
   Coef.FactorialMultiply(this->LzMax + 1);
-  double TmpV = Coef.GetNumericalValue();
+  double TmpV = 1.0;//Coef.GetNumericalValue();
   cout << "TmpV = " << TmpV << endl;
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J = 2 * this->LzMax - 2;

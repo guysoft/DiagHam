@@ -52,7 +52,13 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   //
   // Str = reference on current output stream 
   // return value = spin projection on (Oz)
-  int TotalSz (int state);
+  virtual int TotalSz (int state) = 0;
+
+  // return value of the value of the sum of the square of spin projection on (Oz) 
+  //
+  // index = index of the state to test
+  // return value = twice spin projection on (Oz)
+  virtual double TotalSzSz (int index) = 0;
 
   // get the momentum of each state in the current Hilbert space
   //
@@ -117,6 +123,24 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   // return value = index of resulting state (orbit index)
   virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
 
+  // return index of resulting state from application of S+_i operator on a given state (only valid if there is no constraint on total Sz)
+  //
+  // i = operator position
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int Spi (int i, int state, double& coefficient, int& nbrTranslation) = 0;
+
+  // return index of resulting state from application of S-_i operator on a given state (only valid if there is no constraint on total Sz)
+  //
+  // i = operator position
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int Smi (int i, int state, double& coefficient, int& nbrTranslation) = 0;
+    
   // find state index
   //
   // state = state description
