@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
-  for (int i = 0; i < 3; ++i)
+  for (int i = 1; i < 4; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");

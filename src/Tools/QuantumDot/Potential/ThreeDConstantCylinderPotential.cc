@@ -25,6 +25,7 @@
 
 
 #include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
+#include "Tools/QuantumDot/Potential/OneDConstantCellPotential.h"
 
 #include <iostream>
 #include <fstream>
@@ -85,4 +86,25 @@ void ThreeDConstantCylinderPotential::SavePotential(char* fileName)
 
 void ThreeDConstantCylinderPotential::LoadPotential(char* fileName)
 {
+}
+
+// get a 1-D potential by averaging through a gaussian weight
+//
+// sigma = the variance of the gaussian function
+// return = pointer to the one dimension potential
+
+OneDConstantCellPotential* ThreeDConstantCylinderPotential::GaussianReductionOneDimension(double sigma)
+{
+  double* cellWidth = new double [this->NumberZ];
+  double* potentialValue = new double [this->NumberZ];
+  for (int k = 0; k < this->NumberZ; ++k)
+    {
+      cellWidth[k] = this->CylinderHeight[k];
+      if (this->CylinderRadius[k] >= 0.0)
+	potentialValue[k] = this->PotentialValue[k] * (1.0 - exp(-this->CylinderRadius[k] * this->CylinderRadius[k] / (sigma * sigma)));
+      else
+	potentialValue[k] = this->PotentialValue[k];						      
+    }
+  OneDConstantCellPotential* potential = new OneDConstantCellPotential (this->NumberZ, cellWidth, potentialValue);
+  return potential;
 }

@@ -90,6 +90,7 @@ class QuantumDotThreeDConstantCylinderPotential : public ThreeDConstantCylinderP
   //
   // fileName = name of the file to stock the diagram presentation
   virtual void SaveBmpPicture(char* fileName);
+
 };
 
 #endif

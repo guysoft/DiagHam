@@ -34,6 +34,7 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
+  /*
   cout.precision(14);  
   OptionManager Manager ("AllSpectra" , "0.01");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
@@ -139,8 +140,8 @@ int main(int argc, char** argv)
       Electron << '\n'; Hole << '\n';
     }
   Electron.close(); Hole.close();
+  */
   
-  /*
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
@@ -193,7 +194,7 @@ int main(int argc, char** argv)
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
  
-  
+  /*
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(40, 40, 21, -10);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -420,18 +421,19 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
-/*
-  int Nbr = 1;
-  char** Files = new char* [Nbr]; int* State = new int[Nbr];
-  for (int i = 0; i < Nbr; ++i)
+  char** Files = new char* [Number]; int* State = new int[Number];
+  for (int i = 0; i < Number; ++i)
     {
-      State[i] = 99;
+      State[i] = 2;
       Files[i] = new char[80];
-      Files[i] = FileName;
+      if (i < 9)
+        AddString(Files[i], "./0.00", i + 1, "/PolarizationZ.txt");
+      else
+        AddString(Files[i], "./0.0", i + 1, "/PolarizationZ.txt");
+      cout << Files[i] << endl; 
     }
-  Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.6, 2e-4);
+  Spectra Absorption (Number, Files, State, 4e-3, 0.0, 0.6, 2e-4);
   Absorption.WriteSpectra(out);
-*/
 
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 

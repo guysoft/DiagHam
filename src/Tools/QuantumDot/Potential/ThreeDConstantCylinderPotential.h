@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/QuantumDot/Potential/AbstractPotential.h"
 
+class OneDConstantCellPotential;
 
 class ThreeDConstantCylinderPotential : public AbstractPotential
 {
@@ -114,6 +115,12 @@ class ThreeDConstantCylinderPotential : public AbstractPotential
   //  k = z coordinate of the considered cylinder
   // return value = the radius of the cylinder
   virtual double GetRadius(int k);
+
+  // get a 1-D potential by averaging through a gaussian weight
+  //
+  // sigma = the variance of the gaussian function
+  // return = pointer to the one dimension potential
+  virtual OneDConstantCellPotential* GaussianReductionOneDimension(double sigma);
 
 };
 

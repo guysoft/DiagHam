@@ -113,3 +113,4 @@ void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPot
 void QuantumDotThreeDConstantCylinderPotential::SaveBmpPicture(char* fileName)
 {
 }
+

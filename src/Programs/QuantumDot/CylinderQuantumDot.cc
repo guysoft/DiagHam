@@ -14,9 +14,11 @@
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 
-#include "Architecture/MonoProcessorArchitecture.h"
-#include "Architecture/SMPArchitecture.h"
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
@@ -43,105 +45,93 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {  
- 
-  // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
   cout.precision(14);
-  // some running options and help  
-  BooleanOption HelpOption ('h', "help", "display this help");
-  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
-  BooleanOption EigenstateOption ('e', "eigenstate", "evaluate eigenstates", false);
-  SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 50);
-  SingleIntegerOption NumberRValueOption ('R', "R-states", "number of states in plane", 100);
-  SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of cells in z direction", 100);
-  SingleIntegerOption NumberMValueOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
+  OptionManager Manager ("CylinderQuantumDotInMagneticField" , "0.01");
+  OptionGroup* PotentialGroup = new OptionGroup ("potential options");
+  OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
+  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
-  SingleDoubleOption SuperCylinderRadiusOption ('\n', "radius", "radius of the supercylinder (in Angstrom unit)", 1000);
-  SingleDoubleOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 11.3);
-  SingleDoubleOption BelowValueOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 0.0);
-  SingleDoubleOption WettingWidthOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 8.0);
-  SingleIntegerOption NumberDotOption('\n', "nbr-dot", "number of uniformly high layer in the dot", 3);
-  SingleDoubleOption BaseRadiusOption ('\n', "base", "base radius in Angstrom unit", 100);
-  SingleDoubleOption DotHeightOption ('\n', "height", "height of dot in Angstrom unit", 18);
-  SingleDoubleOption TopRadiusOption ('\n', "top", "top radius in Anstrom unit", 74);
-  SingleDoubleOption AboveValueOption ('\n', "above", "width of the layer above the dot layer (in Angstrom unit)", 100.0);
+  ArchitectureManager Architecture;
 
-  SingleDoubleOption RMassOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
-  SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
-  SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.4);
-  SingleDoubleOption WellPotentialOption ('\n', "well", "potential in the well", 1.079);
-  SingleDoubleOption WaveVectorOption('k', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
-  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
-  BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
-  SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);
-  SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 60);
+  Architecture.AddOptionGroup(&Manager);
+  Manager += PotentialGroup;
+  Manager += HilbertSpaceGroup;
+  Manager += LanczosGroup;
+  Manager += MiscGroup;
 
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "radius", "radius of the supercylinder (in Angstrom unit)", 1000);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "barrier", "number of cells in the well barrier", 10.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 10.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 5.0);
+  (*PotentialGroup) += new SingleIntegerOption ('\n', "nbr-dot", "number of uniformly high layer in the dot", 3);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "base", "base radius in Angstrom unit", 100.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "height", "height of dot in Angstrom unit", 17.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "top", "top radius in Anstrom unit", 74.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "above", "width of the layer above the dot layer (in Angstrom unit)", 70.0);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot", "potential in the dot", -0.4);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "well", "potential in the well", 1.079);
 
-  List<AbstractOption*> OptionList;
-  OptionList += &HelpOption;
-  OptionList += &SMPOption;
-  OptionList += &EigenstateOption;
-  OptionList += &IterationOption;
-  OptionList += &NbrEigenvaluesOption;
-  OptionList += &NumberRValueOption;
-  OptionList += &NumberZValueOption;
-  OptionList += &NumberMValueOption;
-  OptionList += &SuperCylinderRadiusOption;
-  OptionList += &UnderBarrierValueOption;
-  OptionList += &BelowValueOption;
-  OptionList += &WettingWidthOption;
-  OptionList += &NumberDotOption;
-  OptionList += &BaseRadiusOption;
-  OptionList += &DotHeightOption;
-  OptionList += &TopRadiusOption;
-  OptionList += &AboveValueOption;
-  OptionList += &RMassOption;
-  OptionList += &ZMassOption;
-  OptionList += &DotPotentialOption;
-  OptionList += &WellPotentialOption;
-  OptionList += &WaveVectorOption;
-  OptionList += &VectorMemoryOption;
-  OptionList += &DiskOption;
-  OptionList += &ResumeOption;
-  OptionList += &NbrIterationOption;
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('R', "R-states", "number of states in plane", 50);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('Z', "Z-states", "number of cells in z direction", 21);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowz", "lower impulsion in z direction", -10);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('k', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
 
-  if (ProceedOptions(argv, argc, OptionList) == false)
+  (*LanczosGroup) += new SingleIntegerOption ('n', "nbr-eigen", "number of eigenvalues", 10);
+  (*LanczosGroup) += new BooleanOption ('e', "eigenstate", "evaluate eigenstates", false);
+  (*LanczosGroup) += new SingleIntegerOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup) += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
+  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 500);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);  
+
+  (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
+  (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false); 
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
       return -1;
     }
-  if (HelpOption.GetBoolean() == true)
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
-      DisplayHelp (OptionList, cout);
+      Manager.DisplayHelp (cout);
       return 0;
     }
 
-  bool SMPFlag = SMPOption.GetBoolean();
-  bool EigenstateFlag = EigenstateOption.GetBoolean();
-  int MaxNbrIterLanczos = IterationOption.GetInteger();
-  int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrStateR = NumberRValueOption.GetInteger();
-  int NbrStateZ = NumberZValueOption.GetInteger();
-  int NumberM = NumberMValueOption.GetInteger();
-  double SuperCylinderRadius = SuperCylinderRadiusOption.GetDouble();
-  double Barrier = UnderBarrierValueOption.GetDouble();
-  double Below = BelowValueOption.GetDouble();
-  double WettingWidth = WettingWidthOption.GetDouble();
-  double BaseRadius = BaseRadiusOption.GetDouble();
-  double DotHeight = DotHeightOption.GetDouble();
-  int DotNbr = NumberDotOption.GetInteger();
-  double TopRadius = TopRadiusOption.GetDouble();
-  double Above = AboveValueOption.GetDouble();
-  double Mur = RMassOption.GetDouble();
-  double Muz = ZMassOption.GetDouble();
-  double DotPotential = DotPotentialOption.GetDouble();
-  double WellPotential = WellPotentialOption.GetDouble();
-  double WaveVector= WaveVectorOption.GetDouble();
-  int VectorMemory = VectorMemoryOption.GetInteger();
-  bool ResumeFlag = ResumeOption.GetBoolean();
-  bool DiskFlag = DiskOption.GetBoolean();
-  int NbrIterLanczos = NbrIterationOption.GetInteger();
-  
+  double SuperCylinderRadius = ((SingleDoubleOption*) Manager["radius"])->GetDouble();
+  double Barrier = ((SingleDoubleOption*) Manager["barrier"])->GetDouble();
+  double Below = ((SingleDoubleOption*) Manager["below"])->GetDouble();
+  double WettingWidth = ((SingleDoubleOption*) Manager["wetting"])->GetDouble();
+  double BaseRadius = ((SingleDoubleOption*) Manager["base"])->GetDouble();
+  double DotHeight = ((SingleDoubleOption*) Manager["height"])->GetDouble();
+  int DotNbr = ((SingleIntegerOption*) Manager["nbr-dot"])->GetInteger();
+  double TopRadius = ((SingleDoubleOption*) Manager["top"])->GetDouble();
+  double Above = ((SingleDoubleOption*) Manager["above"])->GetDouble();
+  double DotPotential = ((SingleDoubleOption*) Manager["dot"])->GetDouble();
+  double WellPotential = ((SingleDoubleOption*) Manager["well"])->GetDouble();
+
+  int NbrStateR = ((SingleIntegerOption*) Manager["R-states"])->GetInteger();
+  int NbrStateZ = ((SingleIntegerOption*) Manager["Z-states"])->GetInteger();
+  int LowImpulsionZ = ((SingleIntegerOption*) Manager["lowz"])->GetInteger();
+  int NumberM = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
+  double Mur = ((SingleDoubleOption*) Manager["mu-r"])->GetDouble();
+  double Muz = ((SingleDoubleOption*) Manager["mu-z"])->GetDouble();
+  double WaveVector = ((SingleDoubleOption*) Manager["wave"])->GetDouble();
+
+  int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();   
+  bool EigenstateFlag = ((BooleanOption*) Manager["eigenstate"])->GetBoolean();
+  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
+  bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
+  bool ResumeFlag = ((BooleanOption*) Manager["resume"])->GetBoolean();
+  int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
+
+  bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
+
   // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, SuperCylinderRadius);
   // void ConstructPotential(double dotPotential, double wellPotential);
@@ -149,7 +139,7 @@ int main(int argc, char** argv)
 
   // define Hilbert space
   // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
-  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ);
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
@@ -171,13 +161,6 @@ int main(int argc, char** argv)
   ComplexVector* Eigenstates = 0;
   double* Eigenvalues = 0;
 
-  // architecture type (i.e. 1 CPU or multi CPU)
-  AbstractArchitecture* Architecture;
-  if (SMPFlag == true)
-    Architecture = new SMPArchitecture(2);
-  else
-    Architecture = new MonoProcessorArchitecture;
-
   cout << "----------------------------------------------------------------" << endl;
 
   double HamiltonianShift = -Hamiltonian.MaxPartialDiagonalElement();
@@ -189,9 +172,10 @@ int main(int argc, char** argv)
   // type of lanczos algorithm (with or without reorthogonalization)
   AbstractLanczosAlgorithm* Lanczos;
   if (DiskFlag == false)
-    Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);   
+    Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);   
   else
-    Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+    Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage(Architecture.GetArchitecture(), NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+
   cout << "Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl; 
 
   // initialization of lanczos algorithm
@@ -228,7 +212,8 @@ int main(int argc, char** argv)
       Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
       Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
       PreviousLowest = Lowest;
-      cout << CurrentNbrIterLanczos << "\t" <<  TmpMatrix.DiagonalElement(0) - HamiltonianShift << "\t\t" << Lowest - HamiltonianShift << "\t\t" << Precision << endl;
+      if (VerboseFlag)
+	cout << CurrentNbrIterLanczos << "\t" <<  TmpMatrix.DiagonalElement(0) - HamiltonianShift << "\t\t" << Lowest - HamiltonianShift << "\t\t" << Precision << endl;
     }
   if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
     {
