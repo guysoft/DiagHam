@@ -916,6 +916,8 @@ ostream& operator << (ostream& Str, const RealMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -939,3 +941,5 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealMatrix& P)
   Str << "]";
   return Str;
 }
+
+#endif

@@ -1168,6 +1168,8 @@ ostream& operator << (ostream& Str, const ComplexSkewSymmetricMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1225,3 +1227,4 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexSkewSymmetr
   return Str;
 }
 
+#endif

@@ -1201,6 +1201,8 @@ ostream& operator << (ostream& Str, const ComplexMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1253,3 +1255,5 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P)
   Str << "}}";
   return Str;
 }
+
+#endif

@@ -36,7 +36,9 @@
 #include "Matrix/Matrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/ComplexTriDiagonalHermitianMatrix.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 #include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>

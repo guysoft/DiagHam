@@ -47,8 +47,10 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "delta");
+  (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before tthe .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
 
   int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+  int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
@@ -80,15 +83,23 @@ int main(int argc, char** argv)
       return -1;      
     }
   char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameCorr, "bosons_%s_corr_n_%d_2s_%d.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
+  if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+    {
+      sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
+    }
+  else
+    {
+      sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax,
+	       ((SingleStringOption*) Manager["add-filename"])->GetString());
+    }
 
-  BosonOnSphere Space (NbrBosons, 0, LzMax);
+  BosonOnSphere Space (NbrBosons, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
 
   Complex Sum (0.0, 0.0);
   Complex Sum2 (0.0, 0.0);
   Complex TmpValue;
-  RealVector Value(2);
+  RealVector Value(2, true);
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
@@ -102,6 +113,8 @@ int main(int argc, char** argv)
   ofstream File;
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);
+  double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrBosons * NbrBosons));
+  double Factor2 = sqrt (0.5 * LzMax );
   for (int x = 0; x < NbrPoints; ++x)
     {
       Value[0] = X;
@@ -113,7 +126,7 @@ int main(int argc, char** argv)
 	  Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
 	  ++Pos;
 	}
-      File << (X * sqrt (0.5 * LzMax )) << " " << Norm(Sum)  * (16.0 * M_PI * M_PI) / ((double) (NbrBosons * NbrBosons))<< endl;
+      File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
       X += XInc;
     }
   File.close();

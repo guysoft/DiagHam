@@ -43,7 +43,9 @@
 using std::ostream;
 
 
+#ifdef USE_OUTPUT
 class MathematicaOutput;
+#endif
 class RealMatrix;
 class ComplexMatrix;
 
@@ -71,8 +73,9 @@ class ComplexVector : public Vector
   friend ComplexMatrix operator * (double x, const ComplexMatrix& M);
   friend ComplexMatrix operator / (const ComplexMatrix& M, double x);
   friend ostream& operator << (ostream& Str, const ComplexMatrix& P);
+#ifdef USE_OUTPUT
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P);
-
+#endif
  protected:
   
   double* RealComponents;
@@ -646,12 +649,14 @@ class ComplexVector : public Vector
   //
   friend ostream& operator << (ostream& Str, const ComplexVector& P);
 
+#ifdef USE_OUTPUT
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // v = vector to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v);
+#endif
 
 #ifdef __MPI__
 

@@ -635,6 +635,8 @@ double RealTriDiagonalSymmetricMatrix::Det ()
   return d1;
 }
 
+#ifdef USE_POLYNOMIAL
+
 // return matrix characteritic equation
 //
 // return value =  reference one polynomial corresponding to matrix characteritic equation
@@ -673,6 +675,8 @@ Polynomial& RealTriDiagonalSymmetricMatrix::CharacteristicEquation()
   delete[] P0;
   return *P;
 }
+
+#endif
 
 // Diagonalize RealTridiagonal Symmetric Matrix using QL algorithm with implicit shift
 // current matrix is replaced by its corresponding diagonalized matrix
@@ -1801,6 +1805,8 @@ ostream& operator << (ostream& Str, const RealTriDiagonalSymmetricMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1849,3 +1855,4 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealTriDiagonalSym
   return Str;
 }
 
+#endif

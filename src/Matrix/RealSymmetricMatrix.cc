@@ -1193,6 +1193,8 @@ ostream& operator << (ostream& Str, const RealSymmetricMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1229,6 +1231,8 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealSymmetricMatri
   Str << "}";
   return Str;
 }
+
+#endif
 
 // Tridiagonalize an hermitian matrix using Lanczos algorithm without re-orthogonalizing base at each step
 //

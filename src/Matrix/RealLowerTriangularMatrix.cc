@@ -823,6 +823,8 @@ ostream& operator << (ostream& Str, const RealLowerTriangularMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -859,6 +861,8 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealLowerTriangula
   Str << "}";
   return Str;
 }
+
+#endif
 
 // output file stream overload
 //

@@ -674,6 +674,8 @@ double ComplexTriDiagonalHermitianMatrix::Det ()
   return d1;
 }
 
+#ifdef USE_POLYNOMIAL
+
 // return matrix characteritic equation
 //
 // return value =  reference one polynomial corresponding to matrix characteritic equation
@@ -715,6 +717,8 @@ Polynomial& ComplexTriDiagonalHermitianMatrix::CharacteristicEquation()
   delete[] P0;
   return *P;
 }
+
+#endif
 
 // evaluate a normalized eigenvector for a given eigenvalue (supposing the eigenvalue is non-degenerate)
 //

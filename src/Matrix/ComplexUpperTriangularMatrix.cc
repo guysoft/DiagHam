@@ -826,6 +826,8 @@ ostream& operator << (ostream& Str, const ComplexUpperTriangularMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -881,3 +883,5 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexUpperTriang
   Str << "}";
   return Str;
 }
+
+#endif

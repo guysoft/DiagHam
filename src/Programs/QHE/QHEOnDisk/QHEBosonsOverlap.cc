@@ -125,13 +125,13 @@ int main(int argc, char** argv)
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
 //  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrBosons, 1, 1);
-  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 4);
+  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-  for (int k = 0; k < 10; ++k)
+/*  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
@@ -141,8 +141,6 @@ int main(int argc, char** argv)
 	  Location[1 + (i << 1)] = Radius * sin (Theta);
  	  Location[i << 1] = M_PI * drand48();
 	}
-//      Location[4] = Location[0];
-//      Location[5] = Location[1];
       Location[0] = 1.0;
       Location[1] = 0.0;
       Location[2] = 0.0;
@@ -151,6 +149,10 @@ int main(int argc, char** argv)
       Location[5] = 0.0;
       Location[6] = 0.0;
       Location[7] = -1.0;
+      Location[8] = 0.0;
+      Location[9] = -1.0;
+      Location[10] = 0.0;
+      Location[11] = -1.0;
       ParticleOnDiskFunctionBasis Basis(MMax);
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
@@ -161,7 +163,7 @@ int main(int argc, char** argv)
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;
+  return 0;*/
   double Factor = 1.0;
   for (int j = 0; j < NbrBosons; ++j)
     {
@@ -184,7 +186,7 @@ int main(int argc, char** argv)
   for (int j = 0; j < NbrBosons; ++j)
     {
       Radius = RandomNumber->GetRealRandomNumber();      
-      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
+      Radius = sqrt (- 2.0 * log (Radius));
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[j << 1] = Radius * cos (Theta);
       Location[1 + (j << 1)] = Radius * sin (Theta);
@@ -198,8 +200,7 @@ int main(int argc, char** argv)
       double PreviousCoordinates1 = Location[NextCoordinates << 1];
       double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
       Radius = RandomNumber->GetRealRandomNumber();      
-      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
-//      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Radius = sqrt (- 2.0 * log (Radius));
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[NextCoordinates << 1] = Radius * cos (Theta);
       Location[1 + (NextCoordinates << 1)] = Radius * sin (Theta);
@@ -229,6 +230,7 @@ int main(int argc, char** argv)
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
+//      cout << ValueExact << " " << Tmp << " " << TmpMetropolis << endl;
       Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
       Tmp2bis = (ValueExact.Re * ValueExact.Re) + (ValueExact.Im * ValueExact.Im);
       Tmp3 = (Conj(Tmp) * ValueExact);

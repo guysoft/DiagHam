@@ -49,7 +49,9 @@ using std::ofstream;
 
 class Complex;
 class ComplexVector;
+#ifdef USE_OUTPUT
 class MathematicaOutput;
+#endif
 class BlockDiagonalMatrix;
 class Matrix;
 class RealMatrix;

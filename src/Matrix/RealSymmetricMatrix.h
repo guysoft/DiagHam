@@ -35,7 +35,9 @@
 #include "config.h"
 #include "Matrix/Matrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 
 #include <iostream>
 #include <fstream>
@@ -417,12 +419,16 @@ class RealSymmetricMatrix : public Matrix
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, const RealSymmetricMatrix& P);
 
+#ifdef USE_OUTPUT
+
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealSymmetricMatrix& P);
+
+#endif
 
   // output file stream overload
   //

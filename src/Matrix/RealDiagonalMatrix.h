@@ -34,7 +34,9 @@
 
 #include "config.h"
 #include "Matrix/Matrix.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 
 #include <iostream>
 
@@ -280,12 +282,16 @@ class RealDiagonalMatrix : public Matrix
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, const RealDiagonalMatrix& P);
 
+#ifdef USE_OUTPUT
+
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealDiagonalMatrix& P);
+
+#endif
 
 };
 

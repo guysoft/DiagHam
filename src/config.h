@@ -107,4 +107,12 @@
 #endif
 
 
+// package option
+//
+
+// provide output package
+#define USE_OUTPUT
+// provide polynomial package
+//#define USE_POLYNOMIAL
+
 #endif

@@ -35,7 +35,9 @@
 #include "config.h"
 #include "Matrix/Matrix.h"
 #include "GeneralTools/List.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 #include <iostream>
 
 

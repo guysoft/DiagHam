@@ -36,7 +36,9 @@
 #include "Matrix/Matrix.h"
 #include "GeneralTools/List.h"
 #include "GeneralTools/GarbageFlag.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 
 #include <iostream>
 
@@ -259,12 +261,16 @@ class BlockDiagonalMatrix : public Matrix
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, const BlockDiagonalMatrix& P);
 
+#ifdef USE_OUTPUT
+
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const BlockDiagonalMatrix& P);
+
+#endif
 
 };
 

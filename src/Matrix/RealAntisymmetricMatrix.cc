@@ -33,6 +33,7 @@
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#include "Complex.h"
 
 #include <stdlib.h>
 
@@ -1134,6 +1135,8 @@ ostream& operator << (ostream& Str, const RealAntisymmetricMatrix& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
+
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1170,4 +1173,6 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealAntisymmetricM
   Str << "}";
   return Str;
 }
+
+#endif
 

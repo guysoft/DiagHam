@@ -131,7 +131,7 @@ Complex MooreReadOnDiskWaveFunction::operator ()(RealVector& x)
 	  }
       Value += Tmp;
     }
-
+  Value /= (double) this->NbrPermutations;
   delete[] TmpZ;
   return Value;
 }

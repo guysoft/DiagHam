@@ -592,6 +592,9 @@ Complex BosonOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& positi
 	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
+//      Complex Truc = Perm.FastPermanent(ChangeBit, ChangeBitSign);
+//      cout << Truc<< " " << TmpFactor <<  endl;
+//      Value += Truc * TmpFactor;
 //      cout << Perm.FastPermanent(ChangeBit, ChangeBitSign) << " " << TmpFactor << " " << (Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor) << endl;
 //      cout << Perm << endl;
       Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;

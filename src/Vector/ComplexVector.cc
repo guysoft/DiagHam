@@ -1891,6 +1891,7 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
   return Str;
 }
 
+#ifdef USE_OUTPUT
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -1922,6 +1923,7 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v)
       Str << "}";
   return Str;
 }
+#endif
 
 // write vector in a file 
 //

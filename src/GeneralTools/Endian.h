@@ -59,8 +59,8 @@ void WriteLittleEndian (ofstream& file, ClassName& var)
 {
 #ifdef __BIGENDIAN__
   ClassName TmpVar = var;
-  unsigned char* TmpBin1 = (unsigned char*) &var;
-  unsigned char* TmpBin2 = (unsigned char*) &TmpVar;
+  unsigned char* TmpBin2 = (unsigned char*) &var;
+  unsigned char* TmpBin1 = (unsigned char*) &TmpVar;
   int max = sizeof(ClassName) >> 1;
   for (int i = 0; i < max; i++)
     {

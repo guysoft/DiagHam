@@ -35,7 +35,9 @@
 #include "config.h"
 #include "Matrix/Matrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#ifdef USE_POLYNOMIAL
 #include "Polynomial/Polynomial.h"
+#endif
 #include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
@@ -247,10 +249,12 @@ class ComplexTriDiagonalHermitianMatrix : protected Matrix
   // return value = matrix determinant 
   double Det ();
 
+#ifdef USE_POLYNOMIAL
   // return matrix characteritic equation
   //
   // return value =  reference one polynomial corresponding to matrix characteritic equation  
   Polynomial& CharacteristicEquation();
+#endif
 
   // evaluate a normalized eigenvector for a given eigenvalue (supposing the eigenvalue is non-degenerate)
   //

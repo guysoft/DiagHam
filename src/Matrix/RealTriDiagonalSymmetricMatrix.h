@@ -34,9 +34,13 @@
 
 #include "config.h"
 #include "Matrix/Matrix.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 #include "Vector/RealVector.h"
+#ifdef USE_POLYNOMIAL
 #include "Polynomial/Polynomial.h"
+#endif
 #include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
@@ -269,10 +273,12 @@ class RealTriDiagonalSymmetricMatrix : public Matrix
   // return value = matrix determinant 
   double Det ();
 
+#ifdef USE_POLYNOMIAL
   // return matrix characteritic equation
   //
   // return value =  reference one polynomial corresponding to matrix characteritic equation  
   Polynomial& CharacteristicEquation();
+#endif
 
   // Diagonalize RealTridiagonal Symmetric Matrix using QL algorithm with implicit shift
   // current matrix is replaced by its corresponding diagonalized matrix
@@ -403,12 +409,16 @@ class RealTriDiagonalSymmetricMatrix : public Matrix
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, const RealTriDiagonalSymmetricMatrix& P);
 
+#ifdef USE_OUTPUT
+
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealTriDiagonalSymmetricMatrix& P);
+
+#endif
 
 };
 
