@@ -79,13 +79,14 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
 
 //  cout << this->StateShift << " " << this->MomentumIncrement << " " << this->ComplementaryStateShift << " " << hex << this->MomentumMask << dec << endl;
 
+  this->MaximumSignLookUp = 16;
+  this->GenerateSignLookUpTable();
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
   cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
   cout << this->HilbertSpaceDimension << endl;
 
   this->Flag.Initialize();
-  this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -131,6 +132,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations(c
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->NbrParticleLookUpTable = fermions.NbrParticleLookUpTable;
   this->Flag = fermions.Flag;
 }
 
@@ -195,8 +197,9 @@ FermionOnTorusWithMagneticTranslations::~FermionOnTorusWithMagneticTranslations 
     {
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
-/*      delete[] this->SignLookUpTable;
-      delete[] this->LookUpTableShift;
+      delete[] this->SignLookUpTable;
+      delete[] this->NbrParticleLookUpTable;
+/*      delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;*/
@@ -221,6 +224,7 @@ FermionOnTorusWithMagneticTranslations& FermionOnTorusWithMagneticTranslations::
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
       delete[] this->SignLookUpTable;
+      delete[] this->NbrParticleLookUpTable;
       delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
@@ -247,6 +251,7 @@ FermionOnTorusWithMagneticTranslations& FermionOnTorusWithMagneticTranslations::
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->NbrParticleLookUpTable = fermions.NbrParticleLookUpTable;
   this->Flag = fermions.Flag;
 
   this->RescalingFactors = fermions.RescalingFactors;
@@ -409,9 +414,11 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 #endif
     }
   TmpState |= (((unsigned long) 0x1) << m1);
-  cout << "before: " << hex << TmpState << dec << endl;
-  TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation, this->YMomentum);
+//  cout << "before: " << hex << TmpState << dec << endl;
+  TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation);
+//  TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(TmpState, NewMaxMomentum, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewMaxMomentum) == false)
+//  if (nbrTranslation < 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -421,15 +428,15 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 //  cout << hex << this->StateDescription[index] << " " << TmpState << " " << dec << " " << TmpIndex << " " << nbrTranslation << " " << coefficient;
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
   coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
-  cout << "sign: " << (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))))) << " " << TmpIndex  << " " << this->ReorderingSign[TmpIndex] << " " << nbrTranslation << endl;
+//  cout << "sign: " << (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))))) << " " << TmpIndex  << " " << this->ReorderingSign[TmpIndex] << " " << nbrTranslation << endl;
 //  this->CurrentNbrStateInOrbit = this->NbrStateInOrbit[TmpIndex];
 //  this->CurrentNbrStateInOrbitRatio = this->NbrStateInOrbit[index] / this->NbrStateInOrbit[TmpIndex];
 //  this->CurrentSignature = this->StateSignature[TmpIndex];
 //  this->CurrentSignature = (this->CurrentSignature >> this->SignatureComplementaryTransaltions[nbrTranslation]) | 
 //    ((this->CurrentSignature & this->SignatureMasks[nbrTranslation]) << nbrTranslation);
-  unsigned long TmpMask = 0;
+/*  unsigned long TmpMask = 0;
   for (int i = 0; i < nbrTranslation; ++i)
-    TmpMask |= ((unsigned long) 0x1) << i;
+    TmpMask |= ((unsigned long) 0x1) << i;*/
 //  cout << hex << this->CurrentSignature << " ";
 //  this->CurrentSignature = (this->CurrentSignature >> nbrTranslation) | ((this->CurrentSignature & TmpMask) << (this->MomentumModulo - nbrTranslation));
 //  cout << this->CurrentSignature << " " << this->StateSignature[index];  
@@ -461,17 +468,16 @@ double FermionOnTorusWithMagneticTranslations::AdA (int index, int m)
 // stateDescription = unsigned integer describing the state
 // maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
 // nbrTranslation = number of translation needed to obtain the canonical form
-// yMomentum = state momentum value in the y direction
 // return value = canonical form of a state description
 
-unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation, int yMomentum)
+unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation)
 {
   nbrTranslation = 0;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;
   int index = 1;  
   stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
-  while ((index < this->MomentumModulo) && (stateDescriptionReference != stateDescription))
+  while (stateDescriptionReference != stateDescription)
     {
       if (stateDescription < CanonicalState)
 	{
@@ -541,37 +547,113 @@ bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsigned lo
       unsigned long TmpState2 = stateDescription & this->MomentumMask;
       unsigned long TmpState = (stateDescription >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
       int TmpSignature = 0;
-      int TmpNbrParticle = 0;
       int index = 1;  
-      for (int l = 0; l < this->StateShift; ++l)
-	{
-	  if (TmpState2 & 1)
-	    ++TmpNbrParticle;
-	  TmpState2 >>= 1;
-	}
-      if (TmpNbrParticle & 1)
-	++TmpSignature;
+#ifndef  __64_BITS__
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]) & 1;
+#else
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]
+		       + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((unsigned long) 0xffff)]) & 1;
+#endif
+
       while (TmpState != stateDescription)
 	{
-	  TmpNbrParticle = 0;
 	  TmpState2 = TmpState & this->MomentumMask;
 	  TmpState = (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
-	  for (int l = 0; l < this->StateShift; ++l)
-	    {
-	      if (TmpState2 & 1)
-		++TmpNbrParticle;
-	      TmpState2 >>= 1;
-	    }
-	  if (TmpNbrParticle & 1)
-	    ++TmpSignature;
+#ifndef  __64_BITS__
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((unsigned long) 0xffff)]) & 1;
+#endif
 	  ++index;
 	}
-      cout << TmpSignature << " " << index << " " << hex << stateDescription << dec << endl;
+//      cout << TmpSignature << " " << index << " " << hex << stateDescription << dec << endl;
       if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) == 0)
 	return true;
       else
 	return false;
     }
+}
+
+// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+// nbrTranslation = number of translation needed to obtain the canonical form
+// return value = canonical form of a state description and -1 in nbrTranslation if the state does not fit the x momentum constraint
+
+unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;
+  int index = 1;  
+  if (this->NbrFermions & 1)
+    {
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+      while (stateDescriptionReference != stateDescription)
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslation = index;
+	    }
+	  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+	  ++index;
+	}
+      if (((this->XMomentum * index) % this->MomentumModulo) != 0)
+	{
+	  nbrTranslation = -1;
+	  return CanonicalState;
+	}
+    }
+  else
+    {
+      unsigned long TmpState = stateDescription & this->MomentumMask;
+      stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
+      int TmpSignature = 0;
+#ifndef  __64_BITS__
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]) & 1;
+#else
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]
+		       + this->NbrParticleLookUpTable[(TmpState >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 48) & ((unsigned long) 0xffff)]) & 1;
+#endif
+
+      while (stateDescription != stateDescriptionReference)
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslation = index;
+	    }
+	  TmpState = stateDescription & this->MomentumMask;
+	  stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
+#ifndef  __64_BITS__
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]
+			   + this->NbrParticleLookUpTable[(TmpState >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 48) & ((unsigned long) 0xffff)]) & 1;
+#endif
+	  ++index;
+	}
+      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) != 0)
+	{
+	  nbrTranslation = -1;
+	  return CanonicalState;
+	}
+    }
+  if (nbrTranslation != 0)
+    {
+      maxMomentum = this->MaxMomentum;
+      stateDescription = ((unsigned long) 1) << this->MaxMomentum;
+      while ((CanonicalState & stateDescription) ==0)      
+	{
+	  --maxMomentum;
+	  stateDescription >>= 1;
+	}
+      nbrTranslation = index - nbrTranslation;
+    }
+  return CanonicalState;
 }
 
 // find state index
@@ -637,8 +719,8 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
   int NbrTranslation;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      cout << hex << this->StateDescription[i] << dec << endl;
-      this->StateDescription[i] = this->FindCanonicalForm(this->StateDescription[i], this->StateMaxMomentum[i], NbrTranslation, this->YMomentum);
+//      cout << hex << this->StateDescription[i] << dec << endl;
+      this->StateDescription[i] = this->FindCanonicalForm(this->StateDescription[i], this->StateMaxMomentum[i], NbrTranslation);
       ++TmpNbrStateDescription[this->StateMaxMomentum[i]];
     }
   unsigned long** TmpStateDescription = new unsigned long* [this->MaxMomentum + 1];  
@@ -737,12 +819,12 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 		  TmpReorderingSign = (unsigned long) 0;
 		  if ((this->NbrFermions & 1) == 0)
 		    {
-		      cout << Pos << ":" << endl;
+//		      cout << Pos << ":" << endl;
 		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
 			{
 			  TmpState2 = TmpState & this->MomentumMask;
 			  TmpState =  (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
-			  cout << hex << TmpState << " " << TmpState2 << dec << endl;
+//			  cout << hex << TmpState << " " << TmpState2 << dec << endl;
 			  TmpNbrParticle = 0;
 			  for (int l = 0; l < this->StateShift; ++l)
 			    {
@@ -878,44 +960,6 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 	}
     }
   
-  // look-up tables for evaluating sign when applying creation/annihilation operators
-  int Size = 1 << this->MaximumSignLookUp;
-  this->SignLookUpTable = new double [Size];
-  int Count;
-  int TmpNbr;
-  for (int j = 0; j < Size; ++j)
-    {
-      Count = 0;
-      TmpNbr = j;
-      while (TmpNbr != 0)
-	{
-	  if (TmpNbr & 0x1)
-	    ++Count;
-	  TmpNbr >>= 1;
-	}
-      if (Count & 1)
-	this->SignLookUpTable[j] = -1.0;
-      else
-	this->SignLookUpTable[j] = 1.0;
-    }
-#ifdef __64_BITS__
-  this->SignLookUpTableMask = new unsigned long [128];
-  for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
-  for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
-  for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
-#else
-  this->SignLookUpTableMask = new unsigned long [64];
-  for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
-  for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
-  for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
-#endif
-
   this->RescalingFactors = new double* [this->NbrMomentum];
   for (int i = 1; i <= this->MaxMomentum; ++i)
     {
@@ -930,6 +974,7 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
   unsigned long TmpTranslationSign;
   unsigned long TmpState;
   unsigned long TmpReminder;
+  int Count;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       TmpState = this->StateDescription[i];
@@ -950,6 +995,57 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
       this->TranslationSign[i] = TmpTranslationSign;
     }
 }
+
+// generate look-up table associated to sign calculations
+// 
+
+void FermionOnTorusWithMagneticTranslations::GenerateSignLookUpTable()
+{
+  int Size = 1 << this->MaximumSignLookUp;
+  this->SignLookUpTable = new double [Size];
+  this->NbrParticleLookUpTable = new int [Size];
+  int Count;
+  int TmpNbr;
+  for (int j = 0; j < Size; ++j)
+    {
+      Count = 0;
+      TmpNbr = j;
+      while (TmpNbr != 0)
+	{
+	  if (TmpNbr & 0x1)
+	    ++Count;
+	  TmpNbr >>= 1;
+	}
+      if (Count & 1)
+	{
+	  this->SignLookUpTable[j] = -1.0;
+	  this->NbrParticleLookUpTable[j] = 1;
+	}
+      else
+	{
+	  this->SignLookUpTable[j] = 1.0;
+	  this->NbrParticleLookUpTable[j] = 0;
+	}
+    }
+#ifdef __64_BITS__
+  this->SignLookUpTableMask = new unsigned long [128];
+  for (int i = 0; i < 48; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 48; i < 64; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+  for (int i = 64; i < 128; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#else
+  this->SignLookUpTableMask = new unsigned long [64];
+  for (int i = 0; i < 16; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 16; i < 32; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+  for (int i = 32; i < 64; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#endif
+}
+
 
 // evaluate Hilbert space dimension
 //

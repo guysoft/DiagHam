@@ -89,6 +89,8 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   unsigned long* SignLookUpTableMask;
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
+  // a table containing parity of the sum of 1 bits for all integer ranging from 0 to 2^MaximumSignLookUp - 1 (1 if odd)
+  int* NbrParticleLookUpTable;
 
   // array containing rescaling factors when passing from one orbit to another
   double** RescalingFactors;
@@ -99,12 +101,6 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   unsigned long* ReorderingSign;
   // array of unsigned long where each bit describes sign associated to each translation of the orbit representant (0 for +, 1 for -) with respect to N-body ordering convention
   int* StateSignature;
-  // sign signature obtained during previous application of a n-points operator
-//  unsigned long CurrentSignature;
-  //
-//  int CurrentNbrStateInOrbit;
-  //
-//  int CurrentNbrStateInOrbitRatio;
 
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
@@ -192,12 +188,6 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
 
-  // check 
-  //
-  // signature = 
-  // return value = 0 if 
-  unsigned long CheckSignature (unsigned long signature);
-
   // apply a^+_m a_m operator to a given state
   //
   // index = index of the state on which the operator has to be applied
@@ -221,9 +211,17 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // nbrTranslation = number of translation needed to obtain the canonical form
   // yMomentum = state momentum value in the y direction
   // return value = canonical form of a state description
-  unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation, int yMomentum);
+  unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
 
-  // find how many translations on the x direction are needed to obtain the same state
+  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
+  //
+  // stateDescription = unsigned integer describing the state
+  // maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+  // nbrTranslation = number of translation needed to obtain the canonical form
+  // return value = canonical form of a state description and -1 in nbrTranslation if the state does not fit the x momentum constraint
+  unsigned long FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
+
+ // find how many translations on the x direction are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
   // return value = number of translation needed to obtain the same state
@@ -255,6 +253,10 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // memeory = memory size that can be allocated for the look-up table
   void GenerateLookUpTable(int memory);
 
+  // generate look-up table associated to sign calculations
+  // 
+  void GenerateSignLookUpTable();
+
   // generate all states corresponding to the constraints
   // 
   // return value = hilbert space dimension
@@ -281,28 +283,6 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
   return ParticleOnTorusWithMagneticTranslations::FermionicStatistic;
 }
 
-
-// check 
-//
-// signature = 
-// return value = 0 if 
-
-inline unsigned long FermionOnTorusWithMagneticTranslations::CheckSignature (unsigned long signature)
-{
-/*  cout << this->CurrentNbrStateInOrbit << " " << this->CurrentNbrStateInOrbitRatio << " " << hex << this->CurrentSignature << " " << signature << dec << endl;
-  if ((this->MomentumModulo & 1) || (this->CurrentNbrStateInOrbitRatio == 1))
-    return (unsigned long) 1;
-  signature ^= this->CurrentSignature;
-  this->CurrentSignature = (unsigned long) 0;
-  for (int i = 0; i < this->CurrentNbrStateInOrbitRatio; ++i)
-    {
-      this->CurrentSignature += (signature & ((unsigned long) 0x1));
-      signature >>= this->CurrentNbrStateInOrbit;
-    }
-  cout << this->CurrentSignature << endl;
-  return ((2 * this->CurrentSignature) -  this->CurrentNbrStateInOrbitRatio);*/
-  return (unsigned long) 1;
-}
 
 #endif
 

@@ -304,7 +304,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
       unsigned long Signature;
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-/*      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	{
 	  m1 = this->M1Value[j];
 	  m2 = this->M2Value[j];
@@ -344,8 +344,8 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	    }
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
-	}*/
-	  cout << endl << endl << "--------------------------------------" << endl << endl << endl;
+	}
+/*	  cout << endl << endl << "--------------------------------------" << endl << endl << endl;
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
@@ -359,13 +359,13 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	      if (Index < Dim)
 		{
-		  if (vSource.Re(i) != 0.0)
-		    cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
+//		  if (vSource.Re(i) != 0.0)
+//		    cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
 		  Coefficient *= TmpInteraction;
 		  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
 		  Sinus = Coefficient * this->SinusTable[NbrTranslation];
-		  if (vSource.Re(i) != 0.0)
-		    cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+//		  if (vSource.Re(i) != 0.0)
+//		    cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
 		  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 		  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
 		}
@@ -379,19 +379,19 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < Dim)
 	    {
-	      if (vSource.Re(i) != 0.0)
-		cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
+//	      if (vSource.Re(i) != 0.0)
+//		cout << m1 << " " <<  m2<< " " <<  m3<< " " <<   m4 << " " << Index << " " << Coefficient << " " << hex << Signature<< dec << endl;
 	      Coefficient *= TmpInteraction;
 	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
 	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
-	      if (vSource.Re(i) != 0.0)
-		cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+//	      if (vSource.Re(i) != 0.0)
+//		cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
 	      vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 	      vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
 	    }
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
-	}
+	}*/
     }
   else
     {

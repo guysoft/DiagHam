@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 9);
   SingleIntegerOption XMomentumOption ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
   SingleIntegerOption YMomentumOption ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
+  SingleDoubleOption XRatioOption ('r', "ratio", "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
   SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
   BooleanOption DiskOption ('\n', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('\n', "resume", "resume from disk datas", false);
@@ -75,6 +76,7 @@ int main(int argc, char** argv)
   OptionList += &MaxMomentumOption;
   OptionList += &XMomentumOption;
   OptionList += &YMomentumOption;
+  OptionList += &XRatioOption;
   OptionList += &MaxFullDiagonalizationOption;
   OptionList += &NbrIterationOption;
   OptionList += &VectorMemoryOption;
@@ -106,6 +108,10 @@ int main(int argc, char** argv)
   int YMomentum = YMomentumOption.GetInteger();
   int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
   double XRatio = NbrFermions / 4.0;
+  if (XRatioOption.GetDouble() > 0)
+    {
+       XRatio = XRatioOption.GetDouble();
+    }
   bool ResumeFlag = ResumeOption.GetBoolean();
   bool DiskFlag = DiskOption.GetBoolean();
   int VectorMemory = VectorMemoryOption.GetInteger();
@@ -155,12 +161,12 @@ int main(int argc, char** argv)
 	//      cout << "momentum = " << Momentum << endl;
 	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
 //	cout << "momentum = (" << y << ")" << endl;
-	for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+/*	for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	  {
 	    cout << i << " = ";
 	    TotalSpace.PrintState(cout, i) << endl;
 	  }
-	cout << endl << endl;
+	cout << endl << endl;*/
 
 /*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	{
@@ -200,7 +206,7 @@ int main(int argc, char** argv)
 	  Complex Zero;
 //	  HRep2.SetMatrixElement(0, 1, Zero);
 //	  HRep2.SetMatrixElement(1, 5, Zero);
-	  cout << HRep2 << endl;	  
+//	  cout << HRep2 << endl;	  
 	  RealSymmetricMatrix HRep (HRep2.ConvertToSymmetricMatrix());
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {

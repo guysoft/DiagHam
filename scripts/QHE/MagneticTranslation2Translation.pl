@@ -72,6 +72,7 @@ if (defined($ARGV[1]))
 	    if ($Error > (1e-13 * abs($Value)))
 	      {
 		print $Error;
+		print STDERR $TmpLine." ".$Value." ".$Array2[$Index]." ".$Error."\n";
 	      }
 	    else
 	      {

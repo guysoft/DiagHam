@@ -118,12 +118,12 @@ int main(int argc, char** argv)
       FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
       cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
       cout << "momentum = " << Momentum << endl;
-      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	{
 	  cout << i << " = ";
 	  TotalSpace.PrintState(cout, i) << endl;
 	}
-      cout << endl << endl;
+      cout << endl << endl;*/
       AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
-	  cout << HRep << endl;
+//	  cout << HRep << endl;
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension());
