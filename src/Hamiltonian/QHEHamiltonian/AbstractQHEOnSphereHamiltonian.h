@@ -245,11 +245,9 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   //
   virtual void EnableFastMultiplication();
 
-  // enable fast multiplication algorithm (partial evaluation)
-  //
-  // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
-  // nbrJob = number of jobs that proceed the fast multiplication evaluation
-  virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
 
   // load precalculations from a file
   // 

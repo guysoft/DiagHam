@@ -46,5 +46,11 @@ int FindGCD(int m, int n);
 // return value = GCD
 int RecursiveFindGCD(int m, int n);
 
+// get all binomial coefficients up to a given number of element
+//
+// n = maximum number of elements
+// return value = array containing the binomial coefficients (first index (i) corresponding to the number of elements, the second index going from 0 to i)
+long** GetBinomialCoefficients (int n); 
+
 
 #endif

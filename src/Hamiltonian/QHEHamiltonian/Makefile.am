@@ -23,4 +23,6 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc \
 AbstractQHEOnDiskHamiltonian.cc \
 ParticleOnDiskLaplacianDeltaHamiltonian.cc \
 ParticleOnSphereDipolarHamiltonian.cc \
-ParticleOnSphereGenericHamiltonian.cc
+ParticleOnSphereGenericHamiltonian.cc \
+AbstractQHEOnSphereNBodyInteractionHamiltonian.cc \
+ParticleOnSphereNBodyHardCoreHamiltonian.cc

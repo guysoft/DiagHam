@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                a set of functions usefull for integer algebra              //
+//       class of hamiltonian associated to particles on a sphere with        //
+//                         n-body hard core interaction                       //
 //                                                                            //
-//                        last modification : 11/09/2003                      //
+//                        last modification : 23/09/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,64 +29,60 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "MathTools/IntegerAlgebraTools.h"
+#ifndef PARTICLEONSPHERENBODYHARDCOREHAMILTONIAN_H
+#define PARTICLEONSPHERENBODYHARDCOREHAMILTONIAN_H
 
 
-// find greatest common divider
-//
-// m = first integer  
-// n = second integer (must be greater than m)
-// return value = GCD
+#include "config.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
+#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereNBodyInteractionHamiltonian.h"
 
-int FindGCD(int m, int n)
+#include <iostream>
+
+
+using std::ostream;
+
+
+class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
 {
-  if (m < n)
-    return RecursiveFindGCD (m, n);
-  else
-    return RecursiveFindGCD (n, m);
-  return n;
-}
 
-// find greatest common divider (recurisive part of the method)
-//
-// m = first integer  
-// n = second integer (must be greater than m)
-// return value = GCD
+ private:
 
-int RecursiveFindGCD(int m, int n)
-{
-  if (m == 0)
-    return n;
-  else
-    return FindGCD ((n % m), m);
-}
+  // number of particle that interact simultaneously through the hard core interaction
+  int NbrNbody;
+  
+ public:
 
-// get all binomial coefficients up to a given number of element
-//
-// n = maximum number of elements
-// return value = array containing the binomial coefficients (first index (i) corresponding to the number of elements, the second index going from 0 to i)
+  // constructor from default datas
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // architecture = architecture to use for precalculation
+  // nbrBody = number of particle that interact simultaneously through the hard core interaction
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
+					   AbstractArchitecture* architecture, long memory = -1, 
+					   char* precalculationFileName = 0);
 
-long** GetBinomialCoefficients (int n)
-{
-  if (n == 0)
-    n = 1;
-  long** TmpBinomialCoefficients =  new long* [n + 1]; 
-  TmpBinomialCoefficients[0] = new long [1];
-  TmpBinomialCoefficients[1] = new long [2];
-  TmpBinomialCoefficients[0][0] = 1l;
-  TmpBinomialCoefficients[1][0] = 1l;
-  TmpBinomialCoefficients[1][1] = 1l;
-  for (int i = 2; i <= n; ++i)
-    {
-      long*& Tmp1 = TmpBinomialCoefficients[i - 1]; 
-      TmpBinomialCoefficients[i] = new long [i + 1];
-      long*& Tmp2 = TmpBinomialCoefficients[i]; 
-      Tmp2[0] = 1l;
-      Tmp2[i] = 1l;
-      for (int j = 1; j < i; ++j)
-	{
-	  Tmp2[j] = Tmp1[j - 1] + Tmp1[j];
-	}
-    }
-  return TmpBinomialCoefficients;
-}
+  // destructor
+  //
+  ~ParticleOnSphereNBodyHardCoreHamiltonian();
+
+  // clone hamiltonian without duplicating datas
+  //
+  // return value = pointer to cloned hamiltonian
+  AbstractHamiltonian* Clone ();
+
+
+ protected:
+ 
+  // evaluate all interaction factors
+  //   
+  void EvaluateInteractionFactors();
+
+
+};
+
+#endif
