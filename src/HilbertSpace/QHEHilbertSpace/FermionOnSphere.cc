@@ -458,7 +458,7 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
   this->LookUpTable = new int* [this->NbrLzValue];
   this->LookUpTableShift = new int [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize];
+    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
   int CurrentLzMax = this->StateLzMax[0];
   int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
   if (CurrentLzMax < this->MaximumLookUpShift)
@@ -466,13 +466,23 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
   else
     this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
   int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-  unsigned long TmpLookUpTableValue;
+  unsigned long CurrentLookUpTableValue = 0;
+  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
+  while (CurrentLookUpTableValue < TmpLookUpTableValue)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = 0;
+      ++CurrentLookUpTableValue;
+    }
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       if (CurrentLzMax != this->StateLzMax[i])
 	{
+	  while (CurrentLookUpTableValue <= this->LookUpTableMemorySize)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      ++CurrentLookUpTableValue;
+	    }
  	  CurrentLzMax = this->StateLzMax[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
 	  if (CurrentLzMax < this->MaximumLookUpShift)
@@ -480,7 +490,13 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	  else
 	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
 	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
-	  CurrentLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  CurrentLookUpTableValue = 0;
+	  while (CurrentLookUpTableValue < TmpLookUpTableValue)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      ++CurrentLookUpTableValue;
+	    }
 	  TmpLookUpTable[CurrentLookUpTableValue] = i;
 	}
       else
@@ -488,7 +504,12 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
 	    {
-	      CurrentLookUpTableValue = TmpLookUpTableValue;
+	      while (CurrentLookUpTableValue < TmpLookUpTableValue)
+		{
+		  TmpLookUpTable[CurrentLookUpTableValue] = i;
+		  ++CurrentLookUpTableValue;
+		}
+//	      CurrentLookUpTableValue = TmpLookUpTableValue;
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
 	    }
 	}

@@ -87,7 +87,7 @@ int main(int argc, char** argv)
   double ParallelBField = ParallelBFieldOption.GetDouble();
   bool FixedMomentumFlag = FixedMomentumOption.GetBoolean();
   int FixedMomentum = FixedMomentumValueOption.GetInteger();
-  bool ReorthogonalizFlag = ReorthogonalizeOption.GetBoolean();
+  bool ReorthogonalizeFlag = ReorthogonalizeOption.GetBoolean();
   int Memory = MemoryOption.GetInteger() << 20;
   int MinMomentum = 0;
   int MaxMomentum = NbrSpin - 1;
@@ -164,14 +164,9 @@ int main(int argc, char** argv)
 	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
-	      if (ReorthogonalizFlag == true)
-		cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
-	      else
-		{
-		  for (int i = 0; i < NbrEigenvalue; ++i)
-		    cout << TmpMatrix.DiagonalElement(i) << " ";
-		  cout << "precision = " << Precision << " "<< endl;
-		}
+	      for (int i = 0; i < NbrEigenvalue; ++i)
+		cout << TmpMatrix.DiagonalElement(i) << " ";
+	      cout << "precision = " << Precision << " "<< endl;
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {
