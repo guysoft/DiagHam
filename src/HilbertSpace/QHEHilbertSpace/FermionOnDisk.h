@@ -73,8 +73,11 @@ class FermionOnDisk:  public ParticleOnDisk
   unsigned long* LookUpTableMask;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
+
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 

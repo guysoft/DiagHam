@@ -100,6 +100,7 @@ FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
   this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
+  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
 }
 
@@ -113,6 +114,7 @@ FermionOnDisk::~FermionOnDisk ()
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
+      delete[] this->SignLookUpTableMask;
       delete[] this->LookUpTableShift;
       delete[] this->LookUpTableMask;
       for (int i = 0; i < this->NbrLzValue; ++i)
@@ -133,6 +135,7 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
+      delete[] this->SignLookUpTableMask;
       delete[] this->LookUpTableShift;
       delete[] this->LookUpTableMask;
       for (int i = 0; i < this->NbrLzValue; ++i)
@@ -154,6 +157,7 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
+  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   return *this;
 }
@@ -222,55 +226,22 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
     }
   int NewLzMax = StateLzMax;
   unsigned long TmpState = State;
-  int Mask;
-  int SignIndex = NewLzMax - n2;
-  if (SignIndex < 16)
-    {
-      Mask = (TmpState >> n2) & 0xffff;
-      coefficient = this->SignLookUpTable[Mask];
-    }
-  else
-    {
-      Mask = (TmpState >> n2) & 0xffff;
-      coefficient = this->SignLookUpTable[Mask];
+  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
-      Mask = (TmpState >> (n2 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n2 + 32)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n2 + 48)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#else
-      Mask = (TmpState >> (n2 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-    }
   TmpState &= ~(((unsigned long) (0x1)) << n2);
   if (NewLzMax == n2)
     while ((TmpState >> NewLzMax) == 0)
       --NewLzMax;
-  SignIndex = NewLzMax - n1;
-  if (SignIndex < 16)
-    {
-      Mask = (TmpState >> n1) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-    }
-  else
-    {
-      Mask = (TmpState >> n1) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
+  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
-      Mask = (TmpState >> (n1 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n1 + 32)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n1 + 48)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#else
-      Mask = (TmpState >> (n1 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-    }
   TmpState &= ~(((unsigned long) (0x1)) << n1);
   if (NewLzMax == n1)
     while ((TmpState >> NewLzMax) == 0)
@@ -282,35 +253,18 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
     }
   if (m2 > NewLzMax)
     {
-      TmpState |= (((unsigned long) (0x1)) << m2);
       NewLzMax = m2;
     }
   else
     {
-      SignIndex = NewLzMax - m2;
-      if (SignIndex < 16)
-	{
-	  Mask = (TmpState >> m2) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	}
-      else
-	{
-	  Mask = (TmpState >> m2) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
+      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
 #ifdef  __64_BITS__
-	  Mask = (TmpState >> (m2 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m2 + 32)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m2 + 48)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#else
-	  Mask = (TmpState >> (m2 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << m2);
     }
+  TmpState |= (((unsigned long) (0x1)) << m2);
   if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
     {
       coefficient = 0.0;
@@ -318,35 +272,18 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
     }
   if (m1 > NewLzMax)
     {
-      TmpState |= (((unsigned long) (0x1)) << m1);
       NewLzMax = m1;
     }
   else
     {
-      SignIndex = NewLzMax - m1;
-      if (SignIndex < 16)
-	{
-	  Mask = (TmpState >> m1) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	}
-      else
-	{
-	  Mask = (TmpState >> m1) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
-	  Mask = (TmpState >> (m1 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m1 + 32)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m1 + 48)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#else
-	  Mask = (TmpState >> (m1 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << m1);
     }
+  TmpState |= (((unsigned long) (0x1)) << m1);
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
@@ -545,6 +482,23 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
       else
 	this->SignLookUpTable[j] = 1.0;
     }
+#ifdef __64_BITS__
+  this->SignLookUpTableMask = new unsigned long [128];
+  for (int i = 0; i < 48; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 48; i < 64; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+  for (int i = 64; i < 128; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#else
+  this->SignLookUpTableMask = new unsigned long [64];
+  for (int i = 0; i < 16; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 16; i < 32; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+  for (int i = 32; i < 64; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#endif
 }
 
 // evaluate Hilbert space dimension

@@ -515,43 +515,28 @@ inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int red
 #else
   int tmp = (stateIndex >> 5);
 #endif
-  unsigned long Mask;
   for (reducedNbrState; reducedNbrState > tmp; --reducedNbrState)
     {
 #ifdef  __64_BITS__
-      Mask = this->StateDescription[reducedNbrState] & ((unsigned long) 0xffff);
-      coefficient *= signLookUpTable[Mask];
-      Mask = (this->StateDescription[reducedNbrState] >> 16) & ((unsigned long) 0xffff);
-      coefficient *= signLookUpTable[Mask];
-      Mask = (this->StateDescription[reducedNbrState] >> 32)  & ((unsigned long) 0xffff);
-      coefficient *= signLookUpTable[Mask];
-      Mask = (this->StateDescription[reducedNbrState] >>48)  & ((unsigned long) 0xffff);
-      coefficient *= signLookUpTable[Mask];
+      coefficient *= signLookUpTable[this->StateDescription[reducedNbrState] & ((unsigned long) 0xffff)];
+      coefficient *= signLookUpTable[(this->StateDescription[reducedNbrState] >> 16) & ((unsigned long) 0xffff)];
+      coefficient *= signLookUpTable[(this->StateDescription[reducedNbrState] >> 32) & ((unsigned long) 0xffff)];
+      coefficient *= signLookUpTable[(this->StateDescription[reducedNbrState] >>48)  & ((unsigned long) 0xffff)];
 #else
-      Mask = this->StateDescription[reducedNbrState] & 0xffff;
-      coefficient *= signLookUpTable[Mask];
-      Mask = (this->StateDescription[reducedNbrState] >> 16) & 0xffff;
-      coefficient *= signLookUpTable[Mask];
+      coefficient *= signLookUpTable[this->StateDescription[reducedNbrState] & 0xffff];
+      coefficient *= signLookUpTable[(this->StateDescription[reducedNbrState] >> 16) & 0xffff];
 #endif
    }
 #ifdef  __64_BITS__
   stateIndex &= 0x3f;
-  Mask = (this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex];
-  coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16];
-  coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 32))  & signLookUpTableMaks[stateIndex + 32];
-  coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 48))  & signLookUpTableMaks[stateIndex + 48];
-  coefficient *= signLookUpTable[Mask];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex]];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16]];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> (stateIndex + 32))  & signLookUpTableMaks[stateIndex + 32]];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> (stateIndex + 48))  & signLookUpTableMaks[stateIndex + 48]];
 #else
   stateIndex &= 0x1f;
-  Mask = (this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex];
-//  cout << Mask << endl;
-  coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16];
-//  cout << Mask << endl;
-  coefficient *= signLookUpTable[Mask];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex]];
+  coefficient *= signLookUpTable[(this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16]];
 #endif
 }
   

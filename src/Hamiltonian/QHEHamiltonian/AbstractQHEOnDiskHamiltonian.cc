@@ -454,6 +454,8 @@ long AbstractQHEOnDiskHamiltonian::PartialFastMultiplicationMemory(int firstComp
   int m3;
   int m4;
   int LastComponent = lastComponent + firstComponent;
+  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+
   for (int i = firstComponent; i < LastComponent; ++i)
     {
       for (int j = 0; j < this->NbrInteractionFactors; ++j) 
@@ -462,14 +464,16 @@ long AbstractQHEOnDiskHamiltonian::PartialFastMultiplicationMemory(int firstComp
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	  if (Index < TmpParticles->GetHilbertSpaceDimension())
 	    {
 	      ++Memory;
 	      ++this->NbrInteractionPerComponent[i];
 	    }
 	}    
     }
+  delete TmpParticles;
+
   return Memory;
 }
 
@@ -548,7 +552,8 @@ void AbstractQHEOnDiskHamiltonian::PartialEnableFastMultiplication(int firstComp
   int Pos;
   int Min = firstComponent / this->FastMultiplicationStep;
   int Max = lastComponent / this->FastMultiplicationStep;
-  
+  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+
   for (int i = Min; i < Max; ++i)
     {
       this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
@@ -562,8 +567,8 @@ void AbstractQHEOnDiskHamiltonian::PartialEnableFastMultiplication(int firstComp
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  Index = TmpParticles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
+	  if (Index < TmpParticles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;
 	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
@@ -571,6 +576,7 @@ void AbstractQHEOnDiskHamiltonian::PartialEnableFastMultiplication(int firstComp
 	    }
 	}
     }
+  delete[] TmpParticles;
 }
 
 // save precalculations in a file
