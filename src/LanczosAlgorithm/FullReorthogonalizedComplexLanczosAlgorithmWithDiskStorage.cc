@@ -131,7 +131,10 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::InitializeLancz
   for (int i = 0; i < this->MaxNbrVectors; ++i)
     this->LanczosVectors[i] = ComplexVector (Dimension);
   for (int i = 0; i < Dimension; i++)
-    this->LanczosVectors[0][i] = (rand() - 32767) * 0.5;
+    {
+      this->LanczosVectors[0].Re(i) = (rand() - 32767) * 0.5;
+      this->LanczosVectors[0].Im(i) = (rand() - 32767) * 0.5;
+    }
   this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -288,7 +291,7 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
 	      this->Architecture->ExecuteOperation(&Operation4);
 	      for (int j = 0; j < ReducedMaxNbrVector; j++)
 		{
-		  TmpCoef[j] *= -1.0;
+		  TmpCoef[j].Re *= -1.0;
 		}
 	      AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
 	      this->Architecture->ExecuteOperation(&Operation2);
@@ -303,7 +306,7 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
 	  this->Architecture->ExecuteOperation(&Operation4);
 	  for (int j = 0; j <= MaxPos; j++)
 	    {
-	      TmpCoef[j] *= -1.0;
+	      TmpCoef[j].Re *= -1.0;
 	    }
 	  AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
 	  this->Architecture->ExecuteOperation(&Operation2);	  
@@ -469,12 +472,11 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   for (int i = 0; i < this->NbrEigenvalue; ++i)
     {
       File.read((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
+      this->PreviousWantedEigenvalues[i] *= 2.0;
     }
   File.close();  
   this->Diagonalize();
   this->DiagonalizedMatrix.SortMatrixUpOrder();
-  for (int i = 0; i < this->NbrEigenvalue; ++i)
-    this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
   return true;
 }
 

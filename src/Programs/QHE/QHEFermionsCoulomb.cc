@@ -228,6 +228,10 @@ int main(int argc, char** argv)
 	    {
 	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	      if ((DiskFlag == true) && (CurrentNbrIterLanczos >= NbrIterLanczos))
+		{
+		  NbrIterLanczos = CurrentNbrIterLanczos + 1;
+		}
 	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
 	  while ((Lanczos->TestConvergence() == false) &&  (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||

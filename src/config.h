@@ -29,9 +29,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+
+// all options
+
 // machine precision
 #define MACHINE_PRECISION 1e-14
-
 
 // SMP flag 
 #define __SMP__
@@ -40,7 +42,13 @@
 #define __DEBUG__
 
 // 64 bits architecture
-#define __64_BITS__
+//#define __64_BITS__
+
+
+
+
+// architecture dependant options
+//
 
 // DEC CXX specific options
 
@@ -50,17 +58,37 @@
 #define __USE_STD_IOSTREAM
 
 // 64 bits architecture
+#ifndef __64_BITS__
 #define __64_BITS__
+#endif
 
 #endif
+
+
 
 // xlC and AIX specific options (assume 64bits compilation)
 
 # if defined __TOS_AIX__ && __xlC__
 
 // 64 bits architecture
+#ifndef __64_BITS__
 #define __64_BITS__
+#endif
 
 #endif
+
+
+
+// gcc and x86_64 specific options (assume 64bits compilation)
+
+#ifdef __x86_64__
+
+// 64 bits architecture
+#ifndef __64_BITS__
+#define __64_BITS__
+#endif
+
+#endif
+
 
 #endif

@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", true);
+  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -220,13 +220,15 @@ int main(int argc, char** argv)
 	    {
 	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	      if ((DiskFlag == true) && (CurrentNbrIterLanczos >= NbrIterLanczos))
+		{
+		  NbrIterLanczos = CurrentNbrIterLanczos + 1;
+		}
 	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
-	  cout << "check" << endl;
 	  while ((Lanczos->TestConvergence() == false) &&  (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
 							    ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))
 	    {
-	      cout << "check in" << endl;
 	      ++CurrentNbrIterLanczos;
 	      Lanczos->RunLanczosAlgorithm(1);
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
@@ -235,7 +237,6 @@ int main(int argc, char** argv)
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
 	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
-	      cout << "check out" << endl;
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {

@@ -357,6 +357,8 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
       this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -365,6 +367,8 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
     }
   this->WriteState();
 }
@@ -376,7 +380,6 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 
 bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::TestConvergence ()
 {
-  cout << "toto" << endl;
   if (this->DiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue)
     {
       if (this->StrongConvergenceFlag == true)
@@ -393,30 +396,18 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::TestConvergence ()
 	}
       else
 	{
-	  cout << this->PreviousLastWantedEigenvalue << " " << this->DiagonalizedMatrix.GetNbrRow() << endl;
-	  for (int i = 0; i < this->NbrEigenvalue; ++i)
-	    cout << i << " " << this->DiagonalizedMatrix.DiagonalElement(i) << endl;
 	  if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
 	      (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
 	    {
-	      cout << "zog true" << endl;
 	      return true;
 	    }
 	  else
 	    {
-	      cout << "zog false" << endl;
 	      return false;
 	    }
 	}
     }
   return false;
-/*  cout << this->PreviousLastWantedEigenvalue << " " << this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) << " " << this->EigenvaluePrecision<< endl;
-  if ((this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue) && 
-      (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
-    return true;
-  else
-    return false;*/
 }
 
 // write current Lanczos state on disk
@@ -430,6 +421,7 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::WriteState()
   File.write((char*) (&this->Index), sizeof(int));
   File.write((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.write((char*) (&this->EigenvaluePrecision), sizeof(double));
+  File.write((char*) (&this->NbrEigenvalue), sizeof(int));
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
   File.write((char*) (&TmpDimension), sizeof(int));
   for (int i = 0; i <= (this->Index + 1); ++i)    
@@ -440,7 +432,11 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::WriteState()
     {
       File.write((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
     }
-  File.close();  
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    {
+      File.write((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
+    }
+  File.close();
   return true;
 }
 
@@ -455,6 +451,7 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::ReadState()
   File.read((char*) (&this->Index), sizeof(int));
   File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.read((char*) (&this->EigenvaluePrecision), sizeof(double));
+  File.read((char*) (&this->NbrEigenvalue), sizeof(int));
   int TmpDimension;
   File.read((char*) (&TmpDimension), sizeof(int));
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
@@ -465,6 +462,14 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::ReadState()
   for (int i = 0; i <= this->Index; ++i)
     {
       File.read((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+    }
+  if (this->PreviousWantedEigenvalues != 0)
+    delete[] this->PreviousWantedEigenvalues;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    {
+      File.read((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
+      this->PreviousWantedEigenvalues[i] *= 2.0;
     }
   File.close();  
   this->Diagonalize();

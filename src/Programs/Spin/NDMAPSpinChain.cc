@@ -13,6 +13,7 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
@@ -41,6 +42,7 @@ int main(int argc, char** argv)
   BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
   SingleIntegerOption NbrSpinOption ('\0', "nbr-spin", "number of spins", 8);
   SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
+  SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration (including resume run)", 3000);
   BooleanOption ReorthogonalizeOption ('\n', "reorthogonalize", "use reorthogonalized version of the lanczos algorithm", false);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 1);
@@ -51,11 +53,15 @@ int main(int argc, char** argv)
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   BooleanOption FixedMomentumOption('\n', "fixed-momentum", "evaluate for one given momentum value");
   SingleIntegerOption FixedMomentumValueOption ('\n', "momentum", "momentum value if fixed-momentum is fixed to true", 0);
+  BooleanOption DiskOption ('\n', "disk", "enable disk resume capabilities", false);
+  BooleanOption ResumeOption ('\n', "resume", "resume from disk datas", false);
+  SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &SMPNbrProcessorOption;
   OptionList += &IterationOption;
+  OptionList += &NbrIterationOption;
   OptionList += &NbrSpinOption;
   OptionList += &NbrEigenvaluesOption;
   OptionList += &AnisotropyConstantOption;
@@ -66,6 +72,9 @@ int main(int argc, char** argv)
   OptionList += &FixedMomentumOption;
   OptionList += &FixedMomentumValueOption;
   OptionList += &ReorthogonalizeOption;
+  OptionList += &VectorMemoryOption;
+  OptionList += &DiskOption;
+  OptionList += &ResumeOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type NDMAPSpinChain -h" << endl;
@@ -80,6 +89,7 @@ int main(int argc, char** argv)
   bool SMPFlag = SMPOption.GetBoolean();
   int NbrProcessor = SMPNbrProcessorOption.GetInteger();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
+  int NbrIterLanczos = NbrIterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   double AnisotropyConstant = AnisotropyConstantOption.GetDouble();
   double InPlaneAnisotropyConstant = InPlaneAnisotropyConstantOption.GetDouble();
@@ -96,6 +106,11 @@ int main(int argc, char** argv)
       MinMomentum = FixedMomentum;
       MaxMomentum = FixedMomentum;
     }  
+  bool ResumeFlag = ResumeOption.GetBoolean();
+  bool DiskFlag = DiskOption.GetBoolean();
+  int VectorMemory = VectorMemoryOption.GetInteger();
+
+
   for (int k = MinMomentum; k <= MaxMomentum; ++k)
     {
       cout << "momentum = " << k << endl;
@@ -143,19 +158,33 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      if (DiskFlag == false)
+		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
 	  double Lowest = PreviousLowest;
 	  int CurrentNbrIterLanczos = 0;
 	  Lanczos->SetHamiltonian(&Hamiltonian);
-	  Lanczos->InitializeLanczosAlgorithm();
+	  if ((DiskFlag == true) && (ResumeFlag == true))
+	    Lanczos->ResumeLanczosAlgorithm();
+	  else
+	    Lanczos->InitializeLanczosAlgorithm();
 	  cout << "Run Lanczos Algorithm" << endl;
-	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
-	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	  if (ResumeFlag == false)
+	    {
+	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
+	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	      if ((DiskFlag == true) && (CurrentNbrIterLanczos >= NbrIterLanczos))
+		{
+		  NbrIterLanczos = CurrentNbrIterLanczos + 1;
+		}
+	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
-	  while (Lanczos->TestConvergence() == false)      
+	  while ((Lanczos->TestConvergence() == false) &&  (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
+							    ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))      
 	    {
 	      ++CurrentNbrIterLanczos;
 	      Lanczos->RunLanczosAlgorithm(1);
