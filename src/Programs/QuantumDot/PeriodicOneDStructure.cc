@@ -173,11 +173,11 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrEigenvalue; ++i)  
     {
       if (NumberM == 0)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";    
+	cout << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " ";    
       if (NumberM == 1)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+	cout << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
       if (NumberM == -1)
-	cout << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+	cout << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
       if ((NumberM != 0) && (NumberM != 1) && (NumberM != -1))
 	cout << "This momentum is not taken into account" << endl;
   cout << endl;
@@ -205,11 +205,11 @@ int main(int argc, char** argv)
       for (int i = 0; i < NbrEigenvalue; ++i)
 	{
 	  if (NumberM == 0)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " ";
 	  if (NumberM == 1)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
 	  if (NumberM == -1)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
 	}
       OutputFile << endl;
       OutputFile.close();
