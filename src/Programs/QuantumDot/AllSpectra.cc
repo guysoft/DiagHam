@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   bool PairY = PairYOption.GetBoolean();
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
-  /* 
+  /*
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -140,12 +140,12 @@ int main(int argc, char** argv)
   //    OutFile << '\n';
   //  }
   //OutFile.close();  
- /*
 
   ofstream PX("PolarizationX.txt");
+  ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
 
-  for (int i = 1; i < 200; ++i)
+  for (int i = 0; i < 80; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
@@ -153,11 +153,12 @@ int main(int argc, char** argv)
       energy >> tmpE;
       polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
       PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << endl;
+      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) << endl;
       PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
       cout << i << endl;
     }
 
-  PX.close(); PZ.close();
+  PX.close(); PY.close(); PZ.close();
   energy.close(); polarization.close();
   */
   /*
@@ -233,7 +234,7 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  
+  /*
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
@@ -243,7 +244,7 @@ int main(int argc, char** argv)
     }
   DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.4, 2e-4);
   DOS.WriteSpectra(out);
- 
+  */
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -292,18 +293,18 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
-/*
+
   int Nbr = 1;
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 196;
+      State[i] = 200;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
   Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.5, 2e-4);
   Absorption.WriteSpectra(out);
-*/
+
 
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 

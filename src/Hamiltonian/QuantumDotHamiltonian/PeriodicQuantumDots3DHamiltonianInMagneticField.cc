@@ -43,8 +43,8 @@ using std::endl;
 
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
-#define PARAMAGNETIC_FACTOR 1.0
-#define DIAMAGNETIC_FACTOR 1.0
+#define PARAMAGNETIC_FACTOR         3.642e-4
+#define DIAMAGNETIC_FACTOR          2.198e-10
 
 
 // constructor from data
@@ -265,21 +265,26 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
   int* TmpTotalIndex1; int* TmpTotalIndex2;
   int Index1, Index2;
   double* TmpRealParamagnetic; double* TmpImaginaryParamagnetic;
+  double TmpReal = 0.0, TmpImaginary = 0.0;
   for (int m = 0; m < this->NbrStateX; ++m)
     {
       TmpTotalIndex1 = TotalIndex[m];      
-      TmpTotalIndex2 = TotalIndex[m];    
+      TmpTotalIndex2 = TotalIndex[m]; 
+      TmpRealParamagnetic = this->RealParamagneticTermPxY[m];
+      TmpImaginaryParamagnetic = this->ImaginaryParamagneticTermPxY[m];
       for (n1 = 0; n1 < this->NbrStateY; ++n1)
 	{
-	  IndexY = -n1;
+	  IndexY = -n1 + OriginY;
 	  for (n2 = 0; n2 < this->NbrStateY; ++n2)
 	    {
 	      Index1 = TmpTotalIndex1[n1];
-	      Index2 = TmpTotalIndex1[n2];	      
+	      Index2 = TmpTotalIndex1[n2];	
+	      TmpReal = TmpRealParamagnetic[IndexY];
+	      TmpImaginary = TmpImaginaryParamagnetic[IndexY];
 	      for (int p = 0; p < this->NbrStateZ; ++p)
 		{
-		  vDestination.Re(Index1) += (this->RealParamagneticTermPxY[m][IndexY] * vSource.Re(Index2) - this->ImaginaryParamagneticTermPxY[m][IndexY] * vSource.Im(Index2));
-		  vDestination.Re(Index1) += (this->RealParamagneticTermPxY[m][IndexY] * vSource.Im(Index2) + this->ImaginaryParamagneticTermPxY[m][IndexY] * vSource.Re(Index2));		  
+		  vDestination.Re(Index1) += (TmpReal * vSource.Re(Index2) - TmpImaginary * vSource.Im(Index2));
+		  vDestination.Re(Index1) += (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
 		  ++Index1; ++Index2;
 		}
 	      ++IndexY;
@@ -290,18 +295,22 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
   for (m1 = 0; m1 < this->NbrStateX; ++m1)
     {
       TmpTotalIndex1 = TotalIndex[m1]; 
-      IndexX = -m1;
+      IndexX = -m1 + OriginX;
       for (m2 = 0; m2 < this->NbrStateX; ++m2)
 	{
 	  TmpTotalIndex2 = TotalIndex[m2];
+	  TmpRealParamagnetic = this->RealParamagneticTermPyX[IndexX];
+	  TmpImaginaryParamagnetic = this->ImaginaryParamagneticTermPyX[IndexX];
 	  for (int n = 0; n < this->NbrStateY; ++n)
 	    {
 	      Index1 = TmpTotalIndex1[n];
 	      Index2 = TmpTotalIndex1[n];
+	      TmpReal = TmpRealParamagnetic[n];
+	      TmpImaginary = TmpImaginaryParamagnetic[n];
 	      for (int p = 0; p < this->NbrStateZ; ++p)
 		{
-		  vDestination.Re(Index1) -= (this->RealParamagneticTermPyX[IndexX][n] * vSource.Re(Index2) - this->ImaginaryParamagneticTermPyX[IndexX][n] * vSource.Im(Index2));
-		  vDestination.Re(Index1) -= (this->RealParamagneticTermPyX[IndexX][n] * vSource.Im(Index2) + this->ImaginaryParamagneticTermPyX[IndexX][n] * vSource.Re(Index2));		  
+		  vDestination.Re(Index1) -= (TmpReal * vSource.Re(Index2) - TmpImaginary * vSource.Im(Index2));
+		  vDestination.Re(Index1) -= (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
 		  ++Index1; ++Index2;
 		}	      
 	    }
@@ -382,6 +391,8 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
       m1 = ReducedIndex1 / this->NbrStateY;
       n1 = ReducedIndex1 - m1 * this->NbrStateY;
       
+      // need to add the paramagnetic term here!!!
+
       for (; Index1 < lastComponent; ++Index1)
 	{
 	  TmpRe = 0.0; TmpIm = 0.0;
@@ -571,20 +582,18 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMagneticFieldFacto
 	  this->ImaginaryParamagneticTermPxY[m][delta] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryY[delta] * double(m) / (this->Mux * this->XSize);
 	}
     }
-  
   this->RealParamagneticTermPyX = new double* [LengthX];
   this->ImaginaryParamagneticTermPyX = new double* [LengthX];
   for (int delta = 0; delta < LengthX; ++delta)
     {
       this->RealParamagneticTermPyX[delta] = new double [this->NbrStateY];
       this->ImaginaryParamagneticTermPyX[delta] = new double [this->NbrStateY];
-      for (int n = 0; n < this->NbrStateX; ++n)
+      for (int n = 0; n < this->NbrStateY; ++n)
 	{
 	  this->RealParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * RealX[delta] * double(n) / (this->Muy * this->YSize);
 	  this->ImaginaryParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryX[delta] * double(n) / (this->Muy * this->YSize);
 	}
     }
-
   // evaluation of diamagnetic factor
   for (int m = 0; m < LengthX; ++m)
     {
@@ -596,7 +605,7 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMagneticFieldFacto
   for (int n = 0; n < LengthY; ++n)
     {
       this->RealPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * RealSquaredY[n]) / this->Mux;
-      this->ImaginaryPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * ImaginarySquaredY[n]) / this->Mux;
+      this->ImaginaryPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * ImaginarySquaredY[n]) / this->Mux;    
       //this->RealPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bx * this->Bx * RealSquaredY[n]) / this->Muz;
       //this->ImaginaryPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bx * this->Bx * ImaginarySquaredY[n]) / this->Muz;      
     }
@@ -688,7 +697,7 @@ bool PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMeanPositionOperat
   realSquared[Origin] = size2 / 3.0;
   imaginarySquared[Origin] = 0.0;
   
-  for (int i = Origin + 1; i < Length; ++i)
+  for (int i = nbrState; i < Length; ++i)
     {
       Tmp = 1.0 / (2.0 * M_PI * double(i - Origin));
       real[i] = 0.0;
