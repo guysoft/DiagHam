@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
-#define SINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
+#ifndef IMPAIRXPAIRYPERIODIC3DONEPARTICLE_H
+#define IMPAIRXPAIRYPERIODIC3DONEPARTICLE_H
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
@@ -37,7 +37,7 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
 
 
-class SinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexionSymmetricPeriodic3DOneParticle
+class ImpairXPairYPeriodic3DOneParticle : public XYReflexionSymmetricPeriodic3DOneParticle
 {
 
  protected:
@@ -46,21 +46,21 @@ class SinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexionSy
 
   // default constructor
   //
-  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
+  ImpairXPairYPeriodic3DOneParticle();
 
   // constructor
   //
   // space = a more general space without symmetry reduction
-  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle (XYReflexionSymmetricPeriodic3DOneParticle& space);
+  ImpairXPairYPeriodic3DOneParticle (XYReflexionSymmetricPeriodic3DOneParticle& space);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle(const  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
+  ImpairXPairYPeriodic3DOneParticle(const  ImpairXPairYPeriodic3DOneParticle& space);
 
   // destructor
   //
-  ~ SinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
+  ~ ImpairXPairYPeriodic3DOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -71,7 +71,7 @@ class SinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexionSy
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& operator = (const  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
+   ImpairXPairYPeriodic3DOneParticle& operator = (const  ImpairXPairYPeriodic3DOneParticle& space);
   
   // return a list of all possible quantum numbers 
   //

@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQuantumDotHilbertSpace.a
 
-libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc XYReflexionSymmetricPeriodic3DOneParticle.cc SinusSinusXYReflexionSymmetricPeriodic3DOneParticle.cc SinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.cc CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle.cc CosinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.cc
+libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc XYReflexionSymmetricPeriodic3DOneParticle.cc ImpairXImpairYPeriodic3DOneParticle.cc ImpairXPairYPeriodic3DOneParticle.cc PairXImpairYPeriodic3DOneParticle.cc PairXPairYPeriodic3DOneParticle.cc
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
 LIBRARIES =  $(noinst_LIBRARIES)
@@ -85,10 +85,9 @@ LIBS = @LIBS@
 libQuantumDotHilbertSpace_a_LIBADD = 
 libQuantumDotHilbertSpace_a_OBJECTS =  Confined3DOneParticle.o \
 Periodic3DOneParticle.o XYReflexionSymmetricPeriodic3DOneParticle.o \
-SinusSinusXYReflexionSymmetricPeriodic3DOneParticle.o \
-SinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.o \
-CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle.o \
-CosinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.o
+ImpairXImpairYPeriodic3DOneParticle.o \
+ImpairXPairYPeriodic3DOneParticle.o PairXImpairYPeriodic3DOneParticle.o \
+PairXPairYPeriodic3DOneParticle.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -101,11 +100,10 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/Confined3DOneParticle.P \
-.deps/CosinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.P \
-.deps/CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle.P \
-.deps/Periodic3DOneParticle.P \
-.deps/SinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.P \
-.deps/SinusSinusXYReflexionSymmetricPeriodic3DOneParticle.P \
+.deps/ImpairXImpairYPeriodic3DOneParticle.P \
+.deps/ImpairXPairYPeriodic3DOneParticle.P \
+.deps/PairXImpairYPeriodic3DOneParticle.P \
+.deps/PairXPairYPeriodic3DOneParticle.P .deps/Periodic3DOneParticle.P \
 .deps/XYReflexionSymmetricPeriodic3DOneParticle.P
 SOURCES = $(libQuantumDotHilbertSpace_a_SOURCES)
 OBJECTS = $(libQuantumDotHilbertSpace_a_OBJECTS)

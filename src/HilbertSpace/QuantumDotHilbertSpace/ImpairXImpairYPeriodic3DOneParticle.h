@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef COSINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
-#define COSINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
+#ifndef IMPAIRXIMPAIRYPERIODIC3DONEPARTICLE_H
+#define IMPAIRXIMPAIRYPERIODIC3DONEPARTICLE_H
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
@@ -37,7 +37,7 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
 
 
-class CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexionSymmetricPeriodic3DOneParticle
+class ImpairXImpairYPeriodic3DOneParticle : public XYReflexionSymmetricPeriodic3DOneParticle
 {
 
  protected:
@@ -46,21 +46,21 @@ class CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexion
 
   // default constructor
   //
-  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
+  ImpairXImpairYPeriodic3DOneParticle();
 
   // constructor
   //
   // space = a more general space without symmetry reduction
-  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle (XYReflexionSymmetricPeriodic3DOneParticle& space);
+  ImpairXImpairYPeriodic3DOneParticle (XYReflexionSymmetricPeriodic3DOneParticle& space);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle(const  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
+  ImpairXImpairYPeriodic3DOneParticle(const  ImpairXImpairYPeriodic3DOneParticle& space);
 
   // destructor
   //
-  ~ CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
+  ~ ImpairXImpairYPeriodic3DOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -71,7 +71,7 @@ class CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexion
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& operator = (const  CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
+  ImpairXImpairYPeriodic3DOneParticle& operator = (const  ImpairXImpairYPeriodic3DOneParticle& space);
   
   // return a list of all possible quantum numbers 
   //

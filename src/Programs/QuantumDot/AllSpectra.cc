@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   H = ZCell.GetInteger();
   Number = Division.GetInteger();
   char * out = Output.GetString();
+  
   /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2, M / 4, N / 2, N / 4, H, H / 2);
   PeriodicSpectra spectra(Space, FileName);
@@ -74,7 +75,7 @@ int main(int argc, char** argv)
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
 
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
-  char** Files = new char* [100];
+  char** Files = new char* [150];
   ifstream energy("eigenvalues");
   double fundamental;
   energy >> fundamental;
@@ -97,15 +98,21 @@ int main(int argc, char** argv)
   //  }
   //OutFile.close();  
  
-  for (int i = 1; i < 100; ++i)
+  ofstream PX("PolarizationX.txt");
+  ofstream PZ("PolarizationZ.txt");
+
+  for (int i = 1; i < 150; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
       spectra.GetImpulsion(Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
       polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
+      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\n';
+      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
     }
-  
+
+  PX.close(); PZ.close();
   energy.close(); polarization.close();
   */
 
@@ -153,17 +160,17 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  /*
+  
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 100;
+      State[i] = 150;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
-  DOSSpectra DOS(1, Files, State, 1e-3, -0.16, 0.6, 2e-5);
+  DOSSpectra DOS(1, Files, State, 1e-3, -0.16, 0.1, 2e-5);
   DOS.WriteSpectra(out);
-  */
+  
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -212,18 +219,19 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
-
+/*
   int Nbr = 1;
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 99;
+      State[i] = 149;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
-  Spectra Absorption (Nbr, Files, State, 1e-3, 0.03, 0.24, 2e-5);
+  Spectra Absorption (Nbr, Files, State, 1e-3, 0.03, 0.25, 2e-5);
   Absorption.WriteSpectra(out);
-    
+*/
+
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 
   return 0;

@@ -242,7 +242,7 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
 {
   int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
 
-  int m1, m2, n1, n2, p1;
+  int m1, m2, n1, n2, p1, p2;
   int IndexX, IndexY, IndexZ;
   int** TotalIndex = new int* [this->NbrStateX]; int TmpIndex = 0;
   for (m1 = 0; m1 < this->NbrStateX; ++m1) 
@@ -267,37 +267,29 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
   int* TmpTotalIndex1; int* TmpTotalIndex2;
   for (m1 = 0; m1 < this->NbrStateX; ++m1)
     {
-      IndexX = m1 + OriginX;
-      TmpTotalIndex1 = TotalIndex[m1];
       for (m2 = 0; m2 < this->NbrStateX; ++m2)
 	{
-	  TmpTotalIndex2 = TotalIndex[m2];	  
+	  IndexX = -m1 + m2 + OriginX;
 	  for (n1 = 0; n1 < this->NbrStateY; ++n1)
 	    {
-	      IndexY = n1 + OriginY;
 	      for (n2 = 0; n2 < this->NbrStateY; ++n2)
 		{
-		  TmpRealPrecalculatedHamiltonian = this->RealPrecalculatedHamiltonian[IndexX][IndexY];
-		  TmpImaginaryPrecalculatedHamiltonian = this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY];
-		  Index1 = TmpTotalIndex1[n1];
+		  IndexY = -n1 + n2 + OriginY;
+		  Index1 = TotalIndex[m1][n1];
 		  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 		    {
-		      IndexZ = p1 + OriginZ;
-		      TmpRe = 0.0; TmpIm = 0.0;
-		      Index2 = TmpTotalIndex2[n2];
-		      for (; IndexZ >= p1; --IndexZ, ++Index2)
+		      Index2 = TotalIndex[m2][n2];
+		      for (p2 = 0; p2 < this->NbrStateZ; ++p2)
 			{
-			  TmpRe += (vSource.Re(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ] - vSource.Im(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ]);
-			  TmpIm += (vSource.Re(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ] + vSource.Im(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ]);  	  
+			  IndexZ = -p1 + p2 + OriginZ;
+			  vDestination.Re(Index1) += (vSource.Re(Index2) * this->RealPrecalculatedHamiltonian[IndexX][IndexY][IndexZ] - vSource.Im(Index2) * this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY][IndexZ]);
+			  vDestination.Im(Index1) += (vSource.Re(Index2) * this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY][IndexZ] + vSource.Im(Index2) * this->RealPrecalculatedHamiltonian[IndexX][IndexY][IndexZ]);  	  
+			  ++Index2;
 			}
-		      vDestination.Re(Index1) += TmpRe;
-		      vDestination.Im(Index1) += TmpIm;
 		      ++Index1;
 		    }
-   		  --IndexY;
 		}
 	    }
-	  --IndexX;
 	}
     }
   delete[] TotalIndex;

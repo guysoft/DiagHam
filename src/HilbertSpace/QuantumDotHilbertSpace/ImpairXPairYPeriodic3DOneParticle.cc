@@ -29,19 +29,19 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
 
 
 // constructor
 //
 // space = a more general space without symmetry reduction
 
-CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle(XYReflexionSymmetricPeriodic3DOneParticle& space)
+ImpairXPairYPeriodic3DOneParticle::ImpairXPairYPeriodic3DOneParticle(XYReflexionSymmetricPeriodic3DOneParticle& space)
 {
   this->LowerImpulsionX = 0;
-  this->NbrStateX = space.GetNbrCosinusStateX();
+  this->NbrStateX = space.GetNbrSinusStateX();
   this->LowerImpulsionY = 0;
-  this->NbrStateY = space.GetNbrSinusStateY();;
+  this->NbrStateY = space.GetNbrCosinusStateY();;
   this->NbrStateZ = space.GetNbrStateZ();
   this->LowerImpulsionZ = space.GetLowerImpulsionZ();
   this->HilbertSpaceDimension = this->NbrStateX * this->NbrStateY * this->NbrStateZ;
@@ -51,7 +51,7 @@ CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::CosinusSinusXYReflexionSy
 //
 // space = reference on Hilbert space to copy
 
-CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle(const CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space)
+ImpairXPairYPeriodic3DOneParticle::ImpairXPairYPeriodic3DOneParticle(const ImpairXPairYPeriodic3DOneParticle& space)
 {
   this->NbrStateX = space.NbrStateX;
   this->LowerImpulsionX = space.LowerImpulsionX;
@@ -65,7 +65,7 @@ CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::CosinusSinusXYReflexionSy
 // destructor
 //
 
-CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::~CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle()
+ImpairXPairYPeriodic3DOneParticle::~ImpairXPairYPeriodic3DOneParticle()
 {
 }
 
@@ -74,7 +74,7 @@ CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::~CosinusSinusXYReflexionS
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::operator = (const CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space)
+ImpairXPairYPeriodic3DOneParticle& ImpairXPairYPeriodic3DOneParticle::operator = (const ImpairXPairYPeriodic3DOneParticle& space)
 {
   this->NbrStateX = space.NbrStateX;
   this->LowerImpulsionX = space.LowerImpulsionX;
@@ -90,16 +90,16 @@ CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle& CosinusSinusXYReflexionSy
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::Clone()
+AbstractHilbertSpace* ImpairXPairYPeriodic3DOneParticle::Clone()
 {
-  return new CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle(*this);
+  return new ImpairXPairYPeriodic3DOneParticle(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> ImpairXPairYPeriodic3DOneParticle::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -110,7 +110,7 @@ List<AbstractQuantumNumber*> CosinusSinusXYReflexionSymmetricPeriodic3DOnePartic
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* ImpairXPairYPeriodic3DOneParticle::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -121,7 +121,7 @@ AbstractQuantumNumber* CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::Ge
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* ImpairXPairYPeriodic3DOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -133,7 +133,7 @@ AbstractHilbertSpace* CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::Ext
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle::PrintState (ostream& Str, int state)
+ostream& ImpairXPairYPeriodic3DOneParticle::PrintState (ostream& Str, int state)
 {
   int k1 = state / (this->NbrStateY * this->NbrStateX);
   int j1 = (state - (k1 * this->NbrStateY * this->NbrStateX)) / this->NbrStateX;
