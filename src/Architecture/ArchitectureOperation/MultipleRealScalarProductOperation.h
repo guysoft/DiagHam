@@ -52,6 +52,9 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   // number of scalar products
   int NbrScalarProduct;
 
+  // strategy used to do the scalar products
+  int Strategy;
+
   // array containing the scalar products
   double* ScalarProducts;
 
@@ -66,6 +69,14 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   RealVector* LeftVector;  
 
  public:
+
+  enum StrategyType
+    {
+      // each process achieves part of each scalar product
+      VectorSubdivision = 0x01,
+      // each process achieves full scalar product for a given group of vectors
+      GroupSubdivision = 0x02
+    };
   
   // constructor 
   //
@@ -110,6 +121,16 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   // return value = array where scalar products have to be stored
   double* GetScalarProducts ();
 
+  // set the strategy used to do the scalar products (per vector subdivision or per group)
+  //
+  // strategy = flag corresponding to the strategy
+  void SetStrategy (int strategy);
+
+  // get the strategy used to do the scalar products (per vector subdivision or per group)
+  //
+  // return value = flag corresponding to the strategy
+  int GetStrategy ();
+
   // get the vector used as the left hand side of the scalar product
   //
   // return value = pointer to the vector
@@ -117,8 +138,10 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
 
   // set index range of scalar product that have to be calculated
   // 
-  // firstComponent = index of the first component of each partial scalar product
-  // nbrComponent = number of component to take into account for each partial scalar product
+  // firstComponent = index of the first component of each partial scalar product for per vector subdivision stategy, 
+  //                  or index of the first scalar product to evaluate for per group subdivision stategy
+  // nbrComponent = number of component to take into account for each partial scalar product for per vector subdivision stategy,
+  //                or number of scalar products that have to be evaluated for per group subdivision stategy
   void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
   // get the number of scalar products that have to be evaluated
@@ -154,6 +177,15 @@ inline int MultipleRealScalarProductOperation::GetNbrScalarProduct ()
 inline double* MultipleRealScalarProductOperation::GetScalarProducts ()
 {
   return this->ScalarProducts;
+}
+
+// get the strategy used to do the scalar products (per vector subdivision or per group)
+//
+// return value = flag corresponding to the strategy
+
+inline int MultipleRealScalarProductOperation::GetStrategy ()
+{
+  return this->Strategy;
 }
 
 // get the vector used as the left hand side of the scalar product

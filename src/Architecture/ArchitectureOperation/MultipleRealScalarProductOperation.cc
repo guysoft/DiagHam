@@ -49,6 +49,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVecto
   this->RightVectorsByPointers = 0;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
+  this->Strategy = MultipleRealScalarProductOperation::VectorSubdivision;
 }
 
 // constructor 
@@ -68,6 +69,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVecto
   this->RightVectorsByPointers = rightVectors;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
+  this->Strategy = MultipleRealScalarProductOperation::VectorSubdivision;
 }
 
 // constructor 
@@ -88,6 +90,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVecto
   this->RightVectorMatrix = rightVectors;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
+  this->Strategy = MultipleRealScalarProductOperation::VectorSubdivision;
 }
 
 // copy constructor 
@@ -105,6 +108,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(const Mul
   this->RightVectorMatrix = operation.RightVectorMatrix;
   this->LeftVector = operation.LeftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
+  this->Strategy = operation.Strategy;
 }
   
 // destructor
@@ -123,10 +127,21 @@ void MultipleRealScalarProductOperation::SetScalarProducts (double* scalarProduc
   this->ScalarProducts = scalarProducts;
 }
 
+// set the strategy used to do the scalar products (per vector subdivision or per group)
+//
+// strategy = flag corresponding to the strategy
+
+void MultipleRealScalarProductOperation::SetStrategy (int strategy)
+{
+  this->Strategy = strategy;
+}
+
 // set index range of scalar product that have to be calculated
 // 
-// firstComponent = index of the first component of each partial scalar product
-// nbrComponent = number of component to take into account for each partial scalar product
+// firstComponent = index of the first component of each partial scalar product for per vector subdivision stategy, 
+//                  or index of the first scalar product to evaluate for per group subdivision stategy
+// nbrComponent = number of component to take into account for each partial scalar product for per vector subdivision stategy,
+//                or number of scalar products that have to be evaluated for per group subdivision stategy
 
 void MultipleRealScalarProductOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
@@ -149,27 +164,56 @@ AbstractArchitectureOperation* MultipleRealScalarProductOperation::Clone()
 
 bool MultipleRealScalarProductOperation::ApplyOperation()
 {
-  if (this->RightVectors != 0)
+  if (this->Strategy == MultipleRealScalarProductOperation::VectorSubdivision)
     {
-      for (int i = 0; i < this->NbrScalarProduct; ++i)
+      if (this->RightVectors != 0)
 	{
-	  this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectors[i], this->FirstComponent, this->NbrComponents);
+	  for (int i = 0; i < this->NbrScalarProduct; ++i)
+	    {
+	      this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectors[i], this->FirstComponent, this->NbrComponents);
+	    }
 	}
+      else
+	if (this->RightVectorsByPointers != 0)
+	  {
+	    for (int i = 0; i < this->NbrScalarProduct; ++i)
+	      {
+		this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct((*(this->RightVectorsByPointers[i])), this->FirstComponent, this->NbrComponents);
+	      }
+	  }
+	else
+	  {
+	    for (int i = 0; i < this->NbrScalarProduct; ++i)
+	      {
+		this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectorMatrix[i], this->FirstComponent, this->NbrComponents);
+	      }
+	  }
     }
   else
-    if (this->RightVectorsByPointers != 0)
-      {
-	for (int i = 0; i < this->NbrScalarProduct; ++i)
+    {
+      int LastScalarProduct = this->FirstComponent + this->NbrComponents;
+      if (this->RightVectors != 0)
+	{
+	  for (int i = this->FirstComponent; i < LastScalarProduct; ++i)
+	    {
+	      this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectors[i]);
+	    }
+	}
+      else
+	if (this->RightVectorsByPointers != 0)
 	  {
-	    this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct((*(this->RightVectorsByPointers[i])), this->FirstComponent, this->NbrComponents);
+	    for (int i = this->FirstComponent; i < LastScalarProduct; ++i)
+	      {
+		this->ScalarProducts[i] = ((*(this->LeftVector)) * (*(this->RightVectorsByPointers[i])));
+	      }
 	  }
-      }
-    else
-      {
-	for (int i = 0; i < this->NbrScalarProduct; ++i)
+	else
 	  {
-	    this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectorMatrix[i], this->FirstComponent, this->NbrComponents);
+	    for (int i = this->FirstComponent; i < LastScalarProduct; ++i)
+	      {
+		this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
+	      }
 	  }
-      }
+    }
   return true;
 }

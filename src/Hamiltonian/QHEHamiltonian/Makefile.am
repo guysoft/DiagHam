@@ -22,4 +22,5 @@ AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc \
 AbstractQHEOnDiskHamiltonian.cc \
 ParticleOnDiskLaplacianDeltaHamiltonian.cc \
-ParticleOnSphereDipolarHamiltonian.cc
+ParticleOnSphereDipolarHamiltonian.cc \
+ParticleOnSphereGenericHamiltonian.cc
