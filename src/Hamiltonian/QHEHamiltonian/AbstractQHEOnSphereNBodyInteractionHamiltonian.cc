@@ -219,6 +219,12 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
   int* NIndices;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
+
+/*  long NbrDifferent = 0;
+  long Total = 0;
+  long MaxNbrDifferent = 10000000;
+  double* Different = new double [MaxNbrDifferent];*/
+
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
@@ -238,6 +244,105 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 			  {
 			    ++Memory;
 			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+/*			    ++Total;
+			    if (NbrDifferent == 0)
+			      {				
+				Different[0] = Coefficient;
+				++NbrDifferent;
+			      }
+			    else
+			      {
+				long MaxPos = NbrDifferent - 1;
+				if (Coefficient <= Different[0])
+				  {
+				    if (Coefficient != Different[0])
+				      {
+					if (NbrDifferent < (MaxNbrDifferent - 1))
+					  {
+					    for (MaxPos = NbrDifferent - 1; MaxPos >= 0; --MaxPos)
+					      Different[MaxPos + 1] = Different[MaxPos];				    
+					    Different[0] = Coefficient;
+					    ++NbrDifferent;
+					  }
+					else
+					  {
+					    MaxNbrDifferent *= 2;
+					    double* TmpDifferent = new double [MaxNbrDifferent];
+					    for (MaxPos = 0; MaxPos < NbrDifferent; ++MaxPos)
+					      TmpDifferent[MaxPos + 1] = Different[MaxPos];				    
+					    delete[] Different;
+					    Different = TmpDifferent;
+					    Different[0] = Coefficient;
+					    ++NbrDifferent;
+					  }
+				      }
+				  }
+				else
+				  if (Coefficient >= Different[MaxPos])
+				    {
+				      if (Coefficient != Different[MaxPos])
+					{
+					  if (NbrDifferent < (MaxNbrDifferent - 1))
+					    {
+					      Different[MaxPos + 1] = Coefficient;
+					      ++NbrDifferent;
+					    }
+					  else
+					    {
+					      MaxNbrDifferent *= 2;
+					      double* TmpDifferent = new double [MaxNbrDifferent];
+					      for (MaxPos = 0; MaxPos < NbrDifferent; ++MaxPos)
+						TmpDifferent[MaxPos] = Different[MaxPos];				    
+					      delete[] Different;
+					      Different = TmpDifferent;
+					      Different[NbrDifferent] = Coefficient;
+					      ++NbrDifferent;
+					    }
+					}
+				    }
+				  else
+				    {
+				      long MinPos = 0l;
+				      long MedPos;
+				      while ((MaxPos - MinPos) > 1)
+					{
+					  MedPos = (MaxPos + MinPos) >> 1;
+					  if (Coefficient >= Different[MedPos])
+					    {
+					      MinPos = MedPos;
+					    }
+					  else
+					    {
+					      MaxPos = MedPos;
+					    }
+					}
+				      if ((Coefficient != Different[MinPos]) && (Coefficient != Different[MaxPos]))
+					{
+					  ++NbrDifferent;
+					  ++MinPos;
+					  if (NbrDifferent < MaxNbrDifferent)
+					    {
+					      MaxPos = NbrDifferent - 1;
+					      ++MinPos;
+					      for (; MaxPos >= MinPos; --MaxPos)
+						Different[MaxPos] = Different[MaxPos- 1];
+					      Different[MinPos - 1] = Coefficient;
+					    }
+					  else
+					    {
+					      MaxNbrDifferent *= 2;
+					      double* TmpDifferent = new double [MaxNbrDifferent];
+					      for (MaxPos = 0; MaxPos < MinPos; ++MaxPos)
+					      TmpDifferent[MaxPos] = Different[MaxPos];
+					      TmpDifferent[MaxPos++] = Coefficient;
+					      for (; MaxPos < NbrDifferent; ++MaxPos)
+						TmpDifferent[MaxPos] = Different[MaxPos - 1];				    
+					      delete[] Different;
+					      Different = TmpDifferent;
+					    }
+					}
+				    }
+			      }*/
 			  }
 			NIndices += k;
 		      }
@@ -246,6 +351,7 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 	      }
 	  }
       }
+//  cout << "Total = " << Total << "   unique = " <<  NbrDifferent << "(" << (((double) NbrDifferent) * 100.0 / ((double) Total)) <<"%)" << endl;
   delete TmpParticles;
 
   return Memory;

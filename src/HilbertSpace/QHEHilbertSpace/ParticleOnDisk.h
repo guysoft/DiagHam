@@ -33,20 +33,15 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "Complex.h"
+#include "HilbertSpace/QHEHilbertSpace/AbstractQHEParticle.h"
 
 
-class ParticleOnDisk :  public AbstractHilbertSpace
+class ParticleOnDisk :  public AbstractQHEParticle
 {
 
  public:
 
-  enum 
-    {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
-  
   // virtual destructor
   //
   virtual ~ParticleOnDisk ();

@@ -32,6 +32,9 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Vector/RealVector.h"
+#include "FunctionBasis/AbstractFunctionBasis.h"
 
 #include <math.h>
 #include <iostream>
@@ -517,3 +520,232 @@ void BosonOnDisk::ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int fac
   cout << endl;
   delete[] PrimeNumbers;
 }
+
+// evaluate wave function in real space using a given basis and only for agiven range of components
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = wave function evaluated at the given location
+
+Complex BosonOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+					     int firstComponent, int nbrComponent)
+{
+  Complex Value;
+  Complex Tmp;
+  ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+  ComplexMatrix Functions(this->TotalLz + 1, this->NbrBosons);
+  RealVector TmpCoordinates(2);
+  int* Indices = new int [this->NbrBosons];
+  int Pos;
+  int Lz;
+  for (int j = 0; j < this->NbrBosons; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->TotalLz; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
+  double* Factors = new double [this->NbrBosons + 1];
+  Factors[0] = 1.0;
+  Factors[1] = 1.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    Factors[i] = Factors[i - 1] / sqrt((double) i);
+  double TmpFactor;
+  int* ChangeBitSign;
+  int* ChangeBit;
+  int TmpStateDescription;
+  Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
+    {
+      Pos = 0;
+      Lz = 0;
+      TmpFactor = state[k] * Factors[this->NbrBosons];
+      while (Pos < this->NbrBosons)
+	{
+	  TmpStateDescription = this->StateDescription[k][Lz];
+	  if (TmpStateDescription != 0)
+	    {
+	      TmpFactor *= Factors[TmpStateDescription];
+	      for (int j = 0; j < TmpStateDescription; ++j)
+		{
+		  Indices[Pos] = Lz;
+		  ++Pos;
+		}
+	    }
+	  ++Lz;
+	}
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < this->NbrBosons; ++j)
+	    {
+	      Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
+	    }
+	}
+      Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
+    }
+  delete[] ChangeBitSign;
+  delete[] ChangeBit;
+  delete[] Factors;
+  delete[] Indices;
+  return Value;
+}
+
+// evaluate wave function in real space using a given basis and only for a given range of components, using time coherence
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// nextCoordinates = index of the coordinate that will be changed during the next time iteration
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = wave function evaluated at the given location
+
+Complex BosonOnDisk::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+							      int nextCoordinates, int firstComponent, int nbrComponent)
+{
+  double* Factors = new double [this->NbrBosons + 1];
+  Factors[0] = 1.0;
+  Factors[1] = 1.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    Factors[i] = Factors[i - 1] / sqrt((double) i);
+  double TmpFactor;
+  Complex Value;
+  Complex Tmp;
+  Complex TmpPerm;
+  int* Indices = new int [this->NbrBosons];
+  int Pos;
+  int Lz;
+  int TmpStateDescription;
+  int LastComponent = firstComponent + nbrComponent;
+  if ((*(this->KeptCoordinates)) == -1)
+    {
+      ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+      ComplexMatrix Functions(this->TotalLz + 1, this->NbrBosons);
+      RealVector TmpCoordinates(2);
+      for (int j = 0; j < this->NbrBosons; ++j)
+	{
+	  TmpCoordinates[0] = position[j << 1];
+	  TmpCoordinates[1] = position[1 + (j << 1)];
+	  for (int i = 0; i <= this->TotalLz; ++i)
+	    {
+	      basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	      Functions[j].Re(i) = Tmp.Re;
+	      Functions[j].Im(i) = Tmp.Im;
+	    }
+	}
+      int* ChangeBitSign;
+      int* ChangeBit;
+      int TmpStateDescription;
+      Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign, true);
+      int LastComponent = firstComponent + nbrComponent;
+      for (int k = firstComponent; k < LastComponent; ++k)
+	{
+	  Pos = 0;
+	  Lz = 0;
+	  TmpFactor = state[k] * Factors[this->NbrBosons];
+	  while (Pos < this->NbrBosons)
+	    {
+	      TmpStateDescription = this->StateDescription[k][Lz];
+	      if (TmpStateDescription != 0)
+		{
+		  TmpFactor *= Factors[TmpStateDescription];
+		  for (int j = 0; j < TmpStateDescription; ++j)
+		    {
+		      Indices[Pos] = Lz;
+		      ++Pos;
+		    }
+		}
+	      ++Lz;
+	    }
+	  for (int i = 0; i < this->NbrBosons; ++i)
+	    {
+	      ComplexVector& TmpColum2 = Functions[i];	  
+	      for (int j = 0; j < this->NbrBosons; ++j)
+		{
+		  Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
+		  Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
+		}
+	    }
+	  if (this->Minors[k] == 0)
+	    {
+	      this->Minors[k] = new Complex [this->NbrBosons];
+	    }
+	  Perm.FastPermanentMinorDevelopment(ChangeBit, ChangeBitSign, nextCoordinates, this->Minors[k]);
+	  TmpPerm = 0.0;
+	  for (int i = 0; i < this->NbrBosons; ++i)
+	    TmpPerm += this->Minors[k][i] * Complex (Perm[nextCoordinates].Re(i), 
+						     Perm[nextCoordinates].Im(i));
+	  Value += TmpPerm * TmpFactor;
+	}
+      delete[] ChangeBitSign;
+      delete[] ChangeBit;
+      (*(this->KeptCoordinates)) = nextCoordinates;
+    }
+  else
+    {
+      Complex* Functions = new Complex[this->TotalLz + 1];
+      RealVector TmpCoordinates(2);
+      TmpCoordinates[0] = position[(*(this->KeptCoordinates)) << 1];
+      TmpCoordinates[1] = position[1 + ((*(this->KeptCoordinates)) << 1)];
+      for (int i = 0; i <= this->TotalLz; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Functions[i], i);
+	}
+      for (int k = firstComponent; k < LastComponent; ++k)
+	{
+	  Pos = 0;
+	  Lz = 0;
+	  TmpFactor = Factors[this->NbrBosons] * state[k];
+	  while (Pos < this->NbrBosons)
+	    {
+	      TmpStateDescription = this->StateDescription[k][Lz];
+	      if (TmpStateDescription != 0)
+		{
+		  TmpFactor *= Factors[TmpStateDescription];
+		  for (int j = 0; j < TmpStateDescription; ++j)
+		    {
+		      Indices[Pos] = Lz;
+		      ++Pos;
+		    }
+		}
+	      ++Lz;
+	    }
+	  Complex* TmpMinors = this->Minors[k];
+	  TmpPerm = 0.0;
+	  for (int i = 0; i < this->NbrBosons; ++i)
+	    TmpPerm += TmpMinors[i] * Functions[Indices[i]];
+	  Value += TmpPerm * TmpFactor;
+	}
+      delete[] Functions;
+      (*(this->KeptCoordinates)) = -1;
+    }
+  delete[] Factors;
+  delete[] Indices;
+  return Value;
+}
+
+// initialize evaluation of wave function in real space using a given basis and only for a given range of components and
+//
+// timeCoherence = true if time coherence has to be used
+
+void BosonOnDisk::InitializeWaveFunctionEvaluation (bool timeCoherence)
+{
+  if ((timeCoherence == true) && (this->Minors == 0))
+    {
+      this->Minors = new Complex* [this->HilbertSpaceDimension];
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	this->Minors[i] = 0;
+    }
+}
+
+

@@ -140,7 +140,9 @@ ParticleOnDisk.cc \
 FermionOnDisk.cc \
 FermionOnSphereLongState.cc \
 FermionOnDiskUnlimited.cc \
-FermionOnSphereUnlimited.cc
+FermionOnSphereUnlimited.cc \
+BosonOnSphereState.cc \
+AbstractQHEParticle.cc
 
 subdir = src/HilbertSpace/QHEHilbertSpace
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -164,14 +166,17 @@ am_libQHEHilbertSpace_a_OBJECTS = Fermions.$(OBJEXT) \
 	BosonOnTorusState.$(OBJEXT) ParticleOnDisk.$(OBJEXT) \
 	FermionOnDisk.$(OBJEXT) FermionOnSphereLongState.$(OBJEXT) \
 	FermionOnDiskUnlimited.$(OBJEXT) \
-	FermionOnSphereUnlimited.$(OBJEXT)
+	FermionOnSphereUnlimited.$(OBJEXT) BosonOnSphereState.$(OBJEXT) \
+	AbstractQHEParticle.$(OBJEXT)
 libQHEHilbertSpace_a_OBJECTS = $(am_libQHEHilbertSpace_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/BosonOnDisk.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractQHEParticle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/BosonOnDisk.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnSphere.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/BosonOnSphereState.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorusState.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorusWithMagneticTranslations.Po \
@@ -231,8 +236,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnDisk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnSphere.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnSphereState.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnTorusState.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnTorusWithMagneticTranslations.Po@am__quote@

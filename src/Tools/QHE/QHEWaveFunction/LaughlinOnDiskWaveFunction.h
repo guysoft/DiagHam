@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of function basis for particle on disk              //
+//                   class of Laughlin wave function on disk                  //
 //                                                                            //
-//                        last modification : 05/02/2004                      //
+//                        last modification : 10/10/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,48 +28,53 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef LAUGHLINONDISKWAVEFUNCTION_H
+#define LAUGHLINONDISKWAVEFUNCTION_H
+
+
 #include "config.h"
-#include "FunctionBasis/QHEFunctionBasis/ParticleOnDiskFunctionBasis.h"
-#include "Vector/RealVector.h"
-
-#include <math.h>
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
 
-// constructor
-//
-// lzMax = twice the maximum Lz value reached by a particle
-
-ParticleOnDiskFunctionBasis::ParticleOnDiskFunctionBasis(int lzMax)
+class LaughlinOnDiskWaveFunction: public Abstract1DComplexFunction
 {
-  this->LzMax = lzMax;
-  this->HilbertSpaceDimension = this->LzMax + 1;
-  this->Prefactor = new double [this->HilbertSpaceDimension];
-  this->Prefactor[0] = sqrt (1.0 / (2.0 * M_PI));
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
-    {
-      this->Prefactor[i] = this->Prefactor[i - 1] / sqrt (2.0 * ((double) i));
-    }
-}
 
-// destructor
-//
+ protected:
 
-ParticleOnDiskFunctionBasis::~ParticleOnDiskFunctionBasis ()
-{
-  delete[] this->Prefactor;
-}
+  // number of particles
+  int NbrParticles;
 
-// get value of the i-th function at a given point (for functions which take values in C)
-//
-// value = reference on the value where the function has to be evaluated
-// result = reference on the value where the result has to be stored
-// index = function index 
+  // inverse value of the filling factor
+  int InvFillingFactor;
 
-void ParticleOnDiskFunctionBasis::GetFunctionValue(RealVector& value, Complex& result, int index)
-{
-//  result = pow(Complex(value[0], value[1]), (double) (index)) * (this->Prefactor[index] * exp (-0.25 * ((value[0] * value[0]) + (value[1] * value[1]))));
-  result = pow(Complex(value[0], value[1]), (double) (index)) * this->Prefactor[index];
-}
+ public:
 
+  // constructor
+  //
+  // nbrParticles = number of particles
+  // invFillingFactor = inverse value of the filling factor
+  LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor);
 
+  // copy constructor
+  //
+  // function = reference on the wave function to copy
+  LaughlinOnDiskWaveFunction(const LaughlinOnDiskWaveFunction& function);
 
+  // destructor
+  //
+   ~LaughlinOnDiskWaveFunction();
+
+  // clone function 
+  //
+  // return value = clone of the function 
+  Abstract1DComplexFunction* Clone ();
+
+  // evaluate function at a given point
+  //
+  // x = point where the function has to be evaluated
+  // return value = function value at x  
+  Complex operator ()(RealVector& x);
+
+};
+
+#endif

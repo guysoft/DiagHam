@@ -1,15 +1,12 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaHamiltonian.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaModifiedHamiltonian.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
-#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnDiskFunctionBasis.h"
 
-#include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
-#include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
-#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
-#include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/PfaffianOnDiskWaveFunction.h"
+//#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnDiskWaveFunction.h"
+//#include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -18,7 +15,7 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
 
-#include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
+//#include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -59,7 +56,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "momentum", "maximum single particle momentum to study", 10, true, 1);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
@@ -73,7 +70,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsDeltaOverlap -h" << endl;
+      cout << "see man page for option syntax or type QHEBosonsOverlap -h" << endl;
       return -1;
     }
   
@@ -89,12 +86,12 @@ int main(int argc, char** argv)
     }
 
   int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+  int MMax = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
 
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
-      cout << "QHEBosonsDeltaOverlap requires an exact state" << endl;
+      cout << "QHEBosonsOverlap requires an exact state" << endl;
       return -1;
     }
   RealVector State;
@@ -120,42 +117,44 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  BosonOnSphere Space (NbrBosons, 0, LzMax);
-  ParticleOnSphereFunctionBasis Basis(LzMax);
-//  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
-//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 1, 1);
-  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
-//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
+  BosonOnDisk Space (NbrBosons, MMax);
+  ParticleOnDiskFunctionBasis Basis(MMax);
+  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
+//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrBosons, 1, 1);
+//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 3);
+//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-/*  for (int k = 0; k < 10; ++k)
+  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
-	  Location[i << 1] = M_PI * drand48();
-	  Location[(i << 1) + 1] = 2.0 * M_PI * drand48();
-	  cout << Location[i << 1] << " " << Location[(i << 1) + 1] << endl;
+	  double Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+	  double Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
+	  Location[i << 1] = Radius * cos (Theta);
+	  Location[1 + (i << 1)] = Radius * sin (Theta);
+ 	  Location[i << 1] = M_PI * drand48();
 	}
       //  Location[4] = Location[0];
       //  Location[5] = Location[1];
-      ParticleOnSphereFunctionBasis Basis(LzMax);
+      ParticleOnDiskFunctionBasis Basis(MMax);
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
-      Complex ValueLaughlin = LaughlinWaveFunction(Location, NbrBosons) * 0.36563112422012;
+      Complex ValueLaughlin = (*WaveFunction)(Location);
 //      cout << ValueExact  << endl; 
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;*/
+  return 0;
   double Factor = 1.0;
   for (int j = 0; j < NbrBosons; ++j)
     {
-      Factor *= 4.0 * M_PI;
+      Factor *= 4.0 * M_PI * ((double) MMax);
     }
   Complex Overlap;
   Complex ErrorOverlap;
@@ -168,10 +167,14 @@ int main(int argc, char** argv)
   double Tmp2;
   double Tmp2bis;
   int NextCoordinates = 0;
+  double Radius;
+  double Theta;
   for (int j = 0; j < NbrBosons; ++j)
     {
-      Location[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
-      Location[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
+      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
+      Location[j << 1] = Radius * cos (Theta);
+      Location[1 + (j << 1)] = Radius * sin (Theta);
     }
   Tmp = (*WaveFunction)(Location);
   double PreviousProbabilities = Norm(Tmp);
@@ -181,8 +184,10 @@ int main(int argc, char** argv)
     {
       double PreviousCoordinates1 = Location[NextCoordinates << 1];
       double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
-      Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
-      Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
+      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
+      Location[NextCoordinates << 1] = Radius * cos (Theta);
+      Location[1 + (NextCoordinates << 1)] = Radius * sin (Theta);
       Complex TmpMetropolis = (*WaveFunction)(Location);
 //      Complex TmpMetropolis2 = (*WaveFunction2)(Location);
 //      cout << TmpMetropolis << " " << (8 * TmpMetropolis2) << endl;

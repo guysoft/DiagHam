@@ -21,4 +21,6 @@ ParticleOnDisk.cc \
 FermionOnDisk.cc \
 FermionOnSphereLongState.cc \
 FermionOnDiskUnlimited.cc \
-FermionOnSphereUnlimited.cc
+FermionOnSphereUnlimited.cc \
+BosonOnSphereState.cc \
+AbstractQHEParticle.cc

@@ -42,7 +42,7 @@
 // basis = one body real space basis to use
 // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
 
-QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (ParticleOnSphere* space, RealVector* state, RealVector* position, 
+QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEParticle* space, RealVector* state, RealVector* position, 
 								    AbstractFunctionBasis* basis, int nextCoordinates)
 {
   this->FirstComponent = 0;
@@ -52,7 +52,7 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (ParticleOnSp
     space->InitializeWaveFunctionEvaluation(true);
   else
     space->InitializeWaveFunctionEvaluation(false);
-  this->HilbertSpace = (ParticleOnSphere*) space->Clone();
+  this->HilbertSpace = (AbstractQHEParticle*) space->Clone();
   this->State = state;
   this->Position = position;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
@@ -68,7 +68,7 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEPart
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
   this->State = operation.State;
-  this->HilbertSpace = (ParticleOnSphere*) operation.HilbertSpace->Clone();
+  this->HilbertSpace = (AbstractQHEParticle*) operation.HilbertSpace->Clone();
   this->Position = operation.Position;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Basis = operation.Basis;

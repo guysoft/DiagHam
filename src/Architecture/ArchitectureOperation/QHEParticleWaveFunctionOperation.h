@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/AbstractQHEParticle.h"
 
 
 class AbstractFunctionBasis;
@@ -47,7 +47,7 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
  protected:
 
   // pointer to the Hilbert space
-  ParticleOnSphere* HilbertSpace;
+  AbstractQHEParticle* HilbertSpace;
   // vector corresponding to the state in the Fock basis  
   RealVector* State;
   // vector whose components give coordinates of the point where the wave function has to be evaluated
@@ -66,7 +66,7 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
   // position = vector whose components give coordinates of the point where the wave function has to be evaluated
   // basis = one body real space basis to use
   // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
-  QHEParticleWaveFunctionOperation(ParticleOnSphere* space, RealVector* state, RealVector* position, 
+  QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* state, RealVector* position, 
 				   AbstractFunctionBasis* basis, int nextCoordinates = -1);
 
   // copy constructor 
