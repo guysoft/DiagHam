@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
-      if (Hamiltonian->GetHilbertSpaceDimension() < 500)
+      if (Hamiltonian->GetHilbertSpaceDimension() < 1000)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);

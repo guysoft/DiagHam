@@ -38,6 +38,7 @@ while ($NbrFermions <= 40)
 	$Scaling *= $Scaling;
 	$MinArray{$NbrFermions} = (&FindMinimum($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))) * $Scaling / $NbrFermions;
 	$MinArray{$NbrFermions} -= ($FactorInvN / $NbrFermions) + $FactorShift;
+	$MinArray{$NbrFermions} -= $MinArray{int(sqrt($NbrFermions)) * int(sqrt($NbrFermions))};
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;

@@ -56,6 +56,10 @@ class FullReorthogonalizedLanczosAlgorithm : public AbstractLanczosAlgorithm
   int NbrEigenvalue;
   // value of the last wanted eigenvalue at previous Lanczos iteration
   double PreviousLastWantedEigenvalue;
+  // value of the wanted eigenvalue at previous Lanczos iteration
+  double* PreviousWantedEigenvalues;
+  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  bool StrongConvergenceFlag;
 
  public:
 
@@ -64,7 +68,9 @@ class FullReorthogonalizedLanczosAlgorithm : public AbstractLanczosAlgorithm
   // architecture = architecture to use for matrix operations
   // nbrEigenvalue = number of wanted eigenvalues
   // maxIter = an approximation of maximal number of iteration
-  FullReorthogonalizedLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100);
+  // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  FullReorthogonalizedLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
+				       bool strongConvergence = false);
 
   // copy constructor
   //

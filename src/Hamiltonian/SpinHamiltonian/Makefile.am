@@ -19,6 +19,6 @@ MultipleSpinChainHamiltonian.cc \
 TriangleSpinChainHamiltonian.cc \
 V15Hamiltonian.cc \
 XXZSpinChainHamiltonian.cc \
-PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc \
+PeriodicXXZSpinChainWith2ndNeighborCouplingHamiltonian.cc \
 SpinChainHamiltonianWithTranslations.cc \
 NDMAPSpinChainHamiltonian.cc 

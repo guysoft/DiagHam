@@ -147,6 +147,10 @@ sub CreatePostScript
     my $Title = "N = ".$N;
     my $MinL = ($N * ($N - 1)) / 2 - 1;
     ++$MaxL;
+#    $MinL = 17;
+#    $MaxL = 33;
+#    $Min = -0.15;
+#    $Max = 1.5;
     open (OUTFILE, ">$TmpFileName");
     print OUTFILE ("set xrange [".$MinL.":".$MaxL."]
 set yrange [".$Min.":".$Max."]

@@ -24,7 +24,7 @@ while ($NbrFermions <= 40)
     if (-e $TmpFile)
       {
 	print ($TmpFile."\n");
-	my $Scaling = ($S * $NbrFermionsInc) / ($NbrFermions * $SInc);
+	my $Scaling = (($S + 1) * $NbrFermionsInc) / ($NbrFermions * $SInc);
 	$Scaling *= $Scaling;
 	$MinArray{$NbrFermions} = (&FindGround($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))) * $Scaling;
       }
@@ -80,7 +80,7 @@ sub CreatePostScript
     my $PrintFlag = $_[2];
     my $N;
     my $E;
-    my $FileName = "fermions_laplaciandelta_gap_".$Caption.".dat";
+    my $FileName = "fermions_laplaciandelta_chargedgap_".$Caption.".dat";
     open (OUTFILE, ">$FileName");
     my $MinN = 200;
     my $MaxN = 0;
@@ -113,7 +113,7 @@ sub CreatePostScript
     my $Delta = ($MaxGap - $MinGap) / 20.0;
     $MaxGap += $Delta;
     $MinGap -= $Delta;
-    $MinGap = 0.7;
+#    $MinGap = 0.7;
     $MinN--;
     $MaxN++;
     my $Tmp = 1.0 / $MinN;

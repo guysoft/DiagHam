@@ -75,7 +75,7 @@ class FullReorthogonalizedLanczosAlgorithmWithDiskStorage : public AbstractLancz
   // maxIter = an approximation of maximal number of iteration
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
   FullReorthogonalizedLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxNbrVectors = 0, int maxIter = 100,
-							     bool strongConvergence = false);
+						      bool strongConvergence = false);
 
   // copy constructor
   //

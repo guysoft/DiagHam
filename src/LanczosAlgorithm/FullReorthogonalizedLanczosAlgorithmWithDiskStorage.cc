@@ -81,6 +81,7 @@ FullReorthogonalizedLanczosAlgorithmWithDiskStorage::FullReorthogonalizedLanczos
   this->PreviousLastWantedEigenvalue = 0.0;
   this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->EigenvectorPrecision = 0.0;
 }
@@ -392,7 +393,7 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
       this->DiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
-	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
+	this->PreviousWantedEigenvalues[i] = 2.0 * this->DiagonalizedMatrix.DiagonalElement(i);
     }
   this->WriteState();
 }

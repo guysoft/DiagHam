@@ -4127,7 +4127,7 @@ fi
 
 
 
-CXXFLAGS="-O3 -ffast-math -g -Wall  -march=athlon"
+CXXFLAGS="-O2 -g -Wall "
 INCLUDES="-I\$(top_srcdir)/src "
 
 

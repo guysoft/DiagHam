@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/SpinHamiltonian/PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.h"
+#include "Hamiltonian/SpinHamiltonian/PeriodicXXZSpinChainWith2ndNeighborCouplingHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"

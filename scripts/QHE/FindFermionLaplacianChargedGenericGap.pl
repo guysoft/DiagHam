@@ -56,6 +56,7 @@ while ($TmpLine = <INFILE2>)
 	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
 	    my $Quasi1 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	    $S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	    my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	    $Scaling *= $Scaling;
 	    $Quasi1 *= $Scaling;
@@ -69,6 +70,7 @@ while ($TmpLine = <INFILE2>)
 	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
 	    my $Quasi2 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	    $S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	    my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	    $Scaling *= $Scaling;	
 	    $Quasi2 *= $Scaling;
