@@ -1,4 +1,4 @@
-SUBDIRS=NumericalAnalysis
+SUBDIRS=NumericalAnalysis RandomNumber
 
 noinst_LIBRARIES=libMathTools.a
 

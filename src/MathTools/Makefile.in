@@ -117,7 +117,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = NumericalAnalysis
+SUBDIRS = NumericalAnalysis RandomNumber
 
 noinst_LIBRARIES = libMathTools.a
 

@@ -82,6 +82,7 @@ public:
   friend Complex Conj(const Complex& z);
 // return complex corresponding to the polar definition
   friend Complex Polar(double r,double theta);
+  
 
 // basic arithmetic operations
   Complex& operator += (const Complex& z);
@@ -106,6 +107,12 @@ public:
   friend Complex operator / (double x,const Complex& z);
   friend Complex operator + (const Complex& z);
   friend Complex operator - (const Complex& z);
+
+  // multiply the current complex number by the conjugate of another complex number 
+  // 
+  // z = reference on the complex number to use for the multiplication
+  // return value = reference on the current complex number
+  Complex& ConjugateProduct(const Complex& z);
 
 // logical operations
   friend bool operator == (const Complex& z1,const Complex& z2);
@@ -407,6 +414,20 @@ inline bool operator == (const Complex& z1,  const Complex& z2)
 inline bool operator != (const Complex& z1,  const Complex& z2)
 {
   return ((z1.Re != z2.Re) || (z1.Im != z2.Im));
+}
+
+// multiply the current complex number by the conjugate of another complex number 
+// 
+// z = reference on the complex number to use for the multiplication
+// return value = reference on the current complex number
+
+inline Complex& Complex::ConjugateProduct(const Complex& z)
+{
+  double x;
+  x = this->Re * z.Re + this->Im * z.Im;
+  this->Im = this->Im * z.Re - this->Re * z.Im;
+  this->Re = x;  
+  return *this;
 }
 
 // basic mathematical functions
