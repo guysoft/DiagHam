@@ -112,20 +112,42 @@ RealAntisymmetricMatrix::RealAntisymmetricMatrix(double* upperDiagonal, int dime
 // copy constructor (without duplicating datas)
 //
 // M = matrix to copy
+// duplicateFlag = true if datas have to be duplicated
 
-RealAntisymmetricMatrix::RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M) 
+RealAntisymmetricMatrix::RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M, bool duplicateFlag) 
 {
   this->Dummy = 0.0;
-  this->OffDiagonalElements = M.OffDiagonalElements;  
-  this->OffDiagonalGarbageFlag = M.OffDiagonalGarbageFlag;
-  if (this->OffDiagonalGarbageFlag != 0)
-    (*(this->OffDiagonalGarbageFlag))++;  
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
   this->TrueNbrColumn = M.TrueNbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::RealElements | Matrix::Antisymmetric;
+  if (duplicateFlag == false)
+    {
+      this->OffDiagonalElements = M.OffDiagonalElements;  
+      this->OffDiagonalGarbageFlag = M.OffDiagonalGarbageFlag;
+      if (this->OffDiagonalGarbageFlag != 0)
+	(*(this->OffDiagonalGarbageFlag))++;  
+    }
+  else
+    {
+      this->OffDiagonalGarbageFlag =  new int;
+      *(this->OffDiagonalGarbageFlag) = 1;
+      if (this->TrueNbrRow > 1)
+	this->OffDiagonalElements = new double [(this->TrueNbrRow * (this->TrueNbrRow - 1)) / 2];
+      else    
+	this->OffDiagonalElements = new double [1];
+      int pos = 0;
+      for (int i = 0; i < this->TrueNbrRow; ++i)
+	{
+	  for (int j = i + 1; j < this->TrueNbrRow; ++j)
+	    {
+	      this->OffDiagonalElements[pos] = M.OffDiagonalElements[pos];
+	      pos++;
+	    }
+	}
+    }
 }
 
 // destructor
@@ -833,6 +855,62 @@ void RealAntisymmetricMatrix::Conjugate(RealMatrix& UnitaryMl, RealMatrix& Unita
   return;
 }
 
+// swap the i-th row/column with the j-th row/column (thus preserving the skew symmetric form)
+//
+// i = index of the first the row/column
+// j = index of the second the row/column
+// return value = reference on the current matrix
+
+RealAntisymmetricMatrix& RealAntisymmetricMatrix::SwapRowColumn (int i, int j)
+{
+  if (i == j)  
+    return *this;
+  if (i > j)
+    {
+      int Tmp = j;
+      j = i;
+      i = Tmp;
+    }
+  double Tmp;
+  int Pos1 = i - 1;
+  int Pos2 = j - 1;
+  int k = 0;
+  int TmpInc = this->Increment + this->NbrColumn - 2;
+  for (; k < i; ++k)
+    {
+      Tmp = this->OffDiagonalElements[Pos1]; 
+      this->OffDiagonalElements[Pos1] = this->OffDiagonalElements[Pos2]; 
+      this->OffDiagonalElements[Pos2] = Tmp;
+      Pos1 += TmpInc - k; 
+      Pos2 += TmpInc - k; 
+    }
+  this->OffDiagonalElements[Pos2] *= -1.0;
+  ++Pos1;
+  Pos2 +=  TmpInc - k;
+  ++k;
+  for (; k < j; ++k)
+    {
+      Tmp = this->OffDiagonalElements[Pos1]; 
+      this->OffDiagonalElements[Pos1] = -this->OffDiagonalElements[Pos2]; 
+      this->OffDiagonalElements[Pos2] = -Tmp;
+      ++Pos1; 
+      Pos2 += TmpInc - k;
+    }
+  ++k;
+  ++Pos1;
+  ++Pos2;
+  for (; k < this->NbrColumn; ++k)
+    {
+      Tmp = this->OffDiagonalElements[Pos1]; 
+      this->OffDiagonalElements[Pos1] = this->OffDiagonalElements[Pos2]; 
+      this->OffDiagonalElements[Pos2] = Tmp;
+      ++Pos1; 
+      ++Pos2;
+    }
+  return *this;
+}
+
+
 // evaluate matrix trace
 //
 // return value = matrix trace 
@@ -852,12 +930,14 @@ double RealAntisymmetricMatrix::Det ()
   return (Tmp * Tmp);
 }
 
-// evaluate matrix pfaffian
+// evaluate matrix pfaffian using factorization with complete pivoting (Benner, Byers, Fassbender, Mehrmann and Watkins algorithm)
 //
 // return value = matrix pfaffian 
 
 double RealAntisymmetricMatrix::Pfaffian()
 {
+  if ((this->NbrColumn & 1) != 0)
+    return 0.0;
   if (this->NbrColumn == 2)
     {
       return this->OffDiagonalElements[0];
@@ -885,6 +965,35 @@ double RealAntisymmetricMatrix::Pfaffian()
 	      + (this->OffDiagonalElements[3] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[11 + (2 * this->Increment)])
 	      - (this->OffDiagonalElements[3] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[8 + this->Increment])
 	      + (this->OffDiagonalElements[4] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[7 + this->Increment]));
+    }
+  RealAntisymmetricMatrix TmpMatrix(*this, true);
+  int HalfDimension = this->NbrColumn >> 1;
+  int Pos;
+  double Pivot;
+  int PivotColumn;
+  int PivotRow;
+  int TwiceK;
+  for (int k = 0; k < this->NbrColumn; k += 2)
+    {      
+      // find pivot
+      Pos = 0;
+      Pivot = fabs(this->OffDiagonalElements[0]);
+      PivotColumn = 0;
+      PivotRow = 0;
+      for (int i = 0; i < k; ++i)
+	{
+	  for (int j = i; j < k; ++j) 
+	    {
+	      if (fabs(this->OffDiagonalElements[Pos]) > Pivot)
+		{
+		  Pivot = fabs(this->OffDiagonalElements[Pos]);
+		  PivotColumn = j;
+		  PivotRow = i;
+		}
+	      Pos++; 
+	    }
+	  Pos += this->Increment;
+	}
     }
   return 1.0;
 }

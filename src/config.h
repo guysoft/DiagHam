@@ -36,7 +36,7 @@
 // all options
 
 // use sstream instead of strstream
-//#define  __SSTREAM_STYLE__
+#define  __SSTREAM_STYLE__
 
 // machine precision
 #define MACHINE_PRECISION 1e-14

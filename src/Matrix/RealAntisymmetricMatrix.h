@@ -84,10 +84,11 @@ class RealAntisymmetricMatrix : public Matrix
   // dimension = matrix dimension
   RealAntisymmetricMatrix(double* upperDiagonal, int dimension) ;
 
-  // copy constructor (without duplicating datas)
+  // copy constructor with ot without duplicating datas
   //
   // M = matrix to copy
-  RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M);
+  // duplicateFlag = true if datas have to be duplicated
+  RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M, bool duplicateFlag = false);
 
   // destructor
   //
@@ -258,6 +259,13 @@ class RealAntisymmetricMatrix : public Matrix
   void Conjugate(RealMatrix& UnitaryMl, RealMatrix& UnitaryMr, int sourceRowIndex, 
 		 int sourceColumnIndex, int destinationRowIndex,
 		 int destinationColumnIndex, RealAntisymmetricMatrix& matrix);
+
+  // swap the i-th row/column with the j-th row/column (thus preserving the skew symmetric form)
+  //
+  // i = index of the first the row/column
+  // j = index of the second the row/column
+  // return value = reference on the current matrix
+  RealAntisymmetricMatrix& SwapRowColumn (int i, int j);
 
   // evaluate matrix trace
   //

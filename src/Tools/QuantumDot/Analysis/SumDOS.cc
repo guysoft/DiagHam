@@ -11,7 +11,11 @@
 
 #include <iostream>
 #include <fstream>
+#ifdef __SSTREAM_STYLE__
+#include <sstream>
+#else
 #include <strstream>
+#endif
 #include <string>
 
 using std::cout;
