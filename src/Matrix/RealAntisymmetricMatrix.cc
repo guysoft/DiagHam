@@ -32,7 +32,9 @@
 #include "Matrix/BlockDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/ListIterator.h"
+#ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#endif
 #include "Complex.h"
 
 #include <stdlib.h>
@@ -459,6 +461,7 @@ void RealAntisymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   *(this->OffDiagonalGarbageFlag) = 1;
 }
 
+#ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //
 // subspace = reference on subspace structure
@@ -486,6 +489,7 @@ Matrix* RealAntisymmetricMatrix::Project (SubspaceSpaceConverter& subspace)
     }
   return TmpM;
 }
+#endif
 
 // add two matrices
 //

@@ -33,6 +33,8 @@
 #define DELOCALIZEDREALVECTOR_H
 
 
+#ifdef USE_CLUSTER_ARCHITECTURE
+
 #include "config.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/GarbageFlag.h"
@@ -237,6 +239,8 @@ inline void DelocalizedRealVector::FlushDummyElement()
     }
   (*(this->DummyElementPosition)) = -1;
 }
+
+#endif
 
 #endif
 

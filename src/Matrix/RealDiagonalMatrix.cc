@@ -31,7 +31,9 @@
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+#ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#endif
 
 #include <stdlib.h>
 
@@ -313,6 +315,7 @@ void RealDiagonalMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   *(this->DiagonalGarbageFlag) = 1;
 }
 
+#ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //
 // subspace = reference on subspace structure
@@ -325,6 +328,7 @@ Matrix* RealDiagonalMatrix::Project (SubspaceSpaceConverter& subspace)
     TmpM->DiagonalElements[i] = this->DiagonalElements[subspace.SubspaceSpaceConverterArray[i]];
   return TmpM;
 }
+#endif
 
 // add two matrices
 //

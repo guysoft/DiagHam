@@ -112,7 +112,14 @@
 
 // provide output package
 #define USE_OUTPUT
+
 // provide polynomial package
 //#define USE_POLYNOMIAL
+
+// provide use of the cluster architecture package
+#define USE_CLUSTER_ARCHITECTURE
+
+// provide use of the generic Hilbert space package
+#define USE_HILBERT_SPACE
 
 #endif

@@ -29,6 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifdef USE_CLUSTER_ARCHITECTURE
+
 #include "Vector/DelocalizedRealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -607,3 +609,4 @@ ifstream& operator >> (ifstream& file, DelocalizedRealVector& vector)
   return file;
 }
 
+#endif

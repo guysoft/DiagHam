@@ -170,11 +170,13 @@ class RealSymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+#ifdef USE_HILBERT_SPACE
   // project matrix into a given subspace
   //
   // subspace = reference on subspace structure
   // return value = pointer to projected matrix
   Matrix* Project (SubspaceSpaceConverter& subspace);  
+#endif
 
   // add two matrices
   //

@@ -36,7 +36,9 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
+#ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#endif
 #include "GeneralTools/Endian.h"
 
 
@@ -174,6 +176,7 @@ void Matrix::ResizeAndClean (int nbrRow, int nbrColumn)
   this->NbrColumn = nbrColumn;
 }
 
+#ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //
 // subspace = reference on subspace structure
@@ -183,6 +186,7 @@ Matrix* Matrix::Project (SubspaceSpaceConverter& subspace)
 {
   return 0;
 }
+#endif
 
 // return refernce on real part of a given matrix element
 //

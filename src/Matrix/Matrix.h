@@ -43,7 +43,9 @@ using std::ostream;
 class Complex;
 class RealMatrix;
 class BlockDiagonalMatrix;
+#ifdef USE_HILBERT_SPACE
 class SubspaceSpaceConverter;
+#endif
 
 
 class Matrix
@@ -98,11 +100,13 @@ class Matrix
   // retrun value = pointer on new matrix 
   virtual Matrix* Clone ();
 
+#ifdef USE_HILBERT_SPACE
   // project matrix into a given subspace
   //
   // subspace = reference on subspace structure
   // return value = pointer to projected matrix
   virtual Matrix* Project (SubspaceSpaceConverter& subspace);  
+#endif
 
   // get matrix type
   //

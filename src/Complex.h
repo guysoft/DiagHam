@@ -30,7 +30,9 @@
 
 
 #include "config.h"
+#ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
+#endif
 
 #include <math.h>
 #include <iostream>
@@ -172,13 +174,14 @@ public:
   // return value = reference on current output stream 
   friend ostream& operator << (ostream& Str, const Complex& z);
 
+#ifdef USE_OUTPUT
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // z = complex value to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const Complex& z);
-
+#endif
 };
 
 
@@ -612,6 +615,7 @@ inline ostream& operator << (ostream& Str, const Complex& z)
   return Str;
 }
 
+#ifdef  USE_OUTPUT
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -626,6 +630,7 @@ inline MathematicaOutput& operator << (MathematicaOutput& Str, const Complex& z)
     Str << z.Re << "+" << z.Im << "I";
   return Str;
 }
+#endif
 
 #endif
 

@@ -455,6 +455,8 @@ ostream& operator << (ostream& Str, const BlockMatrix& P)
   return Str;
 }
 
+
+#ifdef USE_OUTPUT
 // Mathematica Output Stream overload
 //
 // Str = reference on Mathematica output stream
@@ -487,4 +489,5 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const BlockMatrix& P)
     Str << "}";*/
   return Str;
 }
+#endif
 

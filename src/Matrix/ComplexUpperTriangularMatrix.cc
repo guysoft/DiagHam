@@ -32,7 +32,6 @@
 #include "Matrix/BlockDiagonalMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/ListIterator.h"
-#include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "Complex.h"
 
 #include <stdlib.h>

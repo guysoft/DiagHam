@@ -33,7 +33,6 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/ListIterator.h"
-#include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include <stdlib.h>
 

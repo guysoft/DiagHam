@@ -28,12 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include "config.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/BlockDiagonalMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/ListIterator.h"
+#ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#endif
 
 #include <stdlib.h>
 #include <fstream>
@@ -523,6 +526,7 @@ void RealSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   *(this->OffDiagonalGarbageFlag) = 1;
 }
 
+#ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //
 // subspace = reference on subspace structure
@@ -551,6 +555,7 @@ Matrix* RealSymmetricMatrix::Project (SubspaceSpaceConverter& subspace)
     }
   return TmpM;
 }
+#endif
 
 // add two matrices
 //
