@@ -95,7 +95,6 @@ int main(int argc, char** argv)
 
   double Sphere = 0.0, Arm = 0.0;
   
-  cout << "OK" << endl;
   Spectra.GetTetrapodProbability (Potential, Sphere, Arm);
   
   cout << "The probability in the sphere: " << Sphere << endl;
