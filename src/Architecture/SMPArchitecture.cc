@@ -229,13 +229,13 @@ bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperati
 	{
 	  for (int j = 0; j < NbrVectors; ++j)
 	    operation->GetDestinationRealVectors()[j] += ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationRealVectors()[j];
-	  delete ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationRealVectors();
+	  delete[] ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationRealVectors();
 	}
       else
 	{
 	  for (int j = 0; j < NbrVectors; ++j)
 	    operation->GetDestinationComplexVectors()[j] += ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationComplexVectors()[j];
-	  delete ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationComplexVectors();
+	  delete[] ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationComplexVectors();
 	}
       delete this->ThreadParameters[i].Operation;
     }

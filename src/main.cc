@@ -3,6 +3,7 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Matrix/ComplexTriDiagonalHermitianMatrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealBandDiagonalSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/BlockDiagonalMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
@@ -126,29 +127,45 @@ int main(int argc, char** argv)
   return 0;*/
 
   int nbrRow = atoi(argv[1]);
-  for (int i = 0; i < atoi(argv[2]); ++i)
+  int BandSize = atoi(argv[2]);
+  for (int i = 0; i < atoi(argv[3]); ++i)
     {
-//      RealAntisymmetricMatrix TestPfaf = RandomRealAntisymmetricMatrix(nbrRow, 1.0);
-      ComplexSkewSymmetricMatrix TestPfaf = RandomComplexSkewSymmetricMatrix(nbrRow, 1.0);
-//      cout << TestPfaf << endl;
-//      RealMatrix TestPfaf2 (TestPfaf);
-      ComplexMatrix TestPfaf2 (TestPfaf);
-//       cout << TestPfaf2 << endl;
-/*      double Pfaf1 = TestPfaf.Pfaffian();
-      double Pfaf2 = sqrt(fabs(TestPfaf2.Determinant()));
-      cout << i << ": " <<Pfaf2  << " " << Pfaf1 << " " << (fabs(fabs(Pfaf1) - Pfaf2) / fabs(Pfaf2)) << endl;
-      if (fabs(fabs(Pfaf1) - Pfaf2) > (1e-10 * fabs(Pfaf2)))
-	cout << "error" << endl;*/
-      Complex Pfaf1 = TestPfaf.Pfaffian();
-      Complex Det1 = (Pfaf1 * Pfaf1);
-      Complex Det2 = TestPfaf2.Determinant();
-      cout << i << ": " <<Det2  << " " << Det1 << " " << Pfaf1 << " " << (fabs(Det1.Re - Det2.Re) / fabs(Det2.Re)) 
-	   << " " << (fabs(Det1.Im - Det2.Im) / fabs(Det2.Im)) << endl;
-      if ((fabs(Det1.Re - Det2.Re) > (1e-13 * fabs(Det2.Re))) || (fabs(Det1.Im - Det2.Im) > (1e-13 * fabs(Det2.Im))))
-	cout << "error" << endl;
-      cout << " --------------------------------------------------" << endl;
+      RealBandDiagonalSymmetricMatrix Band (nbrRow, BandSize, true);
+      for (int j = 0; j < nbrRow; ++j)
+	{
+	  Band(j, j) = (j * nbrRow) + j;
+	  for (int k = 0; k < BandSize; ++k)
+	    if ((j + k) < nbrRow)
+	      Band(j, j + k) = ((j + k) * nbrRow) + j;
+	}
+      cout << Band << endl << endl;
     }
   return 0;
+
+//   int nbrRow = atoi(argv[1]);
+//   for (int i = 0; i < atoi(argv[2]); ++i)
+//     {
+// //      RealAntisymmetricMatrix TestPfaf = RandomRealAntisymmetricMatrix(nbrRow, 1.0);
+//       ComplexSkewSymmetricMatrix TestPfaf = RandomComplexSkewSymmetricMatrix(nbrRow, 1.0);
+// //      cout << TestPfaf << endl;
+// //      RealMatrix TestPfaf2 (TestPfaf);
+//       ComplexMatrix TestPfaf2 (TestPfaf);
+// //       cout << TestPfaf2 << endl;
+// /*      double Pfaf1 = TestPfaf.Pfaffian();
+//       double Pfaf2 = sqrt(fabs(TestPfaf2.Determinant()));
+//       cout << i << ": " <<Pfaf2  << " " << Pfaf1 << " " << (fabs(fabs(Pfaf1) - Pfaf2) / fabs(Pfaf2)) << endl;
+//       if (fabs(fabs(Pfaf1) - Pfaf2) > (1e-10 * fabs(Pfaf2)))
+// 	cout << "error" << endl;*/
+//       Complex Pfaf1 = TestPfaf.Pfaffian();
+//       Complex Det1 = (Pfaf1 * Pfaf1);
+//       Complex Det2 = TestPfaf2.Determinant();
+//       cout << i << ": " <<Det2  << " " << Det1 << " " << Pfaf1 << " " << (fabs(Det1.Re - Det2.Re) / fabs(Det2.Re)) 
+// 	   << " " << (fabs(Det1.Im - Det2.Im) / fabs(Det2.Im)) << endl;
+//       if ((fabs(Det1.Re - Det2.Re) > (1e-13 * fabs(Det2.Re))) || (fabs(Det1.Im - Det2.Im) > (1e-13 * fabs(Det2.Im))))
+// 	cout << "error" << endl;
+//       cout << " --------------------------------------------------" << endl;
+//     }
+//   return 0;
 
   RealAntisymmetricMatrix SkewM(nbrRow);
   for (int i = 0; i < nbrRow; i++)

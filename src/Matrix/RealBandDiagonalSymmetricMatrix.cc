@@ -29,8 +29,7 @@
 
 
 #include "Matrix/RealBandDiagonalSymmetricMatrix.h"
-#include "Matrix/RealUpperTriangularMatrix.h"
-#include "Matrix/RealLowerTriangularMatrix.h"
+#include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -51,6 +50,7 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix()
   this->NbrRow = 0;
   this->NbrColumn = 0;
   this->NbrBands = 0; 
+  this->TrueNbrBands = this->NbrBands;
   this->TrueNbrRow = 0;
   this->TrueNbrColumn = 0;
   this->MatrixType = Matrix::RealElements | Matrix::BandDiagonal | Matrix::Symmetric;
@@ -67,8 +67,9 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix(int dimension, 
   this->DiagonalElements = new double [dimension];
   this->UpperOffDiagonalElements = new double* [this->NbrBands];
   this->NbrBands = nbrBands;
+  this->TrueNbrBands = this->NbrBands;
   for (int i = 0; i < this->NbrBands; ++i)
-    this->UpperOffDiagonalElements[i] = new double [dimension]
+    this->UpperOffDiagonalElements[i] = new double [dimension];
   this->Flag.Initialize();
   this->NbrRow = dimension;
   this->NbrColumn = dimension;
@@ -78,12 +79,9 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix(int dimension, 
   if (zero == true)
     {
       for (int i = 0; i < this->NbrRow; i++)
-	{
-	  this->DiagonalElements[i] = 0.0;
-	  Tmp = this->UpperOffDiagonalElements[i];
-	}
+	this->DiagonalElements[i] = 0.0;
       double* Tmp;
-      for (int j = 0; j < this->NbrBands; ++i)
+      for (int j = 0; j < this->NbrBands; ++j)
 	{
 	  Tmp = this->UpperOffDiagonalElements[j];
 	  for (int i = 0; i < this->NbrRow; i++)
@@ -105,6 +103,7 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix(double* diagona
   this->DiagonalElements = diagonal;
   this->UpperOffDiagonalElements = upperDiagonal;
   this->NbrBands = nbrBands;
+  this->TrueNbrBands = this->NbrBands;
   this->Flag.Initialize();
   this->NbrRow = dimension;
   this->NbrColumn = dimension;
@@ -123,6 +122,7 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix(const RealBandD
   this->DiagonalElements = M.DiagonalElements;
   this->UpperOffDiagonalElements = M.UpperOffDiagonalElements;
   this->NbrBands = M.NbrBands;
+  this->TrueNbrBands = M.NbrBands;
   this->Flag = M.Flag;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
@@ -139,7 +139,7 @@ RealBandDiagonalSymmetricMatrix::~RealBandDiagonalSymmetricMatrix()
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      for (int i = 0; i < this->NbrBands; ++i)
+      for (int i = 0; i < this->TrueNbrBands; ++i)
 	delete[] this->UpperOffDiagonalElements[i];
       delete[] this->UpperOffDiagonalElements;
       delete[] this->DiagonalElements;
@@ -155,7 +155,7 @@ RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator = (co
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      for (int i = 0; i < this->NbrBands; ++i)
+      for (int i = 0; i < this->TrueNbrBands; ++i)
 	delete[] this->UpperOffDiagonalElements[i];
       delete[] this->UpperOffDiagonalElements;
       delete[] this->DiagonalElements;
@@ -163,6 +163,7 @@ RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator = (co
   this->DiagonalElements = M.DiagonalElements;
   this->UpperOffDiagonalElements = M.UpperOffDiagonalElements;
   this->NbrBands = M.NbrBands;
+  this->TrueNbrBands = M.NbrBands;
   this->Flag = M.Flag;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
@@ -196,16 +197,22 @@ void RealBandDiagonalSymmetricMatrix::SetMatrixElement(int i, int j, double x)
     }
   else
     {
-      j -= i;
-      if ((j == 1) && (i < (this->NbrRow - 1)))
+      if (j > i)
 	{
-	  this->UpperOffDiagonalElements[i] = x;
+	  j -= i;
+	  if ((j <= this->NbrBands) && (i < (this->NbrRow - 1)))
+	    {
+	      this->UpperOffDiagonalElements[j - 1][i] = x;
+	    }
 	}
       else
-	if ((j == -1) && (i < this->NbrRow))
-	  {
-	    this->UpperOffDiagonalElements[i - 1] = x;
-	  }	
+	{
+	  i -= j;
+	  if ((i <= this->NbrBands) && (j < (this->NbrRow - 1)))
+	    {
+	      this->UpperOffDiagonalElements[i - 1][j] = x;
+	    }	
+	}
     }    
 }
 
@@ -226,7 +233,7 @@ double& RealBandDiagonalSymmetricMatrix::operator () (int i, int j)
       if (j > i)
 	{
 	  j -= i;
-	  if ((j <= this->NbrBand) && (i < (this->NbrRow - 1)))
+	  if ((j <= this->NbrBands) && (i < (this->NbrRow - 1)))
 	    {
 	      return this->UpperOffDiagonalElements[j - 1][i];
 	    }
@@ -234,13 +241,47 @@ double& RealBandDiagonalSymmetricMatrix::operator () (int i, int j)
       else
 	{
 	  i -= j;
-	  if ((i > 0) && (i <= this->NbrBand) && (j > 0))
+	  if ((i <= this->NbrBands) && (j < (this->NbrRow - 1)))
 	    {
-	      return this->UpperOffDiagonalElements[i - 1][j - 1];
+	      return this->UpperOffDiagonalElements[i - 1][j];
 	    }	
 	}
     }    
   return this->Dummy;
+}
+
+// get a matrix element 
+// 
+// i = Row number
+// j = Column number
+// return value = matrix element M_(i,j)
+
+double RealBandDiagonalSymmetricMatrix::GetElement(int i, int j)
+{
+  if ((i == j) && (i < this->NbrRow))
+    {
+      return this->DiagonalElements[i];
+    }
+  else
+    {
+      if (j > i)
+	{
+	  j -= i;
+	  if ((j <= this->NbrBands) && (i < (this->NbrRow - 1)))
+	    {
+	      return this->UpperOffDiagonalElements[j - 1][i];
+	    }
+	}
+      else
+	{
+	  i -= j;
+	  if ((i <= this->NbrBands) && (j < (this->NbrRow - 1)))
+	    {
+	      return this->UpperOffDiagonalElements[i - 1][j];
+	    }	
+	}
+    }    
+  return 0.0;
 }
 
 // set a matrix element
@@ -273,20 +314,26 @@ void RealBandDiagonalSymmetricMatrix::AddToMatrixElement(int i, int j, double x)
 {
   if ((i == j) && (i < this->NbrRow))
     {
-      this->DiagonalElements[i] += x;
+      this->DiagonalElements[i] = x;
     }
   else
     {
-      j -= i;
-      if ((j == 1) && (i < (this->NbrRow - 1)))
+      if (j > i)
 	{
-	  this->UpperOffDiagonalElements[i] += x;
+	  j -= i;
+	  if ((j <= this->NbrBands) && (i < (this->NbrRow - 1)))
+	    {
+	      this->UpperOffDiagonalElements[j - 1][i] += x;
+	    }
 	}
       else
-	if ((j == -1) && (i < this->NbrRow))
-	  {
-	    this->UpperOffDiagonalElements[i - 1] += x;
-	  }	
+	{
+	  i -= j;
+	  if ((i <= this->NbrBands) && (j < (this->NbrRow - 1)))
+	    {
+	      this->UpperOffDiagonalElements[i - 1][j] += x;
+	    }	
+	}
     }    
 }
 
@@ -315,22 +362,75 @@ void RealBandDiagonalSymmetricMatrix::Resize (int nbrRow, int nbrColumn)
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  double* TmpUpperDiag = new double [nbrRow];
+  double** TmpUpperDiag = new double* [this->TrueNbrBands];
+  for (int i = 0; i < this->TrueNbrBands; ++i)
+    TmpUpperDiag[i] = new double [nbrRow];
   if (this->Flag.Used() == true)
     {
       for (int i = 0; i < this->NbrRow; i++)
-	{
-	  TmpDiag[i] = this->DiagonalElements[i];
-	  TmpUpperDiag[i] = this->UpperOffDiagonalElements[i]; 
-	}
+	TmpDiag[i] = this->DiagonalElements[i];
+      for (int j = 0; j < this->NbrBands; ++j)
+	for (int i = 0; i < this->NbrRow; ++i)
+	  TmpUpperDiag[j][i] = this->UpperOffDiagonalElements[j][i];
     }
    if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
+      for (int j = 0; j < this->TrueNbrBands; ++j)
+	delete[] this->UpperOffDiagonalElements[j];
       delete[] this->UpperOffDiagonalElements;
       delete[] this->DiagonalElements;
     }
   this->DiagonalElements = TmpDiag;
   this->UpperOffDiagonalElements = TmpUpperDiag;
+  this->NbrRow = nbrRow;
+  this->NbrColumn = nbrColumn;
+  this->TrueNbrRow = nbrRow;
+  this->TrueNbrColumn = nbrColumn;
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize();
+  return;
+}
+
+// Resize matrix and change the number of bands
+//
+// nbrRow = new number of rows
+// nbrColumn = new number of columns
+// nbrBands = new number of bands
+
+void RealBandDiagonalSymmetricMatrix::Resize (int nbrRow, int nbrColumn, int nbrBands)
+{
+  if (nbrRow != nbrColumn)
+    return;
+  if ((nbrRow <= this->TrueNbrRow) && (nbrBands <= this->TrueNbrBands))
+    {
+      this->NbrRow = nbrRow;
+      this->NbrColumn = nbrColumn;
+      this->NbrBands = nbrBands;
+      return;
+    }
+  double* TmpDiag = new double [nbrRow];
+  double** TmpUpperDiag = new double* [nbrBands];
+  for (int i = 0; i < nbrBands; ++i)
+    TmpUpperDiag[i] = new double [nbrRow];
+  if (this->Flag.Used() == true)
+    {
+      for (int i = 0; i < this->NbrRow; i++)
+	TmpDiag[i] = this->DiagonalElements[i];
+      for (int j = 0; j < this->NbrBands; ++j)
+	for (int i = 0; i < this->NbrRow; ++i)
+	  TmpUpperDiag[j][i] = this->UpperOffDiagonalElements[j][i];
+    }
+   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      for (int j = 0; j < this->TrueNbrBands; ++j)
+	delete[] this->UpperOffDiagonalElements[j];
+      delete[] this->UpperOffDiagonalElements;
+      delete[] this->DiagonalElements;
+    }
+  this->DiagonalElements = TmpDiag;
+  this->UpperOffDiagonalElements = TmpUpperDiag;
+  this->NbrBands = nbrBands;
+  this->TrueNbrBands = nbrBands;
   this->NbrRow = nbrRow;
   this->NbrColumn = nbrColumn;
   this->TrueNbrRow = nbrRow;
@@ -354,30 +454,36 @@ void RealBandDiagonalSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
       for (int i = this->NbrRow; i < nbrRow; i++)
 	{
 	  this->DiagonalElements[i] = 0.0;
-	  this->UpperOffDiagonalElements[i] = 0.0;
 	}
+      for (int j = 0; j < this->NbrBands; ++j)
+	for (int i = this->NbrRow; i < nbrRow; ++i)
+	  this->UpperOffDiagonalElements[j][i] = 0.0;	  
       this->NbrRow = nbrRow;
       this->NbrColumn = nbrColumn;
       return;
     }
   double* TmpDiag = new double [nbrRow];
-  double* TmpUpperDiag = new double [nbrRow];
+  double** TmpUpperDiag = new double* [this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    TmpUpperDiag[i] = new double [nbrRow];
   if (this->Flag.Used() == true)
     {
       int i = 0;
       for (; i < this->NbrRow; i++)
-	{
-	  TmpDiag[i] = this->DiagonalElements[i];
-	  TmpUpperDiag[i] = this->UpperOffDiagonalElements[i]; 
-	}
+	TmpDiag[i] = this->DiagonalElements[i];
       for (; i < nbrRow; i++)
-	{
-	  TmpDiag[i] = 0.0;
-	  TmpUpperDiag[i] = 0.0; 
-	}
+	TmpDiag[i] = 0.0;
+      for (int j = 0; j < this->NbrBands; ++j)
+	for (i = 0; i < this->NbrRow; ++i)
+	  TmpUpperDiag[j][i] = this->UpperOffDiagonalElements[j][i];
+      for (int j = 0; j < this->NbrBands; ++j)
+	for (i = nbrRow; i < this->NbrRow; ++i)
+	  TmpUpperDiag[j][i] = 0.0;
     }
    if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
+      for (int j = 0; j < this->NbrBands; ++j)
+	delete[] this->UpperOffDiagonalElements[j];
       delete[] this->UpperOffDiagonalElements;
       delete[] this->DiagonalElements;
     }
@@ -399,15 +505,16 @@ void RealBandDiagonalSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 
 RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Copy (RealBandDiagonalSymmetricMatrix& M)
 {
-  if (this->NbrRow != M.NbrRow)
-    this->Resize(M.NbrRow, M.NbrColumn);
+  if (this->NbrBands != M.NbrBands)
+    this->Resize(M.NbrRow, M.NbrColumn, M.NbrBands);
+  else
+    if (this->NbrRow != M.NbrRow)
+      this->Resize(M.NbrRow, M.NbrColumn);
   for (int i = 0; i < M.NbrColumn; i++)
-    {
-      this->DiagonalElements[i] = M.DiagonalElements[i];
-    }
+    this->DiagonalElements[i] = M.DiagonalElements[i];
   double* Tmp1;
   double* Tmp2;
-  for (int j = 0; j < this->NbrBands; ++i)
+  for (int j = 0; j < this->NbrBands; ++j)
     {
       Tmp1 = this->UpperOffDiagonalElements[j];
       Tmp2 = M.UpperOffDiagonalElements[j];
@@ -427,25 +534,40 @@ RealBandDiagonalSymmetricMatrix operator + (const RealBandDiagonalSymmetricMatri
 {
   if (M1.NbrRow != M2.NbrRow)
     return RealBandDiagonalSymmetricMatrix();
-  int ReducedNbr = M1.NbrRow - 1;
-  double* Diagonal = new double [M1.NbrRow];
-  double** UpperDiagonal = new double [M1.NbrBands];
-  for (int i = 0; i < M1.NbrRow; i++)
+  int MaxNbrBands = M1.NbrBands;
+  int MinNbrBands = M2.NbrBands;
+  if (M1.NbrBands < M2.NbrBands)
     {
-      Diagonal[i] = M1.DiagonalElements[i] + M2.DiagonalElements[i];
-      UpperDiagonal[i] = M1.UpperOffDiagonalElements[i] + M2.UpperOffDiagonalElements[i];      
+      MaxNbrBands = M2.NbrBands;
+      MinNbrBands = M1.NbrBands;
     }
+  double* Diagonal = new double [M1.NbrRow];
+  double** UpperDiagonal = new double* [MaxNbrBands];
+  for (int i = 0; i < MaxNbrBands; ++i)
+    UpperDiagonal[i] = new double [M1.NbrRow];
+  for (int i = 0; i < M1.NbrRow; i++)
+    Diagonal[i] = M1.DiagonalElements[i] + M2.DiagonalElements[i];
   double* Tmp1;
   double* Tmp2;
-  for (int j = 0; j < this->NbrBands; ++i)
-    {
-      
+  double* Tmp3;
+  for (int j = 0; j < MinNbrBands; ++j)
+    {      
       Tmp1 = M1.UpperOffDiagonalElements[j];
       Tmp2 = M2.UpperOffDiagonalElements[j];
+      Tmp3 = UpperDiagonal[j];
       for (int i = 0; i < M1.NbrRow; i++)
-	Tmp1[i] = Tmp2[i];
+	Tmp3[i] = Tmp1[i] + Tmp2[i];
     }
-  Diagonal[ReducedNbr] = M1.DiagonalElements[ReducedNbr] + M2.DiagonalElements[ReducedNbr];
+  for (int j = MinNbrBands; j < MaxNbrBands; ++j)
+    {      
+      if (M1.NbrBands == MaxNbrBands)
+	Tmp1 = M1.UpperOffDiagonalElements[j];
+      else
+	Tmp1 = M2.UpperOffDiagonalElements[j];
+      Tmp3 = UpperDiagonal[j];
+      for (int i = 0; i < M1.NbrRow; i++)
+	Tmp3[i] = Tmp1[i];
+    }
   return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M1.NbrRow, MaxNbrBands);
 }
 
@@ -459,16 +581,47 @@ RealBandDiagonalSymmetricMatrix operator - (const RealBandDiagonalSymmetricMatri
 {
   if (M1.NbrRow != M2.NbrRow)
     return RealBandDiagonalSymmetricMatrix();
-  int ReducedNbr = M1.NbrRow - 1;
-  double* Diagonal = new double [M1.NbrRow];
-  double* UpperDiagonal = new double [ReducedNbr];
-  for (int i = 0; i < ReducedNbr; i++)
+  int MaxNbrBands = M1.NbrBands;
+  int MinNbrBands = M2.NbrBands;
+  if (M1.NbrBands < M2.NbrBands)
     {
-      Diagonal[i] = M1.DiagonalElements[i] - M2.DiagonalElements[i];
-      UpperDiagonal[i] = M1.UpperOffDiagonalElements[i] - M2.UpperOffDiagonalElements[i];      
+      MaxNbrBands = M2.NbrBands;
+      MinNbrBands = M1.NbrBands;
     }
-  Diagonal[ReducedNbr] = M1.DiagonalElements[ReducedNbr] - M2.DiagonalElements[ReducedNbr];
-  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M1.NbrRow);
+  double* Diagonal = new double [M1.NbrRow];
+  double** UpperDiagonal = new double* [MaxNbrBands];
+  for (int i = 0; i < MaxNbrBands; ++i)
+    UpperDiagonal[i] = new double [M1.NbrRow];
+  for (int i = 0; i < M1.NbrRow; i++)
+    Diagonal[i] = M1.DiagonalElements[i] - M2.DiagonalElements[i];
+  double* Tmp1;
+  double* Tmp2;
+  double* Tmp3;
+  for (int j = 0; j < MinNbrBands; ++j)
+    {      
+      Tmp1 = M1.UpperOffDiagonalElements[j];
+      Tmp2 = M2.UpperOffDiagonalElements[j];
+      Tmp3 = UpperDiagonal[j];
+      for (int i = 0; i < M1.NbrRow; i++)
+	Tmp3[i] = Tmp1[i] + Tmp2[i];
+    }
+  if (M1.NbrBands == MaxNbrBands)
+    for (int j = MinNbrBands; j < MaxNbrBands; ++j)
+      {      
+	Tmp1 = M1.UpperOffDiagonalElements[j];
+	Tmp3 = UpperDiagonal[j];
+	for (int i = 0; i < M1.NbrRow; i++)
+	  Tmp3[i] = Tmp1[i];
+      }
+  else
+    for (int j = MinNbrBands; j < MaxNbrBands; ++j)
+      {      
+	Tmp1 = M2.UpperOffDiagonalElements[j];
+	Tmp3 = UpperDiagonal[j];
+	for (int i = 0; i < M1.NbrRow; i++)
+	  Tmp3[i] = -Tmp1[i];
+      }
+  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M1.NbrRow, MaxNbrBands);
 }
 
 // multiply a matrix with a real number (right multiplication)
@@ -479,16 +632,17 @@ RealBandDiagonalSymmetricMatrix operator - (const RealBandDiagonalSymmetricMatri
 
 RealBandDiagonalSymmetricMatrix operator * (const RealBandDiagonalSymmetricMatrix& M, double x) 
 {
-  int ReducedNbr = M.NbrRow - 1;
   double* Diagonal = new double [M.NbrRow];
-  double* UpperDiagonal = new double [ReducedNbr];
-  for (int i = 0; i < ReducedNbr; i++)
+  double** UpperDiagonal = new double* [M.NbrBands];
+  for (int i = 0; i < M.NbrRow; ++i)
+    Diagonal[i] = M.DiagonalElements[i] * x;      
+  for (int i = 0; i < M.NbrBands; ++i)
     {
-      Diagonal[i] = M.DiagonalElements[i] * x;
-      UpperDiagonal[i] = M.UpperOffDiagonalElements[i] * x;      
+      UpperDiagonal[i] = new double [M.NbrRow];
+      for (int j = 0; j < M.NbrRow; ++j)
+	UpperDiagonal[i][j] = M.UpperOffDiagonalElements[i][j] * x;      	
     }
-  Diagonal[ReducedNbr] = M.DiagonalElements[ReducedNbr] * x;
-  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow);
+  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow, M.NbrBands);
 }
 
 // multiply a matrix with a real number (left multiplication)
@@ -499,16 +653,17 @@ RealBandDiagonalSymmetricMatrix operator * (const RealBandDiagonalSymmetricMatri
 
 RealBandDiagonalSymmetricMatrix operator * (double x, const RealBandDiagonalSymmetricMatrix& M) 
 {
-  int ReducedNbr = M.NbrRow - 1;
   double* Diagonal = new double [M.NbrRow];
-  double* UpperDiagonal = new double [ReducedNbr];
-  for (int i = 0; i < ReducedNbr; i++)
+  double** UpperDiagonal = new double* [M.NbrBands];
+  for (int i = 0; i < M.NbrRow; ++i)
+    Diagonal[i] = M.DiagonalElements[i] * x;      
+  for (int i = 0; i < M.NbrBands; ++i)
     {
-      Diagonal[i] = M.DiagonalElements[i] * x;
-      UpperDiagonal[i] = M.UpperOffDiagonalElements[i] * x;      
+      UpperDiagonal[i] = new double [M.NbrRow];
+      for (int j = 0; j < M.NbrRow; ++j)
+	UpperDiagonal[i][j] = M.UpperOffDiagonalElements[i][j] * x;      	
     }
-  Diagonal[ReducedNbr] = M.DiagonalElements[ReducedNbr] * x;
-  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow);
+  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow, M.NbrBands);
 }
 
 // divide a matrix by a real number (right multiplication)
@@ -519,16 +674,18 @@ RealBandDiagonalSymmetricMatrix operator * (double x, const RealBandDiagonalSymm
 
 RealBandDiagonalSymmetricMatrix operator / (const RealBandDiagonalSymmetricMatrix& M, double x) 
 {
-  int ReducedNbr = M.NbrRow - 1;
+  x = 1.0 / x;
   double* Diagonal = new double [M.NbrRow];
-  double* UpperDiagonal = new double [ReducedNbr];
-  for (int i = 0; i < ReducedNbr; i++)
+  double** UpperDiagonal = new double* [M.NbrBands];
+  for (int i = 0; i < M.NbrRow; ++i)
+    Diagonal[i] = M.DiagonalElements[i] * x;      
+  for (int i = 0; i < M.NbrBands; ++i)
     {
-      Diagonal[i] = M.DiagonalElements[i] / x;
-      UpperDiagonal[i] = M.UpperOffDiagonalElements[i] / x;      
+      UpperDiagonal[i] = new double [M.NbrRow];
+      for (int j = 0; j < M.NbrRow; ++j)
+	UpperDiagonal[i][j] = M.UpperOffDiagonalElements[i][j] * x;      	
     }
-  Diagonal[ReducedNbr] = M.DiagonalElements[ReducedNbr] / x;
-  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow);
+  return RealBandDiagonalSymmetricMatrix(Diagonal, UpperDiagonal, M.NbrRow, M.NbrBands);
 }
 
 // add two matrices
@@ -538,15 +695,13 @@ RealBandDiagonalSymmetricMatrix operator / (const RealBandDiagonalSymmetricMatri
 
 RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator += (const RealBandDiagonalSymmetricMatrix& M) 
 {
-  if (this->NbrRow != M.NbrRow)
+  if ((this->NbrRow != M.NbrRow) || (this->NbrBands < M.NbrBands))
     return *this;
-  int ReducedNbr = M.NbrRow - 1;
-  for (int i = 0; i < ReducedNbr; i++)
-    {
-      this->DiagonalElements[i] += M.DiagonalElements[i];
-      this->UpperOffDiagonalElements[i] += M.UpperOffDiagonalElements[i];      
-    }
-  this->DiagonalElements[ReducedNbr] += DiagonalElements[ReducedNbr];
+  for (int i = 0; i < this->NbrRow; ++i)
+    this->DiagonalElements[i] += M.DiagonalElements[i];
+  for (int j = 0; j < M.NbrBands; ++j)
+    for (int i = 0; i < this->NbrRow; ++i)
+      this->UpperOffDiagonalElements[j][i] += M.UpperOffDiagonalElements[j][i];      
   return *this;
 }
 
@@ -557,15 +712,13 @@ RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator += (c
 
 RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator -= (const RealBandDiagonalSymmetricMatrix& M) 
 {
-  if (this->NbrRow != M.NbrRow)
+  if ((this->NbrRow != M.NbrRow) || (this->NbrBands < M.NbrBands))
     return *this;
-  int ReducedNbr = M.NbrRow - 1;
-  for (int i = 0; i < ReducedNbr; i++)
-    {
-      this->DiagonalElements[i] -= M.DiagonalElements[i];
-      this->UpperOffDiagonalElements[i] -= M.UpperOffDiagonalElements[i];      
-    }
-  this->DiagonalElements[ReducedNbr] -= DiagonalElements[ReducedNbr];
+  for (int i = 0; i < this->NbrRow; ++i)
+    this->DiagonalElements[i] -= M.DiagonalElements[i];
+  for (int j = 0; j < M.NbrBands; ++j)
+    for (int i = 0; i < this->NbrRow; ++i)
+      this->UpperOffDiagonalElements[j][i] -= M.UpperOffDiagonalElements[j][i];      
   return *this;
 }
 
@@ -578,13 +731,11 @@ RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator *= (d
 {
   if (this->NbrRow == 0)
     return *this;
-  int ReducedNbr = this->NbrRow - 1;
-  for (int i = 0; i < ReducedNbr; i++)
-    {
-      this->DiagonalElements[i] *= x;
-      this->UpperOffDiagonalElements[i] *= x;      
-    }
-  this->DiagonalElements[ReducedNbr] *= x;
+  for (int i = 0; i < this->NbrRow; i++)
+    this->DiagonalElements[i] *= x;
+  for (int j = 0; j < this->NbrBands; ++j)
+    for (int i = 0; i < this->NbrRow; i++)    
+      this->UpperOffDiagonalElements[i][j] *= x;      
   return *this;
 }
 
@@ -594,38 +745,16 @@ RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator *= (d
 // return value = reference on current matrix
 
 RealBandDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::operator /= (double x) 
-{
+{  
   if (this->NbrRow == 0)
     return *this;
-  int ReducedNbr = this->NbrRow - 1;
-  for (int i = 0; i < ReducedNbr; i++)
-    {
-      this->DiagonalElements[i] /= x;
-      this->UpperOffDiagonalElements[i] /= x;      
-    }
-  this->DiagonalElements[ReducedNbr] /= x;
+  x = 1.0 / x;
+  for (int i = 0; i < this->NbrRow; i++)
+    this->DiagonalElements[i] *= x;
+  for (int j = 0; j < this->NbrBands; ++j)
+    for (int i = 0; i < this->NbrRow; i++)    
+      this->UpperOffDiagonalElements[i][j] *= x;      
   return *this;
-}
-
-// get a matrix element 
-// 
-// i = Row number
-// j = Column number
-// return value = matrix element M_(i,j)
-
-double RealBandDiagonalSymmetricMatrix::GetElement(int i, int j)
-{
-  if (i == j)
-    return this->DiagonalElements[i];
-  if (j < i)
-    {
-      int tmp = i;
-      i = j;
-      j = tmp;
-    }
-  if ((j - i) == 1)
-    return this->UpperOffDiagonalElements[i];
-  return 0.0;
 }
 
 // evaluate matrix trace
@@ -650,22 +779,237 @@ double RealBandDiagonalSymmetricMatrix::Tr ()
 
 double RealBandDiagonalSymmetricMatrix::Det () 
 {
-  if (this->NbrRow == 0)
-    return 0.0;
-  double d0 = this->DiagonalElements[0];
-  if (this->NbrRow == 1)
-    return d0;
-  double d1 = d0 * this->DiagonalElements[0] - this->UpperOffDiagonalElements[0] * this->UpperOffDiagonalElements[0];
-  if (this->NbrRow == 2)
-    return d0;
-  double d;
-  for (int i = 2; i < this->NbrRow; i++)
+  return 1.0;
+}
+
+// Tridiagonalize a real band symmetric matrix using Rutishauer-Schwarz (modifying current matrix)
+//
+// M = reference on real tridiagonal symmetric matrix where result has to be stored
+// err = absolute error on matrix element
+// return value = reference on real tridiagonal symmetric matrix
+
+RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err)
+{
+  if (M.NbrRow != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  int ReducedNbrRow = this->NbrRow - 2;
+  double TmpNorm;
+  double Cosinus;
+  double Sinus;
+  double Tmp;
+  double Tmp2;
+  double FillInElement;
+  int MinJ;
+  int Pos;
+  int Pos2;
+  int Max;
+  int GivenColumnPosition;
+  int GivenRowPosition;
+  double SquareErr = err * err;
+  if (SquareErr < MACHINE_PRECISION)
+    SquareErr = MACHINE_PRECISION;
+
+  for (int i = 0; i < ReducedNbrRow; ++i)
     {
-      d = this->DiagonalElements[i] * d1 - this->UpperOffDiagonalElements[i - 1] * this->UpperOffDiagonalElements[i - 1] * d0;
-      d0 = d1;
-      d1 = d;
+      MinJ = ReducedNbrRow - i;
+      if (MinJ >= this->NbrBands)
+	MinJ = this->NbrBands - 1;
+      for (int j = MinJ; j >= 1; --j)
+	{
+	  GivenRowPosition = i;
+	  GivenColumnPosition = j;
+	  FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition]; 
+	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+	  Sinus = -FillInElement;
+	  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	  while ((GivenRowPosition < this->NbrRow) && (((Sinus * Sinus) > (TmpNorm * SquareErr)) && (TmpNorm > SquareErr)))
+	    {
+	      // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
+	      TmpNorm = sqrt (TmpNorm);
+	      this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition] = TmpNorm;
+	      TmpNorm = 1.0 / TmpNorm;
+	      Cosinus *= TmpNorm;
+	      Sinus *= TmpNorm;
+	      Pos = GivenRowPosition + 1;
+	      Pos2 = GivenColumnPosition - 1;
+	      while (Pos2 > 0)
+		{
+		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2][Pos] += Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos];
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] -= Sinus * Tmp;
+		  --Pos2;
+		  ++Pos;
+		}
+	      
+	      Tmp = this->UpperOffDiagonalElements[0][Pos];
+	      Tmp2 = this->DiagonalElements[Pos];
+	      this->DiagonalElements[Pos] *= Cosinus * Cosinus;
+	      this->DiagonalElements[Pos] += Sinus * ((Sinus * this->DiagonalElements[Pos + 1]) - (2.0 * Cosinus * Tmp));
+	      this->UpperOffDiagonalElements[0][Pos] *= (Cosinus * Cosinus - Sinus * Sinus);
+	      this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp - this->DiagonalElements[Pos + 1]);
+	      this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
+	      this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
+	      
+	      ++Pos;
+	      Pos2 = 1;
+	      Max = ReducedNbrRow - GivenRowPosition + 1;
+	      if (Max > this->NbrBands)
+		Max = this->NbrBands;
+	      while (Pos2 < Max)
+		{
+		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2][Pos] -= Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1];
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] += Sinus * Tmp;
+		  ++Pos2;
+		}
+	      
+	      
+	      FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos] * Sinus;
+	      this->UpperOffDiagonalElements[Max - 1][Pos] *= Cosinus;
+
+
+	      GivenRowPosition += GivenColumnPosition;
+	      GivenColumnPosition = this->NbrBands - 1;
+	      Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+	      Sinus = -FillInElement;
+	      TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	    }
+	}
     }
-  return d1;
+
+  for (int i = 0; i < this->NbrRow; ++i)
+    M.DiagonalElements[i] = this->DiagonalElements[i];
+  ++ReducedNbrRow;
+  double* TmpColumn = this->UpperOffDiagonalElements[0];
+  for (int i = 0; i < ReducedNbrRow; ++i)
+    M.UpperDiagonalElements[i] = TmpColumn[i];
+
+  return M;
+}
+
+// Tridiagonalize a real band symmetric matrix using Rutishauer-Schwarz and evaluate transformation matrix  (modifying current matrix)
+//
+// M = reference on real tridiagonal symmetric matrix where result has to be stored
+// err = absolute error on matrix element
+// Q = matrix where transformation matrix has to be stored
+// return value = reference on real tridiagonal symmetric matrix
+
+RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err, RealMatrix& Q)
+{
+  if (M.NbrRow != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  int ReducedNbrRow = this->NbrRow - 2;
+  double TmpNorm;
+  double Cosinus;
+  double Sinus;
+  double Tmp;
+  double Tmp2;
+  double FillInElement;
+  int MinJ;
+  int Pos;
+  int Pos2;
+  int Max;
+  int GivenColumnPosition;
+  int GivenRowPosition;
+  double SquareErr = err * err;
+  if (SquareErr < MACHINE_PRECISION)
+    SquareErr = MACHINE_PRECISION;
+
+  for (int i = 0; i < ReducedNbrRow; ++i)
+    {
+      MinJ = ReducedNbrRow - i;
+      if (MinJ >= this->NbrBands)
+	MinJ = this->NbrBands - 1;
+      for (int j = MinJ; j >= 1; --j)
+	{
+	  GivenRowPosition = i;
+	  GivenColumnPosition = j;
+	  FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition]; 
+	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+	  Sinus = -FillInElement;
+	  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	  while ((GivenRowPosition < this->NbrRow) && (((Sinus * Sinus) > (TmpNorm * SquareErr)) && (TmpNorm > SquareErr)))
+	    {
+	      // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
+	      TmpNorm = sqrt (TmpNorm);
+	      this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition] = TmpNorm;
+	      TmpNorm = 1.0 / TmpNorm;
+	      Cosinus *= TmpNorm;
+	      Sinus *= TmpNorm;
+	      Pos = GivenRowPosition + 1;
+	      Pos2 = GivenColumnPosition - 1;
+	      while (Pos2 > 0)
+		{
+		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2][Pos] += Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos];
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] -= Sinus * Tmp;
+		  --Pos2;
+		  ++Pos;
+		}
+	      
+	      Tmp = this->UpperOffDiagonalElements[0][Pos];
+	      Tmp2 = this->DiagonalElements[Pos];
+	      this->DiagonalElements[Pos] *= Cosinus * Cosinus;
+	      this->DiagonalElements[Pos] += Sinus * ((Sinus * this->DiagonalElements[Pos + 1]) - (2.0 * Cosinus * Tmp));
+	      this->UpperOffDiagonalElements[0][Pos] *= (Cosinus * Cosinus - Sinus * Sinus);
+	      this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp - this->DiagonalElements[Pos + 1]);
+	      this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
+	      this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
+	      
+	      ++Pos;
+	      Pos2 = 1;
+	      Max = ReducedNbrRow - GivenRowPosition + 1;
+	      if (Max > this->NbrBands)
+		Max = this->NbrBands;
+	      while (Pos2 < Max)
+		{
+		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2][Pos] -= Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1];
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] *= Cosinus;
+		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] += Sinus * Tmp;
+		  ++Pos2;
+		}
+	      
+	      
+	      RealVector& Vector1 =  Q[GivenRowPosition + GivenColumnPosition];
+	      RealVector& Vector2 =  Q[GivenRowPosition + GivenColumnPosition + 1];
+	      for (int k = 0; k < this->NbrRow; ++k)
+		{
+		  Tmp = Vector2[k];
+		  Vector2[k] *= Cosinus;
+		  Vector2[k] += Sinus * Vector1[k];
+		  Vector1[k] *= Cosinus;
+		  Vector1[k] += Sinus * Tmp;
+		}
+	      
+	      FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos] * Sinus;
+	      this->UpperOffDiagonalElements[Max - 1][Pos] *= Cosinus;
+
+
+	      GivenRowPosition += GivenColumnPosition;
+	      GivenColumnPosition = this->NbrBands - 1;
+	      Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+	      Sinus = -FillInElement;
+	      TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	    }
+	}
+    }
+
+  for (int i = 0; i < this->NbrRow; ++i)
+    M.DiagonalElements[i] = this->DiagonalElements[i];
+  ++ReducedNbrRow;
+  double* TmpColumn = this->UpperOffDiagonalElements[0];
+  for (int i = 0; i < ReducedNbrRow; ++i)
+    M.UpperDiagonalElements[i] = TmpColumn[i];
+
+  return M;
 }
 
 // Output Stream overload
@@ -676,33 +1020,25 @@ double RealBandDiagonalSymmetricMatrix::Det ()
 
 ostream& operator << (ostream& Str, const RealBandDiagonalSymmetricMatrix& P)
 {
-  for (int i = 0; i < P.NbrRow; i++)
+  for (int i = 0; i < P.NbrRow; ++i)
     {
       int j = 0;
-      for (; j < (i-1); j++)
+      for (; j < (i - P.NbrBands); ++j)
 	Str << "0    ";
-      if (i > 0)
+      for (; j < i; ++j)
 	{
-	  Str << P.UpperOffDiagonalElements[(i - 1)] << "    ";
-	  j++;
+	  Str << P.UpperOffDiagonalElements[i - j - 1][j] << "    ";
 	}
       Str << P.DiagonalElements[i] << "    ";
-      j++;
-      if (i < (P.NbrRow -1))
+      ++j;
+      for (; ((j < (P.NbrBands + i)) && (j < P.NbrColumn)); ++j)
 	{
-	  Str << P.UpperOffDiagonalElements[i] << "    ";
-	  j++;
+	  Str << P.UpperOffDiagonalElements[j - i - 1][i] << "    ";
 	}
       for (; j < P.NbrColumn; j++)
 	Str << "0    ";
       Str << endl;
     }
-/*  for (int i = 0; i < (P.NbrColumn - 1); i++)
-    if (i > 0)
-      {
-	Str << P.DiagonalElements[i] << "    " << P.UpperOffDiagonalElements[i] << endl;
-      }
-  Str << P.DiagonalElements[P.NbrColumn - 1] << endl;*/
   return Str;
 }
 
@@ -717,42 +1053,32 @@ ostream& operator << (ostream& Str, const RealBandDiagonalSymmetricMatrix& P)
 MathematicaOutput& operator << (MathematicaOutput& Str, const RealBandDiagonalSymmetricMatrix& P)
 {
   Str << "{";
-  for (int i = 0; i < (P.NbrRow - 1); i++)
+  for (int i = 0; i < P.NbrRow; i++)
     {
       Str << "{";
       int j = 0;
-      for (; j < (i-1); j++)
+      for (; j < (i - P.NbrBands); ++j)
 	Str << "0,";
-      if (i > 0)
-	{
-	  Str << P.UpperOffDiagonalElements[(i - 1)] << ",";
-	  j++;
-	}
+      for (; j < i; ++j)
+	Str << P.UpperOffDiagonalElements[i - j - 1][j] << ",";
       Str << P.DiagonalElements[i] << ",";
       j++;
-      if (i < (P.NbrRow -1))
+
+      for (; ((j < (P.NbrBands + i)) && (j < P.NbrColumn)); ++j)
 	{
-	  Str << P.UpperOffDiagonalElements[i];
+	  Str << P.UpperOffDiagonalElements[j - i - 1][i];
 	  if (j != (P.NbrColumn - 1))
 	    Str << ",";
-	  j++;
 	}
       for (; j < (P.NbrColumn - 1); j++)
 	Str << "0,";
       if (j == (P.NbrColumn - 1))
 	Str << "0";
-      Str << "},";
+      Str << "}";
+      if (i != (P.NbrRow - 1))
+	Str << ",";
     }
-  Str << "{";
-  int j = 0;
-  for (; j < (P.NbrRow-2); j++)
-    Str << "0,";
-  if (P.NbrRow > 0)
-    {
-      Str << P.UpperOffDiagonalElements[P.NbrRow - 2] << ",";
-    }
-  Str << P.DiagonalElements[P.NbrRow - 1];
-  Str << "}}";
+  Str << "}";
   return Str;
 }
 

@@ -62,6 +62,7 @@ class RealTriDiagonalSymmetricMatrix : public Matrix
 
   friend class RealMatrix;
   friend class RealSymmetricMatrix;
+  friend class RealBandDiagonalSymmetricMatrix;
   friend class ComplexMatrix;
   friend class HermitianMatrix;
   friend class ComplexTriDiagonalHermitianMatrix;

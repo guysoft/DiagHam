@@ -63,8 +63,10 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // array which contains upper off-diagonal elements (first index is used as row index)
   double** UpperOffDiagonalElements;
 
-  // number of bands in the upper part of the matrix
+  // number of bands in used in the upper part of the matrix
   int NbrBands;
+  // total number of bands in the upper part of the matrix
+  int TrueNbrBands;
 
   // garbage flag used to avoid data duplication
   GarbageFlag Flag;
@@ -160,6 +162,13 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // Resize matrix and change the number of bands
+  //
+  // nbrRow = new number of rows
+  // nbrColumn = new number of columns
+  // nbrBands = new number of bands
+  void Resize (int nbrRow, int nbrColumn, int nbrBands);
+
   // copy matrix
   //
   // M = matrix to copy
@@ -248,20 +257,20 @@ class RealBandDiagonalSymmetricMatrix : public Matrix
   // return value = matrix determinant 
   double Det ();
 
-  // Tridiagonalize a real symmetric matrix using Householder algorithm (modifying current matrix)
+  // Tridiagonalize a real band symmetric matrix using Rutishauer-Schwarz  (modifying current matrix)
   //
   // M = reference on real tridiagonal symmetric matrix where result has to be stored
   // err = absolute error on matrix element
   // return value = reference on real tridiagonal symmetric matrix
-  RealTriDiagonalSymmetricMatrix& Householder (RealTriDiagonalSymmetricMatrix& M, double err);
+  RealTriDiagonalSymmetricMatrix& Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err);
 
-  // Tridiagonalize a real symmetric matrix using Householder algorithm and evaluate transformation matrix  (modifying current matrix)
+  // Tridiagonalize a real band symmetric matrix using Rutishauer-Schwarz and evaluate transformation matrix  (modifying current matrix)
   //
   // M = reference on real tridiagonal symmetric matrix where result has to be stored
   // err = absolute error on matrix element
   // Q = matrix where transformation matrix has to be stored
   // return value = reference on real tridiagonal symmetric matrix
-  RealTriDiagonalSymmetricMatrix& Householder (RealTriDiagonalSymmetricMatrix& M, double err, RealMatrix& Q);
+  RealTriDiagonalSymmetricMatrix& Tridiagonalize (RealTriDiagonalSymmetricMatrix& M, double err, RealMatrix& Q);
 
   // Output Stream overload
   //

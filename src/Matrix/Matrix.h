@@ -84,7 +84,8 @@ class Matrix
     AntiHermitian = 0x0800,    
     Block = 0x1000,
     Upper = 0x2000,
-    Lower = 0x4000
+    Lower = 0x4000,
+    BandDiagonal = 0x10000
   };
 
   // default constructor

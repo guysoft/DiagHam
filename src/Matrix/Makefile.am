@@ -16,4 +16,5 @@ RealSymmetricMatrix.cc \
 RealTriDiagonalSymmetricMatrix.cc \
 RealUpperTriangularMatrix.cc \
 RealLowerTriangularMatrix.cc \
-ComplexUpperTriangularMatrix.cc 
+ComplexUpperTriangularMatrix.cc \
+RealBandDiagonalSymmetricMatrix.cc

@@ -60,7 +60,8 @@ am_libMatrix_a_OBJECTS = BlockDiagonalMatrix.$(OBJEXT) \
 	RealTriDiagonalSymmetricMatrix.$(OBJEXT) \
 	RealUpperTriangularMatrix.$(OBJEXT) \
 	RealLowerTriangularMatrix.$(OBJEXT) \
-	ComplexUpperTriangularMatrix.$(OBJEXT)
+	ComplexUpperTriangularMatrix.$(OBJEXT) \
+	RealBandDiagonalSymmetricMatrix.$(OBJEXT)
 libMatrix_a_OBJECTS = $(am_libMatrix_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -74,6 +75,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/HermitianMatrix.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Matrix.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RealAntisymmetricMatrix.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/RealBandDiagonalSymmetricMatrix.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RealDiagonalMatrix.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RealLowerTriangularMatrix.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/RealMatrix.Po \
@@ -196,7 +198,8 @@ RealSymmetricMatrix.cc \
 RealTriDiagonalSymmetricMatrix.cc \
 RealUpperTriangularMatrix.cc \
 RealLowerTriangularMatrix.cc \
-ComplexUpperTriangularMatrix.cc 
+ComplexUpperTriangularMatrix.cc \
+RealBandDiagonalSymmetricMatrix.cc
 
 all: all-recursive
 
@@ -254,6 +257,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HermitianMatrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Matrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealAntisymmetricMatrix.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealBandDiagonalSymmetricMatrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealDiagonalMatrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealLowerTriangularMatrix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RealMatrix.Po@am__quote@
