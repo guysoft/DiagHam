@@ -102,6 +102,10 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->MaxNbrIterLanczos = ((SingleIntegerOption*) (*options)["iter-max"])->GetInteger();
   this->NbrIterLanczos = ((SingleIntegerOption*) (*options)["nbr-iter"])->GetInteger();
   this->NbrEigenvalue = ((SingleIntegerOption*) (*options)["nbr-eigen"])->GetInteger();
+  if (this->NbrEigenvalue > this->Space->GetHilbertSpaceDimension())
+    {
+      this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
+    }
   this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
   this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
@@ -174,7 +178,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 		  Q[j].WriteVector(TmpVectorName);
-		  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " ";		  
+		  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
 		}	      
 	      cout << endl;
 	      delete[] TmpVectorName;

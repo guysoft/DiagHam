@@ -106,10 +106,8 @@ int main(int argc, char** argv)
   if (InitialLz >= 0)
     {
       L = InitialLz;
-      if ((abs(Max) & 1) != 0)
-	L = 1;
-      else
-	L = 0;
+      if ((abs(Max) & 1) != (InitialLz & 1))
+	L += 1;
     }
   if (GroundFlag == true)
       Max = L;
