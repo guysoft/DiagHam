@@ -35,6 +35,9 @@
 
 #include <math.h>
 
+using std::hex;
+using std::dec;
+
 
 // basic constructor
 // 
@@ -341,8 +344,8 @@ int FermionOnSphere::FindStateIndex(unsigned int stateDescription, int lzmax)
 //  cout << lzmax << " " << hex << stateDescription << dec << " " << this->LookUpTableShift[lzmax] << Pos << endl;
   while (this->StateDescription[Pos] != stateDescription)
     ++Pos;
-/*  if (this->StateLzMax[Pos] != lzmax)
-    cout << "error !!! " << lzmax << " " << this->StateLzMax[Pos] << " " << hex << stateDescription << dec << " " << Pos << endl;*/
+//  if (this->StateLzMax[Pos] != lzmax)
+//    cout << "error !!! " << lzmax << " " << this->StateLzMax[Pos] << " " << hex << stateDescription << dec << " " << Pos << endl;
   return Pos;
 }
 

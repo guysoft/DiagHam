@@ -454,7 +454,7 @@ void ParticleOnSphereCoulombHamiltonian::EvaluateInteractionFactors()
       Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
       Coef.FactorialMultiply(this->LzMax + 1);
       TmpV[j] = Coef.GetNumericalValue();
-//      cout << "TmpV[" << j << "] = " << TmpV[j]<< endl;
+      cout << "TmpV[" << j << "] = " << TmpV[j]<< endl;
     }
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J;
@@ -467,6 +467,15 @@ void ParticleOnSphereCoulombHamiltonian::EvaluateInteractionFactors()
     Sign = 0;
   double MaxCoefficient = 0.0;
 
+  for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
+    for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
+      {
+	Clebsch.InitializeCoefficientIterator(m1, m2);
+	cout << "------------------------------------------------" << endl;
+	cout << m1 << " " << m2 << ":" << endl;	
+	while (Clebsch.Iterate(J, ClebschCoef))
+	  cout << J << " " << ClebschCoef << endl;
+      }
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
@@ -513,7 +522,7 @@ void ParticleOnSphereCoulombHamiltonian::EvaluateInteractionFactors()
 	      Min = 0;
 	    for (int m3 = Min; m3 <= Lim; ++m3)
 	      {
-		if ((fabs(TmpCoefficient[Pos]) > MaxCoefficient) && ((2 * m3) > (m1 + m2)))
+		if (/*(fabs(TmpCoefficient[Pos]) > MaxCoefficient) &&*/ ((2 * m3) > (m1 + m2)))
 	      {
 		this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
 		this->M1Value[this->NbrInteractionFactors] = m1;
