@@ -6,7 +6,7 @@
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 //#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnDiskWaveFunction.h"
-//#include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -123,15 +123,15 @@ int main(int argc, char** argv)
     }
   ParticleOnDiskFunctionBasis Basis(MMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
-  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrBosons, 1, 1);
-//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 3);
+  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 4);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-/*  for (int k = 0; k < 10; ++k)
+  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;*/
+  return 0;
   double Factor = 1.0;
   for (int j = 0; j < NbrBosons; ++j)
     {

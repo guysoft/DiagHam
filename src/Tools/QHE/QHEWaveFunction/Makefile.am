@@ -7,4 +7,5 @@ PfaffianOnSphereWaveFunction.cc \
 JainCFFilledLevelOnSphereWaveFunction.cc \
 MooreReadOnSphereWaveFunction.cc \
 LaughlinOnDiskWaveFunction.cc \
-PfaffianOnDiskWaveFunction.cc
+PfaffianOnDiskWaveFunction.cc \
+MooreReadOnDiskWaveFunction.cc
