@@ -133,6 +133,234 @@ void SortArrayUpOrdering(ClassName* array, long nbrValue)
   return;
 }
 
+// down ordering array sort using quick sort
+//
+// array = pointer to the array
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayDownOrdering(ClassName* array, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (array[0] < array[1])
+	  {
+	    ClassName TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	ClassName TmpElement;
+	if (array[0] < array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	  }
+	if (array[1] < array[2])
+	  {
+	    TmpElement = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement;
+	  }	
+	if (array[0] < array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	ClassName TmpElement;
+	if (array[0] <  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	  }
+	if (array[i] <  array[j])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement;
+	  }
+	if (array[0] <  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	  }
+	--j;
+	ClassName Pivot = array[i];
+	array[i] = array[j];
+	array[j] = Pivot;
+	i = 0;
+	while (true)
+	  {
+	    while (array[++i] > Pivot);
+	    while (array[--j] < Pivot);
+	    if (i < j)
+	      {
+		TmpElement = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement;	    
+	      }
+	    else
+	      break;
+	  }	
+	array[nbrValue - 2] = array[i];
+	array[i] = Pivot;
+	SortArrayDownOrdering(array, i);
+	SortArrayDownOrdering(&(array[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
+// sort in down ordering an array of doubles and apply the same sort on another array (using quick sort)
+//
+// doubleArray = pointer to the array of doubles
+// array = pointer to the second array to sort in the same way as doubleArray
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayDownOrdering(double* doubleArray, ClassName* array, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (doubleArray[0] < doubleArray[1])
+	  {
+	    double TmpElement = doubleArray[0];
+	    doubleArray[0] = doubleArray[1];
+	    doubleArray[1] = TmpElement;
+	    ClassName TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	double TmpElement;
+	ClassName TmpElement2;
+	if (doubleArray[0] < doubleArray[1])
+	  {
+	    TmpElement = doubleArray[0];
+	    doubleArray[0] = doubleArray[1];
+	    doubleArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	if (doubleArray[1] < doubleArray[2])
+	  {
+	    TmpElement = doubleArray[1];
+	    doubleArray[1] = doubleArray[2];
+	    doubleArray[2] = TmpElement;
+	    TmpElement2 = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement2;
+	  }	
+	if (doubleArray[0] < doubleArray[1])
+	  {
+	    TmpElement = doubleArray[0];
+	    doubleArray[0] = doubleArray[1];
+	    doubleArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	double TmpElement;
+	ClassName TmpElement2;
+	if (doubleArray[0] <  doubleArray[i])
+	  {
+	    TmpElement = doubleArray[i];
+	    doubleArray[i] = doubleArray[0];
+	    doubleArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	if (doubleArray[i] <  doubleArray[j])
+	  {
+	    TmpElement = doubleArray[i];
+	    doubleArray[i] = doubleArray[j];
+	    doubleArray[j] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement2;
+	  }
+	if (doubleArray[0] <  doubleArray[i])
+	  {
+	    TmpElement = doubleArray[i];
+	    doubleArray[i] = doubleArray[0];
+	    doubleArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	--j;
+	double Pivot = doubleArray[i];
+	ClassName Pivot2 = array[i];
+	doubleArray[i] = doubleArray[j];
+	doubleArray[j] = Pivot;
+	i = 0;
+	while (true)
+	  {
+	    while (doubleArray[++i] > Pivot);
+	    while (doubleArray[--j] < Pivot);
+	    if (i < j)
+	      {
+		TmpElement = doubleArray[i];
+		doubleArray[i] = doubleArray[j];
+		doubleArray[j] = TmpElement;	    
+		TmpElement2 = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement2;	    
+	      }
+	    else
+	      break;
+	  }	
+	doubleArray[nbrValue - 2] = doubleArray[i];
+	doubleArray[i] = Pivot;
+	array[nbrValue - 2] = array[i];
+	array[i] = Pivot2;
+	SortArrayDownOrdering(doubleArray, array, i);
+	SortArrayDownOrdering(&(doubleArray[i + 1]), &(array[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
 // up ordering array sort using quick sort, and sort row of an 2d-array in the way
 //
 // array = pointer to the array
@@ -258,7 +486,7 @@ void SortArrayUpOrdering(ClassName* array, ClassName** coarray, long nbrValue)
 	coarray[nbrValue - 2] = coarray[i];
 	coarray[i] = Pivot2;
 	SortArrayUpOrdering(array, coarray, i);
-	SortArrayUpOrdering(&(array[i + 1]), coarray, nbrValue - i - 1);	
+	SortArrayUpOrdering(&(array[i + 1]), &(coarray[i + 1]), nbrValue - i - 1);	
       }
     }
   return;

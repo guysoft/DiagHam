@@ -155,33 +155,6 @@ int ParticleOnSphereDeltaHamiltonian::GetHilbertSpaceDimension ()
   return this->Particles->GetHilbertSpaceDimension();
 }
 
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereDeltaHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  double x = 0.0;
-  int dim = this->Particles->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return Complex(x);
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnSphereDeltaHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  return Complex();
-}
-
 // return a list of left interaction operators
 //
 // return value = list of left interaction operators

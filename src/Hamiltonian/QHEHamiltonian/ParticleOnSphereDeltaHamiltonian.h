@@ -89,20 +89,6 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
 
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
   // return a list of left interaction operators
   //
   // return value = list of left interaction operators

@@ -88,9 +88,9 @@ class BosonOnSphere :  public ParticleOnSphere
   // basic constructor
   // 
   // nbrBosons = number of bosons
-  // lzMax = maximum Lz value reached by a boson
   // totalLz = momentum total value
-  BosonOnSphere (int nbrBosons, int lzMax, int totalLz);
+  // lzMax = maximum Lz value reached by a boson
+  BosonOnSphere (int nbrBosons, int totalLz, int lzMax);
 
   // copy constructor (without duplicating datas)
   //

@@ -10,8 +10,10 @@ my $Eigenvalue = 0.0;
 my $Error = 1.0e-12;
 my $LFlag = 0;
 my $RowFlag = 0;
+my $SumFlag = 0;
+my $LatexFlag = 0;
 my $Result = GetOptions ("spectrum=s" => \$SpectrumFile, "eigenvalue:s" => \$Eigenvalue, "error:s" => \$Error, "lsort" => \$LFlag,
-			"row" => \$RowFlag); 
+			"row" => \$RowFlag, "sum" => \$SumFlag, "latex:s" => \$LatexFlag); 
 
 #if (($SpectrumFile eq "") || (!(-e $SpectrumFile)) || (!($Eigenvalue =~ /^[\+\-]?\d*\.?\d*e?\d+$/)) || (!()))
 if ($SpectrumFile eq "")
@@ -48,6 +50,22 @@ while (defined($TmpLine = <INFILE>))
   }
 close (INFILE);
 
+my $Sum = 0;
+if ($SumFlag != 0)
+  {
+    foreach $TmpLine (keys(%Degeneracy))
+      {
+	if ($TmpLine != 0)
+	  {
+	    $Sum += 2 * $Degeneracy{$TmpLine};
+	  }
+	else
+	  {
+	    $Sum += $Degeneracy{$TmpLine};
+	  }
+      }
+  }
+
 if ($LFlag != 0)
   {
     my $CurrentNbr = 0;
@@ -59,7 +77,7 @@ if ($LFlag != 0)
     
   }
 
-if ($RowFlag == 0)
+if (($LatexFlag == 0) && ($RowFlag == 0))
   {
     foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
       {
@@ -68,9 +86,36 @@ if ($RowFlag == 0)
   }
 else
   {
-    foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+    if ($LatexFlag == 0)
       {
-	print $Degeneracy{$TmpLine}." ";
+	foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+	  {
+	    print $Degeneracy{$TmpLine}." ";
+	  }
+	print "\n";
       }
-    print "\n";
+    else
+      {
+	my $Tmp = 0;
+	foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+	  {
+	    print "\$".$Degeneracy{$TmpLine}."\$";
+	    if ($Tmp < $LatexFlag)
+	      {
+		print " & "; 
+	      }
+	    $Tmp++;
+	  }
+	while ($Tmp < $LatexFlag)
+	  {
+	    print " & "; 
+	    $Tmp++;
+	  }
+	print "\\\\\n";
+      }
+  }
+
+if ($SumFlag != 0)
+  {
+    print "Sum = ".$Sum."\n";
   }
