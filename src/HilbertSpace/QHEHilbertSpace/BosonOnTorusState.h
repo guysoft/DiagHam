@@ -34,6 +34,11 @@
 
 #include "config.h"
 
+#include <iostream>
+
+
+using std::ostream;
+
 
 // get the reduced number of state (aka the number of unsigned long per state)
 // 
@@ -169,7 +174,22 @@ class BosonOnTorusState
   // put the state in a canonical form
   // 
   // 
-//  void PutInCanonicalForm(int& nbrTranslation);
+  //  void PutInCanonicalForm(int& nbrTranslation);
+
+  // shift a state to the left
+  //
+  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+  // nbrTranslation = magnitude of the translation to apply
+  void LeftShiftState(int& reducedNbrState, int& nbrStateRemainder, int nbrTranslation);
+
+  // print a given state
+  //
+  // str = reference on current output stream 
+  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+  // return value = reference on current output stream 
+  ostream& PrintState (ostream& str, int& reducedNbrState, int& nbrStateRemainder);
 
 };
 
@@ -180,12 +200,12 @@ class BosonOnTorusState
 inline int GetReducedNbrState (int nbrState)
 {
 #ifdef __64_BITS__
-  if (nbrState & 0x7)
+  if (nbrState & ((unsigned long) 0x7))
     return (nbrState >> 3);
   else
     return ((nbrState >> 3) + 1);
 #else
-  if (nbrState & 0x3)
+  if (nbrState & ((unsigned long) 0x3))
     return (nbrState >> 2);
   else
     return ((nbrState >> 2) + 1);
@@ -278,9 +298,11 @@ inline int BosonOnTorusState::GetHighestIndex (int& reducedNbrState)
 inline void BosonOnTorusState::SetOccupation (const int& stateIndex, const int& nbrBosons)
 {
 #ifdef __64_BITS__
-  this->StateDescription[stateIndex >> 3] = nbrBosons << ((stateIndex & 0x7) << 8);
+  this->StateDescription[stateIndex >> 3] &= ~(((unsigned long) 0xff) << ((stateIndex & ((unsigned long) 0x7)) << 3));
+  this->StateDescription[stateIndex >> 3] |= nbrBosons << ((stateIndex & ((unsigned long) 0x7)) << 3);
 #else
-  this->StateDescription[stateIndex >> 2] = nbrBosons << ((stateIndex & 0x3) << 8);
+  this->StateDescription[stateIndex >> 2] &= ~(((unsigned long) 0xff) << ((stateIndex & ((unsigned long) 0x3)) << 3));
+  this->StateDescription[stateIndex >> 2] |= nbrBosons << ((stateIndex & ((unsigned long) 0x3)) << 3);
 #endif
 }
 
@@ -292,9 +314,9 @@ inline void BosonOnTorusState::SetOccupation (const int& stateIndex, const int& 
 inline int BosonOnTorusState::GetOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  return (this->StateDescription[stateIndex >> 3] >> ((stateIndex & 0x7) << 8));
+  return ((this->StateDescription[stateIndex >> 3] >> ((stateIndex & ((unsigned long) 0x7)) << 3)) & ((unsigned long) 0xff));
 #else
-  return (this->StateDescription[stateIndex >> 2] >> ((stateIndex & 0x3) << 8));
+  return ((this->StateDescription[stateIndex >> 2] >> ((stateIndex & ((unsigned long) 0x3)) << 3)) & ((unsigned long) 0xff));
 #endif
 }
 
@@ -308,12 +330,13 @@ inline void BosonOnTorusState::IncrementOccupation (const int& stateIndex, int& 
 {
 #ifdef __64_BITS__
   tmpShift1 = stateIndex >> 3;
-  tmpShift2 = (stateIndex & 0x7) << 8;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x7)) << 3;
 #else
   tmpShift1 = stateIndex >> 2;
-  tmpShift2 = (stateIndex & 0x3) << 8;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
 #endif
-  this->StateDescription[tmpShift1] = ((this->StateDescription[tmpShift1] >> tmpShift2) + 1) << tmpShift2;
+  this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) + 1) << tmpShift2;
 }
 
 // decrement occupation of a state (without testing if the state es empty)
@@ -326,12 +349,13 @@ inline void BosonOnTorusState::DecrementOccupation (const int& stateIndex, int& 
 {
 #ifdef __64_BITS__
   tmpShift1 = stateIndex >> 3;
-  tmpShift2 = (stateIndex & 0x7) << 8;
+  tmpShift2 = (stateIndex & 0x7) << 3;
 #else
   tmpShift1 = stateIndex >> 2;
-  tmpShift2 = (stateIndex & 0x3) << 8;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
 #endif
-  this->StateDescription[tmpShift1] = ((this->StateDescription[tmpShift1] >> tmpShift2) - 1) << tmpShift2;
+  this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) - 1) << tmpShift2;
 }
 
 // test if the state is empty an if it is not, decrement its occupation
@@ -345,14 +369,15 @@ inline bool BosonOnTorusState::TestAndDecrementOccupation (const int& stateIndex
 {
 #ifdef __64_BITS__
   tmpShift1 = stateIndex >> 3;
-  tmpShift2 = (stateIndex & 0x7) << 8;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x7)) << 3;
 #else
   tmpShift1 = stateIndex >> 2;
-  tmpShift2 = (stateIndex & 0x3) << 8;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
 #endif
   if (this->StateDescription[tmpShift1] >> tmpShift2)
     {
-      this->StateDescription[tmpShift1] = ((this->StateDescription[tmpShift1] >> tmpShift2) - 1) << tmpShift2;
+      this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
+      this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) - 1) << tmpShift2;
       return true;
     }
   else
@@ -476,5 +501,132 @@ inline bool BosonOnTorusState::LowerOrEqual (BosonOnTorusState& state, int& redu
 //{
   //  if ()
 //}
+
+// shift a state to the left
+//
+// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+// nbrTranslation = magnitude of the translation to apply
+
+inline void BosonOnTorusState::LeftShiftState(int& reducedNbrState, int& nbrStateRemainder, int nbrTranslation)
+{
+#ifdef __64_BITS__
+  unsigned long Remainder;
+  // WARNING : this part of the code is not speed optimal but it doesn't need too much temporary variables and is fast enough
+  // if the translation is lower than 15 (true for most of the system size reachable with a 64 bits architecture)
+
+#else
+  unsigned long Remainder;
+  // WARNING : this part of the code is not speed optimal but it doesn't need too much temporary variables and is fast enough
+  // if the translation is lower than 8 (true for most of the system size reachable with a 32 bits architecture)
+  for (int j = 0; j < (nbrTranslation >> 2); ++j)
+    {
+      Remainder = this->StateDescription[0];
+      for (int i = 0; i < reducedNbrState; ++i)
+	{
+	  this->StateDescription[i] = this->StateDescription[i + 1];
+	}      
+      this->StateDescription[reducedNbrState - 1] |= Remainder << (nbrStateRemainder << 8);
+      this->StateDescription[reducedNbrState] = Remainder >> ((4 - nbrStateRemainder) << 8);
+    }
+  switch (nbrTranslation & 0x3)
+    {
+    case 1:
+      {	
+	Remainder = this->StateDescription[0] & ((unsigned long) 0xff);
+	for (int i = 0; i < reducedNbrState; ++i)
+	  {
+	    this->StateDescription[i] >>= 8;
+	    this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xff)) << 24;
+	  }
+	this->StateDescription[reducedNbrState] >>= 8;
+	this->StateDescription[reducedNbrState] |= Remainder << ((nbrStateRemainder - 1) << 3);
+      }
+      break;
+    case 2:
+      {	
+	if (nbrStateRemainder >= 2)
+	  {
+	    Remainder = this->StateDescription[0] & ((unsigned long) 0xffff);
+	    for (int i = 0; i < reducedNbrState; ++i)
+	      {
+		this->StateDescription[i] >>= 16;
+		this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xffff)) << 16;
+	      }
+	    this->StateDescription[reducedNbrState] >>= 16;
+	    this->StateDescription[reducedNbrState] |= Remainder << ((nbrStateRemainder - 2) << 3);
+	  }
+	else
+	  {
+	    Remainder = this->StateDescription[0] & ((unsigned long) 0xffff);
+	    int ReducedNbrState = reducedNbrState - 1;
+	    for (int i = 0; i < ReducedNbrState; ++i)
+	      {
+		this->StateDescription[i] >>= 16;
+		this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xffff)) << 16;
+	      }
+	    this->StateDescription[ReducedNbrState] >>= 16;
+	    this->StateDescription[ReducedNbrState] |= this->StateDescription[reducedNbrState] << 16;
+	    this->StateDescription[ReducedNbrState] |= (Remainder & ((unsigned long) 0xff)) << 24;
+	    this->StateDescription[reducedNbrState] = Remainder >> 8;
+	  }
+      }
+      break;
+    case 3:
+      {	
+	if (nbrStateRemainder >= 3)
+	  {
+	    Remainder = this->StateDescription[0] & ((unsigned long) 0xffffff);
+	    for (int i = 0; i < reducedNbrState; ++i)
+	      {
+		this->StateDescription[i] >>= 24;
+		this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xffffff)) << 8;
+	      }
+	    this->StateDescription[reducedNbrState] >>= 24;
+	    this->StateDescription[reducedNbrState] |= Remainder << ((nbrStateRemainder - 3) << 3);
+	  }
+	else
+	  {
+	    Remainder = this->StateDescription[0] & ((unsigned long) 0xffffff);
+	    int ReducedNbrState = reducedNbrState - 1;
+	    for (int i = 0; i < ReducedNbrState; ++i)
+	      {
+		this->StateDescription[i] >>= 24;
+		this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xffffff)) << 8;
+	      }
+	    this->StateDescription[ReducedNbrState] >>= 24;
+	    this->StateDescription[ReducedNbrState] |= this->StateDescription[reducedNbrState] << ((3 - nbrStateRemainder) << 8);
+	    this->StateDescription[ReducedNbrState] |= (Remainder << ((4 - nbrStateRemainder) << 8));
+	    this->StateDescription[reducedNbrState] = Remainder >> ((3 - nbrStateRemainder) << 8);
+	  }
+      }
+      break;
+    }
+#endif
+}
+
+// print a given state
+//
+// str = reference on current output stream 
+// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+// return value = reference on current output stream 
+
+inline ostream& BosonOnTorusState::PrintState (ostream& str, int& reducedNbrState, int& nbrStateRemainder)
+{
+  for (int i = 0; i < reducedNbrState; ++i)
+    {
+#ifdef __64_BITS__
+      for (int j = 0; j < 8; ++j)
+#else
+      for (int j = 0; j < 4; ++j)
+#endif
+	str << ((this->StateDescription[i] >> (j << 3)) & ((unsigned long) 0xff)) << " ";
+    }
+  for (int i = 0; i < nbrStateRemainder; ++i)
+    str << ((this->StateDescription[reducedNbrState] >> (i << 3)) & ((unsigned long) 0xff)) << " ";
+  return str;
+}
+
 
 #endif
