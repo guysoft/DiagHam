@@ -210,14 +210,17 @@ int main(int argc, char** argv)
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
 	    }
 	  cout << endl;
-/*	  ComplexVector* Eigenstates =  (ComplexVector*) ((Lanczos)->GetEigenstates(NbrEigenvalue));
-	  for (int i = 0; i < NbrEigenvalue; ++i)
+	  if (Lanczos->TestConvergence() == true)
 	    {
-	      ComplexVector TmpVector (Space.GetHilbertSpaceDimension());
-	      Hamiltonian.LowLevelMultiply(Eigenstates[i], TmpVector, 0, Space.GetHilbertSpaceDimension());
-	      cout << (Eigenstates[i] * TmpVector).Re << " ";
+	      ComplexVector* Eigenstates =  (ComplexVector*) ((Lanczos)->GetEigenstates(NbrEigenvalue));
+	      for (int i = 0; i < NbrEigenvalue; ++i)
+		{
+		  ComplexVector TmpVector (Space.GetHilbertSpaceDimension());
+		  Hamiltonian.LowLevelMultiply(Eigenstates[i], TmpVector, 0, Space.GetHilbertSpaceDimension());
+		  cout << (Eigenstates[i] * TmpVector).Re << " ";
+		}
 	    }
-	  cout << endl;*/
+	  cout << endl;
 	}
       gettimeofday (&(TotalEndingTime), 0);
       Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 

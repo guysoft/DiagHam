@@ -5,6 +5,7 @@
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombLaplacianDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
   SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
+  SingleDoubleOption CoulombOption ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure laplacian delta if 0)", 0.0);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
@@ -73,6 +75,7 @@ int main(int argc, char** argv)
   OptionList += &ResumeOption;
   OptionList += &LoadPrecalculationOption;
   OptionList += &SavePrecalculationOption;
+  OptionList += &CoulombOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
@@ -100,12 +103,17 @@ int main(int argc, char** argv)
   int VectorMemory = VectorMemoryOption.GetInteger();
   char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
   char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
+  double CoulombFactor = CoulombOption.GetDouble();
 
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
   int Shift = 0;
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_laplaciandelta_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
+  if (CoulombFactor == 0.0)
+    sprintf (OutputNameLz, "fermions_laplaciandelta_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
+  else
+    sprintf (OutputNameLz, "fermions_coulomblaplaciandelta_n_%d_2s_%d_%f_lz.dat", NbrFermions, LzMax, CoulombFactor);
+
   char* OutputNameL = "fermions_l.dat";
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
@@ -155,7 +163,10 @@ int main(int argc, char** argv)
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
       AbstractQHEOnSphereHamiltonian* Hamiltonian;
-      Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      if (CoulombFactor == 0.0)
+	Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      else
+	Hamiltonian = new ParticleOnSphereCoulombLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, CoulombFactor, Architecture, Memory, LoadPrecalculationFileName);
 //      Hamiltonian = new ParticleOnSphereCoulombHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
       if (SavePrecalculationFileName != 0)
 	{

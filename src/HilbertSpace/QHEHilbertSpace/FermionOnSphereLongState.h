@@ -49,13 +49,13 @@ using std::hex;
 // 
 // nbrState = number of states in which fermions can lie
 // return value = reduced number of state
-int GetReducedNbrState (int nbrState);
+int FermionOnSphereLongStateGetReducedNbrState (int nbrState);
 
 // get the number of the state in the last unsigned long array describing the whole state
 // 
 // nbrState = number of states in which fermions can lie
 // return value = number of the state in the last unsigned long array describing the whole state
-int GetRemainderNbrState (int nbrState);
+int FermionOnSphereLongStateGetRemainderNbrState (int nbrState);
 
 
 class FermionOnSphereLongState
@@ -146,18 +146,28 @@ class FermionOnSphereLongState
   // stateIndex = index of the state whose occupation has to be set 
   void IncrementOccupation (const int& stateIndex);
   
+  // test if the state is full and if it is not, increment its occupation
+  //
+  // stateIndex = index of the state whose occupation has to be set 
+  // return value = false if the state is empty
+  bool TestAndIncrementOccupation (const int& stateIndex);
+  
   // decrement occupation of a state (without testing if the state es empty)
   //
   // stateIndex = index of the state whose occupation has to be set 
   void DecrementOccupation (const int& stateIndex);
   
-  // test if the state is empty an if it is not, decrement its occupation
+  // test if the state is empty and if it is not, decrement its occupation
   //
   // stateIndex = index of the state whose occupation has to be set 
-  // tmpShift1 = refence on temporary variable used to evaluated a bit shift
-  // tmpShift2 = refence on temporary variable used to evaluated a bit shift
   // return value = false if the state is empty
-  inline bool TestAndDecrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2);
+  bool TestAndDecrementOccupation (const int& stateIndex);
+
+  // stateIndex = index of the state whose occupation has to be set 
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
+  // signLookUpTable = pointer to an array containing the parity of the number of one for each integer ranging from 0 to 65535
+  // coefficient = reference on a coefficient which will be multiplied by the sign of the permutation
+  void GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, double& coefficient);
   
   // swap two states
   //
@@ -167,28 +177,28 @@ class FermionOnSphereLongState
   // test if the current state is identical to another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the two states are identical
   bool Equal (FermionOnSphereLongState& state, int reducedNbrState);
 
   // test if the current state is different to another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the two states are different
   bool Different (FermionOnSphereLongState& state, int reducedNbrState);
   
   // test if the current state is greater than another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater than the other state
   bool Greater (FermionOnSphereLongState& state, int reducedNbrState);
 
   // test if the current state is greater or equal than another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater or equal than the other state
   bool GreaterOrEqual (FermionOnSphereLongState& state, int reducedNbrState);
 
@@ -221,7 +231,7 @@ class FermionOnSphereLongState
 // nbrState = number of states in which fermions can lie
 // return value = reduced number of state
 
-inline int GetReducedNbrState (int nbrState)
+inline int FermionOnSphereLongStateGetReducedNbrState (int nbrState)
 {
 #ifdef __64_BITS__
   if ((nbrState & ((unsigned long) 0x3f)) == 0)
@@ -241,7 +251,7 @@ inline int GetReducedNbrState (int nbrState)
 // nbrState = number of states in which fermions can lie
 // return value = number of the state in the last unsigned long array describing the whole state
 
-inline int GetRemainderNbrState (int nbrState)
+inline int FermionOnSphereLongStateGetRemainderNbrState (int nbrState)
 {
 #ifdef __64_BITS__
   if ((nbrState & 0x3f) == 0)
@@ -424,6 +434,32 @@ inline void FermionOnSphereLongState::IncrementOccupation (const int& stateIndex
 #endif
 }
 
+// test if the state is full and if it is not, increment its occupation
+//
+// stateIndex = index of the state whose occupation has to be set 
+// return value = false if the state is empty
+
+inline bool FermionOnSphereLongState::TestAndIncrementOccupation (const int& stateIndex)
+{
+#ifdef __64_BITS__
+  if ((this->StateDescription[stateIndex >> 6] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) != 0)
+    return false;
+  else
+    {
+      this->StateDescription[stateIndex >> 6] |=  ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f));
+      return true;
+    }
+#else
+  if ((this->StateDescription[stateIndex >> 5] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f))) != 0)
+    return false;
+  else
+    {
+      this->StateDescription[stateIndex >> 5] |=  ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f));
+      return true;
+    }
+#endif
+}
+  
 // decrement occupation of a state (without testing if the state is empty)
 //
 // stateIndex = index of the state whose occupation has to be set 
@@ -440,29 +476,81 @@ inline void FermionOnSphereLongState::DecrementOccupation (const int& stateIndex
 // test if the state is empty an if it is not, decrement its occupation
 //
 // stateIndex = index of the state whose occupation has to be set 
-// tmpShift1 = refence on temporary variable used to evaluated a bit shift
-// tmpShift2 = refence on temporary variable used to evaluated a bit shift
 // return value = false if the state is empty
 
-inline bool FermionOnSphereLongState::TestAndDecrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2)
+inline bool FermionOnSphereLongState::TestAndDecrementOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  tmpShift1 = stateIndex >> 3;
-  tmpShift2 = (stateIndex & ((unsigned long) 0x7)) << 3;
-#else
-  tmpShift1 = stateIndex >> 2;
-  tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
-#endif
-  if (this->StateDescription[tmpShift1] >> tmpShift2)
+  if ((this->StateDescription[stateIndex >> 6] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) != 0)
+    return false;
+  else
     {
-      this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
-      this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) - 1) << tmpShift2;
+      this->StateDescription[stateIndex >> 6] &=  ~((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f));
       return true;
     }
-  else
+#else
+  if ((this->StateDescription[stateIndex >> 5] & ((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f))) != 0)
     return false;
+  else
+    {
+      this->StateDescription[stateIndex >> 5] &=  ~((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x1f));
+      return true;
+    }
+#endif
 }
 
+// get the sign resulting from the permutation 
+//
+// stateIndex = index of the state whose occupation has to be set 
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
+// signLookUpTable = pointer to an array containing the parity of the number of one for each integer ranging from 0 to 65535
+// coefficient = reference on a coefficient which will be multiplied by the sign of the permutation
+
+inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, double& coefficient)
+{
+#ifdef  __64_BITS__
+  int tmp = (stateIndex >> 6);
+#else
+  int tmp = (stateIndex >> 5);
+#endif
+  unsigned long Mask;
+  for (reducedNbrState; reducedNbrState > tmp; --reducedNbrState)
+    {
+#ifdef  __64_BITS__
+      Mask = this->StateDescription[reducedNbrState] & ((unsigned long) 0xffff);
+      coefficient *= signLookUpTable[Mask];
+      Mask = (this->StateDescription[reducedNbrState] >> 16) & ((unsigned long) 0xffff);
+      coefficient *= signLookUpTable[Mask];
+      Mask = (this->StateDescription[reducedNbrState] >> 32)  & ((unsigned long) 0xffff);
+      coefficient *= signLookUpTable[Mask];
+      Mask = (this->StateDescription[reducedNbrState] >>48)  & ((unsigned long) 0xffff);
+      coefficient *= signLookUpTable[Mask];
+#else
+      Mask = this->StateDescription[reducedNbrState] & 0xffff;
+      coefficient *= signLookUpTable[Mask];
+      Mask = (this->StateDescription[reducedNbrState] >> 16) & 0xffff;
+      coefficient *= signLookUpTable[Mask];
+#endif
+   }
+#ifdef  __64_BITS__
+  stateIndex &= 0x3f;
+  Mask = (this->StateDescription[tmp] >> stateIndex) & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 32))  & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 48))  & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+#else
+  stateIndex &= 0x1f;
+  Mask = (this->StateDescription[tmp] >> stateIndex) & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & ((unsigned long) 0xffff);
+  coefficient *= signLookUpTable[Mask];
+#endif
+}
+  
 // swap two states
 //
 // state = reference on the state to swap with the current one
@@ -477,7 +565,7 @@ inline void FermionOnSphereLongState::SwapStates (FermionOnSphereLongState& stat
 // test if the current state is identical to another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the two states are identical
 
 inline bool FermionOnSphereLongState::Equal (FermionOnSphereLongState& state, int reducedNbrState)
@@ -493,7 +581,7 @@ inline bool FermionOnSphereLongState::Equal (FermionOnSphereLongState& state, in
 // test if the current state is different to another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the two states are different
 
 inline bool FermionOnSphereLongState::Different (FermionOnSphereLongState& state, int reducedNbrState)
@@ -509,7 +597,7 @@ inline bool FermionOnSphereLongState::Different (FermionOnSphereLongState& state
 // test if the current state is greater than another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is greater than the other state
 
 inline bool FermionOnSphereLongState::Greater (FermionOnSphereLongState& state, int reducedNbrState)
@@ -529,7 +617,7 @@ inline bool FermionOnSphereLongState::Greater (FermionOnSphereLongState& state, 
 // test if the current state is greater or equal than another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is greater or equal than the other state
 
 inline bool FermionOnSphereLongState::GreaterOrEqual (FermionOnSphereLongState& state, int reducedNbrState)

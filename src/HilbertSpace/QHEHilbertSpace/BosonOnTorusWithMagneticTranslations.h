@@ -95,7 +95,7 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int*** LookUpTable;
   // number of states with the same maximum momentum and a hash key
   int** NbrStateInLookUpTable;
-  // number of bits to take into account in a hash key
+  // mask corresponding to the number of bits to take into account in a hash key
   unsigned long HashKeyMask;
 
  public:

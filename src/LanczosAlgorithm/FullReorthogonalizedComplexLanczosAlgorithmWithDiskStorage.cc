@@ -240,7 +240,7 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::GetEigenstat
           this->Architecture->ExecuteOperation(&Operation);
         }
       MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) - (MaxPos * ReducedMaxNbrVector);
-      for (int j = 0; j < ReducedMaxNbrVector; ++j)
+      for (int j = 0; j < MaxPos; ++j)
         {
           sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
           this->LanczosVectors[1 + j].ReadVector(TmpVectorName);

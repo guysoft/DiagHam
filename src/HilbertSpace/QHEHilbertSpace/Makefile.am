@@ -19,4 +19,5 @@ BosonOnTorusWithMagneticTranslations.cc \
 BosonOnTorusState.cc \
 ParticleOnDisk.cc \
 FermionOnDisk.cc \
-FermionOnSphereLongState.cc
+FermionOnSphereLongState.cc \
+FermionOnDiskUnlimited.cc

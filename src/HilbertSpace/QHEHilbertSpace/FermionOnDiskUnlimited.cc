@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of fermions on disk with restriction on the            //
-//              number of reachable states or the number of fermions          //
+//               class of fermions on disk with no restriction on the         //
+//               number of reachable states or the number of fermions         //
 //                                                                            //
-//                        last modification : 01/02/2004                      //
+//                        last modification : 03/03/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/FermionOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnDiskUnlimited.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 
@@ -48,7 +48,7 @@ using std::dec;
 // nbrFermions = number of fermions
 // totalLz = momentum total value
 
-FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz)
+FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -57,16 +57,30 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz)
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateDescription = new FermionOnSphereLongState [this->HilbertSpaceDimension];
+  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
+  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   this->StateLzMax = new int [this->HilbertSpaceDimension];
+  this->ReducedNbrState = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
   int UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    UsedMemory += ((this->ReducedNbrState[i] + 1) * sizeof(unsigned long));
+  UsedMemory += this->HilbertSpaceDimension * (3 * sizeof(int));
   UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    {
+      if (this->NbrStateInLookUpTable[i] != 0)
+	{
+	  for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+	    if (this->NbrStateInLookUpTable[i][j] > 0)      
+	      UsedMemory += this->NbrStateInLookUpTable[i][j] * sizeof(int);
+	}
+    }
+  UsedMemory += this->NbrLzValue * sizeof(int*);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
@@ -83,7 +97,7 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz)
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
+FermionOnDiskUnlimited::FermionOnDiskUnlimited(const FermionOnDiskUnlimited& fermions)
 {
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
@@ -94,30 +108,39 @@ FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
+  this->NbrStateInLookUpTable = fermions.NbrStateInLookUpTable;
+  this->HashKeyMask = fermions.HashKeyMask;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
+  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
 }
 
 // destructor
 //
 
-FermionOnDisk::~FermionOnDisk ()
+FermionOnDiskUnlimited::~FermionOnDiskUnlimited ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
+      delete[] this->ReducedNbrState;
       delete[] this->SignLookUpTable;
-      delete[] this->LookUpTableShift;
-      delete[] this->LookUpTableMask;
       for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
+	{
+	  if (this->NbrStateInLookUpTable[i] != 0)
+	    {
+	      for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+		if (this->NbrStateInLookUpTable[i][j] > 0)
+		  delete[] this->LookUpTable[i][j];
+	      delete[] this->LookUpTable[i];
+	      delete[] this->NbrStateInLookUpTable[i];
+	    }
+	}
       delete[] this->LookUpTable;
+      delete[] this->NbrStateInLookUpTable;
     }
 }
 
@@ -126,19 +149,28 @@ FermionOnDisk::~FermionOnDisk ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
+FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskUnlimited& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
-      delete[] this->LookUpTableShift;
-      delete[] this->LookUpTableMask;
+      delete[] this->ReducedNbrState;
       for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
+	{
+	  if (this->NbrStateInLookUpTable[i] != 0)
+	    {
+	      for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+		if (this->NbrStateInLookUpTable[i][j] > 0)
+		  delete[] this->LookUpTable[i][j];
+	      delete[] this->LookUpTable[i];
+	      delete[] this->NbrStateInLookUpTable[i];
+	    }
+	}
       delete[] this->LookUpTable;
-    }
+      delete[] this->NbrStateInLookUpTable;
+   }
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -148,13 +180,13 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
+  this->NbrStateInLookUpTable = fermions.NbrStateInLookUpTable;
+  this->HashKeyMask = fermions.HashKeyMask;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
+  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   return *this;
 }
 
@@ -162,16 +194,16 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnDisk::Clone()
+AbstractHilbertSpace* FermionOnDiskUnlimited::Clone()
 {
-  return new FermionOnDisk(*this);
+  return new FermionOnDiskUnlimited(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> FermionOnDisk::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> FermionOnDiskUnlimited::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -183,7 +215,7 @@ List<AbstractQuantumNumber*> FermionOnDisk::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* FermionOnDisk::GetQuantumNumber (int index)
+AbstractQuantumNumber* FermionOnDiskUnlimited::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -194,8 +226,8 @@ AbstractQuantumNumber* FermionOnDisk::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* FermionOnDisk::ExtractSubspace (AbstractQuantumNumber& q, 
-							SubspaceSpaceConverter& converter)
+AbstractHilbertSpace* FermionOnDiskUnlimited::ExtractSubspace (AbstractQuantumNumber& q, 
+							       SubspaceSpaceConverter& converter)
 {
   return 0;
 }
@@ -210,144 +242,55 @@ AbstractHilbertSpace* FermionOnDisk::ExtractSubspace (AbstractQuantumNumber& q,
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnDiskUnlimited::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
-  unsigned long State = this->StateDescription[index];
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  if ((n1 > StateLzMax) || (n2 > StateLzMax) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int NewLzMax = StateLzMax;
-  unsigned long TmpState = State;
-  int Mask;
-  int SignIndex = NewLzMax - n2;
-  if (SignIndex < 16)
-    {
-      Mask = (TmpState >> n2) & 0xffff;
-      coefficient = this->SignLookUpTable[Mask];
-    }
-  else
-    {
-      Mask = (TmpState >> n2) & 0xffff;
-      coefficient = this->SignLookUpTable[Mask];
-#ifdef  __64_BITS__
-      Mask = (TmpState >> (n2 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n2 + 32)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n2 + 48)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#else
-      Mask = (TmpState >> (n2 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#endif
-    }
-  TmpState &= ~(((unsigned long) (0x1)) << n2);
-  if (NewLzMax == n2)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  SignIndex = NewLzMax - n1;
-  if (SignIndex < 16)
-    {
-      Mask = (TmpState >> n1) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-    }
-  else
-    {
-      Mask = (TmpState >> n1) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#ifdef  __64_BITS__
-      Mask = (TmpState >> (n1 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n1 + 32)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (n1 + 48)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#else
-      Mask = (TmpState >> (n1 + 16)) & 0xffff;
-      coefficient *= this->SignLookUpTable[Mask];
-#endif
-    }
-  TmpState &= ~(((unsigned long) (0x1)) << n1);
-  if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
+  int TmpReducedNbrState = this->ReducedNbrState[index];
+  this->TemporaryState.EmptyState(this->TemporaryStateReducedNbrState);
+  this->TemporaryState.Assign(this->StateDescription[index], TmpReducedNbrState);
+  if (this->TemporaryState.TestAndDecrementOccupation(n2) == false)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  if (m2 > NewLzMax)
-    {
-      TmpState |= (((unsigned long) (0x1)) << m2);
-      NewLzMax = m2;
-    }
-  else
-    {
-      SignIndex = NewLzMax - m2;
-      if (SignIndex < 16)
-	{
-	  Mask = (TmpState >> m2) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	}
-      else
-	{
-	  Mask = (TmpState >> m2) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#ifdef  __64_BITS__
-	  Mask = (TmpState >> (m2 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m2 + 32)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m2 + 48)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#else
-	  Mask = (TmpState >> (m2 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << m2);
-    }
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+  coefficient = 1.0;
+  this->TemporaryState.GetPermutationSign(n2, TmpReducedNbrState, this->SignLookUpTable, coefficient);
+  if (this->TemporaryState.TestAndDecrementOccupation(n1) == false)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  if (m1 > NewLzMax)
+  this->TemporaryState.GetPermutationSign(n1, TmpReducedNbrState, this->SignLookUpTable, coefficient);
+  if (this->TemporaryState.TestAndIncrementOccupation(m2) == false)
     {
-      TmpState |= (((unsigned long) (0x1)) << m1);
-      NewLzMax = m1;
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
     }
-  else
+  int TmpLzMax = this->TemporaryState.GetHighestIndex(TmpReducedNbrState);
+  if (m2 > TmpLzMax)
     {
-      SignIndex = NewLzMax - m1;
-      if (SignIndex < 16)
-	{
-	  Mask = (TmpState >> m1) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	}
-      else
-	{
-	  Mask = (TmpState >> m1) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#ifdef  __64_BITS__
-	  Mask = (TmpState >> (m1 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m1 + 32)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (m1 + 48)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#else
-	  Mask = (TmpState >> (m1 + 16)) & 0xffff;
-	  coefficient *= this->SignLookUpTable[Mask];
-#endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << m1);
+      TmpLzMax = m2;
+    }  
+  TmpReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(TmpLzMax + 1);
+  this->TemporaryState.GetPermutationSign(m2, TmpReducedNbrState, this->SignLookUpTable, coefficient);
+  if (this->TemporaryState.TestAndIncrementOccupation(m1) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
     }
-  return this->FindStateIndex(TmpState, NewLzMax);
+  if (m1 > TmpLzMax)
+    {
+      TmpLzMax = m1;
+      TmpReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(TmpLzMax + 1);
+    }  
+  this->TemporaryState.GetPermutationSign(m1, TmpReducedNbrState, this->SignLookUpTable, coefficient);
+  cout << TmpReducedNbrState << TmpLzMax << endl;
+  return this->FindStateIndex(this->TemporaryState, TmpReducedNbrState, TmpLzMax);
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -356,9 +299,9 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
 
-double FermionOnDisk::AdA (int index, int m)
+double FermionOnDiskUnlimited::AdA (int index, int m)
 {
-  if ((this->StateLzMax[index] & (((unsigned long) (0x1)) << m)) == 0)
+  if (this->StateDescription[index].GetOccupation(m) == 0)
     return 0.0;
   else
     return 1.0;
@@ -366,16 +309,30 @@ double FermionOnDisk::AdA (int index, int m)
 
 // find state index
 //
-// stateDescription = unsigned integer describing the state
+// stateDescription = reference on the state description
+// reducedNbrState =reduced number of state (aka the number of unsigned long per state) minus 1
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnDisk::FindStateIndex(unsigned long stateDescription, int lzmax)
+int FermionOnDiskUnlimited::FindStateIndex(FermionOnSphereLongState& stateDescription, int reducedNbrState, int lzmax)
 {
-  int Pos = this->LookUpTable[lzmax][(stateDescription >> this->LookUpTableShift[lzmax]) & this->LookUpTableMask[lzmax]];
-  while (this->StateDescription[Pos] != stateDescription)
-    ++Pos;
-  return Pos;
+  int TmpKey = stateDescription.GetHashKey(reducedNbrState, this->HashKeyMask);
+  int Max = this->NbrStateInLookUpTable[lzmax][TmpKey] - 1;
+  int* TmpLookUpTable = this->LookUpTable[lzmax][TmpKey];
+  int Min = 0;
+  int Pos = 0;
+  while ((Max - Min) > 1)
+    {
+      Pos = (Max + Min) >> 1;
+      if (stateDescription.Greater (this->StateDescription[TmpLookUpTable[Pos]], reducedNbrState))
+	Max = Pos;
+      else
+	Min = Pos;
+    }
+  if (stateDescription.Different(this->StateDescription[TmpLookUpTable[Min]], reducedNbrState))
+    return TmpLookUpTable[Max];
+  else
+    return TmpLookUpTable[Min];
 }
 
 // print a given State
@@ -384,12 +341,10 @@ int FermionOnDisk::FindStateIndex(unsigned long stateDescription, int lzmax)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnDisk::PrintState (ostream& Str, int state)
+ostream& FermionOnDiskUnlimited::PrintState (ostream& Str, int state)
 {
-  unsigned long TmpState = this->StateDescription[state];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]) << "   " << TmpState;
+  this->StateDescription[state].PrintState(Str, this->ReducedNbrState[state], FermionOnSphereLongStateGetRemainderNbrState(this->StateLzMax[state] + 1));
+  Str << " position = " << this->FindStateIndex(this->StateDescription[state], this->ReducedNbrState[state], this->StateLzMax[state])  << "   ";
   return Str;
 }
 
@@ -402,7 +357,7 @@ ostream& FermionOnDisk::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnDisk::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
+int FermionOnDiskUnlimited::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
 {
   if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
     return pos;
@@ -411,25 +366,26 @@ int FermionOnDisk::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, 
     return pos;
   if ((nbrFermions == 1) && (currentLzMax >= totalLz))
     {
-      this->StateDescription[pos] = ((unsigned long) 0x1) << totalLz;
+      this->ReducedNbrState[pos] = FermionOnSphereLongStateGetReducedNbrState(lzMax + 1);
+      this->StateDescription[pos].Resize(this->ReducedNbrState[pos]);
       this->StateLzMax[pos] = lzMax;
+      this->StateDescription[pos].SetOccupation(totalLz);
       return pos + 1;
     }
   if (LzTotalMax == totalLz)
     {
-      unsigned long Mask = 0;
-      for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
-	Mask |= (((unsigned long) 1) << i);
-      this->StateDescription[pos] = Mask;
+      this->ReducedNbrState[pos] = FermionOnSphereLongStateGetReducedNbrState(lzMax + 1);
+      this->StateDescription[pos].Resize(this->ReducedNbrState[pos]);
       this->StateLzMax[pos] = lzMax;
+      for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
+	this->StateDescription[pos].SetOccupation(i);
       return pos + 1;
     }
 
   int ReducedCurrentLzMax = currentLzMax - 1;
   int TmpPos = this->GenerateStates(nbrFermions - 1, lzMax, ReducedCurrentLzMax, totalLz - currentLzMax, pos);
-  unsigned long Mask = ((unsigned long) 1) << currentLzMax;
   for (int i = pos; i < TmpPos; i++)
-    this->StateDescription[i] |= Mask;
+    this->StateDescription[i].SetOccupation(currentLzMax);
   if (lzMax == currentLzMax)
     return this->GenerateStates(nbrFermions, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, TmpPos);
   else
@@ -440,90 +396,74 @@ int FermionOnDisk::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, 
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnDisk::GenerateLookUpTable(int memory)
+void FermionOnDiskUnlimited::GenerateLookUpTable(int memory)
 {
   // evaluate look-up table size
-  memory /= (4 * this->NbrLzValue);
-  this->MaximumLookUpShift = 1;
+  memory /= (sizeof(int) * this->NbrLzValue);
+  this->HashKeyMask = (unsigned long) 0x1;
   while (memory > 0)
     {
       memory >>= 1;
-      ++this->MaximumLookUpShift;
+      this->HashKeyMask <<= 1;
+      this->HashKeyMask |= (unsigned long) 0x1;
     }
-  if (this->MaximumLookUpShift > this->NbrLzValue)
-    this->MaximumLookUpShift = this->NbrLzValue;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
+  cout <<  this->HashKeyMask << " " << this->HilbertSpaceDimension << endl;
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [this->NbrLzValue];
-  this->LookUpTableShift = new int [this->NbrLzValue];
-  this->LookUpTableMask = new unsigned long [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize];
+  this->LookUpTable = new int** [this->NbrLzValue];
   int CurrentLzMax = this->StateLzMax[0];
-  int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-  if (CurrentLzMax < this->MaximumLookUpShift)
-    {
-      this->LookUpTableShift[CurrentLzMax] = 0;
-#ifdef __64_BITS__
-      this->LookUpTableMask[CurrentLzMax] = 0xffffffffffffffff;
-#else
-      this->LookUpTableMask[CurrentLzMax] = 0xffffffff;
-#endif
-    }
-  else
-    {
-      this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-#ifdef __64_BITS__
-      this->LookUpTableMask[CurrentLzMax] = 0x7fffffffffffffff >> (this->LookUpTableShift[CurrentLzMax] -1);
-#else
-      this->LookUpTableMask[CurrentLzMax] = 0x7fffffff >> (this->LookUpTableShift[CurrentLzMax] - 1);
-#endif
-    }
-  int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentMask = this->LookUpTableMask[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = (this->StateDescription[0] >> CurrentShift) & CurrentMask;
-  unsigned long TmpLookUpTableValue;
-  TmpLookUpTable[CurrentLookUpTableValue] = 0;
+  this->LookUpTable[CurrentLzMax] = new int* [this->HashKeyMask + (unsigned long) 1];
+  this->NbrStateInLookUpTable = new int* [this->NbrLzValue];
+  for (int i = 0; i < this->LzMax; ++i)
+    this->NbrStateInLookUpTable[i] = 0;
+  this->NbrStateInLookUpTable[CurrentLzMax] = new int [this->HashKeyMask + (unsigned long) 1];
+  for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+    this->NbrStateInLookUpTable[CurrentLzMax][j] = 0;
+  unsigned long* TmpHashTable = new unsigned long [this->HilbertSpaceDimension];
+  unsigned long TmpKey = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
+      cout << i << ": ";
+      this->StateDescription[i].PrintState(cout, this->ReducedNbrState[i], FermionOnSphereLongStateGetRemainderNbrState(this->StateLzMax[i] + 1));
+      cout << "(" << this->ReducedNbrState[i] << ")"<< endl;
       if (CurrentLzMax != this->StateLzMax[i])
 	{
- 	  CurrentLzMax = this->StateLzMax[i];
-	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-	  if (CurrentLzMax < this->MaximumLookUpShift)
-	    {
-	      this->LookUpTableShift[CurrentLzMax] = 0;
-#ifdef __64_BITS__
-	      this->LookUpTableMask[CurrentLzMax] = 0xffffffffffffffff;
-#else
-	      this->LookUpTableMask[CurrentLzMax] = 0xffffffff;
-#endif
-	    }
-	  else
-	    {
-	      this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-#ifdef __64_BITS__
-	      this->LookUpTableMask[CurrentLzMax] = 0x7fffffffffffffff >> (this->LookUpTableShift[CurrentLzMax] -1);
-#else
-	      this->LookUpTableMask[CurrentLzMax] = 0x7fffffff >> (this->LookUpTableShift[CurrentLzMax] - 1);
-#endif
-	    }
-	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
-	  CurrentMask = this->LookUpTableMask[CurrentLzMax];
-	  CurrentLookUpTableValue = (this->StateDescription[i] >> CurrentShift) & CurrentMask;
-	  TmpLookUpTable[CurrentLookUpTableValue] = i;
+	  CurrentLzMax = this->StateLzMax[i];
+	  this->LookUpTable[CurrentLzMax] = new int* [this->HashKeyMask + (unsigned long) 1];
+	  this->NbrStateInLookUpTable[CurrentLzMax] = new int [this->HashKeyMask + (unsigned long) 1];
+	  TmpKey = this->StateDescription[i].GetHashKey(this->ReducedNbrState[i], this->HashKeyMask);
+	  TmpHashTable[i] = TmpKey;
+	  for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+	    this->NbrStateInLookUpTable[CurrentLzMax][j] = 0;
+	  ++this->NbrStateInLookUpTable[CurrentLzMax][TmpKey];	  
 	}
       else
 	{
-	  TmpLookUpTableValue = (this->StateDescription[i] >> CurrentShift) & CurrentMask;
-	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
-	    {
-	      CurrentLookUpTableValue = TmpLookUpTableValue;
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	    }
+	  TmpKey = this->StateDescription[i].GetHashKey(this->ReducedNbrState[i], this->HashKeyMask);
+	  TmpHashTable[i] = TmpKey;
+	  ++this->NbrStateInLookUpTable[CurrentLzMax][TmpKey];
 	}
     }
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    if (this->NbrStateInLookUpTable[i] != 0)
+      for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
+	if (this->NbrStateInLookUpTable[i][j] != 0)
+	  {
+	    this->LookUpTable[i][j] = new int [this->NbrStateInLookUpTable[i][j]];
+	    cout << i << " " << j << " " << this->NbrStateInLookUpTable[i][j] << endl;
+	    this->NbrStateInLookUpTable[i][j] = 0;
+	  }
+	else
+	  {
+	    this->LookUpTable[i][j] = 0;
+	  }
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      cout << i << " " << this->StateLzMax[i] << " " << TmpHashTable[i] << " " << this->NbrStateInLookUpTable[this->StateLzMax[i]][TmpHashTable[i]] << endl;
+      this->LookUpTable[this->StateLzMax[i]][TmpHashTable[i]][this->NbrStateInLookUpTable[this->StateLzMax[i]]
+							      [TmpHashTable[i]]++] = i;
+    }
+  delete[] TmpHashTable;
   
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
@@ -554,7 +494,7 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+int FermionOnDiskUnlimited::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
     return 0;

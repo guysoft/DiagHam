@@ -2,6 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include "HilbertSpace/QHEHilbertSpace/FermionOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnDiskUnlimited.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnDiskLaplacianDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
@@ -116,10 +117,11 @@ int main(int argc, char** argv)
 	      cout << m1 << " " << m2 << " " << HamiltonianEvaluateInteractionCoefficient(m1, m2, m3, m4, Precision) << endl;
 	    }
       return 0;*/
-      FermionOnDisk Space(NbrFermions, L);
+//      FermionOnDisk Space(NbrFermions, L);
+      FermionOnDiskUnlimited Space(NbrFermions, L);
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
-      /*      for (int i = 0 ; i < Space.GetHilbertSpaceDimension(); ++i)
-	      Space.PrintState(cout, i) << endl;*/
+      for (int i = 0 ; i < Space.GetHilbertSpaceDimension(); ++i)
+	Space.PrintState(cout, i) << endl;
       ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(&Space, NbrFermions, Architecture, Memory, LoadPrecalculationFileName);
       if (SavePrecalculationFileName != 0)
 	{
