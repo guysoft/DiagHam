@@ -476,7 +476,10 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   ifstream File;
   File.open("lanczos.dat", ios::binary | ios::in);
   if (!File.is_open())
-    cout << "Cannot open the log file (lanczos.dat). Maybe the resume option for Lanczos algorithm is wrongly used" << endl;
+    {
+      cout << "Cannot open the log file (lanczos.dat). Maybe the resume option for Lanczos algorithm is wrongly used" << endl;
+      return false;
+    }
   File.read((char*) (&this->Index), sizeof(int));
   File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.read((char*) (&this->EigenvaluePrecision), sizeof(double));

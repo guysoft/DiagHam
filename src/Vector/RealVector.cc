@@ -2494,7 +2494,10 @@ bool RealVector::ReadVector (char* fileName)
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
   if (!File.is_open())
-    cout << "Cannot open the file: " << fileName << endl;
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
   int TmpDimension;
   File.read ((char*) &(TmpDimension), sizeof(int));
   this->Resize(TmpDimension);

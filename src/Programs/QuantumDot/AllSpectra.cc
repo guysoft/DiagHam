@@ -91,16 +91,16 @@ int main(int argc, char** argv)
     }
   OutFile.close();
 
-  //ofstream File;
-  //File.open("MeanE.txt", ios::binary | ios::out | ios::app);
+  ofstream File;
+  File.open("MeanH.txt", ios::binary | ios::out | ios::app);
   double squareX, squareY, squareZ;
-  cout << spectra.GetMeanValueX(squareX) << '\t';
-  cout << squareX << '\t';
-  cout << spectra.GetMeanValueY(squareY) << '\t';
-  cout << squareY << '\t';
-  cout << spectra.GetMeanValueZ(squareZ) << '\t';
-  cout << squareZ << '\n';
-  //File.close();
+  File << spectra.GetMeanValueX(squareX) << '\t';
+  File << squareX << '\t';
+  File << spectra.GetMeanValueY(squareY) << '\t';
+  File << squareY << '\t';
+  File << spectra.GetMeanValueZ(squareZ) << '\t';
+  File << squareZ << '\n';
+  File.close();
 
   /*
   ThreeDPotential potential(50, 50, 30, 6, 10);

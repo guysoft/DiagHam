@@ -168,7 +168,7 @@ DIST_COMMON =  Makefile.am Makefile.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/2DQuantumDot.P .deps/3DQuantumDot.P \
 .deps/AllSpectra.P .deps/CoulombInteraction.P .deps/DotEmbeddedWell.P \
