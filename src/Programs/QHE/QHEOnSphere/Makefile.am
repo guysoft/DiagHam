@@ -29,6 +29,6 @@ QHEBosonsGross_DEPENDENCIES=$(top_builddir)/src/MathTools/libMathTools.a $(top_b
 
 QHEBosonsGross_LDADD=-L$(top_builddir)/src/MathTools -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -lMathTools -lGeneralTools -lOptions @MATH_LIBS@ @THREAD_LIBS@
 
-QHENBodyQuasiHoleOverlap_DEPENDENCIES=$(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a 
+QHENBodyQuasiHoleOverlap_DEPENDENCIES=$(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a 
 
-QHENBodyQuasiHoleOverlap_LDADD=-L$(top_builddir)/src/MathTools  -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -lMathTools  -lVector -lMatrix -lGeneralTools -lOptions @MATH_LIBS@ @THREAD_LIBS@
+QHENBodyQuasiHoleOverlap_LDADD=-L$(top_builddir)/src/MathTools  -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/Output -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -lMathTools  -lVector -lMatrix -lOutput -lGeneralTools -lOptions @MATH_LIBS@ @THREAD_LIBS@
