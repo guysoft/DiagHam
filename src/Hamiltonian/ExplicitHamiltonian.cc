@@ -217,7 +217,7 @@ ComplexVector& ExplicitHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 ComplexVector& ExplicitHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return vDestination.Multiply(*(this->Hamiltonian), vSource, firstComponent, 1, nbrComponent, firstComponent, 1);
+  return vDestination.Multiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -243,7 +243,7 @@ ComplexVector& ExplicitHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 ComplexVector& ExplicitHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
 {
-  return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, 1, nbrComponent, firstComponent, 1);
+  return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
  
 // return a list of left interaction operators

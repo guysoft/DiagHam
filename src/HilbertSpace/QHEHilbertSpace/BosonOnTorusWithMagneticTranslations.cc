@@ -417,13 +417,13 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates(int nbrBosons, int maxM
 
 int BosonOnTorusWithMagneticTranslations::GenerateStates()
 {
-  this->CompatibilityWithXMomentum = new bool [this->IncNbrBosons];
+/*  this->CompatibilityWithXMomentum = new bool [this->IncNbrBosons];
   for (int i = 0; i <= this->NbrBosons; ++i)
     {
-      if (((i * this->XMomentum) % this->) == 0)
-	this->CompatibilityWithMomentum[i] = true;
+      if (((i * this->XMomentum) % this->MomentumModulo) == 0)
+	this->CompatibilityWithXMomentum[i] = true;
       else
-	this->CompatibilityWithMomentum[i] = false;
+	this->CompatibilityWithXMomentum[i] = false;
     }
   int Lim = this->NbrBosons * this->MaxMomentum;
   this->CompatibilityWithYMomentum = new bool [Lim + 1];
@@ -460,7 +460,7 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
 	{
 	}
     }  
-
+*/
 /*  this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrBosons, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   int* TmpNbrStateDescription = new int [this->MaxMomentum + 1];  
@@ -491,7 +491,7 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
 
 int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentYMomentum)
 {
-  return 0;
+/*  return 0;
   if (nbrBosons == 0)
     {
       if ((currentYMomentum % this->MomentumModulo) == this->YMomentum)

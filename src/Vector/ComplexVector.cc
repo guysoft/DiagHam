@@ -1280,7 +1280,7 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
 ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
 					int sourceNbrComponent)
 {
-  if ((this->Dimension == 0) || (V.Dimension != (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
     return *this;
   int Last = sourceStart + sourceNbrComponent;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1296,10 +1296,10 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
       y = 0.0;
       for (j = sourceStart; j < Last; ++j)
 	{
-	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
 	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
-	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	    + M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
 	  ++Pos;
 	}
       Pos += Inc1 - i;
@@ -1346,15 +1346,15 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
       Pos = Pos3;
       for (j = sourceStart; j < Last; ++j)
 	{
-	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
-	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] + 
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] - 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
 	  Pos += Inc2 - j;
 	}
       ++Pos3;
       this->RealComponents[i] = x;
-       this->ImaginaryComponents[i] = y;
+      this->ImaginaryComponents[i] = y;
    }
   return *this;
 }
@@ -1408,7 +1408,7 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
 					   int sourceNbrComponent)
 {
-  if ((this->Dimension == 0) || (V.Dimension != (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
     return *this;
   int Last = sourceStart + sourceNbrComponent;
   int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
@@ -1424,10 +1424,10 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
       y = 0.0;
       for (j = sourceStart; j < Last; ++j)
 	{
-	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
 	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
-	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	    + M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
 	  ++Pos;
 	}
       Pos += Inc1 - i;
@@ -1474,9 +1474,9 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
       Pos = Pos3;
       for (j = sourceStart; j < Last; ++j)
 	{
-	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
-	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] + 
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] - 
 	    M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
 	  Pos += Inc2 - j;
 	}
@@ -1548,6 +1548,20 @@ ComplexVector& ComplexVector::Multiply (const ComplexMatrix&  M, ComplexVector& 
 
 ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V)
 {
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->Multiply((HermitianMatrix&) M, V);
+      break;
+    case (Matrix::ComplexElements):
+      return this->Multiply((ComplexMatrix&) M, V);
+      break;
+    case (Matrix::RealElements):
+      return this->Multiply((RealMatrix&) M, V);
+      break;
+    default:
+      return *this;
+    }
   return *this;
 }
 
@@ -1560,6 +1574,14 @@ ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V)
 
 ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V)
 {
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->AddMultiply((HermitianMatrix&) M, V);
+      break;
+    default:
+      return *this;
+    }
   return *this;
 }
 
@@ -1575,7 +1597,7 @@ ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V)
 // return value = reference on current vector
 
 ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceStep, 
-			   int destStart, int destStep)
+					int destStart, int destStep)
 {
   return *this;
 }
@@ -1592,8 +1614,52 @@ ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V, int 
 // return value = reference on current vector
 
 ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceStep, 
-			    int destStart, int destStep)
+					   int destStart, int destStep)
 {
+  return *this;
+}
+
+// left multiply a vector with a matrix and use to store result in current 
+// vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent)
+{
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->Multiply((HermitianMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    default:
+      return *this;
+    }
+  return *this;
+}
+
+// left multiply a vector with a matrix and add current 
+// vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent)
+{
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->AddMultiply((HermitianMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    default:
+      return *this;
+    }
   return *this;
 }
 
@@ -1610,8 +1676,16 @@ ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V, i
 // return value = reference on current vector
 
 ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceStep, 
-			 int sourceNbrComponent, int destStart, int destStep)
+					int sourceNbrComponent, int destStart, int destStep)
 {
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->Multiply((HermitianMatrix&) M, V, sourceStart, sourceStep, sourceNbrComponent, destStart, destStep);
+      break;
+    default:
+      return *this;
+    }
   return *this;
 }
 
@@ -1630,6 +1704,14 @@ ComplexVector& ComplexVector::Multiply (const Matrix&  M, ComplexVector& V, int 
 ComplexVector& ComplexVector::AddMultiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceStep, 
 					   int sourceNbrComponent, int destStart, int destStep)
 {
+  switch (M.MatrixType)
+    {
+    case (Matrix::ComplexElements | Matrix::Hermitian):
+      return this->AddMultiply((HermitianMatrix&) M, V, sourceStart, sourceStep, sourceNbrComponent, destStart, destStep);
+      break;
+    default:
+      return *this;
+    }
   return *this;
 }
 

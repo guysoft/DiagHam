@@ -136,7 +136,7 @@ class ExplicitHamiltonian : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-		       int firstComponent, int nbrComponent);
+			       int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

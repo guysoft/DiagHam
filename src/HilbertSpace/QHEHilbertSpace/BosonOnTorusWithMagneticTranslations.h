@@ -63,9 +63,9 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int MomentumModulo;
 
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with x momentum constraint
-  bool* CompatibilityXWithMomentum;
+  bool* CompatibilityWithXMomentum;
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with y momentum constraint
-  bool** CompatibilityYWithMomentum;
+  bool* CompatibilityWithYMomentum;
 
   // array containing rescaling factors when passing from one orbit to another
   double** RescalingFactors;

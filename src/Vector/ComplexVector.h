@@ -465,6 +465,26 @@ class ComplexVector : public Vector
   // M = matrix to use
   // V = vector to multiply
   // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  ComplexVector& Multiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent);
+
+  // left multiply a vector with a matrix and add current 
+  // vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  ComplexVector& AddMultiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent);
+
+  // left multiply a vector with a matrix and use to store result in current 
+  // vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
   // sourceStep = step to add to go to the following source vector coordinate
   // destStart = destination vector first coordinate to modify
   // destStep = step to add to go to the following destination vector coordinate

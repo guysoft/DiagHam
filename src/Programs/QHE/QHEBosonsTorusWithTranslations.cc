@@ -1,6 +1,11 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
+#include "Matrix/HermitianMatrix.h"
+#include "Vector/ComplexVector.h"
+#include "Hamiltonian/ExplicitHamiltonian.h"
+#include "HilbertSpace/UndescribedHilbertSpace.h"
+
 #include "HilbertSpace/QHEHilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/QHEHilbertSpace/BosonOnTorusState.h"
@@ -72,6 +77,41 @@ int main(int argc, char** argv)
       DisplayHelp (OptionList, cout);
       return 0;
     }
+
+/*  int Dim = 20;
+  HermitianMatrix Mat (Dim, true);
+  
+  for (int i = 0; i < Dim; ++i)
+    {
+      Mat.SetMatrixElement(i, i, drand48());
+      for (int j = i + 1; j < Dim; ++j)
+        Mat.SetMatrixElement(i, j, Complex(drand48(), drand48()));
+    }
+
+  UndescribedHilbertSpace Sp (Dim); 
+  ExplicitHamiltonian Hamil (&Sp, &Mat);
+//  cout << Mat << endl;
+  for (int i = 0; i < Dim; ++i)
+    {
+      cout << " i = " << i << endl;
+      ComplexVector V1 (Dim, true);
+      ComplexVector V2 (Dim, true);
+      ComplexVector V3 (Dim, true);
+      V1.Re(i) = drand48();
+      V1.Im(i) = drand48();
+      Hamil.LowLevelMultiply(V1, V2, 0, 3);
+      Hamil.LowLevelAddMultiply(V1, V2, 3, 2);
+      Hamil.LowLevelAddMultiply(V1, V2, 5, 5);
+      Hamil.LowLevelAddMultiply(V1, V2, 10, 10);
+      V3.Multiply (Mat, V1);
+      for (int j = 0; j < Dim; ++j)
+	{
+	  if ((V2.Re(j) != V3.Re(j)) || (V2.Im(j) != V3.Im(j)))
+	    cout << "error at " << j << " " << V2.Re(j) << " " << V3.Re(j) << " " << V2.Im(j) << " " << V3.Im(j) << endl;
+	}
+//      cout << V2 << endl << endl << V3 << endl << endl;
+   }
+  return 0;*/
 
 
   bool GroundFlag = GroundOption.GetBoolean();

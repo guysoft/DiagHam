@@ -50,6 +50,7 @@ class Matrix
 {
 
   friend class RealVector;
+  friend class ComplexVector;
 
  private:
   
