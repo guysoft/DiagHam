@@ -13,7 +13,8 @@ PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc \
 DotEmbeddedWellThreeDConstantCellPotential.cc \
 EllipticalDotThreeDConstantCellPotential.cc \
 ThreeDConstantCylinderPotential.cc \
-QuantumDotThreeDConstantCylinderPotential.cc
+QuantumDotThreeDConstantCylinderPotential.cc \
+TetrapodThreeDConstantCellPotential.cc
 
 check_PROGRAMS=TestPotential
 

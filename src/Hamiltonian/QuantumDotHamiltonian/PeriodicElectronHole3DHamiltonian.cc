@@ -70,35 +70,6 @@ using std::endl;
 // end of 5 bit coding
 
 
-/*
-// each state is coded with 4 bits
-#define NBRBITZ2 4
-#define NBRBITY2 4
-#define NBRBITX2 4
-#define NBRBITZ1 4
-#define NBRBITY1 4
-#define NBRBITX1 4
-
-#define HEX2 0xfff
-#define HEX1 0xfff
-// end of 4 bit coding
-*/
-
-/*
-// each state is coded with 3 bits
-#define NBRBITZ2 3
-#define NBRBITY2 3
-#define NBRBITX2 3
-#define NBRBITZ1 3
-#define NBRBITY1 3
-#define NBRBITX1 3
-
-#define HEX2 0x1ff
-#define HEX1 0x1ff
-// end of 3 bit coding
-*/
-
-
 #define NBRBIT2 (NBRBITX2 + NBRBITY2 + NBRBITZ2)
 #define NBRBIT1 (NBRBITX1 + NBRBITY1 + NBRBITZ1)
 

@@ -62,7 +62,8 @@ am_libPotential_a_OBJECTS = AbstractPotential.$(OBJEXT) \
 	DotEmbeddedWellThreeDConstantCellPotential.$(OBJEXT) \
 	EllipticalDotThreeDConstantCellPotential.$(OBJEXT) \
 	ThreeDConstantCylinderPotential.$(OBJEXT) \
-	QuantumDotThreeDConstantCylinderPotential.$(OBJEXT)
+	QuantumDotThreeDConstantCylinderPotential.$(OBJEXT) \
+	TetrapodThreeDConstantCellPotential.$(OBJEXT)
 libPotential_a_OBJECTS = $(am_libPotential_a_OBJECTS)
 am_TestPotential_OBJECTS = TestPotential.$(OBJEXT)
 TestPotential_OBJECTS = $(am_TestPotential_OBJECTS)
@@ -184,7 +185,8 @@ PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc \
 DotEmbeddedWellThreeDConstantCellPotential.cc \
 EllipticalDotThreeDConstantCellPotential.cc \
 ThreeDConstantCylinderPotential.cc \
-QuantumDotThreeDConstantCylinderPotential.cc
+QuantumDotThreeDConstantCylinderPotential.cc \
+TetrapodThreeDConstantCellPotential.cc
 
 TESTS = 
 TestPotential_SOURCES = TestPotential.cc
@@ -253,6 +255,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicPyramidQuantumDotThreeDConstantCellPotential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuantumDotThreeDConstantCylinderPotential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TestPotential.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TetrapodThreeDConstantCellPotential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ThreeDConstantCellPotential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ThreeDConstantCylinderPotential.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TwoDConstantCellPotential.Po@am__quote@

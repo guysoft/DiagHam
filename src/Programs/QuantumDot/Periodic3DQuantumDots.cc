@@ -305,7 +305,7 @@ int main(int argc, char** argv)
   Input << "Diagonalization time: " << Dt << '\n';
   Input << "To verify: M, N, H, under, above = " << M << ", " << N << ", " << H << ", " << LeftSize << ", " << RightSize << endl;
   Input.close(); 
-  /*
+ 
   // insert here your code using the eigenvalues and the eigenvectors
   if (EigenstateFlag == true)
     {
@@ -327,6 +327,6 @@ int main(int argc, char** argv)
 	}
       delete[] TmpFileName;
     }
-  */
+  
   return 0;
 }
