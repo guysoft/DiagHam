@@ -89,7 +89,7 @@ int main(int argc, char** argv)
   double SizeX = ((SingleDoubleOption*) Manager["sizeX"])->GetDouble();
   double SizeY = ((SingleDoubleOption*) Manager["sizeY"])->GetDouble();
   double SizeZ = ((SingleDoubleOption*) Manager["sizeZ"])->GetDouble();
-
+  
    // define Hilbert space    
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
@@ -107,10 +107,12 @@ int main(int argc, char** argv)
   XYReflexionSymmetricPeriodicSpectra spectra(Space, FileName1);  
 
   //void GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
-
+  
   double real, imaginary, realX, imaginaryX, realY, imaginaryY;
   spectra.GetDerivedOverlap(Space, FileName2, SizeX, SizeY, SizeZ, real, imaginary, realX, imaginaryX, realY, imaginaryY);
-  
+  cout << "Overlap: " << real << " " << imaginary << endl;
+  cout << "Overlap of X derived: " << realX << " " << imaginaryX << endl;
+  cout << "Overlap of Y derived: " << realY << " " << imaginaryY << endl;
   double re1, re2, im1, im2;
   
   re1 = real - 23 * 1.6 * (realX - realY)/ ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
@@ -120,9 +122,10 @@ int main(int argc, char** argv)
 
   double tmp1 = re1 * re1 + im1 * im1;
   double tmp2 = re2 * re2 + im2 * im2;
-
+  cout << tmp1 << " " << tmp2 << endl;
   cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
-
+  
+  
   XYReflexionSymmetricPeriodicSpectra spectra2(Space, FileName2);
   int Number = 50;
   ofstream Electron ("Function_Electron.txt");
@@ -362,17 +365,17 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  /*
+  
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 100;
+      State[i] = 245;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
   DOSSpectra DOS(1, Files, State, 4e-3, -0.2, 0.5, 2e-4);
   DOS.WriteSpectra(out);
-  */
+  
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -421,6 +424,7 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
+/*
   char** Files = new char* [Number]; int* State = new int[Number];
   for (int i = 0; i < Number; ++i)
     {
@@ -434,7 +438,7 @@ int main(int argc, char** argv)
     }
   Spectra Absorption (Number, Files, State, 4e-3, 0.0, 0.6, 2e-4);
   Absorption.WriteSpectra(out);
-
+*/
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 
   return 0;

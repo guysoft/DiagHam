@@ -69,6 +69,7 @@ int main(int argc, char** argv)
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-statez", "number of states in z direction", 21);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowz", "lower impulsion in z direction", -10);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('s', "sigma", "value of sigma for gaussian weight (in Angstrom unit)", 70);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('k', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
 
@@ -100,6 +101,7 @@ int main(int argc, char** argv)
   double Muz = ((SingleDoubleOption*) Manager["mu-z"])->GetDouble();
   int NbrStateZ = ((SingleIntegerOption*) Manager["nbr-statez"])->GetInteger();
   int LowImpulsionZ = ((SingleIntegerOption*) Manager["lowz"])->GetInteger();
+  int NumberM = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
   double Sigma = ((SingleDoubleOption*) Manager["sigma"])->GetDouble();
   double WaveVector = ((SingleDoubleOption*) Manager["wave"])->GetDouble();
 
@@ -109,7 +111,7 @@ int main(int argc, char** argv)
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, 1000.0);
   // void ConstructPotential(double dotPotential, double wellPotential);
   potential->ConstructPotential(DotPotential, WellPotential);
-  OneDConstantCellPotential* oneDPotential = potential->GaussianReductionOneDimension(Sigma);
+  OneDConstantCellPotential* oneDPotential = potential->GaussianReductionOneDimension(Sigma, NumberM);
 
   double** RealOverlap; double** ImaginaryOverlap;
   EvaluateWaveFunctionOverlap(potential, NbrStateZ, RealOverlap, ImaginaryOverlap);    
@@ -146,6 +148,16 @@ int main(int argc, char** argv)
   TmpTriDiag.Diagonalize(TmpEigenvectors);
   TmpTriDiag.SortMatrixUpOrder(TmpEigenvectors);
 
+  for (int i = 0; i < NbrEigenvalue; ++i)  
+    {
+      if (NumberM == 0)
+	cout << TmpTriDiag.DiagonalElement(2 * i) + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";    
+      if (NumberM == 1)
+	cout << TmpTriDiag.DiagonalElement(2 * i) + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+      if ((NumberM != 0) && (NumberM != 1))
+	cout << "This momentum is not taken into account" << endl;
+  cout << endl;
+    }
   if (EigenstateFlag)
     {
       RealVector* Eigenstates = new RealVector [NbrEigenvalue];
@@ -165,8 +177,14 @@ int main(int argc, char** argv)
       OutputFile.precision(14);      
       OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
       //OutputFile << WaveVector;
+
       for (int i = 0; i < NbrEigenvalue; ++i)
-	OutputFile << " " << Eigenvalues[i] + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	{
+	  if (NumberM == 0)
+	    OutputFile << " " << Eigenvalues[i] + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	  if (NumberM == 1)
+	    OutputFile << " " << Eigenvalues[i] + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	}
       OutputFile << endl;
       OutputFile.close();
 

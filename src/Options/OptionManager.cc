@@ -34,6 +34,7 @@
 #include "Options/OptionManager.h"
 
 #include <iostream>
+#include <string.h>
 
 
 using std::ostream;

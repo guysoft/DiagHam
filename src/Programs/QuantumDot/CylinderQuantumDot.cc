@@ -29,6 +29,8 @@
 #include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
 #include "Tools/QuantumDot/Potential/QuantumDotThreeDConstantCylinderPotential.h"
 
+#include "Tools/QuantumDot/Spectra/CylinderQuantumDotSpectra.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <fstream.h>
@@ -139,7 +141,7 @@ int main(int argc, char** argv)
 
   // define Hilbert space
   // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
-  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ);
+  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ);  
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
@@ -266,6 +268,6 @@ int main(int argc, char** argv)
   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);  
   cout << endl << "Total time = " << Dt << endl;
   delete Lanczos;
-  
+
   return 0;
 }

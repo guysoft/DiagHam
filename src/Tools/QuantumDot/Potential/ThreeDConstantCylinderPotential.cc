@@ -30,6 +30,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
+#include <math.h>
 
 using std::cout;
 using std::endl;
@@ -91,19 +92,28 @@ void ThreeDConstantCylinderPotential::LoadPotential(char* fileName)
 // get a 1-D potential by averaging through a gaussian weight
 //
 // sigma = the variance of the gaussian function
+// m = value of angular momentum
 // return = pointer to the one dimension potential
 
-OneDConstantCellPotential* ThreeDConstantCylinderPotential::GaussianReductionOneDimension(double sigma)
+OneDConstantCellPotential* ThreeDConstantCylinderPotential::GaussianReductionOneDimension(double sigma, int m)
 {
   double* cellWidth = new double [this->NumberZ];
   double* potentialValue = new double [this->NumberZ];
   for (int k = 0; k < this->NumberZ; ++k)
     {
-      cellWidth[k] = this->CylinderHeight[k];
+      double tmp = this->CylinderRadius[k] * this->CylinderRadius[k] / (sigma * sigma);
+      double tmp1 = 1.0, tmp2 = 1.0;
+      for (int i = 0; i < m; ++i)
+	{
+	  tmp2 *= tmp;
+	  tmp1 += tmp2;
+	}
+      cellWidth[k] = this->CylinderHeight[k];      
       if (this->CylinderRadius[k] >= 0.0)
-	potentialValue[k] = this->PotentialValue[k] * (1.0 - exp(-this->CylinderRadius[k] * this->CylinderRadius[k] / (sigma * sigma)));
+	potentialValue[k] = this->PotentialValue[k] * (1.0 - exp(-tmp) * tmp1);
       else
-	potentialValue[k] = this->PotentialValue[k];						      
+	potentialValue[k] = this->PotentialValue[k];
+      //cout << potentialValue[k] << endl;
     }
   OneDConstantCellPotential* potential = new OneDConstantCellPotential (this->NumberZ, cellWidth, potentialValue);
   return potential;

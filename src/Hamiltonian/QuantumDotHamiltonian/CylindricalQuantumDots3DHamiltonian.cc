@@ -64,7 +64,7 @@ CylindricalQuantumDots3DHamiltonian::CylindricalQuantumDots3DHamiltonian(Vertica
   this->NumberM = this->Space->GetQuantumNumberM();
   this->NbrStateR = this->Space->GetNbrStateR();
   if (this->NbrStateR > NBRBESSELFUNCTION)
-    cout << "The number of Bessel functions in the plane is two big" << endl;
+    cout << "The number of Bessel functions in the plane is too big" << endl;
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
 

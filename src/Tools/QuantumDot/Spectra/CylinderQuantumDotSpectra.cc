@@ -27,6 +27,8 @@
 
 #include "Tools/QuantumDot/Spectra/CylinderQuantumDotSpectra.h"
 #include "MathTools/BesselJZeros.h"
+#include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
+#include "Tools/QuantumDot/Potential/QuantumDotThreeDConstantCylinderPotential.h"
 
 #include <iostream>
 #include <fstream>
@@ -134,13 +136,6 @@ void CylinderQuantumDotSpectra::GetImpulsion(VerticalPeriodicParticleInMagneticF
     }
   else
     {
-      double* InverseZeros1 = new double [MinUpperR];
-      double* InverseZeros2 = new double [MinUpperR];
-      for (int n = 0; n < MinUpperR; ++n)
-	{
-	  //InverseZeros1[n] = BesselJZeros[1][n] / BesselJZeros[0][n];
-	  //InverseZeros2[n] = BesselJZeros[0][n] / BesselJZeros[1][n];
-	}
       TmpRe = 0.0; TmpIm = 0.0;
       for (int n1 = 0; n1 < MinUpperR; ++n1)
 	{
@@ -187,3 +182,170 @@ void CylinderQuantumDotSpectra::GetImpulsion(VerticalPeriodicParticleInMagneticF
       realImpulsionZ = realImpulsionZ * 2.0 * M_PI / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ * 2.0 * M_PI / sizeZ;	    
     }  
 }
+
+// get the probability integrated in the dot to find the particle
+//
+// potential = pointer to a 3D potential with constant value in a cylinder
+
+double CylinderQuantumDotSpectra::GetDotProbability(QuantumDotThreeDConstantCylinderPotential* potential)
+{
+  int addition;
+  if ((this->NumberM == 1) || (this->NumberM == -1))
+    addition = 1;
+  else
+    if (this->NumberM == 0)
+      addition = 0;
+    else
+      cout << "Attention! This quantum number of kinetic momentum has not been taken into account: " << this->NumberM << endl;
+
+  double** RealWaveFunctionOverlapZ; double** ImaginaryWaveFunctionOverlapZ;
+  if (!this->EvaluatePlaneWaveFunctionOverlap(potential, this->NbrStateZ, RealWaveFunctionOverlapZ, ImaginaryWaveFunctionOverlapZ))
+    cout << "Error in evaluation of function overlap in Z direction. Stop!" << endl;
+  
+  double WettingRadius = potential->GetRadius(3); // wetting radius
+  int nbrCylinder = potential->GetNbrCylinderZ();
+  double RSize = potential->GetSuperCylinderRadius();
+  double radius;
+  double* Zeros = new double [this->NbrStateR];
+  double* Normalization = new double [this->NbrStateR];
+  double** Fraction = new double* [this->NbrStateR];
+  double** BesselOne = new double* [this->NbrStateR];
+  double** BesselTwo = new double* [this->NbrStateR];
+  for (int n = 0; n < this->NbrStateR; ++n)
+    {
+      Zeros[n] = BesselJZeros[addition][n];
+      if (addition == 0)
+	Normalization[n] = 1.0 / j1(Zeros[n]);
+      if (addition == 1)
+	Normalization[n] = 1.0 / j0(Zeros[n]);
+
+      Fraction[n] = new double [nbrCylinder];
+      BesselOne[n] = new double [nbrCylinder];
+      BesselTwo[n] = new double [nbrCylinder];
+      for (int k = 0; k < nbrCylinder; ++k)
+	{
+	  if (k != 2)
+	    radius = potential->GetRadius(k);
+	  else 
+	    radius = WettingRadius; // for the wetting layer!!!
+	  if (radius > 0.0)
+	    {
+	      Fraction[n][k] = radius * Zeros[n] / RSize;
+	      if (addition == 0)
+		{
+		  BesselOne[n][k] = j0(Fraction[n][k]);
+		  BesselTwo[n][k] = -j1(Fraction[n][k]);
+		}
+	      if (addition == 1)
+		{
+		  BesselOne[n][k] = j1(Fraction[n][k]);
+		  BesselTwo[n][k] = j0(Fraction[n][k]);
+		}		
+	    }
+	}
+    }
+  double*** RadialOverlap = new double ** [this->NbrStateR];
+  for (int n1 = 0; n1 < this->NbrStateR; ++n1)
+    {
+      RadialOverlap[n1] = new double* [this->NbrStateR];
+      for (int n2 = 0; n2 < this->NbrStateR; ++n2)
+	{ 
+	  RadialOverlap[n1][n2] = new double [nbrCylinder];
+	  for (int k = 0; k < nbrCylinder; ++k)
+	    {
+	      if (k != 2)
+		radius = potential->GetRadius(k);
+	      else 
+		radius = WettingRadius; // for the wetting layer!!!
+	      if (radius > 0.0)
+		{
+		  if (n1 != n2)		    
+		    RadialOverlap[n1][n2][k] = 2.0 * (Fraction[n1][k] * BesselOne[n2][k] * BesselTwo[n1][k] - Fraction[n2][k] * BesselOne[n1][k] * BesselTwo[n2][k]) * (Normalization[n1] * Normalization[n2] / (Zeros[n2] * Zeros[n2] - Zeros[n1] * Zeros[n1]));
+		  else
+		    RadialOverlap[n1][n2][k] = ((radius * radius) / (RSize * RSize)) * (BesselTwo[n1][k] * BesselTwo[n1][k] - (2.0 * double(addition) * BesselOne[n1][k] * BesselTwo[n1][k] / Fraction[n1][k]) + BesselOne[n1][k] * BesselOne[n1][k]) * Normalization[n1] * Normalization[n1];
+		}	      
+	      else
+		RadialOverlap[n1][n2][k] = 0;
+	    }	  
+	  
+	}
+    }
+  
+  int IndexZ; int LimitZ = 0;
+  int LengthZ = (this->NbrStateZ - 1) * 2 + 1; int OriginZ = this->NbrStateZ - 1;
+  double* tmpRadial; double* tmpRealVertical; double* tmpImaginaryVertical;
+  double TmpRe = 0.0; double TmpIm = 0.0; double TmpRe1 = 0.0; double TmpIm1 = 0.0; double TmpRe2 = 0.0; double TmpIm2 = 0.0;
+
+  for (int n1 = 0; n1 < this->NbrStateR; ++n1)    
+    for (int n2 = 0; n2 < this->NbrStateR; ++n2)
+      { 
+	tmpRadial =  RadialOverlap[n1][n2];
+	for (int p1 = 0; p1 < this->NbrStateZ; ++p1)
+	  {	   
+	    IndexZ = -p1 + OriginZ;
+	    LimitZ = LengthZ - p1;
+	    for (int p2 = 0; IndexZ < LimitZ; ++IndexZ, ++p2)
+	      {
+		tmpRealVertical = RealWaveFunctionOverlapZ [IndexZ];
+		tmpImaginaryVertical = ImaginaryWaveFunctionOverlapZ [IndexZ];
+		TmpRe1 = 0.0; TmpIm1 = 0.0;
+		for (int k = 0; k < nbrCylinder; ++k)		  
+		  {  
+		    TmpRe1 += (tmpRadial[k] * tmpRealVertical[k]);
+		    TmpIm1 += (tmpRadial[k] * tmpImaginaryVertical[k]);
+		  }
+		TmpRe2 = (this->RealCoefficients[n1][p1] * this->RealCoefficients[n2][p2] + this->ImaginaryCoefficients[n1][p1] * this->ImaginaryCoefficients[n2][p2]);
+		TmpIm2 = (this->RealCoefficients[n1][p1] * this->ImaginaryCoefficients[n2][p2] - this->ImaginaryCoefficients[n1][p1] * this->RealCoefficients[n2][p2]);
+		TmpRe += (TmpRe2 * TmpRe1 - TmpIm2 * TmpIm1);
+		TmpIm += (TmpRe2 * TmpIm1 + TmpIm2 * TmpRe1);
+	      }
+	  }
+      }    
+  return TmpRe * TmpRe + TmpIm * TmpIm;
+}
+
+// evaluate the plane wave function overlap
+//
+// potential = pointer to the potential
+// nbrState = number of states chosen for this direction
+// realArray = 2D array containing the real elements of the overlap
+// imaginaryArray = 2D array containing the imaginary elements of the overlap
+
+bool CylinderQuantumDotSpectra::EvaluatePlaneWaveFunctionOverlap(QuantumDotThreeDConstantCylinderPotential* &potential, int nbrState, double** &realArray, double** &imaginaryArray)
+{
+  int nbrCylinder = potential->GetNbrCylinderZ();
+  double* ZPosition = new double [nbrCylinder + 1];
+  ZPosition[0] = 0.0;
+  for (int k = 0; k < nbrCylinder; ++k)    
+    ZPosition[k + 1] = ZPosition[k] + potential->GetHeight(k);      
+  double ZSize = ZPosition[nbrCylinder];
+      
+  realArray = new double* [nbrState * 2 - 1];
+  imaginaryArray = new double* [nbrState * 2 - 1];   
+  int Origin = nbrState - 1;
+  double Diff = 0.0, Tmp = 0.0;
+  for (int p = 0; p < (nbrState * 2 - 1); ++p)
+    {      
+      realArray[p] = new double [nbrCylinder];
+      imaginaryArray[p] = new double [nbrCylinder];
+      if (p == Origin)	
+	for (int k = 0; k < nbrCylinder; ++k)
+	  {
+	    realArray[Origin][k] = (ZPosition[k + 1] - ZPosition[k]) / ZSize;
+	    imaginaryArray[Origin][k] = 0.0;     
+	  }
+      else
+	{
+	  Diff = 2.0 * M_PI * double(p - Origin);
+	  Tmp = Diff / ZSize;
+	  Diff = 1.0 / Diff;
+	  for (int k = 0; k < nbrCylinder; ++k)
+	    {
+	      realArray[p][k] = Diff * (sin(Tmp * ZPosition[k + 1]) - sin(Tmp * ZPosition[k]));
+	      imaginaryArray[p][k] = Diff * (cos(Tmp * ZPosition[k]) - cos(Tmp * ZPosition[k + 1]));     
+	    }
+	}
+    }
+  return true;
+}
+

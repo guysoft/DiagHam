@@ -29,8 +29,10 @@
 
 
 #include "config.h"
-
 #include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+
+class QuantumDotThreeDConstantCylinderPotential;
+class ThreeDConstantCylinderPotential;
 
 class CylinderQuantumDotSpectra
 {
@@ -68,7 +70,22 @@ class CylinderQuantumDotSpectra
   // sizeZ = size of sample in Z direction
   // sizeR = size of the super-cylinder in plane
   // impulsionX, impulsionY, impulsionZ = reference to the return values
-  void GetImpulsion(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double sizeR, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  void GetImpulsion (VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double sizeR, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+
+  // get the probability integrated in the dot to find the particle
+  //
+  // potential = pointer to a 3D potential with constant value in a cylinder
+  double GetDotProbability (QuantumDotThreeDConstantCylinderPotential* potential);
+
+ private:
+
+  // evaluate the plane wave function overlap
+  //
+  // potential = pointer to the potential
+  // nbrState = number of states chosen for this direction
+  // realArray = 2D array containing the real elements of the overlap
+  // imaginaryArray = 2D array containing the imaginary elements of the overlap
+  bool EvaluatePlaneWaveFunctionOverlap(QuantumDotThreeDConstantCylinderPotential* &potential, int nbrState, double** &realArray, double** &imaginaryArray);
   
 };
 
