@@ -128,6 +128,7 @@ int main(int argc, char** argv)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
+	  cout << HRep << endl;
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension());

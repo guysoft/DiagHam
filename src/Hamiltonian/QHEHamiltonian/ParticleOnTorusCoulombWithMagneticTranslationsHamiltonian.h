@@ -36,7 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnTorusHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.h"
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusHamiltonian
+class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsHamiltonian
 {
 
  public:
@@ -57,12 +57,13 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
+  // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, double ratio, 
-							    AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+  ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
+							    double ratio, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

@@ -50,11 +50,6 @@ class MathematicaOutput;
 class ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsHamiltonian
 {
 
- private:
-
-  // momentum value in the x direction (modulo GCD of nbrBosons and maxMomentum)
-  int XMomentum;
-
  public:
 
   // constructor from default datas

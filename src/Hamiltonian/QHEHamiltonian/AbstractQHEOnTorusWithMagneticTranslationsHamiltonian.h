@@ -69,6 +69,8 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
 
   // maximum momentum value reached by a particle in the state
   int MaxMomentum;
+  // momentum value in the x direction (modulo GCD of NbParticles and MaxMomentum)
+  int XMomentum;
   // number of Lz values in a state
   int NbrLzValue;
 

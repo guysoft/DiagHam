@@ -60,29 +60,39 @@ using std::ostream;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
+// xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
-														     int nbrParticles, 
-														     int maxMomentum, double ratio, 
+ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, 
+														     int maxMomentum, int xMomentum, double ratio, 
 														     AbstractArchitecture* architecture, int memory, 
 														     char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
+  this->XMomentum = xMomentum;
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+//  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  double WignerEnergy = 0.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
+  this->CosinusTable = new double [this->MaxMomentum];
+  this->SinusTable = new double [this->MaxMomentum];
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    {
+      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
+      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / 2);//((double) this->MaxMomentum));
+      cout << this->CosinusTable[i] << " cossin " << this->SinusTable[i] << endl;
+    }
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -152,7 +162,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::SetHilbertSpace 
       delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
     }
-  this->Particles = (ParticleOnTorus*) hilbertSpace;
+  this->Particles = (ParticleOnTorusWithMagneticTranslations*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
 
@@ -174,7 +184,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
   double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
   double MaxCoefficient = 0.0;
 
-  if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
+  if (this->Particles->GetParticleStatistic() == ParticleOnTorusWithMagneticTranslations::FermionicStatistic)
     {
      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)

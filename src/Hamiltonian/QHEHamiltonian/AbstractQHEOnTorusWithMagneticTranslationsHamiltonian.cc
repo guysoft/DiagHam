@@ -337,6 +337,45 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
 	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
 	}
+/*      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  cout << endl << endl << "--------------------------------------" << endl << "i = " << i << endl << endl;
+	  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      m4 = this->M4Value[j];
+	      TmpInteraction = this->InteractionFactors[j];
+	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	      if (Index < Dim)
+		{
+		  Coefficient *= TmpInteraction;
+		  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+		  Sinus = Coefficient * this->SinusTable[NbrTranslation];
+		  cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+		  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
+		  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
+		}
+	    }
+	  m1 = this->M1Value[ReducedNbrInteractionFactors];
+	  m2 = this->M2Value[ReducedNbrInteractionFactors];
+	  m3 = this->M3Value[ReducedNbrInteractionFactors];
+	  m4 = this->M4Value[ReducedNbrInteractionFactors];
+	  TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
+	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  if (Index < Dim)
+	    {
+	      Coefficient *= TmpInteraction;
+	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
+	      cout << Coefficient  << " " << Cosinus << " " <<  Sinus << endl;
+	      vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
+	      vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
+	    }
+	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
+	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
+	}*/
     }
   else
     {

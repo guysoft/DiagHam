@@ -85,8 +85,11 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 
-  // a cosinus precalculation teble used to obtain coefficients coming from the translations
-  double* CosinusPreculcationTable;
+  // array containing rescaling factors when passing from one orbit to another
+  double** RescalingFactors;
+  // number of state in each orbit
+  int* NbrStateInOrbit;
+
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
 

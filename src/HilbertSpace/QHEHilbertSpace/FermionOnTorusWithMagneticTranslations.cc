@@ -77,7 +77,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
       this->MomentumMask |= ((unsigned long) 1);
     }
 
-  cout << this->StateShift << " " << this->MomentumIncrement << " " << this->ComplementaryStateShift << " " << hex << this->MomentumMask << dec << endl;
+//  cout << this->StateShift << " " << this->MomentumIncrement << " " << this->ComplementaryStateShift << " " << hex << this->MomentumMask << dec << endl;
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
   cout << this->HilbertSpaceDimension << endl;
@@ -112,6 +112,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations(c
 {
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
+
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -119,6 +120,10 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations(c
   this->XMomentum = fermions.XMomentum;
   this->YMomentum = fermions.YMomentum;
   this->MomentumModulo = fermions.MomentumModulo;
+
+  this->RescalingFactors = fermions.RescalingFactors;
+  this->NbrStateInOrbit = fermions.NbrStateInOrbit;
+
   this->StateShift = fermions.StateShift;
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
@@ -187,7 +192,6 @@ FermionOnTorusWithMagneticTranslations::~FermionOnTorusWithMagneticTranslations 
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->CosinusPreculcationTable;
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
 /*      delete[] this->SignLookUpTable;
@@ -195,6 +199,12 @@ FermionOnTorusWithMagneticTranslations::~FermionOnTorusWithMagneticTranslations 
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;*/
+
+      for (int i = 1; i <= this->MaxMomentum ; ++i)
+	delete[] this->RescalingFactors[i];
+      delete[] this->RescalingFactors;
+      delete[] this->NbrStateInOrbit;
+
     }
 }
 
@@ -214,6 +224,11 @@ FermionOnTorusWithMagneticTranslations& FermionOnTorusWithMagneticTranslations::
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
+
+      for (int i = 1; i <= this->MaxMomentum ; ++i)
+	delete[] this->RescalingFactors[i];
+      delete[] this->RescalingFactors;
+      delete[] this->NbrStateInOrbit;
     }
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
@@ -232,6 +247,10 @@ FermionOnTorusWithMagneticTranslations& FermionOnTorusWithMagneticTranslations::
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->Flag = fermions.Flag;
+
+  this->RescalingFactors = fermions.RescalingFactors;
+  this->NbrStateInOrbit = fermions.NbrStateInOrbit;
+
   return *this;
 }
 
@@ -330,7 +349,7 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
       return this->HilbertSpaceDimension;
     }
   int NewMaxMomentum = StateMaxMomentum;
-  int TmpState = State;
+  unsigned long TmpState = State;
   coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -389,19 +408,17 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 #endif
     }
   TmpState |= (((unsigned long) 0x1) << m1);
-  int Translation = 0;
-  TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, Translation, this->YMomentum);
+  TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation, this->YMomentum);
   if (this->TestXMomentumConstraint(TmpState, NewMaxMomentum) == false)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
-  cout << m1 << " " << m2 << " " << n1 << " " << n2 << endl;
-  cout << hex << this->StateDescription[index] << " " << TmpState << " " << dec << " " << TmpIndex << " " << Translation << " " << coefficient << endl;
-  coefficient *= this->CosinusPreculcationTable[Translation];
-/*  if ((this->TranslationSign[index] & (((unsigned long) 1) << Translation)) == 0)
-    coefficient *= -1.0;*/
+//  cout << m1 << " " << m2 << " " << n1 << " " << n2 << endl;
+//  cout << hex << this->StateDescription[index] << " " << TmpState << " " << dec << " " << TmpIndex << " " << nbrTranslation << " " << coefficient;
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
+//  cout  << " " << coefficient << endl;
   return TmpIndex;
 }
 
@@ -444,9 +461,9 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 	}
       ++index;
     }
-  maxMomentum = this->MaxMomentum;
   if (nbrTranslation != 0)
     {
+      maxMomentum = this->MaxMomentum;
       stateDescription = ((unsigned long) 1) << this->MaxMomentum;
       while ((CanonicalState & stateDescription) ==0)      
 	{
@@ -520,7 +537,7 @@ int FermionOnTorusWithMagneticTranslations::FindStateIndex(unsigned long stateDe
 
 ostream& FermionOnTorusWithMagneticTranslations::PrintState (ostream& Str, int state)
 {
-  int TmpState = this->StateDescription[state];
+  unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->MaxMomentum; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
 //  Str << " key = " << this->Keys[state] << " maxMomentum position = " << this->MaxMomentumPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
@@ -623,6 +640,7 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
   delete[] this->StateDescription;
   this->StateDescription = new unsigned long [TmpHilbertSpaceDimension];
   this->StateMaxMomentum = new int [TmpHilbertSpaceDimension];
+  this->NbrStateInOrbit = new int [TmpHilbertSpaceDimension];
   int Pos = 0;
   for (int i = 0; i <= this->MaxMomentum; ++i) 
     {
@@ -637,6 +655,7 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 		{
 		  this->StateDescription[Pos] = TmpStateArray[j];
 		  this->StateMaxMomentum[Pos] = i;
+		  this->NbrStateInOrbit[Pos] = this->FindNumberXTranslation(this->StateDescription[Pos]);
 		  ++Pos;
 		}
 	    }
@@ -696,7 +715,7 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 {
 //  this->ReminderTable = new unsigned long [1 << (this->StateShift + 1)];
   // evaluate look-up table size
-/*  memory /= (4 * this->NbrMomentum);
+  memory /= (4 * this->NbrMomentum);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
@@ -745,7 +764,7 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
 	    }
 	}
-    }*/
+    }
   
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
@@ -784,11 +803,17 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
   for (int i = 32; i < 64; ++i)
     this->SignLookUpTableMask[i] = (unsigned long) 0;
 #endif
-  this->CosinusPreculcationTable = new double [this->MomentumModulo];
-  for (int i = 0; i < this->MomentumModulo; ++i)
+
+  this->RescalingFactors = new double* [this->NbrMomentum];
+  for (int i = 1; i <= this->MaxMomentum; ++i)
     {
-      this->CosinusPreculcationTable[i] = cos (((double) (i * this->XMomentum)) / ((double) this->MomentumModulo));
+      this->RescalingFactors[i] = new double [this->NbrMomentum];
+      for (int j = 1; j <= this->MaxMomentum; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
     }
+
   this->TranslationSign = new unsigned long [this->HilbertSpaceDimension];
   unsigned long TmpTranslationSign;
   unsigned long TmpState;

@@ -28,4 +28,5 @@ AbstractQHEOnSphereNBodyInteractionHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreHamiltonian.cc \
 AbstractQHEOnDiskNBodyInteractionHamiltonian.cc \
 ParticleOnDiskNBodyHardCoreHamiltonian.cc \
+ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.cc 

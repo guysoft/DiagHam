@@ -77,6 +77,7 @@ am_libQHEHamiltonian_a_OBJECTS =  \
 	ParticleOnSphereNBodyHardCoreHamiltonian.$(OBJEXT) \
 	AbstractQHEOnDiskNBodyInteractionHamiltonian.$(OBJEXT) \
 	ParticleOnDiskNBodyHardCoreHamiltonian.$(OBJEXT) \
+	ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.$(OBJEXT) \
 	ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.$(OBJEXT)
 libQHEHamiltonian_a_OBJECTS = $(am_libQHEHamiltonian_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
@@ -105,6 +106,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombWithSpinHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.Po \
@@ -237,6 +239,7 @@ AbstractQHEOnSphereNBodyInteractionHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreHamiltonian.cc \
 AbstractQHEOnDiskNBodyInteractionHamiltonian.cc \
 ParticleOnDiskNBodyHardCoreHamiltonian.cc \
+ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.cc 
 
 all: all-recursive
@@ -309,6 +312,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombWithSpinHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.Po@am__quote@

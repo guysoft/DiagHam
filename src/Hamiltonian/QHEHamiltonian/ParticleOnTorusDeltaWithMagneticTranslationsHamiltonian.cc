@@ -60,7 +60,7 @@ using std::ostream;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
-// xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
+// xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
