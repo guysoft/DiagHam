@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(QHEBosonsCorrelation_SOURCES) $(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyHardCore_SOURCES)
+SOURCES = $(QHEBosonsCorrelation_SOURCES) $(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyCorrelation_SOURCES) $(QHEBosonsNBodyHardCore_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,7 +36,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = QHEBosonsCorrelation$(EXEEXT) QHEBosonsGross$(EXEEXT) \
+bin_PROGRAMS = QHEBosonsCorrelation$(EXEEXT) \
+	QHEBosonsNBodyCorrelation$(EXEEXT) QHEBosonsGross$(EXEEXT) \
 	QHEBosonsNBodyHardCore$(EXEEXT)
 subdir = src/Programs/QHE/QHEOnSphere
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -54,6 +55,10 @@ am_QHEBosonsCorrelation_OBJECTS = QHEBosonsCorrelation.$(OBJEXT)
 QHEBosonsCorrelation_OBJECTS = $(am_QHEBosonsCorrelation_OBJECTS)
 am_QHEBosonsGross_OBJECTS = QHEBosonsGross.$(OBJEXT)
 QHEBosonsGross_OBJECTS = $(am_QHEBosonsGross_OBJECTS)
+am_QHEBosonsNBodyCorrelation_OBJECTS =  \
+	QHEBosonsNBodyCorrelation.$(OBJEXT)
+QHEBosonsNBodyCorrelation_OBJECTS =  \
+	$(am_QHEBosonsNBodyCorrelation_OBJECTS)
 am_QHEBosonsNBodyHardCore_OBJECTS = QHEBosonsNBodyHardCore.$(OBJEXT)
 QHEBosonsNBodyHardCore_OBJECTS = $(am_QHEBosonsNBodyHardCore_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
@@ -61,6 +66,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/QHEBosonsCorrelation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEBosonsGross.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEBosonsNBodyCorrelation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEBosonsNBodyHardCore.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -68,9 +74,11 @@ CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 SOURCES = $(QHEBosonsCorrelation_SOURCES) $(QHEBosonsGross_SOURCES) \
+	$(QHEBosonsNBodyCorrelation_SOURCES) \
 	$(QHEBosonsNBodyHardCore_SOURCES)
 DIST_SOURCES = $(QHEBosonsCorrelation_SOURCES) \
-	$(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyHardCore_SOURCES)
+	$(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyCorrelation_SOURCES) \
+	$(QHEBosonsNBodyHardCore_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -166,10 +174,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 QHEBosonsCorrelation_SOURCES = QHEBosonsCorrelation.cc
+QHEBosonsNBodyCorrelation_SOURCES = QHEBosonsNBodyCorrelation.cc
 QHEBosonsGross_SOURCES = QHEBosonsGross.cc
 QHEBosonsNBodyHardCore_SOURCES = QHEBosonsNBodyHardCore.cc
 QHEBosonsCorrelation_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/Operator/QHEOperator/libQHEOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a $(top_builddir)/src/Tools/QHE/QHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a
 QHEBosonsCorrelation_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/Operator/QHEOperator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/FunctionBasis/QHEFunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MainTask/QHEMainTask -L$(top_builddir)/src/MathTools/NumericalAnalysis -L$(top_builddir)/src/Tools/QHE/QHEWaveFunction -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lArchitectureOperation -lQHEOperator -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lQHEWaveFunction -lNumericalAnalysis -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+QHEBosonsNBodyCorrelation_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/Operator/QHEOperator/libQHEOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a $(top_builddir)/src/Tools/QHE/QHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a
+QHEBosonsNBodyCorrelation_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/Operator/QHEOperator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/FunctionBasis/QHEFunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MainTask/QHEMainTask -L$(top_builddir)/src/MathTools/NumericalAnalysis -L$(top_builddir)/src/Tools/QHE/QHEWaveFunction -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lArchitectureOperation -lQHEOperator -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lQHEWaveFunction -lNumericalAnalysis -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 QHEBosonsNBodyHardCore_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a $(top_builddir)/src/Tools/QHE/QHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a
 QHEBosonsNBodyHardCore_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/FunctionBasis/QHEFunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MainTask/QHEMainTask -L$(top_builddir)/src/MathTools/NumericalAnalysis -L$(top_builddir)/src/Tools/QHE/QHEWaveFunction -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lArchitectureOperation -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lQHEWaveFunction -lNumericalAnalysis -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 QHEBosonsGross_DEPENDENCIES = $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/Options/libOptions.a
@@ -236,6 +247,9 @@ QHEBosonsCorrelation$(EXEEXT): $(QHEBosonsCorrelation_OBJECTS) $(QHEBosonsCorrel
 QHEBosonsGross$(EXEEXT): $(QHEBosonsGross_OBJECTS) $(QHEBosonsGross_DEPENDENCIES) 
 	@rm -f QHEBosonsGross$(EXEEXT)
 	$(CXXLINK) $(QHEBosonsGross_LDFLAGS) $(QHEBosonsGross_OBJECTS) $(QHEBosonsGross_LDADD) $(LIBS)
+QHEBosonsNBodyCorrelation$(EXEEXT): $(QHEBosonsNBodyCorrelation_OBJECTS) $(QHEBosonsNBodyCorrelation_DEPENDENCIES) 
+	@rm -f QHEBosonsNBodyCorrelation$(EXEEXT)
+	$(CXXLINK) $(QHEBosonsNBodyCorrelation_LDFLAGS) $(QHEBosonsNBodyCorrelation_OBJECTS) $(QHEBosonsNBodyCorrelation_LDADD) $(LIBS)
 QHEBosonsNBodyHardCore$(EXEEXT): $(QHEBosonsNBodyHardCore_OBJECTS) $(QHEBosonsNBodyHardCore_DEPENDENCIES) 
 	@rm -f QHEBosonsNBodyHardCore$(EXEEXT)
 	$(CXXLINK) $(QHEBosonsNBodyHardCore_LDFLAGS) $(QHEBosonsNBodyHardCore_OBJECTS) $(QHEBosonsNBodyHardCore_LDADD) $(LIBS)
@@ -248,6 +262,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEBosonsCorrelation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEBosonsGross.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEBosonsNBodyCorrelation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEBosonsNBodyHardCore.Po@am__quote@
 
 .cc.o:

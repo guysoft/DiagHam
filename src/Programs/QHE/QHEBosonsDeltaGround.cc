@@ -18,8 +18,8 @@
 #include "BitmapPicture/AbstractBitmapPicture.h"
 #include "BitmapPicture/TgaFormat.h"
 
-#include "Operator/ParticleOnSphereDensityDensityOperator.h"
-#include "Operator/ParticleOnSphereDensityOperator.h"
+#include "Operator/QHEOperator/ParticleOnSphereDensityDensityOperator.h"
+#include "Operator/QHEOperator/ParticleOnSphereDensityOperator.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Options/AbstractOption.h"

@@ -505,7 +505,6 @@ ostream& BosonOnSphere::PrintState (ostream& Str, int state)
 
 int BosonOnSphere::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos)
 {
-//  cout << nbrBosons << " " << lzMax << " " << currentLzMax << " " << totalLz << " " << pos << endl;
   if ((nbrBosons == 0) || ((nbrBosons * currentLzMax) < totalLz) || (pos == this->HilbertSpaceDimension))
     {
       return pos;
@@ -621,8 +620,6 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
     {
       if (CurrentLzMax != this->StateLzMax[i])
 	{
-	  cout << "sector " << CurrentNbrLzMax << "/" << CurrentLzMax << ": " << CurrentKeyInvertSectorSize  
-	       << " " << this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]<< endl;
 	  CurrentLzMax = this->StateLzMax[i];
 	  CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
 	  CurrentKeyInvertSectorSize = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
@@ -635,8 +632,6 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
       else
 	if (this->StateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
 	  {
-	    cout << "sector " << CurrentNbrLzMax << "/" << CurrentLzMax << ": " <<  CurrentKeyInvertSectorSize
-		 << " " << this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] << endl;
 	    CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
 	    CurrentKeyInvertSectorSize = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
 	    this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
@@ -683,12 +678,6 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
 	  int* TmpKeyInvertTable2 = new int [Lim];
 	  int* TmpKeyInvertTableNbrIndices2 = new int [Lim];
 	  int Tmp;
-/*	  cout << "sector size = " << Lim << endl;
-	  cout << "before sort" << endl;
-	  for (int j = 0; j < Lim; ++j)
-	    {
-	      cout << TmpKeyInvertTable[j] << " " <<  TmpKeyInvertTableNbrIndices[j] << endl;
-	    }*/
 	  for (int j = 0; j < Lim; ++j)
 	    {
 	      Tmp = TmpKeyInvertTable[j];
@@ -708,11 +697,6 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
 	  delete[] TmpKeyInvertTableNbrIndices;
 	  this->KeyInvertTable[i] = TmpKeyInvertTable2;
 	  this->KeyInvertTableNbrIndices[i] = TmpKeyInvertTableNbrIndices2;
-/*	  cout << "after sort" << endl;
-	  for (int j = 0; j < Lim; ++j)
-	    {
-	      cout << TmpKeyInvertTable2[j] << " " <<  TmpKeyInvertTableNbrIndices2[j] << endl;
-	    }*/
 	  this->KeyInvertIndices[i] = new int* [Lim];
 	  for (int j = 0; j < Lim; ++j)
 	    {

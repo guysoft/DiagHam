@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -34,7 +35,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHENBodyCorrelation" , "0.01");
+  OptionManager Manager ("QHEBosonsNBodyCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHENBodyCorrelation -h" << endl;
+      cout << "see man page for option syntax or type QHEBosonsNBodyCorrelation -h" << endl;
       return -1;
     }
   
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
-  int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
+  int NbrNBody = ((SingleIntegerOption*) Manager["nbr-nbody"])->GetInteger();
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
       cout << "QHEBosonsCorrelation requires a state" << endl;
@@ -80,26 +81,113 @@ int main(int argc, char** argv)
       cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
       return -1;      
     }
-
+  char* StrNbrParticles = 0;
   if (NbrParticles < 0)
     {
+      StrNbrParticles = strstr(((SingleStringOption*) Manager["state"])->GetString(), "_n_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      NbrParticles = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess number of particles from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
+	       << "use --nbr-particles option" << endl;
+	  return -1;            
+	}
     }
   if (LzMax < 0)
     {
+      StrNbrParticles = strstr(StrNbrParticles, "_2s_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 4;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      LzMax = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess maximum momentum from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
+	       << "use --lzmax option" << endl;
+	  return -1;            
+	}
     }
   if (Lz < 0)
     {
+      StrNbrParticles = strstr(StrNbrParticles, "_lz_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 4;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      Lz = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess total momentum from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
+	       << "use --lz-value option" << endl;
+	  return -1;            
+	}
     }
-  
-  BosonOnSphere Space (NbrBosons, Lz, LzMax);
+
+
+  BosonOnSphere Space (NbrParticles, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
+  int* AnnihilationIndices = new int [NbrNBody];
+  int* CreationIndices = new int [NbrNBody];
   if (((BooleanOption*) Manager["integrate"])->GetBoolean() == false)
     {
+      double Factor = 1.0;
+      double Tmp = ((double) (LzMax + 1)) / (4.0 * M_PI);
+      for (int i = 0; i < NbrNBody; ++i)
+	{
+	  AnnihilationIndices[i] = 0;
+	  CreationIndices[i] = 0;
+	  Factor *= Tmp;
+	}
+      ParticleOnSphereNBodyOperator Operator (&Space, CreationIndices, AnnihilationIndices, NbrNBody);
+      Factor *= Operator.MatrixElement(State, State).Re;
+      cout << Factor << endl;
     }
   else
     {
     }
-
+  delete[] AnnihilationIndices;
+  delete[] CreationIndices;
   return 0;
 }
 
