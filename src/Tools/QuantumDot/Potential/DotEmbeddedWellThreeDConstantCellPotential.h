@@ -112,7 +112,7 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
   // j = y coordinate of the considered cell
   // k = z coordinate of the considered cell
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double& value);
+  virtual void SetPotential(int i, int j, int k, double value);
 
   // get the potential at a given position
   //
@@ -136,7 +136,7 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
 // k = z coordinate of the considered cell
 // value = value of potential
 
-inline void DotEmbeddedWellThreeDConstantCellPotential::SetPotential(int i, int j, int k, double& value)
+inline void DotEmbeddedWellThreeDConstantCellPotential::SetPotential(int i, int j, int k, double value)
 {
   this->PotentialValue[k][j][i] = value;
 }

@@ -51,15 +51,17 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
 
   // wave function basis dimension in the x direction
-  int NbrStateX;  
+  int NbrStateX;
+  int LowerImpulsionX;  
 
   // wave function basis dimension in the y direction
   int NbrStateY;
+  int LowerImpulsionY;
 
   // wave function basis dimension in the z direction
   int NbrStateZ;
 
-  int LowerImpulsionZ;  
+  int LowerImpulsionZ;
 
   // number of cells in the x direction
   int NbrCellX;
@@ -86,7 +88,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   double* KineticElements;
 
   // tridimensionnal array containing all cell interaction factors
-  double*** InteractionFactors;  
+  double*** InteractionFactors;
 
   // wave function overlaps on a cell in a the x direction (with symmetric access type for the first two indices)
   double*** WaveFunctionOverlapX;
@@ -94,7 +96,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   double*** WaveFunctionOverlapY;
   // wave function overlaps on a cell in a the z direction (with symmetric access type for the first two indices)
   double** RealWaveFunctionOverlapZ;
-  double** ImaginaryWaveFunctionOverlapZ;  
+  double** ImaginaryWaveFunctionOverlapZ;
 
   // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian
   // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)

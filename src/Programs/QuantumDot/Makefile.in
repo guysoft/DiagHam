@@ -70,7 +70,7 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-bin_PROGRAMS = AllSpectra CoulombInteraction DotEmbeddedWell Isosurface PeriodicFunctionStatistic PeriodicQuantumDot2D PeriodicQuantumDot QuantumDot QuantumDot2D Visual2D Visual3D
+bin_PROGRAMS = AllSpectra CoulombInteraction DotEmbeddedWell Isosurface PeriodicFunctionStatistic PeriodicQuantumDot2D ExplicitPeriodicQuantumDot PeriodicQuantumDot QuantumDot QuantumDot2D Visual2D Visual3D
 
 AllSpectra_SOURCES = AllSpectra.cc
 
@@ -83,6 +83,8 @@ Isosurface_SOURCES = Isosurface.cc
 PeriodicFunctionStatistic_SOURCES = PeriodicFunctionStatistic.cc
 
 PeriodicQuantumDot2D_SOURCES = Periodic2DQuantumDot.cc
+
+ExplicitPeriodicQuantumDot_SOURCES = ExplicitPeriodic3DQuantumDots.cc
 
 PeriodicQuantumDot_SOURCES = Periodic3DQuantumDots.cc
 
@@ -117,6 +119,10 @@ PeriodicFunctionStatistic_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@
 PeriodicQuantumDot2D_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
 
 PeriodicQuantumDot2D_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -L@top_srcdir@/src/Tools/QuantumDot/Potential -L@top_srcdir@/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
+
+ExplicitPeriodicQuantumDot_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
+
+ExplicitPeriodicQuantumDot_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -L@top_srcdir@/src/Tools/QuantumDot/Potential -L@top_srcdir@/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 
 PeriodicQuantumDot_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
 
@@ -158,6 +164,8 @@ PeriodicFunctionStatistic_OBJECTS =  PeriodicFunctionStatistic.o
 PeriodicFunctionStatistic_LDFLAGS = 
 PeriodicQuantumDot2D_OBJECTS =  Periodic2DQuantumDot.o
 PeriodicQuantumDot2D_LDFLAGS = 
+ExplicitPeriodicQuantumDot_OBJECTS =  ExplicitPeriodic3DQuantumDots.o
+ExplicitPeriodicQuantumDot_LDFLAGS = 
 PeriodicQuantumDot_OBJECTS =  Periodic3DQuantumDots.o
 PeriodicQuantumDot_LDFLAGS = 
 QuantumDot_OBJECTS =  3DQuantumDot.o
@@ -180,11 +188,11 @@ TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/2DQuantumDot.P .deps/3DQuantumDot.P \
 .deps/AllSpectra.P .deps/CoulombInteraction.P .deps/DotEmbeddedWell.P \
-.deps/Isosurface.P .deps/Periodic2DQuantumDot.P \
-.deps/Periodic3DQuantumDots.P .deps/PeriodicFunctionStatistic.P \
-.deps/Visual2D.P .deps/Visual3D.P
-SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) $(DotEmbeddedWell_SOURCES) $(Isosurface_SOURCES) $(PeriodicFunctionStatistic_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(PeriodicQuantumDot_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
-OBJECTS = $(AllSpectra_OBJECTS) $(CoulombInteraction_OBJECTS) $(DotEmbeddedWell_OBJECTS) $(Isosurface_OBJECTS) $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicQuantumDot2D_OBJECTS) $(PeriodicQuantumDot_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS) $(Visual2D_OBJECTS) $(Visual3D_OBJECTS)
+.deps/ExplicitPeriodic3DQuantumDots.P .deps/Isosurface.P \
+.deps/Periodic2DQuantumDot.P .deps/Periodic3DQuantumDots.P \
+.deps/PeriodicFunctionStatistic.P .deps/Visual2D.P .deps/Visual3D.P
+SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) $(DotEmbeddedWell_SOURCES) $(Isosurface_SOURCES) $(PeriodicFunctionStatistic_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(ExplicitPeriodicQuantumDot_SOURCES) $(PeriodicQuantumDot_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
+OBJECTS = $(AllSpectra_OBJECTS) $(CoulombInteraction_OBJECTS) $(DotEmbeddedWell_OBJECTS) $(Isosurface_OBJECTS) $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicQuantumDot2D_OBJECTS) $(ExplicitPeriodicQuantumDot_OBJECTS) $(PeriodicQuantumDot_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS) $(Visual2D_OBJECTS) $(Visual3D_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -261,6 +269,10 @@ PeriodicFunctionStatistic: $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicFuncti
 PeriodicQuantumDot2D: $(PeriodicQuantumDot2D_OBJECTS) $(PeriodicQuantumDot2D_DEPENDENCIES)
 	@rm -f PeriodicQuantumDot2D
 	$(CXXLINK) $(PeriodicQuantumDot2D_LDFLAGS) $(PeriodicQuantumDot2D_OBJECTS) $(PeriodicQuantumDot2D_LDADD) $(LIBS)
+
+ExplicitPeriodicQuantumDot: $(ExplicitPeriodicQuantumDot_OBJECTS) $(ExplicitPeriodicQuantumDot_DEPENDENCIES)
+	@rm -f ExplicitPeriodicQuantumDot
+	$(CXXLINK) $(ExplicitPeriodicQuantumDot_LDFLAGS) $(ExplicitPeriodicQuantumDot_OBJECTS) $(ExplicitPeriodicQuantumDot_LDADD) $(LIBS)
 
 PeriodicQuantumDot: $(PeriodicQuantumDot_OBJECTS) $(PeriodicQuantumDot_DEPENDENCIES)
 	@rm -f PeriodicQuantumDot

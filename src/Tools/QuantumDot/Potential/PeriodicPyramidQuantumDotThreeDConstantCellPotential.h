@@ -126,7 +126,7 @@ class PeriodicPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConsta
   // j = y coordinate of the considered cell 
   // k = z coordinate of the considered cell 
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double& value);
+  virtual void SetPotential(int i, int j, int k, double value);
 
   // get the potential at a given position
   //
@@ -155,7 +155,7 @@ class PeriodicPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConsta
 // k = z coordinate of the considered cell
 // value = value of potential
 
-inline void PeriodicPyramidQuantumDotThreeDConstantCellPotential::SetPotential(int i, int j, int k, double& value)
+inline void PeriodicPyramidQuantumDotThreeDConstantCellPotential::SetPotential(int i, int j, int k, double value)
 {
   this->PotentialValue[k][j][i] = value;
 }

@@ -95,7 +95,7 @@ class ThreeDConstantCellPotential : public AbstractPotential
   // j = y coordinate of the considered cell 
   // k = z coordinate of the considered cell 
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double& value) = 0;
+  virtual void SetPotential(int i, int j, int k, double value) = 0;
 
   // get the potential at a given position
   //

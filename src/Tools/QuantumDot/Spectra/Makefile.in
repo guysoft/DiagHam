@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libSpectra.a
 
-libSpectra_a_SOURCES = Spectra.cc OverlapSpectra.cc AverageSpectra.cc DOSSpectra.cc TimeResolvedPLSpectra.cc PeriodicSpectra.cc
+libSpectra_a_SOURCES = Spectra.cc OverlapSpectra.cc AverageSpectra.cc DOSSpectra.cc TimeResolvedPLSpectra.cc PeriodicSpectra.cc XYReflexionSymmetricPeriodicSpectra.cc
 
 
 check_PROGRAMS = TestSpectra
@@ -95,7 +95,8 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libSpectra_a_LIBADD = 
 libSpectra_a_OBJECTS =  Spectra.o OverlapSpectra.o AverageSpectra.o \
-DOSSpectra.o TimeResolvedPLSpectra.o PeriodicSpectra.o
+DOSSpectra.o TimeResolvedPLSpectra.o PeriodicSpectra.o \
+XYReflexionSymmetricPeriodicSpectra.o
 AR = ar
 TestSpectra_OBJECTS =  TestSpectra.o
 TestSpectra_LDFLAGS = 
@@ -111,7 +112,8 @@ TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AverageSpectra.P .deps/DOSSpectra.P \
 .deps/OverlapSpectra.P .deps/PeriodicSpectra.P .deps/Spectra.P \
-.deps/TestSpectra.P .deps/TimeResolvedPLSpectra.P
+.deps/TestSpectra.P .deps/TimeResolvedPLSpectra.P \
+.deps/XYReflexionSymmetricPeriodicSpectra.P
 SOURCES = $(libSpectra_a_SOURCES) $(TestSpectra_SOURCES)
 OBJECTS = $(libSpectra_a_OBJECTS) $(TestSpectra_OBJECTS)
 

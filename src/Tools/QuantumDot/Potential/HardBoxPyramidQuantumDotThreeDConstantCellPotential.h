@@ -173,7 +173,7 @@ class HardBoxPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConstan
   // j = y coordinate of the considered cell 
   // k = z coordinate of the considered cell 
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double& value);
+  virtual void SetPotential(int i, int j, int k, double value);
 
   // get the potential at a given position
   //
@@ -254,7 +254,7 @@ inline double HardBoxPyramidQuantumDotThreeDConstantCellPotential::GetAbovePoten
 // k = z coordinate of the considered cell 
 // value = value of potential
 
-inline void HardBoxPyramidQuantumDotThreeDConstantCellPotential::SetPotential(int i, int j, int k, double& value)
+inline void HardBoxPyramidQuantumDotThreeDConstantCellPotential::SetPotential(int i, int j, int k, double value)
 {
   if (k < this->Under)
     this->UnderPotentialValue[k] = value;

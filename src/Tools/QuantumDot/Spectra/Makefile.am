@@ -7,7 +7,8 @@ OverlapSpectra.cc \
 AverageSpectra.cc \
 DOSSpectra.cc \
 TimeResolvedPLSpectra.cc \
-PeriodicSpectra.cc
+PeriodicSpectra.cc \
+XYReflexionSymmetricPeriodicSpectra.cc
 
 check_PROGRAMS=TestSpectra
 

@@ -164,13 +164,14 @@ int main(int argc, char** argv)
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 150;
+      State[i] = 80;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
-  DOSSpectra DOS(1, Files, State, 1e-3, -0.16, 0.1, 2e-5);
+  DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.2, 2e-4);
   DOS.WriteSpectra(out);
-  
+ 
+
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -224,11 +225,11 @@ int main(int argc, char** argv)
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 149;
+      State[i] = 79;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
-  Spectra Absorption (Nbr, Files, State, 1e-3, 0.03, 0.25, 2e-5);
+  Spectra Absorption (Nbr, Files, State, 4e-3, 0.03, 0.33, 2e-4);
   Absorption.WriteSpectra(out);
 */
 
