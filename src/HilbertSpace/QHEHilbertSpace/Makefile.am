@@ -3,7 +3,7 @@ SUBDIRS=
 noinst_LIBRARIES=libQHEHilbertSpace.a
 
 libQHEHilbertSpace_a_SOURCES=Fermions.cc \
-TrappedBosons.cc \
+BosonOnDisk.cc \
 ParticleOnSphere.cc \
 FermionOnSphere.cc \
 BosonOnSphere.cc \

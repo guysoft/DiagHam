@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of trapped bosons                         //
+//                            class of bosons on disk                         //
 //                                                                            //
 //                        last modification : 04/06/2002                      //
 //                                                                            //
@@ -28,15 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TRAPPEDBOSONS_H
-#define TRAPPEDBOSONS_H
+#ifndef BOSONONDISK_H
+#define BOSONONDISK_H
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
 
 
-class TrappedBosons :  public AbstractHilbertSpace
+class BosonOnDisk :  public ParticleOnDisk
 {
 
   // number of bosons
@@ -64,27 +64,37 @@ class TrappedBosons :  public AbstractHilbertSpace
   // 
   // nbrBosons = number of bosons
   // totalLz = momentum total value
-  TrappedBosons (int nbrBosons, int totalLz);
+  BosonOnDisk (int nbrBosons, int totalLz);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  TrappedBosons(const TrappedBosons& bosons);
+  BosonOnDisk(const BosonOnDisk& bosons);
 
   // destructor
   //
-  ~TrappedBosons ();
+  ~BosonOnDisk ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  TrappedBosons& operator = (const TrappedBosons& bosons);
+  BosonOnDisk& operator = (const BosonOnDisk& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  int GetParticleStatistic();
+
+  // get the maximum angular momentum that can be reached by a particle 
+  //
+  // return value = maximum momentum
+  int GetMaxLz();
 
   // return a list of all possible quantum numbers 
   //
@@ -115,6 +125,13 @@ class TrappedBosons :  public AbstractHilbertSpace
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  double AdA (int index, int m);
 
   // print a given State
   //
@@ -165,6 +182,24 @@ class TrappedBosons :  public AbstractHilbertSpace
   void ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int factor);
 
 };
+
+// get the particle statistic 
+//
+// return value = particle statistic
+
+inline int BosonOnDisk::GetParticleStatistic()
+{
+  return ParticleOnDisk::BosonicStatistic;
+}
+
+// get the maximum angular momentum that can be reached by a particle 
+//
+// return value = maximum momentum
+
+inline int BosonOnDisk::GetMaxLz()
+{
+  return this->TotalLz;
+}
 
 #endif
 

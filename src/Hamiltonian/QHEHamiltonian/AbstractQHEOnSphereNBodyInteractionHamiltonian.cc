@@ -75,35 +75,37 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
       int Index;
       int* MIndices;
       int* NIndices;
-      double TmpInteraction;
+      double* TmpInteraction;
+      double Coefficient2;
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    int ReducedNbrInteractionFactors = this->NBodyNbrInteractionFactors[k] - 1;
-	    for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
-	      {
-		MIndices = this->NBodyMValue[k][j];
-		NIndices = this->NBodyNValue[k][j];
-		TmpInteraction = this->NBodyInteractionFactors[k][j];
-		for (int i = firstComponent; i < LastComponent; ++i)
-		  {
-		    Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		  }
-	      }
-	    MIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
-	    NIndices = this->NBodyNValue[k][ReducedNbrInteractionFactors];
-	    TmpInteraction = this->NBodyInteractionFactors[k][ReducedNbrInteractionFactors];
 	    for (int i = firstComponent; i < LastComponent; ++i)
 	      {
-		Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-		if (Index < Dim)
-		  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		vDestination[i] += this->HamiltonianShift * vSource[i];
+		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+		  {
+		    TmpInteraction = this->NBodyInteractionFactors[k][j];
+		    int Lim = NbrSortedIndicesPerSum[k][j];
+		    MIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i1 = 0; i1 < Lim; ++i1)
+		      {
+			Coefficient2 = vSource[i] * TmpInteraction[i1];
+			NIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
+			  {
+			    Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			    if (Index < Dim)
+			      vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
+			    NIndices += k;
+			  }
+			MIndices += k;
+		      }
+		  }
 	      }
-	  }
+	  }	    
+      for (int i = firstComponent; i < LastComponent; ++i)
+	vDestination[i] += this->HamiltonianShift * vSource[i];
       delete TmpParticles;
     }
   else
@@ -160,39 +162,41 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	  int Index;
 	  int* MIndices;
 	  int* NIndices;
-	  double TmpInteraction;
+	  double* TmpInteraction;
+	  double Coefficient2;
 	  firstComponent += this->PrecalculationShift;
 	  LastComponent += this->PrecalculationShift;
-	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
-	    if (PosMod != k)
+	  for (l = 0; l < this->FastMultiplicationStep; ++l)
+	    if (PosMod != l)
 	      {	
 		for (int k = 2; k <= this->MaxNBody; ++k)
 		  if (this->NBodyFlags[k] == true)
 		    {
-		      int ReducedNbrInteractionFactors = this->NBodyNbrInteractionFactors[k] - 1;
-		      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+		      for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 			{
-			  MIndices = this->NBodyMValue[k][j];
-			  NIndices = this->NBodyNValue[k][j];
-			  TmpInteraction = this->NBodyInteractionFactors[k][j];
-			  for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+			  for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 			    {
-			      Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			      if (Index < Dim)
-				vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+			      TmpInteraction = this->NBodyInteractionFactors[k][j];
+			      int Lim = NbrSortedIndicesPerSum[k][j];
+			      MIndices = this->SortedIndicesPerSum[k][j];
+			      for (int i1 = 0; i1 < Lim; ++i1)
+				{
+				  Coefficient2 = vSource[i] * TmpInteraction[i1];
+				  NIndices = this->SortedIndicesPerSum[k][j];
+				  for (int i2 = 0; i2 < Lim; ++i2)
+				    {
+				      Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+				      if (Index < Dim)
+					vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
+				      NIndices += k;
+				    }
+				  MIndices += k;
+				}
 			    }
-			}
-		      MIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
-		      NIndices = this->NBodyNValue[k][ReducedNbrInteractionFactors];
-		      TmpInteraction = this->NBodyInteractionFactors[k][ReducedNbrInteractionFactors];
-		      for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-			{
-			  Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			  if (Index < Dim)
-			    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-			  vDestination[i] += this->HamiltonianShift * vSource[i];
-			}
+			}		      
 		    }
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  vDestination[i] += this->HamiltonianShift * vSource[i];					
 	      }
 	  delete TmpParticles;
 	}
@@ -218,17 +222,26 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
-	for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j)
+	for (int i = firstComponent; i < LastComponent; ++i)
 	  {
-	    MIndices = this->NBodyMValue[k][j];
-	    NIndices = this->NBodyNValue[k][j];
-	    for (int i = firstComponent; i < LastComponent; ++i)
+	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
-		Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-		if (Index < this->Particles->GetHilbertSpaceDimension())
+		int Lim = NbrSortedIndicesPerSum[k][j];
+		MIndices = this->SortedIndicesPerSum[k][j];
+		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    ++Memory;
-		    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    NIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i2 = 0; i2 < Lim; ++i2)
+		      {
+			Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			if (Index < this->Particles->GetHilbertSpaceDimension())
+			  {
+			    ++Memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			  }
+			NIndices += k;
+		      }
+		    MIndices += k;
 		  }
 	      }
 	  }
@@ -263,8 +276,8 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
   double* TmpInteraction;
-  int** MIndices;
-  int** NIndices;
+  int* MIndices;
+  int* NIndices;
 
   int TotalPos = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
@@ -277,18 +290,26 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    TmpInteraction = this->NBodyInteractionFactors[k];
-	    MIndices = this->NBodyMValue[k];
-	    NIndices = this->NBodyNValue[k];
-//	    for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j) 
-	    for (int j = this->NBodyNbrInteractionFactors[k] - 1; j >= 0; --j) 
+	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
-		Index = this->Particles->ProdAdProdA(i + this->PrecalculationShift, MIndices[j], NIndices[j], k, Coefficient);
-		if (Index < this->Particles->GetHilbertSpaceDimension())
+		TmpInteraction = this->NBodyInteractionFactors[k][j];
+		int Lim = this->NbrSortedIndicesPerSum[k][j];
+		MIndices = this->SortedIndicesPerSum[k][j];
+		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    TmpIndexArray[Pos] = Index;
-		    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[j];
-		    ++Pos;
+		    NIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i2 = 0; i2 < Lim; ++i2)
+		      {
+			Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			if (Index < this->Particles->GetHilbertSpaceDimension())
+			  {
+			    TmpIndexArray[Pos] = Index;
+			    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+			    ++Pos;
+			  }
+			NIndices += k;
+		      }
+		    MIndices += k;
 		  }
 	      }
 	  }
@@ -318,8 +339,8 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
   int Max = lastComponent / this->FastMultiplicationStep;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   double* TmpInteraction;
-  int** MIndices;
-  int** NIndices;
+  int* MIndices;
+  int* NIndices;
  
   for (int i = Min; i < Max; ++i)
     {
@@ -331,17 +352,26 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    TmpInteraction = this->NBodyInteractionFactors[k];
-	    MIndices = this->NBodyMValue[k];
-	    NIndices = this->NBodyMValue[k];
-	    for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j) 
+	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
-		Index = this->Particles->ProdAdProdA(i + this->PrecalculationShift, MIndices[j], NIndices[j], k, Coefficient);
-		if (Index < this->Particles->GetHilbertSpaceDimension())
+		TmpInteraction = this->NBodyInteractionFactors[k][j];
+		int Lim = NbrSortedIndicesPerSum[k][j];
+		MIndices = this->SortedIndicesPerSum[k][j];
+		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    TmpIndexArray[Pos] = Index;
-		    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[j];
-		    ++Pos;
+		    NIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i2 = 0; i2 < Lim; ++i2)
+		      {
+			Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			if (Index < this->Particles->GetHilbertSpaceDimension())
+			  {
+			    TmpIndexArray[Pos] = Index;
+			    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+			    ++Pos;
+			  }
+			NIndices += k;
+		      }
+		    MIndices += k;
 		  }
 	      }
 	  }
@@ -358,7 +388,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 // return value = total number of index groups
 
 long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
-										  int***& sortedIndicesPerSum)
+										  int**& sortedIndicesPerSum)
 {
   long** BinomialCoefficients = GetBinomialCoefficients(nbrValues);
   long NbrElements = BinomialCoefficients[nbrValues][nbrIndices];
@@ -402,24 +432,31 @@ long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices
   int MaxSum = (((nbrValues - 1) * nbrValues) - ((nbrIndices - 1) * (nbrIndices - 2)))/ 2;
   int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
-  sortedIndicesPerSum = new int** [MaxSum + 1];
+  sortedIndicesPerSum = new int* [MaxSum + 1];
   for (int i = 0; i <= MaxSum; ++i)
     nbrSortedIndicesPerSum[i] = 0;
   for (int i = 0; i < NbrElements; ++i)
     ++nbrSortedIndicesPerSum[Sum[i]];
+  long* TmpPos = new long [MaxSum + 1];
   for (int i = MinSum; i <= MaxSum; ++i)
     {
-      sortedIndicesPerSum[i] = new int* [nbrSortedIndicesPerSum[i]];
+      sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * nbrIndices];
       nbrSortedIndicesPerSum[i] = 0;
+      TmpPos[i] = 0l;      
     }
   for (int i = 0; i < NbrElements; ++i)
     {   
       Pos = Sum[i];
       Max = nbrSortedIndicesPerSum[Pos];
-      sortedIndicesPerSum[Pos][Max] = Indices[i];
+      for (int j = 0; j < nbrIndices; ++j)
+	{
+	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = Indices[i][j];
+	  ++TmpPos[Pos];
+	}
       ++nbrSortedIndicesPerSum[Pos];
+      delete[] Indices[i];
     }
-
+  delete[] TmpPos;
   delete[] Sum;
   delete[]Indices;
   for (int i = 0; i <= nbrValues; ++i)
@@ -438,7 +475,8 @@ long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices
 //                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
 // return value = total number of index groups
 
-long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum,
+long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
+									     int**& sortedIndicesPerSum,
 									     double**& sortedIndicesPerSumSymmetryFactor)
 {
   long** DimensionSymmetricGroup;
@@ -494,8 +532,9 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int
     }
 
   int MaxSum = (nbrValues - 1) * nbrIndices;
+  long* TmpPos = new long [MaxSum + 1];
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
-  sortedIndicesPerSum = new int** [MaxSum + 1];
+  sortedIndicesPerSum = new int* [MaxSum + 1];
   sortedIndicesPerSumSymmetryFactor = new double* [MaxSum + 1];
   for (int i = 0; i <= MaxSum; ++i)
     nbrSortedIndicesPerSum[i] = 0;
@@ -505,7 +544,8 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int
     }
   for (int i = 0; i <= MaxSum; ++i)
     {
-      sortedIndicesPerSum[i] = new int* [nbrSortedIndicesPerSum[i]];
+      TmpPos[i] = 0l;
+      sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * nbrIndices];
       sortedIndicesPerSumSymmetryFactor[i] = new double [nbrSortedIndicesPerSum[i]];
       nbrSortedIndicesPerSum[i] = 0;
     }
@@ -513,10 +553,14 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int
     {   
       Pos = Sum[i];
       Max = nbrSortedIndicesPerSum[Pos];
-      sortedIndicesPerSum[Pos][Max] = Indices[i];
+      int* TmpIndices = Indices[i];
+      for (int j = 0; j < nbrIndices; ++j)
+	{
+	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = TmpIndices[j];
+	  ++TmpPos[Pos];
+	}
       double& SymmetryFactor = sortedIndicesPerSumSymmetryFactor[Pos][Max];
       SymmetryFactor = 1.0;
-      int* TmpIndices = Indices[i];
       for (int j = 1; j < nbrIndices; ++j)
 	{
 	  int TmpSymmetryFactor = 1;
@@ -529,10 +573,12 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int
 	    for (int k = 2; k <= TmpSymmetryFactor; ++k)
 	      SymmetryFactor *= (double) k;
 	}
+      delete[] TmpIndices;
       SymmetryFactor = 1.0 / SymmetryFactor;
       ++nbrSortedIndicesPerSum[Pos];
     }
 
+  delete[] TmpPos;
   delete[] Sum;
   delete[]Indices;
   for (int i = 0; i <= nbrValues; ++i)

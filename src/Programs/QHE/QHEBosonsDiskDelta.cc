@@ -1,8 +1,8 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
-#include "Hamiltonian/QHEHamiltonian/TrappedBosonHamiltonian.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnDiskDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
@@ -91,10 +91,10 @@ int main(int argc, char** argv)
 
   for (int  L = MMin; L <= MMax; ++L)
     {
-      TrappedBosons Space (NbrBosons, L);
+      BosonOnDisk Space (NbrBosons, L);
       cout << "Nbr bosons = " << NbrBosons << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
-      TrappedBosonHamiltonian* Hamiltonian = new TrappedBosonHamiltonian(&Space, L);
+      ParticleOnDiskDeltaHamiltonian* Hamiltonian = new ParticleOnDiskDeltaHamiltonian(&Space, L);
       if (Hamiltonian->GetHilbertSpaceDimension() < FullDiagonalizationLimit)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());

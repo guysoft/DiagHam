@@ -6,7 +6,8 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of  hamiltonian associated to trapped bosons            //
+//          class of  hamiltonian associated to particles on  disk with       //
+//                              delta interaction                             //
 //                                                                            //
 //                        last modification : 11/06/2002                      //
 //                                                                            //
@@ -28,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TRAPPEDBOSONHAMILTONIAN_H
-#define TRAPPEDBOSONHAMILTONIAN_H
+#ifndef PARTICLEONDISKDELTAHAMILTONIAN_H
+#define PARTICLEONDISKDELTAHAMILTONIAN_H
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 #include <iostream>
@@ -45,13 +46,13 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class TrappedBosonHamiltonian : public AbstractHamiltonian
+class ParticleOnDiskDeltaHamiltonian : public AbstractHamiltonian
 {
 
  protected:
   
   // Hilbert space associated to the system
-  TrappedBosons* Bosons;
+  ParticleOnDisk* Particles;
 
   // maximum Lz value reached by a boson in the state
   int LzMax;
@@ -65,11 +66,11 @@ class TrappedBosonHamiltonian : public AbstractHamiltonian
   //
   // bosons = Hilbert space associated to the system
   // lzmax = maximum Lz value reached by a boson in the state
-  TrappedBosonHamiltonian(TrappedBosons* bosons, int lzmax);
+  ParticleOnDiskDeltaHamiltonian(ParticleOnDisk* bosons, int lzmax);
 
   // destructor
   //
-  ~TrappedBosonHamiltonian();
+  ~ParticleOnDiskDeltaHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -201,14 +202,14 @@ class TrappedBosonHamiltonian : public AbstractHamiltonian
   // Str = reference on output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, TrappedBosonHamiltonian& H);
+  friend ostream& operator << (ostream& Str, ParticleOnDiskDeltaHamiltonian& H);
 
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, TrappedBosonHamiltonian& H);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnDiskDeltaHamiltonian& H);
 
  private:
  

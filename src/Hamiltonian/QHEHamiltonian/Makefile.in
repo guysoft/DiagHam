@@ -121,7 +121,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQHEHamiltonian.a
 
-libQHEHamiltonian_a_SOURCES = TrappedBosonHamiltonian.cc \
+libQHEHamiltonian_a_SOURCES = ParticleOnDiskDeltaHamiltonian.cc \
 ParticleOnTorusCoulombHamiltonian.cc \
 ParticleOnTorusDeltaHamiltonian.cc \
 ParticleOnTorusCoulombDMRGReadyHamiltonian.cc \
@@ -155,7 +155,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 
 libQHEHamiltonian_a_AR = $(AR) cru
 libQHEHamiltonian_a_LIBADD =
-am_libQHEHamiltonian_a_OBJECTS = TrappedBosonHamiltonian.$(OBJEXT) \
+am_libQHEHamiltonian_a_OBJECTS = \
+	ParticleOnDiskDeltaHamiltonian.$(OBJEXT) \
 	ParticleOnTorusCoulombHamiltonian.$(OBJEXT) \
 	ParticleOnTorusDeltaHamiltonian.$(OBJEXT) \
 	ParticleOnTorusCoulombDMRGReadyHamiltonian.$(OBJEXT) \
@@ -192,6 +193,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ApproximateFermionOnTorusCoulombHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnCircleCoulombHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnDiskDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnDiskLaplacianDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereCoulombDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereCoulombHamiltonian.Po \
@@ -206,8 +208,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombWithSpinHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusDeltaHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/TrappedBosonHamiltonian.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -257,6 +258,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ApproximateFermionOnTorusCoulombHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnCircleCoulombHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnDiskDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnDiskLaplacianDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereCoulombDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereCoulombHamiltonian.Po@am__quote@
@@ -272,7 +274,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombWithSpinHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TrappedBosonHamiltonian.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \

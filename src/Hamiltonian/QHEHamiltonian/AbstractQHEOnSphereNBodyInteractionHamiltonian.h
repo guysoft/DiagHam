@@ -53,15 +53,17 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // indicates which n-body interaction terms are present in the Hamiltonian
   bool* NBodyFlags;
 
-  // array containing all interaction factors per N body interaction
-  double** NBodyInteractionFactors;
-  // number of interaction factors per N body interaction
-  long* NBodyNbrInteractionFactors;
-  // arrays for creation operartor indices attached to each interaction factor and per N body interaction
-  int*** NBodyMValue;
-  // arrays for annihilation operartor indices attached to each interaction factor and per N body interaction
-  int*** NBodyNValue;
-  
+  // maximum value that the sum of idices can reach
+  int MaxSumIndices;
+  // minimum value that the sum of idices can reach
+  int MinSumIndices;
+  // array containing all interaction factors per N body interaction (first index for interaction type and second for index sum)
+  double*** NBodyInteractionFactors;
+  // array containing the number of index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators
+  int** NbrSortedIndicesPerSum;
+  // array containing the index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators
+  int*** SortedIndicesPerSum;
+
  public:
 
   // destructor
@@ -109,7 +111,7 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
   // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
   // return value = total number of index groups
-  virtual long GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum);
+  virtual long GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum);
 
   // get all indices needed to characterize a completly symmetric tensor, sorted by the sum of the indices
   //
@@ -120,7 +122,7 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // sortedIndicesPerSumSymmetryFactor = reference on a array where symmetry factor (aka inverse of the product of the factorial of the number 
   //                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
   // return value = total number of index groups
-  virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum,
+  virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum,
 				       double**& sortedIndicesPerSumSymmetryFactor);
 
 };

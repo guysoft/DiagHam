@@ -30,7 +30,7 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "HilbertSpace/DMRGHilbertSpace/DMRGPartialHilbertSpace.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "Hamiltonian/SpinHamiltonian/Mn12Hamiltonian.h"
@@ -49,7 +49,7 @@
 #include "Hamiltonian/SpinHamiltonian/PeriodicSpinChainHamiltonian.h"
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "Hamiltonian/DMRGHamiltonian/NonPeriodicDMRGHamiltonian.h"
-#include "Hamiltonian/QHEHamiltonian/TrappedBosonHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnDiskDeltaHamiltonian.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
 #include "TensorProduct/TensorProductRealVector.h"
 #include "TensorProduct/TensorProductStructure.h"
@@ -1309,14 +1309,14 @@ void HilbertTest()
   int M = 7;
 //  Spin1_2ChainWithTranslations Space(NbrSite, 256);
 //  Spin1_2Chain Space(NbrSite, 256);
-  TrappedBosons Space (NbrSite, M);
+  BosonOnDisk Space (NbrSite, M);
   cout << Space.GetHilbertSpaceDimension() << endl;
   for (int  i = 0; i < Space.GetHilbertSpaceDimension(); i++)
     {
 //      cout << i << " " << Space.ChainDescription[i] << " " << ~(Space.ChainDescription[i]) << " " << Space.FindStateIndex(Space.ChainDescription[i]) << endl;
       Space.PrintState(cout ,i) << " " << (*(Space.GetQuantumNumber(i))) << endl;
     }
-  TrappedBosonHamiltonian Hamiltonian(&Space, M);
+  ParticleOnDiskDeltaHamiltonian Hamiltonian(&Space, M);
   TestHamiltonian(&Hamiltonian);
   return;
 

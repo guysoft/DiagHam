@@ -122,7 +122,7 @@ SUBDIRS =
 noinst_LIBRARIES = libQHEHilbertSpace.a
 
 libQHEHilbertSpace_a_SOURCES = Fermions.cc \
-TrappedBosons.cc \
+BosonOnDisk.cc \
 ParticleOnSphere.cc \
 FermionOnSphere.cc \
 BosonOnSphere.cc \
@@ -152,7 +152,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 libQHEHilbertSpace_a_AR = $(AR) cru
 libQHEHilbertSpace_a_LIBADD =
 am_libQHEHilbertSpace_a_OBJECTS = Fermions.$(OBJEXT) \
-	TrappedBosons.$(OBJEXT) ParticleOnSphere.$(OBJEXT) \
+	BosonOnDisk.$(OBJEXT) ParticleOnSphere.$(OBJEXT) \
 	FermionOnSphere.$(OBJEXT) BosonOnSphere.$(OBJEXT) \
 	ParticleOnTorus.$(OBJEXT) \
 	ParticleOnTorusWithMagneticTranslations.$(OBJEXT) \
@@ -170,7 +170,8 @@ libQHEHilbertSpace_a_OBJECTS = $(am_libQHEHilbertSpace_a_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/BosonOnSphere.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/BosonOnDisk.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/BosonOnSphere.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorusState.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BosonOnTorusWithMagneticTranslations.Po \
@@ -188,8 +189,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphere.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusWithMagneticTranslations.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusWithSpin.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/TrappedBosons.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusWithSpin.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -231,6 +231,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnDisk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnSphere.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BosonOnTorusState.Po@am__quote@
@@ -250,7 +251,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusWithMagneticTranslations.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusWithSpin.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TrappedBosons.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \

@@ -6,8 +6,8 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of  hamiltonian associated to trapped bosons            //
-//                             with delta interaction                         //
+//          class of  hamiltonian associated to particles on  disk with       //
+//                              delta interaction                             //
 //                                                                            //
 //                        last modification : 11/06/2002                      //
 //                                                                            //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/QHEHamiltonian/TrappedBosonHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnDiskDeltaHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -53,9 +53,9 @@ using std::ostream;
 // bosons = Hilbert space associated to the system
 // lzmax = maximum Lz value reached by a boson in the state
 
-TrappedBosonHamiltonian::TrappedBosonHamiltonian(TrappedBosons* bosons, int lzmax)
+ParticleOnDiskDeltaHamiltonian::ParticleOnDiskDeltaHamiltonian(ParticleOnDisk* bosons, int lzmax)
 {
-  this->Bosons = bosons;
+  this->Particles = bosons;
   this->LzMax = lzmax;
   this->EvaluateInteractionFactors();
 }
@@ -63,7 +63,7 @@ TrappedBosonHamiltonian::TrappedBosonHamiltonian(TrappedBosons* bosons, int lzma
 // destructor
 //
 
-TrappedBosonHamiltonian::~TrappedBosonHamiltonian() 
+ParticleOnDiskDeltaHamiltonian::~ParticleOnDiskDeltaHamiltonian() 
 {
   for (int i = 0; i <= this->LzMax; ++i)
     delete[] this->InteractionFactors[i];    
@@ -74,12 +74,12 @@ TrappedBosonHamiltonian::~TrappedBosonHamiltonian()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void TrappedBosonHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnDiskDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   for (int i = 0; i <= this->LzMax; ++i)
     delete[] this->InteractionFactors[i];    
   delete[] this->InteractionFactors;
-  this->Bosons = (TrappedBosons*) hilbertSpace;
+  this->Particles = (ParticleOnDisk*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
 
@@ -87,25 +87,25 @@ void TrappedBosonHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpac
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* TrappedBosonHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnDiskDeltaHamiltonian::GetHilbertSpace ()
 {
-  return this->Bosons;
+  return this->Particles;
 }
 
 // return dimension of Hilbert space where Hamiltonian acts
 //
 // return value = corresponding matrix elementdimension
 
-int TrappedBosonHamiltonian::GetHilbertSpaceDimension ()
+int ParticleOnDiskDeltaHamiltonian::GetHilbertSpaceDimension ()
 {
-  return this->Bosons->GetHilbertSpaceDimension();
+  return this->Particles->GetHilbertSpaceDimension();
 }
 
 // shift Hamiltonian from a given energy
 //
 // shift = shift value
 
-void TrappedBosonHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnDiskDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
 }
   
@@ -115,10 +115,10 @@ void TrappedBosonHamiltonian::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex TrappedBosonHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex ParticleOnDiskDeltaHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   double x = 0.0;
-  int dim = this->Bosons->GetHilbertSpaceDimension();
+  int dim = this->Particles->GetHilbertSpaceDimension();
   for (int i = 0; i < dim; i++)
     {
     }
@@ -131,7 +131,7 @@ Complex TrappedBosonHamiltonian::MatrixElement (RealVector& V1, RealVector& V2)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex TrappedBosonHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex ParticleOnDiskDeltaHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   return Complex();
 }
@@ -143,9 +143,9 @@ Complex TrappedBosonHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-RealVector& TrappedBosonHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
+RealVector& ParticleOnDiskDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
 {
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Bosons->GetHilbertSpaceDimension());
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -157,7 +157,7 @@ RealVector& TrappedBosonHamiltonian::LowLevelMultiply(RealVector& vSource, RealV
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& TrappedBosonHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnDiskDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 						      int firstComponent, int nbrComponent) 
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -173,9 +173,9 @@ RealVector& TrappedBosonHamiltonian::LowLevelMultiply(RealVector& vSource, RealV
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+RealVector& ParticleOnDiskDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Bosons->GetHilbertSpaceDimension());
+  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -187,11 +187,11 @@ RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, Re
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& ParticleOnDiskDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 							 int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Bosons->GetHilbertSpaceDimension();
+  int Dim = this->Particles->GetHilbertSpaceDimension();
   int m1;
   int m2;
   int n1;
@@ -216,7 +216,7 @@ RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, Re
 		Lim = SumM;
 	      for (n1 = 0; n1 <= Lim; ++n1)
 		{
-		  Index = this->Bosons->AdAdAA(i, m1, m2, n1, SumM - n1, Coefficient);
+		  Index = this->Particles->AdAdAA(i, m1, m2, n1, SumM - n1, Coefficient);
 		  if (Index < Dim)
 		    {
 		      vDestination[Index] += Coefficient * Factor * this->InteractionFactors[n1][SumM - n1] * vSource[i];
@@ -231,7 +231,7 @@ RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, Re
 	    Lim = SumM;
 	  for (n1 = 0; n1 <= Lim; ++n1)
 	    {
-	      Index = this->Bosons->AdAdAA(i, m1, m1, n1, SumM - n1, Coefficient);
+	      Index = this->Particles->AdAdAA(i, m1, m1, n1, SumM - n1, Coefficient);
 	      if (Index < Dim)
 		{
 		  vDestination[Index] += Coefficient * Factor * this->InteractionFactors[n1][SumM - n1] * vSource[i];
@@ -249,7 +249,7 @@ RealVector& TrappedBosonHamiltonian::LowLevelAddMultiply(RealVector& vSource, Re
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& TrappedBosonHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
+ComplexVector& ParticleOnDiskDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
 {
   return vDestination;
 }
@@ -263,7 +263,7 @@ ComplexVector& TrappedBosonHamiltonian::LowLevelMultiply(ComplexVector& vSource,
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& TrappedBosonHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnDiskDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							 int firstComponent, int nbrComponent)
 {
   return vDestination;
@@ -276,7 +276,7 @@ ComplexVector& TrappedBosonHamiltonian::LowLevelMultiply(ComplexVector& vSource,
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& TrappedBosonHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+ComplexVector& ParticleOnDiskDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
   return vDestination;
 }
@@ -289,7 +289,7 @@ ComplexVector& TrappedBosonHamiltonian::LowLevelAddMultiply(ComplexVector& vSour
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-ComplexVector& TrappedBosonHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnDiskDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
 {
   return vDestination;
@@ -299,7 +299,7 @@ ComplexVector& TrappedBosonHamiltonian::LowLevelAddMultiply(ComplexVector& vSour
 //
 // return value = list of left interaction operators
 
-List<Matrix*> TrappedBosonHamiltonian::LeftInteractionOperators()
+List<Matrix*> ParticleOnDiskDeltaHamiltonian::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -309,7 +309,7 @@ List<Matrix*> TrappedBosonHamiltonian::LeftInteractionOperators()
 //
 // return value = list of right interaction operators
 
-List<Matrix*> TrappedBosonHamiltonian::RightInteractionOperators()
+List<Matrix*> ParticleOnDiskDeltaHamiltonian::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -318,7 +318,7 @@ List<Matrix*> TrappedBosonHamiltonian::RightInteractionOperators()
 // evaluate all interaction factors
 //   
 
-void TrappedBosonHamiltonian::EvaluateInteractionFactors()
+void ParticleOnDiskDeltaHamiltonian::EvaluateInteractionFactors()
 {
   this->InteractionFactors = new double* [this->LzMax + 1];
   FactorialCoefficient Coef;
@@ -345,21 +345,21 @@ void TrappedBosonHamiltonian::EvaluateInteractionFactors()
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& Str, TrappedBosonHamiltonian& H) 
+ostream& operator << (ostream& Str, ParticleOnDiskDeltaHamiltonian& H) 
 {
-  RealVector TmpV2 (H.Bosons->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Bosons->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Bosons->GetHilbertSpaceDimension(); i++)
+  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Bosons->GetHilbertSpaceDimension());
+      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
       if (i > 0)
 	TmpV2[i - 1] = 0.0;
       TmpV2[i] = 1.0;
       H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
-  for (int i = 0; i < H.Bosons->GetHilbertSpaceDimension(); i++)
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      for (int j = 0; j < H.Bosons->GetHilbertSpaceDimension(); j++)
+      for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
 	{
 	  Str << TmpV[j][i] << "    ";
 	}
@@ -374,35 +374,35 @@ ostream& operator << (ostream& Str, TrappedBosonHamiltonian& H)
 // H = Hamiltonian to print
 // return value = reference on output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Str, TrappedBosonHamiltonian& H) 
+MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnDiskDeltaHamiltonian& H) 
 {
-  RealVector TmpV2 (H.Bosons->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Bosons->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Bosons->GetHilbertSpaceDimension(); i++)
+  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Bosons->GetHilbertSpaceDimension());
+      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
       if (i > 0)
 	TmpV2[i - 1] = 0.0;
       TmpV2[i] = 1.0;
       H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
   Str << "{";
-  for (int i = 0; i < (H.Bosons->GetHilbertSpaceDimension() - 1); i++)
+  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
     {
       Str << "{";
-      for (int j = 0; j < (H.Bosons->GetHilbertSpaceDimension() - 1); j++)
+      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
 	{
 	  Str << TmpV[j][i] << ",";
 	}
-      Str << TmpV[H.Bosons->GetHilbertSpaceDimension() - 1][i];
+      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
       Str << "},";
     }
   Str << "{";
-  for (int j = 0; j < (H.Bosons->GetHilbertSpaceDimension() - 1); j++)
+  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
     {
-      Str << TmpV[j][H.Bosons->GetHilbertSpaceDimension() - 1] << ",";
+      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
     }
-  Str << TmpV[H.Bosons->GetHilbertSpaceDimension() - 1][H.Bosons->GetHilbertSpaceDimension() - 1];
+  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
   Str << "}}";
   return Str;
 }

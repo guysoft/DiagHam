@@ -2,7 +2,7 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQHEHamiltonian.a
 
-libQHEHamiltonian_a_SOURCES=TrappedBosonHamiltonian.cc \
+libQHEHamiltonian_a_SOURCES=ParticleOnDiskDeltaHamiltonian.cc \
 ParticleOnTorusCoulombHamiltonian.cc \
 ParticleOnTorusDeltaHamiltonian.cc \
 ParticleOnTorusCoulombDMRGReadyHamiltonian.cc \

@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of trapped bosons                         //
+//                            class of bosons on disk                         //
 //                                                                            //
 //                        last modification : 04/06/2002                      //
 //                                                                            //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 
@@ -46,7 +46,7 @@ using std::endl;
 // nbrBosons = number of bosons
 // totalLz = momentum total value
 
-TrappedBosons::TrappedBosons (int nbrBosons, int totalLz)
+BosonOnDisk::BosonOnDisk (int nbrBosons, int totalLz)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -57,7 +57,6 @@ TrappedBosons::TrappedBosons (int nbrBosons, int totalLz)
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrBosons, this->TotalLz, this->TotalLz, this->TotalLz, 0);
   this->KeyMultiplicationTable = new int [this->TotalLz + 1];
-//  this->ErasthothenesSlieve(10000000, this->TotalLz + 1, this->IncNbrBosons);
   this->GenerateLookUpTable(0);
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -82,7 +81,7 @@ TrappedBosons::TrappedBosons (int nbrBosons, int totalLz)
 //
 // bosons = reference on the hilbert space to copy to copy
 
-TrappedBosons::TrappedBosons(const TrappedBosons& bosons)
+BosonOnDisk::BosonOnDisk(const BosonOnDisk& bosons)
 {
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
@@ -96,7 +95,7 @@ TrappedBosons::TrappedBosons(const TrappedBosons& bosons)
 // destructor
 //
 
-TrappedBosons::~TrappedBosons ()
+BosonOnDisk::~BosonOnDisk ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -112,7 +111,7 @@ TrappedBosons::~TrappedBosons ()
 // bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-TrappedBosons& TrappedBosons::operator = (const TrappedBosons& bosons)
+BosonOnDisk& BosonOnDisk::operator = (const BosonOnDisk& bosons)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -135,16 +134,16 @@ TrappedBosons& TrappedBosons::operator = (const TrappedBosons& bosons)
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* TrappedBosons::Clone()
+AbstractHilbertSpace* BosonOnDisk::Clone()
 {
-  return new TrappedBosons(*this);
+  return new BosonOnDisk(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> TrappedBosons::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> BosonOnDisk::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -156,7 +155,7 @@ List<AbstractQuantumNumber*> TrappedBosons::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* TrappedBosons::GetQuantumNumber (int index)
+AbstractQuantumNumber* BosonOnDisk::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -167,7 +166,7 @@ AbstractQuantumNumber* TrappedBosons::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* TrappedBosons::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* BosonOnDisk::ExtractSubspace (AbstractQuantumNumber& q, 
 						      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -183,7 +182,7 @@ AbstractHilbertSpace* TrappedBosons::ExtractSubspace (AbstractQuantumNumber& q,
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int TrappedBosons::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int BosonOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int LzMax = this->StateLzMax[index];
   int* State = this->StateDescription[index];
@@ -219,13 +218,27 @@ int TrappedBosons::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
   return DestIndex;
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double BosonOnDisk::AdA (int index, int m)
+{
+  if (this->StateLzMax[index] < m)
+    return 0.0;
+  else
+    return ((double) this->StateDescription[index][m]);
+}
+
 // find state index
 //
 // stateDescription = array describing the state
 // lzmax = maximum Lz value reached by a boson in the state
 // return value = corresponding index
 
-int TrappedBosons::FindStateIndex(int* stateDescription, int lzmax)
+int BosonOnDisk::FindStateIndex(int* stateDescription, int lzmax)
 {
   int TmpKey = this->GenerateKey(stateDescription, lzmax);
   int i;
@@ -258,7 +271,7 @@ int TrappedBosons::FindStateIndex(int* stateDescription, int lzmax)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& TrappedBosons::PrintState (ostream& Str, int state)
+ostream& BosonOnDisk::PrintState (ostream& Str, int state)
 {
   int* TmpState = this->StateDescription[state];
   int Max = this->StateLzMax[state];
@@ -281,16 +294,14 @@ ostream& TrappedBosons::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int TrappedBosons::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos)
+int BosonOnDisk::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos)
 {
   if ((nbrBosons == 0) || ((nbrBosons * currentLzMax) < totalLz) || (pos == this->HilbertSpaceDimension))
     {
-//      cout << "reject "<< nbrBosons << " " << lzMax << " " << currentLzMax << " " << totalLz << " " << pos << " " << endl;
       return pos;
     }
   if ((nbrBosons * currentLzMax) == totalLz)
     {
-//      cout << "check ! " << nbrBosons << " " << lzMax << " " << currentLzMax << " " << totalLz << " " << pos << " " << endl;
       this->StateDescription[pos] = new int [lzMax + 1];
       int* TmpState = this->StateDescription[pos];
       for (int i = 0; i <= lzMax; ++i)
@@ -301,7 +312,6 @@ int TrappedBosons::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, in
     }
   if ((currentLzMax == 0) || (totalLz == 0))
     {
-//      cout << "check " << nbrBosons << " " << lzMax << " " << currentLzMax << " " << totalLz << " " << pos << " " << endl;
       this->StateDescription[pos] = new int [lzMax + 1];
       int* TmpState = this->StateDescription[pos];
       for (int i = 1; i <= lzMax; ++i)
@@ -310,7 +320,6 @@ int TrappedBosons::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, in
       this->StateLzMax[pos] = lzMax;
       return pos + 1;
     }
-//  cout << "normal " << nbrBosons << " " << lzMax << " " << currentLzMax << " " << totalLz << " " << pos << " " << endl;
 
   int TmpTotalLz = totalLz / currentLzMax;
   int TmpNbrBosons = nbrBosons - TmpTotalLz;
@@ -336,7 +345,7 @@ int TrappedBosons::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, in
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void TrappedBosons::GenerateLookUpTable(int memeory)
+void BosonOnDisk::GenerateLookUpTable(int memeory)
 {
   this->Keys = new int [this->HilbertSpaceDimension];
   for (int i = 0; i <= this->TotalLz; ++i)
@@ -370,7 +379,7 @@ void TrappedBosons::GenerateLookUpTable(int memeory)
 // lzmax = maximum Lz value reached by a boson in the state
 // return value = key associated to the state
 
-int TrappedBosons::GenerateKey(int* stateDescription, int lzmax)
+int BosonOnDisk::GenerateKey(int* stateDescription, int lzmax)
 {
   int Key = 0;
   for (int i = 0; i <= lzmax; ++i)
@@ -387,7 +396,7 @@ int TrappedBosons::GenerateKey(int* stateDescription, int lzmax)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int TrappedBosons::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+int BosonOnDisk::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
   if ((nbrBosons == 0) || ((nbrBosons * lzMax) < totalLz))
     return 0;
@@ -403,7 +412,7 @@ int TrappedBosons::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int t
   return TmpDim;
 }
 
-void TrappedBosons::ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int factor)
+void BosonOnDisk::ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int factor)
 {
    maxNumber &= ~((int) 0x1);
   int Size = (int) sqrt((double) maxNumber);
