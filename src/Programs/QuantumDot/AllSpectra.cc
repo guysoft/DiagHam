@@ -26,6 +26,16 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
+  /*
+  int M = 3, N = 3, H = 3;
+  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
+  double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
+  Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H, H / 2);
+  PeriodicSpectra spectra(Space, "v1");  
+  double ReX, ImX, ReY, ImY, ReZ, ImZ;  
+  spectra.GetImpulsion("v2", SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+  cout << ReX << '\t' << ImX << '\t' << ReY << '\t' << ImY << '\t' <<  ReZ << '\t' << ImZ << endl;
+  */
   
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
@@ -69,7 +79,7 @@ int main(int argc, char** argv)
   
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2, M / 4, N / 2, N / 4, H, H / 2);
   PeriodicSpectra spectra(Space, FileName);
-
+   
   double Lx = 5.65, Ly = 5.65, Lz = 5.65;
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
   // void GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
@@ -79,18 +89,39 @@ int main(int argc, char** argv)
   ifstream energy("eigenvalues");
   double fundamental;
   energy >> fundamental;
-  double tmpE;
-  ofstream polarization ("Polarization.txt");
-  for (int i = 1; i < 2a; ++i)
+  double tmpE;  
+  //ofstream polarization ("Polarization.txt");
+
+  ofstream OutFile(out);  
+
+  // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
+
+  double PositionX = (double(M) * Lx / 2.0);
+  double RealValue = 0.0, ImaginaryValue = 0.0;
+
+  for (int j = 0; j <= N; ++j)
     {      
+      for (int k = 0; k <= H; ++k)
+	{
+	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
+	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
+	}
+      OutFile << '\n';
+    }
+  OutFile.close();  
+
+  /*
+  for (int i = 1; i < 50; ++i)
+    {
       Files[i] = new char[80];
-      AddString(Files[i], "eigenvector.", 0, ""); 
+      AddString(Files[i], "eigenvector.", i, "");
       spectra.GetImpulsion(Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
-      polarization << tmpE - fundamental << '\t' << ReX * ReX + ImX * ImX << '\t' << ReY * ReY + ImY * ImY << '\t' << ReZ * ReZ + ImZ * ImZ << '\n';
+      cout << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
+      //cout << ReX << '\t' << ImX << '\t' << ReY << '\t' << ImY << '\t' <<  ReZ << '\t' << ImZ << endl;
     }
-  
-  energy.close(); polarization.close();
+  */
+  energy.close(); //polarization.close();
   
 
   /*
