@@ -96,6 +96,19 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   //
   void EvaluateSumPrefactors();
 
+ protected:
+
+  // evaluate composite fermion monopole spherical harmonic 
+  //
+  // spinorUCoordinates = spinor u coordinates where the function has to be evalauted
+  // spinorVCoordinates = spinor v coordinates where the function has to be evalauted
+  // coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
+  // momentum = monopole spherical harmonic Lz momentum
+  // landauLevel = index of the pseudo Landau level
+  // return value = value of the monopole spherical harmonic at the givne point
+  Complex EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
+				      int coordinate, int momentum, int landauLevel);
+
 };
 
 #endif
