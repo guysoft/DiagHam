@@ -50,6 +50,7 @@ int main(int argc, char** argv)
 					-1);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  SingleIntegerOption MemorySpaceOption ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
   OptionList += &NbrFermionOption;
   OptionList += &LzMaxOption;
   OptionList += &MemoryOption;
+  OptionList += &MemorySpaceOption;
   OptionList += &InitialLzOption;
   OptionList += &NbrLzOption;
   OptionList += &VectorMemoryOption;
@@ -97,7 +99,8 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrFermions = NbrFermionOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
-  long Memory = MemoryOption.GetInteger() << 20;
+  long Memory = ((unsigned long) MemoryOption.GetInteger()) << 20;
+  unsigned long MemorySpace = ((unsigned long) MemorySpaceOption.GetInteger()) << 20;
   int InitialLz = InitialLzOption.GetInteger();
   int NbrLz = NbrLzOption.GetInteger();
   int VectorMemory = VectorMemoryOption.GetInteger();
@@ -147,7 +150,7 @@ int main(int argc, char** argv)
     {
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
-      FermionOnSphere Space (NbrFermions, L, LzMax);
+      FermionOnSphere Space (NbrFermions, L, LzMax, MemorySpace);
       /*      for (int j = 0; j < 100; ++j)
 	for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
 	  Space.FindStateIndex(Space.StateDescription[i], Space.StateLzMax[i]);

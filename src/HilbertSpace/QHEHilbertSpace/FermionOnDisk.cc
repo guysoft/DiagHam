@@ -275,7 +275,7 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
       NewLzMax = m1;
     }
   else
-    {
+    {      
       coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__

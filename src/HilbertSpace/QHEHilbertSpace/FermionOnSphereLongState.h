@@ -482,7 +482,7 @@ inline void FermionOnSphereLongState::DecrementOccupation (const int& stateIndex
 inline bool FermionOnSphereLongState::TestAndDecrementOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
-  if ((this->StateDescription[stateIndex >> 6] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f))) == 0)
+  if ((this->StateDescription[stateIndex >> 6] & (((unsigned long) 0x1) << (stateIndex & ((unsigned long) 0x3f)))) == 0)
     return false;
   else
     {

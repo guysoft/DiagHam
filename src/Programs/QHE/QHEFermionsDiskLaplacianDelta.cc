@@ -44,23 +44,31 @@ int main(int argc, char** argv)
   SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 30);
   SingleIntegerOption LzMaxOption ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
   SingleIntegerOption LzMinOption ('\n', "minimum-momentum", "minimum single particle momentum to study", 0, true, 1);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
   SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
-  
+  SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
+  BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
+
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &SMPNbrProcessorOption;
   OptionList += &NbrFermionOption;
   OptionList += &IterationOption;
+  OptionList += &NbrIterationOption;
   OptionList += &NbrEigenvaluesOption;
   OptionList += &LzMaxOption;
   OptionList += &LzMinOption;
   OptionList += &MemoryOption;
+  OptionList += &VectorMemoryOption;
+  OptionList += &DiskOption;
+  OptionList += &ResumeOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsDiskLaplacianDelta -h" << endl;
@@ -76,6 +84,7 @@ int main(int argc, char** argv)
   bool SMPFlag = SMPOption.GetBoolean();
   int NbrProcessor = SMPNbrProcessorOption.GetInteger();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
+  int NbrIterLanczos = NbrIterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrFermions = NbrFermionOption.GetInteger();
   int MMin = LzMinOption.GetInteger();
@@ -87,6 +96,9 @@ int main(int argc, char** argv)
   long Memory = MemoryOption.GetInteger() << 20;
   char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
   char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
+  bool ResumeFlag = ResumeOption.GetBoolean();
+  bool DiskFlag = DiskOption.GetBoolean();
+  int VectorMemory = VectorMemoryOption.GetInteger();
 
   char* OutputName = new char [1024];
   sprintf (OutputName, "fermions_disk_laplaciandelta_n_%d_l_%d.dat", NbrFermions, MMax);
@@ -137,27 +149,45 @@ int main(int argc, char** argv)
 	  AbstractLanczosAlgorithm* Lanczos;
 	  if (NbrEigenvalue == 1)
 	    {
-	       Lanczos = new BasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      if (DiskFlag == false)
+		Lanczos = new BasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		Lanczos = new BasicLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
 	    }
 	  else
 	    {
-	      Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      if (DiskFlag == false)
+		Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
 	  double Lowest = PreviousLowest;
 	  int CurrentNbrIterLanczos = 0;
 	  Lanczos->SetHamiltonian(Hamiltonian);
-	  Lanczos->InitializeLanczosAlgorithm();
+	  if ((DiskFlag == true) && (ResumeFlag == true))
+	    Lanczos->ResumeLanczosAlgorithm();
+	  else
+	    Lanczos->InitializeLanczosAlgorithm();
 	  cout << "Run Lanczos Algorithm" << endl;
 	  timeval TotalStartingTime;
 	  timeval TotalEndingTime;
 	  double Dt;
 	  gettimeofday (&(TotalStartingTime), 0);
-	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	  if (ResumeFlag == false)
+	    {
+	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
+	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	      if ((DiskFlag == true) && (CurrentNbrIterLanczos >= NbrIterLanczos))
+		{
+		  NbrIterLanczos = CurrentNbrIterLanczos + 1;
+		}
+	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
-	  while ((Lanczos->TestConvergence() == false) &&  (CurrentNbrIterLanczos < MaxNbrIterLanczos))
+	  while ((Lanczos->TestConvergence() == false) && (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
+							   ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))
 	    {
 	      ++CurrentNbrIterLanczos;
 	      Lanczos->RunLanczosAlgorithm(1);

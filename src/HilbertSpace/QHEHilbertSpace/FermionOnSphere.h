@@ -65,8 +65,11 @@ class FermionOnSphere :  public ParticleOnSphere
   int* LookUpTableShift;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
+
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 
@@ -77,7 +80,8 @@ class FermionOnSphere :  public ParticleOnSphere
   // nbrFermions = number of fermions
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
-  FermionOnSphere (int nbrFermions, int totalLz, int lzMax);
+  // memory = amount of memory granted for precalculations
+  FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -176,7 +180,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(int memory);
+  void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
   // 
