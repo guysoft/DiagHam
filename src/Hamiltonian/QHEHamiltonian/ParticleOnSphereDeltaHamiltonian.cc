@@ -71,6 +71,11 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (precalculationFileName == 0)
     {
       if (memory > 0)

@@ -44,12 +44,15 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
 
  protected:
 
-  // index of the first scalar product to evaluate 
-  int FirstScalarProduct;
-  // number of component 
+  // index of the first component of each partial scalar product
+  int FirstComponent;
+  // number of component to take into account for each partial scalar product
+  int NbrComponents;
+
+  // number of scalar products
   int NbrScalarProduct;
 
-  // array containing the scalar product
+  // array containing the scalar products
   double* ScalarProducts;
 
   // array of vectors to use for the right hand side of the scalar product
@@ -97,11 +100,26 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   //
   ~MultipleRealScalarProductOperation();
   
+  // set the array where scalar products have to be stored
+  //
+  // scalarProducts = array where scalar products have to be stored
+  void SetScalarProducts (double* scalarProducts);
+
+  // get the array where scalar products have to be stored
+  //
+  // return value = array where scalar products have to be stored
+  double* GetScalarProducts ();
+
+  // get the vector used as the left hand side of the scalar product
+  //
+  // return value = pointer to the vector
+  RealVector* GetLeftVector();
+
   // set index range of scalar product that have to be calculated
   // 
-  // firstScalarProduct = index of the first scalar product to evaluate
-  // nbrScalarProduct = number of scalar products that have to be evaluated
-  void SetIndicesRange (const int& firstScalarProduct, const int& nbrScalarProduct);
+  // firstComponent = index of the first component of each partial scalar product
+  // nbrComponent = number of component to take into account for each partial scalar product
+  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
   // get the number of scalar products that have to be evaluated
   // 
@@ -127,6 +145,24 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
 inline int MultipleRealScalarProductOperation::GetNbrScalarProduct ()
 {
   return this->NbrScalarProduct;
+}
+
+// get the array where scalar products have to be stored
+//
+// return value = array where scalar products have to be stored
+
+inline double* MultipleRealScalarProductOperation::GetScalarProducts ()
+{
+  return this->ScalarProducts;
+}
+
+// get the vector used as the left hand side of the scalar product
+//
+// return value = pointer to the vector
+
+inline RealVector* MultipleRealScalarProductOperation::GetLeftVector()
+{
+  return this->LeftVector;
 }
 
 #endif

@@ -61,7 +61,7 @@ AbstractArchitecture::~AbstractArchitecture()
 void AbstractArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
 {
   minIndex = 0;
-  maxIndex = 0;
+  maxIndex = this->HilbertSpaceDimension - 1;
 }
   
 // get a new real vector with memory alloaction depending on the architecture

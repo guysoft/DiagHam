@@ -11,9 +11,9 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
-#include "Architecture/MonoProcessorArchitecture.h"
-#include "Architecture/SMPArchitecture.h"
-#include "Architecture/SimpleMPIArchitecture.h"
+
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -43,14 +43,15 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   OptionManager Manager ("QHEFermionsLaplacianDelta" , "0.01");
-  OptionGroup* ParallelizationGroup  = new OptionGroup ("parallelization options");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
-  Manager += ParallelizationGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
@@ -61,11 +62,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure laplacian delta if 0)", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
-  (*ParallelizationGroup) += new BooleanOption  ('S', "SMP", "enable SMP mode");
-  (*ParallelizationGroup) += new SingleIntegerOption  ('\n', "processors", "number of processors to use in SMP mode", 2);
-#ifdef __MPI__
-  (*ParallelizationGroup) += new BooleanOption  ('\n', "mpi", "enable MPI mode");  
-#endif
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 					     "maximum Hilbert space dimension for which full diagonalization is applied", 500, true, 100);
@@ -94,13 +90,6 @@ int main(int argc, char** argv)
   bool ResumeFlag = ((BooleanOption*) Manager["help"])->GetBoolean();
   bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
-  bool SMPFlag = ((BooleanOption*) Manager["SMP"])->GetBoolean();
-#ifdef __MPI__
-  bool MPIFlag = ((BooleanOption*) Manager["mpi"])->GetBoolean();
-#else
-  bool MPIFlag = false;
-#endif
-  int NbrProcessor = ((SingleIntegerOption*) Manager["processors"])->GetInteger();
   int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
@@ -116,7 +105,6 @@ int main(int argc, char** argv)
   char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
   double CoulombFactor = ((SingleDoubleOption*) Manager["add-coulomb"])->GetDouble();
 
-  int InvNu = 2;
   double GroundStateEnergy = 0.0;
   double Shift = -10.0;
   char* OutputNameLz = new char [256];
@@ -125,23 +113,11 @@ int main(int argc, char** argv)
   else
     sprintf (OutputNameLz, "fermions_coulomblaplaciandelta_n_%d_2s_%d_%f_lz.dat", NbrFermions, LzMax, CoulombFactor);
 
-  char* OutputNameL = "fermions_l.dat";
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
   int Max = ((LzMax - NbrFermions + 1) * NbrFermions);
   int TotalSize = 0;
-  double** Eigenvalues = new double* [2 * Max + 1];
-  int* Dimensions = new int [2 * Max + 1];
-
-  AbstractArchitecture* Architecture = 0;
-  if (SMPFlag == false)
-    if (MPIFlag == false)
-      Architecture = new MonoProcessorArchitecture;
-    else
-      Architecture = new SimpleMPIArchitecture;
-  else
-    Architecture = new SMPArchitecture(NbrProcessor);
 
   int  L = 0;
   if ((abs(Max) & 1) != 0)
@@ -170,12 +146,12 @@ int main(int argc, char** argv)
       FermionOnSphere Space (NbrFermions, L, LzMax, MemorySpace);
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
-      Architecture->SetDimension(Space.GetHilbertSpaceDimension());
+      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian;
       if (CoulombFactor == 0.0)
-	Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+	Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
       else
-	Hamiltonian = new ParticleOnSphereCoulombLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, CoulombFactor, Architecture, Memory, LoadPrecalculationFileName);
+	Hamiltonian = new ParticleOnSphereCoulombLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, CoulombFactor, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
 	{
@@ -211,16 +187,16 @@ int main(int argc, char** argv)
 	  if (NbrEigenvalue == 1)
 	    {
 	      if (DiskFlag == false)
-		Lanczos = new BasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new BasicLanczosAlgorithm(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	      else
-		Lanczos = new BasicLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new BasicLanczosAlgorithmWithDiskStorage(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	    }
 	  else
 	    {
 	      if (DiskFlag == false)
-		Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	      else
-		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (Architecture.GetArchitecture(), NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
 	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
@@ -271,7 +247,7 @@ int main(int argc, char** argv)
 	       << CurrentNbrIterLanczos << endl;
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
-	      cout << TmpMatrix.DiagonalElement(i) << " ";
+	      cout << (TmpMatrix.DiagonalElement(i) - Shift) << " ";
 	      File << (int) (L / 2) << " " << (TmpMatrix.DiagonalElement(i) - Shift) << endl;
 	    }
 	  cout << endl;
@@ -289,7 +265,6 @@ int main(int argc, char** argv)
       delete Hamiltonian;
     }
   File.close();
-  delete Architecture;
 
   return 0;
 }

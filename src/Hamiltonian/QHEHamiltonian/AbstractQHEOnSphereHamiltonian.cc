@@ -178,7 +178,6 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Shift = -0.5 * ((double) (this->NbrParticles * this->NbrParticles)) / (0.5 * ((double) this->LzMax));
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
@@ -213,7 +212,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < Dim)
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	  vDestination[i] += Shift * vSource[i];
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
 	}
     }
   else
@@ -224,15 +223,17 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	  double* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-	      Coefficient = vSource[i];
+	      Coefficient = vSource[i + this->PrecalculationShift];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[i] += Shift * Coefficient;
+	      vDestination[i + this->PrecalculationShift] += this->HamiltonianShift * Coefficient;
 	    }
 	}
       else
@@ -241,6 +242,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	  double* TmpCoefficientArray; 
 	  int j;
 	  int TmpNbrInteraction;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
 	  int Pos = firstComponent / this->FastMultiplicationStep; 
 	  int PosMod = firstComponent % this->FastMultiplicationStep;
 	  if (PosMod != 0)
@@ -253,10 +256,10 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
 	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      Coefficient = vSource[i];
+	      Coefficient = vSource[i + this->PrecalculationShift];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[i] += Shift * Coefficient;
+	      vDestination[i + this->PrecalculationShift] += this->HamiltonianShift * Coefficient;
 	      ++Pos;
 	    }
 	  int Index;
@@ -266,6 +269,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	  int m4;
 	  double TmpInteraction;
 	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
 	    if (PosMod != k)
 	      {		
@@ -293,7 +298,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 		    Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		    if (Index < Dim)
 		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		    vDestination[i] += Shift * vSource[i];
+		    vDestination[i] += this->HamiltonianShift * vSource[i];
 		  }
 	      }
 	}
@@ -381,9 +386,13 @@ List<Matrix*> AbstractQHEOnSphereHamiltonian::RightInteractionOperators()
 
 long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
-
-  this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  
+  this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     this->NbrInteractionPerComponent[i] = 0;
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
@@ -395,11 +404,11 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
   this->Architecture->ExecuteOperation(&Operation);
 
   long Memory = 0;
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
     Memory += this->NbrInteractionPerComponent[i];
 
   cout << "nbr interaction = " << Memory << endl;
-  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
@@ -407,12 +416,12 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
       while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
 	{
 	  ++this->FastMultiplicationStep;
-	  ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
 	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
 	    ++ReducedSpaceDimension;
 	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
 	  Memory = 0;
-	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
+	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
       int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
@@ -424,7 +433,7 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
     }
   else
     {
-      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension()) + (Memory * (sizeof (int) + sizeof(double)));
+      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
       this->FastMultiplicationStep = 1;
     }
 
@@ -452,6 +461,7 @@ long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstCo
   int m2;
   int m3;
   int m4;
+  cout << "test " << firstComponent << " " << this->PrecalculationShift << " " << lastComponent << endl;
   int LastComponent = lastComponent + firstComponent;
   for (int i = firstComponent; i < LastComponent; ++i)
     {
@@ -465,7 +475,7 @@ long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstCo
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      ++Memory;
-	      ++this->NbrInteractionPerComponent[i];
+	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
 	    }
 	}    
     }
@@ -477,6 +487,10 @@ long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstCo
 
 void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 {
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int Index;
   double Coefficient;
   int m1;
@@ -491,14 +505,14 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start" << endl;
-  int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+  int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
   int TotalPos = 0;
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
@@ -511,7 +525,7 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = m1 + m2 - m3;
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	  Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[Pos] = Index;

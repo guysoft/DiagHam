@@ -71,6 +71,11 @@ ParticleOnSphereDipolarHamiltonian::ParticleOnSphereDipolarHamiltonian(ParticleO
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -107,8 +112,12 @@ ParticleOnSphereDipolarHamiltonian::~ParticleOnSphereDipolarHamiltonian()
   delete[] this->M3Value;
   if (this->FastMultiplicationFlag == true)
     {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
 	++ReducedDim;
       for (int i = 0; i < ReducedDim; ++i)
 	{
@@ -358,43 +367,4 @@ void ParticleOnSphereDipolarHamiltonian::EvaluateInteractionFactors()
 }
 
 
-
-// Mathematica Output Stream overload
-//
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereDipolarHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  Str << "{";
-  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
-    {
-      Str << "{";
-      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-	{
-	  Str << TmpV[j][i] << ",";
-	}
-      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
-    }
-  Str << "{";
-  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-    {
-      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
-    }
-  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
-}
 

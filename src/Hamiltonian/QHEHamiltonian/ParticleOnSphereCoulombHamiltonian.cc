@@ -69,8 +69,13 @@ ParticleOnSphereCoulombHamiltonian::ParticleOnSphereCoulombHamiltonian(ParticleO
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
+  this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (precalculationFileName == 0)
     {
       if (memory > 0)

@@ -44,9 +44,12 @@ class MultipleComplexScalarProductOperation: public AbstractArchitectureOperatio
 
  protected:
 
-  // index of the first scalar product to evaluate 
-  int FirstScalarProduct;
-  // number of component 
+  // index of the first component of each partial scalar product
+  int FirstComponent;
+  // number of component to take into account for each partial scalar product
+  int NbrComponents;
+
+  // number of scalar products
   int NbrScalarProduct;
 
   // array containing the scalar product
@@ -97,11 +100,26 @@ class MultipleComplexScalarProductOperation: public AbstractArchitectureOperatio
   //
   ~MultipleComplexScalarProductOperation();
   
+  // set the array where scalar products have to be stored
+  //
+  // scalarProducts = array where scalar products have to be stored
+  void SetScalarProducts (Complex* scalarProducts);
+
+  // get the array where scalar products have to be stored
+  //
+  // return value = array where scalar products have to be stored
+  Complex* GetScalarProducts ();
+
+  // get the vector used as the left hand side of the scalar product
+  //
+  // return value = pointer to the vector
+  ComplexVector* GetLeftVector();
+
   // set index range of scalar product that have to be calculated
   // 
-  // firstScalarProduct = index of the first scalar product to evaluate
-  // nbrScalarProduct = number of scalar products that have to be evaluated
-  void SetIndicesRange (const int& firstScalarProduct, const int& nbrScalarProduct);
+  // firstComponent = index of the first component of each partial scalar product
+  // nbrComponent = number of component to take into account for each partial scalar product
+  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
   // get the number of scalar products that have to be evaluated
   // 
@@ -127,6 +145,24 @@ class MultipleComplexScalarProductOperation: public AbstractArchitectureOperatio
 inline int MultipleComplexScalarProductOperation::GetNbrScalarProduct ()
 {
   return this->NbrScalarProduct;
+}
+
+// get the array where scalar products have to be stored
+//
+// return value = array where scalar products have to be stored
+
+inline Complex* MultipleComplexScalarProductOperation::GetScalarProducts ()
+{
+  return this->ScalarProducts;
+}
+
+// get the vector used as the left hand side of the scalar product
+//
+// return value = pointer to the vector
+
+inline ComplexVector* MultipleComplexScalarProductOperation::GetLeftVector()
+{
+  return this->LeftVector;
 }
 
 #endif

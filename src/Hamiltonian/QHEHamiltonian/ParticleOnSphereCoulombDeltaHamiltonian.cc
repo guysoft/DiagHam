@@ -70,8 +70,13 @@ ParticleOnSphereCoulombDeltaHamiltonian::ParticleOnSphereCoulombDeltaHamiltonian
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
+  this->HamiltonianShift = -0.5 * ((double) (this->NbrParticles * this->NbrParticles)) / (0.5 * ((double) this->LzMax));
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);

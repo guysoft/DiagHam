@@ -159,7 +159,16 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
 
 bool SimpleMPIArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->GetDestinationVector()->ClearVector();
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  operation->GetDestinationVector()->SumVector(MPI::COMM_WORLD, 0);
+  operation->GetDestinationVector()->BroadcastVector(MPI::COMM_WORLD, 0);
+  return true;
+#else
+  return false;
+#endif
 }
   
 
@@ -170,7 +179,22 @@ bool SimpleMPIArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation
 
 bool SimpleMPIArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  for (int i = 0; i < this->NbrMPINodes; ++i)
+    if (i == this->MPIRank)
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+      }
+    else
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
+      }
+  return true;
+#else
+  return false;
+#endif
 }  
 
 // execute an architecture-dependent add complex linear combination operation
@@ -180,7 +204,22 @@ bool SimpleMPIArchitecture::ExecuteOperation (AddRealLinearCombinationOperation*
 
 bool SimpleMPIArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  for (int i = 0; i < this->NbrMPINodes; ++i)
+    if (i == this->MPIRank)
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+      }
+    else
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
+      }
+  return true;
+#else
+  return false;
+#endif
 }  
 
 // execute an architecture-dependent multiple real scalar product operation
@@ -190,7 +229,24 @@ bool SimpleMPIArchitecture::ExecuteOperation (AddComplexLinearCombinationOperati
 
 bool SimpleMPIArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  double* TmpScalarProducts = 0;
+  if (this->MPIRank == 0)
+    TmpScalarProducts = new double [operation->GetNbrScalarProduct()];
+  MPI::COMM_WORLD.Reduce(operation->GetScalarProducts(), TmpScalarProducts, operation->GetNbrScalarProduct(), MPI::DOUBLE, MPI::SUM, 0);
+  if (this->MPIRank == 0)
+    {
+      for (int i = 0; i < operation->GetNbrScalarProduct(); ++i)
+	operation->GetScalarProducts()[i] = TmpScalarProducts[i];
+      delete[] TmpScalarProducts;
+    }
+  MPI::COMM_WORLD.Bcast(operation->GetScalarProducts(), operation->GetNbrScalarProduct(), MPI::DOUBLE, 0);  
+  return true;
+#else
+  return false;
+#endif
 }  
 
 // execute an architecture-dependent multiple complex scalar product operation
@@ -200,7 +256,24 @@ bool SimpleMPIArchitecture::ExecuteOperation (MultipleRealScalarProductOperation
 
 bool SimpleMPIArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  Complex* TmpScalarProducts = 0;
+  if (this->MPIRank == 0)
+    TmpScalarProducts = new Complex [operation->GetNbrScalarProduct()];
+  MPI::COMM_WORLD.Reduce(operation->GetScalarProducts(), TmpScalarProducts, operation->GetNbrScalarProduct(), MPI::COMPLEX, MPI::SUM, 0);
+  if (this->MPIRank == 0)
+    {
+      for (int i = 0; i < operation->GetNbrScalarProduct(); ++i)
+	operation->GetScalarProducts()[i] = TmpScalarProducts[i];
+      delete[] TmpScalarProducts;
+    }
+  MPI::COMM_WORLD.Bcast(operation->GetScalarProducts(), operation->GetNbrScalarProduct(), MPI::COMPLEX, 0);  
+  return true;
+#else
+  return false;
+#endif
 }  
 
 // execute an architecture-dependent matrix matrix multiplication operation
@@ -220,5 +293,11 @@ bool SimpleMPIArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* ope
 
 bool SimpleMPIArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  return true;
+#else
+  return false;
+#endif
 }

@@ -233,21 +233,30 @@ bool SMPArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* op
 
 bool SMPArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
 {
-  int Step = operation->GetNbrScalarProduct() / this->NbrProcesses;
+  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrProcesses;
   int FirstComponent = 0;
   int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  this->ThreadParameters[0].Operation = operation;
+  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[0].Operation))->SetIndicesRange(FirstComponent, Step);
+  FirstComponent += Step;
+  for (int i = 1; i < ReducedNbrProcesses; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
-      ((AddRealLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
-      FirstComponent += Step;
+      ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetScalarProducts(new double [operation->GetNbrScalarProduct()]);
+      FirstComponent += Step;            
     }
   this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
   ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
-														  operation->GetNbrScalarProduct() - FirstComponent);  
+														   operation->GetLeftVector()->GetVectorDimension() - 
+														   FirstComponent);  
+  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetScalarProducts(new double [operation->GetNbrScalarProduct()]);
   this->SendJobs();
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrProcesses; ++i)
     {
+      for (int j = 0; j < operation->GetNbrScalarProduct(); ++j)
+	operation->GetScalarProducts()[j] += ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts()[j];
+      delete[] ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts();
       delete this->ThreadParameters[i].Operation;
     }
   return true;
@@ -260,21 +269,30 @@ bool SMPArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* oper
 
 bool SMPArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
 {
-  int Step = operation->GetNbrScalarProduct() / this->NbrProcesses;
+  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrProcesses;
   int FirstComponent = 0;
   int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  this->ThreadParameters[0].Operation = operation;
+  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[0].Operation))->SetIndicesRange(FirstComponent, Step);
+  FirstComponent += Step;
+  for (int i = 1; i < ReducedNbrProcesses; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
-      ((AddRealLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
-      FirstComponent += Step;
+      ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetScalarProducts(new Complex [operation->GetNbrScalarProduct()]);
+      FirstComponent += Step;            
     }
   this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
   ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
-														  operation->GetNbrScalarProduct() - FirstComponent);  
+														   operation->GetLeftVector()->GetVectorDimension() - 
+														   FirstComponent);  
+  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetScalarProducts(new Complex [operation->GetNbrScalarProduct()]);
   this->SendJobs();
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrProcesses; ++i)
     {
+      for (int j = 0; j < operation->GetNbrScalarProduct(); ++j)
+	operation->GetScalarProducts()[j] += ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts()[j];
+      delete[] ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts();
       delete this->ThreadParameters[i].Operation;
     }
   return true;

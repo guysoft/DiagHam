@@ -190,6 +190,15 @@ class ComplexVector : public Vector
   // return value = result of scalar product
   friend Complex operator * (const RealVector& V1, const ComplexVector& V2);
 
+  // do part of the scalar product between two vectors in a given range of indices
+  //
+  // vRight = right vector of the scalar product
+  // firstComponent = index of the first component to consider
+  // nbrComponent = number of components to consider
+  // step = increment between to consecutive indices to consider
+  // return value = result of the partial scalar product
+  Complex PartialScalarProduct (const ComplexVector& vRight, int firstComponent, int nbrComponent, int step = 1);
+
   // sum two vectors
   //
   // V1 = vector to add
@@ -640,6 +649,47 @@ class ComplexVector : public Vector
   // v = vector to print
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v);
+
+#ifdef __MPI__
+
+  // send a vector to a given MPI process
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // return value = reference on the current vector
+  Vector& SendVector(MPI::Intracomm& communicator, int id);
+
+  // broadcast a vector to all MPI processes associated to the same communicator
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // return value = reference on the current vector
+  Vector& BroadcastVector(MPI::Intracomm& communicator,  int id);
+
+  // broadcast part of vector to all MPI processes associated to the same communicator
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // firstComponent = index of the first component (useless if the method is not called by the MPI process which broadcasts the vector)
+  // nbrComponent = number of component (useless if the method is not called by the MPI process which broadcasts the vector)
+  // return value = reference on the current vector
+  Vector& BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent = 0, int nbrComponent = 0);
+
+  // receive a vector from a MPI process
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the source MPI process
+  // return value = reference on the current vector
+  Vector& ReceiveVector(MPI::Intracomm& communicator, int id);
+
+  // add current vector to the current vector of a given MPI process
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the destination MPI process
+  // return value = reference on the current vector
+  Vector& SumVector(MPI::Intracomm& communicator, int id);
+
+#endif
 
 };
 

@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
 #include <iostream>
 
@@ -46,7 +46,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnSphereDeltaModifiedHamiltonian : public AbstractHamiltonian
+class ParticleOnSphereDeltaModifiedHamiltonian : public AbstractQHEOnSphereHamiltonian
 {
 
  protected:

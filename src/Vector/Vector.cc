@@ -220,3 +220,64 @@ ostream& operator << (ostream& str, const Vector& v)
   return str;
 }
 
+#ifdef __MPI__
+
+// send a vector to a given MPI process
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current vector
+
+Vector& Vector::SendVector(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+// broadcast a vector to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// return value = reference on the current vector
+
+Vector& Vector::BroadcastVector(MPI::Intracomm& communicator,  int id)
+{
+  return *this;
+}
+
+// broadcast part of vector to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// firstComponent = index of the first component (useless if the method is not called by the MPI process which broadcasts the vector)
+// nbrComponent = number of component (useless if the method is not called by the MPI process which broadcasts the vector)
+// return value = reference on the current vector
+
+Vector& Vector::BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+{
+  return *this;
+}
+
+// receive a vector from a MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the source MPI process
+// return value = reference on the current vector
+
+Vector& Vector::ReceiveVector(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+// add current vector to the current vector of a given MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current vector
+
+Vector& Vector::SumVector(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+#endif
+

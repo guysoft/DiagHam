@@ -6,10 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a sphere with        //
-//                              dipolar interaction                           //
+//                         class of Architecture Manager                      //
 //                                                                            //
-//                        last modification : 11/05/2004                      //
+//                        last modification : 28/05/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,57 +28,49 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREDIPOLARHAMILTONIAN_H
-#define PARTICLEONSPHEREDIPOLARHAMILTONIAN_H
+#ifndef ARCHITECTUREMANAGER_H
+#define ARCHITECTUREMANAGER_H
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereHamiltonian.h"
-
-#include <iostream>
 
 
-using std::ostream;
-
-
-class MathematicaOutput;
 class AbstractArchitecture;
+class OptionManager;
 
 
-class ParticleOnSphereDipolarHamiltonian : public AbstractQHEOnSphereHamiltonian
+class ArchitectureManager
 {
 
-  friend class QHEParticlePrecalculationOperation;
+ protected:
+
+  // pointer to the best avalaible architecture in agrement with the option constraints
+  AbstractArchitecture* Architecture;
+
+  // pointer to the option manager
+  OptionManager* Options;
 
  public:
 
-  // constructor from default datas
+  // default constructor
   //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // lzmax = maximum Lz value reached by a particle in the state
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereDipolarHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, long memory = -1, 
-				     char* precalculationFileName = 0);
+  ArchitectureManager();
 
   // destructor
   //
-  ~ParticleOnSphereDipolarHamiltonian();
-
-  // clone hamiltonian without duplicating datas
-  //
-  // return value = pointer to cloned hamiltonian
-  AbstractHamiltonian* Clone ();
-
- protected:
+  ~ArchitectureManager();
  
-  // evaluate all interaction factors
-  //   
-  void EvaluateInteractionFactors();
+  // add an option group containing all options related to the architecture 
+  //
+  // manager = pointer to the option manager
+  void AddOptionGroup(OptionManager* manager);
+
+  // get the best avalaible architecture in agrement with the option constraints
+  //
+  // return value = pointer to the architecture
+  AbstractArchitecture* GetArchitecture();
 
 };
 
 #endif
+

@@ -42,7 +42,8 @@
 MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(ComplexVector* leftVector, ComplexVector* rightVectors, 
 									     int nbrScalarProduct, Complex* scalarProducts)
 {
-  this->FirstScalarProduct = 0;
+  this->FirstComponent = 0;
+  this->NbrComponents = leftVector->GetVectorDimension();
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = rightVectors; 
@@ -61,7 +62,8 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
 MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(ComplexVector* leftVector, ComplexVector** rightVectors, 
 									     int nbrScalarProduct, Complex* scalarProducts)
 {
-  this->FirstScalarProduct = 0;
+  this->FirstComponent = 0;
+  this->NbrComponents = leftVector->GetVectorDimension();
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = 0; 
@@ -80,7 +82,8 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
 MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(ComplexVector* leftVector, ComplexMatrix& rightVectors, 
 									     int nbrScalarProduct, Complex* scalarProducts)
 {
-  this->FirstScalarProduct = 0;
+  this->FirstComponent = 0;
+  this->NbrComponents = leftVector->GetVectorDimension();
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = 0; 
@@ -96,7 +99,8 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
 
 MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(const MultipleComplexScalarProductOperation& operation)
 {
-  this->FirstScalarProduct = operation.FirstScalarProduct;
+  this->FirstComponent = operation.FirstComponent;
+  this->NbrComponents = operation.NbrComponents;
   this->NbrScalarProduct = operation.NbrScalarProduct;
   this->ScalarProducts = operation.ScalarProducts;
   this->RightVectors = operation.RightVectors; 
@@ -112,15 +116,24 @@ MultipleComplexScalarProductOperation::~MultipleComplexScalarProductOperation()
 {
 }
   
+// set the array where scalar products have to be stored
+//
+// scalarProducts = array where scalar products have to be stored
+
+void MultipleComplexScalarProductOperation::SetScalarProducts (Complex* scalarProducts)
+{
+  this->ScalarProducts = scalarProducts;
+}
+
 // set index range of scalar product that have to be calculated
 // 
-// firstScalarProduct = index of the first scalar product to evaluate
-// nbrScalarProduct = number of scalar products that have to be evaluated
+// firstComponent = index of the first component of each partial scalar product
+// nbrComponent = number of component to take into account for each partial scalar product
 
-void MultipleComplexScalarProductOperation::SetIndicesRange (const int& firstScalarProduct, const int& nbrScalarProduct)
+void MultipleComplexScalarProductOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
-  this->FirstScalarProduct = firstScalarProduct;
-  this->NbrScalarProduct = nbrScalarProduct;
+  this->FirstComponent = firstComponent;
+  this->NbrComponents = nbrComponent;
 }
 
 // clone operation
@@ -138,27 +151,26 @@ AbstractArchitectureOperation* MultipleComplexScalarProductOperation::Clone()
 
 bool MultipleComplexScalarProductOperation::ApplyOperation()
 {
-  int LastScalarProduct = this->FirstScalarProduct + this->NbrScalarProduct;
   if (this->RightVectors != 0)
     {
-      for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+      for (int i = 0; i < this->NbrScalarProduct; ++i)
 	{
-	  this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectors[i]);
+	  this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectors[i], this->FirstComponent, this->NbrComponents);
 	}
     }
   else
     if (this->RightVectorsByPointers != 0)
       {
-	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	for (int i = 0; i < this->NbrScalarProduct; ++i)
 	  {
-	    this->ScalarProducts[i] = ((*(this->LeftVector)) * (*(this->RightVectorsByPointers[i])));
+	    this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct((*(this->RightVectorsByPointers[i])), this->FirstComponent, this->NbrComponents);
 	  }
       }
     else
       {
-	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	for (int i = 0; i < this->NbrScalarProduct; ++i)
 	  {
-	    this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
+	    this->ScalarProducts[i] = this->LeftVector->PartialScalarProduct(this->RightVectorMatrix[i], this->FirstComponent, this->NbrComponents);
 	  }
       }
   return true;

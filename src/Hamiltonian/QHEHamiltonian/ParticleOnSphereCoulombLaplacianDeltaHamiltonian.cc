@@ -77,9 +77,14 @@ ParticleOnSphereCoulombLaplacianDeltaHamiltonian::ParticleOnSphereCoulombLaplaci
   else
   if (this->Ratio > 1.0)
     this->Ratio = 1.0;    
+  this->HamiltonianShift = 0.0;
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (precalculationFileName == 0)
     {
       if (memory > 0)
