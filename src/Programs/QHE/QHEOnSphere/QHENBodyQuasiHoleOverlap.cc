@@ -106,6 +106,9 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
+  RealVector** SortedTestVectors = new RealVector*[MaxNbrLz];
+  int* NbrSortedTestVectors = new int [MaxNbrLz];
+
   for (int i = 0; i < MaxNbrLz; ++i)
     {
       int Lz = i << 1;
@@ -124,6 +127,9 @@ int main(int argc, char** argv)
 	    }
      
 	}
+
+      for (int l = 0; l < MaxNbrLz; ++l)
+	NbrSortedTestVectors[l] = 0;
 
       RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
       if (Degeneracy[i] > 1)
@@ -148,10 +154,14 @@ int main(int argc, char** argv)
 	  TmpTriDiag.Diagonalize(TmpEigenvector);
 	  TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
 	  cout << "angular momentum of test eigenvectors = ";
+	  int TmpAngularMomentum;
 	  for (int k = 0; k < Degeneracy[i]; ++k)	    
 	    {
-	      cout << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << " ";
+	      TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)))
+	      cout << TmpAngularMomentum << " ";	      
+	      NbrSortedTestVectors[TmpAngularMomentum]++;
 	    }
+	  
 	  cout << endl;
 	  DiagonalBasis.Multiply(TmpEigenvector);
 	}
@@ -207,6 +217,8 @@ int main(int argc, char** argv)
   delete[] Degeneracy;
   delete[] InputVectors;
   delete[] OutputVectors;
+  delete[] SortedTestVectors;
+  delete[] NbrSortedTestVectors;
 
   return 0;
 }
