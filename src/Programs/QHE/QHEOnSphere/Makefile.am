@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=QHEBosonsCorrelation QHEBosonsNBodyCorrelation QHEBosonsGross QHEBosonsNBodyHardCore
+bin_PROGRAMS=QHEBosonsCorrelation QHEBosonsNBodyCorrelation QHEBosonsGross QHEBosonsNBodyHardCore QHENBodyQuasiHoleOverlap
 
 QHEBosonsCorrelation_SOURCES=QHEBosonsCorrelation.cc
 
@@ -9,6 +9,8 @@ QHEBosonsNBodyCorrelation_SOURCES=QHEBosonsNBodyCorrelation.cc
 QHEBosonsGross_SOURCES=QHEBosonsGross.cc
 
 QHEBosonsNBodyHardCore_SOURCES=QHEBosonsNBodyHardCore.cc
+
+QHENBodyQuasiHoleOverlap_SOURCES=QHENBodyQuasiHoleOverlap.cc
 
 QHEBosonsCorrelation_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/Operator/QHEOperator/libQHEOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a $(top_builddir)/src/Tools/QHE/QHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a
 
@@ -26,3 +28,7 @@ QHEBosonsNBodyHardCore_LDADD=-L$(top_builddir)/src/Architecture -L$(top_builddir
 QHEBosonsGross_DEPENDENCIES=$(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/Options/libOptions.a
 
 QHEBosonsGross_LDADD=-L$(top_builddir)/src/MathTools -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -lMathTools -lGeneralTools -lOptions @MATH_LIBS@ @THREAD_LIBS@
+
+QHENBodyQuasiHoleOverlap_DEPENDENCIES=$(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a 
+
+QHENBodyQuasiHoleOverlap_LDADD=-L$(top_builddir)/src/MathTools  -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -lMathTools  -lVector -lMatrix -lGeneralTools -lOptions @MATH_LIBS@ @THREAD_LIBS@

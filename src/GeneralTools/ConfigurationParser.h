@@ -87,6 +87,12 @@ class ConfigurationParser
   // return value = reference on the output stream
   ostream& PrintLastError (ostream& str);
 
+  // dump all errors encountered during parsing operation
+  //
+  // str = reference on the output stream
+  // return value = reference on the output stream
+  ostream& DumpErrors (ostream& str);
+
  private:
 
   // clean a line from useless comments and spaces

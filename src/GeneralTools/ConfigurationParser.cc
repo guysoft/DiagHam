@@ -228,6 +228,18 @@ ostream& ConfigurationParser::DumpConfiguration (ostream& str)
 
 ostream& ConfigurationParser::PrintLastError (ostream& str)
 {
+  if (this->ErrorLog.GetNbrElement() > 0)
+    str << this->ErrorLog[this->ErrorLog.GetNbrElement() - 1];
+  return str;
+}
+
+// dump all errors encountered during parsing operation
+//
+// str = reference on the output stream
+// return value = reference on the output stream
+
+ostream& ConfigurationParser::DumpErrors (ostream& str)
+{
   ListIterator<char*> IterError(this->ErrorLog);
   char** TmpError;
   while ((TmpError = IterError()))

@@ -13,8 +13,10 @@
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
-#include "Architecture/MonoProcessorArchitecture.h"
-#include "Architecture/SMPArchitecture.h"
+
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
@@ -22,6 +24,8 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
@@ -47,80 +51,85 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  BooleanOption HelpOption ('h', "help", "display this help");
-  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
-  SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
-  SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
-  BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
-  SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 6);
-  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 9);
-  SingleIntegerOption XMomentumOption ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
-  SingleIntegerOption YMomentumOption ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
-  SingleDoubleOption XRatioOption ('r', "ratio", "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
-  SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
-  BooleanOption DiskOption ('\n', "disk", "enable disk resume capabilities", false);
-  BooleanOption ResumeOption ('\n', "resume", "resume from disk datas", false);
-  SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
-  SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
+  // some running options and help
+  OptionManager Manager ("QHEBosonsDelta" , "0.01");
+  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
-  List<AbstractOption*> OptionList;
-  OptionList += &HelpOption;
-  OptionList += &SMPOption;
-  OptionList += &GroundOption;
-  OptionList += &SMPNbrProcessorOption;
-  OptionList += &IterationOption;
-  OptionList += &NbrEigenvaluesOption;
-  OptionList += &NbrFermionOption;
-  OptionList += &MaxMomentumOption;
-  OptionList += &XMomentumOption;
-  OptionList += &YMomentumOption;
-  OptionList += &XRatioOption;
-  OptionList += &MaxFullDiagonalizationOption;
-  OptionList += &NbrIterationOption;
-  OptionList += &VectorMemoryOption;
-  OptionList += &DiskOption;
-  OptionList += &ResumeOption;
-  OptionList += &LoadPrecalculationOption;
-  OptionList += &SavePrecalculationOption;
-  if (ProceedOptions(argv, argc, OptionList) == false)
+  ArchitectureManager Architecture;
+
+  Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
+  Manager += LanczosGroup;
+  Manager += PrecalculationGroup;
+  Manager += MiscGroup;
+
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle", 18);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
+  (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
+					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 
+					      -1);
+
+
+  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "full-diag", 
+					       "maximum Hilbert space dimension for which full diagonalization is applied", 
+					       500, true, 100);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup) += new BooleanOption  ('\n', "disk", "enable disk resume capabilities", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "resume", "resume from disk datas", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
+					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", 
+					 false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
+
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
+						      500);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsTorus -h" << endl;
+      cout << "see man page for option syntax or type QHEBosonsDelta -h" << endl;
       return -1;
     }
-  if (HelpOption.GetBoolean() == true)
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
-      DisplayHelp (OptionList, cout);
+      Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  bool GroundFlag = GroundOption.GetBoolean();
-  bool SMPFlag = SMPOption.GetBoolean();
-  int NbrProcessor = SMPNbrProcessorOption.GetInteger();
-  int MaxNbrIterLanczos = IterationOption.GetInteger();
-  int NbrIterLanczos = NbrIterationOption.GetInteger();
-  int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrFermions = NbrFermionOption.GetInteger();
-  int MaxMomentum = MaxMomentumOption.GetInteger();
-  int XMomentum = XMomentumOption.GetInteger();
-  int YMomentum = YMomentumOption.GetInteger();
-  int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
-  double XRatio = NbrFermions / 4.0;
-  if (XRatioOption.GetDouble() > 0)
-    {
-       XRatio = XRatioOption.GetDouble();
-    }
-  bool ResumeFlag = ResumeOption.GetBoolean();
-  bool DiskFlag = DiskOption.GetBoolean();
-  int VectorMemory = VectorMemoryOption.GetInteger();
-  char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
-  char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
 
-  int InvNu = 3;
-//  int MaxMomentum = InvNu * NbrFermions;
+
+  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
+  int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
+  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
+  int XMomentum = ((SingleIntegerOption*) Manager["x-momentum"])->GetInteger();
+  int YMomentum = ((SingleIntegerOption*) Manager["y-momentum"])->GetInteger();
+  int MaxFullDiagonalization = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
+  double XRatio = NbrFermions / 4.0;
+  if (((SingleDoubleOption*) Manager["ratio"])->GetDouble() > 0)
+    {
+       XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+    }
+  bool ResumeFlag = ((BooleanOption*) Manager["resume"])->GetBoolean();
+  bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
+  int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
+  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
+  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
+  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+
   int L = 0;
   double GroundStateEnergy = 0.0;
 
@@ -132,19 +141,12 @@ int main(int argc, char** argv)
 
 
   
-  AbstractArchitecture* Architecture = 0;
-  if (SMPFlag == false)
-    Architecture = new MonoProcessorArchitecture;
-  else
-    Architecture = new SMPArchitecture(NbrProcessor);
-
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
   int XMaxMomentum = (MomentumModulo - 1);
   if (XMomentum < 0)
     XMomentum = 0;
   else
     XMaxMomentum = XMomentum;
-//  int YMaxMomentum = (MomentumModulo - 1);
   int YMaxMomentum = (MaxMomentum - 1);
   if (YMomentum < 0)
     YMomentum = 0;
@@ -191,15 +193,12 @@ int main(int argc, char** argv)
 		    }
 		}
 		}*/
-	  
-      AbstractArchitecture* Architecture = 0;
-      if (SMPFlag == false)
-	Architecture = new MonoProcessorArchitecture;
-      else
-	Architecture = new SMPArchitecture(NbrProcessor);
-//      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XRatio);
-      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XMomentum, XRatio,
-													Architecture, (500 << 20));
+	Architecture.GetArchitecture()->SetDimension(TotalSpace.GetHilbertSpaceDimension());
+	
+	AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (&TotalSpace, 
+													  NbrFermions, MaxMomentum, XMomentum, XRatio,
+													  Architecture.GetArchitecture(), 
+													  Memory);
       if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
 	{
 	  HermitianMatrix HRep2 (Hamiltonian->GetHilbertSpaceDimension());
@@ -236,16 +235,17 @@ int main(int argc, char** argv)
 	  if (NbrEigenvalue == 1)
 	    {
 	      if (DiskFlag == false)
-		Lanczos = new ComplexBasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new ComplexBasicLanczosAlgorithm(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	      else
-		Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	    }
 	  else
 	    {
 	      if (DiskFlag == false)
-		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	      else
-		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (Architecture.GetArchitecture(), NbrEigenvalue, VectorMemory, 
+											  MaxNbrIterLanczos);
 	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
