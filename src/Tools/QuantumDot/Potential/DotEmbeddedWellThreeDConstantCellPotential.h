@@ -82,6 +82,11 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
   // wellPotential = potential in the well barrier (0 reference: potential in the bulk, outside the dot)
   // dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
   void ConstructPotential(double wellPotential, double dotPotential);
+
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta);
  
   // determine if a cell is in the dot or wetting layer
   //

@@ -324,6 +324,22 @@ void HardBoxPyramidQuantumDotThreeDConstantCellPotential::ConstructPotential(dou
   cout << "Real proportion: " << percent << endl;  
 }
 
+// shift the potential with a given quantity
+//
+// delta = shift value
+
+void HardBoxPyramidQuantumDotThreeDConstantCellPotential::ShiftPotential(double delta)
+{
+  for (int k = 0; k < this->Under; ++k)
+    this->UnderPotentialValue[k] += delta;
+  for (int k = 0; k < (this->NumberZ - this->Under - this->Above); ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	this->PotentialValue[k][j][i] += delta;
+  for (int k = 0; k < this->Above; ++k)
+    this->AbovePotentialValue[k] += delta;
+}
+
 // determine if there is any In in the first neigbor region (6 possibilities)
 //
 // m, n, h = three coordinations of the considered cell

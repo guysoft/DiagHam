@@ -61,6 +61,9 @@ class PeriodicPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConsta
   // concentration of the alloy in the dot and wetting layer
   double Concentration;
 
+  // integer of launched ConstructPotential processes, used for the random process to prevent the same draw
+  int LaunchNumber;
+
  public:
 
   // constructor from geometric parameters
@@ -87,6 +90,11 @@ class PeriodicPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConsta
   // scratch = true if constructed from nothing, else from existing Diagram
   // fileName = file to store parameters
   void ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName);
+
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta);
 
   // determine if there is any In in the first neigbor region (6 possibilities)
   //
@@ -128,6 +136,11 @@ class PeriodicPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConsta
   // return value = the potential in the cell
   virtual double GetPotential(int i, int j, int k);
 
+  // get the concentration
+  //
+  // return = concentration value, in ration of 1.0
+  double GetConcentration();
+
   // save the whole diagram presentation in a bitmap file
   //
   // fileName = name of the file to stock the diagram presentation
@@ -157,6 +170,15 @@ inline void PeriodicPyramidQuantumDotThreeDConstantCellPotential::SetPotential(i
 inline double PeriodicPyramidQuantumDotThreeDConstantCellPotential::GetPotential(int i, int j, int k)
 {
   return this->PotentialValue[k][j][i];
+}
+
+// get the concentration
+//
+// return = concentration value, in ration of 1.0
+
+inline double PeriodicPyramidQuantumDotThreeDConstantCellPotential::GetConcentration()
+{
+  return this->Concentration;
 }
 
 #endif

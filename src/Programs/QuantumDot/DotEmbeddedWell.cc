@@ -11,7 +11,7 @@
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
-#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
@@ -130,9 +130,9 @@ int main(int argc, char** argv)
 
   // ConstructPotential(double wellPotential, double dotPotential)
   potential->ConstructPotential(WellPotential, DotPotential);
-
+  //potential->LoadPotential("DotPotential.txt");
   // define Hilbert space
-  Periodic3DOneParticle Space(M / 2, M / 4, N / 2, N / 4, H, H / 2);
+  Periodic3DOneParticle Space(M, M / 2, N, N / 2, H, H / 2);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
   cout << "Shift:  " << HamiltonianShift << endl;
   // type of lanczos algorithm (with or without reorthogonalization)
   gettimeofday (&(PrecalculationStartingTime), 0);
-  FullReorthogonalizedComplexLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+  FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage Lanczos(Architecture, NbrEigenvalue, 10, MaxNbrIterLanczos);
   
   // initialization of lanczos algorithm
   double Precision = 1.0;
@@ -203,6 +203,12 @@ int main(int argc, char** argv)
   if (EigenstateFlag == true)
     Eigenstates = (ComplexVector*) Lanczos.GetEigenstates(NbrEigenvalue);
   
+  /*
+  ComplexVector test(Hamiltonian.GetHilbertSpaceDimension());
+  ComplexVector left = Hamiltonian.LowLevelMultiply(Eigenstates[1], test);
+  Complex result = left * Eigenstates[1];
+  cout << endl << endl << Real(result) - HamiltonianShift << " rere" << endl;;
+  */
   gettimeofday (&(PrecalculationEndingTime), 0);
   Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
     ((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
@@ -229,6 +235,5 @@ int main(int argc, char** argv)
 	}
       delete[] TmpFileName;
     }
-  
   return 0;
 }

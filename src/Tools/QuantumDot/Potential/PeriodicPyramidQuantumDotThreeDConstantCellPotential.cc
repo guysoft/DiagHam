@@ -70,6 +70,7 @@ PeriodicPyramidQuantumDotThreeDConstantCellPotential::PeriodicPyramidQuantumDotT
 	  this->PotentialValue[k][j] = new double [this->NumberX];
 	}
     }
+  this->LaunchNumber = 0;
 }
 
 //destructor
@@ -93,7 +94,14 @@ PeriodicPyramidQuantumDotThreeDConstantCellPotential::~PeriodicPyramidQuantumDot
 
 void PeriodicPyramidQuantumDotThreeDConstantCellPotential::ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName)
 {
-  srand(time(NULL));
+  srand(time(NULL) + this->LaunchNumber);
+  this->LaunchNumber += 2;
+
+  if (scratch)
+    for (int k = 0; k < this->NumberZ; ++k)      
+      for (int j = 0; j < this->NumberY; ++j)
+	for (int i = 0; i < this->NumberX; ++i)
+	  this->Alloy[k][j][i] = false;
 
   int** Height = new int* [this->NumberX];
   int temp;
@@ -233,6 +241,18 @@ void PeriodicPyramidQuantumDotThreeDConstantCellPotential::ConstructPotential(do
 	}
   this->Concentration = inNCounter / dotCounter;
   delete[] ReferencePotential; delete[] Barrier; delete[] Dot; delete[] Height; 
+}
+
+// shift the potential with a given quantity
+//
+// delta = shift value
+
+void PeriodicPyramidQuantumDotThreeDConstantCellPotential::ShiftPotential(double delta)
+{
+  for (int k = 0; k < this->NumberZ; ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	this->PotentialValue[k][j][i] += delta;
 }
 
 // determine if there is any In in the first neigbor region (6 possibilities)

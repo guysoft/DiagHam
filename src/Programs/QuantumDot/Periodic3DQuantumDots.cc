@@ -36,7 +36,6 @@ using std::ostream;
 using std::ios;
 using std::ofstream;
 
-
 int main(int argc, char** argv)
 {
 
@@ -116,9 +115,9 @@ int main(int argc, char** argv)
   int LeftSize = LeftSizeOption.GetInteger();
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
-  /*
+
   // **** PROBABILITIES ****
-  double p = 0.175;
+  double p1 = 0.05; double p2 = 0.377;
 
   // *** Dot geometry ****
   int Rb = 20, Rt = 5, w = 4;
@@ -129,10 +128,6 @@ int main(int argc, char** argv)
   // *** Electric field (absolute value) ****;
   double AbsolutePiezo = 0.02;
   
-  // Pour la simulation du puits quantique InGaAs / GaAs
-  //Offset = 0.713; Piezo = 0.0; Mux = 0.0715; Muy = 0.0715; Muz = 0.0715;     
-  //Rb = 0; Rt = 0; w = 4; p = 0.5;
-   
   double Piezo;
   if (Carrier)
     {
@@ -143,31 +138,31 @@ int main(int argc, char** argv)
     {
       Offset = 1.8; Piezo = AbsolutePiezo;
       Mux = 0.166; Muy = 0.166; Muz = 0.184;
-    }
-  
-  // PeriodicPyramidQuantumDotPotential(int NbrCellX, int NbrCellY, int NbrCellZ, double Lz, int u, int a, int rb, int rt, int w, double offset, double concentration, double piezofield, bool scratch, char* logfile)
-  PeriodicPyramidQuantumDotPotential* potential = new PeriodicPyramidQuantumDotPotential(M, N, H, Lz, LeftSize, RightSize, Rb, Rt, w, Offset, p, Piezo, Carrier, "DotInput.txt");
-  
+    } 
+  // PeriodicPyramidQuantumDotThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int under, int above, int wettingWidth, int baseRadius, int topRadius)
+  PeriodicPyramidQuantumDotThreeDConstantCellPotential* potential = new PeriodicPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, w, Rb, Rt);   
+  // void ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName); 
+  double concentration = 0.0;
   if (Carrier)
     {     
-      ofstream diagram("Diagram.txt");
-      potential->PrintDiagram(diagram);
-      diagram.close();
+      do 
+	{	
+	  potential->ConstructPotential(p1, p2, Piezo, Lz, Offset, true, "DotInput.txt");
+	  concentration = potential->GetConcentration();	
+	  cout << "Concentration is:  " << concentration << endl;
+	}
+      while ((concentration > 0.18) || (concentration < 0.17));
+
+      cout << "The retained concentration is:  " << concentration << endl;   
+      potential->SaveDiagram("Diagram.txt");
     }
   else
     {
-      potential->ReadDiagram("../h/Diagram.txt");
-      potential->GeneratePotential(p, Piezo, Lz, Offset, Carrier, "DotInput.txt");
+      potential->LoadDiagram("../h/Diagram.txt");
+      potential->ConstructPotential(p1, p2, Piezo, Lz, Offset, false, "DotInput.txt");
     }
-
-  ofstream pfile("DotPotential.txt");
-  pfile.precision(14);
-  potential->PrintPotential(pfile);
-  pfile.close();  
-  */
   
-  PeriodicPyramidQuantumDotThreeDConstantCellPotential* potential = new PeriodicPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, 2, 1, 1);   
-  potential->LoadPotential("DotPotential.txt");
+  potential->SavePotential("DotPotential.txt");
 
   // define Hilbert space
   Periodic3DOneParticle Space(M, M / 2, N, N / 2, H, H / 2);
@@ -181,8 +176,6 @@ int main(int argc, char** argv)
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
     ((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
   cout << "precalculation time = " << Dt << endl;
-
-  cout << LanczosFlag << endl;
 
   ofstream Input;
   Input.open("DotInput.txt", ios::out | ios::app);
@@ -251,7 +244,7 @@ int main(int argc, char** argv)
 
       double HamiltonianShift = - (150.4 * ((1.0 / (Lx * Lx * Mux)) + (1.0 / (Ly * Ly * Muy)) + (1.0 / (Lz * Lz * Muz))));
       Hamiltonian.ShiftHamiltonian (HamiltonianShift);
-      cout << "Décalage:  " << HamiltonianShift << endl;
+      cout << "Hamiltonian shift  " << HamiltonianShift << endl;
       // type of lanczos algorithm (with or without reorthogonalization)
       // BasicLanczosAlgorithm Lanczos(Architecture, MaxNbrIterLanczos);
       gettimeofday (&(PrecalculationStartingTime), 0);

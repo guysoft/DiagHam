@@ -1,3 +1,9 @@
+#include "Options/AbstractOption.h"
+#include "Options/BooleanOption.h"
+#include "Options/SingleIntegerOption.h"
+#include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
+
 #include "Tools/QuantumDot/Spectra/Spectra.h"
 #include "Tools/QuantumDot/Spectra/OverlapSpectra.h"
 #include "Tools/QuantumDot/Spectra/AverageSpectra.h"
@@ -19,13 +25,53 @@ using std::ofstream;
 using std::ios;
 using std::endl;
 
-int main()
+int main(int argc, char** argv)
 {
-  int M = 61, N = 61, H = 60;
+
+  // some running options and help 
+  BooleanOption HelpOption ('h', "help", "display this help");
+  SingleStringOption InputFile('\n', "input", "name of the input file", 0);
+  SingleIntegerOption XCell('X', "Xcells", "number of the cells in X direction", 61);
+  SingleIntegerOption YCell('Y', "Ycells", "number of the cells in Y direction", 61);
+  SingleIntegerOption ZCell('Z', "Zcells", "number of the cells in Z direction", 60);
+  SingleIntegerOption Division('D', "division", "number of the sub-divisions in each direction", 5);
+  SingleStringOption Output('r', "output", "name of the output file", "default_output.txt");
+
+  List<AbstractOption*> OptionList;
+  OptionList += &HelpOption;
+  OptionList += &InputFile;
+  OptionList += &XCell;
+  OptionList += &YCell;
+  OptionList += &ZCell;
+  OptionList += &Division;
+  OptionList += &Output;
+
+  if (ProceedOptions(argv, argc, OptionList) == false)
+    {
+      cout << "bad options" << endl;
+      return -1;
+    }
+  if (HelpOption.GetBoolean() == true)
+    {
+      DisplayHelp (OptionList, cout);
+      return 0;
+    }
+
+  int M, N, H;
+  char* FileName;
+  int Number;
+
+  FileName = InputFile.GetString();
+  M = XCell.GetInteger();
+  N = YCell.GetInteger();
+  H = ZCell.GetInteger();
+  Number = Division.GetInteger();
+  char * out = Output.GetString();
+
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
   
-  PeriodicSpectra spectra(Space, "asgard/e/eigenvector.0");
-  ofstream OutFile("asgard/e/ProbabilityY-Z.txt");  
+  PeriodicSpectra spectra(Space, FileName);
+  ofstream OutFile(out);  
 
   // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
 
@@ -44,16 +90,18 @@ int main()
       OutFile << '\n';
     }
   OutFile.close();
-  
-  /*
+
+  //ofstream File;
+  //File.open("MeanE.txt", ios::binary | ios::out | ios::app);
   double squareX, squareY, squareZ;
-  cout << spectra.GetMeanValueX(squareX) << " ";
-  cout << squareX << endl;
-  cout << spectra.GetMeanValueY(squareY) << " ";
-  cout << squareY << endl;
-  cout << spectra.GetMeanValueZ(squareZ) << " ";
-  cout << squareZ << endl;
-  */
+  cout << spectra.GetMeanValueX(squareX) << '\t';
+  cout << squareX << '\t';
+  cout << spectra.GetMeanValueY(squareY) << '\t';
+  cout << squareY << '\t';
+  cout << spectra.GetMeanValueZ(squareZ) << '\t';
+  cout << squareZ << '\n';
+  //File.close();
+
   /*
   ThreeDPotential potential(50, 50, 30, 6, 10);
   potential.ReadDiagram("Diagram/Diagram/0.175/h/Diagram.txt");

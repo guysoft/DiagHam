@@ -43,6 +43,14 @@ OneDConstantCellPotential::~OneDConstantCellPotential()
 {
 }
 
+// shift the potential with a given quantity
+//
+// delta = shift value
+
+void OneDConstantCellPotential::ShiftPotential(double delta)
+{
+}
+
 // save the diagram of atoms in a file
 //
 // fileName = name of the file to stock the diagram

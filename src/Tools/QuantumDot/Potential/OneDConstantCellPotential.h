@@ -50,6 +50,11 @@ class OneDConstantCellPotential : public AbstractPotential
   //
   int GetNumberCell();
 
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta);
+
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram

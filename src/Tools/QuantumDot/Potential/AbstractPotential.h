@@ -42,6 +42,11 @@ class AbstractPotential
   //
   virtual ~AbstractPotential();
 
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta) = 0;
+
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram

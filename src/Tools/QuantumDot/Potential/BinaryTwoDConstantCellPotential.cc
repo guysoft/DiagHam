@@ -96,6 +96,17 @@ void BinaryTwoDConstantCellPotential::ConstructEffectivePotential(ThreeDConstant
 //
 // fileName = name of the file to stock the diagram
 
+// shift the potential with a given quantity
+//
+// delta = shift value
+
+void BinaryTwoDConstantCellPotential::ShiftPotential(double delta)
+{
+  for (int j = 0; j < this->NumberY; ++j)
+    for (int i = 0; i < this->NumberX; ++i)
+      this->PotentialValue[j][i] += delta;
+} 
+
 void BinaryTwoDConstantCellPotential::SaveDiagram(char* fileName)
 {
   ofstream file(fileName);

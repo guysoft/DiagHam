@@ -135,6 +135,19 @@ void DotEmbeddedWellThreeDConstantCellPotential::ConstructPotential(double wellP
 	  this->PotentialValue[k][j][i] = 0.0;
 	}
 }
+
+
+// shift the potential with a given quantity
+//
+// delta = shift value
+
+void DotEmbeddedWellThreeDConstantCellPotential::ShiftPotential(double delta)
+{
+  for (int k = 0; k < this->NumberZ; ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	this->PotentialValue[k][j][i] += delta;
+}
   
 // determine if a cell is in the dot or wetting layer
 //

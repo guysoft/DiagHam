@@ -234,7 +234,7 @@ DIST_COMMON =  Makefile.am Makefile.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/ApproximateQHE.P .deps/Bosons.P \
 .deps/GetBosonsDimension.P .deps/QHEBosons.P .deps/QHEBosonsCoulomb.P \

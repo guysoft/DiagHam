@@ -346,8 +346,7 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
 		    ++Index2;
 		    
 		  }
-	      }
-	  
+	      }	  
 	  vDestination.Re(Index1) += TmpRe;
 	  vDestination.Im(Index1) += TmpIm;
 	  ++p1;

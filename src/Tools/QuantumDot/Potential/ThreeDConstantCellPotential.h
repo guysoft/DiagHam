@@ -64,6 +64,11 @@ class ThreeDConstantCellPotential : public AbstractPotential
   //
   int GetNumberCellZ();
 
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta);
+
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram

@@ -128,6 +128,11 @@ class HardBoxPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConstan
   // fileName = file to store parameters
   void ConstructPotential(double noInNProbability, double withInNProbability, double downField, double wettingField, double dotField, double upField, double offset, double cellSizeZ, bool scratch, char* fileName);
 
+  // shift the potential with a given quantity
+  //
+  // delta = shift value
+  virtual void ShiftPotential(double delta);
+
   // determine if there is any In in the first neigbor region (6 possibilities)
   //
   // m, n, h = three coordinations of the considered cell
@@ -177,6 +182,11 @@ class HardBoxPyramidQuantumDotThreeDConstantCellPotential : public ThreeDConstan
   // k = z coordinate of the considered cell   
   // return value = the potential in the cell
   virtual double GetPotential(int i, int j, int k);
+
+  // get the concentration
+  //
+  // return = concentration value, in ration of 1.0
+  double GetConcentration();
 
   // save the whole diagram presentation in a bitmap file
   //
@@ -271,6 +281,15 @@ inline double HardBoxPyramidQuantumDotThreeDConstantCellPotential::GetPotential(
       return this->AbovePotentialValue[k];
     else
       return this->PotentialValue[k - this->Under][j][i];
+}
+
+// get the concentration
+//
+// return = concentration value, in ration of 1.0
+
+inline double HardBoxPyramidQuantumDotThreeDConstantCellPotential::GetConcentration()
+{
+  return this->Concentration;
 }
 
 #endif
