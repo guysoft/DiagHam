@@ -81,6 +81,13 @@ class SingleStringOption : public AbstractOption
   // return value = pointer to string
   char* GetString();
 
+  // print the current option and its values
+  //  
+  // output = reference on output stream;
+  // shortVersion = true if return only option code and the option value, false if return option description in addition
+  // return value = reference on current output stream
+  virtual ostream& DisplayOption (ostream& output, bool shortVersion = false);
+
   // print help concerning current option
   //
   // output = reference on output stream;

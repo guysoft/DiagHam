@@ -151,6 +151,54 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
   return true;
 }
 
+// print the options and their values in the current group
+//  
+// output = reference on output stream;
+// shortVersion = true if return only option code and the option value, false if return option description in addition
+// return value = reference on current output stream
+
+ostream& OptionManager::DisplayOption (ostream& output, bool shortVersion)
+{
+  if (shortVersion)
+    {
+      output << this->ProgramName << "  ";
+      ListIterator<OptionGroup*> IterGroup(this->Groups);
+      OptionGroup** TmpGroup;
+      while ((TmpGroup = IterGroup()))
+	{
+	  (*TmpGroup)->DisplayOption(output, shortVersion);
+	}
+      return output;
+    }
+  else
+    {
+      if ((this->ProgramVersion != 0) || (this->ProgramAdditionalInformations != 0))
+	{
+	  output << this->ProgramName;
+	  if (this->ProgramVersion != 0)
+	    {
+	      output << ", version " << this->ProgramVersion << endl;
+	    }
+	  else
+	    {
+	      output << endl;
+	    }
+	  if (this->ProgramAdditionalInformations != 0)
+	    {
+	      output << this->ProgramAdditionalInformations << endl;
+	    }
+	}  
+      output << endl << "Options:" << endl << endl;
+      ListIterator<OptionGroup*> IterGroup(this->Groups);
+      OptionGroup** TmpGroup;
+      while ((TmpGroup = IterGroup()))
+	{
+	  (*TmpGroup)->DisplayOption(output, shortVersion) << endl;
+	}
+      return output;
+    }
+}
+
 // print help concerning current option group
 //
 // output = reference on output stream;

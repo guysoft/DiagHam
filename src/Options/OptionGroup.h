@@ -91,6 +91,13 @@ class OptionGroup
   // return value = reference on current output stream
   ostream& PrintError (ostream& output);
 
+  // print the options and their values in the current group
+  //  
+  // output = reference on output stream;
+  // shortVersion = true if return only option code and the option value, false if return option description in addition
+  // return value = reference on current output stream
+  ostream& DisplayOption (ostream& output, bool shortVersion = false);
+
   // print help concerning current option group
   //
   // output = reference on output stream;

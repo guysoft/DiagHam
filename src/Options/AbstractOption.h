@@ -90,6 +90,13 @@ class AbstractOption
   // return value = reference on current output stream
   virtual ostream& DisplayHelp (ostream& output) = 0;
 
+  // print the current option and its values
+  //  
+  // output = reference on output stream;
+  // shortVersion = true if return only option code and the option value, false if return option description in addition
+  // return value = reference on current output stream
+  virtual ostream& DisplayOption (ostream& output, bool shortVersion = false) = 0;
+
   // display help
   //
   // options = option list

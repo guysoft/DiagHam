@@ -211,6 +211,26 @@ int SingleIntegerOption::GetInteger()
   return this->Integer;
 }
 
+// print the current option and its values
+//  
+// output = reference on output stream;
+// shortVersion = true if return only option code and the option value, false if return option description in addition
+// return value = reference on current output stream
+
+ostream& SingleIntegerOption::DisplayOption (ostream& output, bool shortVersion)
+{
+  if (shortVersion)
+    {
+      output << "-" << this->OptionName << " " <<  this->Integer;
+      return output;    
+    }
+  else
+    {
+      output << "-" << this->OptionName << " : " << this->OptionDescription << " : " << this->Integer;
+      return output;   
+    }
+}
+
 // print help concerning current option
 //
 // output = reference on output stream;

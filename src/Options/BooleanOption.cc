@@ -108,6 +108,30 @@ bool BooleanOption::GetBoolean()
   return this->Boolean;
 }
 
+// print the current option and its values
+//  
+// output = reference on output stream;
+// shortVersion = true if return only option code and the option value, false if return option description in addition
+// return value = reference on current output stream
+
+ostream& BooleanOption::DisplayOption (ostream& output, bool shortVersion)
+{
+  if (shortVersion)
+    {
+      if (this->Boolean)	
+	output << "-" << this->OptionName;      
+      return output;     
+    }
+  else
+    {
+      if (this->Boolean) 
+	output << "-" << this->OptionName << " : " << this->OptionDescription << " : true";
+      else
+	output << "-" << this->OptionName << " : " << this->OptionDescription << " : false";
+      return output;   
+    }
+}
+
 // print error message on output stream
 //
 // output = reference on output stream;
