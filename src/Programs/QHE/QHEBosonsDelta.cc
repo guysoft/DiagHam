@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   int LzMax = LzMaxOption.GetInteger();
   int MinTotalLz = MinTotalLzOption.GetInteger();
   int MaxTotalLz = MaxTotalLzOption.GetInteger();
-  int Memory = MemoryOption.GetInteger() << 20;
+  long Memory = MemoryOption.GetInteger() << 20;
   int VectorMemory = VectorMemoryOption.GetInteger();
   char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
   char* SavePrecalculationFileName = SavePrecalculationOption.GetString();

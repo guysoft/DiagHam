@@ -54,4 +54,13 @@
 
 #endif
 
+// xlC and AIX specific options (assume 64bits compilation)
+
+# if defined __TOS_AIX__ && __xlC__
+
+// 64 bits architecture
+#define __64_BITS__
+
+#endif
+
 #endif

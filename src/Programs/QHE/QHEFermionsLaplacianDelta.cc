@@ -94,7 +94,7 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrFermions = NbrFermionOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
-  int Memory = MemoryOption.GetInteger() << 20;
+  long Memory = MemoryOption.GetInteger() << 20;
   int InitialLz = InitialLzOption.GetInteger();
   int NbrLz = NbrLzOption.GetInteger();
   int VectorMemory = VectorMemoryOption.GetInteger();

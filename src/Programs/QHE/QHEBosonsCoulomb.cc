@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrBosons = NbrBosonOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
-  int Memory = MemoryOption.GetInteger() << 20;
+  long Memory = MemoryOption.GetInteger() << 20;
   bool DeltaFlag = DeltaOption.GetBoolean();
   double CoulombRatio = CoulombRatioOption.GetDouble();
 

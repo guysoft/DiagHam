@@ -142,7 +142,7 @@ int main(int argc, char** argv)
   int MaxMomentum = MaxMomentumOption.GetInteger();
   int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
   double XRatio = RatioOption.GetDouble();
-  int Memory = -1;
+  long Memory = -1;
   if (MemoryOption.GetInteger() > 0)
     Memory = MemoryOption.GetInteger()<< 20;
   bool ResumeFlag = ResumeOption.GetBoolean();

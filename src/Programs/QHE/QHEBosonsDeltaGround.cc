@@ -103,7 +103,7 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrBosons = NbrBosonOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
-  int Memory = MemoryOption.GetInteger() << 20;
+  long Memory = MemoryOption.GetInteger() << 20;
   int VectorMemory = VectorMemoryOption.GetInteger();
   char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
   char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
