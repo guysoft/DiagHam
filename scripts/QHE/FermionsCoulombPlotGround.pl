@@ -25,8 +25,7 @@ while ($NbrFermions <= 40)
       {
 	print ($TmpFile."\n");
 	my $Scaling = sqrt(($S * $NbrFermionsInc) / ($NbrFermions * $SInc));
-	my $Scaling = 1.0;
-	$MinArray{$NbrFermions} = (&FindMinimum($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S))) * $Scaling;
+	$MinArray{$NbrFermions} = ((&FindMinimum($TmpFile)) * $Scaling) / $NbrFermions;
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;
@@ -108,11 +107,12 @@ sub CreatePostScript
 	print OUTFILE ($N." ".$E."\n");
       }
     close (OUTFILE);
-    $MinGap = 0;
+#    $MinGap = 0;
     my $Delta = ($MaxGap - $MinGap) / 20.0;
     $MaxGap += $Delta;
     $MinGap -= $Delta;
-    $MinGap = 0;
+#    $MinGap = -0.995;
+#    $MaxGap = -0.925;
     $MinN--;
     $MaxN++;
     my $Tmp = 1.0 / $MinN;
@@ -127,12 +127,12 @@ sub CreatePostScript
     print OUTFILE ("set xrange [".$MinN.":".$MaxN."]
 set yrange [".$MinGap.":".$MaxGap."]
 set xlabel \"1/N\"
-set ylabel \"E\"
+set ylabel \"E/N\"
 set size 1.0, 0.6
 set nokey
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-g(x)= m*x*x+p
+g(x)= m*x+p
 fit g(x) \"".$FileName."\" using 1:2 via m,p
 plot \"".$FileName."\" using 1:2 title \"".$Title."\", g(x) with lines 1
 ");

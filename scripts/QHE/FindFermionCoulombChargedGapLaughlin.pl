@@ -30,13 +30,13 @@ while ($NbrFermions <= 40)
     if ((-e $TmpFile) && (-e $TmpFileElectron) && (-e $TmpFileHole))
       {
 	my $Scaling = sqrt((($S - 1) * $NbrFermionsInc) / ($NbrFermions * $SInc));
-	$MinArray{$NbrFermions} = (&FindGround($TmpFileElectron) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * ($S - 1)))) * $Scaling;
+	$MinArray{$NbrFermions} = &FindGround($TmpFileElectron) * $Scaling;
 	$MinArray{$NbrFermions} += (($ChargeQ * $ChargeQ) / ($ChargeP * $ChargeP * sqrt (2.0 * ($S - 1)))) * $Scaling;
 	$Scaling = sqrt((($S + 1) * $NbrFermionsInc) / ($NbrFermions * $SInc));
-	$MinArray{$NbrFermions} += (&FindGround($TmpFileHole) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * ($S + 1)))) * $Scaling;
+	$MinArray{$NbrFermions} += &FindGround($TmpFileHole) * $Scaling;
 	$MinArray{$NbrFermions} += (($ChargeQ * $ChargeQ) / ($ChargeP * $ChargeP * sqrt (2.0 * ($S + 1)))) * $Scaling;
 	$Scaling = sqrt(($S * $NbrFermionsInc) / ($NbrFermions * $SInc));
-	$MinArray{$NbrFermions} -= 2.0 * (&FindGround($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S))) * $Scaling;
+	$MinArray{$NbrFermions} -= 2.0 * &FindGround($TmpFile) * $Scaling;
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;

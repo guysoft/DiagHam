@@ -21,10 +21,14 @@ unless (open (INFILE2, $GapFile))
 my %MinArrayElectron;
 my %MinArrayHole;
 my $TmpFile;
+my $TmpFileGround1;
+my $TmpFileGround2;
 my $TmpLine; 
 my $PFactor = 1;
 my $QFactor = 1;
 my $Shift = 1;
+my $ChargeP = 0;
+my $ChargeQ = 0;
 my $Flag = 0;
 while (($Flag == 0) && ($TmpLine = <INFILE2>))
   {
@@ -33,7 +37,7 @@ while (($Flag == 0) && ($TmpLine = <INFILE2>))
     $TmpLine =~ s/\s*$//;
     if (($TmpLine ne "") && (!($TmpLine =~ /^\#/)))
       {
-	($PFactor, $QFactor, $Shift) = split (/ /, $TmpLine);
+	($PFactor, $QFactor, $Shift, $ChargeQ, $ChargeP) = split (/ /, $TmpLine);
 	$Flag = 1;
       }
   }
@@ -48,33 +52,33 @@ while ($TmpLine = <INFILE2>)
 	my @Values = split (/ /, $TmpLine);
 	my $NbrFermions = $Values[0];
 	my $S = $Values[1];
+	my $Ground;
 	$TmpFile = "n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat";
-	if (!(-e $TmpFile))
+	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
-	    die ("file n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
+	    my $Quasi1 = &FindGround($TmpFile);
+	    my $Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
+	    $Quasi1 *= $Scaling;	
+	    $Quasi1 += (($ChargeQ * $ChargeQ) / ($ChargeP * $ChargeP * sqrt (2.0 * $S))) * $Scaling;
+	    #	$Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);
+	    $Quasi1 -= $Ground;
+	    print ($Quasi1."\n");
+	    $MinArrayElectron{$Values[0]} = $Quasi1;
 	  }
-	my $Quasi1 = (&FindGround($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S)));
-	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
-	my $Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
-	my $Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);	
-	$Quasi1 -=  $Ground;
-#	$Quasi1 *= $Scaling;	
-	$MinArrayElectron{$Values[0]} = $Quasi1;
-
 	$NbrFermions = $Values[2];
 	$S = $Values[3];
 	$TmpFile = "n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat";
-	if (!(-e $TmpFile))
+	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
-	    die ("file n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
+	    my $Quasi2 = &FindGround($TmpFile);
+	    my $Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
+	    $Quasi2 *= $Scaling;	
+	    $Quasi2 += (($ChargeQ * $ChargeQ) / ($ChargeP * $ChargeP * sqrt (2.0 * $S))) * $Scaling;
+	    #	$Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);
+	    $Quasi2 -= $Ground;	
+	    print ($Quasi2."\n");
+	    $MinArrayHole{$Values[2]} = $MinArrayElectron{$Values[0]};
 	  }
-	my $Quasi2 = (&FindGround($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S)));
-	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
-	$Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
-	$Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);	
-	$Quasi2 -= $Ground;	
-#	$Quasi2 *= $Scaling;		
-	$MinArrayHole{$Values[2]} = $Quasi2;
       }
   }
 close (INFILE2);
@@ -113,6 +117,74 @@ sub FindGround
       }
     close (INFILE);
     return $Min;
+  }
+
+# find ground state energy in a file using linear fit if needed
+#
+# $_[0] = number of fermions of the corresponding state
+# $_[1] = fraction numerator
+# $_[2] = fraction denominator
+# $_[3] = shift to the filling factor definition
+# $_[4] = reference on the ground state energy
+# return value = 0 if the value has be evaluated 
+
+sub FindApproximativeGround
+  {
+    my $NbrFermions = $_[0];
+    my $PFactor = $_[1];
+    my $QFactor = $_[2];
+    my $Shift = $_[3];
+    my $Ground = $_[4];
+    my $SMin = (($QFactor * $NbrFermions) / $PFactor) - $Shift;
+    my $SMax = $SMin;
+    my $NbrFermionsMin = $NbrFermions;
+    my $NbrFermionsMax = $NbrFermions;
+    if ($SMin != int($SMin))
+      {
+	$SMax = int($SMin) + 1;
+	$NbrFermionsMax = (($SMax + $Shift) * $PFactor) / $QFactor;
+	while ($NbrFermionsMax != int($NbrFermionsMax))
+	  {
+	    $SMax++;
+	    $NbrFermionsMax = (($SMax + $Shift) * $PFactor) / $QFactor;
+	  }
+	$SMin = int($SMin);
+	$NbrFermionsMin = (($SMin + $Shift) * $PFactor) / $QFactor;
+	while ($NbrFermionsMin != int($NbrFermionsMin))
+	  {
+	    $SMin--;
+	    $NbrFermionsMin = (($SMin + $Shift) * $PFactor) / $QFactor;
+	  }
+      }
+    else
+      {
+	if (-e "n_".$NbrFermionsMin."/fermions_coulomb_n_".$NbrFermionsMin."_2s_".$SMin."_lz.dat")
+	  {
+	    $$Ground = &FindGround("n_".$NbrFermionsMin."/fermions_coulomb_n_".$NbrFermionsMin."_2s_".$SMin."_lz.dat") 
+	      * sqrt(($SMin * $PFactor) / ($NbrFermionsMin * $QFactor)) / $NbrFermionsMin;
+	    return 0;
+	  }
+	else
+	  {
+	    return -1;
+	  }
+      }
+    $TmpFileGround1 = "n_".$NbrFermionsMin."/fermions_coulomb_n_".$NbrFermionsMin."_2s_".$SMin."_lz.dat";
+    $TmpFileGround2 = "n_".$NbrFermionsMax."/fermions_coulomb_n_".$NbrFermionsMax."_2s_".$SMax."_lz.dat";
+    if ((!(-e $TmpFileGround1)) || (!(-e $TmpFileGround2)))
+      {
+	return -1;
+      }
+    else
+      {
+	my $Ground1 = (&FindGround($TmpFileGround1) * 
+		       sqrt(($SMin * $PFactor) / ($NbrFermionsMin * $QFactor))) / $NbrFermionsMin;	
+	my $Ground2 = (&FindGround($TmpFileGround2) * 
+		       sqrt(($SMax * $PFactor) / ($NbrFermionsMax * $QFactor))) / $NbrFermionsMax;	
+	$$Ground = (((($Ground1 - $Ground2) / ((1.0 / $NbrFermionsMin) - (1.0 / $NbrFermionsMax))) * 
+		     ((1.0 / $NbrFermions) - (1.0 / $NbrFermionsMax)) + $Ground2) * $NbrFermions);
+      }
+    return 0;
   }
 
 # create postscript graph from data file
@@ -182,13 +254,13 @@ sub CreatePostScript
     my $Delta = ($MaxGap - $MinGap) / 20.0;
     $MaxGap += $Delta;
     $MinGap -= $Delta;
-    $MinGap = 0;
+    $MinGap = 0.0;
     $MinN--;
     $MaxN++;
     my $Tmp = 1.0 / $MinN;
     $MinN = 1.0 / $MaxN;
     $MaxN = $Tmp;
-    $MinN = 0.0;
+    $MinN = 0;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = "fermions_coulomb_chargedgap_".$Caption.".ps";
     my @TmpArray = split (/_/,  $OutputFile);
