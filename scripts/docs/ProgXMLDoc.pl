@@ -21,14 +21,10 @@ my $ProgramName = $ARGV[0];
 $ProgramName =~ s/^.*\/([^\/]*)$/$1/;
 $Path =~ s/^\.\///;
 $Path =~ s/\/[^\/]*$//;
-my $Options = `$ARGV[0] --help`;
+my $OptionText = `$ARGV[0] --help`;
 my @OptionGroups;
-my %Options;
-my @TmpLines = split (/\n/, $Options);
-my $TmpLine;
 
-
-print "<?xml version=\"1.0\" ?>
+print "<?xml version=\"1.0\"   encoding=\"ISO-8859-1\"?>
 <program name=\"".$ProgramName."\">
   <location>".$Path."</location>
   <authors name=\"\">
@@ -36,63 +32,30 @@ print "<?xml version=\"1.0\" ?>
     <homepage></homepage>
   </authors>
   <optiongroupsort>";
+
+&ParseHelp($OptionText, \@OptionGroups);
+
 my $Pos = 0;
-while ($Pos < ($#OptionGroups - 1))
+while ($Pos < $#OptionGroups)
   {
-    print $OptionGroups[$Pos].",";
-    Pos++;
+    print $OptionGroups[$Pos]->GetName().", ";
+    $Pos++;
   }
-print $OptionGroups[$Pos]."</optiongroupsort>
-  <optiongroup name=\"misc options\">
-  <optiongroup name=\"\">
-";
-
-my $GroupName;
-foreach $GroupName (@OptionGroups)
+print $OptionGroups[$Pos]->GetName()."</optiongroupsort>\n";
+my $TmpOptionGroup;
+foreach $TmpOptionGroup (@OptionGroups)
   {
+    print $TmpOptionGroup->ShowInformationXML();
   }
 
-foreach $TmpLine (@TmpLines)
-  {
-    chomp ($TmpLine);
-    $TmpLine =~ s/^\s*//;
-    if ($TmpLine =~ /^\-/)
-      {
-	my $OptionLong = $TmpLine;
-	$OptionLong =~ s/ \: .*//;
-	my $OptionShort = $OptionLong;
-	$OptionShort =~ s/\-\-.*//;
-	$OptionShort =~ s/^\-([a-z,A-Z])\,.*/$1/;
-	$OptionLong =~ s/^\-[a-z,A-Z]\, //;
-	$OptionLong =~ s/^\-\-//;
-	$TmpLine =~ s/^.* \: //;
-	my $DefaultValue = $TmpLine;
-	$DefaultValue =~ s/.*(\(default value.*\)).*/$1/;
-	$TmpLine  =~ s/\(default value.*\)//;
-	print "  <option name=\"".$OptionLong."\">\n";
-	if ($OptionShort ne "")
-	  {
-	    print "    <short>".$OptionShort."</short>\n";
-	  }
-	$TmpLine =~ s/\</\\&lt;/m;
-	$TmpLine =~ s/\>/\\&gt;/m;
-	$TmpLine =~ s/\s*$//;
-	print "    <description>".$TmpLine."</description>\n";
-	if ($DefaultValue ne $TmpLine)
-	  {
-	    $DefaultValue  =~ s/\(default value = (.*)\)/$1/;
-	    print "    <default>".$DefaultValue."</default>\n";
-	  }
-	print "  </option>\n"
-      }
-  }
-print "  </optiongroup>
-
+print "
   <shortdescription></shortdescription>
 
   <longdescription></longdescription>
 
   <accuracy></accuracy>
+
+  <relatedprogsort></relatedprogsort>
 
   <relatedprog name=\"\" type=\"\">
     <location></location>
@@ -107,35 +70,225 @@ print "  </optiongroup>
 
 # parse help returned by a program
 #
-# $_[0] = 
+# $_[0] = help message displayed by the program
+# $_[1] = reference on an ordered array where option groups will be stored
+# $_[2] = reference on a hash table where an option array will ber stored for each option group
 
 sub ParseHelp
   {
     my @TmpLines = split (/\n/, $_[0]);
-    my $OptionGroupNames = $_[1];
+    my $OptionGroups = $_[1];
     my $TmpLine;
     my $Pos = 0;
-    while (($Pos < $#TmpLines) && ($TmpLines[$Pos] =~ /^Options\:/))
+    while (($Pos <= $#TmpLines) && !($TmpLines[$Pos] =~ /^Options\:/))
       {
-	Pos++;
+	$Pos++;
       }
-    Pos++;
-    while ($Pos < $#TmpLines)
+    $Pos++;
+    while ($Pos <= $#TmpLines)
       {
 	chomp ($TmpLines[$Pos]);
 	$TmpLines[$Pos] =~ s/\:\s*$//;
 	my $TmpOptionGroupName = $TmpLines[$Pos];
-	push (@$OptionGroupName, $TmpOptionGroupName);
-	while (($TmpLines[$Pos] ne "") && ($Pos < $#TmpLines))
+	if (($Pos <= $#TmpLines) && ($TmpOptionGroupName ne ""))
 	  {
+	    $Pos++;	    
+	    my $TmpOptionGroup =  OptionGroup->new();
+	    $TmpOptionGroup->SetName($TmpOptionGroupName);
 	    chomp ($TmpLines[$Pos]);
 	    $TmpLines[$Pos] =~ s/^\s//;
-	    
+	    $TmpLines[$Pos] =~ s/\s*//;
+	    while (($Pos <= $#TmpLines) && ($TmpLines[$Pos] ne ""))
+	      {
+		my $TmpOption =  Option->new();
+		$TmpOption->ParseFromString($TmpLines[$Pos]);
+		$TmpOptionGroup->AddOption($TmpOption);
+		$Pos++;
+		if ($Pos <= $#TmpLines)
+		  {
+		    chomp ($TmpLines[$Pos]);
+		    $TmpLines[$Pos] =~ s/^\s//;
+		    $TmpLines[$Pos] =~ s/\s*//;
+		  }
+	      }
+	    push (@$OptionGroups, $TmpOptionGroup);
 	  }
-	if ()
+	else
+	  {
+	    $Pos++;
+	  }
       }
-    foreach $TmpLine (@TmpLines)
-      {
-	chomp ($TmpLine);	
-      }
+  }
+
+
+{package OptionGroup;
+
+ # constructor
+ #
+
+ sub new
+   {
+     my $Class = shift;
+     my $Self  = {};
+     $Self->{NAME} = undef;
+     $Self->{OPTIONS} = [];
+     bless ($Self, $Class);
+     return $Self;
+   }
+ 
+ # get an ordered comma-separated list of options
+ #
+ # return value = string containing ordered comma-separated list of options
+ 
+ sub GetOptionOrderedList
+   {
+     my $Self = shift;
+     my $String = "";
+     if ($#{@{$Self->{OPTIONS}}} < 0)
+       {
+	 return $String;
+       }
+     my $Pos = 0;
+     while ($Pos < $#{@{$Self->{OPTIONS}}})
+       {
+	 $String .= ${@{$Self->{OPTIONS}}}[$Pos]->GetName().", ";
+	 $Pos++;
+       }
+     $String .= ${@{$Self->{OPTIONS}}}[$Pos]->GetName();
+     return $String;
+   }
+ 
+ # display option group information using XML format
+ #
+ # return value = string containing option group information
+
+ sub ShowInformationXML
+   {
+     my $Self = shift;
+     my $String = "";
+     $String .= "  <optiongroup name=\"".$Self->{NAME}."\">\n";
+     $String .= "    <optiongroupsort>".$Self->GetOptionOrderedList()."</optiongroupsort>\n";
+     my $TmpOption;
+     foreach $TmpOption (@{$Self->{OPTIONS}})
+       {
+	 $String .= $TmpOption->ShowInformationXML();
+       }
+     $String .= "  </optiongroup>\n";
+     return $String;
+   }
+ 
+ # add an option to the option group
+ #
+ 
+ sub AddOption
+   {
+     my $Self = shift;
+     push (@{$Self->{OPTIONS}}, $_[0]);
+   }
+
+ # get name of the option group
+ #
+ # return value = option group name
+
+ sub GetName
+   {
+     my $Self = shift;
+     return $Self->{NAME};
+   }
+
+ # set name of the option group
+ #
+ # $_[0] = option group name
+
+ sub SetName
+   {
+     my $Self = shift;
+     $Self->{NAME} = $_[0];
+   }
+
+}
+
+{package Option;
+
+ # constructor
+ #
+ 
+ sub new
+   {
+     my $Class = shift;
+     my $Self  = {};
+     $Self->{NAME} = undef;
+     $Self->{SHORTCUT} = undef;
+     $Self->{DESCRIPTION} = undef;
+     $Self->{DEFAULTVALUE} = undef;
+     bless ($Self, $Class);
+     return $Self;
+   }
+ 
+
+ # parse option parameter from a string
+ #
+ 
+ sub ParseFromString
+   {
+     my $Self = shift;
+     my $TmpLine = $_[0];
+     chomp ($TmpLine);
+     $TmpLine =~ s/^\s*//;
+     if ($TmpLine =~ /^\-/)
+       {
+	 $Self->{NAME} = $TmpLine;
+	 $Self->{NAME} =~ s/ \: .*//;
+	 $Self->{SHORTCUT} = $Self->{NAME};
+	 $Self->{SHORTCUT} =~ s/\-\-.*//;
+	 $Self->{SHORTCUT} =~ s/^\-([a-z,A-Z])\,.*/$1/;
+	 $Self->{NAME} =~ s/^\-[a-z,A-Z]\, //;
+	 $Self->{NAME} =~ s/^\-\-//;
+	 $TmpLine =~ s/^.* \: //;
+	 $Self->{DEFAULTVALUE} = $TmpLine;
+	 $Self->{DEFAULTVALUE} =~ s/.*\(.*default value \= (.*)\).*/$1/;
+	 $TmpLine  =~ s/\(default value \=.*\)//;
+	 $TmpLine  =~ s/\, default value \=.*\)/\)/;
+	 $TmpLine =~ s/\</\\&lt;/m;
+	 $TmpLine =~ s/\>/\\&gt;/m;
+	 $TmpLine =~ s/\s*$//;
+	 $Self->{DESCRIPTION} = $TmpLine;
+	 if (($Self->{DEFAULTVALUE} eq "") || ($Self->{DEFAULTVALUE} eq $Self->{DESCRIPTION}))
+	   {
+	     $Self->{DEFAULTVALUE}  = undef;
+	   }
+       }
+   }
+
+ # display option information using XML format
+ #
+ 
+ sub ShowInformationXML
+   {
+     my $Self = shift;
+     my $String = "";
+     $String .= "    <option name=\"".$Self->{NAME}."\">\n";
+     if ((defined($Self->{SHORTCUT})) && ($Self->{SHORTCUT} ne ""))
+       {
+	 $String .= "    <short>".$Self->{SHORTCUT}."</short>\n";
+       }
+     $String .= "    <description>".$Self->{DESCRIPTION}."</description>\n";
+     if ((defined($Self->{DEFAULTVALUE})) && ($Self->{DEFAULTVALUE} ne ""))
+       {
+	 $String .= "    <default>".$Self->{DEFAULTVALUE}."</default>\n";
+       }
+     $String .= "    </option>\n";
+     return $String;
+   }
+
+ # get name of the option group
+ #
+ # return value = option group name
+
+ sub GetName
+   {
+     my $Self = shift;
+     return $Self->{NAME};
+   }
+
 }
