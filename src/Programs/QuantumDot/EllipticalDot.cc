@@ -158,6 +158,7 @@ int main(int argc, char** argv)
   potential->SavePotential("EllipticalDotPotential.txt");
 
   // define Hilbert space
+  
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -171,7 +172,7 @@ int main(int argc, char** argv)
     else
       Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);    
   
-  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, -M / 2, N, -N / 2, H, -H / 2);
+  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, -NbrStateX / 2, NbrStateY, -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;

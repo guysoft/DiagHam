@@ -35,6 +35,7 @@ using std::ios;
 
 int main(int argc, char** argv)
 {
+  /*
   cout.precision(14);
   OptionManager Manager ("CylinderQuantumDotInMagneticField" , "0.01");
   OptionGroup* PotentialGroup = new OptionGroup ("potential options");
@@ -101,15 +102,8 @@ int main(int argc, char** argv)
 
   CylinderQuantumDotSpectra* spectra = new CylinderQuantumDotSpectra(Space, FileName, 0.0);
   cout << "The probability to find the particle in the dot is: " << spectra->GetDotProbability(potential) << endl;
+  */
 
-
-
-
-
-
-
-
-  /*
   cout.precision(14);
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
@@ -163,7 +157,7 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
-  for (int i = 1; i < 4; ++i)
+  for (int i = 0; i < 4; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
@@ -175,7 +169,7 @@ int main(int argc, char** argv)
       PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental)  << endl;
       //cout << i << endl;
     } 
-  */
+  
 
   /*
   VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
