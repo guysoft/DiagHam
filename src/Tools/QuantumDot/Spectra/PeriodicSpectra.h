@@ -29,8 +29,8 @@
 #define PERIODICSPECTRA_H
 
 #include "config.h"
-
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "Complex.h"
 
 class PeriodicSpectra
 {
@@ -114,6 +114,19 @@ class PeriodicSpectra
   // overlapX, overlapY = reference to the return values
   void GetDerivedOverlap (Periodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
   
+  // get the probability of finding the particle in a cube
+  //
+  // minX, maxX, minY, maxY, minZ, maxZ = bounds of the cube in unit of proportion compared to the whole length
+  // return = value of the probability  
+  double GetCubeProbability (double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
+
+  // get the overlap value of one d plane wave functions
+  //
+  // m1, m2 = indices of the one d function
+  // min, max = bound of the integral, in unit of proportion compared to the whole length
+  // real, imaginary = real and imaginary values  
+  void EvaluateOneDOverlap (int m1, int m2, double min, double max, Complex& c);
+
 };
 
 

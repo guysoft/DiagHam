@@ -24,6 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include "config.h"
 #include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
 
 #include <iostream>
@@ -400,4 +401,95 @@ void PeriodicSpectra::GetDerivedOverlap (Periodic3DOneParticle* space, char* fil
 	} 
   realOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); imaginaryOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); 
   realOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); imaginaryOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); 
+}
+
+// get the probability of finding the particle in a cube
+//
+// minX, maxX, minY, maxY, minZ, maxZ = bounds of the cube in unit of proportion compared to the whole length
+// return = value of the probability
+
+double PeriodicSpectra::GetCubeProbability (double minX, double maxX, double minY, double maxY, double minZ, double maxZ)
+{
+  Complex** overlapX = new Complex* [this->NbrStateX];
+  Complex** overlapY = new Complex* [this->NbrStateY];
+  Complex** overlapZ = new Complex* [this->NbrStateZ];
+
+  for (int m1 = 0; m1 < this->NbrStateX; ++m1)    
+    {
+      overlapX [m1] = new Complex [this->NbrStateX];
+      for (int m2 = 0; m2 < this->NbrStateX; ++m2)
+	this->EvaluateOneDOverlap(m1, m2, minX, maxX, overlapX[m1][m2]);    
+    }
+
+  for (int n1 = 0; n1 < this->NbrStateY; ++n1)    
+    {
+      overlapY [n1] = new Complex [this->NbrStateY];
+      for (int n2 = 0; n2 < this->NbrStateY; ++n2)
+	this->EvaluateOneDOverlap(n1, n2, minY, maxY, overlapY[n1][n2]);    
+    }
+
+  for (int p1 = 0; p1 < this->NbrStateZ; ++p1)    
+    {
+      overlapZ [p1] = new Complex [this->NbrStateZ];
+      for (int p2 = 0; p2 < this->NbrStateZ; ++p2)
+	this->EvaluateOneDOverlap(p1, p2, minZ, maxZ, overlapZ[p1][p2]);    
+    }
+
+  Complex tmp1 = 0.0, tmp2 = 0.0; double value = 0.0;
+  double* tmpRe1; double* tmpIm1; double* tmpRe2; double* tmpIm2; 
+  Complex coef1 = 0.0, coef2 = 0.0; 
+  for (int m1 = 0; m1 < this->NbrStateX; ++m1)    
+    for (int m2 = 0; m2 <  this->NbrStateX; ++m2)
+      {
+	tmp1 = 0.0;
+	for (int n1 = 0; n1 < this->NbrStateY; ++n1)    	    
+	  {
+	    tmpRe1 = this->RealCoefficients [m1][n1];
+	    tmpIm1 = this->ImaginaryCoefficients [m1][n1];
+	    for (int n2 = 0; n2 <  this->NbrStateY; ++n2)
+	      {
+		tmp2 = 0.0; 		
+		tmpRe2 = this->RealCoefficients [m2][n2];
+		tmpIm2 = this->ImaginaryCoefficients [m2][n2];
+		for (int p1 = 0; p1 < this->NbrStateZ; ++p1)
+		  {
+		    coef1.Re = tmpRe1 [p1]; coef1.Im = tmpIm1 [p1];		 
+		    for (int p2 = 0; p2 <  this->NbrStateZ; ++p2)
+		      {
+			coef2.Re = tmpRe2 [p2]; coef2.Im = tmpIm2 [p2];
+			tmp2 += (coef1 * coef2 * overlapZ [p1][p2]);
+		      }
+		  }
+		tmp1 += (tmp2 * overlapY [n1][n2]);	       
+	      }
+	  }
+	value += (Real (tmp1) * Real (overlapX [m1][m2]) - Imag (tmp1) * Imag (overlapX [m1][m2]));
+      }
+  delete[] overlapX; delete[] overlapY; delete[] overlapZ; 
+
+  return value;
+}
+
+// get the overlap value of one d plane wave functions
+//
+// m1, m2 = indices of the one d function
+// min, max = bound of the integral, in unit of proportion compared to the whole length
+// real, imaginary = real and imaginary values
+
+void PeriodicSpectra::EvaluateOneDOverlap (int m1, int m2, double min, double max, Complex& c)
+{
+  if (m1 == m2)
+    {
+      c.Re = max - min;
+      c.Im = 0.0;
+    }
+  else
+    {
+      double delta = 2.0 * M_PI * ((double) -m1 + m2);  
+      c.Re = cos (delta * max) - cos (delta * min);
+      c.Im = -sin (delta * max) + sin (delta * min);
+      
+      c.Re /= delta; c.Im /= delta; 
+    }
+  return;
 }

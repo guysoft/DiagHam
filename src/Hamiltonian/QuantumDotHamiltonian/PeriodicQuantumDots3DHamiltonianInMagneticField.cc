@@ -1053,7 +1053,7 @@ bool PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateWaveFunctionOverla
 	  for (int i = 0; i < nbrStep; ++i)
 	    {
 	      realArray[delta][i] = Diff * (sin(Tmp * (i + 1)) - sin(Tmp * i));
-	      imaginaryArray[delta][i] = Diff * (cos(Tmp * (i + 1)) - cos(Tmp * i));
+	      imaginaryArray[delta][i] = Diff * (-cos(Tmp * (i + 1)) + cos(Tmp * i));
 	    }
 	}
       else
