@@ -137,7 +137,8 @@ int main(int argc, char** argv)
     XMomentum = 0;
   else
     XMaxMomentum = XMomentum;
-  int YMaxMomentum = (MomentumModulo - 1);
+//  int YMaxMomentum = (MomentumModulo - 1);
+  int YMaxMomentum = (MaxMomentum - 1);
   if (YMomentum < 0)
     YMomentum = 0;
   else

@@ -192,7 +192,7 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 
   if (this->Particles->GetParticleStatistic() == ParticleOnTorusWithMagneticTranslations::FermionicStatistic)
     {
-     for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
 	    {
@@ -246,6 +246,63 @@ void ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateInteract
 		  ++Pos;
 		}
 	    }
+/*     for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 < this->MaxMomentum; ++m2)
+	  if (m1 != m2)
+	    {
+	      for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
+		{
+		  m4 = m1 + m2 - m3;
+		  if (m4 < 0)
+		    m4 += this->MaxMomentum;
+		  else
+		    if (m4 >= this->MaxMomentum)
+		      m4 -= this->MaxMomentum;
+		  if (m3 != m4)
+		    {
+		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4);
+		      if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
+			MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		      ++Pos;
+		    }
+		}
+	    }
+      this->NbrInteractionFactors = 0;
+      this->M1Value = new int [Pos];
+      this->M2Value = new int [Pos];
+      this->M3Value = new int [Pos];
+      this->M4Value = new int [Pos];
+      this->InteractionFactors = new double [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 < this->MaxMomentum; ++m2)
+	  if (m1 != m2)
+	    {
+	      for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
+		{
+		  m4 = m1 + m2 - m3;
+		  if (m4 < 0)
+		    m4 += this->MaxMomentum;
+		  else
+		    if (m4 >= this->MaxMomentum)
+		      m4 -= this->MaxMomentum;
+		  if (m3 != m4)
+		    {
+		      if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+			{
+			  this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+			  this->M1Value[this->NbrInteractionFactors] = m1;
+			  this->M2Value[this->NbrInteractionFactors] = m2;
+			  this->M3Value[this->NbrInteractionFactors] = m3;
+			  this->M4Value[this->NbrInteractionFactors] = m4;
+			  ++this->NbrInteractionFactors;
+			}
+		      ++Pos;
+		    }
+		}
+	    }*/
     }
   else
     {

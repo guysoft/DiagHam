@@ -65,7 +65,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MomentumModulo = FindGCD(this->NbrFermions, this->MaxMomentum);
   this->XMomentum = xMomentum % this->MomentumModulo;
-  this->YMomentum = yMomentum % this->MomentumModulo;
+  this->YMomentum = yMomentum % this->MaxMomentum;
 
   this->StateShift = this->MaxMomentum / this->MomentumModulo;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
@@ -409,6 +409,7 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 #endif
     }
   TmpState |= (((unsigned long) 0x1) << m1);
+  cout << "before: " << hex << TmpState << dec << endl;
   TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation, this->YMomentum);
   if (this->TestXMomentumConstraint(TmpState, NewMaxMomentum) == false)
     {
@@ -419,7 +420,8 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 //  cout << m1 << " " << m2 << " " << n1 << " " << n2 << endl;
 //  cout << hex << this->StateDescription[index] << " " << TmpState << " " << dec << " " << TmpIndex << " " << nbrTranslation << " " << coefficient;
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 0.5 * ( 1.0 - ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  cout << "sign: " << (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))))) << " " << TmpIndex  << " " << this->ReorderingSign[TmpIndex] << " " << nbrTranslation << endl;
 //  this->CurrentNbrStateInOrbit = this->NbrStateInOrbit[TmpIndex];
 //  this->CurrentNbrStateInOrbitRatio = this->NbrStateInOrbit[index] / this->NbrStateInOrbit[TmpIndex];
 //  this->CurrentSignature = this->StateSignature[TmpIndex];
@@ -548,7 +550,8 @@ bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsigned lo
 	++TmpSignature;
       while (TmpState != stateDescription)
 	{
-	  TmpState2 = stateDescription & this->MomentumMask;
+	  TmpNbrParticle = 0;
+	  TmpState2 = TmpState & this->MomentumMask;
 	  TmpState = (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
 	  for (int l = 0; l < this->StateShift; ++l)
 	    {
@@ -560,7 +563,8 @@ bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsigned lo
 	    ++TmpSignature;
 	  ++index;
 	}
-      if ((this->XMomentum == 0) || (((this->XMomentum * index) % this->MomentumModulo) == 0))
+      cout << TmpSignature << " " << index << " " << hex << stateDescription << dec << endl;
+      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) == 0)
 	return true;
       else
 	return false;
@@ -630,6 +634,7 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
   int NbrTranslation;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
+      cout << hex << this->StateDescription[i] << dec << endl;
       this->StateDescription[i] = this->FindCanonicalForm(this->StateDescription[i], this->StateMaxMomentum[i], NbrTranslation, this->YMomentum);
       ++TmpNbrStateDescription[this->StateMaxMomentum[i]];
     }
@@ -784,14 +789,14 @@ int FermionOnTorusWithMagneticTranslations::RawGenerateStates(int nbrFermions, i
     return pos;
   if (nbrFermions == 1)
     {
-      int i = this->YMomentum - (currentYMomentum % this->MomentumModulo);
+/*      int i = this->YMomentum - (currentYMomentum % this->MomentumModulo);
       if (i < 0)
 	i += this->MomentumModulo;
-      for (; i <= currentMaxMomentum; i += this->MomentumModulo)
-/*      int i = this->YMomentum - (currentYMomentum % this->MaxMomentum);
+      for (; i <= currentMaxMomentum; i += this->MomentumModulo)*/
+      int i = this->YMomentum - (currentYMomentum % this->MaxMomentum);
       if (i < 0)
 	i += this->MaxMomentum;
-      for (; i <= currentMaxMomentum; i += this->MaxMomentum)*/
+      for (; i <= currentMaxMomentum; i += this->MaxMomentum)
 	{
 	  this->StateDescription[pos] = ((unsigned long) 1) << i;
 	  this->StateMaxMomentum[pos] = maxMomentum;
