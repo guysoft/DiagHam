@@ -37,6 +37,8 @@
 
 using std::ofstream;
 using std::ios;
+using std::cout;
+using std::endl;
 
 
 // default constructor
@@ -88,6 +90,11 @@ Spectra::Spectra(int FileNumber, char** Files, int * LineNumber, double Gamma, d
       tmp = new double* [2]; tmp[0] = new double [n]; tmp[1] = new double [n];
       ifstream file;
       file.open(Files[i],ios::out);
+      if (!file.is_open())
+        {
+	  cout << "Error in open the file: " << Files[i] << "Exit now" << endl;
+	  exit(0);
+	}
       for (int j = 0; j < n; ++j)
 	file >> tmp[0][j] >> tmp[1][j];
       file.close();

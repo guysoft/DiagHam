@@ -1,1 +1,1 @@
-SUBDIRS=Potential Spectra
+SUBDIRS=Potential Spectra Analysis

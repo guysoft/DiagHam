@@ -91,8 +91,7 @@ int main(int argc, char** argv)
   double SizeY = ((SingleDoubleOption*) Manager["sizeY"])->GetDouble();
   double SizeZ = ((SingleDoubleOption*) Manager["sizeZ"])->GetDouble();
   
-   // define Hilbert space 
-  /*
+   // define Hilbert space   
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -108,13 +107,13 @@ int main(int argc, char** argv)
 
   XYReflexionSymmetricPeriodicSpectra spectra(Space, FileName1);  
   
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, -NbrStateX / 2, NbrStateY , -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
-  PeriodicSpectra spectra(Space, FileName1);
+  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, -NbrStateX / 2, NbrStateY , -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
+  //PeriodicSpectra spectra(Space, FileName1);
 
   //void GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
   
   double real, imaginary, realX, imaginaryX, realY, imaginaryY;
-  spectra.GetDerivedOverlap(Space, FileName2, SizeX, SizeY, SizeZ, real, imaginary, realX, imaginaryX, realY, imaginaryY);
+  spectra.GetDerivedOverlap(Space, FileName2, SizeX, SizeY, 1.0, real, imaginary, realX, imaginaryX, realY, imaginaryY);
   cout << "Overlap: " << real << " " << imaginary << endl;
   cout << "Overlap of X derived: " << realX << " " << imaginaryX << endl;
   cout << "Overlap of Y derived: " << realY << " " << imaginaryY << endl;
@@ -129,8 +128,8 @@ int main(int argc, char** argv)
   double tmp2 = re2 * re2 + im2 * im2;
   cout << tmp1 << " " << tmp2 << endl;
   cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
-  */
-
+  
+  /*
   Confined3DOneParticle* Space = new Confined3DOneParticle (NbrStateX, NbrStateY, NbrStateZ);
   HardBoxSpectra spectra (Space, FileName1);
   double overlap = 0.0, overlapX = 0.0, overlapY = 0.0;
@@ -141,7 +140,7 @@ int main(int argc, char** argv)
 
   cout << "Overlap is: " << overlap * overlap << endl;
   cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
- 
+  */
   /*
   XYReflexionSymmetricPeriodicSpectra spectra2(Space, FileName2);
   int Number = 50;
