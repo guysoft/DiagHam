@@ -81,16 +81,6 @@ int main(int argc, char** argv)
   if (MMax < MMin)
     MMax = MMin;
 
-  FactorialCoefficient Coef;
-  Coef.SetToOne();
-  Coef *= 2000000000;
-  Coef *= 2000000000;
-  Coef *= 2000000000;
-  return 0;
-
-  cout << Zog(11, 8, 0, 19) << endl;
-  return 0;
-
   char* OutputName = new char [1024];
   sprintf (OutputName, "fermions_disk_laplaciandelta_n_%d_l_%d.dat", NbrFermions, MMax);
   ofstream File;

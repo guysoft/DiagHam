@@ -40,7 +40,7 @@
 #define __DEBUG__
 
 // 64 bits architecture
-// #define __64_BITS__
+//#define __64_BITS__
 
 // DEC CXX specific options
 

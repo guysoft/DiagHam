@@ -40,6 +40,11 @@ using std::endl;
 
 
 #define MAX_INTEGER_SIZE 1000
+#ifdef __64_BITS__
+#define MAX_SIGNED_INTEGER 9.2233720368546e18
+#else
+#define MAX_SIGNED_INTEGER 2147483647.0
+#endif
 
 
 // default constructor 
@@ -126,7 +131,7 @@ FactorialCoefficient& FactorialCoefficient::operator *= (long x)
   i = 0;
   while (i <= this->NumeratorPosition)
     {
-      if ((x * this->Numerator[i]) > this->Numerator[i])
+      if ((((double) x) * ((double) this->Numerator[i])) < MAX_SIGNED_INTEGER)
 	{
 	  this->Numerator[i] *= x;
 	  i = this->NumeratorPosition + 2;
@@ -138,19 +143,6 @@ FactorialCoefficient& FactorialCoefficient::operator *= (long x)
       this->Numerator[i] = x;
       ++this->NumeratorPosition;
     }
-  cout << "Numerator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Numerator[i] << " ";
-    }
-  cout << endl;
-  cout << "Denominator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Denominator[i] << " ";
-    }
-  cout << endl;
-  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -174,7 +166,7 @@ FactorialCoefficient& FactorialCoefficient::operator /= (long y)
   i = 0;
   while (i <= this->DenominatorPosition)
     {
-      if ((y * this->Denominator[i]) > this->Denominator[i])
+      if ((((double) y) * ((double) this->Denominator[i])) < MAX_SIGNED_INTEGER)
 	{
 	  this->Denominator[i] *= y;
 	  i = this->DenominatorPosition + 2;
@@ -282,19 +274,6 @@ FactorialCoefficient& FactorialCoefficient::Power2Divide (long power)
 #endif
   ++this->DenominatorPosition;
   this->Denominator[this->DenominatorPosition] = 1 << power;
-  cout << "Numerator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Numerator[i] << " ";
-    }
-  cout << endl;
-  cout << "Denominator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Denominator[i] << " ";
-    }
-  cout << endl;
-  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -330,19 +309,6 @@ FactorialCoefficient& FactorialCoefficient::PartialFactorialMultiply (long start
     {
       (*this) *= i;
     }
-  cout << "Numerator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Numerator[i] << " ";
-    }
-  cout << endl;
-  cout << "Denominator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Denominator[i] << " ";
-    }
-  cout << endl;
-  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -359,19 +325,6 @@ FactorialCoefficient& FactorialCoefficient::FactorialDivide (long x)
     {
       (*this) /= i;
     }
-  cout << "Numerator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Numerator[i] << " ";
-    }
-  cout << endl;
-  cout << "Denominator: ";
-  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
-    {
-      cout << this->Denominator[i] << " ";
-    }
-  cout << endl;
-  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 

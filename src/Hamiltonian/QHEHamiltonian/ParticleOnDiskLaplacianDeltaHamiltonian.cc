@@ -236,7 +236,6 @@ double ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(i
     return 0.0;
   FactorialCoefficient Coef;
   Coef.SetToOne();
-  cout << m1 << " " << m2 << " " << m3 << " " << m4 << endl;
   if (m2 > 1)
     {
       Coef.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
