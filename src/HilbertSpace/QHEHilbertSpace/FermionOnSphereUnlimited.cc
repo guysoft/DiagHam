@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of fermions on disk with no restriction on the         //
+//              class of fermions on spher with no restriction on the         //
 //               number of reachable states or the number of fermions         //
 //                                                                            //
-//                        last modification : 03/03/2004                      //
+//                        last modification : 31/05/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/FermionOnDiskUnlimited.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphereUnlimited.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 
@@ -46,14 +46,16 @@ using std::dec;
 // basic constructor
 // 
 // nbrFermions = number of fermions
-// totalLz = momentum total value
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a fermion
+// memory = amount of memory granted for precalculations
 
-FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz)
+FermionOnSphereUnlimited::FermionOnSphereUnlimited (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
-  this->LzMax = this->TotalLz - (((this->NbrFermions - 1) * (this->NbrFermions - 2)) / 2);
+  this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
@@ -61,10 +63,9 @@ FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz)
   this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
   this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->ReducedNbrState = new int [this->HilbertSpaceDimension];
-  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);
+  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->MaximumSignLookUp = 16;
-  this->GenerateLookUpTable(1000000);
+  this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
   long UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -97,18 +98,17 @@ FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz)
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnDiskUnlimited::FermionOnDiskUnlimited(const FermionOnDiskUnlimited& fermions)
+FermionOnSphereUnlimited::FermionOnSphereUnlimited(const FermionOnSphereUnlimited& fermions)
 {
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->StateDescription = fermions.StateDescription;
+  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
   this->ReducedNbrState = fermions.ReducedNbrState;
 
   this->LookUpTable = fermions.LookUpTable;
@@ -126,7 +126,7 @@ FermionOnDiskUnlimited::FermionOnDiskUnlimited(const FermionOnDiskUnlimited& fer
 // destructor
 //
 
-FermionOnDiskUnlimited::~FermionOnDiskUnlimited ()
+FermionOnSphereUnlimited::~FermionOnSphereUnlimited ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -156,7 +156,7 @@ FermionOnDiskUnlimited::~FermionOnDiskUnlimited ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskUnlimited& fermions)
+FermionOnSphereUnlimited& FermionOnSphereUnlimited::operator = (const FermionOnSphereUnlimited& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -178,7 +178,7 @@ FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskU
 	}
       delete[] this->LookUpTable;
       delete[] this->NbrStateInLookUpTable;
-   }
+    }
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -186,7 +186,7 @@ FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskU
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-
+ 
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->ReducedNbrState = fermions.ReducedNbrState;
@@ -208,16 +208,16 @@ FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskU
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnDiskUnlimited::Clone()
+AbstractHilbertSpace* FermionOnSphereUnlimited::Clone()
 {
-  return new FermionOnDiskUnlimited(*this);
+  return new FermionOnSphereUnlimited(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> FermionOnDiskUnlimited::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> FermionOnSphereUnlimited::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -229,7 +229,7 @@ List<AbstractQuantumNumber*> FermionOnDiskUnlimited::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* FermionOnDiskUnlimited::GetQuantumNumber (int index)
+AbstractQuantumNumber* FermionOnSphereUnlimited::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -240,8 +240,8 @@ AbstractQuantumNumber* FermionOnDiskUnlimited::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* FermionOnDiskUnlimited::ExtractSubspace (AbstractQuantumNumber& q, 
-							       SubspaceSpaceConverter& converter)
+AbstractHilbertSpace* FermionOnSphereUnlimited::ExtractSubspace (AbstractQuantumNumber& q, 
+							SubspaceSpaceConverter& converter)
 {
   return 0;
 }
@@ -256,7 +256,7 @@ AbstractHilbertSpace* FermionOnDiskUnlimited::ExtractSubspace (AbstractQuantumNu
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnDiskUnlimited::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnSphereUnlimited::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   if ((n1 > StateLzMax) || (n2 > StateLzMax) || (n1 == n2) || (m1 == m2))
@@ -320,7 +320,7 @@ int FermionOnDiskUnlimited::AdAdAA (int index, int m1, int m2, int n1, int n2, d
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
 
-double FermionOnDiskUnlimited::AdA (int index, int m)
+double FermionOnSphereUnlimited::AdA (int index, int m)
 {
   if (this->StateDescription[index].GetOccupation(m) == 0)
     return 0.0;
@@ -335,7 +335,7 @@ double FermionOnDiskUnlimited::AdA (int index, int m)
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnDiskUnlimited::FindStateIndex(FermionOnSphereLongState& stateDescription, int reducedNbrState, int lzmax)
+int FermionOnSphereUnlimited::FindStateIndex(FermionOnSphereLongState& stateDescription, int reducedNbrState, int lzmax)
 {
   int TmpKey = stateDescription.GetHashKey(reducedNbrState, this->HashKeyMask);
   int Max = this->NbrStateInLookUpTable[lzmax][TmpKey] - 1;
@@ -362,7 +362,7 @@ int FermionOnDiskUnlimited::FindStateIndex(FermionOnSphereLongState& stateDescri
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnDiskUnlimited::PrintState (ostream& Str, int state)
+ostream& FermionOnSphereUnlimited::PrintState (ostream& Str, int state)
 {
   this->StateDescription[state].PrintState(Str, this->ReducedNbrState[state], FermionOnSphereLongStateGetRemainderNbrState(this->StateLzMax[state] + 1));
   Str << " position = " << this->FindStateIndex(this->StateDescription[state], this->ReducedNbrState[state], this->StateLzMax[state])  << "   ";
@@ -378,7 +378,7 @@ ostream& FermionOnDiskUnlimited::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnDiskUnlimited::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
+int FermionOnSphereUnlimited::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
 {
   if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
     return pos;
@@ -417,10 +417,10 @@ int FermionOnDiskUnlimited::GenerateStates(int nbrFermions, int lzMax, int curre
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnDiskUnlimited::GenerateLookUpTable(int memory)
+void FermionOnSphereUnlimited::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
-  memory /= (sizeof(int) * this->NbrLzValue);
+  memory /= (sizeof(int*) * this->NbrLzValue);
   this->HashKeyMask = (unsigned long) 0x1;
   while (memory > 0)
     {
@@ -429,7 +429,6 @@ void FermionOnDiskUnlimited::GenerateLookUpTable(int memory)
       this->HashKeyMask |= (unsigned long) 0x1;
     }
 
-  // construct  look-up tables for searching states
   this->LookUpTable = new int** [this->NbrLzValue];
   int CurrentLzMax = this->StateLzMax[0];
   this->LookUpTable[CurrentLzMax] = new int* [this->HashKeyMask + (unsigned long) 1];
@@ -526,7 +525,19 @@ void FermionOnDiskUnlimited::GenerateLookUpTable(int memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnDiskUnlimited::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+int FermionOnSphereUnlimited::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+{
+  return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
+}
+
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+//
+// nbrFermions = number of fermions
+// lzMax = two times momentum maximum value for a fermion plus one 
+// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+// return value = Hilbert space dimension
+
+int FermionOnSphereUnlimited::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
     return 0;
@@ -537,6 +548,6 @@ int FermionOnDiskUnlimited::EvaluateHilbertSpaceDimension(int nbrFermions, int l
     return 1;
   if (LzTotalMax == totalLz)
     return 1;
-  return  (this->EvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
-	   + this->EvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }

@@ -20,4 +20,5 @@ BosonOnTorusState.cc \
 ParticleOnDisk.cc \
 FermionOnDisk.cc \
 FermionOnSphereLongState.cc \
-FermionOnDiskUnlimited.cc
+FermionOnDiskUnlimited.cc \
+FermionOnSphereUnlimited.cc

@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of fermions on disk with no restriction on the         //
+//              class of fermions on spher with no restriction on the         //
 //               number of reachable states or the number of fermions         //
 //                                                                            //
-//                        last modification : 03/03/2004                      //
+//                        last modification : 31/05/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,16 +29,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONDISKUNLIMITED_H
-#define FERMIONONDISKUNLIMITED_H
+#ifndef FERMIONONSPHEREUNLIMITED_H
+#define FERMIONONSPHEREUNLIMITED_H
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphereLongState.h"
 
+#include <iostream>
 
-class FermionOnDiskUnlimited:  public ParticleOnDisk
+
+class FermionOnSphereUnlimited :  public ParticleOnSphere
 {
 
   // number of fermions
@@ -47,9 +49,9 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   int IncNbrFermions;
   // momentum total value
   int TotalLz;
-  //  maximum momentum that can be reached by a fermion
+  // maximum Lz value reached by a fermion
   int LzMax;
-  // number of one particle state with a different momentum
+  // number of Lz values in a state
   int NbrLzValue;
 
   // array describing each state
@@ -66,7 +68,7 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   // mask corresponding to the number of bits to take into account in a hash key
   unsigned long HashKeyMask;
 
-  // a table containing the parity of the number of one for each integer ranging from 0 to 2^MaximumSignLookUp - 1
+  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
   // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
   unsigned long* SignLookUpTableMask;
@@ -84,22 +86,24 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   // 
   // nbrFermions = number of fermions
   // totalLz = momentum total value
-  FermionOnDiskUnlimited (int nbrFermions, int totalLz);
+  // lzMax = maximum Lz value reached by a fermion
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereUnlimited (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnDiskUnlimited(const FermionOnDiskUnlimited& fermions);
+  FermionOnSphereUnlimited(const FermionOnSphereUnlimited& fermions);
 
   // destructor
   //
-  ~FermionOnDiskUnlimited ();
+  ~FermionOnSphereUnlimited ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnDiskUnlimited& operator = (const FermionOnDiskUnlimited& fermions);
+  FermionOnSphereUnlimited& operator = (const FermionOnSphereUnlimited& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -110,11 +114,6 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   //
   // return value = particle statistic
   int GetParticleStatistic();
-
-  // get the maximum angular momentum that can be reached by a particle 
-  //
-  // return value = maximum momentum
-  int GetMaxLz();
 
   // return a list of all possible quantum numbers 
   //
@@ -160,7 +159,7 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
- private:
+  private:
 
   // find state index
   //
@@ -178,10 +177,18 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   // return value = Hilbert space dimension
   int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
+  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+  //
+  // nbrFermions = number of fermions
+  // lzMax = two times momentum maximum value for a fermion plus one 
+  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+  // return value = Hilbert space dimension  
+  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+
   // generate look-up table associated to current Hilbert space
   // 
-  // memory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(int memory);
+  // memeory = memory size that can be allocated for the look-up table
+  void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
   // 
@@ -199,18 +206,9 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
 //
 // return value = particle statistic
 
-inline int FermionOnDiskUnlimited::GetParticleStatistic()
+inline int FermionOnSphereUnlimited::GetParticleStatistic()
 {
-  return ParticleOnDisk::FermionicStatistic;
-}
-
-// get the maximum angular momentum that can be reached by a particle 
-//
-// return value = maximum momentum
-
-inline int FermionOnDiskUnlimited::GetMaxLz()
-{
-  return this->LzMax;
+  return ParticleOnSphere::FermionicStatistic;
 }
 
 #endif
