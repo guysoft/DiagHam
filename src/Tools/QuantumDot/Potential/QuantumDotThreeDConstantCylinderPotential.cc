@@ -45,30 +45,35 @@ using std::ifstream;
 // baseRadius = radius of the dot base
 // topRadius = radius of the dot top
 // aboveHeight = height of cylinder above the dot
+// underBarrier = height of the layer serving as well barrier
 
-QuantumDotThreeDConstantCylinderPotential::QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight)
+QuantumDotThreeDConstantCylinderPotential::QuantumDotThreeDConstantCylinderPotential( double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight, double underBarrier)
 {
   this->NbrCylinderDot = nbrCylinderDot;
-  this->NumberZ = this->NbrCylinderDot + 3;
+  this->NumberZ = this->NbrCylinderDot + 4;
   this->CylinderHeight = new double[this->NumberZ];
   this->CylinderRadius = new double[this->NumberZ];
   this->PotentialValue =  new double[this->NumberZ];
 
-  this->BelowHeight = belowHeight;
-  this->CylinderHeight[0] = this->BelowHeight;
+  this->UnderBarrier = underBarrier;
+  this->CylinderHeight[0] = this->UnderBarrier;
   this->CylinderRadius[0] = -1.0;
 
-  this->WettingWidth = wettingWidth;
-  this->CylinderHeight[1] = this->WettingWidth;
+  this->BelowHeight = belowHeight;
+  this->CylinderHeight[1] = this->BelowHeight;
   this->CylinderRadius[1] = -1.0;
+
+  this->WettingWidth = wettingWidth;
+  this->CylinderHeight[2] = this->WettingWidth;
+  this->CylinderRadius[2] = -1.0;
 
   this->DotHeight = dotHeight;
   this->BaseRadius = baseRadius;
   this->TopRadius = topRadius;
-  for (int k = 2; k < (2 + this->NbrCylinderDot); ++k)
+  for (int k = 3; k < (3 + this->NbrCylinderDot); ++k)
     {
       this->CylinderHeight[k] = this->DotHeight / double(this->NbrCylinderDot);
-      this->CylinderRadius[k] = this->BaseRadius - double(k - 2) * (this->BaseRadius - this->TopRadius) / double(this->NbrCylinderDot - 1);
+      this->CylinderRadius[k] = this->BaseRadius - double(k - 3) * (this->BaseRadius - this->TopRadius) / double(this->NbrCylinderDot - 1);
     }
   
   this->AboveHeight = aboveHeight;
@@ -86,13 +91,16 @@ QuantumDotThreeDConstantCylinderPotential::~QuantumDotThreeDConstantCylinderPote
 
 // construct the potential profile from potential values
 //
+// dotPotential = dot potential, in comparision with the bulk
+// wellPotential = barrier potential, in comparison with the bulk
 
-void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPotential)
+void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPotential, double wellPotential)
 {
-  this->PotentialValue[0] = 0.0;
-  this->PotentialValue[1] = dotPotential;
+  this->PotentialValue[0] = wellPotential;
+  this->PotentialValue[1] = 0.0;
+  this->PotentialValue[2] = dotPotential;
   for (int k = 0; k < this->NbrCylinderDot; ++k)
-    this->PotentialValue[k + 2] = dotPotential;
+    this->PotentialValue[k + 3] = dotPotential;
   this->PotentialValue[this->NumberZ - 1] = 0.0;
 }
 

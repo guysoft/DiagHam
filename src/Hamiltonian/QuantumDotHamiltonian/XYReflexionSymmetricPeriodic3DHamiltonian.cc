@@ -133,6 +133,8 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
   this->NbrStateX = this->Space->GetNbrStateX();
   this->NbrStateY = this->Space->GetNbrStateY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
+  this->LowerImpulsionX = this->Space->GetLowerImpulsionX();
+  this->LowerImpulsionY = this->Space->GetLowerImpulsionY();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
   this->KineticElements = hamiltonian.KineticElements;
   this->InteractionFactors = hamiltonian.InteractionFactors;
@@ -666,10 +668,10 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool 
   int TotalIndex = 0;
   for (int i = 0; i < this->NbrStateX; ++i)
     {
-      FactorX = double((i + this->LowerImpulsionX) * (i + this->LowerImpulsionX)) * InvXFactor;	
+      FactorX = double((i + this->LowerImpulsionX) * (i + this->LowerImpulsionX)) * InvXFactor;
       for (int j = 0; j < this->NbrStateY; ++j)
 	{	  
-	  FactorY = double((j + this->LowerImpulsionY) * (j + this->LowerImpulsionY)) * InvYFactor + FactorX;       
+	  FactorY = double((j + this->LowerImpulsionY) * (j + this->LowerImpulsionY)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
 	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;

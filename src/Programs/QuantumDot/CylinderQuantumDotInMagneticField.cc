@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of cells in z direction", 100);
   SingleIntegerOption NumberMValueOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
 
+  SingleDoubleOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 11.3);
   SingleDoubleOption BelowValueOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 0.0);
   SingleDoubleOption WettingWidthOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 8.0);
   SingleIntegerOption NumberDotOption('\n', "dot", "number of uniformly high layer in the dot", 3);
@@ -64,8 +65,9 @@ int main(int argc, char** argv)
   SingleDoubleOption RMassOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.4);
+  SingleDoubleOption WellPotentialOption ('\n', "well", "potential in the well", 1.079);
   SingleDoubleOption MagneticFieldOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
-  SingleDoubleOption WaveVectorOption('w', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
+  SingleDoubleOption WaveVectorOption('k', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
   BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);
@@ -81,6 +83,7 @@ int main(int argc, char** argv)
   OptionList += &NumberRValueOption;
   OptionList += &NumberZValueOption;
   OptionList += &NumberMValueOption;
+  OptionList += &UnderBarrierValueOption;
   OptionList += &BelowValueOption;
   OptionList += &WettingWidthOption;
   OptionList += &NumberDotOption;
@@ -91,6 +94,7 @@ int main(int argc, char** argv)
   OptionList += &RMassOption;
   OptionList += &ZMassOption;
   OptionList += &DotPotentialOption;
+  OptionList += &WellPotentialOption;
   OptionList += &MagneticFieldOption;
   OptionList += &WaveVectorOption;
   OptionList += &VectorMemoryOption;
@@ -116,6 +120,7 @@ int main(int argc, char** argv)
   int NbrStateR = NumberRValueOption.GetInteger();
   int NbrStateZ = NumberZValueOption.GetInteger();
   int NumberM = NumberMValueOption.GetInteger();
+  double Barrier = UnderBarrierValueOption.GetDouble();
   double Below = BelowValueOption.GetDouble();
   double WettingWidth = WettingWidthOption.GetDouble();
   double BaseRadius = BaseRadiusOption.GetDouble();
@@ -134,7 +139,7 @@ int main(int argc, char** argv)
   int NbrIterLanczos = NbrIterationOption.GetInteger();
  
   // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
-  QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above);
+  QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier);
   // void ConstructPotential(double dotPotential);
   potential->ConstructPotential(DotPotential);
 
@@ -253,7 +258,7 @@ int main(int argc, char** argv)
           OutputFile << endl;
           OutputFile.close();
         }
-      /*
+      
       if ((EigenstateFlag == true) && (Eigenstates != 0))
         {
           char* TmpFileName = new char[256];
@@ -264,7 +269,7 @@ int main(int argc, char** argv)
             }
           delete[] TmpFileName;
         }
-      */      
+            
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
     }

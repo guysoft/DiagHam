@@ -425,7 +425,7 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	    }
 	  realImpulsionX += ((double) m * TmpRe); imaginaryImpulsionX += ((double) m * TmpIm);
 	}
-      realImpulsionX = realImpulsionX / sizeX; imaginaryImpulsionX = imaginaryImpulsionX / sizeX;
+      realImpulsionX = realImpulsionX * 2.0 * M_PI / sizeX; imaginaryImpulsionX = imaginaryImpulsionX * 2.0 * M_PI / sizeX;
     }
 
   // y direction
@@ -453,7 +453,7 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	      realImpulsionY += (double(n) * TmpRe); imaginaryImpulsionY += (double(n) * TmpIm);
 	    }
 	}
-      realImpulsionY = realImpulsionY / sizeY; imaginaryImpulsionY = imaginaryImpulsionY / sizeY;
+      realImpulsionY = realImpulsionY * 2.0 * M_PI / sizeY; imaginaryImpulsionY = imaginaryImpulsionY * 2.0 * M_PI / sizeY;
     }
 
   // z direction
@@ -479,6 +479,6 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 		}
 	    }
 	}
-      realImpulsionZ = realImpulsionZ / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ / sizeZ;	    
+      realImpulsionZ = realImpulsionZ * 2.0 * M_PI / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ * 2.0 * M_PI / sizeZ;	    
     }  
 }

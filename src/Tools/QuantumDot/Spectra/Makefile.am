@@ -8,7 +8,8 @@ AverageSpectra.cc \
 DOSSpectra.cc \
 TimeResolvedPLSpectra.cc \
 PeriodicSpectra.cc \
-XYReflexionSymmetricPeriodicSpectra.cc
+XYReflexionSymmetricPeriodicSpectra.cc \
+CylinderInMagneticFieldSpectra.cc
 
 check_PROGRAMS=TestSpectra
 

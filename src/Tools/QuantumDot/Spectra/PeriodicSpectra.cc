@@ -308,12 +308,12 @@ void PeriodicSpectra::GetImpulsion(char* fileName, double sizeX, double sizeY, d
       realImpulsionX += double (m) * tmpRe1;
       imaginaryImpulsionX += double (m) * tmpIm1;
     }
-  realImpulsionX = (realImpulsionX + double(this->LowerImpulsionX) * Re) / sizeX;
-  realImpulsionY = (realImpulsionY + double(this->LowerImpulsionY) * Re) / sizeY;
-  realImpulsionZ = (realImpulsionZ + double(this->LowerImpulsionZ) * Re) / sizeZ;
-  imaginaryImpulsionX = (imaginaryImpulsionX + double(this->LowerImpulsionX) * Im) / sizeX;
-  imaginaryImpulsionY = (imaginaryImpulsionY + double(this->LowerImpulsionY) * Im) / sizeY;
-  imaginaryImpulsionZ = (imaginaryImpulsionZ + double(this->LowerImpulsionZ) * Im) / sizeZ;
+  realImpulsionX = (realImpulsionX + double(this->LowerImpulsionX) * Re) * 2.0 * M_PI / sizeX;
+  realImpulsionY = (realImpulsionY + double(this->LowerImpulsionY) * Re) * 2.0 * M_PI / sizeY;
+  realImpulsionZ = (realImpulsionZ + double(this->LowerImpulsionZ) * Re) * 2.0 * M_PI / sizeZ;
+  imaginaryImpulsionX = (imaginaryImpulsionX + double(this->LowerImpulsionX) * Im) * 2.0 * M_PI / sizeX;
+  imaginaryImpulsionY = (imaginaryImpulsionY + double(this->LowerImpulsionY) * Im) * 2.0 * M_PI / sizeY;
+  imaginaryImpulsionZ = (imaginaryImpulsionZ + double(this->LowerImpulsionZ) * Im) * 2.0 * M_PI / sizeZ;
 
   File.close();
 }
