@@ -77,6 +77,17 @@ class QHEOnSphereMainTask: public AbstractMainTask
   int MaxNbrIterLanczos;
   // maximum number of vector in RAM during Lanczos iteration
   int VectorMemory;
+  // force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1
+  bool FullReorthogonalizationFlag;
+  // evaluate eigenstates
+  bool EvaluateEigenvectors;
+  // prefix to add to the name of each file that will contain an eigenvector
+  char* EigenvectorFileName;
+  // evaluate Lanczos convergence from eigenstate convergence
+  bool EigenvectorConvergence;
+
+  // flag that indicates if it the first time the main task is used
+  bool FirstRun;
 
  public:
 
@@ -88,8 +99,10 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // lValue = twice the total momentum value of the system
   // shift = energy shift that is applied to the hamiltonian
   // outputFileName = name of the file where results have to be stored
+  // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
-		      AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName);
+		      AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
+		      char* eigenvectorFileName = 0);
   
   // destructor
   //  

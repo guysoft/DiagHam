@@ -49,8 +49,8 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 21);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure laplacian delta if 0)", 0.0);
@@ -66,6 +66,10 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
+					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -126,10 +130,20 @@ int main(int argc, char** argv)
 	Hamiltonian = new ParticleOnSphereCoulombDeltaHamiltonian(&Space, NbrBosons, LzMax, CoulombFactor, Architecture.GetArchitecture(), Memory);
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz);
+      char* EigenvectorName = 0;
+      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+	{
+	  EigenvectorName = new char [64];
+	  sprintf (EigenvectorName, "bosons_delta_n_%d_2s_%d_lz_%d", NbrBosons, LzMax, L);
+	}
+      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
       delete Hamiltonian;
+      if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	}
     }
 
   return 0;

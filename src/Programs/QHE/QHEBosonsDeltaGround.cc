@@ -130,6 +130,10 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
       BosonOnSphere Space (NbrBosons, L, LzMax);
+/*      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+	{
+	  Space.PrintState(cout, i) << endl;
+	}*/
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
       AbstractArchitecture* Architecture = 0;

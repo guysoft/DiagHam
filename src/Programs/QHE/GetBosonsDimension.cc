@@ -1,5 +1,11 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
+#include "Options/AbstractOption.h"
+#include "Options/BooleanOption.h"
+#include "Options/SingleIntegerOption.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -13,7 +19,7 @@ using std::endl;
 // lzMax = momentum maximum value for a boson
 // totalLz = momentum total value
 // return value = Hilbert space dimension
-int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
 // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
 //
@@ -21,7 +27,7 @@ int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 // lzMax = two times momentum maximum value for a boson plus one 
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
-int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
 // evaluate Hilbert space dimension
 //
@@ -29,7 +35,7 @@ int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 // lzMax = momentum maximum value for a fermion
 // totalLz = momentum total value
 // return value = Hilbert space dimension
-int FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
 // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
 //
@@ -37,7 +43,7 @@ int FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz
 // lzMax = two times momentum maximum value for a fermion plus one 
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
-int FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
 // fake run to generate all states corresponding to the constraints
 // 
@@ -53,44 +59,51 @@ int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, 
 
 int main(int argc, char** argv)
 {
-  for (int NbrBosons = 4; NbrBosons <= 40; ++NbrBosons)
-    {
-      for (int LzMax = 2; LzMax <= 50; ++LzMax)
-	{
-	  // boson
-	  //int Max = (LzMax * NbrBosons);
-	  // fermion
-	  int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
-	  int  L = 0;
-	  if ((abs(Max) & 1) != 0)
-	    L = 1;
-	  cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+  OptionManager Manager ("GetBosonsDimension" , "0.01");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  Manager += SystemGroup;
+  Manager += MiscGroup;
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-particles", "number of particles", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles", "number of particles", 20);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lz", "number of particles", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lz", "number of particles", 20);
+  (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
-//	  BosonOnSphere Space (NbrBosons, L, LzMax);
-//	  ParticleOnSphereDeltaHamiltonian Hamiltonian(&Space, NbrBosons, LzMax, 0);
-/*	  int Memory = 0;
-	  int Dim = FakeGenerateStates(NbrBosons, LzMax, LzMax, (L + NbrBosons * LzMax) >> 1, 0, Memory);
-	  if (Memory < 0)
-	    cout << "NAN ";
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
+    {
+      cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
+      return -1;
+    }
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+    {
+      Manager.DisplayHelp (cout);
+      return 0;
+    }
+
+  for (int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger(); 
+       NbrBosons <= ((SingleIntegerOption*) Manager["max-particles"])->GetInteger(); ++NbrBosons)
+    {
+      for (int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger(); 
+	   LzMax <= ((SingleIntegerOption*) Manager["max-lz"])->GetInteger(); ++LzMax)
+	{
+	  if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
+	    {
+	      int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
+	      int  L = 0;
+	      if ((abs(Max) & 1) != 0)
+		L = 1;
+	      cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+	    }
 	  else
 	    {
-	      Memory += Dim * (2 * sizeof (int) + sizeof (int*)) + ((LzMax + 2) * (NbrBosons + 1)) * sizeof (int);
-	      if (Memory < 0)
-		cout << "NAN ";
-	      else
-		{
-		  if (Memory < 1024)
-		    cout <<  Memory << "b ";
-		  else
-		    if (Memory < (1 << 20))
-		      cout << (Memory >> 10) << "kb ";
-		    else
-		      if (Memory < (1 << 30))
-			cout << (Memory >> 20) << "Mb ";
-		      else
-			cout << (Memory >> 30) << "Gb ";
-		}
-	    }*/
+	      int Max = (LzMax * NbrBosons);
+	      int  L = 0;
+	      if ((abs(Max) & 1) != 0)
+		L = 1;
+	      cout << EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+	    }
 	}
       cout << endl;
     }
@@ -103,7 +116,7 @@ int main(int argc, char** argv)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
   return ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax, (totalLz + lzMax * nbrBosons) >> 1);
 }
@@ -115,7 +128,7 @@ int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
   if ((nbrBosons == 0) || ((nbrBosons * lzMax) < totalLz))
     return 0;
@@ -123,7 +136,7 @@ int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
     {
       return 1;
     }
-  int TmpDim = 0;
+  long TmpDim = 0;
   while ((totalLz >= 0) && (nbrBosons > 0))
     {
       TmpDim += ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
@@ -186,7 +199,7 @@ int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, 
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   return FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
 }
@@ -198,17 +211,17 @@ int FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-int FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return 0;
+    return (long) 0;
   int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
   if (LzTotalMax < totalLz)
-    return 0;
+    return (long) 0;
   if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1;
+    return (long) 1;
   if (LzTotalMax == totalLz)
-    return 1;
+    return (long) 1;
   return  (FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   +  FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }

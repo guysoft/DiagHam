@@ -32,9 +32,11 @@
 #include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
 
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
@@ -71,13 +73,25 @@ using std::ofstream;
 // lValue = twice the total momentum value of the system
 // shift = energy shift that is applied to the hamiltonian
 // outputFileName = name of the file where results have to be stored
+// eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 
 QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
-					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName)
+					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
+					 char* eigenvectorFileName)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
   this->OutputFileName[strlen(outputFileName)] = '\0';
+  if (eigenvectorFileName == 0)
+    {
+      this->EigenvectorFileName = 0;
+    }
+  else
+    {
+      this->EigenvectorFileName = new char [strlen(eigenvectorFileName) + 1];
+      strncpy(this->EigenvectorFileName, eigenvectorFileName, strlen(eigenvectorFileName));
+      this->EigenvectorFileName[strlen(eigenvectorFileName)] = '\0';
+    }
   this->Hamiltonian = hamiltonian;
   this->Space = space;
   this->LValue = lValue;
@@ -90,6 +104,10 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
   this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
+  this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
+  this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
+  this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
+  this->FirstRun = true;
 }  
  
 // destructor
@@ -98,6 +116,8 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
 QHEOnSphereMainTask::~QHEOnSphereMainTask()
 {
   delete[] this->OutputFileName;
+  if (this->EigenvectorFileName != 0)
+    delete[] this->EigenvectorFileName;
 }
   
 // execute the main task
@@ -107,7 +127,15 @@ QHEOnSphereMainTask::~QHEOnSphereMainTask()
 int QHEOnSphereMainTask::ExecuteMainTask()
 {
   ofstream File;
-  File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
+  if (this->FirstRun == true)
+    {
+      File.open(this->OutputFileName, ios::binary | ios::out);
+      this->FirstRun = false;
+    }
+  else
+    {
+      File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
+    }
   File.precision(14);
   cout.precision(14);
   cout << "----------------------------------------------------------------" << endl;
@@ -125,10 +153,31 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
 	  RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	  HRep.Householder(TmpTriDiag, 1e-7);
-	  TmpTriDiag.Diagonalize();
-	  TmpTriDiag.SortMatrixUpOrder();
-	  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; j++)
+	  if (this->EvaluateEigenvectors == false)
+	    {
+	      HRep.Householder(TmpTriDiag, 1e-7);
+	      TmpTriDiag.Diagonalize();
+	      TmpTriDiag.SortMatrixUpOrder();
+	    }
+	  else
+	    {
+	      RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+	      HRep.Householder(TmpTriDiag, 1e-7, Q);
+	      TmpTriDiag.Diagonalize(Q);
+	      TmpTriDiag.SortMatrixUpOrder(Q);
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+	      for (int j = 0; j < this->NbrEigenvalue; ++j)
+		{
+		  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		  Q[j].WriteVector(TmpVectorName);
+		  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " ";		  
+		}	      
+	      cout << endl;
+	      delete[] TmpVectorName;
+	    }
+	  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 	    {
 	      File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
 	    }
@@ -141,7 +190,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
   else
     {
       AbstractLanczosAlgorithm* Lanczos;
-      if (this->NbrEigenvalue == 1)
+      if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
 	{
 	  if (this->DiskFlag == false)
 	    Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
@@ -199,12 +248,53 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-      for (int i = 0; i <= this->NbrEigenvalue; ++i)
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
 	  File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
 	}
       cout << endl;
+      if (this->EvaluateEigenvectors == true)
+	{
+	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+	  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+	  if (this->EigenvectorConvergence == true)
+	    {
+	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+	      this->Architecture->ExecuteOperation(&Operation1);
+	      double Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+	      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+	      while (Precision > 1e-7)
+		{
+		  ++CurrentNbrIterLanczos;
+		  Lanczos->RunLanczosAlgorithm(1);
+		  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+		  TmpMatrix.SortMatrixUpOrder();
+		  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
+		  delete[] Eigenvectors;
+		  Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+		  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+		  this->Architecture->ExecuteOperation(&Operation1);
+		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+		  cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
+		       << Precision << " "<< endl;
+		}
+	    }
+	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	  for (int i = 0; i < this->NbrEigenvalue; ++i)
+	    {
+	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
+	      this->Architecture->ExecuteOperation(&Operation1);
+	      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
+	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+	      Eigenvectors[i].WriteVector(TmpVectorName);
+	    }
+	  cout << endl;
+	  delete[] TmpVectorName;
+	  delete[] Eigenvectors;
+	}
       gettimeofday (&(TotalEndingTime), 0);
       cout << "------------------------------------------------------------------" << endl << endl;;
       Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
