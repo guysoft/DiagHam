@@ -48,7 +48,7 @@ using std::ofstream;
 int main(int argc, char** argv)
 {  
   cout.precision(14);
-  OptionManager Manager ("CylinderQuantumDotInMagneticField" , "0.01");
+  OptionManager Manager ("CylinderQuantumDot" , "0.01");
   OptionGroup* PotentialGroup = new OptionGroup ("potential options");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
@@ -258,11 +258,9 @@ int main(int argc, char** argv)
         {
           ofstream OutputFile;
           OutputFile.precision(14);
-          OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
-	  //OutputFile << WaveVector << " ";
+          OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);	 
           for (int i = 0; i < NbrEigenvalue; ++i)
-            OutputFile << BaseRadius << '\t' << Barrier + Below + WettingWidth + DotHeight << '\t'<< Eigenvalues[i] << endl;
-          OutputFile << endl;
+            OutputFile << Eigenvalues[i] << " ";          
           OutputFile.close();
         }
       

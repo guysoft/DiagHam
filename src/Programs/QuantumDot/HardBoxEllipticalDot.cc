@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
 
-  OptionManager Manager ("DotEmbeddedWell" , "0.01");
+  OptionManager Manager ("HardBoxEllipticalDot" , "0.01");
   OptionGroup* PotentialGroup = new OptionGroup ("potential options");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
