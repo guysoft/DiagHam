@@ -419,9 +419,19 @@ int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, i
 //  cout << hex << this->StateDescription[index] << " " << TmpState << " " << dec << " " << TmpIndex << " " << nbrTranslation << " " << coefficient;
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
   coefficient *= this->ReorderingSign[TmpIndex][nbrTranslation];
+  this->CurrentNbrStateInOrbit = this->NbrStateInOrbit[TmpIndex];
+  this->CurrentNbrStateInOrbitRatio = this->NbrStateInOrbit[index] / this->NbrStateInOrbit[TmpIndex];
   this->CurrentSignature = this->StateSignature[TmpIndex];
-//  this->CurrentSignature = (this->CurrentSignature >> nbrTranslation) | ((this->CurrentSignature & [nbrTranslation]) << [nbrTranslation]);
+//  this->CurrentSignature = (this->CurrentSignature >> this->SignatureComplementaryTransaltions[nbrTranslation]) | 
+//    ((this->CurrentSignature & this->SignatureMasks[nbrTranslation]) << nbrTranslation);
+  unsigned long TmpMask = 0;
+  for (int i = 0; i < nbrTranslation; ++i)
+    TmpMask |= ((unsigned long) 0x1) << i;
+  cout << hex << this->CurrentSignature << " ";
+  this->CurrentSignature = (this->CurrentSignature >> nbrTranslation) | ((this->CurrentSignature & TmpMask) << (this->MomentumModulo - nbrTranslation));
+  cout << this->CurrentSignature << " " << this->StateSignature[index];  
   this->CurrentSignature ^= this->StateSignature[index];  
+  cout << this->CurrentSignature << dec << endl;
   nbrTranslation *= this->StateShift;
 //  cout  << " " << coefficient << endl;
   return TmpIndex;

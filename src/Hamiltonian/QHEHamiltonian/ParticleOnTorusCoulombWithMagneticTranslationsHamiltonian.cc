@@ -39,6 +39,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Architecture/AbstractArchitecture.h"
 
@@ -66,8 +67,9 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, 
-														     int maxMomentum, int xMomentum, double ratio, 
+ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
+														     int nbrParticles, int maxMomentum, 
+														     int xMomentum, double ratio, 
 														     AbstractArchitecture* architecture, int memory, 
 														     char* precalculationFileName)
 {
@@ -76,14 +78,16 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   this->XMomentum = xMomentum;
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
+  this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
 //  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   double WignerEnergy = 0.0;
   this->Architecture = architecture;
-  cout << "Wigner Energy = " << WignerEnergy << endl;
+  cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
+  this->EvaluateIndexPermutationSign(this->MaxMomentum / this->MomentumModulo);
   this->EnergyShift = 0.0;
   this->CosinusTable = new double [this->MaxMomentum];
   this->SinusTable = new double [this->MaxMomentum];

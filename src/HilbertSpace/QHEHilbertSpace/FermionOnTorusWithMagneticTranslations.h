@@ -35,6 +35,11 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 
+using std::cout;
+using std::endl;
+using std::dec;
+using std::hex;
+
 
 class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagneticTranslations
 {
@@ -96,7 +101,11 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   unsigned long* StateSignature;
   // sign signature obtained during previous application of a n-points operator
   unsigned long CurrentSignature;
-  
+  //
+  int CurrentNbrStateInOrbit;
+  //
+  int CurrentNbrStateInOrbitRatio;
+
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
 
@@ -182,6 +191,12 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
+
+  // check 
+  //
+  // signature = 
+  // return value = 0 if 
+  unsigned long CheckSignature (unsigned long signature);
 
   // apply a^+_m a_m operator to a given state
   //
@@ -272,18 +287,22 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
 // signature = 
 // return value = 0 if 
 
-/*inline unsigned long FermionOnTorusWithMagneticTranslations::Check ()
+inline unsigned long FermionOnTorusWithMagneticTranslations::CheckSignature (unsigned long signature)
 {
+  cout << this->CurrentNbrStateInOrbit << " " << this->CurrentNbrStateInOrbitRatio << " " << hex << this->CurrentSignature << " " << signature << dec << endl;
+  if ((this->MomentumModulo & 1) || (this->CurrentNbrStateInOrbitRatio == 1))
+    return (unsigned long) 1;
   signature ^= this->CurrentSignature;
   this->CurrentSignature = (unsigned long) 0;
-  for (int i = 0; i < ; ++i)
+  for (int i = 0; i < this->CurrentNbrStateInOrbitRatio; ++i)
     {
-      this->CurrentSignature ^= signature;
+      this->CurrentSignature += (signature & ((unsigned long) 0x1));
       signature >>= this->CurrentNbrStateInOrbit;
     }
-  return (this->CurrentSignature & ((unsigned long) 0x1));
+  cout << this->CurrentSignature << endl;
+  return ((2 * this->CurrentSignature) -  this->CurrentNbrStateInOrbitRatio);
 }
-*/
+
 #endif
 
 

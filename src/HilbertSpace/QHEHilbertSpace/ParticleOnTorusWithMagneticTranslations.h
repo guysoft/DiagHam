@@ -76,6 +76,12 @@ class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
   // return value = index of the destination state 
   virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation) = 0;
 
+  // check 
+  //
+  // signature = 
+  // return value = 0 if 
+  virtual unsigned long CheckSignature (unsigned long signature);
+
   // return matrix representation of the annihilation operator a_i
   //
   // i = operator index
@@ -91,6 +97,20 @@ class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
   Matrix& Ad (int i, Matrix& M);
 
 };
+
+
+
+// check 
+//
+// signature = 
+// return value = 0 if 
+
+inline unsigned long ParticleOnTorusWithMagneticTranslations::CheckSignature (unsigned long signature)
+{
+  return (unsigned long) 1;
+}
+
+
 
 #endif
 
