@@ -81,7 +81,6 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   else
     cout << UsedMemory << endl;
 #endif
-  this->Debug = 0;
 }
 
 // copy constructor (without duplicating datas)
@@ -106,7 +105,6 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->Debug = fermions.Debug;
 }
 
 // destructor
@@ -700,19 +698,8 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
-/*      if (this->Debug == 1)
-	{
-	  char FileName[256];
-	  sprintf (FileName, "matrix_%d", k);
-	  cout << Slatter << endl;
-	  Slatter.WriteMatrix(FileName);
-	}*/
       Complex SlatterDet = Slatter.Determinant();
       Value += SlatterDet * (state[k] * Factor);
-      if (this->Debug == 1)
-	{
-	  cout << k << " " << SlatterDet << endl;
-	}
     }
   delete[] Indices;
   return Value;

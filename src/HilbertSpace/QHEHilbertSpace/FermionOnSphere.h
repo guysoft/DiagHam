@@ -75,8 +75,6 @@ class FermionOnSphere :  public ParticleOnSphere
 
  public:
 
-  int Debug;
-
   // basic constructor
   // 
   // nbrFermions = number of fermions

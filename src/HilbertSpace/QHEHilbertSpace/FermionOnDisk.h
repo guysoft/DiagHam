@@ -173,6 +173,22 @@ class FermionOnDisk:  public ParticleOnDisk
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // evaluate wave function in real space using a given basis and only for agiven range of components
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = wave function evaluated at the given location
+  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+				int firstComponent, int nbrComponent);                                
+  
+  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
+  //
+  // timeCoherence = true if time coherence has to be used
+  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+  
  private:
 
   // find state index

@@ -143,7 +143,6 @@ int main(int argc, char** argv)
       int TimeCoherence = -1;
       if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == true)
 	TimeCoherence = NextCoordinates;
-      Space.Debug = 0;
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());

@@ -33,6 +33,9 @@
 #include "HilbertSpace/QHEHilbertSpace/FermionOnDiskUnlimited.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Vector/RealVector.h"
+#include "FunctionBasis/AbstractFunctionBasis.h"
 
 #include <math.h>
 
@@ -614,3 +617,78 @@ int FermionOnDiskUnlimited::EvaluateHilbertSpaceDimension(int nbrFermions, int l
   return  (this->EvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   + this->EvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
+
+// evaluate wave function in real space using a given basis and only for agiven range of components
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = wave function evaluated at the given location
+
+Complex FermionOnDiskUnlimited::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+						      int firstComponent, int nbrComponent)
+{
+  Complex Value;
+  Complex Tmp;
+  ComplexMatrix Slatter(this->NbrFermions, this->NbrFermions);
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
+  RealVector TmpCoordinates(2);
+  int* Indices = new int [this->NbrFermions];
+  int Pos;
+  int Lz;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
+  double Factor = 1.0;
+  for (int i = 2; i <= this->NbrFermions; ++i)
+    Factor *= (double) i;
+  Factor = 1.0 / sqrt(Factor);
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
+    {
+      Pos = 0;
+      Lz = 0;
+      FermionOnSphereLongState& TmpStateDescription = this->StateDescription[k];
+      while (Pos < this->NbrFermions)
+	{
+	  if (TmpStateDescription.GetOccupation(Lz) == 1l)
+	    {
+	      Indices[Pos] = Lz;
+	      ++Pos;
+	    }
+	  ++Lz;
+	}
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < this->NbrFermions; ++j)
+	    {
+	      Slatter[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
+	    }
+	}
+      Complex SlatterDet = Slatter.Determinant();
+      Value += SlatterDet * (state[k] * Factor);
+    }
+  delete[] Indices;
+  return Value;
+}
+
+// initialize evaluation of wave function in real space using a given basis and only for a given range of components and
+//
+// timeCoherence = true if time coherence has to be used
+
+void FermionOnDiskUnlimited::InitializeWaveFunctionEvaluation (bool timeCoherence)
+{
+}
+  

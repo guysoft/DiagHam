@@ -68,7 +68,14 @@ ParticleOnDiskFunctionBasis::~ParticleOnDiskFunctionBasis ()
 void ParticleOnDiskFunctionBasis::GetFunctionValue(RealVector& value, Complex& result, int index)
 {
 //  result = pow(Complex(value[0], value[1]), (double) (index)) * (this->Prefactor[index] * exp (-0.25 * ((value[0] * value[0]) + (value[1] * value[1]))));
-  result = pow(Complex(value[0], value[1]), (double) (index)) * this->Prefactor[index];
+  result = 1.0;
+  Complex Tmp(value[0], value[1]);
+  while (index > 0)
+    {
+      result *= Tmp;
+      --index;
+    }
+  result *= (this->Prefactor[index] * exp (-0.25 * ((value[0] * value[0]) + (value[1] * value[1]))));
 }
 
 

@@ -157,7 +157,7 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	  RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
 	  if (this->EvaluateEigenvectors == false)
 	    {
-	      HRep.Householder(TmpTriDiag, 1e-7);
+	      HRep.Householder(TmpTriDiag, MACHINE_PRECISION);
 	      TmpTriDiag.Diagonalize();
 	      TmpTriDiag.SortMatrixUpOrder();
 	    }

@@ -1,6 +1,8 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/QHEHilbertSpace/BosonOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnDiskUnlimited.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnDiskFunctionBasis.h"
 
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
@@ -43,7 +45,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsOverlap" , "0.01");
+  OptionManager Manager ("QHEFermionsOverlap" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
@@ -70,7 +72,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsOverlap -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsOverlap -h" << endl;
       return -1;
     }
   
@@ -85,13 +87,13 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int MMax = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
 
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
-      cout << "QHEBosonsOverlap requires an exact state" << endl;
+      cout << "QHEFermionsOverlap requires an exact state" << endl;
       return -1;
     }
   RealVector State;
@@ -117,25 +119,33 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  BosonOnDisk Space (NbrBosons, MMax);
+  ParticleOnDisk* Space;
+#ifdef __64_BITS__
+  if ((MMax - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 63)      
+#else
+    if ((MMax - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 31)
+#endif
+      Space = new FermionOnDisk (NbrFermions, MMax);
+    else
+      Space = new FermionOnDiskUnlimited (NbrFermions, MMax);
   for (int i = 0; i < State.GetVectorDimension(); ++i)
     {
       cout << State[i] << " ";
-      Space.PrintState(cout, i) << endl;
+      Space->PrintState(cout, i) << endl;
     }
   ParticleOnDiskFunctionBasis Basis(MMax);
-  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
-//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrBosons, 1, 1);
-//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 3);
-//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrBosons);
-  RealVector Location(2 * NbrBosons, true);
+  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrFermions, 3);
+//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrFermions);
+//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrFermions, 1, 1);
+//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrFermions, 3);
+//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrFermions);
+  RealVector Location(2 * NbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-/*  for (int k = 0; k < 10; ++k)
+  for (int k = 0; k < 10; ++k)
     {
-      for (int i = 0; i < NbrBosons; ++i)
+      for (int i = 0; i < NbrFermions; ++i)
 	{
 	  double Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
 	  double Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
@@ -143,21 +153,21 @@ int main(int argc, char** argv)
 	  Location[1 + (i << 1)] = Radius * sin (Theta);
  	  Location[i << 1] = M_PI * drand48();
 	}
-//      Location[4] = Location[0];
-//      Location[5] = Location[1];
+      Location[4] = Location[0];
+      Location[5] = Location[1];
       ParticleOnDiskFunctionBasis Basis(MMax);
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
-      //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
+      //      Complex ValueExact = Space->EvaluateWaveFunction(State, Location, Basis);
       Complex ValueLaughlin = (*WaveFunction)(Location);
 //      cout << ValueExact  << endl; 
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;*/
+  return 0;
   double Factor = 1.0;
-  for (int j = 0; j < NbrBosons; ++j)
+  for (int j = 0; j < NbrFermions; ++j)
     {
       Factor *= 4.0 * M_PI * ((double) MMax);
     }
@@ -174,7 +184,7 @@ int main(int argc, char** argv)
   int NextCoordinates = 0;
   double Radius;
   double Theta;
-  for (int j = 0; j < NbrBosons; ++j)
+  for (int j = 0; j < NbrFermions; ++j)
     {
       Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
@@ -209,14 +219,14 @@ int main(int argc, char** argv)
 	  CurrentProbabilities = PreviousProbabilities;
 	}
       TotalProbability += CurrentProbabilities;
-      NextCoordinates = (int) (((double) NbrBosons) * RandomNumber->GetRealRandomNumber());
-      if (NextCoordinates == NbrBosons)
+      NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
+      if (NextCoordinates == NbrFermions)
 	--NextCoordinates;
 
       int TimeCoherence = NextCoordinates;
       if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == false)
 	TimeCoherence = -1;
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
       Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);

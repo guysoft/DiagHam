@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of Laughlin wave function on disk                  //
+//                       class of state of boson on a sphere                  //
 //                                                                            //
-//                        last modification : 10/10/2004                      //
+//                        last modification : 03/10/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,77 +29,49 @@
 
 
 #include "config.h"
-#include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
-#include "Vector/RealVector.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnSphereState.h"
 
 
-// constructor
-//
-// nbrParticles = number of particles
-// invFillingFactor = inverse value of the filling factor
+// default constructor
+// 
 
-LaughlinOnDiskWaveFunction::LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor)
+BosonOnSphereState::BosonOnSphereState()
 {
-  this->InvFillingFactor = invFillingFactor;
-  this->NbrParticles = nbrParticles;
+  this->StateDescription = 0;
 }
-
+  
 // copy constructor
-//
-// function = reference on the wave function to copy
+// 
+// state = reference on the state to copy
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 
-LaughlinOnDiskWaveFunction::LaughlinOnDiskWaveFunction(const LaughlinOnDiskWaveFunction& function)
+BosonOnSphereState::BosonOnSphereState(BosonOnSphereState& state, const int& reducedNbrState)
 {
-  this->NbrParticles = function.NbrParticles;
-  this->InvFillingFactor = function.InvFillingFactor;
+  this->StateDescription = new unsigned long [reducedNbrState + 1];
+  for (int i = 0; i <= reducedNbrState; ++i)
+    this->StateDescription[i] = state.StateDescription[i];
 }
+  
+  
+// basic constructor
+// 
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 
+BosonOnSphereState::BosonOnSphereState(const int& reducedNbrState)
+{
+  this->StateDescription = new unsigned long [reducedNbrState + 1];
+  for (int i = 0; i <= reducedNbrState; ++i)
+    this->StateDescription[i] = (unsigned long) 0;
+}
+  
+  
 // destructor
-//
+// 
 
-LaughlinOnDiskWaveFunction::~LaughlinOnDiskWaveFunction()
+BosonOnSphereState::~BosonOnSphereState()
 {
+  if (this->StateDescription != 0)
+    delete[] this->StateDescription;
 }
+  
 
-// clone function 
-//
-// return value = clone of the function 
-
-Abstract1DComplexFunction* LaughlinOnDiskWaveFunction::Clone ()
-{
-  return new LaughlinOnDiskWaveFunction(*this);
-}
-
-// evaluate function at a given point
-//
-// x = point where the function has to be evaluated
-// return value = function value at x  
-
-Complex LaughlinOnDiskWaveFunction::operator ()(RealVector& x)
-{
-  Complex Tmp;
-  Complex WaveFunction(1.0);
-  double ZRe;
-  double ZIm;
-  double GaussianWeight = 0.0;
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      ZRe = x[i << 1];
-      ZIm = x[1 + (i << 1)];
-      for (int j = i + 1; j < this->NbrParticles; ++j)
-	{
-	  Tmp.Re = ZRe - x[j << 1];
-	  Tmp.Im = ZIm - x[1 + (j << 1)];
-	  WaveFunction *= Tmp;
-	}
-      GaussianWeight += ZRe * ZRe;
-      GaussianWeight += ZIm * ZIm;      
-    }
-  Tmp = WaveFunction;
-  for (int i = 1; i < this->InvFillingFactor; ++i)
-    {
-      WaveFunction *= Tmp;
-    }
-  WaveFunction *= exp (-0.25 * GaussianWeight);
-  return WaveFunction;
-}
