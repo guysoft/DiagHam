@@ -4,7 +4,7 @@ use strict 'vars';
 
 if (!(defined($ARGV[4])))
   {
-    die "usage: FindGapGeneric StartN StartS NInc SInc Caption [PrintFlag]";
+    die "usage: FindFermionLaplacianNeutralGap.pl StartN StartS NInc SInc Caption [PrintFlag]";
   }
 my $PrintFlag = 0;
 my $NbrFermions = $ARGV[0];

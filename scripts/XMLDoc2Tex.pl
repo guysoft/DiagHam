@@ -7,7 +7,7 @@ use XML::Simple;
 
 unless (open (INFILE, "docs/built_in_progams/header.tex"))
   {
-    die ("can't open ".$ARGV[0]."\n");
+    die ("can't open docs/built_in_progams/header.tex\n");
   }
 my $TmpLine;
 foreach $TmpLine (<INFILE>)
@@ -24,70 +24,144 @@ my $Value;
 
 if (defined($$XMLContent{'name'}))
   {
-    print "{\\bf{\\underline{".$$XMLContent{'name'}."}:}}\\\\\n";
+    print "\\begin{center}{\\Large{\\bf{\\underline{".$$XMLContent{'name'}."}:}}}\\end{center}\n\\vspace{0.5cm}\n";
   }
 if (defined($$XMLContent{'shortdesc'}))
   {
-    print $$XMLContent{'shortdesc'}."\\\\\n";
+    print "\\begin{flushleft}{\\bf{\\underline{Summary} : }}".$$XMLContent{'shortdesc'}."\\end{flushleft}\n\n";
   }
 if (defined($$XMLContent{'location'}))
   {
-    print "{\\bf{\\underline{Location}:}} ".$$XMLContent{'location'}."\\\\\n";
+    print "\\begin{flushleft}{\\bf{\\underline{Location} : }} \\directoryname{".$$XMLContent{'location'}."}\\end{flushleft}\n\n";
   }
-if (defined($$XMLContent{'option'}))
+
+if (defined($$XMLContent{'name'}))
   {
-    print "{\\bf{\\underline{Options}:}}\\\\
+    print "\\begin{flushleft}{\\bf{\\underline{Usage} : }}\\command{".$$XMLContent{'name'}." [options]}\\end{flushleft}\n\n";
+  }
+
+if (defined($$XMLContent{'optiongroup'}))
+  {
+    print "\\begin{flushleft}{\\bf{\\underline{Options} : }}\\end{flushleft}
 
 \\begin{description}\n";
     my $Key;
-    my $Value;
-    my $OptionRef = $$XMLContent{'option'};
-    while (($Key, $Value) = each (%$OptionRef))
+    my $OptionGroupRef = $$XMLContent{'optiongroup'};
+    my @OptionGroupNames;
+    if (defined($$XMLContent{'optiongroupsort'}))
       {
-	print "\\item[";
-	if (defined($$Value{'short'}))
+	@OptionGroupNames = split (/\s*\,\s*/, $$XMLContent{'optiongroupsort'});
+      }
+    else
+      {
+	@OptionGroupNames = sort (keys(%$OptionGroupRef));
+      }
+    foreach $Key (@OptionGroupNames)
+      {
+	my $Value = $$OptionGroupRef{$Key};
+	print "\\item[\\textbullet]{\\bf{".$Key." :}}\n
+\\begin{description}\n";
+	my $OptionRef = $$Value{'option'};
+	if (defined($$OptionRef{'name'}))
 	  {
-	    print "-".$$Value{'short'}.", ";
+	    print PrintOptionInfo($OptionRef);
 	  }
-	print "--".$Key."] ".$$Value{'description'};
-	if (defined($$Value{'default'}))
+	else
 	  {
-	    print " (default value is set to ".$$Value{'default'}.")";
+	    my @OptionSortArray;
+	    if (defined($$Value{'sort'}))
+	      {
+		@OptionSortArray = split (/\s*\,\s*/, $$Value{'sort'});
+	      }
+	    else
+	      {
+		@OptionSortArray = sort (keys (%$OptionRef));
+	      }
+	    my $OptionName;
+	    foreach $OptionName (@OptionSortArray)
+	      {
+		my $OptionValue = $$OptionRef{$OptionName};
+		$$OptionValue{'name'} = $OptionName;
+		print PrintOptionInfo($OptionValue);
+	      }
 	  }
-	print "\n";
+	print "\\end{description}\n\n";
       }
     print "\\end{description}\n";
   }
 if (defined($$XMLContent{'longdesc'}))
   {
-    print "{\\bf{\\underline{Description}:}}\\\\\n";
-    print $$XMLContent{'longdesc'}."\\\\\n";
+    print "\\begin{flushleft}{\\bf{\\underline{Description} : }}\\end{flushleft}\n\n";
+    print $$XMLContent{'longdesc'}."\\\\\n\n";
   }
 if (defined($$XMLContent{'accuracy'}))
   {
-    print "{\\bf{\\underline{Accuracy}:}}\\\\\n";
-    print $$XMLContent{'accuracy'}."\\\\\n";
+    print "\\begin{flushleft}{\\bf{\\underline{Accuracy} : }}\\end{flushleft}\n\n";
+    print $$XMLContent{'accuracy'}."\\\\\n\n";
   }
 if (defined($$XMLContent{'remarks'}))
   {
-    print "{\\bf{\\underline{Remarks}:}}\\\\\n";
+    print "\\begin{flushleft}{\\bf{\\underline{Remarks} : }}\\end{flushleft}\n\n";
     print $$XMLContent{'remarks'}."\\\\\n";
   }
+if (defined($$XMLContent{'relatedprog'}))
+  {
+    print "\\begin{flushleft}{\\bf{\\underline{Related programs and scripts} : }}\\end{flushleft}\n\n
+
+\\begin{description}\n";
+    my $RelatedProgram = $$XMLContent{'relatedprog'};
+    if (defined($$RelatedProgram{'name'}))
+      {
+	print PrintRelatedProgramInfo($RelatedProgram);
+      }
+    else
+      {
+	my @RelatedProgramNames;
+	if (defined($$XMLContent{'relatedprogsort'}))
+	  {
+	    @RelatedProgramNames = split (/\s*\,\s*/, $$XMLContent{'relatedprogsort'});
+	  }
+	else
+	  {
+	    @RelatedProgramNames = sort (keys(%$RelatedProgram));
+	  }
+	my $Key;
+	foreach $Key (@RelatedProgramNames)
+	  {
+	    my $Value = $$RelatedProgram{$Key};
+	    $$Value{'name'} = $Key;
+	    print PrintRelatedProgramInfo($Value);
+	  }
+      }
+    print "\\end{description}\n";
+  }
+
 if (defined($$XMLContent{'author'}))
   {
-    my $Key;
-    my $Value;
-    my $OptionRef = $$XMLContent{'author'};
-    while (($Key, $Value) = each (%$OptionRef))
+    my $AuthorInfo = $$XMLContent{'author'};
+    if (defined($$AuthorInfo{'name'}))
       {
-	print $Key."\\\\\n";
+	print "\\begin{flushleft}{\\bf{\\underline{Author} : }}".&PrintAuthorInfo($AuthorInfo)."\\end{flushleft}\n\n";
+      }
+    else
+      {
+	print "\\begin{flushleft}{\\bf{\\underline{Authors} : }}\\end{flushleft}\n";
+	print "\\begin{description}\n";
+	my $Key;
+	my $Value;
+	while (($Key, $Value) = each (%$AuthorInfo))
+	  {
+	    $$Value{'name'} = $Key;
+	    print "\\item[\\textbullet] ".PrintAuthorInfo($Value)."\n";
+	  }
+	print "\\end{description}\n\n";
       }
   }
 
 
 unless (open (INFILE, "docs/built_in_progams/footer.tex"))
   {
-    die ("can't open ".$ARGV[0]."\n");
+    die ("can't open docs/built_in_progams/footer.tex\n");
   }
 foreach $TmpLine (<INFILE>)
   {
@@ -95,3 +169,64 @@ foreach $TmpLine (<INFILE>)
   }
 close (INFILE);
 
+# print author information in a string
+#
+# $_[0] = reference on the hash table containing author information
+# return value = string corresponding to the author information
+
+sub PrintAuthorInfo
+  {
+    my $AuthorInfo = $_[0];
+    my $TmpString = $$AuthorInfo{'name'};
+    if ((defined($$AuthorInfo{'email'})) || (defined($$AuthorInfo{'homepage'})))
+      {
+	$TmpString .= " (";
+	if (defined($$AuthorInfo{'email'}))
+	  {
+	    $TmpString .= $$AuthorInfo{'email'};
+	    if (defined($$AuthorInfo{'homepage'}))
+	      {
+		$TmpString .= ", ".$$AuthorInfo{'homepage'};
+	      }
+	  }
+	else
+	  {
+	    $TmpString .= $$AuthorInfo{'homepage'};
+	  }
+	 $TmpString .= ")";
+      }
+    return $TmpString;
+  }
+
+# print option information in a string
+#
+# $_[0] = reference on the hash table containing option information
+# return value = string corresponding to the option information
+
+sub PrintOptionInfo
+  {
+    my $OptionValue = $_[0];
+    my $TmpString = "\\item[";
+    if (defined($$OptionValue{'short'}))
+      {
+	$TmpString .= "-".$$OptionValue{'short'}.", ";
+      }
+    $TmpString .= "- -".$$OptionValue{'name'}." : ] ".$$OptionValue{'description'};
+    if (defined($$OptionValue{'default'}))
+      {
+	$TmpString .= " (default value is set to ".$$OptionValue{'default'}.")";
+      }
+    $TmpString .= "\n";
+    return $TmpString;
+  }
+
+# print related program information in a string
+#
+# $_[0] = reference on the hash table containing related program information
+# return value = string corresponding to the related program information
+
+sub PrintRelatedProgramInfo
+  {
+    my $Value = $_[0];
+    return "\\item[\\textbullet]{\\bf{".$$Value{'name'}."}}\\\\\n  {\\underline{location}} : \\directoryname{".$$Value{'location'}."}\\\\\n  {\\underline{usage}} : {\\it {".$$Value{'usage'}."}}\\\\\n  {\\underline{description}} : ".$$Value{'description'}."\\\\\n";
+  }
