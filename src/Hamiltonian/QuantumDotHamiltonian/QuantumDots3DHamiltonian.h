@@ -42,6 +42,7 @@ using std::ostream;
 
 class MathematicaOutput;
 class HardBoxPyramidQuantumDotThreeDConstantCellPotential;
+class EllipticalDotThreeDConstantCellPotential;
 
 class QuantumDots3DHamiltonian : public AbstractHamiltonian
 {
@@ -143,6 +144,25 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // overlapingFactors = tridimensionnal array where overlaping factors are stored
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory = -1);
+
+  // constructor from default data
+  //
+  // space = Hilbert space associated to the system
+  // xSize = system dimension in the x direction (in Angstrom unit)
+  // ySize = system dimension in the y direction (in Angstrom unit)
+  // zSize = system dimension in the z direction (in Angstrom unit)
+  // preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
+  // postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
+  // postConstantRegionPotential = value of the potential in the region after the gradiant zone
+  // mux = effective mass in the x direction (in electron mass unit)
+  // muy = effective mass in the y direction (in electron mass unit)
+  // muz = effective mass in the z direction (in electron mass unit)
+  // nbrCellX = number of cells in the x direction
+  // nbrCellY = number of cells in the y direction
+  // nbrCellZ = number of cells in the z direction
+  // overlapingFactors = tridimensionnal array where overlaping factors are stored
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, EllipticalDotThreeDConstantCellPotential* PotentialInput, int memory = -1);
 
   // copy constructor (without duplicating datas)
   //

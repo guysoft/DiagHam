@@ -59,6 +59,9 @@ class EllipticalDotThreeDConstantCellPotential : public ThreeDConstantCellPotent
 
   // anisotropy of the dot, epsilon defined by Rx / Ry = 1 + epsilon
   double Anisotropy;
+  
+  // cell size in Z direction (in Angstrom unit)
+  double CellSizeZ;
 
  public:
 
@@ -101,6 +104,38 @@ class EllipticalDotThreeDConstantCellPotential : public ThreeDConstantCellPotent
   // return = true if the cell is in the dot, false otherwise
   bool InTheDot(int x, int y, int z);
 
+  // set the size of each cell
+  //
+  void SetCellSizeZ (double lz);
+
+  // get the number of monolayers under the wetting layer
+  //
+  int GetUnder();
+
+  // get the height of one monolayer under the wetting layer
+  //
+  // z = the indice of the monolayer
+  double GetUnderSize(int z);
+
+  // get the potential of one monolayer under the wetting layer
+  //
+  // z = the indice of the monolayer
+  double GetUnderPotentialValue(int z);
+
+  // get the number of monolayers above the dot
+  //
+  int GetAbove();
+
+  // get the height of one monolayer above the dot
+  //
+  // z = the indice of the monolayer, which is counted from 0
+  double GetAboveSize(int z);
+
+  // get the potential of one monolayer above the dot
+  //
+  // z = the indice of the monolayer, which is counted from 0
+  double GetAbovePotentialValue(int z);
+
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram
@@ -133,6 +168,66 @@ class EllipticalDotThreeDConstantCellPotential : public ThreeDConstantCellPotent
   virtual void SaveBmpPicture(char* fileName);
 
 };
+
+// set the size of each cell
+//
+
+inline void EllipticalDotThreeDConstantCellPotential::SetCellSizeZ (double lz)
+{
+  this->CellSizeZ = lz;
+}
+
+// get the number of monolayers under the wetting layer
+//
+
+inline int EllipticalDotThreeDConstantCellPotential::GetUnder()
+{
+  return this->BelowWettingLayer;
+}
+
+// get the height of one monolayer under the wetting layer
+//
+// z = the indice of the monolayer
+
+inline double EllipticalDotThreeDConstantCellPotential::GetUnderSize(int z)
+{
+  return this->CellSizeZ;
+}
+
+// get the potential of one monolayer under the wetting layer
+//
+// z = the indice of the monolayer
+
+inline double EllipticalDotThreeDConstantCellPotential::GetUnderPotentialValue(int z)
+{
+  return this->PotentialValue[0][0][z];
+}
+
+// get the number of monolayers above the dot
+//
+
+inline int EllipticalDotThreeDConstantCellPotential::GetAbove()
+{
+  return (this->NumberZ - this->BelowWettingLayer - this->WettingWidth - this->DotHeight);
+}
+
+// get the height of one monolayer above the dot
+//
+// z = the indice of the monolayer, which is counted from 0
+
+inline double EllipticalDotThreeDConstantCellPotential::GetAboveSize(int z)
+{
+  return this->CellSizeZ;
+}
+
+// get the potential of one monolayer above the dot
+//
+// z = the indice of the monolayer
+
+inline double EllipticalDotThreeDConstantCellPotential::GetAbovePotentialValue(int z)
+{
+  return this->PotentialValue[0][0][z + this->BelowWettingLayer + this->WettingWidth + this->DotHeight];
+}
 
 // assign the potential a value at a given position 
 //

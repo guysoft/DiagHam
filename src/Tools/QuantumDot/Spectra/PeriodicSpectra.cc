@@ -317,3 +317,87 @@ void PeriodicSpectra::GetImpulsion(char* fileName, double sizeX, double sizeY, d
 
   File.close();
 }
+
+// get the overlap of derived functions
+//
+// space = Hilbert space describing the other particle
+// fileName = the file to stock the other function
+// sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
+// overlap, overlapX, overlapY = reference to the return values
+
+void PeriodicSpectra::GetDerivedOverlap (Periodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY)
+{
+  int nbrStateX = space->GetNbrStateX();
+  int nbrStateY = space->GetNbrStateY();
+  int nbrStateZ = space->GetNbrStateZ();
+  int lowerImpulsionX = space->GetLowerImpulsionX();
+  int lowerImpulsionY = space->GetLowerImpulsionY();
+  int lowerImpulsionZ = space->GetLowerImpulsionZ();
+
+  int MaxLowerX = this->LowerImpulsionX, MaxLowerY = this->LowerImpulsionY, MaxLowerZ = this->LowerImpulsionZ;
+  if (this->LowerImpulsionX < lowerImpulsionX)
+    MaxLowerX = lowerImpulsionX;
+  if (this->LowerImpulsionY < lowerImpulsionY)
+    MaxLowerY = lowerImpulsionY;
+  if (this->LowerImpulsionZ < lowerImpulsionZ)
+    MaxLowerZ = lowerImpulsionZ;
+
+  int MinUpperX = this->LowerImpulsionX + this->NbrStateX, MinUpperY = this->LowerImpulsionY + this->NbrStateY, MinUpperZ = this->LowerImpulsionZ + this->NbrStateZ;
+  if (MinUpperX > (lowerImpulsionX + nbrStateX))
+    MinUpperX = lowerImpulsionX + nbrStateX;
+  if (MinUpperY > (lowerImpulsionY + nbrStateY))
+    MinUpperY = lowerImpulsionY + nbrStateY;
+  if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
+    MinUpperZ = lowerImpulsionZ + nbrStateZ;
+
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Error in open the file: " << fileName << endl;
+      exit(0);
+    }
+  double*** realCoefficients = new double** [nbrStateX];
+  double*** imaginaryCoefficients = new double** [nbrStateX];
+  for (int i = 0; i < nbrStateX; ++i)
+    {
+      realCoefficients[i] = new double* [nbrStateY];
+      imaginaryCoefficients[i] = new double* [nbrStateY];   
+      for (int j = 0; j < nbrStateY; ++j)
+	{
+	  realCoefficients[i][j] = new double [nbrStateZ];
+	  imaginaryCoefficients[i][j] = new double [nbrStateZ];
+	  for (int k = 0; k < nbrStateZ; ++k)	      
+	    File >> realCoefficients[i][j][k] >> imaginaryCoefficients[i][j][k];	    
+	}
+    }
+  File.close();  
+
+  realOverlap = 0.0; imaginaryOverlap = 0.0; realOverlapX = 0.0; imaginaryOverlapX = 0.0; realOverlapY = 0.0; imaginaryOverlapY = 0.0; 
+
+  for (int m = 0; m < this->NbrStateX; ++m)
+    for (int n = 0; n < this->NbrStateY; ++n)
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  realOverlap += (this->RealCoefficients[m][n][p] * realCoefficients[m][n][p] + this->ImaginaryCoefficients[m][n][p] * imaginaryCoefficients[m][n][p]);
+	  imaginaryOverlap += (this->RealCoefficients[m][n][p] * imaginaryCoefficients[m][n][p] - this->ImaginaryCoefficients[m][n][p] * realCoefficients[m][n][p]);
+	}
+
+  for (int m = 0; m < this->NbrStateX; ++m)
+    for (int n = 0; n < this->NbrStateY; ++n)
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  realOverlapX += (this->RealCoefficients[m][n][p] * realCoefficients[m][n][p] + this->ImaginaryCoefficients[m][n][p] * imaginaryCoefficients[m][n][p]) * double (m + this->LowerImpulsionX) * double (m + this->LowerImpulsionX);
+	  imaginaryOverlapX += (this->RealCoefficients[m][n][p] * imaginaryCoefficients[m][n][p] - this->ImaginaryCoefficients[m][n][p] * realCoefficients[m][n][p]) * double (m + this->LowerImpulsionX) * double (m + this->LowerImpulsionX);
+	} 
+
+  for (int m = 0; m < this->NbrStateX; ++m)
+    for (int n = 0; n < this->NbrStateY; ++n)
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  realOverlapY += (this->RealCoefficients[m][n][p] * realCoefficients[m][n][p] + this->ImaginaryCoefficients[m][n][p] * imaginaryCoefficients[m][n][p]) * double (n + this->LowerImpulsionY) * double (n + this->LowerImpulsionY);
+	  imaginaryOverlapY += (this->RealCoefficients[m][n][p] * imaginaryCoefficients[m][n][p] - this->ImaginaryCoefficients[m][n][p] * realCoefficients[m][n][p]) * double (n + this->LowerImpulsionY) * double (n + this->LowerImpulsionY);
+	} 
+  realOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); imaginaryOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); 
+  realOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); imaginaryOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); 
+}

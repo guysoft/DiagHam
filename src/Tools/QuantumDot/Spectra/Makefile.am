@@ -10,7 +10,8 @@ TimeResolvedPLSpectra.cc \
 PeriodicSpectra.cc \
 XYReflexionSymmetricPeriodicSpectra.cc \
 CylinderInMagneticFieldSpectra.cc \
-CylinderQuantumDotSpectra.cc
+CylinderQuantumDotSpectra.cc \
+HardBoxSpectra.cc
 
 check_PROGRAMS=TestSpectra
 

@@ -202,7 +202,7 @@ double CylinderQuantumDotSpectra::GetDotProbability(QuantumDotThreeDConstantCyli
   if (!this->EvaluatePlaneWaveFunctionOverlap(potential, this->NbrStateZ, RealWaveFunctionOverlapZ, ImaginaryWaveFunctionOverlapZ))
     cout << "Error in evaluation of function overlap in Z direction. Stop!" << endl;
   
-  double WettingRadius = potential->GetRadius(3); // wetting radius
+  double WettingRadius = potential->GetRadius(3) * 3; // wetting radius
   int nbrCylinder = potential->GetNbrCylinderZ();
   double RSize = potential->GetSuperCylinderRadius();
   double radius;
@@ -266,8 +266,7 @@ double CylinderQuantumDotSpectra::GetDotProbability(QuantumDotThreeDConstantCyli
 		}	      
 	      else
 		RadialOverlap[n1][n2][k] = 0;
-	    }	  
-	  
+	    }	  	  
 	}
     }
   
@@ -297,11 +296,11 @@ double CylinderQuantumDotSpectra::GetDotProbability(QuantumDotThreeDConstantCyli
 		TmpRe2 = (this->RealCoefficients[n1][p1] * this->RealCoefficients[n2][p2] + this->ImaginaryCoefficients[n1][p1] * this->ImaginaryCoefficients[n2][p2]);
 		TmpIm2 = (this->RealCoefficients[n1][p1] * this->ImaginaryCoefficients[n2][p2] - this->ImaginaryCoefficients[n1][p1] * this->RealCoefficients[n2][p2]);
 		TmpRe += (TmpRe2 * TmpRe1 - TmpIm2 * TmpIm1);
-		TmpIm += (TmpRe2 * TmpIm1 + TmpIm2 * TmpRe1);
+		//TmpIm += (TmpRe2 * TmpIm1 + TmpIm2 * TmpRe1);
 	      }
 	  }
       }    
-  return TmpRe * TmpRe + TmpIm * TmpIm;
+  return TmpRe;
 }
 
 // evaluate the plane wave function overlap

@@ -32,7 +32,6 @@
 
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 
-
 class PeriodicSpectra
 {
  protected:
@@ -106,6 +105,14 @@ class PeriodicSpectra
   // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
   // impulsionX, impulsionY, impulsionZ = reference to the return values
   void GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+
+  // get the overlap of derived functions
+  //
+  // space = Hilbert space describing the other particle
+  // fileName = the file to stock the other function
+  // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
+  // overlapX, overlapY = reference to the return values
+  void GetDerivedOverlap (Periodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
   
 };
 

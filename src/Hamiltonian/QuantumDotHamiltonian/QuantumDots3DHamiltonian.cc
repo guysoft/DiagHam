@@ -33,6 +33,7 @@
 #include "Vector/RealVector.h"
 #include "Complex.h"
 #include "Tools/QuantumDot/Potential/HardBoxPyramidQuantumDotThreeDConstantCellPotential.h"
+#include "Tools/QuantumDot/Potential/EllipticalDotThreeDConstantCellPotential.h"
 
 #include <iostream>
 
@@ -65,6 +66,70 @@ using std::endl;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory)
+{
+  this->Space = space;
+  this->XSize = xSize;
+  this->YSize = ySize;
+  this->ZSize = zSize;
+  this->Mux = mux;
+  this->Muy = muy;
+  this->Muz = muz;
+  this->NbrCellX = nbrCellX;
+  this->NbrCellY = nbrCellY;
+  this->NbrCellZ = nbrCellZ;
+  this->TotalNbrCells = this->NbrCellX * this->NbrCellY * this->NbrCellZ;
+  this->NbrStateX = this->Space->GetNbrStateX();
+  this->NbrStateY = this->Space->GetNbrStateY();
+  this->NbrStateZ = this->Space->GetNbrStateZ();
+  this->LeftNumber = PotentialInput->GetUnder();
+  this->PreConstantRegionSize = new double [this->LeftNumber];
+  this->PreConstantRegionPotential = new double [this->LeftNumber];
+  for (int k = 0; k < this->LeftNumber; ++k)
+    {
+      this->PreConstantRegionSize[k] = PotentialInput->GetUnderSize(k);
+      this->PreConstantRegionPotential[k] = PotentialInput->GetUnderPotentialValue(k);
+    }
+  this->RightNumber = PotentialInput->GetAbove();
+  this->PostConstantRegionSize = new double [this->RightNumber];
+  this->PostConstantRegionPotential = new double [this->RightNumber];
+  for (int k = 0; k < this->RightNumber; ++k)
+    {
+      this->PostConstantRegionSize[k] = PotentialInput->GetAboveSize(k);
+      this->PostConstantRegionPotential[k] = PotentialInput->GetAbovePotentialValue(k);
+    }
+  this->InteractionFactors = new double** [this->NbrCellZ];  
+  for (int k = 0; k < this->NbrCellZ; ++k)
+    {
+      this->InteractionFactors[k] = new double* [this->NbrCellY];
+      for (int j = 0; j < this->NbrCellY; ++j)
+	{
+	  this->InteractionFactors[k][j] = new double [this->NbrCellX];	
+	  for (int i = 0; i < this->NbrCellX; ++i)
+	    this->InteractionFactors[k][j][i] = PotentialInput->GetPotential(i, j, k + this->LeftNumber);
+	}
+    }
+  this->EvaluateInteractionFactors(memory);
+}
+
+// constructor from default datas
+//
+// space = Hilbert space associated to the system
+// xSize = system dimension in the x direction (in Angstrom unit)
+// ySize = system dimension in the y direction (in Angstrom unit)
+// zSize = system dimension in the z direction (in Angstrom unit)
+// preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
+// postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
+// postConstantRegionPotential = value of the potential in the region after the gradiant zone
+// mux = effective mass in the x direction (in electron mass unit)
+// muy = effective mass in the y direction (in electron mass unit)
+// muz = effective mass in the z direction (in electron mass unit)
+// nbrCellX = number of cells in the x direction
+// nbrCellY = number of cells in the y direction
+// nbrCellZ = number of cells in the z direction
+// overlapingFactors = tridimensionnal array where overlaping factors are stored
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, EllipticalDotThreeDConstantCellPotential* PotentialInput, int memory)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -949,16 +1014,12 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
     }
   if (this->NbrPrecalculatedDimension == 0x100)
     {
-      double Tmp = 0.0; int Index2 = 0;
+      double Tmp = 0.0; 
       for (int Index1 = firstComponent; Index1 < LastComponent; ++Index1)
 	{
 	  Tmp = (this->DiagonalElements[Index1] * vSource[Index1]);	  
-	  Index2 = 0;
-	  for (; Index2 < Index1; ++Index2)
+	  for (int Index2 = 0; Index2 < Dim; ++Index2)
 	    Tmp += this->FullPrecalculatedHamiltonian[Index1][Index2] * vSource[Index2];	  
-	  ++Index2;
-	  for (; Index2 < Dim; ++Index2)
-	    Tmp += this->FullPrecalculatedHamiltonian[Index2][Index1] * vSource[Index2];
 	  vDestination[Index1] += Tmp;
 	}
     }
@@ -1206,7 +1267,7 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
      
       for (int Index1 = 0; Index1 < Dim; ++Index1)
 	{
-	  this->FullPrecalculatedHamiltonian[Index1] = new double [Index1];
+	  this->FullPrecalculatedHamiltonian[Index1] = new double [Dim];
 	  ReducedIndex1 = Index1 / this->NbrStateZ;
 	  p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
 	  m1 = ReducedIndex1 / this->NbrStateY;
@@ -1227,8 +1288,9 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 	      if (ReducedIndex1 == ReducedIndex2)
 		tmp += this->PartialZPrecalculatedHamiltonian[p1][p2];
 	      this->FullPrecalculatedHamiltonian[Index1][Index2] = tmp;
+	      this->FullPrecalculatedHamiltonian[Index2][Index1] = tmp;	      
 	    }
-
+          this->FullPrecalculatedHamiltonian[Index1][Index1] = 0.0;
 	}
       delete[] Inter1; delete[] Inter2;      
       return; 

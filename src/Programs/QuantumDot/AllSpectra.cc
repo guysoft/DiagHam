@@ -12,7 +12,9 @@
 #include "Tools/QuantumDot/Spectra/DOSSpectra.h"
 #include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
 #include "Tools/QuantumDot/Spectra/XYReflexionSymmetricPeriodicSpectra.h"
+#include "Tools/QuantumDot/Spectra/HardBoxSpectra.h"
 
+#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
@@ -34,7 +36,6 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
-  /*
   cout.precision(14);  
   OptionManager Manager ("AllSpectra" , "0.01");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
@@ -90,7 +91,8 @@ int main(int argc, char** argv)
   double SizeY = ((SingleDoubleOption*) Manager["sizeY"])->GetDouble();
   double SizeZ = ((SingleDoubleOption*) Manager["sizeZ"])->GetDouble();
   
-   // define Hilbert space    
+   // define Hilbert space 
+  /*
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -105,6 +107,9 @@ int main(int argc, char** argv)
       Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);
 
   XYReflexionSymmetricPeriodicSpectra spectra(Space, FileName1);  
+  
+  Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, -NbrStateX / 2, NbrStateY , -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
+  PeriodicSpectra spectra(Space, FileName1);
 
   //void GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
   
@@ -115,17 +120,29 @@ int main(int argc, char** argv)
   cout << "Overlap of Y derived: " << realY << " " << imaginaryY << endl;
   double re1, re2, im1, im2;
   
-  re1 = real - 23 * 1.6 * (realX - realY)/ ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
-  re2 = real + 23 * 1.6 * (realX - realY)/ ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
-  im1 = imaginary -  23 * 1.6 * (imaginaryX - imaginaryY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
-  im2 = imaginary +  23 * 1.6 * (imaginaryX - imaginaryY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
+  re1 = real - 38.2 * (realX - realY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
+  re2 = real + 38.2 * (realX - realY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
+  im1 = imaginary - 38.2 * (imaginaryX - imaginaryY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
+  im2 = imaginary + 38.2 * (imaginaryX - imaginaryY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2));
 
   double tmp1 = re1 * re1 + im1 * im1;
   double tmp2 = re2 * re2 + im2 * im2;
   cout << tmp1 << " " << tmp2 << endl;
   cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
-  
-  
+  */
+
+  Confined3DOneParticle* Space = new Confined3DOneParticle (NbrStateX, NbrStateY, NbrStateZ);
+  HardBoxSpectra spectra (Space, FileName1);
+  double overlap = 0.0, overlapX = 0.0, overlapY = 0.0;
+  spectra.GetDerivedOverlap(Space, FileName2, SizeX, SizeY, SizeZ, overlap, overlapX, overlapY);
+
+  double tmp1 = (overlap - 38.2 * (overlapX - overlapY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2))) * (overlap - 38.2 * (overlapX - overlapY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2)));
+  double tmp2 = (overlap + 38.2 * (overlapX - overlapY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2))) * (overlap + 38.2 * (overlapX - overlapY) / ((Gap + Energy1 + Energy2) * (Gap + Energy1 + Energy2)));
+
+  cout << "Overlap is: " << overlap * overlap << endl;
+  cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
+ 
+  /*
   XYReflexionSymmetricPeriodicSpectra spectra2(Space, FileName2);
   int Number = 50;
   ofstream Electron ("Function_Electron.txt");
@@ -144,7 +161,7 @@ int main(int argc, char** argv)
     }
   Electron.close(); Hole.close();
   */
-  
+  /*
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
@@ -196,7 +213,7 @@ int main(int argc, char** argv)
   bool PairY = PairYOption.GetBoolean();
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
- 
+  */
   /*
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(40, 40, 21, -10);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
@@ -365,7 +382,7 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  
+  /*
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
@@ -375,7 +392,7 @@ int main(int argc, char** argv)
     }
   DOSSpectra DOS(1, Files, State, 4e-3, -0.2, 0.5, 2e-4);
   DOS.WriteSpectra(out);
-  
+  */
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -428,15 +445,18 @@ int main(int argc, char** argv)
   char** Files = new char* [Number]; int* State = new int[Number];
   for (int i = 0; i < Number; ++i)
     {
-      State[i] = 2;
+      State[i] = 149;
+      Files[i] = FileName;
+      
       Files[i] = new char[80];
       if (i < 9)
         AddString(Files[i], "./0.00", i + 1, "/PolarizationZ.txt");
       else
         AddString(Files[i], "./0.0", i + 1, "/PolarizationZ.txt");
       cout << Files[i] << endl; 
+      
     }
-  Spectra Absorption (Number, Files, State, 4e-3, 0.0, 0.6, 2e-4);
+  Spectra Absorption (Number, Files, State, 10e-3, 0.0, 0.4, 2e-4);
   Absorption.WriteSpectra(out);
 */
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
