@@ -32,6 +32,8 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 #include "Complex.h"
 
+class TetrapodThreeDConstantCellPotential;
+
 class PeriodicSpectra
 {
  protected:
@@ -120,6 +122,12 @@ class PeriodicSpectra
   // return = value of the probability  
   double GetCubeProbability (double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
 
+  // get the probability of the particle in different parts of the tetrapod 
+  //
+  // potential = pointer to the tetrapod potential
+  // SphereProbability = reference to the probability in the sphere
+  // ArmProbability = reference to the probabiliti in the four arms
+  void GetTetrapodProbability (TetrapodThreeDConstantCellPotential* potential, double& SphereProbability, double& ArmProbability);
   // get the overlap value of one d plane wave functions
   //
   // m1, m2 = indices of the one d function

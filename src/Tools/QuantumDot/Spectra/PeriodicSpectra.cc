@@ -26,6 +26,8 @@
 
 #include "config.h"
 #include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
+#include "Tools/QuantumDot/Potential/TetrapodThreeDConstantCellPotential.h"
+
 
 #include <iostream>
 #include <fstream>
@@ -468,6 +470,45 @@ double PeriodicSpectra::GetCubeProbability (double minX, double maxX, double min
   delete[] overlapX; delete[] overlapY; delete[] overlapZ; 
 
   return value;
+}
+
+// get the probability of the particle in different parts of the tetrapod 
+//
+// potential = pointer to the tetrapod potential
+// SphereProbability = reference to the probability in the sphere
+// ArmProbability = reference to the probabiliti in the four arms
+
+void PeriodicSpectra::GetTetrapodProbability (TetrapodThreeDConstantCellPotential* potential, double& SphereProbability, double& ArmProbability)
+{
+  int NbrCellX = potential->GetNbrCellX ();
+  int NbrCellY = potential->GetNbrCellY ();
+  int NbrCellZ = potential->GetNbrCellZ ();
+
+  double deltaX = 1.0 / ((double) NbrCellX);
+  double deltaY = 1.0 / ((double) NbrCellY);
+  double deltaZ = 1.0 / ((double) NbrCellZ);
+  
+  double minX, maxX, minY, maxY, minZ, maxZ;
+  double sphere = 0.0; double arm = 0.0;
+  for (int k = 0; k < NbrCellZ; ++k)
+    {
+      minZ = ((double) k) * deltaZ; maxZ = minZ + deltaZ;
+      for (int j = 0; j < NbrCellY; ++j)
+	{
+	  minY = ((double) j) * deltaY; maxY = minY + deltaY;
+	  for (int i = 0; i < NbrCellX; ++i)
+	    {
+	      minX = ((double) i) * deltaX; maxX = minX + deltaX;
+	      if (potential->InTheDot (i, j, k))		
+		sphere += this->GetCubeProbability (minX, maxX, minY, maxY, minZ, maxZ);
+	      else
+		if (potential->InTheArms (i, j, k))
+		  arm += this->GetCubeProbability (minX, maxX, minY, maxY, minZ, maxZ);
+	    }
+	}
+    }
+  
+  SphereProbability = sphere;; ArmProbability = arm;
 }
 
 // get the overlap value of one d plane wave functions
