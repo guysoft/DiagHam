@@ -512,11 +512,6 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
       n1 = tmpIndex / this->NbrStateZ;
       p1 = tmpIndex - n1 * this->NbrStateZ;
       int Index1 = firstComponent;
-      /*
-      int ReducedIndex1 = Index1 / this->NbrStateZ;
-      p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
-      m1 = ReducedIndex1 / this->NbrStateY;
-      n1 = ReducedIndex1 - m1 * this->NbrStateY;*/
       double TmpRe = 0.0, TmpIm = 0.0;      
       int Index2 = 0; int IndexZ = 0; int tmpIndexZ = 0;
       double* TmpRealHamiltonian; double* TmpImaginaryHamiltonian;
@@ -670,7 +665,7 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool 
       FactorX = double((i + this->LowerImpulsionX) * (i + this->LowerImpulsionX)) * InvXFactor;	
       for (int j = 0; j < this->NbrStateY; ++j)
 	{	  
-	  FactorY = double((j + this->LowerImpulsionX) * (j + this->LowerImpulsionX)) * InvYFactor + FactorX;       
+	  FactorY = double((j + this->LowerImpulsionY) * (j + this->LowerImpulsionY)) * InvYFactor + FactorX;       
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
 	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;
