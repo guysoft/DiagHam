@@ -27,5 +27,5 @@ ParticleOnSphereGenericHamiltonian.cc \
 AbstractQHEOnSphereNBodyInteractionHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreHamiltonian.cc \
 AbstractQHEOnDiskNBodyInteractionHamiltonian.cc \
-ParticleOnDiskNBodyHardCoreHamiltonian.cc
-
+ParticleOnDiskNBodyHardCoreHamiltonian.cc \
+ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.cc 

@@ -175,7 +175,7 @@ void ParticleOnSphereDipolarHamiltonian::EvaluateInteractionFactors()
   for (int j = 0; j < this->LzMax; ++j)
     {
       Coef.SetToOne();
-      Coef.PartialFactorialMultiply(this->LzMax - j + 1, 2 * this->LzMax - 2 * j - 2);
+      Coef.PartialFactorialMultiply(this->LzMax - j + 1, 2 * this->LzMax - 2 * j - 1);
       Coef.FactorialDivide(this->LzMax - j - 2);
       Coef.PartialFactorialMultiply(this->LzMax + j + 1, 2 * this->LzMax + 2 * j);
       Coef.FactorialDivide(this->LzMax + j);
@@ -183,7 +183,7 @@ void ParticleOnSphereDipolarHamiltonian::EvaluateInteractionFactors()
       Coef.FactorialMultiply(this->LzMax);
       Coef.PartialFactorialDivide(this->LzMax + 1, 2 * this->LzMax);
       Coef.FactorialMultiply(this->LzMax);
-      TmpV[j] = 0.5 * (this->LzMax + 1) * (this->LzMax + 1) * Coef.GetNumericalValue() / (this->LzMax + j + 1);
+      TmpV[j] = 0.5 * (this->LzMax + 1) * (this->LzMax + 1) * Coef.GetNumericalValue() / ((double) (((this->LzMax + j + 1) * (2 * this->LzMax - 2 * j - 1))));
       cout << "TmpV[" << j << "] = " << TmpV[j]<< endl;
     }
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
