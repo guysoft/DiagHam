@@ -81,10 +81,15 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // BosonOnTorusState external parameter: number of the state in the last unsigned long array describing the whole state
   int RemainderNbrState;
 
+  // array containg all sqare root that can be obtaines when applying creation/annihilation operators
+  double* PrecalculatedSqrt;
+
   // a temporary state array used during Hilbert space generation
   BosonOnTorusState** TemporaryStateDescription;
   // a temporary state used for all canonical form calculations
   BosonOnTorusState TemporaryState;
+  // a temporary state used for all canonical form calculations
+  BosonOnTorusState TemporaryState2;
 
   // look_up table use to find states with a given maximum momentum and a given hash key
   int*** LookUpTable;
@@ -103,18 +108,6 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
   // memory = amount of memory that can be used to allocate the look-up table (in bytes)
   BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum, unsigned long memory = 100000000);
-
-  // constructor from full datas
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
-  // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
-  // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
-  // hilbertSpaceDimension = Hilbert space dimension
-  // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a boson in a given state
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum, int hilbertSpaceDimension, 
-					int** stateDescription, int* stateMaxMomentum);
 
   // copy constructor (without duplicating datas)
   //
@@ -140,12 +133,6 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   //
   // return value = particle statistic
   int GetParticleStatistic();
-
-  // get momemtum value of a given state
-  //
-  // index = state index
-  // return value = state momentum
-  int GetMomentumValue(int index);
 
   // return a list of all possible quantum numbers 
   //

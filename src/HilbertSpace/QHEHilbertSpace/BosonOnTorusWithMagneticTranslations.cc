@@ -32,6 +32,7 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnTorusWithMagneticTranslations.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
+#include "QuantumNumber/VectorQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "MathTools/IntegerAlgebraTools.h"
@@ -67,6 +68,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
   this->ReducedNbrState = GetReducedNbrState (this->MaxMomentum);
   this->RemainderNbrState = GetRemainderNbrState (this->MaxMomentum);
   this->TemporaryState.Resize(this->ReducedNbrState);
+  this->TemporaryState2.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
   cout << this->HilbertSpaceDimension << endl;
@@ -107,42 +109,6 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
 #endif
 }
 
-// constructor from full datas (with no constraint on the total momentum)
-// 
-// nbrBosons = number of bosons
-// maxMomentum = momentum maximum value for a boson
-// hilbertSpaceDimension = Hilbert space dimension
-// stateDescription = array describing each state
-// stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
-
-BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum, int hilbertSpaceDimension, 
-									    int** stateDescription, int* stateMaxMomentum)
-{
-/*  this->NbrBosons = nbrBosons;
-  this->IncNbrBosons = this->NbrBosons + 1;
-  this->MaxMomentum = maxMomentum;
-  this->NbrMomentum = this->MaxMomentum + 1;
-  this->MomentumConstraintFlag = false;
-  this->HilbertSpaceDimension = hilbertSpaceDimension;
-  this->Flag.Initialize();
-  this->StateDescription = stateDescription;
-  this->StateMaxMomentum = stateMaxMomentum;
-  this->GenerateLookUpTable(1000000);
-#ifdef __DEBUG__
-  int UsedMemory = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    UsedMemory += (this->StateMaxMomentum[i] + 1) * sizeof(int) + sizeof(int*) + sizeof(int);
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-#endif
-*/}
-
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
@@ -162,6 +128,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations(const
   this->ReducedNbrState = bosons.ReducedNbrState;
   this->RemainderNbrState = bosons.RemainderNbrState;
   this->TemporaryState.Resize(this->ReducedNbrState);
+  this->TemporaryState2.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
@@ -259,6 +226,7 @@ BosonOnTorusWithMagneticTranslations& BosonOnTorusWithMagneticTranslations::oper
   this->ReducedNbrState = bosons.ReducedNbrState;
   this->RemainderNbrState = bosons.RemainderNbrState;
   this->TemporaryState.Resize(this->ReducedNbrState);
+  this->TemporaryState2.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
@@ -284,24 +252,6 @@ AbstractHilbertSpace* BosonOnTorusWithMagneticTranslations::Clone()
   return new BosonOnTorusWithMagneticTranslations(*this);
 }
 
-// get momemtum value of a given state
-//
-// index = state index
-// return value = state momentum
-
-int BosonOnTorusWithMagneticTranslations::GetMomentumValue(int index)
-{
-/*  int StateMaxMomentum = this->StateMaxMomentum[index];
-  int Momentum = 0;
-  int* TmpStateDescription = this->StateDescription[index];
-  for (int i = 0; i <= StateMaxMomentum; ++i)
-    {
-      Momentum += (TmpStateDescription[i] * i);
-    }
-  return (Momentum % this->MaxMomentum);*/
-  return 0;
-}
-
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
@@ -309,14 +259,11 @@ int BosonOnTorusWithMagneticTranslations::GetMomentumValue(int index)
 List<AbstractQuantumNumber*> BosonOnTorusWithMagneticTranslations::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
-/*  if (this->MomentumConstraintFlag == false)
-    {
-      for (int i = 0; i < this->MaxMomentum; ++i)
-	TmpList += new PeriodicMomentumQuantumNumber (i, this->MaxMomentum);
-    }
-  else
-    TmpList += new PeriodicMomentumQuantumNumber (this->MomentumConstraint, this->MaxMomentum);*/
-  return TmpList;
+  TmpList += new PeriodicMomentumQuantumNumber (this->XMomentum, this->MomentumModulo);
+  TmpList += new PeriodicMomentumQuantumNumber (this->YMomentum, this->MomentumModulo);
+  List<AbstractQuantumNumber*> TmpList2;
+  TmpList2 += new VectorQuantumNumber (TmpList);
+  return TmpList2;
 }
 
 // return quantum number associated to a given state
@@ -326,13 +273,10 @@ List<AbstractQuantumNumber*> BosonOnTorusWithMagneticTranslations::GetQuantumNum
 
 AbstractQuantumNumber* BosonOnTorusWithMagneticTranslations::GetQuantumNumber (int index)
 {
-/*  if (this->MomentumConstraintFlag == false)
-    {
-      return  new PeriodicMomentumQuantumNumber (this->GetMomentumValue(index), this->MaxMomentum);
-    }
-  else
-    return new PeriodicMomentumQuantumNumber (this->MomentumConstraint, this->MaxMomentum);*/
-  return 0;
+  List<AbstractQuantumNumber*> TmpList;
+  TmpList += new PeriodicMomentumQuantumNumber (this->XMomentum, this->MomentumModulo);
+  TmpList += new PeriodicMomentumQuantumNumber (this->YMomentum, this->MomentumModulo);
+  return new VectorQuantumNumber (TmpList);
 }
 
 // extract subspace with a fixed quantum number
@@ -344,14 +288,15 @@ AbstractQuantumNumber* BosonOnTorusWithMagneticTranslations::GetQuantumNumber (i
 AbstractHilbertSpace* BosonOnTorusWithMagneticTranslations::ExtractSubspace (AbstractQuantumNumber& q, 
 									     SubspaceSpaceConverter& converter)
 {
-  return 0;
-/*  if (q.GetQuantumNumberType() != AbstractQuantumNumber::PeriodicMomentum)
+  if (q.GetQuantumNumberType() != (AbstractQuantumNumber::Vector | AbstractQuantumNumber::PeriodicMomentum))
     return 0;
-  if (this->MomentumConstraintFlag == true)
-    if (this->MomentumConstraint == ((PeriodicMomentumQuantumNumber&) q).GetMomentum())
-      return this;
-    else 
-      return 0;*/
+  if (((VectorQuantumNumber&) q).GetQuantumNumbers().GetNbrElement() != 2)
+    return 0;
+  if ((this->XMomentum == ((PeriodicMomentumQuantumNumber*) (((VectorQuantumNumber&) q)[0]))->GetMomentum()) &&
+      (this->YMomentum == ((PeriodicMomentumQuantumNumber*) (((VectorQuantumNumber&) q)[1]))->GetMomentum()))
+    return this;
+  else 
+    return 0;
 }
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
@@ -367,19 +312,26 @@ AbstractHilbertSpace* BosonOnTorusWithMagneticTranslations::ExtractSubspace (Abs
 
 int BosonOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
 {
-  int currentLzMax = this->StateMaxMomentum[index];
-  BosonOnTorusState& state = this->StateDescription[index];
-  if ((n1 > currentLzMax) || (n2 > currentLzMax) || (State.GetOccupation(n1) == 0) || (State.GetOccupation(n1) == 0) 
+  BosonOnTorusState& State = this->StateDescription[index];
+  if ((n1 > this->StateMaxMomentum[index]) || (n2 > this->StateMaxMomentum[index]) || 
+      (State.GetOccupation(n1) == 0) || (State.GetOccupation(n1) == 0) 
       || ((n1 == n2) && (State.GetOccupation(n1) == 1)))
     {
       return this->HilbertSpaceDimension;
     }
 
-  this->TemporaryState.Assign(state);
-  coefficient = this->PrecalculatedSqrt[this->TemporaryState.DecrementOccupation(n1)];
-  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.DecrementOccupation(n2)];  
-  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m1)];
-  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m2)];
+  this->TemporaryState.Assign(State, this->ReducedNbrState);
+  unsigned long Tmp1;
+  int Tmp2;
+  coefficient = this->PrecalculatedSqrt[this->TemporaryState.DecrementOccupation(n1, Tmp1, Tmp2)];
+  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.DecrementOccupation(n2, Tmp1, Tmp2)];  
+  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m1, Tmp1, Tmp2)];
+  coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m2, Tmp1, Tmp2)];
+  this->TemporaryState.PutInCanonicalForm(this->TemporaryState2, this->ReducedNbrState, this->RemainderNbrState, 
+					  this->MaxMomentum, nbrTranslation, this->XMomentumTranslationStep, Tmp2);
+  if (this->CompatibilityWithXMomentum[Tmp2] == false)
+    return this->HilbertSpaceDimension;
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][Tmp2];
   return this->FindStateIndex(this->TemporaryState);
 }
 
@@ -610,6 +562,10 @@ void BosonOnTorusWithMagneticTranslations::GenerateLookUpTable()
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
+
+  this->PrecalculatedSqrt = new double [this->IncNbrBosons];
+  for (int i = 0; i < this->IncNbrBosons; ++i)
+    this->PrecalculatedSqrt[i] = sqrt ((double) i);
 
   this->LookUpTable = new int** [this->MaxMomentum];
   int CurrentMaxMomentum = this->StateMaxMomentum[0];

@@ -128,27 +128,29 @@ class BosonOnTorusState
   //
   // stateIndex = index of the state whose occupation has to be set 
   // nbrBosons = number of bosons in the given state
-  void SetOccupation (const int& stateIndex, const int& nbrBosons);
+  void SetOccupation (const int& stateIndex, const unsigned long& nbrBosons);
 
   // get occupation of a state 
   //
   // stateIndex = index of the state whose occupation has to be set 
   // return value = number of bosons in the given state
-  int GetOccupation (const int& stateIndex);
+  unsigned long GetOccupation (const int& stateIndex);
 
   // increment occupation of a state 
   //
   // stateIndex = index of the state whose occupation has to be set 
-  // tmpShift1 = refence on temporary variable used to evaluated a bit shift
+  // tmpShift1 = refence on temporary variable used during incrementation
   // tmpShift2 = refence on temporary variable used to evaluated a bit shift
-  void IncrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2);
+  // return = occupation of the stateIndex-th state after the increment operation
+  unsigned long IncrementOccupation (const int& stateIndex, unsigned long& tmpShift1, int& tmpShift2);
   
   // decrement occupation of a state (without testing if the state es empty)
   //
   // stateIndex = index of the state whose occupation has to be set 
-  // tmpShift1 = refence on temporary variable used to evaluated a bit shift
+  // tmpShift1 = refence on temporary variable used during decrementation
   // tmpShift2 = refence on temporary variable used to evaluated a bit shift
-  void DecrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2);
+  // return = occupation of the stateIndex-th state before the decrement operation
+  unsigned long DecrementOccupation (const int& stateIndex, unsigned long& tmpShift1, int& tmpShift2);
   
   // test if the state is empty an if it is not, decrement its occupation
   //
@@ -215,6 +217,18 @@ class BosonOnTorusState
   // nbrTranslationStep = step to used between two translations
   void PutInCanonicalForm(BosonOnTorusState& tmpState, const int& reducedNbrStat, const int& nbrStateRemainder,
 			  const int& nbrState, int& nbrTranslation, const int& nbrTranslationStep);
+
+  // put the state in a canonical form and find how many translations are needed to obtain the same state
+  // 
+  // tmpState = reference temporary state with the same number of states than the current one
+  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+  // nbrState = number of state in the current boson state
+  // nbrTranslation = reference where the number of translations used to obtain the canonical form will be stored
+  // nbrTranslationStep = step to used between two translations
+  // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+  void PutInCanonicalForm(BosonOnTorusState& tmpState, const int& reducedNbrStat, const int& nbrStateRemainder,
+			  const int& nbrState, int& nbrTranslation, const int& nbrTranslationStep, int& nbrTranslationToIdentity);
 
   // get the number of translation to obtain the same state
   // 
@@ -406,7 +420,7 @@ inline int BosonOnTorusState::GetHighestIndex (const int& reducedNbrState)
 // stateIndex = index of the state whose occupation has to be set 
 // nbrBosons = number of bosons in the given state
 
-inline void BosonOnTorusState::SetOccupation (const int& stateIndex, const int& nbrBosons)
+inline void BosonOnTorusState::SetOccupation (const int& stateIndex, const unsigned long& nbrBosons)
 {
 #ifdef __64_BITS__
   this->StateDescription[stateIndex >> 3] &= ~(((unsigned long) 0xff) << ((stateIndex & ((unsigned long) 0x7)) << 3));
@@ -422,7 +436,7 @@ inline void BosonOnTorusState::SetOccupation (const int& stateIndex, const int& 
 // stateIndex = index of the state whose occupation has to be set 
 // return value = number of bosons in the given state
 
-inline int BosonOnTorusState::GetOccupation (const int& stateIndex)
+inline unsigned long BosonOnTorusState::GetOccupation (const int& stateIndex)
 {
 #ifdef __64_BITS__
   return ((this->StateDescription[stateIndex >> 3] >> ((stateIndex & ((unsigned long) 0x7)) << 3)) & ((unsigned long) 0xff));
@@ -434,39 +448,46 @@ inline int BosonOnTorusState::GetOccupation (const int& stateIndex)
 // increment occupation of a state 
 //
 // stateIndex = index of the state whose occupation has to be set 
-// tmpShift1 = refence on temporary variable used to evaluated a bit shift
+// tmpShift1 = refence on temporary variable used during incrementation
 // tmpShift2 = refence on temporary variable used to evaluated a bit shift
+// return = occupation of the stateIndex-th state after the increment operation
 
-inline void BosonOnTorusState::IncrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2)
+inline unsigned long BosonOnTorusState::IncrementOccupation (const int& stateIndex, unsigned long& tmpShift1, int& tmpShift2)
 {
 #ifdef __64_BITS__
-  tmpShift1 = stateIndex >> 3;
   tmpShift2 = (stateIndex & ((unsigned long) 0x7)) << 3;
+  tmpShift1 = ((this->StateDescription[stateIndex >> 3] >> tmpShift2) & ((unsigned long) 0xff)) + 1;
+  this->StateDescription[stateIndex >> 3] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[stateIndex >> 3] |= tmpShift1 << tmpShift2;
 #else
-  tmpShift1 = stateIndex >> 2;
   tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
+  tmpShift1 = ((this->StateDescription[stateIndex >> 2] >> tmpShift2) & ((unsigned long) 0xff)) + 1;
+  this->StateDescription[stateIndex >> 2] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[stateIndex >> 2] |= tmpShift1 << tmpShift2;
 #endif
-  this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
-  this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) + 1) << tmpShift2;
+  return tmpShift1;
 }
 
 // decrement occupation of a state (without testing if the state es empty)
 //
 // stateIndex = index of the state whose occupation has to be set 
-// tmpShift1 = refence on temporary variable used to evaluated a bit shift
+// tmpShift1 = refence on temporary variable used during decrementation
 // tmpShift2 = refence on temporary variable used to evaluated a bit shift
 
-inline void BosonOnTorusState::DecrementOccupation (const int& stateIndex, int& tmpShift1, int& tmpShift2)
+inline unsigned long BosonOnTorusState::DecrementOccupation (const int& stateIndex, unsigned long& tmpShift1, int& tmpShift2)
 {
 #ifdef __64_BITS__
-  tmpShift1 = stateIndex >> 3;
-  tmpShift2 = (stateIndex & 0x7) << 3;
+  tmpShift2 = (stateIndex & ((unsigned long) 0x7)) << 3;
+  tmpShift1 = ((this->StateDescription[stateIndex >> 3] >> tmpShift2) & ((unsigned long) 0xff));
+  this->StateDescription[stateIndex >> 3] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[stateIndex >> 3] |= (tmpShift1 - 1) << tmpShift2;
 #else
-  tmpShift1 = stateIndex >> 2;
   tmpShift2 = (stateIndex & ((unsigned long) 0x3)) << 3;
+  tmpShift1 = ((this->StateDescription[stateIndex >> 2] >> tmpShift2) & ((unsigned long) 0xff));
+  this->StateDescription[stateIndex >> 2] &= ~(((unsigned long) 0xff) << tmpShift2);
+  this->StateDescription[stateIndex >> 2] |= (tmpShift1 - 1) << tmpShift2;
 #endif
-  this->StateDescription[tmpShift1] &= ~(((unsigned long) 0xff) << tmpShift2);
-  this->StateDescription[tmpShift1] |= (((this->StateDescription[tmpShift1] >> tmpShift2) & ((unsigned long) 0xff)) - 1) << tmpShift2;
+  return tmpShift1;
 }
 
 // test if the state is empty an if it is not, decrement its occupation
@@ -641,6 +662,36 @@ inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, c
 	  this->Assign(tmpState, reducedNbrState);	  
 	}
       TmpNbrTranslation += nbrTranslationStep;
+    }
+}
+
+// put the state in a canonical form and find how many translations are needed to obtain the same state
+// 
+// tmpState = reference temporary state with the same number of states than the current one
+// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+// nbrState = number of state in the current boson state
+// nbrTranslation = reference where the number of translations used to obtain the canonical form will be stored
+// nbrTranslationStep = step to used between two translations
+// nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+
+inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, const int& reducedNbrState, 
+						  const int& nbrStateRemainder, const int& nbrState, int& nbrTranslation, 
+						  const int& nbrTranslationStep, int& nbrTranslationToIdentity)
+{
+  tmpState.Assign(*this, reducedNbrState);
+  nbrTranslation = 0; 
+  nbrTranslationToIdentity = nbrTranslationStep;
+  tmpState.LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
+  while ((nbrTranslationToIdentity < nbrState) && (tmpState.Different(*this, reducedNbrState)))
+    {
+      if (tmpState.Lesser(*this, reducedNbrState))
+	{
+	  nbrTranslation = nbrTranslationToIdentity;
+	  this->Assign(tmpState, reducedNbrState);	  
+	}
+      tmpState.LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
+      nbrTranslationToIdentity += nbrTranslationStep;
     }
 }
 

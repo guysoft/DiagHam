@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslationsHamiltonian.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
 
 #include <iostream>
@@ -46,7 +46,7 @@ using std::ostream;
 class AbstractArchitecture;
 
 
-class AbstractQHEOnTorusHamiltonianWithMagneticTranslationsHamiltonian : public AbstractQHEHamiltonian
+class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHEHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
@@ -54,7 +54,7 @@ class AbstractQHEOnTorusHamiltonianWithMagneticTranslationsHamiltonian : public 
  protected:
   
   // Hilbert space associated to the system
-  ParticleOnTorusWithMagneticTranslationsHamiltonian* Particles;
+  ParticleOnTorusWithMagneticTranslations* Particles;
 
   // number of particles
   int NbrParticles;
@@ -92,12 +92,19 @@ class AbstractQHEOnTorusHamiltonianWithMagneticTranslationsHamiltonian : public 
   int** InteractionPerComponentIndex;
   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
   double** InteractionPerComponentCoefficient;
+  // number of transaltion obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  int** InteractionPerComponentNbrTranslation;
+
+  //array containing all the cosinus that are needed when computing matrix elements
+  double* CosinusTable;
+  //array containing all the sinus that are needed when computing matrix elements
+  double* SinusTable;
 
  public:
 
   // destructor
   //
-  virtual ~AbstractQHEOnTorusHamiltonianWithMagneticTranslationsHamiltonian() = 0;
+  virtual ~AbstractQHEOnTorusWithMagneticTranslationsHamiltonian() = 0;
 
   // set Hilbert space
   //
