@@ -130,7 +130,7 @@ int main(int argc, char** argv)
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
 //      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio);
-      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusDeltaHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio);
+      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusDeltaHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio, Architecture);
 
       if (Hamiltonian->GetHilbertSpaceDimension() < 300)
 	{
@@ -157,24 +157,29 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  FullReorthogonalizedLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	  AbstractLanczosAlgorithm* Lanczos = 0;
+	  if (NbrEigenvalue > 1)
+	    Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	  else
+	    Lanczos = new BasicLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	    
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
 	  double Lowest = PreviousLowest;
 	  int CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	  Lanczos.SetHamiltonian(Hamiltonian);
-	  Lanczos.InitializeLanczosAlgorithm();
+	  Lanczos->SetHamiltonian(Hamiltonian);
+	  Lanczos->InitializeLanczosAlgorithm();
 	  cout << "Run Lanczos Algorithm" << endl;
 	  timeval TotalStartingTime;
 	  timeval TotalEndingTime;
 	  double Dt;
 	  gettimeofday (&(TotalStartingTime), 0);
-	  Lanczos.RunLanczosAlgorithm(NbrEigenvalue + 2);
+	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
 	  while ((Precision > 1e-14) && (CurrentNbrIterLanczos++ < MaxNbrIterLanczos))
 	    {
-	      Lanczos.RunLanczosAlgorithm(1);
-	      TmpMatrix.Copy(Lanczos.GetDiagonalizedMatrix());
+	      Lanczos->RunLanczosAlgorithm(1);
+	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
 	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue);
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
@@ -203,6 +208,7 @@ int main(int argc, char** argv)
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
+	  delete Lanczos;
 	}
       cout << "----------------------------------------------------------------" << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;

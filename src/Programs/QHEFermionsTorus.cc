@@ -44,6 +44,8 @@ int main(int argc, char** argv)
   BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 5);
   SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
+  SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
+  SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
 
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -54,6 +56,8 @@ int main(int argc, char** argv)
   OptionList += &NbrEigenvaluesOption;
   OptionList += &NbrFermionOption;
   OptionList += &MaxMomentumOption;
+  OptionList += &MomentumOption;
+  OptionList += &MaxFullDiagonalizationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsTorus -h" << endl;
@@ -73,16 +77,22 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrFermions = NbrFermionOption.GetInteger();
   int MaxMomentum = MaxMomentumOption.GetInteger();
+  int Momentum = MomentumOption.GetInteger();
+  int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
+  double XRatio = NbrFermions / 4.0;
 
   int InvNu = 3;
 //  int MaxMomentum = InvNu * NbrFermions;
   int L = 0;
   double GroundStateEnergy = 0.0;
-/*  if (argc >= 3)
-    LzTotal = atoi (argv[3]);*/
-  char* OutputNameLz = "fermions_torus.dat";
-  char* OutputNameL = "fermions_torus.dat";
-  double XRatio = NbrFermions / 4.0;
+
+  char* OutputNameLz = new char [512];
+  sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+  ofstream File;
+  File.open(OutputNameLz, ios::binary | ios::out);
+  File.precision(14);
+
+
   
   AbstractArchitecture* Architecture = 0;
   if (SMPFlag == false)
@@ -90,48 +100,29 @@ int main(int argc, char** argv)
   else
     Architecture = new SMPArchitecture(NbrProcessor);
 
-  int Max = MaxMomentum;
-  int MomentumConstraint = 0;
-//  if (argc >= 4)
-//    Max = atoi (argv[3]);
-  ofstream File;
-  File.open(OutputNameLz, ios::binary | ios::out);
-//  int Max = ((MaxMomentum - NbrFermions) * NbrFermions);
-  int TotalSize = 0;
-//  XRatio = 0.7;
-//  XRatio = 1.0 / XRatio;
-//  NbrFermions = 3;
-//  XRatio = 1.0;
-//  MaxMomentum = 4;
-//  for (; MaxMomentum <= Max; ++MaxMomentum)
-  cout << "----------------------------------------------------------------" << endl;
-  cout << " Ratio = " << XRatio << endl;
-  //      cout << " LzTotal = " << L << endl;
-  FermionOnTorus TotalSpace (NbrFermions, MaxMomentum);//, Momentum);
-  cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-  List<AbstractQuantumNumber*> QuantumNumbers ( TotalSpace.GetQuantumNumbers());
-  ListIterator<AbstractQuantumNumber*> QuantumNumberIter (QuantumNumbers);
-  AbstractQuantumNumber** TmpQuantumNumber;
-  while ((TmpQuantumNumber = QuantumNumberIter()))
-    {
-      cout << "momentum = " << (**TmpQuantumNumber) << endl;
-      SubspaceSpaceConverter Converter;
-      FermionOnTorus* Space = (FermionOnTorus*) TotalSpace.ExtractSubspace (**TmpQuantumNumber, Converter);
-/*      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " = ";
-	  Space->PrintState(cout, i) << endl;
-	}*/
-      cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
-      cout << **TmpQuantumNumber << endl;
-//      return 0;
-      Space = new FermionOnTorus(NbrFermions, MaxMomentum);
-      ParticleOnTorusCoulombHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (Space, NbrFermions, MaxMomentum, XRatio);
-      if (Hamiltonian->GetHilbertSpaceDimension() < 9000)
+  int Max = (MaxMomentum - 1);
+  if (Momentum < 0)
+    Momentum = 0;
+  else
+    Max = Momentum;
+
+  for (; Momentum <= Max; ++Momentum)
+    {     
+      cout << "----------------------------------------------------------------" << endl;
+      cout << " Ratio = " << XRatio << endl;
+      FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
+      cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
+      cout << "momentum = " << Momentum << endl;
+      AbstractArchitecture* Architecture = 0;
+      if (SMPFlag == false)
+	Architecture = new MonoProcessorArchitecture;
+      else
+	Architecture = new SMPArchitecture(NbrProcessor);
+      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XRatio);
+      if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
-//	  cout << HRep << endl;
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension());
@@ -140,19 +131,15 @@ int main(int argc, char** argv)
 	      TmpTriDiag.SortMatrixUpOrder();
 	      if (L == 0)
 		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
-	      //	  cout << "eigenvalues : " << endl;
 	      for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
 		{
-		  cout << TmpTriDiag.DiagonalElement(j) << " ";
-//		  File << (L / 2) << " " << TmpTriDiag.DiagonalElement(j) << endl;
-// (TmpTriDiag.DiagonalElement(j) - GroundStateEnergy) << endl;
+		  File << Momentum << " " << TmpTriDiag.DiagonalElement(j) << endl;
 		}
 	      cout << endl;
 	    }
 	  else
 	    {
-	      cout << HRep(0, 0) << endl;;
-//	      File << (L / 2) << " " << HRep(0, 0) << endl;// - GroundStateEnergy) / (4 * M_PI)) << endl;
+	      File << Momentum << " " << HRep(0, 0) << endl;
 	    }
 	}
       else
@@ -195,7 +182,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << (L / 2) << " " << TmpMatrix.DiagonalElement(i) << endl;
+	      File << Momentum << " " << TmpMatrix.DiagonalElement(i) << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);
@@ -204,14 +191,10 @@ int main(int argc, char** argv)
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
 	}
-//      XRatio += 0.01;
       cout << "----------------------------------------------------------------" << endl;
-//      cout << " Total Hilbert space dimension = " << TotalSize << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;
       cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
-      File << (((double) NbrFermions) / ((double) MaxMomentum)) << " " << (GroundStateEnergy / (double) NbrFermions) << endl;
       delete Hamiltonian;
-      delete Space;
     }
   File.close();
 

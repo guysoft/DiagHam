@@ -40,6 +40,8 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
+#include "Architecture/AbstractArchitecture.h"
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -59,9 +61,12 @@ using std::ostream;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum,
-								     double ratio)
+								 double ratio, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -70,11 +75,34 @@ ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
-  cout << "fast = " << this->FastMultiplicationMemory() << endl;
-  this->EnableFastMultiplication();
+  this->EnergyShift = 0.0;
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
 }
 
 // destructor
@@ -86,9 +114,13 @@ ParticleOnTorusDeltaHamiltonian::~ParticleOnTorusDeltaHamiltonian()
   delete[] this->M1Value;
   delete[] this->M2Value;
   delete[] this->M3Value;
+  delete[] this->M4Value;
   if (this->FastMultiplicationFlag == true)
     {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
 	{
 	  delete[] this->InteractionPerComponentIndex[i];
 	  delete[] this->InteractionPerComponentCoefficient[i];
@@ -121,24 +153,6 @@ void ParticleOnTorusDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hil
   this->EvaluateInteractionFactors();
 }
 
-// get Hilbert space on which Hamiltonian acts
-//
-// return value = pointer to used Hilbert space
-
-AbstractHilbertSpace* ParticleOnTorusDeltaHamiltonian::GetHilbertSpace ()
-{
-  return this->Particles;
-}
-
-// return dimension of Hilbert space where Hamiltonian acts
-//
-// return value = corresponding matrix elementdimension
-
-int ParticleOnTorusDeltaHamiltonian::GetHilbertSpaceDimension ()
-{
-  return this->Particles->GetHilbertSpaceDimension();
-}
-
 // shift Hamiltonian from a given energy
 //
 // shift = shift value
@@ -147,228 +161,6 @@ void ParticleOnTorusDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnTorusDeltaHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  double x = 0.0;
-  int dim = this->Particles->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return Complex(x);
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex ParticleOnTorusDeltaHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  return Complex();
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& ParticleOnTorusDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& ParticleOnTorusDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-								int firstComponent, int nbrComponent) 
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = 0.0;
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-RealVector& ParticleOnTorusDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& ParticleOnTorusDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								   int firstComponent, int nbrComponent)
-{
-  int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-//  double Shift = ((double) this->NbrParticles) * this->WignerEnergy;
-  if (this->FastMultiplicationFlag == false)
-    {
-      double Coefficient;
-      int Index;
-      int m1;
-      int m2;
-      int m3;
-      int m4;
-      double TmpInteraction;
-      int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = this->M4Value[j];
-	  TmpInteraction = this->InteractionFactors[j];
-	  for (int i = firstComponent; i < LastComponent; ++i)
-	    {
-	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < Dim)
-		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	    }
-	}
-      m1 = this->M1Value[ReducedNbrInteractionFactors];
-      m2 = this->M2Value[ReducedNbrInteractionFactors];
-      m3 = this->M3Value[ReducedNbrInteractionFactors];
-      m4 = this->M4Value[ReducedNbrInteractionFactors];
-      TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < Dim)
-	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-//	  vDestination[i] += Shift * vSource[i];
-	}
-    }
-  else
-    {
-      double Coefficient;
-      int* TmpIndexArray;
-      double* TmpCoefficientArray; 
-      int j;
-      int TmpNbrInteraction;
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  TmpNbrInteraction = this->NbrInteractionPerComponent[i];
-	  TmpIndexArray = this->InteractionPerComponentIndex[i];
-	  TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-	  Coefficient = vSource[i];
-	  for (j = 0; j < TmpNbrInteraction; ++j)
-	    vDestination[TmpIndexArray[j]] += TmpCoefficientArray[j] * Coefficient;
-//	  vDestination[i] += Shift * Coefficient;
-	}
-   }
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& ParticleOnTorusDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnTorusDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								   int firstComponent, int nbrComponent)
-{
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      vDestination.Re(i) = 0.0;
-      vDestination.Im(i) = 0.0;
-    }
-  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& ParticleOnTorusDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnTorusDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								      int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
- 
-// return a list of left interaction operators
-//
-// return value = list of left interaction operators
-
-List<Matrix*> ParticleOnTorusDeltaHamiltonian::LeftInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-// return a list of right interaction operators
-//
-// return value = list of right interaction operators
-
-List<Matrix*> ParticleOnTorusDeltaHamiltonian::RightInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
 // evaluate all interaction factors
 //   
 
@@ -378,12 +170,6 @@ void ParticleOnTorusDeltaHamiltonian::EvaluateInteractionFactors()
   int m4;
   double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
   double MaxCoefficient = 0.0;
-
-/*  cout << this->EvaluateInteractionCoefficient(2, 0, 2, 0) << endl;
-//  this->InvRatio = this->Ratio;
-//  this->Ratio = 1.0 / this->InvRatio;
-  cout << this->EvaluateInteractionCoefficient(0, 2, 2, 0) << endl;
-  exit(0);*/
 
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
@@ -436,9 +222,6 @@ void ParticleOnTorusDeltaHamiltonian::EvaluateInteractionFactors()
 		      this->M2Value[this->NbrInteractionFactors] = m2;
 		      this->M3Value[this->NbrInteractionFactors] = m3;
 		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      /*		cout << this->M1Value[this->NbrInteractionFactors] << " " << this->M2Value[this->NbrInteractionFactors] 
-					<< " " << this->M3Value[this->NbrInteractionFactors] 
-					<< " " << this->InteractionFactors[this->NbrInteractionFactors] << endl;*/
 		      ++this->NbrInteractionFactors;
 		    }
 		  ++Pos;
@@ -682,84 +465,6 @@ double ParticleOnTorusDeltaHamiltonian::PartialMisraFunction (double n, double x
   Sum += (0.5 - M1_12 * 2.0 * x * min * max) * exp(min * min * x);
   Sum *= max;
   return Sum;
-}
-
-// test the amount of memory needed for fast multiplication algorithm
-//
-// return value = amount of memory needed
-
-int ParticleOnTorusDeltaHamiltonian::FastMultiplicationMemory()
-{
-  int Index;
-  double Coefficient;
-  int memory = 0;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-    this->NbrInteractionPerComponent[i] = 0;
-  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-    {
-      m1 = this->M1Value[j];
-      m2 = this->M2Value[j];
-      m3 = this->M3Value[j];
-      m4 = this->M4Value[j];
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-	{
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      ++memory;
-	      ++this->NbrInteractionPerComponent[i];
-	    }
-	}    
-    }
-  memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * this->Particles->GetHilbertSpaceDimension() + 
-	    memory *  (sizeof (int) + 2 * sizeof(double)));
-  return memory;
-}
-
-// enable fast multiplication algorithm
-//
-
-void ParticleOnTorusDeltaHamiltonian::EnableFastMultiplication()
-{
-  int Index;
-  double Coefficient;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  int Pos;
-  this->InteractionPerComponentIndex = new int* [this->Particles->GetHilbertSpaceDimension()];
-  this->InteractionPerComponentCoefficient = new double* [this->Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-    {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[i];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-      Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      ++Pos;
-	    }
-	}
-    }
-  this->FastMultiplicationFlag = true;
 }
 
 // Output Stream overload

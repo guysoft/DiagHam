@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libHamiltonian.a
 
-libHamiltonian_a_SOURCES = AbstractHamiltonian.cc AnisotropicSpinChainHamiltonian.cc AKLTHamiltonian.cc DiamondSpinChainHamiltonian.cc DoubleTriangleSpinChainHamiltonian.cc ExplicitHamiltonian.cc Mn12Hamiltonian.cc NonPeriodicDMRGHamiltonian.cc PeriodicDMRGHamiltonian.cc OpenDiamondSpinChainHamiltonian.cc PeriodicSpinChainHamiltonian.cc PeriodicAnisotropicSpinChainHamiltonian.cc PeriodicSandGlassSpinChainHamiltonian.cc PeriodicXXZSpinChainHamiltonian.cc SpinChainHamiltonian.cc SpinChainHamiltonianWithTranslations.cc SandGlassSpinChainHamiltonian.cc MultipleSpinChainHamiltonian.cc TriangleSpinChainHamiltonian.cc V15Hamiltonian.cc XXZSpinChainHamiltonian.cc TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc QuantumDots3DHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc
+libHamiltonian_a_SOURCES = AbstractHamiltonian.cc AnisotropicSpinChainHamiltonian.cc AKLTHamiltonian.cc DiamondSpinChainHamiltonian.cc DoubleTriangleSpinChainHamiltonian.cc ExplicitHamiltonian.cc Mn12Hamiltonian.cc NonPeriodicDMRGHamiltonian.cc PeriodicDMRGHamiltonian.cc OpenDiamondSpinChainHamiltonian.cc PeriodicSpinChainHamiltonian.cc PeriodicAnisotropicSpinChainHamiltonian.cc PeriodicSandGlassSpinChainHamiltonian.cc PeriodicXXZSpinChainHamiltonian.cc SpinChainHamiltonian.cc SpinChainHamiltonianWithTranslations.cc SandGlassSpinChainHamiltonian.cc MultipleSpinChainHamiltonian.cc TriangleSpinChainHamiltonian.cc V15Hamiltonian.cc XXZSpinChainHamiltonian.cc TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc QuantumDots3DHamiltonian.cc AbstractQHEHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc AbstractQHEOnTorusHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -104,7 +104,8 @@ ParticleOnCircleCoulombHamiltonian.o \
 ApproximateFermionOnTorusCoulombHamiltonian.o \
 ParticleOnSphereDeltaModifiedHamiltonian.o \
 PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.o \
-QuantumDots3DHamiltonian.o AbstractQHEOnSphereHamiltonian.o \
+QuantumDots3DHamiltonian.o AbstractQHEHamiltonian.o \
+AbstractQHEOnSphereHamiltonian.o AbstractQHEOnTorusHamiltonian.o \
 ParticleOnSphereCoulombDeltaHamiltonian.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -118,7 +119,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AKLTHamiltonian.P .deps/AbstractHamiltonian.P \
-.deps/AbstractQHEOnSphereHamiltonian.P \
+.deps/AbstractQHEHamiltonian.P .deps/AbstractQHEOnSphereHamiltonian.P \
+.deps/AbstractQHEOnTorusHamiltonian.P \
 .deps/AnisotropicSpinChainHamiltonian.P \
 .deps/ApproximateFermionOnTorusCoulombHamiltonian.P \
 .deps/DiamondSpinChainHamiltonian.P \

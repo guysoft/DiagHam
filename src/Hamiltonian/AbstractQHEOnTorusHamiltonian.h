@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //                   class of quatum Hall hamiltonian associated              //
-//                        to particles on a sphere with                       //
+//                         to particles on a torus with                       //
 //                                                                            //
-//                        last modification : 23/03/2003                      //
+//                        last modification : 27/06/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTQHEONSPHEREHAMILTONIAN_H
-#define ABSTRACTQHEONSPHEREHAMILTONIAN_H
+#ifndef ABSTRACTQHEONTORUSHAMILTONIAN_H
+#define ABSTRACTQHEONTORUSHAMILTONIAN_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/ParticleOnTorus.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
 #include <iostream>
@@ -46,7 +46,7 @@ using std::ostream;
 class AbstractArchitecture;
 
 
-class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
+class AbstractQHEOnTorusHamiltonian : public AbstractQHEHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
@@ -54,13 +54,21 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
  protected:
   
   // Hilbert space associated to the system
-  ParticleOnSphere* Particles;
+  ParticleOnTorus* Particles;
 
   // number of particles
   int NbrParticles;
 
-  // maximum Lz value reached by a particle in the state
-  int LzMax;
+  // global energy shift (can be used to store the energy of the Wigner crystal)
+  double EnergyShift;
+
+  // ratio between the width in the x direction and the width in the y direction
+  double Ratio;
+  // ratio between the width in the y direction and the width in the x direction
+  double InvRatio;
+
+  // maximum momentum value reached by a particle in the state
+  int MaxMomentum;
   // number of Lz values in a state
   int NbrLzValue;
 
@@ -72,6 +80,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   int* M1Value;
   int* M2Value;
   int* M3Value;
+  int* M4Value;
 
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
@@ -88,7 +97,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
 
   // destructor
   //
-  virtual ~AbstractQHEOnSphereHamiltonian() = 0;
+  virtual ~AbstractQHEOnTorusHamiltonian() = 0;
 
   // set Hilbert space
   //

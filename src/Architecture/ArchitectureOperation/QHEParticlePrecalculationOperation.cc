@@ -37,7 +37,7 @@
 // hamiltonian = pointer to the hamiltonian to use
 // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
 
-QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (AbstractQHEOnSphereHamiltonian* hamiltonian, bool firstPass)
+QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (AbstractQHEHamiltonian* hamiltonian, bool firstPass)
 {
   this->FirstComponent = 0;
   this->NbrComponent = hamiltonian->GetHilbertSpaceDimension();

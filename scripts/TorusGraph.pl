@@ -119,17 +119,22 @@ sub CreatePostScript
     my $PrintFlag = $_[1];
     my $Max;
     my $Min;
-    &FindMinMax($FileName, 1, \$Min, \$Max, 0, 0, 14);
+    &FindMinMax($FileName, 1, \$Min, \$Max);
     my $Delta = ($Max - $Min) / 20.0;
     $Max += $Delta;
     $Min -= $Delta;
+    my $PMin;
+    my $PMax;
+    &FindMinMax($FileName, 0, \$PMin, \$PMax);
+    $PMin--;
+    $PMax++;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
     my @TmpArray = split (/_/,  $OutputFile);
     my $Title = "N = ".$TmpArray[4]."  P = ".$TmpArray[6]." ratio = ".$TmpArray[8];
     $OutputFile =~ s/\.dat/\.ps/;
     open (OUTFILE, ">$TmpFileName");
-    print OUTFILE ("set xrange [-1:15]
+    print OUTFILE ("set xrange [".$PMin.":".$PMax."]
 set yrange [".$Min.":".$Max."]
 set xlabel \"Total Momentum [".$TmpArray[6]."]\"
 set ylabel \"E(L)\"

@@ -35,5 +35,7 @@ ApproximateFermionOnTorusCoulombHamiltonian.cc \
 ParticleOnSphereDeltaModifiedHamiltonian.cc \
 PeriodicXXZSpinChainWithSecondNearestNeighborCouplingHamiltonian.cc \
 QuantumDots3DHamiltonian.cc \
+AbstractQHEHamiltonian.cc \
 AbstractQHEOnSphereHamiltonian.cc \
+AbstractQHEOnTorusHamiltonian.cc \
 ParticleOnSphereCoulombDeltaHamiltonian.cc
