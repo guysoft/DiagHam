@@ -301,11 +301,10 @@ inline Complex& Complex::operator -=(const Complex& z)
 
 inline Complex& Complex::operator /=(const Complex& z)
 {
-  double x;
-  double n = z.Re * z.Re + z.Im * z.Im;
-  x = (this->Re * z.Re + this->Im * z.Im) / n;
-  this->Im = (this->Re * z.Im - this->Im * z.Re) / n;
-  this->Re = x ;
+  double n = 1.0 / (z.Re * z.Re + z.Im * z.Im);
+  double x = (this->Re * z.Re + this->Im * z.Im) * n;
+  this->Im = (this->Im * z.Re - this->Re * z.Im) * n;
+  this->Re = x;
   return *this;
 }
 

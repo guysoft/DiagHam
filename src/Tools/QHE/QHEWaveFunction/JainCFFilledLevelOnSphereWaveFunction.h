@@ -49,8 +49,14 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // number of Landau levels filled with composite fermions
   int NbrLandauLevels;
+
+  // twice the value of the momentum in the lowest pseudo-Landau level
+  int TwiceS;
   
   // power to which the Jastrow factor has to be raised
+  int ActualJastrowPower;
+
+  // for fermionic case, half the power to which the Jastrow factor has to be raised, for bosonic case, half the power + 1 to which the Jastrow factor has to be raised
   int JastrowPower;
 
   // array with powers of JastrowPower
@@ -65,12 +71,21 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // grabage flag to avoid duplication of precalculation array
   GarbageFlag Flag;
 
-  // temporary used to store (u_i v_j - u_j v_i)^-1 factors
+  // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
   Complex** JastrowFactorElements;
-  // temporary used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
+  // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
   Complex*** DerivativeFactors;
   // a duplicate array of DerivativeFactors used for precalculations
   Complex*** DerivativeFactors2;
+
+  // temporary array used to store u spinor coordinates
+  Complex* SpinorUCoordinates;
+  // temporary array used to store v spinor coordinates
+  Complex* SpinorVCoordinates;
+  // temporary array used to store powers of the u spinor coordinates
+  Complex** SpinorUCoordinatePower;
+  // temporary array used to store powers of the v spinor coordinates
+  Complex** SpinorVCoordinatePower;
 
  public:
 
@@ -115,15 +130,12 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // evaluate composite fermion monopole spherical harmonic 
   //
-  // spinorUCoordinates = spinor u coordinates where the function has to be evalauted
-  // spinorVCoordinates = spinor v coordinates where the function has to be evalauted
   // coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
   // momentum = monopole spherical harmonic Lz momentum
   // landauLevel = index of the pseudo Landau level
   // maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
   // return value = value of the monopole spherical harmonic at the givne point
-  Complex EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
-				      int coordinate, int momentum, int landauLevel, int maximumMomentum);
+  Complex EvaluateCFMonopoleHarmonic (int coordinate, int momentum, int landauLevel, int maximumMomentum);
 
   // evaluate derivative part of the composite fermion monopole spherical harmonic 
   //
