@@ -70,7 +70,6 @@ PeriodicOneDOneParticle::PeriodicOneDOneParticle (const PeriodicOneDOneParticle&
 
 PeriodicOneDOneParticle::~PeriodicOneDOneParticle ()
 {
-  cout << "PeriodicOneDOneParticle's destructor is being called" << endl;
 }
 
 

@@ -46,62 +46,74 @@ using std::endl;
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 #define COULOMBIAN_FACTOR 180.79
 
-/*
 // each state is coded with 5 bits
-#define NbrBitZ2 5
-#define NbrBitY2 5
-#define NbrBitX2 5
-#define NbrBitZ1 5
-#define NbrBitY1 5
-#define NbrBitX1 5
+#define NBRBITZ2 5
+#define DELTAZ2  15
 
-#define Hex2 0x7fff 
-#define Hex1 0x7fff
+#define NBRBITY2 5
+#define DELTAY2  15
+
+#define NBRBITX2 5
+#define DELTAX2  15
+
+#define NBRBITZ1 5
+#define DELTAZ1  15
+
+#define NBRBITY1 5
+#define DELTAY1  15
+
+#define NBRBITX1 5
+#define DELTAX1  15
+
+#define HEX2 0x7fff 
+#define HEX1 0x7fff
 // end of 5 bit coding
-*/
+
 
 /*
 // each state is coded with 4 bits
-#define NbrBitZ2 4
-#define NbrBitY2 4
-#define NbrBitX2 4
-#define NbrBitZ1 4
-#define NbrBitY1 4
-#define NbrBitX1 4
+#define NBRBITZ2 4
+#define NBRBITY2 4
+#define NBRBITX2 4
+#define NBRBITZ1 4
+#define NBRBITY1 4
+#define NBRBITX1 4
 
-#define Hex2 0xfff
-#define Hex1 0xfff
+#define HEX2 0xfff
+#define HEX1 0xfff
 // end of 4 bit coding
 */
 
-
+/*
 // each state is coded with 3 bits
-#define NbrBitZ2 3
-#define NbrBitY2 3
-#define NbrBitX2 3
-#define NbrBitZ1 3
-#define NbrBitY1 3
-#define NbrBitX1 3
+#define NBRBITZ2 3
+#define NBRBITY2 3
+#define NBRBITX2 3
+#define NBRBITZ1 3
+#define NBRBITY1 3
+#define NBRBITX1 3
 
-#define Hex2 0x1ff
-#define Hex1 0x1ff
+#define HEX2 0x1ff
+#define HEX1 0x1ff
 // end of 3 bit coding
+*/
 
 
+#define NBRBIT2 (NBRBITX2 + NBRBITY2 + NBRBITZ2)
+#define NBRBIT1 (NBRBITX1 + NBRBITY1 + NBRBITZ1)
 
-#define NbrBit2 (NbrBitX2 + NbrBitY2 + NbrBitZ2)
-#define NbrBit1 (NbrBitX1 + NbrBitY1 + NbrBitZ1)
+#define SHIFTZ2 0
+#define SHIFTY2 (SHIFTZ2 + NBRBITZ2)
+#define SHIFTX2 (SHIFTY2 + NBRBITY2)
+#define SHIFTZ1 (SHIFTX2 + NBRBITX2)
+#define SHIFTY1 (SHIFTZ1 + NBRBITZ1)
+#define SHIFTX1 (SHIFTY1 + NBRBITY1)
+#define SHIFTZ1bis 0
+#define SHIFTY1bis (SHIFTZ1bis + NBRBITZ1)
+#define SHIFTX1bis (SHIFTY1bis + NBRBITZ2)
 
-#define ShiftZ2 0
-#define ShiftY2 (ShiftZ2 + NbrBitZ2)
-#define ShiftX2 (ShiftY2 + NbrBitY2)
-#define ShiftZ1 (ShiftX2 + NbrBitX2)
-#define ShiftY1 (ShiftZ1 + NbrBitZ1)
-#define ShiftX1 (ShiftY1 + NbrBitY1)
-#define ShiftZ1bis 0
-#define ShiftY1bis (ShiftZ1bis + NbrBitZ1)
-#define ShiftX1bis (ShiftY1bis + NbrBitZ2)
-
+#define DELTAX ((DELTAX1 << SHIFTX1bis) | (DELTAY1 <<  SHIFTY1bis) | (DELTAZ1 << SHIFTZ1bis))
+#define DELTAY ((DELTAX2 << SHIFTX2) | (DELTAY2 <<  SHIFTY2) | (DELTAZ2 << SHIFTZ2))
 
 // constructor
 //
@@ -125,18 +137,19 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian (PeriodicTh
   this->NbrState2Y = secondParticle->GetNbrStateY ();
   this->NbrState2Z = secondParticle->GetNbrStateZ ();
 
-  if (((this->NbrState1X * 2 - 1) > (1 << NbrBitX1)) || ((this->NbrState1Y * 2 - 1) > (1 << NbrBitY1)) || ((this->NbrState1Z * 2 - 1) > (1 << NbrBitZ1)) || ((this->NbrState2X * 2 - 1) > (1 << NbrBitX2)) || ((this->NbrState2Y * 2 - 1) > (1 << NbrBitY2)) || ((this->NbrState2Z * 2 - 1) > (1 << NbrBitZ2)))
+  if (((this->NbrState1X * 2 - 1) > (1 << NBRBITX1)) || ((this->NbrState1Y * 2 - 1) > (1 << NBRBITY1)) || ((this->NbrState1Z * 2 - 1) > (1 << NBRBITZ1)) || ((this->NbrState2X * 2 - 1) > (1 << NBRBITX2)) || ((this->NbrState2Y * 2 - 1) > (1 << NBRBITY2)) || ((this->NbrState2Z * 2 - 1) > (1 << NBRBITZ2)))
     {
       cout << "At least a number of states in a direction is too big.!" << endl;
       exit (1);
     }
+
   this->MakeConversionTable ();
   cout << "Evaluating the kinetic terms ..." << endl;
   this->EvaluateKineticTerm (Mex, Mey, Mez, Mhx, Mhy, Mhz, firstParticle, secondParticle, xSize, ySize, zSize);
   cout << "Evaluating the electron confinement terms ..." << endl;
-  this->EvaluateConfinementTerm (potentialElectron, firstParticle, 1, this->RealElectronConfinement, this->ImaginaryElectronConfinement);
+  this->EvaluateConfinementTerm (potentialElectron, firstParticle, this->RealElectronConfinement, this->ImaginaryElectronConfinement);
   cout << "Evaluating the hole confinement terms ..." << endl;
-  this->EvaluateConfinementTerm (potentialHole, secondParticle, 2, this->RealHoleConfinement, this->ImaginaryHoleConfinement);
+  this->EvaluateConfinementTerm (potentialHole, secondParticle, this->RealHoleConfinement, this->ImaginaryHoleConfinement);
   cout << "Evaluating the Coulombian term ..." << endl;
   this->EvaluateCoulombianTerm (xSize, ySize, zSize, dielectric);
   firstParticle = NULL; secondParticle = NULL;
@@ -156,9 +169,9 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian(const Perio
   this->NbrState2X = NbrState2X;
   this->NbrState2Y = NbrState2Y;
   this->NbrState2Z = NbrState2Z;
-  this->IToX = hamiltonian.IToX;
-  this->IToX1 = hamiltonian.IToX1;
-  this->IToX2 = hamiltonian.IToX2;
+  this->IToXY = hamiltonian.IToXY;
+  this->XToI = hamiltonian.XToI;
+  this->YToI = hamiltonian.YToI;
   this->KineticTerm = hamiltonian.KineticTerm;
   this->RealElectronConfinement = hamiltonian.RealElectronConfinement;
   this->ImaginaryElectronConfinement = hamiltonian.ImaginaryElectronConfinement;
@@ -175,9 +188,9 @@ PeriodicElectronHole3DHamiltonian::~ PeriodicElectronHole3DHamiltonian()
   //cout << "PeriodicElectronHole3DHamiltonian destructor is being called." << endl;
   delete   this->Space;
   //cout << "Destructor of Hilbert space is being called" << endl;
-  delete[] this->IToX;
-  delete[] this->IToX1;
-  delete[] this->IToX2;
+  delete[] this->IToXY;
+  delete[] this->XToI;
+  delete[] this->YToI;
   delete[] this->KineticTerm;
   delete[] this->RealElectronConfinement;
   delete[] this->ImaginaryElectronConfinement;
@@ -299,58 +312,62 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
   int lastComponent = firstComponent + nbrComponent;
   int XY1 = 0, XY2 = 0; int Sum1 = 0;
   int X1 = 0, Y1 = 0, X2 = 0, Y2 = 0;
-  double* tmpCoulombian; double* tmpRealElectron; double* tmpImaginaryElectron;
-  double* tmpRealHole; double* tmpImaginaryHole;
   double TmpRe = 0.0, TmpIm = 0.0;
+  int X1Shifted = 0, Y1Shifted = 0;
 
   for (int Index1 = firstComponent; Index1 < lastComponent; ++Index1)
     {
-      XY1 = this->IToX[Index1];
-      Y1 = XY1 & Hex2; X1 = (XY1 >> NbrBit2) & Hex1;
+      XY1 = this->IToXY[Index1];
+      Y1 = XY1 & HEX2; X1 = (XY1 >> NBRBIT2) & HEX1;
       Sum1 = X1 + Y1;
+      X1Shifted = DELTAX - X1; Y1Shifted = DELTAY - Y1;      
       
       TmpRe = 0.0; TmpIm = 0.0;
+
       // kinetic term
       TmpRe += this->KineticTerm[Index1] * vSource.Re(Index1);
       TmpIm += this->KineticTerm[Index1] * vSource.Im(Index1);
-      
-      tmpCoulombian = this->CoulombianTerm[X1];
-      tmpRealElectron = this->RealElectronConfinement[X1]; tmpImaginaryElectron = this->ImaginaryElectronConfinement[X1];
-      tmpRealHole = this->RealHoleConfinement[Y1]; tmpImaginaryHole = this->ImaginaryHoleConfinement[Y1];
+
       for (int Index2 = 0; Index2 < dimension; ++Index2)
 	{
-	  XY2 = this->IToX[Index2];
-	  Y2 = XY2 & Hex2; X2 = (XY2 >> NbrBit2) & Hex1;
+	  XY2 = this->IToXY[Index2];
+	  Y2 = XY2 & HEX2; X2 = (XY2 >> NBRBIT2) & HEX1;
 	  
 	  double ReSource =  vSource.Re(Index2), ImSource = vSource.Im(Index2);
-	  // Coulombian term	  
+
 	  
-	  if ((X2 + Y2) == Sum1)
-	    {
-	      // cout << "Coulomb: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      TmpRe += tmpCoulombian[X2] * ReSource;
-	      TmpIm += tmpCoulombian[X2] * ImSource;
+	  // Coulombian term	  	  
+	  if ((X2 + Y2) == Sum1)  
+	    {	     
+	      double tmpCoulomb = this->CoulombianTerm[this->XToI[X1Shifted + X2]];
+	      TmpRe += tmpCoulomb * ReSource;
+	      TmpIm += tmpCoulomb * ImSource;
 	    }
-	  
-	  // confinement term for the electrons	  
+	  	  
+	  // confinement terms for the electrons
 	  if (Y1 == Y2)
 	    {
-	      //cout << "Electron: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      TmpRe += (tmpRealElectron[X2] * ReSource - tmpImaginaryElectron[X2] * ImSource);
-	      TmpIm += (tmpRealElectron[X2] * ImSource + tmpImaginaryElectron[X2] * ReSource);
+	      int tmpIndex = this->XToI[X1Shifted + X2];
+	      double tmpERe = this->RealElectronConfinement[tmpIndex];
+	      double tmpEIm = this->ImaginaryElectronConfinement[tmpIndex];
+	      TmpRe += (tmpERe * ReSource - tmpEIm * ImSource);
+	      TmpIm += (tmpERe * ImSource + tmpEIm * ReSource);
 	    }
-	  
-	  // confinement term for the holes
+	  	    
+	  // confinement terms for the holes
 	  if (X1 == X2)
 	    {
-	      //cout << "Hole: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      TmpRe += (tmpRealHole[Y2] * ReSource - tmpImaginaryHole[Y2] * ImSource);
-	      TmpIm += (tmpRealHole[Y2] * ImSource + tmpImaginaryHole[Y2] * ReSource);
+	      int tmpIndex = this->YToI[Y1Shifted + Y2];
+	      double tmpERe = this->RealHoleConfinement[tmpIndex];
+	      double tmpEIm = this->ImaginaryHoleConfinement[tmpIndex];	      
+	      TmpRe += (tmpERe * ReSource - tmpEIm * ImSource);
+	      TmpIm += (tmpERe * ImSource + tmpEIm * ReSource);
 	    }
 	  
 	}
       vDestination.Re(Index1) += TmpRe; vDestination.Im(Index1) += TmpIm;
     }
+
   return vDestination;
 }
  
@@ -374,7 +391,7 @@ void PeriodicElectronHole3DHamiltonian::MakeConversionTable ()
 {
   int dimension = this->Space->GetHilbertSpaceDimension ();
   
-  this->IToX = new int [dimension];
+  this->IToXY = new int [dimension];
   int index = 0;
   //cout << "I to X:" << endl;
   for (int m1 = 0; m1 < this->NbrState1X; ++m1)
@@ -384,38 +401,51 @@ void PeriodicElectronHole3DHamiltonian::MakeConversionTable ()
 	  for (int n2 = 0; n2 < this->NbrState2Y; ++n2)      
 	    for (int p2 = 0; p2 < this->NbrState2Z; ++p2)	    
 	      {
-		this->IToX[index] = (m1 << ShiftX1) | (n1 << ShiftY1) | (p1 << ShiftZ1) | (m2 << ShiftX2) | (n2 << ShiftY2) | (p2 << ShiftZ2);
-		//cout << "Index: " << index << " " << m1 << " " << n1 << " " << p1 << " " << m2 << " " << n2 << " " << p2 << " " << this->IToX[index] << endl;
+		this->IToXY[index] = (m1 << SHIFTX1) | (n1 << SHIFTY1) | (p1 << SHIFTZ1) | (m2 << SHIFTX2) | (n2 << SHIFTY2) | (p2 << SHIFTZ2);
+		//cout << "Index: " << index << " " << m1 << " " << n1 << " " << p1 << " " << m2 << " " << n2 << " " << p2 << " " << this->IToXY[index] << endl;
 		++index;
 	      }
+  
+  int dimension1 = (1 << NBRBIT1);
+  this->XToI = new int [dimension1];
 
-  this->IToX1 = new int** [this->NbrState1X];
-  //cout << "I to X 1 :" << endl;
-  for (int m1 = 0; m1 < this->NbrState1X; ++m1)
+  int LengthX1 = this->NbrState1X * 2 - 1; int LengthY1 = this->NbrState1Y * 2 - 1; int LengthZ1 = this->NbrState1Z * 2 - 1;
+  int OriginX1 = this->NbrState1X - 1; int OriginY1 = this->NbrState1Y - 1; int OriginZ1 = this->NbrState1Z - 1; 
+
+  int index1 = 0; int tmpX = 0; int tmpX1 = 0; int tmpY1 = 0;
+  for (int i = 0; i < LengthX1; ++i)
     {
-      this->IToX1[m1] = new int* [this->NbrState1Y];
-      for (int n1 = 0; n1 < this->NbrState1Y; ++n1)   
+      tmpX1 = ((i - OriginX1 + DELTAX1) << SHIFTX1bis);
+      for (int j = 0; j < LengthY1; ++j)
 	{
-	  this->IToX1[m1][n1] = new int [this->NbrState1Z];
-	  for (int p1 = 0; p1 < this->NbrState1Z; ++p1)	    
+	  tmpY1 = (tmpX1 | ((j - OriginY1 + DELTAY1) << SHIFTY1bis));
+	  for (int k = 0; k < LengthZ1; ++k)
 	    {
-	      this->IToX1[m1][n1][p1] = (m1 << ShiftX1bis) | (n1 << ShiftY1bis) | (p1 << ShiftZ1bis);
-	      //cout <<  m1 << " " << n1 << " " << p1 << " " << this->IToX1[m1][n1][p1] << endl;	  
+	      tmpX =  (tmpY1 | ((k - OriginZ1 + DELTAZ1) << SHIFTZ1bis));	     
+	      this->XToI[tmpX] = index1;
+	      ++index1;
 	    }
 	}
     }
 
-  this->IToX2 = new int** [this->NbrState2X];
-  for (int m2 = 0; m2 < this->NbrState2X; ++m2)
+  int dimension2 = (1 << NBRBIT2);
+  this->YToI = new int [dimension2];
+
+  int LengthX2 = this->NbrState2X * 2 - 1; int LengthY2 = this->NbrState2Y * 2 - 1; int LengthZ2 = this->NbrState2Z * 2 - 1;
+  int OriginX2 = this->NbrState2X - 1; int OriginY2 = this->NbrState2Y - 1; int OriginZ2 = this->NbrState2Z - 1; 
+
+  int index2 = 0; int tmpY = 0; int tmpX2 = 0; int tmpY2 = 0;
+  for (int i = 0; i < LengthX2; ++i)
     {
-      this->IToX2[m2] = new int* [this->NbrState2Y];
-      for (int n2 = 0; n2 < this->NbrState2Y; ++n2)   
+      tmpX2 = ((i - OriginX2 + DELTAX2) << SHIFTX2);
+      for (int j = 0; j < LengthY2; ++j)
 	{
-	  this->IToX2[m2][n2] = new int [this->NbrState2Z];
-	  for (int p2 = 0; p2 < this->NbrState2Z; ++p2)
+	  tmpY2 = (tmpX2 | ((j - OriginY2 + DELTAY2) << SHIFTY2));
+	  for (int k = 0; k < LengthZ2; ++k)
 	    {
-	      this->IToX2[m2][n2][p2] = (m2 << ShiftX2) | (n2 << ShiftY2) | (p2 << ShiftZ2);
-	      //cout <<  m2 << " " << n2 << " " << p2 << " " << this->IToX2[m2][n2][p2] << endl;	  
+	      tmpY =  (tmpY2 | ((k - OriginZ2 + DELTAZ2) << SHIFTZ2));	     
+	      this->YToI[tmpY] = index2;
+	      ++index2;
 	    }
 	}
     }
@@ -506,11 +536,10 @@ void PeriodicElectronHole3DHamiltonian::EvaluateKineticTerm (double mex, double 
 //
 // potential = pointer to the potential for the considered carrier
 // particle = pointer to the Hilbertspace for the considered carrier
-// type = type of the carrier, 1 for electron, 2 for hole
-// realConfinement = reference to 2D array of real elements of the wanted terms
-// imaginaryConfinement = reference to 2D array of imaginary elements of the wanted terms
+// realConfinement = reference to 1D array of real elements of the wanted terms
+// imaginaryConfinement = reference to 1D array of imaginary elements of the wanted terms
 
-void PeriodicElectronHole3DHamiltonian::EvaluateConfinementTerm (ThreeDConstantCellPotential* potential, PeriodicThreeDOneParticle* particle, int type, double** &realConfinement, double** &imaginaryConfinement)
+void PeriodicElectronHole3DHamiltonian::EvaluateConfinementTerm (ThreeDConstantCellPotential* potential, PeriodicThreeDOneParticle* particle, double* &realConfinement, double* &imaginaryConfinement)
 {
   int NbrStateX = particle->GetNbrStateX (), NbrStateY = particle->GetNbrStateY (), NbrStateZ = particle->GetNbrStateZ ();
   int NbrCellX = potential->GetNbrCellX (), NbrCellY = potential->GetNbrCellY (), NbrCellZ = potential->GetNbrCellZ ();
@@ -568,98 +597,38 @@ void PeriodicElectronHole3DHamiltonian::EvaluateConfinementTerm (ThreeDConstantC
 	    }
 	}
     }
-
-  double*** RealPrecalculatedHamiltonian = new double** [LengthX];
-  double*** ImaginaryPrecalculatedHamiltonian = new double** [LengthX];
-
+  
+  int number = LengthX * LengthY * LengthZ;
+  realConfinement = new double [number]; imaginaryConfinement = new double [number]; 
+  
+  int index = 0;
   double* TmpRealWaveFunctionOverlapZ;
   double* TmpImaginaryWaveFunctionOverlapZ;
   for (int m = 0; m < LengthX; ++m)
-    {
-      RealPrecalculatedHamiltonian[m] = new double* [LengthY];      
-      ImaginaryPrecalculatedHamiltonian[m] = new double* [LengthY]; 
-      for (int n = 0; n < LengthY; ++n)
-	{
-	  RealPrecalculatedHamiltonian[m][n] = new double [LengthZ];      
-	  ImaginaryPrecalculatedHamiltonian[m][n] = new double [LengthZ]; 
-	  TmpRealPrecalculatedHamiltonian = TmpReal[m][n];
-	  TmpImaginaryPrecalculatedHamiltonian = TmpImaginary[m][n];
-	  for (int p = 0; p < LengthZ; ++p)
-	    {
-	      TmpRealWaveFunctionOverlapZ = RealWaveFunctionOverlapZ[p];
-	      TmpImaginaryWaveFunctionOverlapZ = ImaginaryWaveFunctionOverlapZ[p];
-	      TmpRe = 0.0; TmpIm = 0.0;
-	      for (int CellZ = 0; CellZ < NbrCellZ; ++CellZ)
-		{
-		  TmpRe += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ] - TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ]);
-		  TmpIm += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ] + TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ]);
-		}
-	      RealPrecalculatedHamiltonian[m][n][p] = TmpRe;
-	      ImaginaryPrecalculatedHamiltonian[m][n][p] = TmpIm;
-	    }
-	}
-    }
-  
-  int nbrBit = 0; int*** iToX;
-  if (type == 1)
-    {
-      nbrBit = NbrBit1;
-      iToX = this->IToX1;
-    }
-  else    
-    if (type == 2)
+    for (int n = 0; n < LengthY; ++n)
       {
-	nbrBit = NbrBit2;
-	iToX = this->IToX2;
-      }
-    else
-      {
-	cout << "This type of particle is not taken into account. Exit now!" << endl;
-	exit (1);
-      }
-
-  int number = (1 << nbrBit);
-  realConfinement = new double* [number];
-  imaginaryConfinement = new double* [number];
-  for (int i1 = 0; i1 < number; ++i1)
-    {
-      realConfinement[i1] = new double [number];
-      imaginaryConfinement[i1] = new double [number];
-      for (int i2 = 0; i2 < number; ++i2)
-	{
-	  realConfinement[i1][i2] = 0.0;
-	  imaginaryConfinement[i1][i2] = 0.0;
-	}
-    }
-
-  int OriginX = NbrStateX - 1, OriginY = NbrStateY - 1, OriginZ = NbrStateZ - 1;
-  double* real; double* imaginary; int tmpIndex;
-  for (int m1 = 0; m1 < NbrStateX; ++m1)
-    for (int n1 = 0; n1 < NbrStateY; ++n1)
-      for (int p1 = 0; p1 < NbrStateZ; ++p1)
-	{
-	  int X1 = iToX[m1][n1][p1];	  
-	  for (int m3 = 0; m3 < NbrStateX; ++m3)
-	    for (int n3 = 0; n3 < NbrStateY; ++n3)
+	TmpRealPrecalculatedHamiltonian = TmpReal[m][n];
+	TmpImaginaryPrecalculatedHamiltonian = TmpImaginary[m][n];
+	for (int p = 0; p < LengthZ; ++p)
+	  {
+	    TmpRealWaveFunctionOverlapZ = RealWaveFunctionOverlapZ[p];
+	    TmpImaginaryWaveFunctionOverlapZ = ImaginaryWaveFunctionOverlapZ[p];
+	    TmpRe = 0.0; TmpIm = 0.0;
+	    for (int CellZ = 0; CellZ < NbrCellZ; ++CellZ)
 	      {
-		real = RealPrecalculatedHamiltonian[-m1 + m3 + OriginX][-n1 + n3 + OriginY];
-		imaginary = ImaginaryPrecalculatedHamiltonian[-m1 + m3 + OriginX][-n1 + n3 + OriginY];
-		tmpIndex = OriginZ - p1;
-		for (int p3 = 0; p3 < NbrStateZ; ++p3)	
-		  {
-		    int X2 = iToX[m3][n3][p3];
-		    realConfinement[X1][X2] = real[tmpIndex];
-		    imaginaryConfinement[X1][X2] = imaginary[tmpIndex];		      	       
-		    ++tmpIndex;
-		    //cout << m1 << " " << n1 << " " << p1 << " " << m3 << " " << n3 << " " << p3 << " " << realConfinement[X1][X2] << " " << imaginaryConfinement[X1][X2] << endl;
-		  }
+		TmpRe += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ] - TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ]);
+		TmpIm += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ] + TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ]);
 	      }
-	}
+
+	    realConfinement[index] = TmpRe;
+	    imaginaryConfinement[index] = TmpIm;   	    
+	    ++index;
+	  }
+      }
 
   delete[] RealWaveFunctionOverlapX; delete[] RealWaveFunctionOverlapY; delete[] RealWaveFunctionOverlapZ;
   delete[] ImaginaryWaveFunctionOverlapX; delete[] ImaginaryWaveFunctionOverlapY; delete[] ImaginaryWaveFunctionOverlapZ;
   delete[] TmpReal; delete[] TmpImaginary;
-  delete[] RealPrecalculatedHamiltonian; delete[] ImaginaryPrecalculatedHamiltonian; 
 }
 
 // evaluate the Coulombian term
@@ -669,58 +638,30 @@ void PeriodicElectronHole3DHamiltonian::EvaluateConfinementTerm (ThreeDConstantC
 
 void PeriodicElectronHole3DHamiltonian::EvaluateCoulombianTerm (double xSize, double ySize, double zSize, double dielectric)
 {
-  double factor = COULOMBIAN_FACTOR / dielectric;
   double squareX = xSize * xSize;
   double squareY = ySize * ySize;
   double squareZ = zSize * zSize;
   double volume = xSize * ySize * zSize;
-
-  int number = (1 << NbrBit1);
-  this->CoulombianTerm = new double* [number];
-  for (int i1 = 0; i1 < number; ++i1)
-    this->CoulombianTerm[i1] = new double [number];
+  double factor = COULOMBIAN_FACTOR / (dielectric * volume);
 
   int lengthX = this->NbrState1X * 2 - 1, lengthY = this->NbrState1Y * 2 - 1, lengthZ = this->NbrState1Z * 2 - 1;
   int originX = this->NbrState1X - 1, originY = this->NbrState1Y - 1, originZ = this->NbrState1Z - 1;
-  double*** precalculated = new double** [lengthX];
+  
+  this->CoulombianTerm = new double [lengthX * lengthY * lengthZ];
+  int index = 0;
   for (int i = 0; i < lengthX; ++i)
-    {
-      precalculated[i] = new double* [lengthY];
-      for (int j = 0; j < lengthY; ++j)
+    for (int j = 0; j < lengthY; ++j)
+      for (int k = 0; k < lengthZ; ++k)
 	{
-	  precalculated[i][j] = new double [lengthZ];
-	  for (int k = 0; k < lengthZ; ++k)
+	  if ((i == originX) && (j == originY) && (k == originZ))
+	    this->CoulombianTerm[index] = 0.0;
+	  else
 	    {
-	      if ((i == originX) && (j == originY) && (k == originZ))
-		precalculated[i][j][k] = 0;
-	      else
-		{
-		  double tmp = ((double )(i - originX) * (i - originX)) / squareX + ((double) (j - originY) * (j - originY)) / squareY + ((double) (k - originZ) * (k - originZ)) / squareZ;
-		  precalculated[i][j][k] = factor / (tmp * volume);
-		}
+	      double tmp = ((double )(i - originX) * (i - originX)) / squareX + ((double) (j - originY) * (j - originY)) / squareY + ((double) (k - originZ) * (k - originZ)) / squareZ;
+	      this->CoulombianTerm[index] = factor / tmp;		
 	    }
+	  ++index;
 	}
-    }
-
-  double* tmpPre;
-  for (int m1 = 0; m1 < this->NbrState1X; ++m1)
-    for (int n1 = 0; n1 < this->NbrState1Y; ++n1)      
-      for (int p1 = 0; p1 < this->NbrState1Z; ++p1)
-	{
-	  int X1 = this->IToX1[m1][n1][p1];	  
-	  for (int m3 = 0; m3 < this->NbrState1X; ++m3)
-	    for (int n3 = 0; n3 < this->NbrState1Y; ++n3)
-	      {
-		tmpPre = precalculated[-m1 + m3 + originX][-n1 + n3 + originY];
-		for (int p3 = 0; p3 < this->NbrState1Z; ++p3)
-		  {
-		    int X2 = this->IToX1[m3][n3][p3];       	       
-		    this->CoulombianTerm[X1][X2] = tmpPre[-p1 + p3 + originZ];
-		  }
-	      }
-	}
-
-  delete[] precalculated;
 }
 
 // evaluate the wave function overlap

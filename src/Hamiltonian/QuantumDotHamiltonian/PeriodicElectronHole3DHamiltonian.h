@@ -63,16 +63,16 @@ class PeriodicElectronHole3DHamiltonian : public AbstractHamiltonian
   int NbrState2Z;
 
   // table of conversions to hexadecimal indices
-  int* IToX;
-  int*** IToX1;
-  int*** IToX2;
+  int* IToXY;
+  int* XToI;
+  int* YToI;
   
   double* KineticTerm;
-  double** RealElectronConfinement;
-  double** ImaginaryElectronConfinement;
-  double** RealHoleConfinement;
-  double** ImaginaryHoleConfinement;
-  double** CoulombianTerm;
+  double* RealElectronConfinement;
+  double* ImaginaryElectronConfinement;
+  double* RealHoleConfinement;
+  double* ImaginaryHoleConfinement;
+  double* CoulombianTerm;
 
  public:
 
@@ -200,10 +200,9 @@ class PeriodicElectronHole3DHamiltonian : public AbstractHamiltonian
   //
   // potential = pointer to the potential for the considered carrier
   // particle = pointer to the Hilbertspace for the considered carrier
-  // type = type of the carrier, 1 for electron, 2 for hole
-  // realConfinement = reference to 2D array of real elements of the wanted terms
-  // imaginaryConfinement = reference to 2D array of imaginary elements of the wanted terms
-  void EvaluateConfinementTerm (ThreeDConstantCellPotential* potential, PeriodicThreeDOneParticle* particle, int type, double** &realConfinement, double** &imaginaryConfinement);
+  // realConfinement = reference to 1D array of real elements of the wanted terms
+  // imaginaryConfinement = reference to 1D array of imaginary elements of the wanted terms
+  void EvaluateConfinementTerm (ThreeDConstantCellPotential* potential, PeriodicThreeDOneParticle* particle, double* &realConfinement, double* &imaginaryConfinement);
 
   // evaluate the Coulombian term
   //

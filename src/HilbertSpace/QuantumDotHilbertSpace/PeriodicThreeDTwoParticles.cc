@@ -71,11 +71,9 @@ PeriodicThreeDTwoParticles::PeriodicThreeDTwoParticles (const PeriodicThreeDTwoP
 
 PeriodicThreeDTwoParticles::~PeriodicThreeDTwoParticles ()
 {
-  cout << "PeriodicThreeDTwoParticles's destructor is being called" << endl;
   delete (PeriodicThreeDOneParticle*) this->FirstParticle;
   delete (PeriodicThreeDOneParticle*) this->SecondParticle;
   this->FirstParticle = NULL; this->SecondParticle = NULL;
-  cout << "PeriodicThreeDTwoParticles's destructor is finished" << endl;
 }
 
 // assignement
