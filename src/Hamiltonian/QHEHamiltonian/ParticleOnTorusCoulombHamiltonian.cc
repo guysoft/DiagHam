@@ -70,7 +70,8 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+//  this->WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  this->WignerEnergy = 0.0;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   cout << "fast = " << this->FastMultiplicationMemory() << endl;

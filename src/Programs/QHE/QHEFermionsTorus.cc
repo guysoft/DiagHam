@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 5);
   SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
   SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
+  SingleDoubleOption XRatioOption ('r', "ratio", "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
   SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
 
   List<AbstractOption*> OptionList;
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
   OptionList += &NbrFermionOption;
   OptionList += &MaxMomentumOption;
   OptionList += &MomentumOption;
+  OptionList += &XRatioOption;
   OptionList += &MaxFullDiagonalizationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -80,7 +82,10 @@ int main(int argc, char** argv)
   int Momentum = MomentumOption.GetInteger();
   int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
   double XRatio = NbrFermions / 4.0;
-
+  if (XRatioOption.GetDouble() > 0)
+    {
+       XRatio = XRatioOption.GetDouble();
+    }
   int InvNu = 3;
 //  int MaxMomentum = InvNu * NbrFermions;
   int L = 0;

@@ -62,7 +62,7 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // complementary shift (with respect to MaxMomentum) to StateShift
   int ComplementaryStateShift;
   // mask corresponding to StateShift
-  int MomentumMask;
+  unsigned long MomentumMask;
 
   // array describing each state 
   unsigned long* StateDescription;
@@ -80,6 +80,8 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
 
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 
@@ -87,6 +89,7 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   double* CosinusPreculcationTable;
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
+
  public:
 
   // basic constructor
