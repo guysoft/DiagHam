@@ -338,6 +338,23 @@ class HermitianMatrix : public Matrix
   // return value = real symmetric matrix associated to the hermitian matrix
   RealSymmetricMatrix ConvertToSymmetricMatrix();
 
+  // Diagonalize an hermitian matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& Diagonalize (RealDiagonalMatrix& M, double err = 1e-7, int maxIter = 50);
+
+  // Diagonalize an hermitian matrix and evaluate transformation matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& Diagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
+
   // Output Stream overload
   //
   // Str = reference on output stream

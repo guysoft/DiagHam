@@ -30,6 +30,7 @@
 
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/BlockDiagonalMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -1109,7 +1110,6 @@ void RealSymmetricMatrix::Conjugate(RealMatrix& UnitaryMl, RealMatrix& UnitaryMr
       ((UnitaryMl.NbrColumn + destinationRowIndex) > matrix.NbrRow))
     return;
   double tmp1;
-  double tmp2;
   int l;
   int i2;
   for (int i = 0; i < UnitaryMl.NbrColumn; i++)
@@ -1360,7 +1360,7 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::OrthoLanczos (int dimension
   return M;
 }
 
-// Tridiagonalize a real symmetric matrix using Householder algorithm
+// Tridiagonalize a real symmetric matrix using Householder algorithm  (modifying current matrix)
 //
 // M = reference on real tridiagonal symmetric matrix where result has to be stored
 // err = absolute error on matrix element
@@ -1474,7 +1474,7 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   return M;
 }
 
-// Tridiagonalize a real symmetric matrix using Householder algorithm and evaluate transformation matrix
+// Tridiagonalize a real symmetric matrix using Householder algorithm and evaluate transformation matrix  (modifying current matrix)
 //
 // M = reference on real tridiagonal symmetric matrix where result has to be stored
 // err = absolute error on matrix element
@@ -1633,6 +1633,45 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   M.UpperDiagonalElement(ReducedNbrRow - 1) = this->OffDiagonalElements[Pos - this->Increment];  
   M.DiagonalElement(ReducedNbrRow) = this->DiagonalElements[ReducedNbrRow];
   delete[] TmpV;
+  return M;
+}
+
+// Diagonalize a real symmetric matrix (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
+  this->Householder(TmpMatrix, err);
+  TmpMatrix.Diagonalize(maxIter);
+  for (int i = 0; i < this->NbrRow; ++i)
+    M[i] = TmpMatrix.DiagonalElement(i);
+  return M;
+}
+
+// Diagonalize a real symmetric matrix and evaluate transformation matrix (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
+  this->Householder(TmpMatrix, err, Q);
+  TmpMatrix.Diagonalize(Q, maxIter);
+  for (int i = 0; i < this->NbrRow; ++i)
+    M[i] = TmpMatrix.DiagonalElement(i);
   return M;
 }
 

@@ -33,6 +33,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 #include <stdlib.h>
 
@@ -1490,4 +1491,57 @@ RealSymmetricMatrix HermitianMatrix::ConvertToSymmetricMatrix()
     }
   return TmpMatrix;
 }
+
+
+// Diagonalize an hermitian matrix (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());
+  RealDiagonalMatrix TmpMatrix2(2 * this->NbrRow);
+  TmpMatrix1.Diagonalize(TmpMatrix2, err, maxIter);
+  TmpMatrix2.SortMatrixUpOrder();
+  for (int i = 0; i < M.GetNbrRow(); ++i)
+    M[i] = TmpMatrix2[2 * i];
+  return M;
+}
+
+// Diagonalize an hermitian matrix and evaluate transformation matrix (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());
+  RealDiagonalMatrix TmpMatrix2(2 * this->NbrRow);
+  RealMatrix TmpMatrix3(2 * this->NbrRow, 2 * this->NbrRow);
+  TmpMatrix1.Diagonalize(TmpMatrix2, TmpMatrix3, err, maxIter);
+  TmpMatrix2.SortMatrixUpOrder(TmpMatrix3);
+  for (int i = 0; i < M.GetNbrRow(); ++i)
+    {
+      M[i] = TmpMatrix2[2 * i];
+      for (int j = 0; i < M.GetNbrRow(); ++j)
+	{
+	  Q[i].Re(j) = TmpMatrix3[i][j];
+	  Q[i].Im(j) = TmpMatrix3[i][j + M.GetNbrRow()];	  
+	}
+    }
+  
+  return M;
+}
+
+
 

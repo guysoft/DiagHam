@@ -30,6 +30,7 @@
 
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include <stdlib.h>
@@ -552,6 +553,72 @@ RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixDownOrder()
   return *this;
 }
  
+// Sort Matrix such that diagnonal elements are sort in decreasing order
+// and apply corresponding transformation to column of a given real matrix 
+//
+// matrix = matrix on which transformation has to be applied
+// return value = reference on current Matrix
+
+RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixDownOrder(RealMatrix& matrix)
+{
+  int ReducedDim = this->NbrColumn - 2;
+  RealVector TmpV;
+  double tmp;
+  int MinPos;
+  double MinValue;
+  for (int i = 0; i <= ReducedDim; i++)
+    {
+      MinPos = this->NbrColumn - 1;
+      MinValue = this->DiagonalElements[MinPos];
+      for (int j = ReducedDim; j >= i; j--)
+	if (this->DiagonalElements[j] > MinValue)
+	  {
+	    MinValue = this->DiagonalElements[j];
+	    MinPos = j;
+	  }
+      tmp = this->DiagonalElements[i];
+      this->DiagonalElements[i] = MinValue;
+      this->DiagonalElements[MinPos] = tmp;
+      TmpV = matrix[i];
+      matrix[i] = matrix[MinPos];
+      matrix[MinPos] = TmpV;
+    }
+  return *this;
+}
+
+// Sort Matrix such that diagnonal elements are sort in decreasing order
+// and apply corresponding transformation to column of a given complex matrix 
+//
+// matrix = matrix on which transformation has to be applied
+// return value = reference on current Matrix
+
+RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix)
+{
+  int ReducedDim = this->NbrColumn - 2;
+  RealVector TmpV;
+  double tmp;
+  int MinPos;
+  double MinValue;
+  for (int i = 0; i <= ReducedDim; i++)
+    {
+      MinPos = this->NbrColumn - 1;
+      MinValue = this->DiagonalElements[MinPos];
+      for (int j = ReducedDim; j >= i; j--)
+	if (this->DiagonalElements[j] > MinValue)
+	  {
+	    MinValue = this->DiagonalElements[j];
+	    MinPos = j;
+	  }
+      tmp = this->DiagonalElements[i];
+      this->DiagonalElements[i] = MinValue;
+      this->DiagonalElements[MinPos] = tmp;
+      TmpV = matrix[i];
+      matrix[i] = matrix[MinPos];
+      matrix[MinPos] = TmpV;
+    }
+  return *this;
+}
+
 // Sort Matrix such that diagnonal elements are sort in increasing order
 //
 // return value = reference on current Matrix
@@ -575,6 +642,72 @@ RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixUpOrder()
       tmp = this->DiagonalElements[i];
       this->DiagonalElements[i] = MinValue;
       this->DiagonalElements[MinPos] = tmp;
+    }
+  return *this;
+}
+
+// Sort Matrix such that diagnonal elements are sort in increasing order
+// and apply corresponding transformation to column of a given real matrix 
+//
+// matrix = matrix on which transformation has to be applied
+// return value = reference on current Matrix
+
+RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixUpOrder(RealMatrix& matrix)
+{
+  int ReducedDim = this->NbrColumn - 2;
+  RealVector TmpV;
+  double tmp;
+  int MinPos;
+  double MinValue;
+  for (int i = 0; i <= ReducedDim; i++)
+    {
+      MinPos = this->NbrColumn - 1;
+      MinValue = this->DiagonalElements[MinPos];
+      for (int j = ReducedDim; j >= i; j--)
+	if (this->DiagonalElements[j] < MinValue)
+	{
+	  MinValue = this->DiagonalElements[j];
+	  MinPos = j;
+	}
+      tmp = this->DiagonalElements[i];
+      this->DiagonalElements[i] = MinValue;
+      this->DiagonalElements[MinPos] = tmp;
+      TmpV = matrix[i];
+      matrix[i] = matrix[MinPos];
+      matrix[MinPos] = TmpV;
+    }
+  return *this;
+}
+
+// Sort Matrix such that diagnonal elements are sort in increasing order
+// and apply corresponding transformation to column of a given complex matrix 
+//
+// matrix = matrix on which transformation has to be applied
+// return value = reference on current Matrix
+
+RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix)
+{
+  int ReducedDim = this->NbrColumn - 2;
+  ComplexVector TmpV;
+  double tmp;
+  int MinPos;
+  double MinValue;
+  for (int i = 0; i <= ReducedDim; i++)
+    {
+      MinPos = this->NbrColumn - 1;
+      MinValue = this->DiagonalElements[MinPos];
+      for (int j = ReducedDim; j >= i; j--)
+	if (this->DiagonalElements[j] < MinValue)
+	{
+	  MinValue = this->DiagonalElements[j];
+	  MinPos = j;
+	}
+      tmp = this->DiagonalElements[i];
+      this->DiagonalElements[i] = MinValue;
+      this->DiagonalElements[MinPos] = tmp;
+      TmpV = matrix[i];
+      matrix[i] = matrix[MinPos];
+      matrix[MinPos] = TmpV;
     }
   return *this;
 }

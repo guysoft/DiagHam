@@ -47,6 +47,7 @@ using std::ifstream;
 
 
 class RealMatrix;
+class RealDiagonalMatrix;
 class BlockDiagonalMatrix;
 
 
@@ -377,20 +378,37 @@ class RealSymmetricMatrix : public Matrix
   RealTriDiagonalSymmetricMatrix& OrthoLanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, RealMatrix& Q, 
 						double err = 0.00000001);
 
-  // Tridiagonalize a real symmetric matrix using Householder algorithm
+  // Tridiagonalize a real symmetric matrix using Householder algorithm (modifying current matrix)
   //
   // M = reference on real tridiagonal symmetric matrix where result has to be stored
   // err = absolute error on matrix element
   // return value = reference on real tridiagonal symmetric matrix
   RealTriDiagonalSymmetricMatrix& Householder (RealTriDiagonalSymmetricMatrix& M, double err);
 
-  // Tridiagonalize a real symmetric matrix using Householder algorithm and evaluate transformation matrix
+  // Tridiagonalize a real symmetric matrix using Householder algorithm and evaluate transformation matrix  (modifying current matrix)
   //
   // M = reference on real tridiagonal symmetric matrix where result has to be stored
   // err = absolute error on matrix element
   // Q = matrix where transformation matrix has to be stored
   // return value = reference on real tridiagonal symmetric matrix
   RealTriDiagonalSymmetricMatrix& Householder (RealTriDiagonalSymmetricMatrix& M, double err, RealMatrix& Q);
+
+  // Diagonalize a real symmetric matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& Diagonalize (RealDiagonalMatrix& M, double err = 1e-7, int maxIter = 50);
+
+  // Diagonalize a real symmetric matrix and evaluate transformation matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& Diagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err = 1e-7, int maxIter = 50);
 
   // Output Stream overload
   //

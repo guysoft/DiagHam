@@ -44,6 +44,8 @@ using std::ostream;
 
 class RealVector;
 class ComplexVector;
+class RealMatrix;
+class ComplexMatrix;
 
 
 class RealDiagonalMatrix : public Matrix
@@ -238,11 +240,39 @@ class RealDiagonalMatrix : public Matrix
   // return value = reference on current Matrix
   RealDiagonalMatrix& SortMatrixDownOrder();
   
+  // Sort Matrix such that diagnonal elements are sort in decreasing order
+  // and apply corresponding transformation to column of a given real matrix 
+  //
+  // matrix = matrix on which transformation has to be applied
+  // return value = reference on current Matrix
+  RealDiagonalMatrix& SortMatrixDownOrder(RealMatrix& matrix);
+
+  // Sort Matrix such that diagnonal elements are sort in decreasing order
+  // and apply corresponding transformation to column of a given complex matrix 
+  //
+  // matrix = matrix on which transformation has to be applied
+  // return value = reference on current Matrix
+  RealDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix);
+
   // Sort Matrix such that diagnonal elements are sort in increasing order
   //
   // return value = reference on current Matrix
   RealDiagonalMatrix& SortMatrixUpOrder();
   
+  // Sort Matrix such that diagnonal elements are sort in increasing order
+  // and apply corresponding transformation to column of a given real matrix 
+  //
+  // matrix = matrix on which transformation has to be applied
+  // return value = reference on current Matrix
+  RealDiagonalMatrix& SortMatrixUpOrder(RealMatrix& matrix);
+
+  // Sort Matrix such that diagnonal elements are sort in increasing order
+  // and apply corresponding transformation to column of a given complex matrix 
+  //
+  // matrix = matrix on which transformation has to be applied
+  // return value = reference on current Matrix
+  RealDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
+
   // Output Stream overload
   //
   // Str = reference on output stream
