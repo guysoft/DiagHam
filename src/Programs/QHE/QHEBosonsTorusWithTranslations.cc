@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   int L = 0;
   double GroundStateEnergy = 0.0;
 
-  int NbrState = 24;
+  int NbrState = 9;
   int ReducedNbrState = NbrState >> 2;
   int NbrStateRemainder = NbrState - (ReducedNbrState << 2);
   if (NbrStateRemainder == 0)
