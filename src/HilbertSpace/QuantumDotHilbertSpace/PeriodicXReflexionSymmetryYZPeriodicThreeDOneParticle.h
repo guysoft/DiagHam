@@ -67,7 +67,7 @@ class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThr
 
   // destructor
   //
-  ~PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle();
+  virtual ~PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //

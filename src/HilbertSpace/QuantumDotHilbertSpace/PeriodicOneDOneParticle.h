@@ -62,11 +62,11 @@ class PeriodicOneDOneParticle : public AbstractOneDOneParticle
   // space = reference on Hilbert space to copy
   PeriodicOneDOneParticle (const PeriodicOneDOneParticle& space);
 
-  /*
+ 
   // destructor
   //
-  ~PeriodicOneDOneParticle ();
-  */
+  virtual ~PeriodicOneDOneParticle ();
+  
 
   // clone Hilbert space (without duplicating datas)
   //

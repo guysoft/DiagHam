@@ -66,7 +66,7 @@ class PeriodicReflexionSymmetryOneDOneParticle : public AbstractOneDOneParticle
 
   // destructor
   //
-  ~PeriodicReflexionSymmetryOneDOneParticle ();
+  virtual ~PeriodicReflexionSymmetryOneDOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //

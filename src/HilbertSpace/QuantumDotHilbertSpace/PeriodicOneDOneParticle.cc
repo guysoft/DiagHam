@@ -32,6 +32,8 @@
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicOneDOneParticle.h"
 
+using std::cout;
+using std::endl;
 
 // default constructor
 //
@@ -62,14 +64,15 @@ PeriodicOneDOneParticle::PeriodicOneDOneParticle (const PeriodicOneDOneParticle&
   this->LowerImpulsion = space.LowerImpulsion;
 }
 
-/*
+
 // destructor
 //
 
 PeriodicOneDOneParticle::~PeriodicOneDOneParticle ()
 {
+  //cout << "PeriodicOneDOneParticle's destructor is being called" << endl;
 }
-*/
+
 
 // assignement
 //

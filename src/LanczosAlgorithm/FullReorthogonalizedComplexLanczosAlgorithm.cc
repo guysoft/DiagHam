@@ -169,15 +169,11 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithm::GetEigenstates(int nbrEigen
   RealMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
   for (int i = 0; i < this->TridiagonalizedMatrix.GetNbrRow(); ++i)
     TmpEigenvector(i, i) = 1.0;
-  cout << "check 1" << endl;
+
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->TridiagonalizedMatrix.GetNbrRow());
-  cout << "check 2" << endl;
   SortedDiagonalizedMatrix.Copy(this->TridiagonalizedMatrix);
-  cout << "check 3" << endl;
   SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
-  cout << "check 4" << endl;
   SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
-//  cout << "check 5" << endl;
   double* TmpCoefficents = new double [this->TridiagonalizedMatrix.GetNbrRow()];
   for (int i = 0; i < nbrEigenstates; ++i) 
     {

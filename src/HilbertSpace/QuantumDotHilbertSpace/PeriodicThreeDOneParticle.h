@@ -66,7 +66,7 @@ class PeriodicThreeDOneParticle : public AbstractThreeDOneParticle
 
   // destructor
   //
-  ~PeriodicThreeDOneParticle();
+  virtual ~PeriodicThreeDOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //

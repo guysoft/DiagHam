@@ -45,6 +45,7 @@ using std::endl;
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 #define COULOMBIAN_FACTOR 180.79
+
 /*
 // each state is coded with 5 bits
 #define NbrBitZ2 5
@@ -56,7 +57,23 @@ using std::endl;
 
 #define Hex2 0x7fff 
 #define Hex1 0x7fff
+// end of 5 bit coding
 */
+
+/*
+// each state is coded with 4 bits
+#define NbrBitZ2 4
+#define NbrBitY2 4
+#define NbrBitX2 4
+#define NbrBitZ1 4
+#define NbrBitY1 4
+#define NbrBitX1 4
+
+#define Hex2 0xfff
+#define Hex1 0xfff
+// end of 4 bit coding
+*/
+
 
 // each state is coded with 3 bits
 #define NbrBitZ2 3
@@ -68,6 +85,9 @@ using std::endl;
 
 #define Hex2 0x1ff
 #define Hex1 0x1ff
+// end of 3 bit coding
+
+
 
 #define NbrBit2 (NbrBitX2 + NbrBitY2 + NbrBitZ2)
 #define NbrBit1 (NbrBitX1 + NbrBitY1 + NbrBitZ1)
@@ -153,9 +173,9 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian(const Perio
 
 PeriodicElectronHole3DHamiltonian::~ PeriodicElectronHole3DHamiltonian()
 {
-  cout << "PeriodicElectronHole3DHamiltonian destructor is being called." << endl;
-  delete   this->Space;
-  cout << "Destructor of Hilbert space is being called" << endl;
+  //cout << "PeriodicElectronHole3DHamiltonian destructor is being called." << endl;
+  //delete   this->Space;
+  //cout << "Destructor of Hilbert space is being called" << endl;
   delete[] this->IToX;
   delete[] this->IToX1;
   delete[] this->IToX2;
@@ -282,15 +302,18 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
   int X1 = 0, Y1 = 0, X2 = 0, Y2 = 0;
   double* tmpCoulombian; double* tmpRealElectron; double* tmpImaginaryElectron;
   double* tmpRealHole; double* tmpImaginaryHole;
+  double TmpRe = 0.0, TmpIm = 0.0;
 
   for (int Index1 = firstComponent; Index1 < lastComponent; ++Index1)
     {
       XY1 = this->IToX[Index1];
       Y1 = XY1 & Hex2; X1 = (XY1 >> NbrBit2) & Hex1;
       Sum1 = X1 + Y1;
+      
+      TmpRe = 0.0; TmpIm = 0.0;
       // kinetic term
-      vDestination.Re(Index1) += this->KineticTerm[Index1] * vSource.Re(Index1);
-      vDestination.Im(Index1) += this->KineticTerm[Index1] * vSource.Im(Index1);
+      TmpRe += this->KineticTerm[Index1] * vSource.Re(Index1);
+      TmpIm += this->KineticTerm[Index1] * vSource.Im(Index1);
       
       tmpCoulombian = this->CoulombianTerm[X1];
       tmpRealElectron = this->RealElectronConfinement[X1]; tmpImaginaryElectron = this->ImaginaryElectronConfinement[X1];
@@ -300,30 +323,34 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	  XY2 = this->IToX[Index2];
 	  Y2 = XY2 & Hex2; X2 = (XY2 >> NbrBit2) & Hex1;
 	  
+	  double ReSource =  vSource.Re(Index2), ImSource = vSource.Im(Index2);
 	  // Coulombian term	  
+	  
 	  if ((X2 + Y2) == Sum1)
 	    {
 	      // cout << "Coulomb: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      vDestination.Re(Index1) += tmpCoulombian[X2] * vSource.Re(Index2);
-	      vDestination.Im(Index1) += tmpCoulombian[X2] * vSource.Im(Index2);
+	      TmpRe += tmpCoulombian[X2] * ReSource;
+	      TmpIm += tmpCoulombian[X2] * ImSource;
 	    }
-	  	  
+	  
 	  // confinement term for the electrons	  
 	  if (Y1 == Y2)
 	    {
 	      //cout << "Electron: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      vDestination.Re(Index1) += (tmpRealElectron[X2] * vSource.Re(Index2) - tmpImaginaryElectron[X2] * vSource.Im(Index2));
-	      vDestination.Im(Index1) += (tmpRealElectron[X2] * vSource.Im(Index2) + tmpImaginaryElectron[X2] * vSource.Re(Index2));
+	      TmpRe += (tmpRealElectron[X2] * ReSource - tmpImaginaryElectron[X2] * ImSource);
+	      TmpIm += (tmpRealElectron[X2] * ImSource + tmpImaginaryElectron[X2] * ReSource);
 	    }
-	  	  
+	  
 	  // confinement term for the holes
 	  if (X1 == X2)
 	    {
 	      //cout << "Hole: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
-	      vDestination.Re(Index1) += (tmpRealHole[Y2] * vSource.Re(Index2) - tmpImaginaryHole[Y2] * vSource.Im(Index2));
-	      vDestination.Im(Index1) += (tmpRealHole[Y2] * vSource.Im(Index2) + tmpImaginaryHole[Y2] * vSource.Re(Index2));
-	    }	  
+	      TmpRe += (tmpRealHole[Y2] * ReSource - tmpImaginaryHole[Y2] * ImSource);
+	      TmpIm += (tmpRealHole[Y2] * ImSource + tmpImaginaryHole[Y2] * ReSource);
+	    }
+	  
 	}
+      vDestination.Re(Index1) += TmpRe; vDestination.Im(Index1) += TmpIm;
     }
   return vDestination;
 }
@@ -416,11 +443,13 @@ void PeriodicElectronHole3DHamiltonian::EvaluateKineticTerm (double mex, double 
   int LowerImpulsion2Z = secondParticle->GetLowerImpulsionZ();
 
   //cout << "LowerImpulsion: " << LowerImpulsion1X << " " << LowerImpulsion1Y << " " << LowerImpulsion1Z << " " << LowerImpulsion2X << " " << LowerImpulsion2Y << " " << LowerImpulsion2Z << endl;
-  
+  /*
   double InvXFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mex * xSize * xSize);
   double InvYFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mey * ySize * ySize);
   double InvZFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mez * zSize * zSize);
-  
+  */
+  double InvXFactor1 = 0.0, InvYFactor1 = 0.0, InvZFactor1 = 0.0;
+
   double InvXFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhx * xSize * xSize);
   double InvYFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhy * ySize * ySize);
   double InvZFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhz * zSize * zSize);
@@ -652,23 +681,47 @@ void PeriodicElectronHole3DHamiltonian::EvaluateCoulombianTerm (double xSize, do
   for (int i1 = 0; i1 < number; ++i1)
     this->CoulombianTerm[i1] = new double [number];
 
+  int lengthX = this->NbrState1X * 2 - 1, lengthY = this->NbrState1Y * 2 - 1, lengthZ = this->NbrState1Z * 2 - 1;
+  int originX = this->NbrState1X - 1, originY = this->NbrState1Y - 1, originZ = this->NbrState1Z - 1;
+  double*** precalculated = new double** [lengthX];
+  for (int i = 0; i < lengthX; ++i)
+    {
+      precalculated[i] = new double* [lengthY];
+      for (int j = 0; j < lengthY; ++j)
+	{
+	  precalculated[i][j] = new double [lengthZ];
+	  for (int k = 0; k < lengthZ; ++k)
+	    {
+	      if ((i == originX) && (j == originY) && (k == originZ))
+		precalculated[i][j][k] = 0;
+	      else
+		{
+		  double tmp = ((double )(i - originX) * (i - originX)) / squareX + ((double) (j - originY) * (j - originY)) / squareY + ((double) (k - originZ) * (k - originZ)) / squareZ;
+		  precalculated[i][j][k] = factor / (tmp * volume);
+		}
+	    }
+	}
+    }
+
+  double* tmpPre;
   for (int m1 = 0; m1 < this->NbrState1X; ++m1)
     for (int n1 = 0; n1 < this->NbrState1Y; ++n1)      
       for (int p1 = 0; p1 < this->NbrState1Z; ++p1)
 	{
 	  int X1 = this->IToX1[m1][n1][p1];	  
 	  for (int m3 = 0; m3 < this->NbrState1X; ++m3)
-	    for (int n3 = 0; n3 < this->NbrState1Y; ++n3)      
-	      for (int p3 = 0; p3 < this->NbrState1Z; ++p3)
-		{
-		  int X2 = this->IToX1[m3][n3][p3];
-		  double tmp = (m1 - m3) * (m1 - m3) / squareX + (n1 - n3) * (n1 - n3) / squareY + (p1 - p3) * (p1 - p3) / squareZ;
-		  if ((m1 == m3) && (n1 == n3) && (p1 ==p3))       	       
-		    this->CoulombianTerm[X1][X2] = 0;
-		  else
-		    this->CoulombianTerm[X1][X2] = factor / (tmp * volume);
-		}
+	    for (int n3 = 0; n3 < this->NbrState1Y; ++n3)
+	      {
+		tmpPre = precalculated[-m1 + m3 + originX][-n1 + n3 + originY];
+		for (int p3 = 0; p3 < this->NbrState1Z; ++p3)
+		  {
+		    int X2 = this->IToX1[m3][n3][p3];       	       
+		    this->CoulombianTerm[X1][X2] = tmpPre[-p1 + p3 + originZ];
+		  }
+	      }
 	}
+
+  delete[] precalculated;
 }
 
 // evaluate the wave function overlap

@@ -31,6 +31,8 @@
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
 
+using std::cout;
+using std::endl;
 
 // default constructor
 //
@@ -73,6 +75,11 @@ PeriodicThreeDOneParticle::PeriodicThreeDOneParticle (const PeriodicThreeDOnePar
 
 PeriodicThreeDOneParticle::~PeriodicThreeDOneParticle ()
 {
+  //cout << "PeriodicThreeDOneParticle's destructor is being called. " << endl;
+  delete (PeriodicOneDOneParticle*) this->StateX;
+  delete (PeriodicOneDOneParticle*) this->StateY;
+  delete (PeriodicOneDOneParticle*) this->StateZ;
+  this->StateX = NULL; this->StateY = NULL; this->StateZ = NULL; 
 }
 
 // assignement

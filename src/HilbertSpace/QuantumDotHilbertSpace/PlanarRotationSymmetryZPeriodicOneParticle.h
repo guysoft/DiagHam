@@ -59,7 +59,7 @@ class PlanarRotationSymmetryZPeriodicOneParticle : public AbstractPlanarRotation
 
   // destructor
   //
-  ~PlanarRotationSymmetryZPeriodicOneParticle ();
+  virtual ~PlanarRotationSymmetryZPeriodicOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //

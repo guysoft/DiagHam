@@ -79,9 +79,9 @@ int main(int argc, char** argv)
   (*MassGroup) += new SingleDoubleOption ('\n', "me-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.07);
   (*MassGroup) += new SingleDoubleOption ('\n', "me-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.07);
   (*MassGroup) += new SingleDoubleOption ('\n', "me-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-x", "hole effective mass in x direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-y", "hole effective mass in y direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-z", "hole effective mass in z direction (in vacuum electron mass unit)", 0.07);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-x", "hole effective mass in x direction (in vacuum electron mass unit)", 0.1);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-y", "hole effective mass in y direction (in vacuum electron mass unit)", 0.1);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-z", "hole effective mass in z direction (in vacuum electron mass unit)", 0.34);
 
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ex", "number of states in x direction for electrons of the full Hilbert space", 11);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ex", "lower impulsion in x direction for electrons", -5);
@@ -300,7 +300,7 @@ int main(int argc, char** argv)
           for (int i = 0; i < NbrEigenvalue; ++i)
             {
               sprintf  (TmpFileName, "eigenvector.%d", i);
-              Eigenstates[i].WriteAsciiVector(TmpFileName);
+              Eigenstates[i].WriteVector(TmpFileName);
             }
           delete[] TmpFileName;
         }
