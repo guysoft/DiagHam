@@ -124,7 +124,7 @@ int main(int argc, char** argv)
   ParticleOnSphereFunctionBasis Basis(LzMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
 //  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
-  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 1, 1);
+  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 2, 1);
 //  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
