@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQHEHamiltonian.a
 
-libQHEHamiltonian_a_SOURCES = TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc AbstractQHEHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc AbstractQHEOnTorusHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc ParticleOnSphereLaplacianDeltaHamiltonian.cc AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc
+libQHEHamiltonian_a_SOURCES = TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc AbstractQHEHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc AbstractQHEOnTorusHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc ParticleOnSphereLaplacianDeltaHamiltonian.cc AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -95,7 +95,8 @@ ParticleOnSphereDeltaModifiedHamiltonian.o AbstractQHEHamiltonian.o \
 AbstractQHEOnSphereHamiltonian.o AbstractQHEOnTorusHamiltonian.o \
 ParticleOnSphereCoulombDeltaHamiltonian.o \
 ParticleOnSphereLaplacianDeltaHamiltonian.o \
-AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.o
+AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.o \
+ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -121,7 +122,9 @@ DEP_FILES =  .deps/AbstractQHEHamiltonian.P \
 .deps/ParticleOnTorusCoulombDMRGReadyHamiltonian.P \
 .deps/ParticleOnTorusCoulombHamiltonian.P \
 .deps/ParticleOnTorusCoulombWithSpinHamiltonian.P \
-.deps/ParticleOnTorusDeltaHamiltonian.P .deps/TrappedBosonHamiltonian.P
+.deps/ParticleOnTorusDeltaHamiltonian.P \
+.deps/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.P \
+.deps/TrappedBosonHamiltonian.P
 SOURCES = $(libQHEHamiltonian_a_SOURCES)
 OBJECTS = $(libQHEHamiltonian_a_OBJECTS)
 

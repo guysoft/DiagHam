@@ -103,14 +103,9 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::ShiftHamiltonian (do
 
 Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
-  double x = 0.0;
-  int dim = this->Particles->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return Complex(x);
+  return Complex();
 }
-  
+
 // evaluate matrix element
 //
 // V1 = vector to left multiply with current matrix
@@ -119,9 +114,63 @@ Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (Re
 
 Complex AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
-  return Complex();
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Cosinus;
+  double Sinus;
+  int NbrTranslation;
+  int Index;
+  int m1;
+  int m2;
+  int m3;
+  int m4;
+  Complex TmpZ;
+  Complex Z (0.0, 0.0);
+  double TmpInteraction;
+  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+    {
+      m1 = this->M1Value[j];
+      m2 = this->M2Value[j];
+      m3 = this->M3Value[j];
+      m4 = this->M4Value[j];
+      TmpInteraction = this->InteractionFactors[j];
+      for (int i = 0; i < Dim; ++i)
+	{
+	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  if (Index < Dim)
+	    {
+	      Coefficient *= TmpInteraction;
+	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
+	      TmpZ.Re = ((V2.Re(i) * Cosinus) - (V2.Im(i) * Sinus));
+	      TmpZ.Im += ((V2.Re(i) * Sinus) + (V2.Im(i) * Cosinus));
+	      Z += Conj(V1[Index]) * TmpZ;
+	    }
+	}
+    }
+  m1 = this->M1Value[ReducedNbrInteractionFactors];
+  m2 = this->M2Value[ReducedNbrInteractionFactors];
+  m3 = this->M3Value[ReducedNbrInteractionFactors];
+  m4 = this->M4Value[ReducedNbrInteractionFactors];
+  TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
+  for (int i = 0; i < Dim; ++i)
+    {
+      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+      if (Index < Dim)
+	{
+	  Coefficient *= TmpInteraction;
+	  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
+	  Sinus = Coefficient * this->SinusTable[NbrTranslation];
+	  TmpZ.Re = ((V2.Re(i) * Cosinus) - (V2.Im(i) * Sinus));
+	  TmpZ.Im += ((V2.Re(i) * Sinus) + (V2.Im(i) * Cosinus));
+	  Z += Conj(V1[Index]) * TmpZ;
+	}
+      Z += this->EnergyShift * (Conj(V1[i]) * V2[i]);
+    }
+  return Complex(Z);
 }
-
+  
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //
@@ -198,11 +247,14 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelMu
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-												  int firstComponent, int nbrComponent)
+										       int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = 0.0;
+    {
+      vDestination.Re(i) = 0.0;
+      vDestination.Im(i) = 0.0;
+    }
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
@@ -312,7 +364,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
 		  Cosinus *= this->CosinusTable[NbrTranslation];
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
-		  vDestination.Re(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
+		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
 		}
 	      vDestination.Re(i) += Shift * TmpRe;
 	      vDestination.Im(i) += Shift * TmpIm;
@@ -349,7 +401,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
 		  Cosinus *= this->CosinusTable[NbrTranslation];
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
-		  vDestination.Re(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
+		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
 		}
 	      vDestination.Re(i) += Shift * TmpRe;
 	      vDestination.Im(i) += Shift * TmpIm;
@@ -558,13 +610,14 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplica
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
+  this->InteractionPerComponentNbrTranslation = new int* [ReducedSpaceDimension];
 
   int TotalPos = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      this->InteractionPerComponentNbrTranslation[TotalPos] = new int [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentNbrTranslation[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
       TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[TotalPos];

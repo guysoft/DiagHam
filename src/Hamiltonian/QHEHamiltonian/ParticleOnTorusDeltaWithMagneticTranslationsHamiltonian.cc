@@ -60,17 +60,20 @@ using std::ostream;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
+// xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum,
+ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
+														 int nbrParticles, int maxMomentum, int xMomentum,
 														 double ratio, AbstractArchitecture* architecture, 
 														 long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
+  this->XMomentum = xMomentum;
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
@@ -81,6 +84,13 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ParticleOnTorusDeltaWit
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
+  this->CosinusTable = new double [this->MaxMomentum];
+  this->SinusTable = new double [this->MaxMomentum];
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    {
+      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+    }
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -116,6 +126,8 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::~ParticleOnTorusDeltaWi
   delete[] this->M2Value;
   delete[] this->M3Value;
   delete[] this->M4Value;
+  delete[] this->CosinusTable;
+  delete[] this->SinusTable;
   if (this->FastMultiplicationFlag == true)
     {
       int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
@@ -125,10 +137,12 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::~ParticleOnTorusDeltaWi
 	{
 	  delete[] this->InteractionPerComponentIndex[i];
 	  delete[] this->InteractionPerComponentCoefficient[i];
+	  delete[] this->InteractionPerComponentNbrTranslation[i];
 	}
       delete[] this->InteractionPerComponentIndex;
       delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
+      delete[] this->InteractionPerComponentNbrTranslation;
     }
 }
 
@@ -145,12 +159,14 @@ void ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::SetHilbertSpace (A
 	{
 	  delete[] this->InteractionPerComponentIndex[i];
 	  delete[] this->InteractionPerComponentCoefficient[i];
+	  delete[] this->InteractionPerComponentNbrTranslation[i];
 	}
       delete[] this->InteractionPerComponentIndex;
       delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
+      delete[] this->InteractionPerComponentNbrTranslation;
     }
-  this->Particles = (ParticleOnTorus*) hilbertSpace;
+  this->Particles = (ParticleOnTorusWithMagneticTranslations*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
 
@@ -476,21 +492,21 @@ double ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::PartialMisraFunc
 
 ostream& operator << (ostream& Str, ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian& H) 
 {
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  ComplexVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  ComplexVector* TmpV = new ComplexVector [H.Particles->GetHilbertSpaceDimension()];
   for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
+      TmpV[i] = ComplexVector(H.Particles->GetHilbertSpaceDimension());
       if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
+	TmpV2.Re(i - 1) = 0.0;
+      TmpV2.Re(i) = 1.0;
       H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
   for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
       for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
 	{
-	  Str << TmpV[j][i] << "    ";
+	  Str << "(" << TmpV[j].Re(i) << ", " << TmpV[j].Im(i) << ")    ";
 	}
       Str << endl;
     }
@@ -505,14 +521,16 @@ ostream& operator << (ostream& Str, ParticleOnTorusDeltaWithMagneticTranslations
 
 MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian& H) 
 {
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  ComplexVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  ComplexVector* TmpV = new ComplexVector [H.Particles->GetHilbertSpaceDimension()];
   for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
+      TmpV[i] = ComplexVector(H.Particles->GetHilbertSpaceDimension());
       if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
+	{
+	  TmpV2.Re(i - 1) = 0.0;
+	}
+      TmpV2.Re(i) = 1.0;
       H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
   Str << "{";

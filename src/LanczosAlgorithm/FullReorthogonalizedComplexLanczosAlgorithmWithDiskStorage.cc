@@ -53,9 +53,11 @@ using std::ios;
 // architecture = architecture to use for matrix operations
 // nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration
+// strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
 FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, 
-														       int nbrEigenvalue, int maxNbrVectors, int maxIter) 
+														       int nbrEigenvalue, int maxNbrVectors, 
+														       int maxIter, bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -75,7 +77,11 @@ FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::FullReorthogonalized
     }
   this->Architecture = architecture;
   this->Flag.Initialize();
+  this->StrongConvergenceFlag = strongConvergence;
   this->PreviousLastWantedEigenvalue = 0.0;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->EigenvectorPrecision = 0.0;
 }
@@ -98,6 +104,10 @@ FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::FullReorthogonalized
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->EigenvectorPrecision = algorithm.EigenvectorPrecision;
+  this->StrongConvergenceFlag = algorithm.StrongConvergenceFlag;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = 0.0;
 }
 
 // destructor
@@ -109,6 +119,7 @@ FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::~FullReorthogonalize
     {
       delete[] this->LanczosVectors;
     }
+  delete[] this->PreviousWantedEigenvalues;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -352,6 +363,8 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
       this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -360,6 +373,8 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = 2.0 * this->DiagonalizedMatrix.DiagonalElement(i);
     }
   this->WriteState();
 }
@@ -371,13 +386,28 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
 
 bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::TestConvergence ()
 {
-  cout << this->PreviousLastWantedEigenvalue << " " << this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) << " " << this->EigenvaluePrecision<< endl;
-  if ((this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue) && 
-      (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
-    return true;
-  else
-    return false;
+  if (this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue)
+    {
+      if (this->StrongConvergenceFlag == true)
+	{
+	  for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
+	    {
+	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
+		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
+		{
+		  return false;
+		}
+	    }
+	  return true;
+	}
+      else
+	if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+	    (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
+	  return true;
+	else
+	  return false;
+    }
+  return false;
 }
 
 // write current Lanczos state on disk
@@ -430,6 +460,8 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   File.close();  
   this->Diagonalize();
   this->DiagonalizedMatrix.SortMatrixUpOrder();
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
   return true;
 }
 

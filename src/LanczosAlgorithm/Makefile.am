@@ -7,6 +7,7 @@ BasicLanczosAlgorithm.cc \
 ComplexBasicLanczosAlgorithm.cc \
 ComplexBasicLanczosAlgorithmWithEigenstates.cc \
 ComplexBasicLanczosAlgorithmWithGroundState.cc \
+ComplexBasicLanczosAlgorithmWithDiskStorage.cc \
 BasicLanczosAlgorithmWithGroundState.cc \
 BasicLanczosAlgorithmWithEigenstates.cc \
 BasicLanczosAlgorithmWithDiskStorage.cc \

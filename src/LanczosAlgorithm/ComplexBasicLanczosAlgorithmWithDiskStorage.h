@@ -3,13 +3,14 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2003 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//          class of full reorthogonalized complex Lanczos algorithm          //
-//                (with full re-orthogonalization at each step)               //
+//                   class of basic complex Lanczos algorithm                 //
+//                  (without re-orthogonalization at each step)               //
+//                 and storing each iteration information on disk             //
 //                                                                            //
-//                        last modification : 26/05/2003                      //
+//                        last modification : 28/11/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,38 +30,43 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FULLREORTHOGONALIZEDCOMPLEXLANCZOSALGORITHM_H
-#define FULLREORTHOGONALIZEDCOMPLEXLANCZOSALGORITHM_H
+#ifndef COMPLEXBASICLANCZOSALGORITHMWITHDISKSTORAGE_H
+#define COMPLEXBASICLANCZOSALGORITHMWITHDISKSTORAGE_H
 
 
 #include "config.h"
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
-#include "Vector/RealVector.h"
-#include "GeneralTools/GarbageFlag.h"
+#include "Vector/ComplexVector.h"
 
 
-class FullReorthogonalizedComplexLanczosAlgorithm : public AbstractLanczosAlgorithm
+class ComplexBasicLanczosAlgorithmWithDiskStorage : public AbstractLanczosAlgorithm
 {
 
  protected:
 
-  ComplexVector* LanczosVectors;
-  int MaximumNumberIteration;
+  ComplexVector V1;
+  ComplexVector V2;
+  ComplexVector V3;
+
   int Index;
-  GarbageFlag Flag;
-  RealVector GroundState;
 
   // number of wanted eigenvalues
   int NbrEigenvalue;
   // value of the last wanted eigenvalue at previous Lanczos iteration
   double PreviousLastWantedEigenvalue;
-  // value of the wanted eigenvalue at previous Lanczos iteration
-  double* PreviousWantedEigenvalues;
-  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  bool StrongConvergenceFlag;
-  
+
+  // file name containing  Lanczos iteration informations
+  char* LanczosFileName;
+
+  // file name corresponding to the first Lanczos vector
+  char* V1FileName;
+  // file name corresponding to the second Lanczos vector
+  char* V2FileName;
+  // file name corresponding to the third Lanczos vector
+  char* V3FileName;
+
  public:
 
   // default constructor
@@ -68,18 +74,16 @@ class FullReorthogonalizedComplexLanczosAlgorithm : public AbstractLanczosAlgori
   // architecture = architecture to use for matrix operations
   // nbrEigenvalue = number of wanted eigenvalues
   // maxIter = an approximation of maximal number of iteration
-  // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  FullReorthogonalizedComplexLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
-					      bool strongConvergence = true);
+  ComplexBasicLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 0);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  FullReorthogonalizedComplexLanczosAlgorithm(const FullReorthogonalizedComplexLanczosAlgorithm& algorithm);
+  ComplexBasicLanczosAlgorithmWithDiskStorage(const ComplexBasicLanczosAlgorithmWithDiskStorage& algorithm);
 
   // destructor
   //
-  ~FullReorthogonalizedComplexLanczosAlgorithm();
+  ~ComplexBasicLanczosAlgorithmWithDiskStorage();
 
   // initialize Lanczos algorithm with a random vector
   //
@@ -90,16 +94,14 @@ class FullReorthogonalizedComplexLanczosAlgorithm : public AbstractLanczosAlgori
   // vector = reference to the vector used as first step vector
   void InitializeLanczosAlgorithm(const Vector& vector);
 
+  // resume Lanczos algorithm from disk datas in current directory
+  //
+  void ResumeLanczosAlgorithm();
+  
   // get last produced vector
   //
   // return value = reference on last produced vector
   Vector& GetGroundState();
-
-  // get the n first eigenstates
-  //
-  // nbrEigenstates = number of needed eigenstates
-  // return value = array containing the eigenstates
-  Vector* GetEigenstates(int nbrEigenstates);
 
   // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
   //
@@ -110,6 +112,19 @@ class FullReorthogonalizedComplexLanczosAlgorithm : public AbstractLanczosAlgori
   //
   // return value = true if convergence has been reached
   bool TestConvergence ();
+
+ private:
+
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  bool WriteState();
+
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  bool ReadState();
+
 
 };
 

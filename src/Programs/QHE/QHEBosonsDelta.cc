@@ -7,7 +7,10 @@
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaModifiedHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
@@ -18,6 +21,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
+#include "Options/SingleStringOption.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -39,21 +43,37 @@ int main(int argc, char** argv)
   // some running options and help
   BooleanOption HelpOption ('h', "help", "display this help");
   BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
+  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
+  BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
-  SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
+  SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
   SingleIntegerOption LzMaxOption ('l', "lzmax", "twice the maximum momentum for a single particle", 14);
+  SingleIntegerOption MinTotalLzOption ('\n', "min-lz", "minimum total lz value to evaluate (negative if it is 0 or 1 depending on the parameters)", -1);
+  SingleIntegerOption MaxTotalLzOption ('\n', "max-lz", "maximum total lz value to evaluate (negative if all values have to be evaluated)", -1);
   SingleIntegerOption NbrBosonOption ('p', "nbr-particles", "number of particles", 8);
-  SingleDoubleOption FrequencyShiftOption ('f', "frequency-shift", "frequency shift from FQHE", 0.0);
+  SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
+  SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &SMPNbrProcessorOption;
   OptionList += &IterationOption;
+  OptionList += &NbrIterationOption;
   OptionList += &NbrEigenvaluesOption;
   OptionList += &NbrBosonOption;
   OptionList += &LzMaxOption;
-  OptionList += &FrequencyShiftOption;
+  OptionList += &MinTotalLzOption;
+  OptionList += &MaxTotalLzOption;
+  OptionList += &MemoryOption;
+  OptionList += &VectorMemoryOption;
+  OptionList += &DiskOption;
+  OptionList += &ResumeOption;
+  OptionList += &LoadPrecalculationOption;
+  OptionList += &SavePrecalculationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
@@ -64,33 +84,45 @@ int main(int argc, char** argv)
       DisplayHelp (OptionList, cout);
       return 0;
     }
+  bool ResumeFlag = ResumeOption.GetBoolean();
+  bool DiskFlag = DiskOption.GetBoolean();
   bool SMPFlag = SMPOption.GetBoolean();
   int NbrProcessor = SMPNbrProcessorOption.GetInteger();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
+  int NbrIterLanczos = NbrIterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrBosons = NbrBosonOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
-  double FrequencyShift = FrequencyShiftOption.GetDouble();
+  int MinTotalLz = MinTotalLzOption.GetInteger();
+  int MaxTotalLz = MaxTotalLzOption.GetInteger();
+  int Memory = MemoryOption.GetInteger() << 20;
+  int VectorMemory = VectorMemoryOption.GetInteger();
+  char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
+  char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
 
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
   int Shift = 0;
   char* OutputNameLz = new char [256];
-  if (FrequencyShift == 0.0)
-    sprintf (OutputNameLz, "bosons_delta_n_%d_2s_%d_lz.dat", NbrBosons, LzMax);
-  else
-    sprintf (OutputNameLz, "bosons_delta_n_%d_2s_%d_f_%f_lz.dat", NbrBosons, LzMax, FrequencyShift);
+  sprintf (OutputNameLz, "bosons_delta_n_%d_2s_%d_lz.dat", NbrBosons, LzMax);
   char* OutputNameL = "bosons_l.dat";
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
   int Max = (LzMax * NbrBosons);
+  if (MaxTotalLz >= 0)
+    Max = MaxTotalLz;
   int TotalSize = 0;
   double** Eigenvalues = new double* [2 * Max + 1];
   int* Dimensions = new int [2 * Max + 1];
-  int  L = 0;
-  if ((abs(Max) & 1) != 0)
-     L = 1;
+  int  L = MinTotalLz;
+  if (L < 0)
+    {
+      if ((abs(Max) & 1) != 0)
+	L = 1;
+      else
+	L = 0;
+    }
   for (; L <= Max; L += 2)
     {
       cout << "----------------------------------------------------------------" << endl;
@@ -109,11 +141,11 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      AbstractHamiltonian* Hamiltonian = 0;
-      if (FrequencyShift == 0.0)
-	 Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture);
-      else
-	 Hamiltonian = new ParticleOnSphereDeltaModifiedHamiltonian(&Space, NbrBosons, LzMax, FrequencyShift);
+      ParticleOnSphereDeltaHamiltonian* Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      if (SavePrecalculationFileName != 0)
+	{
+	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	}
 
       if (Hamiltonian->GetHilbertSpaceDimension() < 300)
 	{
@@ -154,30 +186,53 @@ int main(int argc, char** argv)
 	}
       else
 	{
-//	  BasicLanczosAlgorithm Lanczos(Architecture, MaxNbrIterLanczos);
-	  FullReorthogonalizedLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	  int MaxNbrIterLanczos = 4000;
+	  AbstractLanczosAlgorithm* Lanczos;
+	  if (NbrEigenvalue == 1)
+	    {
+	      if (DiskFlag == false)
+		Lanczos = new BasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		Lanczos = new BasicLanczosAlgorithmWithDiskStorage(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	    }
+	  else
+	    {
+	      if (DiskFlag == false)
+		Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (Architecture, NbrEigenvalue, VectorMemory, MaxNbrIterLanczos);
+	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
 	  double Lowest = PreviousLowest;
 	  int CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	  Lanczos.SetHamiltonian(Hamiltonian);
-	  Lanczos.InitializeLanczosAlgorithm();
+	  Lanczos->SetHamiltonian(Hamiltonian);
+	  if ((DiskFlag == true) && (ResumeFlag == true))
+	    Lanczos->ResumeLanczosAlgorithm();
+	  else
+	    Lanczos->InitializeLanczosAlgorithm();
 	  cout << "Run Lanczos Algorithm" << endl;
 	  timeval TotalStartingTime;
 	  timeval TotalEndingTime;
 	  double Dt;
 	  gettimeofday (&(TotalStartingTime), 0);
-	  Lanczos.RunLanczosAlgorithm(NbrEigenvalue + 2);
-	  RealTriDiagonalSymmetricMatrix TmpMatrix;
-	  while ((Precision > 1e-14) && (CurrentNbrIterLanczos++ < MaxNbrIterLanczos))
+	  if (ResumeFlag == false)
 	    {
-	      Lanczos.RunLanczosAlgorithm(1);
-	      TmpMatrix.Copy(Lanczos.GetDiagonalizedMatrix());
+	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
+	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	    }
+	  RealTriDiagonalSymmetricMatrix TmpMatrix;
+	  while ((Lanczos->TestConvergence() == false) && (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
+							   ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))
+	    {
+	      Lanczos->RunLanczosAlgorithm(1);
+	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
 	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue);
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
 	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
+	      ++CurrentNbrIterLanczos;
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {

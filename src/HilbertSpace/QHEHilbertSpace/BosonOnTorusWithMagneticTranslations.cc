@@ -71,9 +71,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
   this->TemporaryState2.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
-  cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
-  cout << this->HilbertSpaceDimension << endl;
 
   this->HashKeyMask = (unsigned long) 0x1;
   unsigned long TmpMemory = this->MaxMomentum * ((this->HashKeyMask + 1) * ((this->HilbertSpaceDimension * sizeof(int)) + 
@@ -314,12 +312,14 @@ int BosonOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int
 {
   BosonOnTorusState& State = this->StateDescription[index];
   if ((n1 > this->StateMaxMomentum[index]) || (n2 > this->StateMaxMomentum[index]) || 
-      (State.GetOccupation(n1) == 0) || (State.GetOccupation(n1) == 0) 
+      (State.GetOccupation(n1) == 0) || (State.GetOccupation(n2) == 0) 
       || ((n1 == n2) && (State.GetOccupation(n1) == 1)))
     {
       return this->HilbertSpaceDimension;
     }
 
+//  cout << m1 << " " << m2 << " " << n1 << " " << n2 << " " << endl;
+//  State.PrintState(cout, this->ReducedNbrState, this->RemainderNbrState) << endl;
   this->TemporaryState.Assign(State, this->ReducedNbrState);
   unsigned long Tmp1;
   int Tmp2;
@@ -327,12 +327,15 @@ int BosonOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int
   coefficient *= this->PrecalculatedSqrt[this->TemporaryState.DecrementOccupation(n2, Tmp1, Tmp2)];  
   coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m1, Tmp1, Tmp2)];
   coefficient *= this->PrecalculatedSqrt[this->TemporaryState.IncrementOccupation(m2, Tmp1, Tmp2)];
+//  this->TemporaryState.PrintState(cout, this->ReducedNbrState, this->RemainderNbrState) << endl;
   this->TemporaryState.PutInCanonicalForm(this->TemporaryState2, this->ReducedNbrState, this->RemainderNbrState, 
 					  this->MaxMomentum, nbrTranslation, this->XMomentumTranslationStep, Tmp2);
+//  this->TemporaryState.PrintState(cout, this->ReducedNbrState, this->RemainderNbrState) << "         " << nbrTranslation << " " << Tmp2 << " " << coefficient << endl;
   if (this->CompatibilityWithXMomentum[Tmp2] == false)
     return this->HilbertSpaceDimension;
-  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][Tmp2];
-  return this->FindStateIndex(this->TemporaryState);
+  Tmp2 = this->FindStateIndex(this->TemporaryState);
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[Tmp2]];
+  return Tmp2;
 }
 
 // find state index

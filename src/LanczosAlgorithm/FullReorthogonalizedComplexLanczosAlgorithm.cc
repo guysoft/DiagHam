@@ -50,8 +50,10 @@ using std::endl;
 // architecture = architecture to use for matrix operations
 // nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration
+// strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
-FullReorthogonalizedComplexLanczosAlgorithm::FullReorthogonalizedComplexLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter) 
+FullReorthogonalizedComplexLanczosAlgorithm::FullReorthogonalizedComplexLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
+											 bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -70,7 +72,11 @@ FullReorthogonalizedComplexLanczosAlgorithm::FullReorthogonalizedComplexLanczosA
     }
   this->Architecture = architecture;
   this->Flag.Initialize();
+  this->StrongConvergenceFlag = strongConvergence;
   this->PreviousLastWantedEigenvalue = 0.0;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->EigenvectorPrecision = 0.0;
 }
@@ -92,6 +98,10 @@ FullReorthogonalizedComplexLanczosAlgorithm::FullReorthogonalizedComplexLanczosA
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->EigenvectorPrecision = algorithm.EigenvectorPrecision;
+  this->StrongConvergenceFlag = algorithm.StrongConvergenceFlag;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    this->PreviousWantedEigenvalues[i] = 0.0;
 }
 
 // destructor
@@ -103,6 +113,7 @@ FullReorthogonalizedComplexLanczosAlgorithm::~FullReorthogonalizedComplexLanczos
     {
       delete[] this->LanczosVectors;
     }
+  delete[] this->PreviousWantedEigenvalues;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -279,6 +290,8 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
       this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -287,6 +300,8 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->PreviousWantedEigenvalues[i] = 2.0 * this->DiagonalizedMatrix.DiagonalElement(i);
     }
 }
 
@@ -297,12 +312,27 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 
 bool FullReorthogonalizedComplexLanczosAlgorithm::TestConvergence ()
 {
-  cout << this->PreviousLastWantedEigenvalue << " " << this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) << " " << this->EigenvaluePrecision<< endl;
-  if ((this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue) && 
-      (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
-    return true;
-  else
-    return false;
+  if (this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue)
+    {
+      if (this->StrongConvergenceFlag == true)
+	{
+	  for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
+	    {
+	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
+		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
+		{
+		  return false;
+		}
+	    }
+	  return true;
+	}
+      else
+	if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+	    (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
+	  return true;
+	else
+	  return false;
+    }
+  return false;
 }
 

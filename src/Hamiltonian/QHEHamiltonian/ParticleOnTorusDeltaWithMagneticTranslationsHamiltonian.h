@@ -50,6 +50,11 @@ class MathematicaOutput;
 class ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsHamiltonian
 {
 
+ private:
+
+  // momentum value in the x direction (modulo GCD of nbrBosons and maxMomentum)
+  int XMomentum;
+
  public:
 
   // constructor from default datas
@@ -57,12 +62,13 @@ class ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian : public AbstractQ
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
+  // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum, double ratio, 
-							  AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+  ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum,  int xMomentum,
+							  double ratio, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

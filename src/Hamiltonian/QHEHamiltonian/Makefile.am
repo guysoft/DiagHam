@@ -17,4 +17,5 @@ AbstractQHEOnSphereHamiltonian.cc \
 AbstractQHEOnTorusHamiltonian.cc \
 ParticleOnSphereCoulombDeltaHamiltonian.cc \
 ParticleOnSphereLaplacianDeltaHamiltonian.cc \
-AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc
+AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc \
+ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc
