@@ -96,15 +96,15 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   int* NbrStateInOrbit;
 
   // sign due to state reordering when applying translation operator 
-  double** ReorderingSign;
+  unsigned long* ReorderingSign;
   // array of unsigned long where each bit describes sign associated to each translation of the orbit representant (0 for +, 1 for -) with respect to N-body ordering convention
-  unsigned long* StateSignature;
+  int* StateSignature;
   // sign signature obtained during previous application of a n-points operator
-  unsigned long CurrentSignature;
+//  unsigned long CurrentSignature;
   //
-  int CurrentNbrStateInOrbit;
+//  int CurrentNbrStateInOrbit;
   //
-  int CurrentNbrStateInOrbitRatio;
+//  int CurrentNbrStateInOrbitRatio;
 
   // array containing for each state the sign due to fermion reordering when translating state (1 bit to 0 if sign is negative)
   unsigned long* TranslationSign;
@@ -289,7 +289,7 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
 
 inline unsigned long FermionOnTorusWithMagneticTranslations::CheckSignature (unsigned long signature)
 {
-  cout << this->CurrentNbrStateInOrbit << " " << this->CurrentNbrStateInOrbitRatio << " " << hex << this->CurrentSignature << " " << signature << dec << endl;
+/*  cout << this->CurrentNbrStateInOrbit << " " << this->CurrentNbrStateInOrbitRatio << " " << hex << this->CurrentSignature << " " << signature << dec << endl;
   if ((this->MomentumModulo & 1) || (this->CurrentNbrStateInOrbitRatio == 1))
     return (unsigned long) 1;
   signature ^= this->CurrentSignature;
@@ -300,7 +300,8 @@ inline unsigned long FermionOnTorusWithMagneticTranslations::CheckSignature (uns
       signature >>= this->CurrentNbrStateInOrbit;
     }
   cout << this->CurrentSignature << endl;
-  return ((2 * this->CurrentSignature) -  this->CurrentNbrStateInOrbitRatio);
+  return ((2 * this->CurrentSignature) -  this->CurrentNbrStateInOrbitRatio);*/
+  return (unsigned long) 1;
 }
 
 #endif
