@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorus.h"
+#include "HilbertSpace/AbstractHilbertSpace.h"
 
 #include <iostream>
 
@@ -44,7 +44,7 @@ using std::ostream;
 class Matrix;
 
 
-class ParticleOnTorusWithMagneticTranslations :  public ParticleOnTorus
+class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
 {
 
  public:
@@ -58,6 +58,23 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnTorus
   // virtual destructor
   //
   virtual ~ParticleOnTorusWithMagneticTranslations ();
+
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  virtual int GetParticleStatistic() = 0;
+
+  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation) = 0;
 
   // return matrix representation of the annihilation operator a_i
   //

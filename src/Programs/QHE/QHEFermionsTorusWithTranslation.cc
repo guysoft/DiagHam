@@ -145,7 +145,8 @@ int main(int argc, char** argv)
 		  if (m3 > m4)
 		    {
 		      double Coefficient = 0.0;
-		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		      int NbrTranslations = 0;
+		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslations);
 		    }
 		}
 	}

@@ -1269,6 +1269,224 @@ ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector
   return *this;
 }
 
+// do a partial left multication of a vector with an hermitian matrix and use to store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::Multiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
+					int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension != (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  int j;
+  double x;
+  double y;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
+	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->RealComponents[i] = x;
+      this->ImaginaryComponents[i] = y;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
+	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  Pos += Inc2 - j;
+	}
+      x += M.DiagonalElements[i] * V.RealComponents[i];
+      y += M.DiagonalElements[i] * V.ImaginaryComponents[i];
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos2] * V.RealComponents[j] - 
+	    M.ImaginaryOffDiagonalElements[Pos2] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos2] * V.ImaginaryComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos2] * V.RealComponents[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->RealComponents[i] = x;
+      this->ImaginaryComponents[i] = y;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->RealComponents[i] = x;
+       this->ImaginaryComponents[i] = y;
+   }
+  return *this;
+}
+
+// left multiply a vector with an hermitian matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVector& V)
+{
+  if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
+    return *this;
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      this->RealComponents[i] += M.DiagonalElements[i] * V.RealComponents[i];
+      this->ImaginaryComponents[i] += M.DiagonalElements[i] * V.ImaginaryComponents[i];
+      int pos = i - 1;
+      int j = 0;
+      for (; j < i; ++j)
+	{
+	  this->RealComponents[i] += M.RealOffDiagonalElements[pos] * V.RealComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[pos ] * V.ImaginaryComponents[j];
+	  this->ImaginaryComponents[i] += M.RealOffDiagonalElements[pos] * V.ImaginaryComponents[j] 
+	    - M.ImaginaryOffDiagonalElements[pos] * V.RealComponents[j];
+	  pos += this->Dimension - j - 2 + M.Increment;
+	}
+      ++pos;
+      ++j;
+      for (; j < this->Dimension; ++j)
+	{
+	  this->RealComponents[i] += M.RealOffDiagonalElements[pos] * V.RealComponents[j] - 
+	    M.ImaginaryOffDiagonalElements[pos] * V.ImaginaryComponents[j];
+	  this->ImaginaryComponents[i] += M.RealOffDiagonalElements[pos] * V.ImaginaryComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[pos] * V.RealComponents[j];
+	  ++pos;
+	}
+    }
+  return *this;
+}
+
+// do a partial left multication of a vector with an hermitian matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, 
+					   int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension != (sourceNbrComponent + sourceStart)) || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  int j;
+  double x;
+  double y;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
+	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->RealComponents[i] += x;
+      this->ImaginaryComponents[i] += y;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] 
+	    - M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  Pos += Inc2 - j;
+	}
+      x += M.DiagonalElements[i] * V.RealComponents[i];
+      y += M.DiagonalElements[i] * V.ImaginaryComponents[i];
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos2] * V.RealComponents[j] - 
+	    M.ImaginaryOffDiagonalElements[Pos2] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos2] * V.ImaginaryComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos2] * V.RealComponents[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->RealComponents[i] += x;
+      this->ImaginaryComponents[i] += y;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      y = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.RealOffDiagonalElements[Pos] * V.RealComponents[j] - 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.ImaginaryComponents[j];
+	  y += M.RealOffDiagonalElements[Pos] * V.ImaginaryComponents[j] + 
+	    M.ImaginaryOffDiagonalElements[Pos] * V.RealComponents[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->RealComponents[i] += x;
+       this->ImaginaryComponents[i] += y;
+   }
+  return *this;
+}
+
 // left multiply a vector with a real matrix and use to store result in current vector (without creating temporary vector)
 //
 // M = matrix to use

@@ -50,6 +50,12 @@ using std::hex;
 // return value = reduced number of state
 int GetReducedNbrState (int nbrState);
 
+// get the number of the state in the last unsigned long array describing the whole state
+// 
+// nbrState = number of states in which bosons can lie
+// return value = number of the state in the last unsigned long array describing the whole state
+int GetRemainderNbrState (int nbrState);
+
 
 class BosonOnTorusState
 {
@@ -228,6 +234,26 @@ inline int GetReducedNbrState (int nbrState)
     return ((nbrState >> 2) - 1);
   else
     return (nbrState >> 2);
+#endif
+}
+
+// get the number of the state in the last unsigned long array describing the whole state
+// 
+// nbrState = number of states in which bosons can lie
+// return value = number of the state in the last unsigned long array describing the whole state
+
+inline int GetRemainderNbrState (int nbrState)
+{
+#ifdef __64_BITS__
+  if (nbrState & ((unsigned long) 0x7))
+    return 8;
+  else
+    return (nbrState & ((unsigned long) 0x7));
+#else
+  if (nbrState & ((unsigned long) 0x3))
+    return 4;
+  else
+    return (nbrState & ((unsigned long) 0x3));
 #endif
 }
 

@@ -513,6 +513,31 @@ class ComplexVector : public Vector
   ComplexVector& AddMultiply (const Matrix&  M, ComplexVector& V, int sourceStart, int sourceStep, 
 			      int sourceNbrComponent, int destStart, int destStep);
 
+  // left multiply a vector with an hermitian matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // return value = reference on current vector
+  ComplexVector& AddMultiply (const HermitianMatrix&  M, ComplexVector& V);
+
+  // do a partial left multication of a vector with an hermitian matrix and use to store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  ComplexVector&Multiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent);
+
+  // do a partial left multication of a vector with an hermitian matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  ComplexVector& AddMultiply (const HermitianMatrix&  M, ComplexVector& V, int sourceStart, int sourceNbrComponent);
+
   // return reference on vector i-th coordinate
   //
   // i = coordinate position

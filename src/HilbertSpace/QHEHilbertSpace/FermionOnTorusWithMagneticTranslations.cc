@@ -310,9 +310,10 @@ AbstractHilbertSpace* FermionOnTorusWithMagneticTranslations::ExtractSubspace (A
 // n1 = first index for annihilation operator
 // n2 = second index for annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of the destination state 
 
-int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
   unsigned long State = this->StateDescription[index];

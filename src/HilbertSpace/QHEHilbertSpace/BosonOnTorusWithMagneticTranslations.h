@@ -50,6 +50,8 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int IncNbrBosons;
   // maximum momentum value reached by a boson
   int MaxMomentum;
+  // number of different momentum value
+  int NbrMomentum;
   // number of Lz values in a state
   int NbrLzValue;
 
@@ -57,8 +59,13 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int XMomentum;
   // momentum value in the y direction (modulo GCD of nbrBosons and maxMomentum)
   int YMomentum;
-  // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint
-  bool* CompatibilityWithMomentum;
+  //  GCD of nbrBosons and maxMomentum
+  int MomentumModulo;
+
+  // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with x momentum constraint
+  bool* CompatibilityXWithMomentum;
+  // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with y momentum constraint
+  bool** CompatibilityYWithMomentum;
 
   // array containing rescaling factors when passing from one orbit to another
   double** RescalingFactors;
@@ -67,6 +74,11 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
 
   // array describing each state
   BosonOnTorusState* StateDescription;
+
+  // BosonOnTorusState external parameter: reduced number of state (aka the number of unsigned long per state) minus 1
+  int ReducedNbrState;
+  // BosonOnTorusState external parameter: number of the state in the last unsigned long array describing the whole state
+  int RemainderNbrState;
 
  public:
 
@@ -180,13 +192,11 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // memeory = memory size that can be allocated for the look-up table
   void GenerateLookUpTable(int memory);
 
-  // generate look-up table associated to current Hilbert space
+  // generate all states corresponding to the constraints
   // 
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
-  // return value = key associated to the state
-  int GenerateKey(int* stateDescription, int lzmax);
-    
+  // return value = hilbert space dimension
+  int GenerateStates();
+
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
@@ -202,9 +212,9 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // maxMomentum = momentum maximum value for a boson in the state
   // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
-  // currentMomentum = current value of the momentum
+  // currentYMomentum = current value of the momentum in the y direction
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum);
+  int RawGenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentYMomentum);
 
 };
 
@@ -214,7 +224,7 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
 
 inline int BosonOnTorusWithMagneticTranslations::GetParticleStatistic()
 {
-  return ParticleOnTorus::BosonicStatistic;
+  return ParticleOnTorusWithMagneticTranslations::BosonicStatistic;
 }
 
 #endif
