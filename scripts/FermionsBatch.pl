@@ -20,11 +20,11 @@ chdir("n_$NbrFermions");
 while ($S <= $MaxS)
   {
     print ("proceeding N=".$NbrFermions." 2S=".$S."\n");
-    `/home/regnault/development/DMRG/DiagHam2/src/Programs/QHEFermionsCoulomb -S --processors 2 -p $NbrFermions -l $S`;
+    `/home/regnault/development/DMRG/DiagHam/src/Programs/QHEFermionsCoulomb -S --processors 2 -p $NbrFermions -l $S`;
     my $LzFileName = "fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat";
     my $LFileName = "fermions_coulomb_n_".$NbrFermions."_2s_".$S."_l.dat";
     `/home/regnault/development/DMRG/SpectrumTools/LzToL $LzFileName > $LFileName`;
     $S += 1;
   }
-`/home/regnault/development/DMRG/DiagHam2/FermionsGraphFromL.pl $NbrFermions`;
+`/home/regnault/development/DMRG/DiagHam/scripts/FermionsGraphFromL.pl $NbrFermions`;
 chdir ("..");

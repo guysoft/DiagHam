@@ -73,13 +73,13 @@ int main(int argc, char** argv)
     BInc = (BMax - B) / (double) (NbrB - 1);
   else
     BInc = 1.0;
-  for (;B <= BMax; B += BInc)
+//  for (;B <= BMax; B += BInc)
     {
       cout << "B = " << B << endl;
-      double BField = -0.6717 * B ;//(0.9274078)/(1.380662) * B; 
+      double BField = (0.9274078)/(1.380662) * 0.1;// 0.2;//-0.6717 * B ;//(0.9274078)/(1.380662) * B; 
       double JX = 0.0;
       double JY = 0.0;
-      double JZ = 200.0;
+      double JZ = 400.0;
       for (int i = 0; i < NbrSpin;)
 	{
 /*	  CouplingConstantsJXX[i] = 0.0;
@@ -103,11 +103,11 @@ int main(int argc, char** argv)
 				      CouplingConstantsJXZ[i], CouplingConstantsJYZ[i]);
 	      //	  cout << CouplingConstantsJXX[i] << " " << CouplingConstantsJYY[i] << " " << CouplingConstantsJZZ[i] << " " 
 	      //	       << CouplingConstantsJXY[i] << " " << CouplingConstantsJXZ[i] << " " << CouplingConstantsJYZ[i] << endl;
-//	      RotateCouplingConstants(Angle, Psi, Theta, 2.0 * BField, 2.0 * BField, 2.0 * BField, Dummy, Dummy, 
+//	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 9.0 * BField, Dummy, Dummy, 
 //				      CouplingConstantsGZ[i], Dummy,
 //				      CouplingConstantsGX[i], CouplingConstantsGY[i]);
-	      CouplingConstantsGX[i] = 0.0;
-	      CouplingConstantsGY[i] = 0.0;
+	      CouplingConstantsGX[i] = 2.0;
+	      CouplingConstantsGY[i] = 2.0;
 	      CouplingConstantsGZ[i] = 2.0 * BField;
 	      ++i;
 	      
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 				      CouplingConstantsJXZ[i], CouplingConstantsJYZ[i]);
 	      //	  cout << CouplingConstantsJXX[i] << " " << CouplingConstantsJYY[i] << " " << CouplingConstantsJZZ[i] << " " 
 	      //	       << CouplingConstantsJXY[i] << " " << CouplingConstantsJXZ[i] << " " << CouplingConstantsJYZ[i] << endl;
-	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 9.0 * BField, Dummy, Dummy, 
+	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 0.9 * BField, Dummy, Dummy, 
 				      CouplingConstantsGZ[i], Dummy,
 				      CouplingConstantsGX[i], CouplingConstantsGY[i]);
 	      
@@ -143,8 +143,8 @@ int main(int argc, char** argv)
       //  BasicLanczosAlgorithm Lanczos;
 //        cout << H << endl;
       //  ComplexBasicLanczosAlgorithm Lanczos;
-//      AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
-      AbstractArchitecture* Architecture = new SMPArchitecture(2);
+      AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
+//      AbstractArchitecture* Architecture = new SMPArchitecture(2);
 //      ComplexBasicLanczosAlgorithmWithEigenstates Lanczos(Architecture);
       ComplexBasicLanczosAlgorithmWithGroundState Lanczos(Architecture);
       int MaxNbrIterLanczos = 200; 

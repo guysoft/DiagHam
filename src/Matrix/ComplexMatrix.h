@@ -119,6 +119,12 @@ class ComplexMatrix : protected Matrix
   // x = value to add to matrix element
   void AddToMatrixElement(int i, int j, const Complex& x);
 
+  // get reference to a given column
+  //
+  // i = column position
+  // return value = column reference 
+  ComplexVector& operator [] (int i);
+
   // Resize matrix
   //
   // nbrRow = new number of rows
@@ -262,5 +268,15 @@ class ComplexMatrix : protected Matrix
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P);
 
 };
+
+// get reference to a given column
+//
+// i = column position
+// return value = column reference 
+
+inline ComplexVector& ComplexMatrix::operator [] (int i)
+{
+  return this->Columns[i];
+}
 
 #endif

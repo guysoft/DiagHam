@@ -508,6 +508,25 @@ ComplexVector& ComplexVector::AddLinearCombination (double x, const ComplexVecto
   return *this;
 }
 
+// add a linear combination to a given vector, for a given range of indices
+//
+// x = multiplicative coefficient
+// V = vector to add
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddLinearCombination (double x, const ComplexVector& V, int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > V.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      this->RealComponents[i] += x * V.RealComponents[i];
+      this->ImaginaryComponents[i] += x * V.ImaginaryComponents[i];
+    }
+  return *this;
+}
+
 // add a linear combination to a given vector
 //
 // x = multiplicative coefficient
@@ -519,6 +538,25 @@ ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const Comp
   if ((this->Dimension == 0) || (this->Dimension != V.Dimension))
     return *this;
   for (int i = 0; i < this->Dimension; ++i)
+    {
+      this->RealComponents[i] += x.Re * V.RealComponents[i] - x.Im * V.ImaginaryComponents[i];
+      this->ImaginaryComponents[i] += x.Re * V.ImaginaryComponents[i] + x.Im * V.RealComponents[i];
+    }
+  return *this;
+}
+
+// add a linear combination to a given vector, for a given range of indices
+//
+// x = multiplicative coefficient
+// V = vector to add
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const ComplexVector& V, int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > V.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
     {
       this->RealComponents[i] += x.Re * V.RealComponents[i] - x.Im * V.ImaginaryComponents[i];
       this->ImaginaryComponents[i] += x.Re * V.ImaginaryComponents[i] + x.Im * V.RealComponents[i];
@@ -547,6 +585,31 @@ ComplexVector& ComplexVector::AddLinearCombination (double x1, const ComplexVect
   return *this;
 }
 
+// add a linear combination of two vectors to a given vector, for a given range of indices
+//
+// x1 = multiplicative coefficient of first vector
+// v1 = first vector to add
+// x2 = multiplicative coefficient of first vector
+// v2 = first vector to add
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddLinearCombination (double x1, const ComplexVector& v1, double x2, 
+						    const ComplexVector& v2, int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > v2.Dimension) || 
+      (LastComponent > v1.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      this->RealComponents[i] += x1 * v1.RealComponents[i] + x2 * v2.RealComponents[i];
+      this->ImaginaryComponents[i] += x1 * v1.ImaginaryComponents[i] + x2 * v2.ImaginaryComponents[i];
+    }
+  return *this;
+}
+
 // add a linear combination of two vectors to a given vector
 //
 // x1 = multiplicative coefficient of first vector
@@ -561,6 +624,33 @@ ComplexVector& ComplexVector::AddLinearCombination (const Complex& x1, const Com
   if ((this->Dimension == 0) || (this->Dimension != v1.Dimension) || (this->Dimension != v2.Dimension))
     return *this;
   for (int i = 0; i < this->Dimension; ++i)
+    {
+      this->RealComponents[i] += x1.Re * v1.RealComponents[i]  - x1.Im * v1.ImaginaryComponents[i] 
+	+ x2.Re * v2.RealComponents[i] - x2.Im * v2.ImaginaryComponents[i];
+      this->ImaginaryComponents[i] += x1.Im * v1.RealComponents[i]  + x1.Re * v1.ImaginaryComponents[i] 
+	+ x2.Im * v2.RealComponents[i] + x2.Re * v2.ImaginaryComponents[i];
+    }
+  return *this;
+}
+
+// add a linear combination of two vectors to a given vector, for a given range of indices
+//
+// x1 = multiplicative coefficient of first vector
+// v1 = first vector to add
+// x2 = multiplicative coefficient of first vector
+// v2 = first vector to add
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddLinearCombination (const Complex& x1, const ComplexVector& v1, const Complex& x2, 
+						    const ComplexVector& v2, int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > v2.Dimension) || 
+      (LastComponent > v1.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
     {
       this->RealComponents[i] += x1.Re * v1.RealComponents[i]  - x1.Im * v1.ImaginaryComponents[i] 
 	+ x2.Re * v2.RealComponents[i] - x2.Im * v2.ImaginaryComponents[i];

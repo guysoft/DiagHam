@@ -215,12 +215,26 @@ class ComplexVector : public Vector
   // return value = reference on current vector
   ComplexVector& AddLinearCombination (double x, const ComplexVector& V);
 
+  // add a linear combination to a given vector, for a given range of indices
+  //
+  // x = multiplicative coefficient
+  // V = vector to add
+  // return value = reference on current vector
+  ComplexVector& AddLinearCombination (double x, const ComplexVector& V, int firstComponent, int nbrComponent);
+
   // add a linear combination to a given vector
   //
   // x = multiplicative coefficient
   // V = vector to add
   // return value = reference on current vector  
   ComplexVector& AddLinearCombination (const Complex& x, const ComplexVector& V);
+
+  // add a linear combination to a given vector, for a given range of indices
+  //
+  // x = multiplicative coefficient
+  // V = vector to add
+  // return value = reference on current vector
+  ComplexVector& AddLinearCombination (const Complex& x, const ComplexVector& V, int firstComponent, int nbrComponent);
 
   // add a linear combination of two vectors to a given vector
   //
@@ -232,6 +246,18 @@ class ComplexVector : public Vector
   ComplexVector& AddLinearCombination (double x1, const ComplexVector& v1, double x2, 
 				       const ComplexVector& v2);
 
+  // add a linear combination of two vectors to a given vector, for a given range of indices
+  //
+  // x1 = multiplicative coefficient of first vector
+  // v1 = first vector to add
+  // x2 = multiplicative coefficient of first vector
+  // v2 = first vector to add
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on current vector
+  ComplexVector& AddLinearCombination (double x1, const ComplexVector& v1, double x2, 
+				       const ComplexVector& v2, int firstComponent, int nbrComponent);
+
   // add a linear combination of two vectors to a given vector
   //
   // x1 = multiplicative coefficient of first vector
@@ -241,6 +267,19 @@ class ComplexVector : public Vector
   // return value = reference on current vector
   ComplexVector& AddLinearCombination (const Complex& x1, const ComplexVector& v1, const Complex& x2, 
 				       const ComplexVector& v2);
+
+  // add a linear combination of two vectors to a given vector, for a given range of indices
+  //
+  // x1 = multiplicative coefficient of first vector
+  // v1 = first vector to add
+  // x2 = multiplicative coefficient of first vector
+  // v2 = first vector to add
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on current vector
+  ComplexVector& AddLinearCombination (const Complex& x1, const ComplexVector& v1, const Complex& x2, 
+				       const ComplexVector& v2, int firstComponent, int nbrComponent);
+
   // substract two vectors
   //
   // V1 = first vector

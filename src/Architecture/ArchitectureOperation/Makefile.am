@@ -6,5 +6,7 @@ libArchitectureOperation_a_SOURCES=AbstractArchitectureOperation.cc \
 VectorHamiltonianMultiplyOperation.cc \
 MultipleRealScalarProductOperation.cc \
 AddRealLinearCombinationOperation.cc \
+MultipleComplexScalarProductOperation.cc \
+AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 QHEParticlePrecalculationOperation.cc

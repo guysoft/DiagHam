@@ -53,7 +53,7 @@ class FermionOnSphere :  public ParticleOnSphere
   int NbrLzValue;
 
   // array describing each state
-  unsigned int* StateDescription;
+  unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
   int* StateLzMax;
 
@@ -155,7 +155,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned int stateDescription, int lzmax);
+  int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate Hilbert space dimension
   //

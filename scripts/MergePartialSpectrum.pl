@@ -49,8 +49,7 @@ foreach $TmpFile (@Files)
     }
   else
     {
-      my $MinLz = 0;
-#&TestOverlap ($PreviousFile, $TmpFile);
+      my $MinLz = &TestOverlap ($PreviousFile, $TmpFile);
       if ($MinLz < 0)
 	{
 	  die ("no overlap between files ".$PreviousFile." and ".$TmpFile."\n");
@@ -61,7 +60,6 @@ foreach $TmpFile (@Files)
 	  my $TmpLine;
 	  foreach $TmpLine (<INFILE>)
 	    {
-	    
 	      my $TmpValue = $TmpLine;
 	      chomp ($TmpValue);
 	      $TmpValue =~ s/\ .*//;
@@ -96,11 +94,10 @@ sub OrderFiles
 	chomp ($TmpLine);
 	$TmpLine =~ s/\ .*//;
 	print $TmpLine." ".$TmpFile."\n";
-	%MinimumLzValues = (%MinimumLzValues, $TmpLine, $TmpFile);
+	%MinimumLzValues = (%MinimumLzValues, $TmpFile, $TmpLine);
 	close (INFILE);	
       }
-    sort %MinimumLzValues;
-    @$Files = values(%MinimumLzValues);
+    @$Files = sort { $MinimumLzValues{$a} <=> $MinimumLzValues{$b} } keys %MinimumLzValues
   }
 
 # test if an overlap between two files occurs

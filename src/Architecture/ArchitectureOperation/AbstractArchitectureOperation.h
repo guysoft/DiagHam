@@ -48,8 +48,10 @@ class AbstractArchitectureOperation
     {
       VectorHamiltonianMultiply = 0x1,
       AddRealLinearCombination = 0x2,
-      MultipleRealScalarProduct = 0x4,
+      MultipleRealScalarProduct = 0x4,      
       MatrixMatrixMultiply = 0x8,
+      AddComplexLinearCombination = 0x10,
+      MultipleComplexScalarProduct = 0x20,
       Generic = 0x100,
       QHEParticlePrecalculation = 0x200
     };

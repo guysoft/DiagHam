@@ -622,10 +622,10 @@ int FermionOnTorusWithSpin::AudAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -649,10 +649,10 @@ int FermionOnTorusWithSpin::AudAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -688,10 +688,10 @@ int FermionOnTorusWithSpin::AudAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -725,10 +725,10 @@ int FermionOnTorusWithSpin::AudAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -794,7 +794,7 @@ int FermionOnTorusWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
       Mask = (TmpState >> (Twice + 16));
@@ -833,10 +833,10 @@ int FermionOnTorusWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -870,10 +870,10 @@ int FermionOnTorusWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -921,10 +921,10 @@ int FermionOnTorusWithSpin::AddAddAuAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -948,10 +948,10 @@ int FermionOnTorusWithSpin::AddAddAuAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -987,10 +987,10 @@ int FermionOnTorusWithSpin::AddAddAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1024,10 +1024,10 @@ int FermionOnTorusWithSpin::AddAddAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1075,10 +1075,10 @@ int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1102,10 +1102,10 @@ int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1141,10 +1141,10 @@ int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1178,10 +1178,10 @@ int FermionOnTorusWithSpin::AudAudAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1229,10 +1229,10 @@ int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1256,10 +1256,10 @@ int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1295,10 +1295,10 @@ int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1332,10 +1332,10 @@ int FermionOnTorusWithSpin::AudAudAuAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1383,10 +1383,10 @@ int FermionOnTorusWithSpin::AddAudAuAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1410,10 +1410,10 @@ int FermionOnTorusWithSpin::AddAudAuAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1449,10 +1449,10 @@ int FermionOnTorusWithSpin::AddAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1486,10 +1486,10 @@ int FermionOnTorusWithSpin::AddAudAuAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1537,10 +1537,10 @@ int FermionOnTorusWithSpin::AddAddAdAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1564,10 +1564,10 @@ int FermionOnTorusWithSpin::AddAddAdAu (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1603,10 +1603,10 @@ int FermionOnTorusWithSpin::AddAddAdAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1640,10 +1640,10 @@ int FermionOnTorusWithSpin::AddAddAdAu (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1691,10 +1691,10 @@ int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1718,10 +1718,10 @@ int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1757,10 +1757,10 @@ int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1794,10 +1794,10 @@ int FermionOnTorusWithSpin::AudAddAdAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1845,10 +1845,10 @@ int FermionOnTorusWithSpin::AudAddAuAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1872,10 +1872,10 @@ int FermionOnTorusWithSpin::AudAddAuAd (int index, int m1, int m2, int n1, int n
       coefficient *= this->SignLookUpTable[Mask];
       Mask = (TmpState >> (Twice + 32)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
-      Mask = (TmpState >> (Twice + 48));
+      Mask = (TmpState >> (Twice + 48)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #else
-      Mask = (TmpState >> (Twice + 16));
+      Mask = (TmpState >> (Twice + 16)) & 0xffff;
       coefficient *= this->SignLookUpTable[Mask];
 #endif
     }
@@ -1913,10 +1913,10 @@ int FermionOnTorusWithSpin::AudAddAuAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
@@ -1950,10 +1950,10 @@ int FermionOnTorusWithSpin::AudAddAuAd (int index, int m1, int m2, int n1, int n
 	  coefficient *= this->SignLookUpTable[Mask];
 	  Mask = (TmpState >> (Twice + 32)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
-	  Mask = (TmpState >> (Twice + 48));
+	  Mask = (TmpState >> (Twice + 48)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #else
-	  Mask = (TmpState >> (Twice + 16));
+	  Mask = (TmpState >> (Twice + 16)) & 0xffff;
 	  coefficient *= this->SignLookUpTable[Mask];
 #endif
 	}
