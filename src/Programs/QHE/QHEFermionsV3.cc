@@ -1,8 +1,8 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
@@ -58,7 +58,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 21);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "add-coulomb", "add coefficent in front of the coulomb pseudo-potentials (pure laplacian delta if 0)", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
@@ -103,15 +102,11 @@ int main(int argc, char** argv)
   int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
-  double CoulombFactor = ((SingleDoubleOption*) Manager["add-coulomb"])->GetDouble();
 
   double GroundStateEnergy = 0.0;
   double Shift = -10.0;
   char* OutputNameLz = new char [256];
-  if (CoulombFactor == 0.0)
-    sprintf (OutputNameLz, "fermions_laplaciandelta_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
-  else
-    sprintf (OutputNameLz, "fermions_coulomblaplaciandelta_n_%d_2s_%d_%f_lz.dat", NbrFermions, LzMax, CoulombFactor);
+  sprintf (OutputNameLz, "fermions_v3_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
 
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
@@ -143,16 +138,35 @@ int main(int argc, char** argv)
     {
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
-      FermionOnSphere Space (NbrFermions, L, LzMax, MemorySpace);
-      cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
-      TotalSize += Space.GetHilbertSpaceDimension();
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+      ParticleOnSphere* Space;
+#ifdef __64_BITS__
+      if (LzMax <= 63)
+        {
+          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+        }
+      else
+        {
+          Space = new FermionOnSphereUnlimited(NbrFermions, L, LzMax, MemorySpace);
+        }
+#else
+      if (LzMax <= 31)
+        {
+          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+        }
+      else
+        {
+          Space = new FermionOnSphereUnlimited(NbrFermions, L, LzMax, MemorySpace);
+        }
+#endif
+      cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
+      TotalSize += Space->GetHilbertSpaceDimension();
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian;
       double* PseudoPotential = new double [LzMax + 1];
       for (int i = 0; i <= LzMax; ++i)
 	PseudoPotential[i] = 0.0;
       PseudoPotential[3] = 1.0;
-      Hamiltonian = new ParticleOnSphereGenericHamiltonian(&Space, NbrFermions, LzMax, PseudoPotential, 
+      Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotential, 
 							   Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
       delete[] PseudoPotential;
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -185,7 +199,6 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  int MaxNbrIterLanczos = 4000;
 	  AbstractLanczosAlgorithm* Lanczos;
 	  if (NbrEigenvalue == 1)
 	    {
@@ -265,6 +278,7 @@ int main(int argc, char** argv)
       cout << " Total Hilbert space dimension = " << TotalSize << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;
       cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
+      delete Space;
       delete Hamiltonian;
     }
   File.close();
