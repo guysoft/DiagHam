@@ -62,39 +62,42 @@ int main(int argc, char** argv)
   Manager += LanczosGroup;
   Manager += MiscGroup;
 
-  (*PotentialGroup) += new SingleIntegerOption ('M', "M-cell", "number of cells in the x direction", 161);
-  (*PotentialGroup) += new SingleIntegerOption ('N', "N-cell", "number of cells in the y direction", 161);
-  (*PotentialGroup) += new SingleIntegerOption ('H', "H-cell", "number of cells in the z direction", 21);
-  (*PotentialGroup) += new SingleDoubleOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 5.65);
-  (*PotentialGroup) += new SingleDoubleOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 5.65);
-  (*PotentialGroup) += new SingleDoubleOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 5.65);
+  (*PotentialGroup) += new SingleIntegerOption ('M', "M-cell", "number of cells in the x direction", 100);
+  (*PotentialGroup) += new SingleIntegerOption ('N', "N-cell", "number of cells in the y direction", 100);
+  (*PotentialGroup) += new SingleIntegerOption ('H', "H-cell", "number of cells in the z direction", 50);
+  (*PotentialGroup) += new SingleDoubleOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 5);
+  (*PotentialGroup) += new SingleDoubleOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 5);
+  (*PotentialGroup) += new SingleDoubleOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 5);
+  (*PotentialGroup) += new SingleIntegerOption ('\n', "barrier", "number of cells in the well barrier", 2);
+  (*PotentialGroup) += new SingleIntegerOption ('\n', "below", "number of cells between well barrier and wetting layer", 20);
   (*PotentialGroup) += new SingleIntegerOption ('\n', "wetting", "number of cells in wetting layer", 1);
-  (*PotentialGroup) += new SingleIntegerOption ('\n', "base", "base radius in cell unit", 18);
-  (*PotentialGroup) += new SingleIntegerOption ('\n', "height", "height of dot in cell unit", 3);
+  (*PotentialGroup) += new SingleIntegerOption ('\n', "base", "base radius in cell unit", 20);
+  (*PotentialGroup) += new SingleIntegerOption ('\n', "height", "height of dot in cell unit", 4);
   (*PotentialGroup) += new SingleIntegerOption ('\n', "top", "top radius in cell unit", 13);
-  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot-e", "potential in the dot for electrons (in eV unit)", -0.4);
-  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot-h", "potential in the dot for holes (in eV unit)", -0.2);
-  (*PotentialGroup) += new SingleDoubleOption ('\n', "dielectric", "dielectric constant in the sample", 12);  
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot-e", "potential in the dot for electrons (in eV unit)", -0.413);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "dot-h", "potential in the dot for holes (in eV unit)", -0.288);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "well", "potential in the well", 2);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "dielectric", "dielectric constant in the sample", 12.3);  
 
-  (*MassGroup) += new SingleDoubleOption ('\n', "me-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "me-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "me-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-x", "hole effective mass in x direction (in vacuum electron mass unit)", 0.1);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-y", "hole effective mass in y direction (in vacuum electron mass unit)", 0.1);
-  (*MassGroup) += new SingleDoubleOption ('\n', "mh-z", "hole effective mass in z direction (in vacuum electron mass unit)", 0.34);
+  (*MassGroup) += new SingleDoubleOption ('\n', "me-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.067);
+  (*MassGroup) += new SingleDoubleOption ('\n', "me-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.067);
+  (*MassGroup) += new SingleDoubleOption ('\n', "me-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.067);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-x", "hole effective mass in x direction (in vacuum electron mass unit)", 0.112);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-y", "hole effective mass in y direction (in vacuum electron mass unit)", 0.112);
+  (*MassGroup) += new SingleDoubleOption ('\n', "mh-z", "hole effective mass in z direction (in vacuum electron mass unit)", 0.337);
 
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ex", "number of states in x direction for electrons of the full Hilbert space", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ex", "lower impulsion in x direction for electrons", -5);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ey", "number of states in y direction for electrons of the full Hilbert space", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ey", "lower impulsion in y direction for electrons", -5);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ez", "number of states in z direction for electrons", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ez", "lower impulsion in z direction for electrons", -5);
-   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hx", "number of states in x direction for holes of the full Hilbert space", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hx", "lower impulsion in x direction for holes", -5);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hy", "number of states in y direction for holes of the full Hilbert space", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hy", "lower impulsion in y direction for holes", -5);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hz", "number of states in z direction for holes", 11);
-  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hz", "lower impulsion in z direction for holes", -5); 
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ex", "number of states in x direction for electrons of the full Hilbert space", 7);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ex", "lower impulsion in x direction for electrons", -3);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ey", "number of states in y direction for electrons of the full Hilbert space", 7);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ey", "lower impulsion in y direction for electrons", -3);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-ez", "number of states in z direction for electrons", 15);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-ez", "lower impulsion in z direction for electrons", -7);
+   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hx", "number of states in x direction for holes of the full Hilbert space", 7);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hx", "lower impulsion in x direction for holes", -3);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hy", "number of states in y direction for holes of the full Hilbert space", 7);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hy", "lower impulsion in y direction for holes", -3);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-state-hz", "number of states in z direction for holes", 15);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "low-hz", "lower impulsion in z direction for holes", -7); 
 
   (*LanczosGroup) += new SingleIntegerOption ('n', "nbr-eigen", "number of eigenvalues", 2);
   (*LanczosGroup) += new BooleanOption ('e', "eigenstate", "evaluate eigenstates", false);
@@ -124,12 +127,16 @@ int main(int argc, char** argv)
   double Lx = ((SingleDoubleOption*) Manager["cell-xsize"])->GetDouble();
   double Ly = ((SingleDoubleOption*) Manager["cell-ysize"])->GetDouble();
   double Lz = ((SingleDoubleOption*) Manager["cell-zsize"])->GetDouble();
+
+  int UnderBarrier = ((SingleIntegerOption*) Manager["barrier"])->GetInteger();
+  int BelowWettingLayer = ((SingleIntegerOption*) Manager["below"])->GetInteger();
   int WettingWidth = ((SingleIntegerOption*) Manager["wetting"])->GetInteger();
   int BaseRadius = ((SingleIntegerOption*) Manager["base"])->GetInteger();
   int DotHeight = ((SingleIntegerOption*) Manager["height"])->GetInteger();
   int TopRadius = ((SingleIntegerOption*) Manager["top"])->GetInteger();
   double ElectronDotPotential = ((SingleDoubleOption*) Manager["dot-e"])->GetDouble();
   double HoleDotPotential = ((SingleDoubleOption*) Manager["dot-h"])->GetDouble();
+  double WellPotential = ((SingleDoubleOption*) Manager["well"])->GetDouble();
   double DielectricConstant = ((SingleDoubleOption*) Manager["dielectric"])->GetDouble();
   
   double Mex = ((SingleDoubleOption*) Manager["me-x"])->GetDouble();
@@ -179,11 +186,11 @@ int main(int argc, char** argv)
   Manager.DisplayOption (FullOption, false);
  
   // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
-  DotEmbeddedWellThreeDConstantCellPotential* potentialE = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, 0, 0, WettingWidth, BaseRadius, DotHeight, TopRadius);
-  DotEmbeddedWellThreeDConstantCellPotential* potentialH = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, 0, 0, WettingWidth, BaseRadius, DotHeight, TopRadius);
+  DotEmbeddedWellThreeDConstantCellPotential* potentialE = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
+  DotEmbeddedWellThreeDConstantCellPotential* potentialH = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
   //ConstructPotential(double wellPotential, double dotPotential)
-  potentialE->ConstructPotential(0.0, ElectronDotPotential);
-  potentialH->ConstructPotential(0.0, HoleDotPotential);
+  potentialE->ConstructPotential(WellPotential, ElectronDotPotential);
+  potentialH->ConstructPotential(WellPotential, HoleDotPotential);
   //potential->SavePotential("DotPotential.txt");
   
   // define Hilbert space
