@@ -106,6 +106,8 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // constructor from data
   //
   // space = Hilbert space
+  // pairX = whether basis is pair in X direction, if not impair
+  // pairY = whether basis is pair in Y direction, if not impair
   // xSize = the sample length in X direction
   // ySize = the sample length in Y direction
   // zSize = the sample length in Z direction
@@ -116,7 +118,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // nbrCellY = number of steps in Y direction
   // nbrCellZ = number of steps in Z direction
   // PotentielInput = pointer to a 3D potential with constant value in a cell
-  XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
+  XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
@@ -210,7 +212,9 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   
   // evaluate all interaction factors
   //
-  void EvaluateInteractionFactors();
+  // pairX = whether basis is pair in X direction, if not impair
+  // pairY = whether basis is pair in Y direction, if not impair
+  void EvaluateInteractionFactors(bool pairX, bool pairY);
 
   // evaluate sinus wave function overlaps on a cell in a given direction
   //

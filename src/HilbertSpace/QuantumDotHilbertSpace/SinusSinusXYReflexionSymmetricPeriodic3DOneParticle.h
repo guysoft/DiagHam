@@ -28,15 +28,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef XYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
-#define XYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
+#ifndef SINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
+#define SINUSSINUSXYREFLEXIONSYMMETRICPERIODIC3DONEPARTICLE_H
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
 
 
-class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
+class SinusSinusXYReflexionSymmetricPeriodic3DOneParticle : public XYReflexionSymmetricPeriodic3DOneParticle
 {
 
  protected:
@@ -45,24 +46,21 @@ class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
 
   // default constructor
   //
-  XYReflexionSymmetricPeriodic3DOneParticle();
+  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
 
   // constructor
   //
-  // maxX = maximal wave function basis dimension in the x direction
-  // maxY = maximal wave function basis dimension in the y direction
-  // nbrStateZ = wave function basis dimension in the z direction
-  // lowZ = lower bound of basis dimension in the z direction
-  XYReflexionSymmetricPeriodic3DOneParticle (int maxX, int maxY, int nbrStateZ, int lowZ);
+  // space = a more general space without symmetry reduction
+  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle (XYReflexionSymmetricPeriodic3DOneParticle& space);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  XYReflexionSymmetricPeriodic3DOneParticle(const  XYReflexionSymmetricPeriodic3DOneParticle& space);
+  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle(const  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
 
   // destructor
   //
-  ~ XYReflexionSymmetricPeriodic3DOneParticle();
+  ~ SinusSinusXYReflexionSymmetricPeriodic3DOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -73,27 +71,7 @@ class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-   XYReflexionSymmetricPeriodic3DOneParticle& operator = (const  XYReflexionSymmetricPeriodic3DOneParticle& space);
-
-  // get sinus wave function basis dimension in the x direction
-  //
-  // return value = wave function basis dimension in the x direction
-  virtual int GetNbrSinusStateX();
-  
-  // get cosinus wave function basis dimension in the x direction
-  //
-  // return value = wave function basis dimension in the x direction
-  virtual int GetNbrCosinusStateX(); 
-
-  // get sinus wave function basis dimension in the y direction
-  //
-  // return value = wave function basis dimension in the y direction
-  virtual int GetNbrSinusStateY();
-  
-  // get cossinus wave function basis dimension in the y direction
-  //
-  // return value = wave function basis dimension in the y direction
-  virtual int GetNbrCosinusStateY();
+  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& operator = (const  SinusSinusXYReflexionSymmetricPeriodic3DOneParticle& space);
   
   // return a list of all possible quantum numbers 
   //
@@ -121,42 +99,6 @@ class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
   ostream& PrintState (ostream& Str, int state);
 
 };
-
-// get sinus wave function basis dimension in the x direction
-//
-// return value = wave function basis dimension in the x direction
-
-inline int XYReflexionSymmetricPeriodic3DOneParticle::GetNbrSinusStateX()
-{
-  return -this->LowerImpulsionX;
-}
-  
-// get cosinus wave function basis dimension in the x direction
-//
-// return value = wave function basis dimension in the x direction
-
-inline int XYReflexionSymmetricPeriodic3DOneParticle::GetNbrCosinusStateX()
-{
-   return -this->LowerImpulsionX + 1;
-} 
-
-// get sinus wave function basis dimension in the y direction
-//
-// return value = wave function basis dimension in the y direction
-
-inline int XYReflexionSymmetricPeriodic3DOneParticle::GetNbrSinusStateY()
-{
-  return -this->LowerImpulsionY;
-}  
-
-// get cosinus wave function basis dimension in the y direction
-//
-// return value = wave function basis dimension in the y direction
-
-inline int XYReflexionSymmetricPeriodic3DOneParticle::GetNbrCosinusStateY()
-{
-  return -this->LowerImpulsionY + 1;
-}
 
 
 #endif

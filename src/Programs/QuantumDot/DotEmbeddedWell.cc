@@ -8,6 +8,10 @@
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/SinusSinusXYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/SinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/CosinusCosinusXYReflexionSymmetricPeriodic3DOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
@@ -43,32 +47,6 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {  
-  /*
-  int M = 8, N = 8, H = 11; double Mux = 0.07, Muy = 0.07, Muz = 0.07;
-  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
-
-  DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, 1, 1, 1, 3, 2, 1);
-  potential->ConstructPotential(-1.0, 0.5);
-
-  XYReflexionSymmetricPeriodic3DOneParticle* Space = new XYReflexionSymmetricPeriodic3DOneParticle(M / 2, N / 2, H, -H / 2);
-
-  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
-
-  double*** Tmp = Hamiltonian.EvaluateSinusWaveFunctionOverlap(M * Lx, M, Space->GetNbrSinusStateX());
-  
-  for (int i = 0; i < Space->GetNbrSinusStateX(); ++i)
-    {
-      for (int j = 0; j < i + 1; ++j)
-	{
-	  cout << i << '\t' << j << '\t';
-	  for (int k = 0; k < M; ++k)
-	    {
-	      cout << Tmp[i][j][k] << '\t';
-	    }
-	  cout << '\n';
-	}
-    }
-  */
   cout.precision(14);
   // some running options and help
   BooleanOption HelpOption ('h', "help", "display this help");
@@ -97,6 +75,8 @@ int main(int argc, char** argv)
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);
   SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 60);
+  BooleanOption PairXOption ('\n', "pairX", "pair function in X direction", false);
+  BooleanOption PairYOption ('\n', "pairY", "pair function in Y direciton", false);
 
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -125,6 +105,8 @@ int main(int argc, char** argv)
   OptionList += &DiskOption;
   OptionList += &ResumeOption;
   OptionList += &NbrIterationOption;
+  OptionList += &PairXOption;
+  OptionList += &PairYOption;
 
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -162,6 +144,8 @@ int main(int argc, char** argv)
   bool ResumeFlag = ResumeOption.GetBoolean();
   bool DiskFlag = DiskOption.GetBoolean();
   int NbrIterLanczos = NbrIterationOption.GetInteger();
+  bool PairX = PairXOption.GetBoolean();
+  bool PairY = PairYOption.GetBoolean();   
 
   // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
   DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
@@ -169,19 +153,35 @@ int main(int argc, char** argv)
   // ConstructPotential(double wellPotential, double dotPotential)
   //potential->ConstructPotential(WellPotential, DotPotential);
   potential->LoadPotential("DotPotential.txt");
-
+  
   // define Hilbert space
-  XYReflexionSymmetricPeriodic3DOneParticle* Space = new XYReflexionSymmetricPeriodic3DOneParticle(M / 4, N / 4, H, -H / 2);
+  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
+  XYReflexionSymmetricPeriodic3DOneParticle* Space;
+  if (PairX)
+    if (PairY)
+      Space = new CosinusCosinusXYReflexionSymmetricPeriodic3DOneParticle(GeneralSpace);     
+    else
+      Space = new CosinusSinusXYReflexionSymmetricPeriodic3DOneParticle(GeneralSpace); 
+  else
+     if (PairY)
+      Space = new SinusCosinusXYReflexionSymmetricPeriodic3DOneParticle(GeneralSpace);     
+    else
+      Space = new SinusSinusXYReflexionSymmetricPeriodic3DOneParticle(GeneralSpace);    
+
+  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2 + 1, -M / 4, N / 2 + 1, -N / 4, H, -H / 2);
+
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);
-
+  
+  //cout << "General space dimension: " << GeneralSpace.GetHilbertSpaceDimension() << endl;
   cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
   cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
   cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
 
-  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
-  // PeriodicQuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  //PeriodicQuantumDots3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+
   cout << endl;
   gettimeofday (&(PrecalculationEndingTime), 0);
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +

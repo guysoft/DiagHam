@@ -50,6 +50,8 @@ using std::endl;
 // constructor from data
 //
 // space = Hilbert space
+// pairX = whether basis is pair in X direction, if not impair
+// pairY = whether basis is pair in Y direction, if not impair
 // xSize = the sample length in X direction
 // ySize = the sample length in Y direction
 // zSize = the sample length in Z direction
@@ -61,7 +63,7 @@ using std::endl;
 // nbrCellZ = number of steps in Z direction
 // PotentielInput = pointer to a 3D potential with constant value in a cell
 
-XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
+XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -74,8 +76,8 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
   this->NbrCellY = nbrCellY;
   this->NbrCellZ = nbrCellZ;
 
-  this->NbrStateX = this->Space->GetNbrSinusStateX();
-  this->NbrStateY = this->Space->GetNbrSinusStateY();
+  this->NbrStateX = this->Space->GetNbrStateX();
+  this->NbrStateY = this->Space->GetNbrStateY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
 
@@ -100,10 +102,11 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
 		  }
 	      
 	    }
-	}	  
+	}	        
     }
+  cout << "Hamiltonian dimension: " << this->Space->GetHilbertSpaceDimension () << endl;
   cout << "Evaluation of Hamiltionian elements ..." << endl;
-  this->EvaluateInteractionFactors();
+  this->EvaluateInteractionFactors(pairX, pairY);
   cout << "Evaluation finished ..." << endl;
 }
 
@@ -134,7 +137,7 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
   this->RealWaveFunctionOverlapZ = hamiltonian.RealWaveFunctionOverlapZ;
   this->ImaginaryWaveFunctionOverlapZ = hamiltonian.ImaginaryWaveFunctionOverlapZ;
   this->RealHamiltonian =  hamiltonian.RealHamiltonian;
-  this->ImaginaryHamiltonian =  hamiltonian.ImaginaryHamiltonian;
+  this->ImaginaryHamiltonian = hamiltonian.ImaginaryHamiltonian;
 }
 
 // destructor
@@ -329,39 +332,10 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
 		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
 
-		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-		      TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
-		      TmpTotalIm3 += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));
-		      
-		      ++Index2; ++Index4; ++Index6; ++Index8;
-		      
-		      tmpIndexZ = this->NbrStateZ - p1;
-		      for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
-			{
-			  TmpRe = TmpRealHamiltonian[IndexZ];
-			  TmpIm = TmpImaginaryHamiltonian[IndexZ];
-
-			  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-			  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
-			  vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
-			  vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
-			  vDestination.Re(Index6) += (TmpRe * VSourceRe5 + TmpIm * VSourceIm5);
-			  vDestination.Im(Index6) += (TmpRe * VSourceIm5 - TmpIm * VSourceRe5);
-			  vDestination.Re(Index8) += (TmpRe * VSourceRe7 + TmpIm * VSourceIm7);
-			  vDestination.Im(Index8) += (TmpRe * VSourceIm7 - TmpIm * VSourceRe7);
-
-			  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-			  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-			  TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
-			  TmpTotalIm3 += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));
-			  TmpTotalRe5 += (TmpRe * vSource.Re(Index6) - TmpIm * vSource.Im(Index6));
-			  TmpTotalIm5 += (TmpRe * vSource.Im(Index6) + TmpIm * vSource.Re(Index6));
-			  TmpTotalRe7 += (TmpRe * vSource.Re(Index8) - TmpIm * vSource.Im(Index8));
-			  TmpTotalIm7 += (TmpRe * vSource.Im(Index8) + TmpIm * vSource.Re(Index8));
-			  
-			  ++Index2; ++Index4; ++Index6; ++Index8;
-			}
+		      vDestination.Re(Index1) += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
+		      vDestination.Im(Index1) += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
+		      vDestination.Re(Index3) += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
+		      vDestination.Im(Index3) += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));    
 
 		      vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
 		      vDestination.Re(Index3) += TmpTotalRe3; vDestination.Im(Index3) += TmpTotalIm3;
@@ -406,33 +380,12 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		  // case n2 = n1 && p2 = p1
 		  TmpRe = TmpRealHamiltonian[IndexZ];
 		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-
+ 
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
 		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
-		  
-		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 
-		  ++Index2; ++Index6;		      
-
-		  tmpIndexZ = this->NbrStateZ - p1;
-		  for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
-		    {
-		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-
-		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
-		      vDestination.Re(Index6) += (TmpRe * VSourceRe5 + TmpIm * VSourceIm5);
-		      vDestination.Im(Index6) += (TmpRe * VSourceIm5 - TmpIm * VSourceRe5);
-
-		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-		      TmpTotalRe5 += (TmpRe * vSource.Re(Index6) - TmpIm * vSource.Im(Index6));
-		      TmpTotalIm5 += (TmpRe * vSource.Im(Index6) + TmpIm * vSource.Re(Index6));
-
-		      ++Index2; ++Index6;
-		    }
+		  vDestination.Re(Index1) += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
+		  vDestination.Im(Index1) += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));   
 		  
 		  vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
 		  vDestination.Re(Index5) += TmpTotalRe5; vDestination.Im(Index5) += TmpTotalIm5;
@@ -481,29 +434,8 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
 		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 
-		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-
-		  ++Index2; ++Index4;
-
-		  tmpIndexZ = this->NbrStateZ - p1;
-		  for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
-		    {
-		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];
-
-		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
-		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
-		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
-
-		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-		      TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
-		      TmpTotalIm3 += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));
-
-		      ++Index2; ++Index4;
-		    }
+		  vDestination.Re(Index1) += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
+		  vDestination.Im(Index1) += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2)); 
 
 		  vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
 		  vDestination.Re(Index3) += TmpTotalRe3; vDestination.Im(Index3) += TmpTotalIm3;
@@ -538,7 +470,7 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 	      // case m2 = m1 && n2 = n1 && p2 = p1
 	      TmpRe = TmpRealHamiltonian[IndexZ];
 	      TmpIm = TmpImaginaryHamiltonian[IndexZ];
-
+	      
 	      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
 	      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 	      // kinetic elements added
@@ -546,21 +478,6 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 	      vDestination.Im(Index2) += (KineticElements[Index1] * VSourceIm1);
 
 	      ++Index2;
-
-	      tmpIndexZ = this->NbrStateZ - p1;
-	      for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
-		{
-		  TmpRe = TmpRealHamiltonian[IndexZ];
-		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-
-		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
-
-		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
-		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-
-		  ++Index2;
-		}
 
 	      vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
 
@@ -587,19 +504,150 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
   else
     {
       int lastComponent = firstComponent + nbrComponent;
+      int m1, m2, n1, n2, p1, p2;
+      m1 = firstComponent / (this->NbrStateY * this->NbrStateZ);
+      int tmpIndex = firstComponent - m1 * this->NbrStateY * this->NbrStateZ;
+      n1 = tmpIndex / this->NbrStateZ;
+      p1 = tmpIndex - n1 * this->NbrStateZ;
+      int Index1 = firstComponent;
+      /*
+      int ReducedIndex1 = Index1 / this->NbrStateZ;
+      p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
+      m1 = ReducedIndex1 / this->NbrStateY;
+      n1 = ReducedIndex1 - m1 * this->NbrStateY;*/
+      double TmpRe = 0.0, TmpIm = 0.0;      
+      int Index2 = 0; int IndexZ = 0; int tmpIndexZ = 0;
+      double* TmpRealHamiltonian; double* TmpImaginaryHamiltonian;
 
-      
+      for (; Index1 < lastComponent; ++Index1)
+	{
+	  Index2 = 0;
+	  TmpRe = 0.0; TmpIm = 0.0;
+	  for (m2 = 0; m2 < m1; ++m2)
+	    {
+	      for (n2 = 0; n2 < n1; ++n2)
+		{
+		  TmpRealHamiltonian = this->RealHamiltonian[m1][n1][m2][n2];
+		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n1][m2][n2];
+		  //for (p2 = 0; p2 < p1; ++p2)
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  tmpIndexZ = this->NbrStateZ - p1;
+		  //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+		  for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		}
+	      for (n2 = n1; n2 < this->NbrStateY; ++n2)
+		{
+		  TmpRealHamiltonian = this->RealHamiltonian[m1][n2][m2][n1];
+		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n2][m2][n1];
+		  //for (p2 = 0; p2 < p1; ++p2)
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  tmpIndexZ = this->NbrStateZ - p1;
+		  //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+		  for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		}
+	    }
+	  for (m2 = m1; m2 < this->NbrStateX; ++m2)
+	    {
+	      for (n2 = 0; n2 < n1; ++n2)
+		{
+		  TmpRealHamiltonian = this->RealHamiltonian[m2][n1][m1][n2];
+		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m2][n1][m1][n2];
+		  //for (p2 = 0; p2 < p1; ++p2)
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  tmpIndexZ = this->NbrStateZ - p1;
+		  //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+		  for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		}
+	      for (n2 = n1; n2 < this->NbrStateY; ++n2)
+		{
+		  TmpRealHamiltonian = this->RealHamiltonian[m2][n2][m1][n1];
+		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m2][n2][m1][n1];
+		  //for (p2 = 0; p2 < p1; ++p2)
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  tmpIndexZ = this->NbrStateZ - p1;
+		  //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
+		  for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
+		    {		      
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		}
+	    }
+
+	  TmpRe += KineticElements[Index1] * vSource.Re(Index1);
+	  TmpIm += KineticElements[Index1] * vSource.Im(Index1);
+	  
+	  vDestination.Re(Index1) += TmpRe; 
+	  vDestination.Im(Index1) += TmpIm; 
+
+	  ++p1;
+	  if (p1 == this->NbrStateZ)
+	    {
+	      p1 = 0;
+	      ++n1;
+	      if (n1 == this->NbrStateY)
+		{
+		  n1 = 0;
+		  ++m1;
+		}
+	    }
+	}
+          
       return vDestination;
     }
 }
 
 // evaluate all interaction factors
 // 
+// pairX = whether basis is pair in X direction, if not impair
+// pairY = whether basis is pair in Y direction, if not impair
 
-void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
+void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors(bool pairX, bool pairY)
 {
-  this->WaveFunctionOverlapX = this->EvaluateSinusWaveFunctionOverlap(this->XSize, this->NbrCellX, this->NbrStateX);
-  this->WaveFunctionOverlapY = this->EvaluateSinusWaveFunctionOverlap(this->YSize, this->NbrCellY, this->NbrStateY);
+  if (pairX)    
+    this->WaveFunctionOverlapX = this->EvaluateCosinusWaveFunctionOverlap(this->XSize, this->NbrCellX, this->NbrStateX);
+  else
+    this->WaveFunctionOverlapX = this->EvaluateSinusWaveFunctionOverlap(this->XSize, this->NbrCellX, this->NbrStateX);
+  if (pairY)
+    this->WaveFunctionOverlapY = this->EvaluateCosinusWaveFunctionOverlap(this->YSize, this->NbrCellY, this->NbrStateY);
+  else
+    this->WaveFunctionOverlapY = this->EvaluateSinusWaveFunctionOverlap(this->YSize, this->NbrCellY, this->NbrStateY);
 
   if (!this->EvaluatePlaneWaveFunctionOverlap(this->NbrCellZ, this->NbrStateZ, this->RealWaveFunctionOverlapZ, this->ImaginaryWaveFunctionOverlapZ))
     {
@@ -611,16 +659,22 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
   double InvYFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muy * this->YSize * this->YSize);
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
   
-  this->KineticElements = new double[this->Space->GetHilbertSpaceDimension ()];
-
+  this->KineticElements = new double[this->Space->GetHilbertSpaceDimension()];
+  // this->NbrStateX * this->NbrStateY * this->NbrStateZ this->Space->GetHilbertSpaceDimension()
   double FactorX = 0.0, FactorY = 0.0;
   int TotalIndex = 0;
   for (int i = 0; i < this->NbrStateX; ++i)
     {
-      FactorX = double((i + 1) * (i + 1)) * InvXFactor;
+      if (pairX)
+	FactorX = double(i * i) * InvXFactor;
+      else
+	FactorX = double((i + 1) * (i + 1)) * InvXFactor;
       for (int j = 0; j < this->NbrStateY; ++j)
 	{
-	  FactorY = double((j + 1) * (j + 1)) * InvYFactor + FactorX;
+	  if (pairY)
+	    FactorY = double(j * j) * InvYFactor + FactorX;
+	  else
+	    FactorY = double((j + 1) * (j + 1)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
 	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;
@@ -639,43 +693,9 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
   double TmpRe = 0.0, TmpIm = 0.0, TmpXY = 0.0, TmpX = 0.0, TmpY = 0.0;
   int CellX = 0, CellY = 0, CellZ = 0;
 
-  double***** TmpSum = new double**** [this->NbrStateX];
-  for (m1 = 0; m1 < this->NbrStateX; ++m1)
-    {	  
-      TmpSum[m1] = new double*** [this->NbrStateY];
-      for (n1 = 0; n1 < this->NbrStateY; ++n1)
-	{
-	  TmpSum[m1][n1] = new double** [m1 + 1];
-	  for (m2 = 0; m2 <= m1; ++m2)
-	    {	      
-	      TmpSum[m1][n1][m2] = new double* [n1 + 1];
-	      TmpWaveFunctionOverlapX = this->WaveFunctionOverlapX[m1][m2]; 
-	      for (n2 = 0; n2 <= n1; ++n2)
-		{
-		  TmpSum[m1][n1][m2][n2] = new double [this->NbrCellZ];
-		  TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[n1][n2];
-		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		    {
-		      TmpXY = 0.0;
-		      for (CellY = 0; CellY < this->NbrCellY; ++CellY)
-			{
-			  TmpY = TmpWaveFunctionOverlapY[CellY];
-			  TmpX = 0.0;
-			  for (CellX = 0; CellX < this->NbrCellX; ++CellX)			     
-			    TmpX += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX];
-			  TmpXY += TmpX * TmpY;
-			} 		      
-		      TmpSum[m1][n1][m2][n2][CellZ] = TmpXY;
-		    }
-		}
-	    }
-	}      
-    }
-
   this->RealHamiltonian = new double**** [this->NbrStateX];
   this->ImaginaryHamiltonian = new double**** [this->NbrStateX];
-  
-  double* TmpInter;
+  double* TmpInter = new double [this->NbrCellZ];
   for (m1 = 0; m1 < this->NbrStateX; ++m1)
     {	  
       this->RealHamiltonian[m1] = new double*** [this->NbrStateY];	
@@ -687,14 +707,30 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
 	  for (m2 = 0; m2 <= m1; ++m2)
 	    {	      
 	      this->RealHamiltonian[m1][n1][m2] = new double* [n1 + 1];	
- 	      this->ImaginaryHamiltonian[m1][n1][m2] = new double* [n1 + 1];	      
+ 	      this->ImaginaryHamiltonian[m1][n1][m2] = new double* [n1 + 1];
+	      TmpWaveFunctionOverlapX = this->WaveFunctionOverlapX[m1][m2]; 
 	      for (n2 = 0; n2 <= n1; ++n2)
 		{
+		  TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[n1][n2];	  
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
+		    {
+		      TmpXY = 0.0;
+		      for (CellY = 0; CellY < this->NbrCellY; ++CellY)
+			{
+			  TmpY = TmpWaveFunctionOverlapY[CellY];
+			  TmpX = 0.0;
+			  for (CellX = 0; CellX < this->NbrCellX; ++CellX)			     
+			    TmpX += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX];
+			  TmpXY += (TmpX * TmpY);
+			} 		      
+		      TmpInter[CellZ] = TmpXY;
+		    }
+
 		  this->RealHamiltonian[m1][n1][m2][n2] = new double [this->NbrStateZ];
 		  this->ImaginaryHamiltonian[m1][n1][m2][n2] = new double [this->NbrStateZ];
 		  TmpRealHamiltonian = this->RealHamiltonian[m1][n1][m2][n2];
-		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n1][m2][n2];
-		  TmpInter = TmpSum[m1][n1][m2][n2];
+		  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n1][m2][n2];	
+		  
 		  for (p = 0; p < this->NbrStateZ; ++p)
 		    {
 		      TmpRealWaveFunctionOverlapZ = RealWaveFunctionOverlapZ[p];
@@ -713,7 +749,7 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
 	    }
 	}
     }  
-  delete[] TmpSum;
+  delete[] TmpInter;
 }
 
 // evaluate sinus wave function overlaps on a cell in a given direction
