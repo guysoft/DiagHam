@@ -114,8 +114,12 @@ void FullReorthogonalizedLanczosAlgorithm::InitializeLanczosAlgorithm()
   this->LanczosVectors[0] = RealVector (Dimension);
   this->LanczosVectors[1] = RealVector (Dimension);
   this->LanczosVectors[2] = RealVector (Dimension);
+  int Shift = RAND_MAX / 2;
+  double Scale = 1.0 / ((double) Shift);
   for (int i = 0; i < Dimension; i++)
-    this->LanczosVectors[0][i] = (rand() - 32767) * 0.5;
+    {
+      this->LanczosVectors[0][i] = Scale * ((double) (rand() - Shift));
+    }
   this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);

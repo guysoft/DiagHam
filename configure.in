@@ -22,6 +22,7 @@ AC_C_CONST
 dnl Checks for library functions.
 
 CXXFLAGS="-O3 -ffast-math -g -Wall  -march=athlon"
+dnl CXXFLAGS="-O2 -g -Wall "
 INCLUDES="-I\$(top_srcdir)/src "
 AC_SUBST(CXXFLAGS)
 AC_SUBST(INCLUDES)
