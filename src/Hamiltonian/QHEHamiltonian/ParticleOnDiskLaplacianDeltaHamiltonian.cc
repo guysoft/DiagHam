@@ -287,7 +287,7 @@ double ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(i
 	Coef /= m3;	
     }
   Coef.Power2Divide(2 * (m1 + m2));
-  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4)))/ M_PI);
+  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4))) / M_PI);
 }
 
 // Output Stream overload

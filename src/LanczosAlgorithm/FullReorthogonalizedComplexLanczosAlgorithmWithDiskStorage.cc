@@ -37,6 +37,7 @@
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -203,29 +204,52 @@ Vector& FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::GetGroundSta
 
 Vector* FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::GetEigenstates(int nbrEigenstates)
 {
+  this->Index = 0;
   ComplexVector* Eigenstates = new ComplexVector [nbrEigenstates];
-  ComplexMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
+  RealMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
   for (int i = 0; i < this->TridiagonalizedMatrix.GetNbrRow(); ++i)
-    TmpEigenvector[i].Re(i) = 1.0;
+    TmpEigenvector(i, i) = 1.0;
 
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->TridiagonalizedMatrix.GetNbrRow());
   SortedDiagonalizedMatrix.Copy(this->TridiagonalizedMatrix);
   SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
   SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
   Complex* TmpCoefficents = new Complex [this->TridiagonalizedMatrix.GetNbrRow()];
+  char* TmpVectorName = new char [256];
+  this->LanczosVectors[0].ReadVector("vector.0");
   for (int i = 0; i < nbrEigenstates; ++i) 
     {
       for (int j = 0; j < this->TridiagonalizedMatrix.GetNbrRow(); ++j)
 	{
-	  TmpCoefficents[j].Re = TmpEigenvector[i].Re(j);
+	  TmpCoefficents[j].Re = TmpEigenvector(j, i);
 	  TmpCoefficents[j].Im = 0.0;
 	}
       Eigenstates[i] = ComplexVector (this->Hamiltonian->GetHilbertSpaceDimension());
-      Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector[i].Re(0));
-      AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
+      Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
+      int ReducedMaxNbrVector =  this->MaxNbrVectors - 1;
+      int MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) / ReducedMaxNbrVector;
+      int k = 0;
+      for (; k < MaxPos; ++k)
+	{
+	  for (int j = 0; j < ReducedMaxNbrVector; ++j)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
+	      this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
+	    }
+	  AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), ReducedMaxNbrVector, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
+	  this->Architecture->ExecuteOperation(&Operation);
+	}
+      MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) - (MaxPos * ReducedMaxNbrVector);
+      for (int j = 0; j < ReducedMaxNbrVector; ++j)
+	{
+	  sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
+	  this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
+	}
+      AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), MaxPos, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
       this->Architecture->ExecuteOperation(&Operation);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
+  delete[] TmpVectorName;
   delete[] TmpCoefficents;
   return Eigenstates;
 }

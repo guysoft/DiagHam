@@ -192,7 +192,7 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector&AbstractHamiltonian:: LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+ComplexVector& AbstractHamiltonian:: LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
   return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }

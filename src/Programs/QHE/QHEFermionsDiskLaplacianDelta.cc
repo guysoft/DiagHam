@@ -33,8 +33,7 @@ using std::endl;
 using std::ofstream;
 using std::ios;
 
-double Zog(int m1, int m2, int m3, int m4);
-
+double HamiltonianEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
 int main(int argc, char** argv)
 {
@@ -100,6 +99,22 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
+      int MaxMomentum = L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2);
+      cout << "MaxMomentum=" << MaxMomentum << endl;
+      int m4 = 1;
+      for (int m1 = 0; m1 <= MaxMomentum; ++m1)
+	for (int m2 = 2; m2 < m1; ++m2)
+	  for (int m3 = 2; m3 <= 2; ++m3)
+	    {
+	      cout << m1 << " " << m2 << " " << HamiltonianEvaluateInteractionCoefficient(m1, m2, m3, m4) << endl;
+	    }
+/*	  for (int m3 = 0; m3 <= MaxMomentum; ++m3)
+	    {
+	      m4 = m1 + m2 - m3;
+	      if ((m4 >= 0) && (m3 > m4))
+		HamiltonianEvaluateInteractionCoefficient(m1, m2, m3, m4);
+	    }*/
+      return 0;
       FermionOnDisk Space(NbrFermions, L);
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
       ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(&Space, NbrFermions, Architecture, Memory, LoadPrecalculationFileName);
@@ -194,13 +209,12 @@ int main(int argc, char** argv)
 }
 
 
-double Zog(int m1, int m2, int m3, int m4)
+double HamiltonianEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   if ((m1 == m2) || (m3 == m4))
     return 0.0;
   FactorialCoefficient Coef;
   Coef.SetToOne();
-  cout << m1 << " " << m2 << " " << m3 << " " << m4 << endl;
   if (m2 > 1)
     {
       Coef.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
@@ -222,5 +236,41 @@ double Zog(int m1, int m2, int m3, int m4)
 	Coef /= m3;	
     }
   Coef.Power2Divide(2 * (m1 + m2));
-  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4)))/ M_PI);
+  double Val1 = (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4)))/ M_PI);
+
+  FactorialCoefficient Coef2;
+  Coef2.SetToOne();
+  if (m2 > 1)
+    {
+      Coef2.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
+      Coef2.FactorialDivide(m2);
+    }
+  else
+    {
+      if (m2 == 0)
+	Coef2 /= m1;	
+    }
+  Coef2.Power2Divide(m1 + m2);
+  double Val2 = sqrt (Coef2.GetNumericalValue());
+  return Val2;
+/*  Coef2.SetToOne();
+  if (m4 > 1)
+    {
+      Coef2.PartialFactorialMultiply(m3 + 1, m3 + m4 - 1);
+      Coef2.FactorialDivide(m4);
+    }
+  else
+    {
+      if (m4 == 0)
+	Coef2 /= m3;	
+    }
+  Coef2.Power2Divide(m3 + m4);
+  Val2 *= sqrt (Coef2.GetNumericalValue()) * (((double) ((m2 - m1) * (m3 - m4)))/ M_PI);
+  if (fabs(Val1 - Val2) > (1e-14 * fabs(Val1)))
+    {
+      cout << "error ";
+    }
+  cout << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " " << Val1 << " " << Val2 << endl;
+  return Val1;*/
 }
+

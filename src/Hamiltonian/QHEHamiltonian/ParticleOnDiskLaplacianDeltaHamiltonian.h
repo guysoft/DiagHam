@@ -96,7 +96,7 @@ class ParticleOnDiskLaplacianDeltaHamiltonian : public AbstractQHEOnDiskHamilton
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnDiskLaplacianDeltaHamiltonian& H);
 
- private:
+// private:
  
   // evaluate all interaction factors
   //   
