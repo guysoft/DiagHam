@@ -117,7 +117,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEOnSphere
+SUBDIRS = QHEOnSphere QHEOnDisk
 
 bin_PROGRAMS = QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaOverlap QHEBosonsDiskDelta QHEBosonsDipolar QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsV3 QHEBosonsV2 QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation QHEFermionsLaplacianDelta QHEFermionsLaplacianDeltaOverlap QHEFermionsDipolar QHEFermionsDiskLaplacianDelta QHEBosonsTorusWithTranslations LzToL
 

@@ -229,6 +229,22 @@ FactorialCoefficient& FactorialCoefficient::Power2Multiply (long power)
   return *this;
 }
 
+// multiply the coefficient by a power of N
+// 
+// n = value whose  has to be risen to the power
+// power = power exponent (must be greater than 0)
+// return value = reference on current coefficient
+
+FactorialCoefficient& FactorialCoefficient::PowerNMultiply (long n, long power)
+{
+  while (power > 0)
+    {
+      (*this) *= n;
+      --power;
+    }
+  return *this;
+}
+
 // divide the coefficient by a power of 2
 // 
 // power = power exponent (must be greater than 0)
@@ -274,6 +290,23 @@ FactorialCoefficient& FactorialCoefficient::Power2Divide (long power)
 #endif
   ++this->DenominatorPosition;
   this->Denominator[this->DenominatorPosition] = 1 << power;
+  return *this;
+}
+
+
+// divide the coefficient by a power of N
+// 
+// n = value whose power has to be risen to the power
+// power = power exponent (must be greater than 0)
+// return value = reference on current coefficient
+
+FactorialCoefficient& FactorialCoefficient::PowerNDivide (long n, long power)
+{
+  while (power > 0)
+    {
+      (*this) /= n;
+      --power;
+    }
   return *this;
 }
 

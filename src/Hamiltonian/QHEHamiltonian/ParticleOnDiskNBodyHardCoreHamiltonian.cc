@@ -32,6 +32,7 @@
 #include "config.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnDiskNBodyHardCoreHamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "MathTools/FactorialCoefficient.h"
 
 #include <iostream>
 
@@ -195,37 +196,17 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	if (this->NBodyFlags[k] == true) 
 	  {
 	    this->MinSumIndices = 0;
-	    this->MaxSumIndices = this->NbrLzValue * k;
-	    double* TmpInteractionCoeffients = new double[MaxSumIndices + 1];
-	    double Coefficient;
-	    TmpInteractionCoeffients[0] = 1.0;
-	    TmpInteractionCoeffients[1] = 1.0;
-	    for (int i = 2; i <= MaxSumIndices; ++i)
-	      {
-		Coefficient = 1.0;
-		for (int j = 1; j < i; ++j)
-		  {
-		    double Coefficient2 = TmpInteractionCoeffients[j];
-		    TmpInteractionCoeffients[j] += Coefficient;
-		    Coefficient = Coefficient2;
-		  }
-		TmpInteractionCoeffients[i] = 1.0;
-	      }
-	    Coefficient = 4.0 * M_PI / (((double) MaxSumIndices) + 1.0);
-	    double Radius = 2.0 / ((double) this->NbrLzValue);
-	    for (int i = 2; i <= k; ++i)
-	      {
-		Coefficient *= (double) (i * i);	  
-		Coefficient *= Radius;
-	      }
-	    for (int i = 0; i <= MaxSumIndices; ++i)
-	      TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
-
+	    this->MaxSumIndices = this->MaxMomentum * k;
 	    double** SortedIndicesPerSumSymmetryFactor;
 	    GetAllSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k],
 				   SortedIndicesPerSumSymmetryFactor);
 	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
 	    int Lim;
+	    double Factor = 1.0;
+	    for (int i = 1; i < k; ++i)
+	      Factor *= 8.0 * M_PI;
+	    Factor = 1.0 / Factor;
+	    FactorialCoefficient Coef;
 	    for (int MinSum = 0; MinSum <= MaxSumIndices; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
@@ -235,10 +216,12 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		int* TmpMIndices = this->SortedIndicesPerSum[k][MinSum];
 		for (int i = 0; i < Lim; ++i)
 		  {
-		    Coefficient = TmpSymmetryFactors[i] * TmpInteractionCoeffients[MinSum];
+		    Coef.SetToOne();
+		    Coef.FactorialMultiply(MinSum);
 		    for (int l = 0; l < k; ++l)
-		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
-		    TmpNBodyInteractionFactors[i] = Coefficient;
+		      Coef.FactorialDivide(TmpMIndices[l]);
+		    Coef.PowerNDivide(k, MinSum);
+		    TmpNBodyInteractionFactors[i] = sqrt(Coef.GetNumericalValue() * TmpSymmetryFactors[i] * Factor);
 		    TmpMIndices += k;
 		  }
 	      }
@@ -247,9 +230,7 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	      }
 	    delete[] SortedIndicesPerSumSymmetryFactor;
-	    delete[] TmpInteractionCoeffients;
 	  }
     }
-  delete[] TmpNormalizationCoeffients;
 }
 

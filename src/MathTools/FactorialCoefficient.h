@@ -94,11 +94,25 @@ class FactorialCoefficient
   // return value = reference on current coefficient
   FactorialCoefficient& Power2Multiply (long power);
 
+  // multiply the coefficient by a power of N
+  // 
+  // n = value whose  has to be risen to the power
+  // power = power exponent (must be greater than 0)
+  // return value = reference on current coefficient
+  FactorialCoefficient& PowerNMultiply (long n, long power);
+
   // divide the coefficient by a power of 2
   // 
   // power = power exponent (must be greater than 0)
   // return value = reference on current coefficient
   FactorialCoefficient& Power2Divide (long power);
+
+  // divide the coefficient by a power of N
+  // 
+  // n = value whose power has to be risen to the power
+  // power = power exponent (must be greater than 0)
+  // return value = reference on current coefficient
+  FactorialCoefficient& PowerNDivide (long n, long power);
 
   // multiply the coefficient by the factorial of an integer
   // 
