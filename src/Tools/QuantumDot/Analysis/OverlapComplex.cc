@@ -48,14 +48,7 @@ int main(int argc, char** argv)
   ComplexVector vector1, vector2;
   vector1.ReadVector (File1); vector2.ReadVector (File2); 
 
-  ComplexVector vector1c (vector1.GetVectorDimension ());
-  for (int n = 0; n < vector1.GetVectorDimension (); ++n)
-    {
-      vector1c.Re (n) =  vector1.Re (n);
-      vector1c.Im (n) =  -vector1.Im (n);
-    }
-
-  Complex c = vector1c * vector2;
+  Complex c = vector1 * vector2;
 
   cout << Norm (c);
 
