@@ -1,0 +1,6 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libQHEFunctionBasis.a
+
+libQHEFunctionBasis_a_SOURCES=ParticleOnSphereFunctionBasis.cc \
+ParticleOnDiskFunctionBasis.cc

@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "Vector/RealVector.h"
 
 #include <math.h>

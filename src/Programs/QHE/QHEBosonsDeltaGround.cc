@@ -20,7 +20,7 @@
 
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityOperator.h"
-#include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"

@@ -1,6 +1,5 @@
-SUBDIRS=
+SUBDIRS=QHEFunctionBasis
 
 noinst_LIBRARIES=libFunctionBasis.a
 
-libFunctionBasis_a_SOURCES=AbstractFunctionBasis.cc \
-ParticleOnSphereFunctionBasis.cc
+libFunctionBasis_a_SOURCES=AbstractFunctionBasis.cc

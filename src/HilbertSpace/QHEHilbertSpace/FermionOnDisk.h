@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
 
 
 class FermionOnDisk:  public ParticleOnDisk
@@ -45,6 +45,10 @@ class FermionOnDisk:  public ParticleOnDisk
   int IncNbrFermions;
   // momentum total value
   int TotalLz;
+  //  maximum momentum that can be reached by a fermion
+  int LzMax;
+  // number of one particle state with a different momentum
+  int NbrLzValue;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -58,6 +62,19 @@ class FermionOnDisk:  public ParticleOnDisk
   // indicate position of the first state with a given number of fermion having a given maximum Lz value
   int* LzMaxPosition;
 
+  // maximum shift used for searching a position in the look-up table
+  int MaximumLookUpShift;
+  // memory used for the look-up table in a given lzmax sector
+  int LookUpTableMemorySize;
+  // shift used in each lzmax sector
+  int* LookUpTableShift;
+  // look-up table with two entries : the first one used lzmax value of the state an the second 
+  int** LookUpTable;
+  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
+  double* SignLookUpTable;
+  // number to evalute size of SignLookUpTable
+  int MaximumSignLookUp;
+
  public:
 
   // basic constructor
@@ -69,7 +86,7 @@ class FermionOnDisk:  public ParticleOnDisk
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnDisk(const & fermions);
+  FermionOnDisk(const FermionOnDisk& fermions);
 
   // destructor
   //
@@ -79,12 +96,22 @@ class FermionOnDisk:  public ParticleOnDisk
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  TrappedFermions& operator = (const FermionOnDisk& fermions);
+  FermionOnDisk& operator = (const FermionOnDisk& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // get the particle statistic 
+  //
+  // return value = particle statistic
+  int GetParticleStatistic();
+
+  // get the maximum angular momentum that can be reached by a particle 
+  //
+  // return value = maximum momentum
+  int GetMaxLz();
 
   // return a list of all possible quantum numbers 
   //
@@ -115,6 +142,13 @@ class FermionOnDisk:  public ParticleOnDisk
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply a^+_m a_m operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  double AdA (int index, int m);
 
   // print a given State
   //
@@ -163,6 +197,24 @@ class FermionOnDisk:  public ParticleOnDisk
   int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
 
 };
+
+// get the particle statistic 
+//
+// return value = particle statistic
+
+inline int FermionOnDisk::GetParticleStatistic()
+{
+  return ParticleOnDisk::FermionicStatistic;
+}
+
+// get the maximum angular momentum that can be reached by a particle 
+//
+// return value = maximum momentum
+
+inline int FermionOnDisk::GetMaxLz()
+{
+  return this->LzMax;
+}
 
 #endif
 

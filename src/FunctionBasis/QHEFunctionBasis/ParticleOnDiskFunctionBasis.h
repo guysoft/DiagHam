@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of particle on disk                        //
+//                  class of function basis for particle on disk              //
 //                                                                            //
-//                        last modification : 30/01/2002                      //
+//                        last modification : 05/02/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,56 +28,42 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONDISK_H
-#define PARTICLEONDISK_H
+#ifndef PARTICLEONDISKFUNCTIONBASIS_H
+#define PARTICLEONDISKFUNCTIONBASIS_H
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "FunctionBasis/AbstractFunctionBasis.h"
 
 
-class ParticleOnDisk :  public AbstractHilbertSpace
+class ParticleOnDiskFunctionBasis: public AbstractFunctionBasis
 {
+
+ protected:
+
+  // maximum Lz value reached by a particle
+  int LzMax;
+
+  // array containing numerical prefactor of each function
+  double* Prefactor;
 
  public:
 
-  enum 
-    {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
-  
-  // virtual destructor
+  // constructor
   //
-  virtual ~ParticleOnDisk ();
+  // lzMax = twice the maximum Lz value reached by a particle
+  ParticleOnDiskFunctionBasis(int lzMax);
 
-  // get the particle statistic 
+  // destructor
   //
-  // return value = particle statistic
-  virtual int GetParticleStatistic() = 0;
+  ~ParticleOnDiskFunctionBasis ();
 
-  // get the maximum angular momentum that can be reached by a particle 
+  // get value of the i-th function at a given point (for functions which take values in C)
   //
-  // return value = maximum momentum
-  virtual int GetMaxLz() = 0;
-
-  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
-
-  // apply a^+_m a_m operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AdA (int index, int m) = 0;
+  // value = reference on the value where the function has to be evaluated
+  // result = reference on the value where the result has to be stored
+  // index = function index 
+  void GetFunctionValue(RealVector& value, Complex& result, int index);
 
 };
 

@@ -45,19 +45,20 @@ using std::dec;
 // basic constructor
 // 
 // nbrFermions = number of fermions
-// totalLz = twice the momentum total value
-// lzMax = twice the maximum Lz value reached by a fermion
+// totalLz = momentum total value
 
-FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz, int lzMax)
+FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
+  this->LzMax = this->TotalLz - (((this->NbrFermions - 1) * (this->NbrFermions - 2)) / 2);
+  this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
@@ -339,6 +340,20 @@ int FermionOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
+// apply a^+_m a_m operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+double FermionOnDisk::AdA (int index, int m)
+{
+  if ((this->StateLzMax[index] & (((unsigned long) (0x1)) << m)) == 0)
+    return 0.0;
+  else
+    return 1.0;
+}
+
 // find state index
 //
 // stateDescription = unsigned integer describing the state
@@ -364,7 +379,7 @@ ostream& FermionOnDisk::PrintState (ostream& Str, int state)
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
+  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]) << "   " << TmpState;
   return Str;
 }
 
@@ -494,10 +509,11 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int totalLz)
+int FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
     return 0;
@@ -508,6 +524,6 @@ int FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int totalLz)
     return 1;
   if (LzTotalMax == totalLz)
     return 1;
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+  return  (this->EvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
+	   + this->EvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }

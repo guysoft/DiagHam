@@ -4,19 +4,15 @@ use strict 'vars';
 
 if (!(defined($ARGV[4])))
   {
-    die "usage: FindGapGeneric StartN StartS NInc SInc LexcShift LexcRatio ChargeQ ChargeP Caption [PrintFlag]";
+    die "usage: FindGapGeneric StartN StartS NInc SInc Caption [PrintFlag]";
   }
 my $PrintFlag = 0;
 my $NbrFermions = $ARGV[0];
 my $S = $ARGV[1];
 my $NbrFermionsInc = $ARGV[2];
 my $SInc = $ARGV[3];
-my $LexcShift = $ARGV[4];
-my $LexcRatio = $ARGV[5];
-my $ChargeQ = $ARGV[6];
-my $ChargeP = $ARGV[7];
-my $Caption = $ARGV[8];
-if (defined($ARGV[9]))
+my $Caption = $ARGV[4];
+if (defined($ARGV[5]))
   {
     $PrintFlag = 1;
   }
@@ -24,11 +20,11 @@ my %MinArray;
 my $TmpFile;
 while ($NbrFermions <= 40)
   {
-    $TmpFile = "n_".$NbrFermions."/fermions_.*_n_".$NbrFermions."_2s_".$S."_lz.dat";
+    $TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat";
     if (-e $TmpFile)
       {
 	print ($TmpFile."\n");
-	$MinArray{$NbrFermions} = (&FindGap($TmpFile, ($NbrFermions + $LexcShift) / $LexcRatio) + (($ChargeQ * $ChargeQ) / ($ChargeP * $ChargeP * sqrt (2.0 * $S)))) * sqrt(($S * $NbrFermionsInc) / ($NbrFermions * $SInc));
+	$MinArray{$NbrFermions} = (&FindGap($TmpFile)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1)));
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;
@@ -47,7 +43,6 @@ sub FindGap
     my $Min;
     my $Min2;
     my $Flag = 0;
-    my $LValue = $_[1];
     open (INFILE, $FileName);
     my $TmpLine;
     foreach $TmpLine (<INFILE>)
@@ -56,20 +51,38 @@ sub FindGap
 	my @TmpArray = split (/ /, $TmpLine);
 	if ($Flag < 2)
 	  {
-	if ($Flag == 0)
-	  {
-	    $Min = $TmpArray[1];
-	    $Flag = 1;
+	    if ($Flag == 0)
+	      {
+		$Min = $TmpArray[1];
+		$Flag = 1;
+	      }
+	    else
+	      {
+		if ($TmpArray[1] > $Min)
+		  {
+		    $Min2 = $TmpArray[1];
+		    $Flag = 2;
+		  }
+		else
+		  {
+		    $Min = $TmpArray[1];		
+		  }
+	      }
 	  }
 	else
 	  {
-	    if ($TmpArray[0] == $LValue)
+	    if ($TmpArray[1] < $Min)
 	      {
-		$Min2 = $TmpArray[1];
-		$Flag = 2;
+		$Min = $TmpArray[1];		
+	      }
+	    else
+	      {
+		if ($TmpArray[1] < $Min2)
+		  {
+		    $Min2 = $TmpArray[1];		
+		  }
 	      }
 	  }
-      }
       }
     close (INFILE);
     return ($Min2 - $Min);
@@ -138,9 +151,14 @@ set yrange [".$MinGap.":".$MaxGap."]
 set xlabel \"1/N\"
 set ylabel \"E\"
 set size 1.0, 0.6
+set nokey
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\"
+f(x)= a*x+b
+g(x)= m*x*x+n*x+p
+fit f(x) \"".$FileName."\" using 1:2 via a,b
+fit g(x) \"".$FileName."\" using 1:2 via m,n,p
+plot \"".$FileName."\" using 1:2 title \"".$Title."\", f(x) with lines 1, g(x) with lines 2
 ");
     close (OUTFILE);
     `gnuplot $TmpFileName`;

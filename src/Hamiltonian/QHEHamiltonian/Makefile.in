@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQHEHamiltonian.a
 
-libQHEHamiltonian_a_SOURCES = TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc AbstractQHEHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc AbstractQHEOnTorusHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc ParticleOnSphereLaplacianDeltaHamiltonian.cc AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc
+libQHEHamiltonian_a_SOURCES = TrappedBosonHamiltonian.cc ParticleOnTorusCoulombHamiltonian.cc ParticleOnTorusDeltaHamiltonian.cc ParticleOnTorusCoulombDMRGReadyHamiltonian.cc ParticleOnTorusCoulombWithSpinHamiltonian.cc ParticleOnSphereCoulombHamiltonian.cc ParticleOnSphereDeltaHamiltonian.cc ParticleOnCircleCoulombHamiltonian.cc ApproximateFermionOnTorusCoulombHamiltonian.cc ParticleOnSphereDeltaModifiedHamiltonian.cc AbstractQHEHamiltonian.cc AbstractQHEOnSphereHamiltonian.cc AbstractQHEOnTorusHamiltonian.cc ParticleOnSphereCoulombDeltaHamiltonian.cc ParticleOnSphereLaplacianDeltaHamiltonian.cc AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc AbstractQHEOnDiskHamiltonian.cc ParticleOnDiskLaplacianDeltaHamiltonian.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -96,7 +96,9 @@ AbstractQHEOnSphereHamiltonian.o AbstractQHEOnTorusHamiltonian.o \
 ParticleOnSphereCoulombDeltaHamiltonian.o \
 ParticleOnSphereLaplacianDeltaHamiltonian.o \
 AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.o \
-ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.o
+ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.o \
+AbstractQHEOnDiskHamiltonian.o \
+ParticleOnDiskLaplacianDeltaHamiltonian.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -109,11 +111,13 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AbstractQHEHamiltonian.P \
+.deps/AbstractQHEOnDiskHamiltonian.P \
 .deps/AbstractQHEOnSphereHamiltonian.P \
 .deps/AbstractQHEOnTorusHamiltonian.P \
 .deps/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.P \
 .deps/ApproximateFermionOnTorusCoulombHamiltonian.P \
 .deps/ParticleOnCircleCoulombHamiltonian.P \
+.deps/ParticleOnDiskLaplacianDeltaHamiltonian.P \
 .deps/ParticleOnSphereCoulombDeltaHamiltonian.P \
 .deps/ParticleOnSphereCoulombHamiltonian.P \
 .deps/ParticleOnSphereDeltaHamiltonian.P \

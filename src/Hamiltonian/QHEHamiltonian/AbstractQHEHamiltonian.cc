@@ -39,3 +39,70 @@ AbstractQHEHamiltonian::~AbstractQHEHamiltonian()
 {
 }
 
+// save precalculations in a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+
+bool AbstractQHEHamiltonian::SavePrecalculation (char* fileName)
+{
+  return false;
+}
+
+// evaluate all interaction factors
+//   
+
+void AbstractQHEHamiltonian::EvaluateInteractionFactors()
+{
+  return;
+}
+
+// test the amount of memory needed for fast multiplication algorithm
+//
+// allowedMemory = amount of memory that cam be allocated for fast multiplication
+// return value = amount of memory needed
+
+long AbstractQHEHamiltonian::FastMultiplicationMemory(long allowedMemory)
+{
+  return ((long) -1);
+}
+
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// return value = number of non-zero matrix element
+
+long AbstractQHEHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+{
+  return ((long) -1);
+}
+ 
+// enable fast multiplication algorithm
+//
+
+void AbstractQHEHamiltonian::EnableFastMultiplication()
+{
+  return;
+}
+
+// enable fast multiplication algorithm (partial evaluation)
+//
+// jobIndex = index of the job that proceeds part of the fast multiplication evaluation
+// nbrJob = number of jobs that proceed the fast multiplication evaluation
+
+void AbstractQHEHamiltonian::PartialEnableFastMultiplication(int jobIndex, int nbrJob)
+{
+  return;
+}
+
+// load precalculations from a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be read
+// return value = true if no error occurs
+
+bool AbstractQHEHamiltonian::LoadPrecalculation (char* fileName)
+{
+  return false;
+}
+

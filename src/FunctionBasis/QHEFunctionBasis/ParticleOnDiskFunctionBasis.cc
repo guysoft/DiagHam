@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of particle on disk                        //
+//                  class of function basis for particle on disk              //
 //                                                                            //
-//                        last modification : 30/01/2002                      //
+//                        last modification : 05/02/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,59 +28,51 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONDISK_H
-#define PARTICLEONDISK_H
-
-
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnDiskFunctionBasis.h"
+#include "Vector/RealVector.h"
+
+#include <math.h>
 
 
-class ParticleOnDisk :  public AbstractHilbertSpace
+// constructor
+//
+// lzMax = twice the maximum Lz value reached by a particle
+
+ParticleOnDiskFunctionBasis::ParticleOnDiskFunctionBasis(int lzMax)
 {
-
- public:
-
-  enum 
+  this->LzMax = lzMax;
+  this->HilbertSpaceDimension = this->LzMax + 1;
+  double TmpFactor = ((double) this->HilbertSpaceDimension) / (4.0 * M_PI);
+  double TmpBinomial = 1.0;
+  this->Prefactor = new double [this->HilbertSpaceDimension];
+  this->Prefactor[0] = sqrt (TmpBinomial * TmpFactor);
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
     {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
-  
-  // virtual destructor
-  //
-  virtual ~ParticleOnDisk ();
+      TmpBinomial *= this->LzMax - ((double) i) + 1.0;
+      TmpBinomial /= ((double) i);
+      this->Prefactor[i] = sqrt (TmpBinomial * TmpFactor);
+    }
+}
 
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  virtual int GetParticleStatistic() = 0;
+// destructor
+//
 
-  // get the maximum angular momentum that can be reached by a particle 
-  //
-  // return value = maximum momentum
-  virtual int GetMaxLz() = 0;
+ParticleOnDiskFunctionBasis::~ParticleOnDiskFunctionBasis ()
+{
+  delete[] this->Prefactor;
+}
 
-  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
+// get value of the i-th function at a given point (for functions which take values in C)
+//
+// value = reference on the value where the function has to be evaluated
+// result = reference on the value where the result has to be stored
+// index = function index 
 
-  // apply a^+_m a_m operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AdA (int index, int m) = 0;
+void ParticleOnDiskFunctionBasis::GetFunctionValue(RealVector& value, Complex& result, int index)
+{
+  result = pow(Complex(value[0], value[1]), (double) (index)) * (this->Prefactor[index] * exp (0.25 * ((value[0] * value[0]) + (value[1] * value[1]))));
+}
 
-};
-
-#endif
 
 
