@@ -1775,7 +1775,7 @@ fi
 
 
 CXXFLAGS="-O2 -g -Wall "
-INCLUDES="-I\$(top_srcdir)/src -I\$(top_builddir)/src"
+INCLUDES="-I\$(top_srcdir)/src"
 
 
 

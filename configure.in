@@ -100,7 +100,7 @@ dnl Checks for library functions.
 
 dnl CXXFLAGS="-O3 -ffast-math -g -Wall  -march=athlon"
 CXXFLAGS="-O2 -g -Wall "
-INCLUDES="-I\$(top_srcdir)/src -I\$(top_builddir)/src"
+INCLUDES="-I\$(top_srcdir)/src"
 AC_SUBST(CXXFLAGS)
 AC_SUBST(INCLUDES)
 AC_SUBST(MATH_LIBS)
