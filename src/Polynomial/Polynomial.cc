@@ -68,7 +68,7 @@ Polynomial::Polynomial (int Deg, double* Coef, bool flag)
 {
   this->Degree = Deg;
   this->NoRootFlag = false;
-  if (flag = true)
+  if (flag == true)
     this->Coefficient = Coef;
   else
     {
