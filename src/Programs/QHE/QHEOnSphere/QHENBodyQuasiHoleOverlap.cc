@@ -47,6 +47,7 @@ int main(int argc, char** argv)
   Manager += MainGroup;
 
   (*MainGroup) += new SingleStringOption  ('\n', "input-file", "name of the file which contains definition of overlaps to evaluate");
+  (*MainGroup) += new SingleDoubleOption  ('\n', "ortho-error", "scalar product value below which two states are considered as orthogonal", 1e-12);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -61,10 +62,25 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  double OrthogonalityError = ((SingleDoubleOption*) Manager["ortho-error"])->GetDouble();
+
   ConfigurationParser OverlapDefinition;
   if (OverlapDefinition.Parse(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
     {
       OverlapDefinition.DumpErrors(cout) << endl;
+      return -1;
+    }
+
+  int LzMax = 0;
+  int NbrParticles = 0;
+  if ((OverlapDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax < 0))
+    {
+      cout << "LzMax is not defined or as a wrong value" << endl;
+      return -1;
+    }
+  if ((OverlapDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+    {
+      cout << "NbrParticles is not defined or as a wrong value" << endl;
       return -1;
     }
 
@@ -73,50 +89,15 @@ int main(int argc, char** argv)
       cout << "no Degeneracy defined in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;     
     }
-  char* TmpString = OverlapDefinition["Degeneracy"];
-  int MaxNbrLz = (strlen(TmpString) >> 1) + 1;
-  if (MaxNbrLz == 0)
-     {
+
+  int MaxNbrLz;
+  int* Degeneracy;
+  if (OverlapDefinition.GetAsIntegerArray("Degeneracy", ' ', Degeneracy, MaxNbrLz) == false)
+    {
       cout << "error while parsing Degeneracy in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;     
     }
-
-  int* Degeneracy = new int [MaxNbrLz];
-  MaxNbrLz = 0;
-  char* End = TmpString;
-  bool ErrorFlag = false;
-  while ((*TmpString) != '\0')
-    {
-      while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))
-	{
-	  if ((((*End) < '0') || ((*End) > '9')))
-	    ErrorFlag = true;
-	  ++End;
-	}
-      if (ErrorFlag == true)
-	{
-	  cout << "error while parsing Degeneracy in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
-	  return -1;     
-	}
-      Degeneracy[MaxNbrLz] = atoi (TmpString);
-      ++MaxNbrLz;
-      while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
-	{
-	  ++End;
-	}
-      TmpString = End;
-    }
-
-  if (OverlapDefinition["InputVectors"] == 0)
-    {
-      cout << "no InputVectors defined in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
-      return -1;     
-    }
-  if (OverlapDefinition["OutputVectors"] == 0)
-    {
-      cout << "no OutputVectors defined in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
-      return -1;     
-    }
+  
   
   char* InputVectors = new char [strlen(OverlapDefinition["InputVectors"]) + 24];
   char* OutputVectors = new char [strlen(OverlapDefinition["OutputVectors"]) + 24];
@@ -125,7 +106,6 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
-  MaxNbrLz = 1;
   for (int i = 0; i < MaxNbrLz; ++i)
     {
       int Lz = i << 1;
@@ -145,35 +125,36 @@ int main(int argc, char** argv)
      
 	}
 
-      BosonOnSphere Space (8, Lz, 8);
-      RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
-      ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, 8);
-      for (int k = 0; k < Degeneracy[i]; ++k)
-	{
-	  for (int l = k; l < Degeneracy[i]; ++l)
-	    {	
-	      HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
-	    }
-	}
-      cout << endl << endl;
-      
-      RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
-      for (int l = 0; l < Degeneracy[l]; ++l)
-	TmpEigenvector(l, l) = 1.0;
-      RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
-      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
-      TmpTriDiag.Diagonalize(TmpEigenvector);
-      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
-      cout << "angular momentum of test eigenvectors = ";
-      for (int k = 0; k < Degeneracy[i]; ++k)	    
-	{
-//	  cout << TmpTriDiag.DiagonalElement(k) << " " 
-//	       << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << endl;
-	  cout << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << " ";
-	}
-      cout << endl;
       RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
-      DiagonalBasis.Multiply(TmpEigenvector);
+      if (Degeneracy[i] > 1)
+	{
+	  BosonOnSphere Space (NbrParticles, Lz, LzMax);
+	  RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
+	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+	  for (int k = 0; k < Degeneracy[i]; ++k)
+	    {
+	      for (int l = k; l < Degeneracy[i]; ++l)
+		{	
+		  HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
+		}
+	    }
+	  cout << endl << endl;
+	  
+	  RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
+	  for (int l = 0; l < Degeneracy[l]; ++l)
+	    TmpEigenvector(l, l) = 1.0;
+	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
+	  HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+	  TmpTriDiag.Diagonalize(TmpEigenvector);
+	  TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+	  cout << "angular momentum of test eigenvectors = ";
+	  for (int k = 0; k < Degeneracy[i]; ++k)	    
+	    {
+	      cout << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << " ";
+	    }
+	  cout << endl;
+	  DiagonalBasis.Multiply(TmpEigenvector);
+	}
 
       for (int j = 0; j < Degeneracy[i]; ++j)
 	{
@@ -199,7 +180,8 @@ int main(int argc, char** argv)
 	      
 	      double Scalar = ReferenceVector * DiagonalBasis[k];
 	      Overlaps[j][k] = Scalar;
-	      cout << "    " << OutputVectors << "  = " << Scalar << endl;
+	      if (fabs(Scalar) > OrthogonalityError)
+		cout << "    " << OutputVectors << "  = " << Scalar << endl;
 	      BestOverlaps[j] += Scalar * Scalar;
 	    }
 	  BestOverlaps[j] = sqrt(BestOverlaps[j]);

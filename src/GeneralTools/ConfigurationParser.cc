@@ -34,11 +34,13 @@
 
 #include <string.h>
 #include <fstream>
+#include <iostream>
 
 
 using std::ifstream;
 using std::ios;
 using std::endl;
+using std::cout;
 
 
 // default constructor
@@ -199,6 +201,9 @@ char* ConfigurationParser::operator [] (char* parameterName)
 	  return *TmpValue;
 	}
     }
+  char* TmpString = new char [64 + strlen (parameterName)]; 
+  sprintf (TmpString, "parameter %s is not defined\n", parameterName);
+  this->ErrorLog += TmpString;
   return 0;
 }
 
@@ -276,3 +281,280 @@ bool ConfigurationParser::CleanLine (char* line)
   line[Index] = '\0';
   return true;
 }
+
+
+// get boolean value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// value = reference on the boolean where the read value has to be stored
+// trueString = string which means true (case insensitive)
+// falseString = string which means false (case insensitive)
+// return value = true if no error occured
+
+bool ConfigurationParser::GetAsBoolean (char* parameterName, bool& value, char* trueString, char* falseString)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+  if (strcasecmp(trueString, TmpValue) == 0)
+    {
+      value = true;
+      return true;
+    }
+  if (strcasecmp(falseString, TmpValue) == 0)
+    {
+      value = false;
+      return true;
+    }
+  char* TmpString = new char [128 + strlen(parameterName) + strlen(TmpValue) + strlen (trueString) + strlen(falseString)]; 
+  sprintf (TmpString, "parameter %s is fixed to an invalid boolean value (%s). Must be set to %s (true) or %s (false)\n", parameterName, TmpValue,
+	   trueString, falseString);
+  this->ErrorLog += TmpString;
+  return false;
+}
+
+
+// get integer value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// value = reference on the integer where the read value has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsSingleInteger (char* parameterName, int& value)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+  char* TmpError;
+  value = strtol(TmpValue, &TmpError, 0);
+  if ((TmpError == TmpValue) || ((*TmpError) != '\0'))
+    {
+      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+      sprintf (TmpString, "parameter %s is fixed to an invalid integer value (%s)\n", parameterName, TmpValue);
+      this->ErrorLog += TmpString;
+      return false;
+    }
+  return true;
+}
+
+// get integer value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// separator = character which is used as separator between integer values in the string 
+//             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+// array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+// nbrValues = reference on the integer where the number of read values has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsIntegerArray (char* parameterName, char separator, int*& array, int& nbrValues)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+
+  nbrValues = 0;
+  if ((separator != ' ')  && (separator != '\t'))
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if ((*Start) == separator)
+	    ++nbrValues;
+	  ++Start;
+	}
+      cout << nbrValues << endl;
+      array = new int [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != separator))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = strtol (Start, &Error, 0);
+	  ++nbrValues;
+	  if (Error != End)
+	    {
+	      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+	      sprintf (TmpString, "parameter %s contains an invalid integer value (%s)\n", parameterName, TmpValue);
+	      this->ErrorLog += TmpString;
+	      return false;
+	    }
+	  if ((*End) == separator)
+	    ++End;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  else
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if (((*Start) == ' ') || ((*Start) == '\t'))
+	    {
+	      ++nbrValues;
+	      while (((*Start) != '\0') && (((*Start) == ' ') || ((*Start) == '\t')))
+		++Start;		
+	    }
+	  else
+	    ++Start;
+	}      
+      array = new int [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = strtol (Start, &Error, 0);
+	  ++nbrValues;
+	  if (Error != End)
+	    {
+	      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+	      sprintf (TmpString, "parameter %s contains an invalid integer value (%s)\n", parameterName, TmpValue);
+	      this->ErrorLog += TmpString;
+	      return false;
+	    }
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  return true;
+}
+
+// get double value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// value = reference on the double where the read value has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsSingleDouble (char* parameterName, double& value)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+  char* TmpError;
+  value = strtod(TmpValue, &TmpError);
+  if ((TmpError == TmpValue) || ((*TmpError) != '\0'))
+    {
+      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+      sprintf (TmpString, "parameter %s is fixed to an invalid double value (%s)\n", parameterName, TmpValue);
+      this->ErrorLog += TmpString;
+      return false;
+    }
+  return true;
+}
+
+// get double value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// separator = character which is used as separator between double values in the string 
+//             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+// array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+// nbrValues = reference on the double where the number of read values has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsDoubleArray (char* parameterName, char separator, double*& array, int& nbrValues)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+
+  nbrValues = 0;
+  if ((separator != ' ')  && (separator != '\t'))
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if ((*Start) == separator)
+	    ++nbrValues;
+	  ++Start;
+	}
+      cout << nbrValues << endl;
+      array = new double [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != separator))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = strtod (Start, &Error);
+	  ++nbrValues;
+	  if (Error != End)
+	    {
+	      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+	      sprintf (TmpString, "parameter %s contains an invalid double value (%s)\n", parameterName, TmpValue);
+	      this->ErrorLog += TmpString;
+	      return false;
+	    }
+	  if ((*End) == separator)
+	    ++End;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  else
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if (((*Start) == ' ') || ((*Start) == '\t'))
+	    {
+	      ++nbrValues;
+	      while (((*Start) != '\0') && (((*Start) == ' ') || ((*Start) == '\t')))
+		++Start;		
+	    }
+	  else
+	    ++Start;
+	}      
+      array = new double [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = strtod (Start, &Error);
+	  ++nbrValues;
+	  if (Error != End)
+	    {
+	      char* TmpString = new char [64 + strlen(parameterName) + strlen(TmpValue)]; 
+	      sprintf (TmpString, "parameter %s contains an invalid double value (%s)\n", parameterName, TmpValue);
+	      this->ErrorLog += TmpString;
+	      return false;
+	    }
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  return true;
+}
+

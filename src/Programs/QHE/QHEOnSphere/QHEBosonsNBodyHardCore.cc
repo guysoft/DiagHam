@@ -15,6 +15,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "GeneralTools/ConfigurationParser.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -95,6 +97,27 @@ int main(int argc, char** argv)
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   bool FirstRun = true;
+  double* NBodyWeightFactors = 0;
+  if (((SingleStringOption*) Manager["nbody-file"])->GetString() != 0)
+    {
+      ConfigurationParser NBodyDefinition;
+      if (NBodyDefinition.Parse(((SingleStringOption*) Manager["nbody-file"])->GetString()) == false)
+	{
+	  NBodyDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if ((NBodyDefinition.GetAsSingleInteger("NbrNBody", NbrNBody) == false) || (NbrNBody < 2))
+	{
+	  cout << "NbrNBody is not defined or as a wrong value in " << ((SingleStringOption*) Manager["nbody-file"])->GetString() << endl;
+	  return -1;
+	}
+      int TmpNbrNBody;
+      if ((NBodyDefinition.GetAsDoubleArray("Weights", ' ', NBodyWeightFactors, TmpNbrNBody) == false) || ((TmpNbrNBody - NbrNBody) != 1))
+	{
+	  cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["nbody-file"])->GetString() << endl;
+	  return -1;
+	}
+    }
 
   char* OutputNameLz = new char [256];
   sprintf (OutputNameLz, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
@@ -123,9 +146,19 @@ int main(int argc, char** argv)
     {
       BosonOnSphere Space (NbrBosons, L, LzMax);
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
-      AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
-												 Architecture.GetArchitecture(), 
-												 Memory, LoadPrecalculationFileName);
+      AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
+      if (NBodyWeightFactors == 0)
+	{
+	  Hamiltonian =new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
+								    Architecture.GetArchitecture(), 
+								    Memory, LoadPrecalculationFileName);
+	}
+      else
+	{
+	  Hamiltonian =new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
+								    Architecture.GetArchitecture(), 
+								    Memory, LoadPrecalculationFileName);
+	}
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

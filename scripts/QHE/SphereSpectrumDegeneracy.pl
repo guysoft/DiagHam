@@ -9,7 +9,9 @@ my $SpectrumFile = "";
 my $Eigenvalue = 0.0;
 my $Error = 1.0e-12;
 my $LFlag = 0;
-my $Result = GetOptions ("spectrum=s" => \$SpectrumFile, "eigenvalue:s" => \$Eigenvalue, "error:s" => \$Error, "lsort" => \$LFlag); 
+my $RowFlag = 0;
+my $Result = GetOptions ("spectrum=s" => \$SpectrumFile, "eigenvalue:s" => \$Eigenvalue, "error:s" => \$Error, "lsort" => \$LFlag,
+			"row" => \$RowFlag); 
 
 #if (($SpectrumFile eq "") || (!(-e $SpectrumFile)) || (!($Eigenvalue =~ /^[\+\-]?\d*\.?\d*e?\d+$/)) || (!()))
 if ($SpectrumFile eq "")
@@ -57,7 +59,18 @@ if ($LFlag != 0)
     
   }
 
-foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+if ($RowFlag == 0)
   {
-    print $TmpLine." ".$Degeneracy{$TmpLine}."\n";
+    foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+      {
+	print $TmpLine." ".$Degeneracy{$TmpLine}."\n";
+      }
+  }
+else
+  {
+    foreach $TmpLine (sort {$a <=> $b} (keys(%Degeneracy)))
+      {
+	print $Degeneracy{$TmpLine}." ";
+      }
+    print "\n";
   }

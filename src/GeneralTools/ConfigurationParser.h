@@ -75,6 +75,49 @@ class ConfigurationParser
   // return value = string (must not be altered) corresponding to a configuration parameter, null if the parameter is not defined
   char* operator [] (char* parameterName);
 
+  // get boolean value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // value = reference on the boolean where the read value has to be stored
+  // trueString = string which means true (case insensitive)
+  // falseString = string which means false (case insensitive)
+  // return value = true if no error occured
+  bool GetAsBoolean (char* parameterName, bool& value, char* trueString = "true", char* falseString = "false");
+
+  // get integer value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // value = reference on the integer where the read value has to be stored
+  // return value = true if no errro occured
+  bool GetAsSingleInteger (char* parameterName, int& value);
+
+  // get integer value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // separator = caharacter which is used as separator between integer values in the string
+  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+  // nbrValues = reference on the integer where the number of read values has to be stored
+  // return value = true if no error occured
+  bool GetAsIntegerArray (char* parameterName, char separator, int*& array, int& nbrValues);
+
+  // get double value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // value = reference on the double where the read value has to be stored
+  // return value = true if no error occured
+  bool GetAsSingleDouble (char* parameterName, double& value);
+
+  // get double value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // separator = caharacter which is used as separator between double values in the string
+  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+  // nbrValues = reference on the double where the number of read values has to be stored
+  // return value = true if no error occured
+  bool GetAsDoubleArray (char* parameterName, char separator, double*& array, int& nbrValues);
+
   // dump configuration file
   //
   // str = reference on the output stream
