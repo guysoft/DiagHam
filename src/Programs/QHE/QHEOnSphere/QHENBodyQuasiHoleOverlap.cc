@@ -183,7 +183,7 @@ int main(int argc, char** argv)
 	  int AngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * oper.MatrixElement(ReferenceVector, ReferenceVector).Re) + 1.0) - 1.0)));
 	  cout << "angular momentum = " << AngularMomentum << endl;
 	 
-	  if ((AngularMomentum > MaxNbrLz) || ())
+	  if ((AngularMomentum < MaxNbrLz) || (NbrSortedTestVectors[AngularMomentum] > 0))
 	    {
 	      BestOverlaps[j] = 0.0;
 	      
@@ -205,13 +205,17 @@ int main(int argc, char** argv)
 	      BestOverlaps[j] = sqrt(BestOverlaps[j]);
 	      cout << endl << "best overlap = " << BestOverlaps[j] << endl;
 	    }
+	  else
+	    {
+	      cout << "no possible overlap " << endl;
+	    }
 	}
-      SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
+/*      SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
       cout << endl << "overlaps = " << endl;
       for (int j = 0; j < Degeneracy[i]; ++j)
 	{
 	  cout << BestOverlaps[j] << endl;
-	}
+	}*/
       cout << "----------------------------------------------------" << endl;
       delete[] BestOverlaps;
       for (int j = 0; j < Degeneracy[i]; ++j)

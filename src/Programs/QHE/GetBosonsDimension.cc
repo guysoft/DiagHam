@@ -69,6 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lz", "number of particles", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lz", "number of particles", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
+  (*SystemGroup) += new BooleanOption  ('\n', "l-dimension", "get dimensions of all subspaces with fixed total l value");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -82,30 +83,85 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  for (int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger(); 
-       NbrBosons <= ((SingleIntegerOption*) Manager["max-particles"])->GetInteger(); ++NbrBosons)
+  if (((BooleanOption*) Manager["l-dimension"])->GetBoolean() == false)
     {
-      for (int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger(); 
-	   LzMax <= ((SingleIntegerOption*) Manager["max-lz"])->GetInteger(); ++LzMax)
+      for (int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger(); 
+	   NbrBosons <= ((SingleIntegerOption*) Manager["max-particles"])->GetInteger(); ++NbrBosons)
 	{
-	  if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
+	  for (int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger(); 
+	       LzMax <= ((SingleIntegerOption*) Manager["max-lz"])->GetInteger(); ++LzMax)
 	    {
-	      int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
-	      int  L = 0;
-	      if ((abs(Max) & 1) != 0)
-		L = 1;
-	      cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+	      if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
+		{
+		  int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
+		  int  L = 0;
+		  if ((abs(Max) & 1) != 0)
+		    L = 1;
+		  cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+		}
+	      else
+		{
+		  int Max = (LzMax * NbrBosons);
+		  int  L = 0;
+		  if ((abs(Max) & 1) != 0)
+		    L = 1;
+		  cout << EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
+		}
 	    }
-	  else
-	    {
-	      int Max = (LzMax * NbrBosons);
-	      int  L = 0;
-	      if ((abs(Max) & 1) != 0)
-		L = 1;
-	      cout << EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
-	    }
+	  cout << endl;
 	}
-      cout << endl;
+    }
+  else
+    {
+     int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger();
+     int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger();
+     int TotalLzMax = 0;
+     int StartL = 0;
+     if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
+       {
+	 TotalLzMax = ((LzMax - NbrBosons + 1) * NbrBosons);
+       }
+     else
+       {
+	 TotalLzMax = (LzMax * NbrBosons);
+       }
+     StartL = 0;
+     if ((abs(TotalLzMax) & 1) != 0)
+       StartL = 1;
+     long* LzDimensions = new long [1 + ((TotalLzMax - StartL) >> 1)];
+     for (int L = StartL; L <= TotalLzMax; L += 2)
+       {
+	 long TmpDimension = 0;
+	 if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
+	   {
+	     TmpDimension = FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
+	   }
+	 else
+	   {
+	     TmpDimension = EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
+	   }
+	 LzDimensions[(L - StartL) >> 1] = TmpDimension;
+       }
+     cout << "N = " << NbrBosons << endl;
+     cout << "2S = " << LzMax << endl;
+     cout << "Lz = ";
+     for (int L = StartL; L < TotalLzMax; L += 2)
+       {
+	 cout << LzDimensions[(L - StartL) >> 1] << " ";
+       }
+     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;
+/*     for (int L = TotalLzMax; L > StartL; L -= 2)
+       {
+	 for (int k = L - 2; k >= StartL; k -=2)
+	   LzDimensions[(k - StartL) >> 1] -= LzDimensions[((L - StartL) >> 1)] ;
+       }*/
+     cout << "L = ";
+     for (int L = StartL; L < TotalLzMax; L += 2)
+       {
+	 cout << (LzDimensions[(L - StartL) >> 1] - LzDimensions[1 + ((L - StartL) >> 1)]) << " ";
+       }
+     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;    
+     delete[] LzDimensions;
     }
 }
 
