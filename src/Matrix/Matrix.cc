@@ -39,6 +39,15 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
 
+#include <fstream>
+
+using std::cout;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
+using std::endl;
+
+
 // default constructor
 //
 
@@ -97,6 +106,28 @@ void Matrix::SetMatrixElement(int i, int j, const Complex& x)
 // x = value to add to matrix element
 
 void Matrix::AddToMatrixElement(int i, int j, double x)
+{
+  return;
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void Matrix::GetMatrixElement(int i, int j, double& x)
+{
+  return;
+}
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void Matrix::GetMatrixElement(int i, int j, Complex& x)
 {
   return;
 }
@@ -244,3 +275,143 @@ ostream& operator << (ostream& str, const Matrix& matrix)
     }
   return str;
 }
+
+
+// write matrix in a file 
+//
+// fileName = name of the file where the matrix has to be stored
+// return value = true if no error occurs
+
+bool Matrix::WriteMatrix (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      int TmpType = Matrix::RealElements;
+      File.write ((char*) &(TmpType), sizeof(int));
+      File.write ((char*) &(this->NbrRow), sizeof(int));
+      File.write ((char*) &(this->NbrColumn), sizeof(int));
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    this->GetMatrixElement(i, j, Tmp);
+	    File.write ((char*) (&Tmp), sizeof(double));
+	  }
+    }
+  else
+    {
+      int TmpType = Matrix::ComplexElements;
+      File.write ((char*) &(TmpType), sizeof(int));
+      File.write ((char*) &(this->NbrRow), sizeof(int));
+      File.write ((char*) &(this->NbrColumn), sizeof(int));
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    this->GetMatrixElement(i, j, Tmp);
+	    File.write ((char*) (&(Tmp.Re)), sizeof(double));
+	    File.write ((char*) (&(Tmp.Im)), sizeof(double));
+	  }
+    }
+  File.close();
+  return true;
+}
+
+// write matrix in a file in ascii mode
+//
+// fileName = name of the file where the matrix has to be stored
+// return value = true if no error occurs
+
+bool Matrix::WriteAsciiMatrix (char* fileName)
+{
+  ofstream File;
+  File.precision(14);
+  File.open(fileName, ios::binary | ios::out);
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp;
+      int ReducedNbrColumn = this->NbrColumn - 1;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < ReducedNbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      cout << Tmp << " ";
+	    }
+	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
+	  cout << Tmp << endl;
+	}      
+    }
+  else
+    {
+      Complex Tmp;
+      int ReducedNbrColumn = this->NbrColumn - 1;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < ReducedNbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      cout << Tmp.Re << " " << Tmp.Im << " ";
+	    }
+	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
+	  cout << Tmp.Re << " " << Tmp.Im << endl;
+	}      
+    }
+  File.close();
+  return true;
+}
+
+// read matrix from a file 
+//
+// fileName = name of the file where the matrix has to be read
+// return value = true if no error occurs
+
+bool Matrix::ReadMatrix (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  int TmpType = Matrix::RealElements;
+  File.read ((char*) &(TmpType), sizeof(int));
+  if (((this->MatrixType & TmpType & Matrix::RealElements) == 0) && ((this->MatrixType & TmpType & Matrix::ComplexElements) == 0))
+    {
+      File.close();
+      return false;
+    }
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      File.read ((char*) &(this->NbrRow), sizeof(int));
+      File.read ((char*) &(this->NbrColumn), sizeof(int));
+      this->Resize(this->NbrRow, this->NbrColumn);
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    File.read ((char*) (&Tmp), sizeof(double));
+	    this->SetMatrixElement(i, j, Tmp);
+	  }
+    }
+  else
+    {
+      File.read ((char*) &(this->NbrRow), sizeof(int));
+      File.read ((char*) &(this->NbrColumn), sizeof(int));
+      this->Resize(this->NbrRow, this->NbrColumn);
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	for (int j = 0; j < this->NbrColumn; ++j)
+	  {
+	    File.read ((char*) (&(Tmp.Re)), sizeof(double));
+	    File.read ((char*) (&(Tmp.Im)), sizeof(double));
+	    this->SetMatrixElement(i, j, Tmp);
+	  }
+    }
+  File.close();
+  return true;
+}
+

@@ -119,7 +119,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 
-bin_PROGRAMS = Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaOverlap QHEBosonsDipolar QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsV3 QHEBosonsV2 QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation QHEFermionsLaplacianDelta QHEFermionsDipolar QHEFermionsDiskLaplacianDelta QHEBosonsTorusWithTranslations LzToL
+bin_PROGRAMS = Bosons QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle QHEBosonsTorus ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaOverlap QHEBosonsDipolar QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsV3 QHEBosonsV2 QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation QHEFermionsLaplacianDelta QHEFermionsLaplacianDeltaOverlap QHEFermionsDipolar QHEFermionsDiskLaplacianDelta QHEBosonsTorusWithTranslations LzToL
 
 Bosons_SOURCES = Bosons.cc
 
@@ -130,6 +130,8 @@ QHEFermions_SOURCES = QHEFermions.cc
 QHEFermionsCoulomb_SOURCES = QHEFermionsCoulomb.cc
 
 QHEFermionsLaplacianDelta_SOURCES = QHEFermionsLaplacianDelta.cc
+
+QHEFermionsLaplacianDeltaOverlap_SOURCES = QHEFermionsLaplacianDeltaOverlap.cc
 
 QHEFermionsDipolar_SOURCES = QHEFermionsDipolar.cc
 
@@ -196,6 +198,10 @@ QHEBosonsV2_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Arc
 QHEFermionsLaplacianDelta_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a
 
 QHEFermionsLaplacianDelta_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/FunctionBasis/QHEFunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MainTask/QHEMainTask -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lQHEFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+
+QHEFermionsLaplacianDeltaOverlap_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a
+
+QHEFermionsLaplacianDeltaOverlap_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/FunctionBasis/QHEFunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/src/MainTask/QHEMainTask -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lArchitectureOperation -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 
 QHEFermionsDipolar_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a  $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a
 
@@ -279,7 +285,9 @@ bin_PROGRAMS = Bosons$(EXEEXT) QHEFermions$(EXEEXT) QHEBosons$(EXEEXT) \
 	QHEBosonsV2$(EXEEXT) QHEFermionsTorusDMRG$(EXEEXT) \
 	GetBosonsDimension$(EXEEXT) \
 	QHEFermionsTorusWithTranslation$(EXEEXT) \
-	QHEFermionsLaplacianDelta$(EXEEXT) QHEFermionsDipolar$(EXEEXT) \
+	QHEFermionsLaplacianDelta$(EXEEXT) \
+	QHEFermionsLaplacianDeltaOverlap$(EXEEXT) \
+	QHEFermionsDipolar$(EXEEXT) \
 	QHEFermionsDiskLaplacianDelta$(EXEEXT) \
 	QHEBosonsTorusWithTranslations$(EXEEXT) LzToL$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -347,6 +355,11 @@ am_QHEFermionsLaplacianDelta_OBJECTS = \
 QHEFermionsLaplacianDelta_OBJECTS = \
 	$(am_QHEFermionsLaplacianDelta_OBJECTS)
 QHEFermionsLaplacianDelta_LDFLAGS =
+am_QHEFermionsLaplacianDeltaOverlap_OBJECTS = \
+	QHEFermionsLaplacianDeltaOverlap.$(OBJEXT)
+QHEFermionsLaplacianDeltaOverlap_OBJECTS = \
+	$(am_QHEFermionsLaplacianDeltaOverlap_OBJECTS)
+QHEFermionsLaplacianDeltaOverlap_LDFLAGS =
 am_QHEFermionsTorus_OBJECTS = QHEFermionsTorus.$(OBJEXT)
 QHEFermionsTorus_OBJECTS = $(am_QHEFermionsTorus_OBJECTS)
 QHEFermionsTorus_LDFLAGS =
@@ -387,6 +400,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsDipolar.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsDiskLaplacianDelta.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsLaplacianDelta.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsLaplacianDeltaOverlap.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsTorusDMRG.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEFermionsTorusWithSpin.Po \
@@ -409,6 +423,7 @@ DIST_SOURCES = $(ApproximateQHE_SOURCES) $(Bosons_SOURCES) \
 	$(QHEFermionsDipolar_SOURCES) \
 	$(QHEFermionsDiskLaplacianDelta_SOURCES) \
 	$(QHEFermionsLaplacianDelta_SOURCES) \
+	$(QHEFermionsLaplacianDeltaOverlap_SOURCES) \
 	$(QHEFermionsTorus_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) \
 	$(QHEFermionsTorusWithSpin_SOURCES) \
 	$(QHEFermionsTorusWithTranslation_SOURCES) \
@@ -421,7 +436,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
 DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(ApproximateQHE_SOURCES) $(Bosons_SOURCES) $(GetBosonsDimension_SOURCES) $(LzToL_SOURCES) $(QHEBosons_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsDeltaOverlap_SOURCES) $(QHEBosonsDipolar_SOURCES) $(QHEBosonsTorus_SOURCES) $(QHEBosonsTorusWithTranslations_SOURCES) $(QHEBosonsV2_SOURCES) $(QHEFermions_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsDipolar_SOURCES) $(QHEFermionsDiskLaplacianDelta_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEFermionsTorusWithTranslation_SOURCES) $(QHEFermionsV3_SOURCES)
+SOURCES = $(ApproximateQHE_SOURCES) $(Bosons_SOURCES) $(GetBosonsDimension_SOURCES) $(LzToL_SOURCES) $(QHEBosons_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsDeltaOverlap_SOURCES) $(QHEBosonsDipolar_SOURCES) $(QHEBosonsTorus_SOURCES) $(QHEBosonsTorusWithTranslations_SOURCES) $(QHEBosonsV2_SOURCES) $(QHEFermions_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsDipolar_SOURCES) $(QHEFermionsDiskLaplacianDelta_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEFermionsLaplacianDeltaOverlap_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEFermionsTorusWithTranslation_SOURCES) $(QHEFermionsV3_SOURCES)
 
 all: all-recursive
 
@@ -513,6 +528,9 @@ QHEFermionsDiskLaplacianDelta$(EXEEXT): $(QHEFermionsDiskLaplacianDelta_OBJECTS)
 QHEFermionsLaplacianDelta$(EXEEXT): $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_DEPENDENCIES) 
 	@rm -f QHEFermionsLaplacianDelta$(EXEEXT)
 	$(CXXLINK) $(QHEFermionsLaplacianDelta_LDFLAGS) $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_LDADD) $(LIBS)
+QHEFermionsLaplacianDeltaOverlap$(EXEEXT): $(QHEFermionsLaplacianDeltaOverlap_OBJECTS) $(QHEFermionsLaplacianDeltaOverlap_DEPENDENCIES) 
+	@rm -f QHEFermionsLaplacianDeltaOverlap$(EXEEXT)
+	$(CXXLINK) $(QHEFermionsLaplacianDeltaOverlap_LDFLAGS) $(QHEFermionsLaplacianDeltaOverlap_OBJECTS) $(QHEFermionsLaplacianDeltaOverlap_LDADD) $(LIBS)
 QHEFermionsTorus$(EXEEXT): $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_DEPENDENCIES) 
 	@rm -f QHEFermionsTorus$(EXEEXT)
 	$(CXXLINK) $(QHEFermionsTorus_LDFLAGS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_LDADD) $(LIBS)
@@ -554,6 +572,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsDipolar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsDiskLaplacianDelta.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsLaplacianDelta.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsLaplacianDeltaOverlap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsTorusDMRG.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEFermionsTorusWithSpin.Po@am__quote@

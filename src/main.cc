@@ -96,9 +96,12 @@ void AsymmetricDMRG();
 RealMatrix RandomRealMatrix(int nbrRow, int nbrColumn, double range);
 RealSymmetricMatrix RandomRealSymmetricMatrix(int nbrRow, double range);
 RealTriDiagonalSymmetricMatrix RandomRealTriDiagonalSymmetricMatrix(int nbrRow, double range);
+HermitianMatrix RandomHermitianMatrix(int nbrRow, double range);
 void GroundStateScaling (int nbrSpin, int maxNbrIterLanczos, double precision, int exactLimit);
 void PeriodicDMRG();
 void TestHamiltonian(AbstractHamiltonian* hamiltonian);
+void PermanentTest();
+
 
 int main(int argc, char** argv)
 {
@@ -118,155 +121,45 @@ int main(int argc, char** argv)
   Architecture.Delete(Test);
   return 0;*/
 
-/*  for (int DimMPerm = 3; DimMPerm <= 10; ++DimMPerm)
+  int nbrRow = atoi(argv[1]);
+  for (int i = 0; i < atoi(argv[2]); ++i)
     {
-      long** MPerm = new long* [DimMPerm];
-      for (int i = 0; i < DimMPerm; ++i)
-	{
-	  MPerm[i] = new long [DimMPerm];
-	  for (int j = 0; j < DimMPerm; ++j)
-	    MPerm[i][j] = (long) (i + j +2);
-	}
-      long Perm = (long) 0;
-      long Sign = (long) 1;
-      if ((DimMPerm & 1) == 0)
-	Sign = (long) -1;
-      long* Tmp = new long [DimMPerm];
-      long Tmp2;
-      Tmp2 = Tmp[0];
-      int Lim = 1 << DimMPerm;
-      for (int i = 0; i < DimMPerm; ++i)
-	Tmp[i] = (long) 0;
-      int GrayCode = 0;
-      int ChangedBit;
-      int Index;
-      for (int k = 1; k < Lim; ++k)
-	{
-	  ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
-	  GrayCode = k ^ (k >> 1);
-	  if ((GrayCode & ChangedBit) == 0)
-	    {
-	      Index = 0;
-	      while (ChangedBit != 1)
-		{
-		  ChangedBit >>= 1;
-		  ++Index;
-		}
-	      for (int i = 0; i < DimMPerm; ++i)
-		Tmp[i] -= MPerm[i][Index];
-	    }
-	  else
-	    {
-	      Index = 0;
-	      while (ChangedBit != 1)
-		{
-		  ChangedBit >>= 1;
-		  ++Index;
-		}
-	      for (int i = 0; i < DimMPerm; ++i)
-		Tmp[i] += MPerm[i][Index];
-	    }
-	  Tmp2 = Tmp[0];
-	  for (int i = 1; i < DimMPerm; ++i)
-	    Tmp2 *= Tmp[i];
-	  Perm += Sign * Tmp2;
-	  Sign *= (long) -1;
-	}  
-      delete[] Tmp;
-      cout << Perm << endl;
-    }
-  return 0;*/
 
-/*  int NbrBosons = 4;
-  int LzMax = 6;
-  RealVector State;
-  State.ReadVector ("bosons_delta_nu_1_2/bosons_delta_n_4_2s_6_lz_0.0.vec");
-  BosonOnSphere Space (NbrBosons, 0, LzMax);
-  RealVector Location(2 * NbrBosons, true);
-  srand48(29457);
-  for (int i = 0; i < NbrBosons; ++i)
-    {
-      Location[i << 1] = M_PI * drand48();
-      Location[(i << 1) + 1] = 2.0 * M_PI * drand48();
-      cout << Location[i << 1] << " " << Location[(i << 1) + 1] << endl;
+      HermitianMatrix TestDet4 = RandomHermitianMatrix(nbrRow, 1.0);
+//      cout << TestDet4 << endl;
+      RealSymmetricMatrix TestDet = TestDet4.ConvertToSymmetricMatrix();
+//      RealSymmetricMatrix TestDet = RandomRealSymmetricMatrix(nbrRow, 1.0);
+      //  TestDet.SetMatrixElement(0, 0, 0.0);
+//      RealMatrix TestDet2 (TestDet);
+      ComplexMatrix TestDet2 (TestDet4);
+      TestDet2.ReadMatrix(argv[3]);
+      cout << TestDet2 << endl;
+//      RealTriDiagonalSymmetricMatrix TestDet3;
+      RealTriDiagonalSymmetricMatrix TestDet3(2 * nbrRow);
+      TestDet.Householder(TestDet3, 1e-14);
+      TestDet3.Diagonalize(50);
+//      cout << TestDet2 << endl;
+      TestDet2.WriteMatrix("test.mat");
+      Complex Det1 = TestDet2.Determinant();
+//      double Det1 = TestDet2.Determinant();
+      double Det2 = 1.0;
+      for (int j = 0; j < (2 * nbrRow); ++j)
+	Det2 *= TestDet3.DiagonalElement(j);
+      Det2 = sqrt(Det2);
+//      if (fabs(Det2 - Det1) > (1e-13 * fabs(Det2)))
+	cout << i << ": " << Det1 << " " << Det2 << " " << endl;//(fabs(Det2 - Det1) / fabs(Det2)) << endl;
     }
-  Location[4] = Location[0];
-  Location[5] = Location[1];
-  ParticleOnSphereFunctionBasis Basis(LzMax);
-  cout << Space.EvaluateWaveFunction(State, Location, Basis) << endl;
-  return 0;*/
-
-  int Error = 0;
-  int Total = 0;
-  for (int k = 0; k < 10; ++k)
-  for (int DimMPerm = 5; DimMPerm <= 10; ++DimMPerm)
-    {
-      int* ChangeBit;
-      int* ChangeBitSign;
-      int* ChangeBit2;
-      int* ChangeBitSign2;
-      ComplexMatrix MPerm(DimMPerm, DimMPerm);
-      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign, true);
-      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit2, ChangeBitSign2);
-      Complex* Minor = new Complex [DimMPerm];
-      for (int i = 0; i < DimMPerm; ++i)
-	{
-	  for (int j = 0; j < DimMPerm; ++j)
-	    {
-	      //	      MPerm[j].Im(i) = i + j + 2;
-	      //	      MPerm[j].Re(i) = 0.0;
-	      MPerm[j].Re(i) = 20.0 * (drand48() - 0.5);
-	      MPerm[j].Im(i) = 20.0 * (drand48() - 0.5);
- 	    }
-	}
-      /*      Complex TmpPerm = (MPerm2[0][0] * (MPerm2[1][1] * MPerm2[2][2] + MPerm2[1][2] * MPerm2[2][1])
-			 + MPerm2[1][0] * (MPerm2[0][1] * MPerm2[2][2] + MPerm2[0][2] * MPerm2[2][1])
-			 + MPerm2[2][0] * (MPerm2[0][1] * MPerm2[1][2] + MPerm2[0][2] * MPerm2[1][1]));*/
-      Complex TmpPerm2 = MPerm.Permanent();
-      //Complex TmpPerm2 = MPerm.FastPermanent(ChangeBit2, ChangeBitSign2);
-      for (int ColumnDev = 0; ColumnDev < DimMPerm; ++ColumnDev)
-	{
-	  Complex TmpPerm;
-	  //MPerm.PermanentMinorDevelopment(ColumnDev, Minor);
-	  MPerm.FastPermanentMinorDevelopment(ChangeBit, ChangeBitSign, ColumnDev, Minor);
-	  for (int i = 0; i < DimMPerm; ++i)
-	    TmpPerm += Minor[i] *  Complex (MPerm[ColumnDev].Re(i), MPerm[ColumnDev].Im(i));
-	  //	  TmpPerm = MPerm.Permanent();
-	  if (Norm(TmpPerm - TmpPerm2) > (1e-13 * Norm(TmpPerm)))
-	    {
-	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
-	      Error++;
-	    }
-	  //	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
-	  ++Total;
-	}
-      delete[] ChangeBit;
-      delete[] ChangeBitSign;
-      delete[] ChangeBit2;
-      delete[] ChangeBitSign2;
-    }
-  cout << Error << " " << Total << endl;
   return 0;
-  for (int k = 0; k < 1; ++k)
-  for (int DimMPerm = 3; DimMPerm <= 8; ++DimMPerm)
-    {
-      RealMatrix MPerm(DimMPerm, DimMPerm);
-      for (int i = 0; i < DimMPerm; ++i)
-	for (int j = 0; j < DimMPerm; ++j)
-	  //	  MPerm(i, j) = i + j +2;
-	  MPerm(i, j) = (drand48() - 0.5);
-      double TmpPerm = (MPerm(0, 0) * (MPerm(1, 1) * MPerm(2, 2) + MPerm(1, 2) * MPerm(2, 1))
-			+ MPerm(1, 0) * (MPerm(0, 1) * MPerm(2, 2) + MPerm(0, 2) * MPerm(2, 1))
-			+ MPerm(2, 0) * (MPerm(0, 1) * MPerm(1, 2) + MPerm(0, 2) * MPerm(1, 1)));
-      if (fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) > 1e-13)
-	{
-	  cout << TmpPerm << " " <<  MPerm.Permanent() << " " << fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) << endl;
-	  Error++;
-	}
-      cout << MPerm << endl << endl;
-      cout << MPerm.Permanent() << endl;
-    }
-  cout << Error << endl;
+
+  RealAntisymmetricMatrix SkewM(nbrRow);
+  for (int i = 0; i < nbrRow; i++)
+    for (int j = i + 1; j < nbrRow; j++)
+      {
+	SkewM.SetMatrixElement(i, j, (i * nbrRow) + j);//(range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX;
+      }
+  cout << SkewM << endl;
+  SkewM.SwapRowColumn (atoi(argv[1]), atoi(argv[2]));
+  cout << SkewM << endl;
   return 0;
 
   int dimM = 10;
@@ -1811,6 +1704,160 @@ void BlockTest()
 }
 }
 
+void PermanentTest()
+{
+/*  for (int DimMPerm = 3; DimMPerm <= 10; ++DimMPerm)
+    {
+      long** MPerm = new long* [DimMPerm];
+      for (int i = 0; i < DimMPerm; ++i)
+	{
+	  MPerm[i] = new long [DimMPerm];
+	  for (int j = 0; j < DimMPerm; ++j)
+	    MPerm[i][j] = (long) (i + j +2);
+	}
+      long Perm = (long) 0;
+      long Sign = (long) 1;
+      if ((DimMPerm & 1) == 0)
+	Sign = (long) -1;
+      long* Tmp = new long [DimMPerm];
+      long Tmp2;
+      Tmp2 = Tmp[0];
+      int Lim = 1 << DimMPerm;
+      for (int i = 0; i < DimMPerm; ++i)
+	Tmp[i] = (long) 0;
+      int GrayCode = 0;
+      int ChangedBit;
+      int Index;
+      for (int k = 1; k < Lim; ++k)
+	{
+	  ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
+	  GrayCode = k ^ (k >> 1);
+	  if ((GrayCode & ChangedBit) == 0)
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      for (int i = 0; i < DimMPerm; ++i)
+		Tmp[i] -= MPerm[i][Index];
+	    }
+	  else
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      for (int i = 0; i < DimMPerm; ++i)
+		Tmp[i] += MPerm[i][Index];
+	    }
+	  Tmp2 = Tmp[0];
+	  for (int i = 1; i < DimMPerm; ++i)
+	    Tmp2 *= Tmp[i];
+	  Perm += Sign * Tmp2;
+	  Sign *= (long) -1;
+	}  
+      delete[] Tmp;
+      cout << Perm << endl;
+    }
+  return 0;*/
+
+/*  int NbrBosons = 4;
+  int LzMax = 6;
+  RealVector State;
+  State.ReadVector ("bosons_delta_nu_1_2/bosons_delta_n_4_2s_6_lz_0.0.vec");
+  BosonOnSphere Space (NbrBosons, 0, LzMax);
+  RealVector Location(2 * NbrBosons, true);
+  srand48(29457);
+  for (int i = 0; i < NbrBosons; ++i)
+    {
+      Location[i << 1] = M_PI * drand48();
+      Location[(i << 1) + 1] = 2.0 * M_PI * drand48();
+      cout << Location[i << 1] << " " << Location[(i << 1) + 1] << endl;
+    }
+  Location[4] = Location[0];
+  Location[5] = Location[1];
+  ParticleOnSphereFunctionBasis Basis(LzMax);
+  cout << Space.EvaluateWaveFunction(State, Location, Basis) << endl;
+  return 0;*/
+  int Error = 0;
+  int Total = 0;
+  for (int k = 0; k < 10; ++k)
+  for (int DimMPerm = 5; DimMPerm <= 10; ++DimMPerm)
+    {
+      int* ChangeBit;
+      int* ChangeBitSign;
+      int* ChangeBit2;
+      int* ChangeBitSign2;
+      ComplexMatrix MPerm(DimMPerm, DimMPerm);
+      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign, true);
+      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit2, ChangeBitSign2);
+      Complex* Minor = new Complex [DimMPerm];
+      for (int i = 0; i < DimMPerm; ++i)
+	{
+	  for (int j = 0; j < DimMPerm; ++j)
+	    {
+	      //	      MPerm[j].Im(i) = i + j + 2;
+	      //	      MPerm[j].Re(i) = 0.0;
+	      MPerm[j].Re(i) = 20.0 * (drand48() - 0.5);
+	      MPerm[j].Im(i) = 20.0 * (drand48() - 0.5);
+ 	    }
+	}
+      /*      Complex TmpPerm = (MPerm2[0][0] * (MPerm2[1][1] * MPerm2[2][2] + MPerm2[1][2] * MPerm2[2][1])
+			 + MPerm2[1][0] * (MPerm2[0][1] * MPerm2[2][2] + MPerm2[0][2] * MPerm2[2][1])
+			 + MPerm2[2][0] * (MPerm2[0][1] * MPerm2[1][2] + MPerm2[0][2] * MPerm2[1][1]));*/
+      Complex TmpPerm2 = MPerm.Permanent();
+      //Complex TmpPerm2 = MPerm.FastPermanent(ChangeBit2, ChangeBitSign2);
+      for (int ColumnDev = 0; ColumnDev < DimMPerm; ++ColumnDev)
+	{
+	  Complex TmpPerm;
+	  //MPerm.PermanentMinorDevelopment(ColumnDev, Minor);
+	  MPerm.FastPermanentMinorDevelopment(ChangeBit, ChangeBitSign, ColumnDev, Minor);
+	  for (int i = 0; i < DimMPerm; ++i)
+	    TmpPerm += Minor[i] *  Complex (MPerm[ColumnDev].Re(i), MPerm[ColumnDev].Im(i));
+	  //	  TmpPerm = MPerm.Permanent();
+	  if (Norm(TmpPerm - TmpPerm2) > (1e-13 * Norm(TmpPerm)))
+	    {
+	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
+	      Error++;
+	    }
+	  //	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
+	  ++Total;
+	}
+      delete[] ChangeBit;
+      delete[] ChangeBitSign;
+      delete[] ChangeBit2;
+      delete[] ChangeBitSign2;
+    }
+  cout << Error << " " << Total << endl;
+
+  return;
+  for (int k = 0; k < 1; ++k)
+  for (int DimMPerm = 3; DimMPerm <= 8; ++DimMPerm)
+    {
+      RealMatrix MPerm(DimMPerm, DimMPerm);
+      for (int i = 0; i < DimMPerm; ++i)
+	for (int j = 0; j < DimMPerm; ++j)
+	  //	  MPerm(i, j) = i + j +2;
+	  MPerm(i, j) = (drand48() - 0.5);
+      double TmpPerm = (MPerm(0, 0) * (MPerm(1, 1) * MPerm(2, 2) + MPerm(1, 2) * MPerm(2, 1))
+			+ MPerm(1, 0) * (MPerm(0, 1) * MPerm(2, 2) + MPerm(0, 2) * MPerm(2, 1))
+			+ MPerm(2, 0) * (MPerm(0, 1) * MPerm(1, 2) + MPerm(0, 2) * MPerm(1, 1)));
+      if (fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) > 1e-13)
+	{
+	  cout << TmpPerm << " " <<  MPerm.Permanent() << " " << fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) << endl;
+	  Error++;
+	}
+      cout << MPerm << endl << endl;
+      cout << MPerm.Permanent() << endl;
+    }
+  cout << Error << endl;
+  return;
+}
+
 RealMatrix RandomRealMatrix(int nbrRow, int nbrColumn, double range)
 {
   RealMatrix M(nbrRow, nbrColumn);
@@ -1844,3 +1891,18 @@ RealTriDiagonalSymmetricMatrix RandomRealTriDiagonalSymmetricMatrix(int nbrRow, 
   M.SetMatrixElement(nbrRow - 1, nbrRow - 1, (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX);
   return M;
 }
+
+HermitianMatrix RandomHermitianMatrix(int nbrRow, double range)
+{
+  HermitianMatrix M(nbrRow);
+  Complex Tmp;
+  for (int i = 0; i < nbrRow; i++)
+    for (int j = i; j < nbrRow; j++)
+      {
+	Tmp.Re = (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX;
+	Tmp.Im = (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX;
+	M.SetMatrixElement(i, j, Tmp);
+      }
+  return M;
+}
+

@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -33,6 +33,7 @@
 
 
 using std::endl;
+using std::cout;
 
 
 // default constructor
@@ -779,6 +780,68 @@ RealMatrix& RealMatrix::Transpose ()
 	this->Columns[j].Components[i] = tmp;;
       }
   return *this;
+}
+
+// evaluate matrix determinant (skrewing up matrix elements)
+//
+// return value = matrix determinant 
+
+double RealMatrix::Determinant () 
+{
+  if (this->NbrColumn != this->NbrRow)
+    return 0.0;
+  double TmpDet = 1.0;
+  int ReducedNbrRow = this->NbrRow - 1;
+  double Pivot;
+  double Factor;
+  int PivotPos = 0;
+  double Zero = fabs(this->Columns[0][0]);
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      RealVector& TmpColumn = this->Columns[i];
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  if (fabs(TmpColumn[j]) > Zero)
+	    Zero = fabs(TmpColumn[j]);
+	}
+    }
+  Zero *= MACHINE_PRECISION;
+  for (int k = 0; k < ReducedNbrRow; ++k)
+    {
+      Pivot = this->Columns[k][k];
+      PivotPos = k;
+      while ((fabs(Pivot) < Zero) && (PivotPos != ReducedNbrRow))
+	{
+	  ++PivotPos;
+	  Pivot = this->Columns[PivotPos][k];
+	}
+      if (fabs(Pivot) < Zero)
+	return 0.0;
+      if (PivotPos != k)
+	{
+	  RealVector TmpColumn3(this->Columns[k]);
+	  this->Columns[k] = this->Columns[PivotPos];
+	  this->Columns[PivotPos] = TmpColumn3;
+	  TmpDet *= -1.0;
+	}
+      TmpDet *= Pivot;
+      Pivot = 1.0 / Pivot;       
+      for (int i = k + 1; i < this->NbrRow; ++i)
+	{
+	  RealVector& TmpColumn = this->Columns[i];
+	  if (fabs(TmpColumn[k]) > Zero)
+	    {
+	      RealVector& TmpColumn2 = this->Columns[k];
+	      Factor = Pivot * TmpColumn[k];
+	      for (int j = k + 1; j < this->NbrRow; ++j)
+		{
+		  TmpColumn[j] -= TmpColumn2[j] * Factor;
+		}
+	    }
+	}
+    } 
+  TmpDet *= this->Columns[ReducedNbrRow][ReducedNbrRow];
+  return TmpDet;
 }
 
 // evaluate permanent associated to the (square) matrix using Ryser algorithm

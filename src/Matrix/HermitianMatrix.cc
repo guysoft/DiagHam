@@ -261,6 +261,64 @@ void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
     }
 }
 
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void HermitianMatrix::GetMatrixElement(int i, int j, double& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+      x = this->RealOffDiagonalElements[j];
+    }
+}
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  i -= j * (j - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+	  x.Re = this->RealOffDiagonalElements[i];
+	  x.Im = -this->ImaginaryOffDiagonalElements[i];
+	}
+      else
+	{
+	  j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+	  x.Re = this->RealOffDiagonalElements[j];
+	  x.Im = this->ImaginaryOffDiagonalElements[j];
+	}
+    }
+}
+
 // add a value to a matrix element
 //
 // i = line position

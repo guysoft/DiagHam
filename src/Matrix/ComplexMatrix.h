@@ -44,7 +44,7 @@
 using std::ostream;
 
 
-class ComplexMatrix : protected Matrix
+class ComplexMatrix : public Matrix
 {
 
   friend class ComplexSkewSymmetricMatrix;
@@ -84,6 +84,11 @@ class ComplexMatrix : protected Matrix
   // M = matrix to copy
   ComplexMatrix(const ComplexMatrix& M);
 
+  // copy constructor (duplicating all datas)
+  //
+  // M = matrix to copy
+  ComplexMatrix(Matrix& M);
+
   // destructor
   //
   ~ComplexMatrix();
@@ -112,6 +117,20 @@ class ComplexMatrix : protected Matrix
   // j = column position
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
+
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, double& x);
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x);
 
   // add a value to a matrix element
   //
@@ -268,10 +287,16 @@ class ComplexMatrix : protected Matrix
   // return value = reference on current matrix
   ComplexMatrix& OrthoNormalizeColumns ();
 
+  // evaluate matrix determinant (skrewing up matrix elements)
+  //
+  // return value = matrix determinant 
+  Complex Determinant ();
+
   // evaluate permanent associated to the (square) matrix using Ryser algorithm
   //
   // return value = permanent associated to the matrix
   Complex Permanent();                                                                                                                                     
+
   // evaluate minor develomment of permanent associated to the (square) matrix using Ryser algorithm
   //
   // column = index of the column from which permnanent will developped
@@ -324,6 +349,29 @@ class ComplexMatrix : protected Matrix
 inline ComplexVector& ComplexMatrix::operator [] (int i)
 {
   return this->Columns[i];
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void ComplexMatrix::GetMatrixElement(int i, int j, double& x)
+{
+  x = this->Columns[j].Re(i);
+}
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void ComplexMatrix::GetMatrixElement(int i, int j, Complex& x)
+{
+  x.Re = this->Columns[j].Re(i);
+  x.Im = this->Columns[j].Im(i);
 }
 
 #endif

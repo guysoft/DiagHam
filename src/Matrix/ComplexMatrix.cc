@@ -33,6 +33,7 @@
 
 
 using std::endl;
+using std::cout;
 
 
 // default constructor
@@ -100,6 +101,46 @@ ComplexMatrix::ComplexMatrix(const ComplexMatrix& M)
   this->TrueNbrRow = M.TrueNbrRow;
   this->TrueNbrColumn = M.TrueNbrColumn;  
   this->MatrixType = Matrix::ComplexElements;
+}
+
+// copy constructor (duplicating all datas)
+//
+// M = matrix to copy
+
+ComplexMatrix::ComplexMatrix(Matrix& M)
+{
+  if ((M.GetNbrRow() == 0) || (M.GetNbrColumn() == 0))
+    {
+      this->Columns = 0;
+      this->ColumnGarbageFlag = 0;
+      this->NbrRow = 0;
+      this->NbrColumn = 0;
+      this->TrueNbrRow = 0;
+      this->TrueNbrColumn = 0;
+      this->MatrixType = Matrix::ComplexElements;
+    }
+  else
+    {
+      this->ColumnGarbageFlag = new int;
+      *(this->ColumnGarbageFlag) = 1;
+      this->NbrColumn = M.GetNbrColumn();
+      this->NbrRow = M.GetNbrRow();
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;
+      this->Columns = new ComplexVector [this->NbrColumn];
+      Complex Tmp;
+      for (int i = 0; i < this->NbrColumn; i++)
+	{
+	  this->Columns[i] = ComplexVector (this->NbrRow);
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      M.GetMatrixElement(j, i, Tmp);
+	      this->Columns[i].Re(j) = Tmp.Re;
+	      this->Columns[i].Im(j) = Tmp.Im;
+	    }
+	}
+      this->MatrixType = Matrix::ComplexElements;
+    }
 }
 
 // destructor
@@ -196,6 +237,7 @@ void ComplexMatrix::SetMatrixElement(int i, int j, const Complex& x)
   this->Columns[j].RealComponents[i] = x.Re;
   this->Columns[j].ImaginaryComponents[i] = x.Im;
 }
+
 
 // add a value to a matrix element
 //
@@ -753,6 +795,80 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
   delete[] tmp;
   return *this;
 }
+// evaluate matrix determinant (skrewing up matrix elements)
+//
+// return value = matrix determinant 
+
+Complex ComplexMatrix::Determinant () 
+{
+  if (this->NbrColumn != this->NbrRow)
+    return 0.0;
+  Complex TmpDet (1.0);
+  int ReducedNbrRow = this->NbrRow - 1;
+  Complex Pivot;
+  Complex Factor;
+  int PivotPos = 0;
+  double Zero = (this->Columns[0].Re(0) * this->Columns[0].Re(0)) + (this->Columns[0].Im(0) * this->Columns[0].Im(0));
+  double TmpNorm = 0.0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      ComplexVector& TmpColumn = this->Columns[i];
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  TmpNorm = (TmpColumn.Re(j) * TmpColumn.Re(j)) + (TmpColumn.Im(j) * TmpColumn.Im(j));
+	  if (TmpNorm > Zero)
+	    Zero = TmpNorm;
+	}
+    }
+  if (Zero == 0.0)
+    return Complex(0.0);
+  Zero = sqrt(Zero) * MACHINE_PRECISION;
+//  cout << Zero << endl;
+  for (int k = 0; k < ReducedNbrRow; ++k)
+    {
+//      cout << *this << endl;
+      Pivot.Re = this->Columns[k].Re(k);
+      Pivot.Im = this->Columns[k].Im(k);
+      PivotPos = k;
+      while ((fabs(Pivot.Re) < Zero) && (fabs(Pivot.Im) < Zero) && (PivotPos != ReducedNbrRow))
+	{
+	  ++PivotPos;
+	  Pivot.Re = this->Columns[PivotPos].Re(k);
+	  Pivot.Im = this->Columns[PivotPos].Im(k);
+	}
+      if ((fabs(Pivot.Re) < Zero) && (fabs(Pivot.Im) < Zero))
+	return 0.0;
+      if (PivotPos != k)
+	{
+	  ComplexVector TmpColumn3(this->Columns[k]);
+	  this->Columns[k] = this->Columns[PivotPos];
+	  this->Columns[PivotPos] = TmpColumn3;
+	  TmpDet *= -1.0;
+	}
+      TmpDet *= Pivot;
+      Pivot = 1.0 / Pivot;       
+      for (int i = k + 1; i < this->NbrRow; ++i)
+	{
+	  ComplexVector& TmpColumn = this->Columns[i];
+	  if ((fabs(TmpColumn.Re(k)) > Zero) || (fabs(TmpColumn.Re(k)) > Zero))
+	    {
+	      ComplexVector& TmpColumn2 = this->Columns[k];
+	      Factor.Re = ((Pivot.Re * TmpColumn.Re(k)) - (Pivot.Im * TmpColumn.Im(k)));
+	      Factor.Im = ((Pivot.Im * TmpColumn.Re(k)) + (Pivot.Re * TmpColumn.Im(k)));
+	      for (int j = k + 1; j < this->NbrRow; ++j)
+		{
+		  TmpColumn.Re(j) -= ((TmpColumn2.Re(j) * Factor.Re) - (TmpColumn2.Im(j) * Factor.Im)); 
+		  TmpColumn.Im(j) -= ((TmpColumn2.Re(j) * Factor.Im) + (TmpColumn2.Im(j) * Factor.Re)); 
+		}
+	    }
+	}
+    } 
+  Pivot.Re = this->Columns[ReducedNbrRow].Re(ReducedNbrRow);
+  Pivot.Im = this->Columns[ReducedNbrRow].Im(ReducedNbrRow);
+  TmpDet *= Pivot;
+  return TmpDet;
+}
+
 
 // evaluate permanent associated to the (square) matrix using Ryser algorithm
 //

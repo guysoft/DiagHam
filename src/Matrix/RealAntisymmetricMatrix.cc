@@ -972,30 +972,48 @@ double RealAntisymmetricMatrix::Pfaffian()
   double Pivot;
   int PivotColumn;
   int PivotRow;
+  int PivotPos;
   int TwiceK;
+  double Pfaffian = 1.0;
   for (int k = 0; k < this->NbrColumn; k += 2)
     {      
-      // find pivot
+      // find pivot (greater real value)
       Pos = 0;
-      Pivot = fabs(this->OffDiagonalElements[0]);
+      Pivot = fabs(TmpMatrix.OffDiagonalElements[0]);
       PivotColumn = 0;
       PivotRow = 0;
       for (int i = 0; i < k; ++i)
 	{
-	  for (int j = i; j < k; ++j) 
+	  for (int j = i + 1; j < k; ++j) 
 	    {
-	      if (fabs(this->OffDiagonalElements[Pos]) > Pivot)
+	      if (fabs(TmpMatrix.OffDiagonalElements[Pos]) > Pivot)
 		{
-		  Pivot = fabs(this->OffDiagonalElements[Pos]);
+		  Pivot = fabs(TmpMatrix.OffDiagonalElements[Pos]);
 		  PivotColumn = j;
 		  PivotRow = i;
+		  PivotPos = Pos;
 		}
 	      Pos++; 
 	    }
-	  Pos += this->Increment;
+	  Pos += TmpMatrix.Increment;
 	}
+      if (TmpMatrix.OffDiagonalElements[PivotPos] < 0.0)
+	{
+	  Pos = PivotColumn;
+	  PivotColumn = PivotRow;
+	  PivotRow = Pos;
+	}
+      // apply permutation to put pivot in position
+      if (PivotColumn == (TmpMatrix.NbrRow - 2))
+	Pos = PivotRow;
+      else
+	Pos = PivotColumn;
+      if (PivotRow != (TmpMatrix.NbrRow - 2))
+	TmpMatrix.SwapRowColumn(PivotRow, TmpMatrix.NbrRow - 2);
+      if (Pos != (TmpMatrix.NbrRow - 1))
+	TmpMatrix.SwapRowColumn(Pos, TmpMatrix.NbrRow - 1);
     }
-  return 1.0;
+  return Pfaffian;
 }
 
 // Output Stream overload

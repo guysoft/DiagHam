@@ -383,8 +383,8 @@ inline Complex operator / (const Complex& z, double x)
 
 inline Complex operator / (double x, const Complex& z) 
 {
-double n = z.Re * z.Re + z.Im * z.Im;
-  return Complex  ((x * z.Re) / n , (-x * z.Im) / n);
+  double n = 1.0 / ((z.Re * z.Re) + (z.Im * z.Im));
+  return Complex  ((x * z.Re) * n , (-x * z.Im) * n);
 }
 
 inline Complex operator + (const Complex& z)

@@ -289,6 +289,11 @@ class RealMatrix : public Matrix
   // return value = reference on current matrix
   RealMatrix& Transpose ();
 
+  // evaluate matrix determinant (skrewing up matrix elements)
+  //
+  // return value = matrix determinant 
+  double Determinant ();
+
   // evaluate permanent associated to the (square) matrix using Ryser algorithm
   //
   // return value = permanent associated to the matrix

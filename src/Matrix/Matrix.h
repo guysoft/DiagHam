@@ -133,6 +133,20 @@ class Matrix
   // x = new value for matrix element
   virtual void SetMatrixElement(int i, int j, const Complex& x);
 
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  virtual void GetMatrixElement(int i, int j, double& x);
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  virtual void GetMatrixElement(int i, int j, Complex& x);
+
   // add a value to a matrix element
   //
   // i = line position
@@ -200,6 +214,24 @@ class Matrix
   // matrix = matrix to print
   // return value = reference on output stream
   friend ostream& operator << (ostream& str, const Matrix& matrix);
+
+  // write matrix in a file 
+  //
+  // fileName = name of the file where the matrix has to be stored
+  // return value = true if no error occurs
+  virtual bool WriteMatrix (char* fileName);
+
+  // write matrix in a file in ascii mode
+  //
+  // fileName = name of the file where the matrix has to be stored
+  // return value = true if no error occurs
+  virtual bool WriteAsciiMatrix (char* fileName);
+
+  // read matrix from a file 
+  //
+  // fileName = name of the file where the matrix has to be read
+  // return value = true if no error occurs
+  virtual bool ReadMatrix (char* fileName);
 
 };
 
