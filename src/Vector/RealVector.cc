@@ -37,6 +37,7 @@
 #include <fstream>
 
 
+using std::cout;
 using std::ofstream;
 using std::ifstream;
 using std::ios;
@@ -2492,6 +2493,8 @@ bool RealVector::ReadVector (char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    cout << "Cannot open the file: " << fileName << endl;
   int TmpDimension;
   File.read ((char*) &(TmpDimension), sizeof(int));
   this->Resize(TmpDimension);

@@ -57,8 +57,8 @@ using std::ios;
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
 FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, 
-														       int nbrEigenvalue, int maxNbrVectors, 
-														       int maxIter, bool strongConvergence) 
+                                                                                                                       int nbrEigenvalue, int maxNbrVectors, 
+                                                                                                                       int maxIter, bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -220,31 +220,31 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::GetEigenstat
   for (int i = 0; i < nbrEigenstates; ++i) 
     {
       for (int j = 0; j < this->TridiagonalizedMatrix.GetNbrRow(); ++j)
-	{
-	  TmpCoefficents[j].Re = TmpEigenvector(j, i);
-	  TmpCoefficents[j].Im = 0.0;
-	}
+        {
+          TmpCoefficents[j].Re = TmpEigenvector(j, i);
+          TmpCoefficents[j].Im = 0.0;
+        }
       Eigenstates[i] = ComplexVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       int ReducedMaxNbrVector =  this->MaxNbrVectors - 1;
       int MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) / ReducedMaxNbrVector;
       int k = 0;
       for (; k < MaxPos; ++k)
-	{
-	  for (int j = 0; j < ReducedMaxNbrVector; ++j)
-	    {
-	      sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
-	      this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
-	    }
-	  AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), ReducedMaxNbrVector, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
-	  this->Architecture->ExecuteOperation(&Operation);
-	}
+        {
+          for (int j = 0; j < ReducedMaxNbrVector; ++j)
+            {
+              sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
+              this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
+            }
+          AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), ReducedMaxNbrVector, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
+          this->Architecture->ExecuteOperation(&Operation);
+        }
       MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) - (MaxPos * ReducedMaxNbrVector);
       for (int j = 0; j < ReducedMaxNbrVector; ++j)
-	{
-	  sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
-	  this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
-	}
+        {
+          sprintf(TmpVectorName, "vector.%d", (1 + j + (k * ReducedMaxNbrVector)));
+          this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
+        }
       AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), MaxPos, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
       this->Architecture->ExecuteOperation(&Operation);
       Eigenstates[i] /= Eigenstates[i].Norm();
@@ -265,22 +265,22 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
     {
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       if (nbrIter < 2)
-	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
+        Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
-	this->Architecture->ExecuteOperation(&Operation1);
+        this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
-							    this->LanczosVectors[1]).Re;
+                                                            this->LanczosVectors[1]).Re;
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
-						   DiagonalElement(this->Index), 
-						   this->LanczosVectors[0]);
+                                                   DiagonalElement(this->Index), 
+                                                   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
       this->Architecture->ExecuteOperation(&Operation2);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
-								       this->LanczosVectors[2]).Re;
+                                                                       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
-								      this->LanczosVectors[2]).Re;
+                                                                      this->LanczosVectors[2]).Re;
       this->LanczosVectors[0].WriteVector("vector.0");
       this->LanczosVectors[1].WriteVector("vector.1");
     }
@@ -293,78 +293,78 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
   for (int i = this->Index + 2; i < Dimension; i++)
     {
       this->LanczosVectors[2].AddLinearCombination(-this->TridiagonalizedMatrix.
-						   DiagonalElement(this->Index + 1), 
-						   this->LanczosVectors[1], 
-						   -this->TridiagonalizedMatrix.
-						   UpperDiagonalElement(this->Index), 
-						   this->LanczosVectors[0]);
+                                                   DiagonalElement(this->Index + 1), 
+                                                   this->LanczosVectors[1], 
+                                                   -this->TridiagonalizedMatrix.
+                                                   UpperDiagonalElement(this->Index), 
+                                                   this->LanczosVectors[0]);
       if (i > 2)
-	{
-	  Complex* TmpCoef = new Complex [i];
-	  int ReducedMaxNbrVector = this->MaxNbrVectors - 4;
-	  int MaxPos = (i - 3) / ReducedMaxNbrVector;
-	  int k = 0;
-	  for (; k < MaxPos; ++k)
-	    {
-	      for (int j = 0; j < ReducedMaxNbrVector; ++j)
-		{
-		  sprintf(TmpVectorName, "vector.%d", (j + (k * ReducedMaxNbrVector)));
-		  this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
-		}
-	      MultipleComplexScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
-	      this->Architecture->ExecuteOperation(&Operation4);
-	      for (int j = 0; j < ReducedMaxNbrVector; j++)
-		{
-		  TmpCoef[j].Re *= -1.0;
-		}
-	      AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
-	      this->Architecture->ExecuteOperation(&Operation2);
-	    }
-	  MaxPos = (i - 3) - (MaxPos * ReducedMaxNbrVector);
-	  for (int j = 0; j < MaxPos; ++j)
-	    {
-	      sprintf(TmpVectorName, "vector.%d", (j + (k * ReducedMaxNbrVector)));
-	      this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
-	    }
-	  MultipleComplexScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation4);
-	  for (int j = 0; j <= MaxPos; j++)
-	    {
-	      TmpCoef[j].Re *= -1.0;
-	    }
-	  AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation2);	  
-	  delete[] TmpCoef;
-	}
+        {
+          Complex* TmpCoef = new Complex [i];
+          int ReducedMaxNbrVector = this->MaxNbrVectors - 4;
+          int MaxPos = (i - 3) / ReducedMaxNbrVector;
+          int k = 0;
+          for (; k < MaxPos; ++k)
+            {
+              for (int j = 0; j < ReducedMaxNbrVector; ++j)
+                {
+                  sprintf(TmpVectorName, "vector.%d", (j + (k * ReducedMaxNbrVector)));
+                  this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
+                }
+              MultipleComplexScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
+              this->Architecture->ExecuteOperation(&Operation4);
+              for (int j = 0; j < ReducedMaxNbrVector; j++)
+                {
+                  TmpCoef[j].Re *= -1.0;
+                }
+              AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
+              this->Architecture->ExecuteOperation(&Operation2);
+            }
+          MaxPos = (i - 3) - (MaxPos * ReducedMaxNbrVector);
+          for (int j = 0; j < MaxPos; ++j)
+            {
+              sprintf(TmpVectorName, "vector.%d", (j + (k * ReducedMaxNbrVector)));
+              this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
+            }
+          MultipleComplexScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
+          this->Architecture->ExecuteOperation(&Operation4);
+          for (int j = 0; j <= MaxPos; j++)
+            {
+              TmpCoef[j].Re *= -1.0;
+            }
+          AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
+          this->Architecture->ExecuteOperation(&Operation2);          
+          delete[] TmpCoef;
+        }
 
       double VectorNorm = this->LanczosVectors[2].Norm();
       while (VectorNorm < 1e-5)
-	{
-	  cout << "subspace !!! " << i << endl;
-	  double tmp = 0.0;
-	  for (int j = 0; j < this->LanczosVectors[0].GetVectorDimension(); j++)
-	    {
-	      this->LanczosVectors[i][j] = (rand () - 16384) * 0.5;
-	      tmp += ((this->LanczosVectors[i].Re(j) * this->LanczosVectors[i].Re(j)) + 
-		      (this->LanczosVectors[i].Im(j) * this->LanczosVectors[i].Im(j)));
-	    }
-	  tmp = sqrt(tmp);
-	  this->LanczosVectors[i] /= tmp;
-	  ComplexVector TmpVector(this->LanczosVectors[0].GetVectorDimension());
-	  this->Hamiltonian->Multiply(this->LanczosVectors[2], TmpVector);
-	  this->LanczosVectors[i] = TmpVector;
+        {
+          cout << "subspace !!! " << i << endl;
+          double tmp = 0.0;
+          for (int j = 0; j < this->LanczosVectors[0].GetVectorDimension(); j++)
+            {
+              this->LanczosVectors[i][j] = (rand () - 16384) * 0.5;
+              tmp += ((this->LanczosVectors[i].Re(j) * this->LanczosVectors[i].Re(j)) + 
+                      (this->LanczosVectors[i].Im(j) * this->LanczosVectors[i].Im(j)));
+            }
+          tmp = sqrt(tmp);
+          this->LanczosVectors[i] /= tmp;
+          ComplexVector TmpVector(this->LanczosVectors[0].GetVectorDimension());
+          this->Hamiltonian->Multiply(this->LanczosVectors[2], TmpVector);
+          this->LanczosVectors[i] = TmpVector;
 
-	  Complex* TmpCoef2 = new Complex [i];
-	  for (int j = 0; j < i; j++)
-	    {
-	      TmpCoef2[j] = -(this->LanczosVectors[j] * this->LanczosVectors[i]);
-	    }
-	  AddComplexLinearCombinationOperation Operation3 (&(this->LanczosVectors[2]), this->LanczosVectors, i, TmpCoef2);
-	  this->Architecture->ExecuteOperation(&Operation3);
-	  delete[] TmpCoef2;
+          Complex* TmpCoef2 = new Complex [i];
+          for (int j = 0; j < i; j++)
+            {
+              TmpCoef2[j] = -(this->LanczosVectors[j] * this->LanczosVectors[i]);
+            }
+          AddComplexLinearCombinationOperation Operation3 (&(this->LanczosVectors[2]), this->LanczosVectors, i, TmpCoef2);
+          this->Architecture->ExecuteOperation(&Operation3);
+          delete[] TmpCoef2;
 
-	  VectorNorm = this->LanczosVectors[i].Norm();
-	}
+          VectorNorm = this->LanczosVectors[i].Norm();
+        }
       this->LanczosVectors[2] /= VectorNorm;
 
       ComplexVector TmpV (this->LanczosVectors[0]);
@@ -377,9 +377,9 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
       this->Architecture->ExecuteOperation(&Operation);
 
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
-								       this->LanczosVectors[2]).Re;
+                                                                       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
-								      this->LanczosVectors[2]).Re;
+                                                                      this->LanczosVectors[2]).Re;
       sprintf(TmpVectorName, "vector.%d", i);
       this->LanczosVectors[1].WriteVector(TmpVectorName);
       sprintf(TmpVectorName, "vector.%d", i + 1);
@@ -391,7 +391,7 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
     {
       this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
-	this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
+        this->PreviousWantedEigenvalues[i] = this->DiagonalizedMatrix.DiagonalElement(i);
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -401,7 +401,7 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::RunLanczosAlgor
       this->DiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
-	this->PreviousWantedEigenvalues[i] = 2.0 * this->DiagonalizedMatrix.DiagonalElement(i);
+        this->PreviousWantedEigenvalues[i] = 2.0 * this->DiagonalizedMatrix.DiagonalElement(i);
     }
   this->WriteState();
 }
@@ -416,23 +416,23 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::TestConvergence
   if (this->TridiagonalizedMatrix.GetNbrRow() > this->NbrEigenvalue)
     {
       if (this->StrongConvergenceFlag == true)
-	{
-	  for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
-	    {
-	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
-		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
-		{
-		  return false;
-		}
-	    }
-	  return true;
-	}
+        {
+          for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
+            {
+              if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
+                  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
+                {
+                  return false;
+                }
+            }
+          return true;
+        }
       else
-	if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-	    (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
-	  return true;
-	else
-	  return false;
+        if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+            (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
+          return true;
+        else
+          return false;
     }
   return false;
 }
@@ -475,6 +475,8 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
 {
   ifstream File;
   File.open("lanczos.dat", ios::binary | ios::in);
+  if (!File.is_open())
+    cout << "Cannot open the log file (lanczos.dat). Maybe the resume option for Lanczos algorithm is wrongly used" << endl;
   File.read((char*) (&this->Index), sizeof(int));
   File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.read((char*) (&this->EigenvaluePrecision), sizeof(double));
@@ -503,5 +505,4 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   this->DiagonalizedMatrix.SortMatrixUpOrder();
   return true;
 }
-
 
