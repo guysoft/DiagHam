@@ -238,15 +238,15 @@ void PeriodicSpectra::WaveFunctionValue(double x, double SizeX, double y, double
   double TmpRe2 = 0.0; double TmpIm2 = 0.0;
   for (int m = 0; m < this->NbrStateX; ++m)
     {
-      TmpX = double(m - this->LowerImpulsionX) * x / SizeX;
+      TmpX = double(m + this->LowerImpulsionX) * x / SizeX;
       for (int n = 0; n < this->NbrStateY; ++n)
 	{
-	  TmpY = double(n - this->LowerImpulsionY) * y /SizeY + TmpX;
+	  TmpY = double(n + this->LowerImpulsionY) * y /SizeY + TmpX;
 	  TmpRealCoefficients = this->RealCoefficients[m][n];
 	  TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][n];
 	  for (int p = 0; p < this->NbrStateZ; ++p)
 	    {
-	      TmpZ = 2 * M_PI * (TmpY + double(p - this->LowerImpulsionZ) * z / SizeZ);
+	      TmpZ = 2 * M_PI * (TmpY + double(p + this->LowerImpulsionZ) * z / SizeZ);
 	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 	      TmpRe += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
 	      TmpIm += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
@@ -308,12 +308,12 @@ void PeriodicSpectra::GetImpulsion(char* fileName, double sizeX, double sizeY, d
       realImpulsionX += double (m) * tmpRe1;
       imaginaryImpulsionX += double (m) * tmpIm1;
     }
-  realImpulsionX = (realImpulsionX - double(this->LowerImpulsionX) * Re) / sizeX;
-  realImpulsionY = (realImpulsionY - double(this->LowerImpulsionY) * Re) / sizeY;
-  realImpulsionZ = (realImpulsionZ - double(this->LowerImpulsionZ) * Re) / sizeZ;
-  imaginaryImpulsionX = (imaginaryImpulsionX - double(this->LowerImpulsionX) * Im) / sizeX;
-  imaginaryImpulsionY = (imaginaryImpulsionY - double(this->LowerImpulsionY) * Im) / sizeY;
-  imaginaryImpulsionZ = (imaginaryImpulsionZ - double(this->LowerImpulsionZ) * Im) / sizeZ;
+  realImpulsionX = (realImpulsionX + double(this->LowerImpulsionX) * Re) / sizeX;
+  realImpulsionY = (realImpulsionY + double(this->LowerImpulsionY) * Re) / sizeY;
+  realImpulsionZ = (realImpulsionZ + double(this->LowerImpulsionZ) * Re) / sizeZ;
+  imaginaryImpulsionX = (imaginaryImpulsionX + double(this->LowerImpulsionX) * Im) / sizeX;
+  imaginaryImpulsionY = (imaginaryImpulsionY + double(this->LowerImpulsionY) * Im) / sizeY;
+  imaginaryImpulsionZ = (imaginaryImpulsionZ + double(this->LowerImpulsionZ) * Im) / sizeZ;
 
   File.close();
 }

@@ -10,7 +10,8 @@ ThreeDConstantCellPotential.cc  \
 BinaryThreeDConstantCellPotential.cc  \
 HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  \
 PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc \
-DotEmbeddedWellThreeDConstantCellPotential.cc
+DotEmbeddedWellThreeDConstantCellPotential.cc \
+EllipticalDotThreeDConstantCellPotential.cc
 
 check_PROGRAMS=TestPotential
 

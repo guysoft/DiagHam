@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   bool PairY = PairYOption.GetBoolean();
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
-  
+  /* 
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -123,13 +123,47 @@ int main(int argc, char** argv)
   double fundamental;
   energy >> fundamental;
   double tmpE;  
-  ofstream mean ("MeanZ.txt");
+  ofstream polarization ("Polarization.txt");
   
-  ofstream OutFile(out);  
+  //ofstream OutFile(out);  
+  // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
+  //double PositionX = (double(M) * Lx / 2.0);
+  //double RealValue = 0.0, ImaginaryValue = 0.0;
+
+  //for (int j = 0; j <= N; ++j)
+  //  {      
+  //    for (int k = 0; k <= H; ++k)
+  //	{
+  //	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
+  //	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
+  //	}
+  //    OutFile << '\n';
+  //  }
+  //OutFile.close();  
+ /*
+
+  ofstream PX("PolarizationX.txt");
+  ofstream PZ("PolarizationZ.txt");
+
+  for (int i = 1; i < 200; ++i)
+    {
+      Files[i] = new char[80];
+      AddString(Files[i], "eigenvector.", i, "");
+      spectra.GetImpulsion(Space2, Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      energy >> tmpE;
+      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
+      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << endl;
+      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
+      cout << i << endl;
+    }
+
+  PX.close(); PZ.close();
+  energy.close(); polarization.close();
+  */
+  /*
   // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
   double PositionX = (double(M) * Lx / 2.0);
-  double RealValue = 0.0, ImaginaryValue = 0.0;
-
+  double RealValue = 0.0, ImaginaryValue = 0.0;  
   for (int j = 0; j <= N; ++j)
     {      
       for (int k = 0; k <= H; ++k)
@@ -154,10 +188,6 @@ int main(int argc, char** argv)
       delete spectra;
     }
   */
-
-  //PX.close(); PZ.close();
-  energy.close(); mean.close();
-  
 
   /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
@@ -203,18 +233,17 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  /*
+  
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 150;
+      State[i] = 200;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
-  DOSSpectra DOS(1, Files, State, 4e-3, -0.14, 0.28, 2e-4);
+  DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.4, 2e-4);
   DOS.WriteSpectra(out);
-  */
-
+ 
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -268,11 +297,11 @@ int main(int argc, char** argv)
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 149;
+      State[i] = 196;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
-  Spectra Absorption (Nbr, Files, State, 4e-3, 0.03, 0.43, 2e-4);
+  Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.5, 2e-4);
   Absorption.WriteSpectra(out);
 */
 

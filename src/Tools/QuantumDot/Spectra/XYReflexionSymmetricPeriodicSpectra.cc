@@ -61,7 +61,6 @@ XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYRefle
 
   this->RealCoefficients = new double** [this->NbrStateX];
   this->ImaginaryCoefficients = new double** [this->NbrStateX];
-  cout << "First file ... " << endl;
   for (int i = 0; i < this->NbrStateX; ++i)
     {
       this->RealCoefficients[i] = new double* [this->NbrStateY];
@@ -368,18 +367,6 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
     MinUpperY = lowerImpulsionY + nbrStateY;
   if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
     MinUpperZ = lowerImpulsionZ + nbrStateZ;
-  /*
-  cout << endl << this->LowerImpulsionX << '\t' << this->LowerImpulsionY << '\t' << this->LowerImpulsionZ << endl;
-  cout << lowerImpulsionX << '\t' << lowerImpulsionY << '\t' << lowerImpulsionZ << endl << endl;
-
-  cout << this->NbrStateX << '\t' << this->NbrStateY << '\t' << this->NbrStateZ << endl;
-  cout << nbrStateX << '\t' << nbrStateY << '\t' << nbrStateZ << endl << endl;
-
-  cout << MaxLowerX << '\t' <<  MaxLowerY << '\t' <<  MaxLowerZ << endl;
-  cout << MinUpperX << '\t' << MinUpperY << '\t' << MinUpperZ << endl;
-  
-  int MinStateX = MinUpperX - MaxLowerX, MinStateY = MinUpperY - MaxLowerY, MinStateZ = MinUpperZ - MaxLowerZ;
-  */
 
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -390,7 +377,6 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
     }
   double*** realCoefficients = new double** [nbrStateX];
   double*** imaginaryCoefficients = new double** [nbrStateX];
-  cout << "Second file ... " << endl;
   for (int i = 0; i < nbrStateX; ++i)
     {
       realCoefficients[i] = new double* [nbrStateY];
