@@ -276,7 +276,10 @@ void RealMatrix::Resize (int nbrRow, int nbrColumn)
   if (this->NbrRow != nbrRow)
     {
       for (int i = 0; i < this->NbrColumn; i++)
-	this->Columns[i].Resize(nbrRow);
+	{
+	  cout << i << " " <<  this->NbrColumn << endl;
+	  this->Columns[i].Resize(nbrRow);
+	}
       if (this->TrueNbrRow >= nbrRow)
 	{
 	  this->NbrRow = nbrRow;

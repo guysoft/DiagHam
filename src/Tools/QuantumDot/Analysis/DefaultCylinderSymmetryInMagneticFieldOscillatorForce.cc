@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*HilbertSpaceGroup) += new SingleIntegerOption ('Z', "Z-states", "number of cells in z direction", 21);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowz", "lower impulsion in z direction", -10);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('m', "momentum", "quantum number of kinetic momentum in the plane of the second state", 0);
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
 
   (*FileGroup) += new SingleStringOption ('\n', "state", "name of the file containing the first state", "eigenvector.0");
   (*FileGroup) += new SingleStringOption ('\n', "energy", "name of the file energy of the first state", "eigenvalues");
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
   int NbrStateZ = ((SingleIntegerOption*) Manager["Z-states"])->GetInteger();
   int LowImpulsionZ = ((SingleIntegerOption*) Manager["lowz"])->GetInteger();
   int NumberM = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
+  double MagneticField = ((SingleDoubleOption*) Manager["magnetic"])->GetDouble();
 
   char* State = ((SingleStringOption*) Manager["state"])->GetString();
   char* Energy = ((SingleStringOption*) Manager["energy"])->GetString();
@@ -91,7 +93,7 @@ int main(int argc, char** argv)
 
   VerticalPeriodicParticleInMagneticField* Space2 = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ); 
 
-  CylinderInMagneticFieldSpectra spectra (Space, State, 0.0);
+  CylinderInMagneticFieldSpectra spectra (Space, State, MagneticField);
 
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   // polarization in the Z direction

@@ -179,6 +179,7 @@ int main(int argc, char** argv)
   VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, LowZ);
   CylinderInMagneticFieldSpectra* spectra = new CylinderInMagneticFieldSpectra(space, FileName, MagneticField);
    
+  cout << "# " << spectra->GetSquaredRadius () << endl << endl;
   
   double delta = SizeZ / 100.0; double p = 0.0;
   double shift = 0.0;

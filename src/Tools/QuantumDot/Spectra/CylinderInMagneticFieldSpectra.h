@@ -89,6 +89,11 @@ class CylinderInMagneticFieldSpectra
   // sizeZ = size of sample in Z direction
   // positionX, positionY, positionZ = reference to the return values
   void GetMeanPosition(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ);
+
+  // get the value of <phi|r²|phi>
+  //
+  // return = the value of <phi|r²|phi> in Angstrom unit
+  double GetSquaredRadius ();
   
 };
 

@@ -200,7 +200,7 @@ int main(int argc, char** argv)
       ofstream OutputFile;
       OutputFile.precision(14);      
       OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
-      //OutputFile << WaveVector;
+      OutputFile << Sigma << " ";
 
       for (int i = 0; i < NbrEigenvalue; ++i)
 	{

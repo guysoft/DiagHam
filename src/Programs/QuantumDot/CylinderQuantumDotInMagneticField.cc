@@ -247,11 +247,9 @@ int main(int argc, char** argv)
   cout << endl;
   if (Lanczos->TestConvergence())
     {
-      cout << "OK 1" << endl;
       //compute eigenstates
       if (EigenstateFlag == true)
         Eigenstates = (ComplexVector*) Lanczos->GetEigenstates(NbrEigenvalue);
-      cout << "OK 2" << endl;
       // insert here your code using the eigenvalues and the eigenvectors
       if (EigenstateFlag == true)
         {
@@ -264,7 +262,6 @@ int main(int argc, char** argv)
           OutputFile << endl;
           OutputFile.close();
         }
-      cout << "OK 4" << endl;
       if ((EigenstateFlag == true) && (Eigenstates != 0))
         {
           char* TmpFileName = new char[256];
@@ -275,7 +272,6 @@ int main(int argc, char** argv)
             }
           delete[] TmpFileName;
         }
-      cout << "OK 5" << endl;
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
     }

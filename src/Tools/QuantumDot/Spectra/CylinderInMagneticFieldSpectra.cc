@@ -344,6 +344,41 @@ void CylinderInMagneticFieldSpectra::GetMeanPosition(VerticalPeriodicParticleInM
       TmpRe *= (OrbitRadius / sqrt(2.0)); TmpIm *= (OrbitRadius / sqrt(2.0)); 
       realPositionX = -TmpIm; realPositionY = -TmpIm;
       imaginaryPositionX = TmpRe; imaginaryPositionY = TmpRe;      
-
     }
+}
+
+// get the value of <phi|r²|phi>
+//
+// return = the value of <phi|r²|phi> in Angstrom unit
+
+double CylinderInMagneticFieldSpectra::GetSquaredRadius ()
+{
+  double OrbitRadius = LENGTH_FACTOR / sqrt(this->Bz);
+  if (this->NumberM == 0)
+    {
+      double Res = 0.0;
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  Res += (this->RealCoefficients[0][p] * this->RealCoefficients[0][p] + this->ImaginaryCoefficients[0][p] * this->ImaginaryCoefficients[0][p]);
+	  Res -= (this->RealCoefficients[0][p] * this->RealCoefficients[1][p] + this->ImaginaryCoefficients[0][p] * this->ImaginaryCoefficients[1][p]);
+	}
+      for (int n = 1; n < (this->NbrStateR - 1); ++n)
+	{
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    { 
+	      Res += (2 * n + 1) * (this->RealCoefficients[n][p] * this->RealCoefficients[n][p] + this->ImaginaryCoefficients[n][p] * this->ImaginaryCoefficients[n][p]);
+	      Res -= n * (this->RealCoefficients[n][p] * this->RealCoefficients[n - 1][p] + this->ImaginaryCoefficients[n][p] * this->ImaginaryCoefficients[n - 1][p]);
+	      Res -= (n + 1) * (this->RealCoefficients[n][p] * this->RealCoefficients[n + 1][p] + this->ImaginaryCoefficients[n][p] * this->ImaginaryCoefficients[n + 1][p]);    
+	    }
+	}
+      int N = this->NbrStateR - 1;
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  Res += (2 * N + 1) * (this->RealCoefficients[N][p] * this->RealCoefficients[N][p] + this->ImaginaryCoefficients[N][p] * this->ImaginaryCoefficients[N][p]);
+	  Res -= N * (this->RealCoefficients[N][p] * this->RealCoefficients[N - 1][p] + this->ImaginaryCoefficients[N][p] * this->ImaginaryCoefficients[N - 1][p]);	  
+	} 
+      return Res * 2.0 * OrbitRadius * OrbitRadius;
+    }
+
+  return 0;
 }
