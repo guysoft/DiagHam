@@ -24,24 +24,24 @@ while ($NbrFermions <= 40)
     if (-e $TmpFile)
       {
 	print ($TmpFile."\n");
-	$MinArray{$NbrFermions} = (&FindGap($TmpFile)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1)));
+	my $Scaling = ($S * $NbrFermionsInc) / ($NbrFermions * $SInc);
+	$Scaling *= $Scaling;
+	$MinArray{$NbrFermions} = (&FindMinimum($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))) * $Scaling;
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;
   }
 &CreatePostScript(\%MinArray, $Caption, $PrintFlag);
 
-# find gap in a file
+# find a minimum in a file
 #
 # $_[0] = file name
-# $_[1] = L value where to find the excited state used to obtain the gap value
 # return value = ground state energy
 
-sub FindGap
+sub FindMinimum
   {
     my $FileName = $_[0];
     my $Min;
-    my $Min2;
     my $Flag = 0;
     open (INFILE, $FileName);
     my $TmpLine;
@@ -49,25 +49,10 @@ sub FindGap
       {
 	chomp ($TmpLine);
 	my @TmpArray = split (/ /, $TmpLine);
-	if ($Flag < 2)
+	if ($Flag == 0)
 	  {
-	    if ($Flag == 0)
-	      {
-		$Min = $TmpArray[1];
-		$Flag = 1;
-	      }
-	    else
-	      {
-		if ($TmpArray[1] > $Min)
-		  {
-		    $Min2 = $TmpArray[1];
-		    $Flag = 2;
-		  }
-		else
-		  {
-		    $Min = $TmpArray[1];		
-		  }
-	      }
+	    $Min = $TmpArray[1];
+	    $Flag = 1;
 	  }
 	else
 	  {
@@ -75,17 +60,10 @@ sub FindGap
 	      {
 		$Min = $TmpArray[1];		
 	      }
-	    else
-	      {
-		if ($TmpArray[1] < $Min2)
-		  {
-		    $Min2 = $TmpArray[1];		
-		  }
-	      }
 	  }
       }
     close (INFILE);
-    return ($Min2 - $Min);
+    return $Min;
   }
 
 # create postscript graph from data file
@@ -101,7 +79,7 @@ sub CreatePostScript
     my $PrintFlag = $_[2];
     my $N;
     my $E;
-    my $FileName = "fermions_coulomb_gap_".$Caption.".dat";
+    my $FileName = "fermions_laplaciandelta_ground_".$Caption.".dat";
     open (OUTFILE, ">$FileName");
     my $MinN = 200;
     my $MaxN = 0;
@@ -142,7 +120,7 @@ sub CreatePostScript
     $MaxN = $Tmp;
     $MinN = 0.0;
     my $TmpFileName = "tmp".time().".p";
-    my $OutputFile = "fermions_coulomb_gap_".$Caption.".ps";
+    my $OutputFile = "fermions_laplaciandelta_ground_".$Caption.".ps";
     my @TmpArray = split (/_/,  $OutputFile);
     my $Title = "gap ".$Caption;
     open (OUTFILE, ">$TmpFileName");

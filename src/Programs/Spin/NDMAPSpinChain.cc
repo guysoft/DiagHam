@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 	{
 	  int MaxNbrIterLanczos = 4000;
 	  AbstractLanczosAlgorithm* Lanczos;
-	  if ((NbrEigenvalue == 1) || (ReorthogonalizFlag == true))
+	  if ((NbrEigenvalue == 1) || (ReorthogonalizeFlag == false))
 	    {
 	      Lanczos = new ComplexBasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);	
 	    }
