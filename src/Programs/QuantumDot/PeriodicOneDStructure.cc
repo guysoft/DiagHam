@@ -108,6 +108,22 @@ int main(int argc, char** argv)
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();   
   bool EigenstateFlag = ((BooleanOption*) Manager["eigenstate"])->GetBoolean();
 
+  time_t rawtime;
+  struct tm * timeinfo;
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  
+  ofstream Command; Command.open ("Command.txt", ios::out | ios::app);
+  Command << "\n============================ Begin =============================" << '\n';
+  Command << "The program was launched at: " <<  asctime (timeinfo) << '\n';
+  Manager.DisplayOption (Command, true);
+  Command << endl;
+
+  ofstream FullOption; FullOption.open ("FullOption.txt", ios::out | ios::app);
+  FullOption << "\n============================ Begin =============================" << '\n';
+  FullOption << "The program was launched at: " << asctime (timeinfo) << '\n';
+  Manager.DisplayOption (FullOption, false);
+
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, 1000.0);
   // void ConstructPotential(double dotPotential, double wellPotential);
   potential->ConstructPotential(DotPotential, WellPotential);
@@ -197,6 +213,14 @@ int main(int argc, char** argv)
       delete[] TmpFileName;
       cout << endl;
     }
+
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  Command << "The program finished at: " <<  asctime (timeinfo);
+  Command << "============================== End =============================" << '\n';
+  FullOption << "The program finished at: " << asctime (timeinfo);
+  FullOption << "=============================== End ============================" << '\n'; 
+  Command.close(); FullOption.close(); 
   
   return 1;
 }

@@ -132,6 +132,22 @@ int main(int argc, char** argv)
 
   bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
 
+  time_t rawtime;
+  struct tm * timeinfo;
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  
+  ofstream Command; Command.open ("Command.txt", ios::out | ios::app);
+  Command << "\n============================ Begin =============================" << '\n';
+  Command << "The program was launched at: " <<  asctime (timeinfo) << '\n';
+  Manager.DisplayOption (Command, true);
+  Command << endl;
+
+  ofstream FullOption; FullOption.open ("FullOption.txt", ios::out | ios::app);
+  FullOption << "\n============================ Begin =============================" << '\n';
+  FullOption << "The program was launched at: " << asctime (timeinfo) << '\n';
+  Manager.DisplayOption (FullOption, false);
+
   // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier);
   // void ConstructPotential(double dotPotential, double wellPotential);
@@ -266,6 +282,14 @@ int main(int argc, char** argv)
   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);  
   cout << endl << "Total time = " << Dt << endl;
   delete Lanczos;
-  
+
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  Command << "The program finished at: " <<  asctime (timeinfo);
+  Command << "============================== End =============================" << '\n';
+  FullOption << "The program finished at: " << asctime (timeinfo);
+  FullOption << "=============================== End ============================" << '\n'; 
+  Command.close(); FullOption.close(); 
+ 
   return 0;
 }

@@ -150,6 +150,22 @@ int main(int argc, char** argv)
 
   bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();  
 
+  time_t rawtime;
+  struct tm * timeinfo;
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  
+  ofstream Command; Command.open ("Command.txt", ios::out | ios::app);
+  Command << "\n============================ Begin =============================" << '\n';
+  Command << "The program was launched at: " <<  asctime (timeinfo) << '\n';
+  Manager.DisplayOption (Command, true);
+  Command << endl;
+
+  ofstream FullOption; FullOption.open ("FullOption.txt", ios::out | ios::app);
+  FullOption << "\n============================ Begin =============================" << '\n';
+  FullOption << "The program was launched at: " << asctime (timeinfo) << '\n';
+  Manager.DisplayOption (FullOption, false);
+
   // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
   DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
 
@@ -386,6 +402,14 @@ int main(int argc, char** argv)
       Eigenvalues[i] = TmpMatrix.DiagonalElement(i);
       cout << Eigenvalues[i] << '\t';
     }
+
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+  Command << "The program finished at: " <<  asctime (timeinfo);
+  Command << "============================== End =============================" << '\n';
+  FullOption << "The program finished at: " << asctime (timeinfo);
+  FullOption << "=============================== End ============================" << '\n'; 
+  Command.close(); FullOption.close(); 
 
   return 0;
 }
