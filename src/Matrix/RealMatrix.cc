@@ -814,7 +814,7 @@ double RealMatrix::Permanent()
 	      ++Index;
 	    }
 	  for (int i = 0; i < this->NbrColumn; ++i)
-	    Tmp[i] -= this->Columns[i].Components[Index];
+	    Tmp[i] -= this->Columns[Index].Components[i];
 	}
       else
 	{
@@ -825,7 +825,7 @@ double RealMatrix::Permanent()
 	      ++Index;
 	    }
 	  for (int i = 0; i < this->NbrColumn; ++i)
-	    Tmp[i] += this->Columns[i].Components[Index];
+	    Tmp[i] += this->Columns[Index].Components[i];
 	}
       Tmp2 = Tmp[0];
       for (int i = 1; i < this->NbrColumn; ++i)

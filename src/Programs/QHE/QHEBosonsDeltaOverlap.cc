@@ -85,7 +85,7 @@ int main(int argc, char** argv)
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   RealVector Location(2 * NbrBosons, true);
   srand48(29457);
-  for (int k = 0; k < 100; ++k)
+//  for (int k = 0; k < 100; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{

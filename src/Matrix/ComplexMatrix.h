@@ -263,6 +263,20 @@ class ComplexMatrix : protected Matrix
   //
   // return value = permanent associated to the matrix
   Complex Permanent();                                                                                                                                     
+  
+  // evaluate permanent associated to the (square) matrix using Ryser algorithm using precalculation array (faster)
+  //
+  // changeBit = array indicating which bit is changed at the i-th iteration of the Gray code
+  // changeBitSign = array with -1 if the changed bit is from 1 to 0, +1 either
+  // return value = permanent associated to the matrix
+  Complex FastPermanent(int* changeBit, double* changeBitSign);
+
+  // evaluate precalculation array  neede for the fast permanent calculation
+  //
+  // changeBit = reference on the array indicating which bit is changed at the i-th iteration of the Gray code
+  // changeBitSign = reference on array with -1 if the changed bit is from 1 to 0, +1 either
+  void EvaluateFastPermanentPrecalculationArray(int*& changeBit, double*& changeBitSign);
+
   // Output Stream overload
   //
   // Str = reference on output stream

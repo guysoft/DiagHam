@@ -795,16 +795,32 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
   Complex Value;
   Complex Tmp;
   ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrBosons);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrBosons];
   int Pos;
   int Lz;
+  for (int j = 0; j < this->NbrBosons; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
   double* Factors = new double [this->NbrBosons + 1];
   Factors[0] = 1.0;
   Factors[1] = 1.0;
   for (int i = 2; i <= this->NbrBosons; ++i)
     Factors[i] = Factors[i - 1] / sqrt((double) i);
   double TmpFactor;
+  double* ChangeBitSign;
+  int* ChangeBit;
+  int TmpStateDescription;
+  Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
   for (int k = 0; k < this->HilbertSpaceDimension; ++k)
     {
       Pos = 0;
@@ -812,10 +828,11 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
       TmpFactor = state[k] * Factors[this->NbrBosons];
       while (Pos < this->NbrBosons)
 	{
-	  if (this->StateDescription[k][Lz] != 0)
+	  TmpStateDescription = this->StateDescription[k][Lz];
+	  if (TmpStateDescription != 0)
 	    {
-	      TmpFactor *= Factors[this->StateDescription[k][Lz]];
-	      for (int j = 0; j < this->StateDescription[k][Lz]; ++j)
+	      TmpFactor *= Factors[TmpStateDescription];
+	      for (int j = 0; j < TmpStateDescription; ++j)
 		{
 		  Indices[Pos] = Lz;
 		  ++Pos;
@@ -825,20 +842,20 @@ Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& posi
 	}
       for (int i = 0; i < this->NbrBosons; ++i)
 	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
 	  for (int j = 0; j < this->NbrBosons; ++j)
 	    {
-	      TmpCoordinates[0] = position[i << 1];
-	      TmpCoordinates[1] = position[1 + (i << 1)];
-	      basis.GetFunctionValue(TmpCoordinates, Tmp, Indices[j]);
-	      Perm[j].Re(i) = Tmp.Re;
-	      Perm[j].Im(i) = Tmp.Im;
+	      Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
 //      cout << Perm << endl;
 //      this->PrintState(cout, k) << endl;
 //      cout << Perm.Permanent() << " " << state[k] << endl << endl;
-      Value += Perm.Permanent() * TmpFactor;
+      Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
     }
+  delete[] ChangeBitSign;
+  delete[] ChangeBit;
   delete[] Factors;
   return Value;
 }
