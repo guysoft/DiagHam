@@ -1,5 +1,3 @@
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
-
 #include "Tools/QuantumDot/Spectra/Spectra.h"
 #include "Tools/QuantumDot/Spectra/DOSSpectra.h"
 #include "Tools/QuantumDot/Spectra/OverlapSpectra.h"

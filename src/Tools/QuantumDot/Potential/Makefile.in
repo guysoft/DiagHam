@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libPotential.a
 
-libPotential_a_SOURCES = AbstractPotential.cc OneDConstantCellPotential.cc  TwoDConstantCellPotential.cc  BinaryTwoDConstantCellPotential.cc  ThreeDConstantCellPotential.cc  BinaryThreeDConstantCellPotential.cc  HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc
+libPotential_a_SOURCES = AbstractPotential.cc OneDConstantCellPotential.cc  TwoDConstantCellPotential.cc  BinaryTwoDConstantCellPotential.cc  ThreeDConstantCellPotential.cc  BinaryThreeDConstantCellPotential.cc  HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc DotEmbeddedWellThreeDConstantCellPotential.cc
 
 
 check_PROGRAMS = TestPotential
@@ -99,7 +99,8 @@ OneDConstantCellPotential.o TwoDConstantCellPotential.o \
 BinaryTwoDConstantCellPotential.o ThreeDConstantCellPotential.o \
 BinaryThreeDConstantCellPotential.o \
 HardBoxPyramidQuantumDotThreeDConstantCellPotential.o \
-PeriodicPyramidQuantumDotThreeDConstantCellPotential.o
+PeriodicPyramidQuantumDotThreeDConstantCellPotential.o \
+DotEmbeddedWellThreeDConstantCellPotential.o
 AR = ar
 TestPotential_OBJECTS =  TestPotential.o
 TestPotential_LDFLAGS = 
@@ -116,6 +117,7 @@ GZIP_ENV = --best
 DEP_FILES =  .deps/AbstractPotential.P \
 .deps/BinaryThreeDConstantCellPotential.P \
 .deps/BinaryTwoDConstantCellPotential.P \
+.deps/DotEmbeddedWellThreeDConstantCellPotential.P \
 .deps/HardBoxPyramidQuantumDotThreeDConstantCellPotential.P \
 .deps/OneDConstantCellPotential.P \
 .deps/PeriodicPyramidQuantumDotThreeDConstantCellPotential.P \

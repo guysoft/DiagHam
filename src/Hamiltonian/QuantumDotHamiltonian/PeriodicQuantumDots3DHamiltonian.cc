@@ -193,6 +193,18 @@ Complex PeriodicQuantumDots3DHamiltonian::MatrixElement (ComplexVector& V1, Comp
   return Complex();
 }
 
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->Space->GetHilbertSpaceDimension());
+}
+
 // multiply a vector by the current hamiltonian for a given range of idinces 
 // and store result in another vector, low level function (no architecture optimization)
 //
@@ -214,9 +226,15 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelMultiply(ComplexVector&
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
-// only in MonoProcessor Mode!!!!!
-ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
-{ 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// return value = reference on vectorwhere result has been stored
+
+ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
   int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
 
   int m1, m2, n1, n2, p1;
@@ -279,6 +297,74 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
     }
   delete[] TotalIndex;
   return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{ 
+  if ((firstComponent == 0) && (nbrComponent == this->Space->GetHilbertSpaceDimension()))
+    return this->LowLevelAddMultiply(vSource, vDestination);
+  else
+    {
+      int lastComponent = firstComponent + nbrComponent;
+      int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
+      int m1, m2, n1, n2, p1;
+      int IndexX, IndexY, IndexZ;
+      double* TmpRealPrecalculatedHamiltonian;
+      double* TmpImaginaryPrecalculatedHamiltonian;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      
+      int Index1 = firstComponent; int Index2 = 0;
+      int ReducedIndex1 = Index1 / this->NbrStateZ;
+      p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
+      m1 = ReducedIndex1 / this->NbrStateY;
+      n1 = ReducedIndex1 - m1 * this->NbrStateY;
+      
+      for (; Index1 < lastComponent; ++Index1)
+	{
+	  TmpRe = 0.0; TmpIm = 0.0;
+	  TmpRe += vSource.Re(Index1) * this->KineticElements[Index1];
+	  TmpIm += vSource.Im(Index1) * this->KineticElements[Index1];
+	  Index2 = 0;
+	  for (IndexX = m1 + OriginX; IndexX >= m1; --IndexX)
+	    for (IndexY = n1 + OriginY; IndexY >= n1; --IndexY)
+	      {
+		TmpRealPrecalculatedHamiltonian = this->RealPrecalculatedHamiltonian[IndexX][IndexY];
+		TmpImaginaryPrecalculatedHamiltonian = this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY];
+		for (IndexZ = p1 + OriginZ; IndexZ >= p1; --IndexZ)
+		  {
+		    TmpRe += (vSource.Re(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ] - vSource.Im(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ]);
+		    TmpIm += (vSource.Re(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ] + vSource.Im(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ]);
+		    ++Index2;
+		    
+		  }
+	      }
+	  
+	  vDestination.Re(Index1) += TmpRe;
+	  vDestination.Im(Index1) += TmpIm;
+	  ++p1;
+	  if (p1 == this->NbrStateZ)
+	    {
+	      p1 = 0;
+	      ++n1;
+	      if (n1 == this->NbrStateY)
+		{
+		  n1 = 0;
+		  ++m1;
+		}
+	    }
+	}
+      
+      return vDestination;
+    }
 }
   
 void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
