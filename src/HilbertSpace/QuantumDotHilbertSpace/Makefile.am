@@ -2,4 +2,4 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQuantumDotHilbertSpace.a
 
-libQuantumDotHilbertSpace_a_SOURCES=Confined3DOneParticle.cc
+libQuantumDotHilbertSpace_a_SOURCES=Confined3DOneParticle.cc Periodic3DOneParticle.cc

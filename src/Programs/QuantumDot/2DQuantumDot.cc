@@ -2,6 +2,8 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 
+#include "Vector/RealVector.h"
+
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
@@ -14,78 +16,70 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
+
+#include "Tools/QuantumDot/Potential/TwoDPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
-#include <fstream>
+#include <fstream.h>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
 
 
-using std::ios;
 using std::cout;
 using std::endl;
 using std::ofstream;
 
+const double KineticFactor = 37.60;//h bar carre reduit
 
-//Definir des constantes
-int M = 14;//nombre de cellules dans l'axe x
-int N = 14;//nombre de cellules dans l'axe y
-int H = 10;//nombre de mailles en z
-const int InNz1 = 1;//interface gauche du puits ou de la boite
-const int InNz2 = 2;//interface droite du puits ou de la boite
-const double a = 2.97;//parametre de maille en x
-const double b = 2.97;//parametre de maille en y
-const double c = 2.64;//parametre de maille en z
-const double Me = 0.166;//masse effective
-const double h = 37.60;//h bar carre reduit
-
-//profil de potentiel
-double** Potentiel;
-
-//1er indice: cellule d'InN; 2e et 3e: indices de fonction
-double*** TransfertX;
-double*** TransfertY;
-
-//calculer l'energie cinetique
-inline double cinetique(int i, int j);
-//entrer les elements
-inline void Entree();
 //calculer l'integral des fonctions d'indice m et n
-inline double integral(int m, int n, int i, double P);
+inline double integral(int m, int n, int i, int P);
 
-
-// evaluate matrix element
-//
-double EvaluateMatrixElement(int i, int j);
+double Weight_E[] = {0.128917, 0.119204, 0.103178, 0.0802035, 0.0568751, 0.0372012, 0.0217138, 0.0122897, 0.00653256, 0.00326567, 0.00153112, 0.000692242};
+double Weight_H[] = {3.70785e-08, 3.38324e-07, 2.70859e-06, 1.90038e-05, 0.000116127, 0.000612045, 0.0030628, 0.0113668, 0.0345713, 0.0835946, 0.153434, 0.210873};
 
 int main(int argc, char** argv)
 {
-  cout.precision(14); 
+  cout.precision(14);
 
   // some running options and help
-  BooleanOption LanczosOption ('l', "lanczos", "enable lanczos diagonalization algorithm", false);
   BooleanOption HelpOption ('h', "help", "display this help");
   BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
   BooleanOption VerboseOption ('v', "verbose", "verbose mode");
-  BooleanOption EigenstateOption ('e', "eigenstate", "evaluate eigenstates");
   SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
-  SingleIntegerOption MValueOption ('M', "M-cell", "number of cells in the x direction", 10);
-  SingleIntegerOption NValueOption ('N', "N-cell", "number of cells in the y direction", 10);
-  SingleStringOption CoefficientFileNameOption('\0', "coefficients", "name of the file where interaction coeffcients are stored", "Potentiel_E.txt");
+  SingleIntegerOption MValueOption ('M', "M-cell", "number of cells in the x direction", 120);
+  SingleDoubleOption LeftXValueOption('\n', "left-x", "proportion of left cells omitted in x direction", 0.0);
+  SingleDoubleOption RightXValueOption('\n', "right-x", "proportion of right cells omitted in x direction", 0.0);
+  SingleIntegerOption NValueOption ('N', "N-cell", "number of cells in the y direction", 120);
+  SingleDoubleOption LeftYValueOption('\n', "left-y", "proportion of left cells omitted in y direction", 0.0);
+  SingleDoubleOption RightYValueOption('\n', "right-y", "proportion of right cells omitted in y direction", 0.0);
+  SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 2.97);
+  SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 2.97);
+  SingleDoubleOption XMassOption ('\n', "mu-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.166);
+  SingleDoubleOption YMassOption ('\n', "mu-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.166);  
+  SingleStringOption CoefficientFileNameOption('\0', "coefficients", "name of the file where interaction coeffcients are stored");
+
   List<AbstractOption*> OptionList;
-  OptionList += &LanczosOption;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &VerboseOption;
   OptionList += &IterationOption;
   OptionList += &NbrEigenvaluesOption;
-  OptionList += &EigenstateOption;
   OptionList += &MValueOption;
+  OptionList += &LeftXValueOption;
+  OptionList += &RightXValueOption;
   OptionList += &NValueOption;
+  OptionList += &LeftYValueOption;
+  OptionList += &RightYValueOption;
+  OptionList += &CellXSizeOption;
+  OptionList += &CellYSizeOption;
+  OptionList += &XMassOption;
+  OptionList += &YMassOption;
   OptionList += &CoefficientFileNameOption;
+
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
@@ -96,285 +90,207 @@ int main(int argc, char** argv)
       DisplayHelp (OptionList, cout);
       return 0;
     }
-  bool LanczosFlag = LanczosOption.GetBoolean();
+
   bool SMPFlag = SMPOption.GetBoolean();
   bool VerboseFlag = VerboseOption.GetBoolean();
-  bool EigenstateFlag = EigenstateOption.GetBoolean();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  char* CoefficientFileName = CoefficientFileNameOption.GetString(); 
-  M = MValueOption.GetInteger();
-  N = NValueOption.GetInteger();
+  int NbrCellX = MValueOption.GetInteger();
+  double LeftX = LeftXValueOption.GetDouble();
+  double RightX = RightXValueOption.GetDouble();
+  int NbrCellY = NValueOption.GetInteger();
+  double LeftY = LeftYValueOption.GetDouble();
+  double RightY = RightYValueOption.GetDouble();
+  double Lx = CellXSizeOption.GetDouble();
+  double Ly = CellYSizeOption.GetDouble();
+  double Mux = XMassOption.GetDouble();
+  double Muy = YMassOption.GetDouble();
+  char* CoefficientFileName = CoefficientFileNameOption.GetString();
 
-  // initialize matrix associated to the hamiltonian
+  int NbrStateX = NbrCellX; int NbrStateY = NbrCellY;
+  int MinX = LeftX * NbrCellX; int MaxX = (1.0 - RightX) * NbrCellX;
+  int MinY = LeftY * NbrCellY; int MaxY = (1.0 - RightY) * NbrCellY;
 
   // enter here hilbert space dimension
-  int Dimension = M*N;
-  Potentiel = new double* [M];
-  for (int i = 0; i < M; ++i)
-    {
-      Potentiel[i] = new double [N];
-    }
-  ifstream InputFile;
-  InputFile.open(CoefficientFileName, ios::binary | ios::in);
-  for (int j = 0; j < N; ++j)
-    for (int i = 0; i < M; ++i)
-      InputFile >> Potentiel[i][j];
-  InputFile.close();
+  int Dimension = NbrStateX * NbrStateY;
 
-  TransfertX = new double** [M];
-  for (int i = 0; i < M; ++i)
+  TwoDPotential Potential = TwoDPotential (NbrCellX, NbrCellY, 12);
+  //Potential.UniformWell(0.5, 1.8, Weight_E, true);
+  //ofstream PotentialFile("Potential2D.txt");
+  //Potential.PrintPotential(PotentialFile).flush();
+
+  Potential.ReadTwoDPotential(CoefficientFileName);
+
+  // coupling table in X direction
+  RealVector** ElementaryCouplingX = new RealVector* [NbrStateX];
+  for (int m1 = 0; m1 < NbrStateX; ++m1)
     {
-      TransfertX[i] = new double* [M];
-      for (int j = 0; j < M; ++j)
-	TransfertX[i][j] = new double [M];
+      ElementaryCouplingX[m1] = new RealVector[NbrStateX];
+      for (int m2 = 0; m2 < NbrStateX; ++m2)
+	{
+	  ElementaryCouplingX[m1][m2] = RealVector(NbrCellX);
+	  for (int i = 0; i < NbrCellX; ++i)
+	    ElementaryCouplingX[m1][m2][i] = integral(m1 + 1, m2 + 1, i + 1, NbrCellX);
+	}
     }
-  TransfertY = new double** [N];
-  for (int i = 0; i < N; ++i)
+
+  // coupling table in Y direction
+  RealVector** ElementaryCouplingY = new RealVector* [NbrStateY];
+  for (int n1 = 0; n1 < NbrStateY; ++n1)
     {
-      TransfertY[i] = new double* [N];
-      for (int j = 0; j < N; ++j)
-	TransfertY[i][j] = new double [N];
+      ElementaryCouplingY[n1] = new RealVector[NbrStateY];
+      for (int n2 = 0; n2 < NbrStateY; ++n2)
+	{
+	  ElementaryCouplingY[n1][n2] = RealVector(NbrCellY);
+	  for (int j = 0; j < NbrCellY; ++j)
+	    ElementaryCouplingY[n1][n2][j] = integral(n1 + 1, n2 + 1, j + 1, NbrCellY);
+	}
     }
-  Entree();
+
+  RealVector KineticX (NbrStateX);
+  RealVector KineticY (NbrStateY);
+  double TmpKineticX = KineticFactor / (Mux * Lx * Lx * NbrCellX * NbrCellX);
+  double TmpKineticY = KineticFactor / (Muy * Ly * Ly * NbrCellY * NbrCellY);
+  for (int i = 0; i < NbrStateX; ++i)
+    KineticX[i] = TmpKineticX * (i + 1) * (i + 1);
+
+  for (int j = 0; j < NbrStateY; ++j)
+    KineticY[j] = TmpKineticY * (j + 1) * (j + 1);
+
+  RealVector** Intermediate = new RealVector* [NbrStateX];
+  double tmp = 0.0;
+  for (int m1 = 0; m1 < NbrStateX; ++m1)
+    {
+      Intermediate[m1] = new RealVector[NbrStateX];
+      for (int m2 = 0; m2 < m1; ++m2)
+	{
+	  Intermediate[m1][m2] = RealVector(NbrCellY);
+	  Intermediate[m2][m1] = RealVector(NbrCellY);
+	  for (int j = MinY; j < MaxY; ++j)
+	    {
+	      tmp = 0.0;
+	      for (int i = MinX; i < MaxX; ++i)
+		tmp += (Potential(i, j) * ElementaryCouplingX[m1][m2][i]);
+	      Intermediate[m1][m2][j] = tmp;
+	      Intermediate[m2][m1][j] = tmp;
+	    }
+	}
+      Intermediate[m1][m1] = RealVector(NbrCellY);
+      for (int j = MinY; j < MaxY; ++j)
+	{
+	  tmp = 0.0;
+	  for (int i = MinX; i < MaxX; ++i)
+	    tmp += (Potential(i, j) * ElementaryCouplingX[m1][m1][i]);
+	  Intermediate[m1][m1][j] = tmp;
+	}
+    }
 
   RealSymmetricMatrix HamiltonianRepresentation (Dimension);
 
-  double tmp = 0.0;
-  double tmp2 = 0.0;
-  int m1;
-  int n1;
-  int m2;
-  int n2;
-  
-  for (int i = 0; i < Dimension; ++i)
-    {
-      n1 = i / M;
-      m1 = i - (n1 * M);
-      for (int j = 0; j < i; ++j)
-	{
-	  tmp = 0.0;
-	  n2 = (j / M);
-	  m2 = j - (n2 * M);
-	  for (int k = 0; k < M; ++k)
-	    {
-	      tmp2 = TransfertX[k][m1][m2];
-	      for (int l = 0; l < N; ++l)
-		tmp += Potentiel[k][l] * tmp2 * TransfertY[l][n1][n2];
-	    }
-	  HamiltonianRepresentation(j, i) = tmp;
-	}
-      tmp = cinetique(m1 + 1, n1 + 1);
-      for (int k = 0; k < M; ++k)
-	{
-	  tmp2 = TransfertX[k][m1][m1];
-	  for (int l = 0; l < N; ++l)
-	    tmp += Potentiel[k][l] * tmp2 * TransfertY[l][n1][n1];
-	}
-      HamiltonianRepresentation(i, i) = tmp;
-    }
+  double ShiftHamiltonian = KineticX[NbrStateX - 1] + KineticY[NbrStateY - 1];
 
-  // store matrix in an hamiltonian class and create corresponding hilbert space
-  UndescribedHilbertSpace HilbertSpace(Dimension);
-  ExplicitHamiltonian Hamiltonian(&HilbertSpace, &HamiltonianRepresentation);
-  RealVector* Eigenstates = 0;
-  double* Eigenvalues = 0;
+  for (int n1 = 0; n1 < NbrStateY; ++n1)
+    for (int m1 = 0; m1 < NbrStateX; ++m1)
+      {
+	for (int n2 = 0; n2 < n1; ++n2)
+	  {
+	    for (int m2 = 0; m2 < NbrStateX; ++m2)
+	      {
+		tmp = 0.0;
+		for (int j = MinY; j < MaxY; ++j)
+		    tmp += (ElementaryCouplingY[n2][n1][j] * Intermediate[m2][m1][j]);
+	 	HamiltonianRepresentation.SetMatrixElement(m2 + n2 * NbrStateX, m1 + n1 * NbrStateX, tmp);
+	      }
+	  }
+	for (int m2 = 0; m2 < m1; ++m2)
+	  {
+	    tmp = 0.0;
+	    for (int j = MinY; j < MaxY; ++j)
+	      tmp += (ElementaryCouplingY[n1][n1][j] * Intermediate[m2][m1][j]);
+	    HamiltonianRepresentation.SetMatrixElement(m2 + n1 * NbrStateX, m1 + n1 * NbrStateX, tmp);
+	  }
+	tmp = KineticX[m1] + KineticY[n1] - ShiftHamiltonian;
+	for (int j = MinY; j < MaxY; ++j)
+	  tmp += (ElementaryCouplingY[n1][n1][j] * Intermediate[m1][m1][j]);
+	HamiltonianRepresentation.SetMatrixElement(m1 + n1 * NbrStateX, m1 + n1 * NbrStateX, tmp);
+      }
+
+  delete[] ElementaryCouplingX; delete[] ElementaryCouplingY; delete[] Intermediate;
+
+  // RealVector* Eigenstates = 0;
+  double* Eigenvalues = new double [NbrEigenvalue];
 
   // find the eigenvalues (and eigenvectors if needed)
-  if (LanczosFlag == false)
-    {
-      if (Hamiltonian.GetHilbertSpaceDimension() > 1)
-	{
-	  // diagonalize the hamiltonian
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Dimension);
-
-	  if (EigenstateFlag == false)
-	    {
-	      ((RealSymmetricMatrix*) Hamiltonian.GetHamiltonian())->Householder(TmpTriDiag, MACHINE_PRECISION);
-	      TmpTriDiag.Diagonalize();
-	      TmpTriDiag.SortMatrixUpOrder();
-	    }
-	  else
-	    {
-	      RealMatrix TmpEigenvectors (Dimension, Dimension);
-	      ((RealSymmetricMatrix*) Hamiltonian.GetHamiltonian())->Householder(TmpTriDiag, MACHINE_PRECISION, TmpEigenvectors);
-	      TmpTriDiag.Diagonalize(TmpEigenvectors);
-	      TmpTriDiag.SortMatrixUpOrder(TmpEigenvectors);
-	      Eigenstates = new RealVector [NbrEigenvalue];
-	      for (int i = 0; i < NbrEigenvalue; ++i)
-		{
-		  Eigenstates[i] = TmpEigenvectors[i];
-		}
-	    }
-
-	  // store eigenvalues
-	  int Max = Hamiltonian.GetHilbertSpaceDimension();
-	  if (Max > NbrEigenvalue)
-	    Max = NbrEigenvalue;
-	  Eigenvalues = new double [NbrEigenvalue];
-	  for (int j = 0; j < Max ; j++)
-	    {
-	      Eigenvalues[j]= TmpTriDiag.DiagonalElement(j);
-	    }
-	}
-      else
-	{
-	  cout << (*(Hamiltonian.GetHamiltonian()))(0, 0) << endl;
-	}
-    }
+  
+  // architecture type (i.e. 1 CPU or multi CPU)
+  AbstractArchitecture* Architecture;
+  if (SMPFlag == true)
+    Architecture = new SMPArchitecture(2);
   else
+    Architecture = new MonoProcessorArchitecture;
+  
+  double Precision;
+  double PreviousLowest;
+  double Lowest;
+  int CurrentNbrIterLanczos;
+
+  // type of lanczos algorithm (with or without reorthogonalization)
+  // BasicLanczosAlgorithm Lanczos(Architecture, MaxNbrIterLanczos);
+  FullReorthogonalizedLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);      
+  // store matrix in an hamiltonian class and create corresponding hilbert space
+  cout << "End of filling the matrix" << endl;      
+  UndescribedHilbertSpace HilbertSpace(Dimension);
+  ExplicitHamiltonian Hamiltonian(&HilbertSpace, &HamiltonianRepresentation);
+  
+  
+  // initialization of lanczos algorithm
+  Precision = 1.0;
+  PreviousLowest = 1e50;
+  Lowest = PreviousLowest;
+  CurrentNbrIterLanczos = NbrEigenvalue + 3;
+  Lanczos.SetHamiltonian(&Hamiltonian);
+  Lanczos.InitializeLanczosAlgorithm();
+  Lanczos.RunLanczosAlgorithm(NbrEigenvalue + 2);
+  RealTriDiagonalSymmetricMatrix TmpMatrix;
+  
+  // run Lancos algorithm up to desired precision on the n-th eigenvalues
+  while ((Precision > 1e-14) && (CurrentNbrIterLanczos++ < MaxNbrIterLanczos))
     {
-      
-      // architecture type (i.e. 1 CPU or multi CPU)
-      AbstractArchitecture* Architecture;
-      if (SMPFlag == true)
-	Architecture = new SMPArchitecture(2);
-      else
-	Architecture = new MonoProcessorArchitecture;
-
-
-      // type of lanczos algorithm (with or without reorthogonalization)
-//	  BasicLanczosAlgorithm Lanczos(Architecture, MaxNbrIterLanczos);
-      FullReorthogonalizedLanczosAlgorithm Lanczos(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
-	
-      // initialization of lanczos algorithm
-      double Precision = 1.0;
-      double PreviousLowest = 1e50;
-      double Lowest = PreviousLowest;
-      int CurrentNbrIterLanczos = NbrEigenvalue + 3;
-      Lanczos.SetHamiltonian(&Hamiltonian);
-      Lanczos.InitializeLanczosAlgorithm();
-      Lanczos.RunLanczosAlgorithm(NbrEigenvalue + 2);
-      RealTriDiagonalSymmetricMatrix TmpMatrix;
-
-      // run Lancos algorithm up to desired precision on the n-th eigenvalues
-      while ((Precision > 1e-14) && (CurrentNbrIterLanczos++ < MaxNbrIterLanczos))
-	{
-	  Lanczos.RunLanczosAlgorithm(1);
-	  TmpMatrix.Copy(Lanczos.GetDiagonalizedMatrix());
-	  TmpMatrix.SortMatrixUpOrder();
-	  Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
-	  if (VerboseFlag == true)
-	    cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << endl;
-	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-	  PreviousLowest = Lowest; 
-	}      
-      if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
-	{
-	  cout << "too much Lanczos iterations" << endl;
-	  exit(0);
-	}
-      
-      // store eigenvalues 
-      Eigenvalues = new double [NbrEigenvalue];
-      for (int i = 0; i < NbrEigenvalue; ++i)
-	{
-	  Eigenvalues[i] = TmpMatrix.DiagonalElement(i) + (h/Me)*((1.0/ (a * a)) + (1.0/ (b * b)));
-	}
-      cout << endl;
-      
-      //compute eigenstates
-      if (EigenstateFlag == true)
-	Eigenstates = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
-    }
-
-
-  // insert here your code using the eigenvalues and the eigenvectors
-  ofstream OutputFile;
-  OutputFile.precision(14);
-  OutputFile.open("eigenvalues", ios::binary | ios::out);
-  for (int i = 0; i < NbrEigenvalue; ++i)
+      Lanczos.RunLanczosAlgorithm(1);
+      TmpMatrix.Copy(Lanczos.GetDiagonalizedMatrix());
+      TmpMatrix.SortMatrixUpOrder();
+      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
+      if (VerboseFlag == true)
+	cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << endl;
+      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
+      PreviousLowest = Lowest; 
+    }      
+  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
     {
-      OutputFile << Eigenvalues[i] << " ";
-      cout << Eigenvalues[i] << " ";
+      cout << "too much Lanczos iterations" << endl;
+      exit(0);
     }
+  
+  // store eigenvalues      
+  for (int i = 0; i < NbrEigenvalue; ++i)    
+    {
+      Eigenvalues[i] = TmpMatrix.DiagonalElement(i) + ShiftHamiltonian;
+      cout << Eigenvalues[i] << '\t';
+    }
+    
   cout << endl;
-  OutputFile << endl;
-  OutputFile.close();
-  if ((EigenstateFlag == true) && (Eigenstates != 0))
-    {
-      char* TmpFileName = new char[256];
-      for (int i = 0; i < NbrEigenvalue; ++i)
-	{
-	  sprintf  (TmpFileName, "eigenvector.%d", i);
-	  Eigenstates[i].WriteAsciiVector(TmpFileName);
-	}
-      delete[] TmpFileName;
-    }
-
+      
+  //compute eigenstates
+  //RealVector*  Eigenstates = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);      
+  
   return 0;
 }
 
-//calculer l'energie cinetique
-inline double cinetique(int i, int j)  {
-  return (h/Me)*( ((i/(M*a)) * (i/(M*a))) + ((j/(N*b)) * (j/(N*b))) - (1.0/ (a * a)) - (1.0/ (b * b)));
-}
-
-//entrer les elements
-inline void Entree(){
-
-//  double temp1 = M*M*a*a; double temp2 = N*N*b*b;
-  
-/*  for (int i = 0; i < M; i++)
-    KX[i] = (i+1)*(i+1)/temp1;
-  for (int i = 0; i < N; i++)
-    KY[i] = (i+1)*(i+1)/temp2;*/  
-  
-  //entrer les elements de matrice de transfert sur une chaine lineaire
-  for (int i = 0; i < M; i++){
-    for (int j = 0; j < M; j++){
-      for (int k = 0; k < M; k++){
-	TransfertX[i][j][k] = integral(j+1,k+1,i+1,M);
-      }
-    }
-  }
-  
-  for (int i = 0; i < N; i++){
-    for (int j = 0; j < N; j++){
-      for (int k = 0; k < N; k++){
-	TransfertY[i][j][k] = integral(j+1,k+1,i+1,N);
-      }
-    }
-  }
-
-}
-
-  
 
 //calculer l'integral des fonctions d'indice m et n
-inline double integral(int m, int n, int i, double P){
+inline double integral(int m, int n, int i, int P){
   if (m != n)
-    return (1/M_PI)*(((sin(i*(m - n)*M_PI/P) - sin((i - 1)*(m - n)*M_PI/P))/(m -n)) - ((sin(i*(m + n)*M_PI/P) - sin((i - 1)*(m + n)*M_PI/P))/(m + n)));
+    return M_1_PI * (((sin(i * (m - n) * M_PI / P) - sin((i - 1) * (m - n) * M_PI / P)) / (m - n)) - ((sin(i * (m + n) * M_PI / P) - sin((i - 1) * (m + n) * M_PI / P)) / (m + n)));
   else
-    return (1/P)*(1 + (P/(2*M_PI*n))*(sin(2*M_PI*n*(i - 1)/P) - sin(2*M_PI*n*i/P)));
-}
-
-
-
-  // evaluate matrix element
-//
-
-double EvaluateMatrixElement(int i, int j)
-{
-
-  double tmp = 0.0;
-
-  
-  //indices horizontales
-  int m1 = (i % M);
-  int n1 = (i / M);
-
-  if (i == j)  
-    tmp = cinetique(m1 + 1, n1 + 1);
-
-  //indices verticales
-  int m2 = (j % M);
-  int n2 = (j / M);
-
-  //entrer l'element de matrice
-  for (int k = 0; k < M; k ++)
-    for (int l = 0; l < N; l++)
-      tmp += Potentiel[k][l] * TransfertX[k][m1][m2] * TransfertY[l][n1][n2];
-	
-  return tmp;
+    return (1.0 / P) * (1 + (P / (2 * M_PI * n)) * (sin(2 * M_PI * n * (i - 1) / P) - sin(2 * M_PI * n * i / P)));
 }

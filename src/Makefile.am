@@ -1,4 +1,4 @@
-SUBDIRS=BitmapPicture Color Architecture DMRGAlgorithm GeneralTools Hamiltonian HilbertSpace Interaction LanczosAlgorithm Matrix Output Polynomial QuantumNumber Tensor TensorProduct Vector Operator MathTools Options FunctionBasis Programs
+SUBDIRS=BitmapPicture Color Architecture DMRGAlgorithm GeneralTools Hamiltonian HilbertSpace Interaction LanczosAlgorithm Matrix Output Polynomial QuantumNumber Tensor TensorProduct Vector Operator MathTools Options FunctionBasis Tools Programs
 
 bin_PROGRAMS=DiagHam
 

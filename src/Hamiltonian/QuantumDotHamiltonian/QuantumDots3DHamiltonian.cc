@@ -29,9 +29,10 @@
 
 
 #include "config.h"
-#include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
+#include "Hamiltonian/QuantumDots3DHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Complex.h"
+#include "Potential/ThreeDPotential.h"
 
 #include <iostream>
 
@@ -63,10 +64,7 @@ using std::endl;
 // overlapingFactors = tridimensionnal array where overlaping factors are stored
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double preConstantRegionSize,
-						   double postConstantRegionSize, double postConstantRegionPotential, double mux, double muy, double muz, 
-						   int nbrCellX, int nbrCellY, int nbrCellZ, double*** overlapingFactors,
-						   int memory)
+QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -82,10 +80,13 @@ QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space,
   this->NbrStateX = this->Space->GetNbrStateX();
   this->NbrStateY = this->Space->GetNbrStateY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
-  this->PreConstantRegionSize = preConstantRegionSize;
-  this->PostConstantRegionSize = postConstantRegionSize;
-  this->PostConstantRegionPotential = postConstantRegionPotential;
-  this->InteractionFactors = overlapingFactors;  
+  this->LeftNumber = PotentialInput->under;
+  this->PreConstantRegionSize = PotentialInput->UnderSize;
+  this->PreConstantRegionPotential = PotentialInput->UnderPotential;
+  this->RightNumber = PotentialInput->above;
+  this->PostConstantRegionSize =  PotentialInput->AboveSize;
+  this->PostConstantRegionPotential =  PotentialInput->AbovePotential;
+  this->InteractionFactors = PotentialInput->Potential;
   this->EvaluateInteractionFactors(memory);
 }
 
@@ -116,7 +117,10 @@ QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(const QuantumDots3DHamiltonia
   this->WaveFunctionOverlapY = hamiltonian.WaveFunctionOverlapY;
   this->WaveFunctionOverlapZ = hamiltonian.WaveFunctionOverlapZ;
   this->FullPrecalculatedHamiltonian = hamiltonian.FullPrecalculatedHamiltonian;
+  this->LeftNumber = hamiltonian.LeftNumber;
   this->PreConstantRegionSize = hamiltonian.PreConstantRegionSize;
+  this->PreConstantRegionPotential = hamiltonian.PreConstantRegionPotential;
+  this->RightNumber = hamiltonian.RightNumber;
   this->PostConstantRegionSize = hamiltonian.PostConstantRegionSize;
   this->PostConstantRegionPotential = hamiltonian.PostConstantRegionPotential;
 }
@@ -548,9 +552,11 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 	}
       return vDestination;
     }
+/*
   if (this->NbrPrecalculatedDimension == 0x010)
     {
       double Tmp = 0.0;
+      double TmpTotal = 0.0;
       int Index1 = firstComponent;
       int ReducedIndex1 = Index1 / this->NbrStateZ;
       int k1 = Index1 - ReducedIndex1 * this->NbrStateZ;
@@ -559,34 +565,25 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
       int ReducedDim = this->NbrStateX * this->NbrStateY;
       double* TmpWaveFunctionOverlapZ;
       double* TmpPrecalculatedHamiltonian;
+      int ReducedIndex2 = 0;
+      int Index2 = 0;
+
       while (Index1 < LastComponent)
 	{
-	  vDestination[Index1] += this->DiagonalElements[Index1] * vSource[Index1];
-	  int ReducedIndex2 = 0;
-	  int Index2 = 0;
+	  ReducedIndex2 = 0;
+	  Index2 = 0;
+	  Tmp = 0.0;
+	  TmpTotal = 0.0;
 	  for (; ReducedIndex2 < ReducedIndex1; ++ReducedIndex2)
 	    {
 	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex2];
-	      for (k2 = 0; k2 < k1; ++k2)
-		{		  
+	      for (k2 = 0; k2 < this->NbrStateZ; ++k2)
+		{	     
 		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
 		  Tmp = 0.0;
-		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		    {
-		      Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		    }
-		  vDestination[Index1] += Tmp * vSource[Index2];
-		  ++Index2;
-		}
-	      for (; k2 < this->NbrStateZ; ++k2)
-		{		  
-		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k2][k1];
-		  Tmp = 0.0;
-		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		    {
-		      Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		    }
-		  vDestination[Index1] += Tmp * vSource[Index2];
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		    
+		  TmpTotal += Tmp * vSource[Index2];
 		  ++Index2;
 		}
 	    }
@@ -595,55 +592,214 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
 	    {
 	      TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
 	      Tmp = 0.0;
-	      for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		{
-		  Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		}
-	      Tmp += TmpWaveFunctionOverlapZ[this->NbrCellZ + 1] * this->PostConstantRegionPotential;		  
-	      vDestination[Index1] += Tmp * vSource[Index2];
+	      for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		
+	      Tmp += this->PartialZPrecalculatedHamiltonian[k1][k2];	      
+	      TmpTotal += Tmp * vSource[Index2];
 	      ++Index2;
-	    }	  
+	    }
+       
+	  TmpTotal += this->DiagonalElements[Index1] * vSource[Index1];	      
 	  ++k2;
-	  ++Index2;	  
+	  ++Index2;
 	  for (; k2 < this->NbrStateZ; ++k2)
 	    {
-	      TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k2][k1];
+	      TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
 	      Tmp = 0.0;
-	      for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		{
-		  Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		}
-	      Tmp += TmpWaveFunctionOverlapZ[this->NbrCellZ + 1] * this->PostConstantRegionPotential;		  
-	      vDestination[Index1] += Tmp * vSource[Index2];
+	      for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		
+	      Tmp += this->PartialZPrecalculatedHamiltonian[k1][k2];	     
+	      TmpTotal += Tmp * vSource[Index2];
 	      ++Index2;
-	    }	  
+	    }
 	  ++ReducedIndex2;
 	  for (; ReducedIndex2 < ReducedDim; ++ReducedIndex2)
 	    {
-	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex2][ReducedIndex1];
-	      for (k2 = 0; k2 < k1; ++k2)
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex2];
+	      for (k2 = 0; k2 < this->NbrStateZ; ++k2)
 		{		  
 		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
 		  Tmp = 0.0;
-		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		    {
-		      Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		    }
-		  vDestination[Index1] += Tmp * vSource[Index2];
-		  ++Index2;
-		}
-	      for (; k2 < this->NbrStateZ; ++k2)
-		{		  
-		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k2][k1];
-		  Tmp = 0.0;
-		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-		    {
-		      Tmp += TmpWaveFunctionOverlapZ[CellZ + 1] * TmpPrecalculatedHamiltonian[CellZ];
-		    }
-		  vDestination[Index1] += Tmp * vSource[Index2];
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		    		
+		  TmpTotal += Tmp * vSource[Index2];
 		  ++Index2;
 		}
 	    }
+	  vDestination[Index1] += TmpTotal;
+	  ++k1;
+	  if (k1 == this->NbrStateZ)
+	    {
+	      k1 = 0;
+	      ++ReducedIndex1;
+	    }
+	  ++Index1;
+	}
+      return vDestination;
+    }
+*/
+  if (this->NbrPrecalculatedDimension == 0x001)
+    {
+      double TmpVSource = 0.0;
+      double Tmp = 0.0;
+      double TmpTotal = 0.0;
+      int Index1 = firstComponent;
+      int ReducedIndex1 = Index1 / this->NbrStateZ;
+      int k1 = Index1 - ReducedIndex1 * this->NbrStateZ;
+      int ReducedFirst = firstComponent / this->NbrStateZ;
+      int kFirst = firstComponent - ReducedFirst * this->NbrStateZ;
+      int ReducedLast = LastComponent / this->NbrStateZ;
+      int kLast = LastComponent - ReducedLast * this->NbrStateZ;
+      int k2 = 0;
+      int CellZ;
+      int ReducedDim = this->NbrStateX * this->NbrStateY;
+      double* TmpWaveFunctionOverlapZ;
+      double* TmpPrecalculatedHamiltonian;
+
+      while (Index1 < LastComponent)
+	{
+	  int ReducedIndex2 = 0;
+	  int Index2 = 0;
+	  Tmp = 0.0;
+	  TmpTotal = 0.0;
+	  TmpVSource = vSource[Index1];	  
+	  for (; ReducedIndex2 < ReducedFirst; ++ReducedIndex2)
+	    {
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex2];
+	      for (k2 = 0; k2 < this->NbrStateZ; ++k2)
+		{	     
+		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		  Tmp = 0.0;
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];
+		  TmpTotal += Tmp * vSource[Index2];
+		  ++Index2;
+		}
+	    }
+	  TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex2];
+	  if (ReducedIndex2 == ReducedIndex1)	    
+	    for (k2 = 0; k2 < kFirst; ++k2)
+	      {
+		TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		Tmp = 0.0;
+		for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		  Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ]; 	  
+		Tmp += PartialZPrecalculatedHamiltonian[k1][k2];
+		TmpTotal += Tmp * vSource[Index2];
+		++Index2;
+	      }
+	  else
+	    for (k2 = 0; k2 < kFirst; ++k2)
+	      {
+		TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		Tmp = 0.0;
+		for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		  Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ]; 	  
+		TmpTotal += Tmp * vSource[Index2];
+		++Index2;
+	      }		      
+	  // intersection
+	  if (ReducedIndex2 < ReducedIndex1)
+	    {
+	      for (; k2 < this->NbrStateZ; ++k2)
+		{	      
+		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		  Tmp = 0.0;
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];
+		  TmpTotal += Tmp * vSource[Index2];
+		  vDestination[Index2] += Tmp * TmpVSource;
+		  ++Index2;			      
+		}
+	      ++ReducedIndex2;
+	      for (; ReducedIndex2 < ReducedIndex1; ++ReducedIndex2)
+		{
+		  TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex2];
+		  for (k2 = 0; k2 < this->NbrStateZ; ++k2)
+		    {	  
+		      TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		      Tmp = 0.0;
+		      for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+			Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];
+		      TmpTotal += Tmp * vSource[Index2];
+		      vDestination[Index2] += Tmp * TmpVSource;
+		      ++Index2;
+		    }
+		}
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex1];
+	      for (k2 = 0; k2 < k1; ++k2)
+		{
+		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		  Tmp = 0.0;
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		
+		  Tmp += this->PartialZPrecalculatedHamiltonian[k1][k2];	      
+		  TmpTotal += Tmp * vSource[Index2];
+		  vDestination[Index2] += Tmp * TmpVSource;
+		  ++Index2;
+		}  	  
+	    }
+	  else
+	    {
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex1][ReducedIndex1];
+	      for (k2 = kFirst; k2 < k1; ++k2)
+		{
+		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		  Tmp = 0.0;
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];		
+		  Tmp += this->PartialZPrecalculatedHamiltonian[k1][k2];	      
+		  TmpTotal += Tmp * vSource[Index2];
+		  vDestination[Index2] += Tmp * TmpVSource;
+		  ++Index2;
+		}     
+	    }
+	  // diagonal
+	  TmpTotal += this->DiagonalElements[Index1] * vSource[Index1];
+	  // second part	  
+	  Index2 = LastComponent;
+	  ReducedIndex2 = ReducedLast;	  
+	  k2 = kLast;	 		
+	  if (kLast != 0)
+	    {
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex2][ReducedIndex1];
+	      if (ReducedIndex1 == ReducedIndex2)
+		for (; k2 < this->NbrStateZ; ++k2)
+		  {		  	       
+		    TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		    Tmp = 0.0;
+		    for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		      Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];	    
+		    Tmp += PartialZPrecalculatedHamiltonian[k1][k2];
+		    TmpTotal += Tmp * vSource[Index2];	    
+		    ++Index2;
+		  }	
+	      else
+		for (; k2 < this->NbrStateZ; ++k2)
+		  {		  	       
+		    TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		    Tmp = 0.0;
+		    for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		
+		      Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];	    
+		    TmpTotal += Tmp * vSource[Index2];	    
+		    ++Index2;
+		  }
+	      ++ReducedIndex2;	    
+	    }
+	  for (; ReducedIndex2 < ReducedDim; ++ReducedIndex2)
+	    {
+	      TmpPrecalculatedHamiltonian = this->Partial2DPrecalculatedHamiltonian[ReducedIndex2][ReducedIndex1];
+	      for (k2 = 0; k2 < this->NbrStateZ; ++k2)
+		{
+		  TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
+		  Tmp = 0.0;
+		  for (CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)		    
+		    Tmp += TmpWaveFunctionOverlapZ[CellZ] * TmpPrecalculatedHamiltonian[CellZ];
+		  TmpTotal += Tmp * vSource[Index2];
+		  ++Index2;
+		}
+	    }	  
+	  vDestination[Index1] += TmpTotal;
 	  ++k1;
 	  if (k1 == this->NbrStateZ)
 	    {
@@ -656,13 +812,13 @@ RealVector& QuantumDots3DHamiltonian::LowLevelAddMultiply(RealVector& vSource, R
     }
   if (this->NbrPrecalculatedDimension == 0x100)
     {
-      double Tmp = 0.0;
+      double Tmp = 0.0; int Index2 = 0;
       for (int Index1 = firstComponent; Index1 < LastComponent; ++Index1)
 	{
-	  Tmp = this->DiagonalElements[Index1] * vSource[Index1];
-	  int Index2 = 0;
+	  Tmp = (this->DiagonalElements[Index1] * vSource[Index1]);	  
+	  Index2 = 0;
 	  for (; Index2 < Index1; ++Index2)
-	    Tmp += this->FullPrecalculatedHamiltonian[Index1][Index2] * vSource[Index2];
+	    Tmp += this->FullPrecalculatedHamiltonian[Index1][Index2] * vSource[Index2];	  
 	  ++Index2;
 	  for (; Index2 < Dim; ++Index2)
 	    Tmp += this->FullPrecalculatedHamiltonian[Index2][Index1] * vSource[Index2];
@@ -799,19 +955,16 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 	  FactorY = ((double) ((j + 1) * (j + 1))) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {
-	      TmpElement = FactorY +  ((double) ((k + 1) * (k + 1))) * InvZFactor;
+	      TmpElement = FactorY + ((double) ((k + 1) * (k + 1))) * InvZFactor  + (this->PartialZPrecalculatedHamiltonian[k][k]);
 	      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		{
 		  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		    {
-		      Factor = this->WaveFunctionOverlapZ[k][k][CellZ + 1] * this->WaveFunctionOverlapY[j][j][CellY];
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
-			{
-			  TmpElement += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i][i][CellX];
-			}	 
-		    }     
-		}	    
-	      TmpElement += this->PostConstantRegionPotential * this->WaveFunctionOverlapZ[k][k][IncNbrCellZ];
+		      Factor = this->WaveFunctionOverlapZ[k][k][CellZ] * this->WaveFunctionOverlapY[j][j][CellY];
+		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)			
+			TmpElement += this->InteractionFactors[CellZ][CellY][CellX] * Factor * this->WaveFunctionOverlapX[i][i][CellX];			
+		    }
+		}
 	      this->DiagonalElements[TotalIndex] = TmpElement;
 	      ++TotalIndex;
 	    }
@@ -820,31 +973,150 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
   memory -= UsedMemory;
   if (memory < 0)
     {
+      cout << "Calculation from scratch is done" << endl;
       this->NbrPrecalculatedDimension = 0;
       return;
     }
 
-/*  if (((double) memory) > (0.5 * ((double) this->Space->GetHilbertSpaceDimension()) * 
-			   ((double) this->Space->GetHilbertSpaceDimension() - 1.0) * ((double) sizeof(double))
-			   + (((double) this->Space->GetHilbertSpaceDimension()) * ((double) sizeof(double*)))))
-    {
-      this->NbrPrecalculatedDimension = 0x100;      
-      int Dim = this->Space->GetHilbertSpaceDimension();
-      this->FullPrecalculatedHamiltonian = new double* [Dim];
-      double Tmp;
-      double* TmpWaveFunctionOverlapX;
-      double* TmpWaveFunctionOverlapY;
-      double* TmpWaveFunctionOverlapZ;
-      int k1 = 1;
-      int j1 = 0;
-      int i1 = 0;
-      for (int Index1 = 1; Index1 < Dim; ++Index1)
+  if ( (double)memory > ((double(this->NbrStateX * this->NbrStateX) * double(this->NbrStateY * this->NbrStateY) * double(this->NbrStateZ * this->NbrStateZ)) * (double(sizeof(double)))))
+    {      
+      cout << "Calculation from fully calculated Hamiltonian" << endl << endl;
+      this->NbrPrecalculatedDimension = 0x100;
+      int Dim = this->NbrStateX * this->NbrStateY * this->NbrStateZ;
+      this->FullPrecalculatedHamiltonian = new double* [Dim];      
+      double**** Inter1 = new double*** [this->NbrStateX];   
+      double tmp = 0.0;
+      
+      for (int m1 = 0; m1 < this->NbrStateX; ++m1)
+	{
+	  Inter1[m1] = new double** [this->NbrStateX];
+	  for (int m2 = 0; m2 < m1; ++m2)
+	    {
+	      Inter1[m1][m2] = new double* [this->NbrCellZ];
+	      Inter1[m2][m1] = new double* [this->NbrCellZ];
+	      for (int k = 0; k < this->NbrCellZ; ++k)
+		{
+		  Inter1[m1][m2][k] = new double [this->NbrCellY];
+		  Inter1[m2][m1][k] = new double [this->NbrCellY];
+		  for (int j = 0; j < this->NbrCellY; ++j)
+		    {		     
+		      tmp = 0.0;
+		      for (int i = 0; i < this->NbrCellX; ++i)			
+			tmp += this->InteractionFactors[k][j][i] * this->WaveFunctionOverlapX[m1][m2][i];
+		      Inter1[m1][m2][k][j] = tmp;		     
+		      Inter1[m2][m1][k][j] = tmp;
+		    }
+		}	      
+	    }
+	  Inter1[m1][m1] = new double* [this->NbrCellZ];
+	  for (int k = 0; k < this->NbrCellZ; ++k)
+	    {
+	      Inter1[m1][m1][k] = new double [this->NbrCellY];
+	      for (int j = 0; j < this->NbrCellY; ++j)
+		{		     
+		  tmp = 0.0;
+		  for (int i = 0; i < this->NbrCellX; ++i)			
+		    tmp += this->InteractionFactors[k][j][i] * this->WaveFunctionOverlapX[m1][m1][i];			
+		  Inter1[m1][m1][k][j] = tmp;		     
+		}
+	    }	      
+	}
+      double***** Inter2 = new double**** [this->NbrStateY];
+      for (int n1 = 0; n1 < this->NbrStateY; ++n1)
+	{
+	  Inter2[n1] = new double*** [this->NbrStateY];
+	  for (int n2 = 0; n2 < n1; ++n2)
+	    {
+	      Inter2[n1][n2] = new double** [this->NbrStateX];
+	      Inter2[n2][n1] = new double** [this->NbrStateX];
+	      for (int m1 = 0; m1 < this->NbrStateX; ++m1)
+		{
+		  Inter2[n1][n2][m1] = new double* [this->NbrStateX];
+		  Inter2[n2][n1][m1] = new double* [this->NbrStateX];
+		  for(int m2 = 0; m2 < this->NbrStateX; ++m2)
+		    {
+		      Inter2[n1][n2][m1][m2] = new double [this->NbrCellZ];
+		      Inter2[n2][n1][m1][m2] = new double [this->NbrCellZ];
+		      for (int k = 0; k < this->NbrCellZ; ++k)
+			{
+			  tmp = 0.0;
+			  for (int j = 0; j < this->NbrCellY; ++j)
+			    tmp += this->WaveFunctionOverlapY[n1][n2][j] * Inter1[m1][m2][k][j];
+			  Inter2[n1][n2][m1][m2][k] = tmp;			  
+			  Inter2[n2][n1][m1][m2][k] = tmp;
+			}
+		    }
+		}
+	    }
+	  Inter2[n1][n1] = new double** [this->NbrStateX];
+	  for (int m1 = 0; m1 < this->NbrStateX; ++m1)
+	    {
+	      Inter2[n1][n1][m1] = new double* [this->NbrStateX];
+	      for(int m2 = 0; m2 < this->NbrStateX; ++m2)
+		{
+		  Inter2[n1][n1][m1][m2] = new double [this->NbrCellZ];
+		  for (int k = 0; k < this->NbrCellZ; ++k)
+		    {
+		      tmp = 0.0;
+		      for (int j = 0; j < this->NbrCellY; ++j)
+			tmp += this->WaveFunctionOverlapY[n1][n1][j] * Inter1[m1][m2][k][j];
+		      Inter2[n1][n1][m1][m2][k] = tmp;			  
+		    }
+		}
+	    }
+	} 
+      
+      int ReducedIndex1 = 0, ReducedIndex2 = 0, m1 = 0, m2 = 0, n1 = 0, n2 = 0, p1 = 0, p2 = 0;
+   
+      for (int Index1 = 0; Index1 < Dim; ++Index1) 
 	{
 	  this->FullPrecalculatedHamiltonian[Index1] = new double [Index1];
+	  ReducedIndex1 = Index1 / this->NbrStateZ;
+	  p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
+	  m1 = ReducedIndex1 / this->NbrStateY;
+	  n1 = ReducedIndex1 - m1 * this->NbrStateY;	  
+	  for (int Index2 = 0; Index2 < Index1; ++Index2) 
+	    {	    
+	      ReducedIndex2 = Index2 / this->NbrStateZ;
+	      p2 = Index2 - ReducedIndex2 * this->NbrStateZ;
+	      m2 = ReducedIndex2 / this->NbrStateY;
+	      n2 = ReducedIndex2 - m2 * this->NbrStateY;	  	      
+	      tmp = 0.0;
+	      for (int k = 0; k < this->NbrCellZ; ++k)
+		tmp += this->WaveFunctionOverlapZ[p1][p2][k] * Inter2[n1][n2][m1][m2][k]; 
+	      if (ReducedIndex1 == ReducedIndex2)
+		tmp += this->PartialZPrecalculatedHamiltonian[p1][p2];
+	      this->FullPrecalculatedHamiltonian[Index1][Index2] = tmp;
+	    }
+	    
+	}
+      delete[] Inter1; delete[] Inter2;
+      return; 
+    }
+/*
+  if (((double) memory) > (((double) (this->NbrStateX * this->NbrStateY)) * 
+			    ((double) (this->NbrStateX * this->NbrStateY))) * 
+			   (((double) sizeof(double*)) + ((double) this->NbrCellZ) * ((double) sizeof(double))))
+    {
+      cout << "Calculation with all precalculated Hamiltonian is done" << endl;
+      this->NbrPrecalculatedDimension = 0x010;
+      int Dim = this->NbrStateX * this->NbrStateY;
+      this->Partial2DPrecalculatedHamiltonian = new double** [Dim];
+      this->Partial2DDiagonalPrecalculatedHamiltonian = new double* [Dim];
+      double Tmp;
+      double Tmp2;
+      double* TmpWaveFunctionOverlapX;
+      double* TmpWaveFunctionOverlapY;
+      double* TmpPrecalculatedHamiltonian1;
+      double* TmpPrecalculatedHamiltonian2;
+      int j1 = 0;
+      int i1 = 0;
+      for (int Index1 = 0; Index1 < Dim; ++Index1)
+	{
+	  this->Partial2DPrecalculatedHamiltonian[Index1] = new double* [Dim];
 	  int Index2 = 0;
 	  int i2 = 0;
 	  int j2 = 0;
-	  int k2 = 0;
 	  while (Index2 < Index1)
 	    {
 	      if (i2 <= i1)
@@ -855,61 +1127,71 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 		TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[j1][j2];
 	      else
 		TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[j2][j1];
-	      if (k2 <= k1)
-		TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k1][k2];
-	      else
-		TmpWaveFunctionOverlapZ = this->WaveFunctionOverlapZ[k2][k1];
-	      Tmp = 0.0;
-	      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+	      this->Partial2DPrecalculatedHamiltonian[Index1][Index2] = new double [this->NbrCellZ];
+	      TmpPrecalculatedHamiltonian1 = this->Partial2DPrecalculatedHamiltonian[Index1][Index2];
+	      this->Partial2DPrecalculatedHamiltonian[Index2][Index1] = new double [this->NbrCellZ];
+	      TmpPrecalculatedHamiltonian2 = this->Partial2DPrecalculatedHamiltonian[Index2][Index1];	       
+
+	      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 		{
+		  Tmp = 0.0;
 		  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		    {
-		      Factor = TmpWaveFunctionOverlapX[CellX] * TmpWaveFunctionOverlapY[CellY];
-		      for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
-			{
-			  Tmp += this->InteractionFactors[CellX][CellY][CellZ] * Factor * TmpWaveFunctionOverlapZ[CellZ + 1];
-			}			      
+		      Tmp2 = TmpWaveFunctionOverlapY[CellY];
+		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)			
+			Tmp += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX] * Tmp2;
 		    } 
+		  TmpPrecalculatedHamiltonian1[CellZ] = Tmp;  		 
+		  TmpPrecalculatedHamiltonian2[CellZ] = Tmp;
 		}    
-	      if ((i1 == i2) && (j1 == j2))
-		{
-		  Tmp += this->PostConstantRegionPotential * TmpWaveFunctionOverlapZ[IncNbrCellZ];
-		}
-	      this->FullPrecalculatedHamiltonian[Index1][Index2] = Tmp;  
 	      ++Index2;
-	      ++k2;
-	      if (k2 == this->NbrStateZ)
+	      ++j2;
+	      if (j2 == this->NbrStateY)
 		{
-		  k2 = 0;
-		  ++j2;
-		  if (j2 == this->NbrStateY)
-		    {
-		      j2 = 0;
-		      ++i2;		      
-		    }
+		  j2 = 0;
+		  ++i2;
 		}
 	    }
-	  ++k1;
-	  if (k1 == this->NbrStateZ)
+
+	  if (i2 <= i1)
+	    TmpWaveFunctionOverlapX = this->WaveFunctionOverlapX[i1][i2];
+	  else
+	    TmpWaveFunctionOverlapX = this->WaveFunctionOverlapX[i2][i1];
+	  if (j2 <= j1)
+	    TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[j1][j2];
+	  else
+	    TmpWaveFunctionOverlapY = this->WaveFunctionOverlapY[j2][j1];
+	  this->Partial2DPrecalculatedHamiltonian[Index1][Index2] = new double [this->NbrCellZ];
+	  TmpPrecalculatedHamiltonian1 = this->Partial2DPrecalculatedHamiltonian[Index1][Index1];
+	  
+	  for (int CellZ = 0; CellZ < this->NbrCellZ; ++CellZ)
 	    {
-	      k1 = 0;
-	      ++j1;
-	      if (j1 == this->NbrStateY)
+	      Tmp = 0.0;
+	      for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		{
-		  j1 = 0;
-		  ++i1;		      
-		}
+		  Tmp2 = TmpWaveFunctionOverlapY[CellY];
+		  for (int CellX = 0; CellX < this->NbrCellX; ++CellX)			
+		    Tmp += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX] * Tmp2;
+		} 
+	      TmpPrecalculatedHamiltonian1[CellZ] = Tmp;  
+	    } 
+	  
+	  ++j1;
+	  if (j1 == this->NbrStateY)
+	    {
+	      j1 = 0;
+	      ++i1;
 	    }
-
-	}
+	}   
       return;
-    }*/
-
+    }
+*/
   if (((double) memory) > ((0.5 * ((double) (this->NbrStateX * this->NbrStateY)) * 
 			    ((double) (this->NbrStateX * this->NbrStateY))) * 
 			   (((double) sizeof(double*)) + ((double) this->NbrCellZ) * ((double) sizeof(double)))))
     {
-      this->NbrPrecalculatedDimension = 0x010;      
+      cout << "Calculation with symmetric precalculated Hamiltonian is done" << endl;
+      this->NbrPrecalculatedDimension = 0x001;
       int Dim = this->NbrStateX * this->NbrStateY;
       this->Partial2DPrecalculatedHamiltonian = new double** [Dim];
       this->Partial2DDiagonalPrecalculatedHamiltonian = new double* [Dim];
@@ -944,10 +1226,8 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 		  for (int CellY = 0; CellY < this->NbrCellY; ++CellY)
 		    {
 		      Tmp2 = TmpWaveFunctionOverlapY[CellY];
-		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
-			{
-			  Tmp += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX] * Tmp2;
-			}			      
+		      for (int CellX = 0; CellX < this->NbrCellX; ++CellX)			
+			Tmp += this->InteractionFactors[CellZ][CellY][CellX] * TmpWaveFunctionOverlapX[CellX] * Tmp2;
 		    } 
 		  TmpPrecalculatedHamiltonian[CellZ] = Tmp;  
 		}    
@@ -965,10 +1245,10 @@ void QuantumDots3DHamiltonian::EvaluateInteractionFactors(int memory)
 	      j1 = 0;
 	      ++i1;
 	    }
-	}
+	}    
       return;
     }
-    
+
 }
 
 // evaluate wave function overlaps on a cell in a given direction
@@ -1020,57 +1300,103 @@ double*** QuantumDots3DHamiltonian::EvaluateWaveFunctionOverlap(double size, int
 
 double*** QuantumDots3DHamiltonian::EvaluateWaveFunctionZOverlap(int& memory)
 {
-  memory += ((((this->NbrStateZ * (this->NbrStateZ + 1)) >> 1) * ((this->NbrCellZ + 2)  * sizeof(double) + sizeof(double*)))
+  memory += ((((this->NbrStateZ * (this->NbrStateZ + 1)) >> 1) * ((this->NbrCellZ)  * sizeof(double) + sizeof(double*)))
 	     + this->NbrStateZ * sizeof(double**));
   double*** TmpArray = new double** [this->NbrStateZ];
-  cout << this->PreConstantRegionSize << " " << this->PostConstantRegionSize << " " << this->ZSize << " " << this->NbrCellZ << endl;
-  double StepInc = (this->ZSize - this->PreConstantRegionSize - this->PostConstantRegionSize) / ((((double) this->NbrCellZ)) * this->ZSize);//(((double) this->NbrCellZ))
-  double Shift = this->PreConstantRegionSize / this->ZSize;
-  double PostShift = (this->ZSize -this->PostConstantRegionSize) / this->ZSize;
-  double PostShift2 = this->PostConstantRegionSize / this->ZSize;
-  cout << "shifts = " << StepInc << " " << Shift << " " << PostShift << endl;
+  this->PartialZPrecalculatedHamiltonian = new double*[this->NbrStateZ];
+  double LeftRegionSize = 0.0;
+  for (int k = 0; k < this->LeftNumber; ++k)
+    LeftRegionSize += PreConstantRegionSize[k];
+  double RightRegionSize = 0.0;
+  for (int k = 0; k < this->RightNumber; ++k)
+    RightRegionSize += PostConstantRegionSize[k];
+
+  double StepInc = (this->ZSize - LeftRegionSize - RightRegionSize) / ((((double) this->NbrCellZ)) * this->ZSize);
+  double Shift = LeftRegionSize / this->ZSize;
+  double PostShift = this->ZSize - RightRegionSize;
   double Tmp;
   double TmpShift;
   double Diff;
   double Tmp2;
   double TmpShift2;
   double Diff2;
+  double TmpLength1; double TmpLength2; double Tmp3; double Tmp4; double Tmp5;
   for (int i = 0; i < this->NbrStateZ; ++i)
     {
-      TmpArray[i] = new double* [i + 1];
+      TmpArray[i] = new double* [this->NbrStateZ];
+      this->PartialZPrecalculatedHamiltonian[i] = new double [this->NbrStateZ];
       for (int j = 0; j < i; ++j)
 	{
 	  Diff = (double) (i - j);
 	  Tmp = M_PI * Diff;
 	  TmpShift = Tmp * Shift;
-	  TmpArray[i][j] = new double [this->NbrCellZ + 2];
+	  TmpArray[i][j] = new double [this->NbrCellZ];
+	  TmpArray[j][i] = new double [this->NbrCellZ];
 	  Diff2 = (double) (i + j + 2);
-	  Tmp2 = M_PI * Diff2;	      
+	  Tmp2 = M_PI * Diff2;
 	  TmpShift2 = Tmp2 * Shift;
 	  Diff = M_1_PI / Diff;
 	  Diff2 = M_1_PI / Diff2;
-	  TmpArray[i][j][0] = (sin (TmpShift) * Diff - sin (TmpShift2) * Diff2);
-	  TmpArray[i][j][this->NbrCellZ + 1] = (sin (Tmp2 * PostShift) * Diff2) - (sin (Tmp * PostShift) * Diff);
+	  TmpLength1 = 0.0; TmpLength2 = 0.0;
+	  Tmp3 = Tmp/this->ZSize;
+	  Tmp4 = Tmp2/this->ZSize;
+	  Tmp5 = 0.0;
+	  for (int k = 0; k < this->LeftNumber; ++k)
+	    {
+	      TmpLength1 += PreConstantRegionSize[k];
+	      Tmp5 +=  ((sin(Tmp3 * TmpLength1) - sin(Tmp3 * TmpLength2)) * Diff
+		                  - (sin(Tmp4 * TmpLength1) - sin(Tmp4 * TmpLength2)) * Diff2) * (this->PreConstantRegionPotential[k]);
+	      TmpLength2 += PreConstantRegionSize[k];
+	    }
+
 	  Tmp *= StepInc;
 	  Tmp2 *= StepInc;
 	  for (int k = 0; k < this->NbrCellZ; ++k)
 	    {
-	      TmpArray[i][j][k + 1] =  ((sin ((Tmp * ((double) (k + 1))) + TmpShift) - sin ((Tmp * ((double) k)) + TmpShift)) * Diff
-					- (sin ((Tmp2 * ((double) (k + 1))) + TmpShift2) - sin ((Tmp2 * ((double) k)) + TmpShift2)) * Diff2);
+	      TmpArray[i][j][k] =  ((sin ((Tmp * ((double) (k + 1))) + TmpShift) - sin ((Tmp * ((double) k)) + TmpShift)) * Diff
+					     - (sin ((Tmp2 * ((double) (k + 1))) + TmpShift2) - sin ((Tmp2 * ((double) k)) + TmpShift2)) * Diff2);
+	      TmpArray[j][i][k] =  TmpArray[i][j][k];
 	    }
+	  TmpLength1 = PostShift;
+	  TmpLength2 = PostShift;
+	  for (int k = 0; k < this->RightNumber; ++k)
+	    {
+	      TmpLength1 += PostConstantRegionSize[k];
+	      Tmp5 +=  ((sin(Tmp3 * TmpLength1) - sin(Tmp3 * TmpLength2)) * Diff
+		     - (sin(Tmp4 * TmpLength1) - sin(Tmp4 * TmpLength2)) * Diff2) * (this->PostConstantRegionPotential[k]);
+	      TmpLength2 += PostConstantRegionSize[k];
+	    }
+	  this->PartialZPrecalculatedHamiltonian[i][j] = Tmp5;
+	  this->PartialZPrecalculatedHamiltonian[j][i] = Tmp5;
 	}
-      TmpArray[i][i] = new double [this->NbrCellZ + 2];
+
+      TmpArray[i][i] = new double [this->NbrCellZ];
       Diff = (double) (2 * i + 2);
-      Tmp = M_PI * Diff;	      
+      Tmp = M_PI * Diff;
       TmpShift = Tmp * Shift;
       Diff = M_1_PI / Diff;
-      TmpArray[i][i][0] = Shift - (sin (Tmp * Shift) * Diff);
-      TmpArray[i][i][this->NbrCellZ + 1] = PostShift2 + (sin (Tmp * PostShift) * Diff);
+      Tmp3 = Tmp/this->ZSize;
+      TmpLength1 = 0.0; TmpLength2 = 0.0; Tmp5 = 0.0;
+      for (int k = 0; k < this->LeftNumber; ++k)
+	{
+	  TmpLength1 += PreConstantRegionSize[k];
+	  Tmp5 += ((PreConstantRegionSize[k]/this->ZSize) - (sin(Tmp3 * TmpLength1) - sin(Tmp3 * TmpLength2)) * Diff) * (this->PreConstantRegionPotential[k]);
+	  TmpLength2 += PreConstantRegionSize[k];
+	}
+      TmpLength1 = PostShift; TmpLength2 = PostShift;
+      for (int k = 0; k < this->RightNumber; ++k)
+	{
+	  TmpLength1 += PostConstantRegionSize[k];
+	  Tmp5 += ((PostConstantRegionSize[k]/this->ZSize) - (sin(Tmp3 * TmpLength1) - sin(Tmp3 * TmpLength2)) * Diff) * (this->PostConstantRegionPotential[k]);
+	  TmpLength2 += PostConstantRegionSize[k];
+	}
+      this->PartialZPrecalculatedHamiltonian[i][i] = Tmp5;
+
       Tmp *= StepInc;
       for (int k = 0; k < this->NbrCellZ; ++k)
 	{
-	  TmpArray[i][i][k + 1] = StepInc - (sin ((Tmp * ((double) (k + 1))) + TmpShift) - sin ((Tmp * ((double) k)) + TmpShift)) * Diff;
-	}     
+	  TmpArray[i][i][k] = StepInc - (sin ((Tmp * ((double) (k + 1))) + TmpShift) - sin ((Tmp * ((double) k)) + TmpShift)) * Diff;
+	}
     }
   return TmpArray;
 }

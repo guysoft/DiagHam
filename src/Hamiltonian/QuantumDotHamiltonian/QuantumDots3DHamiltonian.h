@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
+#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
 
 #include <iostream>
 
@@ -49,7 +50,7 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
 {
 
  protected:
-  
+
   // Hilbert space associated to the system
   Confined3DOneParticle* Space;
 
@@ -76,12 +77,18 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // system dimension in the z direction (in Angstrom unit)
   double ZSize;
 
-  // region size in the z direction where potential is constant in every direction (region before gradiant zone)
-  double PreConstantRegionSize;
-  // region size in the z direction where potential is constant in every direction (region after gradiant zone)
-  double PostConstantRegionSize;
-  // value of the potential in the region after the gradiant zone
-  double PostConstantRegionPotential;
+  // number of layers before the active layers
+  int LeftNumber;
+  // region size in the z direction where potential is constant in the plane (regions before active layers)
+  double* PreConstantRegionSize;
+  // value of the potential in the region before the active layers
+  double* PreConstantRegionPotential;
+  // number of layers after the active layers
+  int RightNumber;
+  // region size in the z direction where potential is constant in every direction (regions after active layers)
+  double* PostConstantRegionSize;
+  // value of the potential in the region after the active layers
+  double* PostConstantRegionPotential;
 
   // effective mass in the x direction (in electron mass unit)
   double Mux;
@@ -98,6 +105,7 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
 
   // tridimensionnal array containing all cell interaction factors
   double*** InteractionFactors;
+  //ThreeDPotential* InteractionFactors;
 
   // wave function overlaps on a cell in a the x direction (with symmetric access type for the first two indices)
   double*** WaveFunctionOverlapX;
@@ -109,16 +117,18 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // bidimensionnal array (with symmetric access type i > j) to store hamiltonian when all matrix elements can be stored in memory
   double** FullPrecalculatedHamiltonian;
 
-  // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian 
+  // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian
   // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
-  double*** Partial2DPrecalculatedHamiltonian;
-  // bidimensionnal array to store partial diagonal calculation to construct hamiltonian 
+  double***** Partial2DPrecalculatedHamiltonian;
+  // bidimensionnal array to store partial diagonal calculation to construct hamiltonian
   // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
   double** Partial2DDiagonalPrecalculatedHamiltonian;
+  // elements (intergration over z, the first end second indices are of p1, p2)
+  double ** PartialZPrecalculatedHamiltonian;
 
  public:
 
-  // constructor from default datas
+  // constructor from default data
   //
   // space = Hilbert space associated to the system
   // xSize = system dimension in the x direction (in Angstrom unit)
@@ -135,14 +145,11 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // nbrCellZ = number of cells in the z direction
   // overlapingFactors = tridimensionnal array where overlaping factors are stored
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double preConstantRegionSize,
-			   double postConstantRegionSize, double postConstantRegionPotential, double mux, double muy, double muz, 
-			   int nbrCellX, int nbrCellY, int nbrCellZ, double*** overlapingFactors,
-			   int memory = -1);
+  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory = -1);
 
   // copy constructor (without duplicating datas)
   //
-  // hamiltonian = reference on hamiltonian to copy 
+  // hamiltonian = reference on hamiltonian to copy
   QuantumDots3DHamiltonian(const QuantumDots3DHamiltonian& hamiltonian);
 
   // destructor
@@ -168,7 +175,7 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
-  
+
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
