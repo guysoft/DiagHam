@@ -103,6 +103,20 @@ ParticleOnDiskLaplacianDeltaHamiltonian::~ParticleOnDiskLaplacianDeltaHamiltonia
   delete[] this->M2Value;
   delete[] this->M3Value;
   delete[] this->M4Value;
+  if (this->FastMultiplicationFlag == true)
+    {
+      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+    }
 }
 
 // set Hilbert space
