@@ -1022,7 +1022,7 @@ Complex ComplexSkewSymmetricMatrix::Pfaffian()
 		 - this->ImaginaryOffDiagonalElements[2] * this->ImaginaryOffDiagonalElements[3 + this->Increment]);
       Pfaffian.Im += (this->ImaginaryOffDiagonalElements[2] * this->RealOffDiagonalElements[3 + this->Increment]
 		 + this->RealOffDiagonalElements[2] * this->ImaginaryOffDiagonalElements[3 + this->Increment]);
-      cout << Pfaffian << " " << (Pfaffian * Pfaffian) << endl;
+//      cout << Pfaffian << " " << (Pfaffian * Pfaffian) << endl;
 //      return Pfaffian;
     }
 

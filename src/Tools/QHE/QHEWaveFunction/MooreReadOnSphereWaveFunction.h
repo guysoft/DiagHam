@@ -64,8 +64,7 @@ class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
   //
   // nbrParticles = number of particles
   // clusterSize = number of particle per cluster
-  // nbrClusters = number of clusters
-  MooreReadOnSphereWaveFunction(int nbrParticles, int clusterSize, int nbrClusters);
+  MooreReadOnSphereWaveFunction(int nbrParticles, int clusterSize);
 
   // copy constructor
   //

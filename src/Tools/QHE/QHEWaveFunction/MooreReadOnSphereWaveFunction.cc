@@ -32,8 +32,12 @@
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 #include "Vector/RealVector.h"
 
-
+#include <iostream>
 #include <math.h>
+
+
+using std::cout;
+using std::endl;
 
 
 // group maximum size in bits
@@ -43,12 +47,14 @@
 // constructor
 //
 // nbrParticles = number of particles
+// clusterSize = number of particle per cluster
 
-MooreReadOnSphereWaveFunction::MooreReadOnSphereWaveFunction(int nbrParticles, int clusterSize, int nbrClusters)
+MooreReadOnSphereWaveFunction::MooreReadOnSphereWaveFunction(int nbrParticles, int clusterSize)
 {
   this->NbrParticles = nbrParticles;
   this->ClusterSize = clusterSize;
-  this->NbrClusters = nbrClusters;
+  this->NbrClusters = this->NbrParticles / this->ClusterSize;
+  this->EvaluatePermutations();
   this->Flag.Initialize();
 }
 
@@ -108,12 +114,35 @@ Complex MooreReadOnSphereWaveFunction::operator ()(RealVector& x)
       SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
       SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
     }
+
   Complex Value;
   Complex Tmp;
-
+  int ReducedNbrClusters = this->NbrClusters - 1;
+  int ReducedClusterSize = (this->ClusterSize - 1) * GROUP_MAXSIZE;
   for (unsigned long i = 0; i < this->NbrPermutations; ++i)
     {
+      unsigned long* TmpPerm = this->Permutations[i];
       Tmp = 1.0;
+      for (int j = 0; j < ReducedNbrClusters; ++j)
+	for (int k = j + 1; k < this->NbrClusters; ++k)
+	  {
+	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
+		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
+	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] - 
+		    SpinorUCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
+	    for (int l = GROUP_MAXSIZE; l < ReducedClusterSize; l += GROUP_MAXSIZE)
+	      {
+		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> l) & 0x3fl] - 
+			SpinorUCoordinates[(TmpPerm[k] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
+		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] - 
+			SpinorUCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
+	      }
+	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] - 
+		    SpinorUCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl]);
+	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
+		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >>  ReducedClusterSize) & 0x3fl]);
+//	    cout << Tmp << endl;
+	  }
       Value += Tmp;
     }
 
@@ -132,10 +161,8 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
   for (unsigned long i = 3; i <= ((unsigned long) this->NbrParticles); ++i)
     Fact *= i;
   unsigned long** Perm = new unsigned long* [Fact];
-  int* SignPerm = new int [Fact];
 
   Perm[0] = new unsigned long[this->NbrClusters];
-  SignPerm[0] = 1;
   unsigned long* TmpPerm = Perm[0];
   int Shift = 0;   
   for (int k = 0; k < this->NbrClusters; ++k) 
@@ -150,7 +177,6 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
       Perm[i] = new unsigned long[this->NbrClusters];
       for (int k = 0; k < this->NbrClusters; ++k)
         Perm[i][k] = TmpPerm[k];
-      SignPerm[i] = 1;
     }
 
   int GroupId = 0;
@@ -191,7 +217,6 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
 		      Perm[j][GroupId] |= Tmp2;
 		      Perm[j][GroupId2] &= NegMask2;
 		      Perm[j][GroupId2] |= Tmp1;
-		      SignPerm[j] *= -1;
 		    }
 		}
 	      else
@@ -205,7 +230,6 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
 		      Perm[j][GroupId] |= Tmp2;
 		      Perm[j][GroupId2] &= NegMask2;
 		      Perm[j][GroupId2] |= Tmp1;
-		      SignPerm[j] *= -1;
 		    }
 		}
 	      ++PosInGroup2;
@@ -257,7 +281,6 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
       Tmp = ((Perm[i][GroupId] & Mask1) << GROUP_MAXSIZE) | ((Perm[i][GroupId] & Mask2) >> GROUP_MAXSIZE);
       Perm[i][GroupId] &= NegMask;
       Perm[i][GroupId] |= Tmp;
-      SignPerm[i] *= -1;      
       j = 0;
       TmpFlag = false;
       while ((j < ReducedNbrClusters) && (TmpFlag == false))
@@ -274,8 +297,6 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
       else
 	delete[]  Perm[i];
     }
-
-  delete[] SignPerm;
   delete[] Perm;
   return;
 }

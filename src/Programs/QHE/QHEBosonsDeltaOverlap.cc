@@ -9,6 +9,7 @@
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -104,8 +105,10 @@ int main(int argc, char** argv)
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
-  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 1, 1);
+  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 1, 1);
+//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 2);
+//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
@@ -163,6 +166,8 @@ int main(int argc, char** argv)
       Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
       Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Complex TmpMetropolis = (*WaveFunction)(Location);
+//      Complex TmpMetropolis2 = (*WaveFunction2)(Location);
+//      cout << TmpMetropolis << " " << (8 * TmpMetropolis2) << endl;
       CurrentProbabilities = Norm(TmpMetropolis);
       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	{
