@@ -488,7 +488,7 @@ Complex ComplexVector::PartialScalarProduct (const ComplexVector& vRight, int fi
 // V1 = vector to add
 // return value = reference on current vector
 
-ComplexVector& ComplexVector::operator += (const ComplexVector& V1) 
+ComplexVector& ComplexVector::operator += (ComplexVector& V1) 
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
@@ -505,7 +505,7 @@ ComplexVector& ComplexVector::operator += (const ComplexVector& V1)
 // V1 = real vector to add
 // return value = reference on current vector
 
-ComplexVector& ComplexVector::operator += (const RealVector& V1) 
+ComplexVector& ComplexVector::operator += (RealVector& V1) 
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
@@ -519,7 +519,7 @@ ComplexVector& ComplexVector::operator += (const RealVector& V1)
 // vector = vector to add
 // return value = reference on current vector
 
-Vector& ComplexVector::operator += (const Vector& vector)
+Vector& ComplexVector::operator += (Vector& vector)
 {
   if (vector.VectorType == Vector::RealDatas)
     return (*this += ((RealVector&) vector));

@@ -206,19 +206,19 @@ class ComplexVector : public Vector
   //
   // V1 = vector to add
   // return value = reference on current vector
-  ComplexVector& operator += (const ComplexVector& V1);
+  ComplexVector& operator += (ComplexVector& V1);
 
   // sum two vectors
   //
   // V1 = real vector to add
   // return value = reference on current vector
-  ComplexVector& operator += (const RealVector& V1);
+  ComplexVector& operator += (RealVector& V1);
 
   // sum two vectors
   //
   // vector = vector to add
   // return value = reference on current vector
-  Vector& operator += (const Vector& vector);
+  Vector& operator += (Vector& vector);
 
   // add a linear combination to a given vector
   //
