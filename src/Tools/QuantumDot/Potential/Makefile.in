@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libPotential.a
 
-libPotential_a_SOURCES = Potential.cc TwoDPotential.cc ThreeDPotential.cc SegregationThreeDPotential.cc PeriodicPyramidQuantumDot.cc
+libPotential_a_SOURCES = AbstractPotential.cc OneDConstantCellPotential.cc  TwoDConstantCellPotential.cc  BinaryTwoDConstantCellPotential.cc  ThreeDConstantCellPotential.cc  BinaryThreeDConstantCellPotential.cc  HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc
 
 
 check_PROGRAMS = TestPotential
@@ -94,8 +94,12 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libPotential_a_LIBADD = 
-libPotential_a_OBJECTS =  Potential.o TwoDPotential.o ThreeDPotential.o \
-SegregationThreeDPotential.o PeriodicPyramidQuantumDot.o
+libPotential_a_OBJECTS =  AbstractPotential.o \
+OneDConstantCellPotential.o TwoDConstantCellPotential.o \
+BinaryTwoDConstantCellPotential.o ThreeDConstantCellPotential.o \
+BinaryThreeDConstantCellPotential.o \
+HardBoxPyramidQuantumDotThreeDConstantCellPotential.o \
+PeriodicPyramidQuantumDotThreeDConstantCellPotential.o
 AR = ar
 TestPotential_OBJECTS =  TestPotential.o
 TestPotential_LDFLAGS = 
@@ -109,9 +113,14 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/PeriodicPyramidQuantumDot.P .deps/Potential.P \
-.deps/SegregationThreeDPotential.P .deps/TestPotential.P \
-.deps/ThreeDPotential.P .deps/TwoDPotential.P
+DEP_FILES =  .deps/AbstractPotential.P \
+.deps/BinaryThreeDConstantCellPotential.P \
+.deps/BinaryTwoDConstantCellPotential.P \
+.deps/HardBoxPyramidQuantumDotThreeDConstantCellPotential.P \
+.deps/OneDConstantCellPotential.P \
+.deps/PeriodicPyramidQuantumDotThreeDConstantCellPotential.P \
+.deps/TestPotential.P .deps/ThreeDConstantCellPotential.P \
+.deps/TwoDConstantCellPotential.P
 SOURCES = $(libPotential_a_SOURCES) $(TestPotential_SOURCES)
 OBJECTS = $(libPotential_a_OBJECTS) $(TestPotential_OBJECTS)
 

@@ -18,7 +18,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Potential/TwoDPotential.h"
+#include "Tools/QuantumDot/Potential/BinaryTwoDConstantCellPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -114,12 +114,12 @@ int main(int argc, char** argv)
   // enter here hilbert space dimension
   int Dimension = NbrStateX * NbrStateY;
 
-  TwoDPotential Potential = TwoDPotential (NbrCellX, NbrCellY, 12);
+  BinaryTwoDConstantCellPotential Potential = BinaryTwoDConstantCellPotential(NbrCellX, NbrCellY);
   //Potential.UniformWell(0.5, 1.8, Weight_E, true);
   //ofstream PotentialFile("Potential2D.txt");
   //Potential.PrintPotential(PotentialFile).flush();
 
-  Potential.ReadTwoDPotential(CoefficientFileName);
+  Potential.LoadPotential(CoefficientFileName);
 
   // coupling table in X direction
   RealVector** ElementaryCouplingX = new RealVector* [NbrStateX];
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
 	    {
 	      tmp = 0.0;
 	      for (int i = MinX; i < MaxX; ++i)
-		tmp += (Potential(i, j) * ElementaryCouplingX[m1][m2][i]);
+		tmp += (Potential.GetPotential(i, j) * ElementaryCouplingX[m1][m2][i]);
 	      Intermediate[m1][m2][j] = tmp;
 	      Intermediate[m2][m1][j] = tmp;
 	    }
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
 	{
 	  tmp = 0.0;
 	  for (int i = MinX; i < MaxX; ++i)
-	    tmp += (Potential(i, j) * ElementaryCouplingX[m1][m1][i]);
+	    tmp += (Potential.GetPotential(i, j) * ElementaryCouplingX[m1][m1][i]);
 	  Intermediate[m1][m1][j] = tmp;
 	}
     }

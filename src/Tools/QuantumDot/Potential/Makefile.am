@@ -2,11 +2,14 @@ SUBDIRS=
 
 noinst_LIBRARIES=libPotential.a
 
-libPotential_a_SOURCES=Potential.cc \
-TwoDPotential.cc \
-ThreeDPotential.cc \
-SegregationThreeDPotential.cc \
-PeriodicPyramidQuantumDot.cc
+libPotential_a_SOURCES=AbstractPotential.cc \
+OneDConstantCellPotential.cc  \
+TwoDConstantCellPotential.cc  \
+BinaryTwoDConstantCellPotential.cc  \
+ThreeDConstantCellPotential.cc  \
+BinaryThreeDConstantCellPotential.cc  \
+HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  \
+PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc
 
 check_PROGRAMS=TestPotential
 

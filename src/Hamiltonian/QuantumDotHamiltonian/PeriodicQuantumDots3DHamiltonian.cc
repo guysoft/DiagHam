@@ -32,7 +32,7 @@
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 #include "Complex.h"
 #include "Vector/ComplexVector.h"
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
+#include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"
 
 #include <iostream>
 #include <math.h>
@@ -41,24 +41,29 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
+
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 
 
-// constructor from default data
+// constructor from default datas
 //
 // space = Hilbert space associated to the system
 // xSize = system dimension in the x direction (in Angstrom unit)
 // ySize = system dimension in the y direction (in Angstrom unit)
 // zSize = system dimension in the z direction (in Angstrom unit)
+// preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
+// postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
+// postConstantRegionPotential = value of the potential in the region after the gradiant zone
 // mux = effective mass in the x direction (in electron mass unit)
 // muy = effective mass in the y direction (in electron mass unit)
 // muz = effective mass in the z direction (in electron mass unit)
 // nbrCellX = number of cells in the x direction
 // nbrCellY = number of cells in the y direction
 // nbrCellZ = number of cells in the z direction
-// potentialInput = pointer to a 3D potential
+// overlapingFactors = tridimensionnal array where overlaping factors are stored
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* potentialInput)
+PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -76,7 +81,17 @@ PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOne
   this->LowerImpulsionY = this->Space->GetLowerImpulsionY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
-  this->InteractionFactors = potentialInput->Potential;
+  this->InteractionFactors = new double** [this->NbrCellZ];  
+  for (int k = 0; k < this->NbrCellZ; ++k)
+    {
+      this->InteractionFactors[k] = new double* [this->NbrCellY];
+      for (int j = 0; j < this->NbrCellY; ++j)
+	{
+	  this->InteractionFactors[k][j] = new double [this->NbrCellX];
+	  for (int i = 0; i < this->NbrCellX; ++i)
+	    this->InteractionFactors[k][j][i] = PotentialInput->GetPotential(i, j, k);
+	}
+    }
   this->EvaluateInteractionFactors();
 }
 
@@ -199,71 +214,73 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelMultiply(ComplexVector&
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
-// multiply a vector by the current hamiltonian for a given range of indices
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
+// only in MonoProcessor Mode!!!!!
 ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 { 
-  
-  int lastComponent = firstComponent + nbrComponent;
   int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
+
   int m1, m2, n1, n2, p1;
   int IndexX, IndexY, IndexZ;
-  double* TmpRealPrecalculatedHamiltonian;
-  double* TmpImaginaryPrecalculatedHamiltonian;
-  double TmpRe = 0.0; double TmpIm = 0.0;
-
-  int Index1 = firstComponent; int Index2 = 0;
-  int ReducedIndex1 = Index1 / this->NbrStateZ;
-  p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
-  m1 = ReducedIndex1 / this->NbrStateY;
-  n1 = ReducedIndex1 - m1 * this->NbrStateY;
-
-  for (; Index1 < lastComponent; ++Index1)
+  int** TotalIndex = new int* [this->NbrStateX]; int TmpIndex = 0;
+  for (m1 = 0; m1 < this->NbrStateX; ++m1) 
     {
-      TmpRe = 0.0; TmpIm = 0.0;
-      TmpRe += vSource.Re(Index1) * this->KineticElements[Index1];
-      TmpIm += vSource.Im(Index1) * this->KineticElements[Index1];     
-      Index2 = 0;
-      for (IndexX = m1 + OriginX; IndexX >= m1; --IndexX)
-	for (IndexY = n1 + OriginY; IndexY >= n1; --IndexY)
-	  {
-	    TmpRealPrecalculatedHamiltonian = this->RealPrecalculatedHamiltonian[IndexX][IndexY];
-	    TmpImaginaryPrecalculatedHamiltonian = this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY];
-	    for (IndexZ = p1 + OriginZ; IndexZ >= p1; --IndexZ)	  
-	      {
-		TmpRe += (vSource.Re(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ] - vSource.Im(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ]);
-		TmpIm += (vSource.Re(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ] + vSource.Im(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ]); 		
-		++Index2;
-		
-	      }
-	  }
-
-      vDestination.Re(Index1) += TmpRe;
-      vDestination.Im(Index1) += TmpIm;
-      ++p1;
-      if (p1 == this->NbrStateZ)
+      TotalIndex[m1] = new int [this->NbrStateY];
+      for (n1 = 0; n1 < this->NbrStateY; ++n1)	
 	{
-	  p1 = 0;
-	  ++n1;
-	  if (n1 == this->NbrStateY)
-	    {
-	      n1 = 0;
-	      ++m1;
+	  TotalIndex[m1][n1] = (m1 * this->NbrStateY + n1) * this->NbrStateZ;
+	  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
+	    {	      
+	      vDestination.Re(TmpIndex) += vSource.Re(TmpIndex) * this->KineticElements[TmpIndex];
+	      vDestination.Im(TmpIndex) += vSource.Im(TmpIndex) * this->KineticElements[TmpIndex];
+	      ++TmpIndex;
 	    }
 	}
     }
 
+  int Index1, Index2;
+  double* TmpRealPrecalculatedHamiltonian;
+  double* TmpImaginaryPrecalculatedHamiltonian;
+  double TmpRe = 0.0; double TmpIm = 0.0;
+  int* TmpTotalIndex1; int* TmpTotalIndex2;
+  for (m1 = 0; m1 < this->NbrStateX; ++m1)
+    {
+      IndexX = m1 + OriginX;
+      TmpTotalIndex1 = TotalIndex[m1];
+      for (m2 = 0; m2 < this->NbrStateX; ++m2)
+	{
+	  TmpTotalIndex2 = TotalIndex[m2];	  
+	  for (n1 = 0; n1 < this->NbrStateY; ++n1)
+	    {
+	      IndexY = n1 + OriginY;
+	      for (n2 = 0; n2 < this->NbrStateY; ++n2)
+		{
+		  TmpRealPrecalculatedHamiltonian = this->RealPrecalculatedHamiltonian[IndexX][IndexY];
+		  TmpImaginaryPrecalculatedHamiltonian = this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY];
+		  Index1 = TmpTotalIndex1[n1];
+		  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
+		    {
+		      IndexZ = p1 + OriginZ;
+		      TmpRe = 0.0; TmpIm = 0.0;
+		      Index2 = TmpTotalIndex2[n2];
+		      for (; IndexZ >= p1; --IndexZ, ++Index2)
+			{
+			  TmpRe += (vSource.Re(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ] - vSource.Im(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ]);
+			  TmpIm += (vSource.Re(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ] + vSource.Im(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ]);  	  
+			}
+		      vDestination.Re(Index1) += TmpRe;
+		      vDestination.Im(Index1) += TmpIm;
+		      ++Index1;
+		    }
+   		  --IndexY;
+		}
+	    }
+	  --IndexX;
+	}
+    }
+  delete[] TotalIndex;
   return vDestination;
 }
-
-// evaluate the all interaction factors
-//   
-
+  
 void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
 {
   if (!this->EvaluateWaveFunctionOverlap(this->NbrCellX, this->NbrStateX, this->RealWaveFunctionOverlapX, this->ImaginaryWaveFunctionOverlapX))
@@ -373,13 +390,6 @@ void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
     }
   delete[] TmpReal; delete[] TmpImaginary;
 }
-
-// evaluate wave function overlap in a given direction
-//
-// nbrStep = number of subdivisions in the choosen direction
-// nbrState = number of states in the restrained Hilbert space in the choosen direction
-// realArray = reference to a 2D array to stock the real values of overlap
-// imaginaryArray = reference to a 2D array to stock the imaginary values of overlap
 
 bool PeriodicQuantumDots3DHamiltonian::EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray)
 {

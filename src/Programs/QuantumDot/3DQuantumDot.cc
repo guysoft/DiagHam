@@ -19,7 +19,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
+#include "Tools/QuantumDot/Potential/HardBoxPyramidQuantumDotThreeDConstantCellPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -137,12 +137,10 @@ int main(int argc, char** argv)
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
 
-  ThreeDPotential* potential = new ThreeDPotential(M, N, H, LeftSize, RightSize);
-  
-  //potential->ReadPotentialWithField(CoefficientFileName);
+  HardBoxPyramidQuantumDotThreeDConstantCellPotential* potential = new HardBoxPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, 1, 2, 1);  
+  potential->LoadPotentialWithConstantField(CoefficientFileName);
 
-
-  
+  /*
   // **** PROBABILITIES ****
   double p1 = 0.0, p2 = 0.0;
 
@@ -177,26 +175,6 @@ int main(int argc, char** argv)
       potential->PrintPotentialWithField(potenf);
       potenf.close();
     }
-
-  /*
-  // ASENIDE HOLE         
-  Mux = 0.11; Muy = 0.11; Muz = 0.34;
-  potential->SegregationPyramidDot(p1, p2, 20, 5, 4, 0.0, 0.0, 0.0, 0.0, 0.29, 2.64, true, "DotInput.txt");
-  ofstream potenf("DotPotential.txt");
-  potential->PrintPotentialWithField(potenf);
-  potenf.close();
-  ofstream diagram ("Diagram.txt");
-  potential->PrintDiagram(diagram);
-  diagram.close(); 
-  */
-  /*
-  // NITRIDE ELECTRON           
-  Mux = 0.07; Muy = 0.07; Muz = 0.07;
-  potential->ReadDiagram("../h/Diagram.txt");
-  potential->SegregationPyramidDot(p1, p2, 20, 5, 4, 0.0, 0.0, 0.0, 0.0, 0.41, 2.64, false, "DotInput.txt");
-  ofstream potenf("DotPotential.txt");
-  potential->PrintPotentialWithField(potenf);
-  potenf.close();
   */
 
   Confined3DOneParticle Space(M, N, H);

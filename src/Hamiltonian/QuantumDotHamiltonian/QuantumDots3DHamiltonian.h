@@ -35,16 +35,13 @@
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
 
 #include <iostream>
 
-
 using std::ostream;
 
-
 class MathematicaOutput;
-
+class HardBoxPyramidQuantumDotThreeDConstantCellPotential;
 
 class QuantumDots3DHamiltonian : public AbstractHamiltonian
 {
@@ -145,7 +142,7 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // nbrCellZ = number of cells in the z direction
   // overlapingFactors = tridimensionnal array where overlaping factors are stored
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory = -1);
+  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory = -1);
 
   // copy constructor (without duplicating datas)
   //

@@ -35,7 +35,6 @@
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
 
 #include <iostream>
 
@@ -44,6 +43,7 @@ using std::ostream;
 
 
 class MathematicaOutput;
+class ThreeDConstantCellPotential;
 
 
 class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
@@ -117,33 +117,41 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
 
  public:
   
-  // constructor from default data
+  // constructor from default datas
   //
   // space = Hilbert space associated to the system
   // xSize = system dimension in the x direction (in Angstrom unit)
   // ySize = system dimension in the y direction (in Angstrom unit)
   // zSize = system dimension in the z direction (in Angstrom unit)
+  // preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
+  // postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
+  // postConstantRegionPotential = value of the potential in the region after the gradiant zone
   // mux = effective mass in the x direction (in electron mass unit)
   // muy = effective mass in the y direction (in electron mass unit)
   // muz = effective mass in the z direction (in electron mass unit)
   // nbrCellX = number of cells in the x direction
   // nbrCellY = number of cells in the y direction
   // nbrCellZ = number of cells in the z direction
-  // potentialInput = pointer to a 3D potential  
-  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput);
+  // overlapingFactors = tridimensionnal array where overlaping factors are stored
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  
+  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
-  // hamiltonian = reference on hamiltonian to copy  
+  // hamiltonian = reference on hamiltonian to copy
+  
   PeriodicQuantumDots3DHamiltonian(const PeriodicQuantumDots3DHamiltonian& hamiltonian);
 
   // destructor
-  //  
+  //
+  
   ~PeriodicQuantumDots3DHamiltonian();
   
   // clone hamiltonian without duplicating datas
   //
-  // return value = pointer to cloned hamiltonian  
+  // return value = pointer to cloned hamiltonian
+  
   AbstractHamiltonian* PeriodicQuantumDots3DHamiltonian::Clone ();
 
   // set Hilbert space
@@ -197,24 +205,10 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination,
 				  int firstComponent, int nbrComponent);
 
-  // multiply a vector by the current hamiltonian for a given range of indices
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
   
-  // evaluate the all interaction factors
-  // 
   void EvaluateInteractionFactors();
 
-  // evaluate wave function overlap in a given direction
-  //
-  // nbrStep = number of subdivisions in the choosen direction
-  // nbrState = number of states in the restrained Hilbert space in the choosen direction
-  // realArray = reference to a 2D array to stock the real values of overlap
-  // imaginaryArray = reference to a 2D array to stock the imaginary values of overlap
   bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
 };
 

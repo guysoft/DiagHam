@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            // 
-//                     Copyright (C) 2003 Duc-Phuong Nguyen                   //
+//                     Copyright (C) 2004 Duc-Phuong Nguyen                   //
 //                                                                            //
-//                    class for periodic pyramid quantum dot                  //
+//                          class of abstract potential                       //
 //                                                                            //
-//                        last modification : 09/15/2003                      //
+//                        last modification : 02/11/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -24,47 +24,49 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PERIODICPYRAMIDQUANTUMDOTPOTENTIAL_H
-#define PERIODICPYRAMIDQUANTUMDOTPOTENTIAL_H
+#ifndef ABSTRACTPOTENTIAL_H
+#define ABSTRACTPOTENTIAL_H
 
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
 
 #include "config.h"
 
-class PeriodicPyramidQuantumDotPotential : public ThreeDPotential
+
+class AbstractPotential
 {
 
  protected:
 
-  // width of wetting layer
-  int WettingWidth;
-
-  // base radius
-  int BaseRadius;
-
-  // top radius
-  int TopRadius;
-
- 
-
  public:
 
-  // constructor
-  PeriodicPyramidQuantumDotPotential(int NbrCellX, int NbrCellY, int NbrCellZ, double Lz, int u, int a, int rb, int rt, int w, double offset, double concentration, double piezofield, bool scratch, char* logfile);
-
   // destructor
-  ~PeriodicPyramidQuantumDotPotential();
-
-  bool GeneratePotential(double C, double F, double Lz, double offset, bool scratch, char* filename);
-
-  // determine if a cell is in the dot (wetting layer is included)
-  // x: x coordinate of the cell
-  // y: y coordinate of the cell
-  // z: z coordinate of the cell
   //
-  // return : true if the cell is in the dot, false otherwise
-  bool InTheDot(int x, int y, int z);
-};
+  virtual ~AbstractPotential();
 
+  // save the diagram of atoms in a file
+  //
+  // fileName = name of the file to stock the diagram
+  virtual void SaveDiagram(char* fileName) = 0;
+
+  // load the diagram of atoms from a file
+  //
+  // fileName = name of the file in which the diagram is stocked
+  virtual void LoadDiagram(char* fileName) = 0;
+
+  // save the potential in a file
+  //
+  // fileName = name of the file to stock the potential
+  virtual void SavePotential(char* fileName) = 0;
+
+  // load the potential from a file
+  //
+  // fileName = name of the file in which the potential is stocked
+  virtual void LoadPotential(char* fileName) = 0;
+
+  // save the whole diagram presentation in a bitmap file
+  //
+  // fileName = name of the file to stock the diagram presentation  
+  virtual void SaveBmpPicture(char* fileName) = 0;
+
+};
 
 #endif

@@ -32,7 +32,7 @@
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Complex.h"
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
+#include "Tools/QuantumDot/Potential/HardBoxPyramidQuantumDotThreeDConstantCellPotential.h"
 
 #include <iostream>
 
@@ -64,7 +64,7 @@ using std::endl;
 // overlapingFactors = tridimensionnal array where overlaping factors are stored
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory)
+QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -80,13 +80,33 @@ QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space,
   this->NbrStateX = this->Space->GetNbrStateX();
   this->NbrStateY = this->Space->GetNbrStateY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
-  this->LeftNumber = PotentialInput->under;
-  this->PreConstantRegionSize = PotentialInput->UnderSize;
-  this->PreConstantRegionPotential = PotentialInput->UnderPotential;
-  this->RightNumber = PotentialInput->above;
-  this->PostConstantRegionSize =  PotentialInput->AboveSize;
-  this->PostConstantRegionPotential =  PotentialInput->AbovePotential;
-  this->InteractionFactors = PotentialInput->Potential;
+  this->LeftNumber = PotentialInput->GetUnder();
+  this->PreConstantRegionSize = new double [this->LeftNumber];
+  this->PreConstantRegionPotential = new double [this->LeftNumber];
+  for (int k = 0; k < this->LeftNumber; ++k)
+    {
+      this->PreConstantRegionSize[k] = PotentialInput->GetUnderSize(k);
+      this->PreConstantRegionPotential[k] = PotentialInput->GetUnderPotentialValue(k);
+    }
+  this->RightNumber = PotentialInput->GetAbove();
+  this->PostConstantRegionSize = new double [this->RightNumber];
+  this->PostConstantRegionPotential = new double [this->RightNumber];
+  for (int k = 0; k < this->RightNumber; ++k)
+    {
+      this->PostConstantRegionSize[k] = PotentialInput->GetAboveSize(k);
+      this->PostConstantRegionPotential[k] = PotentialInput->GetAbovePotentialValue(k);
+    }
+  this->InteractionFactors = new double** [this->NbrCellZ];  
+  for (int k = 0; k < this->NbrCellZ; ++k)
+    {
+      this->InteractionFactors[k] = new double* [this->NbrCellY];
+      for (int j = 0; j < this->NbrCellY; ++j)
+	{
+	  this->InteractionFactors[k][j] = new double [this->NbrCellX];	
+	  for (int i = 0; i < this->NbrCellX; ++i)
+	    this->InteractionFactors[k][j][i] = PotentialInput->GetPotential(i, j, k + this->LeftNumber);
+	}
+    }
   this->EvaluateInteractionFactors(memory);
 }
 

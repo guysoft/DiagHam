@@ -18,9 +18,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Potential/TwoDPotential.h"
-
-#include "Tools/QuantumDot/Spectra/DOSSpectra.h" 
+#include "Tools/QuantumDot/Potential/BinaryTwoDConstantCellPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -125,13 +123,7 @@ int main(int argc, char** argv)
   int MinX = LeftX * NbrCellX; int MaxX = (1.0 - RightX) * NbrCellX;
   int MinY = LeftY * NbrCellY; int MaxY = (1.0 - RightY) * NbrCellY;
 
-
-  TwoDPotential Potential = TwoDPotential (NbrCellX, NbrCellY, 12);
-  //Potential.UniformWell(0.5, 1.8, Weight_E, true);
-  //ofstream PotentialFile("Potential2D.txt");
-  //Potential.PrintPotential(PotentialFile).flush();
-
-  Potential.ReadTwoDPotential(CoefficientFileName);
+  BinaryTwoDConstantCellPotential potential = BinaryTwoDConstantCellPotential(NbrCellX, NbrCellY);
 
   // coupling table in X direction
   ComplexVector** ElementaryCouplingX = new ComplexVector* [NbrStateX];
@@ -212,7 +204,7 @@ int main(int argc, char** argv)
 	    {
 	      tmp = Complex(0.0, 0.0);
 	      for (int i = MinX; i < MaxX; ++i)		
-		tmp += (Potential(i, j) * ElementaryCouplingX[m1][m2][i]);	      		
+		tmp += (potential.GetPotential(i, j) * ElementaryCouplingX[m1][m2][i]);	      		
 	      Intermediate[m1][m2].Re(j) = tmp.Re;
 	      Intermediate[m1][m2].Im(j) = tmp.Im;
 	      Intermediate[m2][m1].Re(j) = tmp.Re;
@@ -224,7 +216,7 @@ int main(int argc, char** argv)
 	{
 	  tmp = Complex(0.0, 0.0);
 	  for (int i = MinX; i < MaxX; ++i)
-	    tmp += (Potential(i, j) * ElementaryCouplingX[m1][m1][i]);
+	    tmp += (potential.GetPotential(i, j) * ElementaryCouplingX[m1][m1][i]);
 	  Intermediate[m1][m1].Re(j) = tmp.Re;
 	  Intermediate[m1][m1].Im(j) = tmp.Im;
 	}

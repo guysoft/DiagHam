@@ -5,9 +5,7 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
-#include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
@@ -23,10 +21,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
-#include "Tools/QuantumDot/Potential/PeriodicPyramidQuantumDot.h"
-
-#include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
+#include "Tools/QuantumDot/Potential/PeriodicPyramidQuantumDotThreeDConstantCellPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -34,7 +29,6 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
-
 
 using std::cout;
 using std::endl;
@@ -122,7 +116,7 @@ int main(int argc, char** argv)
   int LeftSize = LeftSizeOption.GetInteger();
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
- 
+  /*
   // **** PROBABILITIES ****
   double p = 0.175;
 
@@ -133,43 +127,53 @@ int main(int argc, char** argv)
   double Offset = 0.0;
 
   // *** Electric field (absolute value) ****;
-  double Piezo = 0.03;
-
+  double AbsolutePiezo = 0.02;
+  
   // Pour la simulation du puits quantique InGaAs / GaAs
-  Offset = 0.713; Piezo = 0.0; Mux = 0.0715; Muy = 0.0715; Muz = 0.0715;     
-  Rb = 0; Rt = 0; w = 4; p = 0.5;
-
-  /*
+  //Offset = 0.713; Piezo = 0.0; Mux = 0.0715; Muy = 0.0715; Muz = 0.0715;     
+  //Rb = 0; Rt = 0; w = 4; p = 0.5;
+   
+  double Piezo;
   if (Carrier)
     {
-      Offset = 0.9; Piezo = -0.03;
+      Offset = 0.9; Piezo = -AbsolutePiezo;;
       Mux = 0.5045; Muy = 0.5045; Muz = 1.1;
     }
   else
     {
-      Offset = 1.8; Piezo = 0.03;
+      Offset = 1.8; Piezo = AbsolutePiezo;
       Mux = 0.166; Muy = 0.166; Muz = 0.184;
     }
-  */
+  
   // PeriodicPyramidQuantumDotPotential(int NbrCellX, int NbrCellY, int NbrCellZ, double Lz, int u, int a, int rb, int rt, int w, double offset, double concentration, double piezofield, bool scratch, char* logfile)
   PeriodicPyramidQuantumDotPotential* potential = new PeriodicPyramidQuantumDotPotential(M, N, H, Lz, LeftSize, RightSize, Rb, Rt, w, Offset, p, Piezo, Carrier, "DotInput.txt");
+  
+  if (Carrier)
+    {     
+      ofstream diagram("Diagram.txt");
+      potential->PrintDiagram(diagram);
+      diagram.close();
+    }
+  else
+    {
+      potential->ReadDiagram("../h/Diagram.txt");
+      potential->GeneratePotential(p, Piezo, Lz, Offset, Carrier, "DotInput.txt");
+    }
 
   ofstream pfile("DotPotential.txt");
   pfile.precision(14);
   potential->PrintPotential(pfile);
-  pfile.close();
-
-  ofstream diagram("Diagram.txt");
-  potential->PrintDiagram(diagram);
-  diagram.close();  
+  pfile.close();  
+  */
+  
+  PeriodicPyramidQuantumDotThreeDConstantCellPotential* potential = new PeriodicPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, 2, 1, 1);   
+  potential->LoadPotential("DotPotential.txt");
 
   // define Hilbert space
-  Periodic3DOneParticle Space(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
+  Periodic3DOneParticle Space(M, M / 2, N, N / 2, H, H / 2);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
-  gettimeofday (&(PrecalculationStartingTime), 0);
-  
-  //  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory = -1);
+  gettimeofday (&(PrecalculationStartingTime), 0);  
  
   PeriodicQuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
 
@@ -178,10 +182,13 @@ int main(int argc, char** argv)
     ((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
   cout << "precalculation time = " << Dt << endl;
 
+  cout << LanczosFlag << endl;
+
   ofstream Input;
   Input.open("DotInput.txt", ios::out | ios::app);
   Input << "Lattice constants: X = " << Lx << ", Y = " << Ly << ", Z = " << Lz << '\n';
   Input << "Effective masses: Mx = " << Mux << ", My = " << Muy << ", Mz = " << Muz << '\n';
+  //Input << "Piezo-electric field: " << Piezo << '\n';
   Input << "Precalculation time: " << Dt << '\n';  
  
   ComplexVector* Eigenstates = 0;
@@ -293,7 +300,7 @@ int main(int argc, char** argv)
       gettimeofday (&(PrecalculationEndingTime), 0);
       Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
 	((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
-      cout << "diagonalisation time = " << Dt << endl;
+      cout << endl << "diagonalisation time = " << Dt << endl;
     }
 
   Input << "Diagonalization time: " << Dt << '\n';

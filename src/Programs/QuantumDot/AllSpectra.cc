@@ -4,9 +4,6 @@
 #include "Tools/QuantumDot/Spectra/DOSSpectra.h"
 #include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
 
-#include "Tools/QuantumDot/Potential/Potential.h"
-#include "Tools/QuantumDot/Potential/ThreeDPotential.h"
-
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 
 #include "BitmapPicture/BmpFormat.h"
@@ -27,8 +24,8 @@ int main()
   int M = 61, N = 61, H = 60;
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
   
-  PeriodicSpectra spectra(Space, "asgard/h/eigenvector.0");
-  ofstream OutFile("asgard/h/ProbabilityY-Z.txt");  
+  PeriodicSpectra spectra(Space, "asgard/e/eigenvector.0");
+  ofstream OutFile("asgard/e/ProbabilityY-Z.txt");  
 
   // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
 
