@@ -85,7 +85,14 @@ class QuantumDotThreeDConstantCylinderPotential : public ThreeDConstantCylinderP
   // dotPotential = dot potential, in comparision with the bulk
   // wellPotential = barrier potential, in comparison with the bulk
   void ConstructPotential(double dotPotential, double wellPotential = 0.0);
-  
+
+  // add two barriers of the same potential just below and above the dot + WL (for Vienna experimenters)
+  //
+  // belowBarrier = width of barrier layer just below the WL (in Angstrom unit)
+  // aboveBarrier = width of barrier layer just above  the dot (in Angstrom unit)
+  // potential = potential to add in these barriers (in eV unit)  
+  void AddBarrierPotential (double belowBarrier, double aboveBarrier, double potential);  
+
   // save the whole diagram presentation in a bitmap file
   //
   // fileName = name of the file to stock the diagram presentation

@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(libSpectra_a_SOURCES) $(TestSpectra_SOURCES)
+SOURCES = $(libSpectra_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,7 +36,6 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-check_PROGRAMS = TestSpectra$(EXEEXT)
 subdir = src/Tools/QuantumDot/Spectra
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -58,8 +57,6 @@ am_libSpectra_a_OBJECTS = Spectra.$(OBJEXT) OverlapSpectra.$(OBJEXT) \
 	CylinderInMagneticFieldSpectra.$(OBJEXT) \
 	CylinderQuantumDotSpectra.$(OBJEXT) HardBoxSpectra.$(OBJEXT)
 libSpectra_a_OBJECTS = $(am_libSpectra_a_OBJECTS)
-am_TestSpectra_OBJECTS = TestSpectra.$(OBJEXT)
-TestSpectra_OBJECTS = $(am_TestSpectra_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -70,7 +67,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/HardBoxSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/OverlapSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicSpectra.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Spectra.Po ./$(DEPDIR)/TestSpectra.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/Spectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/TimeResolvedPLSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodicSpectra.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -78,8 +75,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(libSpectra_a_SOURCES) $(TestSpectra_SOURCES)
-DIST_SOURCES = $(libSpectra_a_SOURCES) $(TestSpectra_SOURCES)
+SOURCES = $(libSpectra_a_SOURCES)
+DIST_SOURCES = $(libSpectra_a_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -186,10 +183,6 @@ CylinderInMagneticFieldSpectra.cc \
 CylinderQuantumDotSpectra.cc \
 HardBoxSpectra.cc
 
-TESTS = $(check_PROGRAMS)
-TestSpectra_SOURCES = TestSpectra.cc
-TestSpectra_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
-TestSpectra_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 all: all-recursive
 
 .SUFFIXES:
@@ -231,12 +224,6 @@ libSpectra.a: $(libSpectra_a_OBJECTS) $(libSpectra_a_DEPENDENCIES)
 	$(libSpectra_a_AR) libSpectra.a $(libSpectra_a_OBJECTS) $(libSpectra_a_LIBADD)
 	$(RANLIB) libSpectra.a
 
-clean-checkPROGRAMS:
-	-test -z "$(check_PROGRAMS)" || rm -f $(check_PROGRAMS)
-TestSpectra$(EXEEXT): $(TestSpectra_OBJECTS) $(TestSpectra_DEPENDENCIES) 
-	@rm -f TestSpectra$(EXEEXT)
-	$(CXXLINK) $(TestSpectra_LDFLAGS) $(TestSpectra_OBJECTS) $(TestSpectra_LDADD) $(LIBS)
-
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -251,7 +238,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OverlapSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Spectra.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TestSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TimeResolvedPLSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodicSpectra.Po@am__quote@
 
@@ -392,79 +378,6 @@ GTAGS:
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
-check-TESTS: $(TESTS)
-	@failed=0; all=0; xfail=0; xpass=0; skip=0; \
-	srcdir=$(srcdir); export srcdir; \
-	list='$(TESTS)'; \
-	if test -n "$$list"; then \
-	  for tst in $$list; do \
-	    if test -f ./$$tst; then dir=./; \
-	    elif test -f $$tst; then dir=; \
-	    else dir="$(srcdir)/"; fi; \
-	    if $(TESTS_ENVIRONMENT) $${dir}$$tst; then \
-	      all=`expr $$all + 1`; \
-	      case " $(XFAIL_TESTS) " in \
-	      *" $$tst "*) \
-		xpass=`expr $$xpass + 1`; \
-		failed=`expr $$failed + 1`; \
-		echo "XPASS: $$tst"; \
-	      ;; \
-	      *) \
-		echo "PASS: $$tst"; \
-	      ;; \
-	      esac; \
-	    elif test $$? -ne 77; then \
-	      all=`expr $$all + 1`; \
-	      case " $(XFAIL_TESTS) " in \
-	      *" $$tst "*) \
-		xfail=`expr $$xfail + 1`; \
-		echo "XFAIL: $$tst"; \
-	      ;; \
-	      *) \
-		failed=`expr $$failed + 1`; \
-		echo "FAIL: $$tst"; \
-	      ;; \
-	      esac; \
-	    else \
-	      skip=`expr $$skip + 1`; \
-	      echo "SKIP: $$tst"; \
-	    fi; \
-	  done; \
-	  if test "$$failed" -eq 0; then \
-	    if test "$$xfail" -eq 0; then \
-	      banner="All $$all tests passed"; \
-	    else \
-	      banner="All $$all tests behaved as expected ($$xfail expected failures)"; \
-	    fi; \
-	  else \
-	    if test "$$xpass" -eq 0; then \
-	      banner="$$failed of $$all tests failed"; \
-	    else \
-	      banner="$$failed of $$all tests did not behave as expected ($$xpass unexpected passes)"; \
-	    fi; \
-	  fi; \
-	  dashes="$$banner"; \
-	  skipped=""; \
-	  if test "$$skip" -ne 0; then \
-	    skipped="($$skip tests were not run)"; \
-	    test `echo "$$skipped" | wc -c` -le `echo "$$banner" | wc -c` || \
-	      dashes="$$skipped"; \
-	  fi; \
-	  report=""; \
-	  if test "$$failed" -ne 0 && test -n "$(PACKAGE_BUGREPORT)"; then \
-	    report="Please report to $(PACKAGE_BUGREPORT)"; \
-	    test `echo "$$report" | wc -c` -le `echo "$$banner" | wc -c` || \
-	      dashes="$$report"; \
-	  fi; \
-	  dashes=`echo "$$dashes" | sed s/./=/g`; \
-	  echo "$$dashes"; \
-	  echo "$$banner"; \
-	  test -z "$$skipped" || echo "$$skipped"; \
-	  test -z "$$report" || echo "$$report"; \
-	  echo "$$dashes"; \
-	  test "$$failed" -eq 0; \
-	else :; fi
-
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
@@ -506,8 +419,6 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-recursive
 all-am: Makefile $(LIBRARIES)
 installdirs: installdirs-recursive
@@ -538,8 +449,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-checkPROGRAMS clean-generic clean-noinstLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR)
@@ -588,19 +498,18 @@ uninstall-am: uninstall-info-am
 
 uninstall-info: uninstall-info-recursive
 
-.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am check check-TESTS \
-	check-am clean clean-checkPROGRAMS clean-generic \
-	clean-noinstLIBRARIES clean-recursive ctags ctags-recursive \
-	distclean distclean-compile distclean-generic \
-	distclean-recursive distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am uninstall-info-am
+.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am check check-am \
+	clean clean-generic clean-noinstLIBRARIES clean-recursive \
+	ctags ctags-recursive distclean distclean-compile \
+	distclean-generic distclean-recursive distclean-tags distdir \
+	dvi dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-exec install-exec-am \
+	install-info install-info-am install-man install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic \
+	maintainer-clean-recursive mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-recursive pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

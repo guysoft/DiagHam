@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   OptionGroup* PotentialGroup = new OptionGroup ("potential options");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* AdditionalGroup = new OptionGroup ("additional options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
   Manager += PotentialGroup;
   Manager += HilbertSpaceGroup;
   Manager += LanczosGroup;
+  Manager += AdditionalGroup;
   Manager += MiscGroup;
 
   (*PotentialGroup) += new SingleDoubleOption ('\n', "radius", "radius of the supercylinder (in Angstrom unit)", 1000);
@@ -87,6 +89,10 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 500);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);  
+
+  (*AdditionalGroup) += new SingleDoubleOption ('\n', "down-barrier", "width of barrier layer just below the WL (in Angstrom unit)", 0);
+  (*AdditionalGroup) += new SingleDoubleOption ('\n', "up-barrier", "width of barrier layer just above  the dot (in Angstrom unit)", 0);
+  (*AdditionalGroup) += new SingleDoubleOption ('\n', "potential", "potential in the barrier (in eV unit)", 0);
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
   (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false); 
@@ -130,6 +136,10 @@ int main(int argc, char** argv)
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
 
+  double BelowBarrier = ((SingleDoubleOption*) Manager["down-barrier"])->GetDouble();  
+  double AboveBarrier = ((SingleDoubleOption*) Manager["up-barrier"])->GetDouble();  
+  double BarrierPotential = ((SingleDoubleOption*) Manager["potential"])->GetDouble();
+
   bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
 
   time_t rawtime;
@@ -152,6 +162,7 @@ int main(int argc, char** argv)
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, SuperCylinderRadius);
   // void ConstructPotential(double dotPotential, double wellPotential);
   potential->ConstructPotential(DotPotential, WellPotential);
+  potential->AddBarrierPotential (BelowBarrier, AboveBarrier, BarrierPotential);
 
   // define Hilbert space
   // PlanarRotationSymmetryZPeriodicOneParticle(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);

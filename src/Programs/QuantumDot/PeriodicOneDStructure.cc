@@ -31,6 +31,11 @@ using std::ostream;
 using std::ios;
 using std::ofstream;
 
+#define PERIODIC_HAMILTONIAN_FACTOR 150.4
+#define BLOCH_FACTOR 7.619
+#define PARAMAGNETIC_FACTOR         5.802e-5
+#define DIAMAGNETIC_FACTOR          2.198e-10 // = e^2 * B^2 / 8m
+
 // evaluate the wave function overlap
 //
 // potential = potential of the quantum dot
@@ -38,11 +43,6 @@ using std::ofstream;
 // realArray = 2D array containing the real elements of the overlap
 // imaginaryArray = 2D array containing the imaginary elements of the overlap
 bool EvaluateWaveFunctionOverlap(ThreeDConstantCylinderPotential* potential, int nbrState, double** &realArray, double** &imaginaryArray);
-
-#define PERIODIC_HAMILTONIAN_FACTOR 150.4
-#define BLOCH_FACTOR 7.619
-#define PARAMAGNETIC_FACTOR         5.802e-5
-#define DIAMAGNETIC_FACTOR          2.198e-10
 
 int main(int argc, char** argv)
 {  
@@ -73,8 +73,10 @@ int main(int argc, char** argv)
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-statez", "number of states in z direction", 21);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowz", "lower impulsion in z direction", -10);
+  (*HilbertSpaceGroup) += new SingleIntegerOption ('d', "degree", "degree of the weight function", 1);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
-  (*HilbertSpaceGroup) += new SingleDoubleOption ('s', "sigma", "value of sigma for gaussian weight (in Angstrom unit)", 70);
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('s', "sigma", "value of sigma for gaussian weight (in Angstrom unit)", 40);
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('l', "lambda", "value of lambda for second degree (2S states) weight (in Angstrom unit)", 40);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('k', "wave", "wave vector of Bloch function in Z direction (in 1/Angstrom unit)", 0.0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -107,8 +109,10 @@ int main(int argc, char** argv)
   double Muz = ((SingleDoubleOption*) Manager["mu-z"])->GetDouble();
   int NbrStateZ = ((SingleIntegerOption*) Manager["nbr-statez"])->GetInteger();
   int LowImpulsionZ = ((SingleIntegerOption*) Manager["lowz"])->GetInteger();
+  int Degree = ((SingleIntegerOption*) Manager["degree"])->GetInteger();
   int NumberM = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
   double Sigma = ((SingleDoubleOption*) Manager["sigma"])->GetDouble();
+  double Lambda = ((SingleDoubleOption*) Manager["lambda"])->GetDouble();
   double WaveVector = ((SingleDoubleOption*) Manager["wave"])->GetDouble();
 
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();   
@@ -133,7 +137,16 @@ int main(int argc, char** argv)
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, 1000.0);
   // void ConstructPotential(double dotPotential, double wellPotential);
   potential->ConstructPotential(DotPotential, WellPotential);
-  OneDConstantCellPotential* oneDPotential = potential->GaussianReductionOneDimension(Sigma, NumberM);
+  if (Degree > 2)
+    {
+      cout << "This degree of the weight function is not taken into account: " << Degree << endl;
+      return 1;
+    }
+  OneDConstantCellPotential* oneDPotential;
+  if (Degree == 1)    
+    oneDPotential = potential->GaussianReductionOneDimension(Sigma, NumberM);
+  if (Degree == 2)
+    oneDPotential = potential->SecondDegreeReductionOneDimension(Lambda, Sigma, NumberM);
 
   double** RealOverlap; double** ImaginaryOverlap;
   EvaluateWaveFunctionOverlap(potential, NbrStateZ, RealOverlap, ImaginaryOverlap);    
@@ -170,17 +183,35 @@ int main(int argc, char** argv)
   TmpTriDiag.Diagonalize(TmpEigenvectors);
   TmpTriDiag.SortMatrixUpOrder(TmpEigenvectors);
 
+  double* tmpE = new double [NbrEigenvalue];
   for (int i = 0; i < NbrEigenvalue; ++i)  
     {
-      if (NumberM == 0)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " ";    
-      if (NumberM == 1)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
-      if (NumberM == -1)
-	cout << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
+      if (Degree == 1)
+	{
+	  if (NumberM == 0)
+	    tmpE[i] = TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Mur * Sigma * Sigma);
+	  if (NumberM == 1)
+	    tmpE[i] = TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma);
+	  if (NumberM == -1)
+	    tmpE[i] = TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma);
+	}
+      if (Degree == 2)
+	{
+	  double l = Lambda * Lambda; double s = Sigma * Sigma;
+	  double a = 2 * l * s / (l + s);	 
+	  double denominator = 2 * l * l - 2 * l * a + a * a;
+	  if (NumberM == 0)
+	    tmpE[i] = TmpTriDiag.DiagonalElement(2 * i) + PERIODIC_HAMILTONIAN_FACTOR * (2 * l * l + a * a) / (4.0 * M_PI * M_PI * Mur * denominator * l) + DIAMAGNETIC_FACTOR * l * MagneticField * MagneticField * (6 * l * l - 4 * l * a + a * a) / (Mur * denominator);
+	}
+    }
+
+  for (int i = 0; i < NbrEigenvalue; ++i)  
+    {
+      cout << tmpE[i] << " ";    
+
       if ((NumberM != 0) && (NumberM != 1) && (NumberM != -1))
 	cout << "This momentum is not taken into account" << endl;
-  cout << endl;
+      cout << endl;
     }
   if (EigenstateFlag)
     {
@@ -202,15 +233,8 @@ int main(int argc, char** argv)
       OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
       // OutputFile << Sigma << " ";
 
-      for (int i = 0; i < NbrEigenvalue; ++i)
-	{
-	  if (NumberM == 0)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " ";
-	  if (NumberM == 1)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
-	  if (NumberM == -1)
-	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Mur * Sigma * Sigma) << " "; 
-	}
+      for (int i = 0; i < NbrEigenvalue; ++i)	
+	OutputFile << tmpE[i] << " ";	  	
       OutputFile << endl;
       OutputFile.close();
 

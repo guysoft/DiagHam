@@ -37,7 +37,6 @@ using std::endl;
 using std::ofstream;
 using std::ifstream;
 
-
 // destructor
 //
 
@@ -117,6 +116,46 @@ OneDConstantCellPotential* ThreeDConstantCylinderPotential::GaussianReductionOne
 	potentialValue[k] = this->PotentialValue[k];
       //cout << potentialValue[k] << endl;
     }
+  OneDConstantCellPotential* potential = new OneDConstantCellPotential (this->NumberZ, cellWidth, potentialValue);
+  return potential;
+}
+
+// get a 1-D potential by averaging through a weight of C(r^2 - a^2) exp(-r^2/(2s^2))
+//
+// lambda = the variance of the gaussian function
+// sigma = the variance of the gaussian function for the 1S state
+// m = value of angular momentum
+// return = pointer to the one dimension potential
+
+OneDConstantCellPotential* ThreeDConstantCylinderPotential::SecondDegreeReductionOneDimension(double lambda, double sigma, int m)
+{
+  double* cellWidth = new double [this->NumberZ];
+  double* potentialValue = new double [this->NumberZ];
+  if (m < 0)
+    m = -m;
+
+  // only the case m = 0
+  for (int k = 0; k < this->NumberZ; ++k)
+    {
+      if (this->CylinderRadius[k] >= 0.0)
+	{
+	  double tmp = this->CylinderRadius[k] * this->CylinderRadius[k] / (lambda * lambda);
+	  
+	  double l = lambda * lambda; double s = sigma * sigma;
+	  double a = 2 * l * s / (l + s);
+	  
+	  double numerator = l * l * (tmp * tmp + 2 * tmp + 2) - 2 * l * a * (tmp + 1) + a * a;
+	  double denominator = 2 * l * l - 2 * l * a + a * a;
+
+	  potentialValue[k] = this->PotentialValue[k] * (1 - exp(-tmp) * numerator / denominator);
+	}
+      else
+	potentialValue[k] = this->PotentialValue[k];
+      cellWidth[k] = this->CylinderHeight[k];      
+
+      //cout << potentialValue[k] << endl;
+    }  
+
   OneDConstantCellPotential* potential = new OneDConstantCellPotential (this->NumberZ, cellWidth, potentialValue);
   return potential;
 }

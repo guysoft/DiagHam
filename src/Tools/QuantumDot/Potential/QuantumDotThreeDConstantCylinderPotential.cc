@@ -106,6 +106,67 @@ void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPot
   this->PotentialValue[this->NumberZ - 1] = 0.0;
 }
 
+// add two barriers of the same potential just below and above the dot + WL (for Vienna experimenters)
+//
+// belowBarrier = width of barrier layer just below the WL (in Angstrom unit)
+// aboveBarrier = width of barrier layer just above  the dot (in Angstrom unit)
+// potential = potential to add in these barriers (in eV unit)  
+
+void QuantumDotThreeDConstantCylinderPotential::AddBarrierPotential (double belowBarrier, double aboveBarrier, double potential)
+{
+  if ((belowBarrier > this->UnderBarrier) || (aboveBarrier > this->AboveHeight))
+    {
+      cout << "The barrier potential inserted is too thick. Try another thinner one" << endl;
+      return;
+    }
+
+  delete[] this->CylinderHeight; delete[] this->CylinderRadius; 
+  double* tmpPotential = this->PotentialValue;
+
+  this->NumberZ = this->NbrCylinderDot + 6;
+  this->CylinderHeight = new double[this->NumberZ];
+  this->CylinderRadius = new double[this->NumberZ];
+  this->PotentialValue =  new double[this->NumberZ];
+  
+  // geometry
+  this->CylinderHeight[0] = this->UnderBarrier;
+  this->CylinderRadius[0] = -1.0;
+
+  this->CylinderHeight[1] = this->BelowHeight - belowBarrier;
+  this->CylinderRadius[1] = -1.0;
+
+  this->CylinderHeight[2] = belowBarrier;
+  this->CylinderRadius[2] = -1.0;
+
+  this->CylinderHeight[3] = this->WettingWidth;
+  this->CylinderRadius[3] = -1.0;
+
+  for (int k = 4; k < (4 + this->NbrCylinderDot); ++k)
+    {
+      this->CylinderHeight[k] = this->DotHeight / double(this->NbrCylinderDot);
+      this->CylinderRadius[k] = this->BaseRadius - double(k - 4) * (this->BaseRadius - this->TopRadius) / double(this->NbrCylinderDot - 1);
+    }
+
+  this->CylinderHeight[this->NumberZ - 2] = aboveBarrier;
+  this->CylinderRadius[this->NumberZ - 2] = -1.0;
+
+  this->CylinderHeight[this->NumberZ - 1] = this->AboveHeight - aboveBarrier;
+  this->CylinderRadius[this->NumberZ - 1] = -1.0;
+  
+  // potential
+  this->PotentialValue[0] = tmpPotential[0];
+  this->PotentialValue[1] = tmpPotential[1];
+  this->PotentialValue[2] = this->PotentialValue[1] + potential;
+  this->PotentialValue[3] = tmpPotential[2];
+  for (int k = 0; k < this->NbrCylinderDot; ++k)
+    this->PotentialValue[k + 4] = tmpPotential[k + 3];
+  this->PotentialValue[this->NumberZ - 2] = tmpPotential[1] + potential;
+  this->PotentialValue[this->NumberZ - 1] = this->PotentialValue[1];
+
+  delete[] tmpPotential;
+
+}
+
 // save the whole diagram presentation in a bitmap file
 //
 // fileName = name of the file to stock the diagram presentation

@@ -121,7 +121,15 @@ class ThreeDConstantCylinderPotential : public AbstractPotential
   // sigma = the variance of the gaussian function
   // m = value of angular momentum
   // return = pointer to the one dimension potential
-  virtual OneDConstantCellPotential* GaussianReductionOneDimension(double sigma, int m = 0);
+  OneDConstantCellPotential* GaussianReductionOneDimension (double sigma, int m = 0);
+
+  // get a 1-D potential by averaging through a weight of C(r^2 - a^2) exp(-r^2/(2s^2))
+  //
+  // lambda = the variance of the gaussian function
+  // sigma = the variance of the gaussian function for the 1S state
+  // m = value of angular momentum
+  // return = pointer to the one dimension potential  
+  OneDConstantCellPotential* SecondDegreeReductionOneDimension (double lambda, double sigma, int m);
 
 };
 
