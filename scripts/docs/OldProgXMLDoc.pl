@@ -22,12 +22,8 @@ $ProgramName =~ s/^.*\/([^\/]*)$/$1/;
 $Path =~ s/^\.\///;
 $Path =~ s/\/[^\/]*$//;
 my $Options = `$ARGV[0] --help`;
-my @OptionGroups;
-my %Options;
 my @TmpLines = split (/\n/, $Options);
 my $TmpLine;
-
-
 print "<?xml version=\"1.0\" ?>
 <program name=\"".$ProgramName."\">
   <location>".$Path."</location>
@@ -35,23 +31,10 @@ print "<?xml version=\"1.0\" ?>
     <email></email>
     <homepage></homepage>
   </authors>
-  <optiongroupsort>";
-my $Pos = 0;
-while ($Pos < ($#OptionGroups - 1))
-  {
-    print $OptionGroups[$Pos].",";
-    Pos++;
-  }
-print $OptionGroups[$Pos]."</optiongroupsort>
+  <optiongroupsort></optiongroupsort>
   <optiongroup name=\"misc options\">
   <optiongroup name=\"\">
 ";
-
-my $GroupName;
-foreach $GroupName (@OptionGroups)
-  {
-  }
-
 foreach $TmpLine (@TmpLines)
   {
     chomp ($TmpLine);
@@ -102,40 +85,3 @@ print "  </optiongroup>
 
   <remarks></remarks>
 </program>\n";
-
-
-
-# parse help returned by a program
-#
-# $_[0] = 
-
-sub ParseHelp
-  {
-    my @TmpLines = split (/\n/, $_[0]);
-    my $OptionGroupNames = $_[1];
-    my $TmpLine;
-    my $Pos = 0;
-    while (($Pos < $#TmpLines) && ($TmpLines[$Pos] =~ /^Options\:/))
-      {
-	Pos++;
-      }
-    Pos++;
-    while ($Pos < $#TmpLines)
-      {
-	chomp ($TmpLines[$Pos]);
-	$TmpLines[$Pos] =~ s/\:\s*$//;
-	my $TmpOptionGroupName = $TmpLines[$Pos];
-	push (@$OptionGroupName, $TmpOptionGroupName);
-	while (($TmpLines[$Pos] ne "") && ($Pos < $#TmpLines))
-	  {
-	    chomp ($TmpLines[$Pos]);
-	    $TmpLines[$Pos] =~ s/^\s//;
-	    
-	  }
-	if ()
-      }
-    foreach $TmpLine (@TmpLines)
-      {
-	chomp ($TmpLine);	
-      }
-}
