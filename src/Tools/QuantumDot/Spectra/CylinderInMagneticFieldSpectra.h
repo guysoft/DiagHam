@@ -67,6 +67,13 @@ class CylinderInMagneticFieldSpectra
   // Real, Imaginary : references to the real and imaginary components of the wave function
   void WaveFunctionValue(double x, double y, double z, double SizeZ, double& Real, double& Imaginary);
 
+  // get the probability density in z direction (i.e. to sum the probability in the plane)
+  //
+  // z = z position
+  // sizeZ = sample size in Z direction
+  // return = probability density in Z direction at the given point
+  double ZProbabilityDensity(double z, double sizeZ);
+
   // get the value of impulsion operators with another wavefunction <this|p|another>
   //
   // space = Hilbert space describing the other particle

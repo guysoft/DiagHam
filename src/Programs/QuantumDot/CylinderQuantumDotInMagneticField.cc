@@ -5,8 +5,10 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
+#include "HilbertSpace/QuantumDotHilbertSpace/Periodic1DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
 
+#include "Hamiltonian/QuantumDotHamiltonian/Periodic1DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/CylindricalHamiltonianInMagneticField.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
@@ -21,6 +23,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
+#include "Tools/QuantumDot/Potential/OneDConstantCellPotential.h"
 #include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
 #include "Tools/QuantumDot/Potential/QuantumDotThreeDConstantCylinderPotential.h"
 
@@ -56,7 +59,7 @@ int main(int argc, char** argv)
   SingleDoubleOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 11.3);
   SingleDoubleOption BelowValueOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 0.0);
   SingleDoubleOption WettingWidthOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 8.0);
-  SingleIntegerOption NumberDotOption('\n', "dot", "number of uniformly high layer in the dot", 3);
+  SingleIntegerOption NumberDotOption('\n', "nbr-dot", "number of uniformly high layer in the dot", 3);
   SingleDoubleOption BaseRadiusOption ('\n', "base", "base radius in Angstrom unit", 100);
   SingleDoubleOption DotHeightOption ('\n', "height", "height of dot in Angstrom unit", 18);
   SingleDoubleOption TopRadiusOption ('\n', "top", "top radius in Anstrom unit", 74);
@@ -131,17 +134,18 @@ int main(int argc, char** argv)
   double Mur = RMassOption.GetDouble();
   double Muz = ZMassOption.GetDouble();
   double DotPotential = DotPotentialOption.GetDouble();
+  double WellPotential = WellPotentialOption.GetDouble();
   double MagneticField = MagneticFieldOption.GetDouble();
   double WaveVector= WaveVectorOption.GetDouble();
   int VectorMemory = VectorMemoryOption.GetInteger();
   bool ResumeFlag = ResumeOption.GetBoolean();
   bool DiskFlag = DiskOption.GetBoolean();
   int NbrIterLanczos = NbrIterationOption.GetInteger();
- 
+  
   // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier);
-  // void ConstructPotential(double dotPotential);
-  potential->ConstructPotential(DotPotential);
+  // void ConstructPotential(double dotPotential, double wellPotential);
+  potential->ConstructPotential(DotPotential, WellPotential);
 
   // define Hilbert space
   // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
@@ -152,13 +156,13 @@ int main(int argc, char** argv)
   gettimeofday (&(PrecalculationStartingTime), 0);
   
   //cout << "General space dimension: " << GeneralSpace.GetHilbertSpaceDimension() << endl;
-  cout << "Hilbert space Component: " << Space->GetNbrStateR() << '\t' << Space->GetNbrStateZ() << endl;
-  cout << "Minimal impulsions:       " << Space->GetLowerImpulsionZ() << endl;
-  cout << "Hilbert space dimension: " << Space->GetHilbertSpaceDimension() << endl;
+  //cout << "Hilbert space Component: " << Space->GetNbrStateR() << '\t' << Space->GetNbrStateZ() << endl;
+  //cout << "Minimal impulsions:       " << Space->GetLowerImpulsionZ() << endl;
+  //cout << "Hilbert space dimension: " << Space->GetHilbertSpaceDimension() << endl;
   
   // CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVector, ThreeDConstantCylinderPotential* PotentialInput);
   CylindricalHamiltonianInMagneticField Hamiltonian(Space, Mur, Muz, MagneticField, WaveVector, potential);
-  
+
   gettimeofday (&(PrecalculationEndingTime), 0);
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
     ((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
@@ -176,7 +180,7 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
+  double HamiltonianShift = -Hamiltonian.MaxPartialDiagonalElement();
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
 
   cout << "Hamiltonian shift =  " << HamiltonianShift << endl;
@@ -269,7 +273,7 @@ int main(int argc, char** argv)
             }
           delete[] TmpFileName;
         }
-            
+         
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
     }

@@ -2,7 +2,8 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQuantumDotHamiltonian.a
 
-libQuantumDotHamiltonian_a_SOURCES=QuantumDots3DHamiltonian.cc \
+libQuantumDotHamiltonian_a_SOURCES=Periodic1DHamiltonian.cc \
+QuantumDots3DHamiltonian.cc \
 PeriodicQuantumDots3DHamiltonian.cc \
 XYReflexionSymmetricPeriodic3DHamiltonian.cc \
 ReflexionSymmetricPeriodic3DHamiltonian.cc \

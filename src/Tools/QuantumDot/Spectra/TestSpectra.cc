@@ -65,11 +65,20 @@ int main(int argc, char** argv)
   int NumberM = NumberMValueOption.GetInteger();
   double MagneticField = MagneticFieldOption.GetDouble();
   double SizeZ = SizeZOption.GetDouble();
-
+  
   VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   CylinderInMagneticFieldSpectra* spectra = new CylinderInMagneticFieldSpectra(space, FileName, MagneticField);
 
+  double delta = SizeZ / 100.0; double p = 0.0;
+  double shift = 11.3;
+  for (double z = shift; z <= (SizeZ + shift); z += delta)
+    {
+      p = spectra->ZProbabilityDensity(z, SizeZ);
+      cout << (z - shift) << '\t' << p << '\n';
+    }
+
+  /*
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   char** Files = new char* [200];
   ifstream energy("eigenvalues");
@@ -80,7 +89,7 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
-  for (int i = 0; i < 10; ++i)
+  for (int i = 1; i < 30; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
@@ -94,6 +103,7 @@ int main(int argc, char** argv)
     }
   PX.close(); PY.close(); PZ.close();
   energy.close(); polarization.close();
+  */
 
 /*
   //DOSSpectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE)
@@ -103,12 +113,11 @@ int main(int argc, char** argv)
   DOSSpectra spectra(1, name, state, 5e-4, -0.011, 0.18, 1e-4);
   spectra.WriteSpectra("Sinus50");
 */
-
+/*
   // OverlapSpectra(char* ElectronStateFile, char* ElectronEnergyFile ,int ElectronNumber, char* HoleStateFile, char* HoleEnergyFile, int HoleNumber);
   //  OverlapSpectra x (36);
   //  Spectra (5);
   // e.WriteSpectra("yes");
-  /*
   aa->WriteVector("hehe");
   bb->WriteVector("hehe");
   ifstream te("hehe");

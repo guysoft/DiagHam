@@ -36,6 +36,26 @@ using std::ofstream;
 using std::ifstream;
 
 
+// constructor
+//
+// number = number of cells
+// cellWidth = array containing the width of cells
+// potentialValue = array containing the potential of cells
+
+OneDConstantCellPotential::OneDConstantCellPotential(int number, double* &cellWidth, double* &potentialValue)
+{
+  this->Number = number;
+  this->CellWidth = new double [this->Number];
+  this->PotentialValue = new double [this->Number];
+  this->Size = 0.0;
+  for (int i = 0; i < this->Number; ++i)
+    {
+      this->CellWidth[i] = cellWidth[i];
+      this->PotentialValue[i] = potentialValue[i];
+      this->Size += this->CellWidth[i];
+    }
+}
+
 // destructor
 //
 
@@ -49,6 +69,8 @@ OneDConstantCellPotential::~OneDConstantCellPotential()
 
 void OneDConstantCellPotential::ShiftPotential(double delta)
 {
+  for (int i = 0; i < this->Number; ++i)
+    this->PotentialValue[i] += delta;
 }
 
 // save the diagram of atoms in a file
@@ -103,4 +125,10 @@ void OneDConstantCellPotential::LoadPotential(char* fileName)
   file.close();
 }
 
+// save the whole diagram presentation in a bitmap file
+//
+// fileName = name of the file to stock the diagram presentation
 
+void OneDConstantCellPotential::SaveBmpPicture(char* fileName)
+{
+}

@@ -40,7 +40,23 @@ class OneDConstantCellPotential : public AbstractPotential
   // number of cells
   int Number;
 
+  // size of potential (in Angstrom unit)
+  double Size;
+
+  // the width of cells
+  double* CellWidth;
+
+  // potential in each cell
+  double* PotentialValue;
+
  public:
+
+  // constructor
+  //
+  // number = number of cells
+  // cellWidth = array containing the width of cells
+  // potentialValue = array containing the potential of cells
+  OneDConstantCellPotential(int number, double* &cellWidth, double* &potentialValue);
 
   // destructor
   //
@@ -79,18 +95,29 @@ class OneDConstantCellPotential : public AbstractPotential
   //
   // position = position of the considered cell
   // value = value of potential
-  virtual void SetPotential(int position, double& value) = 0;
+  virtual void SetPotential(int position, double value);
 
   // get the potential at a given position
   //
   // position = position of the considered cell
   // return value = the potential in the cell
-  virtual double GetPotential(int position) = 0;
+  virtual double GetPotential(int position);
+
+  // get the size of the potential sample
+  //
+  // return = size value (in Angstrom unit)
+  double GetSize();
+
+  // get the width of a cell
+  //
+  // position = position of the cell
+  // return = the width of the given cell
+  double GetCellWidth(int position);
 
   // save the whole diagram presentation in a bitmap file
   //
   // fileName = name of the file to stock the diagram presentation
-  virtual void SaveBmpPicture(char* fileName) = 0;
+  virtual void SaveBmpPicture(char* fileName);
 
 };
 
@@ -100,6 +127,45 @@ class OneDConstantCellPotential : public AbstractPotential
 inline int OneDConstantCellPotential::GetNumberCell()
 {
   return this->Number;
+}
+
+// assign the potential a value at a given position 
+//
+// position = position of the considered cell
+// value = value of potential
+
+inline void OneDConstantCellPotential::SetPotential(int position, double value)
+{
+  this->PotentialValue[position] = value;
+}
+
+// get the potential at a given position
+//
+// position = position of the considered cell
+// return value = the potential in the cell
+
+inline double OneDConstantCellPotential::GetPotential(int position)
+{
+  return this->PotentialValue[position];
+}
+
+// get the size of the potential sample
+//
+// return = size value (in Angstrom unit)
+
+inline double OneDConstantCellPotential::GetSize()
+{
+  return this->Size;
+}
+
+// get the width of a cell
+//
+// position = position of the cell
+// return = the width of the given cell
+
+inline double OneDConstantCellPotential::GetCellWidth(int position)
+{
+  return this->CellWidth[position];
 }
 
 #endif

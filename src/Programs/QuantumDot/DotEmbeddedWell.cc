@@ -204,7 +204,7 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
+  double HamiltonianShift = -Hamiltonian.MaxPartialDiagonalElement();
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
   cout << "Hamiltonian shift =  " << HamiltonianShift << endl;
   gettimeofday (&(PrecalculationStartingTime), 0);

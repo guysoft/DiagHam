@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQuantumDotHamiltonian.a
 
-libQuantumDotHamiltonian_a_SOURCES = QuantumDots3DHamiltonian.cc PeriodicQuantumDots3DHamiltonian.cc XYReflexionSymmetricPeriodic3DHamiltonian.cc ReflexionSymmetricPeriodic3DHamiltonian.cc PeriodicQuantumDots3DHamiltonianInMagneticField.cc CylindricalHamiltonianInMagneticField.cc
+libQuantumDotHamiltonian_a_SOURCES = Periodic1DHamiltonian.cc QuantumDots3DHamiltonian.cc PeriodicQuantumDots3DHamiltonian.cc XYReflexionSymmetricPeriodic3DHamiltonian.cc ReflexionSymmetricPeriodic3DHamiltonian.cc PeriodicQuantumDots3DHamiltonianInMagneticField.cc CylindricalHamiltonianInMagneticField.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -84,8 +84,8 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libQuantumDotHamiltonian_a_LIBADD = 
-libQuantumDotHamiltonian_a_OBJECTS =  QuantumDots3DHamiltonian.o \
-PeriodicQuantumDots3DHamiltonian.o \
+libQuantumDotHamiltonian_a_OBJECTS =  Periodic1DHamiltonian.o \
+QuantumDots3DHamiltonian.o PeriodicQuantumDots3DHamiltonian.o \
 XYReflexionSymmetricPeriodic3DHamiltonian.o \
 ReflexionSymmetricPeriodic3DHamiltonian.o \
 PeriodicQuantumDots3DHamiltonianInMagneticField.o \
@@ -102,7 +102,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/CylindricalHamiltonianInMagneticField.P \
-.deps/PeriodicQuantumDots3DHamiltonian.P \
+.deps/Periodic1DHamiltonian.P .deps/PeriodicQuantumDots3DHamiltonian.P \
 .deps/PeriodicQuantumDots3DHamiltonianInMagneticField.P \
 .deps/QuantumDots3DHamiltonian.P \
 .deps/ReflexionSymmetricPeriodic3DHamiltonian.P \

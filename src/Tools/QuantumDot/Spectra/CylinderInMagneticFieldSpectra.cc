@@ -81,6 +81,47 @@ void CylinderInMagneticFieldSpectra::WaveFunctionValue(double x, double y, doubl
 {
 }
 
+// get the probability density in z direction (i.e. to sum the probability in the plane)
+//
+// z = z position
+// sizeZ = sample size in Z direction
+// return = probability density in Z direction at the given point
+
+double CylinderInMagneticFieldSpectra::ZProbabilityDensity(double z, double sizeZ)
+{
+  int LengthZ = (this->NbrStateZ - 1) * 2 + 1;
+  double* real = new double [LengthZ];
+  double* imaginary = new double [LengthZ];
+  int OriginZ = this->NbrStateZ - 1;
+  double tmp = 2.0 * M_PI * z / sizeZ;
+  for (int delta = 0; delta < LengthZ; ++delta)
+    {
+      real[delta] = cos (tmp * double (delta - OriginZ));
+      imaginary[delta] = sin (tmp * double (delta - OriginZ));
+    }
+  double Tmp = 0.0; int IndexZ = 0;
+  double* TmpRealCoefficient; double* TmpImaginaryCoefficient; 
+  double TmpRe1 = 0.0, TmpIm1 = 0.0;
+  for (int n = 0; n < this->NbrStateR; ++n)
+    {
+      TmpRealCoefficient = this->RealCoefficients[n]; TmpImaginaryCoefficient = this->ImaginaryCoefficients[n];
+      for (int p1 = 0; p1 < this->NbrStateZ; ++p1)
+	{
+	  IndexZ = -p1 + OriginZ;
+	  
+	  for (int p2 = 0; p2 < this->NbrStateZ; ++p2) 
+	    {
+	      TmpRe1 = TmpRealCoefficient[p1] * TmpRealCoefficient[p2] + TmpImaginaryCoefficient[p1] * TmpImaginaryCoefficient[p2];
+	      TmpIm1 = TmpRealCoefficient[p1] * TmpImaginaryCoefficient[p2] - TmpImaginaryCoefficient[p1] * TmpRealCoefficient[p2]; 
+	      Tmp += (TmpRe1 * real[IndexZ] - TmpIm1 * imaginary[IndexZ]);
+	      ++IndexZ;
+	    }
+	}
+    }
+  Tmp /= sizeZ; 
+  return Tmp;
+}
+
 // get the value of impulsion operators with another wavefunction <this|p|another>
 //
 // space = Hilbert space describing the other particle
@@ -123,7 +164,7 @@ void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagn
     MinUpperR = nbrStateR;
   if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
     MinUpperZ = lowerImpulsionZ + nbrStateZ;
-  
+
   realImpulsionX = 0.0;
   realImpulsionY = 0.0;
   realImpulsionZ = 0.0;
