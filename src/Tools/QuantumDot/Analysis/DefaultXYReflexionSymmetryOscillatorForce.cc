@@ -128,7 +128,7 @@ int main(int argc, char** argv)
       ofstream PZ("PolarizationZ.txt");
       ifstream energy ("eigenvalues");
 
-      char** Files = new char* [Last];
+      char** Files = new char* [Last + 1];
       double tmpE;  
       double fundamental;
       energy >> fundamental;
