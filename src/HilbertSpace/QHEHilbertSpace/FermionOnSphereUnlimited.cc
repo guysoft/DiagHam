@@ -63,6 +63,7 @@ FermionOnSphereUnlimited::FermionOnSphereUnlimited (int nbrFermions, int totalLz
   this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
   this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
   this->StateLzMax = new int [this->HilbertSpaceDimension];
+  this->ReducedNbrState = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
@@ -104,11 +105,12 @@ FermionOnSphereUnlimited::FermionOnSphereUnlimited(const FermionOnSphereUnlimite
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
+
+  this->StateDescription = fermions.StateDescription;
+  this->StateLzMax = fermions.StateLzMax;
   this->ReducedNbrState = fermions.ReducedNbrState;
 
   this->LookUpTable = fermions.LookUpTable;

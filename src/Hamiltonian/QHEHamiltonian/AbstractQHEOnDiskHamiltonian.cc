@@ -189,6 +189,7 @@ RealVector& AbstractQHEOnDiskHamiltonian::LowLevelAddMultiply(RealVector& vSourc
       int m4;
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+      ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
       for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	{
 	  m1 = this->M1Value[j];
@@ -210,11 +211,12 @@ RealVector& AbstractQHEOnDiskHamiltonian::LowLevelAddMultiply(RealVector& vSourc
       TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	  if (Index < Dim)
 	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 	  vDestination[i] += Shift * vSource[i];
 	}
+      delete TmpParticles;
     }
   else
     {
@@ -237,6 +239,7 @@ RealVector& AbstractQHEOnDiskHamiltonian::LowLevelAddMultiply(RealVector& vSourc
 	}
       else
 	{
+	  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
 	  int* TmpIndexArray;
 	  double* TmpCoefficientArray; 
 	  int j;
@@ -278,7 +281,7 @@ RealVector& AbstractQHEOnDiskHamiltonian::LowLevelAddMultiply(RealVector& vSourc
 		    TmpInteraction = this->InteractionFactors[j];
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
-			Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 			if (Index < Dim)
 			  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		      }
@@ -290,12 +293,13 @@ RealVector& AbstractQHEOnDiskHamiltonian::LowLevelAddMultiply(RealVector& vSourc
 		TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
-		    Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 		    if (Index < Dim)
 		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
 		    vDestination[i] += Shift * vSource[i];
 		  }
 	      }
+	  delete TmpParticles;
 	}
    }
   return vDestination;
@@ -576,7 +580,7 @@ void AbstractQHEOnDiskHamiltonian::PartialEnableFastMultiplication(int firstComp
 	    }
 	}
     }
-  delete[] TmpParticles;
+  delete TmpParticles;
 }
 
 // save precalculations in a file

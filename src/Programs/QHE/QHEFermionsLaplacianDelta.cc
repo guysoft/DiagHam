@@ -64,7 +64,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
-					     "maximum Hilbert space dimension for which full diagonalization is applied", 500, true, 100);
+						"maximum Hilbert space dimension for which full diagonalization is applied", 
+						500, true, 100);
+
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
@@ -87,7 +89,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  bool ResumeFlag = ((BooleanOption*) Manager["help"])->GetBoolean();
+  bool ResumeFlag = ((BooleanOption*) Manager["resume"])->GetBoolean();
   bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
