@@ -243,6 +243,7 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
 	  return this->HilbertSpaceDimension;
 	}
     }
+  int NewLzMax = CurrentLzMax;
  
   int i = 0;
   for (; i <= CurrentLzMax; ++i)
@@ -252,6 +253,7 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
   coefficient = 1.0;
   for (i = nbrIndices; i >= 0; --i)
     {
+      cout << n[i] << endl;
       if (this->TemporaryState[n[i]] == 0)
 	{
 	  coefficient = 0.0;
@@ -262,13 +264,21 @@ int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double&
     }
   for (i = nbrIndices; i >= 0; --i)
     {
+      cout << m[i] << endl;
       ++this->TemporaryState[m[i]];
       coefficient *= (double) this->TemporaryState[m[i]];
+      if (m[i] > NewLzMax)
+	NewLzMax = m[i];
     }
   coefficient = sqrt(coefficient);
-  int NewLzMax = this->TotalLz;
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
+  i = 0;
+  for (; i <= NewLzMax; ++i)
+    cout << this->TemporaryState[i] << " ";
+  for (; i <= this->TotalLz; ++i)
+    cout << "0 ";
+  cout << endl;
   int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }

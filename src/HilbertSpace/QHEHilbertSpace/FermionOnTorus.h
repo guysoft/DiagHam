@@ -54,7 +54,7 @@ class FermionOnTorus :  public ParticleOnTorus
   bool MomentumConstraintFlag;
 
   // array describing each state
-  unsigned int* StateDescription;
+  unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
   int* StateMaxMomentum;
 
@@ -94,7 +94,7 @@ class FermionOnTorus :  public ParticleOnTorus
   // stateDescription = array describing each state
   // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
   FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpaceDimension, 
-		  unsigned int* stateDescription, int* stateMaxMomentum);
+		  unsigned long* stateDescription, int* stateMaxMomentum);
 
   // constructor from full datas
   // 
@@ -105,7 +105,7 @@ class FermionOnTorus :  public ParticleOnTorus
   // stateDescription = array describing each state
   // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
   FermionOnTorus (int nbrFermions, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
-		  unsigned int* stateDescription, int* stateMaxMomentum);
+		  unsigned long* stateDescription, int* stateMaxMomentum);
 
   // copy constructor (without duplicating datas)
   //
@@ -203,7 +203,7 @@ class FermionOnTorus :  public ParticleOnTorus
   // stateDescription = unsigned integer describing the state
   // maxMomentum = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned int stateDescription, int maxMomentum);
+  int FindStateIndex(unsigned long stateDescription, int maxMomentum);
 
   // evaluate Hilbert space dimension
   //

@@ -63,7 +63,7 @@ FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum)
   this->Flag.Initialize();
   this->MomentumConstraint = 0;
   this->MomentumConstraintFlag = false;
-  this->StateDescription = new unsigned int [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
   this->GenerateStates();
   this->MaximumSignLookUp = 16;
@@ -101,7 +101,7 @@ FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum, int mo
   this->MomentumConstraintFlag = true;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
   this->Flag.Initialize();
-  this->StateDescription = new unsigned int [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   cout << this->HilbertSpaceDimension << endl;
@@ -152,7 +152,7 @@ FullFermionOnTorus::FullFermionOnTorus(const FullFermionOnTorus& fermions)
 // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
 
 FullFermionOnTorus::FullFermionOnTorus (int nbrFermions, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
-				unsigned int* stateDescription, int* StateMaxMomentum)
+				unsigned long* stateDescription, int* StateMaxMomentum)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -283,7 +283,7 @@ AbstractQuantumNumber* FullFermionOnTorus::GetQuantumNumber (int index)
 int FullFermionOnTorus::GetMomentumValue(int index)
 {
   int StateMaxMomentum = this->StateMaxMomentum[index];
-  unsigned int State = this->StateDescription[index];
+  unsigned long State = this->StateDescription[index];
   int Momentum = 0;
   for (int i = 0; i <= StateMaxMomentum; ++i)
     {
@@ -299,7 +299,7 @@ int FullFermionOnTorus::GetMomentumValue(int index)
 
 int FullFermionOnTorus::GetNbrParticleValue(int index)
 {
-  unsigned int State = this->StateDescription[index];
+  unsigned long State = this->StateDescription[index];
   int NbrParticle = this->NbrParticleLookUpTable[State & 0xffff];
   NbrParticle += this->NbrParticleLookUpTable[(State >> 16) & 0xffff];
 #ifdef __64_BITS__
@@ -327,7 +327,7 @@ AbstractHilbertSpace* FullFermionOnTorus::ExtractSubspace (AbstractQuantumNumber
   int SubspaceHilbertSpaceDimension = Lim - this->FixedNbrParticleSubspacePosition[NbrParticle];
   if (SubspaceHilbertSpaceDimension == 0)
     return 0;
-  unsigned int* SubspaceStateDescription = new unsigned int [SubspaceHilbertSpaceDimension];
+  unsigned long* SubspaceStateDescription = new unsigned long [SubspaceHilbertSpaceDimension];
   int* SubspaceStateMaxMomentum = new int [SubspaceHilbertSpaceDimension];
   int* ConvArray = new int [SubspaceHilbertSpaceDimension];
   int Inc = this->FixedNbrParticleSubspacePosition[NbrParticle];
@@ -362,7 +362,7 @@ AbstractHilbertSpace* FullFermionOnTorus::ExtractSubspace (AbstractQuantumNumber
     }
   if (SubspaceHilbertSpaceDimension == 0)
     return 0;
-  unsigned int* SubspaceStateDescription = new unsigned int [SubspaceHilbertSpaceDimension];
+  unsigned long* SubspaceStateDescription = new unsigned long [SubspaceHilbertSpaceDimension];
   int* SubspaceStateMaxMomentum = new int [SubspaceHilbertSpaceDimension];
   int* ConvArray = new int [SubspaceHilbertSpaceDimension];
   for (int i = 0; i < SubspaceHilbertSpaceDimension; ++i)
@@ -398,7 +398,7 @@ int FullFermionOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, doubl
   n2 += this->MaxMomentum;
   n2 >>= 1;*/
   int StateMaxMomentum = this->StateMaxMomentum[index];
-  unsigned int State = this->StateDescription[index];
+  unsigned long State = this->StateDescription[index];
   if ((n1 > StateMaxMomentum) || (n2 > StateMaxMomentum) || ((State & (1 << n1)) == 0) || 
       ((State & (1 << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
@@ -545,10 +545,10 @@ Matrix& FullFermionOnTorus::A (int i, Matrix& M)
   if ((M.GetNbrRow() != this->HilbertSpaceDimension) || (M.GetNbrColumn() != this->HilbertSpaceDimension))
     M.ResizeAndClean(this->HilbertSpaceDimension, this->HilbertSpaceDimension);
   int StateMaxMomentum;
-  unsigned int State;
+  unsigned long State;
   int NbrParticle;
   double Coefficient;
-  unsigned int GlobalMask = (0x1 << i);
+  unsigned long GlobalMask = (0x1 << i);
   int Mask;
   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
     {
@@ -585,11 +585,11 @@ Matrix& FullFermionOnTorus::Ad (int i, Matrix& M)
   if ((M.GetNbrRow() != this->HilbertSpaceDimension) || (M.GetNbrColumn() != this->HilbertSpaceDimension))
     M.ResizeAndClean(this->HilbertSpaceDimension, this->HilbertSpaceDimension);
   int StateMaxMomentum;
-  unsigned int State;
+  unsigned long State;
   int NbrParticle;
   double Coefficient;
   int Mask;
-  unsigned int GlobalMask = (0x1 << i);
+  unsigned long GlobalMask = (0x1 << i);
   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
     {
       StateMaxMomentum = this->StateMaxMomentum[j];
@@ -623,7 +623,7 @@ Matrix& FullFermionOnTorus::Ad (int i, Matrix& M)
 // nbrParticle = number of particles in the state
 // return value = corresponding index
 
-int FullFermionOnTorus::FindStateIndex(unsigned int stateDescription, int maxMomentum, int nbrParticle)
+int FullFermionOnTorus::FindStateIndex(unsigned long stateDescription, int maxMomentum, int nbrParticle)
 {
 
   int Pos = this->LookUpTable[nbrParticle][maxMomentum][stateDescription >> this->LookUpTableShift[nbrParticle][maxMomentum]];
@@ -706,7 +706,7 @@ int FullFermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int cur
     }
   int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
   int TmpPos = this->GenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentMaxMomentum, pos);
-  unsigned int Mask = 1 << currentMaxMomentum;
+  unsigned long Mask = 1 << currentMaxMomentum;
   for (int i = pos; i < TmpPos; i++)
     this->StateDescription[i] |= Mask;
   if (maxMomentum == currentMaxMomentum)
@@ -747,7 +747,7 @@ int FullFermionOnTorus::GenerateStates(int nbrFermions, int maxMomentum, int cur
     {
       TmpPos += this->GenerateStates(nbrFermions - i, maxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum + currentMaxMomentum);
     }
-  unsigned int Mask = 1 << currentMaxMomentum;
+  unsigned long Mask = 1 << currentMaxMomentum;
   for (int i = pos; i < TmpPos; i++)
     this->StateDescription[i] |= Mask;
   if (maxMomentum == currentMaxMomentum)
@@ -790,8 +790,8 @@ void FullFermionOnTorus::GenerateLookUpTable(int memory)
       else
 	this->LookUpTableShift[n][CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
       int CurrentShift = this->LookUpTableShift[n][CurrentMaxMomentum];
-      unsigned int CurrentLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-      unsigned int TmpLookUpTableValue;
+      unsigned long CurrentLookUpTableValue = this->StateDescription[0] >> CurrentShift;
+      unsigned long TmpLookUpTableValue;
       TmpLookUpTable[CurrentLookUpTableValue] = 0;
       int Lim = FixedNbrParticleSubspacePosition[n + 1];
       for (int i = FixedNbrParticleSubspacePosition[n]; i < Lim; ++i)
