@@ -62,6 +62,10 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
+					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -87,6 +91,7 @@ int main(int argc, char** argv)
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
+  bool FirstRun = true;
 
   char* OutputNameLz = new char [256];
   sprintf (OutputNameLz, "fermions_v3_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
@@ -146,11 +151,23 @@ int main(int argc, char** argv)
 							   Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
       delete[] PseudoPotential;
       Hamiltonian->ShiftHamiltonian(Shift);
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz);
+      char* EigenvectorName = 0;
+      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+	{
+	  EigenvectorName = new char [64];
+	  sprintf (EigenvectorName, "fermions_v3_n_%d_2s_%d_lz_%d", NbrFermions, LzMax, L);
+	}
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
       delete Hamiltonian;
       delete Space;
+      if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	}
+      if (FirstRun == true)
+	FirstRun = false;
     }
 
   return 0;

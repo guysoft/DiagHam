@@ -47,8 +47,8 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
@@ -93,9 +93,10 @@ int main(int argc, char** argv)
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
+  bool FirstRun = true;
 
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "bosons_hard_core_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
+  sprintf (OutputNameLz, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = 0;
   if ((abs(Max) & 1) != 0)
@@ -129,9 +130,9 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_hard_core_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, LzMax, L);
+	  sprintf (EigenvectorName, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
       delete Hamiltonian;
@@ -139,6 +140,8 @@ int main(int argc, char** argv)
 	{
 	  delete[] EigenvectorName;
 	}
+      if (FirstRun == true)
+	FirstRun = false;
     }
 
   return 0;

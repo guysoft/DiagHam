@@ -177,26 +177,33 @@ ostream& SingleDoubleOption::PrintError (ostream& output)
     {
     case SingleDoubleOption::NotAnDouble:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an double as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an double as argument" << endl;
       }
       break;
     case SingleDoubleOption::NoDouble:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs one double as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output <<" needs one double as argument" << endl;
       }
       break;
     case SingleDoubleOption::Greater:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an double lower than " << this->MaxValue << " as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an double lower than " << this->MaxValue << " as argument" << endl;
       }
       break;
     case SingleDoubleOption::Lower:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an double greater than " << this->MinValue << " as argument" << endl;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an double greater than " << this->MinValue << " as argument" << endl;
       }
       break;
     }

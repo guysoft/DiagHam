@@ -84,7 +84,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	    for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 	      {
 		MIndices = this->NBodyMValue[k][j];
-		NIndices = this->NBodyMValue[k][j];
+		NIndices = this->NBodyNValue[k][j];
 		TmpInteraction = this->NBodyInteractionFactors[k][j];
 		for (int i = firstComponent; i < LastComponent; ++i)
 		  {
@@ -94,7 +94,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		  }
 	      }
 	    MIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
-	    NIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
+	    NIndices = this->NBodyNValue[k][ReducedNbrInteractionFactors];
 	    TmpInteraction = this->NBodyInteractionFactors[k][ReducedNbrInteractionFactors];
 	    for (int i = firstComponent; i < LastComponent; ++i)
 	      {
@@ -173,7 +173,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
 			{
 			  MIndices = this->NBodyMValue[k][j];
-			  NIndices = this->NBodyMValue[k][j];
+			  NIndices = this->NBodyNValue[k][j];
 			  TmpInteraction = this->NBodyInteractionFactors[k][j];
 			  for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 			    {
@@ -183,7 +183,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 			    }
 			}
 		      MIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
-		      NIndices = this->NBodyMValue[k][ReducedNbrInteractionFactors];
+		      NIndices = this->NBodyNValue[k][ReducedNbrInteractionFactors];
 		      TmpInteraction = this->NBodyInteractionFactors[k][ReducedNbrInteractionFactors];
 		      for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 			{
@@ -221,7 +221,7 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 	for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j)
 	  {
 	    MIndices = this->NBodyMValue[k][j];
-	    NIndices = this->NBodyMValue[k][j];
+	    NIndices = this->NBodyNValue[k][j];
 	    for (int i = firstComponent; i < LastComponent; ++i)
 	      {
 		Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
@@ -279,7 +279,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 	  {
 	    TmpInteraction = this->NBodyInteractionFactors[k];
 	    MIndices = this->NBodyMValue[k];
-	    NIndices = this->NBodyMValue[k];
+	    NIndices = this->NBodyNValue[k];
 	    for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j) 
 	      {
 		Index = this->Particles->ProdAdProdA(i + this->PrecalculationShift, MIndices[j], NIndices[j], k, Coefficient);
@@ -402,6 +402,8 @@ long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices
   int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
   sortedIndicesPerSum = new int** [MaxSum + 1];
+  for (int i = 0; i <= MaxSum; ++i)
+    nbrSortedIndicesPerSum[i] = 0;
   for (int i = 0; i < NbrElements; ++i)
     ++nbrSortedIndicesPerSum[Sum[i]];
   for (int i = MinSum; i <= MaxSum; ++i)
@@ -490,8 +492,12 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
   sortedIndicesPerSum = new int** [MaxSum + 1];
   sortedIndicesPerSumSymmetryFactor = new double* [MaxSum + 1];
+  for (int i = 0; i <= MaxSum; ++i)
+    nbrSortedIndicesPerSum[i] = 0;
   for (int i = 0; i < NbrElements; ++i)
-    ++nbrSortedIndicesPerSum[Sum[i]];
+    {
+      ++nbrSortedIndicesPerSum[Sum[i]];
+    }
   for (int i = 0; i <= MaxSum; ++i)
     {
       sortedIndicesPerSum[i] = new int* [nbrSortedIndicesPerSum[i]];

@@ -73,11 +73,12 @@ using std::ofstream;
 // lValue = twice the total momentum value of the system
 // shift = energy shift that is applied to the hamiltonian
 // outputFileName = name of the file where results have to be stored
+// firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 
 QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-					 char* eigenvectorFileName)
+					 bool firstRun, char* eigenvectorFileName)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -107,7 +108,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
   this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
   this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
-  this->FirstRun = true;
+  this->FirstRun = firstRun;
 }  
  
 // destructor
@@ -150,6 +151,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
+//      cout << HRep << endl;
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
 	  RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());

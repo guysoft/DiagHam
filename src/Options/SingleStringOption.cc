@@ -131,8 +131,10 @@ ostream& SingleStringOption::PrintError (ostream& output)
     return output;
   if (this->ErrorCode == SingleStringOption::NoString)
     {
-      output << "option -" << this->OptionName << " (-" << this->OptionCode
-	     <<") needs one string as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs one string as argument" << endl;
       return output;
     }
   return output;

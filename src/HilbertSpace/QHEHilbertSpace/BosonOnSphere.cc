@@ -318,24 +318,18 @@ int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
   int CurrentLzMax = this->StateLzMax[index];
   int* State = this->StateDescription[index];
   --nbrIndices;
-  for (int i = 0; i < nbrIndices; ++i)
+  int NewLzMax = CurrentLzMax;
+  for (int i = 0; i <= nbrIndices; ++i)
     {
       if ((n[i] > CurrentLzMax) || (State[n[i]] == 0))
 	{
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
+      if (NewLzMax < m[i])
+	NewLzMax = m[i];
     }
-  if ((n[nbrIndices] > CurrentLzMax) || (State[n[nbrIndices]] == 0))
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  int NewLzMax = CurrentLzMax;
-  for (int i = 0; i <= nbrIndices; ++i)
-    if (NewLzMax < m[i])
-      NewLzMax = m[i];
-
+ 
   int i = 0;
   int* TemporaryState = new int [NewLzMax + 1];
   for (; i <= CurrentLzMax; ++i)
@@ -345,7 +339,7 @@ int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
   coefficient = 1.0;
   for (i = nbrIndices; i >= 0; --i)
     {
-      if (State[n[i]] == 0)
+      if (TemporaryState[n[i]] == 0)
 	{
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension; 	    

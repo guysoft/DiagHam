@@ -99,10 +99,11 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // lValue = twice the total momentum value of the system
   // shift = energy shift that is applied to the hamiltonian
   // outputFileName = name of the file where results have to be stored
+  // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
   QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 		      AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-		      char* eigenvectorFileName = 0);
+		      bool firstRun = true, char* eigenvectorFileName = 0);
   
   // destructor
   //  

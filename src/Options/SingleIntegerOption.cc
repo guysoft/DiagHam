@@ -176,26 +176,34 @@ ostream& SingleIntegerOption::PrintError (ostream& output)
     {
     case SingleIntegerOption::NotAnInteger:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an integer as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an integer as argument" << endl;
       }
       break;
     case SingleIntegerOption::NoInteger:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs one integer as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output <<" needs one integer as argument" << endl;
       }
       break;
     case SingleIntegerOption::Greater:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an integer lower than " << this->MaxValue << " as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an integer lower than " << this->MaxValue << " as argument" << endl;
       }
       break;
     case SingleIntegerOption::Lower:
       {
-	output << "option -" << this->OptionName << " (-" << this->OptionCode
-	       <<") needs an integer greater than " << this->MinValue << " as argument" << endl;
+	output << "option -" << this->OptionName;
+	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
+	  output << " (-" << this->OptionCode <<")";
+	output << " needs an integer greater than " << this->MinValue << " as argument" << endl;
       }
       break;
     }

@@ -96,6 +96,7 @@ int main(int argc, char** argv)
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   double CoulombRatio = ((SingleDoubleOption*) Manager["add-delta"])->GetDouble();
+  bool FirstRun = true;
 
   char* OutputNameLz = new char [256];
   if (CoulombRatio == 0.0)
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
 	  else
 	    sprintf (EigenvectorName, "bosons_coulomb_delta_n_%d_2s_%d_lz_%d", NbrBosons, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
       delete Hamiltonian;
@@ -151,6 +152,8 @@ int main(int argc, char** argv)
 	{
 	  delete[] EigenvectorName;
 	}
+      if (FirstRun == true)
+	FirstRun = false;
     }
 
   return 0;
