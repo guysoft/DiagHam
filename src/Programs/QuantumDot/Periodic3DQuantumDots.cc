@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
   // *** Electric field (absolute value) ****;
   double AbsolutePiezo = 0.02;
-  
+  /*
   double Piezo;
   if (Carrier)
     {
@@ -139,9 +139,11 @@ int main(int argc, char** argv)
       Offset = 1.8; Piezo = AbsolutePiezo;
       Mux = 0.166; Muy = 0.166; Muz = 0.184;
     } 
+  */
   // PeriodicPyramidQuantumDotThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int under, int above, int wettingWidth, int baseRadius, int topRadius)
   PeriodicPyramidQuantumDotThreeDConstantCellPotential* potential = new PeriodicPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, w, Rb, Rt);   
   // void ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName); 
+  /*
   double concentration = 0.0;
   /*
   if (Carrier)
