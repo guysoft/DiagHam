@@ -212,6 +212,12 @@ class AbstractQHEOnSphereHamiltonian : public AbstractHamiltonian
   // return value = list of right interaction operators
   virtual List<Matrix*> RightInteractionOperators();  
 
+  // save precalculations in a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
+  // return value = true if no error occurs
+  virtual bool SavePrecalculation (char* fileName);
+
  protected:
  
   // evaluate all interaction factors
@@ -240,6 +246,12 @@ class AbstractQHEOnSphereHamiltonian : public AbstractHamiltonian
   // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
   // nbrJob = number of jobs that proceed the fast multiplication evaluation
   virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
+
+  // load precalculations from a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be read
+  // return value = true if no error occurs
+  virtual bool LoadPrecalculation (char* fileName);
 
 };
 

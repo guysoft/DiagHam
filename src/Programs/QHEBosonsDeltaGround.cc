@@ -26,6 +26,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
+#include "Options/SingleStringOption.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -63,6 +64,8 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrBosonOption ('p', "nbr-particles", "number of particles", 12);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
+  SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
   SingleDoubleOption FrequencyShiftOption ('f', "frequency-shift", "frequency shift from FQHE", 0.0);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -78,6 +81,8 @@ int main(int argc, char** argv)
   OptionList += &VectorMemoryOption;
   OptionList += &DiskOption;
   OptionList += &ResumeOption;
+  OptionList += &LoadPrecalculationOption;
+  OptionList += &SavePrecalculationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
@@ -99,6 +104,9 @@ int main(int argc, char** argv)
   int LzMax = LzMaxOption.GetInteger();
   int Memory = MemoryOption.GetInteger() << 20;
   int VectorMemory = VectorMemoryOption.GetInteger();
+  char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
+  char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
+
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
   char* OutputNameLz = new char [256];
@@ -147,7 +155,11 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      ParticleOnSphereDeltaHamiltonian Hamiltonian(&Space, NbrBosons, LzMax, Architecture, Memory);
+      ParticleOnSphereDeltaHamiltonian Hamiltonian(&Space, NbrBosons, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      if (SavePrecalculationFileName != 0)
+	{
+	  Hamiltonian.SavePrecalculation(SavePrecalculationFileName);
+	}
       if (Hamiltonian.GetHilbertSpaceDimension() < 200)
 	{
 //	  Dimensions[L >> 1] = Hamiltonian.GetHilbertSpaceDimension();

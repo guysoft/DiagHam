@@ -61,7 +61,9 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   // lzmax = maximum Lz value reached by a particle in the state
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, int memory = -1);
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, 
+				   int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
@@ -211,19 +213,6 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();
-
-  // test the amount of memory needed for fast multiplication algorithm
-  //
-  // allowedMemory = amount of memory that cam be allocated for fast multiplication
-  // return value = amount of memory needed
-  int FastMultiplicationMemory(int allowedMemory);
-
-  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
-  //
-  // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
-  // return value = number of non-zero matrix element
-  int PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
 
   // enable fast multiplication algorithm
   //

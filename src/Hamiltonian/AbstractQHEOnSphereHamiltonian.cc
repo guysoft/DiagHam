@@ -40,8 +40,12 @@
 
 #include <iostream>
 #include <sys/time.h>
+#include <fstream>
 
 
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 using std::cout;
 using std::endl;
 using std::ostream;
@@ -566,5 +570,79 @@ void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstCo
 	    }
 	}
     }
+}
+
+// save precalculations in a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be stored
+// return value = true if no error occurs
+
+bool AbstractQHEOnSphereHamiltonian::SavePrecalculation (char* fileName)
+{
+  if (this->FastMultiplicationFlag)
+    {
+      ofstream File;
+      File.open(fileName, ios::binary | ios::out);
+      int Tmp = this->Particles->GetHilbertSpaceDimension();
+      File.write((char*) &(Tmp), sizeof(int));
+      File.write((char*) &(this->FastMultiplicationStep), sizeof(int));
+      Tmp /= this->FastMultiplicationStep;
+      if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++Tmp;
+      File.write((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
+      for (int i = 0; i < Tmp; ++i)
+	{
+	  File.write((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
+	}
+      for (int i = 0; i < Tmp; ++i)
+	{
+	  File.write((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
+	}
+      File.close();
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+// load precalculations from a file
+// 
+// fileName = pointer to a string containg the name of the file where precalculations have to be read
+// return value = true if no error occurs
+
+bool AbstractQHEOnSphereHamiltonian::LoadPrecalculation (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  int Tmp;
+  File.read((char*) &(Tmp), sizeof(int));
+  if (Tmp != this->Particles->GetHilbertSpaceDimension())
+    {
+      File.close();
+      return false;
+    }
+  File.read((char*) &(this->FastMultiplicationStep), sizeof(int));
+  Tmp /= this->FastMultiplicationStep;
+  if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+    ++Tmp;
+  this->NbrInteractionPerComponent = new int [Tmp];
+  File.read((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
+  this->InteractionPerComponentIndex = new int* [Tmp];
+  this->InteractionPerComponentCoefficient = new double* [Tmp];
+  for (int i = 0; i < Tmp; ++i)
+    {
+      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
+      File.read((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
+    }
+  for (int i = 0; i < Tmp; ++i)
+    {
+      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
+      File.read((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
+    }
+  File.close();
+  this->FastMultiplicationFlag = true;
+  return true;
 }
 

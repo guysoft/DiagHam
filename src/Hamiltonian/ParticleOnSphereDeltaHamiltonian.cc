@@ -59,9 +59,9 @@ using std::ostream;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-								   AbstractArchitecture* architecture, int memory)
+								   AbstractArchitecture* architecture, int memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -70,24 +70,29 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
-  if (memory > 0)
+  if (precalculationFileName == 0)
     {
-      int TmpMemory = this->FastMultiplicationMemory(memory);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
       if (memory > 0)
 	{
-	  this->EnableFastMultiplication();
+	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
 	}
     }
+  else
+    this->LoadPrecalculation(precalculationFileName);
 }
 
 // destructor
@@ -818,104 +823,6 @@ void ParticleOnSphereDeltaHamiltonian::EvaluateInteractionFactors()
   delete[] TmpCoefficient;
 }
 
-// test the amount of memory needed for fast multiplication algorithm
-//
-// allowedMemory = amount of memory that cam be allocated for fast multiplication
-// return value = amount of memory needed
-
-int ParticleOnSphereDeltaHamiltonian::FastMultiplicationMemory(int allowedMemory)
-{
-
-  this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-    this->NbrInteractionPerComponent[i] = 0;
-  timeval TotalStartingTime2;
-  timeval TotalEndingTime2;
-  double Dt2;
-  gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
-
-  QHEParticlePrecalculationOperation Operation(this);
-  this->Architecture->ExecuteOperation(&Operation);
-
-  int Memory = 0;
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-    Memory += this->NbrInteractionPerComponent[i];
-
-  cout << "nbr interaction = " << Memory << endl;
-  int TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
-  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
-    {
-      this->FastMultiplicationStep = 1;
-      int ReducedSpaceDimension  = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
-	{
-	  ++this->FastMultiplicationStep;
-	  ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
-	    ++ReducedSpaceDimension;
-	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
-	  Memory = 0;
-	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
-	    Memory += this->NbrInteractionPerComponent[i];
-	}
-      int* TmpNbrInteractionPerComponent = TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
-      for (int i = 0; i < ReducedSpaceDimension; ++i)
-	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
-      delete[] this->NbrInteractionPerComponent;
-      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
-    }
-  else
-    {
-      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension()) + (Memory * (sizeof (int) + sizeof(double)));
-      this->FastMultiplicationStep = 1;
-    }
-
-  cout << "reduction factor=" << this->FastMultiplicationStep << endl;
-  gettimeofday (&(TotalEndingTime2), 0);
-  cout << "------------------------------------------------------------------" << endl << endl;;
-  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-  cout << "time = " << Dt2 << endl;
-  return Memory;
-}
-
-// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
-//
-// firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
-// return value = number of non-zero matrix element
-
-int ParticleOnSphereDeltaHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
-{
-  int Index;
-  double Coefficient;
-  int Memory = 0;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int LastComponent = lastComponent + firstComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = m1 + m2 - m3;
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      ++Memory;
-	      ++this->NbrInteractionPerComponent[i];
-	    }
-	}    
-    }
-  return Memory;
-}
-
 // enable fast multiplication algorithm
 //
 
@@ -940,13 +847,6 @@ void ParticleOnSphereDeltaHamiltonian::EnableFastMultiplication()
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-
-/*  AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
-  GenericOperation<ParticleOnSphereDeltaHamiltonian> Operation(this, &(ParticleOnSphereDeltaHamiltonian::PartialEnableFastMultiplication));
-  if (Architecture->ExecuteOperation(&Operation) == false)
-    cout << "error" << endl;
-  else
-    cout << "success" << endl;*/
 
   int TotalPos = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
