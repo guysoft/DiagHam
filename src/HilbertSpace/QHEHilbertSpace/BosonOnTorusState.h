@@ -346,7 +346,7 @@ inline unsigned long BosonOnTorusState::GetHashKey (const int& reducedNbrState, 
 {
   unsigned long Key = this->StateDescription[0];
   for (int i = 1; i <= reducedNbrState; ++i)
-    Key += this->StateDescription[i];
+    Key += (this->StateDescription[i] << i);
   return (Key & keyMask);
 }
 

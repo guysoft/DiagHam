@@ -50,8 +50,6 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int MaxMomentum;
   // number of different momentum value
   int NbrMomentum;
-  // number of Lz values in a state
-  int NbrLzValue;
 
   // momentum value in the x direction (modulo GCD of nbrBosons and maxMomentum)
   int XMomentum;
@@ -103,7 +101,8 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // maxMomentum = momentum maximum value for a boson
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum);
+  // memory = amount of memory that can be used to allocate the look-up table (in bytes)
+  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum, unsigned long memory = 100000000);
 
   // constructor from full datas
   // 
@@ -190,10 +189,9 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
 
   // find state index
   //
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
+  // stateDescription = state description
   // return value = corresponding index
-  int FindStateIndex(int* stateDescription, int lzmax);
+  int FindStateIndex(BosonOnTorusState& state);
 
   // evaluate Hilbert space dimension
   //
@@ -204,8 +202,7 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
 
   // generate look-up table associated to current Hilbert space
   // 
-  // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(int memory);
+  void GenerateLookUpTable();
 
   // generate all states corresponding to the constraints
   // 
@@ -215,12 +212,11 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson in the state
   // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
   // pos = position in StateDescription array where to store states
   // currentYMomentum = current value of the momentum in the y direction
   // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentYMomentum);
+  int RawGenerateStates(int nbrBosons, int currentMaxMomentum, int pos, int currentYMomentum);
 
 };
 
