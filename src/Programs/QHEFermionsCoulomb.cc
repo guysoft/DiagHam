@@ -101,6 +101,15 @@ int main(int argc, char** argv)
   double** Eigenvalues = new double* [2 * Max + 1];
   int* Dimensions = new int [2 * Max + 1];
 //  Max = 30;
+
+
+/*  ClebschGordanCoefficients Clebsch (24, 24);
+  for (int m2 = -24; m2 <= 24; m2 += 2)
+    {
+      cout << m2 << " " << Clebsch.GetCoefficient(0, m2, 46) << endl;
+    }
+  exit(0);*/
+
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;

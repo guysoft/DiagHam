@@ -59,13 +59,6 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax)
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
-  cout << "LookUpTableShift = " << this->MaximumLookUpShift << endl;
-  cout << "MaximumSignLookUp = " << this->MaximumSignLookUp << endl;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      cout << this->StateLzMax[i] << " ";
-    }
-  cout << endl;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);

@@ -387,7 +387,7 @@ void ClebschGordanCoefficients::RecursionAlgorithm (int m1, int m2Min, int m2Max
       CurrentWigner3jCoefficient = NextWigner3jCoefficient;
     }
   double MidWigner3jCoefficient = CurrentWigner3jCoefficient;
-  if (fabs(MidWigner3jCoefficient) > MACHINE_PRECISION)
+  if (fabs(MidWigner3jCoefficient) > (MACHINE_PRECISION * Normalization))
     {
       M2Pos = (m2Max + this->J2) >> 1;
       PreviousWigner3jCoefficient = 1.0;
