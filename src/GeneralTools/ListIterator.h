@@ -38,7 +38,7 @@
 
 
 template <class ClassName>
-class ListIterator : List<ClassName>
+class ListIterator
 {
 public:
   

@@ -406,7 +406,7 @@ int TrappedBosons::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int t
 void TrappedBosons::ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int factor)
 {
    maxNumber &= ~((int) 0x1);
-  int Size = (int) sqrt(maxNumber);
+  int Size = (int) sqrt((double) maxNumber);
   int NbrPrime = 1;
   int* PrimeNumbers = new int [Size];
   int NbrKeyFactor = 1;

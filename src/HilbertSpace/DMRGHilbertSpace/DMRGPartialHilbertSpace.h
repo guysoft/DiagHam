@@ -40,7 +40,6 @@
 #include "GeneralTools/GarbageFlag.h"
 
 
-#include <iostream.h>
 class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
 

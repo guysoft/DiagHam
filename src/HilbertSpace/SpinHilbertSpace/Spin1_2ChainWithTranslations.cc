@@ -36,7 +36,11 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "QuantumNumber/MomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 #define M_SQRT3 1.73205080756888

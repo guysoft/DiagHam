@@ -135,7 +135,7 @@ class V15Hamiltonian : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-		       int firstComponent, int nbrComponent);
+			       int firstComponent, int nbrComponent);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)

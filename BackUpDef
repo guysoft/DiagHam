@@ -24,3 +24,5 @@ COPYING
 Changelog
 aclocal.m4
 install-sh
+missing
+mkinstalldirs

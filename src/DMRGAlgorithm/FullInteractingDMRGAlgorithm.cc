@@ -54,6 +54,10 @@
 #include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
 
 
+using std::cout;
+using std::endl;
+
+
 void TestPeriodicDiagonalize(TwoSpaceTensor* T);
 
 // constructor from datas

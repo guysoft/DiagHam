@@ -40,7 +40,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+using std::ios;
 
 
 // default constructor

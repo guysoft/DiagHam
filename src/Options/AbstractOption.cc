@@ -30,7 +30,11 @@
 #include "Options/AbstractOption.h"
 #include "GeneralTools/ListIterator.h"
 
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 // virtual destructor

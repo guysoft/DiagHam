@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 
+using std::ios;
 using std::cout;
 using std::endl;
 using std::ofstream;

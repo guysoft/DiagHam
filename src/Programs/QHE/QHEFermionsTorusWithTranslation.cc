@@ -111,6 +111,7 @@ int main(int argc, char** argv)
 
 //  for (; Momentum <= Max; ++Momentum)
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
+//  int MomentumModulo = 1;
   for (int x = 0; x < MomentumModulo; ++x)
   for (int y = 0; y < MomentumModulo; ++y)
     {     

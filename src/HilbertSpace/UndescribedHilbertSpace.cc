@@ -32,7 +32,7 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 // default constructor

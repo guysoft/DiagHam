@@ -44,6 +44,13 @@
 using std::ostream;
 
 
+class RealVector;
+class ComplexVector;
+class RealSymmetricMatrix;
+class RealAntisymmetricMatrix;
+class TensorProductRealVector;
+
+
 class BlockDiagonalMatrix : public Matrix
 {
 

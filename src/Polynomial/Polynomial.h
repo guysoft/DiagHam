@@ -39,11 +39,11 @@
 
 
 #define POLYERROR 0.0001
-#define MC1_3 0.333333333333
-#define MC1_9 0.111111111111
-#define MC1_27 0.037037037037
-#define cos2PI_3 -0.5
-#define sin2PI_3 0.866025403785
+#define MC1_3 0.33333333333333333333l
+#define MC1_9 0.11111111111111111111l
+#define MC1_27 0.0370370370370370370l
+#define cos2PI_3 -0.5l
+#define sin2PI_3 0.866025403785l
 
 
 using std::ostream;

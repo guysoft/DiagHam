@@ -52,6 +52,11 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
 
+
+using std::cout;
+using std::endl;
+
+
 void TestPeriodicDiagonalize(TwoSpaceTensor* T);
 
 // constructor from datas

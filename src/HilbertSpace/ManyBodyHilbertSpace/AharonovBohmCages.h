@@ -35,7 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class AharonovBohmCages :  public AbstractHilbertSpace

@@ -128,6 +128,14 @@ AbstractHilbertSpace* V15Hamiltonian::GetHilbertSpace ()
   return 0;
 }
 
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void V15Hamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+}
+
 // return dimension of Hilbert space where Hamiltonian acts
 //
 // return value = corresponding matrix elementdimension

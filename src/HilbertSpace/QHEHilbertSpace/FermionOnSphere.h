@@ -35,7 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class FermionOnSphere :  public ParticleOnSphere

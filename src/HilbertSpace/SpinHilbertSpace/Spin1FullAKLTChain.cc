@@ -34,7 +34,12 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 #define MAX_HILBERTSPACE_DIMENSION 19131876 
 #ifndef M_SQRT2

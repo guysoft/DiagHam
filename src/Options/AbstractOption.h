@@ -34,7 +34,10 @@
 #include "config.h"
 #include "GeneralTools/List.h"
 
-#include <ostream.h>
+#include <iostream>
+
+
+using std::ostream;
 
 
 class AbstractOption

@@ -41,6 +41,12 @@
 using std::ostream;
 
 
+class Complex;
+
+//define i
+Complex I();
+
+
 class Complex
 {
 

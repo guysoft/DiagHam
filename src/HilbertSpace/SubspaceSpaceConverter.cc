@@ -32,7 +32,10 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "GeneralTools/ListIterator.h"
-#include <iostream.h>
+#include <iostream>
+
+
+using std::endl;
 
 
 // default constructor

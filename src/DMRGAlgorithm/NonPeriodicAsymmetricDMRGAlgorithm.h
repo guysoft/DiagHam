@@ -47,7 +47,7 @@ class BlockDiagonalMatrix;
 class FullTensorProductStructure;
 
 
-class NonPeriodicAsymmetricDMRGAlgorithm : AbstractDMRGAlgorithm
+class NonPeriodicAsymmetricDMRGAlgorithm : public AbstractDMRGAlgorithm
 {
 
  protected:

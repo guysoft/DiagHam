@@ -35,7 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithSpin.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class FermionOnTorusWithSpin :  public ParticleOnTorusWithSpin

@@ -45,6 +45,11 @@ class ComplexVector;
 class MathematicaOutput;
 class BlockDiagonalMatrix;
 class Matrix;
+class RealMatrix;
+class RealAntisymmetricMatrix;
+class RealDiagonalMatrix;
+class RealSymmetricMatrix;
+class RealTriDiagonalSymmetricMatrix;
 class ComplexVector;
 
 

@@ -35,6 +35,10 @@
 #include "Complex.h"
 
 
+using std::cout;
+using std::endl;
+
+
 // constructor from default datas
 //
 // sxFactor = array containing factors in front of Sx term (g mu B)

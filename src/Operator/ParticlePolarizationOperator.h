@@ -37,7 +37,7 @@
 #include "Operator/AbstractOperator.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithSpin.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class MathematicaOutput;

@@ -30,7 +30,10 @@
 
 #include "HilbertSpace/SpaceDecomposition.h"
 
-#include <iostream.h>
+#include <iostream>
+
+
+using std::endl;
 
 
 // default constructor

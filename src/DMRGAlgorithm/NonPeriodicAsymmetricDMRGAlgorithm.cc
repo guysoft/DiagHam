@@ -53,6 +53,10 @@
 #include "Interaction/BasicInteraction.h"
 
 
+using std::cout;
+using std::endl;
+
+
 void TestDiagonalize(TwoSpaceTensor* T);
 
 // constructor from datas

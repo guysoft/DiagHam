@@ -40,6 +40,10 @@
 #include <math.h>
 
 
+using std::cout;
+using std::endl;
+
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -2053,7 +2057,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
 int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentTotalSpinMomentum)
 {
   if ((nbrFermions == 0) || (nbrFermions > (currentMaxMomentum + 1)) || (currentMaxMomentum < 0) || 
-      (fabs(this->TotalSpinMomentum - currentTotalSpinMomentum) > nbrFermions))
+      (abs(this->TotalSpinMomentum - currentTotalSpinMomentum) > nbrFermions))
     return pos;
   if (nbrFermions == 1)
     {
@@ -2109,7 +2113,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
 int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentTotalSpinMomentum, int currentMomentum)
 {
   if ((nbrFermions == 0) || (nbrFermions > (currentMaxMomentum + 1)) || (currentMaxMomentum < 0) || 
-      (fabs(this->TotalSpinMomentum - currentTotalSpinMomentum) > nbrFermions))
+      (abs(this->TotalSpinMomentum - currentTotalSpinMomentum) > nbrFermions))
     return pos;
   if (nbrFermions == 1)
     {

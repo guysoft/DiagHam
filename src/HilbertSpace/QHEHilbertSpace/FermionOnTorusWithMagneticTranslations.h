@@ -189,6 +189,19 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // return value = canonical form of a state description
   unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation, int yMomentum);
 
+  // find how many translations on the x direction are needed to obtain the same state
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = number of translation needed to obtain the same state
+  int FindNumberXTranslation(unsigned long stateDescription);
+
+  // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
+  //
+  // stateDescription = unsigned integer describing the state
+  // maxMomentum = maximum momentum value that can be reached by a fermion in the stateDescription state
+  // return value = true if the state satisfy the x momentum constraint
+  bool TestXMomentumConstraint(unsigned long stateDescription, int maxMomentum);
+
   // find state index
   //
   // stateDescription = unsigned integer describing the state

@@ -29,9 +29,13 @@
 
 #include "Options/SingleIntegerOption.h"
 
-#include <iostream.h>
+#include <iostream>
 #include <stdio.h>
 #include <string.h>
+
+
+using std::cout;
+using std::endl;
 
 
 // constructor from default datas

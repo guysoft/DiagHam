@@ -36,7 +36,12 @@
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 #define MAX_HILBERTSPACE_DIMENSION 32768
 

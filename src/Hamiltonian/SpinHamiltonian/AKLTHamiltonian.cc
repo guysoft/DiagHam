@@ -94,6 +94,14 @@ AbstractHilbertSpace* AKLTHamiltonian::GetHilbertSpace ()
   return &(this->Chain);
 }
 
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void AKLTHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+}
+
 // return dimension of Hilbert space where Hamiltonian acts
 //
 // return value = corresponding matrix elementdimension
@@ -213,6 +221,21 @@ RealVector& AKLTHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& v
 ComplexVector& AKLTHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
 {
   return vDestination;
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AKLTHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						 int firstComponent, int nbrComponent)
+{
+  return vDestination;  
 }
 
 // return a list of left interaction operators

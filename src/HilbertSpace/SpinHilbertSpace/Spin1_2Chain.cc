@@ -35,7 +35,11 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 #define M_SQRT3 1.73205080756888

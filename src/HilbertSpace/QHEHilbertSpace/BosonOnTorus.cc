@@ -38,6 +38,10 @@
 #include <math.h>
 
 
+using std::cout;
+using std::endl;
+
+
 // basic constructor
 // 
 // nbrBosons = number of bosons

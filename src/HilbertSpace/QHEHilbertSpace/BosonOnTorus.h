@@ -35,7 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorus.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class BosonOnTorus :  public ParticleOnTorus

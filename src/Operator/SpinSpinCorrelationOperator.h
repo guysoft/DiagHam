@@ -37,7 +37,7 @@
 #include "Operator/AbstractOperator.h"
 #include "HilbertSpace/AbstractSpinChain.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class MathematicaOutput;

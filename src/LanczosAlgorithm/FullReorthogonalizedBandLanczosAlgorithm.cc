@@ -39,7 +39,11 @@
 #include "Matrix/RealMatrix.h"
 
 #include <stdlib.h>
-#include <iostream.h>
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 // default constructor

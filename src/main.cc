@@ -81,6 +81,10 @@
 #include <stdio.h>
 
 
+using std::cout;
+using std::endl;
+
+
 void TensorTest();
 void HilbertTest();
 void BlockTest();

@@ -99,6 +99,14 @@ AbstractHilbertSpace* Mn12Hamiltonian::GetHilbertSpace ()
   return 0;
 }
 
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void Mn12Hamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+}
+
 // return dimension of Hilbert space where Hamiltonian acts
 //
 // return value = corresponding matrix elementdimension

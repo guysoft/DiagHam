@@ -320,7 +320,7 @@ class RealTriDiagonalSymmetricMatrix : public Matrix
   //
   // Q = matrix initialized with corresponding base in which unitary matrix of QR factorization has to be calculated
   // return value = Qt H Q
-  RealTriDiagonalSymmetricMatrix RealTriDiagonalSymmetricMatrix::QLConjugaison(RealMatrix& Q);
+  RealTriDiagonalSymmetricMatrix QLConjugaison(RealMatrix& Q);
 
   // find QL factorization and evaluate LQ (ie Qt H Q), shifting initial matrix diagonal elements and shifting back after evaluating RQ
   //

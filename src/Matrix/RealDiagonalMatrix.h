@@ -42,6 +42,10 @@
 using std::ostream;
 
 
+class RealVector;
+class ComplexVector;
+
+
 class RealDiagonalMatrix : public Matrix
 {
 

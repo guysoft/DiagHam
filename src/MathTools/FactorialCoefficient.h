@@ -34,7 +34,7 @@
 
 #include "config.h"
 
-#include <iostream.h>
+#include <iostream>
 
 
 class FactorialCoefficient

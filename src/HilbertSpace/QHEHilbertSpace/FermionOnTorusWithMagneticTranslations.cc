@@ -42,6 +42,12 @@
 #include <math.h>
 
 
+using std::cout;
+using std::endl;
+using std::dec;
+using std::hex;
+
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -62,8 +68,8 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
   this->YMomentum = yMomentum % this->MomentumModulo;
 
   this->StateShift = this->MaxMomentum / this->MomentumModulo;
-  this->MomentumIncrement = this->NbrFermions * this->StateShift;
-  this->ComplementaryStateShift = this->NbrMomentum - this->StateShift;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->MaxMomentum - this->StateShift;
   this->MomentumMask = 1;
   for (int i = 1; i < this->StateShift; ++i)
     {
@@ -71,8 +77,12 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
       this->MomentumMask |= 1;
     }
 
+  cout << this->StateShift << " " << this->MomentumIncrement << " " << this->ComplementaryStateShift << " " << hex << this->MomentumMask << dec << endl;
+
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
+  cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
+  cout << this->HilbertSpaceDimension << endl;
 
   this->Flag.Initialize();
   this->MaximumSignLookUp = 16;
@@ -136,7 +146,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
   this->YMomentum = yMomentum;
   this->MomentumModulo = FindGCD(this->NbrFermions, this->MaxMomentum);
   this->StateShift = this->MaxMomentum / this->MomentumModulo;
-  this->MomentumIncrement = this->NbrFermions * this->StateShift;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->NbrMomentum - this->StateShift;
   this->MomentumMask = 1;
   for (int i = 1; i < this->StateShift; ++i)
@@ -176,12 +186,11 @@ FermionOnTorusWithMagneticTranslations::~FermionOnTorusWithMagneticTranslations 
     {
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
-      delete[] this->StateDescription;
-      delete[] this->SignLookUpTable;
+/*      delete[] this->SignLookUpTable;
       delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+      delete[] this->LookUpTable;*/
     }
 }
 
@@ -436,11 +445,13 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
   unsigned long CanonicalState = stateDescription;
   unsigned long TmpState = stateDescription;
   unsigned long TmpReminder;
-  int index = 0;  
-  while (index <= this->MomentumModulo)
+  int index = 1;  
+  while (index < this->MomentumModulo)
     {
       TmpReminder = (TmpState & this->MomentumMask) << this->ComplementaryStateShift;      
+//      cout << endl << hex << TmpState << " " << TmpReminder << " ";
       TmpState = (TmpState >> this->StateShift) | TmpReminder;
+//      cout << TmpState << dec << endl;
       yMomentum -= this->MomentumIncrement;
       if (yMomentum < 0)
 	{
@@ -453,14 +464,49 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 	}
       ++index;
     }
-  TmpReminder = 1 << this->NbrMomentum;
+  TmpReminder = 1 << this->MaxMomentum;
   maxMomentum = this->MaxMomentum;
-  while ((TmpReminder & TmpReminder) ==0)      
+  while ((CanonicalState & TmpReminder) ==0)      
     {
       --maxMomentum;
       TmpReminder >>= 1;
     }
   return CanonicalState;
+}
+
+// find how many translations on the x direction are needed to obtain the same state
+//
+// stateDescription = unsigned integer describing the state
+// return value = number of translation needed to obtain the same state
+
+int  FermionOnTorusWithMagneticTranslations::FindNumberXTranslation(unsigned long stateDescription)
+{
+  unsigned long TmpReminder = (stateDescription & this->MomentumMask) << this->ComplementaryStateShift;
+  unsigned long TmpState = (TmpState >> this->StateShift) | TmpReminder;
+  int index = 1;  
+  while (TmpState != stateDescription)
+    {
+      TmpReminder = (TmpState & this->MomentumMask) << this->ComplementaryStateShift;      
+      TmpState = (TmpState >> this->StateShift) | TmpReminder;
+      ++index;
+    }
+  return index;
+}
+
+// test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// maxMomentum = maximum momentum value that can be reached by a fermion in the stateDescription state
+// return value = true if the state satisfy the x momentum constraint
+
+bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsigned long stateDescription, int maxMomentum)
+{
+  if (this->XMomentum == 0)
+    return true;
+  if (((this->XMomentum * this->FindNumberXTranslation(stateDescription)) % this->MomentumModulo) == 0)
+    return true;
+  else
+    return false;
 }
 
 // find state index
@@ -471,8 +517,8 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 
 int FermionOnTorusWithMagneticTranslations::FindStateIndex(unsigned long stateDescription, int maxMomentum)
 {
-//  int Pos = 0;
-  int Pos = this->LookUpTable[maxMomentum][stateDescription >> this->LookUpTableShift[maxMomentum]];
+  int Pos = 0;
+//  int Pos = this->LookUpTable[maxMomentum][stateDescription >> this->LookUpTableShift[maxMomentum]];
 //  cout << maxMomentum << " " << hex << stateDescription << dec << " " << this->LookUpTableShift[maxMomentum] << Pos << endl;
   while (this->StateDescription[Pos] != stateDescription)
     ++Pos;
@@ -493,7 +539,13 @@ ostream& FermionOnTorusWithMagneticTranslations::PrintState (ostream& Str, int s
   for (int i = 0; i < this->MaxMomentum; ++i)
     Str << ((TmpState >> i) & 0x1) << " ";
 //  Str << " key = " << this->Keys[state] << " maxMomentum position = " << this->MaxMomentumPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-  Str << " position = " << FindStateIndex(TmpState, this->StateMaxMomentum[state]) << " momentum = " << this->GetYMomentumValue(state);
+  int TmpMaxMomentum = this->StateMaxMomentum[state];
+  int TmpTranslation = 0;
+/*  Str << " position = " << FindStateIndex(TmpState, this->StateMaxMomentum[state]) << " momentum = " << this->GetYMomentumValue(state) << " canonical form = ";
+  TmpState = this->FindCanonicalForm(this->StateDescription[state], TmpMaxMomentum, TmpTranslation, this->YMomentum);
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    Str << ((TmpState >> i) & 0x1) << " ";
+  Str << " position = " << FindStateIndex(TmpState, TmpMaxMomentum) << " momentum = " << TmpMaxMomentum   << " translation = " << TmpTranslation ; */
   return Str;
 }
 
@@ -505,6 +557,7 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
 {
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
+//  return this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, this->MaxMomentum - 1, 0, 0);
   int* TmpNbrStateDescription = new int [this->MaxMomentum + 1];  
   for (int i = 0; i <= this->MaxMomentum; ++i)
@@ -518,9 +571,16 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
       ++TmpNbrStateDescription[this->StateMaxMomentum[i]];
     }
   unsigned long** TmpStateDescription = new unsigned long* [this->MaxMomentum + 1];  
+  bool** TmpStateDescriptionFlag = new bool* [this->MaxMomentum + 1];  
   for (int i = 0; i <= this->MaxMomentum; ++i)
     {
-      TmpStateDescription[i] = new unsigned long [TmpNbrStateDescription[i]];
+      if (TmpNbrStateDescription[i] != 0)
+	{
+	  TmpStateDescription[i] = new unsigned long [TmpNbrStateDescription[i]];
+	  TmpStateDescriptionFlag[i] = new bool [TmpNbrStateDescription[i]];
+	}
+      else
+	TmpStateDescription[i] = 0;
       TmpNbrStateDescription[i] = 0;
     }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -535,14 +595,34 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
       if (CurrentNbrState > 0)
 	{
 	  unsigned long* TmpStateArray = TmpStateDescription[i];
+	  bool* TmpStateArrayFlag = TmpStateDescriptionFlag[i];
 	  SortArrayUpOrdering(TmpStateArray, CurrentNbrState);
 	  int TmpNbr = CurrentNbrState;
+	  if (this->TestXMomentumConstraint(TmpStateArray[0], i) == true)
+	    {
+	      TmpStateArrayFlag[0] = true;
+	    }
+	  else
+	    {
+	      TmpStateArrayFlag[0] = false;
+	      --TmpNbr;	      
+	    }
 	  for (int j = 1; j < CurrentNbrState; ++j)
 	    {
 	      while (TmpStateArray[j - 1] == TmpStateArray[j])
 		{
+		  TmpStateArrayFlag[j] = false;
 		  --TmpNbr;
 		  ++j;
+		}
+	      if (this->TestXMomentumConstraint(TmpStateArray[j], i) == true)
+		{
+		  TmpStateArrayFlag[j] = true;
+		}
+	      else
+		{
+		  TmpStateArrayFlag[j] = false;
+		  --TmpNbr;	      
 		}
 	    }
 	  TmpHilbertSpaceDimension += TmpNbr;
@@ -559,23 +639,22 @@ int FermionOnTorusWithMagneticTranslations::GenerateStates()
       if (CurrentNbrState > 0)
 	{
 	  unsigned long* TmpStateArray = TmpStateDescription[i];
-	  this->StateDescription[Pos] = TmpStateArray[0];
-	  this->StateMaxMomentum[Pos] = i;
-	  ++Pos;
-	  for (int j = 1; j < CurrentNbrState; ++j)
+	  bool* TmpStateArrayFlag = TmpStateDescriptionFlag[i];
+	  for (int j = 0; j < CurrentNbrState; ++j)
 	    {
-	      while (TmpStateArray[j - 1] == TmpStateArray[j])
+	      if (TmpStateArrayFlag[j] == true)
 		{
-		  ++j;
+		  this->StateDescription[Pos] = TmpStateArray[j];
+		  this->StateMaxMomentum[Pos] = i;
+		  ++Pos;
 		}
-	      this->StateDescription[Pos] = TmpStateArray[j];
-	      this->StateMaxMomentum[Pos] = i;
-	      ++Pos;
 	    }
 	  delete[] TmpStateArray;
+	  delete[] TmpStateArrayFlag;
 	}
     }
   delete[] TmpStateDescription;
+  delete[] TmpStateDescriptionFlag;
   delete[] TmpNbrStateDescription;
 
   return TmpHilbertSpaceDimension;
@@ -624,6 +703,7 @@ int FermionOnTorusWithMagneticTranslations::RawGenerateStates(int nbrFermions, i
 
 void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 {
+//  this->ReminderTable = new unsigned long [1 << (this->StateShift + 1)];
   // evaluate look-up table size
 /*  memory /= (4 * this->NbrMomentum);
   this->MaximumLookUpShift = 1;
