@@ -516,9 +516,9 @@ void CylindricalQuantumDots3DHamiltonian::EvaluateInteractionFactors(double wave
     {
       Zeros[n] = BesselJZeros[addition][n];
       if (addition == 0)
-	Normalization[n] = 1.0 / fabs(j1(Zeros[n]));
+	Normalization[n] = 1.0 / j1(Zeros[n]);
       if (addition == 1)
-	Normalization[n] = 1.0 / fabs(j0(Zeros[n]));
+	Normalization[n] = 1.0 / j0(Zeros[n]);
       //cout << "n: " << n << " Normalization: " << Normalization[n] << endl;
       Fraction[n] = new double [nbrCylinder];
       BesselOne[n] = new double [nbrCylinder];

@@ -128,7 +128,8 @@ DOSSpectra.cc \
 TimeResolvedPLSpectra.cc \
 PeriodicSpectra.cc \
 XYReflexionSymmetricPeriodicSpectra.cc \
-CylinderInMagneticFieldSpectra.cc
+CylinderInMagneticFieldSpectra.cc \
+CylinderQuantumDotSpectra.cc
 
 
 check_PROGRAMS = TestSpectra
@@ -153,7 +154,8 @@ am_libSpectra_a_OBJECTS = Spectra.$(OBJEXT) OverlapSpectra.$(OBJEXT) \
 	AverageSpectra.$(OBJEXT) DOSSpectra.$(OBJEXT) \
 	TimeResolvedPLSpectra.$(OBJEXT) PeriodicSpectra.$(OBJEXT) \
 	XYReflexionSymmetricPeriodicSpectra.$(OBJEXT) \
-	CylinderInMagneticFieldSpectra.$(OBJEXT)
+	CylinderInMagneticFieldSpectra.$(OBJEXT) \
+	CylinderQuantumDotSpectra.$(OBJEXT)
 libSpectra_a_OBJECTS = $(am_libSpectra_a_OBJECTS)
 check_PROGRAMS = TestSpectra$(EXEEXT)
 am_TestSpectra_OBJECTS = TestSpectra.$(OBJEXT)
@@ -165,6 +167,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AverageSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/CylinderInMagneticFieldSpectra.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/CylinderQuantumDotSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/DOSSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/OverlapSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicSpectra.Po \
@@ -220,6 +223,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AverageSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylinderInMagneticFieldSpectra.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylinderQuantumDotSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DOSSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OverlapSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicSpectra.Po@am__quote@

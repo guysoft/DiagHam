@@ -10,6 +10,7 @@
 #include "Tools/QuantumDot/Spectra/AverageSpectra.h"
 #include "Tools/QuantumDot/Spectra/TimeResolvedPLSpectra.h"
 #include "Tools/QuantumDot/Spectra/CylinderInMagneticFieldSpectra.h"
+#include "Tools/QuantumDot/Spectra/CylinderQuantumDotSpectra.h"
 
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
@@ -38,6 +39,7 @@ int main(int argc, char** argv)
   SingleIntegerOption NumberMValueOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
   SingleDoubleOption MagneticFieldOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
   SingleDoubleOption SizeZOption ('z', "size-z", "size of sample in Z direction (in Angstrom unit)", 118.65);
+  SingleDoubleOption SizeROption ('r', "size-r", "size of sample in plane (in Angstrom unit)", 1000);
 
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -47,6 +49,7 @@ int main(int argc, char** argv)
   OptionList += &NumberMValueOption;
   OptionList += &MagneticFieldOption;
   OptionList += &SizeZOption;
+  OptionList += &SizeROption;
 
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -65,7 +68,37 @@ int main(int argc, char** argv)
   int NumberM = NumberMValueOption.GetInteger();
   double MagneticField = MagneticFieldOption.GetDouble();
   double SizeZ = SizeZOption.GetDouble();
+  double SizeR = SizeROption.GetDouble();
   
+  VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  CylinderQuantumDotSpectra* spectra = new CylinderQuantumDotSpectra(space, FileName, MagneticField);
+
+  double ReX, ImX, ReY, ImY, ReZ, ImZ;
+  char** Files = new char* [200];
+  ifstream energy("eigenvalues");
+  double fundamental;
+  energy >> fundamental;
+  double tmpE;  
+  ofstream polarization ("Polarization.txt");   
+  ofstream PX("PolarizationX.txt");
+  ofstream PY("PolarizationY.txt");  
+  ofstream PZ("PolarizationZ.txt");
+  for (int i = 0; i < 3; ++i)
+    {
+      Files[i] = new char[80];
+      AddString(Files[i], "eigenvector.", i, "");
+      spectra->GetImpulsion(space2, Files[i], SizeZ, SizeR, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      energy >> tmpE;
+      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental) << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental) << endl;
+      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental)  << endl;
+      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental)  << endl;
+      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental)  << endl;
+      //cout << i << endl;
+    } 
+
+
+  /*
   VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   CylinderInMagneticFieldSpectra* spectra = new CylinderInMagneticFieldSpectra(space, FileName, MagneticField);
@@ -77,7 +110,7 @@ int main(int argc, char** argv)
       p = spectra->ZProbabilityDensity(z, SizeZ);
       cout << (z - shift) << '\t' << p << '\n';
     }
-  
+  */
   /*
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   char** Files = new char* [200];
@@ -105,14 +138,22 @@ int main(int argc, char** argv)
   energy.close(); polarization.close();
   */
 
-/*
+  /*
   //DOSSpectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE)
-  char** name = new char*[1];
-  name[0] = "Sinus50.txt";
-  int state[1]; state[0] = 10;
-  DOSSpectra spectra(1, name, state, 5e-4, -0.011, 0.18, 1e-4);
-  spectra.WriteSpectra("Sinus50");
-*/
+  char** Files = new char* [NbrStateR];
+  int* StateNumber = new int [NbrStateR];
+  for (int i = 0; i < NbrStateR; ++i)
+    {
+      StateNumber[i] = 100;
+      Files[i] = new char [80];
+      if (i < 9)
+	AddString(Files[i], "./0.00", i + 1, "/eigenvalues");
+      else
+	AddString(Files[i], "./0.0", i + 1, "/eigenvalues");
+    }
+  DOSSpectra spectra(NbrStateR, Files, StateNumber, 4e-3, -0.20, 0.5, 1e-4);
+  spectra.WriteSpectra(FileName);
+  */
 /*
   // OverlapSpectra(char* ElectronStateFile, char* ElectronEnergyFile ,int ElectronNumber, char* HoleStateFile, char* HoleEnergyFile, int HoleNumber);
   //  OverlapSpectra x (36);

@@ -9,7 +9,8 @@ DOSSpectra.cc \
 TimeResolvedPLSpectra.cc \
 PeriodicSpectra.cc \
 XYReflexionSymmetricPeriodicSpectra.cc \
-CylinderInMagneticFieldSpectra.cc
+CylinderInMagneticFieldSpectra.cc \
+CylinderQuantumDotSpectra.cc
 
 check_PROGRAMS=TestSpectra
 
