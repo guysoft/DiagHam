@@ -6,6 +6,7 @@
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
+#include "Tools/QHE/QHEWaveFunction/QHEWaveFunctionManager.h"
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
@@ -13,6 +14,7 @@
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -55,18 +57,20 @@ int main(int argc, char** argv)
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
 
   ArchitectureManager Architecture;
+  QHEWaveFunctionManager WaveFunctionManager;
 
   Manager += SystemGroup;
+  WaveFunctionManager.AddOptionGroup(&Manager);
   Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "lz", "twice the momentum projection", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
-  (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
-  (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "filen name of an exact state that has to be used as test wave function");
+  (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
@@ -88,12 +92,14 @@ int main(int argc, char** argv)
 
   if (((BooleanOption*) Manager["list-wavefunctions"])->GetBoolean() == true)
     {
+      WaveFunctionManager.ShowAvalaibleWaveFunctions(cout);
       return 0;
     }
 
   int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  int Lz = ((SingleIntegerOption*) Manager["lz"])->GetInteger();
 
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
@@ -123,18 +129,37 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  BosonOnSphere Space (NbrBosons, 0, LzMax);
+  Abstract1DComplexFunction* WaveFunction = WaveFunctionManager.GetWaveFunction();
+  if (WaveFunction == 0)
+    {
+      cout << "no or unknown analytical wave function" << endl;
+      return -1;
+    }
+  BosonOnSphere Space (NbrBosons, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
 //  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 2, 1);
-  Abstract1DComplexFunction* WaveFunction = new JainCFOnSphereWaveFunction("test.cf");
+//  Abstract1DComplexFunction* WaveFunction = new JainCFOnSphereWaveFunction("test.cf");
 //  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
+  
+/*  ClebschGordanCoefficients Clebsch(3, 5);
+  cout << Clebsch.GetCoefficient(3, -5, 8) << endl;
+  cout << Clebsch.GetCoefficient(1, -3, 8) << endl;
+  cout << Clebsch.GetCoefficient(-1, -1, 8) << endl;
+  cout << Clebsch.GetCoefficient(-3, 1, 8) << endl;*/
+  ClebschGordanCoefficients Clebsch(4, 6);
+  cout << Clebsch.GetCoefficient(4, -4, 10) << endl;
+  cout << Clebsch.GetCoefficient(2, -2, 10) << endl;
+  cout << Clebsch.GetCoefficient(0, 0, 10) << endl;
+  cout << Clebsch.GetCoefficient(-2, 2, 10) << endl;
+  cout << Clebsch.GetCoefficient(-4, 4, 10) << endl;
+  
 /*  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)

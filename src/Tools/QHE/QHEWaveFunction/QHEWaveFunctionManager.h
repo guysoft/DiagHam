@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//           class of Jain composite fermion wave function on sphere          //
+//                     class of FQHE wave function manager                    //
 //                                                                            //
-//                        last modification : 10/01/2005                      //
+//                        last modification : 18/01/2005                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,76 +28,66 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef JAINCFONSPHEREWAVEFUNCTION_H
-#define JAINCFONSPHEREWAVEFUNCTION_H
+#ifndef QHEWAVEFUNCTIONMANAGER_H
+#define QHEWAVEFUNCTIONMANAGER_H
 
 
 #include "config.h"
-#include "GeneralTools/GarbageFlag.h"
-#include "Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
-#include "Tools/QHE/QHEWaveFunction/LandauSpectrumOnSphere.h"
+
+#include <iostream>
 
 
-class ConfigurationParser;
+using std::ostream;
 
 
-class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
+class OptionManager;
+class Abstract1DComplexFunction;
+
+
+class QHEWaveFunctionManager
 {
 
  protected:
 
-  // description of the  occupation of the pseudo-Landau levels
-  LandauSpectrumOnSphere* LevelOccupation;
+  // pointer to the option manager
+  OptionManager* Options;
 
-  // number of wave functions that appear in the linear combination
-  int NbrLinearCombination;
-  // coefficients in front of each wave functions that appear in the linear combination  
-  double* LinearCombinationCoefficients;
+  // id of the geometry to use
+  int GeometryID;
 
  public:
 
+  // list of avalaible geometries
+  enum Geometries
+    {
+      SphereGeometry = 0x01,
+      DiskGeometry = 0x02
+    };
+  
   // constructor
   //
-  // filename = name of the file describing the occupation of the pseudo-Landau levels
-  JainCFOnSphereWaveFunction(char* filename);
-
-  // copy constructor
-  //
-  // function = reference on the wave function to copy
-  JainCFOnSphereWaveFunction(const JainCFOnSphereWaveFunction& function);
+  // geometry = id of the geometry to use
+  QHEWaveFunctionManager(int geometry = QHEWaveFunctionManager::SphereGeometry);
 
   // destructor
   //
-   ~JainCFOnSphereWaveFunction();
+  ~QHEWaveFunctionManager();
 
-  // clone function 
+  // add an option group containing all options related to the wave functions
   //
-  // return value = clone of the function 
-  Abstract1DComplexFunction* Clone ();
+  // manager = pointer to the option manager
+  void AddOptionGroup(OptionManager* manager);
 
-  // evaluate function at a given point
-  //
-  // x = point where the function has to be evaluated
-  // return value = function value at x  
-  Complex operator ()(RealVector& x);
-
- protected:
-
-  // get occupation information from a formatted string
-  //
-  // descriptionString = pointer to the string containing the description
-  // descriptionArray = reference on the array where description has to be stored
-  // return value = number of particles (0 if an error occured)
-  int ParseOccupationDescription (char* descriptionString, int**& descriptionArray);
-
-  // parse general informations about the composite fermion state
+  // get list of all available wave functions
   // 
-  // state = reference on the configuration parser that contains the informations
-  // return value = false if an error occured  
-  bool ParseGeneralInformation(ConfigurationParser& state);
-
+  // str = reference on the output stream
+  ostream& ShowAvalaibleWaveFunctions (ostream& str);
+  
+  // get the wave function corresponding to the option constraints
+  //
+  // return value = pointer to the wave function (null if an error occurs)
+  Abstract1DComplexFunction* GetWaveFunction();
+  
 };
 
 #endif

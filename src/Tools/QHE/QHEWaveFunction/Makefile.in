@@ -59,7 +59,8 @@ am_libQHEWaveFunction_a_OBJECTS =  \
 	PfaffianOnDiskWaveFunction.$(OBJEXT) \
 	MooreReadOnDiskWaveFunction.$(OBJEXT) \
 	JainCFOnSphereWaveFunction.$(OBJEXT) \
-	LandauSpectrumOnSphere.$(OBJEXT)
+	LandauSpectrumOnSphere.$(OBJEXT) \
+	QHEWaveFunctionManager.$(OBJEXT)
 libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -72,7 +73,8 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnDiskWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnDiskWaveFunction.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po
+@AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEWaveFunctionManager.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -183,7 +185,8 @@ LaughlinOnDiskWaveFunction.cc \
 PfaffianOnDiskWaveFunction.cc \
 MooreReadOnDiskWaveFunction.cc \
 JainCFOnSphereWaveFunction.cc \
-LandauSpectrumOnSphere.cc
+LandauSpectrumOnSphere.cc \
+QHEWaveFunctionManager.cc
 
 all: all-recursive
 
@@ -241,6 +244,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnDiskWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEWaveFunctionManager.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

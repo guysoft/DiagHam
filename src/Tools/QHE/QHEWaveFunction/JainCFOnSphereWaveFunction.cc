@@ -52,9 +52,6 @@ JainCFOnSphereWaveFunction::JainCFOnSphereWaveFunction(char* filename)
   ConfigurationParser CFDefinition;
   if ((CFDefinition.Parse(filename) == true) && (this->ParseGeneralInformation(CFDefinition) == true))
     {
-      cout << this->NbrParticles << endl;
-      this->LevelOccupation.PrintSpectrum(cout);
-
       if (this->NbrParticles != 0)
 	{
 	  if ((this->ActualJastrowPower & 1) == 1)
@@ -116,6 +113,8 @@ JainCFOnSphereWaveFunction::JainCFOnSphereWaveFunction(const JainCFOnSphereWaveF
       this->JastrowPower = function.JastrowPower;
       this->Flag = function.Flag;
       this->LevelOccupation = function.LevelOccupation;
+      this->LinearCombinationCoefficients =  function.LinearCombinationCoefficients;
+      this->NbrLinearCombination = function.NbrLinearCombination;
       this->NormalizationPrefactors = function.NormalizationPrefactors;
       this->SumPrefactors = function.SumPrefactors;
       this->JastrowFactorElements = new Complex*[this->NbrParticles - 1];
@@ -161,6 +160,8 @@ JainCFOnSphereWaveFunction::~JainCFOnSphereWaveFunction()
 	    }
 	  delete[] this->SumPrefactors;
 	  delete[] this->JastrowPowerPowers;
+	  delete[] this->LevelOccupation;
+	  delete[] this->LinearCombinationCoefficients;
 	}
       for (int i = 0; i < this->NbrParticles; ++i)
 	delete[] this->JastrowFactorElements[i];
@@ -208,40 +209,30 @@ Complex JainCFOnSphereWaveFunction::operator ()(RealVector& x)
     }
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
   Complex JastrowFactor = this->EvaluateTables(x);
-
-  for (int i = 0; i < this->NbrParticles; ++i)
+  Complex TmpValue(0.0);
+  for (int n = 0; n < this->NbrLinearCombination; ++n)
     {
-      int Index = 0;
-      int MaxMomentum = this->TwiceS;
-      for (int j = 0; j < this->NbrLandauLevels; ++j)
+      for (int i = 0; i < this->NbrParticles; ++i)
 	{
-	  for (int k = 0; k <= MaxMomentum; ++k)
+	  int Index = 0;
+	  int MaxMomentum = this->TwiceS;
+	  for (int j = 0; j < this->NbrLandauLevels; ++j)
 	    {
-	      if (this->LevelOccupation(j, k) == 1)
+	      for (int k = 0; k <= MaxMomentum; ++k)
 		{
-		  Slater.SetMatrixElement(Index, i, this->EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
-		  ++Index;
+		  if ((this->LevelOccupation[n])(j, k) == 1)
+		    {
+		      Slater.SetMatrixElement(Index, i, this->EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
+		      ++Index;
+		    }
 		}
+	      MaxMomentum += 2;
 	    }
-	  MaxMomentum += 2;
-	}
-    } 
-/*  for (int i = 0; i < 4; ++i)
-    {
-      cout << endl << "i = " << i << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 0, 0, 0) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 2, 1, 2) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 1, 1, 2) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 0, 1, 2) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 4, 2, 4) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 3, 2, 4) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 2, 2, 4) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 1, 2, 4) << endl;
-      cout << this->EvaluateCFMonopoleHarmonic(i, 0, 2, 4) << endl;
+	} 
+      TmpValue += this->LinearCombinationCoefficients[n] * Slater.Determinant();
     }
-  cout << Slater << endl;*/
 
-  return JastrowFactor * Slater.Determinant();
+  return JastrowFactor * TmpValue;
 }
 
 // parse general informations about the composite fermion state
@@ -345,7 +336,7 @@ bool JainCFOnSphereWaveFunction::ParseGeneralInformation(ConfigurationParser& st
 	  delete[] this->LinearCombinationCoefficients;
 	  return false;		  		  	  
 	}
-      LandauSpectrumOnSphere* TmpLandauLevels = new LandauSpectrumOnSphere [this->NbrLinearCombination];
+      this->LevelOccupation = new LandauSpectrumOnSphere [this->NbrLinearCombination];
       char* TmpLevelDescription = new char [strlen(state["Levels"]) + 1];
       strcpy (TmpLevelDescription, state["Levels"]);
       Start = TmpLevelDescription;
@@ -368,16 +359,16 @@ bool JainCFOnSphereWaveFunction::ParseGeneralInformation(ConfigurationParser& st
 	    {
 	      delete[] this->LinearCombinationCoefficients;
 	      delete[] TmpLevelDescription;
-	      delete[] TmpLandauLevels;
+	      delete[] this->LevelOccupation;
 	      return false;		  		  	  	      
 	    }
 	  (*End) = '\0';
-	  TmpLandauLevels[TmpNbrLinearCombination] = LandauSpectrumOnSphere(this->NbrLandauLevels, this->TwiceS, Start);
-	  if (TmpLandauLevels[TmpNbrLinearCombination].GetNbrParticles() <= 0)
+	  this->LevelOccupation[TmpNbrLinearCombination] = LandauSpectrumOnSphere(this->NbrLandauLevels, this->TwiceS, Start);
+	  if (this->LevelOccupation[TmpNbrLinearCombination].GetNbrParticles() <= 0)
 	    {
 	      delete[] this->LinearCombinationCoefficients;
 	      delete[] TmpLevelDescription;
-	      delete[] TmpLandauLevels;
+	      delete[] this->LevelOccupation;
 	      return false;		  		  	  	      	      
 	    }
 	  ++TmpNbrLinearCombination;
@@ -388,7 +379,7 @@ bool JainCFOnSphereWaveFunction::ParseGeneralInformation(ConfigurationParser& st
 	    {
 	      delete[] this->LinearCombinationCoefficients;
 	      delete[] TmpLevelDescription;
-	      delete[] TmpLandauLevels;
+	      delete[] this->LevelOccupation;
 	      return false;		  		  	  	      	      
 	    }
 	  else
@@ -400,34 +391,32 @@ bool JainCFOnSphereWaveFunction::ParseGeneralInformation(ConfigurationParser& st
 	{
 	  delete[] TmpLevelDescription;
 	  delete[] this->LinearCombinationCoefficients;
-	  delete[] TmpLandauLevels;
+	  delete[] this->LevelOccupation;
 	  return false;		  		  	  
 	}
-      this->NbrParticles = TmpLandauLevels[0].GetNbrParticles();
+      this->NbrParticles = this->LevelOccupation[0].GetNbrParticles();
       for (int i = 1; i < this->NbrLinearCombination; ++i)
-	if (this->NbrParticles != TmpLandauLevels[i].GetNbrParticles())
+	if (this->NbrParticles != this->LevelOccupation[i].GetNbrParticles())
 	  {
 	    delete[] this->LinearCombinationCoefficients;
 	    delete[] TmpLevelDescription;
-	    delete[] TmpLandauLevels;
+	    delete[] this->LevelOccupation;
 	    return false;		  		  	  	      	      
 	  }
-      for (int i = 1; i < TmpNbrLinearCombination; ++i)
-	for (int j = 0; j < i; ++j)
-	  {
-	    cout << i << " " << j << ": " << TmpLandauLevels[i].EvaluateDistance(TmpLandauLevels[j]) << endl;
-	  }
-      this->LevelOccupation = TmpLandauLevels[0];      
-      delete[] TmpLevelDescription;
     }
   else
     {
-      this->LevelOccupation = LandauSpectrumOnSphere(this->NbrLandauLevels, this->TwiceS, state["Levels"]);
-      this->NbrParticles = this->LevelOccupation.GetNbrParticles();
+      this->LevelOccupation = new LandauSpectrumOnSphere [1];
+      this->LevelOccupation[0] = LandauSpectrumOnSphere(this->NbrLandauLevels, this->TwiceS, state["Levels"]);      
+      this->NbrParticles = this->LevelOccupation[0].GetNbrParticles();
       if (this->NbrParticles == 0)
 	{
+	  delete[] this->LevelOccupation;
 	  return false;
 	}
+      this->LinearCombinationCoefficients = new double [1];
+      this->LinearCombinationCoefficients[0] = 1.0;
+      this->NbrLinearCombination = 1;
     }
   return true;
 }

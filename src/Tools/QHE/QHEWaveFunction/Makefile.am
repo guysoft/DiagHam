@@ -10,4 +10,6 @@ LaughlinOnDiskWaveFunction.cc \
 PfaffianOnDiskWaveFunction.cc \
 MooreReadOnDiskWaveFunction.cc \
 JainCFOnSphereWaveFunction.cc \
-LandauSpectrumOnSphere.cc
+LandauSpectrumOnSphere.cc \
+QHEWaveFunctionManager.cc
+
