@@ -71,34 +71,42 @@ class PeriodicSpectra
 
   // constructor from a Hilbert space and a file
   //
-  // space: Hilbert space describing the particle
-  // fileName: name of the state file
+  // space = Hilbert space describing the particle
+  // fileName = name of the state file
   PeriodicSpectra(Periodic3DOneParticle* space, char* fileName);
 
   // get mean value in X direction
   //
-  // squareX: reference to the mean square value in X direction
-  // return: position in 1.0 scale
+  // squareX = reference to the mean square value in X direction
+  // return = position in 1.0 scale
   double GetMeanValueX(double& squareX);
 
   // get mean value in Y direction
   //
-  // squareY: reference to the mean square value in Y direction
-  // return: position in 1.0 scale
+  // squareY = reference to the mean square value in Y direction
+  // return = position in 1.0 scale
   double GetMeanValueY(double& squareY);
 
   // get mean value in Z direction
   //
-  // squareZ: reference to the mean square value in Z direction
-  // return: position in 1.0 scale 
+  // squareZ = reference to the mean square value in Z direction
+  // return = position in 1.0 scale 
   double GetMeanValueZ(double& squareZ);
 
   // get the wave function value of a state at a given point
   //
-  // x, y, z : the position of the point
-  // SizeX, SizeY, SizeZ : the 3D-sizes of the sample
-  // Real, Imaginary : references to the real and imaginary components of the wave function
+  // x, y, z  = the position of the point
+  // SizeX, SizeY, SizeZ = the 3D-sizes of the sample
+  // Real, Imaginary = references to the real and imaginary components of the wave function
   void WaveFunctionValue(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary);
+
+  // get the value of impulsion operators with another wavefunction <this|p|another>
+  //
+  // fileName = the file to stock the other function
+  // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
+  // impulsionX, impulsionY, impulsionZ = reference to the return values
+  void GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  
 };
 
 

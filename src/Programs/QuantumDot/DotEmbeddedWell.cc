@@ -140,7 +140,8 @@ int main(int argc, char** argv)
 
   // ConstructPotential(double wellPotential, double dotPotential)
   potential->ConstructPotential(WellPotential, DotPotential);
-  //potential->LoadPotential("DotPotential.txt");
+  potential->SavePotential("DotPotential.txt");
+
   // define Hilbert space
   Periodic3DOneParticle Space(M / 2, M / 4, N / 2, N / 4, H, H / 2);
   timeval PrecalculationStartingTime;

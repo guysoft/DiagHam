@@ -255,3 +255,65 @@ void PeriodicSpectra::WaveFunctionValue(double x, double SizeX, double y, double
     }
   Real = TmpRe; Imaginary = TmpIm;
 }
+
+// get the value of impulsion operators with another wavefunction <this|p|another>
+//
+// fileName = the file to stock the other function
+// sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
+// impulsionX, impulsionY, impulsionZ = reference to the return values
+
+void PeriodicSpectra::GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Error in open the file: " << fileName << endl;
+      exit(0);
+    }
+  realImpulsionX = 0.0;
+  realImpulsionY = 0.0;
+  realImpulsionZ = 0.0;
+  imaginaryImpulsionX = 0.0;
+  imaginaryImpulsionY = 0.0;
+  imaginaryImpulsionZ = 0.0;
+
+  double tmpRe = 0.0, tmpIm = 0.0; 
+  double tmpIm1 = 0.0, tmpRe1 = 0.0;
+  double tmpIm2 = 0.0, tmpRe2 = 0.0;
+  double tmpIm3 = 0.0, tmpRe3 = 0.0;
+  double Im = 0.0, Re = 0.0;
+
+  for (int m = 0; m < this->NbrStateX; ++m)
+    {      
+      tmpRe1 = 0.0; tmpIm1 = 0.0;
+      for (int n = 0; n < this->NbrStateY; ++n)
+	{	  
+	  tmpIm2 = 0.0; tmpRe2 = 0.0;
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    {
+	      File >> tmpRe >> tmpIm;
+	      tmpRe3 = this->RealCoefficients[m][n][p] * tmpRe + this->ImaginaryCoefficients[m][n][p] * tmpIm;
+	      tmpIm3 = this->RealCoefficients[m][n][p] * tmpIm - this->ImaginaryCoefficients[m][n][p] * tmpRe;
+	      realImpulsionZ += double (p) * tmpRe3;
+	      imaginaryImpulsionZ += double (p) * tmpIm3;
+	      tmpRe2 += tmpRe3;
+	      tmpIm2 += tmpIm3;
+	    }
+	  tmpRe1 += tmpRe2; tmpIm1 += tmpIm2;
+	  realImpulsionY += double (n) * tmpRe2;
+	  imaginaryImpulsionY += double (n) * tmpIm2;	  
+	}
+      Re += tmpRe1; Im += tmpIm1;      
+      realImpulsionX += double (m) * tmpRe1;
+      imaginaryImpulsionX += double (m) * tmpIm1;
+    }  
+  realImpulsionX = (realImpulsionX - double(this->LowerImpulsionX) * Re) / sizeX;
+  realImpulsionY = (realImpulsionY - double(this->LowerImpulsionY) * Re) / sizeY;
+  realImpulsionZ = (realImpulsionZ - double(this->LowerImpulsionZ) * Re) / sizeZ;
+  imaginaryImpulsionX = (imaginaryImpulsionX - double(this->LowerImpulsionX) * Im) / sizeX;
+  imaginaryImpulsionY = (imaginaryImpulsionY - double(this->LowerImpulsionY) * Im) / sizeY;
+  imaginaryImpulsionZ = (imaginaryImpulsionZ - double(this->LowerImpulsionZ) * Im) / sizeZ;
+  
+  File.close();
+}

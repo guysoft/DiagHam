@@ -14,7 +14,6 @@
 
 #include "BitmapPicture/BmpFormat.h"
 
-#include "Vector/RealVector.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,13 +26,13 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
-
+  
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
-  SingleIntegerOption XCell('X', "Xcells", "number of the cells in X direction", 61);
-  SingleIntegerOption YCell('Y', "Ycells", "number of the cells in Y direction", 61);
-  SingleIntegerOption ZCell('Z', "Zcells", "number of the cells in Z direction", 60);
+  SingleIntegerOption XCell('X', "Xcells", "number of the cells in X direction", 160);
+  SingleIntegerOption YCell('Y', "Ycells", "number of the cells in Y direction", 160);
+  SingleIntegerOption ZCell('Z', "Zcells", "number of the cells in Z direction", 21);
   SingleIntegerOption Division('D', "division", "number of the sub-divisions in each direction", 5);
   SingleStringOption Output('r', "output", "name of the output file", "default_output.txt");
 
@@ -67,7 +66,34 @@ int main(int argc, char** argv)
   H = ZCell.GetInteger();
   Number = Division.GetInteger();
   char * out = Output.GetString();
+  
+  Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2, M / 4, N / 2, N / 4, H, H / 2);
+  PeriodicSpectra spectra(Space, FileName);
 
+  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
+  double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
+  // void GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+
+  double ReX, ImX, ReY, ImY, ReZ, ImZ;
+  char** Files = new char* [50];
+  ifstream energy("eigenvalues");
+  double fundamental;
+  energy >> fundamental;
+  double tmpE;
+  ofstream polarization ("Polarization.txt");
+  for (int i = 1; i < 2a; ++i)
+    {      
+      Files[i] = new char[80];
+      AddString(Files[i], "eigenvector.", 0, ""); 
+      spectra.GetImpulsion(Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      energy >> tmpE;
+      polarization << tmpE - fundamental << '\t' << ReX * ReX + ImX * ImX << '\t' << ReY * ReY + ImY * ImY << '\t' << ReZ * ReZ + ImZ * ImZ << '\n';
+    }
+  
+  energy.close(); polarization.close();
+  
+
+  /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
   
   PeriodicSpectra spectra(Space, FileName);
@@ -101,7 +127,7 @@ int main(int argc, char** argv)
   File << spectra.GetMeanValueZ(squareZ) << '\t';
   File << squareZ << '\n';
   File.close();
-
+  */
   /*
   ThreeDPotential potential(50, 50, 30, 6, 10);
   potential.ReadDiagram("Diagram/Diagram/0.175/h/Diagram.txt");
@@ -111,19 +137,18 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-
   /*
-  char** Files = new char* [50]; int* State = new int[50];
-  for (int i = 0; i < 50; ++i)
+  char** Files = new char* [1]; int* State = new int[1];
+  for (int i = 0; i < 1; ++i)
     {
-      State[i] = 9;
+      State[i] = 49;
       Files[i] = new char[80];
-      AddString(Files[i], "./", i + 60, "/Energy_E.txt");
+      Files[0] = "PolarizationZ.txt";
     }
-  DOSSpectra DOS(50, Files, State, 1e-3, -0.02, 0.03, 2e-5);
-  DOS.WriteSpectra("DOS_E.txt");
+  Spectra DOS(1, Files, State, 1e-3, 0.03, 0.16, 2e-5);
+  DOS.WriteSpectra("DOS_EZ.txt");
   */
-/*
+  /*
   for (int n = 102; n < 110; ++n)
     {  
       char* EE = new char [50]; char* ES = new char [50];
@@ -182,27 +207,6 @@ int main(int argc, char** argv)
   Absorption.WriteSpectra("Absorption.txt");
 */    
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
-/*
-  ifstream File("./46/Etat_E.txt");
-  ifstream File1("./46/Etat_E1.txt");  
-  ofstream Out("./46/Etat_E2.txt");
 
-  RealVector* a = new RealVector[9];
-  RealVector* b = new RealVector[9];
-  for (int i = 0; i < 9; ++i)
-    {
-      a[i].ReadVector(File);
-      b[i] = RealVector(3600);
-      for (int j = 0; j < 3600; ++j)
-	{
-	  File1 >> b[i][j];
-	  Out << a[i][j] << " ";
-	}
-      Out << '\n';
-    }
-  cout << a[8][35] << endl;
-  cout << b[8][35] << endl;
-  File.close(); Out.close();
-*/
   return 0;
 }
