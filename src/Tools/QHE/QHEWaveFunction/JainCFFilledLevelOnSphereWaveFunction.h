@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
 
@@ -60,6 +61,11 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // grabage flag to avoid duplication of precalculation array
   GarbageFlag Flag;
+
+  // temporary used to store (u_i v_j - u_j v_i)^-1 factors
+  Complex** JastrowFactorElements;
+  // temporary used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
+  Complex*** DerivativeFactors;
 
  public:
 

@@ -50,6 +50,18 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(int
   this->Flag.Initialize();
   this->EvaluateNormalizationPrefactors();  
   this->EvaluateSumPrefactors();
+  this->JastrowFactorElements = new Complex*[this->NbrParticles - 1];
+  for (int i = 1; i < this->NbrParticles; ++i)
+    this->JastrowFactorElements[i - 1] = new Complex[this->NbrParticles - i];
+  this->DerivativeFactors = new Complex** [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->DerivativeFactors[i] = new Complex* [this->NbrLandauLevels];
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	{
+	  this->DerivativeFactors[i][j] = new Complex [this->NbrLandauLevels];
+	}
+    }
 }
 
 // copy constructor
@@ -64,6 +76,18 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(con
   this->Flag = function.Flag;
   this->NormalizationPrefactors = function.NormalizationPrefactors;
   this->SumPrefactors = function.SumPrefactors;
+  this->JastrowFactorElements = new Complex*[this->NbrParticles - 1];
+  for (int i = 1; i < this->NbrParticles; ++i)
+    this->JastrowFactorElements[i - 1] = new Complex[this->NbrParticles - i];
+  this->DerivativeFactors = new Complex** [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->DerivativeFactors[i] = new Complex* [this->NbrLandauLevels];
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	{
+	  this->DerivativeFactors[i][j] = new Complex [this->NbrLandauLevels];
+	}
+    }
 }
 
 // destructor
@@ -82,6 +106,16 @@ JainCFFilledLevelOnSphereWaveFunction::~JainCFFilledLevelOnSphereWaveFunction()
 	}
       delete this->SumPrefactors;
     }
+  for (int i = 0; i < this->NbrParticles; ++i)
+    delete[] this->JastrowFactorElements[i];
+  delete[] this->JastrowFactorElements;
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	delete[] this->DerivativeFactors[i][j];
+      delete[] this->DerivativeFactors[i];
+    }
+  delete[] this->DerivativeFactors;
 }
 
 // clone function 
@@ -115,18 +149,31 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
     }
 
   Complex JastrowFactor(1.0);
+  Complex Tmp;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
-	  JastrowFactor *= ((SpinorUCoordinates[i] * SpinorVCoordinates[j]) - (SpinorUCoordinates[j] * SpinorVCoordinates[i]));
+	  Tmp = ((SpinorUCoordinates[i] * SpinorVCoordinates[j]) - (SpinorUCoordinates[j] * SpinorVCoordinates[i]));
+	  this->JastrowFactorElements[i][j - i - 1] = 1.0 / Tmp;
+	  JastrowFactor *= Tmp;
 	}
     }
-  Complex Tmp = JastrowFactor;
+  Tmp = JastrowFactor;
   for (int i = 1; i < this->JastrowPower; ++i)
     {
       JastrowFactor *= Tmp;
     }
+
+/*  for (int i = 0; i < this->NbrParticles; ++i)
+    for (int j = 0; j < this->NbrLandauLevels; ++j)
+      {
+	Complex** TmpDerivativeFactors = this->DerivativeFactors[i][j];
+	for (int k1 = 0; k1 <= j; ++k1)
+	  for (int k2 = 0; k2 <= j; ++k2)
+	    {
+	    }
+      }*/
   
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
 
