@@ -149,6 +149,10 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
       FermionOnSphere Space (NbrFermions, L, LzMax);
+      /*      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+	{
+	  Space.PrintState(cout, i) << " (" << i<< ")" << endl;
+	  }*/
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
       AbstractArchitecture* Architecture = 0;

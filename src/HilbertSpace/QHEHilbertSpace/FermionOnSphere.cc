@@ -374,9 +374,24 @@ int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
-  while (this->StateDescription[PosMin] != stateDescription)
-    ++PosMin;
-  return PosMin;
+  long PosMid = (PosMin + PosMax) >> 1;
+  while ((PosMax != PosMid))
+    {
+      //      cout << PosMin << " " << PosMax << " " << PosMid << " " << this->StateDescription[PosMid] << " " << stateDescription << endl;
+      if (this->StateDescription[PosMid] > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+    }
+  if (this->StateDescription[PosMax] == stateDescription)
+    return PosMax;
+  else
+    return PosMin;
 }
 
 // print a given State
@@ -391,7 +406,9 @@ ostream& FermionOnSphere::PrintState (ostream& Str, int state)
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
 //  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-//  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
+  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
+  if (state !=  this->FindStateIndex(TmpState, this->StateLzMax[state]))
+    Str << " error! ";
   return Str;
 }
 
@@ -486,9 +503,9 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
-	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
+	  /*	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
 	    cout << TmpLookUpTable[j] << " ";
-	  cout << endl << "-------------------------------------------" << endl;
+	    cout << endl << "-------------------------------------------" << endl;*/
  	  CurrentLzMax = this->StateLzMax[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
 	  if (CurrentLzMax < this->MaximumLookUpShift)
@@ -520,6 +537,15 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	    }
 	}
     }
+  while (CurrentLookUpTableValue > 0)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  /*  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
+    cout << TmpLookUpTable[j] << " ";
+    cout << endl << "-------------------------------------------" << endl;*/
   
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;

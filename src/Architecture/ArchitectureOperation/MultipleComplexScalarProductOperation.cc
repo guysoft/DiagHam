@@ -46,6 +46,26 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = rightVectors; 
+  this->RightVectorsByPointers = 0; 
+  this->LeftVector = leftVector;
+  this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
+}
+
+// constructor 
+//
+// leftVector = pointer to the vector to use for the left hand side of the scalar product
+// rightVectors = array of pointers to the vectors to use for the right hand side of the scalar product
+// nbrScalarProduct = number of scalar products that have to be evaluated
+// scalarProducts = array where scalar products have to be stored
+
+MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(ComplexVector* leftVector, ComplexVector** rightVectors, 
+									     int nbrScalarProduct, Complex* scalarProducts)
+{
+  this->FirstScalarProduct = 0;
+  this->NbrScalarProduct = nbrScalarProduct;
+  this->ScalarProducts = scalarProducts;
+  this->RightVectors = 0; 
+  this->RightVectorsByPointers = rightVectors; 
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
 }
@@ -64,6 +84,7 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = 0; 
+  this->RightVectorsByPointers = 0; 
   this->RightVectorMatrix = rightVectors;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
@@ -126,12 +147,19 @@ bool MultipleComplexScalarProductOperation::ApplyOperation()
 	}
     }
   else
-
-    {
-      for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
-	{
-	  this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
-	}
-    }
+    if (this->RightVectorsByPointers != 0)
+      {
+	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	  {
+	    this->ScalarProducts[i] = ((*(this->LeftVector)) * (*(this->RightVectorsByPointers[i])));
+	  }
+      }
+    else
+      {
+	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	  {
+	    this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
+	  }
+      }
   return true;
 }

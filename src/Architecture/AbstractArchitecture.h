@@ -36,6 +36,9 @@
 
 
 class Vector;
+class RealVector;
+class ComplexVector;
+
 class AbstractHamiltonian;
 
 class AbstractArchitectureOperation;
@@ -56,6 +59,37 @@ public:
   // destructor
   //
   virtual ~AbstractArchitecture();
+  
+  // get typical range of indices on which the local architecture acts
+  //
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  virtual void GetTypicalRange (long& minIndex, long& maxIndex);
+  
+  // get a new real vector with memory alloaction depending on the architecture
+  //
+  // return value = pointer to the requested vector (zero if an error occurs)
+  virtual RealVector* GetNewRealVector ();
+  
+  // get a new real vector with memory alloaction depending on the architecture
+  //
+  // dimension = dimension of the requested vector
+  // zeroFlag = true if all vector entries has to be set to zero
+  // return value = pointer to the requested vector (zero if an error occurs)
+  virtual RealVector* GetNewRealVector (long dimension, bool zeroFlag = false);
+  
+  // get a new complex vector with memory alloaction depending on the architecture
+  //
+  // return value = pointer to the requested vector (zero if an error occurs)
+  virtual ComplexVector* GetNewComplexVector ();
+  
+  // get a new complex vector with memory alloaction depending on the architecture
+  //
+  // dimension = dimension of the requested vector
+  // zeroFlag = true if all vector entries has to be set to zero
+  // return value = pointer to the requested vector (zero if an error occurs)
+  virtual ComplexVector* GetNewComplexVector (long dimension, bool zeroFlag = false);
   
   // multiply a vector by an hamiltonian and store the result in another vector
   //
@@ -112,6 +146,48 @@ public:
   // return value = true if operation has been completed successfully
   virtual bool ExecuteOperation (AbstractPrecalculationOperation* operation);
 
+  // request a given amount of memory for an array of Type element
+  //
+  // architecture = reference on the architecture to which memory will be asked
+  // pointer = reference on pointer that will be used for the memory allocation
+  // size = number of elements of type Type
+  // return value = reference on the pointer
+  template <class Type>
+  friend Type*& New (AbstractArchitecture& architecture, Type*& pointer,  unsigned long size);
+  
+  // delete an array that has been requested by the New function
+  //
+  // architecture = reference on the architecture to which memory has been asked
+  // pointer = reference on pointer that of the memory allocation
+  template <class Type>
+  friend void Delete (AbstractArchitecture& architecture, Type*& pointer);
+  
 };
+
+
+// request a given amount of memory for an array of Type element
+//
+// pointer = reference on pointer that will be used for the memory allocation
+// size = number of elements of type Type
+// return value = reference on the pointer
+
+template <class Type>
+inline Type*& New (AbstractArchitecture& architecture, Type*& pointer, unsigned long size)
+{
+  pointer = new Type [size];
+  return pointer;
+}
+  
+// delete an array that has been requested by the New function
+//
+// architecture = reference on the architecture to which memory has been asked
+// pointer = reference on pointer that of the memory allocation
+
+template <class Type>
+inline void Delete (AbstractArchitecture& architecture, Type*& pointer)
+{
+  delete[] pointer;
+}
+  
 
 #endif

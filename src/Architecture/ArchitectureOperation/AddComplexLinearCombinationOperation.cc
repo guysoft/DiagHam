@@ -36,9 +36,10 @@
 
 // constructor 
 //
-// hamiltonian = pointer to the hamiltonian to use
-// sourceVector = vector to be multiplied by the hamiltonian
-// destinationVector = vector where the result has to be stored
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
 
 AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, ComplexVector* sourceVector, 
 									    int nbrVector, Complex* coefficients)
@@ -46,6 +47,28 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = sourceVector;
+  this->SourceVectorByPointers = 0;
+  this->NbrVector = nbrVector;
+  this->Coefficients = coefficients;
+  this->RealCoefficients = 0;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing pointers to the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, ComplexVector** sourceVector, 
+									    int nbrVector, Complex* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
@@ -66,6 +89,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
   this->SourceVectorMatrix = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
@@ -76,9 +100,10 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
 
 // constructor 
 //
-// hamiltonian = pointer to the hamiltonian to use
-// sourceVector = vector to be multiplied by the hamiltonian
-// destinationVector = vector where the result has to be stored
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
 
 AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, ComplexVector* sourceVector, 
 									    int nbrVector, double* coefficients)
@@ -86,6 +111,28 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = sourceVector;
+  this->SourceVectorByPointers = 0;
+  this->NbrVector = nbrVector;
+  this->Coefficients = 0;
+  this->RealCoefficients = coefficients;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing poiinters to the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, ComplexVector** sourceVector, 
+									    int nbrVector, double* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
@@ -106,6 +153,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
   this->SourceVectorMatrix = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = 0;
@@ -173,11 +221,18 @@ bool AddComplexLinearCombinationOperation::ApplyOperation()
 							  this->NbrComponent);
 	  }
       else
-	for (int i = 0; i < this->NbrVector; ++i)
-	  {
-	    this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
-							  this->NbrComponent);
-	  }
+	if (this->SourceVectorByPointers != 0)
+	  for (int i = 0; i < this->NbrVector; ++i)
+	    {
+	      this->DestinationVector->AddLinearCombination(Coefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
+							    this->NbrComponent);
+	    }
+	else
+	  for (int i = 0; i < this->NbrVector; ++i)
+	    {
+	      this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+							    this->NbrComponent);
+	    }
     }
   else
     {
@@ -188,11 +243,18 @@ bool AddComplexLinearCombinationOperation::ApplyOperation()
 							  this->NbrComponent);
 	  }
       else
-	for (int i = 0; i < this->NbrVector; ++i)
-	  {
-	    this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
-							  this->NbrComponent);
-	  }
+	if (this->SourceVectorByPointers != 0)
+	  for (int i = 0; i < this->NbrVector; ++i)
+	    {
+	      this->DestinationVector->AddLinearCombination(RealCoefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
+							    this->NbrComponent);
+	    }
+	else
+	  for (int i = 0; i < this->NbrVector; ++i)
+	    {
+	      this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+							    this->NbrComponent);
+	    }
     }
   return true;
 }

@@ -39,6 +39,9 @@
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
 
+#include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
+
 
 // destructor
 //
@@ -47,6 +50,58 @@ AbstractArchitecture::~AbstractArchitecture()
 {
 }
 
+// get typical range of indices on which the local architecture acts
+//
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+
+void AbstractArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
+{
+  minIndex = 0;
+  maxIndex = 0;
+}
+  
+// get a new real vector with memory alloaction depending on the architecture
+//
+// return value = pointer to the requested vector (zero if an error occurs)
+
+RealVector* AbstractArchitecture::GetNewRealVector ()
+{
+  return new RealVector;
+}
+  
+// get a new real vector with memory alloaction depending on the architecture
+//
+// dimension = dimension of the requested vector
+// zeroFlag = true if all vector entries has to be set to zero
+// return value = pointer to the requested vector (zero if an error occurs)
+
+RealVector* AbstractArchitecture::GetNewRealVector (long dimension, bool zeroFlag)
+{
+  return new RealVector(dimension, zeroFlag);
+}
+  
+// get a new complex vector with memory alloaction depending on the architecture
+//
+// return value = pointer to the requested vector (zero if an error occurs)
+
+ComplexVector* AbstractArchitecture::GetNewComplexVector ()
+{
+  return new ComplexVector;
+}
+  
+// get a new complex vector with memory alloaction depending on the architecture
+//
+// dimension = dimension of the requested vector
+// zeroFlag = true if all vector entries has to be set to zero
+// return value = pointer to the requested vector (zero if an error occurs)
+
+ComplexVector* AbstractArchitecture::GetNewComplexVector (long dimension, bool zeroFlag)
+{
+  return new ComplexVector (dimension, zeroFlag);
+}
+  
 // execute an architecture-dependent operation
 //
 // operation = pointer to the operation to execute

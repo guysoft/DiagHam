@@ -51,6 +51,8 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
 
   // vector array containing the vectors that have to be added
   RealVector* SourceVector;
+  // vector array containing pointers to the vectors that have to be added
+  RealVector** SourceVectorByPointers;
   // matrix containing the vectors that have to be added (can be used instead of SourceVector)
   RealMatrix SourceVectorMatrix;
   // number of vector that have to be added
@@ -70,6 +72,14 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
   // nbrVector = number of vector that have to be added
   // coefficients = coefficient of the linear combination
   AddRealLinearCombinationOperation(RealVector* destinationVector, RealVector* sourceVector, int nbrVector, double* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing the pointers to the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddRealLinearCombinationOperation(RealVector* destinationVector, RealVector** sourceVector, int nbrVector, double* coefficients);
 
   // constructor 
   //

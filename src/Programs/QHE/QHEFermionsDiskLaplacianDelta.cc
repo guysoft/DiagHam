@@ -163,7 +163,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << (int) (L / 2) << " " << (TmpMatrix.DiagonalElement(i)) << endl;
+	      File << L << " " << (TmpMatrix.DiagonalElement(i)) << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);

@@ -68,6 +68,8 @@ class FermionOnDisk:  public ParticleOnDisk
   int LookUpTableMemorySize;
   // shift used in each lzmax sector
   int* LookUpTableShift;
+  // mask to apply to a state after shifting it by the corresponding LookUpTableShift
+  unsigned long* LookUpTableMask;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1

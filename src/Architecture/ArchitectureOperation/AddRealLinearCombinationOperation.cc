@@ -35,9 +35,10 @@
 
 // constructor 
 //
-// hamiltonian = pointer to the hamiltonian to use
-// sourceVector = vector to be multiplied by the hamiltonian
-// destinationVector = vector where the result has to be stored
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
 
 AddRealLinearCombinationOperation::AddRealLinearCombinationOperation (RealVector* destinationVector, RealVector* sourceVector, 
 								      int nbrVector, double* coefficients)
@@ -45,6 +46,27 @@ AddRealLinearCombinationOperation::AddRealLinearCombinationOperation (RealVector
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = sourceVector;
+  this->SourceVectorByPointers = 0;
+  this->NbrVector = nbrVector;
+  this->Coefficients = coefficients;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddRealLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing the pointers to the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddRealLinearCombinationOperation::AddRealLinearCombinationOperation (RealVector* destinationVector, RealVector** sourceVector, 
+								      int nbrVector, double* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
   this->DestinationVector = destinationVector;  
@@ -63,6 +85,7 @@ AddRealLinearCombinationOperation::AddRealLinearCombinationOperation(RealVector*
   this->FirstComponent = 0;
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
   this->SourceVectorMatrix = sourceVector;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
@@ -126,11 +149,18 @@ bool AddRealLinearCombinationOperation::ApplyOperation()
 						      this->NbrComponent);
       }
   else
-    for (int i = 0; i < this->NbrVector; ++i)
-      {
-	this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+    if (this->SourceVectorByPointers != 0)
+      for (int i = 0; i < this->NbrVector; ++i)
+	{
+	  this->DestinationVector->AddLinearCombination(Coefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
 						      this->NbrComponent);
-      }
+	}
+    else
+      for (int i = 0; i < this->NbrVector; ++i)
+	{
+	  this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+							this->NbrComponent);
+	}
   return true;
 }
 

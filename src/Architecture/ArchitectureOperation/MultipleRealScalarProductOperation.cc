@@ -45,6 +45,25 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVecto
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = rightVectors; 
+  this->RightVectorsByPointers = 0;
+  this->LeftVector = leftVector;
+  this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
+}
+
+// constructor 
+//
+// leftVector = pointer to the vector to use for the left hand side of the scalar product
+// rightVectors = array of pointers to the vectors to use for the right hand side of the scalar product
+// nbrScalarProduct = number of scalar products that have to be evaluated
+// scalarProducts = array where scalar products have to be stored
+
+MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVector* leftVector, RealVector** rightVectors, int nbrScalarProduct, double* scalarProducts)
+{
+  this->FirstScalarProduct = 0;
+  this->NbrScalarProduct = nbrScalarProduct;
+  this->ScalarProducts = scalarProducts;
+  this->RightVectors = 0; 
+  this->RightVectorsByPointers = rightVectors;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
 }
@@ -62,6 +81,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(RealVecto
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
   this->RightVectors = 0; 
+  this->RightVectorsByPointers = 0;
   this->RightVectorMatrix = rightVectors;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
@@ -77,6 +97,7 @@ MultipleRealScalarProductOperation::MultipleRealScalarProductOperation(const Mul
   this->NbrScalarProduct = operation.NbrScalarProduct;
   this->ScalarProducts = operation.ScalarProducts;
   this->RightVectors = operation.RightVectors; 
+  this->RightVectorsByPointers = operation.RightVectorsByPointers; 
   this->RightVectorMatrix = operation.RightVectorMatrix;
   this->LeftVector = operation.LeftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleRealScalarProduct;
@@ -124,12 +145,19 @@ bool MultipleRealScalarProductOperation::ApplyOperation()
 	}
     }
   else
-
-    {
-      for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
-	{
-	  this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
-	}
-    }
+    if (this->RightVectorsByPointers != 0)
+      {
+	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	  {
+	    this->ScalarProducts[i] = ((*(this->LeftVector)) * (*(this->RightVectorsByPointers[i])));
+	  }
+      }
+    else
+      {
+	for (int i = this->FirstScalarProduct; i < LastScalarProduct; ++i)
+	  {
+	    this->ScalarProducts[i] = ((*(this->LeftVector)) * this->RightVectorMatrix[i]);
+	  }
+      }
   return true;
 }

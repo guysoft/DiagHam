@@ -51,6 +51,8 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
 
   // vector array containing the vectors that have to be added
   ComplexVector* SourceVector;
+  // vector array containing pointers to the vectors that have to be added
+  ComplexVector** SourceVectorByPointers;
   // matrix containing the vectors that have to be added (can be used instead of SourceVector)
   ComplexMatrix SourceVectorMatrix;
   // number of vector that have to be added
@@ -76,6 +78,14 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   // constructor 
   //
   // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing pointers to the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexVector** sourceVector, int nbrVector, Complex* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
   // sourceVector = matrix containing the vectors that have to be added
   // nbrVector = number of vector that have to be added
   // coefficients = coefficient of the linear combination
@@ -88,6 +98,14 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   // nbrVector = number of vector that have to be added
   // coefficients = coefficient of the linear combination
   AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexVector* sourceVector, int nbrVector, double* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing poiinters to the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexVector** sourceVector, int nbrVector, double* coefficients);
 
   // constructor 
   //

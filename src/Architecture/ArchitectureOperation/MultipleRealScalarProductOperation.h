@@ -54,6 +54,8 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
 
   // array of vectors to use for the right hand side of the scalar product
   RealVector* RightVectors;
+  // array of pointers to the vectors to use for the right hand side of the scalar product
+  RealVector** RightVectorsByPointers;
   // real matrix where vectors to use for the right hand side of the scalar product are stored (can be used instead of RightVectors)
   RealMatrix RightVectorMatrix;
 
@@ -69,6 +71,14 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   // nbrScalarProduct = number of scalar products that have to be evaluated
   // scalarProducts = array where scalar products have to be stored
   MultipleRealScalarProductOperation(RealVector* leftVector, RealVector* rightVectors, int nbrScalarProduct, double* scalarProducts);
+
+  // constructor 
+  //
+  // leftVector = pointer to the vector to use for the left hand side of the scalar product
+  // rightVectors = array of pointers to the vectors to use for the right hand side of the scalar product
+  // nbrScalarProduct = number of scalar products that have to be evaluated
+  // scalarProducts = array where scalar products have to be stored
+  MultipleRealScalarProductOperation(RealVector* leftVector, RealVector** rightVectors, int nbrScalarProduct, double* scalarProducts);
 
   // constructor 
   //

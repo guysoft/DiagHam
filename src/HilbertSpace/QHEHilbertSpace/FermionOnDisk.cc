@@ -96,6 +96,7 @@ FermionOnDisk::FermionOnDisk(const FermionOnDisk& fermions)
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
+  this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -112,6 +113,7 @@ FermionOnDisk::~FermionOnDisk ()
       delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
       delete[] this->LookUpTableShift;
+      delete[] this->LookUpTableMask;
       for (int i = 0; i < this->NbrLzValue; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
@@ -129,6 +131,12 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
     {
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
+      delete[] this->SignLookUpTable;
+      delete[] this->LookUpTableShift;
+      delete[] this->LookUpTableMask;
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	delete[] this->LookUpTable[i];
+      delete[] this->LookUpTable;
     }
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
@@ -142,6 +150,7 @@ FermionOnDisk& FermionOnDisk::operator = (const FermionOnDisk& fermions)
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
+  this->LookUpTableMask = fermions.LookUpTableMask;
   this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -362,7 +371,7 @@ double FermionOnDisk::AdA (int index, int m)
 
 int FermionOnDisk::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  int Pos = this->LookUpTable[lzmax][stateDescription >> this->LookUpTableShift[lzmax]];
+  int Pos = this->LookUpTable[lzmax][(stateDescription >> this->LookUpTableShift[lzmax]) & this->LookUpTableMask[lzmax]];
   while (this->StateDescription[Pos] != stateDescription)
     ++Pos;
   return Pos;
@@ -447,16 +456,32 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
   // construct  look-up tables for searching states
   this->LookUpTable = new int* [this->NbrLzValue];
   this->LookUpTableShift = new int [this->NbrLzValue];
+  this->LookUpTableMask = new unsigned long [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize];
   int CurrentLzMax = this->StateLzMax[0];
   int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
   if (CurrentLzMax < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentLzMax] = 0;
+    {
+      this->LookUpTableShift[CurrentLzMax] = 0;
+#ifdef __64_BITS__
+      this->LookUpTableMask[CurrentLzMax] = 0xffffffffffffffff;
+#else
+      this->LookUpTableMask[CurrentLzMax] = 0xffffffff;
+#endif
+    }
   else
-    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+    {
+      this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+#ifdef __64_BITS__
+      this->LookUpTableMask[CurrentLzMax] = 0x7fffffffffffffff >> (this->LookUpTableShift[CurrentLzMax] -1);
+#else
+      this->LookUpTableMask[CurrentLzMax] = 0x7fffffff >> (this->LookUpTableShift[CurrentLzMax] - 1);
+#endif
+    }
   int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = this->StateDescription[0] >> CurrentShift;
+  unsigned long CurrentMask = this->LookUpTableMask[CurrentLzMax];
+  unsigned long CurrentLookUpTableValue = (this->StateDescription[0] >> CurrentShift) & CurrentMask;
   unsigned long TmpLookUpTableValue;
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -466,16 +491,31 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
  	  CurrentLzMax = this->StateLzMax[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
 	  if (CurrentLzMax < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentLzMax] = 0;
+	    {
+	      this->LookUpTableShift[CurrentLzMax] = 0;
+#ifdef __64_BITS__
+	      this->LookUpTableMask[CurrentLzMax] = 0xffffffffffffffff;
+#else
+	      this->LookUpTableMask[CurrentLzMax] = 0xffffffff;
+#endif
+	    }
 	  else
-	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+	    {
+	      this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+#ifdef __64_BITS__
+	      this->LookUpTableMask[CurrentLzMax] = 0x7fffffffffffffff >> (this->LookUpTableShift[CurrentLzMax] -1);
+#else
+	      this->LookUpTableMask[CurrentLzMax] = 0x7fffffff >> (this->LookUpTableShift[CurrentLzMax] - 1);
+#endif
+	    }
 	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
-	  CurrentLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  CurrentMask = this->LookUpTableMask[CurrentLzMax];
+	  CurrentLookUpTableValue = (this->StateDescription[i] >> CurrentShift) & CurrentMask;
 	  TmpLookUpTable[CurrentLookUpTableValue] = i;
 	}
       else
 	{
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  TmpLookUpTableValue = (this->StateDescription[i] >> CurrentShift) & CurrentMask;
 	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
 	    {
 	      CurrentLookUpTableValue = TmpLookUpTableValue;

@@ -36,12 +36,20 @@ Run Lanczos Algorithm<br>
 momentum = 1<br>
 ...
 </prgoutput>
-Fo
+
     The source code of this program, <file>SpinChainWithTranslation.cc</file>, can be found in the same directory. In the following section, we will study this code and show you the structure 
 
+<subsection>the running options</subsection>
+
+DiagHam provides an easy way to parse command line options. Each option is instanciated from one of the following classes depending on the type of data associated to the option:
+<list>
+<li><class:BooleanOption>BooleanOption</class></li>
+<li><class:SingleIntegerOption>SingleIntegerOption</class></li>
+</list>
+These classes derived from the <class:AbstractOption>AbstractOption</class>.
 <!-- Created: Fri Nov  21 17:42:02 UTC 2003 -->
 <!-- hhmts start -->
-Last modified: Fri Nov 21 18:30:11 CET 2003
+Last modified: Mon Feb 23 15:23:40 CET 2004
 <!-- hhmts end -->
   </body>
 </html>

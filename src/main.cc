@@ -102,6 +102,20 @@ int main(int argc, char** argv)
 {
 
   cout.precision(14);
+
+  // distributed architecture test
+  //  MonoProcessorArchitecture Architecture;
+  SMPArchitecture Architecture(2);
+  int* Test;
+  New(Architecture, Test, 10);
+  for (int i = 0; i < 10; ++i)
+    Test[i] = i;
+  for (int i = 0; i < 10; ++i)
+    cout << i << " ";
+  cout << endl;
+  Delete(Architecture, Test);
+  return 0;
+
   int dimM = 10;
   for (int k = 0; k < 10; ++k)
     {
