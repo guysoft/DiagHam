@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 
   Manager += HilbertSpaceGroup;
   Manager += FileGroup;
+  Manager += SampleGroup;
   Manager += MiscGroup;
 
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-statex", "number of states in x direction of the full Hilbert space (no symmetry reduction)", 81);
