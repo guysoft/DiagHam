@@ -34,11 +34,9 @@
 
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnTorusState.h"
 
 #include <iostream>
-
-
-class BosonOnTorusState;
 
 
 class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagneticTranslations
@@ -74,11 +72,19 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
 
   // array describing each state
   BosonOnTorusState* StateDescription;
+  //array giving maximum momentum value reached for a boson in a given state
+  int* StateMaxMomentum;
+  
 
   // BosonOnTorusState external parameter: reduced number of state (aka the number of unsigned long per state) minus 1
   int ReducedNbrState;
   // BosonOnTorusState external parameter: number of the state in the last unsigned long array describing the whole state
   int RemainderNbrState;
+
+  // a temporary state array used during Hilbert space generation
+  BosonOnTorusState** TemporaryStateDescription;
+  // a temporary state used for all canonical form calculations
+  BosonOnTorusState TemporaryState;
 
  public:
 

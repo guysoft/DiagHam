@@ -6,8 +6,8 @@
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
-#include "HilbertSpace/QHEHilbertSpace/FermionOnTorus.h"
-#include "HilbertSpace/QHEHilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/QHEHilbertSpace/BosonOnTorusState.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 
@@ -51,8 +51,8 @@ int main(int argc, char** argv)
   SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
   BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
-  SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 6);
-  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 9);
+  SingleIntegerOption NbrBosonOption ('p', "nbr-particles", "number of particles", 3);
+  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 6);
   SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
 
@@ -63,13 +63,13 @@ int main(int argc, char** argv)
   OptionList += &SMPNbrProcessorOption;
   OptionList += &IterationOption;
   OptionList += &NbrEigenvaluesOption;
-  OptionList += &NbrFermionOption;
+  OptionList += &NbrBosonOption;
   OptionList += &MaxMomentumOption;
   OptionList += &MomentumOption;
   OptionList += &MaxFullDiagonalizationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsTorus -h" << endl;
+      cout << "see man page for option syntax or type QHEBosonsTorus -h" << endl;
       return -1;
     }
   if (HelpOption.GetBoolean() == true)
@@ -119,18 +119,18 @@ int main(int argc, char** argv)
   int NbrProcessor = SMPNbrProcessorOption.GetInteger();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrFermions = NbrFermionOption.GetInteger();
+  int NbrBosons = NbrBosonOption.GetInteger();
   int MaxMomentum = MaxMomentumOption.GetInteger();
   int Momentum = MomentumOption.GetInteger();
   int MaxFullDiagonalization = MaxFullDiagonalizationOption.GetInteger();
-  double XRatio = NbrFermions / 4.0;
+  double XRatio = NbrBosons / 4.0;
 
   int InvNu = 3;
-//  int MaxMomentum = InvNu * NbrFermions;
+//  int MaxMomentum = InvNu * NbrBosons;
   int L = 0;
   double GroundStateEnergy = 0.0;
 
-  int NbrState = 9;
+/*  int NbrState = 9;
   int ReducedNbrState = NbrState >> 2;
   int NbrStateRemainder = NbrState - (ReducedNbrState << 2);
   if (NbrStateRemainder == 0)
@@ -151,13 +151,13 @@ int main(int argc, char** argv)
 	  cout << "error " << i << endl;
       State.PrintState(cout, ReducedNbrState, NbrStateRemainder) << endl;
     }
-  return 0;
+  return 0;*/
 
   char* OutputNameLz = new char [512];
-  sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+/*  sprintf (OutputNameLz, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrBosons, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
-  File.precision(14);
+  File.precision(14);*/
 
 
   
@@ -173,16 +173,16 @@ int main(int argc, char** argv)
   else
     Max = Momentum;
 
-  int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
-  MomentumModulo = 1;
+  int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
+//  MomentumModulo = 1;
 //  for (; Momentum <= Max; ++Momentum)
   for (int x = 0; x < MomentumModulo; ++x)
   for (int y = 0; y < MomentumModulo; ++y)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-//      FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
-      FermionOnTorusWithMagneticTranslations TotalSpace (NbrFermions, MaxMomentum, x, y);
+//      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, Momentum);
+      BosonOnTorusWithMagneticTranslations TotalSpace (NbrBosons, MaxMomentum, x, y);
       cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
 //      cout << "momentum = " << Momentum << endl;
       cout << "momentum = (" << x << "," << y << ")" << endl;
@@ -192,7 +192,7 @@ int main(int argc, char** argv)
 	  TotalSpace.PrintState(cout, i) << endl;
 	}
       cout << endl << endl;
-      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	{
 	  cout << "---------------------------------------------" << endl;
 	  cout << i << " = " << endl;;
@@ -213,14 +213,14 @@ int main(int argc, char** argv)
 		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslations);
 		    }
 		}
-	}
+	}*/
 /*	  
       AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrFermions, MaxMomentum, XRatio);
+      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio);
       if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
@@ -296,11 +296,11 @@ int main(int argc, char** argv)
 	}
       cout << "----------------------------------------------------------------" << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;
-      cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
+      cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrBosons) << endl;
       delete Hamiltonian;
 */
     }
-  File.close();
+//  File.close();
 
   return 0;
 }
