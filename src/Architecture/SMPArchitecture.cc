@@ -171,7 +171,7 @@ bool SMPArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* oper
   return true;
 }
   
-// execute an architecture-dependent vector abstact scalar sum operation
+// execute an architecture-dependent vector abstract scalar sum operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
@@ -191,7 +191,7 @@ bool SMPArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
   ((AbstractScalarSumOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent,
 													   operation->GetDimension() - FirstComponent);
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrProcesses; ++i)
     {
       operation->GetScalar() += ((AbstractScalarSumOperation*) (this->ThreadParameters[i].Operation))->GetScalar();
       delete this->ThreadParameters[i].Operation;

@@ -40,6 +40,7 @@
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
 
 #include <iostream>
 #ifdef __MPI__
@@ -171,6 +172,28 @@ bool SimpleMPIArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation
 #endif
 }
   
+
+// execute an architecture-dependent vector abstract scalar sum operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+  
+bool SimpleMPIArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
+{
+#ifdef __MPI__
+  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  Complex TmpResult;
+  MPI::COMM_WORLD.Reduce(&(operation->GetScalar().Re), &(TmpResult.Re), 1, MPI::DOUBLE, MPI::SUM, 0);
+  MPI::COMM_WORLD.Reduce(&(operation->GetScalar().Im), &(TmpResult.Im), 1, MPI::DOUBLE, MPI::SUM, 0);
+  operation->GetScalar() = TmpResult;
+  MPI::COMM_WORLD.Bcast(&(operation->GetScalar().Re), 1, MPI::DOUBLE, 0);  
+  MPI::COMM_WORLD.Bcast(&(operation->GetScalar().Im), 1, MPI::DOUBLE, 0);  
+  return true;
+#else
+  return false;
+#endif
+}
 
 // execute an architecture-dependent add real linear combination operation
 //

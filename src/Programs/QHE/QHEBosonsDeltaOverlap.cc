@@ -54,6 +54,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
+  (*SystemGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
 
   int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
 
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
@@ -84,9 +86,10 @@ int main(int argc, char** argv)
       return -1;      
     }
   BosonOnSphere Space (NbrBosons, 0, LzMax);
+  ParticleOnSphereFunctionBasis Basis(LzMax);
   RealVector Location(2 * NbrBosons, true);
   srand48(29457);
-  for (int k = 0; k < 100; ++k)
+/*  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
@@ -102,12 +105,71 @@ int main(int argc, char** argv)
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
       Complex ValueLaughlin = LaughlinWaveFunction(Location, NbrBosons) * 0.36563112422012;
-      cout << ValueExact  << endl; 
+//      cout << ValueExact  << endl; 
+      cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
-//      cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;  
-      
     }
-  return 0;
+  return 0;*/
+  double Factor = 1.0;
+  for (int j = 0; j < NbrBosons; ++j)
+    {
+      Factor *= 4.0 * M_PI; //2.0 * M_PI * M_PI;
+    }
+  Complex Overlap;
+  Complex ErrorOverlap;
+  double Normalization = 0.0;
+  double ErrorNormalization = 0.0;
+  Complex Tmp;
+  Complex Tmp3;
+  double Tmp2;
+  for (int i = 0; i < NbrIter; ++i)
+    {
+      for (int j = 0; j < NbrBosons; ++j)
+	{
+	  Location[j << 1] = acos (1.0- (2.0 * drand48()));
+	  Location[1 + (j << 1)] = 2.0 * M_PI * drand48();
+	}
+      Tmp = LaughlinWaveFunction (Location, NbrBosons);
+      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
+      Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
+      Complex ValueExact (Operation.GetScalar());
+//      ValueExact.Re *= -1.0;
+      Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
+      Tmp3 = (Conj(Tmp) * ValueExact);
+      Overlap += Tmp3;// * Factor;
+      ErrorOverlap.Re += Tmp3.Re * Tmp3.Re;//  * Factor * Factor;
+      ErrorOverlap.Im += Tmp3.Im * Tmp3.Im;//  * Factor * Factor;
+//      ErrorOverlap += Tmp3 * Tmp3  * Factor * Factor;
+      Normalization += Tmp2;// * Factor;
+      ErrorNormalization += Tmp2 * Tmp2;// *  Factor * Factor;
+      if ((i > 0) && ((i % 1000) == 0))
+	{
+	  Complex Tmp4 = Overlap / ((double) i);
+	  cout << (Tmp4 * Factor);
+//	  Complex Tmp5 (sqrt((((ErrorOverlap.Re / ((double) (i))) - (Overlap.Re * Overlap.Re)) / ((double) (i))) / Factor),
+//			sqrt((((ErrorOverlap.Im / ((double) (i))) - (Overlap.Im * Overlap.Im)) / ((double) (i))) / Factor));
+	  Complex Tmp5 (sqrt( ((ErrorOverlap.Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+			sqrt( ((ErrorOverlap.Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+	  cout << " +/- " << (Tmp5 * Factor) << endl;
+	  double Tmp6 = Normalization / ((double) i);
+	  cout << Factor * Tmp6;
+//	  Tmp6 = sqrt((((ErrorNormalization / ((double) (i))) - (Tmp6 * Tmp6)) / ((double) (i))) / Factor);
+	  double Tmp7 = sqrt( ((ErrorNormalization / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
+	  cout << " +/- " << (Tmp7  * Factor) << endl;	  
+	  Tmp5.Re /= Tmp4.Re;
+	  Tmp5.Im /= Tmp4.Im;
+	  Tmp5.Re = fabs(Tmp5.Re);
+	  Tmp5.Im = fabs(Tmp5.Im);
+	  Tmp5.Re += (Tmp7 / Tmp6);
+	  Tmp5.Im += (Tmp7 / Tmp6);
+	  Tmp4 *= sqrt(Factor / Tmp6);	  
+	  Tmp5.Re *= Tmp4.Re;
+	  Tmp5.Im *= Tmp4.Im;
+	  cout << Tmp4 << " " << Tmp5 << endl;
+	  cout << "-----------------------------------------------" << endl;
+	}
+    } 
+ return 0;
 }
 
 
@@ -118,7 +180,7 @@ Complex LaughlinWaveFunction(RealVector& position, int nbrBosons)
   for (int i = 0; i < (nbrBosons - 1); ++i)
     for (int j = i + 1; j < nbrBosons; ++j)
       {
-	Tmp.Re = sin(0.5 * (position[i << 1] - position[j << 1])) * cos(0.5 * (position[1 + (i << 1)] - position[1 + (j << 1)]));
+	Tmp.Re = sin(0.5 * (position[j << 1] - position[i << 1])) * cos(0.5 * (position[1 + (i << 1)] - position[1 + (j << 1)]));
 	Tmp.Im = sin(0.5 * (position[i << 1] + position[j << 1])) * sin(0.5 * (position[1 + (i << 1)] - position[1 + (j << 1)]));
 	Value *= Tmp;
 	Value *= Tmp;

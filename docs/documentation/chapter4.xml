@@ -1,6 +1,3 @@
-<?xml version="1.0"  encoding="ISO-8859-1"?>
-<chapter name="First steps with DiagHam">
-
 <section name="Hello world-like using diagham">
 Let start with one simplest example you can write with
 DiagHam. We are going to write the diagonalisation of a
@@ -52,19 +49,19 @@ included line
 1. The class basic constructor constructor is used line 18 and takes only one argument which
 is the number of spin.
 
-The hamiltonian that corresponds to our problem is described by the
+The hamiltonian that corresponds to our problem is decribed by the
 PeriodicSpinChainHamiltonian whose header is included in line 2. The Hamiltonian (defined
 line 19) needs the following informations: a pointer to the Hilbert space, the number of
 spins and an array giving the coupling constants. This array (defined from line 12 to 17)
 contains the isotropic coupling constant between sites $0 \leftrightarrow 1$, $1
 \leftrightarrow 2$, ... and $n-1 \leftrightarrow 0$.
 
-From here, our physical system is completely defined. We want now to extract some physical
+From here, our physical system is completly defined. We want now to extract some physical
 informations from this system. The simplest thing (and one of the thing we are
-generally interested in) are the eigenvalues of the hamiltonian. For small Hilbert space
+generaly interested in) are the eigenvalues of the hamiltonian. For small Hilbert space
 (typically smaller than 500), the simplest and safest way is to used complete
 diagonalization. Any class can give the representation of its corresponding hamiltonian in
-its associated Hilbert space basis. Line 21, we create a real symmetric matrix and line 22,
+its associated hilbert space basis. Line 21, we create a real symmetric matrix and line 22,
 we ask to the hamiltonian to store the representation. 
 
 The rest of the code is just an example to obtain the eigenvalues of an explicit matrix. 
@@ -73,7 +70,7 @@ The rest of the code is just an example to obtain the eigenvalues of an explicit
 
 
 <section name="Hello John-like using DiagHam">
-When you learn a programming language, you begin with a simple message printed on screen. Then you provide
+When you learn a programming language, you begin to print a simple message. Then you provide
 a way to ask the name of the user and echo it. Here we want to pass the number of spins as a
 parameter or restrict the Hilbert space to a given value of the sum of the spin projection
 along the z axis. DiagHam provides an easy way to parse running arguments.
@@ -85,7 +82,7 @@ along the z axis. DiagHam provides an easy way to parse running arguments.
 
 </code>
 
-In most of the program, it is useful to define a misc option group that will at least
+In most of the program, it is usefull to define a misc option group that will at least
 contain an help option. These two are defined line and. After having processed options we
 check (lines to ) if the help has been requested and if it's right/ then the help is
 displayed and we exit from the program.
@@ -95,14 +92,14 @@ option that requests an integer to define the number of spins we want for our ch
 After processing options, the number of spins is get back line . 
 
 The second option is a
-boolean option used to known if we want to restrict our calculation to a given subspace with
+boolean option ued to known if we want to restrict our calculation to a given subspace with
 fixed total spin projection along the z axis. At last, the third option is an integer option
 that ask twice the value of the total spin projection. If the flag to restrict to a given
 subspace is set to true, then we check if this value is compatible with the number of
 1/2 spins (lines to ). 
 
 The rest of the program is quite similar to the previous one except that if we have to
-restricted our program to a given subspace, we use another constructor method of
+restricted our program to a given subspace, we use another contructor method of
 \cppclassprogram{Spin1_2Chain} that allow to work in a given subspace (line ). We also use
 dynamic allocation for Space to have a more compact program.
  
@@ -112,7 +109,7 @@ dynamic allocation for Space to have a more compact program.
 
 <section name="boosted hello world: handling more than ten spins">
 If you have to entered 30 spins, your computer must now have smoke going out its gut. The
-previous version of the program stores the hamiltonian in a matrix in a brutal force way.
+previous version of the program stores the hamiltonion in a matrix in a brutal force way.
 Even if the matrix is full of zeros, the amount of requested memory is of order of the
 square of the Hilbert dimension (so for 30 spins, it is of the order of $2^12 Gb$ !).
 
@@ -125,7 +122,7 @@ rewrite our \program{HelloWorld} to support this feature.
 
 We have introduced line an object instantiated from the
 \cppclassname{MonoprocessorArchitecture} class. This class describes how calculation has to
-a done when running DiagHam on single processor computer. More details will be given in the
+a done when running DiagHam on single processor copmute. More details will be given in the
 next section.
 
 </section>
@@ -174,7 +171,7 @@ use .
 If you're only interested in monoprocessor or SMP computer, you can keep the previous way we
 use architecture and only replace \cppclassname{MonoProcessorArchitecture} class with
 \cppclassname{SMPArchitecture} one. It's allowed you to have a simpler code but with less
-portability (that's why this method is not recommended).
+portability (that why this method is not recommanded).
 
 </section>
 
@@ -185,12 +182,9 @@ directory. They all use
 the same structure that the one we have described in this chapter. Before trying to
 develop your own hamiltonian or Hilbert space, we suggest you to look at those who
 are already provided. Using your knowledge of DiagHam, header included documentation and
-already available programs, you can perhaps just recycle what have already been developed.
+already available programs, you can perhaps just recycle what have already been developped.
 If you think your system can't be
 described by available classes the next two chapters will provide you all needed information
 to encode it.
 
 </section>
-
-
-</program>

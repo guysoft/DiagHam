@@ -86,6 +86,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // dimension = dimension of the Hilbert space
   void SetDimension (long dimension);
 
+  // execute an architecture-dependent vector abstact scalar sum operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  bool ExecuteOperation (AbstractScalarSumOperation* operation);
+
   // execute an architecture-dependent vector hamiltonian multiplication operation
   //
   // operation = pointer to the operation to execute
