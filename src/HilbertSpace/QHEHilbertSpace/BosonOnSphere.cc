@@ -304,6 +304,69 @@ int BosonOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
   return DestIndex;
 }
 
+// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+//
+// index = index of the state on which the operator has to be applied
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+{
+  int CurrentLzMax = this->StateLzMax[index];
+  int* State = this->StateDescription[index];
+  --nbrIndices;
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if ((n[i] > CurrentLzMax) || (State[n[i]] == 0))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      for (int j = i + 1; j <= nbrIndices; ++j)
+	if ((n[i] == n[j]) || (State[n[i]] == 1))
+	  {
+	    coefficient = 0.0;
+	    return this->HilbertSpaceDimension; 	    
+	  }
+    }
+  if ((n[nbrIndices] > CurrentLzMax) || (State[n[nbrIndices]] == 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLzMax = CurrentLzMax;
+  for (int i = 0; i <= nbrIndices; ++i)
+    if (NewLzMax < m[i])
+      NewLzMax = m[i];
+
+  int i = 0;
+  int* TemporaryState = new int [NewLzMax + 1];
+  for (; i <= CurrentLzMax; ++i)
+    TemporaryState[i] = State[i];
+  for (; i <= NewLzMax; ++i)
+    TemporaryState[i] = 0;
+  coefficient = 1.0;
+  for (i = nbrIndices; i >= 0; --i)
+    {
+      coefficient *= TemporaryState[n[i]];
+      --TemporaryState[n[i]];
+    }
+  for (i = nbrIndices; i >= 0; --i)
+    {
+      ++TemporaryState[m[i]];
+      coefficient *= TemporaryState[m[i]];
+    }
+  coefficient = sqrt(coefficient);
+  while (TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  int DestIndex = this->FindStateIndex(TemporaryState, NewLzMax);
+  delete[] TemporaryState;
+  return DestIndex;
+}
+
 // apply a^+_m a_m operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

@@ -316,6 +316,80 @@ int FermionOnSphereUnlimited::AdAdAA (int index, int m1, int m2, int n1, int n2,
   return this->FindStateIndex(this->TemporaryState, TmpReducedNbrState, StateLzMax);
 }
 
+// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+//
+// index = index of the state on which the operator has to be applied
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereUnlimited::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  --nbrIndices;
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if (n[i] > StateLzMax)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      for (int j = i + 1; j <= nbrIndices; ++j)
+	if ((n[i] == n[j]) || (m[i] == m[j]))
+	  {
+	    coefficient = 0.0;
+	    return this->HilbertSpaceDimension; 	    
+	  }
+    }
+  if (n[nbrIndices] > StateLzMax)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+
+  int TmpReducedNbrState = this->ReducedNbrState[index];
+  this->TemporaryState.EmptyState(this->TemporaryStateReducedNbrState);
+  this->TemporaryState.Assign(this->StateDescription[index], TmpReducedNbrState);
+  for (int i = 0; i <= nbrIndices; ++i)
+    if (this->TemporaryState.GetOccupation(n[i]) == 0)
+      {
+	coefficient = 0.0;
+	return this->HilbertSpaceDimension;
+      }
+
+  coefficient = 1.0;
+  for (int i = nbrIndices; i >= 0; --i)
+    {
+      this->TemporaryState.GetPermutationSign(n[i], TmpReducedNbrState, this->SignLookUpTable, this->SignLookUpTableMask, coefficient);
+      this->TemporaryState.DecrementOccupation(n[i]);
+    }
+
+  StateLzMax = this->TemporaryState.GetHighestIndex(TmpReducedNbrState);
+  TmpReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(StateLzMax + 1);
+
+  for (int i = nbrIndices; i >= 0; --i)
+    {
+      if (this->TemporaryState.GetOccupation(m[i]) != 0)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      if (m[i] > StateLzMax)
+	{
+	  StateLzMax = m[i];
+	  TmpReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(StateLzMax + 1);
+	}  
+      else
+	{
+	  this->TemporaryState.GetPermutationSign(m[i], TmpReducedNbrState, this->SignLookUpTable, this->SignLookUpTableMask, coefficient);
+	}
+      this->TemporaryState.IncrementOccupation(m[i]);
+    }
+  return this->FindStateIndex(this->TemporaryState, TmpReducedNbrState, StateLzMax);
+}
+
 // apply a^+_m a_m operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
