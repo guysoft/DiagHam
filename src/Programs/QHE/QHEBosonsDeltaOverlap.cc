@@ -100,8 +100,8 @@ int main(int argc, char** argv)
     }
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
-//  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
-  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
+  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
+//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
   srand48(29457);
 /*  for (int k = 0; k < 10; ++k)
@@ -126,10 +126,10 @@ int main(int argc, char** argv)
     }
   return 0;*/
   double Factor = 1.0;
-  for (int j = 0; j < NbrBosons; ++j)
+/*  for (int j = 0; j < NbrBosons; ++j)
     {
       Factor *= 4.0 * M_PI; //2.0 * M_PI * M_PI;
-    }
+    }*/
   Complex Overlap;
   Complex ErrorOverlap;
   double Normalization = 0.0;
@@ -143,7 +143,9 @@ int main(int argc, char** argv)
       Location[j << 1] = acos (1.0- (2.0 * drand48()));
       Location[1 + (j << 1)] = 2.0 * M_PI * drand48();
     }
-
+  Tmp = (*WaveFunction)(Location);
+  double PreviousProbabilities = Norm(Tmp);
+  double CurrentProbabilities;
   for (int i = 0; i < NbrIter; ++i)
     {
       /*      for (int j = 0; j < NbrBosons; ++j)
@@ -151,21 +153,48 @@ int main(int argc, char** argv)
 	  Location[NextCoordinates << 1] = acos (1.0- (2.0 * drand48()));
 	  Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * drand48();
 	  }*/
-      Location[NextCoordinates << 1] = acos (1.0- (2.0 * drand48()));
-      Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * drand48();
-      NextCoordinates = (int) (((double) NbrBosons) * drand48());
-      if (NextCoordinates == NbrBosons)
-	--NextCoordinates;
-      Tmp = (*WaveFunction)(Location);
-      int TimeCoherence = NextCoordinates;
+//      bool Flag = false;
+//      while (Flag == false)
+	{
+	  Location[NextCoordinates << 1] = acos (1.0- (2.0 * drand48()));	  
+	  Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * drand48();
+	  NextCoordinates = (int) (((double) NbrBosons) * drand48());
+	  if (NextCoordinates == NbrBosons)
+	    --NextCoordinates;
+	  Complex TmpMetropolis = (*WaveFunction)(Location);
+	  CurrentProbabilities = Norm(TmpMetropolis);
+	  if (CurrentProbabilities > PreviousProbabilities)
+	    {
+	      PreviousProbabilities = CurrentProbabilities;
+	      Tmp = TmpMetropolis;
+//	      Flag = true;
+	    }
+	  else
+	    {
+	      if ((drand48() * PreviousProbabilities) < CurrentProbabilities)
+		{
+		  PreviousProbabilities = CurrentProbabilities;
+		  Tmp = TmpMetropolis;
+//		  Flag = true;		  
+		}
+	      else
+		{
+		  CurrentProbabilities = PreviousProbabilities;
+		}
+	    }
+	}
+/*      int TimeCoherence = NextCoordinates;
       if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == false)
-	TimeCoherence = -1;
+	TimeCoherence = -1;*/
+      int TimeCoherence = -1;
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
 //      ValueExact.Re *= -1.0;
       Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
       Tmp3 = (Conj(Tmp) * ValueExact);
+      Tmp2 /= CurrentProbabilities;
+      Tmp3 /= CurrentProbabilities;      
       Overlap += Tmp3;// * Factor;
       ErrorOverlap.Re += Tmp3.Re * Tmp3.Re;//  * Factor * Factor;
       ErrorOverlap.Im += Tmp3.Im * Tmp3.Im;//  * Factor * Factor;
