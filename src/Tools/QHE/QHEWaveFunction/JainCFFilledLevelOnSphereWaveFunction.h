@@ -34,6 +34,7 @@
 
 
 #include "config.h"
+#include "GeneralTools/GarbageFlag.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
 
@@ -55,7 +56,10 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   double** NormalizationPrefactors;
 
   // array containing constant factors that appears in the sum of projected monopole harmonic (except LLL)
-  double** SumPrefactors;
+  double*** SumPrefactors;
+
+  // grabage flag to avoid duplication of precalculation array
+  GarbageFlag Flag;
 
  public:
 
@@ -105,9 +109,10 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
   // momentum = monopole spherical harmonic Lz momentum
   // landauLevel = index of the pseudo Landau level
+  // maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
   // return value = value of the monopole spherical harmonic at the givne point
   Complex EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
-				      int coordinate, int momentum, int landauLevel);
+				      int coordinate, int momentum, int landauLevel, int maximumMomentum);
 
 };
 

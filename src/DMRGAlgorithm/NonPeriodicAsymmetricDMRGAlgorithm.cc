@@ -52,6 +52,8 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
 
+#include <math.h>
+
 
 using std::cout;
 using std::endl;

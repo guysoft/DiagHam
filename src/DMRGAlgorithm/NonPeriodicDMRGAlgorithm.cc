@@ -52,6 +52,8 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
 
+#include <math.h>
+
 
 // constructor from datas
 //

@@ -47,7 +47,9 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(int
   this->NbrParticles = nbrParticles;
   this->NbrLandauLevels = nbrLandauLevels;
   this->JastrowPower = jastrowPower;
+  this->Flag.Initialize();
   this->EvaluateNormalizationPrefactors();  
+  this->EvaluateSumPrefactors();
 }
 
 // copy constructor
@@ -59,7 +61,9 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(con
   this->NbrParticles = function.NbrParticles;
   this->NbrLandauLevels = function.NbrLandauLevels;
   this->JastrowPower = function.JastrowPower;
+  this->Flag = function.Flag;
   this->NormalizationPrefactors = function.NormalizationPrefactors;
+  this->SumPrefactors = function.SumPrefactors;
 }
 
 // destructor
@@ -67,7 +71,17 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(con
 
 JainCFFilledLevelOnSphereWaveFunction::~JainCFFilledLevelOnSphereWaveFunction()
 {
-  delete[] this->NormalizationPrefactors;
+  if (this->Flag.Shared() == false)
+    {
+      delete[] this->NormalizationPrefactors;
+      for (int i = 0; i < this->NbrLandauLevels; ++i)
+	{
+	  for (int j = 0; j < this->NbrLandauLevels; ++j)
+	    delete[] this->SumPrefactors[i][j];
+	  delete[] this->SumPrefactors[i];
+	}
+      delete this->SumPrefactors;
+    }
 }
 
 // clone function 
@@ -115,77 +129,22 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
     }
   
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
-  
-  switch (this->NbrLandauLevels)
+
+  int MaxMomentum = (this->NbrParticles / this->NbrLandauLevels) - this->NbrLandauLevels;
+  for (int i = 0; i < this->NbrParticles; ++i)
     {
-    case 1:
-      {
-	Complex TmpU;
-	Complex TmpV;
-	double* TmpPrefactors = this->NormalizationPrefactors[0];
-	for (int i = 0; i < this->NbrParticles; ++i)
-	  {
-	    TmpU = SpinorUCoordinates[i];
-	    TmpV = SpinorVCoordinates[i];
-	    for (int j = i; j < this->NbrParticles; ++j)
-	      {
-		Tmp = 1.0;
-		for (int k = 0; k < j; ++k)
-		  Tmp *= TmpU;
-		for (int k = this->NbrParticles - j - 1; k > 0; --k)
-		  Tmp *= TmpV;
-		Tmp *= TmpPrefactors[j];
-		Slater.SetMatrixElement(i, j, Tmp);
-	      }
-	    for (int j = 0; j < i; ++j)
-	      {
-		Tmp = 1.0;
-		for (int k = 0; k < j; ++k)
-		  Tmp *= TmpU;
-		for (int k = this->NbrParticles - j - 1; k > 0; --k)
-		  Tmp *= TmpV;
-		Tmp *= TmpPrefactors[j];
-		Slater.SetMatrixElement(i, j, Tmp);
-	      }
-	  }
-      }
-      break;
-    case 2:
-      {
-	Complex TmpU;
-	Complex TmpV;
-	int MaxLL0 = (this->NbrParticles >> 1) - 1;
-	int MaxLL1 =  MaxLL0 + 2;
-	int Max;	
-	for (int i = 0; i < this->NbrParticles; ++i)
-	  {
-	    TmpU = SpinorUCoordinates[i];
-	    TmpV = SpinorVCoordinates[i];
-	    int Max = i + MaxLL0;
-	    if (Max >= this->NbrParticles)
-	      Max = this->NbrParticles;
-	    for (int j = i; j < Max; ++j)
-	      {
-		Tmp = 1.0;
-		for (int k = 0; k < j; ++k)
-		  Tmp *= TmpU;
-		for (int k = this->NbrParticles - j - 1; k > 0; --k)
-		  Tmp *= TmpV;
-		Slater.SetMatrixElement(i, j, Tmp);
-	      }
-	    for (int j = 0; j < i; ++j)
-	      {
-		Tmp = 1.0;
-		for (int k = 0; k < j; ++k)
-		  Tmp *= TmpU;
-		for (int k = this->NbrParticles - j - 1; k > 0; --k)
-		  Tmp *= TmpV;
-		Slater.SetMatrixElement(i, j, Tmp);
-	      }
-	  }
-      }
-      break;
-    }
+      int Index = 0;
+      int MaxMomentum2 = MaxMomentum;
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	{
+	  for (int k = 0; k <= MaxMomentum2; ++k)
+	    {
+	      Slater.SetMatrixElement(Index, i, EvaluateCFMonopoleHarmonic(SpinorUCoordinates, SpinorVCoordinates, i, k, j, MaxMomentum2));
+	      ++Index;
+	    }
+	  MaxMomentum2 += 2;
+	}
+    }  
 
   delete[] SpinorUCoordinates;
   delete[] SpinorVCoordinates;
@@ -208,9 +167,13 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
   for (int j = 0; j <= MaxMomentum; ++j)
     {
       Coef.SetToOne();
-      Coef.PartialFactorialMultiply(TwiceQ - j + 1, TwiceQ);
-      Coef.FactorialDivide(j);
+      Coef.PartialFactorialDivide(TwiceQ - j + 1, TwiceQ);
+      Coef.FactorialMultiply(j);
       this->NormalizationPrefactors[0][j] = sqrt(Factor * Coef.GetNumericalValue());
+      if ((j & 1) != 0)
+	{
+	  this->NormalizationPrefactors[0][j] *= -1.0;
+	}
     }
   MaxMomentum += 2;
   for (int i = 1; i < this->NbrLandauLevels; ++i)  
@@ -218,12 +181,16 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
       double Factor = ((double) (TwiceQ + (2 * this->NbrLandauLevels) - 1)) / (4.0  * M_PI);
       this->NormalizationPrefactors[i] = new double[MaxMomentum + 1];
       for (int j = 0; j <= MaxMomentum; ++j)
-	{
+	{	  
 	  Coef.SetToOne();
 	  Coef.FactorialMultiply(TwiceQ + 2 * (this->NbrLandauLevels - 1) - j);
 	  Coef.FactorialDivide(this->NbrLandauLevels - 1);
 	  Coef.PartialFactorialDivide(j + 1, TwiceQ + this->NbrLandauLevels - 1);
 	  this->NormalizationPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
+	  if (((j + this->NbrLandauLevels - 1) & 1) != 0)
+	    {
+	      this->NormalizationPrefactors[i][j] *= -1.0;
+	    }
 	}
       MaxMomentum += 2;
     }
@@ -234,7 +201,7 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
 
 void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 {
-  this->SumPrefactors = new double* [this->NbrLandauLevels];
+  this->SumPrefactors = new double** [this->NbrLandauLevels];
   int TwiceQ = (this->NbrParticles / this->NbrLandauLevels) - this->NbrLandauLevels;
   int MaxMomentum = TwiceQ + 2 * (this->NbrLandauLevels - 1);
   FactorialCoefficient Coef;
@@ -242,18 +209,29 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
   int ReducedNbrLandauLevels = this->NbrLandauLevels - 1;
   for (int i = 0; i < this->NbrLandauLevels; ++i)  
     {
-      this->SumPrefactors[i] = new double [MaxMomentum + 1];
-      for (int j = 0; j <= MaxMomentum; ++j)
+      this->SumPrefactors[i] = new double* [i + 1];
+      Factor = 1.0;
+      for (int k = 0; k <= i; ++i)  
 	{
-	  Coef.SetToOne();
-	  Coef.PartialFactorialMultiply(j + 1, ReducedNbrLandauLevels);
-	  Coef.FactorialDivide(j);
-	  Coef.PartialFactorialMultiply(j + i, TwiceQ + ReducedNbrLandauLevels);	  
-	  this->SumPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
+	  this->SumPrefactors[i][k] = new double [MaxMomentum + 1];
+	  for (int j = 0; j < (this->NbrLandauLevels - k); ++j)
+	    this->SumPrefactors[i][k][j] = 0.0;
+	  for (int j = this->NbrLandauLevels - k; j <= (MaxMomentum - k); ++j)
+	    {
+	      Coef.SetToOne();
+	      Coef.PartialFactorialDivide(TwiceQ + 2 * (1 + this->JastrowPower * (this->NbrParticles - 1)), 
+					   TwiceQ + 2 * (this->JastrowPower * (this->NbrParticles - 1)) + this->NbrLandauLevels);
+	      Coef.PartialFactorialMultiply(k + 1, ReducedNbrLandauLevels);
+	      Coef.FactorialDivide(k);
+	      Coef.PartialFactorialMultiply(j + k - ReducedNbrLandauLevels, TwiceQ + ReducedNbrLandauLevels);	  
+	      Coef.FactorialDivide(TwiceQ + (2 * ReducedNbrLandauLevels) -j - k);	  
+	      this->SumPrefactors[i][k][j] = Factor * Coef.GetNumericalValue();
+	    }
+	  for (int j = MaxMomentum - k + 1; j <= MaxMomentum; ++j)
+	    this->SumPrefactors[i][k][j] = 0.0;
+	  Factor *= -1.0;
 	}
-      Factor *= -1.0;
     }
-
 }
 
 
@@ -262,13 +240,41 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 // spinorUCoordinates = spinor u coordinates where the function has to be evalauted
 // spinorVCoordinates = spinor v coordinates where the function has to be evalauted
 // coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
-// momentum = monopole spherical harmonic Lz momentum
+// momentum = monopole spherical harmonic Lz momentum (plus S shift)
 // landauLevel = index of the pseudo Landau level
+// maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
 // return value = value of the monopole spherical harmonic at the givne point
 
 Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
-									   int coordinate, int momentum, int landauLevel)
+									   int coordinate, int momentum, int landauLevel, int maximumMomentum)
 {
-  Complex Z (1.0);
-  return Z;
+  Complex Z (this->NormalizationPrefactors[landauLevel][momentum]);
+  Complex Tmp = spinorUCoordinates[coordinate];
+  if (momentum >= 0)
+    {
+      for (int i = 0; i < momentum; ++i)
+	Z *= Tmp;
+    }
+  else
+    {
+      for (int i = momentum; i < 0; ++i)
+	Z /= Tmp;
+    }
+  Tmp = spinorVCoordinates[coordinate];
+  if (momentum <= (maximumMomentum - landauLevel))
+    {
+      for (int i = momentum; i < maximumMomentum; ++i)
+	Z *= Tmp;  
+    }
+  else
+    {
+      for (int i = momentum; i < maximumMomentum; ++i)
+	Z /= Tmp;
+    }
+  Tmp = 1.0;
+  for (int i = 0; i <= landauLevel; ++i)
+    {
+      Tmp += this->SumPrefactors[landauLevel][i][maximumMomentum];// * this->EvaluateCFMonopoleHarmonicDerivative();
+    }
+  return (Z * Tmp);
 }

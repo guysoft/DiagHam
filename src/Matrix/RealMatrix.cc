@@ -31,6 +31,8 @@
 #include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
 
+#include <math.h>
+
 
 using std::endl;
 using std::cout;

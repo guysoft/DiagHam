@@ -37,8 +37,9 @@
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include "GeneralTools/ArrayTools.h"
-#include <iostream>
 
+#include <iostream>
+#include <math.h>
 
 using std::cout;
 using std::endl;

@@ -39,6 +39,7 @@
 #endif
 
 #include <stdlib.h>
+#include <math.h>
 #include <fstream>
 
 

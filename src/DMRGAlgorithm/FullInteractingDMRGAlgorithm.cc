@@ -53,6 +53,8 @@
 #include "Interaction/BasicInteraction.h"
 #include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
 
+#include <math.h>
+
 
 using std::cout;
 using std::endl;
