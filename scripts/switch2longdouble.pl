@@ -34,9 +34,8 @@ sub SwitchToLongDouble
       {
 	if (!($TmpLine =~ /^\s*\/\//))
 	  {
-	    $TmpLine =~ s/long double/longi double/mg;
 	    $TmpLine =~ s/double/long double/mg;
-	    $TmpLine =~ s/longi double/long double/mg;
+	    $TmpLine =~ s/long long double/long double/mg;
 	    $TmpLine =~ s/pow\s*\(/powl\(/mg;
 	    $TmpLine =~ s/cos\s*\(/cosl\(/mg;
 	    $TmpLine =~ s/sin\s*\(/sinl\(/mg;
@@ -68,7 +67,7 @@ sub ApplySwitchToDirectoryTree
     my $TmpFile;
     foreach $TmpFile (<*>)
       {
-	if (-d $TmpFile)
+	if ((-d $TmpFile) && ($TmpFile ne "Output"))
 	  {
 	    chdir ($TmpFile);
 	    &ApplySwitchToDirectoryTree();
