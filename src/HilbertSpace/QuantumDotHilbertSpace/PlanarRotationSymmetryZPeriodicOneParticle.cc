@@ -65,8 +65,6 @@ PlanarRotationSymmetryZPeriodicOneParticle::PlanarRotationSymmetryZPeriodicOnePa
 
 PlanarRotationSymmetryZPeriodicOneParticle::~PlanarRotationSymmetryZPeriodicOneParticle()
 {
-  delete this->StateR;
-  delete this->StateZ;
 }
 
 // assignement

@@ -73,9 +73,6 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmet
 
 PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::~PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle ()
 {
-  delete this->StateX;
-  delete this->StateY;
-  delete this->StateZ;
 }
 
 // assignement

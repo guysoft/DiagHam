@@ -67,8 +67,6 @@ PeriodicThreeDTwoParticles::PeriodicThreeDTwoParticles (const PeriodicThreeDTwoP
 
 PeriodicThreeDTwoParticles::~PeriodicThreeDTwoParticles ()
 {
-  delete this->FirstParticle;
-  delete this->SecondParticle;
 }
 
 // assignement

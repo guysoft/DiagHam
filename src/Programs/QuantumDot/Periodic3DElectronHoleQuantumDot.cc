@@ -30,7 +30,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include <fstream.h>
+#include <fstream>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -57,6 +57,7 @@ int main(int argc, char** argv)
 
   Architecture.AddOptionGroup(&Manager);
   Manager += PotentialGroup;
+  Manager += MassGroup;
   Manager += HilbertSpaceGroup;
   Manager += LanczosGroup;
   Manager += MiscGroup;
@@ -130,14 +131,14 @@ int main(int argc, char** argv)
   double ElectronDotPotential = ((SingleDoubleOption*) Manager["dot-e"])->GetDouble();
   double HoleDotPotential = ((SingleDoubleOption*) Manager["dot-h"])->GetDouble();
   double DielectricConstant = ((SingleDoubleOption*) Manager["dielectric"])->GetDouble();
-
+  
   double Mex = ((SingleDoubleOption*) Manager["me-x"])->GetDouble();
   double Mey = ((SingleDoubleOption*) Manager["me-y"])->GetDouble();
   double Mez = ((SingleDoubleOption*) Manager["me-z"])->GetDouble();
   double Mhx = ((SingleDoubleOption*) Manager["mh-x"])->GetDouble();
   double Mhy = ((SingleDoubleOption*) Manager["mh-y"])->GetDouble();
   double Mhz = ((SingleDoubleOption*) Manager["mh-z"])->GetDouble();
-
+  
   int NbrStateEX = ((SingleIntegerOption*) Manager["nbr-state-ex"])->GetInteger();
   int LowImpulsionEX = ((SingleIntegerOption*) Manager["low-ex"])->GetInteger();
   int NbrStateEY = ((SingleIntegerOption*) Manager["nbr-state-ey"])->GetInteger();
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
   int LowImpulsionHY = ((SingleIntegerOption*) Manager["low-hy"])->GetInteger();
   int NbrStateHZ = ((SingleIntegerOption*) Manager["nbr-state-hz"])->GetInteger();
   int LowImpulsionHZ = ((SingleIntegerOption*) Manager["low-hz"])->GetInteger();
-
+  
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();   
   bool EigenstateFlag = ((BooleanOption*) Manager["eigenstate"])->GetBoolean();
   int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();

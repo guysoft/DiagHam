@@ -73,9 +73,6 @@ PeriodicThreeDOneParticle::PeriodicThreeDOneParticle (const PeriodicThreeDOnePar
 
 PeriodicThreeDOneParticle::~PeriodicThreeDOneParticle ()
 {
-  delete this->StateX;
-  delete this->StateY;
-  delete this->StateZ;
 }
 
 // assignement
