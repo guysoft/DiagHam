@@ -126,17 +126,6 @@ class V15Hamiltonian : public AbstractHamiltonian
   // return value = reference on vectorwhere result has been stored
   RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
 
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
-
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
   //

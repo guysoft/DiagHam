@@ -1383,7 +1383,7 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   int Inc;
   M.DiagonalElement(0) = this->DiagonalElements[0];
   double SquareErr = err * err;
-  if (SquareErr > MACHINE_PRECISION)
+  if (SquareErr < MACHINE_PRECISION)
     SquareErr = MACHINE_PRECISION;
   for (int i = 1; i < ReducedNbrRow; i++)
     {
@@ -1511,7 +1511,7 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   int Inc;
   M.DiagonalElement(0) = this->DiagonalElements[0];
   double SquareErr = err * err;
-  if (SquareErr > MACHINE_PRECISION)
+  if (SquareErr < MACHINE_PRECISION)
     SquareErr = MACHINE_PRECISION;
   for (int i = 1; i < ReducedNbrRow; i++)
     {

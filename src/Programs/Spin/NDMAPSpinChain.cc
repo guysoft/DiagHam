@@ -42,11 +42,12 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrSpinOption ('\0', "nbr-spin", "number of spins", 8);
   SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration (including resume run)", 3000);
+  BooleanOption ReorthogonalizeOption ('\n', "reorthogonalize", "use reorthogonalized version of the lanczos algorithm", false);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 1);
   SingleDoubleOption AnisotropyConstantOption ('d', "anisotropy-constant", "value of the anisotropy constant", 0.0);
   SingleDoubleOption InPlaneAnisotropyConstantOption ('e', "inplane-anisotropy-constant", "value of the in-plane anisotropy constant", 0.0);
-  SingleDoubleOption PerpendicularBFieldOption ('z', "perpendicular-bfield", "value of b field in the direction perpendicular to the chain", 0.0);
-  SingleDoubleOption ParallelBFieldOption ('p', "parallel-bfield", "value of b field in the direction parallel to the chain", 0.0);
+  SingleDoubleOption PerpendicularBFieldOption ('a', "perpendicular-bfield", "value of b field in the direction perpendicular to the chain", 0.0);
+  SingleDoubleOption ParallelBFieldOption ('z', "parallel-bfield", "value of b field in the direction parallel to the chain", 0.0);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   BooleanOption FixedMomentumOption('\n', "fixed-momentum", "evaluate for one given momentum value");
   SingleIntegerOption FixedMomentumValueOption ('\n', "momentum", "momentum value if fixed-momentum is fixed to true", 0);
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
   OptionList += &MemoryOption;
   OptionList += &FixedMomentumOption;
   OptionList += &FixedMomentumValueOption;
+  OptionList += &ReorthogonalizeOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type NDMAPSpinChain -h" << endl;
@@ -85,6 +87,7 @@ int main(int argc, char** argv)
   double ParallelBField = ParallelBFieldOption.GetDouble();
   bool FixedMomentumFlag = FixedMomentumOption.GetBoolean();
   int FixedMomentum = FixedMomentumValueOption.GetInteger();
+  bool ReorthogonalizFlag = ReorthogonalizeOption.GetBoolean();
   int Memory = MemoryOption.GetInteger() << 20;
   int MinMomentum = 0;
   int MaxMomentum = NbrSpin - 1;
@@ -134,7 +137,7 @@ int main(int argc, char** argv)
 	{
 	  int MaxNbrIterLanczos = 4000;
 	  AbstractLanczosAlgorithm* Lanczos;
-	  if (NbrEigenvalue == 1)
+	  if ((NbrEigenvalue == 1) || (ReorthogonalizFlag == true))
 	    {
 	      Lanczos = new ComplexBasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);	
 	    }
@@ -161,7 +164,14 @@ int main(int argc, char** argv)
 	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
-	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
+	      if (ReorthogonalizFlag == true)
+		cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
+	      else
+		{
+		  for (int i = 0; i < NbrEigenvalue; ++i)
+		    cout << TmpMatrix.DiagonalElement(i) << " ";
+		  cout << "precision = " << Precision << " "<< endl;
+		}
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {
