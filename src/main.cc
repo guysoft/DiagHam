@@ -133,13 +133,40 @@ int main(int argc, char** argv)
       RealBandDiagonalSymmetricMatrix Band (nbrRow, BandSize, true);
       for (int j = 0; j < nbrRow; ++j)
 	{
-	  Band(j, j) = (j * nbrRow) + j;
+	  Band(j, j) = ((double) ((j * nbrRow) + j)) * -1.0;
 	  for (int k = 0; k < BandSize; ++k)
 	    if ((j + k) < nbrRow)
-	      Band(j, j + k) = ((j + k) * nbrRow) + j;
+	      Band(j, j + k + 1) = (double) (((j + k + 1) * nbrRow) + j);
 	}
-      cout << Band << endl << endl;
-    }
+      RealSymmetricMatrix TmpSymm(Band);
+      cout << Band << endl << endl; 
+      cout << Band.Tr() << " " << TmpSymm.Tr() << endl;
+      cout << TmpSymm << endl << endl;
+      RealTriDiagonalSymmetricMatrix TmpTridiag (nbrRow, true);
+      Band.Tridiagonalize(TmpTridiag, 1e-7);
+      RealTriDiagonalSymmetricMatrix DiagonalizedMatrix (nbrRow);
+      TmpSymm.Householder(DiagonalizedMatrix, 1e-7);
+      DiagonalizedMatrix.Diagonalize();
+      TmpTridiag.Diagonalize();
+      cout << Band << endl << endl; 
+      cout << Band.Tr() <<  endl << endl;
+      DiagonalizedMatrix.SortMatrixUpOrder();
+      TmpTridiag.SortMatrixUpOrder();
+      double Sum1 = 0.0;
+      double Sum2 = 0.0;
+      double Prod1 = 1.0;
+      double Prod2 = 1.0;
+      for (int j = 0; j < nbrRow; ++j)
+	{
+	  cout << DiagonalizedMatrix.DiagonalElement(j) << " " << TmpTridiag.DiagonalElement(j) << endl;
+	  Sum1 += DiagonalizedMatrix.DiagonalElement(j);
+	  Sum2 += TmpTridiag.DiagonalElement(j);
+	  Prod1 *= DiagonalizedMatrix.DiagonalElement(j);
+	  Prod2 *= TmpTridiag.DiagonalElement(j);
+	}
+      cout << "Sum = " << Sum1 << " " << Sum2 << endl;
+      cout << "Prod = " << Prod1 << " " << Prod2 << endl;
+   }
   return 0;
 
 //   int nbrRow = atoi(argv[1]);

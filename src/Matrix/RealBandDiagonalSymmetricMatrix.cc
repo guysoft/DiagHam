@@ -37,6 +37,7 @@
 #include <math.h>
 
 
+using std::cout;
 using std::endl;
 
 
@@ -64,10 +65,10 @@ RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix()
 
 RealBandDiagonalSymmetricMatrix::RealBandDiagonalSymmetricMatrix(int dimension, int nbrBands, bool zero)
 {
-  this->DiagonalElements = new double [dimension];
-  this->UpperOffDiagonalElements = new double* [this->NbrBands];
   this->NbrBands = nbrBands;
   this->TrueNbrBands = this->NbrBands;
+  this->DiagonalElements = new double [dimension];
+  this->UpperOffDiagonalElements = new double* [this->NbrBands];
   for (int i = 0; i < this->NbrBands; ++i)
     this->UpperOffDiagonalElements[i] = new double [dimension];
   this->Flag.Initialize();
@@ -214,6 +215,43 @@ void RealBandDiagonalSymmetricMatrix::SetMatrixElement(int i, int j, double x)
 	    }	
 	}
     }    
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void RealBandDiagonalSymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+{
+  if ((i == j) && (i < this->NbrRow))
+    {
+      x = this->DiagonalElements[i];
+      return;
+    }
+  else
+    {
+      if (j > i)
+	{
+	  j -= i;
+	  if ((j <= this->NbrBands) && (i < (this->NbrRow - 1)))
+	    {
+	      x = this->UpperOffDiagonalElements[j - 1][i];
+	      return;
+	    }
+	}
+      else
+	{
+	  i -= j;
+	  if ((i <= this->NbrBands) && (j < (this->NbrRow - 1)))
+	    {
+	      x = this->UpperOffDiagonalElements[i - 1][j];
+	      return;
+	    }	
+	}
+    }    
+  x = 0.0;
 }
 
 // return refernce on real part of a given matrix element
@@ -822,12 +860,14 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
 	  Sinus = -FillInElement;
 	  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	  cout << "GivenRowPosition = " << GivenRowPosition << " " << GivenColumnPosition << endl;
 	  while ((GivenRowPosition < this->NbrRow) && (((Sinus * Sinus) > (TmpNorm * SquareErr)) && (TmpNorm > SquareErr)))
 	    {
 	      // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
 	      TmpNorm = sqrt (TmpNorm);
+	      this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition] = 0.0;
 	      this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition] = TmpNorm;
-	      TmpNorm = 1.0 / TmpNorm;
+	      TmpNorm = 1.0 / sqrt(TmpNorm);
 	      Cosinus *= TmpNorm;
 	      Sinus *= TmpNorm;
 	      Pos = GivenRowPosition + 1;
@@ -847,16 +887,17 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 	      Tmp2 = this->DiagonalElements[Pos];
 	      this->DiagonalElements[Pos] *= Cosinus * Cosinus;
 	      this->DiagonalElements[Pos] += Sinus * ((Sinus * this->DiagonalElements[Pos + 1]) - (2.0 * Cosinus * Tmp));
-	      this->UpperOffDiagonalElements[0][Pos] *= (Cosinus * Cosinus - Sinus * Sinus);
-	      this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp - this->DiagonalElements[Pos + 1]);
+	      this->UpperOffDiagonalElements[0][Pos] *= ((Cosinus * Cosinus) - (Sinus * Sinus));
+	      this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp2 - this->DiagonalElements[Pos + 1]);
 	      this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
 	      this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
 	      
-	      ++Pos;
+//	      ++Pos;
 	      Pos2 = 1;
-	      Max = ReducedNbrRow - GivenRowPosition + 1;
+	      Max = ReducedNbrRow - Pos;
 	      if (Max > this->NbrBands)
 		Max = this->NbrBands;
+	      cout << "pos2 = " << Pos2 << " " << Max << endl;
 	      while (Pos2 < Max)
 		{
 		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
@@ -867,16 +908,25 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 		  ++Pos2;
 		}
 	      
-	      
-	      FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos] * Sinus;
-	      this->UpperOffDiagonalElements[Max - 1][Pos] *= Cosinus;
+	      if ((ReducedNbrRow - Pos) > this->NbrBands)
+		{
+		  FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos + 1] * Sinus;
+		  this->UpperOffDiagonalElements[Max - 1][Pos + 1] *= Cosinus;
+		  GivenRowPosition = Pos + Max;
+		  GivenColumnPosition = this->NbrBands - 1;
+		  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+		  Sinus = -FillInElement;
+		  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+		}
+	      else
+		{
+		  GivenRowPosition = this->NbrRow;
+		}
 
+	      cout << *this << endl;
 
-	      GivenRowPosition += GivenColumnPosition;
-	      GivenColumnPosition = this->NbrBands - 1;
-	      Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
-	      Sinus = -FillInElement;
-	      TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+	      cout << endl << GivenRowPosition << " " << GivenColumnPosition << " " << Cosinus << " " << Sinus << " " << TmpNorm << " " << endl;
+
 	    }
 	}
     }
@@ -1031,7 +1081,7 @@ ostream& operator << (ostream& Str, const RealBandDiagonalSymmetricMatrix& P)
 	}
       Str << P.DiagonalElements[i] << "    ";
       ++j;
-      for (; ((j < (P.NbrBands + i)) && (j < P.NbrColumn)); ++j)
+      for (; ((j <= (P.NbrBands + i)) && (j < P.NbrColumn)); ++j)
 	{
 	  Str << P.UpperOffDiagonalElements[j - i - 1][i] << "    ";
 	}
@@ -1039,6 +1089,7 @@ ostream& operator << (ostream& Str, const RealBandDiagonalSymmetricMatrix& P)
 	Str << "0    ";
       Str << endl;
     }
+
   return Str;
 }
 

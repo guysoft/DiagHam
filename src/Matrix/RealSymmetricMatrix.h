@@ -97,10 +97,10 @@ class RealSymmetricMatrix : public Matrix
   // M = matrix to copy
   RealSymmetricMatrix(const RealSymmetricMatrix& M);
 
-  // copy constructor from a real tridiagonal symmetric matrix (without duplicating diagonal elements)
+  // copy constructor from any matrix (only keeping real part of elements of and above the diagonal, duplicating datas)
   //
   // M = matrix to copy
-  RealSymmetricMatrix(const RealTriDiagonalSymmetricMatrix& M);
+  RealSymmetricMatrix(Matrix& M);
 
   // destructor
   //

@@ -174,13 +174,45 @@ RealSymmetricMatrix::RealSymmetricMatrix(const RealSymmetricMatrix& M)
   this->MatrixType = Matrix::RealElements | Matrix::Symmetric;
 }
 
-// copy constructor from a real tridiagonal symmetric matrix (without duplicating diagonal elements)
+// copy constructor from any matrix (only keeping real part of elements of and above the diagonal, duplicating datas)
 //
 // M = matrix to copy
 
-RealSymmetricMatrix::RealSymmetricMatrix(const RealTriDiagonalSymmetricMatrix& M) 
+RealSymmetricMatrix::RealSymmetricMatrix(Matrix& M)
 {
+  int Min = M.GetNbrRow();
+  if (Min > M.GetNbrColumn())
+    {
+      Min = M.GetNbrColumn();
+    }
+  this->NbrRow = Min;
+  this->NbrColumn = Min;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Increment = (this->TrueNbrRow - this->NbrRow);
+  this->MatrixType = Matrix::RealElements | Matrix::Symmetric;
+  this->DiagonalGarbageFlag =  new int;
+  *(this->DiagonalGarbageFlag) = 1;
+  this->OffDiagonalGarbageFlag =  new int;
+  *(this->OffDiagonalGarbageFlag) = 1;
+  this->DiagonalElements = new double [this->NbrRow];
+  this->OffDiagonalElements = new double [(this->NbrRow * (this->NbrRow - 1)) / 2];
+  int pos = 0;
+  double Tmp;
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      M.GetMatrixElement(i, i, Tmp);
+      this->DiagonalElements[i] = Tmp;
+      for (int j = i + 1; j < this->NbrRow; j++)
+	{
+	  M.GetMatrixElement(i, j, Tmp);	  
+	  this->OffDiagonalElements[pos] = Tmp;
+	  pos++;
+	}
+    }
 }
+
+
 
 // destructor
 //
