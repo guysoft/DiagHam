@@ -95,16 +95,6 @@ class XYReflexionSymmetricPeriodic3DOneParticle : public Periodic3DOneParticle
   // return value = wave function basis dimension in the y direction
   virtual int GetNbrCosinusStateY();
 
-  // get wave function basis dimension in the z direction
-  //
-  // return value = wave function basis dimension in the z direction
-  int GetNbrStateZ();
-
-  // get lower impulsion in Z
-  //
-  // return value = lower value in unit of 2 * Pi / L
-  int GetLowerImpulsionZ();
-
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number

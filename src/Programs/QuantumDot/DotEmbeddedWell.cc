@@ -42,8 +42,33 @@ using std::ofstream;
 
 
 int main(int argc, char** argv)
-{
+{  
   /*
+  int M = 8, N = 8, H = 11; double Mux = 0.07, Muy = 0.07, Muz = 0.07;
+  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
+
+  DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, 1, 1, 1, 3, 2, 1);
+  potential->ConstructPotential(-1.0, 0.5);
+
+  XYReflexionSymmetricPeriodic3DOneParticle* Space = new XYReflexionSymmetricPeriodic3DOneParticle(M / 2, N / 2, H, -H / 2);
+
+  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+
+  double*** Tmp = Hamiltonian.EvaluateSinusWaveFunctionOverlap(M * Lx, M, Space->GetNbrSinusStateX());
+  
+  for (int i = 0; i < Space->GetNbrSinusStateX(); ++i)
+    {
+      for (int j = 0; j < i + 1; ++j)
+	{
+	  cout << i << '\t' << j << '\t';
+	  for (int k = 0; k < M; ++k)
+	    {
+	      cout << Tmp[i][j][k] << '\t';
+	    }
+	  cout << '\n';
+	}
+    }
+  */
   cout.precision(14);
   // some running options and help
   BooleanOption HelpOption ('h', "help", "display this help");
@@ -142,8 +167,8 @@ int main(int argc, char** argv)
   DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
 
   // ConstructPotential(double wellPotential, double dotPotential)
-  potential->ConstructPotential(WellPotential, DotPotential);
-  potential->SavePotential("DotPotential.txt");
+  //potential->ConstructPotential(WellPotential, DotPotential);
+  potential->LoadPotential("DotPotential.txt");
 
   // define Hilbert space
   XYReflexionSymmetricPeriodic3DOneParticle* Space = new XYReflexionSymmetricPeriodic3DOneParticle(M / 4, N / 4, H, -H / 2);
@@ -152,8 +177,9 @@ int main(int argc, char** argv)
   gettimeofday (&(PrecalculationStartingTime), 0);
 
   cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
-  //cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
-  // cout << "Maximal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
+  cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
+  cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
+
   XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
   // PeriodicQuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
   cout << endl;
@@ -174,8 +200,8 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  int ImpulsionX = Space->GetNbrStateX() / 2;
-  int ImpulsionY = Space->GetNbrStateY() / 2;
+  int ImpulsionX = Space->GetNbrStateX();
+  int ImpulsionY = Space->GetNbrStateY();
   int ImpulsionZ = Space->GetNbrStateZ() / 2;
   double HamiltonianShift = - (150.4 * ((double (ImpulsionX * ImpulsionX) / (double (M * M) * Lx * Lx * Mux)) + (double (ImpulsionY * ImpulsionY) / (double (N * N) * Ly * Ly * Muy)) + (double (ImpulsionZ * ImpulsionZ) / (double (H * H) * Lz * Lz * Muz))));
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
@@ -272,13 +298,13 @@ int main(int argc, char** argv)
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
       cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
-      //cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
-      //cout << "Maximal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
+      cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
+      cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
     }
   gettimeofday (&(TotalEndingTime), 0);
   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);  
   cout << endl << "Total time = " << Dt << endl;
   delete Lanczos;
-  */
+  
   return 0;
 }

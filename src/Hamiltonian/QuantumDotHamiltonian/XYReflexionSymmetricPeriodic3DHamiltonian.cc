@@ -92,7 +92,7 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
 	      this->InteractionFactors[k][j][i] = PotentialInput->GetPotential(i, j, k);	
 	      
 	      if ((i > CenterX) && (j > CenterY))
-	      if ((this->InteractionFactors[k][j][i] != this->InteractionFactors[k][this->NbrCellY - j][i]) || (this->InteractionFactors[k][j][i] != this->InteractionFactors[k][j][this->NbrCellX - i]) ||
+	        if ((this->InteractionFactors[k][j][i] != this->InteractionFactors[k][this->NbrCellY - j][i]) || (this->InteractionFactors[k][j][i] != this->InteractionFactors[k][j][this->NbrCellX - i]) ||
 		    (this->InteractionFactors[k][j][i] != this->InteractionFactors[k][this->NbrCellY - j][this->NbrCellX - i]))
 		  {
 		    cout << "The potential is not reflexion symmetric in X or Y direction. Exit now!" << endl;
@@ -261,7 +261,7 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
   int Index1 = 0, Index2 = 0, Index3 = 0, Index4 = 0, Index5 = 0, Index6 = 0, Index7 = 0, Index8 = 0;
   double TmpRe = 0.0, TmpIm = 0.0;
   int IndexZ = 0, tmpIndexZ = 0;
-  double* TmpRealHamiltonian; double* TmpImaginaryHamiltonian; 
+  double* TmpRealHamiltonian; double* TmpImaginaryHamiltonian;
   double VSourceRe1 = 0.0, VSourceIm1 = 0.0, VSourceRe3 = 0.0, VSourceIm3 = 0.0, VSourceRe5 = 0.0, VSourceIm5 = 0.0, VSourceRe7 = 0.0, VSourceIm7 = 0.0;
   double TmpTotalRe1 = 0.0, TmpTotalIm1 = 0.0, TmpTotalRe3 = 0.0, TmpTotalIm3 = 0.0, TmpTotalRe5 = 0.0, TmpTotalIm5 = 0.0, TmpTotalRe7 = 0.0, TmpTotalIm7 = 0.0;
   // Index1 = (m1 * N + n1) * H + p1; Index3 = (m1 * N + n2) * H + p1; Index5 = (m2 * N + n1) * H + p1; Index7 = (m2 * N + n2) * H + p1
@@ -269,11 +269,11 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
   for (m1 = 0; m1 < this->NbrStateX; ++m1)
     {
       for (n1 = 0; n1 < this->NbrStateY; ++n1)
-	{	  		  
+	{
 	  for (m2 = 0; m2 < m1; ++m2)
-	    { 
+	    {
 	      for (n2 = 0; n2 < n1; ++n2)
-		{			
+		{
 		  Index1 = RI[m1][n1]; // Index1 = (m1 * N + n1) * H
 		  Index3 = RI[m1][n2]; // Index3 = (m1 * N + n2) * H
 		  Index5 = RI[m2][n1]; // Index5 = (m2 * N + n1) * H
@@ -292,23 +292,23 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		      VSourceRe5 = vSource.Re(Index5); VSourceIm5 = vSource.Im(Index5);
 		      VSourceRe7 = vSource.Re(Index7); VSourceIm7 = vSource.Im(Index7);
 
-		      TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe3 = 0.0; TmpTotalIm3 = 0.0; 
-		      TmpTotalRe5 = 0.0; TmpTotalIm5 = 0.0; TmpTotalRe7 = 0.0; TmpTotalIm7 = 0.0; 
-		      
+		      TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe3 = 0.0; TmpTotalIm3 = 0.0;
+		      TmpTotalRe5 = 0.0; TmpTotalIm5 = 0.0; TmpTotalRe7 = 0.0; TmpTotalIm7 = 0.0;
+
 		      for (IndexZ = p1; IndexZ > 0; --IndexZ)
 			{
 			  TmpRe = TmpRealHamiltonian[IndexZ];
-			  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-			  
+			  TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 			  vDestination.Re(Index2) += (TmpRe * VSourceRe1 - TmpIm * VSourceIm1);
-			  vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);			  
+			  vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);
 			  vDestination.Re(Index4) += (TmpRe * VSourceRe3 - TmpIm * VSourceIm3);
-			  vDestination.Im(Index4) += (TmpRe * VSourceIm3 + TmpIm * VSourceRe3);	
+			  vDestination.Im(Index4) += (TmpRe * VSourceIm3 + TmpIm * VSourceRe3);
 			  vDestination.Re(Index6) += (TmpRe * VSourceRe5 - TmpIm * VSourceIm5);
 			  vDestination.Im(Index6) += (TmpRe * VSourceIm5 + TmpIm * VSourceRe5);
 			  vDestination.Re(Index8) += (TmpRe * VSourceRe7 - TmpIm * VSourceIm7);
 			  vDestination.Im(Index8) += (TmpRe * VSourceIm7 + TmpIm * VSourceRe7);
-			  
+
 			  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) + TmpIm * vSource.Im(Index2));
 			  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));
 			  TmpTotalRe3 += (TmpRe * vSource.Re(Index4) + TmpIm * vSource.Im(Index4));
@@ -317,40 +317,40 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 			  TmpTotalIm5 += (TmpRe * vSource.Im(Index6) - TmpIm * vSource.Re(Index6));
 			  TmpTotalRe7 += (TmpRe * vSource.Re(Index8) + TmpIm * vSource.Im(Index8));
 			  TmpTotalIm7 += (TmpRe * vSource.Im(Index8) - TmpIm * vSource.Re(Index8));
-
+			  
 			  ++Index2; ++Index4; ++Index6; ++Index8;
 			}
 		      // case p2 = p1
 		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-			  
-		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  
-		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
-		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);	
+		      TmpIm = TmpImaginaryHamiltonian[IndexZ];
 		      
+		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
+		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
+		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
+		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
+
 		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 		      TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
 		      TmpTotalIm3 += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));
-
-		      ++Index2; ++Index4; ++Index6; ++Index8;		      
-
+		      
+		      ++Index2; ++Index4; ++Index6; ++Index8;
+		      
 		      tmpIndexZ = this->NbrStateZ - p1;
 		      for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
 			{
 			  TmpRe = TmpRealHamiltonian[IndexZ];
-			  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-			  
+			  TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 			  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-			  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  
+			  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 			  vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
-			  vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);	
+			  vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
 			  vDestination.Re(Index6) += (TmpRe * VSourceRe5 + TmpIm * VSourceIm5);
 			  vDestination.Im(Index6) += (TmpRe * VSourceIm5 - TmpIm * VSourceRe5);
 			  vDestination.Re(Index8) += (TmpRe * VSourceRe7 + TmpIm * VSourceIm7);
 			  vDestination.Im(Index8) += (TmpRe * VSourceIm7 - TmpIm * VSourceRe7);
-			  
+
 			  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 			  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 			  TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
@@ -359,7 +359,7 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 			  TmpTotalIm5 += (TmpRe * vSource.Im(Index6) + TmpIm * vSource.Re(Index6));
 			  TmpTotalRe7 += (TmpRe * vSource.Re(Index8) - TmpIm * vSource.Im(Index8));
 			  TmpTotalIm7 += (TmpRe * vSource.Im(Index8) + TmpIm * vSource.Re(Index8));
-
+			  
 			  ++Index2; ++Index4; ++Index6; ++Index8;
 			}
 
@@ -368,34 +368,34 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		      vDestination.Re(Index5) += TmpTotalRe5; vDestination.Im(Index5) += TmpTotalIm5;
 		      vDestination.Re(Index7) += TmpTotalRe7; vDestination.Im(Index7) += TmpTotalIm7;
 
-		      ++Index1; ++Index3; ++Index5; ++Index7; 
+		      ++Index1; ++Index3; ++Index5; ++Index7;
 		    }		  
 		}
 	      // case n2 = n1
 	      Index1 = RI[m1][n1]; // Index1 = (m1 * N + n1) * H	      
-	      Index5 = RI[m2][n1]; // Index5 = (m2 * N + n1) * H	     
+	      Index5 = RI[m2][n1]; // Index5 = (m2 * N + n1) * H
 	      TmpRealHamiltonian = this->RealHamiltonian[m1][n1][m2][n1];
 	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n1][m2][n1];
 	      for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 		{
-		  Index2 = RI[m2][n1]; // Index2 = (m2 * N + n1) * H		 
+		  Index2 = RI[m2][n1]; // Index2 = (m2 * N + n1) * H
 		  Index6 = RI[m1][n1]; // Index6 = (m1 * N + n1) * H
-		  
+
 		  VSourceRe1 = vSource.Re(Index1); VSourceIm1 = vSource.Im(Index1);
 		  VSourceRe5 = vSource.Re(Index5); VSourceIm5 = vSource.Im(Index5);
-		  
+
 		  TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe5 = 0.0; TmpTotalIm5 = 0.0;
-		  
+
 		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
 		    {
 		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		      
+		      TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 - TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);			  	
+		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);
 		      vDestination.Re(Index6) += (TmpRe * VSourceRe5 - TmpIm * VSourceIm5);
 		      vDestination.Im(Index6) += (TmpRe * VSourceIm5 + TmpIm * VSourceRe5);
-		      
+
 		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) + TmpIm * vSource.Im(Index2));
 		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));
 		      TmpTotalRe5 += (TmpRe * vSource.Re(Index6) + TmpIm * vSource.Im(Index6));
@@ -406,31 +406,31 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		  // case n2 = n1 && p2 = p1
 		  TmpRe = TmpRealHamiltonian[IndexZ];
 		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		  
+
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  	
+		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 		  
 		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-		  
+
 		  ++Index2; ++Index6;		      
-		  
+
 		  tmpIndexZ = this->NbrStateZ - p1;
 		  for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
 		    {
 		      TmpRe = TmpRealHamiltonian[IndexZ];
 		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		      
+
 		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  	
+		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 		      vDestination.Re(Index6) += (TmpRe * VSourceRe5 + TmpIm * VSourceIm5);
 		      vDestination.Im(Index6) += (TmpRe * VSourceIm5 - TmpIm * VSourceRe5);
-		      
+
 		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 		      TmpTotalRe5 += (TmpRe * vSource.Re(Index6) - TmpIm * vSource.Im(Index6));
 		      TmpTotalIm5 += (TmpRe * vSource.Im(Index6) + TmpIm * vSource.Re(Index6));
-		      
+
 		      ++Index2; ++Index6;
 		    }
 		  
@@ -450,130 +450,128 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 	      for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 		{
 		  Index2 = RI[m1][n2]; // Index2 = (m1 * N + n2) * H
-		  Index4 = RI[m1][n1]; // Index4 = (m1 * N + n1) * H		      
+		  Index4 = RI[m1][n1]; // Index4 = (m1 * N + n1) * H
 
 		  VSourceRe1 = vSource.Re(Index1); VSourceIm1 = vSource.Im(Index1);
 		  VSourceRe3 = vSource.Re(Index3); VSourceIm3 = vSource.Im(Index3);
-		  
-		  TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe3 = 0.0; TmpTotalIm3 = 0.0; 		  
-		  
+
+		  TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe3 = 0.0; TmpTotalIm3 = 0.0;
+
 		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
 		    {
 		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		      
+		      TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 - TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);			  
+		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);
 		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 - TmpIm * VSourceIm3);
-		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 + TmpIm * VSourceRe3);	
-			  
+		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 + TmpIm * VSourceRe3);
+
 		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) + TmpIm * vSource.Im(Index2));
 		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));
 		      TmpTotalRe3 += (TmpRe * vSource.Re(Index4) + TmpIm * vSource.Im(Index4));
 		      TmpTotalIm3 += (TmpRe * vSource.Im(Index4) - TmpIm * vSource.Re(Index4));
 
 		      ++Index2; ++Index4;
-			}
+		    }
 		  // case m2 = m1 && p2 = p1
 		  TmpRe = TmpRealHamiltonian[IndexZ];
-		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-			  
+		  TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  
-		      
+		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
+
 		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 
-		  ++Index2; ++Index4; ++Index6; ++Index8;		      
-		  
+		  ++Index2; ++Index4;
+
 		  tmpIndexZ = this->NbrStateZ - p1;
 		  for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
 		    {
 		      TmpRe = TmpRealHamiltonian[IndexZ];
-		      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		      
+		      TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 		      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  
+		      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 		      vDestination.Re(Index4) += (TmpRe * VSourceRe3 + TmpIm * VSourceIm3);
-		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);	
-			  
+		      vDestination.Im(Index4) += (TmpRe * VSourceIm3 - TmpIm * VSourceRe3);
+
 		      TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		      TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
 		      TmpTotalRe3 += (TmpRe * vSource.Re(Index4) - TmpIm * vSource.Im(Index4));
 		      TmpTotalIm3 += (TmpRe * vSource.Im(Index4) + TmpIm * vSource.Re(Index4));
-		      
+
 		      ++Index2; ++Index4;
 		    }
-		  
+
 		  vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
 		  vDestination.Re(Index3) += TmpTotalRe3; vDestination.Im(Index3) += TmpTotalIm3;
-		  
+
 		  ++Index1; ++Index3;
-		}		  
+		}
 	    }
 	  // case m2 = m1 && n2 = n1
-	  Index1 = RI[m1][n1]; // Index1 = (m1 * N + n1) * H	      	      
+	  Index1 = RI[m1][n1]; // Index1 = (m1 * N + n1) * H
 	  TmpRealHamiltonian = this->RealHamiltonian[m1][n1][m1][n1];
 	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[m1][n1][m1][n1];
 	  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 	    {
-	      Index2 = RI[m1][n1]; // Index2 = (m1 * N + n1) * H		 		  
-		  
+	      Index2 = RI[m1][n1]; // Index2 = (m1 * N + n1) * H
+
 	      VSourceRe1 = vSource.Re(Index1); VSourceIm1 = vSource.Im(Index1);
-	      
-	      TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe5 = 0.0; TmpTotalIm5 = 0.0;	      
+
+	      TmpTotalRe1 = 0.0; TmpTotalIm1 = 0.0; TmpTotalRe5 = 0.0; TmpTotalIm5 = 0.0;
 	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
 		{
 		  TmpRe = TmpRealHamiltonian[IndexZ];
-		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		  
+		  TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 - TmpIm * VSourceIm1);
-		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);			  	
-		      
+		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 + TmpIm * VSourceRe1);
+
 		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) + TmpIm * vSource.Im(Index2));
-		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));		  
+		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));
 
 		  ++Index2;
 		}
 	      // case m2 = m1 && n2 = n1 && p2 = p1
 	      TmpRe = TmpRealHamiltonian[IndexZ];
-	      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-	      
+	      TmpIm = TmpImaginaryHamiltonian[IndexZ];
+
 	      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-	      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  		     
+	      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
 	      // kinetic elements added
 	      vDestination.Re(Index2) += (KineticElements[Index1] * VSourceRe1);
 	      vDestination.Im(Index2) += (KineticElements[Index1] * VSourceIm1);
-		
+
 	      ++Index2;
-		  
+
 	      tmpIndexZ = this->NbrStateZ - p1;
 	      for (IndexZ = 1; IndexZ < tmpIndexZ; ++IndexZ)
 		{
 		  TmpRe = TmpRealHamiltonian[IndexZ];
 		  TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
-		  
+
 		  vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
-		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  	
-		  
+		  vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);
+
 		  TmpTotalRe1 += (TmpRe * vSource.Re(Index2) - TmpIm * vSource.Im(Index2));
 		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) + TmpIm * vSource.Re(Index2));
-		  
+
 		  ++Index2;
 		}
-	      
+
 	      vDestination.Re(Index1) += TmpTotalRe1; vDestination.Im(Index1) += TmpTotalIm1;
-	      vDestination.Re(Index5) += TmpTotalRe5; vDestination.Im(Index5) += TmpTotalIm5;
-	      
+
 	      ++Index1;
 	    }
-	}	  
+	}
     }
-  
   return vDestination;
 }
 
-// multiply a vector by the current hamiltonian for a given range of indices 
+// multiply a vector by the current hamiltonian for a given range of indices
 // and add result to another vector, low level function (no architecture optimization)
 //
 // vSource = vector to be multiplied
@@ -583,7 +581,7 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 // return value = reference on vector where result has been stored
 
 ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
-{ 
+{
   if ((firstComponent == 0) && (nbrComponent == this->Space->GetHilbertSpaceDimension()))
     return this->LowLevelAddMultiply(vSource, vDestination);
   else
@@ -624,8 +622,8 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
 	{
 	  FactorY = double((j + 1) * (j + 1)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
-	    {	      
-	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;	      
+	    {
+	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;
 	      ++TotalIndex;
 	    }
 	}
@@ -782,17 +780,17 @@ double*** XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateCosinusWaveFunction
 	    {
 	      Diff = (double) 2 * (i - j);
 	      Tmp = M_PI * Diff * StepInc;	      
-	      TmpArray[i][j][k] = M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / Diff;
+	      TmpArray[i][j][k] = M_1_PI * (sin (Tmp * ((double) (k + 1))) - sin (Tmp * ((double) (k)))) / Diff;
 	      Diff = (double) 2 * (i + j);
-	      Tmp = M_PI * Diff * StepInc;	      
-	      TmpArray[i][j][k] -= M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / Diff;
+	      Tmp = M_PI * Diff * StepInc;
+	      TmpArray[i][j][k] += M_1_PI * (sin (Tmp * ((double) (k + 1))) - sin (Tmp * ((double) (k)))) / Diff;
 	    }
 	}
       TmpArray[i][i] = new double [nbrStep];
       for (int k = 0; k < nbrStep; ++k)
 	{
 	  Tmp = M_PI * (double) (4 * i) * StepInc;	      
-	  TmpArray[i][i][k] = StepInc - M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / ((double) (4 * i + 4));
+	  TmpArray[i][i][k] = StepInc + M_1_PI * (sin (Tmp * ((double) (k + 1))) - sin (Tmp * ((double) (k)))) / ((double) (4 * i + 4));
 	}     
     }
   return TmpArray;

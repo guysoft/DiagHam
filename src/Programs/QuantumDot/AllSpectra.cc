@@ -26,16 +26,6 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
-  /*
-  int M = 3, N = 3, H = 3;
-  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
-  double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H, H / 2);
-  PeriodicSpectra spectra(Space, "v1");  
-  double ReX, ImX, ReY, ImY, ReZ, ImZ;  
-  spectra.GetImpulsion("v2", SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
-  cout << ReX << '\t' << ImX << '\t' << ReY << '\t' << ImY << '\t' <<  ReZ << '\t' << ImZ << endl;
-  */
   
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
@@ -76,53 +66,48 @@ int main(int argc, char** argv)
   H = ZCell.GetInteger();
   Number = Division.GetInteger();
   char * out = Output.GetString();
-  
+  /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2, M / 4, N / 2, N / 4, H, H / 2);
   PeriodicSpectra spectra(Space, FileName);
    
   double Lx = 5.65, Ly = 5.65, Lz = 5.65;
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
-  // void GetImpulsion(char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
-  char** Files = new char* [50];
+  char** Files = new char* [100];
   ifstream energy("eigenvalues");
   double fundamental;
   energy >> fundamental;
   double tmpE;  
-  //ofstream polarization ("Polarization.txt");
-
-  ofstream OutFile(out);  
-
+  ofstream polarization ("Polarization.txt");
+  
+  //ofstream OutFile(out);  
   // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
+  //double PositionX = (double(M) * Lx / 2.0);
+  //double RealValue = 0.0, ImaginaryValue = 0.0;
 
-  double PositionX = (double(M) * Lx / 2.0);
-  double RealValue = 0.0, ImaginaryValue = 0.0;
-
-  for (int j = 0; j <= N; ++j)
-    {      
-      for (int k = 0; k <= H; ++k)
-	{
-	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
-	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
-	}
-      OutFile << '\n';
-    }
-  OutFile.close();  
-
-  /*
-  for (int i = 1; i < 50; ++i)
+  //for (int j = 0; j <= N; ++j)
+  //  {      
+  //    for (int k = 0; k <= H; ++k)
+  //	{
+  //	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
+  //	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
+  //	}
+  //    OutFile << '\n';
+  //  }
+  //OutFile.close();  
+ 
+  for (int i = 1; i < 100; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
       spectra.GetImpulsion(Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
-      cout << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
-      //cout << ReX << '\t' << ImX << '\t' << ReY << '\t' << ImY << '\t' <<  ReZ << '\t' << ImZ << endl;
+      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
     }
-  */
-  energy.close(); //polarization.close();
   
+  energy.close(); polarization.close();
+  */
 
   /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
@@ -172,13 +157,14 @@ int main(int argc, char** argv)
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 49;
+      State[i] = 100;
       Files[i] = new char[80];
-      Files[0] = "PolarizationZ.txt";
+      Files[0] = FileName;
     }
-  Spectra DOS(1, Files, State, 1e-3, 0.03, 0.16, 2e-5);
-  DOS.WriteSpectra("DOS_EZ.txt");
+  DOSSpectra DOS(1, Files, State, 1e-3, -0.16, 0.6, 2e-5);
+  DOS.WriteSpectra(out);
   */
+
   /*
   for (int n = 102; n < 110; ++n)
     {  
@@ -226,17 +212,18 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
-/*
-  char** Files = new char* [50]; int* State = new int[50];
-  for (int i = 0; i < 50; ++i)
+
+  int Nbr = 1;
+  char** Files = new char* [Nbr]; int* State = new int[Nbr];
+  for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 81;
+      State[i] = 99;
       Files[i] = new char[80];
-      AddString(Files[i], "./", i + 60, "/Overlap.txt");
+      Files[i] = FileName;
     }
-  Spectra Absorption (50, Files, State, 1e-3, -0.03, 0.03, 2e-5);
-  Absorption.WriteSpectra("Absorption.txt");
-*/    
+  Spectra Absorption (Nbr, Files, State, 1e-3, 0.03, 0.24, 2e-5);
+  Absorption.WriteSpectra(out);
+    
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 
   return 0;
