@@ -108,8 +108,6 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // constructor from data
   //
   // space = Hilbert space
-  // pairX = whether basis is pair in X direction, if not impair
-  // pairY = whether basis is pair in Y direction, if not impair
   // xSize = the sample length in X direction
   // ySize = the sample length in Y direction
   // zSize = the sample length in Z direction
@@ -121,7 +119,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // nbrCellZ = number of steps in Z direction
   // PotentielInput = pointer to a 3D potential with constant value in a cell
   // waveVectorZ = wave vector of Bloch function in Z direction
-  XYReflexionSymmetricPeriodic3DHamiltonian(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ = 0.0);
+  XYReflexionSymmetricPeriodic3DHamiltonian(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ = 0.0);
 
   // copy constructor (without duplicating datas)
   //

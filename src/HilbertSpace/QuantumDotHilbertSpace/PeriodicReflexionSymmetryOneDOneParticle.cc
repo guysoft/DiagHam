@@ -53,7 +53,7 @@ PeriodicReflexionSymmetryOneDOneParticle::PeriodicReflexionSymmetryOneDOnePartic
  if ((nbrState % 2) == 0)
    cout << "There is one dimension which is not correct: " << nbrState << ". It will be substract by 1" << endl;
    
-  this->Even = Even;
+  this->Even = even;
   if (this->Even)
     {
       this->NbrState = (nbrState / 2) + 1;

@@ -29,6 +29,7 @@
 
 
 #include "config.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicReflexionSymmetryOneDOneParticle.h"
 #include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
 #include "Complex.h"
 #include "Vector/ComplexVector.h"
@@ -49,9 +50,6 @@ using std::endl;
 
 // constructor from data
 //
-// space = Hilbert space
-// pairX = whether basis is pair in X direction, if not impair
-// pairY = whether basis is pair in Y direction, if not impair
 // xSize = the sample length in X direction
 // ySize = the sample length in Y direction
 // zSize = the sample length in Z direction
@@ -64,7 +62,7 @@ using std::endl;
 // PotentielInput = pointer to a 3D potential with constant value in a cell
 // waveVectorZ = wave vector of Bloch function in Z direction
 
-XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, bool pairX, bool pairY, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
+XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -107,6 +105,9 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
 	    }
 	}	        
     }
+  bool pairX = ((PeriodicReflexionSymmetryOneDOneParticle*) this->Space->GetStateX())->IsEven ();
+  bool pairY = ((PeriodicReflexionSymmetryOneDOneParticle*) this->Space->GetStateY())->IsEven ();
+
   cout << "Hamiltonian dimension: " << this->Space->GetHilbertSpaceDimension () << endl;
   cout << "Evaluation of Hamiltionian elements ..." << endl;
   this->EvaluateInteractionFactors(pairX, pairY, waveVectorZ);

@@ -192,7 +192,7 @@ int main(int argc, char** argv)
   cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
 
   //ReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);  
-  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential, WaveVector);
+  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential, WaveVector);
   //PeriodicQuantumDots3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
 
   cout << endl;
