@@ -173,7 +173,10 @@ int main(int argc, char** argv)
     //Visual << 0.0 << " ";
   //Visual << ' \n';
 
-  double tmp = 0.0; double Temp[M][M];
+  double tmp = 0.0;
+  double** Temp = new double* [M];
+  for (int i = 0; i < M; ++i)
+    Temp[i] = new double [M];
   
   for (int j = 0; j < NY - 1; ++j)
     {
@@ -201,6 +204,10 @@ int main(int argc, char** argv)
       //Visual << 0.0 << '\n';
     }
   
+  for (int i = 0; i < M; ++i)
+    delete[] Temp[i];
+  delete[] Temp;
+
   for (int i = 0; i < NX + 1; ++i)
     Visual << double(i)/Number  << '\t' <<  N << '\t' << 0.0 << '\n';
     //Visual << 0.0 << " ";
