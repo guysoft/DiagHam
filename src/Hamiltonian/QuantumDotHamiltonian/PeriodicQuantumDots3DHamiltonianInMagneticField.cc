@@ -915,18 +915,18 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotenti
 	}
     }
 
-  RealPrecalculatedHamiltonian = new double** [LengthX];
-  ImaginaryPrecalculatedHamiltonian = new double** [LengthX];
+  this->RealPrecalculatedHamiltonian = new double** [LengthX];
+  this->ImaginaryPrecalculatedHamiltonian = new double** [LengthX];
   double* TmpRealWaveFunctionOverlapZ;
   double* TmpImaginaryWaveFunctionOverlapZ;
   for (int m = 0; m < LengthX; ++m)
     {
-      RealPrecalculatedHamiltonian[m] = new double* [LengthY];      
-      ImaginaryPrecalculatedHamiltonian[m] = new double* [LengthY]; 
+      this->RealPrecalculatedHamiltonian[m] = new double* [LengthY];      
+      this->ImaginaryPrecalculatedHamiltonian[m] = new double* [LengthY]; 
       for (int n = 0; n < LengthY; ++n)
 	{
-	  RealPrecalculatedHamiltonian[m][n] = new double [LengthZ];      
-	  ImaginaryPrecalculatedHamiltonian[m][n] = new double [LengthZ]; 
+	  this->RealPrecalculatedHamiltonian[m][n] = new double [LengthZ];      
+	  this->ImaginaryPrecalculatedHamiltonian[m][n] = new double [LengthZ]; 
 	  TmpRealPrecalculatedHamiltonian = TmpReal[m][n];
 	  TmpImaginaryPrecalculatedHamiltonian = TmpImaginary[m][n];
 	  for (int p = 0; p < LengthZ; ++p)
@@ -939,8 +939,8 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateConfinementPotenti
 		  TmpRe += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ] - TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ]);
 		  TmpIm += (TmpRealPrecalculatedHamiltonian[CellZ] * TmpImaginaryWaveFunctionOverlapZ[CellZ] + TmpImaginaryPrecalculatedHamiltonian[CellZ] * TmpRealWaveFunctionOverlapZ[CellZ]);
 		}
-	      RealPrecalculatedHamiltonian[m][n][p] = TmpRe;
-	      ImaginaryPrecalculatedHamiltonian[m][n][p] = TmpIm;
+	      this->RealPrecalculatedHamiltonian[m][n][p] = TmpRe;
+	      this->ImaginaryPrecalculatedHamiltonian[m][n][p] = TmpIm;
 	    }
 	}
     }

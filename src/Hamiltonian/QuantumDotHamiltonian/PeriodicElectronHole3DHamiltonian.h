@@ -78,6 +78,13 @@ class PeriodicElectronHole3DHamiltonian : public AbstractHamiltonian
 
   // constructor
   //
+  // space = pointer to the Hilbert space of two particles
+  // Mex, Mey, Mez = effective masses in three directions of electron (in vacuum electron mass unit)
+  // Mhx, Mhy, Mhz = effective masses in three directions of hole (in vacuum electron mass unit)
+  // potentialElectron = pointer to the potential for electron
+  // potentialHole = pointer to the potential for hole
+  // xSize, ySize, zSize = sizes of the sample in three direction (in Angstrom unit)
+  // dielectric = dielectric constant in the sample
   PeriodicElectronHole3DHamiltonian (PeriodicThreeDTwoParticles* space, double Mex, double Mey, double Mez, double Mhx, double Mhy, double Mhz, ThreeDConstantCellPotential* potentialElectron, ThreeDConstantCellPotential* potentialHole, double xSize, double ySize, double zSize, double dielectric);
 
   // copy constructor (without duplicating datas)
@@ -182,23 +189,35 @@ class PeriodicElectronHole3DHamiltonian : public AbstractHamiltonian
 
   // evaluate the kinetic term
   //
+  // mex, mey, mez = effective masses in three directions of electron (in vacuum electron mass unit)
+  // mhx, mhy, mhz = effective masses in three directions of hole (in vacuum electron mass unit)
+  // firstParticle = pointer to the first particle's Hilbert space
+  // secondParticle = pointer to the second particle's Hilbert space
+  // xSize, ySize, zSize = sizes of the sample in three direction (in Angstrom unit)
   void EvaluateKineticTerm (double mex, double mey, double mez, double mhx, double mhy, double mhz, PeriodicThreeDOneParticle* firstParticle, PeriodicThreeDOneParticle* secondParticle, double xSize, double ySize, double zSize);
 
   // evaluate the confinement terms for electrons and holes
   //
-  void EvaluateConfinementTerm (ThreeDConstantCellPotential* potentialElectron, ThreeDConstantCellPotential* potentialHole);
+  // potential = pointer to the potential for the considered carrier
+  // particle = pointer to the Hilbertspace for the considered carrier
+  // type = type of the carrier, 1 for electron, 2 for hole
+  // realConfinement = reference to 2D array of real elements of the wanted terms
+  // imaginaryConfinement = reference to 2D array of imaginary elements of the wanted terms
+  void EvaluateConfinementTerm (ThreeDConstantCellPotential* potential, PeriodicThreeDOneParticle* particle, int type, double** &realConfinement, double** &imaginaryConfinement);
 
   // evaluate the Coulombian term
   //
+  // xSize, ySize, zSize = sizes of the sample in three direction (in Angstrom unit)
+  // dielectric = dielectric constant in the sample
   void EvaluateCoulombianTerm (double xSize, double ySize, double zSize, double dielectric);
 
   // evaluate the wave function overlap
   //
   // nbrStep = number of steps in the given direction
   // nbrState = number of states chosen for this direction
-  // realArray = 3D array containing the real elements of the overlap
-  // imaginaryArray = 3D array containing the imaginary elements of the overlap
-  bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double*** &realArray, double*** &imaginaryArray);
+  // realArray = 2D array containing the real elements of the overlap
+  // imaginaryArray = 2D array containing the imaginary elements of the overlap
+  bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
 
 };
 
