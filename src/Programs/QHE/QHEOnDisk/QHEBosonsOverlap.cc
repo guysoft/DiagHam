@@ -15,8 +15,6 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
 
-//#include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
-
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
@@ -124,8 +122,8 @@ int main(int argc, char** argv)
       Space.PrintState(cout, i) << endl;
     }
   ParticleOnDiskFunctionBasis Basis(MMax);
-  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrBosons, 2);
+  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrBosons);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrBosons, 1, 1);
 //  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrBosons);
@@ -145,6 +143,14 @@ int main(int argc, char** argv)
 	}
 //      Location[4] = Location[0];
 //      Location[5] = Location[1];
+      Location[0] = 1.0;
+      Location[1] = 0.0;
+      Location[2] = 0.0;
+      Location[3] = 1.0;
+      Location[4] = -1.0;
+      Location[5] = 0.0;
+      Location[6] = 0.0;
+      Location[7] = -1.0;
       ParticleOnDiskFunctionBasis Basis(MMax);
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
@@ -159,8 +165,9 @@ int main(int argc, char** argv)
   double Factor = 1.0;
   for (int j = 0; j < NbrBosons; ++j)
     {
-      Factor *= 4.0 * M_PI * ((double) MMax);
+      Factor *= 4.0 * M_PI * 2.0 / (1.0 + exp(-((double) MMax)));
     }
+  Factor = 1.0;
   Complex Overlap;
   Complex ErrorOverlap;
   double Normalization = 0.0;
@@ -176,7 +183,8 @@ int main(int argc, char** argv)
   double Theta;
   for (int j = 0; j < NbrBosons; ++j)
     {
-      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Radius = RandomNumber->GetRealRandomNumber();      
+      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[j << 1] = Radius * cos (Theta);
       Location[1 + (j << 1)] = Radius * sin (Theta);
@@ -189,7 +197,9 @@ int main(int argc, char** argv)
     {
       double PreviousCoordinates1 = Location[NextCoordinates << 1];
       double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
-      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Radius = RandomNumber->GetRealRandomNumber();      
+      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
+//      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[NextCoordinates << 1] = Radius * cos (Theta);
       Location[1 + (NextCoordinates << 1)] = Radius * sin (Theta);

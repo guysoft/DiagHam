@@ -834,6 +834,8 @@ Complex ComplexMatrix::Determinant ()
 	  this->Columns[PivotPos] = TmpColumn3;
 	  TmpDet *= -1.0;
 	}
+      if (PivotNorm == 0.0)
+	return Complex(0.0);
       TmpDet *= Pivot;
       Pivot = 1.0 / Pivot;       
       for (int i = k + 1; i < this->NbrRow; ++i)

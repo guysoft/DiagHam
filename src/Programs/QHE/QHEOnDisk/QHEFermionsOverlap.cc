@@ -6,9 +6,7 @@
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnDiskFunctionBasis.h"
 
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
-#include "Tools/QHE/QHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 //#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnDiskWaveFunction.h"
-//#include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -16,8 +14,6 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
-
-//#include "MainTask/QHEMainTask/QHEOnSphereMainTask.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -135,15 +131,12 @@ int main(int argc, char** argv)
     }
   ParticleOnDiskFunctionBasis Basis(MMax);
   Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrFermions, 3);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrFermions);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnDiskWaveFunction(NbrFermions, 1, 1);
-//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnDiskWaveFunction(NbrFermions, 3);
-//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnDiskWaveFunction(NbrFermions);
   RealVector Location(2 * NbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-  for (int k = 0; k < 10; ++k)
+/*  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrFermions; ++i)
 	{
@@ -151,10 +144,10 @@ int main(int argc, char** argv)
 	  double Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
 	  Location[i << 1] = Radius * cos (Theta);
 	  Location[1 + (i << 1)] = Radius * sin (Theta);
- 	  Location[i << 1] = M_PI * drand48();
+// 	  Location[i << 1] = M_PI * drand48();
 	}
-      Location[4] = Location[0];
-      Location[5] = Location[1];
+//      Location[4] = Location[0];
+//      Location[5] = Location[1];
       ParticleOnDiskFunctionBasis Basis(MMax);
       QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
@@ -165,11 +158,11 @@ int main(int argc, char** argv)
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;
+  return 0;*/
   double Factor = 1.0;
   for (int j = 0; j < NbrFermions; ++j)
     {
-      Factor *= 4.0 * M_PI * ((double) MMax);
+      Factor *= 4.0 * M_PI * 2.0 / (1.0 + exp(-((double) MMax)));
     }
   Complex Overlap;
   Complex ErrorOverlap;
@@ -186,7 +179,8 @@ int main(int argc, char** argv)
   double Theta;
   for (int j = 0; j < NbrFermions; ++j)
     {
-      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Radius = RandomNumber->GetRealRandomNumber();      
+      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[j << 1] = Radius * cos (Theta);
       Location[1 + (j << 1)] = Radius * sin (Theta);
@@ -199,7 +193,8 @@ int main(int argc, char** argv)
     {
       double PreviousCoordinates1 = Location[NextCoordinates << 1];
       double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
-      Radius = RandomNumber->GetRealRandomNumber() * 2.0 * ((double) MMax);
+      Radius = RandomNumber->GetRealRandomNumber();      
+      Radius = -2.0 * log(Radius + ((Radius - 1.0) * exp(-((double) MMax))));
       Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       Location[NextCoordinates << 1] = Radius * cos (Theta);
       Location[1 + (NextCoordinates << 1)] = Radius * sin (Theta);

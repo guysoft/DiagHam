@@ -7,6 +7,7 @@
 //                                                                            //
 //                                                                            //
 //                   class of Laughlin wave function on disk                  //
+//                         (without the gaussian factor)                      //
 //                                                                            //
 //                        last modification : 10/10/2004                      //
 //                                                                            //
@@ -81,7 +82,6 @@ Complex LaughlinOnDiskWaveFunction::operator ()(RealVector& x)
   Complex WaveFunction(1.0);
   double ZRe;
   double ZIm;
-  double GaussianWeight = 0.0;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       ZRe = x[i << 1];
@@ -92,14 +92,11 @@ Complex LaughlinOnDiskWaveFunction::operator ()(RealVector& x)
 	  Tmp.Im = ZIm - x[1 + (j << 1)];
 	  WaveFunction *= Tmp;
 	}
-      GaussianWeight += ZRe * ZRe;
-      GaussianWeight += ZIm * ZIm;      
     }
   Tmp = WaveFunction;
   for (int i = 1; i < this->InvFillingFactor; ++i)
     {
       WaveFunction *= Tmp;
     }
-  WaveFunction *= exp (-0.25 * GaussianWeight);
   return WaveFunction;
 }

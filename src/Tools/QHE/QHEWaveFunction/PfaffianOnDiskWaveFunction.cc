@@ -7,6 +7,7 @@
 //                                                                            //
 //                                                                            //
 //                   class of Pfaffian wave function on disk                  //
+//                         (without the gaussian factor)                      //
 //                                                                            //
 //                        last modification : 10/10/2004                      //
 //                                                                            //
@@ -80,7 +81,6 @@ Complex PfaffianOnDiskWaveFunction::operator ()(RealVector& x)
   Complex WaveFunction(1.0);
   double ZRe;
   double ZIm;
-  double GaussianWeight = 0.0;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       ZRe = x[i << 1];
@@ -93,10 +93,7 @@ Complex PfaffianOnDiskWaveFunction::operator ()(RealVector& x)
 	  Tmp = 1.0 / Tmp;
 	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
-       GaussianWeight += ZRe * ZRe;
-      GaussianWeight += ZIm * ZIm;      
    }
   WaveFunction *= TmpPfaffian.Pfaffian();
-  WaveFunction *= exp (-0.25 * GaussianWeight);
   return WaveFunction;
 }

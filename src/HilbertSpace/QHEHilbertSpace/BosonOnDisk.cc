@@ -562,9 +562,9 @@ Complex BosonOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& positi
   int* ChangeBit;
   int TmpStateDescription;
   Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
+//  cout << Functions << endl << endl;
   int LastComponent = firstComponent + nbrComponent;
-//  for (int k = firstComponent; k < LastComponent; ++k)
-  for (int k = 18; k < LastComponent; ++k)
+  for (int k = firstComponent; k < LastComponent; ++k)
     {
       Pos = 0;
       Lz = 0;
@@ -593,6 +593,7 @@ Complex BosonOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& positi
 	    }
 	}
 //      cout << Perm.FastPermanent(ChangeBit, ChangeBitSign) << " " << TmpFactor << " " << (Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor) << endl;
+//      cout << Perm << endl;
       Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
     }
   delete[] ChangeBitSign;

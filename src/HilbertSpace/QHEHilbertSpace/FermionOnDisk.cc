@@ -635,6 +635,8 @@ Complex FermionOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& posi
   Factor = 1.0 / sqrt(Factor);
   unsigned long TmpStateDescription;
   int LastComponent = firstComponent + nbrComponent;
+
+//  cout << Functions << endl << endl;
   for (int k = firstComponent; k < LastComponent; ++k)
     {
       Pos = 0;
@@ -659,7 +661,9 @@ Complex FermionOnDisk::EvaluateWaveFunction (RealVector& state, RealVector& posi
 	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
+//      cout << Slatter << endl;
       Complex SlatterDet = Slatter.Determinant();
+//      cout << SlatterDet << endl << endl;
       Value += SlatterDet * (state[k] * Factor);
     }
   delete[] Indices;

@@ -7,6 +7,7 @@
 //                                                                            //
 //                                                                            //
 //                   class of Laughlin wave function on disk                  //
+//                         (without the gaussian factor)                      //
 //                                                                            //
 //                        last modification : 10/10/2004                      //
 //                                                                            //

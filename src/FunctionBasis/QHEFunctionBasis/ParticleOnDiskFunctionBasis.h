@@ -7,6 +7,7 @@
 //                                                                            //
 //                                                                            //
 //                  class of function basis for particle on disk              //
+//                         (without the gaussian factor)                      //
 //                                                                            //
 //                        last modification : 05/02/2004                      //
 //                                                                            //
