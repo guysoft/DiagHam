@@ -830,7 +830,8 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 {
   if (M.NbrRow != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
-  int ReducedNbrRow = this->NbrRow - 2;
+  int ReducedNbrRow = this->NbrRow - 1;
+  int ReducedNbrRow2 = this->NbrRow - 2;
   double TmpNorm;
   double Cosinus;
   double Sinus;
@@ -847,31 +848,29 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
   if (SquareErr < MACHINE_PRECISION)
     SquareErr = MACHINE_PRECISION;
 
-  for (int i = 0; i < ReducedNbrRow; ++i)
+  for (int i = 0; i < ReducedNbrRow2; ++i)
     {
-      MinJ = ReducedNbrRow - i;
+      MinJ = ReducedNbrRow - i - 1;
       if (MinJ >= this->NbrBands)
 	MinJ = this->NbrBands - 1;
       for (int j = MinJ; j >= 1; --j)
 	{
 	  GivenRowPosition = i;
-	  GivenColumnPosition = j;
-	  FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition]; 
-	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+	  GivenColumnPosition = j - 1;
+	  FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition + 1][GivenRowPosition]; 
+	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition];
 	  Sinus = -FillInElement;
 	  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
-	  cout << "GivenRowPosition = " << GivenRowPosition << " " << GivenColumnPosition << endl;
-	  while ((GivenRowPosition < this->NbrRow) && (((Sinus * Sinus) > (TmpNorm * SquareErr)) && (TmpNorm > SquareErr)))
+	  while ((GivenRowPosition < this->NbrRow) && (TmpNorm > SquareErr))
 	    {
 	      // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
 	      TmpNorm = sqrt (TmpNorm);
-	      this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition] = 0.0;
-	      this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition] = TmpNorm;
-	      TmpNorm = 1.0 / sqrt(TmpNorm);
+	      this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition] = TmpNorm;
+	      TmpNorm = 1.0 / TmpNorm;
 	      Cosinus *= TmpNorm;
 	      Sinus *= TmpNorm;
 	      Pos = GivenRowPosition + 1;
-	      Pos2 = GivenColumnPosition - 1;
+	      Pos2 = GivenColumnPosition;
 	      while (Pos2 > 0)
 		{
 		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
@@ -883,6 +882,7 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 		  ++Pos;
 		}
 	      
+
 	      Tmp = this->UpperOffDiagonalElements[0][Pos];
 	      Tmp2 = this->DiagonalElements[Pos];
 	      this->DiagonalElements[Pos] *= Cosinus * Cosinus;
@@ -892,12 +892,10 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 	      this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
 	      this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
 	      
-//	      ++Pos;
 	      Pos2 = 1;
 	      Max = ReducedNbrRow - Pos;
 	      if (Max > this->NbrBands)
 		Max = this->NbrBands;
-	      cout << "pos2 = " << Pos2 << " " << Max << endl;
 	      while (Pos2 < Max)
 		{
 		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
@@ -912,21 +910,14 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 		{
 		  FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos + 1] * Sinus;
 		  this->UpperOffDiagonalElements[Max - 1][Pos + 1] *= Cosinus;
-		  GivenRowPosition = Pos + Max;
+		  GivenRowPosition = Pos;
 		  GivenColumnPosition = this->NbrBands - 1;
-		  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
+		  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition];
 		  Sinus = -FillInElement;
 		  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
 		}
 	      else
-		{
-		  GivenRowPosition = this->NbrRow;
-		}
-
-	      cout << *this << endl;
-
-	      cout << endl << GivenRowPosition << " " << GivenColumnPosition << " " << Cosinus << " " << Sinus << " " << TmpNorm << " " << endl;
-
+		GivenRowPosition = this->NbrRow;
 	    }
 	}
     }
@@ -952,7 +943,19 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 {
   if (M.NbrRow != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
-  int ReducedNbrRow = this->NbrRow - 2;
+  if ((Q.GetNbrRow() != this->NbrRow) || (Q.GetNbrColumn() != this->NbrColumn))
+    Q.Resize(this->NbrRow, this->NbrColumn);
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      RealVector& Vector1 =  Q[i];
+      for (int j = 0; j < i; j++)
+	Vector1[j] = 0.0;       
+      Vector1[i] = 1.0;
+      for (int j = i + 1; j < this->NbrColumn; j++)
+	Vector1[j] = 0.0;       
+    }
+  int ReducedNbrRow = this->NbrRow - 1;
+  int ReducedNbrRow2 = this->NbrRow - 2;
   double TmpNorm;
   double Cosinus;
   double Sinus;
@@ -969,87 +972,89 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
   if (SquareErr < MACHINE_PRECISION)
     SquareErr = MACHINE_PRECISION;
 
-  for (int i = 0; i < ReducedNbrRow; ++i)
+  for (int i = 0; i < ReducedNbrRow2; ++i)
     {
-      MinJ = ReducedNbrRow - i;
+      MinJ = ReducedNbrRow - i - 1;
       if (MinJ >= this->NbrBands)
-	MinJ = this->NbrBands - 1;
+        MinJ = this->NbrBands - 1;
       for (int j = MinJ; j >= 1; --j)
-	{
-	  GivenRowPosition = i;
-	  GivenColumnPosition = j;
-	  FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition]; 
-	  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
-	  Sinus = -FillInElement;
-	  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
-	  while ((GivenRowPosition < this->NbrRow) && (((Sinus * Sinus) > (TmpNorm * SquareErr)) && (TmpNorm > SquareErr)))
-	    {
-	      // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
-	      TmpNorm = sqrt (TmpNorm);
-	      this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition] = TmpNorm;
-	      TmpNorm = 1.0 / TmpNorm;
-	      Cosinus *= TmpNorm;
-	      Sinus *= TmpNorm;
-	      Pos = GivenRowPosition + 1;
-	      Pos2 = GivenColumnPosition - 1;
-	      while (Pos2 > 0)
-		{
-		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
-		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
-		  this->UpperOffDiagonalElements[Pos2][Pos] += Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos];
-		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] *= Cosinus;
-		  this->UpperOffDiagonalElements[Pos2 - 1][Pos] -= Sinus * Tmp;
-		  --Pos2;
-		  ++Pos;
-		}
+        {
+          GivenRowPosition = i;
+          GivenColumnPosition = j - 1;
+          FillInElement = this->UpperOffDiagonalElements[GivenColumnPosition + 1][GivenRowPosition];
+          Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition];
+          Sinus = -FillInElement;
+          TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+          while ((GivenRowPosition < this->NbrRow) && (TmpNorm > SquareErr))
+            {
+              // zeroing outmost element of the i-th line using Given rotation and apllying Given rotations to chase out the fill-in element produced by the previous Given rotation
+              TmpNorm = sqrt (TmpNorm);
+              this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition] = TmpNorm;
+              TmpNorm = 1.0 / TmpNorm;
+              Cosinus *= TmpNorm;
+              Sinus *= TmpNorm;
+              Pos = GivenRowPosition + 1;
+              Pos2 = GivenColumnPosition;
+              while (Pos2 > 0)
+                {
+                  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+                  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+                  this->UpperOffDiagonalElements[Pos2][Pos] += Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos];
+                  this->UpperOffDiagonalElements[Pos2 - 1][Pos] *= Cosinus;
+                  this->UpperOffDiagonalElements[Pos2 - 1][Pos] -= Sinus * Tmp;
+                  --Pos2;
+                  ++Pos;
+                }
+
+              Tmp = this->UpperOffDiagonalElements[0][Pos];
+              Tmp2 = this->DiagonalElements[Pos];
+              this->DiagonalElements[Pos] *= Cosinus * Cosinus;
+              this->DiagonalElements[Pos] += Sinus * ((Sinus * this->DiagonalElements[Pos + 1]) - (2.0 * Cosinus * Tmp));
+              this->UpperOffDiagonalElements[0][Pos] *= ((Cosinus * Cosinus) - (Sinus * Sinus));
+              this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp2 - this->DiagonalElements[Pos + 1]);
+              this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
+              this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
+
+              Pos2 = 1;
+              Max = ReducedNbrRow - Pos;
+              if (Max > this->NbrBands)
+                Max = this->NbrBands;
+              while (Pos2 < Max)
+                {
+                  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
+                  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
+                  this->UpperOffDiagonalElements[Pos2][Pos] -= Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1];
+                  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] *= Cosinus;
+                  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] += Sinus * Tmp;
+                  ++Pos2;
+                }
 	      
-	      Tmp = this->UpperOffDiagonalElements[0][Pos];
-	      Tmp2 = this->DiagonalElements[Pos];
-	      this->DiagonalElements[Pos] *= Cosinus * Cosinus;
-	      this->DiagonalElements[Pos] += Sinus * ((Sinus * this->DiagonalElements[Pos + 1]) - (2.0 * Cosinus * Tmp));
-	      this->UpperOffDiagonalElements[0][Pos] *= (Cosinus * Cosinus - Sinus * Sinus);
-	      this->UpperOffDiagonalElements[0][Pos] += Cosinus * Sinus * (Tmp - this->DiagonalElements[Pos + 1]);
-	      this->DiagonalElements[Pos + 1] *= Cosinus * Cosinus;
-	      this->DiagonalElements[Pos + 1] += Sinus * ((Sinus * Tmp2) + (2.0 * Cosinus * Tmp));
 	      
-	      ++Pos;
-	      Pos2 = 1;
-	      Max = ReducedNbrRow - GivenRowPosition + 1;
-	      if (Max > this->NbrBands)
-		Max = this->NbrBands;
-	      while (Pos2 < Max)
-		{
-		  Tmp = this->UpperOffDiagonalElements[Pos2][Pos];
-		  this->UpperOffDiagonalElements[Pos2][Pos] *= Cosinus;
-		  this->UpperOffDiagonalElements[Pos2][Pos] -= Sinus * this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1];
-		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] *= Cosinus;
-		  this->UpperOffDiagonalElements[Pos2 - 1][Pos + 1] += Sinus * Tmp;
-		  ++Pos2;
-		}
-	      
-	      
-	      RealVector& Vector1 =  Q[GivenRowPosition + GivenColumnPosition];
-	      RealVector& Vector2 =  Q[GivenRowPosition + GivenColumnPosition + 1];
+	      RealVector& Vector1 =  Q[GivenRowPosition + GivenColumnPosition + 1];
+	      RealVector& Vector2 =  Q[GivenRowPosition + GivenColumnPosition + 2];
 	      for (int k = 0; k < this->NbrRow; ++k)
 		{
 		  Tmp = Vector2[k];
 		  Vector2[k] *= Cosinus;
 		  Vector2[k] += Sinus * Vector1[k];
 		  Vector1[k] *= Cosinus;
-		  Vector1[k] += Sinus * Tmp;
+		  Vector1[k] -= Sinus * Tmp;
 		}
 	      
-	      FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos] * Sinus;
-	      this->UpperOffDiagonalElements[Max - 1][Pos] *= Cosinus;
-
-
-	      GivenRowPosition += GivenColumnPosition;
-	      GivenColumnPosition = this->NbrBands - 1;
-	      Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition - 1][GivenRowPosition];
-	      Sinus = -FillInElement;
-	      TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
-	    }
-	}
+             if ((ReducedNbrRow - Pos) > this->NbrBands)
+                {
+                  FillInElement = -this->UpperOffDiagonalElements[Max - 1][Pos + 1] * Sinus;
+                  this->UpperOffDiagonalElements[Max - 1][Pos + 1] *= Cosinus;
+                  GivenRowPosition = Pos;
+                  GivenColumnPosition = this->NbrBands - 1;
+                  Cosinus = this->UpperOffDiagonalElements[GivenColumnPosition][GivenRowPosition];
+                  Sinus = -FillInElement;
+                  TmpNorm =  ((Cosinus * Cosinus) + (Sinus * Sinus));
+                }
+	     else
+                GivenRowPosition = this->NbrRow;
+            }
+        }
     }
 
   for (int i = 0; i < this->NbrRow; ++i)

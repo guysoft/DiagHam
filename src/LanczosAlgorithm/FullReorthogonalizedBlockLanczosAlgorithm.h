@@ -37,6 +37,7 @@
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealBandDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/GarbageFlag.h"
@@ -75,9 +76,12 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   int BlockSize;
 
   // matrix where the blocks are stored
-  RealSymmetricMatrix ReducedMatrix;
+  RealBandDiagonalSymmetricMatrix ReducedMatrix;
+//  RealSymmetricMatrix ReducedMatrix;
+
   // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-  RealSymmetricMatrix TemporaryReducedMatrix;
+  RealBandDiagonalSymmetricMatrix TemporaryReducedMatrix;
+//  RealSymmetricMatrix TemporaryReducedMatrix;
 
   // array used to store temporary scalar products
   double* TemporaryCoefficients;
@@ -150,8 +154,10 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   // matrix = matrix where transformation matrix has to be stored
   // rowShift = shift to apply to matrix row index to reach the upper leftmost element
   // columnShift = shift to apply to matrix column index to reach the upper leftmost element
-  void ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealSymmetricMatrix& matrix,
-			       int rowShift, int columnShift);
+  void ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealBandDiagonalSymmetricMatrix& matrix,
+                               int rowShift, int columnShift);
+//  void ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealSymmetricMatrix& matrix,
+//			       int rowShift, int columnShift);
 
 };
 

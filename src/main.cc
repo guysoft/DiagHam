@@ -128,44 +128,67 @@ int main(int argc, char** argv)
 
   int nbrRow = atoi(argv[1]);
   int BandSize = atoi(argv[2]);
+  double range = 10.0;
   for (int i = 0; i < atoi(argv[3]); ++i)
     {
+//      nbrRow = (int) (5 + ((500 * ((long) rand())) / RAND_MAX));
+//      BandSize = (int) (2 + (((nbrRow - 4) * ((long) rand())) / RAND_MAX));
+      cout << i << "    size = " << nbrRow << "   band = "  << BandSize << endl;
       RealBandDiagonalSymmetricMatrix Band (nbrRow, BandSize, true);
       for (int j = 0; j < nbrRow; ++j)
 	{
+//	  Band(j, j) = (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX;
 	  Band(j, j) = ((double) ((j * nbrRow) + j)) * -1.0;
 	  for (int k = 0; k < BandSize; ++k)
 	    if ((j + k) < nbrRow)
+//	      Band(j, j + k + 1) = (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX;
 	      Band(j, j + k + 1) = (double) (((j + k + 1) * nbrRow) + j);
 	}
+      double TmpTrace = Band.Tr();
       RealSymmetricMatrix TmpSymm(Band);
       cout << Band << endl << endl; 
-      cout << Band.Tr() << " " << TmpSymm.Tr() << endl;
-      cout << TmpSymm << endl << endl;
+/*      cout << Band.Tr() << " " << TmpSymm.Tr() << endl;
+      cout << TmpSymm << endl << endl;*/
       RealTriDiagonalSymmetricMatrix TmpTridiag (nbrRow, true);
-      Band.Tridiagonalize(TmpTridiag, 1e-7);
+      RealMatrix TransMatrix (nbrRow, nbrRow);
+      Band.Tridiagonalize(TmpTridiag, 1e-7, TransMatrix);
+      cout << TmpTridiag << endl << endl;
+      cout << TransMatrix << endl << endl;
+//      TransMatrix.Transpose();
+      RealSymmetricMatrix* TmpSymm2 = (RealSymmetricMatrix*) TmpSymm.Conjugate(TransMatrix);
+      cout << *TmpSymm2 << endl << endl;
       RealTriDiagonalSymmetricMatrix DiagonalizedMatrix (nbrRow);
       TmpSymm.Householder(DiagonalizedMatrix, 1e-7);
       DiagonalizedMatrix.Diagonalize();
       TmpTridiag.Diagonalize();
-      cout << Band << endl << endl; 
-      cout << Band.Tr() <<  endl << endl;
+/*      cout << Band << endl << endl; 
+      cout << Band.Tr() <<  endl << endl;*/
       DiagonalizedMatrix.SortMatrixUpOrder();
       TmpTridiag.SortMatrixUpOrder();
       double Sum1 = 0.0;
       double Sum2 = 0.0;
       double Prod1 = 1.0;
       double Prod2 = 1.0;
+      double MaxError = 0.0;
       for (int j = 0; j < nbrRow; ++j)
 	{
-	  cout << DiagonalizedMatrix.DiagonalElement(j) << " " << TmpTridiag.DiagonalElement(j) << endl;
+	  double TmpError = fabs (DiagonalizedMatrix.DiagonalElement(j) - TmpTridiag.DiagonalElement(j)) / fabs ( TmpTridiag.DiagonalElement(j));
+	  cout << DiagonalizedMatrix.DiagonalElement(j) << " " << TmpTridiag.DiagonalElement(j) << " " << TmpError << endl;
 	  Sum1 += DiagonalizedMatrix.DiagonalElement(j);
 	  Sum2 += TmpTridiag.DiagonalElement(j);
 	  Prod1 *= DiagonalizedMatrix.DiagonalElement(j);
 	  Prod2 *= TmpTridiag.DiagonalElement(j);
+	  if (TmpError > MaxError)
+	    MaxError = TmpError;
 	}
-      cout << "Sum = " << Sum1 << " " << Sum2 << endl;
+      cout << "Sum = " << Sum1 << " " << Sum2 << " " << TmpTrace << endl;
       cout << "Prod = " << Prod1 << " " << Prod2 << endl;
+      cout << "max error = " << MaxError << endl;
+      if (MaxError > 1e-12)
+	{
+	  cout << "alert" << endl;
+	}
+      cout << "------------------------------------------------" << endl;
    }
   return 0;
 

@@ -74,15 +74,19 @@ FullReorthogonalizedBlockLanczosAlgorithm::FullReorthogonalizedBlockLanczosAlgor
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
-      this->ReducedMatrix = RealSymmetricMatrix(this->MaximumNumberIteration, true);
-      this->TemporaryReducedMatrix = RealSymmetricMatrix(this->MaximumNumberIteration, true);
+      this->ReducedMatrix = RealBandDiagonalSymmetricMatrix(this->MaximumNumberIteration, this->BlockSize, true);
+      this->TemporaryReducedMatrix = RealBandDiagonalSymmetricMatrix(this->MaximumNumberIteration, this->BlockSize, true);
+ //     this->ReducedMatrix = RealSymmetricMatrix(this->MaximumNumberIteration, true);
+ //     this->TemporaryReducedMatrix = RealSymmetricMatrix(this->MaximumNumberIteration, true);
     }
   else
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
-      this->ReducedMatrix = RealSymmetricMatrix();
-      this->TemporaryReducedMatrix = RealSymmetricMatrix();
+      this->ReducedMatrix = RealBandDiagonalSymmetricMatrix();
+      this->TemporaryReducedMatrix = RealBandDiagonalSymmetricMatrix();
+//      this->ReducedMatrix = RealSymmetricMatrix();
+//      this->TemporaryReducedMatrix = RealSymmetricMatrix();
     }
   this->Architecture = architecture;
   this->Flag.Initialize();
@@ -207,7 +211,8 @@ Vector& FullReorthogonalizedBlockLanczosAlgorithm::GetGroundState()
 
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->ReducedMatrix.GetNbrRow());
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
-  this->TemporaryReducedMatrix.Householder(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
+  this->TemporaryReducedMatrix.Tridiagonalize(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
+//  this->TemporaryReducedMatrix.Householder(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
   SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
   SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
 
@@ -238,7 +243,8 @@ Vector* FullReorthogonalizedBlockLanczosAlgorithm::GetEigenstates(int nbrEigenst
 
   RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->ReducedMatrix.GetNbrRow());
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
-  this->TemporaryReducedMatrix.Householder(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
+  this->TemporaryReducedMatrix.Tridiagonalize(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
+//  this->TemporaryReducedMatrix.Householder(SortedDiagonalizedMatrix, 1e-7, TmpEigenvector);
   SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
   SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
 
@@ -426,7 +432,8 @@ void FullReorthogonalizedBlockLanczosAlgorithm::Diagonalize ()
 {
   int Dimension = this->ReducedMatrix.GetNbrRow();
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
-  this->TemporaryReducedMatrix.Householder(this->DiagonalizedMatrix, 1e-7);
+  this->TemporaryReducedMatrix.Tridiagonalize(this->DiagonalizedMatrix, 1e-7);
+//  this->TemporaryReducedMatrix.Householder(this->DiagonalizedMatrix, 1e-7);
   this->DiagonalizedMatrix.Diagonalize();
   this->GroundStateEnergy = this->DiagonalizedMatrix.DiagonalElement(0);
   for (int DiagPos = 1; DiagPos < Dimension; DiagPos++)
@@ -479,8 +486,10 @@ bool FullReorthogonalizedBlockLanczosAlgorithm::TestConvergence ()
 // rowShift = shift to apply to matrix row index to reach the upper leftmost element
 // columnShift = shift to apply to matrix column index to reach the upper leftmost element
 
-void FullReorthogonalizedBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealSymmetricMatrix& matrix,
-									int rowShift, int columnShift)
+void FullReorthogonalizedBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealBandDiagonalSymmetricMatrix& matrix,
+                                                                        int rowShift, int columnShift)
+//void FullReorthogonalizedBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealSymmetricMatrix& matrix,
+//									int rowShift, int columnShift)
 {
   double TmpNorm = vectors[0].Norm();
   matrix(rowShift, columnShift) = TmpNorm;
