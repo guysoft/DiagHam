@@ -636,7 +636,7 @@ void PeriodicElectronHole3DHamiltonian::EvaluateCoulombianTerm (double xSize, do
   double squareY = ySize * ySize;
   double squareZ = zSize * zSize;
   double volume = xSize * ySize * zSize;
-  double factor = COULOMBIAN_FACTOR / (dielectric * volume);
+  double factor = COULOMBIAN_FACTOR / (dielectric * volume * 4.0 * M_PI * M_PI);
 
   int lengthX = this->NbrState1X * 2 - 1, lengthY = this->NbrState1Y * 2 - 1, lengthZ = this->NbrState1Z * 2 - 1;
   int originX = this->NbrState1X - 1, originY = this->NbrState1Y - 1, originZ = this->NbrState1Z - 1;
