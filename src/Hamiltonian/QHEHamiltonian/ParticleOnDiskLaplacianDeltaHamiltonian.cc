@@ -53,14 +53,43 @@ using std::ostream;
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian(ParticleOnDisk* particles, int nbrParticles)
+ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian(ParticleOnDisk* particles, int nbrParticles,
+										 AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = this->Particles->GetMaxLz();
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
+  this->FastMultiplicationFlag = false;
+  this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
   this->EnergyShift = 0.0;
 }
 
@@ -93,6 +122,7 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSp
 
 void ParticleOnDiskLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->EnergyShift = shift;
 }
   
 // evaluate all interaction factors

@@ -47,6 +47,9 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 30);
   SingleIntegerOption LzMaxOption ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
   SingleIntegerOption LzMinOption ('\n', "minimum-momentum", "minimum single particle momentum to study", 0, true, 1);
+  SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
+  SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
 
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -57,6 +60,7 @@ int main(int argc, char** argv)
   OptionList += &NbrEigenvaluesOption;
   OptionList += &LzMaxOption;
   OptionList += &LzMinOption;
+  OptionList += &MemoryOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsDiskLaplacianDelta -h" << endl;
@@ -80,6 +84,9 @@ int main(int argc, char** argv)
     MMin = (((NbrFermions - 1) * (NbrFermions)) / 2);
   if (MMax < MMin)
     MMax = MMin;
+  long Memory = MemoryOption.GetInteger() << 20;
+  char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
+  char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
 
   char* OutputName = new char [1024];
   sprintf (OutputName, "fermions_disk_laplaciandelta_n_%d_l_%d.dat", NbrFermions, MMax);
@@ -95,7 +102,11 @@ int main(int argc, char** argv)
 	Architecture = new SMPArchitecture(NbrProcessor);
       FermionOnDisk Space(NbrFermions, L);
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
-      ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(&Space, NbrFermions);
+      ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(&Space, NbrFermions, Architecture, Memory, LoadPrecalculationFileName);
+      if (SavePrecalculationFileName != 0)
+	{
+	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	}
       if (Hamiltonian->GetHilbertSpaceDimension() < 500)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
@@ -119,6 +130,8 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  double Shift = -10.0;
+	  Hamiltonian->ShiftHamiltonian(Shift);
 	  AbstractLanczosAlgorithm* Lanczos;
 	  if (NbrEigenvalue == 1)
 	    {
@@ -162,8 +175,8 @@ int main(int argc, char** argv)
 	    }
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
-	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << L << " " << (TmpMatrix.DiagonalElement(i)) << endl;
+	      cout << (TmpMatrix.DiagonalElement(i) - Shift) << " ";
+	      File << L << " " << (TmpMatrix.DiagonalElement(i) - Shift) << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);

@@ -77,6 +77,17 @@ class AbstractQHEOnDiskHamiltonian : public AbstractQHEHamiltonian
   int* M3Value;
   int* M4Value;
 
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  // step between each precalculated index
+  int FastMultiplicationStep;
+  // number of non-null term in the hamiltonian for each state
+  int* NbrInteractionPerComponent;
+  // index of the state obtained for each term of the hamiltonian when applying on a given state
+  int** InteractionPerComponentIndex;
+  // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  double** InteractionPerComponentCoefficient;
+
  public:
 
   // destructor
@@ -203,12 +214,46 @@ class AbstractQHEOnDiskHamiltonian : public AbstractQHEHamiltonian
   // return value = list of right interaction operators
   virtual List<Matrix*> RightInteractionOperators();  
 
+  // save precalculations in a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
+  // return value = true if no error occurs
+  virtual bool SavePrecalculation (char* fileName);
+
  protected:
  
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors() = 0;
 
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory(long allowedMemory);
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // return value = number of non-zero matrix element
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+
+  // enable fast multiplication algorithm
+  //
+  virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
+  // nbrJob = number of jobs that proceed the fast multiplication evaluation
+  virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
+
+  // load precalculations from a file
+  // 
+  // fileName = pointer to a string containg the name of the file where precalculations have to be read
+  // return value = true if no error occurs
+  virtual bool LoadPrecalculation (char* fileName);
 };
 
 #endif

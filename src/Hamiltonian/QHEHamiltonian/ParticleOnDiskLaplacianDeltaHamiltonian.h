@@ -45,6 +45,7 @@ using std::ostream;
 
 
 class MathematicaOutput;
+class AbstractArchitecture;
 
 
 class ParticleOnDiskLaplacianDeltaHamiltonian : public AbstractQHEOnDiskHamiltonian
@@ -56,7 +57,11 @@ class ParticleOnDiskLaplacianDeltaHamiltonian : public AbstractQHEOnDiskHamilton
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
-  ParticleOnDiskLaplacianDeltaHamiltonian(ParticleOnDisk* particles, int nbrParticles);
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnDiskLaplacianDeltaHamiltonian(ParticleOnDisk* particles, int nbrParticles, AbstractArchitecture* architecture, long memory = -1,
+					  char* precalculationFileName = 0);
 
   // destructor
   //
