@@ -59,6 +59,7 @@ class AbstractOption
 
  public:
 
+
   // virtual destructor
   //
   virtual ~AbstractOption();

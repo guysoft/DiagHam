@@ -38,6 +38,7 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 
 using std::cout;
