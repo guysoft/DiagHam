@@ -4,6 +4,7 @@
 *.h
 *.html
 *.pl
+*.sh
 
 # Makefile and configuration files
 

@@ -22,7 +22,7 @@ time ./src/Programs/QHEBosonsDeltaGround -n 15 -p 12 -l 10 > benchmark_bosons_12
 echo "bosons 12 10 20 mono"
 time ./src/Programs/QHEBosonsDeltaGround -n 20 -p 12 -l 10 > benchmark_bosons_12_10_20_mono_1.log
 echo "bosons 12 10 20 mono"
-time ./src/Programs/QHEBosonsDeltaGround -n 20 -p 22 -l 10 > benchmark_bosons_12_10_20_mono_2.log
+time ./src/Programs/QHEBosonsDeltaGround -n 20 -p 12 -l 10 > benchmark_bosons_12_10_20_mono_2.log
 echo "bosons 12 10 25 mono"
 time ./src/Programs/QHEBosonsDeltaGround -n 25 -p 12 -l 10 > benchmark_bosons_12_10_25_mono_1.log
 echo "bosons 12 10 25 mono"
@@ -30,7 +30,7 @@ time ./src/Programs/QHEBosonsDeltaGround -n 25 -p 12 -l 10 > benchmark_bosons_12
 echo "bosons 12 10 30 mono"
 time ./src/Programs/QHEBosonsDeltaGround -n 30 -p 12 -l 10 > benchmark_bosons_12_10_30_mono_1.log
 echo "bosons 12 10 30 mono"
-time ./src/Programs/QHEBosonsDeltaGround -n 30 -p 22 -l 10 > benchmark_bosons_12_10_30_mono_2.log
+time ./src/Programs/QHEBosonsDeltaGround -n 30 -p 12 -l 10 > benchmark_bosons_12_10_30_mono_2.log
 echo "bosons 12 10 2 bipro"
 time ./src/Programs/QHEBosonsDeltaGround -S -n 2 -p 12 -l 10 > benchmark_bosons_12_10_2_bipro_1.log
 echo "bosons 12 10 2 bipro"
@@ -54,7 +54,7 @@ time ./src/Programs/QHEBosonsDeltaGround -S -n 15 -p 12 -l 10 > benchmark_bosons
 echo "bosons 12 10 20 bipro"
 time ./src/Programs/QHEBosonsDeltaGround -S -n 20 -p 12 -l 10 > benchmark_bosons_12_10_20_bipro_1.log
 echo "bosons 12 10 20 bipro"
-time ./src/Programs/QHEBosonsDeltaGround -S -n 20 -p 22 -l 10 > benchmark_bosons_12_10_20_bipro_2.log
+time ./src/Programs/QHEBosonsDeltaGround -S -n 20 -p 12 -l 10 > benchmark_bosons_12_10_20_bipro_2.log
 echo "bosons 12 10 25 bipro"
 time ./src/Programs/QHEBosonsDeltaGround -S -n 25 -p 12 -l 10 > benchmark_bosons_12_10_25_bipro_1.log
 echo "bosons 12 10 25 bipro"
@@ -62,7 +62,7 @@ time ./src/Programs/QHEBosonsDeltaGround -S -n 25 -p 12 -l 10 > benchmark_bosons
 echo "bosons 12 10 30 bipro"
 time ./src/Programs/QHEBosonsDeltaGround -S -n 30 -p 12 -l 10 > benchmark_bosons_12_10_30_bipro_1.log
 echo "bosons 12 10 30 bipro"
-time ./src/Programs/QHEBosonsDeltaGround -S -n 30 -p 22 -l 10 > benchmark_bosons_12_10_30_bipro_2.log
+time ./src/Programs/QHEBosonsDeltaGround -S -n 30 -p 12 -l 10 > benchmark_bosons_12_10_30_bipro_2.log
 echo "fermions 8 21 5 mono"
 time ./src/Programs/QHEFermionsCoulomb -n 5 -p 8 -l 21 --nbr-lz 1 > benchmark_fermions_8_21_5_mono_1.log
 echo "fermions 8 21 5 mono"
