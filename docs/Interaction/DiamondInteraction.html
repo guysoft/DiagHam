@@ -6,12 +6,13 @@
   <body>
     <H1><DIV align=center>Class : DiamondInteraction</DIV></H1>
 
+<DIV ALIGN="CENTER">class deriving from <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/AbstractInteraction.html">AbstractInteraction</A></DIV><BR>
 <H3>DiamondInteraction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  ()<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  ()<BR><BR>
 <u>description:</u>default constructor 
 <BR>
 <BR><BR><BR><H3>DiamondInteraction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (double upperCouplingConstant double lowerCouplingConstant )<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (double , double lowerCouplingConstant )<BR><BR>
 <u>description:</u>constructor from partial datas 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -19,8 +20,8 @@
 <BR>lowerCoupligConstant = couling constant for lower link 
 <BR>
 <BR><BR><BR><H3>DiamondInteraction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (double upperCouplingConstant double lowerCouplingConstant int leftSpaceIndex 
-  int rightSpaceIndex <A HREF="/home/regnault/development/DMRG/AKLT/docs/TensorProduct/AbstractTensorProductStructure.html">AbstractTensorProductStructure</A>* structure )<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (double , double , int , 
+  int , <A HREF="/home/regnault/development/Physics/DiagHam/docs/TensorProduct/AbstractTensorProductStructure.html">AbstractTensorProductStructure</A>* structure )<BR><BR>
 <u>description:</u>constructor from complete datas 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -31,7 +32,7 @@
 <BR>struture = reference on tensor product structure 
 <BR>
 <BR><BR><BR><H3>DiamondInteraction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (const <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& interaction )<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>  (const <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& interaction )<BR><BR>
 <u>description:</u>copy constructor 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -42,7 +43,7 @@
 <u>description:</u>destructor 
 <BR>
 <BR><BR><BR><H3>operator = :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& operator =  (const <A HREF="/home/regnault/development/DMRG/AKLT/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& interaction )<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& operator =  (const <A HREF="/home/regnault/development/Physics/DiagHam/docs/Interaction/DiamondInteraction.html">DiamondInteraction</A>& interaction )<BR><BR>
 <u>description:</u>assignment 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -51,7 +52,7 @@
 <u>return value:</u> reference to current interaction 
 <BR>
 <BR><BR><BR><H3>Interaction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Tensor/TwoSpaceTensor.html">TwoSpaceTensor</A> Interaction  (List<Matrix*>& firstSystemOperators 
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Tensor/TwoSpaceTensor.html">TwoSpaceTensor</A> Interaction  (List<Matrix*>& , 
   List<Matrix*>& secondSystemOperators )<BR><BR>
 <u>description:</u>evaluate interaction between two systems from operators of each system 
 <BR><BR><BR>
@@ -62,10 +63,9 @@
 <u>return value:</u> tensor corresponding to the interaction 
 <BR>
 <BR><BR><BR><H3>Interaction :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Tensor/TwoSpaceTensor.html">TwoSpaceTensor</A> Interaction  (List<Matrix*>& firstSystemOperators 
-  List<Matrix*>& secondSystemOperators 
-  <A HREF="/home/regnault/development/DMRG/AKLT/docs/HilbertSpace/SpaceDecomposition.html">SpaceDecomposition</A>& firstSpaceDecomposition 
-  <A HREF="/home/regnault/development/DMRG/AKLT/docs/HilbertSpace/SpaceDecomposition.html">SpaceDecomposition</A>& secondSpaceDecomposition )<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Tensor/TwoSpaceTensor.html">TwoSpaceTensor</A> Interaction  (List<Matrix*>& , 
+  List<Matrix*>& , 
+  <A HREF="/home/regnault/development/Physics/DiagHam/docs/HilbertSpace/SpaceDecomposition.html">SpaceDecomposition</A>& ,  <A HREF="/home/regnault/development/Physics/DiagHam/docs/HilbertSpace/SpaceDecomposition.html">SpaceDecomposition</A>& secondSpaceDecomposition )<BR><BR>
 <u>description:</u>evaluate interaction between two systems from operators of each system with a given 
 <BR>space decomposition for each space 
 <BR><BR><BR>
@@ -77,7 +77,7 @@
 <BR><BR><BR>
 <u>return value:</u> tensor corresponding to the interaction 
 <BR>
-<BR><BR><BR>	Back to <A HREF="/home/regnault/development/DMRG/AKLT/docs/index.html">index</A>. 
+<BR><BR><BR>	Back to <A HREF="/home/regnault/development/Physics/DiagHam/docs/index.html">index</A>. 
 
   </body>
 </html>

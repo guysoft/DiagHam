@@ -7,7 +7,7 @@
     <H1><DIV align=center>Class : AbstractOutput</DIV></H1>
 
 <H3>AbstractOutput :</H3>
-<u>prototype:</u>     <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>  ()<BR><BR>
+<u>prototype:</u>     <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>  ()<BR><BR>
 <u>description:</u>default constructor 
 <BR>
 <BR><BR><BR><H3>~AbstractOutput :</H3>
@@ -24,7 +24,7 @@
 <u>return value:</u> true if operation succeded 
 <BR>
 <BR><BR><BR><H3>write :</H3>
-<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& write  (char* c int n )<BR><BR>
+<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& write  (char* , int n )<BR><BR>
 <u>description:</u>write a string of char 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -34,7 +34,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out const char* c )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , const char* c )<BR><BR>
 <u>description:</u>push a null-ended string on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -44,7 +44,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out const char c )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , const char c )<BR><BR>
 <u>description:</u>push a character on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -54,7 +54,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out const int x )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , const int x )<BR><BR>
 <u>description:</u>push an integer on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -64,7 +64,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out const double x )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , const double x )<BR><BR>
 <u>description:</u>push a double on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -74,7 +74,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out ostream& Str )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , ostream& Str )<BR><BR>
 <u>description:</u>push an output stream on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -84,7 +84,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> ostream& operator <<  (ostream& Str <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out )<BR><BR>
+<u>prototype:</u>     <i>friend</i> ostream& operator <<  (ostream& , <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out )<BR><BR>
 <u>description:</u>push an abstract output on output stream 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -94,7 +94,7 @@
 <u>return value:</u> reference on current output stream 
 <BR>
 <BR><BR><BR><H3>operator << :</H3>
-<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out1 <A HREF="/home/regnault/development/DMRG/AKLT/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out2 )<BR><BR>
+<u>prototype:</u>     <i>friend</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& operator <<  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& , <A HREF="/home/regnault/development/Physics/DiagHam/docs/Output/AbstractOutput.html">AbstractOutput</A>& Out2 )<BR><BR>
 <u>description:</u>push an abstract ouput on output 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -103,7 +103,7 @@
 <BR><BR><BR>
 <u>return value:</u> reference on current output stream 
 <BR>
-<BR><BR><BR>	Back to <A HREF="/home/regnault/development/DMRG/AKLT/docs/index.html">index</A>. 
+<BR><BR><BR>	Back to <A HREF="/home/regnault/development/Physics/DiagHam/docs/index.html">index</A>. 
 
   </body>
 </html>

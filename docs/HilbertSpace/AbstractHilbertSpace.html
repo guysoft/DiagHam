@@ -10,6 +10,14 @@
 <u>prototype:</u>     <i>virtual</i> ~AbstractHilbertSpace  ()<BR><BR>
 <u>description:</u>virtual destructor 
 <BR>
+<BR><BR><BR><H3>Clone :</H3>
+<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/HilbertSpace/AbstractHilbertSpace.html">AbstractHilbertSpace</A>* Clone  ()<BR><BR>
+<u>description:</u>clone Hilbert space (without duplicating datas) 
+<BR><BR><BR>
+<u>input parameters:</u>
+<BR><BR><BR>
+<u>return value:</u> pointer to cloned Hilbert space 
+<BR>
 <BR><BR><BR><H3>GetHilbertSpaceDimension :</H3>
 <u>prototype:</u>     <i>virtual</i> int GetHilbertSpaceDimension  ()<BR><BR>
 <u>description:</u>return Hilbert space dimension 
@@ -27,7 +35,7 @@
 <u>return value:</u> pointer to corresponding quantum number 
 <BR>
 <BR><BR><BR><H3>GetQuantumNumber :</H3>
-<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/QuantumNumber/AbstractQuantumNumber.html">AbstractQuantumNumber</A>* GetQuantumNumber  (int index )<BR><BR>
+<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/QuantumNumber/AbstractQuantumNumber.html">AbstractQuantumNumber</A>* GetQuantumNumber  (int index )<BR><BR>
 <u>description:</u>return quantum number associated to a given state 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -36,8 +44,8 @@
 <u>return value:</u> pointer to corresponding quantum number 
 <BR>
 <BR><BR><BR><H3>ExtractSubspace :</H3>
-<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/DMRG/AKLT/docs/HilbertSpace/AbstractHilbertSpace.html">AbstractHilbertSpace</A>* ExtractSubspace  (<A HREF="/home/regnault/development/DMRG/AKLT/docs/QuantumNumber/AbstractQuantumNumber.html">AbstractQuantumNumber</A>& q 
-  <A HREF="/home/regnault/development/DMRG/AKLT/docs/HilbertSpace/SubspaceSpaceConverter.html">SubspaceSpaceConverter</A>& converter )<BR><BR>
+<u>prototype:</u>     <i>virtual</i> <A HREF="/home/regnault/development/Physics/DiagHam/docs/HilbertSpace/AbstractHilbertSpace.html">AbstractHilbertSpace</A>* ExtractSubspace  (<A HREF="/home/regnault/development/Physics/DiagHam/docs/QuantumNumber/AbstractQuantumNumber.html">AbstractQuantumNumber</A>& , 
+  <A HREF="/home/regnault/development/Physics/DiagHam/docs/HilbertSpace/SubspaceSpaceConverter.html">SubspaceSpaceConverter</A>& converter )<BR><BR>
 <u>description:</u>extract subspace with a fixed quantum number 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -47,7 +55,7 @@
 <u>return value:</u> pointer to the new subspace 
 <BR>
 <BR><BR><BR><H3>PrintState :</H3>
-<u>prototype:</u>     <i>virtual</i> ostream& PrintState  (ostream& Str int state )<BR><BR>
+<u>prototype:</u>     <i>virtual</i> ostream& PrintState  (ostream& , int state )<BR><BR>
 <u>description:</u>print a given State 
 <BR><BR><BR>
 <u>input parameters:</u>
@@ -56,7 +64,7 @@
 <BR><BR><BR>
 <u>return value:</u> reference on current output stream  
 <BR>
-<BR><BR><BR>	Back to <A HREF="/home/regnault/development/DMRG/AKLT/docs/index.html">index</A>. 
+<BR><BR><BR>	Back to <A HREF="/home/regnault/development/Physics/DiagHam/docs/index.html">index</A>. 
 
   </body>
 </html>
