@@ -31,6 +31,7 @@
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 #include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "Hamiltonian/SpinHamiltonian/Mn12Hamiltonian.h"
 #include "Hamiltonian/SpinHamiltonian/V15Hamiltonian.h"
 #include "Hamiltonian/SpinHamiltonian/AKLTHamiltonian.h"
@@ -71,6 +72,7 @@
 #include "Operator/PeriodicAnisotropicMagnetizationOperator.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "GeneralTools/ArrayTools.h"
 
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
 
   // distributed architecture test
   //  MonoProcessorArchitecture Architecture;
-  SMPArchitecture Architecture(2);
+/*  SMPArchitecture Architecture(2);
   int* Test;
   Architecture.New(Test, 10);
   for (int i = 0; i < 10; ++i)
@@ -114,6 +116,137 @@ int main(int argc, char** argv)
     cout << i << " ";
   cout << endl;
   Architecture.Delete(Test);
+  return 0;*/
+
+/*  for (int DimMPerm = 3; DimMPerm <= 10; ++DimMPerm)
+    {
+      long** MPerm = new long* [DimMPerm];
+      for (int i = 0; i < DimMPerm; ++i)
+	{
+	  MPerm[i] = new long [DimMPerm];
+	  for (int j = 0; j < DimMPerm; ++j)
+	    MPerm[i][j] = (long) (i + j +2);
+	}
+      long Perm = (long) 0;
+      long Sign = (long) 1;
+      if ((DimMPerm & 1) == 0)
+	Sign = (long) -1;
+      long* Tmp = new long [DimMPerm];
+      long Tmp2;
+      Tmp2 = Tmp[0];
+      int Lim = 1 << DimMPerm;
+      for (int i = 0; i < DimMPerm; ++i)
+	Tmp[i] = (long) 0;
+      int GrayCode = 0;
+      int ChangedBit;
+      int Index;
+      for (int k = 1; k < Lim; ++k)
+	{
+	  ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
+	  GrayCode = k ^ (k >> 1);
+	  if ((GrayCode & ChangedBit) == 0)
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      for (int i = 0; i < DimMPerm; ++i)
+		Tmp[i] -= MPerm[i][Index];
+	    }
+	  else
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      for (int i = 0; i < DimMPerm; ++i)
+		Tmp[i] += MPerm[i][Index];
+	    }
+	  Tmp2 = Tmp[0];
+	  for (int i = 1; i < DimMPerm; ++i)
+	    Tmp2 *= Tmp[i];
+	  Perm += Sign * Tmp2;
+	  Sign *= (long) -1;
+	}  
+      delete[] Tmp;
+      cout << Perm << endl;
+    }
+  return 0;*/
+
+  int NbrBosons = 4;
+  int LzMax = 6;
+  RealVector State;
+  State.ReadVector ("bosons_delta_nu_1_2/bosons_delta_n_4_2s_6_lz_0.0.vec");
+  BosonOnSphere Space (NbrBosons, 0, LzMax);
+  RealVector Location(2 * NbrBosons, true);
+  srand48(29457);
+  for (int i = 0; i < NbrBosons; ++i)
+    {
+      Location[i << 1] = M_PI * drand48();
+      Location[(i << 1) + 1] = 2.0 * M_PI * drand48();
+      cout << Location[i << 1] << " " << Location[(i << 1) + 1] << endl;
+    }
+  Location[4] = Location[0];
+  Location[5] = Location[1];
+  ParticleOnSphereFunctionBasis Basis(LzMax);
+  cout << Space.EvaluateWaveFunction(State, Location, Basis) << endl;
+  return 0;
+
+  int Error = 0;
+  for (int k = 0; k < 1; ++k)
+  for (int DimMPerm = 3; DimMPerm <= 3; ++DimMPerm)
+    {
+      ComplexMatrix MPerm(DimMPerm, DimMPerm);
+      Complex** MPerm2 = new Complex* [DimMPerm];
+      for (int i = 0; i < DimMPerm; ++i)
+	{
+	  MPerm2[i] = new Complex[DimMPerm];
+	  for (int j = 0; j < DimMPerm; ++j)
+	    {
+	      MPerm[j].Im(i) = i + j + 2;
+	      MPerm[j].Re(i) = 0.0;
+//	      MPerm[j].Re(i) = 20.0 * (drand48() - 0.5);
+//	      MPerm[j].Im(i) = 20.0 * (drand48() - 0.5);
+	      MPerm2[i][j].Re = MPerm[j].Re(i);
+              MPerm2[i][j].Im = MPerm[j].Im(i);
+ 	    }
+	}
+      Complex TmpPerm = (MPerm2[0][0] * (MPerm2[1][1] * MPerm2[2][2] + MPerm2[1][2] * MPerm2[2][1])
+			 + MPerm2[1][0] * (MPerm2[0][1] * MPerm2[2][2] + MPerm2[0][2] * MPerm2[2][1])
+			 + MPerm2[2][0] * (MPerm2[0][1] * MPerm2[1][2] + MPerm2[0][2] * MPerm2[1][1]));
+      if ((Norm(TmpPerm - MPerm.Permanent()) / Norm(MPerm.Permanent())) > 1e-13)
+	{
+	  cout << TmpPerm << " " <<  MPerm.Permanent() << " " << (Norm(TmpPerm - MPerm.Permanent()) / Norm(MPerm.Permanent())) << endl;
+	  Error++;
+	}
+      cout << MPerm << endl << endl;
+      cout << MPerm.Permanent() << endl;
+    }
+ 
+  for (int k = 0; k < 1; ++k)
+  for (int DimMPerm = 3; DimMPerm <= 3; ++DimMPerm)
+    {
+      RealMatrix MPerm(DimMPerm, DimMPerm);
+      for (int i = 0; i < DimMPerm; ++i)
+	for (int j = 0; j < DimMPerm; ++j)
+	  MPerm(i, j) = i + j +2;
+//	  MPerm(i, j) = 20.0 * (drand48() - 0.5);
+      double TmpPerm = (MPerm(0, 0) * (MPerm(1, 1) * MPerm(2, 2) + MPerm(1, 2) * MPerm(2, 1))
+			+ MPerm(1, 0) * (MPerm(0, 1) * MPerm(2, 2) + MPerm(0, 2) * MPerm(2, 1))
+			+ MPerm(2, 0) * (MPerm(0, 1) * MPerm(1, 2) + MPerm(0, 2) * MPerm(1, 1)));
+      if (fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) > 1e-13)
+	{
+	  cout << TmpPerm << " " <<  MPerm.Permanent() << " " << fabs((TmpPerm - MPerm.Permanent()) / MPerm.Permanent()) << endl;
+	  Error++;
+	}
+      cout << MPerm << endl << endl;
+      cout << MPerm.Permanent() << endl;
+    }
+  cout << Error << endl;
   return 0;
 
   int dimM = 10;

@@ -754,6 +754,69 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
   return *this;
 }
 
+// evaluate permanent associated to the (square) matrix using Ryser algorithm
+//
+// return value = permanent associated to the matrix
+                                                                                                                                          
+Complex ComplexMatrix::Permanent()
+{
+  if (this->NbrColumn != this->NbrRow)
+    return 0.0;
+  Complex Perm;
+  double Sign = 1.0;
+  if ((this->NbrColumn & 1) == 0)
+    Sign = -1.0;
+  Complex* Tmp = new Complex [this->NbrColumn];
+  Complex Tmp2;
+  int Lim = 1 << this->NbrColumn;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    Tmp[i] = 0.0;
+  int GrayCode = 0;
+  int ChangedBit;
+  int Index;
+  for (int k = 1; k < Lim; ++k)
+    {
+      ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
+      GrayCode = k ^ (k >> 1);
+      if ((GrayCode & ChangedBit) == 0)
+        {
+          Index = 0;
+          while (ChangedBit != 1)
+            {
+              ChangedBit >>= 1;
+              ++Index;
+            }
+          for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+	      Tmp[i].Re -= this->Columns[i].RealComponents[Index];
+	      Tmp[i].Im -= this->Columns[i].ImaginaryComponents[Index];
+
+	    }
+        }
+      else
+        {
+          Index = 0;
+          while (ChangedBit != 1)
+            {
+              ChangedBit >>= 1;
+              ++Index;
+            }
+          for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+              Tmp[i].Re += this->Columns[i].RealComponents[Index];
+              Tmp[i].Im += this->Columns[i].ImaginaryComponents[Index];
+ 	    }
+         }
+      Tmp2 = Tmp[0];
+      for (int i = 1; i < this->NbrColumn; ++i)
+        Tmp2 *= Tmp[i];
+      Perm += Sign * Tmp2;
+      Sign *= -1.0;
+    }
+  delete[] Tmp;
+  return Perm;
+}
+
 // Output Stream overload
 //
 // Str = reference on output stream

@@ -32,6 +32,9 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Vector/RealVector.h"
+#include "FunctionBasis/AbstractFunctionBasis.h"
 
 #include <math.h>
 
@@ -778,3 +781,65 @@ int BosonOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax
     }
   return TmpDim;
 }
+
+
+// evaluate wave function in real space using a given basis
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// return value = wave function evaluated at the given location
+
+Complex BosonOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis)
+{
+  Complex Value;
+  Complex Tmp;
+  ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+  RealVector TmpCoordinates(2);
+  int* Indices = new int [this->NbrBosons];
+  int Pos;
+  int Lz;
+  double* Factors = new double [this->NbrBosons + 1];
+  Factors[0] = 1.0;
+  Factors[1] = 1.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    Factors[i] = Factors[i - 1] / sqrt((double) i);
+  double TmpFactor;
+  for (int k = 0; k < this->HilbertSpaceDimension; ++k)
+    {
+      Pos = 0;
+      Lz = 0;
+      TmpFactor = state[k] * Factors[this->NbrBosons];
+      while (Pos < this->NbrBosons)
+	{
+	  if (this->StateDescription[k][Lz] != 0)
+	    {
+	      TmpFactor *= Factors[this->StateDescription[k][Lz]];
+	      for (int j = 0; j < this->StateDescription[k][Lz]; ++j)
+		{
+		  Indices[Pos] = Lz;
+		  ++Pos;
+		}
+	    }
+	  ++Lz;
+	}
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  for (int j = 0; j < this->NbrBosons; ++j)
+	    {
+	      TmpCoordinates[0] = position[i << 1];
+	      TmpCoordinates[1] = position[1 + (i << 1)];
+	      basis.GetFunctionValue(TmpCoordinates, Tmp, Indices[j]);
+	      Perm[j].Re(i) = Tmp.Re;
+	      Perm[j].Im(i) = Tmp.Im;
+	    }
+	}
+//      cout << Perm << endl;
+//      this->PrintState(cout, k) << endl;
+//      cout << Perm.Permanent() << " " << state[k] << endl << endl;
+      Value += Perm.Permanent() * TmpFactor;
+    }
+  delete[] Factors;
+  return Value;
+}
+

@@ -289,6 +289,11 @@ class RealMatrix : public Matrix
   // return value = reference on current matrix
   RealMatrix& Transpose ();
 
+  // evaluate permanent associated to the (square) matrix using Ryser algorithm
+  //
+  // return value = permanent associated to the matrix
+  double Permanent();
+
   // Output Stream overload
   //
   // Str = reference on output stream

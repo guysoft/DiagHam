@@ -33,7 +33,12 @@
 
 
 #include "config.h"
+#include "Complex.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
+
+
+class RealVector;
+class AbstractFunctionBasis;
 
 
 class ParticleOnSphere :  public AbstractHilbertSpace
@@ -73,6 +78,14 @@ class ParticleOnSphere :  public AbstractHilbertSpace
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m) = 0;
+
+  // evaluate wave function in real space using a given basis
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // return value = wave function evaluated at the given location
+  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
 
 };
 

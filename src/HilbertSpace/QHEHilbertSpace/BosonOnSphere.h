@@ -153,6 +153,14 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // evaluate wave function in real space using a given basis
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // return value = wave function evaluated at the given location
+  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
+
  private:
 
   // find state index

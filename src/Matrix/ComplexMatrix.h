@@ -259,6 +259,10 @@ class ComplexMatrix : protected Matrix
   // return value = reference on current matrix
   ComplexMatrix& OrthoNormalizeColumns ();
 
+  // evaluate permanent associated to the (square) matrix using Ryser algorithm
+  //
+  // return value = permanent associated to the matrix
+  Complex Permanent();                                                                                                                                     
   // Output Stream overload
   //
   // Str = reference on output stream
