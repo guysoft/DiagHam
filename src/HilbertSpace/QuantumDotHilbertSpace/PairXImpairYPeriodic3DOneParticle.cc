@@ -40,7 +40,7 @@ PairXImpairYPeriodic3DOneParticle::PairXImpairYPeriodic3DOneParticle(XYReflexion
 {
   this->LowerImpulsionX = 0;
   this->NbrStateX = space.GetNbrCosinusStateX();
-  this->LowerImpulsionY = 0;
+  this->LowerImpulsionY = 1;
   this->NbrStateY = space.GetNbrSinusStateY();;
   this->NbrStateZ = space.GetNbrStateZ();
   this->LowerImpulsionZ = space.GetLowerImpulsionZ();

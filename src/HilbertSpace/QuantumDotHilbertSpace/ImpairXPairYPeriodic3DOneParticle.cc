@@ -38,7 +38,7 @@
 
 ImpairXPairYPeriodic3DOneParticle::ImpairXPairYPeriodic3DOneParticle(XYReflexionSymmetricPeriodic3DOneParticle& space)
 {
-  this->LowerImpulsionX = 0;
+  this->LowerImpulsionX = 1;
   this->NbrStateX = space.GetNbrSinusStateX();
   this->LowerImpulsionY = 0;
   this->NbrStateY = space.GetNbrCosinusStateY();;

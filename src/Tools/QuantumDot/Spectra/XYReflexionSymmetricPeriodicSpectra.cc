@@ -107,10 +107,16 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
     MinUpperY = lowerImpulsionY + nbrStateY;
   if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
     MinUpperZ = lowerImpulsionZ + nbrStateZ;
+  /*
+  cout << this->LowerImpulsionX << '\t' << this->LowerImpulsionY << '\t' << this->LowerImpulsionZ << endl;
+  cout << lowerImpulsionX << '\t' << lowerImpulsionY << '\t' << lowerImpulsionZ << endl;
+
+  cout << this->NbrStateX << '\t' << this->NbrStateY << '\t' << this->NbrStateZ << endl;
+  cout << nbrStateX << '\t' << nbrStateY << '\t' << nbrStateZ << endl;
 
   cout << MaxLowerX << '\t' <<  MaxLowerY << '\t' <<  MaxLowerZ << endl;
   cout << MinUpperX << '\t' << MinUpperY << '\t' << MinUpperZ << endl;
-
+  */
   int MinStateX = MinUpperX - MaxLowerX, MinStateY = MinUpperY - MaxLowerY, MinStateZ = MinUpperZ - MaxLowerZ;
 
   ifstream File;
@@ -198,10 +204,9 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	      realImpulsionY += (double(n) * TmpRe); imaginaryImpulsionY += (double(n) * TmpIm);
 	    }
 	}
-      realImpulsionY = realImpulsionY / sizeY; imaginaryImpulsionY = realImpulsionY / sizeY;
+      realImpulsionY = realImpulsionY / sizeY; imaginaryImpulsionY = imaginaryImpulsionY / sizeY;
     }
 
-  double tr = 0.0, ti = 0.0;
   // z direction
   if ((this->LowerImpulsionX != lowerImpulsionX) || (this->LowerImpulsionY != lowerImpulsionY))
     {
@@ -209,31 +214,22 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
       imaginaryImpulsionZ = 0.0;
     }
   else
-    {
-      /*
+    {    
       for (int m = MaxLowerX; m < MinUpperX; ++m)
 	{
 	  for (int n = MaxLowerY; n < MinUpperY; ++n)
-	    {
-      */
-      for (int m = 0; m < this->NbrStateX; ++m)
-	{
-	  for (int n = 0; n < this->NbrStateY; ++n)
-	    {
-	      Re1 = this->RealCoefficients[m][n];
-	      Im1 = this->ImaginaryCoefficients[m][n];
-	      Re2 = realCoefficients[m][n];
-	      Im2 = imaginaryCoefficients[m][n];
-	      for (int p = 0; p < this->NbrStateZ; ++p)
+	    {	      
+	      Re1 = this->RealCoefficients[m - this->LowerImpulsionX][n - this->LowerImpulsionY];
+	      Im1 = this->ImaginaryCoefficients[m - this->LowerImpulsionX][n - this->LowerImpulsionY];
+	      Re2 = realCoefficients[m - lowerImpulsionX][n - lowerImpulsionY];
+	      Im2 = imaginaryCoefficients[m - lowerImpulsionX][n - lowerImpulsionY];
+	      for (int p = MaxLowerZ; p < MinUpperZ; ++p)
 		{
-		  tr += (Re1[p] * Re2[p] + Im1[p] * Im2[p]);
-		  ti += (Re1[p] * Im2[p] - Im1[p] * Re2[p]);
-		  realImpulsionZ += ((Re1[p] * Re2[p] + Im1[p] * Im2[p]) * double(p));
-		  imaginaryImpulsionZ += ((Re1[p] * Im2[p] - Im1[p] * Re2[p]) * double(p));
+		  realImpulsionZ += ((Re1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]) * double(p));
+		  imaginaryImpulsionZ += ((Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]) * double(p));
 		}
 	    }
 	}
-      realImpulsionZ = realImpulsionZ / sizeZ; imaginaryImpulsionZ = realImpulsionZ / sizeZ;	    
-      cout << tr << '\t' << ti << endl;
+      realImpulsionZ = realImpulsionZ / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ / sizeZ;	    
     }  
 }

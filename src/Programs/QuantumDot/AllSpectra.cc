@@ -9,8 +9,14 @@
 #include "Tools/QuantumDot/Spectra/AverageSpectra.h"
 #include "Tools/QuantumDot/Spectra/DOSSpectra.h"
 #include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
+#include "Tools/QuantumDot/Spectra/XYReflexionSymmetricPeriodicSpectra.h"
 
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
 
 #include "BitmapPicture/BmpFormat.h"
 
@@ -30,11 +36,15 @@ int main(int argc, char** argv)
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
-  SingleIntegerOption XCell('X', "Xcells", "number of the cells in X direction", 160);
-  SingleIntegerOption YCell('Y', "Ycells", "number of the cells in Y direction", 160);
+  SingleIntegerOption XCell('X', "Xcells", "number of the cells in X direction", 161);
+  SingleIntegerOption YCell('Y', "Ycells", "number of the cells in Y direction", 161);
   SingleIntegerOption ZCell('Z', "Zcells", "number of the cells in Z direction", 21);
   SingleIntegerOption Division('D', "division", "number of the sub-divisions in each direction", 5);
   SingleStringOption Output('r', "output", "name of the output file", "default_output.txt");
+  BooleanOption PairXOption ('\n', "pairX", "pair function in X direction", false);
+  BooleanOption PairYOption ('\n', "pairY", "pair function in Y direciton", false);
+  BooleanOption PairX2Option ('\n', "pairX2", "pair function in X direction of other particles", false);
+  BooleanOption PairY2Option ('\n', "pairY2", "pair function in Y direciton of other particles", false);
 
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
@@ -44,6 +54,10 @@ int main(int argc, char** argv)
   OptionList += &ZCell;
   OptionList += &Division;
   OptionList += &Output;
+  OptionList += &PairXOption;
+  OptionList += &PairYOption;
+  OptionList += &PairX2Option;
+  OptionList += &PairY2Option;
 
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -66,10 +80,39 @@ int main(int argc, char** argv)
   H = ZCell.GetInteger();
   Number = Division.GetInteger();
   char * out = Output.GetString();
+  bool PairX = PairXOption.GetBoolean();
+  bool PairY = PairYOption.GetBoolean();
+  bool PairX2 = PairX2Option.GetBoolean();
+  bool PairY2 = PairY2Option.GetBoolean();
   
-  /*
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2, M / 4, N / 2, N / 4, H, H / 2);
-  PeriodicSpectra spectra(Space, FileName);
+  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
+  XYReflexionSymmetricPeriodic3DOneParticle* Space;
+  if (PairX)
+    if (PairY)
+      Space = new PairXPairYPeriodic3DOneParticle(GeneralSpace);
+    else
+      Space = new PairXImpairYPeriodic3DOneParticle(GeneralSpace);
+  else
+     if (PairY)
+      Space = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);
+    else
+      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);
+
+  XYReflexionSymmetricPeriodic3DOneParticle* Space2;
+  if (PairX2)
+    if (PairY2)
+      Space2 = new PairXPairYPeriodic3DOneParticle(GeneralSpace);
+    else
+      Space2 = new PairXImpairYPeriodic3DOneParticle(GeneralSpace);
+  else
+     if (PairY2)
+      Space2 = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);
+    else
+      Space2 = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);
+  XYReflexionSymmetricPeriodicSpectra spectra(Space, FileName); 
+  
+  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2 + 1 , -M / 4, N / 2 + 1, -N / 4, H, -H / 2);
+  //PeriodicSpectra spectra(Space, FileName);
    
   double Lx = 5.65, Ly = 5.65, Lz = 5.65;
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
@@ -101,11 +144,11 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PZ("PolarizationZ.txt");
 
-  for (int i = 1; i < 150; ++i)
+  for (int i = 1; i < 80; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
-      spectra.GetImpulsion(Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      spectra.GetImpulsion(Space2, Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
       polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
       PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\n';
@@ -114,7 +157,7 @@ int main(int argc, char** argv)
 
   PX.close(); PZ.close();
   energy.close(); polarization.close();
-  */
+  
 
   /*
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, M / 2, N, N / 2, H / 2 + 1, H / 4);
@@ -160,7 +203,7 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  
+  /*
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
@@ -170,7 +213,7 @@ int main(int argc, char** argv)
     }
   DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.2, 2e-4);
   DOS.WriteSpectra(out);
- 
+  */
 
 
   /*
