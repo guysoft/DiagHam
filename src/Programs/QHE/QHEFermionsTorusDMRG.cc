@@ -3,7 +3,7 @@
 
 #include "HilbertSpace/FullFermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorus.h"
-#include "Hamiltonian/ParticleOnTorusCoulombDMRGReadyHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnTorusCoulombDMRGReadyHamiltonian.h"
 
 #include "Interaction/InternalInteraction/ParticleOnTorusCoulombInternalInteraction.h"
 

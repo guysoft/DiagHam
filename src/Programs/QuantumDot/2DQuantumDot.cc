@@ -5,9 +5,6 @@
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
-#include "HilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/ParticleOnSphereDeltaHamiltonian.h"
-
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Architecture/MonoProcessorArchitecture.h"

@@ -1,0 +1,18 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libQHEHamiltonian.a
+
+libQHEHamiltonian_a_SOURCES=TrappedBosonHamiltonian.cc \
+ParticleOnTorusCoulombHamiltonian.cc \
+ParticleOnTorusDeltaHamiltonian.cc \
+ParticleOnTorusCoulombDMRGReadyHamiltonian.cc \
+ParticleOnTorusCoulombWithSpinHamiltonian.cc \
+ParticleOnSphereCoulombHamiltonian.cc \
+ParticleOnSphereDeltaHamiltonian.cc \
+ParticleOnCircleCoulombHamiltonian.cc \
+ApproximateFermionOnTorusCoulombHamiltonian.cc \
+ParticleOnSphereDeltaModifiedHamiltonian.cc \
+AbstractQHEHamiltonian.cc \
+AbstractQHEOnSphereHamiltonian.cc \
+AbstractQHEOnTorusHamiltonian.cc \
+ParticleOnSphereCoulombDeltaHamiltonian.cc

@@ -1,0 +1,5 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libQuantumDotHamiltonian.a
+
+libQuantumDotHamiltonian_a_SOURCES=QuantumDots3DHamiltonian.cc

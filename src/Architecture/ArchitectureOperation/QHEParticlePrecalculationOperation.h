@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
-#include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
 
 
 class ParticleOnSphereDeltaHamiltonian;

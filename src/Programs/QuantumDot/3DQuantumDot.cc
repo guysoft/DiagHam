@@ -6,7 +6,7 @@
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 #include "HilbertSpace/Confined3DOneParticle.h"
 
-#include "Hamiltonian/QuantumDots3DHamiltonian.h"
+#include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"

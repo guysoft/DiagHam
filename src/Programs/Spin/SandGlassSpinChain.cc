@@ -6,7 +6,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
 #include "HilbertSpace/Spin1_2Chain.h"
-#include "Hamiltonian/SandGlassSpinChainHamiltonian.h"
+#include "Hamiltonian/SpinHamiltonian/SandGlassSpinChainHamiltonian.h"
 #include "GeneralTools/List.h"
 #include "GeneralTools/ListIterator.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"

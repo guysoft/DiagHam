@@ -6,7 +6,7 @@
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/ParticleOnSphereDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"

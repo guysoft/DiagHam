@@ -31,7 +31,7 @@
 #include "DMRGAlgorithm/NonPeriodicAsymmetricDMRGAlgorithm.h"
 #include "DMRGAlgorithm/DMRGBlock.h"
 #include "Hamiltonian/ExplicitHamiltonian.h"
-#include "Hamiltonian/NonPeriodicDMRGHamiltonian.h"
+#include "Hamiltonian/DMRGHamiltonian/NonPeriodicDMRGHamiltonian.h"
 #include "Matrix/Matrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"

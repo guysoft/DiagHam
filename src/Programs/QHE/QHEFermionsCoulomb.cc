@@ -3,8 +3,8 @@
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/FermionOnSphere.h"
-#include "Hamiltonian/ParticleOnSphereCoulombHamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"

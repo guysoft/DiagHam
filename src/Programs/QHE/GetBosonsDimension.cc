@@ -1,5 +1,5 @@
 #include "HilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/ParticleOnSphereDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaHamiltonian.h"
 
 #include <iostream>
 #include <stdlib.h>

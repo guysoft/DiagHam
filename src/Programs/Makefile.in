@@ -70,18 +70,13 @@ VERSION = @VERSION@
 
 SUBDIRS = QHE QuantumDot Spin
 
-bin_PROGRAMS = Bosons ExplicitMatrixExample
+bin_PROGRAMS = ExplicitMatrixExample
 
-Bosons_SOURCES = Bosons.cc
 ExplicitMatrixExample_SOURCES = ExplicitMatrixExample.cc
 
-Bosons_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
+ExplicitMatrixExample_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
-Bosons_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lHamiltonian -lOperator -lTensorProduct -lTensor -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
-
-ExplicitMatrixExample_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
-
-ExplicitMatrixExample_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lHamiltonian -lOperator -lTensorProduct -lTensor -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+ExplicitMatrixExample_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QHEHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
 PROGRAMS =  $(bin_PROGRAMS)
@@ -91,8 +86,6 @@ DEFS = @DEFS@ -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-Bosons_OBJECTS =  Bosons.o
-Bosons_LDFLAGS = 
 ExplicitMatrixExample_OBJECTS =  ExplicitMatrixExample.o
 ExplicitMatrixExample_LDFLAGS = 
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -105,9 +98,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/Bosons.P .deps/ExplicitMatrixExample.P
-SOURCES = $(Bosons_SOURCES) $(ExplicitMatrixExample_SOURCES)
-OBJECTS = $(Bosons_OBJECTS) $(ExplicitMatrixExample_OBJECTS)
+DEP_FILES =  .deps/ExplicitMatrixExample.P
+SOURCES = $(ExplicitMatrixExample_SOURCES)
+OBJECTS = $(ExplicitMatrixExample_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -160,10 +153,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 maintainer-clean-compile:
-
-Bosons: $(Bosons_OBJECTS) $(Bosons_DEPENDENCIES)
-	@rm -f Bosons
-	$(CXXLINK) $(Bosons_LDFLAGS) $(Bosons_OBJECTS) $(Bosons_LDADD) $(LIBS)
 
 ExplicitMatrixExample: $(ExplicitMatrixExample_OBJECTS) $(ExplicitMatrixExample_DEPENDENCIES)
 	@rm -f ExplicitMatrixExample

@@ -2,7 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include "HilbertSpace/FermionOnTorus.h"
-#include "Hamiltonian/ParticleOnCircleCoulombHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnCircleCoulombHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "Architecture/MonoProcessorArchitecture.h"

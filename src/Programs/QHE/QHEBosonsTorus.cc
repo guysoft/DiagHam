@@ -4,8 +4,8 @@
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
-#include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
-#include "Hamiltonian/ParticleOnTorusDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnTorusCoulombHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnTorusDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
