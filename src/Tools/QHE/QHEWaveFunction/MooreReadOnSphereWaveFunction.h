@@ -53,6 +53,8 @@ class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // array containing description of each permutation that appears in the calculation of the Moore-Read state
   unsigned long** Permutations;
+  // number of permutations that appears in the calculation of the Moore-Read state
+  unsigned long NbrPermutations;
   // garable flag associated to the Permutations array
   GarbageFlag Flag;
 
@@ -84,6 +86,12 @@ class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
   // x = point where the function has to be evaluated
   // return value = function value at x  
   Complex operator ()(RealVector& x);
+
+ private:
+
+  // evaluate all permutations requested for the Moore-Read state evaluation
+  //
+  void EvaluatePermutations();
 
 };
 

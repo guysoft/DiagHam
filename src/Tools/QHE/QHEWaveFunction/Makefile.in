@@ -123,7 +123,8 @@ noinst_LIBRARIES = libQHEWaveFunction.a
 
 libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc \
 PfaffianOnSphereWaveFunction.cc \
-JainCFFilledLevelOnSphereWaveFunction.cc
+JainCFFilledLevelOnSphereWaveFunction.cc \
+MooreReadOnSphereWaveFunction.cc
 
 subdir = src/Tools/QHE/QHEWaveFunction
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -136,7 +137,8 @@ libQHEWaveFunction_a_AR = $(AR) cru
 libQHEWaveFunction_a_LIBADD =
 am_libQHEWaveFunction_a_OBJECTS = LaughlinOnSphereWaveFunction.$(OBJEXT) \
 	PfaffianOnSphereWaveFunction.$(OBJEXT) \
-	JainCFFilledLevelOnSphereWaveFunction.$(OBJEXT)
+	JainCFFilledLevelOnSphereWaveFunction.$(OBJEXT) \
+	MooreReadOnSphereWaveFunction.$(OBJEXT)
 libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
@@ -145,6 +147,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = \
 @AMDEP_TRUE@	./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -189,6 +192,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po@am__quote@
 
 .cc.o:

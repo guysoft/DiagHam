@@ -134,7 +134,8 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 		  Tmp *= TmpU;
 		for (int k = this->NbrParticles - j - 1; k > 0; --k)
 		  Tmp *= TmpV;
-		Slater.SetMatrixElement(i, j, Tmp) * TmpPrefactors[j];
+		Tmp *= TmpPrefactors[j];
+		Slater.SetMatrixElement(i, j, Tmp);
 	      }
 	    for (int j = 0; j < i; ++j)
 	      {
@@ -143,7 +144,8 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 		  Tmp *= TmpU;
 		for (int k = this->NbrParticles - j - 1; k > 0; --k)
 		  Tmp *= TmpV;
-		Slater.SetMatrixElement(i, j, Tmp) * TmpPrefactors[j];
+		Tmp *= TmpPrefactors[j];
+		Slater.SetMatrixElement(i, j, Tmp);
 	      }
 	  }
       }
@@ -161,7 +163,7 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 	    TmpV = SpinorVCoordinates[i];
 	    int Max = i + MaxLL0;
 	    if (Max >= this->NbrParticles)
-	      Max = this->NbrParticles
+	      Max = this->NbrParticles;
 	    for (int j = i; j < Max; ++j)
 	      {
 		Tmp = 1.0;
@@ -199,14 +201,14 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
 {
   this->NormalizationPrefactors = new double* [this->NbrLandauLevels];
   int TwiceQ = (this->NbrParticles / this->NbrLandauLevels) - this->NbrLandauLevels;
-  int NbrMomentum = TwiceQ;
+  int MaxMomentum = TwiceQ;
   FactorialCoefficient Coef;
   double Factor = ((double) (TwiceQ + 1)) / (4.0  * M_PI);
   this->NormalizationPrefactors[0] = new double[MaxMomentum + 1];
   for (int j = 0; j <= MaxMomentum; ++j)
     {
       Coef.SetToOne();
-      Coef.PartialFactorialMultiply(Q - j + 1, Q);
+      Coef.PartialFactorialMultiply(TwiceQ - j + 1, TwiceQ);
       Coef.FactorialDivide(j);
       this->NormalizationPrefactors[0][j] = sqrt(Factor * Coef.GetNumericalValue());
     }
@@ -218,9 +220,9 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
 	  Coef.SetToOne();
-	  Coef.FactorialMultiply(Q + 2 * (this->NbrLandauLevels - 1) - j);
+	  Coef.FactorialMultiply(TwiceQ + 2 * (this->NbrLandauLevels - 1) - j);
 	  Coef.FactorialDivide(this->NbrLandauLevels - 1);
-	  Coef.PartialFactorialDivide(j + 1, Q + this->NbrLandauLevels - 1);
+	  Coef.PartialFactorialDivide(j + 1, TwiceQ + this->NbrLandauLevels - 1);
 	  this->NormalizationPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
 	}
       MaxMomentum += 2;
@@ -246,7 +248,7 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 	  Coef.SetToOne();
 	  Coef.PartialFactorialMultiply(j + 1, ReducedNbrLandauLevels);
 	  Coef.FactorialDivide(j);
-	  Coef.PartialFactorialMultiply(j + i, Q + ReducedNbrLandauLevels);	  
+	  Coef.PartialFactorialMultiply(j + i, TwiceQ + ReducedNbrLandauLevels);	  
 	  this->SumPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
 	}
       Factor *= -1.0;
