@@ -32,6 +32,13 @@
 #include "MathTools/FactorialCoefficient.h"
 
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 #define MAX_INTEGER_SIZE 1000
 
 
@@ -42,8 +49,8 @@ FactorialCoefficient::FactorialCoefficient()
 {
   this->NumeratorPosition = 0;
   this->DenominatorPosition = 0;
-  this->Numerator = new int [MAX_INTEGER_SIZE];
-  this->Denominator = new int [MAX_INTEGER_SIZE];
+  this->Numerator = new long [MAX_INTEGER_SIZE];
+  this->Denominator = new long [MAX_INTEGER_SIZE];
   this->Numerator[0] = 1;
   this->Denominator[0] = 1;
 }
@@ -52,12 +59,12 @@ FactorialCoefficient::FactorialCoefficient()
 //
 // x = value to assign to the factorial coefficient
 
-FactorialCoefficient::FactorialCoefficient(int x)  
+FactorialCoefficient::FactorialCoefficient(long x)  
 {
   this->NumeratorPosition = 0;
   this->DenominatorPosition = 0;
-  this->Numerator = new int [MAX_INTEGER_SIZE];
-  this->Denominator = new int [MAX_INTEGER_SIZE];
+  this->Numerator = new long [MAX_INTEGER_SIZE];
+  this->Denominator = new long [MAX_INTEGER_SIZE];
   this->Numerator[0] = x;
   this->Denominator[0] = 1;
 }
@@ -67,12 +74,12 @@ FactorialCoefficient::FactorialCoefficient(int x)
 // x = numerator to assign to the factorial coefficient
 // y = denominator to assign to the factorial coefficient
 
-FactorialCoefficient::FactorialCoefficient(int x, int y)  
+FactorialCoefficient::FactorialCoefficient(long x, long y)  
 {
   this->NumeratorPosition = 0;
   this->DenominatorPosition = 0;
-  this->Numerator = new int [MAX_INTEGER_SIZE];
-  this->Denominator = new int [MAX_INTEGER_SIZE];
+  this->Numerator = new long [MAX_INTEGER_SIZE];
+  this->Denominator = new long [MAX_INTEGER_SIZE];
   this->Numerator[0] = x;
   this->Denominator[0] = y;
 }
@@ -104,9 +111,9 @@ FactorialCoefficient& FactorialCoefficient::SetToOne()
 // x = integer to use
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::operator *= (int x)
+FactorialCoefficient& FactorialCoefficient::operator *= (long x)
 {
-  int GCD;
+  long GCD;
   int i;
   for (i = 0; i <= this->DenominatorPosition; ++i)
     {
@@ -114,10 +121,12 @@ FactorialCoefficient& FactorialCoefficient::operator *= (int x)
       x /= GCD;
       this->Denominator[i] /= GCD;
     }
+  if (x == 1)
+    return *this;
   i = 0;
   while (i <= this->NumeratorPosition)
     {
-      if ((x * this->Numerator[i]) < this->Numerator[i])
+      if ((x * this->Numerator[i]) > this->Numerator[i])
 	{
 	  this->Numerator[i] *= x;
 	  i = this->NumeratorPosition + 2;
@@ -129,6 +138,19 @@ FactorialCoefficient& FactorialCoefficient::operator *= (int x)
       this->Numerator[i] = x;
       ++this->NumeratorPosition;
     }
+  cout << "Numerator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Numerator[i] << " ";
+    }
+  cout << endl;
+  cout << "Denominator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Denominator[i] << " ";
+    }
+  cout << endl;
+  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -137,9 +159,9 @@ FactorialCoefficient& FactorialCoefficient::operator *= (int x)
 // y = integer to use
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::operator /= (int y)
+FactorialCoefficient& FactorialCoefficient::operator /= (long y)
 {
-  int GCD;
+  long GCD;
   int i;
   for (i = 0; i <= this->NumeratorPosition; ++i)
     {
@@ -147,10 +169,12 @@ FactorialCoefficient& FactorialCoefficient::operator /= (int y)
       y /= GCD;
       this->Numerator[i] /= GCD;
     }
+  if (y == 1)
+    return *this;
   i = 0;
   while (i <= this->DenominatorPosition)
     {
-      if ((y * this->Denominator[i]) < this->Denominator[i])
+      if ((y * this->Denominator[i]) > this->Denominator[i])
 	{
 	  this->Denominator[i] *= y;
 	  i = this->DenominatorPosition + 2;
@@ -170,7 +194,7 @@ FactorialCoefficient& FactorialCoefficient::operator /= (int y)
 // power = power exponent (must be greater than 0)
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::Power2Multiply (int power)
+FactorialCoefficient& FactorialCoefficient::Power2Multiply (long power)
 {
   int i;
   for (i = 0; (i <= this->DenominatorPosition) && (power > 0); ++i)
@@ -189,13 +213,27 @@ FactorialCoefficient& FactorialCoefficient::Power2Multiply (int power)
 	  --power;
 	}
     }
-  while (power > 0)
+#ifdef __64_BITS_
+  i = power / 62;
+  power -= (62 * i);
+  while (i > 0)
     {
-      i = power % 31;
-      power -= i;
       ++this->NumeratorPosition;
-      this->Numerator[this->NumeratorPosition] = 1 << i;
+      this->Numerator[this->NumeratorPosition] = 1 << 62;
+      --i;
     }
+#else
+  i = power / 30;
+  power -= (30 * i);
+  while (i > 0)
+    {
+      ++this->NumeratorPosition;
+      this->Numerator[this->NumeratorPosition] = 1 << 30;
+      --i;
+    }
+#endif
+  ++this->NumeratorPosition;
+  this->Numerator[this->NumeratorPosition] = 1 << power;
   return *this;
 }
 
@@ -204,7 +242,7 @@ FactorialCoefficient& FactorialCoefficient::Power2Multiply (int power)
 // power = power exponent (must be greater than 0)
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::Power2Divide (int power)
+FactorialCoefficient& FactorialCoefficient::Power2Divide (long power)
 {
   int i;
   for (i = 0; (i <= this->NumeratorPosition) && (power > 0); ++i)
@@ -223,13 +261,40 @@ FactorialCoefficient& FactorialCoefficient::Power2Divide (int power)
 	  --power;
 	}
     }
-  while (power > 0)
+#ifdef __64_BITS_
+  i = power / 62;
+  power -= (62 * i);
+  while (i > 0)
     {
-      i = power % 31;
-      power -= i;
       ++this->DenominatorPosition;
-      this->Denominator[this->DenominatorPosition] = 1 << i;
+      this->Denominator[this->DenominatorPosition] = 1 << 62;
+      --i;
     }
+#else
+  i = power / 30;
+  power -= (30 * i);
+  while (i > 0)
+    {
+      ++this->DenominatorPosition;
+      this->Denominator[this->DenominatorPosition] = 1 << 30;
+      --i;
+    }
+#endif
+  ++this->DenominatorPosition;
+  this->Denominator[this->DenominatorPosition] = 1 << power;
+  cout << "Numerator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Numerator[i] << " ";
+    }
+  cout << endl;
+  cout << "Denominator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Denominator[i] << " ";
+    }
+  cout << endl;
+  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -238,7 +303,7 @@ FactorialCoefficient& FactorialCoefficient::Power2Divide (int power)
 // x = integer to use
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::FactorialMultiply (int x)
+FactorialCoefficient& FactorialCoefficient::FactorialMultiply (long x)
 {
   if (x <= 1)
     return *this;
@@ -255,16 +320,29 @@ FactorialCoefficient& FactorialCoefficient::FactorialMultiply (int x)
 // end = last integer in the partial factorial product
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::PartialFactorialMultiply (int start, int end)
+FactorialCoefficient& FactorialCoefficient::PartialFactorialMultiply (long start, long end)
 {
   if (end <= 1)
     return *this;
   if (start <= 1)
     start = 2;
-  for (int i = start; i <= end; ++i)
+  for (long i = start; i <= end; ++i)
     {
       (*this) *= i;
     }
+  cout << "Numerator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Numerator[i] << " ";
+    }
+  cout << endl;
+  cout << "Denominator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Denominator[i] << " ";
+    }
+  cout << endl;
+  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -273,14 +351,27 @@ FactorialCoefficient& FactorialCoefficient::PartialFactorialMultiply (int start,
 // x = integer to use
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::FactorialDivide (int x)
+FactorialCoefficient& FactorialCoefficient::FactorialDivide (long x)
 {
   if (x <= 1)
     return *this;
-  for (int i = 2; i <= x; ++i)
+  for (long i = 2; i <= x; ++i)
     {
       (*this) /= i;
     }
+  cout << "Numerator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Numerator[i] << " ";
+    }
+  cout << endl;
+  cout << "Denominator: ";
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      cout << this->Denominator[i] << " ";
+    }
+  cout << endl;
+  cout << "-------------------------------------------------------" << endl;
   return *this;
 }
 
@@ -290,13 +381,13 @@ FactorialCoefficient& FactorialCoefficient::FactorialDivide (int x)
 // end = last integer in the partial factorial product
 // return value = reference on current coefficient
 
-FactorialCoefficient& FactorialCoefficient::PartialFactorialDivide (int start, int end)
+FactorialCoefficient& FactorialCoefficient::PartialFactorialDivide (long start, long end)
 {
   if (end <= 1)
     return *this;
   if (start <= 1)
     start = 2;
-  for (int i = start; i <= end; ++i)
+  for (long i = start; i <= end; ++i)
     {
       (*this) /= i;
     }
@@ -322,12 +413,12 @@ double FactorialCoefficient::GetNumericalValue()
 //
 // return value = numerical value associated to the coefficient
 
-int  FactorialCoefficient::GetIntegerValue()
+long  FactorialCoefficient::GetIntegerValue()
 {
   for (int i = 0; i <= this->DenominatorPosition; ++i)
     if (this->Denominator[i] != 1)
       return 0;
-  int x = 1;
+  long x = 1;
   for (int i = 0; i <= this->NumeratorPosition; ++i)
     if ((x * this->Numerator[i]) >= x)
       x *= this->Numerator[i];
@@ -342,7 +433,7 @@ int  FactorialCoefficient::GetIntegerValue()
 // n = second integer (must be greater than m)
 // return value = GCD
  
-int FactorialCoefficient::FindGCD(int m, int n)
+long FactorialCoefficient::FindGCD(long m, long n)
 {
   if (m < n)
     return this->RecursiveFindGCD (m, n);
@@ -357,7 +448,7 @@ int FactorialCoefficient::FindGCD(int m, int n)
 // n = second integer (must be greater than m)
 // return value = GCD
  
-int FactorialCoefficient::RecursiveFindGCD(int m, int n)
+long FactorialCoefficient::RecursiveFindGCD(long m, long n)
 {
   if (m == 0)
     return n;

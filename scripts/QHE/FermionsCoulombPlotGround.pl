@@ -24,8 +24,8 @@ while ($NbrFermions <= 40)
     if (-e $TmpFile)
       {
 	print ($TmpFile."\n");
+	my $Scaling = sqrt(($S * $NbrFermionsInc) / ($NbrFermions * $SInc));
 	my $Scaling = 1.0;
-#sqrt(($S * $NbrFermionsInc) / ($NbrFermions * $SInc));
 	$MinArray{$NbrFermions} = (&FindMinimum($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S))) * $Scaling;
       }
     $NbrFermions += $NbrFermionsInc;
@@ -132,11 +132,9 @@ set size 1.0, 0.6
 set nokey
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-f(x)= a*x+b
-g(x)= m*x*x+n*x+p
-fit f(x) \"".$FileName."\" using 1:2 via a,b
-fit g(x) \"".$FileName."\" using 1:2 via m,n,p
-plot \"".$FileName."\" using 1:2 title \"".$Title."\", f(x) with lines 1, g(x) with lines 2
+g(x)= m*x*x+p
+fit g(x) \"".$FileName."\" using 1:2 via m,p
+plot \"".$FileName."\" using 1:2 title \"".$Title."\", g(x) with lines 1
 ");
     close (OUTFILE);
     `gnuplot $TmpFileName`;

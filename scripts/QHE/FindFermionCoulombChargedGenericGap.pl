@@ -18,58 +18,68 @@ unless (open (INFILE2, $GapFile))
     die ("can't open $GapFile\n")
   }
 
-my %MinArray;
+my %MinArrayElectron;
+my %MinArrayHole;
 my $TmpFile;
 my $TmpLine; 
-$TmpLine = <INFILE2>;
-chomp ($TmpLine);
 my $PFactor = 1;
 my $QFactor = 1;
 my $Shift = 1;
-($PFactor, $QFactor, $Shift) = split (/ /, $TmpLine);
+my $Flag = 0;
+while (($Flag == 0) && ($TmpLine = <INFILE2>))
+  {
+    chomp ($TmpLine);
+    $TmpLine =~ s/^\s*//;
+    $TmpLine =~ s/\s*$//;
+    if (($TmpLine ne "") && (!($TmpLine =~ /^\#/)))
+      {
+	($PFactor, $QFactor, $Shift) = split (/ /, $TmpLine);
+	$Flag = 1;
+      }
+  }
 while ($TmpLine = <INFILE2>)
   {
     chomp ($TmpLine);
+    $TmpLine =~ s/^\s*//;
+    $TmpLine =~ s/\s*$//;
     if (($TmpLine ne "") && (!($TmpLine =~ /^\#/)))
       {
 	print "--------------------------------------------------\n";
 	my @Values = split (/ /, $TmpLine);
 	my $NbrFermions = $Values[0];
 	my $S = $Values[1];
-	$TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat";
+	$TmpFile = "n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat";
 	if (!(-e $TmpFile))
 	  {
-	    die ("file n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
+	    die ("file n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
 	  }
-	my $Quasi1 = ((&FindGround($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	my $Quasi1 = (&FindGround($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S)));
 	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
-	my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
+	my $Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
 	my $Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);	
-	$Ground /= $Scaling * $Scaling;	
-	print $Quasi1." ".$Ground."\n";
 	$Quasi1 -=  $Ground;
-	$MinArray{$Values[0]} = $Quasi1;
+#	$Quasi1 *= $Scaling;	
+	$MinArrayElectron{$Values[0]} = $Quasi1;
+
 	$NbrFermions = $Values[2];
 	$S = $Values[3];
-	$TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat";
+	$TmpFile = "n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat";
 	if (!(-e $TmpFile))
 	  {
-	    die ("file n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
+	    die ("file n_".$NbrFermions."/fermions_coulomb_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
 	  }
-	my $Quasi2 = ((&FindGround($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	my $Quasi2 = (&FindGround($TmpFile) + ((0.5 * $NbrFermions * $NbrFermions) / sqrt(0.5 * $S)));
 	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
-	$Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
+	$Scaling = sqrt(($S * $PFactor) / ($NbrFermions * $QFactor));
 	$Ground = (($Values[4] / ($NbrFermions * $NbrFermions)) + ($Values[5] / $NbrFermions) + $Values[6]);	
-	$Ground /= $Scaling * $Scaling;		
-	print $Quasi2." ".$Ground."\n";
 	$Quasi2 -= $Ground;	
-	$MinArray{$Values[0]} += $Quasi2;
+#	$Quasi2 *= $Scaling;		
+	$MinArrayHole{$Values[2]} = $Quasi2;
       }
   }
 close (INFILE2);
 
-&CreatePostScript(\%MinArray, $Caption, $PrintFlag);
-#&CreatePostScript(\%MinArrayElectron, \%MinArrayHole, $Caption, $PrintFlag);
+&CreatePostScript(\%MinArrayElectron, \%MinArrayHole, $Caption, $PrintFlag);
 
 # find ground state energy in a file
 #
@@ -107,44 +117,65 @@ sub FindGround
 
 # create postscript graph from data file
 #
-# $_[0] = hash table containing datas
-# $_[1] = print flag (1 if true)
-# $_[2] = number of fermions
+# $_[0] = hash table containing electron datas
+# $_[1] = hash table containing hole datas
+# $_[2] = print flag (1 if true)
+# $_[3] = number of fermions
 
 sub CreatePostScript
   {
-    my $Datas = $_[0];
-    my $Caption = $_[1];
-    my $PrintFlag = $_[2];
-    my $N;
-    my $E;
-    my $FileName = "fermions_laplaciandelta_chargedgap_".$Caption.".dat";
+    my $DataElectrons = $_[0];
+    my $DataHoles = $_[1];
+    my $Caption = $_[2];
+    my $PrintFlag = $_[3];
+    my $NHole;
+    my $EHole;
+    my $NElectron;
+    my $EElectron;
+    my $FileName = "fermions_coulomb_chargedgap_".$Caption.".dat";
     open (OUTFILE, ">$FileName");
     my $MinN = 200;
     my $MaxN = 0;
     my $MinGap = 400;
     my $MaxGap = 0;
-    while (($N, $E) = each (%$Datas))
+    while ((($NHole, $EHole) = each (%$DataHoles)) && (($NElectron, $EElectron) = each (%$DataElectrons)))
       {
-	if ($MinN > $N)
+	if ($MinN > $NHole)
 	  {
-	    $MinN = $N;
+	    $MinN = $NHole;
 	  }
-	if ($MaxN < $N)
+	if ($MaxN < $NHole)
 	  {
-	    $MaxN = $N;
+	    $MaxN = $NHole;
 	  }
-	if ($MinGap > $E)
+	if ($MinGap > $EHole)
 	  {
-	    $MinGap = $E;
+	    $MinGap = $EHole;
 	  }
-	if ($MaxGap < $E)
+	if ($MaxGap < $EHole)
 	  {
-	    $MaxGap = $E;
+	    $MaxGap = $EHole;
 	  }
-	$N = 1.0 / $N;
-	print ($N." ".$E."\n");
-	print OUTFILE ($N." ".$E."\n");
+	$NHole = 1.0 / $NHole;
+	if ($MinN > $NElectron)
+	  {
+	    $MinN = $NElectron;
+	  }
+	if ($MaxN < $NElectron)
+	  {
+	    $MaxN = $NElectron;
+	  }
+	if ($MinGap > $EElectron)
+	  {
+	    $MinGap = $EElectron;
+	  }
+	if ($MaxGap < $EElectron)
+	  {
+	    $MaxGap = $EElectron;
+	  }
+	$NElectron = 1.0 / $NElectron;
+	print ($NHole." ".$EHole." ".$NElectron." ".$EElectron."\n");
+	print OUTFILE ($NHole." ".$EHole." ".$NElectron." ".$EElectron."\n");
       }
     close (OUTFILE);
     $MinGap = 0;
@@ -159,7 +190,7 @@ sub CreatePostScript
     $MaxN = $Tmp;
     $MinN = 0.0;
     my $TmpFileName = "tmp".time().".p";
-    my $OutputFile = "fermions_laplaciandelta_chargedgap_".$Caption.".ps";
+    my $OutputFile = "fermions_coulomb_chargedgap_".$Caption.".ps";
     my @TmpArray = split (/_/,  $OutputFile);
     my $Title = "gap ".$Caption;
     open (OUTFILE, ">$TmpFileName");
@@ -172,10 +203,10 @@ set nokey
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
 f(x)= a*x+b
-g(x)= m*x*x+n*x+p
+g(x)= m*x+n
 fit f(x) \"".$FileName."\" using 1:2 via a,b
-fit g(x) \"".$FileName."\" using 1:2 via m,n,p
-plot \"".$FileName."\" using 1:2 title \"".$Title."\", f(x) with lines 1, g(x) with lines 2
+fit g(x) \"".$FileName."\" using 3:4 via m,n
+plot \"".$FileName."\" using 1:2 title \"".$Title."\", \"".$FileName."\" using 3:4 title \"".$Title."\" with points 2, f(x) with lines 1, g(x) with lines 2
 ");
     close (OUTFILE);
     `gnuplot $TmpFileName`;

@@ -17,6 +17,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "MathTools/FactorialCoefficient.h"
+
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -30,6 +32,9 @@ using std::cout;
 using std::endl;
 using std::ofstream;
 using std::ios;
+
+double Zog(int m1, int m2, int m3, int m4);
+
 
 int main(int argc, char** argv)
 {
@@ -76,6 +81,15 @@ int main(int argc, char** argv)
   if (MMax < MMin)
     MMax = MMin;
 
+  FactorialCoefficient Coef;
+  Coef.SetToOne();
+  Coef *= 2000000000;
+  Coef *= 2000000000;
+  Coef *= 2000000000;
+  return 0;
+
+  cout << Zog(11, 8, 0, 19) << endl;
+  return 0;
 
   char* OutputName = new char [1024];
   sprintf (OutputName, "fermions_disk_laplaciandelta_n_%d_l_%d.dat", NbrFermions, MMax);
@@ -176,3 +190,34 @@ int main(int argc, char** argv)
   return 0;
 }
 
+
+double Zog(int m1, int m2, int m3, int m4)
+{
+  if ((m1 == m2) || (m3 == m4))
+    return 0.0;
+  FactorialCoefficient Coef;
+  Coef.SetToOne();
+  cout << m1 << " " << m2 << " " << m3 << " " << m4 << endl;
+  if (m2 > 1)
+    {
+      Coef.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
+      Coef.FactorialDivide(m2);
+    }
+  else
+    {
+      if (m2 == 0)
+	Coef /= m1;	
+    }
+  if (m4 > 1)
+    {
+      Coef.PartialFactorialMultiply(m3 + 1, m3 + m4 - 1);
+      Coef.FactorialDivide(m4);
+    }
+  else
+    {
+      if (m4 == 0)
+	Coef /= m3;	
+    }
+  Coef.Power2Divide(2 * (m1 + m2));
+  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4)))/ M_PI);
+}

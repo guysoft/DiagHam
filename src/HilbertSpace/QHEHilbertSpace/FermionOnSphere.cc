@@ -371,10 +371,12 @@ double FermionOnSphere::AdA (int index, int m)
 
 int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  int Pos = this->LookUpTable[lzmax][stateDescription >> this->LookUpTableShift[lzmax]];
-  while (this->StateDescription[Pos] != stateDescription)
-    ++Pos;
-  return Pos;
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  while (this->StateDescription[PosMin] != stateDescription)
+    ++PosMin;
+  return PosMin;
 }
 
 // print a given State
@@ -389,7 +391,7 @@ ostream& FermionOnSphere::PrintState (ostream& Str, int state)
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
 //  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
+//  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
   return Str;
 }
 
@@ -443,7 +445,7 @@ int FermionOnSphere::GenerateStates(int nbrFermions, int lzMax, int currentLzMax
 void FermionOnSphere::GenerateLookUpTable(int memory)
 {
   // evaluate look-up table size
-  memory /= (4 * this->NbrLzValue);
+  memory /= (sizeof(int*) * this->NbrLzValue);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
@@ -466,23 +468,27 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
   else
     this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
   int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = 0;
+  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
   unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-  while (CurrentLookUpTableValue < TmpLookUpTableValue)
+  while (CurrentLookUpTableValue > TmpLookUpTableValue)
     {
       TmpLookUpTable[CurrentLookUpTableValue] = 0;
-      ++CurrentLookUpTableValue;
+      --CurrentLookUpTableValue;
     }
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
       if (CurrentLzMax != this->StateLzMax[i])
 	{
-	  while (CurrentLookUpTableValue <= this->LookUpTableMemorySize)
+	  while (CurrentLookUpTableValue > 0)
 	    {
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      ++CurrentLookUpTableValue;
+	      --CurrentLookUpTableValue;
 	    }
+	  TmpLookUpTable[0] = i;
+	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
+	    cout << TmpLookUpTable[j] << " ";
+	  cout << endl << "-------------------------------------------" << endl;
  	  CurrentLzMax = this->StateLzMax[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
 	  if (CurrentLzMax < this->MaximumLookUpShift)
@@ -491,11 +497,11 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
 	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  CurrentLookUpTableValue = 0;
-	  while (CurrentLookUpTableValue < TmpLookUpTableValue)
+	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
+	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
 	    {
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      ++CurrentLookUpTableValue;
+	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[CurrentLookUpTableValue] = i;
 	}
@@ -504,10 +510,10 @@ void FermionOnSphere::GenerateLookUpTable(int memory)
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
 	    {
-	      while (CurrentLookUpTableValue < TmpLookUpTableValue)
+	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
 		{
 		  TmpLookUpTable[CurrentLookUpTableValue] = i;
-		  ++CurrentLookUpTableValue;
+		  --CurrentLookUpTableValue;
 		}
 //	      CurrentLookUpTableValue = TmpLookUpTableValue;
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
