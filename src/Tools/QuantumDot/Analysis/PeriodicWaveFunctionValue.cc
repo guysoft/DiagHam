@@ -34,9 +34,18 @@ int main(int argc, char** argv)
   Manager += FileGroup;
   Manager += MiscGroup;
 
-  (*PositionGroup) += new SingleDoubleOption ('x', "x-position", "position in X direction in the length of the big box unit", 0.5);
-  (*PositionGroup) += new SingleDoubleOption ('y', "y-position", "position in Y direction in the length of the big box unit", 0.5);
-  (*PositionGroup) += new SingleDoubleOption ('z', "z-position", "position in Z direction in the length of the big box unit", 0.5);
+  
+  (*PositionGroup) += new SingleDoubleOption ('\n', "begin-x", "beginning position in X direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleDoubleOption ('\n', "end-x", "ending position in X direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleIntegerOption ('x', "nbr-pointx", "number of points in X direction", 1);
+
+  (*PositionGroup) += new SingleDoubleOption ('\n', "begin-y", "beginning position in Y direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleDoubleOption ('\n', "end-y", "ending position in Y direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleIntegerOption ('y', "nbr-pointy", "number of points in Y direction", 1);
+  
+  (*PositionGroup) += new SingleDoubleOption ('\n', "begin-z", "beginning position in Z direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleDoubleOption ('\n', "end-z", "ending position in Z direction in the length of the big box unit", 0.5);
+  (*PositionGroup) += new SingleIntegerOption ('z', "nbr-pointz", "number of points in Z direction", 1);
 
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-statex", "number of states in x direction", 31);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowx", "lower impulsion in x direction", -15);
@@ -60,9 +69,17 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  double PositionX = ((SingleDoubleOption*) Manager["x-position"])->GetDouble();
-  double PositionY = ((SingleDoubleOption*) Manager["y-position"])->GetDouble();
-  double PositionZ = ((SingleDoubleOption*) Manager["z-position"])->GetDouble();
+  double BeginX = ((SingleDoubleOption*) Manager["begin-x"])->GetDouble();
+  double EndX = ((SingleDoubleOption*) Manager["end-x"])->GetDouble();
+  int NbrPointX = ((SingleIntegerOption*) Manager["nbr-pointx"])->GetInteger();
+
+  double BeginY = ((SingleDoubleOption*) Manager["begin-y"])->GetDouble();
+  double EndY = ((SingleDoubleOption*) Manager["end-y"])->GetDouble();
+  int NbrPointY = ((SingleIntegerOption*) Manager["nbr-pointy"])->GetInteger();
+
+  double BeginZ = ((SingleDoubleOption*) Manager["begin-z"])->GetDouble();
+  double EndZ = ((SingleDoubleOption*) Manager["end-z"])->GetDouble();
+  int NbrPointZ = ((SingleIntegerOption*) Manager["nbr-pointz"])->GetInteger();
 
   int NbrStateX = ((SingleIntegerOption*) Manager["nbr-statex"])->GetInteger();
   int LowImpulsionX = ((SingleIntegerOption*) Manager["lowx"])->GetInteger();
@@ -76,12 +93,39 @@ int main(int argc, char** argv)
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, LowImpulsionX, NbrStateY, LowImpulsionY, NbrStateZ, LowImpulsionZ);
 
   PeriodicSpectra Spectra (Space, FileName);
-
-  double Real = 0.0, Imaginary = 0.0;
   
-  Spectra.WaveFunctionValue (PositionX, 1.0, PositionY, 1.0, PositionZ, 1.0, Real, Imaginary);
-  
-  cout << "The probability at considered the point: " << Real << " " << Imaginary << endl;
+  double deltaX = 0.0;
+  if (NbrPointX != 0)
+    deltaX = (EndX - BeginX) / (NbrPointX - 1);
 
+  double deltaY = 0.0;
+  if (NbrPointY != 0)
+    deltaY = (EndY - BeginY) / (NbrPointY - 1);
+  
+  double deltaZ = 0.0;
+  if (NbrPointZ != 0)
+    deltaZ = (EndZ - BeginZ) / (NbrPointZ - 1);
+
+  double PositionX = BeginX, PositionY = 0.0, PositionZ = 0.0;
+  double Real = 0.0, Imaginary = 0.0; double Value = 0;
+  for (int i = 0; i < NbrPointX; ++i)
+    {
+      PositionY = BeginY;
+      for (int j = 0; j < NbrPointY; ++j)
+	{
+	  PositionZ = BeginZ;
+	  for (int k = 0; k < NbrPointZ; ++k)
+	    {
+	      Spectra.WaveFunctionValue (PositionX, 1.0, PositionY, 1.0, PositionZ, 1.0, Real, Imaginary);
+	      Value = Real * Real + Imaginary * Imaginary;
+	      cout << PositionX << '\t' << PositionY << '\t' << PositionZ << '\t' << Real << '\t' << Imaginary << '\t' << Value << '\n';
+	      PositionZ += deltaZ;
+	    }
+	  
+	  PositionY += deltaY;
+	}
+      PositionX += deltaX;
+    }
+  
   return 1;
 }
