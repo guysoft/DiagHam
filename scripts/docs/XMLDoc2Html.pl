@@ -3,11 +3,26 @@
 use strict 'vars';
 
 use XML::Simple;
+use Getopt::Long;
 
+my $HeaderFile = "";
+my $FooterFile = "";
+my $Result = GetOptions ("header:s" => $HeaderFile); 
+$Result = GetOptions ("footer:s" => $FooterFile); 
+$Result = GetOptions ("xml=s" => $XMLFile); 
 
-unless (open (INFILE, "docs/built_in_progams/header.html"))
+if ($HeaderFile == "")
   {
-    die ("can't open docs/built_in_progams/header.html\n");
+    $HeaderFile = "docs/built_in_progams/header.html";
+  }
+if ($FooterFile == "")
+  {
+    $FooterFile = "docs/built_in_progams/footer.html";
+  }
+
+unless (open (INFILE, $HeaderFile))
+  {
+    die ("can't open ".$HeaderFile."\n");
   }
 my $TmpLine;
 foreach $TmpLine (<INFILE>)
@@ -17,7 +32,7 @@ foreach $TmpLine (<INFILE>)
 close (INFILE);
 
 
-my $XMLContent = XMLin($ARGV[0]);
+my $XMLContent = XMLin($XMLFile);
 
 if (defined($$XMLContent{'name'}))
   {
@@ -56,7 +71,7 @@ if (defined($$XMLContent{'optiongroup'}))
     foreach $Key (@OptionGroupNames)
       {
 	my $Value = $$OptionGroupRef{$Key};
-	print "<li>".$Key." :
+	print "<li>".&ConvertLatex2HTML($Key)." :
 <ul>\n";
 	my $OptionRef = $$Value{'option'};
 	if (defined($$OptionRef{'name'}))
@@ -157,9 +172,9 @@ if (defined($$XMLContent{'author'}))
   }
 
 
-unless (open (INFILE, "docs/built_in_progams/footer.html"))
+unless (open (INFILE, $FooterFile))
   {
-    die ("can't open docs/built_in_progams/footer.html\n");
+    die ("can't open ".$FooterFile."\n");
   }
 foreach $TmpLine (<INFILE>)
   {
@@ -200,7 +215,7 @@ sub PrintOptionInfo
       {
 	$TmpString .= "-".$$OptionValue{'short'}.", ";
       }
-    $TmpString .= "- -".$$OptionValue{'name'}." : ".$$OptionValue{'description'};
+    $TmpString .= "--".$$OptionValue{'name'}." : ".&ConvertLatex2HTML($$OptionValue{'description'});
     if (defined($$OptionValue{'default'}))
       {
 	$TmpString .= " (default value is set to ".$$OptionValue{'default'}.")";
@@ -227,7 +242,9 @@ sub PrintRelatedProgramInfo
 
 sub ConvertLatex2HTML
   {
-    my $TmpString = $_[0];
+    my $TmpString = $_[0];    
+    $TmpString =~ s/\\\\//g;
+    $TmpString =~ s/\n/\<br \/\>/g;
     $TmpString =~ s/\\\_/\_/g;
     $TmpString =~ s/\\\'(.)/\&$1acute\;/g;
     $TmpString =~ s/\\\`(.)/\&$1grave\;/g;
@@ -235,25 +252,41 @@ sub ConvertLatex2HTML
 
     $TmpString =~ s/\\href\{([^\}]*)\}\{([^\}]*)\}/\<a href\=\"$2\"\>$1\<\/a\>/g;
     $TmpString =~ s/\\program\{([^\}]*)\}/\<span class\=\"programdocprogram\">$1\<\/span\>/g;
-    $TmpString =~ s/\\option\{([^\}]*)\}/\<span class\=\"programdocoption\">$1\<\/span\>/g;
-    $TmpString =~ s/\\longoption\{([^\}]*)\}/\<span class\=\"programdoclongoption\">$1\<\/span\>/g;
+    $TmpString =~ s/\\programwithlink\{([^\}]*)\}\{([^\}]*)\}/\<span class\=\\\"programdocprogram\\\">$1\/$2\<\/span\>/g;
+    $TmpString =~ s/\\option\{([^\}]*)\}/\<span class\=\"programdocoption\">\-$1\<\/span\>/g;
+    $TmpString =~ s/\\longoption\{([^\}]*)\}/\<span class\=\"programdoclongoption\">\-\-$1\<\/span\>/g;
     $TmpString =~ s/\\filename\{([^\}]*)\}/\<span class\=\"programdocfilename\">$1\<\/span\>/g;
     $TmpString =~ s/\\directoryname\{([^\}]*)\}/\<span class\=\"programdocdirectoryname\">$1\<\/span\>/g;
     $TmpString =~ s/\\paper\{([^\}]*)\}/\<span class\=\"programdocpaper\">$1\<\/span\>/g;
+    $TmpString =~ s/\\paperwithlink\{([^\}]*)\}\{([^\}]*)\}/\<span class\=\"programdocpaper\">$2\<\/span\>/g;
+    $TmpString =~ s/\\command\{([^\}]*)\}/\<span class\=\"programdoccommand\">$1\<\/span\>/g;
+    $TmpString =~ s/\\commandarray\{([^\}]*)\}/\<div class\=\"programdoccommand\">$1\<\/div\>/g;
 
     my $StartPos = 0;
     my $EndPos = 0;
     while ($EndPos >= 0)
-      {
-	$StartPos = index ($TmpString, "\$", $EndPos);
+      {	
+	$StartPos = index ($TmpString, "\$", 0);
 	$EndPos = index ($TmpString, "\$", $StartPos + 1);	
 	if ($EndPos > $StartPos)
 	  {
-	    substr($TmpString, $StartPos, $StartPos - $EndPos + 1, &ConvertLatexSmallFormula2HTML(substr($TmpString, $StartPos + 1, $StartPos - $EndPos - 1)))
+	    substr($TmpString, $StartPos, $EndPos - $StartPos + 1, &ConvertLatexSmallFormula2HTML(substr($TmpString, $StartPos + 1, $EndPos - $StartPos - 1)))
 	  }
       }
 
-    $TmpString =~ s/\n/\<br \/\>/g;
+    $EndPos = 0;
+    while ($EndPos >= 0)
+      {	
+	$StartPos = index ($TmpString, "\\begin{eqnarray}", 0);
+	$EndPos = index ($TmpString, "\\end{eqnarray}", $StartPos + 16);	
+	if ($EndPos > $StartPos)
+	  {
+	    substr($TmpString, $StartPos, $EndPos - $StartPos + 14, &ConvertLatexLongFormula2HTML(substr($TmpString, $StartPos + 16, $EndPos - $StartPos - 16)))
+	  }
+      }
+
+    $TmpString =~ s/\<br \/\>/\<br \/\>\n/g;
+
     return $TmpString;
   }
 
@@ -265,5 +298,99 @@ sub ConvertLatex2HTML
 
 sub ConvertLatexSmallFormula2HTML
   {
-    return $_[0];
+    my $TmpString = $_[0];
+    $TmpString =~ s/\\alpha/\&alpha\;/g;
+    $TmpString =~ s/\\Alpha/\&Alpha\;/g;
+    $TmpString =~ s/\\beta/\&beta\;/g;
+    $TmpString =~ s/\\Beta/\&Beta\;/g;
+    $TmpString =~ s/\\gamma/\&gamma\;/g;
+    $TmpString =~ s/\\Gamma/\&Gamma\;/g;
+    $TmpString =~ s/\\delta/\&delta\;/g;
+    $TmpString =~ s/\\Delta/\&Delta\;/g;
+    $TmpString =~ s/\\epsilon/\&epsilon\;/g;
+    $TmpString =~ s/\\Epsilon/\&Epsilon\;/g;
+    $TmpString =~ s/\\zeta/\&zeta\;/g;
+    $TmpString =~ s/\\Zeta/\&Zeta\;/g;
+    $TmpString =~ s/\\eta/\&eta\;/g;
+    $TmpString =~ s/\\Eta/\&Eta\;/g;
+    $TmpString =~ s/\\theta/\&theta\;/g;
+    $TmpString =~ s/\\Theta/\&Theta\;/g;
+    $TmpString =~ s/\\iota/\&iota\;/g;
+    $TmpString =~ s/\\Iota/\&Iota\;/g;
+    $TmpString =~ s/\\kappa/\&kappa\;/g;
+    $TmpString =~ s/\\Kappa/\&Kappa\;/g;
+    $TmpString =~ s/\\lambda/\&lambda\;/g;
+    $TmpString =~ s/\\Lambda/\&Lambda\;/g;
+    $TmpString =~ s/\\mu/\&mu\;/g;
+    $TmpString =~ s/\\Mu/\&Mu\;/g;
+    $TmpString =~ s/\\nu/\&nu\;/g;
+    $TmpString =~ s/\\Nu/\&nu\;/g;
+    $TmpString =~ s/\\omicron/\&omicron\;/g;
+    $TmpString =~ s/\\Omicron/\&Omicron\;/g;
+    $TmpString =~ s/\\xi/\&xi\;/g;
+    $TmpString =~ s/\\Xi/\&Xi\;/g;
+    $TmpString =~ s/\\pi/\&pi\;/g;
+    $TmpString =~ s/\\Pi/\&Pi\;/g;
+    $TmpString =~ s/\\rho/\&rho\;/g;
+    $TmpString =~ s/\\Rho/\&Rho\;/g;
+    $TmpString =~ s/\\sigma/\&sigma\;/g;
+    $TmpString =~ s/\\Sigma/\&Sigma\;/g;
+    $TmpString =~ s/\\tau/\&Tau\;/g;
+    $TmpString =~ s/\\upsilon/\&upsilon\;/g;
+    $TmpString =~ s/\\Upsilon/\&\Upsilon;/g;
+    $TmpString =~ s/\\chi/\&chi\;/g;
+    $TmpString =~ s/\\Chi/\&Chi\;/g;
+    $TmpString =~ s/\\psi/\&psi\;/g;
+    $TmpString =~ s/\\Psi/\&Psi\;/g;
+    $TmpString =~ s/\\phi/\&phi\;/g;
+    $TmpString =~ s/\\Phi/\&Phi\;/g;
+    $TmpString =~ s/\\omega/\&omega\;/g;
+    $TmpString =~ s/\\Omega/\&Omega\;/g;
+
+    $TmpString =~ s/\\pm/\&plusmn\;/g;
+
+    $TmpString =~ s/\\\;/ /g;
+    $TmpString =~ s/\\nonumber//g;
+
+    $TmpString =~ s/\\frac\{([^\}]*)\}\{([^\}]*)\}/\($1\)\/\($2\)/g;
+    $TmpString =~ s/\{([^\}]*)\}\^\{([^\}]*)\}/\($1\)\<sup\>$2\<\/sup\>/g;
+    $TmpString =~ s/\^\{([^\}]*)\}/\<sup\>$1\<\/sup\>/g;
+    $TmpString =~ s/\^(.)/\<sup\>$1\<\/sup\>/g;
+    $TmpString =~ s/\_\{([^\}]*)\}/\<sub\>$1\<\/sub\>/g;
+    $TmpString =~ s/\_(.)/\<sub\>$1\<\/sub\>/g;
+
+    return $TmpString;
+  }
+
+# convert a Latex formula embedded in a equation array to HTML
+#
+# $_[0] = string containing the formula to convert
+# return value = converted formula
+
+sub ConvertLatexLongFormula2HTML
+  {
+    $_[0] =~ s/^[\s\n]*//g;
+    $_[0] =~ s/[\s\n]*$//g;
+    my @Lines = split (/\\\\/, $_[0]);
+    my $TmpLine;
+    my $TmpString = "<table>\n";
+    foreach $TmpLine (@Lines)
+      {
+	$TmpString .= "<tr>\n";
+	$TmpLine =~ s/^[\s\n]*//g;
+	$TmpLine =~ s/[\s\n]*$//g;
+	my @Columns = split (/\&/, $TmpLine);
+	my $TmpColumn;
+	foreach $TmpColumn (@Columns)
+	  {
+	    $TmpString .= "<td>";	    
+	    $TmpColumn =~ s/^[\s]*//g;
+	    $TmpColumn =~ s/[\s]*$//g;
+	    $TmpString .= &ConvertLatexSmallFormula2HTML($TmpColumn)."</td>"	    
+	    
+	  }
+	$TmpString .= "</tr>\n";
+      }
+    $TmpString .= "</table>\n";
+    return $TmpString;
   }

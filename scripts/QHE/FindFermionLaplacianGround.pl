@@ -12,7 +12,7 @@ while ($NbrFermions < 40)
     my $TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$SValue."_lz.dat";
     if (-e  $TmpFile)
       {
-	my $Energy = (&FindMin($TmpFile) + 10.0) * sqrt (0.5 * $SValue);
+	my $Energy = &FindMin($TmpFile);
 	if ($Energy < 0)
 	{
 #       print ($NbrFermions." ".$SValue." ".$Energy."\n");

@@ -49,6 +49,8 @@ int main(int argc, char** argv)
   SingleIntegerOption InitialLzOption ('\n', "initial-lz", "twice the inital momentum projection for the system", 
 					-1);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
+  SingleIntegerOption FullDiagonalizationLimitOption ('\n', "full-diag", 
+						      "maximum Hilbert space dimension for which full diagonalization is applied", 500, true, 100);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   SingleIntegerOption MemorySpaceOption ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
@@ -68,6 +70,7 @@ int main(int argc, char** argv)
   OptionList += &NbrEigenvaluesOption;
   OptionList += &NbrFermionOption;
   OptionList += &LzMaxOption;
+  OptionList += &FullDiagonalizationLimitOption;
   OptionList += &MemoryOption;
   OptionList += &MemorySpaceOption;
   OptionList += &InitialLzOption;
@@ -99,6 +102,7 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrFermions = NbrFermionOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
+  int FullDiagonalizationLimit = FullDiagonalizationLimitOption.GetInteger();
   long Memory = ((unsigned long) MemoryOption.GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) MemorySpaceOption.GetInteger()) << 20;
   int InitialLz = InitialLzOption.GetInteger();
@@ -110,7 +114,7 @@ int main(int argc, char** argv)
 
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
-  int Shift = 0;
+  double Shift = -10.0;
   char* OutputNameLz = new char [256];
   if (CoulombFactor == 0.0)
     sprintf (OutputNameLz, "fermions_laplaciandelta_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
@@ -151,13 +155,6 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
       FermionOnSphere Space (NbrFermions, L, LzMax, MemorySpace);
-      /*      for (int j = 0; j < 100; ++j)
-	for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-	  Space.FindStateIndex(Space.StateDescription[i], Space.StateLzMax[i]);
-      for (int i = 0; i <= LzMax; ++i)
-	cout << i << " = " << Space.LookUpTableShift[i] << endl;
-	//	Space.PrintState(cout, i) << endl;
-	return 0;*/
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
       AbstractArchitecture* Architecture = 0;
@@ -170,12 +167,12 @@ int main(int argc, char** argv)
 	Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
       else
 	Hamiltonian = new ParticleOnSphereCoulombLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, CoulombFactor, Architecture, Memory, LoadPrecalculationFileName);
-//      Hamiltonian = new ParticleOnSphereCoulombHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
-      if (Hamiltonian->GetHilbertSpaceDimension() < 1000)
+      if (Hamiltonian->GetHilbertSpaceDimension() < FullDiagonalizationLimit)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
@@ -186,16 +183,16 @@ int main(int argc, char** argv)
 	      TmpTriDiag.Diagonalize();
 	      TmpTriDiag.SortMatrixUpOrder();
 	      if (L == 0)
-		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
+		GroundStateEnergy = (TmpTriDiag.DiagonalElement(0) - Shift);
 	      for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
 		{
-		  File << (L / 2) << " " << TmpTriDiag.DiagonalElement(j) << endl;
+		  File << (L / 2) << " " << (TmpTriDiag.DiagonalElement(j) - Shift) << endl;
 		}
 	      cout << endl;
 	    }
 	  else
 	    {
-	      File << (L / 2) << " " << HRep(0, 0) << endl;
+	      File << (L / 2) << " " << (HRep(0, 0) - Shift) << endl;
 	    }
 	}
       else
@@ -247,10 +244,10 @@ int main(int argc, char** argv)
 	      Lanczos->RunLanczosAlgorithm(1);
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	      TmpMatrix.SortMatrixUpOrder();
-	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
+	      Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1) - Shift;
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
-	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
+	      cout << (TmpMatrix.DiagonalElement(0) - Shift) << " " << Lowest << " " << Precision << " "<< endl;
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {
@@ -261,12 +258,12 @@ int main(int argc, char** argv)
 	    }
 	  GroundStateEnergy = Lowest;
 	  cout << endl;
-	  cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
+	  cout << (TmpMatrix.DiagonalElement(0) - Shift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	       << CurrentNbrIterLanczos << endl;
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << (int) (L / 2) << " " << (TmpMatrix.DiagonalElement(i)) << endl;
+	      File << (int) (L / 2) << " " << (TmpMatrix.DiagonalElement(i) - Shift) << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);

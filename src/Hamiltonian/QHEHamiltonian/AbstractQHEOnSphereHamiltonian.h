@@ -84,6 +84,9 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
   double** InteractionPerComponentCoefficient;
 
+  // shift to apply to the Hamiltonian diagonal elements
+  double HamiltonianShift;
+
  public:
 
   // destructor

@@ -71,6 +71,7 @@ ParticleOnSphereLaplacianDeltaHamiltonian::ParticleOnSphereLaplacianDeltaHamilto
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -156,6 +157,7 @@ int ParticleOnSphereLaplacianDeltaHamiltonian::GetHilbertSpaceDimension ()
 
 void ParticleOnSphereLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
+  this->HamiltonianShift = shift;
 }
   
 // evaluate matrix element
@@ -237,11 +239,11 @@ RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(RealV
 // return value = reference on vector where result has been stored
 
 RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								   int firstComponent, int nbrComponent)
+									   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Shift = -10.0;//-0.5 * ((double) (this->NbrParticles * this->NbrParticles)) / sqrt (0.5 * ((double) this->LzMax));
+  double Shift = this->HamiltonianShift;
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
@@ -445,19 +447,8 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   int Lim;
   int Min;
   int Pos = 0;
-//  int NbrNonZero = 0;
-  FactorialCoefficient Coef;
-  Coef.SetToOne();
-  Coef.PartialFactorialMultiply(this->LzMax, 2 * this->LzMax - 2);
-  Coef.FactorialDivide(this->LzMax - 1);
-  Coef.PartialFactorialMultiply(this->LzMax + 6, 2 * this->LzMax + 4);
-  Coef.FactorialDivide(this->LzMax + 2);
-  Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
-  Coef.FactorialMultiply(this->LzMax + 1);
-  Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
-  Coef.FactorialMultiply(this->LzMax + 1);
-  double TmpV = 1.0;//Coef.GetNumericalValue();
-  cout << "TmpV = " << TmpV << endl;
+  double TmpV = ((((double) this->LzMax) + 1.0) * (((double) this->LzMax) + 1.0)) / 
+		 ((0.5 * ((double) this->LzMax)) * ((2.0 * (double) this->LzMax) - 1.0));
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J = 2 * this->LzMax - 2;
   int m4;
@@ -471,7 +462,7 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)//= this->LzMax; m2 += 2)// m1; m2 += 2)
+	for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
 	  {
 	    Lim = m1 + m2 + this->LzMax;
 	    if (Lim > this->LzMax)
@@ -499,9 +490,9 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
-      double Factor = - 4.0 / sqrt (0.5 * ((double) this->LzMax));
+      double Factor = - 4.0;
       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)//this->NbrLzValue; ++m2)// m1; ++m2)
+	for (int m2 = 0; m2 < m1; ++m2)
 	  {
 	    Lim = m1 + m2;
 	    if (Lim > this->LzMax)
@@ -511,17 +502,14 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	      Min = 0;
 	    for (int m3 = Min; m3 <= Lim; ++m3)
 	      {
-		if (/*(fabs(TmpCoefficient[Pos]) > MaxCoefficient) &&*/ ((2 * m3) > (m1 + m2)))
-	      {
-		this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-		this->M1Value[this->NbrInteractionFactors] = m1;
-		this->M2Value[this->NbrInteractionFactors] = m2;
-		this->M3Value[this->NbrInteractionFactors] = m3;
-		/*		cout << this->M1Value[this->NbrInteractionFactors] << " " << this->M2Value[this->NbrInteractionFactors] 
-				<< " " << this->M3Value[this->NbrInteractionFactors] 
-				<< " " << this->InteractionFactors[this->NbrInteractionFactors] << endl;*/
-		++this->NbrInteractionFactors;
-	      }
+		if (((2 * m3) > (m1 + m2)))
+		  {
+		    this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
+		    this->M1Value[this->NbrInteractionFactors] = m1;
+		    this->M2Value[this->NbrInteractionFactors] = m2;
+		    this->M3Value[this->NbrInteractionFactors] = m3;
+		    ++this->NbrInteractionFactors;
+		  }
 		++Pos;
 	      }
 	  }
@@ -529,7 +517,7 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   else
     {
        for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
-	for (int m2 =  -this->LzMax; m2 <= m1; m2 += 2) // this->LzMax; m2 += 2)// 
+	for (int m2 =  -this->LzMax; m2 <= m1; m2 += 2)
 	  {
 	    Lim = m1 + m2 + this->LzMax;
 	    if (Lim > this->LzMax)
@@ -557,10 +545,10 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
-      double Factor = 4.0 / sqrt (0.5 * ((double) this->LzMax));
+      double Factor = 4.0;
       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
 	{
-	  for (int m2 = 0; m2 < m1; ++m2)//this->NbrLzValue; ++m2)//
+	  for (int m2 = 0; m2 < m1; ++m2)
 	    {
 	      Lim = m1 + m2;
 	      if (Lim > this->LzMax)
@@ -751,13 +739,6 @@ void ParticleOnSphereLaplacianDeltaHamiltonian::EnableFastMultiplication()
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-
-/*  AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
-  GenericOperation<ParticleOnSphereDeltaHamiltonian> Operation(this, &(ParticleOnSphereDeltaHamiltonian::PartialEnableFastMultiplication));
-  if (Architecture->ExecuteOperation(&Operation) == false)
-    cout << "error" << endl;
-  else
-    cout << "success" << endl;*/
 
   int TotalPos = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)

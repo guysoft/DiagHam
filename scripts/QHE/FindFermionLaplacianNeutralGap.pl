@@ -26,7 +26,7 @@ while ($NbrFermions <= 40)
 	print ($TmpFile."\n");
 	my $Scaling = ($S * $NbrFermionsInc) / ($NbrFermions * $SInc);
 	$Scaling *= $Scaling;
-	$MinArray{$NbrFermions} = (&FindGap($TmpFile)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))) * $Scaling;
+	$MinArray{$NbrFermions} = (&FindGap($TmpFile)) * $Scaling;
       }
     $NbrFermions += $NbrFermionsInc;
     $S += $SInc;

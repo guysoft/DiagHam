@@ -139,7 +139,7 @@ Matrix* AbstractHamiltonian::GetHamiltonian ()
 
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
-  return vDestination;
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -154,6 +154,28 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 						  int firstComponent, int nbrComponent)
 {
+  return this->LowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
   return vDestination;
 }
 
@@ -166,7 +188,7 @@ RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 
 RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
-  return vDestination;
+  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -181,9 +203,30 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return vDestination;
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
 
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
@@ -192,7 +235,7 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& AbstractHamiltonian:: LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
   return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
@@ -210,9 +253,30 @@ ComplexVector& AbstractHamiltonian:: LowLevelMultiply(ComplexVector& vSource, Co
 ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return vDestination;
+  return this->LowLevelMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
 }
 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+						     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  return vDestination;
+}
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -237,6 +301,28 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 
 ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							int firstComponent, int nbrComponent)
+{
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+							int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
   return vDestination;
 }

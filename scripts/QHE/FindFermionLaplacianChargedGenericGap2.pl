@@ -43,7 +43,7 @@ while ($TmpLine = <INFILE2>)
 	  {
 	    die ("file n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
 	  }
-	my $Quasi1 = ((&FindGround($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	my $Quasi1 = &FindGround($TmpFile);
 	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	$Quasi1 *= $Scaling * $Scaling;	
@@ -58,7 +58,7 @@ while ($TmpLine = <INFILE2>)
 	  {
 	    die ("file n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat does not exist\n")
 	  }
-	my $Quasi2 = ((&FindGround($TmpFile) + 10.0) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	my $Quasi2 = &FindGround($TmpFile);
 	$S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	$Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	$Quasi2 *= $Scaling * $Scaling;		

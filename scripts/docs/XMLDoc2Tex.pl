@@ -3,11 +3,25 @@
 use strict 'vars';
 
 use XML::Simple;
+use Getopt::Long;
 
+my $HeaderFile = "";
+my $FooterFile = "";
+my $TexFile = "";
+my $Result = GetOptions ("header:s" => \$HeaderFile, "footer:s" => \$FooterFile, "xml=s" => \$TexFile); 
 
-unless (open (INFILE, "docs/built_in_progams/header.tex"))
+if ($HeaderFile eq "")
   {
-    die ("can't open docs/built_in_progams/header.tex\n");
+    $HeaderFile = "docs/built_in_programs/header.tex";
+  }
+if ($FooterFile eq "")
+  {
+    $FooterFile = "docs/built_in_programs/footer.tex";
+  }
+
+unless (open (INFILE, $HeaderFile))
+  {
+    die ("can't open ".$HeaderFile."\n");
   }
 my $TmpLine;
 foreach $TmpLine (<INFILE>)
@@ -17,7 +31,7 @@ foreach $TmpLine (<INFILE>)
 close (INFILE);
 
 
-my $XMLContent = XMLin($ARGV[0]);
+my $XMLContent = XMLin($TexFile);
 
 my $Key;
 my $Value;
@@ -159,9 +173,9 @@ if (defined($$XMLContent{'author'}))
   }
 
 
-unless (open (INFILE, "docs/built_in_progams/footer.tex"))
+unless (open (INFILE, $FooterFile))
   {
-    die ("can't open docs/built_in_progams/footer.tex\n");
+    die ("can't open ".$FooterFile."\n");
   }
 foreach $TmpLine (<INFILE>)
   {

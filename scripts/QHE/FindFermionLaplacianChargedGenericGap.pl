@@ -4,7 +4,7 @@ use strict 'vars';
 
 if (!(defined($ARGV[1])))
   {
-    die "usage: FindGapGeneric ground.dat Caption [PrintFlag]";
+    die "usage: FindFermionLaplacianChargedGenericGap.pl ground.dat Caption [PrintFlag]";
   }
 my $PrintFlag = 0;
 my $GapFile = $ARGV[0];
@@ -55,7 +55,7 @@ while ($TmpLine = <INFILE2>)
 	$TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat";
 	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
-	    my $Quasi1 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	    my $Quasi1 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)));
 	    $S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	    my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	    $Scaling *= $Scaling;
@@ -69,7 +69,7 @@ while ($TmpLine = <INFILE2>)
 	$TmpFile = "n_".$NbrFermions."/fermions_laplaciandelta_n_".$NbrFermions."_2s_".$S."_lz.dat";
 	if ((-e $TmpFile) && (&FindApproximativeGround($NbrFermions, $PFactor, $QFactor, $Shift, \$Ground) == 0))
 	  {
-	    my $Quasi2 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)) * (sqrt(0.5 * $S) * ($S + 1) * ($S + 1) / (0.5* $S * ((2 * $S) - 1))));
+	    my $Quasi2 = ((&FindGround($TmpFile) + &ShiftEnergy($S, $NbrFermions)));
 	    $S = ($QFactor * $NbrFermions / $PFactor) - $Shift;
 	    my $Scaling = ($S * $PFactor) / ($NbrFermions * $QFactor);
 	    $Scaling *= $Scaling;	
@@ -218,10 +218,10 @@ sub FindApproximativeGround
 	  }
       }
     my $Scaling = ($SMin * $PFactor) / ($NbrFermionsMin * $QFactor);	
-    my $Ground1 = (((&FindGround($TmpFileGround1) + &ShiftEnergy($SMin, $NbrFermionsMin)) * (sqrt(0.5 * $SMin) * ($SMin + 1) * ($SMin + 1) / (0.5* $SMin * ((2 * $SMin) - 1))))
+    my $Ground1 = (((&FindGround($TmpFileGround1) + &ShiftEnergy($SMin, $NbrFermionsMin))
 		   * $Scaling * $Scaling / $NbrFermionsMin);	
     $Scaling = ($SMax * $PFactor) / ($NbrFermionsMax * $QFactor);
-    my $Ground2 = (((&FindGround($TmpFileGround2) + &ShiftEnergy($SMax, $NbrFermionsMax)) * (sqrt(0.5 * $SMax) * ($SMax + 1) * ($SMax + 1) / (0.5* $SMax * ((2 * $SMax) - 1))))
+    my $Ground2 = (((&FindGround($TmpFileGround2) + &ShiftEnergy($SMax, $NbrFermionsMax))
 		   * $Scaling * $Scaling / $NbrFermionsMax);	
     $$Ground = (((($Ground1 - $Ground2) / ((1.0 / $NbrFermionsMin) - (1.0 / $NbrFermionsMax))) * 
 		 ((1.0 / $NbrFermions) - (1.0 / $NbrFermionsMax)) + $Ground2) * $NbrFermions);
@@ -238,7 +238,7 @@ sub ShiftEnergy
   {
     my $S = $_[0];
     my $NbrFermions = $_[1];
-    return 10.0;
+    return 0.0;
   }
 # create postscript graph from data file
 #
