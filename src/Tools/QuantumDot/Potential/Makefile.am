@@ -21,6 +21,6 @@ TESTS=
 
 TestPotential_SOURCES=TestPotential.cc
 
-TestPotential_DEPENDENCIES=@top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a
+TestPotential_DEPENDENCIES=$(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a
 
-TestPotential_LDADD=-L@top_srcdir@/src/Tools/QuantumDot/Potential -lPotential @MATH_LIBS@ @THREAD_LIBS@
+TestPotential_LDADD=-L$(top_builddir)/src/Tools/QuantumDot/Potential -lPotential @MATH_LIBS@ @THREAD_LIBS@
