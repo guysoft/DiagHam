@@ -99,6 +99,11 @@ class VectorQuantumNumber : public AbstractQuantumNumber
   // return value = pointer to the quantum number
   AbstractQuantumNumber* operator [] (int index);
 
+  // Get reference on the list of quantum numbers that are part of the vector
+  //
+  // return value = reference on the list of quantum numbers
+  List<AbstractQuantumNumber*>& GetQuantumNumbers();
+
   // add two quantum numbers
   //
   // Q1 = first quantum number
@@ -135,6 +140,15 @@ class VectorQuantumNumber : public AbstractQuantumNumber
   friend ostream& operator << (ostream& Str, const VectorQuantumNumber& Q);
 
 };
+
+// Get reference on the list of quantum numbers that are part of the vector
+//
+// return value = reference on the list of quantum numbers
+
+inline List<AbstractQuantumNumber*>& VectorQuantumNumber::GetQuantumNumbers()
+{
+  return this->QuantumNumbers;
+}
 
 #endif
 

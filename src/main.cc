@@ -96,7 +96,36 @@ int main(int argc, char** argv)
 {
 
   cout.precision(14);
-  int dimM = 6;
+  int dimM = 10;
+
+  RealSymmetricMatrix TmpRM(RandomRealSymmetricMatrix(dimM, 10.0));
+  
+  RealVector V1 (dimM);
+  RealVector V2 (dimM);
+  RealVector V3 (dimM);
+  for (int i = 0; i < 10; ++i)
+    {
+      cout << i << " ---------------------------------------------------------" << endl;
+      V1.ClearVector();
+      for (int j = 0; j < dimM; ++j)
+	V1[j] = (double) j;
+      V2.Multiply(TmpRM, V1);
+      V3.Multiply(TmpRM, V1, 0, 2);
+//      cout << V3 << endl << "----------" << endl;
+      V3.AddMultiply(TmpRM, V1, 2, 5);
+      V3.AddMultiply(TmpRM, V1, 7, 1);
+      V3.AddMultiply(TmpRM, V1, 8, 2);
+//      cout << V3 << endl;
+      for (int j = 0; j < dimM; ++j)
+	{
+	  if (V2[j] != V3[j])
+	    {
+	      cout << "error " << j << " " << V2[j] << " " << V3[j] << endl;
+	    }
+	}
+    }
+  return 0;
+
   RealTriDiagonalSymmetricMatrix TmpM (RandomRealTriDiagonalSymmetricMatrix(dimM, 10));
   RealTriDiagonalSymmetricMatrix TmpM2;
   TmpM2.Copy(TmpM);

@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libMathTools.a
 
-libMathTools_a_SOURCES = FactorialCoefficient.cc ClebschGordanCoefficients.cc
+libMathTools_a_SOURCES = FactorialCoefficient.cc ClebschGordanCoefficients.cc IntegerAlgebraTools.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -85,7 +85,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libMathTools_a_LIBADD = 
 libMathTools_a_OBJECTS =  FactorialCoefficient.o \
-ClebschGordanCoefficients.o
+ClebschGordanCoefficients.o IntegerAlgebraTools.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -98,7 +98,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/ClebschGordanCoefficients.P \
-.deps/FactorialCoefficient.P
+.deps/FactorialCoefficient.P .deps/IntegerAlgebraTools.P
 SOURCES = $(libMathTools_a_SOURCES)
 OBJECTS = $(libMathTools_a_OBJECTS)
 

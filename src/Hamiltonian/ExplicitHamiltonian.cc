@@ -163,7 +163,7 @@ RealVector& ExplicitHamiltonian::LowLevelMultiply(RealVector& vSource, RealVecto
 RealVector& ExplicitHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 						  int firstComponent, int nbrComponent) 
 {
-  return vDestination.Multiply(*(this->Hamiltonian), vSource, firstComponent, 1, nbrComponent, firstComponent, 1);
+  return vDestination.Multiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -190,7 +190,7 @@ RealVector& ExplicitHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 RealVector& ExplicitHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 						     int firstComponent, int nbrComponent)
 {
-  return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, 1, nbrComponent, firstComponent, 1);
+  return vDestination.AddMultiply(*(this->Hamiltonian), vSource, firstComponent, nbrComponent);
 }
 
 // multiply a vector by the current hamiltonian and store result in another vector

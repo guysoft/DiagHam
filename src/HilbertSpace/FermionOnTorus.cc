@@ -223,6 +223,11 @@ FermionOnTorus::~FermionOnTorus ()
     {
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
+      delete[] this->SignLookUpTable;
+      delete[] this->LookUpTableShift;
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	delete[] this->LookUpTable[i];
+      delete[] this->LookUpTable;
     }
 }
 
@@ -237,6 +242,11 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
     {
       delete[] this->StateDescription;
       delete[] this->StateMaxMomentum;
+      delete[] this->SignLookUpTable;
+      delete[] this->LookUpTableShift;
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	delete[] this->LookUpTable[i];
+      delete[] this->LookUpTable;
     }
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;

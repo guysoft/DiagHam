@@ -103,12 +103,12 @@ int main(int argc, char** argv)
       cout << " Ratio = " << XRatio << endl;
       BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, Momentum);
       cout << " Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
 	{
 	  cout << i << " = ";
 	  TotalSpace.PrintState(cout, i) << endl;
 	}
-	List<AbstractQuantumNumber*> QuantumNumbers ( TotalSpace.GetQuantumNumbers());
+/*	List<AbstractQuantumNumber*> QuantumNumbers ( TotalSpace.GetQuantumNumbers());
       ListIterator<AbstractQuantumNumber*> QuantumNumberIter (QuantumNumbers);
       AbstractQuantumNumber** TmpQuantumNumber;
       while ((TmpQuantumNumber = QuantumNumberIter()))

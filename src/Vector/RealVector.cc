@@ -697,6 +697,79 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V)
   return *this;
 }
 
+// do a partial left multication of a vector with a real symmetric matrix and store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+				  int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    {
+      return *this;
+    }
+  int Last = sourceStart + sourceNbrComponent;
+  int j;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  double x;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; i++)
+    {
+      x = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->Components[i] = x;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      x += M.DiagonalElements[i] * V.Components[i];
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos2] * V.Components[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->Components[i] = x;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->Components[i] = x;
+    }
+  return *this;
+}
+
 // left multiply a vector with a symmetric matrix and use to store result in current vector (without creating temporary vector)
 //
 // M = matrix to use
@@ -834,6 +907,79 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
   return *this;
 }
 
+// do a partial left multication of a vector with a real symmetric matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+				     int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    {
+      return *this;
+    }
+  int Last = sourceStart + sourceNbrComponent;
+  int j;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  double x;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; i++)
+    {
+      x = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->Components[i] += x;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      x += M.DiagonalElements[i] * V.Components[i];
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos2] * V.Components[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->Components[i] += x;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->Components[i] += x;
+    }
+  return *this;
+}
+
 // left multiply a vector with a real matrix and add result to the current vector
 //
 // M = matrix to use
@@ -961,6 +1107,78 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
   return *this;
 }
 
+// do a partial left multication of a vector with a real antisymmetric matrix and store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, 
+				  int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    {
+      return *this;
+    }
+  int Last = sourceStart + sourceNbrComponent;
+  int j;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  double x;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; i++)
+    {
+      x = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->Components[i] = x;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x -= M.OffDiagonalElements[Pos2] * V.Components[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->Components[i] = x;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x -= M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->Components[i] = x;
+    }
+  return *this;
+}
+
 // left multiply a vector with a antisymmetric matrix and use to store result in current vector (without creating temporary vector)
 //
 // M = matrix to use
@@ -1079,6 +1297,78 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
   return *this;
 }
 
+// do a partial left multication of a vector with a real antisymmetric matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, 
+				     int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    {
+      return *this;
+    }
+  int Last = sourceStart + sourceNbrComponent;
+  int j;
+  int Inc1 =  this->Dimension - sourceNbrComponent + M.Increment - 2;
+  int Inc2 =  this->Dimension + M.Increment - 2;
+  double x;
+  int i = 0;
+  int Pos = sourceStart - 1;
+  for (; i < sourceStart; i++)
+    {
+      x = 0.0;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos] * V.Components[j];
+	  ++Pos;
+	}
+      Pos += Inc1 - i;
+      this->Components[i] += x;
+    }
+  Inc1 = this->Dimension - Last + M.Increment;
+  int Pos2 = Pos;
+  int Pos3 = Pos;
+  ++Pos2;
+  for (; i < Last; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < i; ++j)
+	{
+	  x -= M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  x += M.OffDiagonalElements[Pos2] * V.Components[j];
+	  ++Pos2;
+	}
+      Pos2 += Inc1; 
+      ++Pos3;
+      this->Components[i] += x;
+    }
+  for (; i < this->Dimension; ++i)
+    {
+      x = 0.0;
+      Pos = Pos3;
+      for (j = sourceStart; j < Last; ++j)
+	{
+	  x -= M.OffDiagonalElements[Pos] * V.Components[j];
+	  Pos += Inc2 - j;
+	}
+      ++Pos3;
+      this->Components[i] += x;
+    }
+  return *this;
+}
+
 // left multiply a vector with an antisymmetric matrix and add result to the current vector
 //
 // M = matrix to use
@@ -1183,6 +1473,35 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
   return *this;
 }
 
+// do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, 
+				  int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  int j = sourceStart;
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      j = sourceStart;
+      this->Components[i] = M.Columns[j].Components[i] * V.Components[j];
+      ++j;
+      for (; j < Last; ++j)
+	{
+	  this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
+	}
+    }
+  return *this;
+}
+
 // left multiply a vector with a real matrix and use to store result in current vector (without creating temporary vector)
 //
 // M = matrix to use
@@ -1277,6 +1596,31 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
   return *this;
 }
 
+// do a partial left multication of a vector with a real matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int sourceStart, 
+				     int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      for (int j = sourceStart; j < Last; ++j)
+	{
+	  this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
+	}
+    }
+  return *this;
+}
+
 // left multiply a vector with a real matrix and add result to the current vector
 //
 // M = matrix to use
@@ -1327,6 +1671,27 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V)
     {
       this->Components[i] = M.DiagonalElements[i] * V.Components[i];
      }
+  return *this;
+}
+
+// do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  for (int i = sourceStart; i < Last; ++i)
+    {
+      this->Components[i] =  M.DiagonalElements[i] * V.Components[i];
+    }
   return *this;
 }
 
@@ -1400,6 +1765,27 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
   for (int i = 0; i < V.Dimension; ++i)
     {
       this->Components[i] += M.DiagonalElements[i] * V.Components[i];
+    }
+  return *this;
+}
+
+// do a partial left multication of a vector with a real matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceNbrComponent = number of component to take into account in the source vector
+// return value = reference on current vector
+
+RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+{
+  if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
+      || (this->Dimension != M.NbrRow))
+    return *this;
+  int Last = sourceStart + sourceNbrComponent;
+  for (int i = sourceStart; i < Last; ++i)
+    {
+      this->Components[i] +=  M.DiagonalElements[i] * V.Components[i];
     }
   return *this;
 }
@@ -1700,6 +2086,43 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V)
     }
 }
 
+// do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceStep = step to add to go to the following source vector coordinate
+// destStart = destination vector first coordinate to modify
+// destStep = step to add to go to the following destination vector coordinate
+// return value = reference on current vector
+
+RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+{
+  if ((M.MatrixType & Matrix::RealElements) == 0)
+    return *this;
+  if ((M.MatrixType & Matrix::BlockDiagonal) != 0)
+    {
+      return this->Multiply((BlockDiagonalMatrix&) M, V, sourceStart, sourceNbrComponent);
+    }
+  switch (M.MatrixType)
+    {
+    case (Matrix::RealElements):
+      return this->Multiply((RealMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::RealElements | Matrix::Symmetric | Matrix::Diagonal):
+      return this->Multiply((RealDiagonalMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::Symmetric | Matrix::RealElements):
+      return this->Multiply((RealSymmetricMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::Antisymmetric | Matrix::RealElements):
+      return this->Multiply((RealAntisymmetricMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    default:
+      return *this;
+    }
+}
+
 // left multiply a vector with a matrix and use to store result in 
 // current vector (without creating temporary vector)
 //
@@ -1774,6 +2197,43 @@ RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceSta
       break;
     case (Matrix::Antisymmetric | Matrix::RealElements):
       return this->Multiply((RealAntisymmetricMatrix&) M, V, sourceStart, sourceStep, sourceNbrComponent, destStart, destStep);
+      break;
+    default:
+      return *this;
+    }
+}
+
+// do a partial left multication of a vector with a real matrix and add result to the current vector
+//
+// M = matrix to use
+// V = vector to multiply
+// sourceStart = source vector first coordinate to modify
+// sourceStep = step to add to go to the following source vector coordinate
+// destStart = destination vector first coordinate to modify
+// destStep = step to add to go to the following destination vector coordinate
+// return value = reference on current vector
+
+RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+{
+  if ((M.MatrixType & Matrix::RealElements) == 0)
+    return *this;
+  if ((M.MatrixType & Matrix::BlockDiagonal) != 0)
+    {
+      return this->AddMultiply((BlockDiagonalMatrix&) M, V, sourceStart, sourceNbrComponent);
+    }
+  switch (M.MatrixType)
+    {
+    case (Matrix::RealElements):
+      return this->AddMultiply((RealMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::RealElements | Matrix::Symmetric | Matrix::Diagonal):
+      return this->AddMultiply((RealDiagonalMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::Symmetric | Matrix::RealElements):
+      return this->AddMultiply((RealSymmetricMatrix&) M, V, sourceStart, sourceNbrComponent);
+      break;
+    case (Matrix::Antisymmetric | Matrix::RealElements):
+      return this->AddMultiply((RealAntisymmetricMatrix&) M, V, sourceStart, sourceNbrComponent);
       break;
     default:
       return *this;

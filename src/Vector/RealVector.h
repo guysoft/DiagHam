@@ -300,6 +300,15 @@ class RealVector : public Vector
   // return value = reference on current vector
   RealVector& Multiply (const RealSymmetricMatrix&  M, RealVector& V);
 
+  // do a partial left multication of a vector with a real symmetric matrix and store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& Multiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+
   // left multiply a vector with a symmetric matrix and use to store result in current vector (without creating temporary vector)
   //
   // M = matrix to use
@@ -330,6 +339,15 @@ class RealVector : public Vector
   // V = vector to multiply
   // return value = reference on current vector
   RealVector& AddMultiply (const RealSymmetricMatrix&  M, RealVector& V);
+
+  // do a partial left multication of a vector with a real symmetric matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& AddMultiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
 
   // left multiply a vector with a antisymmetric matrix and add result to the current vector
   //
@@ -363,7 +381,16 @@ class RealVector : public Vector
   // return value = reference on current vector
   RealVector& Multiply (const RealAntisymmetricMatrix&  M, RealVector& V);
 
-  // left multiply a vector with an antissymmetric matrix and use to store result in current vector (without creating temporary vector)
+  // do a partial left multication of a vector with a real antisymmetric matrix and store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+
+  // left multiply a vector with an antisymmetric matrix and use to store result in current vector (without creating temporary vector)
   //
   // M = matrix to use
   // V = vector to multiply
@@ -375,7 +402,7 @@ class RealVector : public Vector
   RealVector& Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
 			int destStart, int destStep);
 
-  // left multiply a vector with an antissymmetric matrix and use to store result in current vector (without creating temporary vector)
+  // left multiply a vector with an antisymmetric matrix and use to store result in current vector (without creating temporary vector)
   //
   // M = matrix to use
   // V = vector to multiply
@@ -394,6 +421,15 @@ class RealVector : public Vector
   // V = vector to multiply
   // return value = reference on current vector
   RealVector& AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V);
+
+  // do a partial left multication of a vector with a real antisymmetric matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
 
   // left multiply a vector with an antisymmetric matrix and add result to the current vector
   //
@@ -426,6 +462,15 @@ class RealVector : public Vector
   // return value = reference on current vector
   RealVector& Multiply (const RealDiagonalMatrix&  M, RealVector& V);
 
+  // do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& Multiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+
   // left multiply a vector with a real diagonal matrix and use to store result in current vector (without creating temporary vector)
   //
   // M = matrix to use
@@ -457,7 +502,16 @@ class RealVector : public Vector
   // V = vector to multiply
   // return value = reference on current vector
   RealVector& AddMultiply (const RealDiagonalMatrix&  M, RealVector& V);
-
+  
+  // do a partial left multication of a vector with a real matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& AddMultiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+    
   // left multiply a vector with a real diagonal matrix and add result to the current vector
   //
   // M = matrix to use
@@ -489,6 +543,15 @@ class RealVector : public Vector
   // return value = reference on current vector
   RealVector& Multiply (const RealMatrix&  M, RealVector& V);
 
+  // do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+
   // left multiply a vector with a real matrix and use to store result in current vector (without creating temporary vector)
   //
   // M = matrix to use
@@ -512,6 +575,15 @@ class RealVector : public Vector
   // return value = reference on current vector  
   RealVector& Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
 			int sourceNbrComponent, int destStart, int destStep);
+
+  // do a partial left multication of a vector with a real matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceNbrComponent = number of component to take into account in the source vector
+  // return value = reference on current vector
+  RealVector& AddMultiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
 
   // left multiply a vector with a real matrix and add result to the current vector
   //
@@ -620,6 +692,28 @@ class RealVector : public Vector
   // V = vector to multiply
   // return value = reference on current vector
   RealVector& AddMultiply (const Matrix&  M, RealVector& V);
+
+  // do a partial left multication of a vector with a real matrix and store result in current vector (without creating temporary vector)
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceStep = step to add to go to the following source vector coordinate
+  // destStart = destination vector first coordinate to modify
+  // destStep = step to add to go to the following destination vector coordinate
+  // return value = reference on current vector
+  RealVector& Multiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
+
+  // do a partial left multication of a vector with a real matrix and add result to the current vector
+  //
+  // M = matrix to use
+  // V = vector to multiply
+  // sourceStart = source vector first coordinate to modify
+  // sourceStep = step to add to go to the following source vector coordinate
+  // destStart = destination vector first coordinate to modify
+  // destStep = step to add to go to the following destination vector coordinate
+  // return value = reference on current vector
+  RealVector& AddMultiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent);
 
   // left multiply a vector with a matrix and use to store result in current 
   // vector (without creating temporary vector)
