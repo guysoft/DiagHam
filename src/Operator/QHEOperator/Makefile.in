@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(libOperator_a_SOURCES)
+SOURCES = $(libQHEOperator_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -22,7 +22,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../..
+top_builddir = ../../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -36,7 +36,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = src/Operator
+subdir = src/Operator/QHEOperator
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -48,29 +48,21 @@ CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
-libOperator_a_AR = $(AR) $(ARFLAGS)
-libOperator_a_LIBADD =
-am_libOperator_a_OBJECTS = AbstractOperator.$(OBJEXT) \
-	PeriodicAnisotropicMagnetizationOperator.$(OBJEXT) \
-	ParticlePolarizationOperator.$(OBJEXT) \
-	ParticleOnSphereDensityDensityOperator.$(OBJEXT) \
-	ParticleOnSphereDensityOperator.$(OBJEXT)
-libOperator_a_OBJECTS = $(am_libOperator_a_OBJECTS)
+libQHEOperator_a_AR = $(AR) $(ARFLAGS)
+libQHEOperator_a_LIBADD =
+am_libQHEOperator_a_OBJECTS = ParticleOnSphereNBodyOperator.$(OBJEXT)
+libQHEOperator_a_OBJECTS = $(am_libQHEOperator_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDensityDensityOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDensityOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticlePolarizationOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PeriodicAnisotropicMagnetizationOperator.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(libOperator_a_SOURCES)
-DIST_SOURCES = $(libOperator_a_SOURCES)
+SOURCES = $(libQHEOperator_a_SOURCES)
+DIST_SOURCES = $(libQHEOperator_a_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -164,14 +156,9 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEOperator
-noinst_LIBRARIES = libOperator.a
-libOperator_a_SOURCES = AbstractOperator.cc \
-PeriodicAnisotropicMagnetizationOperator.cc \
-ParticlePolarizationOperator.cc \
-ParticleOnSphereDensityDensityOperator.cc \
-ParticleOnSphereDensityOperator.cc
-
+SUBDIRS = 
+noinst_LIBRARIES = libQHEOperator.a
+libQHEOperator_a_SOURCES = ParticleOnSphereNBodyOperator.cc
 all: all-recursive
 
 .SUFFIXES:
@@ -185,9 +172,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/Operator/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/Operator/QHEOperator/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/Operator/Makefile
+	  $(AUTOMAKE) --gnu  src/Operator/QHEOperator/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -208,10 +195,10 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libOperator.a: $(libOperator_a_OBJECTS) $(libOperator_a_DEPENDENCIES) 
-	-rm -f libOperator.a
-	$(libOperator_a_AR) libOperator.a $(libOperator_a_OBJECTS) $(libOperator_a_LIBADD)
-	$(RANLIB) libOperator.a
+libQHEOperator.a: $(libQHEOperator_a_OBJECTS) $(libQHEOperator_a_DEPENDENCIES) 
+	-rm -f libQHEOperator.a
+	$(libQHEOperator_a_AR) libQHEOperator.a $(libQHEOperator_a_OBJECTS) $(libQHEOperator_a_LIBADD)
+	$(RANLIB) libQHEOperator.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -219,11 +206,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDensityDensityOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDensityOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticlePolarizationOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicAnisotropicMagnetizationOperator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

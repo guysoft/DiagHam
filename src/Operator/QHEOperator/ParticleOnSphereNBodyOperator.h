@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of abstract operator                       //
+//                  class of particle on sphere n-body operator               //
 //                                                                            //
-//                        last modification : 22/03/2002                      //
+//                        last modification : 13/12/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,108 +28,84 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTOPERATOR_H
-#define ABSTRACTOPERATOR_H
+#ifndef PARTICLEONSPHERENBODYOPERATOR_H
+#define PARTICLEONSPHERENBODYOPERATOR_H
 
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
-
-#include <iostream>
-
-
-class ComplexVector;
-class RealVector;
-class Complex;
-class Matrix;
-class RealSymmetricMatrix;
-class HermitianMatrix;
-class AbstractHilbertSpace;
-#ifdef USE_OUTPUT
-class MathematicaOutput;
-#endif
+#include "Operator/AbstractOperator.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 
 
-using std::ostream;
-
-
-class AbstractOperator
+class ParticleOnSphereNBodyOperator : public AbstractOperator
 {
 
  protected:
 
-  GarbageFlag Flag;
-
+  // hilbert space associated to the particles
+  ParticleOnSphere* Particle;
+  
+  // indices attached to the a+_i a+_j a_k a_l
+  // index of the leftmost creation operator
+  int CreationIndex1;
+  // index of the rightmost creation operator
+  int CreationIndex2;
+  // index of the leftmost annihilation operator
+  int AnnihilationIndex1;
+  // index of the rightmost annihilation operator
+  int AnnihilationIndex2;
+  
  public:
+  
+  // constructor from default datas
+  //
+  // particle = hilbert space associated to the particles
+  // creationIndex1 = index of the leftmost creation operator
+  // creationIndex2 = index of the rightmost creation operator
+  // annihilationIndex1 = index of the leftmost annihilation operator
+  // annihilationIndex2 = index of the rightmost annihilation operator
+  ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
+					 int annihilationIndex1, int annihilationIndex2);
 
   // destructor
   //
-  virtual ~AbstractOperator();
-
+  ~ParticleOnSphereNBodyOperator();
+  
   // clone operator without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
-  virtual AbstractOperator* Clone () = 0;
+  AbstractOperator* Clone ();
 
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace) = 0;
+  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
 
   // get Hilbert space on which operator acts
   //
   // return value = pointer to used Hilbert space
-  virtual AbstractHilbertSpace* GetHilbertSpace () = 0;
+  AbstractHilbertSpace* GetHilbertSpace ();
 
   // return dimension of Hilbert space where operator acts
   //
   // return value = corresponding matrix elementdimension
-  virtual int GetHilbertSpaceDimension () = 0;
-  
-  // store operator into an hermitian matrix
-  //
-  // M = reference on matrix where operator has to be stored
-  // return value = reference on  corresponding hermitian matrix
-  virtual HermitianMatrix& GetOperator (HermitianMatrix& M);
-  
-  // store real part of operator into a real symmetric matrix
-  //
-  // M = reference on matrix where operator has to be stored
-  // return value = reference on  corresponding real symmetric matrix 
-  virtual RealSymmetricMatrix& GetOperator (RealSymmetricMatrix& M);
-  
-  // store real part of operator into a matrix
-  //
-  // M = reference on matrix where operator has to be stored
-  // return value = reference on  corresponding matrix 
-  virtual Matrix& GetOperator (Matrix& M);
-  
-  // return matrix representation of current operator
-  //
-  // return value = reference to representation
-  virtual Matrix* GetOperator ();
+  int GetHilbertSpaceDimension ();
   
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  virtual Complex MatrixElement (RealVector& V1, RealVector& V2) = 0;
+  Complex MatrixElement (RealVector& V1, RealVector& V2);
   
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2) = 0;
-
-  // multiply a vector by the current operator and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  virtual RealVector& Multiply(RealVector& vSource, RealVector& vDestination);
-
+  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
+   
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
@@ -138,16 +114,9 @@ class AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& Multiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent) = 0;
-
-  // multiply a vector by the current operator and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vector where result has been stored
-  virtual ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination);
-
+  RealVector& Multiply(RealVector& vSource, RealVector& vDestination, 
+		       int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
@@ -156,24 +125,9 @@ class AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent) = 0;
+  ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
+			  int firstComponent, int nbrComponent);
 
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, AbstractOperator& O);
-
-#ifdef USE_OUTPUT
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, AbstractOperator& O);
-#endif
 
 };
 

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of particle on sphere density-density operator           //
+//                  class of particle on sphere n-body operator               //
 //                                                                            //
-//                        last modification : 10/12/2002                      //
+//                        last modification : 13/12/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,13 +29,12 @@
 
 
 #include "config.h"
-#include "Operator/ParticleOnSphereDensityDensityOperator.h"
-#include "Output/MathematicaOutput.h"
+#include "Operator/QHEOperator/ParticleOnSphereNBodyOperator.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Complex.h"
 
-
+  
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
@@ -44,7 +43,7 @@
 // annihilationIndex1 = index of the leftmost annihilation operator
 // annihilationIndex2 = index of the rightmost annihilation operator
 
-ParticleOnSphereDensityDensityOperator::ParticleOnSphereDensityDensityOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
+ParticleOnSphereNBodyOperator::ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
 									       int annihilationIndex1, int annihilationIndex2)
 {
   this->Particle= particle;
@@ -57,7 +56,7 @@ ParticleOnSphereDensityDensityOperator::ParticleOnSphereDensityDensityOperator(P
 // destructor
 //
 
-ParticleOnSphereDensityDensityOperator::~ParticleOnSphereDensityDensityOperator()
+ParticleOnSphereNBodyOperator::~ParticleOnSphereNBodyOperator()
 {
 }
   
@@ -65,7 +64,7 @@ ParticleOnSphereDensityDensityOperator::~ParticleOnSphereDensityDensityOperator(
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractOperator* ParticleOnSphereDensityDensityOperator::Clone ()
+AbstractOperator* ParticleOnSphereNBodyOperator::Clone ()
 {
   return 0;
 }
@@ -74,7 +73,7 @@ AbstractOperator* ParticleOnSphereDensityDensityOperator::Clone ()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereDensityDensityOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereNBodyOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particle = (ParticleOnSphere*) hilbertSpace;
 }
@@ -83,7 +82,7 @@ void ParticleOnSphereDensityDensityOperator::SetHilbertSpace (AbstractHilbertSpa
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereDensityDensityOperator::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereNBodyOperator::GetHilbertSpace ()
 {
   return this->Particle;
 }
@@ -92,7 +91,7 @@ AbstractHilbertSpace* ParticleOnSphereDensityDensityOperator::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnSphereDensityDensityOperator::GetHilbertSpaceDimension ()
+int ParticleOnSphereNBodyOperator::GetHilbertSpaceDimension ()
 {
   return this->Particle->GetHilbertSpaceDimension();
 }
@@ -103,7 +102,7 @@ int ParticleOnSphereDensityDensityOperator::GetHilbertSpaceDimension ()
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereNBodyOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
@@ -123,7 +122,7 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, R
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereDensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex ParticleOnSphereNBodyOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
   return Complex();
 }
@@ -137,8 +136,8 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (ComplexVector& V1
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereDensityDensityOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-							     int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereNBodyOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
+						    int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Index;
@@ -160,9 +159,10 @@ RealVector& ParticleOnSphereDensityDensityOperator::Multiply(RealVector& vSource
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnSphereDensityDensityOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnSphereNBodyOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						       int firstComponent, int nbrComponent)
 {
   return vDestination;
 }
+
 

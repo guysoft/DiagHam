@@ -35,8 +35,15 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Complex.h"
+#ifdef USE_OUTPUT
+#include "Output/MathematicaOutput.h"
+#endif
 
 #include <stdlib.h>
+
+
+using std::cout;
+using std::endl;
 
 
 // destructor
@@ -119,4 +126,102 @@ Matrix* AbstractOperator::GetOperator ()
   return TmpH;
 }
   
+// multiply a vector by the current operator and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
 
+RealVector& AbstractOperator::Multiply(RealVector& vSource, RealVector& vDestination)
+{
+  return this->Multiply(vSource, vDestination, 0, vSource.GetVectorDimension());
+}
+   
+
+// multiply a vector by the current operator and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination)
+{
+  return this->Multiply(vSource, vDestination, 0, vSource.GetVectorDimension());
+}
+
+// Output Stream overload
+//
+// Str = reference on output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+
+ostream& operator << (ostream& Str, AbstractOperator& O)
+{
+  RealVector TmpV2 (O.GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [O.GetHilbertSpaceDimension()];
+  for (int i = 0; i < O.GetHilbertSpaceDimension(); i++)
+    {
+      TmpV[i] = RealVector(O.GetHilbertSpaceDimension());
+      if (i > 0)
+	{
+	  TmpV2[i - 1] = 0.0;
+	}
+      TmpV2[i] = 1.0;
+      O.Multiply (TmpV2, TmpV[i]);
+    }
+  for (int i = 0; i < O.GetHilbertSpaceDimension(); i++)
+    {
+      for (int j = 0; j < O.GetHilbertSpaceDimension(); j++)
+	{
+	  Str << TmpV[j][i];
+	  Str << "   ";
+	}
+      Str << endl;
+    }
+  return Str;
+}
+ 
+#ifdef USE_OUTPUT
+// Mathematica Output Stream overload
+//
+// Str = reference on Mathematica output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+
+MathematicaOutput& operator << (MathematicaOutput& Str, AbstractOperator& O)
+{
+  RealVector TmpV2 (O.GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [O.GetHilbertSpaceDimension()];
+  for (int i = 0; i < O.GetHilbertSpaceDimension(); i++)
+    {
+      TmpV[i] = RealVector(O.GetHilbertSpaceDimension());
+      if (i > 0)
+	{
+	  TmpV2[i - 1] = 0.0;
+	}
+      TmpV2[i] = 1.0;
+      O.Multiply (TmpV2, TmpV[i]);
+    }
+  Str << "{";
+  for (int i = 0; i < (O.GetHilbertSpaceDimension() - 1); ++i)
+    {
+      Str << "{";
+      for (int j = 0; j < (O.GetHilbertSpaceDimension() - 1); ++j)
+	{
+	  Str << TmpV[j][i];
+	  Str << ",";
+	}
+      Str << TmpV[O.GetHilbertSpaceDimension() - 1][i];
+      Str << "},";
+    }
+  Str << "{";
+  for (int j = 0; j < (O.GetHilbertSpaceDimension() - 1); j++)
+    {
+      Str << TmpV[j][O.GetHilbertSpaceDimension() - 1];
+      Str << ",";
+    }
+  Str << TmpV[O.GetHilbertSpaceDimension() - 1][O.GetHilbertSpaceDimension() - 1];
+  Str << "}}";
+  return Str;
+}
+#endif

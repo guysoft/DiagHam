@@ -1,4 +1,4 @@
-SUBDIRS=
+SUBDIRS=QHEOperator
 
 noinst_LIBRARIES=libOperator.a
 

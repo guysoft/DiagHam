@@ -37,11 +37,6 @@
 #include "Operator/AbstractOperator.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 
-#include <iostream>
-
-
-class MathematicaOutput;
-
 
 class ParticleOnSphereDensityDensityOperator : public AbstractOperator
 {
@@ -111,13 +106,6 @@ class ParticleOnSphereDensityDensityOperator : public AbstractOperator
   // return value = corresponding matrix element
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
    
-  // multiply a vector by the current operator and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  RealVector& Multiply(RealVector& vSource, RealVector& vDestination);
-   
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
@@ -129,13 +117,6 @@ class ParticleOnSphereDensityDensityOperator : public AbstractOperator
   RealVector& Multiply(RealVector& vSource, RealVector& vDestination, 
 		       int firstComponent, int nbrComponent);
   
-  // multiply a vector by the current operator and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vector where result has been stored
-  ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination);
-  
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
@@ -146,20 +127,6 @@ class ParticleOnSphereDensityDensityOperator : public AbstractOperator
   // return value = reference on vector where result has been stored
   ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
 			  int firstComponent, int nbrComponent);
-
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnSphereDensityDensityOperator& O);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereDensityDensityOperator& O);
 
 };
 
