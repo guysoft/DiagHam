@@ -1,0 +1,6 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libQHEWaveFunction.a
+
+libQHEWaveFunction_a_SOURCES=LaughlinOnSphereWaveFunction.cc \
+PfaffianOnSphereWaveFunction.cc

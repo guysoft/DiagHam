@@ -12,6 +12,7 @@
 #include "Matrix/RealLowerTriangularMatrix.h"
 #include "Matrix/RealUpperTriangularMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "Output/MathematicaOutput.h"
@@ -97,10 +98,13 @@ RealMatrix RandomRealMatrix(int nbrRow, int nbrColumn, double range);
 RealSymmetricMatrix RandomRealSymmetricMatrix(int nbrRow, double range);
 RealTriDiagonalSymmetricMatrix RandomRealTriDiagonalSymmetricMatrix(int nbrRow, double range);
 HermitianMatrix RandomHermitianMatrix(int nbrRow, double range);
+RealAntisymmetricMatrix RandomRealAntisymmetricMatrix(int nbrRow, double range);
+ComplexSkewSymmetricMatrix RandomComplexSkewSymmetricMatrix(int nbrRow, double range);
 void GroundStateScaling (int nbrSpin, int maxNbrIterLanczos, double precision, int exactLimit);
 void PeriodicDMRG();
 void TestHamiltonian(AbstractHamiltonian* hamiltonian);
 void PermanentTest();
+void DeterminantTest();
 
 
 int main(int argc, char** argv)
@@ -124,30 +128,25 @@ int main(int argc, char** argv)
   int nbrRow = atoi(argv[1]);
   for (int i = 0; i < atoi(argv[2]); ++i)
     {
-
-      HermitianMatrix TestDet4 = RandomHermitianMatrix(nbrRow, 1.0);
-//      cout << TestDet4 << endl;
-      RealSymmetricMatrix TestDet = TestDet4.ConvertToSymmetricMatrix();
-//      RealSymmetricMatrix TestDet = RandomRealSymmetricMatrix(nbrRow, 1.0);
-      //  TestDet.SetMatrixElement(0, 0, 0.0);
-//      RealMatrix TestDet2 (TestDet);
-      ComplexMatrix TestDet2 (TestDet4);
-      TestDet2.ReadMatrix(argv[3]);
-      cout << TestDet2 << endl;
-//      RealTriDiagonalSymmetricMatrix TestDet3;
-      RealTriDiagonalSymmetricMatrix TestDet3(2 * nbrRow);
-      TestDet.Householder(TestDet3, 1e-14);
-      TestDet3.Diagonalize(50);
-//      cout << TestDet2 << endl;
-      TestDet2.WriteMatrix("test.mat");
-      Complex Det1 = TestDet2.Determinant();
-//      double Det1 = TestDet2.Determinant();
-      double Det2 = 1.0;
-      for (int j = 0; j < (2 * nbrRow); ++j)
-	Det2 *= TestDet3.DiagonalElement(j);
-      Det2 = sqrt(Det2);
-//      if (fabs(Det2 - Det1) > (1e-13 * fabs(Det2)))
-	cout << i << ": " << Det1 << " " << Det2 << " " << endl;//(fabs(Det2 - Det1) / fabs(Det2)) << endl;
+//      RealAntisymmetricMatrix TestPfaf = RandomRealAntisymmetricMatrix(nbrRow, 1.0);
+      ComplexSkewSymmetricMatrix TestPfaf = RandomComplexSkewSymmetricMatrix(nbrRow, 1.0);
+//      cout << TestPfaf << endl;
+//      RealMatrix TestPfaf2 (TestPfaf);
+      ComplexMatrix TestPfaf2 (TestPfaf);
+//       cout << TestPfaf2 << endl;
+/*      double Pfaf1 = TestPfaf.Pfaffian();
+      double Pfaf2 = sqrt(fabs(TestPfaf2.Determinant()));
+      cout << i << ": " <<Pfaf2  << " " << Pfaf1 << " " << (fabs(fabs(Pfaf1) - Pfaf2) / fabs(Pfaf2)) << endl;
+      if (fabs(fabs(Pfaf1) - Pfaf2) > (1e-10 * fabs(Pfaf2)))
+	cout << "error" << endl;*/
+      Complex Pfaf1 = TestPfaf.Pfaffian();
+      Complex Det1 = (Pfaf1 * Pfaf1);
+      Complex Det2 = TestPfaf2.Determinant();
+      cout << i << ": " <<Det2  << " " << Det1 << " " << Pfaf1 << " " << (fabs(Det1.Re - Det2.Re) / fabs(Det2.Re)) 
+	   << " " << (fabs(Det1.Im - Det2.Im) / fabs(Det2.Im)) << endl;
+      if ((fabs(Det1.Re - Det2.Re) > (1e-13 * fabs(Det2.Re))) || (fabs(Det1.Im - Det2.Im) > (1e-13 * fabs(Det2.Im))))
+	cout << "error" << endl;
+      cout << " --------------------------------------------------" << endl;
     }
   return 0;
 
@@ -1858,6 +1857,40 @@ void PermanentTest()
   return;
 }
 
+
+void DeterminantTest()
+{
+  int nbrRow = 4;
+  for (int i = 0; i < 100; ++i)
+    {
+
+      HermitianMatrix TestDet4 = RandomHermitianMatrix(nbrRow, 1.0);
+//      cout << TestDet4 << endl;
+      RealSymmetricMatrix TestDet = TestDet4.ConvertToSymmetricMatrix();
+//      RealSymmetricMatrix TestDet = RandomRealSymmetricMatrix(nbrRow, 1.0);
+      //  TestDet.SetMatrixElement(0, 0, 0.0);
+//      RealMatrix TestDet2 (TestDet);
+      ComplexMatrix TestDet2 (TestDet4);
+//      TestDet2.ReadMatrix(argv[3]);
+      cout << TestDet2 << endl;
+//      RealTriDiagonalSymmetricMatrix TestDet3;
+      RealTriDiagonalSymmetricMatrix TestDet3(2 * nbrRow);
+      TestDet.Householder(TestDet3, 1e-14);
+      TestDet3.Diagonalize(50);
+//      cout << TestDet2 << endl;
+//      TestDet2.WriteMatrix("test.mat");
+      Complex Det1 = TestDet2.Determinant();
+//      double Det1 = TestDet2.Determinant();
+      double Det2 = 1.0;
+      for (int j = 0; j < (2 * nbrRow); ++j)
+	Det2 *= TestDet3.DiagonalElement(j);
+      Det2 = sqrt(Det2);
+//      if (fabs(Det2 - Det1) > (1e-13 * fabs(Det2)))
+	cout << i << ": " << Det1 << " " << Det2 << " " << endl;//(fabs(Det2 - Det1) / fabs(Det2)) << endl;
+    }
+  return;
+}
+
 RealMatrix RandomRealMatrix(int nbrRow, int nbrColumn, double range)
 {
   RealMatrix M(nbrRow, nbrColumn);
@@ -1906,3 +1939,25 @@ HermitianMatrix RandomHermitianMatrix(int nbrRow, double range)
   return M;
 }
 
+RealAntisymmetricMatrix RandomRealAntisymmetricMatrix(int nbrRow, double range)
+{
+  RealAntisymmetricMatrix SkewM(nbrRow);
+  for (int i = 0; i < nbrRow; i++)
+    for (int j = i + 1; j < nbrRow; j++)
+      {
+	SkewM.SetMatrixElement(i, j, (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX);//(2 * (nbrRow - 1)) - (i + j));// (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX);
+      }
+  return SkewM;
+}
+
+ComplexSkewSymmetricMatrix RandomComplexSkewSymmetricMatrix(int nbrRow, double range)
+{
+  ComplexSkewSymmetricMatrix SkewM(nbrRow);
+  for (int i = 0; i < nbrRow; i++)
+    for (int j = i + 1; j < nbrRow; j++)
+      {
+	SkewM.SetMatrixElement(i, j, Complex((range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX,
+					     (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX));//(2 * (nbrRow - 1)) - (i + j));// (range * (double) (rand() - RAND_MAX / 2)) / RAND_MAX);
+      }
+  return SkewM;
+}

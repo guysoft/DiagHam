@@ -808,38 +808,27 @@ Complex ComplexMatrix::Determinant ()
   Complex Pivot;
   Complex Factor;
   int PivotPos = 0;
-  double Zero = (this->Columns[0].Re(0) * this->Columns[0].Re(0)) + (this->Columns[0].Im(0) * this->Columns[0].Im(0));
-  double TmpNorm = 0.0;
-  for (int i = 0; i < this->NbrRow; ++i)
-    {
-      ComplexVector& TmpColumn = this->Columns[i];
-      for (int j = 0; j < this->NbrRow; ++j)
-	{
-	  TmpNorm = (TmpColumn.Re(j) * TmpColumn.Re(j)) + (TmpColumn.Im(j) * TmpColumn.Im(j));
-	  if (TmpNorm > Zero)
-	    Zero = TmpNorm;
-	}
-    }
-  if (Zero == 0.0)
-    return Complex(0.0);
-  Zero = sqrt(Zero) * MACHINE_PRECISION;
-//  cout << Zero << endl;
+  double PivotNorm;
   for (int k = 0; k < ReducedNbrRow; ++k)
     {
-//      cout << *this << endl;
       Pivot.Re = this->Columns[k].Re(k);
       Pivot.Im = this->Columns[k].Im(k);
-      PivotPos = k;
-      while ((fabs(Pivot.Re) < Zero) && (fabs(Pivot.Im) < Zero) && (PivotPos != ReducedNbrRow))
+      PivotNorm = (Pivot.Re * Pivot.Re) + (Pivot.Im * Pivot.Im);
+      PivotPos = k + 1;
+      while ((PivotPos < this->NbrRow) && 
+	     (((this->Columns[PivotPos].Re(k) * this->Columns[PivotPos].Re(k)) + (this->Columns[PivotPos].Im(k) * this->Columns[PivotPos].Im(k)))< PivotNorm))
 	{
 	  ++PivotPos;
+	}
+      if (PivotPos == this->NbrRow)
+	{
+	  if (PivotNorm == 0.0)
+	    return Complex(0.0);
+	}
+      else
+	{
 	  Pivot.Re = this->Columns[PivotPos].Re(k);
 	  Pivot.Im = this->Columns[PivotPos].Im(k);
-	}
-      if ((fabs(Pivot.Re) < Zero) && (fabs(Pivot.Im) < Zero))
-	return 0.0;
-      if (PivotPos != k)
-	{
 	  ComplexVector TmpColumn3(this->Columns[k]);
 	  this->Columns[k] = this->Columns[PivotPos];
 	  this->Columns[PivotPos] = TmpColumn3;
@@ -850,16 +839,13 @@ Complex ComplexMatrix::Determinant ()
       for (int i = k + 1; i < this->NbrRow; ++i)
 	{
 	  ComplexVector& TmpColumn = this->Columns[i];
-	  if ((fabs(TmpColumn.Re(k)) > Zero) || (fabs(TmpColumn.Re(k)) > Zero))
+	  ComplexVector& TmpColumn2 = this->Columns[k];
+	  Factor.Re = ((Pivot.Re * TmpColumn.Re(k)) - (Pivot.Im * TmpColumn.Im(k)));
+	  Factor.Im = ((Pivot.Im * TmpColumn.Re(k)) + (Pivot.Re * TmpColumn.Im(k)));
+	  for (int j = k + 1; j < this->NbrRow; ++j)
 	    {
-	      ComplexVector& TmpColumn2 = this->Columns[k];
-	      Factor.Re = ((Pivot.Re * TmpColumn.Re(k)) - (Pivot.Im * TmpColumn.Im(k)));
-	      Factor.Im = ((Pivot.Im * TmpColumn.Re(k)) + (Pivot.Re * TmpColumn.Im(k)));
-	      for (int j = k + 1; j < this->NbrRow; ++j)
-		{
-		  TmpColumn.Re(j) -= ((TmpColumn2.Re(j) * Factor.Re) - (TmpColumn2.Im(j) * Factor.Im)); 
-		  TmpColumn.Im(j) -= ((TmpColumn2.Re(j) * Factor.Im) + (TmpColumn2.Im(j) * Factor.Re)); 
-		}
+	      TmpColumn.Re(j) -= ((TmpColumn2.Re(j) * Factor.Re) - (TmpColumn2.Im(j) * Factor.Im)); 
+	      TmpColumn.Im(j) -= ((TmpColumn2.Re(j) * Factor.Im) + (TmpColumn2.Im(j) * Factor.Re)); 
 	    }
 	}
     } 

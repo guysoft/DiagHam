@@ -6,6 +6,9 @@
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
+#include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -45,18 +48,24 @@ int main(int argc, char** argv)
   OptionManager Manager ("QHEBosonsDelta" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
+  Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
-  (*SystemGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
-  (*SystemGroup) += new BooleanOption  ('\n', "without-timecoherence", "don't use time coherence between two successive evaluation of the wave function");
+  (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
+  (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
+
+  (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
+  (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -65,9 +74,15 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type QHEBosonsDeltaOverlap -h" << endl;
       return -1;
     }
+  
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
       Manager.DisplayHelp (cout);
+      return 0;
+    }
+
+  if (((BooleanOption*) Manager["list-wavefunctions"])->GetBoolean() == true)
+    {
       return 0;
     }
 
@@ -88,6 +103,8 @@ int main(int argc, char** argv)
     }
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
+//  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
+  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
   srand48(29457);
 /*  for (int k = 0; k < 10; ++k)
@@ -129,6 +146,7 @@ int main(int argc, char** argv)
       Location[j << 1] = acos (1.0- (2.0 * drand48()));
       Location[1 + (j << 1)] = 2.0 * M_PI * drand48();
     }
+
   for (int i = 0; i < NbrIter; ++i)
     {
       /*      for (int j = 0; j < NbrBosons; ++j)
@@ -141,9 +159,9 @@ int main(int argc, char** argv)
       NextCoordinates = (int) (((double) NbrBosons) * drand48());
       if (NextCoordinates == NbrBosons)
 	--NextCoordinates;
-      Tmp = LaughlinWaveFunction (Location, NbrBosons);
+      Tmp = (*WaveFunction)(Location);
       int TimeCoherence = NextCoordinates;
-      if (((BooleanOption*) Manager["without-timecoherence"])->GetBoolean() == true)
+      if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == false)
 	TimeCoherence = -1;
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
@@ -157,7 +175,7 @@ int main(int argc, char** argv)
 //      ErrorOverlap += Tmp3 * Tmp3  * Factor * Factor;
       Normalization += Tmp2;// * Factor;
       ErrorNormalization += Tmp2 * Tmp2;// *  Factor * Factor;
-      if ((i > 0) && ((i % 1000) == 0))
+      if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
 	{
 	  Complex Tmp4 = Overlap / ((double) i);
 	  cout << (Tmp4 * Factor);

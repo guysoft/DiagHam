@@ -37,6 +37,7 @@
 #include <stdlib.h>
 
 
+using std::cout;
 using std::endl;
 
 
@@ -109,7 +110,7 @@ RealAntisymmetricMatrix::RealAntisymmetricMatrix(double* upperDiagonal, int dime
   this->MatrixType = Matrix::RealElements | Matrix::Antisymmetric;
 }
 
-// copy constructor (without duplicating datas)
+// copy constructor
 //
 // M = matrix to copy
 // duplicateFlag = true if datas have to be duplicated
@@ -256,6 +257,59 @@ void RealAntisymmetricMatrix::AddToMatrixElement(int i, int j, double x)
     {
       j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
       this->OffDiagonalElements[j] += x;
+    }
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
+    {
+      x = 0.0;
+      return;
+    }
+  if (i > j)
+    {
+      i -= (j * (j + 1)) / 2 - j * (this->NbrRow + this->Increment - 1) + 1;
+      x = -this->OffDiagonalElements[i];
+    }
+  else
+    {
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x = this->OffDiagonalElements[j];
+    }
+}
+    
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, Complex& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
+    {
+      x.Re = 0.0;
+      x.Im = 0.0;
+      return;
+    }
+  if (i > j)
+    {
+      i -= (j * (j + 1)) / 2 - j * (this->NbrRow + this->Increment - 1) + 1;
+      x.Re = -this->OffDiagonalElements[i];
+      x.Im = 0.0;
+    }
+  else
+    {
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x.Re= this->OffDiagonalElements[j];
+      x.Im = 0.0;
     }
 }
 
@@ -964,23 +1018,24 @@ double RealAntisymmetricMatrix::Pfaffian()
 	      - (this->OffDiagonalElements[4] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[10 + (2 * this->Increment)])
 	      + (this->OffDiagonalElements[3] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[11 + (2 * this->Increment)])
 	      - (this->OffDiagonalElements[3] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[8 + this->Increment])
-	      + (this->OffDiagonalElements[4] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[7 + this->Increment]));
+	       + (this->OffDiagonalElements[4] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[7 + this->Increment]));
     }
+
   RealAntisymmetricMatrix TmpMatrix(*this, true);
-  int HalfDimension = this->NbrColumn >> 1;
   int Pos;
   double Pivot;
   int PivotColumn;
   int PivotRow;
   int PivotPos;
-  int TwiceK;
+  int ReducedK;
   double Pfaffian = 1.0;
-  for (int k = 0; k < this->NbrColumn; k += 2)
+  for (int k = this->NbrColumn; k >= 4; k -= 2)
     {      
       // find pivot (greater real value)
       Pos = 0;
       Pivot = fabs(TmpMatrix.OffDiagonalElements[0]);
-      PivotColumn = 0;
+      PivotPos = 0;
+      PivotColumn = 1;
       PivotRow = 0;
       for (int i = 0; i < k; ++i)
 	{
@@ -993,7 +1048,7 @@ double RealAntisymmetricMatrix::Pfaffian()
 		  PivotRow = i;
 		  PivotPos = Pos;
 		}
-	      Pos++; 
+  	      Pos++; 
 	    }
 	  Pos += TmpMatrix.Increment;
 	}
@@ -1001,18 +1056,54 @@ double RealAntisymmetricMatrix::Pfaffian()
 	{
 	  Pos = PivotColumn;
 	  PivotColumn = PivotRow;
-	  PivotRow = Pos;
+	  PivotRow = Pos;	  
 	}
+      if (Pivot == 0.0)
+	return 0.0;
+      // add contribution to the pfaffian
+      Pfaffian *= Pivot;
+      Pivot = 1.0 / Pivot;
       // apply permutation to put pivot in position
       if (PivotColumn == (TmpMatrix.NbrRow - 2))
 	Pos = PivotRow;
       else
 	Pos = PivotColumn;
       if (PivotRow != (TmpMatrix.NbrRow - 2))
-	TmpMatrix.SwapRowColumn(PivotRow, TmpMatrix.NbrRow - 2);
+	{
+	  TmpMatrix.SwapRowColumn(PivotRow, TmpMatrix.NbrRow - 2);
+	  Pfaffian *= -1.0;
+	}
       if (Pos != (TmpMatrix.NbrRow - 1))
-	TmpMatrix.SwapRowColumn(Pos, TmpMatrix.NbrRow - 1);
+	{
+	  TmpMatrix.SwapRowColumn(Pos, TmpMatrix.NbrRow - 1);
+	  Pfaffian *= -1.0;
+	}
+      // write Schur complement instead of the rest of the skew symmetric matrix
+      Pos = 0;
+      double Factor1;
+      double Factor2;
+      ReducedK = k - 2;
+      int Pos1 = ReducedK - 1;
+      int Pos2;
+      for (int i = 0; i < ReducedK; ++i)
+	{
+	  Pos2 = Pos1 + TmpMatrix.NbrColumn + TmpMatrix.Increment - i - 2;
+	  Factor1 = Pivot * TmpMatrix.OffDiagonalElements[Pos1];
+	  Factor2 = Pivot * TmpMatrix.OffDiagonalElements[Pos1 + 1];
+	  for (int j = i + 1; j < ReducedK; ++j)
+	    {
+	      TmpMatrix.OffDiagonalElements[Pos] += ((Factor2 * TmpMatrix.OffDiagonalElements[Pos2]) 
+						     - (Factor1 * TmpMatrix.OffDiagonalElements[Pos2 + 1]));
+	      ++Pos;
+	      Pos2 += TmpMatrix.NbrColumn + TmpMatrix.Increment - j - 2;
+	    }
+	  Pos += 2 + TmpMatrix.Increment;
+	  Pos1 += TmpMatrix.NbrColumn + TmpMatrix.Increment - i - 2;
+	}
+      TmpMatrix.Resize(ReducedK, ReducedK);
     }
+  TmpMatrix.Resize(this->NbrColumn, this->NbrColumn);
+  Pfaffian *= TmpMatrix.OffDiagonalElements[0];
   return Pfaffian;
 }
 

@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -141,11 +141,15 @@ RealMatrix::RealMatrix(Matrix& M)
       this->TrueNbrRow = this->NbrRow;
       this->TrueNbrColumn = this->NbrColumn;
       this->Columns = new RealVector [this->NbrColumn];
+      double Tmp;
       for (int i = 0; i < this->NbrColumn; i++)
 	{
 	  this->Columns[i] = RealVector (this->NbrRow);
 	  for (int j = 0; j < this->NbrColumn; ++j)
-	    this->Columns[i][j] = M(j, i);
+	    {
+	      M.GetMatrixElement(j, i, Tmp);
+	      this->Columns[i][j] = Tmp;
+	    }
 	}
       this->MatrixType = Matrix::RealElements;
     }
@@ -795,33 +799,26 @@ double RealMatrix::Determinant ()
   double Pivot;
   double Factor;
   int PivotPos = 0;
-  double Zero = fabs(this->Columns[0][0]);
-  for (int i = 0; i < this->NbrRow; ++i)
-    {
-      RealVector& TmpColumn = this->Columns[i];
-      for (int j = 0; j < this->NbrRow; ++j)
-	{
-	  if (fabs(TmpColumn[j]) > Zero)
-	    Zero = fabs(TmpColumn[j]);
-	}
-    }
-  Zero *= MACHINE_PRECISION;
   for (int k = 0; k < ReducedNbrRow; ++k)
     {
-      Pivot = this->Columns[k][k];
-      PivotPos = k;
-      while ((fabs(Pivot) < Zero) && (PivotPos != ReducedNbrRow))
+      Pivot = fabs(this->Columns[k][k]);
+      PivotPos = k + 1;
+      while ((PivotPos < this->NbrRow) && (fabs(this->Columns[PivotPos][k]) < Pivot))
 	{
 	  ++PivotPos;
-	  Pivot = this->Columns[PivotPos][k];
 	}
-      if (fabs(Pivot) < Zero)
-	return 0.0;
-      if (PivotPos != k)
+      if (PivotPos == this->NbrRow)
 	{
+	  Pivot = this->Columns[k][k];	  
+	  if (Pivot == 0.0)
+	    return 0.0;
+	}
+      else
+	{
+	  Pivot = this->Columns[PivotPos][k];	  
 	  RealVector TmpColumn3(this->Columns[k]);
 	  this->Columns[k] = this->Columns[PivotPos];
-	  this->Columns[PivotPos] = TmpColumn3;
+	  this->Columns[PivotPos] = TmpColumn3;	  
 	  TmpDet *= -1.0;
 	}
       TmpDet *= Pivot;
@@ -829,17 +826,14 @@ double RealMatrix::Determinant ()
       for (int i = k + 1; i < this->NbrRow; ++i)
 	{
 	  RealVector& TmpColumn = this->Columns[i];
-	  if (fabs(TmpColumn[k]) > Zero)
+	  RealVector& TmpColumn2 = this->Columns[k];
+	  Factor = Pivot * TmpColumn[k];
+	  for (int j = k + 1; j < this->NbrRow; ++j)
 	    {
-	      RealVector& TmpColumn2 = this->Columns[k];
-	      Factor = Pivot * TmpColumn[k];
-	      for (int j = k + 1; j < this->NbrRow; ++j)
-		{
-		  TmpColumn[j] -= TmpColumn2[j] * Factor;
-		}
+	      TmpColumn[j] -= TmpColumn2[j] * Factor;
 	    }
 	}
-    } 
+    }
   TmpDet *= this->Columns[ReducedNbrRow][ReducedNbrRow];
   return TmpDet;
 }

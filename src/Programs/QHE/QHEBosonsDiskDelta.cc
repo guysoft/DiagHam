@@ -8,9 +8,12 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
-#include "Architecture/MonoProcessorArchitecture.h"
-#include "Architecture/SMPArchitecture.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
@@ -34,45 +37,52 @@ using std::ios;
 int main(int argc, char** argv)
 {
   cout.precision(14);
-  BooleanOption HelpOption ('h', "help", "display this help");
-  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
-  SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
-  SingleIntegerOption NbrBosonOption ('p', "nbr-particles", "number of particles", 8);
-  SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 30);
-  SingleIntegerOption LzMaxOption ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
-  SingleIntegerOption LzMinOption ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
 
-  List<AbstractOption*> OptionList;
-  OptionList += &HelpOption;
-  OptionList += &SMPOption;
-  OptionList += &SMPNbrProcessorOption;
-  OptionList += &NbrBosonOption;
-  OptionList += &IterationOption;
-  OptionList += &NbrEigenvaluesOption;
-  OptionList += &LzMaxOption;
-  OptionList += &LzMinOption;
-  if (ProceedOptions(argv, argc, OptionList) == false)
+  // some running options and help
+  OptionManager Manager ("QHEBosonsDiskDelta" , "0.01");
+  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+
+  ArchitectureManager Architecture;
+
+  Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
+  Manager += LanczosGroup;
+  Manager += MiscGroup;
+
+ (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
+ (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
+ (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
+
+  (*LanczosGroup) += new SingleIntegerOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup) += new SingleIntegerOption ('n', "nbr-eigen", "number of eigenvalues", 30);
+  (*LanczosGroup) += new SingleIntegerOption ('\n', "full-diag", 
+					      "maximum Hilbert space dimension for which full diagonalization is applied", 
+					      500, true, 100);
+
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type QHEBosonsDiskDelta -h" << endl;
       return -1;
     }
-  if (HelpOption.GetBoolean() == true)
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
-      DisplayHelp (OptionList, cout);
+      Manager.DisplayHelp (cout);
       return 0;
     }
-  
-  
-  bool SMPFlag = SMPOption.GetBoolean();
-  int NbrProcessor = SMPNbrProcessorOption.GetInteger();
-  int MaxNbrIterLanczos = IterationOption.GetInteger();
-  int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrBosons = NbrBosonOption.GetInteger();
-  int MMin = LzMinOption.GetInteger();
-  int MMax = LzMaxOption.GetInteger();
+
+  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
+  int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
+  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int MMin = ((SingleIntegerOption*) Manager["minimum-momentum"])->GetInteger();
+  int MMax = ((SingleIntegerOption*) Manager["maximum-momentum"])->GetInteger();
   if (MMax < MMin)
     MMax = MMin;
+  int FullDiagonalizationLimit = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
 
   char* OutputName = new char [1024];
   sprintf (OutputName, "bosons_disk_delta_n_%d_l_%d.dat", NbrBosons, MMax);
@@ -81,15 +91,11 @@ int main(int argc, char** argv)
 
   for (int  L = MMin; L <= MMax; ++L)
     {
-      AbstractArchitecture* Architecture = 0;
-      if (SMPFlag == false)
-	Architecture = new MonoProcessorArchitecture;
-      else
-	Architecture = new SMPArchitecture(NbrProcessor);
       TrappedBosons Space (NbrBosons, L);
       cout << "Nbr bosons = " << NbrBosons << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
+      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
       TrappedBosonHamiltonian* Hamiltonian = new TrappedBosonHamiltonian(&Space, L);
-      if (Hamiltonian->GetHilbertSpaceDimension() < 500)
+      if (Hamiltonian->GetHilbertSpaceDimension() < FullDiagonalizationLimit)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
@@ -115,11 +121,11 @@ int main(int argc, char** argv)
 	  AbstractLanczosAlgorithm* Lanczos;
 	  if (NbrEigenvalue == 1)
 	    {
-	       Lanczos = new BasicLanczosAlgorithm(Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	       Lanczos = new BasicLanczosAlgorithm(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	    }
 	  else
 	    {
-	      Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	      Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	    }
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;

@@ -38,6 +38,7 @@
 #include <stdlib.h>
 
 
+using std::cout;
 using std::endl;
 
 
@@ -117,22 +118,50 @@ ComplexSkewSymmetricMatrix::ComplexSkewSymmetricMatrix(double* realUpperDiagonal
   this->MatrixType = Matrix::ComplexElements | Matrix::Antisymmetric;
 }
 
-// copy constructor (without duplicating datas)
+// copy constructor
 //
 // M = matrix to copy
+// duplicateFlag = true if datas have to be duplicated
 
-ComplexSkewSymmetricMatrix::ComplexSkewSymmetricMatrix(const ComplexSkewSymmetricMatrix& M) 
+ComplexSkewSymmetricMatrix::ComplexSkewSymmetricMatrix(const ComplexSkewSymmetricMatrix& M, bool duplicateFlag) 
 {
   this->Dummy = 0.0;
-  this->RealOffDiagonalElements = M.RealOffDiagonalElements;  
-  this->ImaginaryOffDiagonalElements = M.ImaginaryOffDiagonalElements;  
-  this->Flag = M.Flag;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
   this->TrueNbrColumn = M.TrueNbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::ComplexElements | Matrix::Antisymmetric;
+  if (duplicateFlag == false)
+    {
+      this->RealOffDiagonalElements = M.RealOffDiagonalElements;  
+      this->ImaginaryOffDiagonalElements = M.ImaginaryOffDiagonalElements;  
+      this->Flag = M.Flag;
+    }
+  else
+    {
+      this->Flag.Initialize();
+      if (this->TrueNbrRow > 1)
+	{
+	  this->RealOffDiagonalElements = new double [(this->TrueNbrRow * (this->TrueNbrRow - 1)) / 2];
+	  this->ImaginaryOffDiagonalElements = new double [(this->TrueNbrRow * (this->TrueNbrRow - 1)) / 2];
+	}
+      else
+	{    
+	  this->RealOffDiagonalElements = new double [1];
+	  this->ImaginaryOffDiagonalElements = new double [1];
+	}
+      int pos = 0;
+      for (int i = 0; i < this->TrueNbrRow; ++i)
+	{
+	  for (int j = i + 1; j < this->TrueNbrRow; ++j)
+	    {
+	      this->RealOffDiagonalElements[pos] = M.RealOffDiagonalElements[pos];
+	      this->ImaginaryOffDiagonalElements[pos] = M.ImaginaryOffDiagonalElements[pos];
+	      ++pos;
+	    }
+	}
+    }
 }
 
 // destructor
@@ -212,6 +241,59 @@ void ComplexSkewSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x
       j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
       this->RealOffDiagonalElements[j] = x.Re;
       this->ImaginaryOffDiagonalElements[j] = x.Im;
+    }
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
+    {
+      x = 0.0;
+      return;
+    }
+  if (i > j)
+    {
+      i -= (j * (j + 1)) / 2 - j * (this->NbrRow + this->Increment - 1) + 1;
+      x = -this->RealOffDiagonalElements[i];
+    }
+  else
+    {
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x = this->RealOffDiagonalElements[j];
+    }
+}
+    
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x)
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
+    {
+      x.Re = 0.0;
+      x.Im = 0.0;
+      return;
+    }
+  if (i > j)
+    {
+      i -= (j * (j + 1)) / 2 - j * (this->NbrRow + this->Increment - 1) + 1;
+      x.Re = -this->RealOffDiagonalElements[i];
+      x.Im = -this->ImaginaryOffDiagonalElements[i];
+    }
+  else
+    {
+      j -= (i * (i + 1)) / 2 - i * (this->NbrRow + this->Increment - 1) + 1;
+      x.Re = this->RealOffDiagonalElements[j];
+      x.Im = this->ImaginaryOffDiagonalElements[j];
     }
 }
 
@@ -829,6 +911,72 @@ void ComplexSkewSymmetricMatrix::Conjugate(ComplexMatrix& UnitaryMl, ComplexMatr
   return;
 }
 
+// swap the i-th row/column with the j-th row/column (thus preserving the skew symmetric form)
+//
+// i = index of the first the row/column
+// j = index of the second the row/column
+// return value = reference on the current matrix
+
+ComplexSkewSymmetricMatrix& ComplexSkewSymmetricMatrix::SwapRowColumn (int i, int j)
+{
+  if (i == j)  
+    return *this;
+  if (i > j)
+    {
+      int Tmp = j;
+      j = i;
+      i = Tmp;
+    }
+  double Tmp;
+  int Pos1 = i - 1;
+  int Pos2 = j - 1;
+  int k = 0;
+  int TmpInc = this->Increment + this->NbrColumn - 2;
+  for (; k < i; ++k)
+    {
+      Tmp = this->RealOffDiagonalElements[Pos1]; 
+      this->RealOffDiagonalElements[Pos1] = this->RealOffDiagonalElements[Pos2]; 
+      this->RealOffDiagonalElements[Pos2] = Tmp;
+      Tmp = this->ImaginaryOffDiagonalElements[Pos1]; 
+      this->ImaginaryOffDiagonalElements[Pos1] = this->ImaginaryOffDiagonalElements[Pos2]; 
+      this->ImaginaryOffDiagonalElements[Pos2] = Tmp;
+      Pos1 += TmpInc - k; 
+      Pos2 += TmpInc - k; 
+    }
+  this->RealOffDiagonalElements[Pos2] *= -1.0;
+  this->ImaginaryOffDiagonalElements[Pos2] *= -1.0;
+  ++Pos1;
+  Pos2 +=  TmpInc - k;
+  ++k;
+  for (; k < j; ++k)
+    {
+      Tmp = this->RealOffDiagonalElements[Pos1]; 
+      this->RealOffDiagonalElements[Pos1] = -this->RealOffDiagonalElements[Pos2]; 
+      this->RealOffDiagonalElements[Pos2] = -Tmp;
+      Tmp = this->ImaginaryOffDiagonalElements[Pos1]; 
+      this->ImaginaryOffDiagonalElements[Pos1] = -this->ImaginaryOffDiagonalElements[Pos2]; 
+      this->ImaginaryOffDiagonalElements[Pos2] = -Tmp;
+      ++Pos1; 
+      Pos2 += TmpInc - k;
+    }
+  ++k;
+  ++Pos1;
+  ++Pos2;
+  for (; k < this->NbrColumn; ++k)
+    {
+      Tmp = this->RealOffDiagonalElements[Pos1]; 
+      this->RealOffDiagonalElements[Pos1] = this->RealOffDiagonalElements[Pos2]; 
+      this->RealOffDiagonalElements[Pos2] = Tmp;
+      Tmp = this->ImaginaryOffDiagonalElements[Pos1]; 
+      this->ImaginaryOffDiagonalElements[Pos1] = this->ImaginaryOffDiagonalElements[Pos2]; 
+      this->ImaginaryOffDiagonalElements[Pos2] = Tmp;
+      ++Pos1; 
+      ++Pos2;
+    }
+  return *this;
+}
+
+
 // evaluate matrix trace
 //
 // return value = matrix trace 
@@ -853,30 +1001,129 @@ double ComplexSkewSymmetricMatrix::Det ()
 
 Complex ComplexSkewSymmetricMatrix::Pfaffian()
 {
-  Complex Tmp;
+  Complex Pfaffian;
   if (this->NbrColumn == 2)
     {
-      Tmp.Re = this->RealOffDiagonalElements[0];
-      Tmp.Im = this->ImaginaryOffDiagonalElements[0];
-      return Tmp;
+      Pfaffian.Re = this->RealOffDiagonalElements[0];
+      Pfaffian.Im = this->ImaginaryOffDiagonalElements[0];
+      return Pfaffian;
     }
   if (this->NbrColumn == 4)
     {
-      Tmp.Re = (this->RealOffDiagonalElements[0] * this->RealOffDiagonalElements[5 + (2 * this->Increment)]
+      Pfaffian.Re = (this->RealOffDiagonalElements[0] * this->RealOffDiagonalElements[5 + (2 * this->Increment)]
 		 - this->ImaginaryOffDiagonalElements[0] * this->ImaginaryOffDiagonalElements[5 + (2 * this->Increment)]);
-      Tmp.Im = (this->ImaginaryOffDiagonalElements[0] * this->RealOffDiagonalElements[5 + (2 * this->Increment)]
+      Pfaffian.Im = (this->ImaginaryOffDiagonalElements[0] * this->RealOffDiagonalElements[5 + (2 * this->Increment)]
 		+ this->RealOffDiagonalElements[0] * this->ImaginaryOffDiagonalElements[5 + (2 * this->Increment)]);
-      Tmp.Re += (this->RealOffDiagonalElements[1] * this->RealOffDiagonalElements[4 + this->Increment]
+      Pfaffian.Re -= (this->RealOffDiagonalElements[1] * this->RealOffDiagonalElements[4 + this->Increment]
 		 - this->ImaginaryOffDiagonalElements[1] * this->ImaginaryOffDiagonalElements[4 + this->Increment]);
-      Tmp.Im += (this->ImaginaryOffDiagonalElements[1] * this->RealOffDiagonalElements[4 + this->Increment]
+      Pfaffian.Im -= (this->ImaginaryOffDiagonalElements[1] * this->RealOffDiagonalElements[4 + this->Increment]
 		 + this->RealOffDiagonalElements[1] * this->ImaginaryOffDiagonalElements[4 + this->Increment]);
-      Tmp.Re += (this->RealOffDiagonalElements[2] * this->RealOffDiagonalElements[3 + this->Increment]
+      Pfaffian.Re += (this->RealOffDiagonalElements[2] * this->RealOffDiagonalElements[3 + this->Increment]
 		 - this->ImaginaryOffDiagonalElements[2] * this->ImaginaryOffDiagonalElements[3 + this->Increment]);
-      Tmp.Im += (this->ImaginaryOffDiagonalElements[2] * this->RealOffDiagonalElements[3 + this->Increment]
+      Pfaffian.Im += (this->ImaginaryOffDiagonalElements[2] * this->RealOffDiagonalElements[3 + this->Increment]
 		 + this->RealOffDiagonalElements[2] * this->ImaginaryOffDiagonalElements[3 + this->Increment]);
-      return Tmp;
+      cout << Pfaffian << " " << (Pfaffian * Pfaffian) << endl;
+//      return Pfaffian;
     }
-  return Tmp;
+
+  Pfaffian = 1.0;
+
+  ComplexSkewSymmetricMatrix TmpMatrix(*this, true);
+  int Pos;
+  Complex Pivot;
+  double PivotNorm;
+  double TmpNorm;
+  int PivotColumn;
+  int PivotRow;
+  int PivotPos;
+  int ReducedK;
+  int TmpInc;
+  for (int k = this->NbrColumn; k >= 4; k -= 2)
+    {      
+      // find pivot (greater real value)
+      Pos = 0;
+      PivotNorm = ((TmpMatrix.RealOffDiagonalElements[0] * TmpMatrix.RealOffDiagonalElements[0]) + 
+		   (TmpMatrix.ImaginaryOffDiagonalElements[0] * TmpMatrix.ImaginaryOffDiagonalElements[0]));
+      PivotPos = 0;
+      PivotColumn = 1;
+      PivotRow = 0;
+      for (int i = 0; i < k; ++i)
+	{
+	  for (int j = i + 1; j < k; ++j) 
+	    {
+	      TmpNorm = ((TmpMatrix.RealOffDiagonalElements[Pos] * TmpMatrix.RealOffDiagonalElements[Pos]) + 
+			 (TmpMatrix.ImaginaryOffDiagonalElements[Pos] * TmpMatrix.ImaginaryOffDiagonalElements[Pos]));
+	      if (TmpNorm > PivotNorm)
+		{
+		  PivotNorm = TmpNorm;
+		  PivotColumn = j;
+		  PivotRow = i;
+		  PivotPos = Pos;
+		}
+  	      Pos++; 
+	    }
+	  Pos += TmpMatrix.Increment;
+	}
+      if (PivotNorm == 0.0)
+	return Complex();
+      Pivot.Re = TmpMatrix.RealOffDiagonalElements[PivotPos];
+      Pivot.Im = TmpMatrix.ImaginaryOffDiagonalElements[PivotPos];
+      // add contribution to the pfaffian
+      Pfaffian *= Pivot;
+      Pivot = 1.0 / Pivot;
+      // apply permutation to put pivot in position
+      if (PivotColumn == (TmpMatrix.NbrRow - 2))
+	Pos = PivotRow;
+      else
+	Pos = PivotColumn;
+      if (PivotRow != (TmpMatrix.NbrRow - 2))
+	{
+	  TmpMatrix.SwapRowColumn(PivotRow, TmpMatrix.NbrRow - 2);
+	  Pfaffian *= -1.0;
+	}
+      if (Pos != (TmpMatrix.NbrRow - 1))
+	{
+	  TmpMatrix.SwapRowColumn(Pos, TmpMatrix.NbrRow - 1);
+	  Pfaffian *= -1.0;
+	}
+      // write Schur complement instead of the rest of the skew symmetric matrix
+      Pos = 0;
+      Complex Factor1;
+      Complex Factor2;
+      ReducedK = k - 2;
+      int Pos1 = ReducedK - 1;
+      int Pos2;
+      TmpInc = TmpMatrix.NbrColumn + TmpMatrix.Increment - 2;
+      for (int i = 0; i < ReducedK; ++i)
+	{
+	  Pos2 = Pos1 + TmpMatrix.NbrColumn + TmpMatrix.Increment - i - 2;
+	  Factor1.Re = (Pivot.Re * TmpMatrix.RealOffDiagonalElements[Pos1]) - (Pivot.Im * TmpMatrix.ImaginaryOffDiagonalElements[Pos1]);
+	  Factor1.Im = (Pivot.Im * TmpMatrix.RealOffDiagonalElements[Pos1]) + (Pivot.Re * TmpMatrix.ImaginaryOffDiagonalElements[Pos1]);
+	  Factor2.Re = (Pivot.Re * TmpMatrix.RealOffDiagonalElements[Pos1 + 1]) - (Pivot.Im * TmpMatrix.ImaginaryOffDiagonalElements[Pos1 + 1]);
+	  Factor2.Im = (Pivot.Im * TmpMatrix.RealOffDiagonalElements[Pos1 + 1]) + (Pivot.Re * TmpMatrix.ImaginaryOffDiagonalElements[Pos1 + 1]);
+	  for (int j = i + 1; j < ReducedK; ++j)
+	    {
+	      TmpMatrix.RealOffDiagonalElements[Pos] += ((Factor2.Re * TmpMatrix.RealOffDiagonalElements[Pos2]) 
+							 + (Factor1.Im * TmpMatrix.ImaginaryOffDiagonalElements[Pos2 + 1])
+							 - (Factor2.Im * TmpMatrix.ImaginaryOffDiagonalElements[Pos2]) 
+							 - (Factor1.Re * TmpMatrix.RealOffDiagonalElements[Pos2 + 1]));
+	      TmpMatrix.ImaginaryOffDiagonalElements[Pos] += ((Factor2.Im * TmpMatrix.RealOffDiagonalElements[Pos2]) 
+							      + (Factor2.Re * TmpMatrix.ImaginaryOffDiagonalElements[Pos2]) 
+							      - (Factor1.Re * TmpMatrix.ImaginaryOffDiagonalElements[Pos2 + 1])
+							      - (Factor1.Im * TmpMatrix.RealOffDiagonalElements[Pos2 + 1]));
+	      ++Pos;
+	      Pos2 += TmpInc - j;
+	    }
+	  Pos += 2 + TmpMatrix.Increment;
+	  Pos1 += TmpInc - i;
+	}
+      TmpMatrix.Resize(ReducedK, ReducedK);
+    }
+  TmpMatrix.Resize(this->NbrColumn, this->NbrColumn);
+  Pivot.Re = TmpMatrix.RealOffDiagonalElements[0];
+  Pivot.Im = TmpMatrix.ImaginaryOffDiagonalElements[0];
+  Pfaffian *= Pivot;
+  return Pfaffian;
 }
 
 // Output Stream overload

@@ -20,7 +20,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../../..
+top_builddir = ../../../..
 
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
@@ -119,43 +119,35 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 
-noinst_LIBRARIES = libNumericalAnalysis.a
+noinst_LIBRARIES = libQHEWaveFunction.a
 
-libNumericalAnalysis_a_SOURCES = AbstractNumericalInterval.cc \
-FiniteRegularSubdivisionNumericalInterval.cc \
-RNumericalInterval.cc \
-Abstract1DRealFunction.cc \
-Abstract1DComplexFunction.cc
+libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc \
+PfaffianOnSphereWaveFunction.cc
 
-subdir = src/MathTools/NumericalAnalysis
+subdir = src/Tools/QHE/QHEWaveFunction
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/src/config_ac.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
-libNumericalAnalysis_a_AR = $(AR) cru
-libNumericalAnalysis_a_LIBADD =
-am_libNumericalAnalysis_a_OBJECTS = AbstractNumericalInterval.$(OBJEXT) \
-	FiniteRegularSubdivisionNumericalInterval.$(OBJEXT) \
-	RNumericalInterval.$(OBJEXT) Abstract1DRealFunction.$(OBJEXT) \
-	Abstract1DComplexFunction.$(OBJEXT)
-libNumericalAnalysis_a_OBJECTS = $(am_libNumericalAnalysis_a_OBJECTS)
+libQHEWaveFunction_a_AR = $(AR) cru
+libQHEWaveFunction_a_LIBADD =
+am_libQHEWaveFunction_a_OBJECTS = LaughlinOnSphereWaveFunction.$(OBJEXT) \
+	PfaffianOnSphereWaveFunction.$(OBJEXT)
+libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/Abstract1DComplexFunction.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Abstract1DRealFunction.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractNumericalInterval.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/FiniteRegularSubdivisionNumericalInterval.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/RNumericalInterval.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-DIST_SOURCES = $(libNumericalAnalysis_a_SOURCES)
+DIST_SOURCES = $(libQHEWaveFunction_a_SOURCES)
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	ps-recursive install-info-recursive uninstall-info-recursive \
@@ -164,7 +156,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
 DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(libNumericalAnalysis_a_SOURCES)
+SOURCES = $(libQHEWaveFunction_a_SOURCES)
 
 all: all-recursive
 
@@ -172,7 +164,7 @@ all: all-recursive
 .SUFFIXES: .cc .o .obj
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/MathTools/NumericalAnalysis/Makefile
+	  $(AUTOMAKE) --gnu  src/Tools/QHE/QHEWaveFunction/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
@@ -180,10 +172,10 @@ AR = ar
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libNumericalAnalysis.a: $(libNumericalAnalysis_a_OBJECTS) $(libNumericalAnalysis_a_DEPENDENCIES) 
-	-rm -f libNumericalAnalysis.a
-	$(libNumericalAnalysis_a_AR) libNumericalAnalysis.a $(libNumericalAnalysis_a_OBJECTS) $(libNumericalAnalysis_a_LIBADD)
-	$(RANLIB) libNumericalAnalysis.a
+libQHEWaveFunction.a: $(libQHEWaveFunction_a_OBJECTS) $(libQHEWaveFunction_a_DEPENDENCIES) 
+	-rm -f libQHEWaveFunction.a
+	$(libQHEWaveFunction_a_AR) libQHEWaveFunction.a $(libQHEWaveFunction_a_OBJECTS) $(libQHEWaveFunction_a_LIBADD)
+	$(RANLIB) libQHEWaveFunction.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -191,11 +183,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Abstract1DComplexFunction.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Abstract1DRealFunction.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractNumericalInterval.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FiniteRegularSubdivisionNumericalInterval.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RNumericalInterval.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
@@ -345,7 +334,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-top_distdir = ../../..
+top_distdir = ../../../..
 distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)

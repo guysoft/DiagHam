@@ -93,10 +93,11 @@ class ComplexSkewSymmetricMatrix : public Matrix
   // dimension = matrix dimension
   ComplexSkewSymmetricMatrix(double* realUpperDiagonal, double* imaginaryUpperDiagonal, int dimension) ;
 
-  // copy constructor (without duplicating datas)
+  // copy constructor
   //
   // M = matrix to copy
-  ComplexSkewSymmetricMatrix(const ComplexSkewSymmetricMatrix& M);
+  // duplicateFlag = true if datas have to be duplicated
+  ComplexSkewSymmetricMatrix(const ComplexSkewSymmetricMatrix& M, bool duplicateFlag);
 
   // destructor
   //
@@ -126,6 +127,20 @@ class ComplexSkewSymmetricMatrix : public Matrix
   // j = column position
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
+
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, double& x);
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x);
 
   // add a value to a matrix element
   //
@@ -234,12 +249,6 @@ class ComplexSkewSymmetricMatrix : public Matrix
   // return value = pointer to conjugated matrix
   Matrix* Conjugate(ComplexMatrix& UnitaryM);
 
-  // conjugate a matrix with an unitary block-diagonal matrix (Ut M U)
-  //
-  // UnitaryM = unitary matrix to use
-  // return value = pointer to conjugated matrix
-  Matrix* Conjugate(BlockDiagonalMatrix& UnitaryM);
-
   // conjugate a block of the matrix with an unitary matrix (Ut M U)
   //
   // UnitaryM = unitary matrix to use
@@ -261,6 +270,13 @@ class ComplexSkewSymmetricMatrix : public Matrix
   void Conjugate(ComplexMatrix& UnitaryMl, ComplexMatrix& UnitaryMr, int sourceRowIndex, 
 		 int sourceColumnIndex, int destinationRowIndex,
 		 int destinationColumnIndex, ComplexSkewSymmetricMatrix& matrix);
+
+  // swap the i-th row/column with the j-th row/column (thus preserving the skew symmetric form)
+  //
+  // i = index of the first the row/column
+  // j = index of the second the row/column
+  // return value = reference on the current matrix
+  ComplexSkewSymmetricMatrix& SwapRowColumn (int i, int j);
 
   // evaluate matrix trace
   //

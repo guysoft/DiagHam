@@ -117,45 +117,13 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = 
-
-noinst_LIBRARIES = libNumericalAnalysis.a
-
-libNumericalAnalysis_a_SOURCES = AbstractNumericalInterval.cc \
-FiniteRegularSubdivisionNumericalInterval.cc \
-RNumericalInterval.cc \
-Abstract1DRealFunction.cc \
-Abstract1DComplexFunction.cc
-
-subdir = src/MathTools/NumericalAnalysis
+SUBDIRS = QHEWaveFunction
+subdir = src/Tools/QHE
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/src/config_ac.h
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
-
-libNumericalAnalysis_a_AR = $(AR) cru
-libNumericalAnalysis_a_LIBADD =
-am_libNumericalAnalysis_a_OBJECTS = AbstractNumericalInterval.$(OBJEXT) \
-	FiniteRegularSubdivisionNumericalInterval.$(OBJEXT) \
-	RNumericalInterval.$(OBJEXT) Abstract1DRealFunction.$(OBJEXT) \
-	Abstract1DComplexFunction.$(OBJEXT)
-libNumericalAnalysis_a_OBJECTS = $(am_libNumericalAnalysis_a_OBJECTS)
-
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/src
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/Abstract1DComplexFunction.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Abstract1DRealFunction.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractNumericalInterval.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/FiniteRegularSubdivisionNumericalInterval.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/RNumericalInterval.Po
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-DIST_SOURCES = $(libNumericalAnalysis_a_SOURCES)
+DIST_SOURCES =
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	ps-recursive install-info-recursive uninstall-info-recursive \
@@ -164,60 +132,14 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
 DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(libNumericalAnalysis_a_SOURCES)
-
 all: all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .cc .o .obj
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/MathTools/NumericalAnalysis/Makefile
+	  $(AUTOMAKE) --gnu  src/Tools/QHE/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
-
-AR = ar
-
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libNumericalAnalysis.a: $(libNumericalAnalysis_a_OBJECTS) $(libNumericalAnalysis_a_DEPENDENCIES) 
-	-rm -f libNumericalAnalysis.a
-	$(libNumericalAnalysis_a_AR) libNumericalAnalysis.a $(libNumericalAnalysis_a_OBJECTS) $(libNumericalAnalysis_a_LIBADD)
-	$(RANLIB) libNumericalAnalysis.a
-
-mostlyclean-compile:
-	-rm -f *.$(OBJEXT) core *.core
-
-distclean-compile:
-	-rm -f *.tab.c
-
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Abstract1DComplexFunction.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Abstract1DRealFunction.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractNumericalInterval.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FiniteRegularSubdivisionNumericalInterval.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RNumericalInterval.Po@am__quote@
-
-.cc.o:
-@am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
-@am__fastdepCXX_TRUE@	  -c -o $@ `test -f '$<' || echo '$(srcdir)/'`$<; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; \
-@am__fastdepCXX_TRUE@	else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; \
-@am__fastdepCXX_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
-
-.cc.obj:
-@am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
-@am__fastdepCXX_TRUE@	  -c -o $@ `if test -f '$<'; then $(CYGPATH_W) '$<'; else $(CYGPATH_W) '$(srcdir)/$<'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; \
-@am__fastdepCXX_TRUE@	else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; \
-@am__fastdepCXX_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `if test -f '$<'; then $(CYGPATH_W) '$<'; else $(CYGPATH_W) '$(srcdir)/$<'; fi`
 uninstall-info-am:
 
 # This directory's subdirectories are mostly independent; you can cd
@@ -390,7 +312,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LIBRARIES)
+all-am: Makefile
 installdirs: installdirs-recursive
 installdirs-am:
 
@@ -420,13 +342,11 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-generic mostlyclean-am
 
 distclean: distclean-recursive
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+distclean-am: clean-am distclean-generic distclean-tags
 
 dvi: dvi-recursive
 
@@ -447,13 +367,12 @@ install-man:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+mostlyclean-am: mostlyclean-generic
 
 pdf: pdf-recursive
 
@@ -468,21 +387,19 @@ uninstall-am: uninstall-info-am
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am check check-am clean \
-	clean-generic clean-noinstLIBRARIES clean-recursive ctags \
-	ctags-recursive distclean distclean-compile distclean-generic \
-	distclean-recursive distclean-tags distdir dvi dvi-am \
-	dvi-recursive info info-am info-recursive install install-am \
-	install-data install-data-am install-data-recursive \
+	clean-generic clean-recursive ctags ctags-recursive distclean \
+	distclean-generic distclean-recursive distclean-tags distdir \
+	dvi dvi-am dvi-recursive info info-am info-recursive install \
+	install-am install-data install-data-am install-data-recursive \
 	install-exec install-exec-am install-exec-recursive \
 	install-info install-info-am install-info-recursive install-man \
 	install-recursive install-strip installcheck installcheck-am \
 	installdirs installdirs-am installdirs-recursive \
 	maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-recursive pdf pdf-am \
-	pdf-recursive ps ps-am ps-recursive tags tags-recursive \
-	uninstall uninstall-am uninstall-info-am \
-	uninstall-info-recursive uninstall-recursive
+	maintainer-clean-recursive mostlyclean mostlyclean-generic \
+	mostlyclean-recursive pdf pdf-am pdf-recursive ps ps-am \
+	ps-recursive tags tags-recursive uninstall uninstall-am \
+	uninstall-info-am uninstall-info-recursive uninstall-recursive
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
