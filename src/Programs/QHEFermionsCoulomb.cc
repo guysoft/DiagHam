@@ -40,11 +40,14 @@ int main(int argc, char** argv)
   SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 30);
   SingleIntegerOption LzMaxOption ('l', "lzmax", "twice the maximum momentum for a single particle", 10);
+  SingleIntegerOption InitialLzOption ('\n', "initial-lz", "twice the inital momentum projection for the system", 
+					-1);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   BooleanOption DeltaOption ('d', "delta", "add a delta interaction component", false);
   SingleDoubleOption CoulombRatioOption ('r', "ratio", "ratio between coulomd interaction and delta interaction", 1.0);
   List<AbstractOption*> OptionList;
+  SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &GroundOption;
@@ -56,6 +59,8 @@ int main(int argc, char** argv)
   OptionList += &MemoryOption;
   OptionList += &DeltaOption;
   OptionList += &CoulombRatioOption;
+  OptionList += &InitialLzOption;
+  OptionList += &NbrLzOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsCoulomb -h" << endl;
@@ -77,7 +82,8 @@ int main(int argc, char** argv)
   int Memory = MemoryOption.GetInteger() << 20;
   bool DeltaFlag = DeltaOption.GetBoolean();
   double CoulombRatio = CoulombRatioOption.GetDouble();
-
+  int InitialLz = InitialLzOption.GetInteger();
+  int NbrLz = NbrLzOption.GetInteger();
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
   int Shift = 0;
@@ -98,8 +104,23 @@ int main(int argc, char** argv)
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;
+  if (InitialLz >= 0)
+    {
+      L = InitialLz;
+      if ((abs(Max) & 1) != 0)
+	L |= 1;
+      else
+	L &= ~0x1;
+    }
   if (GroundFlag == true)
       Max = L;
+  else
+    {
+      if (NbrLz > 0)
+	{
+	  Max = L + (2 * (NbrLz - 1));
+	}
+    }
   for (; L <= Max; L += 2)
     {
       cout << "----------------------------------------------------------------" << endl;
