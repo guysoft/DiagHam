@@ -25,4 +25,7 @@ ParticleOnDiskLaplacianDeltaHamiltonian.cc \
 ParticleOnSphereDipolarHamiltonian.cc \
 ParticleOnSphereGenericHamiltonian.cc \
 AbstractQHEOnSphereNBodyInteractionHamiltonian.cc \
-ParticleOnSphereNBodyHardCoreHamiltonian.cc
+ParticleOnSphereNBodyHardCoreHamiltonian.cc \
+AbstractQHEOnDiskNBodyInteractionHamiltonian.cc \
+ParticleOnDiskNBodyHardCoreHamiltonian.cc
+

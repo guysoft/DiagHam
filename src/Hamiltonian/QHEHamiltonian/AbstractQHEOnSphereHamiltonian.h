@@ -73,7 +73,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   int* M2Value;
   int* M3Value;
 
-  // shift to apply to go from precalculation index to the corrsponding index in the HilbertSpace
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
 
   // flag for fast multiplication algorithm

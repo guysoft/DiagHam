@@ -58,6 +58,9 @@ class BosonOnDisk :  public ParticleOnDisk
   // indicate position of the first state with a given number of boson having a given maximum Lz value
   int* LzMaxPosition;
 
+  // temporary state used when applying operators
+  int* TemporaryState;
+
  public:
 
   // basic constructor
@@ -125,6 +128,16 @@ class BosonOnDisk :  public ParticleOnDisk
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //

@@ -58,6 +58,7 @@ BosonOnDisk::BosonOnDisk (int nbrBosons, int totalLz)
   this->GenerateStates(this->NbrBosons, this->TotalLz, this->TotalLz, this->TotalLz, 0);
   this->KeyMultiplicationTable = new int [this->TotalLz + 1];
   this->GenerateLookUpTable(0);
+  this->TemporaryState = new int [this->TotalLz + 1];
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -90,6 +91,7 @@ BosonOnDisk::BosonOnDisk(const BosonOnDisk& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
+  this->TemporaryState = new int [this->TotalLz + 1];
 }
 
 // destructor
@@ -97,6 +99,7 @@ BosonOnDisk::BosonOnDisk(const BosonOnDisk& bosons)
 
 BosonOnDisk::~BosonOnDisk ()
 {
+  delete[] this->TemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -113,6 +116,7 @@ BosonOnDisk::~BosonOnDisk ()
 
 BosonOnDisk& BosonOnDisk::operator = (const BosonOnDisk& bosons)
 {
+  delete[] this->TemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -127,6 +131,7 @@ BosonOnDisk& BosonOnDisk::operator = (const BosonOnDisk& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
+  this->TemporaryState = new int [this->TotalLz + 1];
   return *this;
 }
 
@@ -196,25 +201,75 @@ int BosonOnDisk::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coef
     NewLzMax = m1;
   if (LzMax < m2)
     NewLzMax = m2;
-  int* TmpState = new int [NewLzMax + 1];
   int i = 0;
   for (; i <= LzMax; ++i)
-    TmpState[i] = State[i];
+    this->TemporaryState[i] = State[i];
   for (; i <= NewLzMax; ++i)
-    TmpState[i] = 0;
-  coefficient = TmpState[n2];
-  --TmpState[n2];
-  coefficient *= TmpState[n1];
-  --TmpState[n1];
-  ++TmpState[m2];
-  coefficient *= TmpState[m2];
-  ++TmpState[m1];
-  coefficient *= TmpState[m1];
+    this->TemporaryState[i] = 0;
+  coefficient = this->TemporaryState[n2];
+  --this->TemporaryState[n2];
+  coefficient *= this->TemporaryState[n1];
+  --this->TemporaryState[n1];
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);
-  while (TmpState[NewLzMax] == 0)
+  while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(TmpState, NewLzMax);
-  delete[] TmpState;
+  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
+  return DestIndex;
+}
+
+// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+//
+// index = index of the state on which the operator has to be applied
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+{
+  int CurrentLzMax = this->StateLzMax[index];
+  int* State = this->StateDescription[index];
+  --nbrIndices;
+  for (int i = 0; i <= nbrIndices; ++i)
+    {
+      if ((n[i] > CurrentLzMax) || (State[n[i]] == 0))
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+ 
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->TemporaryState[i] = State[i];
+  for (; i <= this->TotalLz; ++i)
+    this->TemporaryState[i] = 0;
+  coefficient = 1.0;
+  for (i = nbrIndices; i >= 0; --i)
+    {
+      if (this->TemporaryState[n[i]] == 0)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension; 	    
+	}
+      coefficient *= (double) this->TemporaryState[n[i]];
+      --this->TemporaryState[n[i]];
+    }
+  for (i = nbrIndices; i >= 0; --i)
+    {
+      ++this->TemporaryState[m[i]];
+      coefficient *= (double) this->TemporaryState[m[i]];
+    }
+  coefficient = sqrt(coefficient);
+  int NewLzMax = this->TotalLz;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }
 

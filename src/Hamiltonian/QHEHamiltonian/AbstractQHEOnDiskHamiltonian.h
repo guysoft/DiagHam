@@ -59,8 +59,11 @@ class AbstractQHEOnDiskHamiltonian : public AbstractQHEHamiltonian
   // number of particles
   int NbrParticles;
 
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
+
   // global energy shift (can be used to store the energy of the Wigner crystal)
-  double EnergyShift;
+  double HamiltonianShift;
 
   // maximum momentum value reached by a particle in the state
   int MaxMomentum;

@@ -38,6 +38,7 @@
 #include "Complex.h"
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
+#include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
 #include <math.h>
@@ -66,6 +67,10 @@ ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
   if (precalculationFileName == 0)
     {
@@ -90,7 +95,7 @@ ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian
     }
   else
     this->LoadPrecalculation(precalculationFileName);
-  this->EnergyShift = 0.0;
+  this->HamiltonianShift = 0.0;
 }
 
 // destructor
@@ -136,7 +141,7 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSp
 
 void ParticleOnDiskLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
-  this->EnergyShift = shift;
+  this->HamiltonianShift = shift;
 }
   
 // evaluate all interaction factors
