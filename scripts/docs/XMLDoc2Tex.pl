@@ -7,8 +7,8 @@ use Getopt::Long;
 
 my $HeaderFile = "";
 my $FooterFile = "";
-my $TexFile = "";
-my $Result = GetOptions ("header:s" => \$HeaderFile, "footer:s" => \$FooterFile, "xml=s" => \$TexFile); 
+my $XMLFile = "";
+my $Result = GetOptions ("header:s" => \$HeaderFile, "footer:s" => \$FooterFile, "xml=s" => \$XMLFile); 
 
 if ($HeaderFile eq "")
   {
@@ -31,8 +31,7 @@ foreach $TmpLine (<INFILE>)
 close (INFILE);
 
 
-my $XMLContent = XMLin($TexFile);
-
+my $XMLContent = XMLin($XMLFile);
 my $Key;
 my $Value;
 

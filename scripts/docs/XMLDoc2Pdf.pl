@@ -28,7 +28,7 @@ if ($FooterFile eq "")
   }
 if ($PathToXMLDoc2Tex eq "")
   {
-    $PathToXMLDoc2Tex = "scripts";
+    $PathToXMLDoc2Tex = "scripts/docs";
   }
 my $TruncatedXMLFileName = $XMLFile;
 $TruncatedXMLFileName =~ s/.*\///g;
@@ -47,6 +47,6 @@ print OUTFILE $TmpLatexFile;
 close (OUTFILE);
 `pdflatex $TmpLatexFileName`;
 $TmpLatexFileName =~ s/\.tex$/\.pdf/i;
-`mv $TmpLatexFileName $PDFFile`;
+`mv -f $TmpLatexFileName $PDFFile`;
 $TmpLatexFileName =~ s/\.pdf$/\.\*/i;
 `rm -f $TmpLatexFileName`;

@@ -232,7 +232,7 @@ sub PrintOptionInfo
 sub PrintRelatedProgramInfo
   {
     my $Value = $_[0];
-    return "<li>".$$Value{'name'}."<br />\n location : <span class=\"programdocdirectoryname\">".$$Value{'location'}."</span><br />\n  usage : ".$$Value{'usage'}."<br />\n  description : ".&ConvertLatex2HTML($$Value{'description'})."<br /></li>\n";
+    return "<li><span class=\"programdocrelatedprogram\">".$$Value{'name'}."</span><br />\n <span class=\"programdocrelatedprogramsection\">location</span> : <span class=\"programdocdirectoryname\">".$$Value{'location'}."</span><br />\n  <span class=\"programdocrelatedprogramsection\">usage</span> : ".&ConvertLatex2HTML($$Value{'usage'})."<br />\n  <span class=\"programdocrelatedprogramsection\">description</span> : ".&ConvertLatex2HTML($$Value{'description'})."<br /><br /></li>\n";
   }
 
 # convert a Latex part of text to HTML
