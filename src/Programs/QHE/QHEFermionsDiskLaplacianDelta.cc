@@ -113,8 +113,14 @@ int main(int argc, char** argv)
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
       ParticleOnDisk* Space;
-//      Space = new FermionOnDisk (NbrFermions, L);
-      Space = new FermionOnDiskUnlimited (NbrFermions, L);
+#ifdef __64_BITS__
+      if ((L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 63)      
+#else
+      if ((L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 31)
+#endif
+	Space = new FermionOnDisk (NbrFermions, L);
+      else
+	Space = new FermionOnDiskUnlimited (NbrFermions, L);
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space->GetHilbertSpaceDimension() << endl;
       ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(Space, NbrFermions, Architecture, Memory, LoadPrecalculationFileName);
       if (SavePrecalculationFileName != 0)
