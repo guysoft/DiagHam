@@ -233,17 +233,17 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
- /*
+ 
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 160;
+      State[i] = 20;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
   DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.4, 2e-4);
   DOS.WriteSpectra(out);
-  */
+ 
 
   /*
   for (int n = 102; n < 110; ++n)
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
       State = 0; Energy = 0; File = 0;
     }
 */
-
+/*
   int Nbr = 1;
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
@@ -303,7 +303,7 @@ int main(int argc, char** argv)
     }
   Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.5, 2e-4);
   Absorption.WriteSpectra(out);
-
+*/
 
 //Spectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE);
 

@@ -41,6 +41,9 @@ class VerticalPeriodicParticleInMagneticField : public AbstractHilbertSpace
 
  protected:
 
+  // quantum number of kinetic momentum in Z direction
+  int NumberM;
+
   // number of Landau states in plane
   int NbrStateR;
 
@@ -57,7 +60,8 @@ class VerticalPeriodicParticleInMagneticField : public AbstractHilbertSpace
   // nbrStateR = number of Landau states in plane 
   // nbrStateZ = wave function basis dimension in the z direction
   // lowerImpulsionZ = LowerImpulsionZ
-  VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
+  // numberM = quantum number of kinetic momentum in Z direction
+  VerticalPeriodicParticleInMagneticField(int numberM, int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
 
   // copy constructor
   //
@@ -93,6 +97,11 @@ class VerticalPeriodicParticleInMagneticField : public AbstractHilbertSpace
   // 
   // return value = lower limit of Z impulsion
   int GetLowerImpulsionZ();
+
+  // get quantum number of kinetic momentum
+  //
+  // return = the kinetic momentum quantum number value
+  int GetQuantumNumberM();
 
   // return a list of all possible quantum numbers
   //
@@ -148,6 +157,15 @@ inline int VerticalPeriodicParticleInMagneticField::GetNbrStateZ()
 inline int VerticalPeriodicParticleInMagneticField::GetLowerImpulsionZ()
 {
   return this->LowerImpulsionZ;
+}
+
+// get quantum number of kinetic momentum
+//
+//return = the kinetic momentum quantum number value
+
+inline int VerticalPeriodicParticleInMagneticField::GetQuantumNumberM()
+{
+  return this->NumberM;
 }
 
 #endif

@@ -51,6 +51,9 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // Hilbert space associated to the system
   VerticalPeriodicParticleInMagneticField* Space;
 
+  // quantum number of kinetic momentum in Z direction
+  int NumberM;
+
   // number of Landau states in plane
   int NbrStateR;
 

@@ -37,9 +37,11 @@
 // nbrStateR = number of Landau states in plane 
 // nbrStateZ = wave function basis dimension in the z direction
 // lowerImpulsionZ = LowerImpulsionZ
+// numberM = quantum number of kinetic momentum in Z direction
 
-VerticalPeriodicParticleInMagneticField::VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ)
+VerticalPeriodicParticleInMagneticField::VerticalPeriodicParticleInMagneticField(int numberM, int nbrStateR, int nbrStateZ, int lowerImpulsionZ)
 {
+  this->NumberM = numberM;
   this->NbrStateR = nbrStateR;
   this->NbrStateZ = nbrStateZ;
   this->LowerImpulsionZ = lowerImpulsionZ;
@@ -52,6 +54,7 @@ VerticalPeriodicParticleInMagneticField::VerticalPeriodicParticleInMagneticField
 
 VerticalPeriodicParticleInMagneticField::VerticalPeriodicParticleInMagneticField(const VerticalPeriodicParticleInMagneticField& space)
 {
+  this->NumberM = space.NumberM;
   this->NbrStateR = space.NbrStateR;
   this->NbrStateZ = space.NbrStateZ;
   this->LowerImpulsionZ = space.LowerImpulsionZ;
@@ -72,6 +75,7 @@ VerticalPeriodicParticleInMagneticField::~VerticalPeriodicParticleInMagneticFiel
 
 VerticalPeriodicParticleInMagneticField& VerticalPeriodicParticleInMagneticField::operator = (const VerticalPeriodicParticleInMagneticField& space)
 {
+  this->NumberM = space.NumberM;
   this->NbrStateR = space.NbrStateR;
   this->NbrStateZ = space.NbrStateZ;
   this->LowerImpulsionZ = space.LowerImpulsionZ;

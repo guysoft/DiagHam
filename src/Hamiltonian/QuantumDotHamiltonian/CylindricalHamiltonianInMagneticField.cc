@@ -60,6 +60,7 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(Ver
     this->ZSize += PotentialInput->GetHeight(k);            
   this->Mur = mur;
   this->Muz = muz;
+  this->NumberM = this->Space->GetQuantumNumberM();
   this->NbrStateR = this->Space->GetNbrStateR();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
@@ -80,6 +81,7 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(con
   this->ZSize = hamiltonian.ZSize;
   this->Mur = hamiltonian.Mur;
   this->Muz = hamiltonian.Muz;
+  this->NumberM = this->Space->GetQuantumNumberM();
   this->NbrStateR = this->Space->GetNbrStateR();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
@@ -301,6 +303,16 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 {
   double PlaneQuantum = ENERGY_FACTOR * Bz / this->Mur;
   double OrbitRadius = LENGTH_FACTOR / sqrt(Bz);
+  int addition;
+  if ((this->NumberM == 1) || (this->NumberM == -1))
+    addition = 1;
+  else
+    if (this->NumberM == 0)
+      addition = 0;
+    else
+      cout << "Attention! This quantum number of kinetic momentum has not been taken into account: " << this->NumberM << endl;
+
+  cout << addition << endl;
 
   double** RealWaveFunctionOverlapZ; double** ImaginaryWaveFunctionOverlapZ;
   if (!this->EvaluatePlaneWaveFunctionOverlap(potential, this->NbrStateZ, RealWaveFunctionOverlapZ, ImaginaryWaveFunctionOverlapZ))
@@ -311,11 +323,11 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   double tmp = 0.0; double radius = 0.0;
   double tk = 0.0;
   double tmp1 = 0.0, tmp2 = 0.0, tmp3 = 0.0;
-  //cout << "Integral: " << endl;
+  cout << "Integral: " << endl;
   int limit = 0, limit2 = 0;
   for (int k = 0; k < nbrCylinder; ++k)
     {
-      Integral[k] = new double [this->NbrStateR * 2 - 1];
+      Integral[k] = new double [this->NbrStateR * 2 - 1 + addition];
       radius = potential->GetRadius(k);      
       if (radius > 0.0)
 	{
@@ -323,33 +335,27 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 	  //cout << "tk: " << tk << endl;
 	  tmp = exp(-tk);
 	  Integral[k][0] = 1.0 - tmp;
-	  cout << Integral[k][0] << " ";
+	  //cout << Integral[k][0] << " ";
 
 	  limit = this->NbrStateR * 2 - 1;
-	  tmp2 = 1.0;
-	  for (int m = 2; m < limit; ++m)
-	    tmp2 *= double(m);	  
+	  tmp2 = 1.0;	  
 	  tmp1 = 0.0;
-	  for (int m = limit; m < 172; ++m)
+	  for (int m = limit; ; ++m)
 	    {
 	      tmp2 *= double(m);
 	      tmp3 = (pow(tk, m - limit) / tmp2);
 	      tmp1 += tmp3;
-	      if ((tmp3 / tmp1) < 1.0e-14)
+	      if (tmp3 < (1.0e-14 * tmp1))
 		{
 		  limit2 = m;
 		  break;
 		}
 	    }
 	  cout << "Limit: " << limit2 << endl;
-	  for (int n = 1; n < (this->NbrStateR * 2 - 1); ++n)
-	    {		      
-	      limit = n;
-	      tmp2 = 1.0;
-	      for (int m = 2; m <= limit; ++m)
-		tmp2 *= double(m);	  
-	      tmp1 = 0.0;
-	      for (int m = limit + 1; m < limit2 ; ++m)
+	  for (int n = 1; n < (this->NbrStateR * 2 - 1 + addition); ++n)
+	    {		      	     
+	      tmp2 = 1.0; tmp1 = 0.0;
+	      for (int m = n + 1; m < limit2 ; ++m)
 		{
 		  tmp2 *= double(m);
 		  tmp1 += (pow(tk, m) / tmp2);
@@ -364,17 +370,18 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 	}
     }
   
-  double** LaguerreCoefficient = new double* [this->NbrStateR * 2 - 1];
+  double** LaguerreCoefficient = new double* [this->NbrStateR + addition];
   //cout << "Laguerre coefficient: " << endl;
-  for (int n = 0; n < (this->NbrStateR * 2 - 1); ++n)
+  for (int n = 0; n < (this->NbrStateR + addition); ++n)
     {
       LaguerreCoefficient[n] = new double [n + 1];      
-      LaguerreCoefficient[n][0] = 1.0;
+      //LaguerreCoefficient[n][0] = 1.0;
       //cout << LaguerreCoefficient[n][0] << " ";
-      for (int m = 1; m <= n; ++m)
+      for (int m = 0; m <= n; ++m)
 	{
 	  FactorialCoefficient* TmpLaguerre = new FactorialCoefficient(1) ;	  
-	  TmpLaguerre->PartialFactorialMultiply(m + 1, n);
+	  TmpLaguerre->PartialFactorialMultiply(m + 1 + addition, n + addition);
+	  TmpLaguerre->FactorialDivide(m);
 	  TmpLaguerre->FactorialDivide(n - m);
 	  LaguerreCoefficient[n][m] = TmpLaguerre->GetNumericalValue();
 	  //cout << LaguerreCoefficient[n][m] << " ";	  
@@ -409,8 +416,13 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 			{
 			  TmpSum1 = 0.0;
 			  for (int m2 = 0; m2 <= n2; ++m2) 			  
-			    TmpSum1 += (LaguerreCoefficient[m1 + m2][m1] * Integral[k][m1 + m2] * LaguerreCoefficient[n2][m2]);
+			    TmpSum1 += (Integral[k][m1 + m2 + addition] * LaguerreCoefficient[n2][m2]);
 			  TmpSum += (LaguerreCoefficient[n1][m1] * TmpSum1);
+			}
+		      if (addition == 1)
+			{
+			  TmpSum /= sqrt(double(n1 + 1) * double(n2 + 1));
+			  TmpSum = -TmpSum;
 			}
 		      TmpRe += (potential->GetPotential(k) * RealWaveFunctionOverlapZ[p][k] * TmpSum);
 		      TmpIm += (potential->GetPotential(k) * ImaginaryWaveFunctionOverlapZ[p][k] * TmpSum);
@@ -445,6 +457,8 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   for (int n = 0; n < this->NbrStateR; ++n)
     {
       TmpE = PlaneQuantum * (0.5 + double(n));
+      if (this->NumberM == 1)
+	TmpE += PlaneQuantum;
       for (int p = 0; p < this->NbrStateZ; ++p)
 	{
 	  this->PartialDiagonalElement[Index] = TmpE + double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor; 

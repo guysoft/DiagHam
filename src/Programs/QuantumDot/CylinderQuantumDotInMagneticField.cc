@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 50);
   SingleIntegerOption NumberRValueOption ('R', "R-states", "number of states in plane", 100);
   SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of cells in z direction", 100);
+  SingleIntegerOption NumberMValueOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
 
   SingleDoubleOption BelowValueOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 0.0);
   SingleDoubleOption WettingWidthOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 8.0);
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   OptionList += &NbrEigenvaluesOption;
   OptionList += &NumberRValueOption;
   OptionList += &NumberZValueOption;
+  OptionList += &NumberMValueOption;
   OptionList += &BelowValueOption;
   OptionList += &WettingWidthOption;
   OptionList += &NumberDotOption;
@@ -111,6 +113,7 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   int NbrStateR = NumberRValueOption.GetInteger();
   int NbrStateZ = NumberZValueOption.GetInteger();
+  int NumberM = NumberMValueOption.GetInteger();
   double Below = BelowValueOption.GetDouble();
   double WettingWidth = WettingWidthOption.GetDouble();
   double BaseRadius = BaseRadiusOption.GetDouble();
@@ -134,7 +137,7 @@ int main(int argc, char** argv)
 
   // define Hilbert space
   // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
-  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
