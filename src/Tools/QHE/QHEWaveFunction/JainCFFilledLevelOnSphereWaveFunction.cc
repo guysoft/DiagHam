@@ -47,6 +47,10 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(int
   this->NbrParticles = nbrParticles;
   this->NbrLandauLevels = nbrLandauLevels;
   this->JastrowPower = jastrowPower;
+  this->JastrowPowerPowers = new double [this->NbrLandauLevels];
+  this->JastrowPowerPowers[0] = 1.0;
+  for (int i = 1; i < this->NbrLandauLevels; ++i)
+    this->JastrowPowerPowers[i] = this->JastrowPowerPowers[i - 1] * ((double) this->JastrowPower);
   this->Flag.Initialize();
   this->EvaluateNormalizationPrefactors();  
   this->EvaluateSumPrefactors();
@@ -54,12 +58,15 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(int
   for (int i = 1; i < this->NbrParticles; ++i)
     this->JastrowFactorElements[i - 1] = new Complex[this->NbrParticles - i];
   this->DerivativeFactors = new Complex** [this->NbrParticles];
+  this->DerivativeFactors2 = new Complex** [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       this->DerivativeFactors[i] = new Complex* [this->NbrLandauLevels];
+      this->DerivativeFactors2[i] = new Complex* [this->NbrLandauLevels];
       for (int j = 0; j < this->NbrLandauLevels; ++j)
 	{
 	  this->DerivativeFactors[i][j] = new Complex [this->NbrLandauLevels];
+	  this->DerivativeFactors2[i][j] = new Complex [this->NbrLandauLevels];
 	}
     }
 }
@@ -80,12 +87,15 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(con
   for (int i = 1; i < this->NbrParticles; ++i)
     this->JastrowFactorElements[i - 1] = new Complex[this->NbrParticles - i];
   this->DerivativeFactors = new Complex** [this->NbrParticles];
+  this->DerivativeFactors2 = new Complex** [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       this->DerivativeFactors[i] = new Complex* [this->NbrLandauLevels];
+      this->DerivativeFactors2[i] = new Complex* [this->NbrLandauLevels];
       for (int j = 0; j < this->NbrLandauLevels; ++j)
 	{
 	  this->DerivativeFactors[i][j] = new Complex [this->NbrLandauLevels];
+	  this->DerivativeFactors2[i][j] = new Complex [this->NbrLandauLevels];
 	}
     }
 }
@@ -104,7 +114,8 @@ JainCFFilledLevelOnSphereWaveFunction::~JainCFFilledLevelOnSphereWaveFunction()
 	    delete[] this->SumPrefactors[i][j];
 	  delete[] this->SumPrefactors[i];
 	}
-      delete this->SumPrefactors;
+      delete[] this->SumPrefactors;
+      delete[] this->JastrowPowerPowers;
     }
   for (int i = 0; i < this->NbrParticles; ++i)
     delete[] this->JastrowFactorElements[i];
@@ -112,10 +123,15 @@ JainCFFilledLevelOnSphereWaveFunction::~JainCFFilledLevelOnSphereWaveFunction()
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       for (int j = 0; j < this->NbrLandauLevels; ++j)
-	delete[] this->DerivativeFactors[i][j];
+	{
+	  delete[] this->DerivativeFactors[i][j];
+	  delete[] this->DerivativeFactors2[i][j];
+	}
       delete[] this->DerivativeFactors[i];
+      delete[] this->DerivativeFactors2[i];
     }
   delete[] this->DerivativeFactors;
+  delete[] this->DerivativeFactors2;
 }
 
 // clone function 
@@ -165,15 +181,54 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
       JastrowFactor *= Tmp;
     }
 
-/*  for (int i = 0; i < this->NbrParticles; ++i)
-    for (int j = 0; j < this->NbrLandauLevels; ++j)
-      {
-	Complex** TmpDerivativeFactors = this->DerivativeFactors[i][j];
-	for (int k1 = 0; k1 <= j; ++k1)
-	  for (int k2 = 0; k2 <= j; ++k2)
+  Complex Tmp2;
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {     
+      Complex** TmpDerivativeFactors = this->DerivativeFactors[i];
+      Complex** TmpDerivativeFactors2 = this->DerivativeFactors2[i];
+      for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+	for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+	  TmpDerivativeFactors[k1][k2] = 0.0;
+
+      int Index = 0;
+      for (int j = 1; j < this->NbrParticles; ++j)
+	{
+	  if (Index == i)
+	    ++Index;
+	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
 	    {
+	      Tmp = 1.0;
+	      if (Index > i)
+		Tmp2 = SpinorVCoordinates[Index] * SpinorUCoordinates[i] * this->JastrowFactorElements[Index][Index - i - 1];
+	      else
+		Tmp2 = SpinorVCoordinates[Index] * SpinorUCoordinates[i] * this->JastrowFactorElements[i][i - Index - 1];
+	      for (int l = 0; l < k1; ++l)
+		Tmp *= Tmp2;
+	      for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+		{
+		  TmpDerivativeFactors2[k1][k2] = Tmp;
+		}
 	    }
-      }*/
+	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+	    {
+	      Tmp = 1.0;
+	      if (Index > i)
+		Tmp2 = - SpinorUCoordinates[Index] * SpinorVCoordinates[i] * this->JastrowFactorElements[Index][Index - i - 1];
+	      else
+		Tmp2 = - SpinorUCoordinates[Index] * SpinorVCoordinates[i] * this->JastrowFactorElements[i][i - Index - 1];
+	      for (int l = 0; l < k1; ++l)
+		Tmp *= Tmp2;
+	      for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+		{
+		  TmpDerivativeFactors2[k2][k1] *= Tmp;
+		}
+	    }
+	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+	    for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+	      TmpDerivativeFactors[k1][k2] += TmpDerivativeFactors2[k1][k2];
+	  ++Index;
+	}
+    }
   
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
 
@@ -290,7 +345,7 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 // momentum = monopole spherical harmonic Lz momentum (plus S shift)
 // landauLevel = index of the pseudo Landau level
 // maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
-// return value = value of the monopole spherical harmonic at the givne point
+// return value = value of the monopole spherical harmonic at the given point
 
 Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
 									   int coordinate, int momentum, int landauLevel, int maximumMomentum)
@@ -321,7 +376,95 @@ Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateCFMonopoleHarmonic (Compl
   Tmp = 1.0;
   for (int i = 0; i <= landauLevel; ++i)
     {
-      Tmp += this->SumPrefactors[landauLevel][i][maximumMomentum];// * this->EvaluateCFMonopoleHarmonicDerivative();
+      Tmp += this->SumPrefactors[landauLevel][i][maximumMomentum] * this->EvaluateCFMonopoleHarmonicDerivative(coordinate, i, landauLevel - i);
     }
   return (Z * Tmp);
+}
+
+
+// evaluate derivative part of the composite fermion monopole spherical harmonic 
+//
+// index = particle index
+// alpha = number of (d\du) derivates
+// beta = number of (d\dv) derivates
+// return value = derivative contribution to the monopole spherical harmonic
+
+Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateCFMonopoleHarmonicDerivative(int index, int alpha, int beta)
+{
+  Complex Tmp;
+  switch (alpha)
+    {
+    case 0:
+      {
+	switch (beta)
+	  {
+	  case 0:
+	    Tmp = 1.0;
+	    break;
+	  case 1:
+	    Tmp = this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][1];
+	    break;
+	  case 2:
+	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1] 
+		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][2]);
+	    break;
+	  case 3:
+	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
+		   - 3 * this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][2] * this->DerivativeFactors[index][0][1]
+		   + 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][3]);
+	    break;
+	  }
+      }
+      break;
+    case 1:
+      {
+	switch (beta)
+	  {
+	  case 0:
+	    Tmp = this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][0];
+	    break;
+	  case 1:
+	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1] 
+		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][1]);
+	    break;
+	  case 2:
+	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
+		   - this->JastrowPowerPowers[2] * (2 * this->DerivativeFactors[index][1][1] * this->DerivativeFactors[index][0][1]
+						    + this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][2])
+		   - 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][2]);
+	    break;
+	  }
+      }
+      break;
+    case 2:
+      {
+	switch (beta)
+	  {
+	  case 0:
+	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] 
+		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][2][0]);
+	    break;
+	  case 1:
+	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1]
+		   - this->JastrowPowerPowers[2] * (2 * this->DerivativeFactors[index][1][1] * this->DerivativeFactors[index][1][0]
+						    + this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][2][0])
+		   - 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][2][1]);
+	    break;
+	  }
+      }
+      break;
+    case 3:
+      {
+	switch (beta)
+	  {
+	  case 0:
+	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0]
+		   - 3 * this->JastrowPowerPowers[2] * this->DerivativeFactors[index][2][0] * this->DerivativeFactors[index][1][0]
+		   + 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][3][0]);
+	    break;
+	  }
+      }
+      break;	    
+    }
+  return Tmp;
 }

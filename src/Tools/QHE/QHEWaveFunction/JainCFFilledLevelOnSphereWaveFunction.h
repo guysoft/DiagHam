@@ -53,6 +53,9 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // power to which the Jastrow factor has to be raised
   int JastrowPower;
 
+  // array with powers of JastrowPower
+  double* JastrowPowerPowers;
+
   // array containing prefactors of each projected monopole harmonic
   double** NormalizationPrefactors;
 
@@ -66,6 +69,8 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   Complex** JastrowFactorElements;
   // temporary used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
   Complex*** DerivativeFactors;
+  // a duplicate array of DerivativeFactors used for precalculations
+  Complex*** DerivativeFactors2;
 
  public:
 
@@ -119,6 +124,14 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = value of the monopole spherical harmonic at the givne point
   Complex EvaluateCFMonopoleHarmonic (Complex* spinorUCoordinates, Complex* spinorVCoordinates,
 				      int coordinate, int momentum, int landauLevel, int maximumMomentum);
+
+  // evaluate derivative part of the composite fermion monopole spherical harmonic 
+  //
+  // index = particle index
+  // alpha = number of (d\du) derivates
+  // beta = number of (d\dv) derivates
+  // return value = derivative contribution to the monopole spherical harmonic  
+  Complex EvaluateCFMonopoleHarmonicDerivative(int index, int alpha, int beta);
 
 };
 
