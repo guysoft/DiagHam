@@ -85,7 +85,7 @@ int main(int argc, char** argv)
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
   /*
-  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 8, N / 8, H, -H / 2);
+  //XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(40, 40, 21, -10);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
     if (PairY)
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
   //Periodic3DOneParticle* Space = new Periodic3DOneParticle(M / 2 + 1 , -M / 4, N / 2 + 1, -N / 4, H, -H / 2);
   //PeriodicSpectra spectra(Space, FileName);
    
-  double Lx = 5.65, Ly = 5.65, Lz = 5.65;
+  //double Lx = 5.65, Ly = 5.65, Lz = 5;
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
   
   //ofstream OutFile(out);    
@@ -143,20 +143,38 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
-
-  for (int i = 0; i < 160; ++i)
+  
+  for (int i = 1; i < 100; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
       spectra.GetImpulsion(Space2, Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
-      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
-      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << endl;
-      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) << endl;
-      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << endl;
+      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental) << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental) << endl;
+      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental) << endl;
+      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental) << endl;
+      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental) << endl;
       cout << i << endl;
     }
-
+  
+  double EigenZ[] = {0.013066932129562, 0.1236666401825, 0.26229073118036};
+  fundamental = -0.13225305464614; 
+  for (int p = 0; p < 3; ++p)
+    {
+      Files[p] = new char[80];
+      AddString(Files[p], "eigenvector.", p, "");
+      for (int m = 0; m < 20; ++m)
+	for (int n = 0; n < 20; ++n)
+	  {
+	    tmpE = EigenZ[p] + 150.4 * (m * m + n * n) / (0.07 * SizeX * SizeX);
+	    if (tmpE < 0.4)
+	      {	     
+		spectra.GetImpulsionWithContinuum(m, n, 21, -10, Files[p], SizeZ, ReZ, ImZ);
+		PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental) << endl;	    
+	      }
+	  }      
+    }
+  
   PX.close(); PY.close(); PZ.close();
   energy.close(); polarization.close();
   */
@@ -237,11 +255,11 @@ int main(int argc, char** argv)
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 30;
+      State[i] = 100;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
-  DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.7, 2e-4);
+  DOSSpectra DOS(1, Files, State, 4e-3, -0.2, 0.5, 2e-4);
   DOS.WriteSpectra(out);
   */
 
@@ -297,11 +315,11 @@ int main(int argc, char** argv)
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 29;
+      State[i] = 99;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
-  Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.8, 2e-4);
+  Spectra Absorption (Nbr, Files, State, 4e-3, 0.0, 0.6, 2e-4);
   Absorption.WriteSpectra(out);
 
 

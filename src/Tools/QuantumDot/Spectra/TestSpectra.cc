@@ -69,16 +69,16 @@ int main(int argc, char** argv)
   VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
   CylinderInMagneticFieldSpectra* spectra = new CylinderInMagneticFieldSpectra(space, FileName, MagneticField);
-  /*
+  
   double delta = SizeZ / 100.0; double p = 0.0;
-  double shift = 11.3;
+  double shift = 0.0;
   for (double z = shift; z <= (SizeZ + shift); z += delta)
     {
       p = spectra->ZProbabilityDensity(z, SizeZ);
       cout << (z - shift) << '\t' << p << '\n';
     }
-  */
-
+  
+  /*
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   char** Files = new char* [200];
   ifstream energy("eigenvalues");
@@ -89,21 +89,21 @@ int main(int argc, char** argv)
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
-  for (int i = 0; i < 10; ++i)
+  for (int i = 1; i < 100; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
-      spectra->GetMeanPosition(space2, Files[i], SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      spectra->GetImpulsion(space2, Files[i], SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
       energy >> tmpE;
-      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) * (tmpE - fundamental) << '\t' << ((ReY * ReY) + (ImY * ImY)) * (tmpE - fundamental) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) * (tmpE - fundamental) << endl;
-      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) * (tmpE - fundamental)  << endl;
-      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) * (tmpE - fundamental)  << endl;
-      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) * (tmpE - fundamental)  << endl;
-      cout << i << endl;
+      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental) << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental) << endl;
+      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) / (tmpE - fundamental)  << endl;
+      PY << tmpE - fundamental << '\t' << ((ReY * ReY) + (ImY * ImY)) / (tmpE - fundamental)  << endl;
+      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental)  << endl;
+      //cout << i << endl;
     }
   PX.close(); PY.close(); PZ.close();
   energy.close(); polarization.close();
-  
+  */
 
 /*
   //DOSSpectra(int FileNumber, char** Files, int * StateNumber, double Gamma, double Emin, double Emax, double dE)

@@ -100,7 +100,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 400);  
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
-  (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", true);
+  (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false);
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {

@@ -479,67 +479,6 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 	    }	  
 	}
       delete[] TotalIndex;
- 
-      /*
-      for (; Index1 < lastComponent; ++Index1)
-	{
-	  TmpRe = 0.0; TmpIm = 0.0;
-	  for (n2 = 0; n2 < n1; ++n2)
-	    {
-	      TmpRealHamiltonian = this->RealHamiltonian[n1][n2];
-	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1][n2];
-	      Index2 = TotalIndex[n2];
-	      //for (p2 = 0; p2 < p1; ++p2)
-	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
-		{		      
-		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
-		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
-		  ++Index2;
-		}
-	      tmpIndexZ = this->NbrStateZ - p1;
-	      //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
-	      for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
-		{		      
-		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
-		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
-		  ++Index2;
-		}
-	    }
-	  for (n2 = n1; n2 < this->NbrStateR; ++n2)
-	    {
-	      TmpRealHamiltonian = this->RealHamiltonian[n2][n1];
-	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n2][n1];
-	      Index2 = TotalIndex[n2];
-	      //for (p2 = 0; p2 < p1; ++p2)
-	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
-		{		      
-		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
-		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
-		  ++Index2;
-		}
-	      tmpIndexZ = this->NbrStateZ - p1;
-	      //for (p2 = p1; p2 < this->NbrStateZ; ++p2)
-	      for (IndexZ = 0; IndexZ < tmpIndexZ; ++IndexZ)
-		{		      
-		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
-		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
-		  ++Index2;
-		}
-	    }	  
-
-	  TmpRe += this->PartialDiagonalElement[Index1] * vSource.Re(Index1);
-	  TmpIm += this->PartialDiagonalElement[Index1] * vSource.Im(Index1);
-	  vDestination.Re(Index1) += TmpRe;
-	  vDestination.Im(Index1) += TmpIm;
-	  ++p1;
-	  if (p1 == this->NbrStateZ)
-	    {
-	      p1 = 0;
-	      ++n1;
-	    }
-	}
-      */
-      return vDestination;
     }
   return vDestination;
 }
@@ -554,7 +493,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 {
   double PlaneQuantum = ENERGY_FACTOR * Bz / this->Mur;
   double OrbitRadius = LENGTH_FACTOR / sqrt(Bz);
-  int addition;
+  int addition = 0;
   if ((this->NumberM == 1) || (this->NumberM == -1))
     addition = 1;
   else
@@ -563,7 +502,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
     else
       cout << "Attention! This quantum number of kinetic momentum has not been taken into account: " << this->NumberM << endl;
 
-  cout << addition << endl;
+  //cout << addition << endl;
 
   double** RealWaveFunctionOverlapZ; double** ImaginaryWaveFunctionOverlapZ;
   if (!this->EvaluatePlaneWaveFunctionOverlap(potential, this->NbrStateZ, RealWaveFunctionOverlapZ, ImaginaryWaveFunctionOverlapZ))
@@ -574,7 +513,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   double tmp = 0.0; double radius = 0.0;
   double tk = 0.0;
   double tmp1 = 0.0, tmp2 = 0.0, tmp3 = 0.0;
-  cout << "Integral: " << endl;
+  //cout << "Integral: " << endl;
   int limit = 0, limit2 = 0;
   for (int k = 0; k < nbrCylinder; ++k)
     {
@@ -583,7 +522,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
       if (radius > 0.0)
 	{
 	  tk = (radius * radius) / (2.0 * OrbitRadius * OrbitRadius);
-	  cout << "tk: " << tk << endl;
+	  //cout << "tk: " << tk << endl;
 	  tmp = exp(-tk);
 	  Integral[k][0] = 1.0 - tmp;
 	  //cout << Integral[k][0] << " ";
@@ -602,7 +541,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 		  break;
 		}
 	    }
-	  cout << "Limit: " << limit2 << endl;
+	  //cout << "Limit: " << limit2 << endl;
 	  for (int n = 1; n < (this->NbrStateR * 2 - 1 + addition); ++n)
 	    {		      	     
 	      tmp2 = 1.0; tmp1 = 0.0;

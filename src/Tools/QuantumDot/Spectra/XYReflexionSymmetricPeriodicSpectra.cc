@@ -482,3 +482,51 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
       realImpulsionZ = realImpulsionZ * 2.0 * M_PI / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ * 2.0 * M_PI / sizeZ;	    
     }  
 }
+
+// get the value of impulsion  with a continuum state, described by Z plane waves
+//
+// impulsionX, impulsionY = value of the planer impulsion
+// nbrStateZ, lowerImpulsionZ = Hilbert space characteristics 
+// fileName =  the file to stock the other function
+// sizeZ = size of the sample in Z direction
+// impulsionZ = reference to the return values
+
+void XYReflexionSymmetricPeriodicSpectra::GetImpulsionWithContinuum(int impulsionX, int impulsionY, int nbrStateZ, int lowerImpulsionZ, char* fileName, double sizeZ, double &realImpulsionZ, double &imaginaryImpulsionZ)
+{
+  int MaxLowerZ = this->LowerImpulsionZ;
+  if (this->LowerImpulsionZ < lowerImpulsionZ)
+    MaxLowerZ = lowerImpulsionZ;
+
+  int MinUpperZ = this->LowerImpulsionZ + this->NbrStateZ;
+  if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
+    MinUpperZ = lowerImpulsionZ + nbrStateZ;
+
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Error in open the file: " << fileName << endl;
+      exit(0);
+    }
+  double* realCoefficients = new double [nbrStateZ];
+  double* imaginaryCoefficients = new double [nbrStateZ];
+  for (int k = 0; k < nbrStateZ; ++k)	      
+    File >> realCoefficients[k] >> imaginaryCoefficients[k];	    
+  File.close();   
+
+  int deltaX = impulsionX - this->LowerImpulsionX; int deltaY = impulsionY - this->LowerImpulsionY; 
+  if ((deltaX < 0) || (deltaX > this->NbrStateX) || (deltaY < 0) || (deltaY >= this->NbrStateY))
+    {
+      realImpulsionZ = 0.0; imaginaryImpulsionZ = 0.0;
+      return;
+    }
+  double* Re1 = this->RealCoefficients[deltaX][deltaY];
+  double* Im1 = this->ImaginaryCoefficients[deltaX][deltaY];
+  realImpulsionZ = 0.0; imaginaryImpulsionZ = 0.0;
+  for (int p = MaxLowerZ; p < MinUpperZ; ++p)
+    { 
+      realImpulsionZ += ((Re1[p - this->LowerImpulsionZ] * realCoefficients[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * imaginaryCoefficients[p - lowerImpulsionZ]) * double(p));
+      imaginaryImpulsionZ += ((Re1[p - this->LowerImpulsionZ] * imaginaryCoefficients[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * realCoefficients[p - lowerImpulsionZ]) * double(p));
+    }
+  realImpulsionZ = realImpulsionZ * 2.0 * M_PI / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ * 2.0 * M_PI / sizeZ;	   
+}
