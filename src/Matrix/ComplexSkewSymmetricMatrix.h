@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                      class of real antisymmetric matrix                    //
+//                    class of complex skew symmetric matrix                  //
 //                                                                            //
-//                        last modification : 03/04/2001                      //
+//                        last modification : 19/08/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,13 +28,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef REALANTISYMMETRICMATRIX_H
-#define REALANTISYMMETRICMATRIX_H
+#ifndef COMPLEXSKEWSYMMETRICMATRIX_H
+#define COMPLEXSKEWSYMMETRICMATRIX_H
 
 
 #include "config.h"
 #include "Matrix/Matrix.h"
 #include "Output/MathematicaOutput.h"
+#include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
 
@@ -42,14 +43,14 @@
 using std::ostream;
 
 
-class RealMatrix;
+class ComplexMatrix;
 class BlockDiagonalMatrix;
-class RealVector;
+class ComplexVector;
 class ComplexVector;
 
 
 
-class RealAntisymmetricMatrix : public Matrix
+class ComplexSkewSymmetricMatrix : public Matrix
 {
 
   friend class RealVector;
@@ -57,47 +58,55 @@ class RealAntisymmetricMatrix : public Matrix
 
  private:
   
+ // dummy variable whose reference is send when an element of the lower part of the matrix is asked (initialize to 0)
   double Dummy;
 
  protected:
 
-  double* OffDiagonalElements;
-  int* OffDiagonalGarbageFlag;
+  // real part of the upper off diagonal elements
+  double* RealOffDiagonalElements;
+  // imaginary part of the upper off diagonal elements
+  double* ImaginaryOffDiagonalElements;
 
+  // garbage flag used for the matrix elements
+  GarbageFlag Flag;
+
+  // increment to add to the end of each line to go to the next line minus 1
   int Increment;
 
  public:
 
   // default constructor
   //
-  RealAntisymmetricMatrix();
+  ComplexSkewSymmetricMatrix();
 
   // constructor for an empty matrix
   //
   // dimension = matrix dimension
   // zero = true if matrix has to be filled with zeros
-  RealAntisymmetricMatrix(int dimension, bool zero = false);
+  ComplexSkewSymmetricMatrix(int dimension, bool zero = false);
 
   // constructor from matrix elements (without duplicating datas)
   //
-  // upperDiagonal = pointer to upper-diagonal element array (with real part in even position and imaginary part in odd position)
+  // realUpperDiagonal = pointer to real part of the upper-diagonal elements
+  // imaginaryUpperDiagonal = pointer to imaginary part of the upper-diagonal elements
   // dimension = matrix dimension
-  RealAntisymmetricMatrix(double* upperDiagonal, int dimension) ;
+  ComplexSkewSymmetricMatrix(double* realUpperDiagonal, double* imaginaryUpperDiagonal, int dimension) ;
 
   // copy constructor (without duplicating datas)
   //
   // M = matrix to copy
-  RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M);
+  ComplexSkewSymmetricMatrix(const ComplexSkewSymmetricMatrix& M);
 
   // destructor
   //
-  ~RealAntisymmetricMatrix();
+  ~ComplexSkewSymmetricMatrix();
 
   // assignement (without duplicating datas)
   //
   // M = matrix to copy
   // return value = reference on modified matrix
-  RealAntisymmetricMatrix& operator = (const RealAntisymmetricMatrix& M);
+  ComplexSkewSymmetricMatrix& operator = (const ComplexSkewSymmetricMatrix& M);
 
   // return pointer on a clone matrix (without duplicating datas)
   //
@@ -151,85 +160,79 @@ class RealAntisymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
-  // project matrix into a given subspace
-  //
-  // subspace = reference on subspace structure
-  // return value = pointer to projected matrix
-  Matrix* Project (SubspaceSpaceConverter& subspace);  
-
   // add two matrices
   //
   // M1 = first matrix
   // M2 = second matrix
   // return value = sum of the two matrices
-  friend RealAntisymmetricMatrix operator + (const RealAntisymmetricMatrix& M1, 
-					     const RealAntisymmetricMatrix& M2);
+  friend ComplexSkewSymmetricMatrix operator + (const ComplexSkewSymmetricMatrix& M1, 
+						const ComplexSkewSymmetricMatrix& M2);
 
   // substract two matrices
   //
   // M1 = first matrix
   // M2 = matrix to substract to M1
   // return value = difference of the two matrices
-  friend RealAntisymmetricMatrix operator - (const RealAntisymmetricMatrix& M1, 
-					     const RealAntisymmetricMatrix& M2);
+  friend ComplexSkewSymmetricMatrix operator - (const ComplexSkewSymmetricMatrix& M1, 
+						const ComplexSkewSymmetricMatrix& M2);
 
   // multiply a matrix by a real number (right multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealAntisymmetricMatrix operator * (const RealAntisymmetricMatrix& M, double x);
+  friend ComplexSkewSymmetricMatrix operator * (const ComplexSkewSymmetricMatrix& M, double x);
 
   // multiply a matrix by a real number (left multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealAntisymmetricMatrix operator * (double x, const RealAntisymmetricMatrix& M);
+  friend ComplexSkewSymmetricMatrix operator * (double x, const ComplexSkewSymmetricMatrix& M);
 
   // divide a matrix by a real number (right multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = division result
-  friend RealAntisymmetricMatrix operator / (const RealAntisymmetricMatrix& M, double x);
+  friend ComplexSkewSymmetricMatrix operator / (const ComplexSkewSymmetricMatrix& M, double x);
 
   // add two matrices
   //
   // M = matrix to add to current matrix
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator += (const RealAntisymmetricMatrix& M);
+  ComplexSkewSymmetricMatrix& operator += (const ComplexSkewSymmetricMatrix& M);
 
   // substract two matrices
   //
   // M = matrix to substract to current matrix
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator -= (const RealAntisymmetricMatrix& M);
+  ComplexSkewSymmetricMatrix& operator -= (const ComplexSkewSymmetricMatrix& M);
 
   // multiply a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator *= (double x);
+  ComplexSkewSymmetricMatrix& operator *= (double x);
 
   // divide a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator /= (double x) ;
+  ComplexSkewSymmetricMatrix& operator /= (double x) ;
 
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  double MatrixElement (RealVector& V1, RealVector& V2);
+  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
-  // conjugate a matrix with an unitary real matrix (Ut M U)
+  // conjugate a matrix with an unitary complex matrix (Ut M U)
   //
   // UnitaryM = unitary matrix to use
   // return value = pointer to conjugated matrix
-  Matrix* Conjugate(RealMatrix& UnitaryM);
+  Matrix* Conjugate(ComplexMatrix& UnitaryM);
 
   // conjugate a matrix with an unitary block-diagonal matrix (Ut M U)
   //
@@ -243,8 +246,8 @@ class RealAntisymmetricMatrix : public Matrix
   // sourcePosition = index of the row where the block to conjugate starts
   // destinationPosition = index of the row where the conjugated block has to be stored
   // matrix = matrix where result has to be stored
-  void Conjugate(RealMatrix& UnitaryM, int sourcePosition, int destinationPosition,
-		 RealAntisymmetricMatrix& matrix);
+  void Conjugate(ComplexMatrix& UnitaryM, int sourcePosition, int destinationPosition,
+		 ComplexSkewSymmetricMatrix& matrix);
 
   // conjugate a block of the matrix (in the upper diagonal part) with two matrix matrix (Vt M U)
   //
@@ -255,9 +258,9 @@ class RealAntisymmetricMatrix : public Matrix
   // destinationRowIndex = index of the row where the conjugated block has to be stored
   // destinationColumnIndex = index of the column where the conjugated block has to be stored
   // matrix = matrix where result has to be stored
-  void Conjugate(RealMatrix& UnitaryMl, RealMatrix& UnitaryMr, int sourceRowIndex, 
+  void Conjugate(ComplexMatrix& UnitaryMl, ComplexMatrix& UnitaryMr, int sourceRowIndex, 
 		 int sourceColumnIndex, int destinationRowIndex,
-		 int destinationColumnIndex, RealAntisymmetricMatrix& matrix);
+		 int destinationColumnIndex, ComplexSkewSymmetricMatrix& matrix);
 
   // evaluate matrix trace
   //
@@ -272,21 +275,21 @@ class RealAntisymmetricMatrix : public Matrix
   // evaluate matrix pfaffian
   //
   // return value = matrix pfaffian 
-  double Pfaffian();
+  Complex Pfaffian();
 
   // Output Stream overload
   //
   // Str = reference on output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, const RealAntisymmetricMatrix& P);
+  friend ostream& operator << (ostream& Str, const ComplexSkewSymmetricMatrix& P);
 
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealAntisymmetricMatrix& P);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexSkewSymmetricMatrix& P);
 
 };
 

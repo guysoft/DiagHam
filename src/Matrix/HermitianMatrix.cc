@@ -910,11 +910,12 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
 	}
     }    
   int ReducedNbrColumn = UnitaryM.NbrColumn - 1;
+  int i2 = 0;
   for (int i = 0; i < ReducedNbrColumn; i++)
     for (int m = i + 1; m < UnitaryM.NbrColumn; m++)
       {    
-	TmpRealOffDiag[i] = 0.0;
-	TmpImaginaryOffDiag[i] = 0.0;
+	TmpRealOffDiag[i2] = 0.0;
+	TmpImaginaryOffDiag[i2] = 0.0;
 	for (int j = 0; j < this->NbrColumn; j++)
 	  {
 	    double tmp1 = 0.0;
@@ -941,9 +942,10 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
 			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
 		++l;
 	      }
-	    TmpRealOffDiag[i] += tmp1 * UnitaryM.Columns[i].RealComponents[j] + tmp2 * UnitaryM.Columns[i].ImaginaryComponents[j];
-	    TmpImaginaryOffDiag[i] += tmp2 * UnitaryM.Columns[i].RealComponents[j] - tmp1 * UnitaryM.Columns[i].ImaginaryComponents[j] ;
+	    TmpRealOffDiag[i2] += tmp1 * UnitaryM.Columns[i].RealComponents[j] + tmp2 * UnitaryM.Columns[i].ImaginaryComponents[j];
+	    TmpImaginaryOffDiag[i2] += tmp2 * UnitaryM.Columns[i].RealComponents[j] - tmp1 * UnitaryM.Columns[i].ImaginaryComponents[j] ;
 	  }
+	++i2;
       }    
   return HermitianMatrix(TmpDiag, TmpRealOffDiag, TmpImaginaryOffDiag, UnitaryM.NbrColumn);
 }
@@ -1114,7 +1116,7 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const HermitianMatrix& P
       int pos = i - 1;
       for (int j = 0; j < i; ++j)
 	{
-	  if ((P.RealOffDiagonalElements[pos] != 0) || (P.ImaginaryOffDiagonalElements[pos + 1] == 0))
+	  if ((P.RealOffDiagonalElements[pos] != 0) || (P.ImaginaryOffDiagonalElements[pos] == 0))
 	    Str << P.RealOffDiagonalElements[pos];
 	  if (P.ImaginaryOffDiagonalElements[pos] > 0.0)
 	    Str << -P.ImaginaryOffDiagonalElements[pos] << "I";
@@ -1139,7 +1141,7 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const HermitianMatrix& P
 		if (P.ImaginaryOffDiagonalElements[pos] != 0.0)
 		  Str << "+" << P.ImaginaryOffDiagonalElements[pos] << "I";
 	      Str << ",";
-	      pos += 2;
+	      ++pos;
 	    }
 	  Str << P.RealOffDiagonalElements[pos];
 	  if (P.ImaginaryOffDiagonalElements[pos] < 0.0)

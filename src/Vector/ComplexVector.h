@@ -56,6 +56,8 @@ class ComplexVector : public Vector
   friend class AbstractHamiltonian;
   friend class ComplexMatrix;
   friend class HermitianMatrix;
+  friend class ComplexSkewSymmetricMatrix;
+  friend class ComplexUpperTriangularMatrix;
   friend class RealTriDiagonalSymmetricMatrix;
   friend class ComplexTriDiagonalHermitianMatrix;
   friend ComplexMatrix operator + (const ComplexMatrix& M1, const ComplexMatrix& M2);

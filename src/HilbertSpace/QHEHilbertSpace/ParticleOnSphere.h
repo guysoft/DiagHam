@@ -87,6 +87,16 @@ class ParticleOnSphere :  public AbstractHilbertSpace
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
 
+  // evaluate wave function in real space using a given basis, using time coherence
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // nextCoordinates = index of the coordinate that will be changed during the next time iteration
+  // return value = wave function evaluated at the given location
+  virtual Complex EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+							 AbstractFunctionBasis& basis, int nextCoordinates);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -96,7 +106,27 @@ class ParticleOnSphere :  public AbstractHilbertSpace
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-					int firstComponent, int nbrComponent);                                                                                                                                                                                  
+					int firstComponent, int nbrComponent);                                
+  
+  // evaluate wave function in real space using a given basis and only for a given range of components, using time coherence
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // nextCoordinates = index of the coordinate that will be changed during the next time iteration
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = wave function evaluated at the given location
+  virtual Complex EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
+							 AbstractFunctionBasis& basis, 
+							 int nextCoordinates, int firstComponent, int nbrComponent);
+
+  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
+  //
+  // timeCoherence = true if time coherence has to be used
+  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+  
+
 };
 
 #endif

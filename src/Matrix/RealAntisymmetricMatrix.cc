@@ -848,6 +848,44 @@ double RealAntisymmetricMatrix::Tr ()
 
 double RealAntisymmetricMatrix::Det () 
 {
+  double Tmp = this->Pfaffian();
+  return (Tmp * Tmp);
+}
+
+// evaluate matrix pfaffian
+//
+// return value = matrix pfaffian 
+
+double RealAntisymmetricMatrix::Pfaffian()
+{
+  if (this->NbrColumn == 2)
+    {
+      return this->OffDiagonalElements[0];
+    }
+  if (this->NbrColumn == 4)
+    {
+      return ((this->OffDiagonalElements[0] * this->OffDiagonalElements[5 + (2 * this->Increment)]) 
+	      - (this->OffDiagonalElements[1] * this->OffDiagonalElements[4 + this->Increment])
+	      + (this->OffDiagonalElements[2] * this->OffDiagonalElements[3 + this->Increment]));
+    }
+  if (this->NbrColumn == 6)
+    {
+      return ((this->OffDiagonalElements[0] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[14 + (4 * this->Increment)])
+	      - (this->OffDiagonalElements[0] * this->OffDiagonalElements[10 + (2 * this->Increment)] * this->OffDiagonalElements[13 + (3 * this->Increment)])
+	      + (this->OffDiagonalElements[0] * this->OffDiagonalElements[11 + (2 * this->Increment)] * this->OffDiagonalElements[12 + (3 * this->Increment)])
+	      - (this->OffDiagonalElements[1] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[14 + (4 * this->Increment)])
+	      + (this->OffDiagonalElements[1] * this->OffDiagonalElements[7 + this->Increment] * this->OffDiagonalElements[13 + (3 * this->Increment)])
+	      - (this->OffDiagonalElements[1] * this->OffDiagonalElements[8 + this->Increment] * this->OffDiagonalElements[12 + (3 * this->Increment)])
+	      + (this->OffDiagonalElements[2] * this->OffDiagonalElements[8 + this->Increment] * this->OffDiagonalElements[10 + (2 * this->Increment)])
+	      - (this->OffDiagonalElements[2] * this->OffDiagonalElements[7 + this->Increment] * this->OffDiagonalElements[11 + (2 * this->Increment)])
+	      + (this->OffDiagonalElements[2] * this->OffDiagonalElements[5 + this->Increment] * this->OffDiagonalElements[14 + (4 * this->Increment)])
+	      - (this->OffDiagonalElements[3] * this->OffDiagonalElements[5 + this->Increment] * this->OffDiagonalElements[13 + (3 * this->Increment)])
+	      + (this->OffDiagonalElements[4] * this->OffDiagonalElements[5 + this->Increment] * this->OffDiagonalElements[12 + (3 * this->Increment)])
+	      - (this->OffDiagonalElements[4] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[10 + (2 * this->Increment)])
+	      + (this->OffDiagonalElements[3] * this->OffDiagonalElements[6 + this->Increment] * this->OffDiagonalElements[11 + (2 * this->Increment)])
+	      - (this->OffDiagonalElements[3] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[8 + this->Increment])
+	      + (this->OffDiagonalElements[4] * this->OffDiagonalElements[9 + (2 * this->Increment)] * this->OffDiagonalElements[7 + this->Increment]));
+    }
   return 1.0;
 }
 

@@ -75,6 +75,11 @@ class BosonOnSphere :  public ParticleOnSphere
   //
   int*** KeyInvertIndices;
 
+  // pointer to an integer which indicate which coordinates are kept for the next time step iteration
+  int* KeptCoordinates;
+  // minors of permanents used for the time coherent wave function evaluation
+  Complex** Minors;
+
  public:
 
   // basic constructor
@@ -161,7 +166,17 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = wave function evaluated at the given location
   Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
 
-  // evaluate wave function in real space using a given basis and only for agiven range of components
+  // evaluate wave function in real space using a given basis, using time coherence
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // nextCoordinates = index of the coordinate that will be changed during the next time iteration
+  // return value = wave function evaluated at the given location
+  Complex EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+						 int nextCoordinates);
+
+  // evaluate wave function in real space using a given basis and only for a given range of components
   //
   // state = vector corresponding to the state in the Fock basis
   // position = vector whose components give coordinates of the point where the wave function has to be evaluated
@@ -171,6 +186,23 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = wave function evaluated at the given location
   Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
 				int firstComponent, int nbrComponent);
+
+  // evaluate wave function in real space using a given basis and only for a given range of components, using time coherence
+  //
+  // state = vector corresponding to the state in the Fock basis
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // nextCoordinates = index of the coordinate that will be changed during the next time iteration
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = wave function evaluated at the given location
+  Complex EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+						 int nextCoordinates, int firstComponent, int nbrComponent);
+
+  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
+  //
+  // timeCoherence = true if time coherence has to be used
+  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
 
  private:
 

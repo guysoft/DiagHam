@@ -47,6 +47,8 @@ using std::ostream;
 class ComplexMatrix : protected Matrix
 {
 
+  friend class ComplexSkewSymmetricMatrix;
+  friend class ComplexUpperTriangularMatrix;
   friend class HermitianMatrix;
   friend class RealVector;
   friend class ComplexVector;
@@ -192,6 +194,13 @@ class ComplexMatrix : protected Matrix
   // return value = product of the two matrices
   friend ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2);
 
+  // multiply a complex matrix with a complex upper triangular matrix
+  //
+  // m1 = complex matrix
+  // m2 = complex upper triangular matrix
+  // return value = product result
+  friend ComplexMatrix operator * (ComplexMatrix& m1, const ComplexUpperTriangularMatrix& m2);
+
   // multiply a matrix by a real number (right multiplication)
   //
   // M = source matrix
@@ -263,19 +272,33 @@ class ComplexMatrix : protected Matrix
   //
   // return value = permanent associated to the matrix
   Complex Permanent();                                                                                                                                     
+  // evaluate minor develomment of permanent associated to the (square) matrix using Ryser algorithm
+  //
+  // column = index of the column from which permnanent will developped
+  // minors = reference on an array where minors will be stored
+  void PermanentMinorDevelopment(int column, Complex*& minors);
   
-  // evaluate permanent associated to the (square) matrix using Ryser algorithm using precalculation array (faster)
+  // evaluate permanent associated to the (square) matrix using Ryser algorithm and precalculation array (faster)
   //
   // changeBit = array indicating which bit is changed at the i-th iteration of the Gray code
   // changeBitSign = array with -1 if the changed bit is from 1 to 0, +1 either
   // return value = permanent associated to the matrix
   Complex FastPermanent(int* changeBit, int* changeBitSign);
 
-  // evaluate precalculation array  neede for the fast permanent calculation
+  // evaluate minor develomment of permanent associated to the (square) matrix using Ryser algorithm and precalculation array (faster)
+  //
+  // changeBit = array indicating which bit is changed at the i-th iteration of the Gray code
+  // changeBitSign = array with -1 if the changed bit is from 1 to 0, +1 either
+  // column = index of the column from which permnanent will developped
+  // minors = reference on an array where minors will be stored
+  void FastPermanentMinorDevelopment(int* changeBit, int* changeBitSign, int column, Complex*& minors);
+  
+  // evaluate precalculation array needed for the fast permanent calculation
   //
   // changeBit = reference on the array indicating which bit is changed at the i-th iteration of the Gray code
   // changeBitSign = reference on array with -1 if the changed bit is from 1 to 0, +1 either
-  void EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign);
+  // minor = flag that indicated if precalculation will be used for minor development
+  void EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign, bool minor = false);
 
   // Output Stream overload
   //

@@ -177,7 +177,7 @@ int main(int argc, char** argv)
     }
   return 0;*/
 
-  int NbrBosons = 4;
+/*  int NbrBosons = 4;
   int LzMax = 6;
   RealVector State;
   State.ReadVector ("bosons_delta_nu_1_2/bosons_delta_n_4_2s_6_lz_0.0.vec");
@@ -194,47 +194,67 @@ int main(int argc, char** argv)
   Location[5] = Location[1];
   ParticleOnSphereFunctionBasis Basis(LzMax);
   cout << Space.EvaluateWaveFunction(State, Location, Basis) << endl;
-  return 0;
+  return 0;*/
 
   int Error = 0;
-  for (int k = 0; k < 1; ++k)
-  for (int DimMPerm = 3; DimMPerm <= 3; ++DimMPerm)
+  int Total = 0;
+  for (int k = 0; k < 10; ++k)
+  for (int DimMPerm = 5; DimMPerm <= 10; ++DimMPerm)
     {
+      int* ChangeBit;
+      int* ChangeBitSign;
+      int* ChangeBit2;
+      int* ChangeBitSign2;
       ComplexMatrix MPerm(DimMPerm, DimMPerm);
-      Complex** MPerm2 = new Complex* [DimMPerm];
+      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign, true);
+      MPerm.EvaluateFastPermanentPrecalculationArray(ChangeBit2, ChangeBitSign2);
+      Complex* Minor = new Complex [DimMPerm];
       for (int i = 0; i < DimMPerm; ++i)
 	{
-	  MPerm2[i] = new Complex[DimMPerm];
 	  for (int j = 0; j < DimMPerm; ++j)
 	    {
-	      MPerm[j].Im(i) = i + j + 2;
-	      MPerm[j].Re(i) = 0.0;
-//	      MPerm[j].Re(i) = 20.0 * (drand48() - 0.5);
-//	      MPerm[j].Im(i) = 20.0 * (drand48() - 0.5);
-	      MPerm2[i][j].Re = MPerm[j].Re(i);
-              MPerm2[i][j].Im = MPerm[j].Im(i);
+	      //	      MPerm[j].Im(i) = i + j + 2;
+	      //	      MPerm[j].Re(i) = 0.0;
+	      MPerm[j].Re(i) = 20.0 * (drand48() - 0.5);
+	      MPerm[j].Im(i) = 20.0 * (drand48() - 0.5);
  	    }
 	}
-      Complex TmpPerm = (MPerm2[0][0] * (MPerm2[1][1] * MPerm2[2][2] + MPerm2[1][2] * MPerm2[2][1])
+      /*      Complex TmpPerm = (MPerm2[0][0] * (MPerm2[1][1] * MPerm2[2][2] + MPerm2[1][2] * MPerm2[2][1])
 			 + MPerm2[1][0] * (MPerm2[0][1] * MPerm2[2][2] + MPerm2[0][2] * MPerm2[2][1])
-			 + MPerm2[2][0] * (MPerm2[0][1] * MPerm2[1][2] + MPerm2[0][2] * MPerm2[1][1]));
-      if ((Norm(TmpPerm - MPerm.Permanent()) / Norm(MPerm.Permanent())) > 1e-13)
+			 + MPerm2[2][0] * (MPerm2[0][1] * MPerm2[1][2] + MPerm2[0][2] * MPerm2[1][1]));*/
+      Complex TmpPerm2 = MPerm.Permanent();
+      //Complex TmpPerm2 = MPerm.FastPermanent(ChangeBit2, ChangeBitSign2);
+      for (int ColumnDev = 0; ColumnDev < DimMPerm; ++ColumnDev)
 	{
-	  cout << TmpPerm << " " <<  MPerm.Permanent() << " " << (Norm(TmpPerm - MPerm.Permanent()) / Norm(MPerm.Permanent())) << endl;
-	  Error++;
+	  Complex TmpPerm;
+	  //MPerm.PermanentMinorDevelopment(ColumnDev, Minor);
+	  MPerm.FastPermanentMinorDevelopment(ChangeBit, ChangeBitSign, ColumnDev, Minor);
+	  for (int i = 0; i < DimMPerm; ++i)
+	    TmpPerm += Minor[i] *  Complex (MPerm[ColumnDev].Re(i), MPerm[ColumnDev].Im(i));
+	  //	  TmpPerm = MPerm.Permanent();
+	  if (Norm(TmpPerm - TmpPerm2) > (1e-13 * Norm(TmpPerm)))
+	    {
+	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
+	      Error++;
+	    }
+	  //	      cout << TmpPerm << " " << TmpPerm2  << " " << (Norm(TmpPerm - TmpPerm2) / Norm(TmpPerm2)) << endl;
+	  ++Total;
 	}
-      cout << MPerm << endl << endl;
-      cout << MPerm.Permanent() << endl;
+      delete[] ChangeBit;
+      delete[] ChangeBitSign;
+      delete[] ChangeBit2;
+      delete[] ChangeBitSign2;
     }
- 
+  cout << Error << " " << Total << endl;
+  return 0;
   for (int k = 0; k < 1; ++k)
-  for (int DimMPerm = 3; DimMPerm <= 3; ++DimMPerm)
+  for (int DimMPerm = 3; DimMPerm <= 8; ++DimMPerm)
     {
       RealMatrix MPerm(DimMPerm, DimMPerm);
       for (int i = 0; i < DimMPerm; ++i)
 	for (int j = 0; j < DimMPerm; ++j)
-	  MPerm(i, j) = i + j +2;
-//	  MPerm(i, j) = 20.0 * (drand48() - 0.5);
+	  //	  MPerm(i, j) = i + j +2;
+	  MPerm(i, j) = (drand48() - 0.5);
       double TmpPerm = (MPerm(0, 0) * (MPerm(1, 1) * MPerm(2, 2) + MPerm(1, 2) * MPerm(2, 1))
 			+ MPerm(1, 0) * (MPerm(0, 1) * MPerm(2, 2) + MPerm(0, 2) * MPerm(2, 1))
 			+ MPerm(2, 0) * (MPerm(0, 1) * MPerm(1, 2) + MPerm(0, 2) * MPerm(1, 1)));

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                      class of real antisymmetric matrix                    //
+//                   class of complex lower triangular matrix                 //
 //                                                                            //
-//                        last modification : 03/04/2001                      //
+//                        last modification : 20/08/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,76 +28,93 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef REALANTISYMMETRICMATRIX_H
-#define REALANTISYMMETRICMATRIX_H
+#ifndef COMPLEXLOWERTRIANGULARMATRIX_H
+#define COMPLEXLOWERTRIANGULARMATRIX_H
 
 
 #include "config.h"
 #include "Matrix/Matrix.h"
+#include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Output/MathematicaOutput.h"
+#include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
+#include <fstream>
 
 
 using std::ostream;
+using std::ofstream;
+using std::ifstream;
 
 
-class RealMatrix;
-class BlockDiagonalMatrix;
-class RealVector;
-class ComplexVector;
+class ComplexMatrix;
 
 
-
-class RealAntisymmetricMatrix : public Matrix
+class ComplexLowerTriangularMatrix : public Matrix
 {
 
   friend class RealVector;
   friend class ComplexVector;
-
- private:
-  
-  double Dummy;
+  friend class ComplexMatrix;
 
  protected:
 
-  double* OffDiagonalElements;
-  int* OffDiagonalGarbageFlag;
+  // real part of the lower off diagonal elements
+  double* RealOffDiagonalElements;
+  // imaginary part of the lower off diagonal elements
+  double* ImaginaryOffDiagonalElements;
+  // garbage flag used for the matrix lower off diagonal elements
+  GarbageFlag OffDiagonalFlag;
 
+  // real part of the diagonal elements
+  double* RealDiagonalElements;
+  // imaginary part of the diagonal elements
+  double* ImaginaryDiagonalElements;
+  // garbage flag used for the matrix diagonal elements
+  GarbageFlag DiagonalFlag;
+
+  // increment to add to the end of each line to go to the next line minus 1
   int Increment;
+
+  // dummy variable whose reference is send when an element of the lower part of the matrix is asked (initialize to 0)
+  double Dummy;
 
  public:
 
   // default constructor
   //
-  RealAntisymmetricMatrix();
+  ComplexLowerTriangularMatrix();
 
   // constructor for an empty matrix
   //
   // dimension = matrix dimension
   // zero = true if matrix has to be filled with zeros
-  RealAntisymmetricMatrix(int dimension, bool zero = false);
+  ComplexLowerTriangularMatrix(int dimension, bool zero = false);
 
   // constructor from matrix elements (without duplicating datas)
   //
-  // upperDiagonal = pointer to upper-diagonal element array (with real part in even position and imaginary part in odd position)
+  // realDiagonal = pointer to real part of the diagonal elements
+  // imaginaryDiagonal = pointer to imaginary part of the diagonal elements
+  // realOffDiagonal = pointer to real part of the off-diagonal elements
+  // imaginaryOffDiagonal = pointer to imaginary part of the off-diagonal elements
   // dimension = matrix dimension
-  RealAntisymmetricMatrix(double* upperDiagonal, int dimension) ;
+  ComplexLowerTriangularMatrix(double* realDiagonal, double* imaginaryDiagonal, 
+			       double* realOffDiagonal, double* imaginaryOffDiagonal, int dimension);
 
   // copy constructor (without duplicating datas)
   //
   // M = matrix to copy
-  RealAntisymmetricMatrix(const RealAntisymmetricMatrix& M);
+  ComplexLowerTriangularMatrix(const ComplexLowerTriangularMatrix& M);
 
   // destructor
   //
-  ~RealAntisymmetricMatrix();
+  ~ComplexLowerTriangularMatrix();
 
   // assignement (without duplicating datas)
   //
   // M = matrix to copy
   // return value = reference on modified matrix
-  RealAntisymmetricMatrix& operator = (const RealAntisymmetricMatrix& M);
+  ComplexLowerTriangularMatrix& operator = (const ComplexLowerTriangularMatrix& M);
 
   // return pointer on a clone matrix (without duplicating datas)
   //
@@ -132,13 +149,6 @@ class RealAntisymmetricMatrix : public Matrix
   // x = value to add to matrix element
   void AddToMatrixElement(int i, int j, const Complex& x);
 
-  // get reference of a given matrix element supposing i < j
-  //
-  // i = line position
-  // j = column position
-  // return value = reference om matrix elememt
-  double& operator () (int i, int j);
-
   // Resize matrix
   //
   // nbrRow = new number of rows
@@ -151,113 +161,80 @@ class RealAntisymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
-  // project matrix into a given subspace
-  //
-  // subspace = reference on subspace structure
-  // return value = pointer to projected matrix
-  Matrix* Project (SubspaceSpaceConverter& subspace);  
-
   // add two matrices
   //
   // M1 = first matrix
   // M2 = second matrix
   // return value = sum of the two matrices
-  friend RealAntisymmetricMatrix operator + (const RealAntisymmetricMatrix& M1, 
-					     const RealAntisymmetricMatrix& M2);
+  friend ComplexLowerTriangularMatrix operator + (const ComplexLowerTriangularMatrix& M1, 
+						  const ComplexLowerTriangularMatrix& M2);
 
   // substract two matrices
   //
   // M1 = first matrix
   // M2 = matrix to substract to M1
   // return value = difference of the two matrices
-  friend RealAntisymmetricMatrix operator - (const RealAntisymmetricMatrix& M1, 
-					     const RealAntisymmetricMatrix& M2);
+  friend ComplexLowerTriangularMatrix operator - (const ComplexLowerTriangularMatrix& M1, 
+						  const ComplexLowerTriangularMatrix& M2);
 
-  // multiply a matrix by a real number (right multiplication)
+  // multiply a complex matrix with a complex lower triangular matrix
   //
-  // M = source matrix
-  // x = real number to use
+  // m1 = complex matrix
+  // m2 = complex lower triangular matrix
   // return value = product result
-  friend RealAntisymmetricMatrix operator * (const RealAntisymmetricMatrix& M, double x);
+  friend ComplexMatrix operator * (ComplexMatrix& m1, const ComplexLowerTriangularMatrix& m2);
 
-  // multiply a matrix by a real number (left multiplication)
+  // multiply a matrix by a complex number (right multiplication)
   //
   // M = source matrix
-  // x = real number to use
+  // x = complex number to use
   // return value = product result
-  friend RealAntisymmetricMatrix operator * (double x, const RealAntisymmetricMatrix& M);
+  friend ComplexLowerTriangularMatrix operator * (const ComplexLowerTriangularMatrix& M, double x);
 
-  // divide a matrix by a real number (right multiplication)
+  // multiply a matrix by a complex number (left multiplication)
   //
   // M = source matrix
-  // x = real number to use
+  // x = complex number to use
+  // return value = product result
+  friend ComplexLowerTriangularMatrix operator * (double x, const ComplexLowerTriangularMatrix& M);
+
+  // divide a matrix by a complex number (right multiplication)
+  //
+  // M = source matrix
+  // x = complex number to use
   // return value = division result
-  friend RealAntisymmetricMatrix operator / (const RealAntisymmetricMatrix& M, double x);
+  friend ComplexLowerTriangularMatrix operator / (const ComplexLowerTriangularMatrix& M, double x);
 
   // add two matrices
   //
   // M = matrix to add to current matrix
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator += (const RealAntisymmetricMatrix& M);
+  ComplexLowerTriangularMatrix& operator += (const ComplexLowerTriangularMatrix& M);
 
   // substract two matrices
   //
   // M = matrix to substract to current matrix
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator -= (const RealAntisymmetricMatrix& M);
+  ComplexLowerTriangularMatrix& operator -= (const ComplexLowerTriangularMatrix& M);
 
-  // multiply a matrix by a real number
+  // multiply a matrix by a complex number
   //
-  // x = real number to use
+  // x = complex number to use
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator *= (double x);
+  ComplexLowerTriangularMatrix& operator *= (double x);
 
-  // divide a matrix by a real number
+  // divide a matrix by a complex number
   //
-  // x = real number to use
+  // x = complex number to use
   // return value = reference on current matrix
-  RealAntisymmetricMatrix& operator /= (double x) ;
+  ComplexLowerTriangularMatrix& operator /= (double x) ;
 
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  double MatrixElement (RealVector& V1, RealVector& V2);
-
-  // conjugate a matrix with an unitary real matrix (Ut M U)
-  //
-  // UnitaryM = unitary matrix to use
-  // return value = pointer to conjugated matrix
-  Matrix* Conjugate(RealMatrix& UnitaryM);
-
-  // conjugate a matrix with an unitary block-diagonal matrix (Ut M U)
-  //
-  // UnitaryM = unitary matrix to use
-  // return value = pointer to conjugated matrix
-  Matrix* Conjugate(BlockDiagonalMatrix& UnitaryM);
-
-  // conjugate a block of the matrix with an unitary matrix (Ut M U)
-  //
-  // UnitaryM = unitary matrix to use
-  // sourcePosition = index of the row where the block to conjugate starts
-  // destinationPosition = index of the row where the conjugated block has to be stored
-  // matrix = matrix where result has to be stored
-  void Conjugate(RealMatrix& UnitaryM, int sourcePosition, int destinationPosition,
-		 RealAntisymmetricMatrix& matrix);
-
-  // conjugate a block of the matrix (in the upper diagonal part) with two matrix matrix (Vt M U)
-  //
-  // UnitaryMl = unitary matrix to use at the left hand side
-  // UnitaryMr = unitary matrix to use at the right hand side
-  // sourceRowIndex = index of the row where the block to conjugate starts
-  // sourceColumnIndex = index of the column where the block to conjugate starts
-  // destinationRowIndex = index of the row where the conjugated block has to be stored
-  // destinationColumnIndex = index of the column where the conjugated block has to be stored
-  // matrix = matrix where result has to be stored
-  void Conjugate(RealMatrix& UnitaryMl, RealMatrix& UnitaryMr, int sourceRowIndex, 
-		 int sourceColumnIndex, int destinationRowIndex,
-		 int destinationColumnIndex, RealAntisymmetricMatrix& matrix);
+  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // evaluate matrix trace
   //
@@ -269,24 +246,19 @@ class RealAntisymmetricMatrix : public Matrix
   // return value = matrix determinant 
   double Det ();
 
-  // evaluate matrix pfaffian
-  //
-  // return value = matrix pfaffian 
-  double Pfaffian();
-
   // Output Stream overload
   //
   // Str = reference on output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, const RealAntisymmetricMatrix& P);
+  friend ostream& operator << (ostream& Str, const ComplexLowerTriangularMatrix& P);
 
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealAntisymmetricMatrix& P);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexLowerTriangularMatrix& P);
 
 };
 

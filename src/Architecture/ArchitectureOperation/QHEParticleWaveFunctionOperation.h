@@ -54,7 +54,8 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
   RealVector* Position;
   // one body real space basis to use
   AbstractFunctionBasis* Basis;
-
+  // indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+  int NextCoordinates;
 
  public:
   
@@ -64,7 +65,9 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
   // state = vector corresponding to the state in the Fock basis
   // position = vector whose components give coordinates of the point where the wave function has to be evaluated
   // basis = one body real space basis to use
-  QHEParticleWaveFunctionOperation(ParticleOnSphere* space, RealVector* state, RealVector* position, AbstractFunctionBasis* basis);
+  // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+  QHEParticleWaveFunctionOperation(ParticleOnSphere* space, RealVector* state, RealVector* position, 
+				   AbstractFunctionBasis* basis, int nextCoordinates = -1);
 
   // copy constructor 
   //

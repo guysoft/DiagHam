@@ -6,6 +6,7 @@ libMatrix_a_SOURCES=BlockDiagonalMatrix.cc \
 BlockMatrix.cc \
 ComplexMatrix.cc \
 ComplexTriDiagonalHermitianMatrix.cc \
+ComplexSkewSymmetricMatrix.cc \
 HermitianMatrix.cc \
 Matrix.cc \
 RealAntisymmetricMatrix.cc \
@@ -14,4 +15,5 @@ RealMatrix.cc \
 RealSymmetricMatrix.cc \
 RealTriDiagonalSymmetricMatrix.cc \
 RealUpperTriangularMatrix.cc \
-RealLowerTriangularMatrix.cc
+RealLowerTriangularMatrix.cc \
+ComplexUpperTriangularMatrix.cc 

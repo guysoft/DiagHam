@@ -766,7 +766,7 @@ Complex ComplexMatrix::Permanent()
   double Sign = 1.0;
   if ((this->NbrColumn & 1) == 0)
     Sign = -1.0;
-  Complex* Tmp = new Complex [this->NbrColumn];
+  Complex Tmp[this->NbrColumn];
   Complex Tmp2;
   int Lim = 1 << this->NbrColumn;
   for (int i = 0; i < this->NbrColumn; ++i)
@@ -779,42 +779,126 @@ Complex ComplexMatrix::Permanent()
       ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
       GrayCode = k ^ (k >> 1);
       if ((GrayCode & ChangedBit) == 0)
-        {
-          Index = 0;
-          while (ChangedBit != 1)
-            {
-              ChangedBit >>= 1;
-              ++Index;
-            }
-          for (int i = 0; i < this->NbrColumn; ++i)
+	{
+	  Index = 0;
+	  while (ChangedBit != 1)
 	    {
-	      Tmp[i].Re -= this->Columns[Index].RealComponents[i];
-	      Tmp[i].Im -= this->Columns[Index].ImaginaryComponents[i];
-
+	      ChangedBit >>= 1;
+	      ++Index;
 	    }
-        }
-      else
-        {
-          Index = 0;
-          while (ChangedBit != 1)
-            {
-              ChangedBit >>= 1;
-              ++Index;
-            }
-          for (int i = 0; i < this->NbrColumn; ++i)
+	  ComplexVector& TmpColumn = this->Columns[Index];
+	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
-              Tmp[i].Re += this->Columns[Index].RealComponents[i];
-              Tmp[i].Im += this->Columns[Index].ImaginaryComponents[i];
- 	    }
-         }
+	      Tmp[i].Re -= TmpColumn.RealComponents[i];
+	      Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];
+	    }
+	}
+      else
+	{
+	  Index = 0;
+	  while (ChangedBit != 1)
+	    {
+	      ChangedBit >>= 1;
+	      ++Index;
+	    }
+	  ComplexVector& TmpColumn = this->Columns[Index];
+	  for (int i = 0; i < this->NbrColumn; ++i)
+	    {
+	      Tmp[i].Re += TmpColumn.RealComponents[i];
+	      Tmp[i].Im += TmpColumn.ImaginaryComponents[i];
+	    }
+	}
       Tmp2 = Tmp[0];
       for (int i = 1; i < this->NbrColumn; ++i)
         Tmp2 *= Tmp[i];
       Perm += Sign * Tmp2;
       Sign *= -1.0;
     }
-  delete[] Tmp;
   return Perm;
+}
+
+// evaluate minor develomment of permanent associated to the (square) matrix using Ryser algorithm
+//
+// column = index of the column from which permnanent will developped
+// minors = reference on an array where minors will be stored
+                                                                                                                                          
+void ComplexMatrix::PermanentMinorDevelopment(int column, Complex*& minors)
+{
+  if (this->NbrColumn != this->NbrRow)
+    return;
+  int ReducedNbrColumn = this->NbrColumn - 1;
+  Complex Tmp[ReducedNbrColumn];
+  Complex Tmp2;
+  int Lim = 1 << ReducedNbrColumn;
+  for (int l = 0; l < this->NbrColumn; ++l)
+    {
+      minors[l].Re = 0.0;
+      minors[l].Im = 0.0;
+      double Sign = 1.0;
+      if ((ReducedNbrColumn & 1) == 0)
+	Sign = -1.0;
+      for (int i = 0; i < ReducedNbrColumn; ++i)
+	Tmp[i] = 0.0;
+      int GrayCode = 0;
+      int ChangedBit;
+      int Index;
+      for (int k = 1; k < Lim; ++k)
+	{
+	  ChangedBit = (k ^ (k >> 1)) ^ GrayCode;
+	  GrayCode = k ^ (k >> 1);
+	  if ((GrayCode & ChangedBit) == 0)
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      if (Index >= column)
+		++Index;
+	      int i = 0;
+	      ComplexVector& TmpColumn = this->Columns[Index];
+	      for (; i < l; ++i)
+		{
+		  Tmp[i].Re -= TmpColumn.RealComponents[i];
+		  Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];
+		}
+	      for (; i < ReducedNbrColumn; ++i)
+		{
+		  Tmp[i].Re -= TmpColumn.RealComponents[i + 1];
+		  Tmp[i].Im -= TmpColumn.ImaginaryComponents[i + 1];
+		}
+	    }
+	  else
+	    {
+	      Index = 0;
+	      while (ChangedBit != 1)
+		{
+		  ChangedBit >>= 1;
+		  ++Index;
+		}
+	      if (Index >= column)
+		++Index;
+	      int i = 0;
+	      ComplexVector& TmpColumn = this->Columns[Index];
+	      for (; i < l; ++i)
+		{
+		  Tmp[i].Re += TmpColumn.RealComponents[i];
+		  Tmp[i].Im += TmpColumn.ImaginaryComponents[i];
+		}
+	      for (; i < ReducedNbrColumn; ++i)
+		{
+		  Tmp[i].Re += TmpColumn.RealComponents[i + 1];
+		  Tmp[i].Im += TmpColumn.ImaginaryComponents[i + 1];
+		}
+	    }
+ 	  Tmp2 = Tmp[0];
+	  for (int i = 1; i < ReducedNbrColumn; ++i)
+	    Tmp2 *= Tmp[i];
+	  minors[l] += Sign * Tmp2;
+	  Sign *= -1.0;
+	}
+    }
 }
 
 // evaluate permanent associated to the (square) matrix using Ryser algorithm using precalculation array (faster)
@@ -829,7 +913,7 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
   double Sign = 1.0;
   if ((this->NbrColumn & 1) == 0)
     Sign = -1.0;
-  Complex* Tmp = new Complex [this->NbrColumn];
+  Complex Tmp[this->NbrColumn];
   Complex Tmp2;
   int Lim = 1 << this->NbrColumn;
   for (int i = 0; i < this->NbrColumn; ++i)
@@ -837,7 +921,7 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
   for (int k = 1; k < Lim; ++k)
     {
       ComplexVector& TmpColumn = this->Columns[changeBit[k]];
-      if (changeBitSign[k])
+      if (changeBitSign[k] == 0)
 	{
 	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
@@ -859,19 +943,98 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
       Perm += Sign * Tmp2;
       Sign *= -1.0;
     }
-  delete[] Tmp;
   return Perm;
 }
 
 
+// evaluate minor develomment of permanent associated to the (square) matrix using Ryser algorithm and precalculation array (faster)
+//
+// changeBit = array indicating which bit is changed at the i-th iteration of the Gray code
+// changeBitSign = array with -1 if the changed bit is from 1 to 0, +1 either
+// column = index of the column from which permnanent will developped
+// minors = reference on an array where minors will be stored
+
+void ComplexMatrix::FastPermanentMinorDevelopment(int* changeBit, int* changeBitSign, int column, Complex*& minors)
+{
+  int ReducedNbrColumn = this->NbrColumn - 1;
+  //  Complex* Tmp = new Complex [ReducedNbrColumn];
+  Complex Tmp[ReducedNbrColumn];
+  Complex Tmp2;
+  ComplexVector* TmpColumn;
+  int Lim = 1 << ReducedNbrColumn;
+  for (int l = 0; l < this->NbrColumn; ++l)
+    {
+      minors[l].Re = 0.0;
+      minors[l].Im = 0.0;
+      double Sign = 1.0;
+      if ((ReducedNbrColumn & 1) == 0)
+	Sign = -1.0;
+      for (int i = 0; i < ReducedNbrColumn; ++i)
+	Tmp[i] = 0.0;
+      for (int k = 1; k < Lim; ++k)
+	{
+	  if (changeBit[k] < column)
+	    {
+	      TmpColumn = &(this->Columns[changeBit[k]]);
+	    }
+	  else
+	    {
+	      TmpColumn = &(this->Columns[changeBit[k] + 1]);
+	    }
+	  if (changeBitSign[k] == 0)
+	    {
+	      int i = 0;
+	      for (; i < l; ++i)
+		{
+		  Tmp[i].Re -= TmpColumn->RealComponents[i];
+		  Tmp[i].Im -= TmpColumn->ImaginaryComponents[i];	  
+		}
+	      for (; i < ReducedNbrColumn; ++i)
+		{
+		  Tmp[i].Re -= TmpColumn->RealComponents[i + 1];
+		  Tmp[i].Im -= TmpColumn->ImaginaryComponents[i + 1];	  
+		}
+	    }
+	  else
+	    {
+	      int i = 0;
+	      for (; i < l; ++i)
+		{
+		  Tmp[i].Re += TmpColumn->RealComponents[i];
+		  Tmp[i].Im += TmpColumn->ImaginaryComponents[i];	  
+		}
+	      for (; i < ReducedNbrColumn; ++i)
+		{
+		  Tmp[i].Re += TmpColumn->RealComponents[i + 1];
+		  Tmp[i].Im += TmpColumn->ImaginaryComponents[i + 1];	  
+		}
+	    }
+	  Tmp2 = Tmp[0];
+	  for (int i = 1; i < ReducedNbrColumn; ++i)
+	    Tmp2 *= Tmp[i];
+	  minors[l] += Sign * Tmp2;
+	  Sign *= -1.0;
+	}
+    }
+}
+  
 // evaluate precalculation array  neede for the fast permanent calculation
 //
 // changeBit = reference on the array indicating which bit is changed at the i-th iteration of the Gray code
 // changeBitSign = reference on array with 0 if the changed bit is from 1 to 0, +1 either
+// minor = flag that indicated if precalculation will be used for minor development
 
-void ComplexMatrix::EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign)
+void ComplexMatrix::EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign, bool minor)
 {
-  int Lim = 1 << this->NbrColumn;
+  int Lim ;
+  if (minor == false)
+    {
+      Lim = 1 << this->NbrColumn;
+    }
+  else
+    {
+      Lim = 1 << (this->NbrColumn - 1);
+    }
   int GrayCode = 0;
   int ChangedBit;
   int Index;

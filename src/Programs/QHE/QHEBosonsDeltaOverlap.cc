@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
+  (*SystemGroup) += new BooleanOption  ('\n', "without-timecoherence", "don't use time coherence between two successive evaluation of the wave function");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -122,15 +123,29 @@ int main(int argc, char** argv)
   Complex Tmp;
   Complex Tmp3;
   double Tmp2;
+  int NextCoordinates = 0;
+  for (int j = 0; j < NbrBosons; ++j)
+    {
+      Location[j << 1] = acos (1.0- (2.0 * drand48()));
+      Location[1 + (j << 1)] = 2.0 * M_PI * drand48();
+    }
   for (int i = 0; i < NbrIter; ++i)
     {
-      for (int j = 0; j < NbrBosons; ++j)
+      /*      for (int j = 0; j < NbrBosons; ++j)
 	{
-	  Location[j << 1] = acos (1.0- (2.0 * drand48()));
-	  Location[1 + (j << 1)] = 2.0 * M_PI * drand48();
-	}
+	  Location[NextCoordinates << 1] = acos (1.0- (2.0 * drand48()));
+	  Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * drand48();
+	  }*/
+      Location[NextCoordinates << 1] = acos (1.0- (2.0 * drand48()));
+      Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * drand48();
+      NextCoordinates = (int) (((double) NbrBosons) * drand48());
+      if (NextCoordinates == NbrBosons)
+	--NextCoordinates;
       Tmp = LaughlinWaveFunction (Location, NbrBosons);
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
+      int TimeCoherence = NextCoordinates;
+      if (((BooleanOption*) Manager["without-timecoherence"])->GetBoolean() == true)
+	TimeCoherence = -1;
+      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
 //      ValueExact.Re *= -1.0;

@@ -36,19 +36,27 @@
 
 // constructor 
 //
-// hamiltonian = pointer to the hamiltonian to use
-// firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
+// space = pointer to the Hilbert space to use
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
 
 QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (ParticleOnSphere* space, RealVector* state, RealVector* position, 
-								    AbstractFunctionBasis* basis)
+								    AbstractFunctionBasis* basis, int nextCoordinates)
 {
   this->FirstComponent = 0;
   this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->NextCoordinates = nextCoordinates;
+  if (this->NextCoordinates != -1)
+    space->InitializeWaveFunctionEvaluation(true);
+  else
+    space->InitializeWaveFunctionEvaluation(false);
   this->HilbertSpace = (ParticleOnSphere*) space->Clone();
   this->State = state;
   this->Position = position;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
-  this->Basis = basis;
+  this->Basis = basis;    
 }
 
 // copy constructor 
@@ -65,6 +73,7 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEPart
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Basis = operation.Basis;
   this->Scalar = operation.Scalar;
+  this->NextCoordinates = operation.NextCoordinates;
 }
   
 // destructor
@@ -101,8 +110,13 @@ AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
 
 bool QHEParticleWaveFunctionOperation::ApplyOperation()
 {
-  this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
-							  this->FirstComponent, this->NbrComponent);
+  if (this->NextCoordinates == -1)
+    this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
+							    this->FirstComponent, this->NbrComponent);
+  else
+    this->Scalar = this->HilbertSpace->EvaluateWaveFunctionWithTimeCoherence(*(this->State), *(this->Position), 
+									     *(this->Basis), this->NextCoordinates, 
+									     this->FirstComponent, this->NbrComponent);
   return true;
 }
 

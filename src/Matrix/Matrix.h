@@ -80,7 +80,9 @@ class Matrix
     Antisymmetric = 0x0200,
     Hermitian = 0x0400,
     AntiHermitian = 0x0800,    
-    Block = 0x1000
+    Block = 0x1000,
+    Upper = 0x2000,
+    Lower = 0x4000
   };
 
   // default constructor
