@@ -17,5 +17,4 @@ FermionOnTorusWithSpin.cc \
 FermionOnTorusWithMagneticTranslations.cc \
 BosonOnTorusWithMagneticTranslations.cc \
 BosonOnTorusState.cc \
-ParticleOnDisk.cc \
-FermionOnDisk.cc
+ParticleOnDisk.cc

@@ -1,7 +1,6 @@
-# Makefile.in generated automatically by automake 1.5 from Makefile.am.
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
-# Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
-# Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -11,7 +10,6 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-@SET_MAKE@
 
 SHELL = @SHELL@
 
@@ -33,9 +31,13 @@ infodir = @infodir@
 mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
+
+DESTDIR =
+
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
+
 top_builddir = ../../..
 
 ACLOCAL = @ACLOCAL@
@@ -44,35 +46,27 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
-INSTALL_HEADER = $(INSTALL_DATA)
 transform = @program_transform_name@
+
 NORMAL_INSTALL = :
 PRE_INSTALL = :
 POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-AMTAR = @AMTAR@
-AWK = @AWK@
 CC = @CC@
 CXX = @CXX@
 CXXFLAGS = @CXXFLAGS@
-DEPDIR = @DEPDIR@
-EXEEXT = @EXEEXT@
 INCLUDES = @INCLUDES@
-INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+MAKEINFO = @MAKEINFO@
 MATH_LIBS = @MATH_LIBS@
-OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
 THREAD_LIBS = @THREAD_LIBS@
 VERSION = @VERSION@
-am__include = @am__include@
-am__quote = @am__quote@
-install_sh = @install_sh@
 
 SUBDIRS = 
 
@@ -179,253 +173,194 @@ QHEBosonsTorusWithTranslations_LDADD = -L@top_srcdir@/src/Architecture -L@top_sr
 QHEFermionsCircle_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a  @top_srcdir@/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
 QHEFermionsCircle_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QHEHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QHEHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lArchitecture -lArchitectureOperation -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
-subdir = src/Programs/QHE
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_CLEAN_FILES =
-bin_PROGRAMS = Bosons$(EXEEXT) QHEFermions$(EXEEXT) QHEBosons$(EXEEXT) \
-	QHEFermionsTorus$(EXEEXT) QHEFermionsCircle$(EXEEXT) \
-	QHEBosonsTorus$(EXEEXT) ApproximateQHE$(EXEEXT) \
-	QHEFermionsTorusWithSpin$(EXEEXT) QHEBosonsDelta$(EXEEXT) \
-	QHEBosonsDeltaGround$(EXEEXT) QHEBosonsCoulomb$(EXEEXT) \
-	QHEFermionsCoulomb$(EXEEXT) QHEFermionsTorusDMRG$(EXEEXT) \
-	GetBosonsDimension$(EXEEXT) \
-	QHEFermionsTorusWithTranslation$(EXEEXT) \
-	QHEFermionsLaplacianDelta$(EXEEXT) \
-	QHEBosonsTorusWithTranslations$(EXEEXT)
-PROGRAMS = $(bin_PROGRAMS)
+CONFIG_CLEAN_FILES = 
+PROGRAMS =  $(bin_PROGRAMS)
 
-am_ApproximateQHE_OBJECTS = ApproximateQHE.$(OBJEXT)
-ApproximateQHE_OBJECTS = $(am_ApproximateQHE_OBJECTS)
-ApproximateQHE_LDFLAGS =
-am_Bosons_OBJECTS = Bosons.$(OBJEXT)
-Bosons_OBJECTS = $(am_Bosons_OBJECTS)
-Bosons_LDFLAGS =
-am_GetBosonsDimension_OBJECTS = GetBosonsDimension.$(OBJEXT)
-GetBosonsDimension_OBJECTS = $(am_GetBosonsDimension_OBJECTS)
-GetBosonsDimension_LDFLAGS =
-am_QHEBosons_OBJECTS = QHEBosons.$(OBJEXT)
-QHEBosons_OBJECTS = $(am_QHEBosons_OBJECTS)
-QHEBosons_LDFLAGS =
-am_QHEBosonsCoulomb_OBJECTS = QHEBosonsCoulomb.$(OBJEXT)
-QHEBosonsCoulomb_OBJECTS = $(am_QHEBosonsCoulomb_OBJECTS)
-QHEBosonsCoulomb_LDFLAGS =
-am_QHEBosonsDelta_OBJECTS = QHEBosonsDelta.$(OBJEXT)
-QHEBosonsDelta_OBJECTS = $(am_QHEBosonsDelta_OBJECTS)
-QHEBosonsDelta_LDFLAGS =
-am_QHEBosonsDeltaGround_OBJECTS = QHEBosonsDeltaGround.$(OBJEXT)
-QHEBosonsDeltaGround_OBJECTS = $(am_QHEBosonsDeltaGround_OBJECTS)
-QHEBosonsDeltaGround_LDFLAGS =
-am_QHEBosonsTorus_OBJECTS = QHEBosonsTorus.$(OBJEXT)
-QHEBosonsTorus_OBJECTS = $(am_QHEBosonsTorus_OBJECTS)
-QHEBosonsTorus_LDFLAGS =
-am_QHEBosonsTorusWithTranslations_OBJECTS = \
-	QHEBosonsTorusWithTranslations.$(OBJEXT)
-QHEBosonsTorusWithTranslations_OBJECTS = \
-	$(am_QHEBosonsTorusWithTranslations_OBJECTS)
-QHEBosonsTorusWithTranslations_LDFLAGS =
-am_QHEFermions_OBJECTS = QHEFermions.$(OBJEXT)
-QHEFermions_OBJECTS = $(am_QHEFermions_OBJECTS)
-QHEFermions_LDFLAGS =
-am_QHEFermionsCircle_OBJECTS = QHEFermionsCircle.$(OBJEXT)
-QHEFermionsCircle_OBJECTS = $(am_QHEFermionsCircle_OBJECTS)
-QHEFermionsCircle_LDFLAGS =
-am_QHEFermionsCoulomb_OBJECTS = QHEFermionsCoulomb.$(OBJEXT)
-QHEFermionsCoulomb_OBJECTS = $(am_QHEFermionsCoulomb_OBJECTS)
-QHEFermionsCoulomb_LDFLAGS =
-am_QHEFermionsLaplacianDelta_OBJECTS = \
-	QHEFermionsLaplacianDelta.$(OBJEXT)
-QHEFermionsLaplacianDelta_OBJECTS = \
-	$(am_QHEFermionsLaplacianDelta_OBJECTS)
-QHEFermionsLaplacianDelta_LDFLAGS =
-am_QHEFermionsTorus_OBJECTS = QHEFermionsTorus.$(OBJEXT)
-QHEFermionsTorus_OBJECTS = $(am_QHEFermionsTorus_OBJECTS)
-QHEFermionsTorus_LDFLAGS =
-am_QHEFermionsTorusDMRG_OBJECTS = QHEFermionsTorusDMRG.$(OBJEXT)
-QHEFermionsTorusDMRG_OBJECTS = $(am_QHEFermionsTorusDMRG_OBJECTS)
-QHEFermionsTorusDMRG_LDFLAGS =
-am_QHEFermionsTorusWithSpin_OBJECTS = QHEFermionsTorusWithSpin.$(OBJEXT)
-QHEFermionsTorusWithSpin_OBJECTS = \
-	$(am_QHEFermionsTorusWithSpin_OBJECTS)
-QHEFermionsTorusWithSpin_LDFLAGS =
-am_QHEFermionsTorusWithTranslation_OBJECTS = \
-	QHEFermionsTorusWithTranslation.$(OBJEXT)
-QHEFermionsTorusWithTranslation_OBJECTS = \
-	$(am_QHEFermionsTorusWithTranslation_OBJECTS)
-QHEFermionsTorusWithTranslation_LDFLAGS =
 
-DEFS = @DEFS@
-DEFAULT_INCLUDES =  -I. -I$(srcdir)
+DEFS = @DEFS@ -I. -I$(srcdir) 
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-depcomp = $(SHELL) $(top_srcdir)/depcomp
-@AMDEP_TRUE@DEP_FILES = $(DEPDIR)/ApproximateQHE.Po $(DEPDIR)/Bosons.Po \
-@AMDEP_TRUE@	$(DEPDIR)/GetBosonsDimension.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosons.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosonsCoulomb.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosonsDelta.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosonsDeltaGround.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosonsTorus.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEBosonsTorusWithTranslations.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermions.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsCircle.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsCoulomb.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsLaplacianDelta.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsTorus.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsTorusDMRG.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsTorusWithSpin.Po \
-@AMDEP_TRUE@	$(DEPDIR)/QHEFermionsTorusWithTranslation.Po
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+Bosons_OBJECTS =  Bosons.o
+Bosons_LDFLAGS = 
+QHEFermions_OBJECTS =  QHEFermions.o
+QHEFermions_LDFLAGS = 
+QHEBosons_OBJECTS =  QHEBosons.o
+QHEBosons_LDFLAGS = 
+QHEFermionsTorus_OBJECTS =  QHEFermionsTorus.o
+QHEFermionsTorus_LDFLAGS = 
+QHEFermionsCircle_OBJECTS =  QHEFermionsCircle.o
+QHEFermionsCircle_LDFLAGS = 
+QHEBosonsTorus_OBJECTS =  QHEBosonsTorus.o
+QHEBosonsTorus_LDFLAGS = 
+ApproximateQHE_OBJECTS =  ApproximateQHE.o
+ApproximateQHE_LDFLAGS = 
+QHEFermionsTorusWithSpin_OBJECTS =  QHEFermionsTorusWithSpin.o
+QHEFermionsTorusWithSpin_LDFLAGS = 
+QHEBosonsDelta_OBJECTS =  QHEBosonsDelta.o
+QHEBosonsDelta_LDFLAGS = 
+QHEBosonsDeltaGround_OBJECTS =  QHEBosonsDeltaGround.o
+QHEBosonsDeltaGround_LDFLAGS = 
+QHEBosonsCoulomb_OBJECTS =  QHEBosonsCoulomb.o
+QHEBosonsCoulomb_LDFLAGS = 
+QHEFermionsCoulomb_OBJECTS =  QHEFermionsCoulomb.o
+QHEFermionsCoulomb_LDFLAGS = 
+QHEFermionsTorusDMRG_OBJECTS =  QHEFermionsTorusDMRG.o
+QHEFermionsTorusDMRG_LDFLAGS = 
+GetBosonsDimension_OBJECTS =  GetBosonsDimension.o
+GetBosonsDimension_LDFLAGS = 
+QHEFermionsTorusWithTranslation_OBJECTS =  \
+QHEFermionsTorusWithTranslation.o
+QHEFermionsTorusWithTranslation_LDFLAGS = 
+QHEFermionsLaplacianDelta_OBJECTS =  QHEFermionsLaplacianDelta.o
+QHEFermionsLaplacianDelta_LDFLAGS = 
+QHEBosonsTorusWithTranslations_OBJECTS =  \
+QHEBosonsTorusWithTranslations.o
+QHEBosonsTorusWithTranslations_LDFLAGS = 
+CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
-CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-DIST_SOURCES = $(ApproximateQHE_SOURCES) $(Bosons_SOURCES) \
-	$(GetBosonsDimension_SOURCES) $(QHEBosons_SOURCES) \
-	$(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) \
-	$(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsTorus_SOURCES) \
-	$(QHEBosonsTorusWithTranslations_SOURCES) \
-	$(QHEFermions_SOURCES) $(QHEFermionsCircle_SOURCES) \
-	$(QHEFermionsCoulomb_SOURCES) \
-	$(QHEFermionsLaplacianDelta_SOURCES) \
-	$(QHEFermionsTorus_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) \
-	$(QHEFermionsTorusWithSpin_SOURCES) \
-	$(QHEFermionsTorusWithTranslation_SOURCES)
+CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
+DIST_COMMON =  Makefile.am Makefile.in
 
-RECURSIVE_TARGETS = info-recursive dvi-recursive install-info-recursive \
-	uninstall-info-recursive all-recursive install-data-recursive \
-	install-exec-recursive installdirs-recursive install-recursive \
-	uninstall-recursive check-recursive installcheck-recursive
-DIST_COMMON = Makefile.am Makefile.in
-DIST_SUBDIRS = $(SUBDIRS)
-SOURCES = $(ApproximateQHE_SOURCES) $(Bosons_SOURCES) $(GetBosonsDimension_SOURCES) $(QHEBosons_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsTorus_SOURCES) $(QHEBosonsTorusWithTranslations_SOURCES) $(QHEFermions_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEFermionsTorusWithTranslation_SOURCES)
 
-all: all-recursive
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
+TAR = gtar
+GZIP_ENV = --best
+DEP_FILES =  .deps/ApproximateQHE.P .deps/Bosons.P \
+.deps/GetBosonsDimension.P .deps/QHEBosons.P .deps/QHEBosonsCoulomb.P \
+.deps/QHEBosonsDelta.P .deps/QHEBosonsDeltaGround.P \
+.deps/QHEBosonsTorus.P .deps/QHEBosonsTorusWithTranslations.P \
+.deps/QHEFermions.P .deps/QHEFermionsCircle.P \
+.deps/QHEFermionsCoulomb.P .deps/QHEFermionsLaplacianDelta.P \
+.deps/QHEFermionsTorus.P .deps/QHEFermionsTorusDMRG.P \
+.deps/QHEFermionsTorusWithSpin.P \
+.deps/QHEFermionsTorusWithTranslation.P
+SOURCES = $(Bosons_SOURCES) $(QHEFermions_SOURCES) $(QHEBosons_SOURCES) $(QHEFermionsTorus_SOURCES) $(QHEFermionsCircle_SOURCES) $(QHEBosonsTorus_SOURCES) $(ApproximateQHE_SOURCES) $(QHEFermionsTorusWithSpin_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsTorusDMRG_SOURCES) $(GetBosonsDimension_SOURCES) $(QHEFermionsTorusWithTranslation_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEBosonsTorusWithTranslations_SOURCES)
+OBJECTS = $(Bosons_OBJECTS) $(QHEFermions_OBJECTS) $(QHEBosons_OBJECTS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsCircle_OBJECTS) $(QHEBosonsTorus_OBJECTS) $(ApproximateQHE_OBJECTS) $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsCoulomb_OBJECTS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsTorusDMRG_OBJECTS) $(GetBosonsDimension_OBJECTS) $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEBosonsTorusWithTranslations_OBJECTS)
+
+all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .cc .o .obj
-$(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
-	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/Programs/QHE/Makefile
-Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
-	cd $(top_builddir) && \
-	  CONFIG_HEADERS= CONFIG_LINKS= \
-	  CONFIG_FILES=$(subdir)/$@ $(SHELL) ./config.status
+.SUFFIXES: .S .c .cc .o .s
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Programs/QHE/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+
+mostlyclean-binPROGRAMS:
+
+clean-binPROGRAMS:
+	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+
+distclean-binPROGRAMS:
+
+maintainer-clean-binPROGRAMS:
+
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	  ; then \
-	    f=`echo $$p1|sed '$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$f"; \
-	   $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/$$f; \
+	  if test -f $$p; then \
+	    echo "  $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	     $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	  else :; fi; \
 	done
 
 uninstall-binPROGRAMS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f $(DESTDIR)$(bindir)/$$f"; \
-	  rm -f $(DESTDIR)$(bindir)/$$f; \
+	list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	done
 
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-ApproximateQHE$(EXEEXT): $(ApproximateQHE_OBJECTS) $(ApproximateQHE_DEPENDENCIES) 
-	@rm -f ApproximateQHE$(EXEEXT)
-	$(CXXLINK) $(ApproximateQHE_LDFLAGS) $(ApproximateQHE_OBJECTS) $(ApproximateQHE_LDADD) $(LIBS)
-Bosons$(EXEEXT): $(Bosons_OBJECTS) $(Bosons_DEPENDENCIES) 
-	@rm -f Bosons$(EXEEXT)
-	$(CXXLINK) $(Bosons_LDFLAGS) $(Bosons_OBJECTS) $(Bosons_LDADD) $(LIBS)
-GetBosonsDimension$(EXEEXT): $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_DEPENDENCIES) 
-	@rm -f GetBosonsDimension$(EXEEXT)
-	$(CXXLINK) $(GetBosonsDimension_LDFLAGS) $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_LDADD) $(LIBS)
-QHEBosons$(EXEEXT): $(QHEBosons_OBJECTS) $(QHEBosons_DEPENDENCIES) 
-	@rm -f QHEBosons$(EXEEXT)
-	$(CXXLINK) $(QHEBosons_LDFLAGS) $(QHEBosons_OBJECTS) $(QHEBosons_LDADD) $(LIBS)
-QHEBosonsCoulomb$(EXEEXT): $(QHEBosonsCoulomb_OBJECTS) $(QHEBosonsCoulomb_DEPENDENCIES) 
-	@rm -f QHEBosonsCoulomb$(EXEEXT)
-	$(CXXLINK) $(QHEBosonsCoulomb_LDFLAGS) $(QHEBosonsCoulomb_OBJECTS) $(QHEBosonsCoulomb_LDADD) $(LIBS)
-QHEBosonsDelta$(EXEEXT): $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDelta_DEPENDENCIES) 
-	@rm -f QHEBosonsDelta$(EXEEXT)
-	$(CXXLINK) $(QHEBosonsDelta_LDFLAGS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDelta_LDADD) $(LIBS)
-QHEBosonsDeltaGround$(EXEEXT): $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsDeltaGround_DEPENDENCIES) 
-	@rm -f QHEBosonsDeltaGround$(EXEEXT)
-	$(CXXLINK) $(QHEBosonsDeltaGround_LDFLAGS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsDeltaGround_LDADD) $(LIBS)
-QHEBosonsTorus$(EXEEXT): $(QHEBosonsTorus_OBJECTS) $(QHEBosonsTorus_DEPENDENCIES) 
-	@rm -f QHEBosonsTorus$(EXEEXT)
-	$(CXXLINK) $(QHEBosonsTorus_LDFLAGS) $(QHEBosonsTorus_OBJECTS) $(QHEBosonsTorus_LDADD) $(LIBS)
-QHEBosonsTorusWithTranslations$(EXEEXT): $(QHEBosonsTorusWithTranslations_OBJECTS) $(QHEBosonsTorusWithTranslations_DEPENDENCIES) 
-	@rm -f QHEBosonsTorusWithTranslations$(EXEEXT)
-	$(CXXLINK) $(QHEBosonsTorusWithTranslations_LDFLAGS) $(QHEBosonsTorusWithTranslations_OBJECTS) $(QHEBosonsTorusWithTranslations_LDADD) $(LIBS)
-QHEFermions$(EXEEXT): $(QHEFermions_OBJECTS) $(QHEFermions_DEPENDENCIES) 
-	@rm -f QHEFermions$(EXEEXT)
-	$(CXXLINK) $(QHEFermions_LDFLAGS) $(QHEFermions_OBJECTS) $(QHEFermions_LDADD) $(LIBS)
-QHEFermionsCircle$(EXEEXT): $(QHEFermionsCircle_OBJECTS) $(QHEFermionsCircle_DEPENDENCIES) 
-	@rm -f QHEFermionsCircle$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsCircle_LDFLAGS) $(QHEFermionsCircle_OBJECTS) $(QHEFermionsCircle_LDADD) $(LIBS)
-QHEFermionsCoulomb$(EXEEXT): $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsCoulomb_DEPENDENCIES) 
-	@rm -f QHEFermionsCoulomb$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsCoulomb_LDFLAGS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsCoulomb_LDADD) $(LIBS)
-QHEFermionsLaplacianDelta$(EXEEXT): $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_DEPENDENCIES) 
-	@rm -f QHEFermionsLaplacianDelta$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsLaplacianDelta_LDFLAGS) $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_LDADD) $(LIBS)
-QHEFermionsTorus$(EXEEXT): $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_DEPENDENCIES) 
-	@rm -f QHEFermionsTorus$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsTorus_LDFLAGS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_LDADD) $(LIBS)
-QHEFermionsTorusDMRG$(EXEEXT): $(QHEFermionsTorusDMRG_OBJECTS) $(QHEFermionsTorusDMRG_DEPENDENCIES) 
-	@rm -f QHEFermionsTorusDMRG$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsTorusDMRG_LDFLAGS) $(QHEFermionsTorusDMRG_OBJECTS) $(QHEFermionsTorusDMRG_LDADD) $(LIBS)
-QHEFermionsTorusWithSpin$(EXEEXT): $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEFermionsTorusWithSpin_DEPENDENCIES) 
-	@rm -f QHEFermionsTorusWithSpin$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsTorusWithSpin_LDFLAGS) $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEFermionsTorusWithSpin_LDADD) $(LIBS)
-QHEFermionsTorusWithTranslation$(EXEEXT): $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_DEPENDENCIES) 
-	@rm -f QHEFermionsTorusWithTranslation$(EXEEXT)
-	$(CXXLINK) $(QHEFermionsTorusWithTranslation_LDFLAGS) $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_LDADD) $(LIBS)
+.s.o:
+	$(COMPILE) -c $<
+
+.S.o:
+	$(COMPILE) -c $<
 
 mostlyclean-compile:
-	-rm -f *.$(OBJEXT) core *.core
+	-rm -f *.o core *.core
+
+clean-compile:
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/ApproximateQHE.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/Bosons.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/GetBosonsDimension.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosons.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosonsCoulomb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosonsDelta.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosonsDeltaGround.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosonsTorus.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEBosonsTorusWithTranslations.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermions.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsCircle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsCoulomb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsLaplacianDelta.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsTorus.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsTorusDMRG.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsTorusWithSpin.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/QHEFermionsTorusWithTranslation.Po@am__quote@
+maintainer-clean-compile:
 
-distclean-depend:
-	-rm -rf $(DEPDIR)
+Bosons: $(Bosons_OBJECTS) $(Bosons_DEPENDENCIES)
+	@rm -f Bosons
+	$(CXXLINK) $(Bosons_LDFLAGS) $(Bosons_OBJECTS) $(Bosons_LDADD) $(LIBS)
 
+QHEFermions: $(QHEFermions_OBJECTS) $(QHEFermions_DEPENDENCIES)
+	@rm -f QHEFermions
+	$(CXXLINK) $(QHEFermions_LDFLAGS) $(QHEFermions_OBJECTS) $(QHEFermions_LDADD) $(LIBS)
+
+QHEBosons: $(QHEBosons_OBJECTS) $(QHEBosons_DEPENDENCIES)
+	@rm -f QHEBosons
+	$(CXXLINK) $(QHEBosons_LDFLAGS) $(QHEBosons_OBJECTS) $(QHEBosons_LDADD) $(LIBS)
+
+QHEFermionsTorus: $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_DEPENDENCIES)
+	@rm -f QHEFermionsTorus
+	$(CXXLINK) $(QHEFermionsTorus_LDFLAGS) $(QHEFermionsTorus_OBJECTS) $(QHEFermionsTorus_LDADD) $(LIBS)
+
+QHEFermionsCircle: $(QHEFermionsCircle_OBJECTS) $(QHEFermionsCircle_DEPENDENCIES)
+	@rm -f QHEFermionsCircle
+	$(CXXLINK) $(QHEFermionsCircle_LDFLAGS) $(QHEFermionsCircle_OBJECTS) $(QHEFermionsCircle_LDADD) $(LIBS)
+
+QHEBosonsTorus: $(QHEBosonsTorus_OBJECTS) $(QHEBosonsTorus_DEPENDENCIES)
+	@rm -f QHEBosonsTorus
+	$(CXXLINK) $(QHEBosonsTorus_LDFLAGS) $(QHEBosonsTorus_OBJECTS) $(QHEBosonsTorus_LDADD) $(LIBS)
+
+ApproximateQHE: $(ApproximateQHE_OBJECTS) $(ApproximateQHE_DEPENDENCIES)
+	@rm -f ApproximateQHE
+	$(CXXLINK) $(ApproximateQHE_LDFLAGS) $(ApproximateQHE_OBJECTS) $(ApproximateQHE_LDADD) $(LIBS)
+
+QHEFermionsTorusWithSpin: $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEFermionsTorusWithSpin_DEPENDENCIES)
+	@rm -f QHEFermionsTorusWithSpin
+	$(CXXLINK) $(QHEFermionsTorusWithSpin_LDFLAGS) $(QHEFermionsTorusWithSpin_OBJECTS) $(QHEFermionsTorusWithSpin_LDADD) $(LIBS)
+
+QHEBosonsDelta: $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDelta_DEPENDENCIES)
+	@rm -f QHEBosonsDelta
+	$(CXXLINK) $(QHEBosonsDelta_LDFLAGS) $(QHEBosonsDelta_OBJECTS) $(QHEBosonsDelta_LDADD) $(LIBS)
+
+QHEBosonsDeltaGround: $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsDeltaGround_DEPENDENCIES)
+	@rm -f QHEBosonsDeltaGround
+	$(CXXLINK) $(QHEBosonsDeltaGround_LDFLAGS) $(QHEBosonsDeltaGround_OBJECTS) $(QHEBosonsDeltaGround_LDADD) $(LIBS)
+
+QHEBosonsCoulomb: $(QHEBosonsCoulomb_OBJECTS) $(QHEBosonsCoulomb_DEPENDENCIES)
+	@rm -f QHEBosonsCoulomb
+	$(CXXLINK) $(QHEBosonsCoulomb_LDFLAGS) $(QHEBosonsCoulomb_OBJECTS) $(QHEBosonsCoulomb_LDADD) $(LIBS)
+
+QHEFermionsCoulomb: $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsCoulomb_DEPENDENCIES)
+	@rm -f QHEFermionsCoulomb
+	$(CXXLINK) $(QHEFermionsCoulomb_LDFLAGS) $(QHEFermionsCoulomb_OBJECTS) $(QHEFermionsCoulomb_LDADD) $(LIBS)
+
+QHEFermionsTorusDMRG: $(QHEFermionsTorusDMRG_OBJECTS) $(QHEFermionsTorusDMRG_DEPENDENCIES)
+	@rm -f QHEFermionsTorusDMRG
+	$(CXXLINK) $(QHEFermionsTorusDMRG_LDFLAGS) $(QHEFermionsTorusDMRG_OBJECTS) $(QHEFermionsTorusDMRG_LDADD) $(LIBS)
+
+GetBosonsDimension: $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_DEPENDENCIES)
+	@rm -f GetBosonsDimension
+	$(CXXLINK) $(GetBosonsDimension_LDFLAGS) $(GetBosonsDimension_OBJECTS) $(GetBosonsDimension_LDADD) $(LIBS)
+
+QHEFermionsTorusWithTranslation: $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_DEPENDENCIES)
+	@rm -f QHEFermionsTorusWithTranslation
+	$(CXXLINK) $(QHEFermionsTorusWithTranslation_LDFLAGS) $(QHEFermionsTorusWithTranslation_OBJECTS) $(QHEFermionsTorusWithTranslation_LDADD) $(LIBS)
+
+QHEFermionsLaplacianDelta: $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_DEPENDENCIES)
+	@rm -f QHEFermionsLaplacianDelta
+	$(CXXLINK) $(QHEFermionsLaplacianDelta_LDFLAGS) $(QHEFermionsLaplacianDelta_OBJECTS) $(QHEFermionsLaplacianDelta_LDADD) $(LIBS)
+
+QHEBosonsTorusWithTranslations: $(QHEBosonsTorusWithTranslations_OBJECTS) $(QHEBosonsTorusWithTranslations_DEPENDENCIES)
+	@rm -f QHEBosonsTorusWithTranslations
+	$(CXXLINK) $(QHEBosonsTorusWithTranslations_LDFLAGS) $(QHEBosonsTorusWithTranslations_OBJECTS) $(QHEBosonsTorusWithTranslations_LDADD) $(LIBS)
 .cc.o:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
-
-.cc.obj:
-@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `cygpath -w $<`
-CXXDEPMODE = @CXXDEPMODE@
-uninstall-info-am:
+	$(CXXCOMPILE) -c $<
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -433,7 +368,12 @@ uninstall-info-am:
 # (1) if the variable is set in `config.status', edit `config.status'
 #     (which will cause the Makefiles to be regenerated when you run `make');
 # (2) otherwise, pass the desired values on the `make' command line.
-$(RECURSIVE_TARGETS):
+
+@SET_MAKE@
+
+all-recursive install-data-recursive install-exec-recursive \
+installdirs-recursive install-recursive uninstall-recursive  \
+check-recursive installcheck-recursive info-recursive dvi-recursive:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
 	dot_seen=no; \
 	target=`echo $@ | sed s/-recursive//`; \
@@ -456,16 +396,11 @@ mostlyclean-recursive clean-recursive distclean-recursive \
 maintainer-clean-recursive:
 	@set fnord $(MAKEFLAGS); amf=$$2; \
 	dot_seen=no; \
-	case "$@" in \
-	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
-	  *) list='$(SUBDIRS)' ;; \
-	esac; \
-	rev=''; for subdir in $$list; do \
-	  if test "$$subdir" = "."; then :; else \
-	    rev="$$subdir $$rev"; \
-	  fi; \
+	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
+	  rev="$$subdir $$rev"; \
+	  test "$$subdir" != "." || dot_seen=yes; \
 	done; \
-	rev="$$rev ."; \
+	test "$$dot_seen" = "no" && rev=". $$rev"; \
 	target=`echo $@ | sed s/-recursive//`; \
 	for subdir in $$rev; do \
 	  echo "Making $$target in $$subdir"; \
@@ -484,60 +419,56 @@ tags-recursive:
 
 tags: TAGS
 
-ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
-	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
-	unique=`for i in $$list; do \
-	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
-	  done | \
-	  $(AWK) '    { files[$$0] = 1; } \
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
-	mkid -fID $$unique $(LISP)
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $$unique $(LISP)
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
-		$(TAGS_FILES) $(LISP)
+TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
 	tags=; \
 	here=`pwd`; \
 	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
+   if test "$$subdir" = .; then :; else \
 	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
-	  fi; \
+   fi; \
 	done; \
-	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
-	unique=`for i in $$list; do \
-	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
-	  done | \
-	  $(AWK) '    { files[$$0] = 1; } \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
-	  || etags $(ETAGS_ARGS) $$tags  $$unique $(LISP)
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
 
-GTAGS:
-	here=`CDPATH=: && cd $(top_builddir) && pwd` \
-	  && cd $(top_srcdir) \
-	  && gtags -i $(GTAGS_ARGS) $$here
+mostlyclean-tags:
+
+clean-tags:
 
 distclean-tags:
-	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH
+	-rm -f TAGS ID
 
-DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+maintainer-clean-tags:
 
-top_distdir = ../../..
-distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+subdir = src/Programs/QHE
 
 distdir: $(DISTFILES)
+	here=`cd $(top_builddir) && pwd`; \
+	top_distdir=`cd $(top_distdir) && pwd`; \
+	distdir=`cd $(distdir) && pwd`; \
+	cd $(top_srcdir) \
+	  && $(AUTOMAKE) --include-deps --build-dir=$$here --srcdir-name=$(top_srcdir) --output-dir=$$top_distdir --gnu src/Programs/QHE/Makefile
 	@for file in $(DISTFILES); do \
-	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
-	  dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
-	  if test "$$dir" != "$$file" && test "$$dir" != "."; then \
-	    $(mkinstalldirs) "$(distdir)/$$dir"; \
-	  fi; \
+	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pR $$d/$$file $(distdir) \
-	    || exit 1; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
-	    || cp -p $$d/$$file $(distdir)/$$file \
-	    || exit 1; \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
 	for subdir in $(SUBDIRS); do \
@@ -545,99 +476,141 @@ distdir: $(DISTFILES)
 	    test -d $(distdir)/$$subdir \
 	    || mkdir $(distdir)/$$subdir \
 	    || exit 1; \
-	    (cd $$subdir && \
-	      $(MAKE) $(AM_MAKEFLAGS) \
-	        top_distdir="$(top_distdir)" \
-	        distdir=../$(distdir)/$$subdir \
-	        distdir) \
+	    chmod 777 $(distdir)/$$subdir; \
+	    (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir=../$(top_distdir) distdir=../$(distdir)/$$subdir distdir) \
 	      || exit 1; \
 	  fi; \
 	done
+
+DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+
+-include $(DEP_FILES)
+
+mostlyclean-depend:
+
+clean-depend:
+
+distclean-depend:
+	-rm -rf .deps
+
+maintainer-clean-depend:
+
+%.o: %.c
+	@echo '$(COMPILE) -c $<'; \
+	$(COMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm .deps/$(*F).pp
+
+%.lo: %.c
+	@echo '$(LTCOMPILE) -c $<'; \
+	$(LTCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
+	  < .deps/$(*F).pp > .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm -f .deps/$(*F).pp
+
+%.o: %.cc
+	@echo '$(CXXCOMPILE) -c $<'; \
+	$(CXXCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm .deps/$(*F).pp
+
+%.lo: %.cc
+	@echo '$(LTCXXCOMPILE) -c $<'; \
+	$(LTCXXCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
+	  < .deps/$(*F).pp > .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm -f .deps/$(*F).pp
+info-am:
+info: info-recursive
+dvi-am:
+dvi: dvi-recursive
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS)
-installdirs: installdirs-recursive
-installdirs-am:
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-
-install: install-recursive
+installcheck-am:
+installcheck: installcheck-recursive
+install-exec-am: install-binPROGRAMS
 install-exec: install-exec-recursive
+
+install-data-am:
 install-data: install-data-recursive
-uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
-
-installcheck: installcheck-recursive
+install: install-recursive
+uninstall-am: uninstall-binPROGRAMS
+uninstall: uninstall-recursive
+all-am: Makefile $(PROGRAMS)
+all-redirect: all-recursive
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
-	  `test -z '$(STRIP)' || \
-	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs: installdirs-recursive
+installdirs-am:
+	$(mkinstalldirs)  $(DESTDIR)$(bindir)
+
+
 mostlyclean-generic:
 
 clean-generic:
 
 distclean-generic:
-	-rm -f Makefile $(CONFIG_CLEAN_FILES) stamp-h stamp-h[0-9]*
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-	@echo "This command is intended for maintainers to use"
-	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-recursive
-
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
-
-distclean: distclean-recursive
-
-distclean-am: clean-am distclean-compile distclean-depend \
-	distclean-generic distclean-tags
-
-dvi: dvi-recursive
-
-dvi-am:
-
-info: info-recursive
-
-info-am:
-
-install-data-am:
-
-install-exec-am: install-binPROGRAMS
-
-install-info: install-info-recursive
-
-install-man:
-
-installcheck-am:
-
-maintainer-clean: maintainer-clean-recursive
-
-maintainer-clean-am: distclean-am maintainer-clean-generic
+mostlyclean-am:  mostlyclean-binPROGRAMS mostlyclean-compile \
+		mostlyclean-tags mostlyclean-depend mostlyclean-generic
 
 mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+clean-am:  clean-binPROGRAMS clean-compile clean-tags clean-depend \
+		clean-generic mostlyclean-am
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+clean: clean-recursive
 
-uninstall-info: uninstall-info-recursive
+distclean-am:  distclean-binPROGRAMS distclean-compile distclean-tags \
+		distclean-depend distclean-generic clean-am
 
-.PHONY: $(RECURSIVE_TARGETS) GTAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-recursive distclean \
-	distclean-compile distclean-depend distclean-generic \
-	distclean-recursive distclean-tags distdir dvi dvi-am \
-	dvi-recursive info info-am info-recursive install install-am \
-	install-binPROGRAMS install-data install-data-am \
-	install-data-recursive install-exec install-exec-am \
-	install-exec-recursive install-info install-info-am \
-	install-info-recursive install-man install-recursive \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am installdirs-recursive maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-recursive \
-	tags tags-recursive uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-info-recursive uninstall-recursive
+distclean: distclean-recursive
+
+maintainer-clean-am:  maintainer-clean-binPROGRAMS \
+		maintainer-clean-compile maintainer-clean-tags \
+		maintainer-clean-depend maintainer-clean-generic \
+		distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-recursive
+
+.PHONY: mostlyclean-binPROGRAMS distclean-binPROGRAMS clean-binPROGRAMS \
+maintainer-clean-binPROGRAMS uninstall-binPROGRAMS install-binPROGRAMS \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile install-data-recursive \
+uninstall-data-recursive install-exec-recursive \
+uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
+all-recursive check-recursive installcheck-recursive info-recursive \
+dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
+maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
+distclean-tags clean-tags maintainer-clean-tags distdir \
+mostlyclean-depend distclean-depend clean-depend \
+maintainer-clean-depend info-am info dvi-am dvi check check-am \
+installcheck-am installcheck install-exec-am install-exec \
+install-data-am install-data install-am install uninstall-am uninstall \
+all-redirect all-am all installdirs-am installdirs mostlyclean-generic \
+distclean-generic clean-generic maintainer-clean-generic clean \
+mostlyclean distclean maintainer-clean
+
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
