@@ -457,26 +457,26 @@ unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned
 {
   nbrTranslation = 0;
   unsigned long CanonicalState = stateDescription;
-  unsigned long TmpState = stateDescription;
-  unsigned long TmpReminder;
   int index = 1;  
   while (index < this->MomentumModulo)
     {
-      TmpReminder = (TmpState & this->MomentumMask) << this->ComplementaryStateShift;      
-      TmpState = (TmpState >> this->StateShift) | TmpReminder;
-      if (TmpState < CanonicalState)
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+      if (stateDescription < CanonicalState)
 	{
-	  CanonicalState = TmpState;
+	  CanonicalState = stateDescription;
 	  nbrTranslation = index;
 	}
       ++index;
     }
-  TmpReminder = ((unsigned long) 1) << this->MaxMomentum;
   maxMomentum = this->MaxMomentum;
-  while ((CanonicalState & TmpReminder) ==0)      
+  if (nbrTranslation != 0)
     {
-      --maxMomentum;
-      TmpReminder >>= 1;
+      stateDescription = ((unsigned long) 1) << this->MaxMomentum;
+      while ((CanonicalState & stateDescription) ==0)      
+	{
+	  --maxMomentum;
+	  stateDescription >>= 1;
+	}
     }
   return CanonicalState;
 }

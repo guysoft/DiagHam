@@ -292,9 +292,9 @@ List<Matrix*> SpinChainHamiltonianWithTranslations::LeftInteractionOperators()
   RealSymmetricMatrix* Sx = new RealSymmetricMatrix (Dim, true);
   RealAntisymmetricMatrix* Sy = new RealAntisymmetricMatrix (Dim, true);
   RealSymmetricMatrix* Sz = new RealSymmetricMatrix (Dim, true);
-  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
-  this->Chain->Syi(this->NbrSpin - 1, *Sy);
-  this->Chain->Szi(this->NbrSpin - 1, *Sz);
+//  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
+//  this->Chain->Syi(this->NbrSpin - 1, *Sy);
+//  this->Chain->Szi(this->NbrSpin - 1, *Sz);
 //  this->Chain->Sxi(0, *Sx);
 //  this->Chain->Syi(0, *Sy);
 //  this->Chain->Szi(0, *Sz);
@@ -315,9 +315,9 @@ List<Matrix*> SpinChainHamiltonianWithTranslations::RightInteractionOperators()
   RealSymmetricMatrix* Sx = new RealSymmetricMatrix (Dim, true);
   RealAntisymmetricMatrix* Sy = new RealAntisymmetricMatrix (Dim, true);
   RealSymmetricMatrix* Sz = new RealSymmetricMatrix (Dim, true);
-  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
-  this->Chain->Syi(this->NbrSpin - 1, *Sy);
-  this->Chain->Szi(this->NbrSpin - 1, *Sz);
+//  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
+//  this->Chain->Syi(this->NbrSpin - 1, *Sy);
+//  this->Chain->Szi(this->NbrSpin - 1, *Sz);
   TmpList += Sx;
   TmpList += Sy;
   TmpList += Sz;

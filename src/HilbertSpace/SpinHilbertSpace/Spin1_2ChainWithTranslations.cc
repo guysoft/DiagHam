@@ -557,98 +557,15 @@ int Spin1_2ChainWithTranslations::TotalSz (int index)
   return TmpSz;
 }
 
-// return matrix representation of Sx
-//
-// i = operator position
-// M = matrix where representation has to be stored
-// return value = corresponding matrix
-
-Matrix& Spin1_2ChainWithTranslations::Sxi (int i, Matrix& M)
-{
-  if ((M.GetNbrRow() != this->HilbertSpaceDimension) || (M.GetNbrColumn() != this->HilbertSpaceDimension))
-    M.ResizeAndClean(this->HilbertSpaceDimension, this->HilbertSpaceDimension);
-  unsigned long tmpState;
-  unsigned long State;
-  unsigned long Mask = 0x00000001 << i;
-  unsigned long NotMask = ~Mask;
-//  double Factor = M_SQRT2 * 0.5;
-  for (int j = 0; j < this->HilbertSpaceDimension; j++)
-    {
-      tmpState = this->ChainDescription[j];
-      State = tmpState;
-      tmpState >>= i;
-      tmpState &= 0x00000001;
-      if (tmpState == 0)
-	M(this->FindStateIndex(State | Mask), j) = 0.5;
-      else
-	M(this->FindStateIndex(State & NotMask), j) = 0.5;
-    }
-  return M;
-}
-
-// return matrix representation of i * Sy
-//
-// i = operator position
-// M = matrix where representation has to be stored
-// return value = corresponding matrix
-
-Matrix& Spin1_2ChainWithTranslations::Syi (int i, Matrix& M)
-{
-  if ((M.GetNbrRow() != this->HilbertSpaceDimension) || (M.GetNbrColumn() != this->HilbertSpaceDimension))
-    M.ResizeAndClean(this->HilbertSpaceDimension, this->HilbertSpaceDimension);
-  unsigned long tmpState;
-  unsigned long State;
-  unsigned long Mask = 0x00000001 << i;
-  unsigned long NotMask = ~Mask;
-//  double Factor = 0.5;
-  for (int j = 0; j < this->HilbertSpaceDimension; j++)
-    {
-      tmpState = this->ChainDescription[j];
-      State = tmpState;
-      tmpState >>= i;
-      tmpState &= 0x00000001;
-      if (tmpState == 0)
-	M(this->FindStateIndex(State | Mask), j) = 0.5;
-      else
-	M(this->FindStateIndex(State & NotMask), j) = -0.5;
-    }
-  return M;
-}
-
-// return matrix representation of Sz
-//
-// i = operator position
-// M = matrix where representation has to be stored
-// return value = corresponding matrix
-
-Matrix& Spin1_2ChainWithTranslations::Szi (int i, Matrix& M)
-{
-  if ((M.GetNbrRow() != this->HilbertSpaceDimension) || (M.GetNbrColumn() != this->HilbertSpaceDimension))
-    M.ResizeAndClean(this->HilbertSpaceDimension, this->HilbertSpaceDimension);
-  unsigned long tmpState;
-  unsigned long State;
-  for (int j = 0; j < this->HilbertSpaceDimension; j++)
-    {
-      tmpState = this->ChainDescription[j];
-      State = tmpState;
-      tmpState >>= i;
-      tmpState &= 0x00000001;
-      if (tmpState == 0)
-	M(j, j) = -0.5;
-      else
-	M(j, j) = 0.5;
-    }
-  return M;
-}
-
 // return index of resulting state from application of P_ij operator on a given state
 //
 // i = first position
 // j = second position
 // state = index of the state to be applied on P_ij operator
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Spin1_2ChainWithTranslations::Pij (int i, int j, int state)
+int Spin1_2ChainWithTranslations::Pij (int i, int j, int state, int& nbrTranslation)
 {  
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long tmpMask = (0x00000001 << i) | (0x00000001 << j);

@@ -52,7 +52,10 @@ class AbstractHilbertSpace
 
  protected:
 
+   // dimension of the hilbert space
   int HilbertSpaceDimension;
+  
+  // garbage flag used to share datas from different copy of the same hilbert space
   GarbageFlag Flag;
 
  public:

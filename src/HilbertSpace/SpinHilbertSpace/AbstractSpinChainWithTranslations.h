@@ -54,27 +54,6 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   // return value = spin projection on (Oz)
   int TotalSz (int state);
 
-  // return matrix representation of Sx
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  virtual Matrix& Sxi (int i, Matrix& M) = 0;
-
-  // return matrix representation of i * Sy
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  virtual Matrix& Syi (int i, Matrix& M) = 0;
-
-  // return matrix representation of Sz
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  virtual Matrix& Szi (int i, Matrix& M) = 0;
-
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
   // i = first position
@@ -83,15 +62,55 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   // return value = corresponding eigenvalue
   virtual double SziSzj (int i, int j, int state) = 0;
 
+  // return index of resulting state from application of S+_i S+_j operator on a given state
+  //
+  // i = position of first S+ operator
+  // j = position of second S+ operator
+  // state = index of the state to be applied on S+_i S+_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
+
+  // return index of resulting state from application of S-_i S-_j operator on a given state
+  //
+  // i = position of first S- operator
+  // j = position of second S- operator
+  // state = index of the state to be applied on S-_i S-_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
+
+  // return index of resulting state from application of S+_i Sz_j operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of Sz operator
+  // state = index of the state to be applied on S+_i Sz_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
+
+  // return index of resulting state from application of S-_i Sz_j operator on a given state
+  //
+  // i = position of S- operator
+  // j = position of Sz operator
+  // state = index of the state to be applied on S-_i Sz_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  virtual int SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
+
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
   // i = position of S- operator
   // j = position of S+ operator
   // state = index of the state to be applied on S-_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
-  // translations = number of translations to apply to the resulting state to obtain the true resulting state
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state (orbit index)
-  virtual int SmiSpj (int i, int j, int state, double& coefficient, int& translations) = 0;
+  virtual int SmiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation) = 0;
 
   // find state index
   //

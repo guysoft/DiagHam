@@ -70,13 +70,15 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-bin_PROGRAMS = Cobalt MultipleSpinChain SandGlassSpinChain
+bin_PROGRAMS = Cobalt MultipleSpinChain SandGlassSpinChain SpinChainWithTranslation
 
 Cobalt_SOURCES = Cobalt.cc
 
 MultipleSpinChain_SOURCES = MultipleSpinChain.cc
 
 SandGlassSpinChain_SOURCES = SandGlassSpinChain.cc
+
+SpinChainWithTranslation_SOURCES = SpinChainWithTranslation.cc
 
 Cobalt_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/SpinHamiltonian/libSpinHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
@@ -89,6 +91,10 @@ MultipleSpinChain_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Arc
 SandGlassSpinChain_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/SpinHamiltonian/libSpinHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/SpinHilbertSpace/libSpinHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
 
 SandGlassSpinChain_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/SpinHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/SpinHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lSpinHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lSpinHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
+
+SpinChainWithTranslation_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/DMRGAlgorithm/libDMRGAlgorithm.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/SpinHamiltonian/libSpinHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/HilbertSpace/SpinHilbertSpace/libSpinHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a  @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a
+
+SpinChainWithTranslation_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/DMRGAlgorithm -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/SpinHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/SpinHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -lDMRGAlgorithm -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lSpinHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lSpinHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
 PROGRAMS =  $(bin_PROGRAMS)
@@ -104,6 +110,8 @@ MultipleSpinChain_OBJECTS =  MultipleSpinChain.o
 MultipleSpinChain_LDFLAGS = 
 SandGlassSpinChain_OBJECTS =  SandGlassSpinChain.o
 SandGlassSpinChain_LDFLAGS = 
+SpinChainWithTranslation_OBJECTS =  SpinChainWithTranslation.o
+SpinChainWithTranslation_LDFLAGS = 
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
@@ -115,9 +123,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/Cobalt.P .deps/MultipleSpinChain.P \
-.deps/SandGlassSpinChain.P
-SOURCES = $(Cobalt_SOURCES) $(MultipleSpinChain_SOURCES) $(SandGlassSpinChain_SOURCES)
-OBJECTS = $(Cobalt_OBJECTS) $(MultipleSpinChain_OBJECTS) $(SandGlassSpinChain_OBJECTS)
+.deps/SandGlassSpinChain.P .deps/SpinChainWithTranslation.P
+SOURCES = $(Cobalt_SOURCES) $(MultipleSpinChain_SOURCES) $(SandGlassSpinChain_SOURCES) $(SpinChainWithTranslation_SOURCES)
+OBJECTS = $(Cobalt_OBJECTS) $(MultipleSpinChain_OBJECTS) $(SandGlassSpinChain_OBJECTS) $(SpinChainWithTranslation_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -182,6 +190,10 @@ MultipleSpinChain: $(MultipleSpinChain_OBJECTS) $(MultipleSpinChain_DEPENDENCIES
 SandGlassSpinChain: $(SandGlassSpinChain_OBJECTS) $(SandGlassSpinChain_DEPENDENCIES)
 	@rm -f SandGlassSpinChain
 	$(CXXLINK) $(SandGlassSpinChain_LDFLAGS) $(SandGlassSpinChain_OBJECTS) $(SandGlassSpinChain_LDADD) $(LIBS)
+
+SpinChainWithTranslation: $(SpinChainWithTranslation_OBJECTS) $(SpinChainWithTranslation_DEPENDENCIES)
+	@rm -f SpinChainWithTranslation
+	$(CXXLINK) $(SpinChainWithTranslation_LDFLAGS) $(SpinChainWithTranslation_OBJECTS) $(SpinChainWithTranslation_LDADD) $(LIBS)
 .cc.o:
 	$(CXXCOMPILE) -c $<
 

@@ -9,4 +9,5 @@ Spin1_2ChainWithTranslations.cc \
 Spin1AKLTChain.cc \
 Spin1Chain.cc \
 Spin1FullAKLTChain.cc \
+Spin1ChainWithTranslations.cc \
 ThierryChain.cc

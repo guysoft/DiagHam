@@ -31,6 +31,8 @@
 #define ARRAYTOOLS_H
 
 #include "config.h"
+#include "GeneralTools/List.h"
+
 
 // up ordering array sort using quick sort
 //
@@ -38,7 +40,7 @@
 // nbrValue = nbr of value in the array
 
 template <class ClassName>
-void SortArrayUpOrdering(ClassName* array, int nbrValue)
+void SortArrayUpOrdering(ClassName* array, long nbrValue)
 {
   switch (nbrValue)
     {
@@ -131,5 +133,56 @@ void SortArrayUpOrdering(ClassName* array, int nbrValue)
   return;
 }
 
+// merge a list of arrays in a smart way i.e. using as less as possible temporary storage 
+//
+// arrayList = list of arrays to merge (list will be deleted after use and memory associate to each array free)
+// arraySizeList = list of array sizes (list will be deleted after use)
+// return value = array corresponding to the merge
+
+template <class ClassName>
+ClassName* SmartMergeArrayListIntoArray(List<ClassName*>& arrayList, List<long>& arraySizeList)
+{
+  List<ClassName*> TmpArrayList;
+  List<long> TmpArraySize;
+  int NbrArray = arrayList.GetNbrElement();
+  if (NbrArray == 0)
+    return 0;
+  if (NbrArray == 1)
+    {
+      ClassName* TmpArray = arrayList[0];
+      arrayList.DeleteList();
+      arraySizeList.DeleteList();
+      return TmpArray;
+    }
+  int Pos = 0;
+  while (NbrArray > 1)
+    { 
+      ClassName* TmpArray1 = arrayList[Pos];
+      ClassName* TmpArray2 = arrayList[Pos + 1];
+      long TmpArraySize1 = arraySizeList[Pos];
+      long TmpArraySize2 = arraySizeList[Pos];      
+      ClassName* TmpArrayMerge = new ClassName [TmpArraySize1 + TmpArraySize2];
+      long i = 0;
+      for (; i < TmpArraySize1; ++i)
+	TmpArrayMerge[i] = TmpArray1[i];
+      for (TmpArraySize1 = 0; TmpArraySize1 < TmpArraySize2; ++TmpArraySize1)
+	TmpArrayMerge[i++] = TmpArray2[TmpArraySize1];  
+      delete[] TmpArray1;
+      delete[] TmpArray2;
+      TmpArrayList += TmpArrayMerge;
+      TmpArraySize += (TmpArraySize1 + TmpArraySize2);      
+      Pos += 2;
+      NbrArray -= 2;
+    }
+  if (NbrArray == 1)
+    {
+      TmpArrayList += arrayList[Pos];
+      TmpArraySize += arraySizeList[Pos];
+    }
+  arrayList.DeleteList();
+  arraySizeList.DeleteList();
+  ClassName* TmpArray = SmartMergeArrayListIntoArray(TmpArrayList, TmpArraySize);
+  return TmpArray;
+}
 
 #endif

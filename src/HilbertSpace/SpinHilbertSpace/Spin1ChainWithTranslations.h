@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of spin 1/2 chain with translastion invariance          //
+//                   class of spin 1 chain with translations                  //
 //                                                                            //
-//                        last modification : 29/01/2002                      //
+//                        last modification : 15/10/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1_2CHAINWITHTRANSLATIONS_H
-#define SPIN1_2CHAINWITHTRANSLATIONS_H
+#ifndef SPIN1CHAIN_H
+#define SPIN1CHAIN_H
 
 
 #include "config.h"
@@ -41,102 +41,85 @@
 using std::ostream;
 
 
-class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
+class HermitianMatrix;
+class RealMatrix;
+class Matrix;
+class SubspaceSpaceConverter;
+class AbstractQuantumNumber;
+
+
+class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
 {
 
  protected:
 
+  // length of the spin chain
   int ChainLength;
-  int ReducedChainLength;
-  int HilbertSpaceDimension;
 
-  int Sz;
-  bool FixedSpinProjectionFlag;
-  
+  // momentum 
   int Momentum;
-  bool FixedMomentumFlag;
   
-  int* LookUpTable;
-  int LookUpTableShift;
-  int LookUpTableSize;
+  // flag to indicate if the total sz component is fixed
+  bool FixedQuantumNumberFlag;
+  //  total sz component (if fixed)
+  int Sz;
+  
+  // shift to apply to move the spin from one end to the other one
+  int ComplementaryStateShift;
 
+  // shift to apply to a state to obtain an index to the look-up table 
+  int LookUpTableShift;
+  // look-up table (LookUpTable[i] gives the index of the smallest state that greater than i <<  LookUpTableShift)
+  long* LookUpTable;
+
+  // array describing each state
   unsigned long* ChainDescription;
-  int* OrbitSize;
 
  public:
 
   // default constructor
   //
-  Spin1_2ChainWithTranslations ();
+  Spin1ChainWithTranslations ();
 
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
-  // chainLength = number of spin 1/2
+  // chainLength = number of spin
+  // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainWithTranslations (int chainLength, int memorySize);
+  Spin1ChainWithTranslations (int chainLength, int momentum, int memorySize);
 
-  // constructor for complete Hilbert space with no restriction on total spin projection Sz
+  // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
-  // chainLength = number of spin 1/2
+  // chainLength = number of spin 1
+  // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainWithTranslations (int chainLength, int sz, int memorySize);
-
-  // constructor for complete Hilbert space with a given total spin projection Sz an a given momentum 
-  //
-  // chainLength = number of spin 1/2
-  // sz = twice the value of total Sz component
-  // momentum = momentum
-  // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainWithTranslations (int chainLength, int sz, int momentum, int memorySize);
-    
-  // constructor from pre-constructed datas
-  //
-  // hilbertSpaceDimension = Hilbert space dimension
-  // chainDescription = array describing states
-  // orbitSize = number of state per orbit
-  // chainLength = number of spin 1/2
-  // sz = twice the value of total Sz component
-  // fixedSpinPorjectionFlag = true if hilbert space is restricted to a given spin projection
-  // momentum = momentum
-  // fixedSpinPorjectionFlag = true if hilbert space is restricted to a given momentum
-  // lookUpTableSize = look-Up table size
-  Spin1_2ChainWithTranslations (int hilbertSpaceDimension, unsigned long* chainDescription, 
-				int* orbitSize, int chainLength, 
-				int sz, bool fixedSpinProjectionFlag, 
-				int momentum, bool fixedMomentumFlag, 
-				int lookUpTableSize);
+  Spin1ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize) ;
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin1_2ChainWithTranslations (const Spin1_2ChainWithTranslations& chain);
+  Spin1ChainWithTranslations (const Spin1ChainWithTranslations& chain);
 
   // destructor
   //
-  ~Spin1_2ChainWithTranslations ();
+  ~Spin1ChainWithTranslations ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin1_2ChainWithTranslations& operator = (const Spin1_2ChainWithTranslations& chain);
+  Spin1ChainWithTranslations& operator = (const Spin1ChainWithTranslations& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // re-initialize chain with another total Sz component
-  //
-  // sz = twice the value of total Sz component
-  // return value = reference on current chain  
-  Spin1_2ChainWithTranslations& Reinitialize(int sz);
-
   // return Hilbert space dimension
   //
   // return value = Hilbert space dimension
-  int GetHilbertSpaceDimension() {return this->HilbertSpaceDimension;};
+  int GetHilbertSpaceDimension();
 
   // return a list of all possible quantum numbers 
   //
@@ -162,15 +145,6 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // state = index of the state to consider
   // return value = corresponding eigenvalue
   double SziSzj (int i, int j, int state);
-
-  // return index of resulting state from application of P_ij operator on a given state
-  //
-  // i = first position
-  // j = second position
-  // state = index of the state to be applied on P_ij operator
-  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
-  // return value = index of resulting state
-  int Pij (int i, int j, int state, int& nbrTranslation);
 
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
@@ -235,13 +209,6 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = corresponding index
   int FindStateIndex(unsigned long state);
 
-  // find canonical state
-  //
-  // state = state description
-  // nbrTranslation = reference on an integer used to store number of translations
-  // return value = canonical state description
-  unsigned long FindCanonicalState(unsigned long state, int& nbrTranslation);
-
   // print a given State
   //
   // Str = reference on current output stream 
@@ -251,34 +218,52 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 
  private:
 
-  // generate Spin 1/2 states
+  // return value of twice spin projection on (Oz) for a given state
   //
-  // sitePosition = site on chain where spin has to be changed
-  // currentStateDescription = description of current state
+  // stateDescription = state to which the spin projection has to be evaluated
+  // return value = twice spin projection on (Oz)
+  int GetTotalSz (unsigned long stateDescription);
+
+ // find the canonical form of a state
+  //
+  // state = state description
+  // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+  // return value = canonical form of the state
+  unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation);
+
+  // find how many translations are needed to obtain the same state
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = number of translation needed to obtain the same state
+  int FindNumberTranslation(unsigned long stateDescription);
+
+  // constructor from pre-constructed datas
+  //
+  // hilbertSpaceDimension = Hilbert space dimension
+  // chainDescription = array describing states
+  // chainLength = number of spin 1
+  // momemtum = total momentum of each state
+  // sz = twice the value of total Sz component
+  // fixedQuantumNumberFlag = true if hilbert space is restricted to a given quantum number
+  // lookUpTable = look-up table
+  // lookUpTableShift = shift to apply to a state to obtain an index to the look-up table 
+  // complementaryStateShift = shift to apply to move the spin from one end to the other one
+  Spin1ChainWithTranslations (int hilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
+			      int momentum, int sz, bool fixedQuantumNumberFlag, long* lookUpTable, int lookUpTableShift, 
+			      int complementaryStateShift);
+
+  // generate all states with no constraint on total Sz
+  //
+  // memorySlice = maximum amount of memory (in unsigned long unit) that can be allocated to partially evalauted the states
   // return value = number of generated states
-  void GenerateStates(int sitePosition, unsigned long currentStateDescription);
+  int GenerateStates(long memorySlice);
 
-  // generate Spin 1/2 states for a given total spin projection Sz
+  // generate all states with constraint on total Sz
   //
-  // sitePosition = site on chain where spin has to be changed
-  // currentStateDescription = description of current state
-  // currentSz = total Sz value of current state
+  // sz = twice the sz value
+  // memorySlice = maximum amount of memory (in unsigned long unit) that can be allocated to partially evalauted the states
   // return value = number of generated states
-  void GenerateStates(int sitePosition, unsigned long currentStateDescription, int currentSz);
-
-  // store a state in its canonical form
-  //
-  // stateDescription = description of the stateto store
-  void StoreCanonicalForm (unsigned long stateDescription);
-
-  // build look-up table
-  //
-  // memorySize = memory size in bytes allowed for look-up table
-  void BuildLookUpTable(int memorySize = 0);
-
-  // Apply momentum criteria to keep allowed state 
-  //
-  void ApplyMomentumCriteria ();
+  int GenerateStates(int sz, long memorySlice);
 
 };
 
