@@ -59,6 +59,8 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   int YMomentum;
   //  GCD of nbrBosons and maxMomentum
   int MomentumModulo;
+  // translation step used for the magnetic translation along x 
+  int XMomentumTranslationStep;
 
   // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with x momentum constraint
   bool* CompatibilityWithXMomentum;
@@ -85,6 +87,13 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   BosonOnTorusState** TemporaryStateDescription;
   // a temporary state used for all canonical form calculations
   BosonOnTorusState TemporaryState;
+
+  // look_up table use to find states with a given maximum momentum and a given hash key
+  int*** LookUpTable;
+  // number of states with the same maximum momentum and a hash key
+  int** NbrStateInLookUpTable;
+  // number of bits to take into account in a hash key
+  unsigned long HashKeyMask;
 
  public:
 
@@ -202,15 +211,6 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // 
   // return value = hilbert space dimension
   int GenerateStates();
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson in the state
-  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos);
 
   // generate all states corresponding to the constraints
   // 

@@ -61,9 +61,10 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
   this->XMomentum = xMomentum;
   this->YMomentum = yMomentum;
   this->MomentumModulo = FindGCD(this->NbrBosons, this->MaxMomentum);
+  this->XMomentumTranslationStep = this->MaxMomentum / this->MomentumModulo;
 
-  this->ReducedNbrState = GetReducedNbrState (this->NbrMomentum);
-  this->RemainderNbrState = GetRemainderNbrState (this->NbrMomentum);
+  this->ReducedNbrState = GetReducedNbrState (this->MaxMomentum);
+  this->RemainderNbrState = GetRemainderNbrState (this->MaxMomentum);
   this->TemporaryState.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
@@ -328,56 +329,29 @@ int BosonOnTorusWithMagneticTranslations::AdAdAA (int index, int m1, int m2, int
 
 // find state index
 //
-// stateDescription = array describing the state
-// lzmax = maximum Lz value reached by a boson in the state
+// state = state describing
 // return value = corresponding index
 
-int BosonOnTorusWithMagneticTranslations::FindStateIndex(int* stateDescription, int lzmax)
+int BosonOnTorusWithMagneticTranslations::FindStateIndex(BosonOnTorusState& state)
 {
-/*  int TmpKey = this->GenerateKey(stateDescription, lzmax);
-  int Sector = lzmax * this->IncNbrBosons + stateDescription[lzmax];
-  int TmpPos = 0;
-  int TmpPos2 = this->KeyInvertSectorSize[Sector] - 1;
-  int TmpPos3;
-  int* TmpKeyInvertTable = this->KeyInvertTable[Sector];
-  while (TmpPos2 != TmpPos)
+  int TmpKey = state.GetHaskKey(this->ReducedNbrState, this_>HashKeyMask);
+  int TmpMaxMomentum = state.GetHighestIndex(this->ReducedNbrState);
+  int Max = this->NbrStateInLookUpTable[TmpMaxMomentum][TmpKey] - 1;
+  int* TmpLookUpTable = this->LookUpTable[TmpMaxMomentum][TmpKey];
+  int Min = 0;
+  int Pos = 0;
+  while ((Max - Min) > 1)
     {
-      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-      if (TmpKey < TmpKeyInvertTable[TmpPos3])
-	{
-	  TmpPos2 = TmpPos3 - 1;
-	}
+      Pos = (Max + Min) >> 1;
+      if (state.Lesser (this->StateDescription[TmpLookUpTable[Pos]], this->ReducedNbrState))
+	Max = Pos;
       else
-	if (TmpKey > TmpKeyInvertTable[TmpPos3])
-	  {
-	    TmpPos = TmpPos3 + 1;
-	  }
-	else
-	  {
-	    TmpPos2 = TmpPos3;
-	    TmpPos = TmpPos3;		    
-	  }
+	Min = Pos;
     }
-  int i;
-  int* TmpStateDescription;
-  int Start;
-  TmpPos3 = this->KeyInvertTableNbrIndices[Sector][TmpPos];
-  int* TmpKeyInvertIndices = this->KeyInvertIndices[Sector][TmpPos];
-  for (int j = 0; j < TmpPos3; ++j)
-    {
-      Start = TmpKeyInvertIndices[j];
-      i = 0;
-      TmpStateDescription = this->StateDescription[Start];
-      while (i <= lzmax)
-	{
-	  if (stateDescription[i] != TmpStateDescription[i])
-	    i = lzmax + 1;
-	  ++i;
-	}
-      if (i == (lzmax + 1))
-	return Start;
-    }*/
-  return this->HilbertSpaceDimension;
+  if (state.Different(this->StateDescription[TmpLookUpTable[Min]], this->ReducedNbrState))
+    return Max;
+  else
+    return Min;
 }
 
 // print a given State
@@ -402,30 +376,17 @@ ostream& BosonOnTorusWithMagneticTranslations::PrintState (ostream& Str, int sta
 
 // generate all states corresponding to the constraints
 // 
-// nbrBosons = number of bosons
-// maxMomentum = momentum maximum value for a fermion in the state
-// currentMaxMomentum = momentum maximum value for fermions that are still to be placed
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-int BosonOnTorusWithMagneticTranslations::GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos)
-{
-  return 0;
-}
-
-// generate all states corresponding to the constraints
-// 
 // return value = hilbert space dimension
 
 int BosonOnTorusWithMagneticTranslations::GenerateStates()
 {
-  this->CompatibilityWithXMomentum = new bool [this->IncNbrBosons];
-  for (int i = 0; i <= this->NbrBosons; ++i)
+  this->CompatibilityWithXMomentum = new bool [this->NbrMomentum];
+  for (int i = 0; i <= this->MomentumModulo; ++i)
     {
       if (((i * this->XMomentum) % this->MomentumModulo) == 0)
-	this->CompatibilityWithXMomentum[i] = true;
+	this->CompatibilityWithXMomentum[i * this->XMomentumTranslationStep] = true;
       else
-	this->CompatibilityWithXMomentum[i] = false;
+	this->CompatibilityWithXMomentum[i * this->XMomentumTranslationStep] = false;
     }
   int Lim = this->NbrBosons * this->MaxMomentum;
   this->CompatibilityWithYMomentum = new bool [Lim + 1];
@@ -440,56 +401,63 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
 
   int MaxHilbertSpaceDimension = this->HilbertSpaceDimension;
   this->TemporaryStateDescription = new BosonOnTorusState* [MaxHilbertSpaceDimension];
+  for (int i = 0; i < MaxHilbertSpaceDimension; ++i)
+    this->TemporaryStateDescription[i] = new BosonOnTorusState (this->ReducedNbrState);
   BosonOnTorusState** InternalTemporaryStateDescription = new BosonOnTorusState* [MaxHilbertSpaceDimension];
+  int* TmpStateSymmetries = new int [MaxHilbertSpaceDimension];
   BosonOnTorusState* TmpState;
   this->HilbertSpaceDimension = -1;
   int NbrTranslation;
+  int StateSymmetry;
   if (this->CompatibilityWithYMomentum[0] == true)
     {
       TmpState = new BosonOnTorusState(this->ReducedNbrState);
       TmpState->SetOccupation (0, this->NbrBosons);
       TmpState->PutInCanonicalForm(this->TemporaryState, this->ReducedNbrState, this->RemainderNbrState, 
-				   this->NbrMomentum, NbrTranslation, this->MomentumModulo);
-      if (this->CompatibilityWithXMomentum[NbrTranslation] == true)
+				   this->MaxMomentum, NbrTranslation, this->XMomentumTranslationStep);
+      StateSymmetry = TmpState->GetStateSymmetry(this->TemporaryState, this->ReducedNbrState, this->RemainderNbrState, 
+						 this->MaxMomentum, this->XMomentumTranslationStep);
+      if (this->CompatibilityWithXMomentum[StateSymmetry] == true)
 	{
 	  InternalTemporaryStateDescription[0] = TmpState;
+	  TmpStateSymmetries[0] = StateSymmetry;
 	  ++this->HilbertSpaceDimension;
+	}
+      else
+	{
+	  delete TmpState;
 	}
     }
   
-  for (int i = 1; i <= this->MaxMomentum; ++i)
+  for (int i = 1; i < this->MaxMomentum; ++i)
     {
-      for (int j = 1; j < this->NbrBosons; ++j)
+      for (int j = 1; j <= this->NbrBosons; ++j)
 	{
 	  int Pos = this->RawGenerateStates(this->NbrBosons - j, i - 1, 0, 0, j * i);
 	  for (int k = 0; k < Pos; ++k)
 	    {
 	      this->TemporaryStateDescription[k]->SetOccupation (i, j);
-	      this->TemporaryStateDescription[k]->PutInCanonicalForm(this->TemporaryState, this->ReducedNbrState, this->RemainderNbrState, 
-								     this->NbrMomentum, NbrTranslation, this->MomentumModulo);
-	      if ((this->CompatibilityWithXMomentum[NbrTranslation] == true) && 
-		  ((this->HilbertSpaceDimension < 0) || (InternalTemporaryStateDescription[this->HilbertSpaceDimension]->Lesser(*(this->TemporaryStateDescription[k]), 
-																this->ReducedNbrState))))
+	      this->TemporaryStateDescription[k]->PutInCanonicalForm(this->TemporaryState, this->ReducedNbrState, 
+								     this->RemainderNbrState, this->MaxMomentum, 
+								     NbrTranslation, this->XMomentumTranslationStep);
+	      this->TemporaryStateDescription[k]->PrintState(cout, this->ReducedNbrState, 
+							     this->RemainderNbrState) << "  =  " << NbrTranslation << endl;
+	      StateSymmetry = this->TemporaryStateDescription[k]->GetStateSymmetry(this->TemporaryState, 
+										   this->ReducedNbrState, this->RemainderNbrState, 
+										   this->MaxMomentum, 
+										   this->XMomentumTranslationStep);
+	      if ((this->CompatibilityWithXMomentum[StateSymmetry] == true) &&
+		  ((this->HilbertSpaceDimension < 0) || 
+		   (InternalTemporaryStateDescription[this->HilbertSpaceDimension]->Lesser(*(this->TemporaryStateDescription[k]), 
+		  this->ReducedNbrState))))
 		{
 		  ++this->HilbertSpaceDimension;
 		  InternalTemporaryStateDescription[this->HilbertSpaceDimension] = this->TemporaryStateDescription[k];
 		  this->TemporaryStateDescription[k] = new BosonOnTorusState (this->ReducedNbrState);
+		  TmpStateSymmetries[this->HilbertSpaceDimension] = StateSymmetry;
 		}
 	      else
 		this->TemporaryStateDescription[k]->EmptyState(this->ReducedNbrState);
-	    }
-	}
-      if (this->CompatibilityWithYMomentum[i * this->NbrBosons] == true)
-	{
-	  TmpState = new BosonOnTorusState(this->ReducedNbrState);
-	  TmpState->SetOccupation (i, this->NbrBosons);
-	  TmpState->PutInCanonicalForm(this->TemporaryState, this->ReducedNbrState, this->RemainderNbrState, 
-				       this->NbrMomentum, NbrTranslation, this->MomentumModulo);
-	  if ((this->CompatibilityWithXMomentum[NbrTranslation] == true) && 
-	      ((this->HilbertSpaceDimension < 0) || (InternalTemporaryStateDescription[this->HilbertSpaceDimension]->Lesser(*TmpState, this->ReducedNbrState))))
-	    {
-	      ++this->HilbertSpaceDimension;
-	      InternalTemporaryStateDescription[this->HilbertSpaceDimension] = TmpState;
 	    }
 	}
     }  
@@ -502,15 +470,19 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
   if (this->HilbertSpaceDimension > 0)
     {
       this->StateDescription = new BosonOnTorusState [this->HilbertSpaceDimension];
+      this->NbrStateInOrbit = new int [this->HilbertSpaceDimension];
+      this->StateMaxMomentum = new int [this->HilbertSpaceDimension];
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
 	  this->StateDescription[i].TransfertState(*(InternalTemporaryStateDescription[i]));
 	  this->StateMaxMomentum[i] = this->StateDescription[i].GetHighestIndex(this->ReducedNbrState);
+	  this->NbrStateInOrbit[i] = TmpStateSymmetries[i];
 	}
     }
-  for (int i = 0; i < MaxHilbertSpaceDimension; ++i)
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     delete InternalTemporaryStateDescription[i];
   delete[] InternalTemporaryStateDescription;
+  delete[] TmpStateSymmetries;
   return this->HilbertSpaceDimension;
 }
 
@@ -523,7 +495,8 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
 // currentYMomentum = current value of the momentum in the y direction
 // return value = position from which new states have to be stored
 
-int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentYMomentum)
+int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, 
+							    int pos, int currentYMomentum)
 {
   if (nbrBosons == 0)
     {
@@ -554,15 +527,12 @@ int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int m
     {
       TmpPos = this->RawGenerateStates(nbrBosons - TmpNbrBosons, maxMomentum, IncCurrentMaxMomentum, pos, currentYMomentum + (TmpNbrBosons * currentMaxMomentum));
       for (int i = pos; i < TmpPos; i++)
-	this->TemporaryStateDescription[i]->SetOccupation (currentMaxMomentum, TmpNbrBosons);      
+	{
+	  this->TemporaryStateDescription[i]->SetOccupation (currentMaxMomentum, TmpNbrBosons);
+	}      
       --TmpNbrBosons;
       pos = TmpPos;
     }
-  if (currentMaxMomentum == 0)
-    {
-      return pos;
-    }
-  else
     return this->RawGenerateStates(nbrBosons, maxMomentum, IncCurrentMaxMomentum, pos, currentYMomentum);
 }
 
@@ -572,6 +542,59 @@ int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int m
 
 void BosonOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 {
+  this->RescalingFactors = new double* [this->NbrMomentum];
+  for (int i = 1; i <= this->MaxMomentum; ++i)
+    {
+      this->RescalingFactors[i] = new double [this->NbrMomentum];
+      for (int j = 1; j <= this->MaxMomentum; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
+
+  this->LookUpTable = new int** [this->MaxMomentum];
+  this->LookUpTable[0] = new int* [this->HashKeyMask + (unsigned long) 1];
+  this->NbrStateInLookUpTable = new int* [this->MaxMomentum];
+  this->NbrStateInLookUpTable[0] = new int [this->HashKeyMask + (unsigned long) 1];
+  for (unsigned long j = 0; j < this->HashKeyMask; ++j)
+    this->NbrStateInLookUpTable[0][j] = 0;
+  int CurrentMaxMomentum = 0;
+  unsigned long* TmpHashTable = new unsigned long [this->HilbertSpaceDimension];
+  unsigned long TmpKey = 0;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      if (CurrentMaxMomentum != this->StateMaxMomentum[i])
+	{
+	  CurrentMaxMomentum = this->StateMaxMomentum[i];
+	  this->LookUpTable[CurrentMaxMomentum] = new unsigned long* [this->HashKeyMask + (unsigned long) 1];
+	  TmpKey = this->StateDescription[i].GetHashKey(this->ReducedNbrState, this->HashKeyMask);
+	  TmpHashTable[i] = TmpKey;
+	  for (unsigned long j = 0; j < this->HashKeyMask; ++j)
+	    this->NbrStateInLookUpTable[CurrentMaxMomentum][j] = 0;
+	  ++this->NbrStateInLookUpTable[CurrentMaxMomentum][TmpKey];	  
+	}
+      else
+	{
+	  TmpKey = this->StateDescription[i].GetHashKey(this->ReducedNbrState, this->HashKeyMask);
+	  TmpHashTable[i] = TmpKey;
+	  ++this->NbrStateInLookUpTable[CurrentMaxMomentum][TmpKey];
+	}
+    }
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    for (unsigned long j = 0; j < this->HashKeyMask; ++j)
+      if (this->NbrStateInLookUpTable[i][j] != 0)
+	{
+	  this->LookUpTable[i][j] = new int [this->NbrStateInLookUpTable[i][j]];
+	  this->NbrStateInLookUpTable[i][j] = 0;
+	}
+      else
+	{
+	  this->LookUpTable[i][j] = 0;
+	}
+  for (int i = 0 i < this->HilbertSpaceDimension; ++i)
+    this->LookUpTable[this->StateMaxMomentum[i]][TmpHashTable[i]][this->NbrStateInLookUpTable[this->StateMaxMomentum[i]]
+								  [TmpHashTable[i]]++] = i;
+  delete[] TmpHashTable;
 }
 
 // evaluate Hilbert space dimension

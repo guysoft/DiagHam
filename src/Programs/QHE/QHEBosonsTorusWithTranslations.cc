@@ -174,14 +174,14 @@ int main(int argc, char** argv)
     Max = Momentum;
 
   int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
-//  MomentumModulo = 1;
-//  for (; Momentum <= Max; ++Momentum)
+  //  MomentumModulo = 1;
+  //  for (; Momentum <= Max; ++Momentum)
   for (int x = 0; x < MomentumModulo; ++x)
-  for (int y = 0; y < MomentumModulo; ++y)
+    for (int y = 0; y < 1; ++y)//MomentumModulo; ++y)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-//      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, Momentum);
+      //      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, y);
       BosonOnTorusWithMagneticTranslations TotalSpace (NbrBosons, MaxMomentum, x, y);
       cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
 //      cout << "momentum = " << Momentum << endl;

@@ -57,7 +57,7 @@ BosonOnTorusState::BosonOnTorusState(BosonOnTorusState& state, const int& reduce
 // 
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 
-BosonOnTorusState::BosonOnTorusState(int reducedNbrState)
+BosonOnTorusState::BosonOnTorusState(const int& reducedNbrState)
 {
   this->StateDescription = new unsigned long [reducedNbrState + 1];
   for (int i = 0; i <= reducedNbrState; ++i)

@@ -84,6 +84,14 @@ class AbstractOption
   // return value = reference on current output stream
   virtual ostream& DisplayHelp (ostream& output) = 0;
 
+  // display help
+  //
+  // options = option list
+  // str = reference on output stream to use
+  // programName = string containing the program name
+  // return value = true if proceeding succeded
+  friend void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName);
+
 };
 
 // Proceed running options 

@@ -74,7 +74,7 @@ class BosonOnTorusState
   // basic constructor
   // 
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
-  BosonOnTorusState(int reducedNbrState);
+  BosonOnTorusState(const int& reducedNbrState);
   
   // copy constructor
   // 
@@ -90,14 +90,14 @@ class BosonOnTorusState
   //
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = reference on  the current state
-  BosonOnTorusState& Resize(int& reducedNbrState);
+  BosonOnTorusState& Resize(const int& reducedNbrState);
 
   // assign a state to the current one
   //
   // state = reference on the state to assign
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = reference on  the current state
-  BosonOnTorusState& Assign(BosonOnTorusState& state, int& reducedNbrState);
+  BosonOnTorusState& Assign(BosonOnTorusState& state, const int& reducedNbrState);
 
   // assign a state to the current one and after undefined it (array tranfert)
   //
@@ -110,19 +110,19 @@ class BosonOnTorusState
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // keyMask = mask giving how many bits have to be kept
   // return value = hash key
-  unsigned long GetHashKey (int& reducedNbrState, unsigned long& keyMask);
+  unsigned long GetHashKey (const int& reducedNbrState, const unsigned long& keyMask);
 
   // get the highest state index for which the state is occupied
   //
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = highest state index
-  int GetHighestIndex (int& reducedNbrState);
+  int GetHighestIndex (const int& reducedNbrState);
 
   // set all ocupations to zero
   //
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = reference on  the current state
-  BosonOnTorusState& EmptyState(int reducedNbrState);
+  BosonOnTorusState& EmptyState(const int& reducedNbrState);
 
   // set occupation of a state 
   //
@@ -168,62 +168,71 @@ class BosonOnTorusState
   // state = reference on the state to compare with
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the two states are identical
-  bool Equal (BosonOnTorusState& state, int& reducedNbrState);
+  bool Equal (BosonOnTorusState& state, int reducedNbrState);
 
   // test if the current state is different to another state
   //
   // state = reference on the state to compare with
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the two states are different
-  bool Different (BosonOnTorusState& state, int& reducedNbrState);
+  bool Different (BosonOnTorusState& state, int reducedNbrState);
   
   // test if the current state is greater than another state
   //
   // state = reference on the state to compare with
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater than the other state
-  bool Greater (BosonOnTorusState& state, int& reducedNbrState);
+  bool Greater (BosonOnTorusState& state, int reducedNbrState);
 
   // test if the current state is greater or equal than another state
   //
   // state = reference on the state to compare with
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater or equal than the other state
-  bool GreaterOrEqual (BosonOnTorusState& state, int& reducedNbrState);
+  bool GreaterOrEqual (BosonOnTorusState& state, int reducedNbrState);
 
   // test if the current state is lesser than another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater than the other state
-  bool Lesser (BosonOnTorusState& state, int& reducedNbrState);
+  bool Lesser (BosonOnTorusState& state, const int reducedNbrState);
 
   // test if the current state is lesser or equal than another state
   //
   // state = reference on the state to compare with
-  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // return value = true if the current state is greater or equal than the other state
-  bool LesserOrEqual (BosonOnTorusState& state, int& reducedNbrState);
+  bool LesserOrEqual (BosonOnTorusState& state, int reducedNbrState);
 
   // put the state in a canonical form
   // 
   // tmpState = reference temporary state with the same number of states than the current one
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
-  // nbrState = number of state in the current boson state
   // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+  // nbrState = number of state in the current boson state
   // nbrTranslation = reference where the number of translations used to obtain the canonical form will be stored
   // nbrTranslationStep = step to used between two translations
-  void PutInCanonicalForm(BosonOnTorusState& tmpState, int& reducedNbrState, int& nbrState, int& nbrStateRemainder, 
-			  int& nbrTranslation, int& nbrTranslationStep);
+  void PutInCanonicalForm(BosonOnTorusState& tmpState, const int& reducedNbrStat, const int& nbrStateRemainder,
+			  const int& nbrState, int& nbrTranslation, const int& nbrTranslationStep);
 
-  //  void PutInCanonicalForm(int& nbrTranslation);
+  // get the number of translation to obtain the same state
+  // 
+  // tmpState = reference temporary state with the same number of states than the current one
+  // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+  // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+  // nbrState = number of state in the current boson state
+  // nbrTranslationStep = step to used between two translations
+  // return value = number of translation to obtain the same state
+  int GetStateSymmetry(BosonOnTorusState& tmpState, const int& reducedNbrState, const int& nbrStateRemainder, 
+		       const int& nbrState, const int& nbrTranslationStep);
 
   // shift a state to the left
   //
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
   // nbrTranslation = magnitude of the translation to apply
-  void LeftShiftState(int& reducedNbrState, int& nbrStateRemainder, int nbrTranslation);
+  void LeftShiftState(const int& reducedNbrState, const int& nbrStateRemainder, const int& nbrTranslation);
 
   // print a given state
   //
@@ -231,7 +240,7 @@ class BosonOnTorusState
   // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
   // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& str, int& reducedNbrState, int& nbrStateRemainder);
+  ostream& PrintState (ostream& str, const int& reducedNbrState, const int& nbrStateRemainder);
 
 };
 
@@ -243,12 +252,12 @@ class BosonOnTorusState
 inline int GetReducedNbrState (int nbrState)
 {
 #ifdef __64_BITS__
-  if (nbrState & ((unsigned long) 0x7))
+  if ((nbrState & ((unsigned long) 0x7)) == 0)
     return ((nbrState >> 3) - 1);
   else
     return (nbrState >> 3);
 #else
-  if (nbrState & ((unsigned long) 0x3))
+  if ((nbrState & ((unsigned long) 0x3)) == 0)
     return ((nbrState >> 2) - 1);
   else
     return (nbrState >> 2);
@@ -263,12 +272,12 @@ inline int GetReducedNbrState (int nbrState)
 inline int GetRemainderNbrState (int nbrState)
 {
 #ifdef __64_BITS__
-  if (nbrState & ((unsigned long) 0x7))
+  if ((nbrState & ((unsigned long) 0x7)) == 0)
     return 8;
   else
     return (nbrState & ((unsigned long) 0x7));
 #else
-  if (nbrState & ((unsigned long) 0x3))
+  if ((nbrState & ((unsigned long) 0x3)) == 0)
     return 4;
   else
     return (nbrState & ((unsigned long) 0x3));
@@ -280,7 +289,7 @@ inline int GetRemainderNbrState (int nbrState)
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = reference on  the current state
 
-inline BosonOnTorusState& BosonOnTorusState::Resize(int& reducedNbrState)
+inline BosonOnTorusState& BosonOnTorusState::Resize(const int& reducedNbrState)
 {
   if (this->StateDescription != 0)
     delete[] this->StateDescription;
@@ -296,7 +305,7 @@ inline BosonOnTorusState& BosonOnTorusState::Resize(int& reducedNbrState)
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = reference on  the current state
 
-inline BosonOnTorusState& BosonOnTorusState::Assign(BosonOnTorusState& state, int& reducedNbrState)
+inline BosonOnTorusState& BosonOnTorusState::Assign(BosonOnTorusState& state, const int& reducedNbrState)
 {
   for (int i = 0; i <= reducedNbrState; ++i)
     this->StateDescription[i] = state.StateDescription[i];
@@ -320,10 +329,10 @@ inline BosonOnTorusState& BosonOnTorusState::TransfertState(BosonOnTorusState& s
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = reference on  the current state
 
-inline BosonOnTorusState& BosonOnTorusState::EmptyState(int reducedNbrState)
+inline BosonOnTorusState& BosonOnTorusState::EmptyState(const int& reducedNbrState)
 {
   for (int i = 0; i <= reducedNbrState; ++i)
-    this->StateDescription[i] = 0;
+    this->StateDescription[i] = (unsigned long) 0;
   return *this;
 }
 
@@ -333,7 +342,7 @@ inline BosonOnTorusState& BosonOnTorusState::EmptyState(int reducedNbrState)
 // keyMask = mask giving how many bits have to be kept
 // return value = hash key
 
-inline unsigned long BosonOnTorusState::GetHashKey (int& reducedNbrState, unsigned long& keyMask)
+inline unsigned long BosonOnTorusState::GetHashKey (const int& reducedNbrState, const unsigned long& keyMask)
 {
   unsigned long Key = this->StateDescription[0];
   for (int i = 1; i <= reducedNbrState; ++i)
@@ -346,7 +355,7 @@ inline unsigned long BosonOnTorusState::GetHashKey (int& reducedNbrState, unsign
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = highest state index
 
-inline int BosonOnTorusState::GetHighestIndex (int& reducedNbrState)
+inline int BosonOnTorusState::GetHighestIndex (const int& reducedNbrState)
 {
   int Index = 0;
   for (int i = reducedNbrState; ((i >= 0) && (Index == 0)); --i)
@@ -503,7 +512,7 @@ inline void BosonOnTorusState::SwapStates (BosonOnTorusState& state)
 // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the two states are identical
 
-inline bool BosonOnTorusState::Equal (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::Equal (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
     if (state.StateDescription[reducedNbrState] != this->StateDescription[reducedNbrState])
@@ -519,7 +528,7 @@ inline bool BosonOnTorusState::Equal (BosonOnTorusState& state, int& reducedNbrS
 // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the two states are different
 
-inline bool BosonOnTorusState::Different (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::Different (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
     if (state.StateDescription[reducedNbrState] != this->StateDescription[reducedNbrState])
@@ -535,14 +544,17 @@ inline bool BosonOnTorusState::Different (BosonOnTorusState& state, int& reduced
 // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is greater than the other state
 
-inline bool BosonOnTorusState::Greater (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::Greater (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
-    if (state.StateDescription[reducedNbrState] >= this->StateDescription[reducedNbrState])
+    if (state.StateDescription[reducedNbrState] > this->StateDescription[reducedNbrState])
       return false;
     else
-      --reducedNbrState;
-  return true;
+      if (state.StateDescription[reducedNbrState] == this->StateDescription[reducedNbrState])
+	--reducedNbrState;
+      else
+	return true;
+  return false;
 }
 
 
@@ -552,46 +564,55 @@ inline bool BosonOnTorusState::Greater (BosonOnTorusState& state, int& reducedNb
 // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is greater or equal than the other state
 
-inline bool BosonOnTorusState::GreaterOrEqual (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::GreaterOrEqual (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
     if (state.StateDescription[reducedNbrState] > this->StateDescription[reducedNbrState])
       return false;
     else
-      --reducedNbrState;
+      if (state.StateDescription[reducedNbrState] == this->StateDescription[reducedNbrState])
+	--reducedNbrState;
+      else
+	return true;
   return true;
 }
 
 // test if the current state is lesser than another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is lower than the other state
 
-inline bool BosonOnTorusState::Lesser (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::Lesser (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
-    if (state.StateDescription[reducedNbrState] <= this->StateDescription[reducedNbrState])
+    if (state.StateDescription[reducedNbrState] < this->StateDescription[reducedNbrState])
       return false;
     else
-      --reducedNbrState;
-  return true;
+      if (state.StateDescription[reducedNbrState] == this->StateDescription[reducedNbrState])
+	--reducedNbrState;
+      else
+	return true;
+  return false;
 }
 
 
 // test if the current state is lesser or equal than another state
 //
 // state = reference on the state to compare with
-// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // return value = true if the current state is lower or equal than the other state
 
-inline bool BosonOnTorusState::LesserOrEqual (BosonOnTorusState& state, int& reducedNbrState)
+inline bool BosonOnTorusState::LesserOrEqual (BosonOnTorusState& state, int reducedNbrState)
 {
   while (reducedNbrState >= 0)
     if (state.StateDescription[reducedNbrState] < this->StateDescription[reducedNbrState])
       return false;
     else
-      --reducedNbrState;
+      if (state.StateDescription[reducedNbrState] == this->StateDescription[reducedNbrState])
+	--reducedNbrState;
+      else
+	return true;
   return true;
 }
 
@@ -599,28 +620,52 @@ inline bool BosonOnTorusState::LesserOrEqual (BosonOnTorusState& state, int& red
 // 
 // tmpState = reference temporary state with the same number of states than the current one
 // reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
-// nbrState = number of state in the current boson state
 // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+// nbrState = number of state in the current boson state
 // nbrTranslation = reference where the number of translations used to obtain the canonical form will be stored
 // nbrTranslationStep = step to used between two translations
 
-inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, int& reducedNbrState, int& nbrState, int& nbrStateRemainder, 
-						  int& nbrTranslation, int& nbrTranslationStep)
+inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, const int& reducedNbrState, 
+						  const int& nbrStateRemainder, const int& nbrState, 
+						  int& nbrTranslation, const int& nbrTranslationStep)
 {
   tmpState.Assign(*this, reducedNbrState);
   nbrTranslation = 0; 
   int TmpNbrTranslation = nbrTranslationStep;
-  this->LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
   while (TmpNbrTranslation < nbrState)
     {
-      if (this->Lesser(tmpState, reducedNbrState))
+      tmpState.LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
+      if (tmpState.Lesser(*this, reducedNbrState))
 	{
 	  nbrTranslation = TmpNbrTranslation;
-	  tmpState.Assign(*this, reducedNbrState);	  
+	  this->Assign(tmpState, reducedNbrState);	  
 	}
       TmpNbrTranslation += nbrTranslationStep;
     }
-  this->Assign(tmpState, reducedNbrState);
+}
+
+// get the number of translation to obtain the same state
+// 
+// tmpState = reference temporary state with the same number of states than the current one
+// reducedNbrState = reference on the reduced number of state (aka the number of unsigned long per state) minus 1
+// nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
+// nbrState = number of state in the current boson state
+// nbrTranslationStep = step to used between two translations
+// return value = number of translation to obtain the same state
+
+inline int BosonOnTorusState::GetStateSymmetry(BosonOnTorusState& tmpState, const int& reducedNbrState, 
+						const int& nbrStateRemainder, const int& nbrState, 
+						const int& nbrTranslationStep)
+{
+  tmpState.Assign(*this, reducedNbrState);
+  int TmpNbrTranslation = nbrTranslationStep;
+  tmpState.LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
+  while ((TmpNbrTranslation < nbrState) && (tmpState.Different(*this, reducedNbrState))) 
+    {
+      tmpState.LeftShiftState(reducedNbrState, nbrStateRemainder, nbrTranslationStep);
+      TmpNbrTranslation += nbrTranslationStep;
+    }
+  return TmpNbrTranslation;
 }
 
 // shift a state to the left
@@ -629,7 +674,8 @@ inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, i
 // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
 // nbrTranslation = magnitude of the translation to apply
 
-inline void BosonOnTorusState::LeftShiftState(int& reducedNbrState, int& nbrStateRemainder, int nbrTranslation)
+inline void BosonOnTorusState::LeftShiftState(const int& reducedNbrState, const int& nbrStateRemainder, 
+					      const int& nbrTranslation)
 {
 #ifdef __64_BITS__
   unsigned long Remainder;
@@ -954,7 +1000,7 @@ inline void BosonOnTorusState::LeftShiftState(int& reducedNbrState, int& nbrStat
 // nbrStateRemainder = number of the state in the last unsigned long array describing the whole state
 // return value = reference on current output stream 
 
-inline ostream& BosonOnTorusState::PrintState (ostream& str, int& reducedNbrState, int& nbrStateRemainder)
+inline ostream& BosonOnTorusState::PrintState (ostream& str, const int& reducedNbrState, const int& nbrStateRemainder)
 {
   for (int i = 0; i < reducedNbrState; ++i)
     {

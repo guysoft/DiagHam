@@ -123,3 +123,32 @@ void DisplayHelp (List<AbstractOption*>& option, ostream& str)
     }
 }
 
+// display help
+//
+// options = option list
+// str = reference on output stream to use
+// programName = string containing the program name
+// return value = true if proceeding succeded
+
+void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName)
+{
+  AbstractOption** TmpOption;
+  ListIterator<AbstractOption*> OptionIter(option);
+  str << "Usage: " << programName << " [options] ";
+  while ((TmpOption = OptionIter()))
+    {
+      if ((*TmpOption)->OptionCode == '\0')
+	{
+	  str << &((*TmpOption)->OptionName[1]) << endl << endl;
+	  str << programName << " has to be called with at least the parameter " << &((*TmpOption)->OptionName[1]) 
+	      << ". This parameter can be passed as an argument or using the --" << &((*TmpOption)->OptionName[1]) << " option.";
+	}
+    }  
+  str << endl << endl << "Options:" << endl;
+  OptionIter.DefineList(option);
+  while ((TmpOption = OptionIter()))
+    {
+      str << "  ";
+      (*TmpOption)->DisplayHelp(str) << endl;
+    }
+}
