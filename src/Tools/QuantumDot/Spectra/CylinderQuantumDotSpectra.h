@@ -67,10 +67,10 @@ class CylinderQuantumDotSpectra
   //
   // space = Hilbert space describing the other particle
   // fileName = the file to stock the other function
-  // sizeZ = size of sample in Z direction
   // sizeR = size of the super-cylinder in plane
+  // sizeZ = size of sample in Z direction
   // impulsionX, impulsionY, impulsionZ = reference to the return values
-  void GetImpulsion (VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double sizeR, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  void GetImpulsion (VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeR, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
   // get the probability integrated in the dot to find the particle
   //

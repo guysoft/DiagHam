@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 
   // ConstructPotential(double dotPotential)
   potential->ConstructPotential(DotPotential, StrainPotential);
-  potential->SavePotential("EllipticalDotPotential.txt");
+  // potential->SavePotential("EllipticalDotPotential.txt");
 
   // define Hilbert space
   
