@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnDiskHamiltonian.h"
 
 #include <iostream>
 
@@ -46,7 +46,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnDiskDeltaHamiltonian : public AbstractHamiltonian
+class ParticleOnDiskDeltaHamiltonian : public AbstractQHEOnDiskHamiltonian
 {
 
  protected:

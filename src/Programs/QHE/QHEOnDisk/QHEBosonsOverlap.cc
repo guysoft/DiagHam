@@ -138,8 +138,8 @@ int main(int argc, char** argv)
 	  Location[1 + (i << 1)] = Radius * sin (Theta);
  	  Location[i << 1] = M_PI * drand48();
 	}
-      //  Location[4] = Location[0];
-      //  Location[5] = Location[1];
+      Location[4] = Location[0];
+      Location[5] = Location[1];
       ParticleOnDiskFunctionBasis Basis(MMax);
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
