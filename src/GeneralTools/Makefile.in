@@ -50,12 +50,14 @@ AR = ar
 ARFLAGS = cru
 libGeneralTools_a_AR = $(AR) $(ARFLAGS)
 libGeneralTools_a_LIBADD =
-am_libGeneralTools_a_OBJECTS = GarbageFlag.$(OBJEXT)
+am_libGeneralTools_a_OBJECTS = GarbageFlag.$(OBJEXT) \
+	ConfigurationParser.$(OBJEXT)
 libGeneralTools_a_OBJECTS = $(am_libGeneralTools_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/GarbageFlag.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ConfigurationParser.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/GarbageFlag.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -158,7 +160,9 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libGeneralTools.a
-libGeneralTools_a_SOURCES = GarbageFlag.cc
+libGeneralTools_a_SOURCES = GarbageFlag.cc \
+ConfigurationParser.cc
+
 all: all-recursive
 
 .SUFFIXES:
@@ -206,6 +210,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConfigurationParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GarbageFlag.Po@am__quote@
 
 .cc.o:

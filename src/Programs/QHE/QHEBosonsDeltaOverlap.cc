@@ -9,6 +9,7 @@
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/JainCFOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
@@ -27,6 +28,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -124,14 +127,15 @@ int main(int argc, char** argv)
   ParticleOnSphereFunctionBasis Basis(LzMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
 //  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
-  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 3, 1);
+//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 2, 1);
+  Abstract1DComplexFunction* WaveFunction = new JainCFOnSphereWaveFunction("test.cf");
 //  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-/*  for (int k = 0; k < 1; ++k)
+/*  for (int k = 0; k < 10; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{

@@ -68,7 +68,7 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // array containing constant factors that appears in the sum of projected monopole harmonic (except LLL)
   double*** SumPrefactors;
 
-  // grabage flag to avoid duplication of precalculation array
+  // garbage flag to avoid duplication of precalculation array
   GarbageFlag Flag;
 
   // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
@@ -89,6 +89,10 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
  public:
 
+  // default constructor
+  //
+  JainCFFilledLevelOnSphereWaveFunction();
+
   // constructor
   //
   // nbrParticles = number of particles
@@ -103,20 +107,26 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // destructor
   //
-   ~JainCFFilledLevelOnSphereWaveFunction();
+  ~JainCFFilledLevelOnSphereWaveFunction();
 
   // clone function 
   //
   // return value = clone of the function 
-  Abstract1DComplexFunction* Clone ();
+  virtual Abstract1DComplexFunction* Clone ();
 
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  Complex operator ()(RealVector& x);
+  virtual Complex operator ()(RealVector& x);
 
- private:
+ protected:
+
+  // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
+  //
+  // x = point where the function has to be evaluated
+  // return value = value of the Jastrow factor
+  Complex EvaluateTables(RealVector& x);
 
   // evaluate normalization factors of projected monopole harmonics
   //
@@ -125,8 +135,6 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
   //
   void EvaluateSumPrefactors();
-
- protected:
 
   // evaluate composite fermion monopole spherical harmonic 
   //

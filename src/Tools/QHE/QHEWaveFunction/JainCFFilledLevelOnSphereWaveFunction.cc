@@ -41,6 +41,14 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction()
+{
+  this->NbrParticles = 0;
+}
+
 // constructor
 //
 // nbrParticles = number of particles
@@ -185,6 +193,34 @@ Abstract1DComplexFunction* JainCFFilledLevelOnSphereWaveFunction::Clone ()
 
 Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 {
+  ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
+  Complex JastrowFactor = this->EvaluateTables(x);
+
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      int Index = 0;
+      int MaxMomentum = this->TwiceS;
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	{
+	  for (int k = 0; k <= MaxMomentum; ++k)
+	    {
+	      Slater.SetMatrixElement(Index, i, EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
+	      ++Index;
+	    }
+	  MaxMomentum += 2;
+	}
+    }  
+
+  return JastrowFactor * Slater.Determinant();
+}
+
+// evaluate precalculation tables used during wave function evaluation (called at each evaluation)
+//
+// x = point where the function has to be evaluated
+// return value = value of the Jastrow factor
+
+Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(RealVector& x)
+{
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
@@ -275,28 +311,8 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 	  ++Index;
 	}
     }
-
-  ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
-
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      int Index = 0;
-      int MaxMomentum = this->TwiceS;
-      for (int j = 0; j < this->NbrLandauLevels; ++j)
-	{
-	  for (int k = 0; k <= MaxMomentum; ++k)
-	    {
-	      Slater.SetMatrixElement(Index, i, EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
-	      ++Index;
-	    }
-	  MaxMomentum += 2;
-	}
-    }  
-
-
-  return JastrowFactor * Slater.Determinant();
+  return JastrowFactor;
 }
-
 
 
 // evaluate normalization factors of projected monopole harmonics
@@ -323,7 +339,7 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
   MaxMomentum += 2;
   for (int i = 1; i < this->NbrLandauLevels; ++i)  
     {
-      double Factor = ((double) (this->TwiceS + (2 * this->NbrLandauLevels) - 1)) / (4.0  * M_PI);
+      double Factor = ((double) (this->TwiceS + (2 * i) + 1)) / (4.0  * M_PI);
       this->NormalizationPrefactors[i] = new double[MaxMomentum + 1];
       double Sign = 1.0;
       if ((this->TwiceS & 1) != 0)
@@ -331,10 +347,10 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateNormalizationPrefactors()
       for (int j = 0; j <= MaxMomentum; ++j)
 	{	  
 	  Coef.SetToOne();
-	  Coef.FactorialMultiply(this->TwiceS + 2 * (this->NbrLandauLevels - 1) - j);
-	  Coef.FactorialDivide(this->NbrLandauLevels - 1);
+	  Coef.FactorialMultiply(this->TwiceS + 2 * i - j);
+	  Coef.FactorialDivide(i);
 	  Coef.FactorialMultiply(j);
-	  Coef.FactorialDivide(this->TwiceS + this->NbrLandauLevels - 1);
+	  Coef.FactorialDivide(this->TwiceS + i);
 	  this->NormalizationPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
 	  this->NormalizationPrefactors[i][j] *= Sign;
 	  Sign *= -1.0;
@@ -368,7 +384,7 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 					   this->TwiceS + 2 * (this->JastrowPower * (this->NbrParticles - 1)) + i + 1);
 	      Coef.PartialFactorialMultiply(k + 1, i);
 	      Coef.FactorialDivide(i - k);
-	      Coef.PartialFactorialMultiply(j + k - i, this->TwiceS + i);	  
+	      Coef.PartialFactorialMultiply(j + k - i + 1, this->TwiceS + i);	  
 	      Coef.FactorialDivide(this->TwiceS + (2 * i) -j - k);	  
 	      this->SumPrefactors[i][k][j] = Factor * Coef.GetNumericalValue();
 	    }
@@ -378,6 +394,18 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 	}
       MaxMomentum += 2;
     }
+/*  MaxMomentum = this->TwiceS;
+  for (int i = 0; i < this->NbrLandauLevels; ++i)  
+    {
+      for (int k = 0; k <= i; ++k) 
+	{ 
+	  for (int j = 0; j <= MaxMomentum; ++j)
+	    {
+	      cout << i << " " << k << " " << j << " " << this->SumPrefactors[i][k][j] << endl;
+	    }
+	}
+      MaxMomentum += 2;
+    }*/
 }
 
 

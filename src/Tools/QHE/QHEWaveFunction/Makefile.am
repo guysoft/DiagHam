@@ -8,4 +8,6 @@ JainCFFilledLevelOnSphereWaveFunction.cc \
 MooreReadOnSphereWaveFunction.cc \
 LaughlinOnDiskWaveFunction.cc \
 PfaffianOnDiskWaveFunction.cc \
-MooreReadOnDiskWaveFunction.cc
+MooreReadOnDiskWaveFunction.cc \
+JainCFOnSphereWaveFunction.cc \
+LandauSpectrumOnSphere.cc
