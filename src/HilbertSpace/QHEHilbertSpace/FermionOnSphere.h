@@ -148,7 +148,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
- private:
+  private:
 
   // find state index
   //

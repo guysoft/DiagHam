@@ -57,6 +57,10 @@ class FullReorthogonalizedLanczosAlgorithmWithDiskStorage : public AbstractLancz
   int NbrEigenvalue;
   // value of the last wanted eigenvalue at previous Lanczos iteration
   double PreviousLastWantedEigenvalue;
+  // value of the wanted eigenvalue at previous Lanczos iteration
+  double* PreviousWantedEigenvalues;
+  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  bool StrongConvergenceFlag;
 
   // number of vector that can be allocated at the same time in local memory (null if all vectors have to be stored in local memory)
   int MaxNbrVectors;
@@ -69,7 +73,9 @@ class FullReorthogonalizedLanczosAlgorithmWithDiskStorage : public AbstractLancz
   // nbrEigenvalue = number of wanted eigenvalues
   // maxNbrVectors = number of vector that can be allocated at the same time in local memory (null if all vectors have to be stored in local memory)
   // maxIter = an approximation of maximal number of iteration
-  FullReorthogonalizedLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxNbrVectors = 0, int maxIter = 100);
+  // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  FullReorthogonalizedLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxNbrVectors = 0, int maxIter = 100,
+							     bool strongConvergence = false);
 
   // copy constructor
   //

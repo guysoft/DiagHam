@@ -421,6 +421,7 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::WriteState()
   File.write((char*) (&this->Index), sizeof(int));
   File.write((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.write((char*) (&this->EigenvaluePrecision), sizeof(double));
+  File.write((char*) (&this->NbrEigenvalue), sizeof(int));
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
   File.write((char*) (&TmpDimension), sizeof(int));
   for (int i = 0; i <= (this->Index + 1); ++i)    
@@ -430,6 +431,10 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::WriteState()
   for (int i = 0; i <= this->Index; ++i)
     {
       File.write((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+    }
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    {
+      File.write((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
     }
   File.close();  
   return true;
@@ -446,6 +451,7 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   File.read((char*) (&this->Index), sizeof(int));
   File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
   File.read((char*) (&this->EigenvaluePrecision), sizeof(double));
+  File.read((char*) (&this->NbrEigenvalue), sizeof(int));
   int TmpDimension;
   File.read((char*) (&TmpDimension), sizeof(int));
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
@@ -456,6 +462,13 @@ bool FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ReadState()
   for (int i = 0; i <= this->Index; ++i)
     {
       File.read((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+    }
+  if (this->PreviousWantedEigenvalues != 0)
+    delete[] this->PreviousWantedEigenvalues;
+  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  for (int i = 0; i < this->NbrEigenvalue; ++i)
+    {
+      File.read((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
     }
   File.close();  
   this->Diagonalize();

@@ -44,13 +44,13 @@ int main(int argc, char** argv)
   SingleIntegerOption NbrIterationOption ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 30);
-  SingleIntegerOption LzMaxOption ('l', "lzmax", "twice the maximum momentum for a single particle", 10);
+  SingleIntegerOption LzMaxOption ('l', "lzmax", "twice the maximum momentum for a single particle", 21);
   SingleIntegerOption InitialLzOption ('\n', "initial-lz", "twice the inital momentum projection for the system", 
 					-1);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
+  BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", true);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -140,8 +140,13 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
       FermionOnSphere Space (NbrFermions, L, LzMax);
-      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-	Space.PrintState(cout, i) << endl;
+      /*      for (int j = 0; j < 100; ++j)
+	for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+	  Space.FindStateIndex(Space.StateDescription[i], Space.StateLzMax[i]);
+      for (int i = 0; i <= LzMax; ++i)
+	cout << i << " = " << Space.LookUpTableShift[i] << endl;
+	//	Space.PrintState(cout, i) << endl;
+	return 0;*/
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
       AbstractArchitecture* Architecture = 0;
@@ -217,9 +222,11 @@ int main(int argc, char** argv)
 	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
 	    }
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
+	  cout << "check" << endl;
 	  while ((Lanczos->TestConvergence() == false) &&  (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
 							    ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))
 	    {
+	      cout << "check in" << endl;
 	      ++CurrentNbrIterLanczos;
 	      Lanczos->RunLanczosAlgorithm(1);
 	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
@@ -228,6 +235,7 @@ int main(int argc, char** argv)
 	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	      PreviousLowest = Lowest; 
 	      cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
+	      cout << "check out" << endl;
 	    }
 	  if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	    {

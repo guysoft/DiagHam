@@ -375,7 +375,7 @@ int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
-  while ((PosMax != PosMid))
+  while ((PosMax != PosMid) && (this->StateDescription[PosMid] != stateDescription))
     {
       //      cout << PosMin << " " << PosMax << " " << PosMid << " " << this->StateDescription[PosMid] << " " << stateDescription << endl;
       if (this->StateDescription[PosMid] > stateDescription)
@@ -388,8 +388,8 @@ int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
 	} 
       PosMid = (PosMin + PosMax) >> 1;
     }
-  if (this->StateDescription[PosMax] == stateDescription)
-    return PosMax;
+  if (this->StateDescription[PosMid] == stateDescription)
+    return PosMid;
   else
     return PosMin;
 }
