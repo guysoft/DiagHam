@@ -54,6 +54,8 @@ class ParticleOnSphereSquareTotalMomentumOperator : public AbstractOperator
 
   // matrix where all coefficents that come from the L+L- terms are stored
   RealMatrix Coefficients;
+  // shift due to the Lz^2 term
+  double Shift;
 
  public:
   

@@ -34,7 +34,14 @@
 #include "Vector/ComplexVector.h"
 #include "Complex.h"
 
-  
+
+#include <iostream>  
+
+
+using std::cout;
+using std::endl;
+
+
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
@@ -46,23 +53,25 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
   this->Particle = (ParticleOnSphere*) (particle->Clone());
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
-  this->Coefficients = RealMatrix(this->TotalLz + 1, this->TotalLz + 1);
-  for (int i = 0; i <= this->TotalLz; ++i)
+  this->Coefficients = RealMatrix(this->LzMax + 1, this->LzMax + 1);
+  this->Shift = 0.25 * ((double) (this->TotalLz * this->TotalLz));
+  for (int i = 0; i <= this->LzMax; ++i)
     {
-      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->TotalLz + 2) * this->TotalLz) - (((2 * i) - this->TotalLz) * (2 * i - this->TotalLz + 2))))));
-      for (int j = 0; j <= this->TotalLz; ++j)
+      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * (2 * i - this->LzMax + 2))))));
+      for (int j = 0; j <= this->LzMax; ++j)
 	{
      	  this->Coefficients(i, j) = TmpCoefficient;
 	}
     }
-  for (int i = 0; i <= this->TotalLz; ++i)
+  for (int i = 0; i <= this->LzMax; ++i)
     {
-      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->TotalLz + 2) * this->TotalLz) - (((2 * i) - this->TotalLz) * (2 * i - this->TotalLz - 2))))));
-      for (int j = 0; j <= this->TotalLz; ++j)
+      double TmpCoefficient = sqrt(0.5 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * (2 * i - this->LzMax - 2))))));
+      for (int j = 0; j <= this->LzMax; ++j)
 	{
      	  this->Coefficients(j, i) *= TmpCoefficient;
 	}
     }
+  cout << this->Coefficients << endl;
 }
 
 // copy constructor
@@ -75,6 +84,7 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
   this->TotalLz = oper.TotalLz;
   this->LzMax = oper.LzMax;
   this->Coefficients = oper.Coefficients;
+  this->Shift = oper.Shift;
 }
 
 // destructor
@@ -131,13 +141,45 @@ int ParticleOnSphereSquareTotalMomentumOperator::GetHilbertSpaceDimension ()
 Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  double Coefficient = 0.0;
   double Element = 0.0;
   int Index = 0;
+  double Coefficient = 0.0;
   for (int i = 0; i < Dim; ++i)
     {
-//      Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+      int k = 1;
+      for (; k <= this->LzMax; ++k)
+	{
+	  Index = this->Particle->AdAdAA(i, k - 1, 1, k, 0, Coefficient);
+	  if (Index != this->Particle->GetHilbertSpaceDimension())
+	    {
+	      Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(0, k);		  
+	    }
+	}
+      for (int j = 1; j < this->LzMax; ++j)
+	{
+	  k = 1;
+	  for (; k < j; ++k)
+	    {
+	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	      if (Index != this->Particle->GetHilbertSpaceDimension())
+		{
+		  Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
+		}
+	    }
+	  ++k;
+	  for (; k <= this->LzMax; ++k)
+	    {
+	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	      if (Index != this->Particle->GetHilbertSpaceDimension())
+		{
+		  Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
+		}
+	    }
+	}
+      Coefficient = 0.0;
+      for (int k = 1; k < this->LzMax; ++k)
+	Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+      Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
     }
   return Complex(Element);
 }
@@ -170,8 +212,35 @@ RealVector& ParticleOnSphereSquareTotalMomentumOperator::Multiply(RealVector& vS
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-//      Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
-      vDestination[Index] = vSource[i] * Coefficient;
+      vDestination[i] = vSource[i] * this->Shift;
+    }
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      for (int j = 0; j < this->LzMax; ++j)
+	{
+	  int k = 1;
+	  for (; k < j; ++k)
+	    {
+	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	      if (Index != this->Particle->GetHilbertSpaceDimension())
+		{
+		  vDestination[Index] = 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
+		}
+	    }
+	  ++k;
+	  for (; k <= this->LzMax; ++k)
+	    {
+	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	      if (Index != this->Particle->GetHilbertSpaceDimension())
+		{
+		  vDestination[Index] = 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
+		}
+	    }
+	}
+      Coefficient = 0.0;
+      for (int k = 1; k < this->LzMax; ++k)
+	Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+      vDestination[i] += vSource[i] * Coefficient;
     }
   return vDestination;
 }

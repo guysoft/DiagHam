@@ -2,6 +2,9 @@
 
 #include "Vector/RealVector.h"
 
+#include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
+
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
@@ -12,6 +15,10 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/ArrayTools.h"
+
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
+
+#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -117,12 +124,24 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
-  for (int i = 0; i < MaxNbrLz; ++i)
+  for (int i = 6; i < MaxNbrLz; ++i)
     {
       int Lz = i << 1;
       cout << "Lz = " << i << endl;
       double* BestOverlaps = new double[Degeneracy[i]];
       double** Overlaps = new double*[Degeneracy[i]];      
+      RealVector* TestVectors = new RealVector[Degeneracy[i]];
+ 
+      for (int j = 0; j < Degeneracy[i]; ++j)
+	{
+	  sprintf (OutputVectors2, "%d.%d.vec", Lz, j);	      
+	  if (TestVectors[j].ReadVector(OutputVectors) == false)
+	    {
+	      cout << "error while reading " << OutputVectors << endl;
+	      return -1;
+	    }
+     
+	}
       for (int j = 0; j < Degeneracy[i]; ++j)
 	{
 	  Overlaps[j] = new double [Degeneracy[i]];
@@ -135,27 +154,47 @@ int main(int argc, char** argv)
 	      return -1;
 	    }
 	  BestOverlaps[j] = 0.0;
+	  
 	  for (int k = 0; k < Degeneracy[i]; ++k)
 	    {
-	      sprintf (OutputVectors2, "%d.%d.vec", Lz, k);	      
-	      RealVector TestVector;	  
-	      if (TestVector.ReadVector(OutputVectors) == false)
+	      if (ReferenceVector.GetVectorDimension() != TestVectors[k].GetVectorDimension())
 		{
-		  cout << "error while reading " << OutputVectors << endl;
-		  return -1;
-		}
-	      if (ReferenceVector.GetVectorDimension() != TestVector.GetVectorDimension())
-		{
+		  sprintf (OutputVectors2, "%d.%d.vec", Lz, k);
 		  cout << "dimension mismatch between " << InputVectors2 << " and " << OutputVectors2 << endl;
 		  return -1;
 		}
-	      double Scalar = ReferenceVector * TestVector;
+	      
+	      double Scalar = ReferenceVector * TestVectors[k];
 	      Overlaps[j][k] = Scalar;
 	      cout << "    " << OutputVectors << "  = " << Scalar << endl;
 	      BestOverlaps[j] += Scalar * Scalar;
 	    }
 	  BestOverlaps[j] = sqrt(BestOverlaps[j]);
 	  cout << endl << "best overlap = " << BestOverlaps[j] << endl;
+
+	  BosonOnSphere Space (8, i, 8);
+	  RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
+	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, i, 8);
+	  for (int k = 0; k < Degeneracy[i]; ++k)
+	    {
+	      for (int l = k; l < Degeneracy[i]; ++l)
+		{	
+		  HRep(l, k) = oper.MatrixElement(TestVectors[k], TestVectors[l]).Re;
+		}
+	    }
+	  cout << endl << endl;
+	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
+	  cout << HRep << endl;
+	  HRep.Householder(TmpTriDiag, 1e-7);
+	  TmpTriDiag.Diagonalize();
+	  TmpTriDiag.SortMatrixUpOrder();
+	  cout << "eigenvalues = " << endl;
+	  for (int k = 0; k < Degeneracy[i]; ++k)	    
+	    {
+	      cout << TmpTriDiag.DiagonalElement(k) << endl;
+	    }
+	  return 0;
+
 	}
       SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
       cout << endl << "overlaps = " << endl;
@@ -170,6 +209,7 @@ int main(int argc, char** argv)
 	  delete[] Overlaps[j];
 	}
       delete[] Overlaps;
+      delete[] TestVectors;
     }
 
   delete[] Degeneracy;
