@@ -15,4 +15,5 @@ ParticleOnSphereDeltaModifiedHamiltonian.cc \
 AbstractQHEHamiltonian.cc \
 AbstractQHEOnSphereHamiltonian.cc \
 AbstractQHEOnTorusHamiltonian.cc \
-ParticleOnSphereCoulombDeltaHamiltonian.cc
+ParticleOnSphereCoulombDeltaHamiltonian.cc \
+ParticleOnSphereLaplacianDeltaHamiltonian.cc

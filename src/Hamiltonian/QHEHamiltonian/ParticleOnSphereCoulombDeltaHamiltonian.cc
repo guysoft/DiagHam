@@ -62,7 +62,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnSphereCoulombDeltaHamiltonian::ParticleOnSphereCoulombDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax,
-										 double ratio, AbstractArchitecture* architecture, int memory)
+										 double ratio, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -74,7 +74,7 @@ ParticleOnSphereCoulombDeltaHamiltonian::ParticleOnSphereCoulombDeltaHamiltonian
   this->EvaluateInteractionFactors();
   if (memory > 0)
     {
-      int TmpMemory = this->FastMultiplicationMemory(memory);
+      long TmpMemory = this->FastMultiplicationMemory(memory);
       if (TmpMemory < 1024)
 	cout  << "fast = " <<  TmpMemory << "b ";
       else

@@ -235,14 +235,14 @@ class AbstractQHEOnTorusHamiltonian : public AbstractQHEHamiltonian
   //
   // allowedMemory = amount of memory that cam be allocated for fast multiplication
   // return value = amount of memory needed
-  virtual int FastMultiplicationMemory(int allowedMemory);
+  virtual long FastMultiplicationMemory(long allowedMemory);
 
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   // return value = number of non-zero matrix element
-  virtual int PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
 
   // enable fast multiplication algorithm
   //

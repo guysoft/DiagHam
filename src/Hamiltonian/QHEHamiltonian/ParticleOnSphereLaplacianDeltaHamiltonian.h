@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //
-//                             coulombian interaction                         //
+//                         laplacian delta interaction                        //
 //                                                                            //
-//                        last modification : 01/07/2002                      //
+//                        last modification : 14/10/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHERECOULOMBHAMILTONIAN_H
-#define PARTICLEONSPHERECOULOMBHAMILTONIAN_H
+#ifndef PARTICLEONSPHERELAPLACIANDELTAHAMILTONIAN_H
+#define PARTICLEONSPHERELAPLACIANDELTAHAMILTONIAN_H
 
 
 #include "config.h"
@@ -47,7 +47,7 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereCoulombHamiltonian : public AbstractQHEOnSphereHamiltonian
+class ParticleOnSphereLaplacianDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
@@ -62,12 +62,12 @@ class ParticleOnSphereCoulombHamiltonian : public AbstractQHEOnSphereHamiltonian
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, long memory = -1, 
+  ParticleOnSphereLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, long memory = -1, 
 					    char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnSphereCoulombHamiltonian();
+  ~ParticleOnSphereLaplacianDeltaHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -199,14 +199,14 @@ class ParticleOnSphereCoulombHamiltonian : public AbstractQHEOnSphereHamiltonian
   // Str = reference on output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnSphereCoulombHamiltonian& H);
+  friend ostream& operator << (ostream& Str, ParticleOnSphereLaplacianDeltaHamiltonian& H);
 
   // Mathematica Output Stream overload
   //
   // Str = reference on Mathematica output stream
   // H = Hamiltonian to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereCoulombHamiltonian& H);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereLaplacianDeltaHamiltonian& H);
 
  protected:
  

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//   class of particle on a torus taking into account magnetic translations   //
+//                       class of state of boson on a torus                   //
 //                                                                            //
-//                        last modification : 10/09/2003                      //
+//                        last modification : 14/10/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,37 +29,36 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnTorusState.h"
 
 
-// virtual destructor
-//
+// default constructor
+// 
 
-ParticleOnTorusWithMagneticTranslations::~ParticleOnTorusWithMagneticTranslations ()
+BosonOnTorusState::BosonOnTorusState()
 {
+  this->StateDescription = 0;
 }
+  
+// basic constructor
+// 
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state)
 
-// return matrix representation of the annihilation operator a_i
-//
-// i = operator index
-// M = matrix where representation has to be stored
-// return value = corresponding matrix
-
-Matrix& ParticleOnTorusWithMagneticTranslations::A (int i, Matrix& M)
+BosonOnTorusState::BosonOnTorusState(int reducedNbrState)
 {
-  return M;
+  this->StateDescription = new unsigned long [reducedNbrState];
+  for (int i = 0; i < reducedNbrState; ++i)
+    this->StateDescription[i] = (unsigned long) 0;
 }
+  
+  
+// destructor
+// 
 
-// return matrix representation ofthw creation operator a^+_i
-//
-// i = operator index
-// M = matrix where representation has to be stored
-// return value = corresponding matrix
-
-Matrix& ParticleOnTorusWithMagneticTranslations::Ad (int i, Matrix& M)
+BosonOnTorusState::~BosonOnTorusState()
 {
-  return M;
+  if (this->StateDescription != 0)
+    delete[] this->StateDescription;
 }
-
-
+  
 

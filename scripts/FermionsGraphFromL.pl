@@ -20,6 +20,10 @@ foreach $TmpFile (<*>)
       {
 	push (@ListFiles, $TmpFile);
       }
+    if ($TmpFile =~ /fermions\_laplaciandelta\_n\_$NbrFermions.*\_l\./)
+      {
+	push (@ListFiles, $TmpFile);
+      }
   }
 
 foreach $TmpFile (@ListFiles)

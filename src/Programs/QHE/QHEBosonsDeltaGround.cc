@@ -125,30 +125,13 @@ int main(int argc, char** argv)
      L = 1;
   Max = L;
 
-  RealVector TextVector1 (5);
-/*  TextVector1[0] = 1.0;
-  TextVector1[1] = 2.0;
-  TextVector1[2] = 3.0;
-  TextVector1[3] = 4.0;
-  TextVector1[4] = 5.0;
-  TextVector1.WriteVector("toto.vec");
-  TextVector1.WriteAsciiVector("toto2.vec");
-  RealVector TextVector2;
-  TextVector2.ReadVector("toto.vec");
-  cout << TextVector2 << endl;*/
   for (; L <= Max; L += 2)
     {
       cout << "----------------------------------------------------------------" << endl;
       cout << " LzTotal = " << L << endl;
       BosonOnSphere Space (NbrBosons, L, LzMax);
-//      FermionOnSphere Space (NbrBosons, L, LzMax);
       cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
       TotalSize += Space.GetHilbertSpaceDimension();
-/*     for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " = ";
-	  Space.PrintState(cout, i) << endl;
-	}*/
       AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;
@@ -161,15 +144,8 @@ int main(int argc, char** argv)
 	}
       if (Hamiltonian.GetHilbertSpaceDimension() < 200)
 	{
-//	  Dimensions[L >> 1] = Hamiltonian.GetHilbertSpaceDimension();
-//	  Eigenvalues[L >> 1] = new double [Hamiltonian.GetHilbertSpaceDimension()];
 	  RealSymmetricMatrix HRep (Hamiltonian.GetHilbertSpaceDimension());
 	  Hamiltonian.GetHamiltonian(HRep);
-/*	  AbstractBitmapPicture* TmpPic = Hamiltonian.GetHamiltonianColorPicture(1e-10);
-	  char* TmpPicName = new char [256];
-	  sprintf (TmpPicName, "pic_lz_%d.tga", L);
-	  TmpPic->SavePicture(TmpPicName);*/
-//	  cout << HRep << endl;
 	  if (Hamiltonian.GetHilbertSpaceDimension() > 1)
 	    {
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian.GetHilbertSpaceDimension());
@@ -178,22 +154,15 @@ int main(int argc, char** argv)
 	      TmpTriDiag.SortMatrixUpOrder();
 	      if (L == 0)
 		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
-	      //	  cout << "eigenvalues : " << endl;
-//	      for (int j = 0; j < Hamiltonian.GetHilbertSpaceDimension() ; j++)
+	      for (int j = 0; j < Hamiltonian.GetHilbertSpaceDimension() ; j++)
 		{
-//		  Eigenvalues[L >> 1][j] = TmpTriDiag.DiagonalElement(j);
-//		  cout << TmpTriDiag.DiagonalElement(j) << " ";
-		  File << (L / 2) << " " << TmpTriDiag.DiagonalElement(0) << endl;
-// (TmpTriDiag.DiagonalElement(j) - GroundStateEnergy) << endl;
+		  File << (L / 2) << " " << TmpTriDiag.DiagonalElement(j) << endl;
 		}
 	      cout << endl;
 	    }
 	  else
 	    {
-//	      Eigenvalues[L >> 1][0] = HRep(0, 0);
-//	      cout << HRep(0, 0) << endl;
-	      //	      GroundStateEnergy = HRep(0, 0);
-	      File << (L / 2) << " " << HRep(0, 0) << endl;// - GroundStateEnergy) / (4 * M_PI)) << endl;
+	      File << (L / 2) << " " << HRep(0, 0) << endl;
 	    }
 	}
       else

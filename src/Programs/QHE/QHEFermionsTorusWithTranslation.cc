@@ -45,8 +45,8 @@ int main(int argc, char** argv)
   SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
   BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
-  SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 5);
-  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
+  SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 6);
+  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 9);
   SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   SingleIntegerOption MaxFullDiagonalizationOption ('f', "max-full", "maximum hilbert space size allowed to use full diagonalization", 300);
 
@@ -109,15 +109,15 @@ int main(int argc, char** argv)
   else
     Max = Momentum;
 
-//  for (; Momentum <= Max; ++Momentum)
   int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
-//  int MomentumModulo = 1;
+  MomentumModulo = 1;
+//  for (; Momentum <= Max; ++Momentum)
   for (int x = 0; x < MomentumModulo; ++x)
   for (int y = 0; y < MomentumModulo; ++y)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
- //     FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
+//      FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, Momentum);
       FermionOnTorusWithMagneticTranslations TotalSpace (NbrFermions, MaxMomentum, x, y);
       cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
 //      cout << "momentum = " << Momentum << endl;
@@ -127,8 +127,30 @@ int main(int argc, char** argv)
 	  cout << i << " = ";
 	  TotalSpace.PrintState(cout, i) << endl;
 	}
-
-/*      AbstractArchitecture* Architecture = 0;
+      cout << endl << endl;
+      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
+	{
+	  cout << "---------------------------------------------" << endl;
+	  cout << i << " = " << endl;;
+	  for (int m1 = 0; m1 < MaxMomentum; ++m1)
+	    for (int m2 = 0; m2 < m1; ++m2)
+	      for (int m3 = 0; m3 < MaxMomentum; ++m3)
+		{
+		  int m4 = m1 + m2 - m3;
+		  if (m4 < 0)
+		    m4 += MaxMomentum;
+		  else
+		    if (m4 >= MaxMomentum)
+		      m4 -= MaxMomentum;
+		  if (m3 > m4)
+		    {
+		      double Coefficient = 0.0;
+		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		    }
+		}
+	}
+/*	  
+      AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;
       else
@@ -148,13 +170,14 @@ int main(int argc, char** argv)
 		GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
 	      for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
 		{
-		  File << Momentum << " " << TmpTriDiag.DiagonalElement(j) << endl;
+		  File << x << " " << y << " " << TmpTriDiag.DiagonalElement(j) << endl;
+		  cout << x << " " << y << " " << TmpTriDiag.DiagonalElement(j) << endl;
 		}
 	      cout << endl;
 	    }
 	  else
 	    {
-	      File << Momentum << " " << HRep(0, 0) << endl;
+	      File << x << " " << y << " " << HRep(0, 0) << endl;
 	    }
 	}
       else
@@ -197,7 +220,7 @@ int main(int argc, char** argv)
 	  for (int i = 0; i <= NbrEigenvalue; ++i)
 	    {
 	      cout << TmpMatrix.DiagonalElement(i) << " ";
-	      File << Momentum << " " << TmpMatrix.DiagonalElement(i) << endl;
+	      File << x << " " << y << " " << TmpMatrix.DiagonalElement(i) << endl;
 	    }
 	  cout << endl;
 	  gettimeofday (&(TotalEndingTime), 0);
@@ -209,7 +232,8 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " ground state energy = " << GroundStateEnergy << endl;
       cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
-      delete Hamiltonian;*/
+      delete Hamiltonian;
+*/
     }
   File.close();
 

@@ -66,7 +66,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum,
-								 double ratio, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+								 double ratio, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -84,7 +84,7 @@ ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  if (TmpMemory < 1024)
 	    cout  << "fast = " <<  TmpMemory << "b ";
 	  else

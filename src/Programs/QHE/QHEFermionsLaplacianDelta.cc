@@ -4,7 +4,7 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereLaplacianDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
@@ -49,8 +49,6 @@ int main(int argc, char** argv)
 					-1);
   SingleIntegerOption NbrFermionOption ('p', "nbr-particles", "number of particles", 8);
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
-  BooleanOption DeltaOption ('d', "delta", "add a delta interaction component", false);
-  SingleDoubleOption CoulombRatioOption ('r', "ratio", "ratio between coulomd interaction and delta interaction", 1.0);
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
@@ -68,8 +66,6 @@ int main(int argc, char** argv)
   OptionList += &NbrFermionOption;
   OptionList += &LzMaxOption;
   OptionList += &MemoryOption;
-  OptionList += &DeltaOption;
-  OptionList += &CoulombRatioOption;
   OptionList += &InitialLzOption;
   OptionList += &NbrLzOption;
   OptionList += &VectorMemoryOption;
@@ -79,7 +75,7 @@ int main(int argc, char** argv)
   OptionList += &SavePrecalculationOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsCoulomb -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
       return -1;
     }
   if (HelpOption.GetBoolean() == true)
@@ -99,8 +95,6 @@ int main(int argc, char** argv)
   int NbrFermions = NbrFermionOption.GetInteger();
   int LzMax = LzMaxOption.GetInteger();
   int Memory = MemoryOption.GetInteger() << 20;
-  bool DeltaFlag = DeltaOption.GetBoolean();
-  double CoulombRatio = CoulombRatioOption.GetDouble();
   int InitialLz = InitialLzOption.GetInteger();
   int NbrLz = NbrLzOption.GetInteger();
   int VectorMemory = VectorMemoryOption.GetInteger();
@@ -111,10 +105,7 @@ int main(int argc, char** argv)
   double GroundStateEnergy = 0.0;
   int Shift = 0;
   char* OutputNameLz = new char [256];
-  if (DeltaFlag == false)
-    sprintf (OutputNameLz, "fermions_coulomb_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
-  else
-    sprintf (OutputNameLz, "fermions_coulomb_delta_%f_n_%d_2s_%d_lz.dat", CoulombRatio, NbrFermions, LzMax);
+  sprintf (OutputNameLz, "fermions_laplaciandelta_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
   char* OutputNameL = "fermions_l.dat";
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
@@ -157,15 +148,13 @@ int main(int argc, char** argv)
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
       AbstractQHEOnSphereHamiltonian* Hamiltonian;
-      if (DeltaFlag == false)
-	Hamiltonian = new ParticleOnSphereCoulombHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
-      else
-	Hamiltonian = new ParticleOnSphereCoulombDeltaHamiltonian(&Space, NbrFermions, LzMax, CoulombRatio, Architecture, Memory);
+      Hamiltonian = new ParticleOnSphereLaplacianDeltaHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+//      Hamiltonian = new ParticleOnSphereCoulombHamiltonian(&Space, NbrFermions, LzMax, Architecture, Memory, LoadPrecalculationFileName);
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
-      if (Hamiltonian->GetHilbertSpaceDimension() < 300)
+      if (Hamiltonian->GetHilbertSpaceDimension() < 500)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
@@ -209,7 +198,7 @@ int main(int argc, char** argv)
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
 	  double Lowest = PreviousLowest;
-	  int CurrentNbrIterLanczos = 4;
+	  int CurrentNbrIterLanczos = 0;
 	  Lanczos->SetHamiltonian(Hamiltonian);
 	  if ((DiskFlag == true) && (ResumeFlag == true))
 	    Lanczos->ResumeLanczosAlgorithm();
@@ -260,6 +249,7 @@ int main(int argc, char** argv)
 	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
 	  cout << "time = " << Dt << endl;
+	  delete Lanczos;
 	}
       cout << "----------------------------------------------------------------" << endl;
       cout << " Total Hilbert space dimension = " << TotalSize << endl;

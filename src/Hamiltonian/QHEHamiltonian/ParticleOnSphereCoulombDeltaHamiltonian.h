@@ -68,7 +68,8 @@ class ParticleOnSphereCoulombDeltaHamiltonian : public AbstractQHEOnSphereHamilt
   // ratio = ratio between coulombian interaction and delta interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnSphereCoulombDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double ratio, AbstractArchitecture* architecture, int memory = -1);
+  ParticleOnSphereCoulombDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double ratio, AbstractArchitecture* architecture, 
+					  long memory = -1);
 
   // destructor
   //

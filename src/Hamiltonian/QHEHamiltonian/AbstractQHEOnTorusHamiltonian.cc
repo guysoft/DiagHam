@@ -381,7 +381,7 @@ List<Matrix*> AbstractQHEOnTorusHamiltonian::RightInteractionOperators()
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
 // return value = amount of memory needed
 
-int AbstractQHEOnTorusHamiltonian::FastMultiplicationMemory(int allowedMemory)
+long AbstractQHEOnTorusHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
 
   this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
@@ -396,12 +396,12 @@ int AbstractQHEOnTorusHamiltonian::FastMultiplicationMemory(int allowedMemory)
   QHEParticlePrecalculationOperation Operation(this);
   this->Architecture->ExecuteOperation(&Operation);
 
-  int Memory = 0;
+  long Memory = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
     Memory += this->NbrInteractionPerComponent[i];
 
   cout << "nbr interaction = " << Memory << endl;
-  int TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
@@ -445,11 +445,11 @@ int AbstractQHEOnTorusHamiltonian::FastMultiplicationMemory(int allowedMemory)
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-int AbstractQHEOnTorusHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long AbstractQHEOnTorusHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient;
-  int Memory = 0;
+  long Memory = 0;
   int m1;
   int m2;
   int m3;

@@ -62,7 +62,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-								   AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+								   AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -75,7 +75,7 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
 	  if (TmpMemory < 1024)
 	    cout  << "fast = " <<  TmpMemory << "b ";
 	  else

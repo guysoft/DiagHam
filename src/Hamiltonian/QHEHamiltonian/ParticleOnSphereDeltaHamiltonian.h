@@ -63,7 +63,7 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, AbstractArchitecture* architecture, 
-				   int memory = -1, char* precalculationFileName = 0);
+				   long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

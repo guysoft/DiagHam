@@ -59,9 +59,10 @@ using std::ostream;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereCoulombHamiltonian::ParticleOnSphereCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax,
-								       AbstractArchitecture* architecture, int memory)
+								       AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -70,24 +71,29 @@ ParticleOnSphereCoulombHamiltonian::ParticleOnSphereCoulombHamiltonian(ParticleO
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
-  if (memory > 0)
+  if (precalculationFileName == 0)
     {
-      int TmpMemory = this->FastMultiplicationMemory(memory);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
 	  if (TmpMemory < (1 << 30))
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
-	cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-      if (memory > 0)
-	{
-	  this->EnableFastMultiplication();
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
 	}
     }
+  else
+    this->LoadPrecalculation(precalculationFileName);
 }
 
 // destructor
@@ -641,7 +647,7 @@ void ParticleOnSphereCoulombHamiltonian::EvaluateInteractionFactors()
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
 // return value = amount of memory needed
 
-int ParticleOnSphereCoulombHamiltonian::FastMultiplicationMemory(int allowedMemory)
+long ParticleOnSphereCoulombHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
   this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
@@ -655,12 +661,12 @@ int ParticleOnSphereCoulombHamiltonian::FastMultiplicationMemory(int allowedMemo
   QHEParticlePrecalculationOperation Operation(this);
   this->Architecture->ExecuteOperation(&Operation);
 
-  int Memory = 0;
+  long Memory = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
     Memory += this->NbrInteractionPerComponent[i];
 
   cout << "nbr interaction = " << Memory << endl;
-  int TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
+  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
@@ -704,11 +710,11 @@ int ParticleOnSphereCoulombHamiltonian::FastMultiplicationMemory(int allowedMemo
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-int ParticleOnSphereCoulombHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long ParticleOnSphereCoulombHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient;
-  int Memory = 0;
+  long Memory = 0;
   int m1;
   int m2;
   int m3;

@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of quatum Hall hamiltonian associated              //
-//                          to particles on a sphere with                     //
+//       class of hamiltonian associated to particles on a sphere with        //
+//                         laplacian delta interaction                        //
 //                                                                            //
-//                        last modification : 24/03/2003                      //
+//                        last modification : 14/10/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,40 +29,103 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "config.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereLaplacianDeltaHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealAntisymmetricMatrix.h"
 #include "Complex.h"
+#include "Output/MathematicaOutput.h"
+#include "MathTools/FactorialCoefficient.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
 #include <sys/time.h>
-#include <fstream>
 
 
-using std::ofstream;
-using std::ifstream;
-using std::ios;
 using std::cout;
 using std::endl;
 using std::ostream;
 
 
+// constructor from default datas
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// lzmax = maximum Lz value reached by a particle in the state
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
+ParticleOnSphereLaplacianDeltaHamiltonian::ParticleOnSphereLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax,
+								       AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+{
+  this->Particles = particles;
+  this->LzMax = lzmax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->NbrParticles = nbrParticles;
+  this->FastMultiplicationFlag = false;
+  this->Architecture = architecture;
+  this->EvaluateInteractionFactors();
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
+
 // destructor
 //
 
-AbstractQHEOnSphereHamiltonian::~AbstractQHEOnSphereHamiltonian()
+ParticleOnSphereLaplacianDeltaHamiltonian::~ParticleOnSphereLaplacianDeltaHamiltonian() 
 {
+  delete[] this->InteractionFactors;
+  delete[] this->M1Value;
+  delete[] this->M2Value;
+  delete[] this->M3Value;
+  if (this->FastMultiplicationFlag == true)
+    {
+      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+    }
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void AbstractQHEOnSphereHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   this->Particles = (ParticleOnSphere*) hilbertSpace;
@@ -73,7 +136,7 @@ void AbstractQHEOnSphereHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilb
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* AbstractQHEOnSphereHamiltonian::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereLaplacianDeltaHamiltonian::GetHilbertSpace ()
 {
   return this->Particles;
 }
@@ -82,7 +145,7 @@ AbstractHilbertSpace* AbstractQHEOnSphereHamiltonian::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int AbstractQHEOnSphereHamiltonian::GetHilbertSpaceDimension ()
+int ParticleOnSphereLaplacianDeltaHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Particles->GetHilbertSpaceDimension();
 }
@@ -91,7 +154,7 @@ int AbstractQHEOnSphereHamiltonian::GetHilbertSpaceDimension ()
 //
 // shift = shift value
 
-void AbstractQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnSphereLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
 }
   
@@ -101,7 +164,7 @@ void AbstractQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex AbstractQHEOnSphereHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
+Complex ParticleOnSphereLaplacianDeltaHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
 {
   double x = 0.0;
   int dim = this->Particles->GetHilbertSpaceDimension();
@@ -117,7 +180,7 @@ Complex AbstractQHEOnSphereHamiltonian::MatrixElement (RealVector& V1, RealVecto
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex AbstractQHEOnSphereHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
+Complex ParticleOnSphereLaplacianDeltaHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
   return Complex();
 }
@@ -129,7 +192,7 @@ Complex AbstractQHEOnSphereHamiltonian::MatrixElement (ComplexVector& V1, Comple
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-RealVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
+RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
 {
   return this->LowLevelMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
@@ -143,8 +206,8 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(RealVector& vSource
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-							       int firstComponent, int nbrComponent) 
+RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+						      int firstComponent, int nbrComponent) 
 {
   int LastComponent = firstComponent + nbrComponent;
   for (int i = firstComponent; i < LastComponent; ++i)
@@ -159,7 +222,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(RealVector& vSource
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
+RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
 {
   return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
 }
@@ -173,12 +236,12 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								  int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+								   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Shift = -0.5 * ((double) (this->NbrParticles * this->NbrParticles)) / (0.5 * ((double) this->LzMax));
+  double Shift = -0.5 * ((double) (this->NbrParticles * this->NbrParticles)) / sqrt (0.5 * ((double) this->LzMax));
   double Coefficient;
   if (this->FastMultiplicationFlag == false)
     {
@@ -308,7 +371,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
+ComplexVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
 {
   return vDestination;
 }
@@ -322,7 +385,7 @@ ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(ComplexVector& v
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							 int firstComponent, int nbrComponent)
 {
   return vDestination;
@@ -335,7 +398,7 @@ ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelMultiply(ComplexVector& v
 // vDestination = vector at which result has to be added
 // return value = reference on vectorwhere result has been stored
 
-ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
+ComplexVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
   return vDestination;
 }
@@ -348,7 +411,7 @@ ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(ComplexVector
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnSphereLaplacianDeltaHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
   return vDestination;
@@ -358,7 +421,7 @@ ComplexVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(ComplexVector
 //
 // return value = list of left interaction operators
 
-List<Matrix*> AbstractQHEOnSphereHamiltonian::LeftInteractionOperators()
+List<Matrix*> ParticleOnSphereLaplacianDeltaHamiltonian::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
@@ -368,10 +431,203 @@ List<Matrix*> AbstractQHEOnSphereHamiltonian::LeftInteractionOperators()
 //
 // return value = list of right interaction operators
 
-List<Matrix*> AbstractQHEOnSphereHamiltonian::RightInteractionOperators()
+List<Matrix*> ParticleOnSphereLaplacianDeltaHamiltonian::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
   return TmpList;
+}
+
+// evaluate all interaction factors
+//   
+
+void ParticleOnSphereLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+{
+  int Lim;
+  int Min;
+  int Pos = 0;
+//  int NbrNonZero = 0;
+  FactorialCoefficient Coef;
+  Coef.SetToOne();
+  Coef.PartialFactorialMultiply(this->LzMax, 2 * this->LzMax - 2);
+  Coef.FactorialDivide(this->LzMax - 1);
+  Coef.PartialFactorialMultiply(this->LzMax + 6, 2 * this->LzMax + 4);
+  Coef.FactorialDivide(this->LzMax + 2);
+  Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
+  Coef.FactorialMultiply(this->LzMax + 1);
+  Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
+  Coef.FactorialMultiply(this->LzMax + 1);
+  double TmpV = Coef.GetNumericalValue();
+  cout << "TmpV = " << TmpV << endl;
+  ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
+  int J = 2 * this->LzMax - 2;
+  int m4;
+  double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
+
+  int Sign = 1;
+  if (this->LzMax & 1)
+    Sign = 0;
+  double MaxCoefficient = 0.0;
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
+	for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)//= this->LzMax; m2 += 2)// m1; m2 += 2)
+	  {
+	    Lim = m1 + m2 + this->LzMax;
+	    if (Lim > this->LzMax)
+	      Lim = this->LzMax;
+	    Min = m1 + m2 - this->LzMax;
+	    if (Min < -this->LzMax)
+	      Min = -this->LzMax;
+	    for (int m3 = Min; m3 <= Lim; m3 += 2)
+	      {
+		Clebsch.InitializeCoefficientIterator(m1, m2);
+		m4 = m1 + m2 - m3;
+		TmpCoefficient[Pos] = 0.0;
+		if (((J >> 1) & 1) == Sign)
+		  TmpCoefficient[Pos] += TmpV * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
+		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		  MaxCoefficient = TmpCoefficient[Pos];
+		++Pos;
+	      }
+	  }
+      this->NbrInteractionFactors = 0;
+      this->M1Value = new int [Pos];
+      this->M2Value = new int [Pos];
+      this->M3Value = new int [Pos];
+      this->InteractionFactors = new double [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+      double Factor = - 4.0 / sqrt (0.5 * ((double) this->LzMax));
+      for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+	for (int m2 = 0; m2 < m1; ++m2)//this->NbrLzValue; ++m2)// m1; ++m2)
+	  {
+	    Lim = m1 + m2;
+	    if (Lim > this->LzMax)
+	      Lim = this->LzMax;
+	    Min = m1 + m2 - this->LzMax;
+	    if (Min < 0)
+	      Min = 0;
+	    for (int m3 = Min; m3 <= Lim; ++m3)
+	      {
+		if (/*(fabs(TmpCoefficient[Pos]) > MaxCoefficient) &&*/ ((2 * m3) > (m1 + m2)))
+	      {
+		this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
+		this->M1Value[this->NbrInteractionFactors] = m1;
+		this->M2Value[this->NbrInteractionFactors] = m2;
+		this->M3Value[this->NbrInteractionFactors] = m3;
+		/*		cout << this->M1Value[this->NbrInteractionFactors] << " " << this->M2Value[this->NbrInteractionFactors] 
+				<< " " << this->M3Value[this->NbrInteractionFactors] 
+				<< " " << this->InteractionFactors[this->NbrInteractionFactors] << endl;*/
+		++this->NbrInteractionFactors;
+	      }
+		++Pos;
+	      }
+	  }
+    }
+  else
+    {
+       for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
+	for (int m2 =  -this->LzMax; m2 <= m1; m2 += 2) // this->LzMax; m2 += 2)// 
+	  {
+	    Lim = m1 + m2 + this->LzMax;
+	    if (Lim > this->LzMax)
+	      Lim = this->LzMax;
+	    Min = m1 + m2 - this->LzMax;
+	    if (Min < -this->LzMax)
+	      Min = -this->LzMax;
+	    for (int m3 = Min; m3 <= Lim; m3 += 2)
+	      {
+		Clebsch.InitializeCoefficientIterator(m1, m2);
+		m4 = m1 + m2 - m3;
+		TmpCoefficient[Pos] = 0.0;
+		if (((J >> 1) & 1) != Sign)
+		  TmpCoefficient[Pos] += TmpV * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
+		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		  MaxCoefficient = TmpCoefficient[Pos];
+		++Pos;
+	      }
+	  }
+      this->NbrInteractionFactors = 0;
+      this->M1Value = new int [Pos];
+      this->M2Value = new int [Pos];
+      this->M3Value = new int [Pos];
+      this->InteractionFactors = new double [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+      double Factor = 4.0 / sqrt (0.5 * ((double) this->LzMax));
+      for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+	{
+	  for (int m2 = 0; m2 < m1; ++m2)//this->NbrLzValue; ++m2)//
+	    {
+	      Lim = m1 + m2;
+	      if (Lim > this->LzMax)
+		Lim = this->LzMax;
+	      Min = m1 + m2 - this->LzMax;
+	      if (Min < 0)
+		Min = 0;
+	      for (int m3 = Min; m3 <= Lim; ++m3)
+		{
+		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		    {
+		      if ((2 * m3) > (m1 + m2))
+			{
+			  this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
+			  this->M1Value[this->NbrInteractionFactors] = m1;
+			  this->M2Value[this->NbrInteractionFactors] = m2;
+			  this->M3Value[this->NbrInteractionFactors] = m3;
+			  ++this->NbrInteractionFactors;
+			}
+		      else
+			if ((2 * m3) == (m1 + m2))
+			  {
+			    this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
+			    this->M1Value[this->NbrInteractionFactors] = m1;
+			    this->M2Value[this->NbrInteractionFactors] = m2;
+			    this->M3Value[this->NbrInteractionFactors] = m3;
+			  ++this->NbrInteractionFactors;
+			  }
+		    }
+		  ++Pos;
+		}
+	    }	
+	  Lim = 2 * m1;
+	  if (Lim > this->LzMax)
+	    Lim = this->LzMax;
+	  Min = 2 * m1 - this->LzMax;
+	  if (Min < 0)
+	    Min = 0;
+	  for (int m3 = Min; m3 <= Lim; ++m3)
+	    {
+	      if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+		{
+		  if (m3 > m1)
+		    {
+		      this->InteractionFactors[this->NbrInteractionFactors] = 0.5 * Factor * TmpCoefficient[Pos];
+		      this->M1Value[this->NbrInteractionFactors] = m1;
+		      this->M2Value[this->NbrInteractionFactors] = m1;
+		      this->M3Value[this->NbrInteractionFactors] = m3;
+		      ++this->NbrInteractionFactors;
+		    }
+		  else
+		    if (m3 == m1)
+		      {
+			this->InteractionFactors[this->NbrInteractionFactors] = 0.25 * Factor * TmpCoefficient[Pos];
+			this->M1Value[this->NbrInteractionFactors] = m1;
+			this->M2Value[this->NbrInteractionFactors] = m1;
+			this->M3Value[this->NbrInteractionFactors] = m3;
+			++this->NbrInteractionFactors;
+		      }
+		}
+	      ++Pos;
+	    }
+	}
+    }
+  cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
+  cout << "====================================" << endl;
+  delete[] TmpCoefficient;
 }
 
 // test the amount of memory needed for fast multiplication algorithm
@@ -379,9 +635,8 @@ List<Matrix*> AbstractQHEOnSphereHamiltonian::RightInteractionOperators()
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
 // return value = amount of memory needed
 
-long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory)
+long ParticleOnSphereLaplacianDeltaHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
-
   this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
     this->NbrInteractionPerComponent[i] = 0;
@@ -415,7 +670,7 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
 	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+      int* TmpNbrInteractionPerComponent = TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
       for (int i = 0; i < ReducedSpaceDimension; ++i)
 	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
       delete[] this->NbrInteractionPerComponent;
@@ -443,7 +698,7 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long ParticleOnSphereLaplacianDeltaHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient;
@@ -475,7 +730,7 @@ long AbstractQHEOnSphereHamiltonian::PartialFastMultiplicationMemory(int firstCo
 // enable fast multiplication algorithm
 //
 
-void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
+void ParticleOnSphereLaplacianDeltaHamiltonian::EnableFastMultiplication()
 {
   int Index;
   double Coefficient;
@@ -496,6 +751,13 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
+
+/*  AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
+  GenericOperation<ParticleOnSphereDeltaHamiltonian> Operation(this, &(ParticleOnSphereDeltaHamiltonian::PartialEnableFastMultiplication));
+  if (Architecture->ExecuteOperation(&Operation) == false)
+    cout << "error" << endl;
+  else
+    cout << "success" << endl;*/
 
   int TotalPos = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
@@ -534,7 +796,7 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 
-void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void ParticleOnSphereLaplacianDeltaHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient;
@@ -572,77 +834,71 @@ void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstCo
     }
 }
 
-// save precalculations in a file
-// 
-// fileName = pointer to a string containg the name of the file where precalculations have to be stored
-// return value = true if no error occurs
+// Output Stream overload
+//
+// Str = reference on output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
 
-bool AbstractQHEOnSphereHamiltonian::SavePrecalculation (char* fileName)
+ostream& operator << (ostream& Str, ParticleOnSphereLaplacianDeltaHamiltonian& H) 
 {
-  if (this->FastMultiplicationFlag)
+  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      ofstream File;
-      File.open(fileName, ios::binary | ios::out);
-      int Tmp = this->Particles->GetHilbertSpaceDimension();
-      File.write((char*) &(Tmp), sizeof(int));
-      File.write((char*) &(this->FastMultiplicationStep), sizeof(int));
-      Tmp /= this->FastMultiplicationStep;
-      if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-	++Tmp;
-      File.write((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
-      for (int i = 0; i < Tmp; ++i)
-	{
-	  File.write((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
-	}
-      for (int i = 0; i < Tmp; ++i)
-	{
-	  File.write((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
-	}
-      File.close();
-      return true;
+      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
+      if (i > 0)
+	TmpV2[i - 1] = 0.0;
+      TmpV2[i] = 1.0;
+      H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
-  else
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      return false;
+      for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
+	{
+	  Str << TmpV[j][i] << "    ";
+	}
+      Str << endl;
     }
+  return Str;
 }
 
-// load precalculations from a file
-// 
-// fileName = pointer to a string containg the name of the file where precalculations have to be read
-// return value = true if no error occurs
+// Mathematica Output Stream overload
+//
+// Str = reference on Mathematica output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
 
-bool AbstractQHEOnSphereHamiltonian::LoadPrecalculation (char* fileName)
+MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnSphereLaplacianDeltaHamiltonian& H) 
 {
-  ifstream File;
-  File.open(fileName, ios::binary | ios::in);
-  int Tmp;
-  File.read((char*) &(Tmp), sizeof(int));
-  if (Tmp != this->Particles->GetHilbertSpaceDimension())
+  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
+  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
+  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
     {
-      File.close();
-      return false;
+      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
+      if (i > 0)
+	TmpV2[i - 1] = 0.0;
+      TmpV2[i] = 1.0;
+      H.LowLevelMultiply (TmpV2, TmpV[i]);
     }
-  File.read((char*) &(this->FastMultiplicationStep), sizeof(int));
-  Tmp /= this->FastMultiplicationStep;
-  if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-    ++Tmp;
-  this->NbrInteractionPerComponent = new int [Tmp];
-  File.read((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
-  this->InteractionPerComponentIndex = new int* [Tmp];
-  this->InteractionPerComponentCoefficient = new double* [Tmp];
-  for (int i = 0; i < Tmp; ++i)
+  Str << "{";
+  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
     {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      File.read((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
+      Str << "{";
+      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
+	{
+	  Str << TmpV[j][i] << ",";
+	}
+      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
+      Str << "},";
     }
-  for (int i = 0; i < Tmp; ++i)
+  Str << "{";
+  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
     {
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
-      File.read((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
+      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
     }
-  File.close();
-  this->FastMultiplicationFlag = true;
-  return true;
+  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
+  Str << "}}";
+  return Str;
 }
 

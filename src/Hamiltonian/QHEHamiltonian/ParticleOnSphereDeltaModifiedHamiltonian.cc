@@ -757,11 +757,11 @@ void ParticleOnSphereDeltaModifiedHamiltonian::EvaluateInteractionFactors()
 //
 // return value = amount of memory needed
 
-int ParticleOnSphereDeltaModifiedHamiltonian::FastMultiplicationMemory()
+long ParticleOnSphereDeltaModifiedHamiltonian::FastMultiplicationMemory()
 {
   int Index;
   double Coefficient;
-  int memory = 0;
+  long memory = 0;
   int m1;
   int m2;
   int m3;

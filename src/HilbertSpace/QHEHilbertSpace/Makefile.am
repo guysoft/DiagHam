@@ -14,4 +14,5 @@ FullFermionOnTorus.cc \
 BosonOnTorus.cc \
 ParticleOnTorusWithSpin.cc \
 FermionOnTorusWithSpin.cc \
-FermionOnTorusWithMagneticTranslations.cc
+FermionOnTorusWithMagneticTranslations.cc \
+BosonOnTorusState.cc
