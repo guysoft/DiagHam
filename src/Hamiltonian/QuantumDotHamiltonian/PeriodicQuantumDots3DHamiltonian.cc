@@ -676,7 +676,8 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
 	      ++IndexY;
 	    }
 	  ++IndexX;
-	}         
+	}   
+      delete[] TotalIndex;     
       return vDestination;
     }
 }

@@ -293,17 +293,195 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
       int* TotalIndex = new int [this->NbrStateR];
       for (int n = 0; n < this->NbrStateR; ++n)	
 	TotalIndex[n] = n * this->NbrStateZ;
-
       int lastComponent = firstComponent + nbrComponent;   
+      for (int Index = firstComponent; Index < lastComponent; ++Index)
+	{
+	  vDestination.Re(Index) += vSource.Re(Index) * this->PartialDiagonalElement[Index];
+	  vDestination.Im(Index) += vSource.Im(Index) * this->PartialDiagonalElement[Index];
+	}
+
       int n1, n2, p1;
       int IndexZ;
       double* TmpRealHamiltonian;
       double* TmpImaginaryHamiltonian;
       double TmpRe = 0.0; double TmpIm = 0.0;
-      int Index1 = firstComponent; int Index2 = 0; int tmpIndexZ = 0;
-      n1 = Index1 / this->NbrStateZ;
-      p1 = Index1 - n1 * this->NbrStateZ;
-      
+      int n1Begin = firstComponent / this->NbrStateZ;
+      int p1Begin = firstComponent - n1Begin * this->NbrStateZ;
+      int Index1 = firstComponent; int Index2 = 0; int LimitZ = 0;
+      int n1Limit = (lastComponent - 1) / this->NbrStateZ;
+      int p1Limit = lastComponent - 1 - n1Limit * this->NbrStateZ;
+      // p1 : p1Begin -> NbrStateZ
+      for (n2 = 0; n2 < n1Begin; ++n2)
+	{
+	  Index1 = firstComponent;
+	  TmpRealHamiltonian = this->RealHamiltonian[n1Begin][n2];
+	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1Begin][n2];	  
+	  for (p1 = p1Begin; p1 < this->NbrStateZ; ++p1)
+	    {
+	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      LimitZ = this->NbrStateZ - p1;
+	      for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;		  
+		}
+	      vDestination.Re(Index1) += TmpRe;
+	      vDestination.Im(Index1) += TmpIm;
+	      ++Index1;
+	    }
+	}
+      for (n2 = n1Begin; n2 < this->NbrStateR; ++n2)
+	{
+	  Index1 = firstComponent;
+	  TmpRealHamiltonian = this->RealHamiltonian[n2][n1Begin];
+	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n2][n1Begin];
+	  for (p1 = p1Begin; p1 < this->NbrStateZ; ++p1)
+	    {
+	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      LimitZ = this->NbrStateZ - p1;
+	      for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;		  
+		}
+	      vDestination.Re(Index1) += TmpRe;
+	      vDestination.Im(Index1) += TmpIm;
+	      ++Index1;
+	    }
+	}
+      ++n1Begin;
+      // n1 : n1Begin + 1 -> n1Limit - 1
+      for (n1 = n1Begin; n1 < n1Limit; ++n1)
+	{
+	  for (n2 = 0; n2 < n1; ++n2)
+	    {
+	      Index1 = TotalIndex[n1];
+	      TmpRealHamiltonian = this->RealHamiltonian[n1][n2];
+	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1][n2];	  
+	      for (p1 = 0; p1 < this->NbrStateZ; ++p1)
+		{
+		  Index2 = TotalIndex[n2];
+		  TmpRe = 0.0; TmpIm = 0.0;
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  LimitZ = this->NbrStateZ - p1;
+		  for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		    {
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;		  
+		    }
+		  vDestination.Re(Index1) += TmpRe;
+		  vDestination.Im(Index1) += TmpIm;
+		  ++Index1;
+		}
+	    }
+	  for (n2 = n1; n2 < this->NbrStateR; ++n2)
+	    {
+	      Index1 = TotalIndex[n1];
+	      TmpRealHamiltonian = this->RealHamiltonian[n2][n1];
+	      TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n2][n1];
+	      for (p1 = 0; p1 < this->NbrStateZ; ++p1)
+		{
+		  Index2 = TotalIndex[n2];
+		  TmpRe = 0.0; TmpIm = 0.0;
+		  for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		    {
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;
+		    }
+		  LimitZ = this->NbrStateZ - p1;
+		  for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		    {
+		      TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		      TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		      ++Index2;		  
+		    }
+		  vDestination.Re(Index1) += TmpRe;
+		  vDestination.Im(Index1) += TmpIm;
+		  ++Index1;
+		}	  
+	    }
+	}
+      // p1 : 0 -> p1Limit
+      for (n2 = 0; n2 < n1Limit; ++n2)
+	{
+	  Index1 = TotalIndex[n1Limit];
+	  TmpRealHamiltonian = this->RealHamiltonian[n1Limit][n2];
+	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1Limit][n2];	  
+	  for (p1 = 0; p1 <= p1Limit; ++p1)
+	    {
+	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      LimitZ = this->NbrStateZ - p1;
+	      for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;		  
+		}
+	      vDestination.Re(Index1) += TmpRe;
+	      vDestination.Im(Index1) += TmpIm;
+	      ++Index1;
+	    }
+	}
+      for (n2 = n1Limit; n2 < this->NbrStateR; ++n2)
+	{
+	  Index1 = TotalIndex[n1Limit];
+	  TmpRealHamiltonian = this->RealHamiltonian[n2][n1Limit];
+	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n2][n1Limit];
+	  for (p1 = 0; p1 <= p1Limit; ++p1)
+	    {
+	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
+	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;
+		}
+	      LimitZ = this->NbrStateZ - p1;
+	      for (IndexZ = 0; IndexZ < LimitZ; ++IndexZ)
+		{
+		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) - TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
+		  TmpIm += (TmpRealHamiltonian[IndexZ] * vSource.Im(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Re(Index2));
+		  ++Index2;		  
+		}
+	      vDestination.Re(Index1) += TmpRe;
+	      vDestination.Im(Index1) += TmpIm;
+	      ++Index1;
+	    }	  
+	}
+      delete[] TotalIndex;
+ 
+      /*
       for (; Index1 < lastComponent; ++Index1)
 	{
 	  TmpRe = 0.0; TmpIm = 0.0;
@@ -361,7 +539,7 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 	      ++n1;
 	    }
 	}
-   
+      */
       return vDestination;
     }
   return vDestination;
