@@ -80,6 +80,9 @@ class BosonOnSphere :  public ParticleOnSphere
   // minors of permanents used for the time coherent wave function evaluation
   Complex** Minors;
 
+  // temporary state used when applying operators
+  int* TemporaryState;
+
  public:
 
   // basic constructor

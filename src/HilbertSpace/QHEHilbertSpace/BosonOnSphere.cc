@@ -59,6 +59,7 @@ BosonOnSphere::BosonOnSphere (int nbrBosons, int totalLz, int lzMax)
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz);
 //  cout << "dim = " << this->HilbertSpaceDimension << endl;
+  this->TemporaryState = new int [this->NbrLzValue];
   this->Flag.Initialize();
   this->StateDescription = new int* [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
@@ -99,6 +100,7 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
   this->TotalLz = bosons.TotalLz;
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
+  this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
@@ -112,6 +114,7 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
   this->KeyInvertIndices = bosons.KeyInvertIndices;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
+  this->TemporaryState = new int [this->NbrLzValue];
 }
 
 // destructor
@@ -119,6 +122,7 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
 
 BosonOnSphere::~BosonOnSphere ()
 {
+  delete[] this->TemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Keys;
@@ -161,6 +165,7 @@ BosonOnSphere::~BosonOnSphere ()
 
 BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
 {
+  delete[] this->TemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Keys;
@@ -212,6 +217,7 @@ BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
   this->KeyInvertIndices = bosons.KeyInvertIndices;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
+  this->TemporaryState = new int [this->NbrLzValue];
 
   return *this;
 }
@@ -283,24 +289,22 @@ int BosonOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& co
   if (NewLzMax < m2)
     NewLzMax = m2;
   int i = 0;
-  int* TemporaryState = new int [NewLzMax + 1];
   for (; i <= CurrentLzMax; ++i)
-    TemporaryState[i] = State[i];
+    this->TemporaryState[i] = State[i];
   for (; i <= NewLzMax; ++i)
-    TemporaryState[i] = 0;
-  coefficient = TemporaryState[n2];
-  --TemporaryState[n2];
-  coefficient *= TemporaryState[n1];
-  --TemporaryState[n1];
-  ++TemporaryState[m2];
-  coefficient *= TemporaryState[m2];
-  ++TemporaryState[m1];
-  coefficient *= TemporaryState[m1];
+    this->TemporaryState[i] = 0;
+  coefficient = this->TemporaryState[n2];
+  --this->TemporaryState[n2];
+  coefficient *= this->TemporaryState[n1];
+  --this->TemporaryState[n1];
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);
-  while (TemporaryState[NewLzMax] == 0)
+  while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(TemporaryState, NewLzMax);
-  delete[] TemporaryState;
+  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }
 
@@ -331,32 +335,30 @@ int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
     }
  
   int i = 0;
-  int* TemporaryState = new int [NewLzMax + 1];
   for (; i <= CurrentLzMax; ++i)
-    TemporaryState[i] = State[i];
+    this->TemporaryState[i] = State[i];
   for (; i <= NewLzMax; ++i)
-    TemporaryState[i] = 0;
+    this->TemporaryState[i] = 0;
   coefficient = 1.0;
   for (i = nbrIndices; i >= 0; --i)
     {
-      if (TemporaryState[n[i]] == 0)
+      if (this->TemporaryState[n[i]] == 0)
 	{
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension; 	    
 	}
-      coefficient *= TemporaryState[n[i]];
-      --TemporaryState[n[i]];
+      coefficient *= this->TemporaryState[n[i]];
+      --this->TemporaryState[n[i]];
     }
   for (i = nbrIndices; i >= 0; --i)
     {
-      ++TemporaryState[m[i]];
-      coefficient *= TemporaryState[m[i]];
+      ++this->TemporaryState[m[i]];
+      coefficient *= this->TemporaryState[m[i]];
     }
   coefficient = sqrt(coefficient);
-  while (TemporaryState[NewLzMax] == 0)
+  while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(TemporaryState, NewLzMax);
-  delete[] TemporaryState;
+  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }
 
