@@ -70,11 +70,13 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-bin_PROGRAMS = AllSpectra CoulombInteraction DotEmbeddedWell EllipticalDot Isosurface PeriodicFunctionStatistic PeriodicQuantumDot2D PeriodicQuantumDot PeriodicQuantumDotInMagneticField QuantumDot QuantumDot2D Visual2D Visual3D
+bin_PROGRAMS = AllSpectra CoulombInteraction CylinderQuantumDotInMagneticField DotEmbeddedWell EllipticalDot Isosurface PeriodicFunctionStatistic PeriodicQuantumDot2D PeriodicQuantumDot PeriodicQuantumDotInMagneticField QuantumDot QuantumDot2D Visual2D Visual3D
 
 AllSpectra_SOURCES = AllSpectra.cc
 
 CoulombInteraction_SOURCES = CoulombInteraction.cc
+
+CylinderQuantumDotInMagneticField_SOURCES = CylinderQuantumDotInMagneticField.cc
 
 DotEmbeddedWell_SOURCES = DotEmbeddedWell.cc
 
@@ -105,6 +107,10 @@ AllSpectra_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architectu
 CoulombInteraction_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
 
 CoulombInteraction_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -L@top_srcdir@/src/Tools/QuantumDot/Potential -L@top_srcdir@/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lSpectra -lVector @MATH_LIBS@ @THREAD_LIBS@
+
+CylinderQuantumDotInMagneticField_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
+
+CylinderQuantumDotInMagneticField_LDADD = -L@top_srcdir@/src/Architecture -L@top_srcdir@/src/Architecture/ArchitectureOperation -L@top_srcdir@/src/Interaction -L@top_srcdir@/src/Interaction/InternalInteraction -L@top_srcdir@/src/Operator -L@top_srcdir@/src/LanczosAlgorithm -L@top_srcdir@/src/Hamiltonian -L@top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian -L@top_srcdir@/src/TensorProduct -L@top_srcdir@/src/Tensor -L@top_srcdir@/src/HilbertSpace -L@top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace -L@top_srcdir@/src/Vector -L@top_srcdir@/src/Matrix -L@top_srcdir@/src/QuantumNumber -L@top_srcdir@/src/Output -L@top_srcdir@/src/Polynomial -L@top_srcdir@/src/GeneralTools -L@top_srcdir@/src/MathTools -L@top_srcdir@/src/BitmapPicture -L@top_srcdir@/src/Color -L@top_srcdir@/src/Options -L@top_srcdir@/src/FunctionBasis -L@top_srcdir@/src/Tools/QuantumDot/Potential -L@top_srcdir@/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 
 DotEmbeddedWell_DEPENDENCIES = @top_srcdir@/src/Architecture/libArchitecture.a @top_srcdir@/src/Architecture/ArchitectureOperation/libArchitectureOperation.a @top_srcdir@/src/Interaction/libInteraction.a @top_srcdir@/src/Interaction/InternalInteraction/libInternalInteraction.a @top_srcdir@/src/Operator/libOperator.a @top_srcdir@/src/LanczosAlgorithm/libLanczosAlgorithm.a @top_srcdir@/src/Hamiltonian/libHamiltonian.a @top_srcdir@/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a @top_srcdir@/src/TensorProduct/libTensorProduct.a @top_srcdir@/src/Tensor/libTensor.a @top_srcdir@/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a @top_srcdir@/src/HilbertSpace/libHilbertSpace.a @top_srcdir@/src/Vector/libVector.a @top_srcdir@/src/Matrix/libMatrix.a @top_srcdir@/src/QuantumNumber/libQuantumNumber.a @top_srcdir@/src/Output/libOutput.a @top_srcdir@/src/Polynomial/libPolynomial.a @top_srcdir@/src/GeneralTools/libGeneralTools.a @top_srcdir@/src/MathTools/libMathTools.a @top_srcdir@/src/BitmapPicture/libBitmapPicture.a @top_srcdir@/src/Color/libColor.a @top_srcdir@/src/Options/libOptions.a @top_srcdir@/src/FunctionBasis/libFunctionBasis.a @top_srcdir@/src/Tools/QuantumDot/Potential/libPotential.a @top_srcdir@/src/Tools/QuantumDot/Spectra/libSpectra.a
 
@@ -162,6 +168,9 @@ AllSpectra_OBJECTS =  AllSpectra.o
 AllSpectra_LDFLAGS = 
 CoulombInteraction_OBJECTS =  CoulombInteraction.o
 CoulombInteraction_LDFLAGS = 
+CylinderQuantumDotInMagneticField_OBJECTS =  \
+CylinderQuantumDotInMagneticField.o
+CylinderQuantumDotInMagneticField_LDFLAGS = 
 DotEmbeddedWell_OBJECTS =  DotEmbeddedWell.o
 DotEmbeddedWell_LDFLAGS = 
 EllipticalDot_OBJECTS =  EllipticalDot.o
@@ -196,13 +205,14 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/2DQuantumDot.P .deps/3DQuantumDot.P \
-.deps/AllSpectra.P .deps/CoulombInteraction.P .deps/DotEmbeddedWell.P \
+.deps/AllSpectra.P .deps/CoulombInteraction.P \
+.deps/CylinderQuantumDotInMagneticField.P .deps/DotEmbeddedWell.P \
 .deps/EllipticalDot.P .deps/Isosurface.P .deps/Periodic2DQuantumDot.P \
 .deps/Periodic3DQuantumDots.P .deps/PeriodicFunctionStatistic.P \
 .deps/PeriodicQuantumDotInMagneticField.P .deps/Visual2D.P \
 .deps/Visual3D.P
-SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) $(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) $(Isosurface_SOURCES) $(PeriodicFunctionStatistic_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDotInMagneticField_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
-OBJECTS = $(AllSpectra_OBJECTS) $(CoulombInteraction_OBJECTS) $(DotEmbeddedWell_OBJECTS) $(EllipticalDot_OBJECTS) $(Isosurface_OBJECTS) $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicQuantumDot2D_OBJECTS) $(PeriodicQuantumDot_OBJECTS) $(PeriodicQuantumDotInMagneticField_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS) $(Visual2D_OBJECTS) $(Visual3D_OBJECTS)
+SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) $(CylinderQuantumDotInMagneticField_SOURCES) $(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) $(Isosurface_SOURCES) $(PeriodicFunctionStatistic_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDotInMagneticField_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
+OBJECTS = $(AllSpectra_OBJECTS) $(CoulombInteraction_OBJECTS) $(CylinderQuantumDotInMagneticField_OBJECTS) $(DotEmbeddedWell_OBJECTS) $(EllipticalDot_OBJECTS) $(Isosurface_OBJECTS) $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicQuantumDot2D_OBJECTS) $(PeriodicQuantumDot_OBJECTS) $(PeriodicQuantumDotInMagneticField_OBJECTS) $(QuantumDot_OBJECTS) $(QuantumDot2D_OBJECTS) $(Visual2D_OBJECTS) $(Visual3D_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -263,6 +273,10 @@ AllSpectra: $(AllSpectra_OBJECTS) $(AllSpectra_DEPENDENCIES)
 CoulombInteraction: $(CoulombInteraction_OBJECTS) $(CoulombInteraction_DEPENDENCIES)
 	@rm -f CoulombInteraction
 	$(CXXLINK) $(CoulombInteraction_LDFLAGS) $(CoulombInteraction_OBJECTS) $(CoulombInteraction_LDADD) $(LIBS)
+
+CylinderQuantumDotInMagneticField: $(CylinderQuantumDotInMagneticField_OBJECTS) $(CylinderQuantumDotInMagneticField_DEPENDENCIES)
+	@rm -f CylinderQuantumDotInMagneticField
+	$(CXXLINK) $(CylinderQuantumDotInMagneticField_LDFLAGS) $(CylinderQuantumDotInMagneticField_OBJECTS) $(CylinderQuantumDotInMagneticField_LDADD) $(LIBS)
 
 DotEmbeddedWell: $(DotEmbeddedWell_OBJECTS) $(DotEmbeddedWell_DEPENDENCIES)
 	@rm -f DotEmbeddedWell

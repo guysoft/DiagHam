@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libPotential.a
 
-libPotential_a_SOURCES = AbstractPotential.cc OneDConstantCellPotential.cc  TwoDConstantCellPotential.cc  BinaryTwoDConstantCellPotential.cc  ThreeDConstantCellPotential.cc  BinaryThreeDConstantCellPotential.cc  HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc DotEmbeddedWellThreeDConstantCellPotential.cc EllipticalDotThreeDConstantCellPotential.cc
+libPotential_a_SOURCES = AbstractPotential.cc OneDConstantCellPotential.cc  TwoDConstantCellPotential.cc  BinaryTwoDConstantCellPotential.cc  ThreeDConstantCellPotential.cc  BinaryThreeDConstantCellPotential.cc  HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc DotEmbeddedWellThreeDConstantCellPotential.cc EllipticalDotThreeDConstantCellPotential.cc ThreeDConstantCylinderPotential.cc QuantumDotThreeDConstantCylinderPotential.cc
 
 
 check_PROGRAMS = TestPotential
@@ -101,7 +101,9 @@ BinaryThreeDConstantCellPotential.o \
 HardBoxPyramidQuantumDotThreeDConstantCellPotential.o \
 PeriodicPyramidQuantumDotThreeDConstantCellPotential.o \
 DotEmbeddedWellThreeDConstantCellPotential.o \
-EllipticalDotThreeDConstantCellPotential.o
+EllipticalDotThreeDConstantCellPotential.o \
+ThreeDConstantCylinderPotential.o \
+QuantumDotThreeDConstantCylinderPotential.o
 AR = ar
 TestPotential_OBJECTS =  TestPotential.o
 TestPotential_LDFLAGS = 
@@ -123,7 +125,9 @@ DEP_FILES =  .deps/AbstractPotential.P \
 .deps/HardBoxPyramidQuantumDotThreeDConstantCellPotential.P \
 .deps/OneDConstantCellPotential.P \
 .deps/PeriodicPyramidQuantumDotThreeDConstantCellPotential.P \
-.deps/TestPotential.P .deps/ThreeDConstantCellPotential.P \
+.deps/QuantumDotThreeDConstantCylinderPotential.P .deps/TestPotential.P \
+.deps/ThreeDConstantCellPotential.P \
+.deps/ThreeDConstantCylinderPotential.P \
 .deps/TwoDConstantCellPotential.P
 SOURCES = $(libPotential_a_SOURCES) $(TestPotential_SOURCES)
 OBJECTS = $(libPotential_a_OBJECTS) $(TestPotential_OBJECTS)

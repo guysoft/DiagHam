@@ -5,11 +5,9 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
-#include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
 
-#include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
-#include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonianInMagneticField.h"
+#include "Hamiltonian/QuantumDotHamiltonian/CylindricalHamiltonianInMagneticField.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
@@ -23,8 +21,8 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"
-#include "Tools/QuantumDot/Potential/DotEmbeddedWellThreeDConstantCellPotential.h"
+#include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
+#include "Tools/QuantumDot/Potential/QuantumDotThreeDConstantCylinderPotential.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -44,13 +42,13 @@ int main(int argc, char** argv)
 {  
   cout.precision(14);
   // some running options and help
+  /*
   BooleanOption HelpOption ('h', "help", "display this help");
   BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
   BooleanOption EigenstateOption ('e', "eigenstate", "evaluate eigenstates", false);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 50);
   SingleIntegerOption NumberXValueOption ('M', "M-cell", "number of cells in the x direction", 160);
-  SingleIntegerOption NumberYValueOption ('N', "N-cell", "number of cells in the y direction", 160);
   SingleIntegerOption NumberZValueOption ('H', "H-cell", "number of cells in the z direction", 21);
   SingleIntegerOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 2);
   SingleIntegerOption BelowWettingLayerValueOption ('\n', "below", "number of cells between well barrier and wetting layer", 2);
@@ -61,11 +59,9 @@ int main(int argc, char** argv)
   SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 5.65);
   SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 5.65);
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 5.65);
-  SingleDoubleOption XMassOption ('\n', "mu-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.07);
-  SingleDoubleOption YMassOption ('\n', "mu-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.07);
+  SingleDoubleOption RMassOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
-  SingleDoubleOption WellPotentialOption ('\n', "well", "potential in the well", 1.079);
-  SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.73);
+  SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.4);
   SingleDoubleOption MagneticFieldOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
   BooleanOption DiskOption ('d', "disk", "enable disk resume capabilities", false);
   BooleanOption ResumeOption ('r', "resume", "resume from disk datas", false);
@@ -283,6 +279,6 @@ int main(int argc, char** argv)
   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);  
   cout << endl << "Total time = " << Dt << endl;
   delete Lanczos;
-  
+  */
   return 0;
 }

@@ -72,7 +72,8 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQuantumDotHilbertSpace.a
 
-libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc XYReflexionSymmetricPeriodic3DOneParticle.cc ImpairXImpairYPeriodic3DOneParticle.cc ImpairXPairYPeriodic3DOneParticle.cc PairXImpairYPeriodic3DOneParticle.cc PairXPairYPeriodic3DOneParticle.cc
+libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc XYReflexionSymmetricPeriodic3DOneParticle.cc ImpairXImpairYPeriodic3DOneParticle.cc ImpairXPairYPeriodic3DOneParticle.cc PairXImpairYPeriodic3DOneParticle.cc PairXPairYPeriodic3DOneParticle.cc VerticalPeriodicParticleInMagneticField.cc
+
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
 LIBRARIES =  $(noinst_LIBRARIES)
@@ -87,7 +88,8 @@ libQuantumDotHilbertSpace_a_OBJECTS =  Confined3DOneParticle.o \
 Periodic3DOneParticle.o XYReflexionSymmetricPeriodic3DOneParticle.o \
 ImpairXImpairYPeriodic3DOneParticle.o \
 ImpairXPairYPeriodic3DOneParticle.o PairXImpairYPeriodic3DOneParticle.o \
-PairXPairYPeriodic3DOneParticle.o
+PairXPairYPeriodic3DOneParticle.o \
+VerticalPeriodicParticleInMagneticField.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -104,6 +106,7 @@ DEP_FILES =  .deps/Confined3DOneParticle.P \
 .deps/ImpairXPairYPeriodic3DOneParticle.P \
 .deps/PairXImpairYPeriodic3DOneParticle.P \
 .deps/PairXPairYPeriodic3DOneParticle.P .deps/Periodic3DOneParticle.P \
+.deps/VerticalPeriodicParticleInMagneticField.P \
 .deps/XYReflexionSymmetricPeriodic3DOneParticle.P
 SOURCES = $(libQuantumDotHilbertSpace_a_SOURCES)
 OBJECTS = $(libQuantumDotHilbertSpace_a_OBJECTS)

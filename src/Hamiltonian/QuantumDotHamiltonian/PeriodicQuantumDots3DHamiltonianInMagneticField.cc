@@ -70,9 +70,9 @@ PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonia
   this->Mux = mux;
   this->Muy = muy;
   this->Muz = muz;
-  this->NbrCellX = PotentialInput->GetNumberCellX();
-  this->NbrCellY = PotentialInput->GetNumberCellY();
-  this->NbrCellZ = PotentialInput->GetNumberCellZ();
+  this->NbrCellX = PotentialInput->GetNbrCellX();
+  this->NbrCellY = PotentialInput->GetNbrCellY();
+  this->NbrCellZ = PotentialInput->GetNbrCellZ();
   //this->Bx = bx;
   //this->By = by;
   this->Bz = bz;
@@ -266,6 +266,7 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
   int Index1, Index2;
   double* TmpRealParamagnetic; double* TmpImaginaryParamagnetic;
   double TmpReal = 0.0, TmpImaginary = 0.0;
+  
   for (int m = 0; m < this->NbrStateX; ++m)
     {
       TmpTotalIndex1 = TotalIndex[m];      
@@ -278,20 +279,20 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
 	  for (n2 = 0; n2 < this->NbrStateY; ++n2)
 	    {
 	      Index1 = TmpTotalIndex1[n1];
-	      Index2 = TmpTotalIndex1[n2];	
+	      Index2 = TmpTotalIndex2[n2];	
 	      TmpReal = TmpRealParamagnetic[IndexY];
 	      TmpImaginary = TmpImaginaryParamagnetic[IndexY];
 	      for (int p = 0; p < this->NbrStateZ; ++p)
 		{
 		  vDestination.Re(Index1) += (TmpReal * vSource.Re(Index2) - TmpImaginary * vSource.Im(Index2));
-		  vDestination.Re(Index1) += (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
+		  vDestination.Im(Index1) += (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
 		  ++Index1; ++Index2;
 		}
 	      ++IndexY;
 	    }
 	}
     }
-
+  
   for (m1 = 0; m1 < this->NbrStateX; ++m1)
     {
       TmpTotalIndex1 = TotalIndex[m1]; 
@@ -304,20 +305,20 @@ ComplexVector& PeriodicQuantumDots3DHamiltonianInMagneticField::LowLevelAddMulti
 	  for (int n = 0; n < this->NbrStateY; ++n)
 	    {
 	      Index1 = TmpTotalIndex1[n];
-	      Index2 = TmpTotalIndex1[n];
+	      Index2 = TmpTotalIndex2[n];
 	      TmpReal = TmpRealParamagnetic[n];
 	      TmpImaginary = TmpImaginaryParamagnetic[n];
 	      for (int p = 0; p < this->NbrStateZ; ++p)
 		{
 		  vDestination.Re(Index1) -= (TmpReal * vSource.Re(Index2) - TmpImaginary * vSource.Im(Index2));
-		  vDestination.Re(Index1) -= (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
+		  vDestination.Im(Index1) -= (TmpReal * vSource.Im(Index2) + TmpImaginary * vSource.Re(Index2));		  
 		  ++Index1; ++Index2;
 		}	      
 	    }
 	  ++IndexX;
 	}
     }
-
+  
   double* TmpRealPrecalculatedHamiltonian;
   double* TmpImaginaryPrecalculatedHamiltonian;
   double TmpRe = 0.0; double TmpIm = 0.0;
@@ -568,7 +569,7 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMagneticFieldFacto
 
   int LengthX = (this->NbrStateX - 1) * 2 + 1; int LengthY = (this->NbrStateY - 1) * 2 + 1; int LengthZ = (this->NbrStateZ - 1) * 2 + 1;
   int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
-  
+
   // evaluation of paramagnetic terms
   this->RealParamagneticTermPxY = new double* [this->NbrStateX];
   this->ImaginaryParamagneticTermPxY = new double* [this->NbrStateX];
@@ -578,37 +579,42 @@ void PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMagneticFieldFacto
       this->ImaginaryParamagneticTermPxY[m] = new double [LengthY];
       for (int delta = 0; delta < LengthY; ++delta)
 	{
-	  this->RealParamagneticTermPxY[m][delta] = PARAMAGNETIC_FACTOR * this->Bz * RealY[delta] * double(m) / (this->Mux * this->XSize);	
-	  this->ImaginaryParamagneticTermPxY[m][delta] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryY[delta] * double(m) / (this->Mux * this->XSize);
+	  this->RealParamagneticTermPxY[m][delta] = PARAMAGNETIC_FACTOR * this->Bz * RealY[delta] * double(m + this->LowerImpulsionX) / (this->Mux * this->XSize);	
+	  this->ImaginaryParamagneticTermPxY[m][delta] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryY[delta] * double(m + this->LowerImpulsionX) / (this->Mux * this->XSize);
 	}
     }
+
   this->RealParamagneticTermPyX = new double* [LengthX];
-  this->ImaginaryParamagneticTermPyX = new double* [LengthX];
+  this->ImaginaryParamagneticTermPyX = new double* [LengthX];  
   for (int delta = 0; delta < LengthX; ++delta)
     {
       this->RealParamagneticTermPyX[delta] = new double [this->NbrStateY];
       this->ImaginaryParamagneticTermPyX[delta] = new double [this->NbrStateY];
       for (int n = 0; n < this->NbrStateY; ++n)
 	{
-	  this->RealParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * RealX[delta] * double(n) / (this->Muy * this->YSize);
-	  this->ImaginaryParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryX[delta] * double(n) / (this->Muy * this->YSize);
+	  this->RealParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * RealX[delta] * double(n + this->LowerImpulsionY) / (this->Muy * this->YSize);
+	  this->ImaginaryParamagneticTermPyX[delta][n] = PARAMAGNETIC_FACTOR * this->Bz * ImaginaryX[delta] * double(n + this->LowerImpulsionY) / (this->Muy * this->YSize);
 	}
     }
-  // evaluation of diamagnetic factor
+
+  // evaluation of diamagnetic factor    
   for (int m = 0; m < LengthX; ++m)
     {
       this->RealPrecalculatedHamiltonian[m][OriginY][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * RealSquaredX[m]) / this->Muy;
       this->ImaginaryPrecalculatedHamiltonian[m][OriginY][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * ImaginarySquaredX[m]) / this->Muy;
       //this->RealPrecalculatedHamiltonian[m][OriginY][OriginZ] += (DIAMAGNETIC_FACTOR * this->By * this->By * RealSquaredX[m]) / this->Muz;
       //this->ImaginaryPrecalculatedHamiltonian[m][OriginY][OriginZ] += (DIAMAGNETIC_FACTOR * this->By * this->By * ImaginarySquaredX[m]) / this->Muz;      
-    }
+    }  
+   
   for (int n = 0; n < LengthY; ++n)
     {
       this->RealPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * RealSquaredY[n]) / this->Mux;
       this->ImaginaryPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bz * this->Bz * ImaginarySquaredY[n]) / this->Mux;    
       //this->RealPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bx * this->Bx * RealSquaredY[n]) / this->Muz;
       //this->ImaginaryPrecalculatedHamiltonian[OriginX][n][OriginZ] += (DIAMAGNETIC_FACTOR * this->Bx * this->Bx * ImaginarySquaredY[n]) / this->Muz;      
-    }
+    }  
+  
+
   /*
   for (int p = 0; p < LengthZ; ++p)
     {

@@ -2,9 +2,9 @@
 //                                                                            // 
 //                     Copyright (C) 2004 Duc-Phuong Nguyen                   //
 //                                                                            //
-//         class of potential in three directions with constant cells         //
+//      class of potential in three directions with constant cylinders        //
 //                                                                            //
-//                        last modification : 02/11/2004                      //
+//                        last modification : 04/22/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -24,45 +24,40 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef THREEDCONSTANTCELLPOTENTIAL_H
-#define THREEDCONSTANTCELLPOTENTIAL_H
+#ifndef THREEDCONSTANTCYLINDERPOTENTIAL_H
+#define THREEDCONSTANTCYLINDERPOTENTIAL_H
 
 
 #include "config.h"
 #include "Tools/QuantumDot/Potential/AbstractPotential.h"
 
 
-class ThreeDConstantCellPotential : public AbstractPotential
+class ThreeDConstantCylinderPotential : public AbstractPotential
 {
 
  protected:
 
-  // number of cells in X direction
-  int NumberX;
-
-  // number of cells in Y direction
-  int NumberY;
-
-  // number of cells in Z direction
+  // number of cylinders in Z direction
   int NumberZ;
+
+  // height of each cylinder
+  double* CylinderHeight;
+
+  // radius of each cylinder, equal to -1.0 if infinite
+  double* CylinderRadius;
+
+  // value of constant potential in each cylinder
+  double* PotentialValue;
 
  public:
 
   // destructor
   //
-  virtual ~ThreeDConstantCellPotential();
+  virtual ~ThreeDConstantCylinderPotential();
 
-  // get the number of cells in X direction
+  // get the number of cylinders in Y direction
   //
-  int GetNbrCellX();
-
-  // get the number of cells in Y direction
-  //
-  int GetNbrCellY();
-
-  // get the number of cells in Y direction
-  //
-  int GetNbrCellZ();
+  int GetNbrCylinderZ();
 
   // shift the potential with a given quantity
   //
@@ -91,49 +86,76 @@ class ThreeDConstantCellPotential : public AbstractPotential
 
   // assign the potential a value at a given position 
   //
-  // i = x coordinate of the considered cell
-  // j = y coordinate of the considered cell 
-  // k = z coordinate of the considered cell 
+  // k = z coordinate of the considered cylinder 
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double value) = 0;
+  virtual void SetPotential(int k, double value);
 
   // get the potential at a given position
   //
-  // i = x coordinate of the considered cell
-  // j = y coordinate of the considered cell
-  // k = z coordinate of the considered cell 
-  // return value = the potential in the cell
-  virtual double GetPotential(int i, int j, int k) = 0;
+  // k = z coordinate of the considered cylinder
+  // return value = the potential in the cylinder
+  virtual double GetPotential(int k);
 
-  // save the whole diagram presentation in a bitmap file
+  // get the cylinder height of a given cylinder
   //
-  // fileName = name of the file to stock the diagram presentation
-  virtual void SaveBmpPicture(char* fileName);
+  //  k = z coordinate of the considered cylinder
+  // return value = the height of the cylinder
+  virtual double GetHeight(int k);
+
+  // get the cylinder radius of a given cylinder
+  //
+  //  k = z coordinate of the considered cylinder
+  // return value = the radius of the cylinder
+  virtual double GetRadius(int k);
 
 };
 
-// get the number of cells in X direction
+// get the number of cylinders in Y direction
 //
 
-inline int ThreeDConstantCellPotential::GetNbrCellX()
-{
-  return this->NumberX;
-}
-
-// get the number of cells in Y direction
-//
-
-inline int ThreeDConstantCellPotential::GetNbrCellY()
-{
-  return this->NumberY;
-}
-
-// get the number of cells in Y direction
-//
-
-inline int ThreeDConstantCellPotential::GetNbrCellZ()
+inline int ThreeDConstantCylinderPotential::GetNbrCylinderZ()
 {
   return this->NumberZ;
+}
+
+// assign the potential a value at a given position 
+//
+// k = z coordinate of the considered cylinder 
+// value = value of potential
+
+inline void ThreeDConstantCylinderPotential::SetPotential(int k, double value)
+{
+  this->PotentialValue[k] = value;
+}
+
+// get the potential at a given position
+//
+// k = z coordinate of the considered cylinder
+// return value = the potential in the cylinder
+
+inline double ThreeDConstantCylinderPotential::GetPotential(int k)
+{
+  return this->PotentialValue[k]; 
+}
+
+// get the cylinder height of a given cylinder
+//
+//  k = z coordinate of the considered cylinder
+// return value = the height of the cylinder
+
+inline double ThreeDConstantCylinderPotential::GetHeight(int k)
+{
+  return this->CylinderHeight[k];
+}
+
+// get the cylinder radius of a given cylinder
+//
+//  k = z coordinate of the considered cylinder
+// return value = the radius of the cylinder
+
+inline double ThreeDConstantCylinderPotential::GetRadius(int k)
+{
+  return this->CylinderRadius[k]; 
 }
 
 #endif

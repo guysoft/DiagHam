@@ -11,7 +11,9 @@ BinaryThreeDConstantCellPotential.cc  \
 HardBoxPyramidQuantumDotThreeDConstantCellPotential.cc  \
 PeriodicPyramidQuantumDotThreeDConstantCellPotential.cc \
 DotEmbeddedWellThreeDConstantCellPotential.cc \
-EllipticalDotThreeDConstantCellPotential.cc
+EllipticalDotThreeDConstantCellPotential.cc \
+ThreeDConstantCylinderPotential.cc \
+QuantumDotThreeDConstantCylinderPotential.cc
 
 check_PROGRAMS=TestPotential
 

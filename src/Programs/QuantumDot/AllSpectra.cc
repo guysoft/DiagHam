@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   int M, N, H;
   char* FileName;
   int Number;
-
+  
   FileName = InputFile.GetString();
   M = XCell.GetInteger();
   N = YCell.GetInteger();
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
   bool PairX2 = PairX2Option.GetBoolean();
   bool PairY2 = PairY2Option.GetBoolean();
   /*
-  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
+  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 8, N / 8, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
     if (PairY)
@@ -116,20 +116,10 @@ int main(int argc, char** argv)
    
   double Lx = 5.65, Ly = 5.65, Lz = 5.65;
   double SizeX = M * Lx, SizeY = N * Ly, SizeZ = H * Lz;
-
-  double ReX, ImX, ReY, ImY, ReZ, ImZ;
-  char** Files = new char* [150];
-  ifstream energy("eigenvalues");
-  double fundamental;
-  energy >> fundamental;
-  double tmpE;  
-  ofstream polarization ("Polarization.txt");
   
-  //ofstream OutFile(out);  
-  // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
+  //ofstream OutFile(out);    
   //double PositionX = (double(M) * Lx / 2.0);
   //double RealValue = 0.0, ImaginaryValue = 0.0;
-
   //for (int j = 0; j <= N; ++j)
   //  {      
   //    for (int k = 0; k <= H; ++k)
@@ -141,11 +131,20 @@ int main(int argc, char** argv)
   //  }
   //OutFile.close();  
 
+  double ReX, ImX, ReY, ImY, ReZ, ImZ;
+  char** Files = new char* [200];
+  ifstream energy("eigenvalues");
+  double fundamental;
+  energy >> fundamental;
+  double tmpE;  
+  ofstream polarization ("Polarization.txt");
+
+  
   ofstream PX("PolarizationX.txt");
   ofstream PY("PolarizationY.txt");  
   ofstream PZ("PolarizationZ.txt");
 
-  for (int i = 0; i < 80; ++i)
+  for (int i = 0; i < 160; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
@@ -177,7 +176,7 @@ int main(int argc, char** argv)
   OutFile.close();  
   
   double square = 0.0; double moyenne = 0.0;
-  /*
+  
   for (int i = 1; i < 150; ++i)
     {
       Files[i] = new char[80];
@@ -234,11 +233,11 @@ int main(int argc, char** argv)
   // bool Potential::SaveBmpPicture(int under, int above, int startX, int endX, int startY, int endY, int choice, int sizeX, int sizeY, PicRGB& InN, PicRGB& GaN, PicRGB& background, int NbrX, char* fileName);
   potential.SaveBmpPicture(9, 20, 0, 50, 0, 50, 1, 5, 5, InN, GaN, background, 4, "Diagram/Diagram/0.175/h/Diagram.bmp");
   */
-  /*
+ /*
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 200;
+      State[i] = 160;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
@@ -298,7 +297,7 @@ int main(int argc, char** argv)
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 200;
+      State[i] = 160;
       Files[i] = new char[80];
       Files[i] = FileName;
     }

@@ -76,11 +76,11 @@ BinaryTwoDConstantCellPotential::~BinaryTwoDConstantCellPotential()
 
 void BinaryTwoDConstantCellPotential::ConstructEffectivePotential(ThreeDConstantCellPotential* potential, RealVector& coefficient)
 {
-  if ((potential->GetNumberCellX() != this->NumberX) || (potential->GetNumberCellY() != this->NumberY))
+  if ((potential->GetNbrCellX() != this->NumberX) || (potential->GetNbrCellY() != this->NumberY))
     cout << "The dimensions in X or Y direction are not the same in 3D and 2D potentials" << endl;
-  if (coefficient.GetVectorDimension() != potential->GetNumberCellZ())
+  if (coefficient.GetVectorDimension() != potential->GetNbrCellZ())
     cout << "The dimension in Z of coeffients and 3D potential are not the same" << endl;
-  int Height = potential->GetNumberCellZ();
+  int Height = potential->GetNbrCellZ();
   double tmp = 0.0;
   for (int j = 0; j < this->NumberY; ++j)
     for (int i = 0; i < this->NumberX; ++i)
