@@ -63,21 +63,35 @@ class MathematicaOutput : public AbstractOutput
   // Out = reference on current output stream
   // c = character to push
   // return value = reference on current output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Out, const char c);
+  friend MathematicaOutput& operator << (MathematicaOutput& Out, const char& c);
 
   // push an integer on output
   //
   // Out = reference on current output stream
   // x = integer to push
   // return value = reference on current output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Out, const int x);
+  friend MathematicaOutput& operator << (MathematicaOutput& Out, const int& x);
+
+  // push a long on output
+  //
+  // Out = reference on current output stream
+  // x = long to push
+  // return value = reference on current output stream
+  friend MathematicaOutput& operator << (MathematicaOutput& Out, const long& x);
 
   // push a double on output
   //
   // Out = reference on current output stream
   // d = double to push
   // return value = reference on current output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Out, const double x);
+  friend MathematicaOutput& operator << (MathematicaOutput& Out, const double& x);
+
+  // push a long double on output
+  //
+  // Out = reference on current output stream
+  // d = long double to push
+  // return value = reference on current output stream
+  friend MathematicaOutput& operator << (MathematicaOutput& Out, const long double& x);
 
   // push an output stream on output
   //

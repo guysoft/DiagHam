@@ -63,7 +63,7 @@ MathematicaOutput& operator << (MathematicaOutput& Out, const char* c)
 // c = character to push
 // return value = reference on current output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Out, const char c) 
+MathematicaOutput& operator << (MathematicaOutput& Out, const char& c) 
 {
   Out.File << c;
   return Out;
@@ -75,7 +75,19 @@ MathematicaOutput& operator << (MathematicaOutput& Out, const char c)
 // x = integer to push
 // return value = reference on current output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Out, const int x) 
+MathematicaOutput& operator << (MathematicaOutput& Out, const int& x) 
+{
+  Out.File << x;
+  return Out;
+}
+
+// push a long on output
+//
+// Out = reference on current output stream
+// x = long to push
+// return value = reference on current output stream
+
+MathematicaOutput& operator << (MathematicaOutput& Out, const long& x) 
 {
   Out.File << x;
   return Out;
@@ -87,7 +99,19 @@ MathematicaOutput& operator << (MathematicaOutput& Out, const int x)
 // d = double to push
 // return value = reference on current output stream
 
-MathematicaOutput& operator << (MathematicaOutput& Out, const double x) 
+MathematicaOutput& operator << (MathematicaOutput& Out, const double& x) 
+{
+  Out.File << x;
+  return Out;
+}
+
+// push a long double on output
+//
+// Out = reference on current output stream
+// d = long double to push
+// return value = reference on current output stream
+
+MathematicaOutput& operator << (MathematicaOutput& Out, const long double& x) 
 {
   Out.File << x;
   return Out;

@@ -101,7 +101,7 @@ AbstractOutput& operator << (AbstractOutput& Out, const char* c)
 // c = character to push
 // return value = reference on current output stream
 
-AbstractOutput& operator << (AbstractOutput& Out, const char c) 
+AbstractOutput& operator << (AbstractOutput& Out, const char& c) 
 {
   Out.File << c;
   return Out;
@@ -113,7 +113,19 @@ AbstractOutput& operator << (AbstractOutput& Out, const char c)
 // x = integer to push
 // return value = reference on current output stream
 
-AbstractOutput& operator << (AbstractOutput& Out, const int x) 
+AbstractOutput& operator << (AbstractOutput& Out, const int& x) 
+{
+  Out.File << x;
+  return Out;
+}
+
+// push a long on output
+//
+// Out = reference on current output stream
+// x = long to push
+// return value = reference on current output stream
+
+AbstractOutput& operator << (AbstractOutput& Out, const long& x) 
 {
   Out.File << x;
   return Out;
@@ -125,7 +137,19 @@ AbstractOutput& operator << (AbstractOutput& Out, const int x)
 // d = double to push
 // return value = reference on current output stream
 
-AbstractOutput& operator << (AbstractOutput& Out, const double x) 
+AbstractOutput& operator << (AbstractOutput& Out, const double& x) 
+{
+  Out.File << x;
+  return Out;
+}
+
+// push a long double on output
+//
+// Out = reference on current output stream
+// d = long double to push
+// return value = reference on current output stream
+
+AbstractOutput& operator << (AbstractOutput& Out, const long double& x) 
 {
   Out.File << x;
   return Out;

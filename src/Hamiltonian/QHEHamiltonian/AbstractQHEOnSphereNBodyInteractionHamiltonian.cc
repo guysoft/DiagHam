@@ -280,7 +280,8 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 	    TmpInteraction = this->NBodyInteractionFactors[k];
 	    MIndices = this->NBodyMValue[k];
 	    NIndices = this->NBodyNValue[k];
-	    for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j) 
+//	    for (int j = 0; j < this->NBodyNbrInteractionFactors[k]; ++j) 
+	    for (int j = this->NBodyNbrInteractionFactors[k] - 1; j >= 0; --j) 
 	      {
 		Index = this->Particles->ProdAdProdA(i + this->PrecalculationShift, MIndices[j], NIndices[j], k, Coefficient);
 		if (Index < this->Particles->GetHilbertSpaceDimension())
