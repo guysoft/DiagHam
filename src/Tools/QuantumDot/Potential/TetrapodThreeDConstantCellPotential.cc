@@ -200,6 +200,9 @@ bool TetrapodThreeDConstantCellPotential::InTheArms(int x, int y, int z)
 
 bool TetrapodThreeDConstantCellPotential::InOneArm(double x, double y, double z, RealVector& a, RealVector& b, double r)
 {
+  if (r <= 0)
+    return false;
+
   // test if the point is in good direction
   double tmp = (x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1]) + (z - a[2]) * (b[2] - a[2]);
   double l = (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]) + (b[2] - a[2]) * (b[2] - a[2]);
