@@ -440,7 +440,11 @@ long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices
 long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum,
 									     double**& sortedIndicesPerSumSymmetryFactor)
 {
-  long** DimensionSymmetricGroup = GetIrreducibleRepresentationDimensionSymmetricGroup(nbrValues);
+  long** DimensionSymmetricGroup;
+  if (nbrValues >= nbrIndices)
+    DimensionSymmetricGroup = GetIrreducibleRepresentationDimensionSymmetricGroup(nbrValues);
+  else
+    DimensionSymmetricGroup = GetIrreducibleRepresentationDimensionSymmetricGroup(nbrIndices);
   long NbrElements = DimensionSymmetricGroup[nbrValues][nbrIndices];
 
   int** Indices = new int* [NbrElements];

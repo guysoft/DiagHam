@@ -63,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
+  (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "filen name of an exact state that has to be used as test wave function");
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
@@ -102,12 +103,29 @@ int main(int argc, char** argv)
       cout << "can't open vector file " << ((SingleStringOption*) Manager["exact-state"])->GetString() << endl;
       return -1;      
     }
+  if (((SingleStringOption*) Manager["use-exact"])->GetString() != 0)
+    {
+      RealVector TestState;
+      if (TestState.ReadVector (((SingleStringOption*) Manager["use-exact"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["use-exact"])->GetString() << endl;
+	  return -1;      
+	}
+      if (State.GetVectorDimension() != TestState.GetVectorDimension())
+	{
+	  cout << "dimension mismatch" << endl;
+	  return -1;      
+	}
+      cout << "overlap = " << (TestState * State) << endl;
+      return 0;
+    }
+
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
-  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
 //  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 1, 1);
-//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 2);
+  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
 //  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
