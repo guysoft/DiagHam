@@ -72,6 +72,7 @@ AbstractThreeDTwoParticles::~AbstractThreeDTwoParticles ()
   cout << "AbstractThreeDTwoParticles's destructor is being called" << endl;
   delete this->FirstParticle;
   delete this->SecondParticle;
+  cout << "AbstractThreeDTwoParticles's destructor is finished" << endl;
 }
 
 // assignement

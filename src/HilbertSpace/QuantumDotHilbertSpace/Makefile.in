@@ -67,8 +67,8 @@ am_libQuantumDotHilbertSpace_a_OBJECTS =  \
 	AbstractTwoDOneParticle.$(OBJEXT) \
 	AbstractThreeDOneParticle.$(OBJEXT) \
 	PeriodicThreeDOneParticle.$(OBJEXT) \
-	PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle.$(OBJEXT) \
-	PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle.$(OBJEXT) \
+	PeriodicXReflexionYZPeriodicThreeDOneParticle.$(OBJEXT) \
+	PeriodicXYReflexionZPeriodicThreeDOneParticle.$(OBJEXT) \
 	AbstractPlanarRotationSymmetryThreeDOneParticle.$(OBJEXT) \
 	PlanarRotationSymmetryZPeriodicOneParticle.$(OBJEXT) \
 	AbstractThreeDTwoParticles.$(OBJEXT) \
@@ -198,8 +198,8 @@ PeriodicReflexionSymmetryOneDOneParticle.cc \
 AbstractTwoDOneParticle.cc \
 AbstractThreeDOneParticle.cc \
 PeriodicThreeDOneParticle.cc \
-PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle.cc \
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle.cc \
+PeriodicXReflexionYZPeriodicThreeDOneParticle.cc \
+PeriodicXYReflexionZPeriodicThreeDOneParticle.cc \
 AbstractPlanarRotationSymmetryThreeDOneParticle.cc \
 PlanarRotationSymmetryZPeriodicOneParticle.cc \
 AbstractThreeDTwoParticles.cc \
@@ -269,8 +269,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicReflexionSymmetryOneDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicThreeDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicThreeDTwoParticles.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXReflexionYZPeriodicThreeDOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXYReflexionZPeriodicThreeDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PlanarRotationSymmetryZPeriodicOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VerticalPeriodicParticleInMagneticField.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodic3DOneParticle.Po@am__quote@

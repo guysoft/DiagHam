@@ -73,11 +73,11 @@ AbstractThreeDOneParticle::AbstractThreeDOneParticle (const AbstractThreeDOnePar
 
 AbstractThreeDOneParticle::~AbstractThreeDOneParticle ()
 {
-  //cout << "AbstractThreeDOneParticle destructor is being called ..." << endl;
+  cout << "AbstractThreeDOneParticle destructor is being called ..." << endl;
   delete this->StateX;
   delete this->StateY;
   delete this->StateZ;
-  //cout << "AbstractThreeDOneParticle destructor is finished ..." << endl;
+  cout << "AbstractThreeDOneParticle destructor is finished ..." << endl;
 }
 
 // assignement

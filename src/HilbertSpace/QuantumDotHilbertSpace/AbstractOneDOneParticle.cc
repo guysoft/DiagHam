@@ -64,7 +64,6 @@ AbstractOneDOneParticle::AbstractOneDOneParticle(const AbstractOneDOneParticle& 
 
 AbstractOneDOneParticle::~AbstractOneDOneParticle()
 {
-  //cout << "AbstractOneDOneParticle destructor is being called" << endl;
 }
 
 // assignement

@@ -125,7 +125,7 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian (PeriodicTh
   this->NbrState2Y = secondParticle->GetNbrStateY ();
   this->NbrState2Z = secondParticle->GetNbrStateZ ();
 
-  if (((this->NbrState1X * 2 - 1) > pow(2, NbrBitX1)) || ((this->NbrState1Y * 2 - 1) > pow(2, NbrBitY1)) || ((this->NbrState1Z * 2 - 1) > pow(2, NbrBitZ1)) || ((this->NbrState2X * 2 - 1) > pow(2, NbrBitX2)) || ((this->NbrState2Y * 2 - 1) > pow(2, NbrBitY2)) || ((this->NbrState2Z * 2 - 1) > pow(2, NbrBitZ2)))
+  if (((this->NbrState1X * 2 - 1) > (1 << NbrBitX1)) || ((this->NbrState1Y * 2 - 1) > (1 << NbrBitY1)) || ((this->NbrState1Z * 2 - 1) > (1 << NbrBitZ1)) || ((this->NbrState2X * 2 - 1) > (1 << NbrBitX2)) || ((this->NbrState2Y * 2 - 1) > (1 << NbrBitY2)) || ((this->NbrState2Z * 2 - 1) > (1 << NbrBitZ2)))
     {
       cout << "At least a number of states in a direction is too big.!" << endl;
       exit (1);
@@ -139,8 +139,7 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian (PeriodicTh
   this->EvaluateConfinementTerm (potentialHole, secondParticle, 2, this->RealHoleConfinement, this->ImaginaryHoleConfinement);
   cout << "Evaluating the Coulombian term ..." << endl;
   this->EvaluateCoulombianTerm (xSize, ySize, zSize, dielectric);
-  delete firstParticle; 
-  delete secondParticle;
+  firstParticle = NULL; secondParticle = NULL;
   cout << "End of the evaluation." << endl;
 }
 
@@ -174,7 +173,7 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian(const Perio
 PeriodicElectronHole3DHamiltonian::~ PeriodicElectronHole3DHamiltonian()
 {
   //cout << "PeriodicElectronHole3DHamiltonian destructor is being called." << endl;
-  //delete   this->Space;
+  delete   this->Space;
   //cout << "Destructor of Hilbert space is being called" << endl;
   delete[] this->IToX;
   delete[] this->IToX1;

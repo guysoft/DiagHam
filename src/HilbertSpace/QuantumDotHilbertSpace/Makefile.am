@@ -18,8 +18,8 @@ PeriodicReflexionSymmetryOneDOneParticle.cc \
 AbstractTwoDOneParticle.cc \
 AbstractThreeDOneParticle.cc \
 PeriodicThreeDOneParticle.cc \
-PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle.cc \
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle.cc \
+PeriodicXReflexionYZPeriodicThreeDOneParticle.cc \
+PeriodicXYReflexionZPeriodicThreeDOneParticle.cc \
 AbstractPlanarRotationSymmetryThreeDOneParticle.cc \
 PlanarRotationSymmetryZPeriodicOneParticle.cc \
 AbstractThreeDTwoParticles.cc \

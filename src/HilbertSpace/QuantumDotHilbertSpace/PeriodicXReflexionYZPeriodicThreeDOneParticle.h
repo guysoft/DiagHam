@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PERIODICXREFLEXIONSYMMETRYYZPERIODICTHREEDONEPARTICLE_H
-#define PERIODICXREFLEXIONSYMMETRYYZPERIODICTHREEDONEPARTICLE_H
+#ifndef PERIODICXREFLEXIONYZPERIODICTHREEDONEPARTICLE_H
+#define PERIODICXREFLEXIONYZPERIODICTHREEDONEPARTICLE_H
 
 
 #include "config.h"
@@ -39,7 +39,7 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDOneParticle.h"
 
 
-class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThreeDOneParticle
+class PeriodicXReflexionYZPeriodicThreeDOneParticle : public AbstractThreeDOneParticle
 {
 
  protected:
@@ -48,7 +48,7 @@ class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThr
 
   // default constructor
   //
-  PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle ();
+  PeriodicXReflexionYZPeriodicThreeDOneParticle ();
 
   // constructor
   //
@@ -58,16 +58,16 @@ class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThr
   // lowY = lower impulsion in Y direction (in unit of 2 * Pi / Lz)
   // nbrStateZ = wave function basis dimension in the z direction
   // lowZ = lower impulsion in Z direction (in unit of 2 * Pi / Lz)
-  PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle (int nbrStateX, bool evenX, int nbrStateY, int lowY, int nbrStateZ, int lowZ);
+  PeriodicXReflexionYZPeriodicThreeDOneParticle (int nbrStateX, bool evenX, int nbrStateY, int lowY, int nbrStateZ, int lowZ);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle (const PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle& space);
+  PeriodicXReflexionYZPeriodicThreeDOneParticle (const PeriodicXReflexionYZPeriodicThreeDOneParticle& space);
 
   // destructor
   //
-  virtual ~PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle();
+  virtual ~PeriodicXReflexionYZPeriodicThreeDOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -78,7 +78,7 @@ class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThr
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle& operator = (const PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle& space);
+  PeriodicXReflexionYZPeriodicThreeDOneParticle& operator = (const PeriodicXReflexionYZPeriodicThreeDOneParticle& space);
 
   // get lower impulsion in X
   //
@@ -115,7 +115,7 @@ class PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle : public AbstractThr
 //
 // return value = lower value in unit of 2 * Pi / L
 
-inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpulsionX ()
+inline int PeriodicXReflexionYZPeriodicThreeDOneParticle::GetLowerImpulsionX ()
 {
   return ((PeriodicReflexionSymmetryOneDOneParticle*) this->StateX)->GetLowerImpulsion ();
 }
@@ -124,7 +124,7 @@ inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpuls
 //
 // return value = lower value in unit of 2 * Pi / L
 
-inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpulsionY ()
+inline int PeriodicXReflexionYZPeriodicThreeDOneParticle::GetLowerImpulsionY ()
 {
   return ((PeriodicOneDOneParticle*) this->StateY)->GetLowerImpulsion ();
 }
@@ -133,7 +133,7 @@ inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpuls
 //
 // return value = lower value in unit of 2 * Pi / L
 
-inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpulsionZ ()
+inline int PeriodicXReflexionYZPeriodicThreeDOneParticle::GetLowerImpulsionZ ()
 {
   return ((PeriodicOneDOneParticle*) this->StateZ)->GetLowerImpulsion ();
 }
@@ -142,7 +142,7 @@ inline int PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetLowerImpuls
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetStateX ()
+inline AbstractOneDOneParticle* PeriodicXReflexionYZPeriodicThreeDOneParticle::GetStateX ()
 {
   AbstractOneDOneParticle* stateX = (PeriodicReflexionSymmetryOneDOneParticle*) this->StateX->Clone ();
   return stateX;
@@ -152,7 +152,7 @@ inline AbstractOneDOneParticle* PeriodicXReflexionSymmetryYZPeriodicThreeDOnePar
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetStateY ()
+inline AbstractOneDOneParticle* PeriodicXReflexionYZPeriodicThreeDOneParticle::GetStateY ()
 {
   AbstractOneDOneParticle* stateY = (PeriodicOneDOneParticle*) this->StateY->Clone ();
   return stateY;
@@ -161,7 +161,7 @@ inline AbstractOneDOneParticle* PeriodicXReflexionSymmetryYZPeriodicThreeDOnePar
 // get the wave function basis in Z direction
 //
 // return = pointer to 1D one particle basis
-inline AbstractOneDOneParticle* PeriodicXReflexionSymmetryYZPeriodicThreeDOneParticle::GetStateZ ()
+inline AbstractOneDOneParticle* PeriodicXReflexionYZPeriodicThreeDOneParticle::GetStateZ ()
 {
   AbstractOneDOneParticle* stateZ = (PeriodicOneDOneParticle*) this->StateZ->Clone ();
   return stateZ;

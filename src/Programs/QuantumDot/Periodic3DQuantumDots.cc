@@ -26,7 +26,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include <fstream.h>
+#include <fstream>
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>

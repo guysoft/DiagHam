@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Duc-Phuong Nguyen                 //
 //                                                                            //
 //                                                                            //
-//class of hilbert space of one 3d periodic box particle with reflexion symmetry in the plane//
+//class of hilbert space of one 3d periodic box particle with reflexion symmetry of X axis //
 //                                                                            //
 //                        last modification : 11/08/2004                      //
 //                                                                            //
@@ -29,13 +29,13 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXReflexionYZPeriodicThreeDOneParticle.h"
 
 
 // default constructor
 //
 
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle ()
+PeriodicXReflexionYZPeriodicThreeDOneParticle::PeriodicXReflexionYZPeriodicThreeDOneParticle ()
 {
 }
 
@@ -43,15 +43,15 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmet
 //
 // nbrStateX = wave function basis dimension in the x direction without symmetry redundancy
 // evenX = true if the wave functions in X is even, else odd
-// nbrStateY = wave function basis dimension in the y direction without symmetry redundancy
-// evenY = true if the wave functions in Y is even, else odd
+// nbrStateY = wave function basis dimension in the y direction
+// lowY = lower impulsion in Y direction (in unit of 2 * Pi / Lz)
 // nbrStateZ = wave function basis dimension in the z direction
 // lowZ = lower impulsion in Z direction (in unit of 2 * Pi / Lz)
 
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle (int nbrStateX, bool evenX, int nbrStateY, bool evenY, int nbrStateZ, int lowZ)
+PeriodicXReflexionYZPeriodicThreeDOneParticle::PeriodicXReflexionYZPeriodicThreeDOneParticle (int nbrStateX, bool evenX, int nbrStateY, int lowY, int nbrStateZ, int lowZ)
 {
   this->StateX = new PeriodicReflexionSymmetryOneDOneParticle (nbrStateX, evenX);
-  this->StateY = new PeriodicReflexionSymmetryOneDOneParticle (nbrStateY, evenY);
+  this->StateY = new PeriodicOneDOneParticle (nbrStateY, lowY);
   this->StateZ = new PeriodicOneDOneParticle (nbrStateZ, lowZ);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState () * this->StateZ->GetNbrState ();
 }
@@ -60,10 +60,10 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmet
 //
 // space = reference on Hilbert space to copy
 
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle (const PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle& space)
+PeriodicXReflexionYZPeriodicThreeDOneParticle::PeriodicXReflexionYZPeriodicThreeDOneParticle (const PeriodicXReflexionYZPeriodicThreeDOneParticle& space)
 {
   this->StateX = (PeriodicReflexionSymmetryOneDOneParticle*) space.StateX;
-  this->StateY = (PeriodicReflexionSymmetryOneDOneParticle*) space.StateY;
+  this->StateY = (PeriodicOneDOneParticle*) space.StateY;
   this->StateZ = (PeriodicOneDOneParticle*) space.StateZ;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
 }
@@ -71,7 +71,7 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::PeriodicXYReflexionSymmet
 // destructor
 //
 
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::~PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle ()
+PeriodicXReflexionYZPeriodicThreeDOneParticle::~PeriodicXReflexionYZPeriodicThreeDOneParticle ()
 {
 }
 
@@ -80,10 +80,10 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::~PeriodicXYReflexionSymme
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle& PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::operator = (const PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle& space)
+PeriodicXReflexionYZPeriodicThreeDOneParticle& PeriodicXReflexionYZPeriodicThreeDOneParticle::operator = (const PeriodicXReflexionYZPeriodicThreeDOneParticle& space)
 {
   this->StateX = (PeriodicReflexionSymmetryOneDOneParticle*) space.StateX;
-  this->StateY = (PeriodicReflexionSymmetryOneDOneParticle*) space.StateY;
+  this->StateY = (PeriodicOneDOneParticle*) space.StateY;
   this->StateZ = (PeriodicOneDOneParticle*) space.StateZ;
   return *this;
 }
@@ -92,8 +92,8 @@ PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle& PeriodicXYReflexionSymmet
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle::Clone ()
+AbstractHilbertSpace* PeriodicXReflexionYZPeriodicThreeDOneParticle::Clone ()
 {
-  return new PeriodicXYReflexionSymmetryZPeriodicThreeDOneParticle (*this);
+  return new PeriodicXReflexionYZPeriodicThreeDOneParticle (*this);
 }
 
