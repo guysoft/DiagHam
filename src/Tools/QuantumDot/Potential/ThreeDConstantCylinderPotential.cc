@@ -99,6 +99,8 @@ OneDConstantCellPotential* ThreeDConstantCylinderPotential::GaussianReductionOne
 {
   double* cellWidth = new double [this->NumberZ];
   double* potentialValue = new double [this->NumberZ];
+  if (m < 0)
+    m = -m;
   for (int k = 0; k < this->NumberZ; ++k)
     {
       double tmp = this->CylinderRadius[k] * this->CylinderRadius[k] / (sigma * sigma);

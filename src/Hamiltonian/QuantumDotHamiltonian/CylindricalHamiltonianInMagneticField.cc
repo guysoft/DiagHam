@@ -722,3 +722,4 @@ double CylindricalHamiltonianInMagneticField::MaxPartialDiagonalElement()
       tmp = this->PartialDiagonalElement[i];
   return tmp;
 }
+
