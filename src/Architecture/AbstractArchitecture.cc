@@ -32,6 +32,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
@@ -140,6 +141,9 @@ bool AbstractArchitecture::ExecuteOperation (AbstractArchitectureOperation* oper
     case AbstractArchitectureOperation::VectorHamiltonianMultiply:
       return this->ExecuteOperation((VectorHamiltonianMultiplyOperation*) operation);
       break;
+    case AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply:
+      return this->ExecuteOperation((MultipleVectorHamiltonianMultiplyOperation*) operation);
+      break;
     case AbstractArchitectureOperation::AddRealLinearCombination:
       return this->ExecuteOperation((AddRealLinearCombinationOperation*) operation);
       break;
@@ -176,6 +180,16 @@ bool AbstractArchitecture::ExecuteOperation (AbstractArchitectureOperation* oper
 // return value = true if operation has been completed successfully
 
 bool AbstractArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* operation)
+{
+  return false;
+}
+
+// execute an architecture-dependent multiple vector hamiltonian multiplication operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool AbstractArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation)
 {
   return false;
 }

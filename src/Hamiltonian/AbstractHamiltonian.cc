@@ -228,6 +228,116 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
   return vDestination;
 }
 
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int firstComponent, int nbrComponent)
+{
+  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vector by the current hamiltonian for a given range of indices 
+// and store result in another set of vector, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							  int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							  int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->LowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vector sat which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+{
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int firstComponent, int nbrComponent)
+{
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result in another set of vectors, low level function (no architecture optimization)
+//
+// vSource = array of vectors to be multiplied
+// vDestination = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors,
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->LowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //
@@ -325,6 +435,117 @@ ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, 
 							int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
 {
   return vDestination;
+}
+
+// multiply a set of vectors by the current hamiltonian and store result in another set of vectors
+// low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent)
+{
+  return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and store result in another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							     int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+							     int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->LowLevelMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			   destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+{
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, 0, this->GetHilbertSpaceDimension());
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int firstComponent, int nbrComponent)
+{
+  return this->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, 1, 0, nbrComponent, 0, 1, 0, this->GetHilbertSpaceDimension());
+}
+ 
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// sourceStart = source vector first index
+// sourceStep = step to add to go to the following source vector index
+// sourceShift = shift to apply when directly accessing source vector component (must be substracted to the real index)
+// sourceNbrComponent = number of component to take into account in the source vector
+// destinationStart = destination vector first index
+// destinationStep = step to add to go to the following destination vector index
+// destinationShift = shift to apply when directly accessing destination vector component (must be substracted to the real index)
+// destinationNbrComponent = number of component to take into account in the destination vector
+// return value = pointer to the array of vectors where result has been stored
+
+ComplexVector* AbstractHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+								int sourceStart, int sourceStep, int sourceShift, int sourceNbrComponent,
+								int destinationStart, int destinationStep, int destinationShift, int destinationNbrComponent)
+{
+  for (int i = 0; i < nbrVectors; ++i)
+    this->LowLevelAddMultiply(vSources[i], vDestinations[i], sourceStart, sourceStep, sourceShift, sourceNbrComponent, sourceNbrComponent, 
+			      destinationStep, destinationShift, destinationNbrComponent);
+  return vDestinations;
 }
 
 // store Hamiltonian into a picture (drawing non zero element with a color scale)
@@ -553,304 +774,114 @@ Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination,
   return vDestination;
 }
 
-// Tridiagonalize an hermitian matrix using Lanczos algorithm without re-orthogonalizing base at each step
+// multiply a set of vectors by the current hamiltonian
 //
-// dimension = maximum iteration number
-// M = reference on real tridiagonal symmetric matrix where result has to be stored
-// V1 = reference on real vector used as first vector (will contain last produced vector at the end)
-// return value = reference on real tridiagonal symmetric  matrix
-
-RealTriDiagonalSymmetricMatrix& AbstractHamiltonian::Lanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, 
-							      ComplexVector& V1) 
-{
-  ComplexVector V2(V1.GetVectorDimension());
-  ComplexVector V3(V1.GetVectorDimension());
-  int Index = 0;
-  if (M.GetNbrRow() != dimension)
-    M.Resize(dimension, dimension);
-  V1 /= V1.Norm();
-  this->LowLevelMultiply(V1, V2);
-  M.DiagonalElement(Index) = (V1 * V2).Re;
-  V2.AddLinearCombination(-M.DiagonalElement(Index), V1);
-  V2 /= V2.Norm();
-  for (int i = 2; i < dimension; i++)
-    {
-      this->LowLevelMultiply(V2, V3);
-      M.UpperDiagonalElement(Index) = (V1 * V3).Re;
-      M.DiagonalElement(Index + 1) = (V2 * V3).Re;
-      V3.AddLinearCombination(-M.DiagonalElement(Index + 1), V2);
-      V3.AddLinearCombination(-M.UpperDiagonalElement(Index), V1);
-      V3 /= V3.Norm();
-      ComplexVector TmpV (V1);
-      V1 = V2;
-      V2 = V3;
-      V3 = TmpV;
-      Index++;
-    }  
-  M.UpperDiagonalElement(Index) = this->MatrixElement(V1, V2).Re;
-  M.DiagonalElement(Index + 1) = this->MatrixElement(V2, V2).Re;
-  return M;
-}
-
-// Tridiagonalize hamiltonian using Lanczos algorithm with base re-orthogonalization
-//
-// dimension = maximum iteration number
-// M = reference on real tridiagonal symmetric matrix where result has to be stored
-// V1 = reference on real vector used as first vector (will contain last produced vector at the end)
-// return value = reference on real tridiagonal symmetric  matrix
-
-RealTriDiagonalSymmetricMatrix& AbstractHamiltonian::FullReorthogonalizedLanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, 
-										  RealVector& V1) 
-{
-  RealVector* Vectors = new RealVector [dimension];
-  Vectors[0] = V1;
-  Vectors[1] = RealVector (V1.GetVectorDimension());
-  int Index = 0;
-  if (M.GetNbrRow() != dimension)
-    M.Resize(dimension, dimension);
-  Vectors[0] /= Vectors[0].Norm();
-  this->LowLevelMultiply(Vectors[0], Vectors[1]);
-  M.DiagonalElement(Index) = (Vectors[0] * Vectors[1]);
-
-  Vectors[1].AddLinearCombination(-M.DiagonalElement(Index), Vectors[0]);
-  Vectors[1] /= Vectors[1].Norm();
-  for (int i = 2; i < dimension; i++)
-    {
-      Vectors[i] = RealVector (V1.GetVectorDimension());
-      this->LowLevelMultiply(Vectors[i - 1], Vectors[i]);
-      M.UpperDiagonalElement(Index) = (Vectors[i - 2] * Vectors[i]);
-      M.DiagonalElement(Index + 1) = (Vectors[i - 1] * Vectors[i]);
-      Vectors[i].AddLinearCombination(-M.DiagonalElement(Index + 1), Vectors[i - 1], 
-				      -M.UpperDiagonalElement(Index), Vectors[i - 2]);
-      for (int j = 0; j < i; j++)
-	Vectors[i].AddLinearCombination(- (Vectors[j] * Vectors[i]), Vectors[j]);	    
-      double VectorNorm = Vectors[i].Norm();
-      while (VectorNorm < 1e-5)
-	{
-	  cout << "subspace !!! " << i << endl;
-	  double tmp = 0;
-	  for (int j = 0; j < V1.GetVectorDimension(); j++)
-	    {
-	      Vectors[i][j] = rand ();
-	      tmp += Vectors[i][j] * Vectors[i][j];
-	    }
-	  tmp = sqrt(tmp);
-	  Vectors[i] /= tmp;
-	  RealVector TmpVector(V1.GetVectorDimension());
-	  this->LowLevelMultiply(Vectors[i], TmpVector);
-	  Vectors[i] = TmpVector;
-	  for (int j = 0; j < i; j++)
-	    {
-	      Vectors[i].AddLinearCombination(- (Vectors[j] * Vectors[i]), Vectors[j]);
-	    }
-	  VectorNorm = Vectors[i].Norm();
-	}
-      Vectors[i] /= VectorNorm;
-//      cout << (Vectors[0] * Vectors[i]) << " | ";
-      Index++;
-    }  
-  M.UpperDiagonalElement(Index) = this->MatrixElement(Vectors[V1.GetVectorDimension() - 2], 
-						      Vectors[V1.GetVectorDimension() - 1]).Re;
-  M.DiagonalElement(Index + 1) = this->MatrixElement(Vectors[V1.GetVectorDimension() - 1], 
-						     Vectors[V1.GetVectorDimension() - 1]).Re;
-  delete[] Vectors;
-  return M;
-}
-
-// Tridiagonalize hamiltonian using Lanczos algorithm with partial base re-orthogonalization
-//
-// dimension = maximum iteration number
-// M = reference on real tridiagonal symmetric complex tridiagonal matrix where result has to be stored
-// V1 = reference on real vector used as first vector (will contain last produced vector at the end)
-// step = number of iterations before re-orthogonalizing whole base
-// return value = reference on real tridiagonal symmetric matrix
-
-RealTriDiagonalSymmetricMatrix& AbstractHamiltonian::ReorthogonalizedLanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, 
-									      RealVector& V1, int step) 
-{
-  RealVector* Vectors = new RealVector [dimension];
-  Vectors[0] = V1;
-  Vectors[1] = RealVector (V1.GetVectorDimension());
-  int Index = 0;
-  if (M.GetNbrRow() != dimension)
-    M.Resize(dimension, dimension);
-  Vectors[0] /= Vectors[0].Norm();
-  this->LowLevelMultiply(Vectors[0], Vectors[1]);
-  M.DiagonalElement(Index) = (Vectors[0] * Vectors[1]);
-
-  Vectors[1].AddLinearCombination(-M.DiagonalElement(Index), Vectors[0]);
-  Vectors[1] /= Vectors[1].Norm();
-  int Step = 0;
-  for (int i = 2; i < dimension; i++)
-    {
-      Vectors[i] = RealVector (V1.GetVectorDimension());
-      this->LowLevelMultiply(Vectors[i - 1], Vectors[i]);
-      M.UpperDiagonalElement(Index) = (Vectors[i - 2] * Vectors[i]);
-      M.DiagonalElement(Index + 1) = (Vectors[i - 1] * Vectors[i]);
-      Vectors[i].AddLinearCombination(-M.DiagonalElement(Index + 1), Vectors[i - 1], 
-				      -M.UpperDiagonalElement(Index), Vectors[i - 2]);
-      if (++Step == step)
-	{
-	  for (int j = 0; j < (i - 1); j++)
-	    Vectors[i - 1].AddLinearCombination(- (Vectors[j] * Vectors[i - 1]), Vectors[j]);	    
-	  for (int j = 0; j < i; j++)
-	    Vectors[i].AddLinearCombination(- (Vectors[j] * Vectors[i]), Vectors[j]);	    
-	  Step = 0;
-	}
-      double VectorNorm = Vectors[i].Norm();
-      while (VectorNorm < 1e-5)
-	{
-	  cout << "subspace !!!" << endl;
-	  double tmp = 0;
-	  for (int j = 0; j < V1.GetVectorDimension(); j++)
-	    {
-	      Vectors[i][j] = rand ();
-	      tmp += Vectors[i][j] * Vectors[i][j];
-	    }
-	  tmp = sqrt(tmp);
-	  Vectors[i] /= tmp;
-	  RealVector TmpVector(V1.GetVectorDimension());
-	  this->LowLevelMultiply(Vectors[i], TmpVector);
-	  Vectors[i] = TmpVector;
-	  for (int j = 0; j < i; j++)
-	    {
-	      Vectors[i].AddLinearCombination(- (Vectors[j] * Vectors[i]), Vectors[j]);
-	    }
-	  VectorNorm = Vectors[i].Norm();
-	}
-      Vectors[i] /= VectorNorm;
-//      cout << (Vectors[0] * Vectors[i]) << " | ";
-      Index++;
-    }  
-  M.UpperDiagonalElement(Index) = this->MatrixElement(Vectors[V1.GetVectorDimension() - 2], 
-						      Vectors[V1.GetVectorDimension() - 1]).Re;
-  M.DiagonalElement(Index + 1) = this->MatrixElement(Vectors[V1.GetVectorDimension() - 1], 
-						     Vectors[V1.GetVectorDimension() - 1]).Re;
-  delete[] Vectors;
-  return M;
-}
-
-// Tridiagonalize an hermitian matrix using Lanczos algorithm without re-orthogonalizing base at each step
-//
-// dimension = maximum iteration number
-// M = reference on real tridiagonal symmetric matrix where result has to be stored
-// V1 = reference on real vector used as first vector (will contain last produced vector at the end)
-// return value = reference on real tridiagonal symmetric matrix
-
-RealTriDiagonalSymmetricMatrix& AbstractHamiltonian::Lanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, 
-							      RealVector& V1) 
-{
-  RealVector V2(V1.GetVectorDimension());
-  RealVector V3(V1.GetVectorDimension());
-  int Index = 0;
-  if (M.GetNbrRow() != dimension)
-    M.Resize(dimension, dimension);
-  V1 /= V1.Norm();
-  this->LowLevelMultiply(V1, V2);
-  M.DiagonalElement(Index) = (V1 * V2);
-  V2.AddLinearCombination(-M.DiagonalElement(Index), V1);
-  double tmpNorm;
-  V2 /= V2.Norm(); 
-  for (int i = 2; i < dimension; i++)
-    {
-      this->LowLevelMultiply(V2, V3);
-      M.UpperDiagonalElement(Index) = (V1 * V3);
-      M.DiagonalElement(Index + 1) = (V2 * V3);
-      V3.AddLinearCombination(-M.DiagonalElement(Index + 1), V2,-M.UpperDiagonalElement(Index), V1);
-      tmpNorm = V3.Norm();
-      V3 /= tmpNorm;
-      RealVector TmpV (V1);
-      V1 = V2;
-      V2 = V3;
-      V3 = TmpV;
-      Index++;
-    }  
-  M.UpperDiagonalElement(Index) = this->MatrixElement(V1, V2).Re;
-  M.DiagonalElement(Index + 1) = this->MatrixElement(V2, V2).Re;
-  return M;
-}
-
-// Tridiagonalize an hermitian matrix using Lanczos algorithm without re-orthogonalizing base at each step
-//
-// dimension = maximum iteration number
-// M = reference on real tridiagonal symmetric matrix where result has to be stored
-// V1 = reference on real vector used as first vector (will contain last produced vector at the end)
-// V2 = reference on real vector used as second vector (will contain next to last produced vector at the end)
-// useV2 = true if V2 already contains result of second Lanczos iteration, in that case M is supposed to give
-//         results of previous Lanczos iteration
-// return value = reference on real tridiagonal symmetric matrix
-
-RealTriDiagonalSymmetricMatrix& AbstractHamiltonian::Lanczos (int dimension, RealTriDiagonalSymmetricMatrix& M, 
-							      RealVector& V1, RealVector& V2, bool useV2) 
-{
-  RealVector V3(V1.GetVectorDimension());
-  int Index;
-  int Start;
-  double tmpNorm;
-  if (useV2 == false)
-    {
-      Start = 2;
-      Index = 0;
-      if (M.GetNbrRow() != dimension)
-	M.Resize(dimension, dimension);
-      V1 /= V1.Norm();
-      this->LowLevelMultiply(V1, V2);
-      M.DiagonalElement(Index) = (V1 * V2);
-      V2.AddLinearCombination(-M.DiagonalElement(Index), V1);
-      V2 /= V2.Norm(); 
-    }
-  else 
-    {
-      Start = M.GetNbrRow();
-      Index = M.GetNbrRow() - 1;
-      if (M.GetNbrRow() != dimension)
-	M.Resize(dimension, dimension);
-    }
-  for (int i = Start; i < dimension; i++)
-    {
-      this->LowLevelMultiply(V2, V3);
-      M.UpperDiagonalElement(Index) = (V1 * V3);
-      M.DiagonalElement(Index + 1) = (V2 * V3);
-      V3.AddLinearCombination(-M.DiagonalElement(Index + 1), V2,-M.UpperDiagonalElement(Index), V1);
-      tmpNorm = V3.Norm();
-      V3 /= tmpNorm;
-      RealVector TmpV (V1);
-      V1 = V2;
-      V2 = V3;
-      V3 = TmpV;
-      Index++;
-    }  
-  M.UpperDiagonalElement(Index) = this->MatrixElement(V1, V2).Re;
-  M.DiagonalElement(Index + 1) = this->MatrixElement(V2, V2).Re;
-  return M;
-}
-
-// multiply a vector by the current hamiltonian using threads
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// nbrProcess = number of process to run
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
 // return value = reference on vector where result has been stored
 
-#ifdef __SMP__
-
-RealVector& AbstractHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int nbrProcess)
+Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
 {
-  return this->LowLevelMultiply(vSource, vDestination);
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if (vSources[0].GetVectorType() == Vector::RealDatas)
+    {
+      return this->LowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->LowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
 }
 
-// multiply a vector by the current hamiltonian using threads
-// and store result in another vector, low level function (no architecture optimization)
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
 //
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// nbrProcess = number of process to run
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors where result has to be stored
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int nbrProcess)
+Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
+					      int firstComponent, int nbrComponent)
 {
-  return this->LowLevelMultiply(vSource, vDestination);
+  cout << "check " << endl;
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  cout << "check 0" << endl;
+  for (int i = 1; i < nbrVectors; ++i)
+    {
+      cout << "check " << i << " " << vSources[0].GetVectorType()<< " " << vSources[i].GetVectorType()<< " " 
+	   << vDestinations[0].GetVectorType()<< " " << vDestinations[i].GetVectorType() << endl;      
+      if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+	return vDestinations;
+    }
+  cout << "check " << endl;
+  if (vSources[0].GetVectorType() == Vector::RealDatas)
+    {
+      cout << "check real " << endl;
+      return this->LowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->LowLevelMultipleMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
 }
 
-#endif
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if (vSources[0].GetVectorType() == Vector::RealDatas)
+    {
+      return this->LowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
+    }
+  else
+    {
+      return this->LowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors);
+    }
+}
+
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
+						 int firstComponent, int nbrComponent)
+{
+  if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
+    return vDestinations;
+  for (int i = 1; i < nbrVectors; ++i)
+    if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
+      return vDestinations;
+  if (vSources[0].GetVectorType() == Vector::RealDatas)
+    {
+      return this->LowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->LowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
+    }
+}
+

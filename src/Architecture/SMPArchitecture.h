@@ -113,17 +113,23 @@ class SMPArchitecture : public AbstractArchitecture
   // vDestination = vector where result has to be stored 
   void Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination);
 
+  // main function for thread
+  //
+  // param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
+  // return value = unused pointer (null)
+  friend void* ThreadMain(void* param);
+
   // execute an architecture-dependent vector hamiltonian multiplication operation
   //
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
   
-  // main function for thread
+  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
   //
-  // param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
-  // return value = unused pointer (null)
-  friend void* ThreadMain(void* param);
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
 
   // execute an architecture-dependent vector abstact scalar sum operation
   //

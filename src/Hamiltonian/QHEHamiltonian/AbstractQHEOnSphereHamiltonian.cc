@@ -314,6 +314,180 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
   return vDestination;
 }
 
+
+// multiply a et of vectors by the current hamiltonian for a given range of indices 
+// and add result to another et of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+									int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  if (this->FastMultiplicationFlag == false)
+    {
+      int Index;
+      int m1;
+      int m2;
+      int m3;
+      int m4;
+      double TmpInteraction;
+      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  m1 = this->M1Value[j];
+	  m2 = this->M2Value[j];
+	  m3 = this->M3Value[j];
+	  TmpInteraction = this->InteractionFactors[j];
+	  m4 = m1 + m2 - m3;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	      if (Index < Dim)
+		{
+		  Coefficient *= TmpInteraction;
+		  for (int l = 0; l < nbrVectors; ++l)
+		    vDestinations[l][Index] += Coefficient * vSources[l][i];
+		}
+	    }
+	}
+      for (int l = 0; l < nbrVectors; ++l)
+	{
+	  RealVector& TmpSourceVector = vSources[l];
+	  RealVector& TmpDestinationVector = vDestinations[l];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	}
+      delete TmpParticles;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  double* Coefficient2 = new double [nbrVectors];
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int j;
+	  int Pos;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  Coefficient2[l] = vSources[l][k];
+		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		    }
+		}
+	      ++k;
+	    }
+	  delete[] Coefficient2;
+	}
+      else
+	{
+	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  double* Coefficient2 = new double [nbrVectors];
+	  int j;
+	  int TmpNbrInteraction;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  int Pos2;
+	  int Pos = firstComponent / this->FastMultiplicationStep; 
+	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  if (PosMod != 0)
+	    {
+	      ++Pos;
+	      PosMod = this->FastMultiplicationStep - PosMod;
+	    }
+	  int l =  PosMod + firstComponent + this->PrecalculationShift;
+	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  Coefficient2[k] = vSources[k][l];
+		  vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos2 = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][Pos2] += Coefficient  * Coefficient2[k];
+		    }
+		}
+	      l += this->FastMultiplicationStep;
+	      ++Pos;
+	    }
+	  int Index;
+	  int m1;
+	  int m2;
+	  int m3;
+	  int m4;
+	  double TmpInteraction;
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
+	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+	    if (PosMod != k)
+	      {		
+		for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+		  {
+		    m1 = this->M1Value[j];
+		    m2 = this->M2Value[j];
+		    m3 = this->M3Value[j];
+		    TmpInteraction = this->InteractionFactors[j];
+		    m4 = m1 + m2 - m3;
+		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+			if (Index < Dim)
+			  {
+			    Coefficient *= TmpInteraction;
+			    for (int l = 0; l < nbrVectors; ++l)
+			      vDestinations[l][Index] += Coefficient * vSources[l][i];
+			  }
+		      }
+		  }
+		for (int l = 0; l < nbrVectors; ++l)
+		  {
+		    RealVector& TmpSourceVector = vSources[l];
+		    RealVector& TmpDestinationVector = vDestinations[l];
+		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		  }
+	      }
+	  delete[] Coefficient2;
+	  delete TmpParticles;
+	}
+   }
+  return vDestinations;
+}
+
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //

@@ -527,6 +527,32 @@ void RealSymmetricMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   *(this->OffDiagonalGarbageFlag) = 1;
 }
 
+// copy matrix
+//
+// M = matrix to copy
+// return value = refence on current matrix
+
+RealSymmetricMatrix& RealSymmetricMatrix::Copy (RealSymmetricMatrix& M)
+{
+  if (this->NbrRow != M.NbrRow)
+    this->Resize(M.NbrRow, M.NbrColumn);
+  int Pos1 = 0;
+  int Pos2 = 0;
+  for (int i = 0; i < M.NbrColumn; i++)
+    {
+      for (int j = i + 1; j < M.NbrColumn; ++j)
+	{
+	  this->OffDiagonalElements[Pos1] = M.OffDiagonalElements[Pos2];
+	  ++Pos1;
+	  ++Pos2;
+	}
+      Pos1 += this->Increment;
+      Pos2 += M.Increment;
+      this->DiagonalElements[i] = M.DiagonalElements[i];
+    }
+  return *this;
+}
+
 #ifdef USE_HILBERT_SPACE
 // project matrix into a given subspace
 //

@@ -45,6 +45,7 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
 
 #include "Options/OptionManager.h"
 #include "Options/AbstractOption.h"
@@ -108,6 +109,16 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
     }
   this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
+  this->BlockLanczosFlag = false;
+  if ((*options)["block-lanczos"] != 0)
+    {
+      this->BlockLanczosFlag = ((BooleanOption*) (*options)["block-lanczos"])->GetBoolean();
+    }
+  this->SizeBlockLanczos = 1;
+  if ((*options)["block-size"] != 0)
+    {
+      this->SizeBlockLanczos = ((SingleIntegerOption*) (*options)["block-size"])->GetInteger();
+    }
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
   this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
@@ -207,7 +218,12 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       else
 	{
 	  if (this->DiskFlag == false)
-	    Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    {
+	      if (this->BlockLanczosFlag == true)
+		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos);
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    }
 	  else
 	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
 	}
@@ -235,7 +251,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) ||
 						       ((this->DiskFlag == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos))))
 	{
-	  ++CurrentNbrIterLanczos;
+	  CurrentNbrIterLanczos += this->SizeBlockLanczos;
 	  Lanczos->RunLanczosAlgorithm(1);
 	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	  TmpMatrix.SortMatrixUpOrder();

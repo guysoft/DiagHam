@@ -170,6 +170,12 @@ class RealSymmetricMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // copy matrix
+  //
+  // M = matrix to copy
+  // return value = refence on current matrix
+  RealSymmetricMatrix& Copy (RealSymmetricMatrix& M);
+
 #ifdef USE_HILBERT_SPACE
   // project matrix into a given subspace
   //

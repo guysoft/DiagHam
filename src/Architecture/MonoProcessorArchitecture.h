@@ -56,6 +56,12 @@ public:
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
   
+  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
+
   // execute an architecture-dependent vector abstact scalar sum operation
   //
   // operation = pointer to the operation to execute

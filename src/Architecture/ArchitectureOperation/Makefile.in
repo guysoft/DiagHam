@@ -53,6 +53,7 @@ libArchitectureOperation_a_LIBADD =
 am_libArchitectureOperation_a_OBJECTS =  \
 	AbstractArchitectureOperation.$(OBJEXT) \
 	VectorHamiltonianMultiplyOperation.$(OBJEXT) \
+	MultipleVectorHamiltonianMultiplyOperation.$(OBJEXT) \
 	MultipleRealScalarProductOperation.$(OBJEXT) \
 	AddRealLinearCombinationOperation.$(OBJEXT) \
 	MultipleComplexScalarProductOperation.$(OBJEXT) \
@@ -78,6 +79,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/MatrixMatrixMultiplyOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleComplexScalarProductOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleRealScalarProductOperation.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/MultipleVectorHamiltonianMultiplyOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/NDMAPPrecalculationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEParticlePrecalculationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po \
@@ -186,6 +188,7 @@ SUBDIRS =
 noinst_LIBRARIES = libArchitectureOperation.a
 libArchitectureOperation_a_SOURCES = AbstractArchitectureOperation.cc \
 VectorHamiltonianMultiplyOperation.cc \
+MultipleVectorHamiltonianMultiplyOperation.cc \
 MultipleRealScalarProductOperation.cc \
 AddRealLinearCombinationOperation.cc \
 MultipleComplexScalarProductOperation.cc \
@@ -254,6 +257,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MatrixMatrixMultiplyOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleComplexScalarProductOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleRealScalarProductOperation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleVectorHamiltonianMultiplyOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NDMAPPrecalculationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticlePrecalculationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po@am__quote@

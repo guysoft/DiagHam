@@ -341,6 +341,20 @@ Vector* RealVector::EmptyClone(bool zeroFlag)
   return new RealVector(this->Dimension, zeroFlag);
 }
 
+// create an array of new vectors with same size and same type but non-initialized components
+//
+// nbrVectors = number of vectors to sreate
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to the array of new vectors
+
+Vector* RealVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
+{
+  RealVector* TmpVectors = new RealVector [nbrVectors];
+  for (int i = 0; i < nbrVectors; ++i)
+    TmpVectors[i] = RealVector(this->Dimension, zeroFlag);
+  return TmpVectors;
+}
+
 // put all vector components to zero
 //
 // return value = reference on current vector

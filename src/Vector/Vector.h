@@ -131,6 +131,13 @@ class Vector
   // return value = pointer to new vector 
   virtual Vector* EmptyClone(bool zeroFlag = false);
 
+  // create an array of new vectors with same size and same type but non-initialized components
+  //
+  // nbrVectors = number of vectors to sreate
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to the array of new vectors
+  virtual Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
+
   // sum two vectors
   //
   // vector = vector to add

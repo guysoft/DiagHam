@@ -66,6 +66,10 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   int NbrEigenvalue;
   // value of the last wanted eigenvalue at previous Lanczos iteration
   double PreviousLastWantedEigenvalue;
+  // value of the wanted eigenvalue at previous Lanczos iteration
+  double* PreviousWantedEigenvalues;
+  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  bool StrongConvergenceFlag;
 
   // size of the block used for the block Lanczos algorithm
   int BlockSize;
@@ -75,6 +79,9 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   // temporary matrix used to duplicated ReducedMatrix before diagonalize it
   RealSymmetricMatrix TemporaryReducedMatrix;
 
+  // array used to store temporary scalar products
+  double* TemporaryCoefficients;
+
  public:
 
   // default constructor
@@ -83,7 +90,9 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   // nbrEigenvalue = number of wanted eigenvalues (rounded to the upper multiple of blockSize)
   // blockSize = size of the block used for the block Lanczos algorithm
   // maxIter = an approximation of maximal number of iteration (rounded to the upper multiple of blockSize)
-  FullReorthogonalizedBlockLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize = 2, int maxIter = 1000);
+  // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  FullReorthogonalizedBlockLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize = 2, int maxIter = 1000,
+					    bool strongConvergence = false);
 
   // copy constructor
   //
@@ -123,6 +132,26 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   //
   // return value = true if convergence has been reached
   bool TestConvergence ();
+
+
+ protected:
+  
+  // diagonalize tridiagonalized matrix and find ground state energy
+  //
+  void Diagonalize ();
+
+
+ private:
+
+  // reorthogonalize a set of vectors using Gram-Schmidt algorithm
+  //
+  // vectors = array of vectors to reorthogonalize
+  // nbrVectors = number of vectors to reorthogonalize
+  // matrix = matrix where transformation matrix has to be stored
+  // rowShift = shift to apply to matrix row index to reach the upper leftmost element
+  // columnShift = shift to apply to matrix column index to reach the upper leftmost element
+  void ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealSymmetricMatrix& matrix,
+			       int rowShift, int columnShift);
 
 };
 

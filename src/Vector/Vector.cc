@@ -48,6 +48,17 @@ Vector* Vector::EmptyClone(bool zeroFlag)
   return 0;
 }
 
+// create an array of new vectors with same size and same type but non-initialized components
+//
+// nbrVectors = number of vectors to sreate
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to the array of new vectors
+
+Vector* Vector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
+{
+  return 0;
+}
+
 // get vector norm
 //
 // return value = vector norm

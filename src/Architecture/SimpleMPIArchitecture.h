@@ -98,6 +98,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
   
+  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  virtual bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
+
   // execute an architecture-dependent add real linear combination operation
   //
   // operation = pointer to the operation to execute

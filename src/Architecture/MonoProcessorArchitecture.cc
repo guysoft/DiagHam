@@ -33,6 +33,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
@@ -66,6 +67,16 @@ bool MonoProcessorArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOpera
   return operation->ApplyOperation();
 }
   
+
+// execute an architecture-dependent multiple vector hamiltonian multiplication operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool MonoProcessorArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation)
+{
+  return operation->ApplyOperation();
+}
 
 // execute an architecture-dependent vector abstact scalar sum operation
 //

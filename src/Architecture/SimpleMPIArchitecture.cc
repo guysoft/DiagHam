@@ -34,6 +34,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
@@ -167,6 +168,52 @@ bool SimpleMPIArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation
   operation->GetDestinationVector()->SumVector(MPI::COMM_WORLD, 0);
   operation->GetDestinationVector()->BroadcastVector(MPI::COMM_WORLD, 0);
   return true;
+#else
+  return false;
+#endif
+}
+  
+
+// execute an architecture-dependent multiple vector hamiltonian multiplication operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool SimpleMPIArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation)
+{
+#ifdef __MPI__
+  bool RealFlag = true;
+  int NbrVectors = operation->GetNbrVectors();
+   if (operation->GetDestinationComplexVectors() == 0)
+    {
+      RealFlag = true;
+      for (int i = 0; i < NbrVectors; ++i)
+	operation->GetDestinationRealVectors()[i].ClearVector();
+    }
+   else
+     {
+      for (int i = 0; i < NbrVectors; ++i)
+	operation->GetDestinationComplexVectors()[i].ClearVector();
+     }
+   operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+   operation->ApplyOperation();
+   if (RealFlag == true)
+     {
+      for (int i = 0; i < NbrVectors; ++i)
+	{
+	  operation->GetDestinationRealVectors()[i].SumVector(MPI::COMM_WORLD, 0);
+	  operation->GetDestinationRealVectors()[i].BroadcastVector(MPI::COMM_WORLD, 0);
+	}
+     }
+   else
+     {
+       for (int i = 0; i < NbrVectors; ++i)
+	 {
+	   operation->GetDestinationComplexVectors()[i].SumVector(MPI::COMM_WORLD, 0);
+	   operation->GetDestinationComplexVectors()[i].BroadcastVector(MPI::COMM_WORLD, 0);
+	 }
+     }
+   return true;
 #else
   return false;
 #endif

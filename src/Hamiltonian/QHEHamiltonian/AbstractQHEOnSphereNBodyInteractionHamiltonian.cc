@@ -204,6 +204,201 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
   return vDestination;
 }
 
+// multiply a et of vectors by the current hamiltonian for a given range of indices 
+// and add result to another et of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+											int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  if (this->FastMultiplicationFlag == false)
+    {
+      int Index;
+      int* MIndices;
+      int* NIndices;
+      double* TmpInteraction;
+      double* Coefficient2 = new double [nbrVectors];
+      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+      for (int k = 2; k <= this->MaxNBody; ++k)
+	if (this->NBodyFlags[k] == true)
+	  {
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      {
+		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+		  {
+		    TmpInteraction = this->NBodyInteractionFactors[k][j];
+		    int Lim = NbrSortedIndicesPerSum[k][j];
+		    MIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i1 = 0; i1 < Lim; ++i1)
+		      {
+			for (int l = 0; l < nbrVectors; ++l)
+			  Coefficient2[l] = vSources[l][i] * TmpInteraction[i1];
+			NIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
+			  {
+			    Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			    if (Index < Dim)
+			      {				
+				for (int l = 0; l < nbrVectors; ++l)
+				  vDestinations[l][Index] += Coefficient * TmpInteraction[i2] * Coefficient2[l];
+			      }
+			    NIndices += k;
+			  }
+			MIndices += k;
+		      }
+		  }
+	      }
+	  }	    
+      for (int l = 0; l < nbrVectors; ++l)
+	{
+	  RealVector& TmpSourceVector = vSources[l];
+	  RealVector& TmpDestinationVector = vDestinations[l];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	}
+      delete TmpParticles;
+      delete[] Coefficient2;
+    }
+  else
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  double* Coefficient2 = new double [nbrVectors];
+	  int j;
+	  int Pos;
+	  int TmpNbrInteraction;
+	  int k = firstComponent;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      for (int l = 0; l < nbrVectors; ++l)
+		{
+		  Coefficient2[l] = vSources[l][k];
+		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int l = 0; l < nbrVectors; ++l)
+		    {
+		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		    }
+		}
+	      ++k;
+	    }
+	  delete[] Coefficient2;
+	}
+      else
+	{
+	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  double* Coefficient2 = new double [nbrVectors];
+	  int j;
+	  int Pos2;
+	  int TmpNbrInteraction;
+	  firstComponent -= this->PrecalculationShift;
+	  LastComponent -= this->PrecalculationShift;
+	  int Pos = firstComponent / this->FastMultiplicationStep; 
+	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  if (PosMod != 0)
+	    {
+	      ++Pos;
+	      PosMod = this->FastMultiplicationStep - PosMod;
+	    }
+	  int l =  PosMod + firstComponent + this->PrecalculationShift;
+	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  Coefficient2[k] = vSources[k][l];
+		  vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
+		}
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Pos2 = TmpIndexArray[j];
+		  Coefficient = TmpCoefficientArray[j];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][Pos2] += Coefficient  * Coefficient2[k];
+		    }
+		}
+	      l += this->FastMultiplicationStep;
+	      ++Pos;
+	    }
+	  int Index;
+	  int* MIndices;
+	  int* NIndices;
+	  double* TmpInteraction;
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
+	  for (l = 0; l < this->FastMultiplicationStep; ++l)
+	    if (PosMod != l)
+	      {	
+		for (int k = 2; k <= this->MaxNBody; ++k)
+		  if (this->NBodyFlags[k] == true)
+		    {
+		      for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			{
+			  for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+			    {
+			      TmpInteraction = this->NBodyInteractionFactors[k][j];
+			      int Lim = NbrSortedIndicesPerSum[k][j];
+			      MIndices = this->SortedIndicesPerSum[k][j];
+			      for (int i1 = 0; i1 < Lim; ++i1)
+				{
+				  for (int l = 0; l < nbrVectors; ++l)
+				    Coefficient2[l] = vSources[l][i] * TmpInteraction[i1];
+				  NIndices = this->SortedIndicesPerSum[k][j];
+				  for (int i2 = 0; i2 < Lim; ++i2)
+				    {
+				      Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+				      if (Index < Dim)
+					{
+					  for (int l = 0; l < nbrVectors; ++l)
+					    vDestinations[l][Index] += Coefficient * TmpInteraction[i2] * Coefficient2[l];
+					}
+				      NIndices += k;
+				    }
+				  MIndices += k;
+				}
+			    }
+			}		      
+		    }
+		for (int l = 0; l < nbrVectors; ++l)
+		  {
+		    RealVector& TmpSourceVector = vSources[l];
+		    RealVector& TmpDestinationVector = vDestinations[l];
+		    for (int i = firstComponent; i < LastComponent; ++i)
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		  }
+	      }
+	  delete[] Coefficient2;
+	  delete TmpParticles;
+	}
+   }
+  return vDestinations;
+}
+
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted

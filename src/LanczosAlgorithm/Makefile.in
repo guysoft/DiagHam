@@ -63,6 +63,7 @@ am_libLanczosAlgorithm_a_OBJECTS = AbstractLanczosAlgorithm.$(OBJEXT) \
 	FullReorthogonalizedComplexLanczosAlgorithm.$(OBJEXT) \
 	FullReorthogonalizedLanczosAlgorithmWithDiskStorage.$(OBJEXT) \
 	FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.$(OBJEXT) \
+	FullReorthogonalizedBlockLanczosAlgorithm.$(OBJEXT) \
 	ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.$(OBJEXT)
 libLanczosAlgorithm_a_OBJECTS = $(am_libLanczosAlgorithm_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
@@ -77,6 +78,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithDiskStorage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithEigenstates.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithGroundState.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/FullReorthogonalizedBlockLanczosAlgorithm.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FullReorthogonalizedComplexLanczosAlgorithm.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FullReorthogonalizedLanczosAlgorithm.Po \
@@ -197,6 +199,7 @@ FullReorthogonalizedLanczosAlgorithm.cc \
 FullReorthogonalizedComplexLanczosAlgorithm.cc \
 FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc \
 FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.cc \
+FullReorthogonalizedBlockLanczosAlgorithm.cc \
 ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc
 
 all: all-recursive
@@ -255,6 +258,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithDiskStorage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithEigenstates.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithGroundState.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FullReorthogonalizedBlockLanczosAlgorithm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FullReorthogonalizedComplexLanczosAlgorithm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FullReorthogonalizedLanczosAlgorithm.Po@am__quote@

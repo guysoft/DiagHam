@@ -343,6 +343,20 @@ Vector* ComplexVector::EmptyClone(bool zeroFlag)
   return new ComplexVector(this->Dimension, zeroFlag);
 }
 
+// create an array of new vectors with same size and same type but non-initialized components
+//
+// nbrVectors = number of vectors to sreate
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to the array of new vectors
+
+Vector* ComplexVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
+{
+  ComplexVector* TmpVectors = new ComplexVector [nbrVectors];
+  for (int i = 0; i < nbrVectors; ++i)
+    TmpVectors[i] = ComplexVector(this->Dimension, zeroFlag);
+  return TmpVectors;
+}
+
 // put all vector components to zero
 //
 // return value = reference on current vector

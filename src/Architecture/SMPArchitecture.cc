@@ -35,6 +35,7 @@
 #include "Vector/ComplexVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
@@ -171,6 +172,76 @@ bool SMPArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* oper
   return true;
 }
   
+// execute an architecture-dependent multiple vector hamiltonian multiplication operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation)
+{
+  bool RealFlag = false;
+  int Dimension = 0;
+  if (operation->GetDestinationComplexVectors() == 0)
+    {
+      RealFlag = true;
+      Dimension = operation->GetDestinationRealVectors()[0].GetVectorDimension();
+    }
+  else
+    {
+      Dimension = operation->GetDestinationComplexVectors()[0].GetVectorDimension();
+    }
+  int Step = Dimension / this->NbrProcesses;
+  int FirstComponent = 0;
+  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  int NbrVectors = operation->GetNbrVectors();
+  if (RealFlag == true)
+    {
+      for (int i = 0; i < NbrVectors; ++i)
+	operation->GetDestinationRealVectors()[i].ClearVector();
+    }
+  else
+    {
+      for (int i = 0; i < NbrVectors; ++i)
+	operation->GetDestinationComplexVectors()[i].ClearVector();
+    }
+   for (int i = 0; i < ReducedNbrProcesses; ++i)
+    {
+      this->ThreadParameters[i].Operation = operation->Clone();
+      ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      FirstComponent += Step;
+    }
+  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
+  ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, Dimension - FirstComponent);  
+  for (int i = 1; i < this->NbrProcesses; ++i)
+    {
+      if (RealFlag == true)
+	((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetDestinationVector(operation->GetDestinationRealVectors()[0].EmptyCloneArray(NbrVectors, 
+																				      true));
+      else
+	((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetDestinationVector(operation->GetDestinationComplexVectors()[0].EmptyCloneArray(NbrVectors, 
+																					 true));
+
+    }
+  this->SendJobs();
+  for (int i = 1; i < this->NbrProcesses; ++i)
+    {
+      if (RealFlag == true)
+	{
+	  for (int j = 0; j < NbrVectors; ++j)
+	    operation->GetDestinationRealVectors()[j] += ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationRealVectors()[j];
+	  delete ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationRealVectors();
+	}
+      else
+	{
+	  for (int j = 0; j < NbrVectors; ++j)
+	    operation->GetDestinationComplexVectors()[j] += ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationComplexVectors()[j];
+	  delete ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationComplexVectors();
+	}
+      delete this->ThreadParameters[i].Operation;
+    }
+  return true;
+}
+
 // execute an architecture-dependent vector abstract scalar sum operation
 //
 // operation = pointer to the operation to execute

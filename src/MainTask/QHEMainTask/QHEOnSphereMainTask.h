@@ -69,6 +69,10 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool DiskFlag;
   // resume from disk datas
   bool ResumeFlag;
+  // enable block Lanczos algorithm
+  bool BlockLanczosFlag;
+  // size of the blocks used in the block Lanczos algorithm
+  int SizeBlockLanczos;
   // number of eigenvalues to evaluate 
   int NbrEigenvalue;
   // number of lanczos iteration (for the current run)
