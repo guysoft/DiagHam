@@ -1,9 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
-//                    class for n dimensional real vector                     //
+//                            DiagHam  version 0.01                           //
 //                                                                            //
-//                        last modification : 04/01/2001                      //
+//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                                                                            //
+//                                                                            //
+//                    class for n dimensional real vector                     //
+//            whose memory allocation is done only on one process             //
+//                                                                            //
+//                        last modification : 15/06/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -23,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Vector/RealVector.h"
+#include "Vector/DelocalizedRealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -51,33 +57,49 @@ using std::endl;
 // default constructor
 //
 
-RealVector::RealVector()
+DelocalizedRealVector::DelocalizedRealVector()
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
   this->Dimension = 0;
   this->TrueDimension = 0;
   this->Components = 0;
   this->VectorId = 0;
+  this->LocalizationId = 0;
+  this->LocalId = 0;
+  this->Architecture = 0;
 }
 
 // constructor for an empty real vector (all coordinates set to zero)
 //
 // size = Vector Dimension 
+// architecture = 
+// vectorId = id of the vector
+// localizationId =
 // zeroFlag = true if all coordinates have to be set to zero
 
-RealVector::RealVector(int size, bool zeroFlag)
+DelocalizedRealVector::DelocalizedRealVector(int size, architecture int vectorId, int localizationId,, bool zeroFlag)
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = Vector::RealDatas | Vector::NonLocalDatas;
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
-  this->Components = new double [this->Dimension + 1]; 
   this->Flag.Initialize();
-  this->VectorId = 0;
-  if (zeroFlag == true)
-    for (int i = 0; i < this->Dimension; i++)
-      {
-	this->Components[i] = 0.0;
-      }
+  this->Architecture = architecture;
+  this->LocalizationId = localizationId;
+  this->LocalId = this->Architecture->GetProcessId();
+  this->VectorId = vectorId;
+  if (this->LocalizationId == this->LocalId)
+    {
+      this->Components = new double [this->Dimension + 1]; 
+      if (zeroFlag == true)
+	for (int i = 0; i < this->Dimension; i++)
+	  {
+	    this->Components[i] = 0.0;
+	  }
+    }
+  else
+    {
+      this->Components = 0;
+    }
 }
 
 // constructor from an array of doubles
@@ -85,7 +107,7 @@ RealVector::RealVector(int size, bool zeroFlag)
 // array = array of doubles with real in even position and imaginary part in odd position
 // size = Vector Dimension
  
-RealVector::RealVector(double* array, int size)
+DelocalizedRealVector::DelocalizedRealVector(double* array, int size)
 {
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
@@ -99,7 +121,7 @@ RealVector::RealVector(double* array, int size)
 // vector = vector to copy
 // DuplicateFlag = true if datas have to be duplicated
 
-RealVector::RealVector(const RealVector& vector, bool duplicateFlag)
+DelocalizedRealVector::DelocalizedRealVector(const DelocalizedRealVector& vector, bool duplicateFlag)
 {
   this->VectorType = Vector::RealDatas;
   this->VectorId = vector.VectorId;
@@ -130,7 +152,7 @@ RealVector::RealVector(const RealVector& vector, bool duplicateFlag)
 //
 // vector = vector to copy
 
-RealVector::RealVector(const ComplexVector& vector)
+DelocalizedRealVector::DelocalizedRealVector(const ComplexVector& vector)
 {
   this->VectorType = Vector::RealDatas;
   this->Dimension = vector.Dimension;
@@ -153,7 +175,7 @@ RealVector::RealVector(const ComplexVector& vector)
 //
 // vector = vector to copy
 
-RealVector::RealVector(const Vector& vector)
+DelocalizedRealVector::DelocalizedRealVector(const Vector& vector)
 {
   this->VectorType = Vector::RealDatas;
   this->Dimension = vector.Dimension;
@@ -162,8 +184,8 @@ RealVector::RealVector(const Vector& vector)
   if (vector.VectorType == Vector::RealDatas)
     {
       this->VectorType = Vector::RealDatas;
-      this->Components = ((RealVector&) vector).Components;
-      this->Flag = ((RealVector&) vector).Flag;
+      this->Components = ((DelocalizedRealVector&) vector).Components;
+      this->Flag = ((DelocalizedRealVector&) vector).Flag;
     }
   else
     if (vector.VectorType == Vector::ComplexDatas)
@@ -190,7 +212,7 @@ RealVector::RealVector(const Vector& vector)
 // destructor
 //
 
-RealVector::~RealVector ()
+DelocalizedRealVector::~DelocalizedRealVector ()
 {
   if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -203,7 +225,7 @@ RealVector::~RealVector ()
 // vector = vector to assign
 // return value = reference on current vector
 
-RealVector& RealVector::operator = (const RealVector& vector)
+DelocalizedRealVector& DelocalizedRealVector::operator = (const DelocalizedRealVector& vector)
 {
   if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -222,7 +244,7 @@ RealVector& RealVector::operator = (const RealVector& vector)
 // vector = vector to assign
 // return value = reference on current vector
 
-RealVector& RealVector::operator = (const ComplexVector& vector)
+DelocalizedRealVector& DelocalizedRealVector::operator = (const ComplexVector& vector)
 {
   if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -245,11 +267,11 @@ RealVector& RealVector::operator = (const ComplexVector& vector)
 // vector = vector to assign
 // return value = reference on current vector
 
-RealVector& RealVector::operator = (const Vector& vector)
+DelocalizedRealVector& DelocalizedRealVector::operator = (const Vector& vector)
 {
   if (vector.VectorType == Vector::RealDatas)
     {
-      return ((*this) = (RealVector&) vector);
+      return ((*this) = (DelocalizedRealVector&) vector);
     }
   else
     if (vector.VectorType == Vector::ComplexDatas)
@@ -263,7 +285,7 @@ RealVector& RealVector::operator = (const Vector& vector)
 //
 // dimension = new dimension
 
-void RealVector::Resize (int dimension)
+void DelocalizedRealVector::Resize (int dimension)
 {
   if (dimension <= this->TrueDimension)
     {
@@ -288,7 +310,7 @@ void RealVector::Resize (int dimension)
 //
 // dimension = new dimension
 
-void RealVector::ResizeAndClean (int dimension)
+void DelocalizedRealVector::ResizeAndClean (int dimension)
 {
   if (dimension <= this->TrueDimension)
     {
@@ -317,7 +339,7 @@ void RealVector::ResizeAndClean (int dimension)
 // coefficient = optional coefficient which multiply source to copy
 // return value = reference on current vector
 
-RealVector& RealVector::Copy (RealVector& vector, double coefficient)
+DelocalizedRealVector& DelocalizedRealVector::Copy (DelocalizedRealVector& vector, double coefficient)
 {
   if (this->Dimension != vector.Dimension)
     this->Resize(vector.Dimension);
@@ -331,16 +353,16 @@ RealVector& RealVector::Copy (RealVector& vector, double coefficient)
 // zeroFlag = true if all coordinates have to be set to zero
 // return value = pointer to new vector 
 
-Vector* RealVector::EmptyClone(bool zeroFlag)
+Vector* DelocalizedRealVector::EmptyClone(bool zeroFlag)
 {
-  return new RealVector(this->Dimension, zeroFlag);
+  return new DelocalizedRealVector(this->Dimension, zeroFlag);
 }
 
 // put all vector components to zero
 //
 // return value = reference on current vector
 
-Vector& RealVector::ClearVector ()
+Vector& DelocalizedRealVector::ClearVector ()
 {
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] = 0.0;  
@@ -351,7 +373,7 @@ Vector& RealVector::ClearVector ()
 //
 // return value = reference on current vector
 
-RealVector& RealVector::operator - ()
+DelocalizedRealVector& DelocalizedRealVector::operator - ()
 {
   for (int i = 0; i < this->Dimension; i++)
     {
@@ -365,17 +387,17 @@ RealVector& RealVector::operator - ()
 // V1 = source vector
 // return value = new vector
 
-RealVector operator - (const RealVector& V1)
+DelocalizedRealVector operator - (const DelocalizedRealVector& V1)
 {
   if (V1.Dimension != 0)
     {
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = -V1.Components[i];
-      return RealVector(TmpComponents, V1.Dimension);
+      return DelocalizedRealVector(TmpComponents, V1.Dimension);
     }
   else
-    return RealVector();
+    return DelocalizedRealVector();
 }
 
 // scalar product between two vectors
@@ -384,7 +406,7 @@ RealVector operator - (const RealVector& V1)
 // V2 = second vector
 // return value = result of scalar product
 
-double operator * (const RealVector& V1, const RealVector& V2)
+double operator * (const DelocalizedRealVector& V1, const DelocalizedRealVector& V2)
 {
 /*  int min = V1.Dimension;
   if (min > V2.Dimension)
@@ -405,7 +427,7 @@ double operator * (const RealVector& V1, const RealVector& V2)
 // step = increment between to consecutive indices to consider
 // return value = result of the partial scalar product
 
-double RealVector::PartialScalarProduct (const RealVector& vRight, int firstComponent, int nbrComponent, int step)
+double DelocalizedRealVector::PartialScalarProduct (const DelocalizedRealVector& vRight, int firstComponent, int nbrComponent, int step)
 {
   double x = this->Components[firstComponent] * vRight.Components[firstComponent];
   nbrComponent *= step;
@@ -421,7 +443,7 @@ double RealVector::PartialScalarProduct (const RealVector& vRight, int firstComp
 // V1 = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::operator += (const RealVector& V1)
+DelocalizedRealVector& DelocalizedRealVector::operator += (const DelocalizedRealVector& V1)
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
@@ -435,10 +457,10 @@ RealVector& RealVector::operator += (const RealVector& V1)
 // vector = vector to add
 // return value = reference on current vector
 
-Vector& RealVector::operator += (const Vector& vector)
+Vector& DelocalizedRealVector::operator += (const Vector& vector)
 {
   if (vector.VectorType == Vector::RealDatas)
-    return (*this += ((RealVector&) vector));
+    return (*this += ((DelocalizedRealVector&) vector));
   return *this;
 }
 
@@ -447,7 +469,7 @@ Vector& RealVector::operator += (const Vector& vector)
 // V1 = first vector
 // return value = reference on current vector
 
-RealVector& RealVector::operator -= (const RealVector& V1)
+DelocalizedRealVector& DelocalizedRealVector::operator -= (const DelocalizedRealVector& V1)
 {
   if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
     return *this;
@@ -462,17 +484,17 @@ RealVector& RealVector::operator -= (const RealVector& V1)
 // V2 = second vector
 // return value = resulting vector
 
-RealVector operator + (const RealVector& V1, const RealVector& V2)
+DelocalizedRealVector operator + (const DelocalizedRealVector& V1, const DelocalizedRealVector& V2)
 {
   if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
     {
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] + V2.Components[i];
-      return RealVector(TmpComponents, V1.Dimension);
+      return DelocalizedRealVector(TmpComponents, V1.Dimension);
     }
   else
-    return RealVector();
+    return DelocalizedRealVector();
 }
 
 // substract two vectors
@@ -481,17 +503,17 @@ RealVector operator + (const RealVector& V1, const RealVector& V2)
 // V2 = second vector
 // return value = resulting vector
 
-RealVector operator - (const RealVector& V1, const RealVector& V2)
+DelocalizedRealVector operator - (const DelocalizedRealVector& V1, const DelocalizedRealVector& V2)
 {
   if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
     {
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] - V2.Components[i];
-      return RealVector(TmpComponents, V1.Dimension);
+      return DelocalizedRealVector(TmpComponents, V1.Dimension);
     }
   else
-    return RealVector();
+    return DelocalizedRealVector();
 }
 
 // add a linear combination to a given vector
@@ -500,7 +522,7 @@ RealVector operator - (const RealVector& V1, const RealVector& V2)
 // V = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (const double& x, const RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddLinearCombination (const double& x, const DelocalizedRealVector& V)
 {
   if ((V.Dimension != this->Dimension))
     return *this;
@@ -515,7 +537,7 @@ RealVector& RealVector::AddLinearCombination (const double& x, const RealVector&
 // V = vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x, const RealVector& V, int firstComponent, 
+DelocalizedRealVector& DelocalizedRealVector::AddLinearCombination (double x, const DelocalizedRealVector& V, int firstComponent, 
 					      int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -535,8 +557,8 @@ RealVector& RealVector::AddLinearCombination (double x, const RealVector& V, int
 // v2 = first vector to add
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, double x2, 
-					      const RealVector& v2)
+DelocalizedRealVector& DelocalizedRealVector::AddLinearCombination (double x1, const DelocalizedRealVector& v1, double x2, 
+					      const DelocalizedRealVector& v2)
 {
   if ((v1.Dimension != this->Dimension) || (v2.Dimension != this->Dimension))
     return *this;
@@ -555,8 +577,8 @@ RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, d
 // nbrComponent = number of components to evaluate
 // return value = reference on current vector
 
-RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, double x2, 
-					      const RealVector& v2, int firstComponent, 
+DelocalizedRealVector& DelocalizedRealVector::AddLinearCombination (double x1, const DelocalizedRealVector& v1, double x2, 
+					      const DelocalizedRealVector& v2, int firstComponent, 
 					      int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -574,17 +596,17 @@ RealVector& RealVector::AddLinearCombination (double x1, const RealVector& v1, d
 // d = real to use
 // return value = resulting vector
 
-RealVector operator * (const RealVector& V1, double d)
+DelocalizedRealVector operator * (const DelocalizedRealVector& V1, double d)
 {
   if (V1.Dimension != 0)
     {
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] * d ;
-      return RealVector(TmpComponents, V1.Dimension);
+      return DelocalizedRealVector(TmpComponents, V1.Dimension);
     }
   else
-    return RealVector();
+    return DelocalizedRealVector();
 }
 
 // multiply a vector with a real number on the left hand side
@@ -593,17 +615,17 @@ RealVector operator * (const RealVector& V1, double d)
 // d = real to use
 // return value = resulting vector
 
-RealVector operator * (double d, const RealVector& V1)
+DelocalizedRealVector operator * (double d, const DelocalizedRealVector& V1)
 {
   if (V1.Dimension != 0)
     {
       double* TmpComponents = new double [V1.Dimension + 1];
       for (int i = 0; i < V1.Dimension; i++)
 	TmpComponents[i] = V1.Components[i] * d ;
-      return RealVector(TmpComponents, V1.Dimension);
+      return DelocalizedRealVector(TmpComponents, V1.Dimension);
     }
   else
-    return RealVector();
+    return DelocalizedRealVector();
 }
 
 // multiply a vector with a real number on the right hand side
@@ -611,7 +633,7 @@ RealVector operator * (double d, const RealVector& V1)
 // d = real to use
 // return value = reference on current vector
 
-RealVector& RealVector::operator *= (double d)
+DelocalizedRealVector& DelocalizedRealVector::operator *= (double d)
 {
   for (int i = 0; i < this->Dimension; i++)
     this->Components[i] *= d;
@@ -623,7 +645,7 @@ RealVector& RealVector::operator *= (double d)
 // d = real to use
 // return value = reference on current vector
 
-RealVector& RealVector::operator /= (double d)
+DelocalizedRealVector& DelocalizedRealVector::operator /= (double d)
 {
   double tmp = 1.0 / d;
   for (int i = 0; i < this->Dimension; i++)
@@ -636,7 +658,7 @@ RealVector& RealVector::operator /= (double d)
 // M = matrix to use
 // return value = reference on current vector
 
-RealVector& RealVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
+DelocalizedRealVector& DelocalizedRealVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
 {
   if ((this->Dimension != M.NbrRow) || (this->Dimension == 0))
     return *this;
@@ -663,7 +685,7 @@ RealVector& RealVector::operator *= (const RealTriDiagonalSymmetricMatrix&  M)
 // M = matrix to use
 // return value = reference on current vector
 
-RealVector& RealVector::operator *= (const RealSymmetricMatrix&  M)
+DelocalizedRealVector& DelocalizedRealVector::operator *= (const RealSymmetricMatrix&  M)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
     return *this;
@@ -707,7 +729,7 @@ RealVector& RealVector::operator *= (const RealSymmetricMatrix&  M)
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
@@ -737,7 +759,7 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V)
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -812,7 +834,7 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -864,7 +886,7 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceNbrComponent, int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -911,7 +933,7 @@ RealVector& RealVector::Multiply (const RealSymmetricMatrix&  M, RealVector& V, 
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn) || (V.Dimension != M.NbrRow))
     return *this;
@@ -947,7 +969,7 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -1022,7 +1044,7 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1072,7 +1094,7 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealSymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceStep, int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1117,7 +1139,7 @@ RealVector& RealVector::AddMultiply (const RealSymmetricMatrix&  M, RealVector& 
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
@@ -1147,7 +1169,7 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -1221,7 +1243,7 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				  int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1264,7 +1286,7 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				  int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1302,7 +1324,7 @@ RealVector& RealVector::Multiply (const RealAntisymmetricMatrix&  M, RealVector&
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrRow) || (V.Dimension != M.NbrColumn))
     return *this;
@@ -1337,7 +1359,7 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -1411,7 +1433,7 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1453,7 +1475,7 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealAntisymmetricMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (this->Dimension < ((M.NbrColumn - 1) * sourceStep + sourceStart)) || 
@@ -1490,7 +1512,7 @@ RealVector& RealVector::AddMultiply (const RealAntisymmetricMatrix&  M, RealVect
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn))
     return *this;
@@ -1513,7 +1535,7 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -1544,7 +1566,7 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
@@ -1576,7 +1598,7 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				  int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1609,7 +1631,7 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V, int sourc
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
@@ -1636,7 +1658,7 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
@@ -1664,7 +1686,7 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1693,7 +1715,7 @@ RealVector& RealVector::AddMultiply (const RealMatrix&  M, RealVector& V, int so
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
@@ -1714,7 +1736,7 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V)
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
       || (this->Dimension != M.NbrRow))
@@ -1737,7 +1759,7 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
@@ -1764,7 +1786,7 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				  int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1790,7 +1812,7 @@ RealVector& RealVector::Multiply (const RealDiagonalMatrix&  M, RealVector& V, i
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (V.Dimension != M.NbrColumn) || (this->Dimension != M.NbrRow))
     return *this;
@@ -1809,7 +1831,7 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
 // sourceNbrComponent = number of component to take into account in the source vector
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceNbrComponent)
 {
   if ((this->Dimension == 0) || (V.Dimension < (sourceNbrComponent + sourceStart)) 
       || (this->Dimension != M.NbrRow))
@@ -1832,7 +1854,7 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
       || (this->Dimension != (M.NbrRow * destStep + destStart)))
@@ -1859,7 +1881,7 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const RealDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1886,7 +1908,7 @@ RealVector& RealVector::AddMultiply (const RealDiagonalMatrix&  M, RealVector& V
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
@@ -1916,7 +1938,7 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V)
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1947,7 +1969,7 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				  int sourceStep, int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -1972,7 +1994,7 @@ RealVector& RealVector::Multiply (const BlockDiagonalMatrix&  M, RealVector& V, 
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V)
 {
   if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
     return *this;
@@ -2001,7 +2023,7 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceStep, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -2031,7 +2053,7 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& V, int sourceStart, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const BlockDiagonalMatrix&  M, DelocalizedRealVector& V, int sourceStart, 
 				     int sourceStep, int sourceNbrComponent, int destStart, int destStep)
 {
   if ((this->Dimension == 0) || (V.Dimension != (M.NbrColumn * sourceStep + sourceStart)) 
@@ -2057,7 +2079,7 @@ RealVector& RealVector::AddMultiply (const BlockDiagonalMatrix&  M, RealVector& 
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const Matrix&  M, DelocalizedRealVector& V)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
     return *this;
@@ -2091,7 +2113,7 @@ RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V)
 // V = vector to multiply
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const Matrix&  M, DelocalizedRealVector& V)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
     return *this;
@@ -2128,7 +2150,7 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V)
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceNbrComponent)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
     return *this;
@@ -2166,7 +2188,7 @@ RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceSta
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, int destStart, int destStep)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
     return *this;
@@ -2205,7 +2227,7 @@ RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceSta
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::Multiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				  int sourceNbrComponent, int destStart, int destStep)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
@@ -2245,7 +2267,7 @@ RealVector& RealVector::Multiply (const Matrix&  M, RealVector& V, int sourceSta
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceNbrComponent)
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceNbrComponent)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
     return *this;
@@ -2283,7 +2305,7 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int source
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int destStart, int destStep)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
@@ -2323,7 +2345,7 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int source
 // destStep = step to add to go to the following destination vector coordinate
 // return value = reference on current vector
 
-RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int sourceStart, int sourceStep, 
+DelocalizedRealVector& DelocalizedRealVector::AddMultiply (const Matrix&  M, DelocalizedRealVector& V, int sourceStart, int sourceStep, 
 				     int sourceNbrComponent, int destStart, int destStep)
 {
   if ((M.MatrixType & Matrix::RealElements) == 0)
@@ -2355,7 +2377,7 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int source
 //
 // return value = vector norm
 
-double RealVector::Norm()
+double DelocalizedRealVector::Norm()
 {
   double x = 0.0;
   if (this->Dimension != 0)
@@ -2370,7 +2392,7 @@ double RealVector::Norm()
 //
 // return value = square of vector norm
 
-double RealVector::SqrNorm ()
+double DelocalizedRealVector::SqrNorm ()
 {
   double x = 0.0;
   if (this->Dimension != 0)
@@ -2385,7 +2407,7 @@ double RealVector::SqrNorm ()
 //
 // return value = reference on current vector
 
-RealVector& RealVector::Normalize()
+DelocalizedRealVector& DelocalizedRealVector::Normalize()
 {
   double tmp = this->Components[0] * this->Components[0];
   for (int i = 1; i < this->Dimension; i ++)
@@ -2404,7 +2426,7 @@ RealVector& RealVector::Normalize()
 // nbrVectors = number of vectors in the set
 // return value = resulting vector norm (can be used to see if vector is can be decomposed on vector set)
 
-/*double RealVector::Orthonormalized (RealVector* vectors, int nbrVectors)
+/*double DelocalizedRealVector::Orthonormalized (DelocalizedRealVector* vectors, int nbrVectors)
 {
   double* Factors = new double []
   for (int i = 0; i )
@@ -2417,11 +2439,11 @@ RealVector& RealVector::Normalize()
 // Step = distance to the next coordinate (1 means to take the following)
 // return value = return corresponding subvector
 
-RealVector RealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step)
+DelocalizedRealVector DelocalizedRealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step)
 {
   if (this->Dimension == 0)
-    return RealVector();
-  RealVector TmpV ((int) ((LastCoordinate - FirstCoordinate + 1) / Step));
+    return DelocalizedRealVector();
+  DelocalizedRealVector TmpV ((int) ((LastCoordinate - FirstCoordinate + 1) / Step));
   for (int i = 0; i < TmpV.Dimension; i++)
     {
       TmpV.Components[i] = this->Components[FirstCoordinate];
@@ -2437,7 +2459,7 @@ RealVector RealVector::Extract(int FirstCoordinate, int LastCoordinate, int Step
 // step = distance to the next coordinate in the destination vector (1 means to take the following)
 // return value = reference to the current Vector
 
-RealVector& RealVector::Merge(const RealVector& V, int firstCoordinate, int step)
+DelocalizedRealVector& DelocalizedRealVector::Merge(const DelocalizedRealVector& V, int firstCoordinate, int step)
 {
   if ((this->Dimension == 0) || (V.Dimension == 0))
     return *this;
@@ -2459,7 +2481,7 @@ RealVector& RealVector::Merge(const RealVector& V, int firstCoordinate, int step
 // v = vector to print
 // return value = reference on output stream
 
-ostream& operator << (ostream& str, const RealVector& v)
+ostream& operator << (ostream& str, const DelocalizedRealVector& v)
 {
   for (int i = 0; i < v.Dimension; ++i)
     {
@@ -2474,7 +2496,7 @@ ostream& operator << (ostream& str, const RealVector& v)
 // vector = reference on vector to save
 // return value = reference on output file stream
 
-/*ofstream& operator << (ofstream& file, const RealVector& vector)
+/*ofstream& operator << (ofstream& file, const DelocalizedRealVector& vector)
 {
   file.write ((char*) &(vector.Dimension), sizeof(int));
   file.write ((char*) vector.Components, sizeof(double) * vector.Dimension);
@@ -2486,7 +2508,7 @@ ostream& operator << (ostream& str, const RealVector& v)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool RealVector::WriteVector (char* fileName)
+bool DelocalizedRealVector::WriteVector (char* fileName)
 {
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
@@ -2502,7 +2524,7 @@ bool RealVector::WriteVector (char* fileName)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool RealVector::WriteAsciiVector (char* fileName)
+bool DelocalizedRealVector::WriteAsciiVector (char* fileName)
 {
   ofstream File;
   File.precision(14);
@@ -2520,7 +2542,7 @@ bool RealVector::WriteAsciiVector (char* fileName)
 // fileName = name of the file where the vector has to be read
 // return value = true if no error occurs
 
-bool RealVector::ReadVector (char* fileName)
+bool DelocalizedRealVector::ReadVector (char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -2544,7 +2566,7 @@ bool RealVector::ReadVector (char* fileName)
 // vector = reference on vector to save
 // return value = reference on output file stream
 
-ifstream& operator >> (ifstream& file, RealVector& vector)
+ifstream& operator >> (ifstream& file, DelocalizedRealVector& vector)
 {
   file.read ((char*) &(vector.Dimension), sizeof(int));
   if (vector.Dimension > 0)
@@ -2568,7 +2590,7 @@ ifstream& operator >> (ifstream& file, RealVector& vector)
 // id = id of the destination MPI process
 // return value = reference on the current vector
 
-Vector& RealVector::SendVector(MPI::Intracomm& communicator, int id)
+Vector& DelocalizedRealVector::SendVector(MPI::Intracomm& communicator, int id)
 {
   communicator.Send(&this->VectorType, 1, MPI::INT, id, 1);
   communicator.Send(&this->Dimension, 1, MPI::INT, id, 1); 
@@ -2586,7 +2608,7 @@ Vector& RealVector::SendVector(MPI::Intracomm& communicator, int id)
 // id = id of the MPI process which broadcasts the vector
 // return value = reference on the current vector
 
-Vector& RealVector::BroadcastVector(MPI::Intracomm& communicator,  int id)
+Vector& DelocalizedRealVector::BroadcastVector(MPI::Intracomm& communicator,  int id)
 {
   int TmpVectorType = this->VectorType;
   int TmpDimension = this->Dimension;
@@ -2632,7 +2654,7 @@ Vector& RealVector::BroadcastVector(MPI::Intracomm& communicator,  int id)
 // nbrComponent = number of component (useless if the method is not called by the MPI process which broadcasts the vector)
 // return value = reference on the current vector
 
-Vector& RealVector::BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+Vector& DelocalizedRealVector::BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
 {
   int TmpVectorType = this->VectorType;
   int TmpDimension = this->Dimension;
@@ -2678,7 +2700,7 @@ Vector& RealVector::BroadcastPartialVector(MPI::Intracomm& communicator, int id,
 // id = id of the source MPI process
 // return value = reference on the current vector
 
-Vector& RealVector::ReceiveVector(MPI::Intracomm& communicator, int id)
+Vector& DelocalizedRealVector::ReceiveVector(MPI::Intracomm& communicator, int id)
 {
   int TmpVectorType = 0;
   int TmpDimension = 0;
@@ -2709,7 +2731,7 @@ Vector& RealVector::ReceiveVector(MPI::Intracomm& communicator, int id)
 // id = id of the destination MPI process
 // return value = reference on the current vector
 
-Vector& RealVector::SumVector(MPI::Intracomm& communicator, int id)
+Vector& DelocalizedRealVector::SumVector(MPI::Intracomm& communicator, int id)
 {
   int TmpVectorType = this->VectorType;
   int TmpDimension = this->Dimension;

@@ -52,11 +52,18 @@ class Vector
   friend class ComplexVector;
 
  protected:
-  
+
+  // dimension as it appears to the user
   int Dimension;
+  // dimension of the allocated array
   int TrueDimension;
 
+  // falg indacting vector type
   int VectorType;
+
+  // vector id
+  int VectorId;
+
 
  public:
 
@@ -92,6 +99,16 @@ class Vector
   // return value = flag indicating vector type
   int GetVectorType();
   
+  // get vector id
+  //
+  // return value = vector id
+  virtual int GetVectorId();
+
+  // set vector id
+  //
+  // id = vector new id
+  virtual void SetVectorId(int id);
+
   // Resize vector
   //
   // dimension = new dimension
@@ -222,6 +239,24 @@ inline int Vector::GetVectorType()
   return this->VectorType;
 }
   
+// get vector id
+//
+// return value = vector id
+
+inline int Vector::GetVectorId()
+{
+  return this->VectorId;
+}
+
+// set vector id
+//
+// id = vector new id
+
+inline void Vector::SetVectorId(int id)
+{
+  this->VectorId = id;
+}
+
 
 
 #endif

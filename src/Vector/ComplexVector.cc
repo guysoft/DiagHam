@@ -46,6 +46,7 @@ ComplexVector::ComplexVector()
   this->ImaginaryComponents = 0;
   this->Flag.Initialize();
   this->Dimension = 0;
+  this->VectorId = 0;
   this->TrueDimension = this->Dimension;
   this->VectorType = Vector::ComplexDatas;
 }
@@ -63,6 +64,7 @@ ComplexVector::ComplexVector(int size, bool zeroFlag)
   this->RealComponents = new double [this->Dimension];
   this->ImaginaryComponents = new double [this->Dimension];
   this->VectorType = Vector::ComplexDatas;
+  this->VectorId = 0;
   if (zeroFlag == true)
     for (int i = 0; i < this->Dimension; ++i)
       {
@@ -82,6 +84,7 @@ ComplexVector::ComplexVector(double* real, double* imaginary, int size)
   this->Flag.Initialize();
   this->Dimension = size;
   this->VectorType = Vector::ComplexDatas;
+  this->VectorId = 0;
   this->TrueDimension = this->Dimension;
   this->RealComponents = real;
   this->ImaginaryComponents = imaginary;
@@ -97,6 +100,7 @@ ComplexVector::ComplexVector(const ComplexVector& vector, bool duplicateFlag)
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
   this->VectorType = Vector::ComplexDatas;
+  this->VectorId = vector.VectorId;
   if (vector.Dimension == 0)
     {
       this->Flag.Initialize();
@@ -133,6 +137,7 @@ ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag)
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
   this->VectorType = Vector::ComplexDatas;
+  this->VectorId = 0;
   if (vector.Dimension == 0)
     {
       this->Flag.Initialize();
@@ -183,6 +188,7 @@ ComplexVector& ComplexVector::operator = (const ComplexVector& vector)
   this->ImaginaryComponents = vector.ImaginaryComponents;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->VectorId = vector.VectorId;
   return *this;
 }
 
