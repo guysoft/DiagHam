@@ -253,7 +253,7 @@ int main(int argc, char** argv)
       else
 	Architecture = new MonoProcessorArchitecture;
 
-      double HamiltonianShift = - (37.60 * ((1.0 / (Lx * Lx * Mux)) + (1.0 / (Ly * Ly * Muy)) + (1.0 / (Lz * Lz * Muz))));
+      double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
       Hamiltonian.ShiftHamiltonian (HamiltonianShift);
       cout << "Décalage:  " << HamiltonianShift << endl;
       // type of lanczos algorithm (with or without reorthogonalization)

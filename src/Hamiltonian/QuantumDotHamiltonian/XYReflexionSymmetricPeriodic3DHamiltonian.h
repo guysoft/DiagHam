@@ -211,7 +211,14 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
-  
+ 
+  // determine the maximal value of partial diagonal array
+  //
+  // return = the wanted value
+  double MaxPartialDiagonalElement();
+
+ private:
+
   // evaluate all interaction factors
   //
   // pairX = whether basis is pair in X direction, if not impair
@@ -241,6 +248,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // realArray = 2D array containing the real elements of the overlap
   // imaginaryArray = 2D array containing the imaginary elements of the overlap
   bool EvaluatePlaneWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
+
 };
 
 // get Hilbert space on which Hamiltonian acts

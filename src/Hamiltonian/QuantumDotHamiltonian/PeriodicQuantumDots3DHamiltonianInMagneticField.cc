@@ -714,3 +714,16 @@ bool PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMeanPositionOperat
 
   return true;
 }
+
+// determine the maximal value of partial diagonal array
+//
+// return = the wanted value
+
+double PeriodicQuantumDots3DHamiltonianInMagneticField::MaxPartialDiagonalElement()
+{
+  double tmp = this->KineticElements[0];
+  for (int i = 1; i < this->Space->GetHilbertSpaceDimension(); ++i)
+    if (tmp < this->KineticElements[i])
+      tmp = this->KineticElements[i];
+  return tmp;
+}

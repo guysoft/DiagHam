@@ -551,3 +551,16 @@ double*** QuantumDots2DHamiltonian::EvaluateWaveFunctionOverlap(double size, int
     }
   return TmpArray;
 }
+
+// determine the maximal value of partial diagonal array
+//
+// return = the wanted value
+
+double QuantumDots2DHamiltonian::MaxPartialDiagonalElement()
+{
+  double tmp = this->DiagonalElements[0];
+  for (int i = 1; i < this->Space->GetHilbertSpaceDimension(); ++i)
+    if (tmp < this->DiagonalElements[i])
+      tmp = this->DiagonalElements[i];
+  return tmp;
+}

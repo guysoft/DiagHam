@@ -40,25 +40,26 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {  
+ 
+  // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
   cout.precision(14);
-  // some running options and help
-  /*
+  // some running options and help  
   BooleanOption HelpOption ('h', "help", "display this help");
   BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
   BooleanOption EigenstateOption ('e', "eigenstate", "evaluate eigenstates", false);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 50);
-  SingleIntegerOption NumberXValueOption ('M', "M-cell", "number of cells in the x direction", 160);
-  SingleIntegerOption NumberZValueOption ('H', "H-cell", "number of cells in the z direction", 21);
-  SingleIntegerOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 2);
-  SingleIntegerOption BelowWettingLayerValueOption ('\n', "below", "number of cells between well barrier and wetting layer", 2);
-  SingleIntegerOption WettingWidthOption ('\n', "wetting", "number of cells in wetting layer", 1);
-  SingleIntegerOption BaseRadiusOption ('\n', "base", "base radius in cell unit", 18);
-  SingleIntegerOption DotHeightOption ('\n', "height", "height of dot in cell unit", 7);
-  SingleIntegerOption TopRadiusOption ('\n', "top", "top radius in cell unit", 6);
-  SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 5.65);
-  SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 5.65);
-  SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 5.65);
+  SingleIntegerOption NumberRValueOption ('R', "R-states", "number of states in plane", 100);
+  SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of cells in z direction", 100);
+
+  SingleDoubleOption BelowValueOption ('\n', "below", "width of the layer below the wetting layer (in Angstrom unit)", 0.0);
+  SingleDoubleOption WettingWidthOption ('\n', "wetting", "width of the wetting layer (in Angstrom unit)", 8.0);
+  SingleIntegerOption NumberDotOption('\n', "dot", "number of uniformly high layer in the dot", 3);
+  SingleDoubleOption BaseRadiusOption ('\n', "base", "base radius in Angstrom unit", 100);
+  SingleDoubleOption DotHeightOption ('\n', "height", "height of dot in Angstrom unit", 18);
+  SingleDoubleOption TopRadiusOption ('\n', "top", "top radius in Anstrom unit", 74);
+  SingleDoubleOption AboveValueOption ('\n', "above", "width of the layer above the dot layer (in Angstrom unit)", 100.0);
+
   SingleDoubleOption RMassOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   SingleDoubleOption DotPotentialOption ('\n', "dot", "potential in the dot", -0.4);
@@ -75,22 +76,17 @@ int main(int argc, char** argv)
   OptionList += &EigenstateOption;
   OptionList += &IterationOption;
   OptionList += &NbrEigenvaluesOption;
-  OptionList += &NumberXValueOption;
-  OptionList += &NumberYValueOption;
+  OptionList += &NumberRValueOption;
   OptionList += &NumberZValueOption;
-  OptionList += &UnderBarrierValueOption;
-  OptionList += &BelowWettingLayerValueOption;
+  OptionList += &BelowValueOption;
   OptionList += &WettingWidthOption;
+  OptionList += &NumberDotOption;
   OptionList += &BaseRadiusOption;
   OptionList += &DotHeightOption;
   OptionList += &TopRadiusOption;
-  OptionList += &CellXSizeOption;
-  OptionList += &CellYSizeOption;
-  OptionList += &CellZSizeOption;
-  OptionList += &XMassOption;
-  OptionList += &YMassOption;
+  OptionList += &AboveValueOption;
+  OptionList += &RMassOption;
   OptionList += &ZMassOption;
-  OptionList += &WellPotentialOption;
   OptionList += &DotPotentialOption;
   OptionList += &MagneticFieldOption;
   OptionList += &VectorMemoryOption;
@@ -113,22 +109,17 @@ int main(int argc, char** argv)
   bool EigenstateFlag = EigenstateOption.GetBoolean();
   int MaxNbrIterLanczos = IterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int M = NumberXValueOption.GetInteger();
-  int N = NumberYValueOption.GetInteger();
-  int H = NumberZValueOption.GetInteger();
-  int UnderBarrier = UnderBarrierValueOption.GetInteger();
-  int BelowWettingLayer = BelowWettingLayerValueOption.GetInteger();
-  int WettingWidth = WettingWidthOption.GetInteger();
-  int BaseRadius = BaseRadiusOption.GetInteger();
-  int DotHeight = DotHeightOption.GetInteger();
-  int TopRadius = TopRadiusOption.GetInteger();
-  double Lx = CellXSizeOption.GetDouble();
-  double Ly = CellYSizeOption.GetDouble();
-  double Lz = CellZSizeOption.GetDouble();
-  double Mux = XMassOption.GetDouble();
-  double Muy = YMassOption.GetDouble();
+  int NbrStateR = NumberRValueOption.GetInteger();
+  int NbrStateZ = NumberZValueOption.GetInteger();
+  double Below = BelowValueOption.GetDouble();
+  double WettingWidth = WettingWidthOption.GetDouble();
+  double BaseRadius = BaseRadiusOption.GetDouble();
+  double DotHeight = DotHeightOption.GetDouble();
+  int DotNbr = NumberDotOption.GetInteger();
+  double TopRadius = TopRadiusOption.GetDouble();
+  double Above = AboveValueOption.GetDouble();
+  double Mur = RMassOption.GetDouble();
   double Muz = ZMassOption.GetDouble();
-  double WellPotential = WellPotentialOption.GetDouble();
   double DotPotential = DotPotentialOption.GetDouble();
   double MagneticField = MagneticFieldOption.GetDouble();
   int VectorMemory = VectorMemoryOption.GetInteger();
@@ -136,27 +127,27 @@ int main(int argc, char** argv)
   bool DiskFlag = DiskOption.GetBoolean();
   int NbrIterLanczos = NbrIterationOption.GetInteger();
  
-  // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
-  DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
-  // ConstructPotential(double wellPotential, double dotPotential)
-  //potential->ConstructPotential(WellPotential, DotPotential);
-  //potential->LoadPotential("DotPotential.txt");
-  
+  // QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight);
+  QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above);
+  // void ConstructPotential(double dotPotential);
+  potential->ConstructPotential(DotPotential);
+
   // define Hilbert space
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, -M / 2, N, -N / 2, H, -H / 2);
+  // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
+  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NbrStateR, NbrStateZ, -NbrStateZ / 2);
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);
   
   //cout << "General space dimension: " << GeneralSpace.GetHilbertSpaceDimension() << endl;
-  cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
-  cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
-  cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
-
-  PeriodicQuantumDots3DHamiltonianInMagneticField Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, 0.0, 0.0, MagneticField, potential);
-
-  cout << endl;
+  cout << "Hilbert space Component: " << Space->GetNbrStateR() << '\t' << Space->GetNbrStateZ() << endl;
+  cout << "Minimal impulsions:       " << Space->GetLowerImpulsionZ() << endl;
+  cout << "Hilbert space dimension: " << Space->GetHilbertSpaceDimension() << endl;
+  
+  // CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, ThreeDConstantCylinderPotential* PotentialInput);
+  CylindricalHamiltonianInMagneticField Hamiltonian(Space, Mur, Muz, MagneticField, potential);
+  
   gettimeofday (&(PrecalculationEndingTime), 0);
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
     ((PrecalculationEndingTime.tv_usec - PrecalculationStartingTime.tv_usec) / 1000000.0);
@@ -174,11 +165,9 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  int ImpulsionX = Space->GetNbrStateX() / 2;
-  int ImpulsionY = Space->GetNbrStateY() / 2;
-  int ImpulsionZ = Space->GetNbrStateZ() / 2;
-  double HamiltonianShift = - (150.4 * ((double (ImpulsionX * ImpulsionX) / (double (M * M) * Lx * Lx * Mux)) + (double (ImpulsionY * ImpulsionY) / (double (N * N) * Ly * Ly * Muy)) + (double (ImpulsionZ * ImpulsionZ) / (double (H * H) * Lz * Lz * Muz))));
+  double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
+
   cout << "Hamiltonian shift =  " << HamiltonianShift << endl;
   gettimeofday (&(PrecalculationStartingTime), 0);
 
@@ -271,14 +260,11 @@ int main(int argc, char** argv)
             
       cout << "----------------- End of calculation ---------------------" << endl;      
       cout << "     ==========  CALCULATION IS FINALIZED  =========  " << endl;
-      cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
-      cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
-      cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
     }
   gettimeofday (&(TotalEndingTime), 0);
   Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);  
   cout << endl << "Total time = " << Dt << endl;
   delete Lanczos;
-  */
+  
   return 0;
 }

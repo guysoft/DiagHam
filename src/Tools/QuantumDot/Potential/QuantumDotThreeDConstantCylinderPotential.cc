@@ -95,3 +95,11 @@ void QuantumDotThreeDConstantCylinderPotential::ConstructPotential(double dotPot
     this->PotentialValue[k + 2] = dotPotential;
   this->PotentialValue[this->NumberZ] = 0.0;
 }
+
+// save the whole diagram presentation in a bitmap file
+//
+// fileName = name of the file to stock the diagram presentation
+
+void QuantumDotThreeDConstantCylinderPotential::SaveBmpPicture(char* fileName)
+{
+}

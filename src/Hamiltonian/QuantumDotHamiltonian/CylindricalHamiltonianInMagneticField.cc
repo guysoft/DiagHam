@@ -55,6 +55,7 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(Ver
 {
   this->Space = space;
   int nbrCylinder = PotentialInput->GetNbrCylinderZ();
+  this->ZSize = 0.0;
   for (int k = 0; k < nbrCylinder; ++k)
     this->ZSize += PotentialInput->GetHeight(k);            
   this->Mur = mur;
@@ -215,10 +216,11 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 	{
 	  Index1 = TotalIndex[n1];
 	  TmpRealHamiltonian = this->RealHamiltonian[n1][n2];
-	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1][n2];
+	  TmpImaginaryHamiltonian = this->ImaginaryHamiltonian[n1][n2];	  
 	  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 	    {
 	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
 	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
 		{
 		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
@@ -245,6 +247,7 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 	  for (p1 = 0; p1 < this->NbrStateZ; ++p1)
 	    {
 	      Index2 = TotalIndex[n2];
+	      TmpRe = 0.0; TmpIm = 0.0;
 	      for (IndexZ = p1; IndexZ > 0; --IndexZ)
 		{
 		  TmpRe += (TmpRealHamiltonian[IndexZ] * vSource.Re(Index2) + TmpImaginaryHamiltonian[IndexZ] * vSource.Im(Index2));
@@ -278,65 +281,15 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 // return value = reference on vector where result has been stored
 
 ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
-{ 
-  /*
+{   
   if ((firstComponent == 0) && (nbrComponent == this->Space->GetHilbertSpaceDimension()))
     return this->LowLevelAddMultiply(vSource, vDestination);
   else
     {
-      int lastComponent = firstComponent + nbrComponent;
-      int OriginX = this->NbrStateX - 1; int OriginY = this->NbrStateY - 1; int OriginZ = this->NbrStateZ - 1;
-      int m1, m2, n1, n2, p1;
-      int IndexX, IndexY, IndexZ;
-      double* TmpRealPrecalculatedHamiltonian;
-      double* TmpImaginaryPrecalculatedHamiltonian;
-      double TmpRe = 0.0; double TmpIm = 0.0;
-      
-      int Index1 = firstComponent; int Index2 = 0;
-      int ReducedIndex1 = Index1 / this->NbrStateZ;
-      p1 = Index1 - ReducedIndex1 * this->NbrStateZ;
-      m1 = ReducedIndex1 / this->NbrStateY;
-      n1 = ReducedIndex1 - m1 * this->NbrStateY;
-      
-      // need to add the paramagnetic term here!!!
-
-      for (; Index1 < lastComponent; ++Index1)
-	{
-	  TmpRe = 0.0; TmpIm = 0.0;
-	  TmpRe += vSource.Re(Index1) * this->KineticElements[Index1];
-	  TmpIm += vSource.Im(Index1) * this->KineticElements[Index1];
-	  Index2 = 0;
-	  for (IndexX = m1 + OriginX; IndexX >= m1; --IndexX)
-	    for (IndexY = n1 + OriginY; IndexY >= n1; --IndexY)
-	      {
-		TmpRealPrecalculatedHamiltonian = this->RealPrecalculatedHamiltonian[IndexX][IndexY];
-		TmpImaginaryPrecalculatedHamiltonian = this->ImaginaryPrecalculatedHamiltonian[IndexX][IndexY];
-		for (IndexZ = p1 + OriginZ; IndexZ >= p1; --IndexZ)
-		  {
-		    TmpRe += (vSource.Re(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ] - vSource.Im(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ]);
-		    TmpIm += (vSource.Re(Index2) * TmpImaginaryPrecalculatedHamiltonian[IndexZ] + vSource.Im(Index2) * TmpRealPrecalculatedHamiltonian[IndexZ]);
-		    ++Index2;
-		    
-		  }
-	      }	  
-	  vDestination.Re(Index1) += TmpRe;
-	  vDestination.Im(Index1) += TmpIm;
-	  ++p1;
-	  if (p1 == this->NbrStateZ)
-	    {
-	      p1 = 0;
-	      ++n1;
-	      if (n1 == this->NbrStateY)
-		{
-		  n1 = 0;
-		  ++m1;
-		}
-	    }
-	}
-      
+      int lastComponent = firstComponent + nbrComponent;      
       return vDestination;
     }
-  */return vDestination;
+  return vDestination;
 }
 
 // evaluate all interaction factors
@@ -352,57 +305,94 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   double** RealWaveFunctionOverlapZ; double** ImaginaryWaveFunctionOverlapZ;
   if (!this->EvaluatePlaneWaveFunctionOverlap(potential, this->NbrStateZ, RealWaveFunctionOverlapZ, ImaginaryWaveFunctionOverlapZ))
     cout << "Error in evaluation of function overlap in Z direction. Stop!" << endl;
-  
+
   int nbrCylinder = potential->GetNbrCylinderZ();
   double** Integral = new double* [nbrCylinder];
   double tmp = 0.0; double radius = 0.0;
   double tk = 0.0;
+  double tmp1 = 0.0, tmp2 = 0.0, tmp3 = 0.0;
+  //cout << "Integral: " << endl;
+  int limit = 0, limit2 = 0;
   for (int k = 0; k < nbrCylinder; ++k)
     {
       Integral[k] = new double [this->NbrStateR * 2 - 1];
-      radius = potential->GetRadius(k);
+      radius = potential->GetRadius(k);      
       if (radius > 0.0)
 	{
 	  tk = (radius * radius) / (2.0 * OrbitRadius * OrbitRadius);
+	  //cout << "tk: " << tk << endl;
 	  tmp = exp(-tk);
 	  Integral[k][0] = 1.0 - tmp;
-	  for (int n = 1; n < (this->NbrStateR * 2 - 1); ++n)
-	    {
-	      tmp *= tk;
-	      Integral[k][n] = double(n) * Integral[k][n - 1] - tmp;
-	    }
-	}
-    }
+	  cout << Integral[k][0] << " ";
 
-  double** LaguerreCoefficient = new double* [this->NbrStateR];
-  FactorialCoefficient TmpLaguerre = 1;
-  for (int n = 0; n < this->NbrStateR; ++n)
-    {
-      LaguerreCoefficient[n] = new double [n + 1];      
-      LaguerreCoefficient[n][0] = 1.0;
-      TmpLaguerre = 1;
-      for (int m = 1; m < (n + 1); ++m)
-	{
-	  TmpLaguerre *= (n + 1 -m);
-	  TmpLaguerre /= m;
-	  TmpLaguerre /= m;
-	  if ((m % 2) == 0)
-	    LaguerreCoefficient[n][m] = TmpLaguerre.GetNumericalValue();
-	  else
-	    LaguerreCoefficient[n][m] = -TmpLaguerre.GetNumericalValue();	    
+	  limit = this->NbrStateR * 2 - 1;
+	  tmp2 = 1.0;
+	  for (int m = 2; m < limit; ++m)
+	    tmp2 *= double(m);	  
+	  tmp1 = 0.0;
+	  for (int m = limit; m < 172; ++m)
+	    {
+	      tmp2 *= double(m);
+	      tmp3 = (pow(tk, m - limit) / tmp2);
+	      tmp1 += tmp3;
+	      if ((tmp3 / tmp1) < 1.0e-14)
+		{
+		  limit2 = m;
+		  break;
+		}
+	    }
+	  cout << "Limit: " << limit2 << endl;
+	  for (int n = 1; n < (this->NbrStateR * 2 - 1); ++n)
+	    {		      
+	      limit = n;
+	      tmp2 = 1.0;
+	      for (int m = 2; m <= limit; ++m)
+		tmp2 *= double(m);	  
+	      tmp1 = 0.0;
+	      for (int m = limit + 1; m < limit2 ; ++m)
+		{
+		  tmp2 *= double(m);
+		  tmp1 += (pow(tk, m) / tmp2);
+		}
+	      if ((n % 2) == 0)		
+		Integral[k][n] = tmp1 * tmp;
+	      else
+		Integral[k][n] = -tmp1 * tmp;
+	      //cout << "n: " << n << " " << Integral[k][n] << endl;
+	    }
+	  //cout << endl;
 	}
     }
   
+  double** LaguerreCoefficient = new double* [this->NbrStateR * 2 - 1];
+  //cout << "Laguerre coefficient: " << endl;
+  for (int n = 0; n < (this->NbrStateR * 2 - 1); ++n)
+    {
+      LaguerreCoefficient[n] = new double [n + 1];      
+      LaguerreCoefficient[n][0] = 1.0;
+      //cout << LaguerreCoefficient[n][0] << " ";
+      for (int m = 1; m <= n; ++m)
+	{
+	  FactorialCoefficient* TmpLaguerre = new FactorialCoefficient(1) ;	  
+	  TmpLaguerre->PartialFactorialMultiply(m + 1, n);
+	  TmpLaguerre->FactorialDivide(n - m);
+	  LaguerreCoefficient[n][m] = TmpLaguerre->GetNumericalValue();
+	  //cout << LaguerreCoefficient[n][m] << " ";	  
+	  delete TmpLaguerre;
+	}
+      //cout << endl;
+    }
+  //cout << "Max Laguerre " << LaguerreCoefficient[this->NbrStateR - 1][this->NbrStateR - 1]<< endl;
   this->RealHamiltonian = new double** [this->NbrStateR];
   this->ImaginaryHamiltonian = new double** [this->NbrStateR];
-  double TmpRe = 0.0; double TmpIm = 0.0; double TmpSum = 0.0;
+  double TmpRe = 0.0; double TmpIm = 0.0; long double TmpSum = 0.0, TmpSum1 = 0.0;
 
   // layers having non-constant potential
   for (int n1 = 0; n1 < this->NbrStateR; ++n1)
     {
       this->RealHamiltonian[n1] = new double* [n1 + 1];
       this->ImaginaryHamiltonian[n1] = new double* [n1 + 1];
-      for (int n2 = 0; n2 < (n1 + 1); ++n2)
+      for (int n2 = 0; n2 <= n1; ++n2)
 	{
 	  this->RealHamiltonian[n1][n2] = new double [this->NbrStateZ];
 	  this->ImaginaryHamiltonian[n1][n2] = new double [this->NbrStateZ];
@@ -416,8 +406,12 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 		    {
 		      TmpSum = 0.0;
 		      for (int m1 = 0; m1 <= n1; ++m1)
-			for (int m2 = 0; m2 <= n2; ++m2) 			  
-			  TmpSum += (LaguerreCoefficient[n1][m1] * LaguerreCoefficient[n2][m2] * Integral[k][m1 + m2]);
+			{
+			  TmpSum1 = 0.0;
+			  for (int m2 = 0; m2 <= n2; ++m2) 			  
+			    TmpSum1 += (LaguerreCoefficient[m1 + m2][m1] * Integral[k][m1 + m2] * LaguerreCoefficient[n2][m2]);
+			  TmpSum += (LaguerreCoefficient[n1][m1] * TmpSum1);
+			}
 		      TmpRe += (potential->GetPotential(k) * RealWaveFunctionOverlapZ[p][k] * TmpSum);
 		      TmpIm += (potential->GetPotential(k) * ImaginaryWaveFunctionOverlapZ[p][k] * TmpSum);
 		    }
@@ -446,15 +440,18 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
   this->PartialDiagonalElement = new double [this->Space->GetHilbertSpaceDimension()];
   double TmpE = 0.0; int Index = 0;
   double InvZFactor = PERIODIC_HAMILTONIAN_FACTOR / (this->Muz * this->ZSize * this->ZSize);
+  //cout << "Plane quantum: " << PlaneQuantum << endl;
+  //cout << "Partial diagonal terms:" << endl;
   for (int n = 0; n < this->NbrStateR; ++n)
     {
       TmpE = PlaneQuantum * (0.5 + double(n));
       for (int p = 0; p < this->NbrStateZ; ++p)
 	{
-	  this->PartialDiagonalElement[Index] = TmpE *  double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor; 
+	  this->PartialDiagonalElement[Index] = TmpE + double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor; 
+	  //cout << TmpE << " " << double((p + this->LowerImpulsionZ) * (p + this->LowerImpulsionZ)) * InvZFactor << " " << this->PartialDiagonalElement[Index] << endl;
   	  ++Index;
 	}
-    }
+    }  
 }
 
 // evaluate the plane wave function overlap
@@ -470,7 +467,11 @@ bool CylindricalHamiltonianInMagneticField::EvaluatePlaneWaveFunctionOverlap(Thr
   double* ZPosition = new double [nbrCylinder + 1];
   ZPosition[0] = 0.0;
   for (int k = 0; k < nbrCylinder; ++k)
-    ZPosition[k + 1] = ZPosition[k] + potential->GetHeight(k);      
+    {
+      ZPosition[k + 1] = ZPosition[k] + potential->GetHeight(k);      
+      //cout << ZPosition[k + 1] << endl;
+    }
+  //cout << this->ZSize << endl;
       
   realArray = new double* [nbrState];
   imaginaryArray = new double* [nbrState];   
@@ -500,3 +501,15 @@ bool CylindricalHamiltonianInMagneticField::EvaluatePlaneWaveFunctionOverlap(Thr
   return true;
 }
 
+// determine the maximal value of partial diagonal array
+//
+// return = the wanted value
+
+double CylindricalHamiltonianInMagneticField::MaxPartialDiagonalElement()
+{
+  double tmp = this->PartialDiagonalElement[0];
+  for (int i = 1; i < this->Space->GetHilbertSpaceDimension(); ++i)
+    if (tmp < this->PartialDiagonalElement[i])
+      tmp = this->PartialDiagonalElement[i];
+  return tmp;
+}

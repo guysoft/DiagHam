@@ -220,6 +220,13 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // return value = reference on vector where result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
   
+  // determine the maximal value of partial diagonal array
+  //
+  // return = the wanted value
+  double MaxPartialDiagonalElement();
+
+ private:
+
   // evaluate all interaction factors
   // 
   void EvaluateInteractionFactors();
@@ -231,6 +238,7 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // realArray = 2D array containing the real elements of the overlap
   // imaginaryArray = 2D array containing the imaginary elements of the overlap
   bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
+
 };
 
 // get Hilbert space on which Hamiltonian acts

@@ -199,10 +199,7 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  int ImpulsionX = Space->GetNbrStateX();
-  int ImpulsionY = Space->GetNbrStateY();
-  int ImpulsionZ = Space->GetNbrStateZ() / 2;
-  double HamiltonianShift = - (150.4 * ((double (ImpulsionX * ImpulsionX) / (double (M * M) * Lx * Lx * Mux)) + (double (ImpulsionY * ImpulsionY) / (double (N * N) * Ly * Ly * Muy)) + (double (ImpulsionZ * ImpulsionZ) / (double (H * H) * Lz * Lz * Muz))));
+  double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
   cout << "Hamiltonian shift =  " << HamiltonianShift << endl;
   gettimeofday (&(PrecalculationStartingTime), 0);

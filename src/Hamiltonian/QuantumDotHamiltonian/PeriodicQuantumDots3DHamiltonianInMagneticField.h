@@ -218,6 +218,13 @@ class PeriodicQuantumDots3DHamiltonianInMagneticField : public AbstractHamiltoni
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+ 
+  // determine the maximal value of partial diagonal array
+  //
+  // return = the wanted value
+  double MaxPartialDiagonalElement();
+
+ private:
   
   // evaluate confinement potential factors
   // 
@@ -245,6 +252,7 @@ class PeriodicQuantumDots3DHamiltonianInMagneticField : public AbstractHamiltoni
   // imaginarySquared = reference to the array of X²'s imaginary component
   // return = true if successful, otherwise false  
   bool PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMeanPositionOperator(double size, int nbrState, double* &real, double* &imaginary, double* &realSquared, double* &imaginarySquared);
+
 };
 
 // get Hilbert space on which Hamiltonian acts

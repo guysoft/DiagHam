@@ -1427,3 +1427,15 @@ double*** QuantumDots3DHamiltonian::EvaluateWaveFunctionZOverlap(int& memory)
   return TmpArray;
 }
 
+// determine the maximal value of partial diagonal array
+//
+// return = the wanted value
+
+double QuantumDots3DHamiltonian::MaxPartialDiagonalElement()
+{
+  double tmp = this->DiagonalElements[0];
+  for (int i = 1; i < this->Space->GetHilbertSpaceDimension(); ++i)
+    if (tmp < this->DiagonalElements[i])
+      tmp = this->DiagonalElements[i];
+  return tmp;
+}

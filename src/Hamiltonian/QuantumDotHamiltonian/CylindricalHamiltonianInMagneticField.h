@@ -173,13 +173,19 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
-  
+
+  // determine the maximal value of partial diagonal array
+  //
+  // return = the wanted value
+  double MaxPartialDiagonalElement();
+ 
+ private:
+
   // evaluate all interaction factors
   //
   // Bz = magnetic field component in Z direction
   // potential = pointer to the potential
   void EvaluateInteractionFactors(double Bz, ThreeDConstantCylinderPotential* &potential);
-
 
   // evaluate the plane wave function overlap
   //
@@ -188,6 +194,7 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // realArray = 2D array containing the real elements of the overlap
   // imaginaryArray = 2D array containing the imaginary elements of the overlap
   bool EvaluatePlaneWaveFunctionOverlap(ThreeDConstantCylinderPotential* &potential, int nbrState, double** &realArray, double** &imaginaryArray);
+
 };
 
 // get Hilbert space on which Hamiltonian acts

@@ -79,6 +79,10 @@ class QuantumDotThreeDConstantCylinderPotential : public ThreeDConstantCylinderP
   //
   void ConstructPotential(double dotPotential);
 
+  // save the whole diagram presentation in a bitmap file
+  //
+  // fileName = name of the file to stock the diagram presentation
+  virtual void SaveBmpPicture(char* fileName);
 };
 
 #endif

@@ -292,6 +292,11 @@ class QuantumDots3DHamiltonian : public AbstractHamiltonian
   // return value = reference on output stream
   friend MathematicaOutput& operator << (MathematicaOutput& Str, QuantumDots3DHamiltonian& H);
 
+  // determine the maximal value of partial diagonal array
+  //
+  // return = the wanted value
+  double MaxPartialDiagonalElement();
+
  private:
  
   // evaluate all interaction factors

@@ -142,9 +142,9 @@ int main(int argc, char** argv)
  
   // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
   DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
-  // ConstructPotential(double wellPotential, double dotPotential)
-  //potential->ConstructPotential(WellPotential, DotPotential);
-  //potential->LoadPotential("DotPotential.txt");
+  //ConstructPotential(double wellPotential, double dotPotential)
+  potential->ConstructPotential(WellPotential, DotPotential);
+  potential->SavePotential("DotPotential.txt");
   
   // define Hilbert space
   Periodic3DOneParticle* Space = new Periodic3DOneParticle(M, -M / 2, N, -N / 2, H, -H / 2);
@@ -178,10 +178,7 @@ int main(int argc, char** argv)
 
   cout << "----------------------------------------------------------------" << endl;
 
-  int ImpulsionX = Space->GetNbrStateX() / 2;
-  int ImpulsionY = Space->GetNbrStateY() / 2;
-  int ImpulsionZ = Space->GetNbrStateZ() / 2;
-  double HamiltonianShift = - (150.4 * ((double (ImpulsionX * ImpulsionX) / (double (M * M) * Lx * Lx * Mux)) + (double (ImpulsionY * ImpulsionY) / (double (N * N) * Ly * Ly * Muy)) + (double (ImpulsionZ * ImpulsionZ) / (double (H * H) * Lz * Lz * Muz))));
+  double HamiltonianShift = Hamiltonian.MaxPartialDiagonalElement();
   Hamiltonian.ShiftHamiltonian (HamiltonianShift);
   cout << "Hamiltonian shift =  " << HamiltonianShift << endl;
   gettimeofday (&(PrecalculationStartingTime), 0);
