@@ -4,6 +4,7 @@
 
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -124,7 +125,8 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
-  for (int i = 8; i < MaxNbrLz; ++i)
+  MaxNbrLz = 1;
+  for (int i = 0; i < MaxNbrLz; ++i)
     {
       int Lz = i << 1;
       cout << "Lz = " << i << endl;
@@ -142,6 +144,37 @@ int main(int argc, char** argv)
 	    }
      
 	}
+
+      BosonOnSphere Space (8, Lz, 8);
+      RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
+      ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, 8);
+      for (int k = 0; k < Degeneracy[i]; ++k)
+	{
+	  for (int l = k; l < Degeneracy[i]; ++l)
+	    {	
+	      HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
+	    }
+	}
+      cout << endl << endl;
+      
+      RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
+      for (int l = 0; l < Degeneracy[l]; ++l)
+	TmpEigenvector(l, l) = 1.0;
+      RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
+      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+      TmpTriDiag.Diagonalize(TmpEigenvector);
+      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+      cout << "angular momentum of test eigenvectors = ";
+      for (int k = 0; k < Degeneracy[i]; ++k)	    
+	{
+//	  cout << TmpTriDiag.DiagonalElement(k) << " " 
+//	       << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << endl;
+	  cout << round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)) << " ";
+	}
+      cout << endl;
+      RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
+      DiagonalBasis.Multiply(TmpEigenvector);
+
       for (int j = 0; j < Degeneracy[i]; ++j)
 	{
 	  Overlaps[j] = new double [Degeneracy[i]];
@@ -157,48 +190,22 @@ int main(int argc, char** argv)
 	  
 	  for (int k = 0; k < Degeneracy[i]; ++k)
 	    {
-	      if (ReferenceVector.GetVectorDimension() != TestVectors[k].GetVectorDimension())
+	      if (ReferenceVector.GetVectorDimension() != DiagonalBasis[k].GetVectorDimension())
 		{
 		  sprintf (OutputVectors2, "%d.%d.vec", Lz, k);
-		  cout << "dimension mismatch between " << InputVectors2 << " and " << OutputVectors2 << endl;
+		  cout << "dimension mismatch between " << InputVectors << " and " << OutputVectors << endl;
 		  return -1;
 		}
 	      
-	      double Scalar = ReferenceVector * TestVectors[k];
+	      double Scalar = ReferenceVector * DiagonalBasis[k];
 	      Overlaps[j][k] = Scalar;
 	      cout << "    " << OutputVectors << "  = " << Scalar << endl;
 	      BestOverlaps[j] += Scalar * Scalar;
 	    }
 	  BestOverlaps[j] = sqrt(BestOverlaps[j]);
 	  cout << endl << "best overlap = " << BestOverlaps[j] << endl;
-
-	  BosonOnSphere Space (8, i, 8);
-	  RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
-	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, i, 8);
-	  for (int k = 0; k < Degeneracy[i]; ++k)
-	    {
-	      for (int l = k; l < Degeneracy[i]; ++l)
-		{	
-		  HRep(l, k) = oper.MatrixElement(TestVectors[k], TestVectors[l]).Re;
-		}
-	    }
-	  cout << endl << endl;
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
-	  cout << HRep << endl;
-	  HRep.Householder(TmpTriDiag, 1e-7);
-	  TmpTriDiag.Diagonalize();
-	  TmpTriDiag.SortMatrixUpOrder();
-	  cout << "eigenvalues = " << endl;
-	  double Sum = 0.0;
-	  for (int k = 0; k < Degeneracy[i]; ++k)	    
-	    {
-	      cout << TmpTriDiag.DiagonalElement(k) << endl;
-	      Sum += TmpTriDiag.DiagonalElement(k);
-	    }
-	  cout << "Sum = " << Sum << endl;
-	  return 0;
-
 	}
+      
       SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
       cout << endl << "overlaps = " << endl;
       for (int j = 0; j < Degeneracy[i]; ++j)
@@ -212,7 +219,7 @@ int main(int argc, char** argv)
 	  delete[] Overlaps[j];
 	}
       delete[] Overlaps;
-      delete[] TestVectors;
+//      delete[] TestVectors;
     }
 
   delete[] Degeneracy;

@@ -63,13 +63,86 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->MaxNBody = this->NbrNbody;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
+  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
-    this->NBodyFlags[k] = false;
+    {
+      this->NBodyFlags[k] = false;
+      this->NBodyInteractionWeightFactors[k] = 0.0;
+    }
   this->NBodyFlags[this->NbrNbody] = true;
+  this->NBodyInteractionWeightFactors[this->NbrNbody] = 1.0;
+  this->Architecture = architecture;
+  this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
 
+// constructor from default datas
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// lzmax = maximum Lz value reached by a particle in the state
+// architecture = architecture to use for precalculation
+// maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
+// nBodyFactors = weight of the different n-body interaction terms with respect to each other
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
+ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+										   int maxNbrBody, double* nBodyFactors,
+										   AbstractArchitecture* architecture, long memory, 
+										   char* precalculationFileName)
+{
+  this->Particles = particles;
+  this->LzMax = lzmax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->NbrParticles = nbrParticles;
+
+  this->NbrNbody = maxNbrBody;
+  this->MaxNBody = maxNbrBody;
+  this->NBodyFlags = new bool [this->MaxNBody + 1];
+  this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
+  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
+  this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
+  this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+
+  for (int k = 0; k <= this->MaxNBody; ++k)
+    {
+      if (nBodyFactors[k] == 0.0)
+	this->NBodyFlags[k] = false;
+      else
+	this->NBodyFlags[k] = true;
+      this->NBodyInteractionWeightFactors[k] = nBodyFactors[k];
+    }
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -123,6 +196,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
   delete[] this->NBodyInteractionFactors;
   delete[] this->SortedIndicesPerSum;
   delete[] this->NbrSortedIndicesPerSum;
+  delete[] this->NBodyInteractionWeightFactors;
 
   if (this->FastMultiplicationFlag == true)
     {
@@ -183,7 +257,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    Coefficient = SumCoefficient;
 		    for (int l = 0; l < k; ++l)
 		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
-		    TmpNBodyInteractionFactors[i] = Coefficient;
+		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
 		    TmpMIndices += k;
 		  }
 	      }
@@ -238,7 +312,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    Coefficient = TmpSymmetryFactors[i] * TmpInteractionCoeffients[MinSum];
 		    for (int l = 0; l < k; ++l)
 		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
-		    TmpNBodyInteractionFactors[i] = Coefficient;
+		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
 		    TmpMIndices += k;
 		  }
 	      }

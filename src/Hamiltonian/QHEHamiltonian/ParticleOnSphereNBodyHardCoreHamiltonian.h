@@ -51,6 +51,9 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // number of particle that interact simultaneously through the hard core interaction
   int NbrNbody;
   
+  // weight of the different n-body interaction terms with respect to each other
+  double* NBodyInteractionWeightFactors;
+
  public:
 
   // constructor from default datas
@@ -63,6 +66,21 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
+					   AbstractArchitecture* architecture, long memory = -1, 
+					   char* precalculationFileName = 0);
+
+  // constructor from default datas
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // architecture = architecture to use for precalculation
+  // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
+  // nBodyFactors = weight of the different n-body interaction terms with respect to each other
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+					   int maxNbrBody, double* nBodyFactors,
 					   AbstractArchitecture* architecture, long memory = -1, 
 					   char* precalculationFileName = 0);
 

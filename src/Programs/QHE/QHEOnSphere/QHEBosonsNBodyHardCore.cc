@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
+  (*SystemGroup) += new  SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -122,7 +123,8 @@ int main(int argc, char** argv)
     {
       BosonOnSphere Space (NbrBosons, L, LzMax);
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
-      AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, Architecture.GetArchitecture(), 
+      AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
+												 Architecture.GetArchitecture(), 
 												 Memory, LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
