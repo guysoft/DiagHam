@@ -108,7 +108,8 @@ int main(int argc, char** argv)
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
   SingleIntegerOption NumberRValueOption ('R', "R-states", "number of states in plane", 100);
-  SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of cells in z direction", 100);
+  SingleIntegerOption NumberZValueOption ('Z', "Z-states", "number of states in z direction", 100);
+  SingleIntegerOption LowZOption ('\n', "lowz", "lower impulsion in z direction", -10);
   SingleIntegerOption NumberMValueOption ('m', "momentum", "quantum number of kinetic in z direction", 0);
   SingleDoubleOption MagneticFieldOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 30);
   SingleDoubleOption SizeZOption ('z', "size-z", "size of sample in Z direction (in Angstrom unit)", 118.65);
@@ -119,6 +120,7 @@ int main(int argc, char** argv)
   OptionList += &InputFile;
   OptionList += &NumberRValueOption;
   OptionList += &NumberZValueOption;
+  OptionList += &LowZOption;
   OptionList += &NumberMValueOption;
   OptionList += &MagneticFieldOption;
   OptionList += &SizeZOption;
@@ -138,13 +140,14 @@ int main(int argc, char** argv)
   char* FileName = InputFile.GetString();
   int NbrStateR = NumberRValueOption.GetInteger();
   int NbrStateZ = NumberZValueOption.GetInteger();
+  int LowZ = LowZOption.GetInteger();
   int NumberM = NumberMValueOption.GetInteger();
   double MagneticField = MagneticFieldOption.GetDouble();
   double SizeZ = SizeZOption.GetDouble();
   double SizeR = SizeROption.GetDouble();
-  
-  VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
-  VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  /*
+  VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, LowZ);
+  VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, LowZ);
   CylinderQuantumDotSpectra* spectra = new CylinderQuantumDotSpectra(space, FileName, MagneticField);
 
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
@@ -169,14 +172,14 @@ int main(int argc, char** argv)
       PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) / (tmpE - fundamental)  << endl;
       //cout << i << endl;
     } 
-  
+  */
 
-  /*
-  VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, -NbrStateZ / 2);
-  VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, -NbrStateZ / 2);
+  
+  VerticalPeriodicParticleInMagneticField* space = new VerticalPeriodicParticleInMagneticField (0, NbrStateR, NbrStateZ, LowZ);
+  VerticalPeriodicParticleInMagneticField* space2 = new VerticalPeriodicParticleInMagneticField (NumberM, NbrStateR, NbrStateZ, LowZ);
   CylinderInMagneticFieldSpectra* spectra = new CylinderInMagneticFieldSpectra(space, FileName, MagneticField);
-  cout << 
-  /*
+   
+  
   double delta = SizeZ / 100.0; double p = 0.0;
   double shift = 0.0;
   for (double z = shift; z <= (SizeZ + shift); z += delta)
@@ -184,7 +187,7 @@ int main(int argc, char** argv)
       p = spectra->ZProbabilityDensity(z, SizeZ);
       cout << (z - shift) << '\t' << p << '\n';
     }
-  */  
+    
   /*
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   char** Files = new char* [200];

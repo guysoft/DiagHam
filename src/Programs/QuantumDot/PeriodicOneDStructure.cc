@@ -41,6 +41,8 @@ bool EvaluateWaveFunctionOverlap(ThreeDConstantCylinderPotential* potential, int
 
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 #define BLOCH_FACTOR 7.619
+#define PARAMAGNETIC_FACTOR         5.802e-5
+#define DIAMAGNETIC_FACTOR          2.198e-10
 
 int main(int argc, char** argv)
 {  
@@ -65,7 +67,9 @@ int main(int argc, char** argv)
   (*PotentialGroup) += new SingleDoubleOption ('\n', "above", "width of the layer above the dot layer (in Angstrom unit)", 70.0);
   (*PotentialGroup) += new SingleDoubleOption ('\n', "dot", "potential in the dot", -0.4);
   (*PotentialGroup) += new SingleDoubleOption ('\n', "well", "potential in the well", 1.079);
+  (*PotentialGroup) += new SingleDoubleOption ('b', "magnetic", "magnetic field in Z direction (in Tesla unit)", 0);
 
+  (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-r", "electron effective mass in plane (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "nbr-statez", "number of states in z direction", 21);
   (*HilbertSpaceGroup) += new SingleIntegerOption ('\n', "lowz", "lower impulsion in z direction", -10);
@@ -97,7 +101,9 @@ int main(int argc, char** argv)
   double Above = ((SingleDoubleOption*) Manager["above"])->GetDouble();
   double DotPotential = ((SingleDoubleOption*) Manager["dot"])->GetDouble();
   double WellPotential = ((SingleDoubleOption*) Manager["well"])->GetDouble();
+  double MagneticField = ((SingleDoubleOption*) Manager["magnetic"])->GetDouble();
 
+  double Mur = ((SingleDoubleOption*) Manager["mu-r"])->GetDouble();
   double Muz = ((SingleDoubleOption*) Manager["mu-z"])->GetDouble();
   int NbrStateZ = ((SingleIntegerOption*) Manager["nbr-statez"])->GetInteger();
   int LowImpulsionZ = ((SingleIntegerOption*) Manager["lowz"])->GetInteger();
@@ -167,10 +173,12 @@ int main(int argc, char** argv)
   for (int i = 0; i < NbrEigenvalue; ++i)  
     {
       if (NumberM == 0)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";    
+	cout << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";    
       if (NumberM == 1)
-	cout << TmpTriDiag.DiagonalElement(2 * i) + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
-      if ((NumberM != 0) && (NumberM != 1))
+	cout << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+      if (NumberM == -1)
+	cout << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+      if ((NumberM != 0) && (NumberM != 1) && (NumberM != -1))
 	cout << "This momentum is not taken into account" << endl;
   cout << endl;
     }
@@ -197,9 +205,11 @@ int main(int argc, char** argv)
       for (int i = 0; i < NbrEigenvalue; ++i)
 	{
 	  if (NumberM == 0)
-	    OutputFile << " " << Eigenvalues[i] + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (4.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
 	  if (NumberM == 1)
-	    OutputFile << " " << Eigenvalues[i] + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " ";
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) + PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
+	  if (NumberM == -1)
+	    OutputFile << TmpTriDiag.DiagonalElement(2 * i) - PARAMAGNETIC_FACTOR * MagneticField / Mur + 2.0 * DIAMAGNETIC_FACTOR * Sigma * Sigma * MagneticField * MagneticField / Mur + PERIODIC_HAMILTONIAN_FACTOR / (2.0 * M_PI * M_PI * Muz * Sigma * Sigma) << " "; 
 	}
       OutputFile << endl;
       OutputFile.close();
