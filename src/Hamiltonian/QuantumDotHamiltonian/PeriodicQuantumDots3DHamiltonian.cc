@@ -757,10 +757,21 @@ void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors(double waveVec
 		{
 		  TmpRe2 = TmpRealWaveFunctionOverlapY[CellY];
 		  TmpIm2 = TmpImaginaryWaveFunctionOverlapY[CellY];
-		  for (int CellX = 0; CellX < this->NbrCellX; ++CellX)
+
+		  for (int CellX = 0; CellX < this->NbrCellX;)
 		    {		      
-		      TmpRe += this->InteractionFactors[CellZ][CellY][CellX] * (TmpRealWaveFunctionOverlapX[CellX] * TmpRe2 - TmpImaginaryWaveFunctionOverlapX[CellX] * TmpIm2);
-		      TmpIm += this->InteractionFactors[CellZ][CellY][CellX] * (TmpRealWaveFunctionOverlapX[CellX] * TmpIm2 + TmpImaginaryWaveFunctionOverlapX[CellX] * TmpRe2);		      
+		      double tmpPotential = this->InteractionFactors[CellZ][CellY][CellX];
+		      int tmpCellX = CellX; double TmpRe3 = 0.0, TmpIm3 = 0.0;
+		      for (; this->InteractionFactors[CellZ][CellY][tmpCellX] == tmpPotential; ++tmpCellX)
+			{
+			  TmpRe3 += TmpRealWaveFunctionOverlapX[tmpCellX];
+			  TmpIm3 += TmpImaginaryWaveFunctionOverlapX[tmpCellX];
+			}
+		      
+		      CellX = tmpCellX;
+
+		      TmpRe += tmpPotential * (TmpRe3 * TmpRe2 - TmpIm3 * TmpIm2);
+		      TmpIm += tmpPotential * (TmpRe3 * TmpIm2 + TmpIm3 * TmpRe2);
 		    }
 		}
 	      TmpRealPrecalculatedHamiltonian[CellZ] = TmpRe;  
