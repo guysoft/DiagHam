@@ -98,8 +98,8 @@ TetrapodThreeDConstantCellPotential::TetrapodThreeDConstantCellPotential (int nu
   this->LowerVertice3[2] = delta;
 
   this->UpperVertice = RealVector (3);
-  this->UpperVertice[0] = 0.0;
-  this->UpperVertice[1] = 0.0;
+  this->UpperVertice[0] = this->Center[0];
+  this->UpperVertice[1] = this->Center[1];
   this->UpperVertice[2] = delta + h;
 }
 
@@ -215,7 +215,7 @@ bool TetrapodThreeDConstantCellPotential::InOneArm(double x, double y, double z,
 
   return false;
 }
-
+/*
 // save the diagram of atoms in a file
 //
 // fileName = name of the file to stock the diagram
@@ -264,3 +264,4 @@ void TetrapodThreeDConstantCellPotential::LoadDiagram(char* fileName)
 void TetrapodThreeDConstantCellPotential::SaveBmpPicture(char* fileName)
 {
 }
+*/

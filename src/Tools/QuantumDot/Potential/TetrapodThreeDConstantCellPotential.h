@@ -29,21 +29,21 @@
 
 
 #include "config.h"
-#include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"
+#include "Tools/QuantumDot/Potential/BinaryThreeDConstantCellPotential.h"
 #include "Vector/RealVector.h"
 
 
-class TetrapodThreeDConstantCellPotential : public ThreeDConstantCellPotential
+class TetrapodThreeDConstantCellPotential : public BinaryThreeDConstantCellPotential
 {
 
  protected:
-
+  /*
     // type of atoms, false for bulk and true for tetrapod atoms
   bool*** Alloy;
 
   // the potential in 3D, the first index is for z, the second for y and the third for x
   double*** PotentialValue;
-
+  */
   // height of the barrier just below the tetrapod (in cell unit)
   int BelowTetrapod;
 
@@ -121,7 +121,7 @@ class TetrapodThreeDConstantCellPotential : public ThreeDConstantCellPotential
   // r = radius of the arm
   // return = true if the cell is in the dot, false otherwise
   bool InOneArm(double x, double y, double z, RealVector& a, RealVector& b, double r);
-
+  /*
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram
@@ -152,9 +152,9 @@ class TetrapodThreeDConstantCellPotential : public ThreeDConstantCellPotential
   //
   // fileName = name of the file to stock the diagram presentation
   virtual void SaveBmpPicture(char* fileName);
-
+  */
 };
-
+/*
 // assign the potential a value at a given position 
 //
 // i = x coordinate of the considered cell
@@ -178,5 +178,5 @@ inline double TetrapodThreeDConstantCellPotential::GetPotential(int i, int j, in
 {
   return this->PotentialValue[k][j][i];
 }
-
+*/
 #endif

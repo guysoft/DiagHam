@@ -41,6 +41,13 @@ using std::endl;
 using std::ofstream;
 
 
+// default constructor
+//
+
+BinaryThreeDConstantCellPotential::BinaryThreeDConstantCellPotential ()
+{
+}
+
 // constructor
 //
 // numberX, numberY, numberZ = number of cells in X, Y and Z directions respectively
@@ -124,6 +131,21 @@ void BinaryThreeDConstantCellPotential::SaveBmpPicture(char* fileName)
   PicRGB InN (0, 0, 0);
   PicRGB GaN (231, 231, 231);  
   if (!this->SaveBmpPicture(0, 0, 0, this->NumberX, 0, this->NumberY, 1, 5, 5, InN, GaN, background, 5, fileName));
+    cout << "Error when saving the bitmap file: " << fileName << endl;
+}
+
+// save the whole diagram presentation in a bitmap file
+//
+// sizeX = the size in X direction of each cell in pixel
+// sizeY = the size in Y direction of each cell in pixel
+// fileName = name of the file to stock the diagram presentation
+
+void BinaryThreeDConstantCellPotential::SaveBmpPicture(char* fileName, int sizeX, int sizeY)
+{
+  PicRGB background (255, 255, 255);
+  PicRGB InN (0, 0, 0);
+  PicRGB GaN (231, 231, 231);  
+  if (!this->SaveBmpPicture(0, 0, 0, this->NumberX, 0, this->NumberY, 1, sizeX, sizeY, InN, GaN, background, 5, fileName));
     cout << "Error when saving the bitmap file: " << fileName << endl;
 }
 

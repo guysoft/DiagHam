@@ -47,6 +47,10 @@ class BinaryThreeDConstantCellPotential : public ThreeDConstantCellPotential
 
  public:
 
+  // default constructor
+  //
+  BinaryThreeDConstantCellPotential ();
+
   // constructor
   //
   // numberX, numberY, numberZ = number of cells in X, Y and Z directions respectively
@@ -72,7 +76,7 @@ class BinaryThreeDConstantCellPotential : public ThreeDConstantCellPotential
   // j = y coordinate of the considered cell
   // k = z coordinate of the considered cell
   // value = value of potential
-  virtual void SetPotential(int i, int j, int k, double& value);
+  virtual void SetPotential(int i, int j, int k, double value);
 
   // get the potential at a given position
   //
@@ -86,6 +90,13 @@ class BinaryThreeDConstantCellPotential : public ThreeDConstantCellPotential
   //
   // fileName = name of the file to stock the diagram presentation
   virtual void SaveBmpPicture(char* fileName);
+
+  // save the whole diagram presentation in a bitmap file
+  //
+  // sizeX = the size in X direction of each cell in pixel
+  // sizeY = the size in Y direction of each cell in pixel
+  // fileName = name of the file to stock the diagram presentation
+  void SaveBmpPicture(char* fileName, int sizeX, int sizeY);
 
   // save the diagram to a bitmap file
   //
@@ -125,7 +136,7 @@ void CellFill(int startX, int sizeX, int startY, int sizeY, PicRGB& Col, Abstrac
 // k = z coordinate of the considered cell 
 // value = value of potential
 
-inline void BinaryThreeDConstantCellPotential::SetPotential(int i, int j, int k, double& value)
+inline void BinaryThreeDConstantCellPotential::SetPotential(int i, int j, int k, double value)
 {
   this->PotentialValue[k][j][i] = value;
 }
