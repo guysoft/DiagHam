@@ -59,6 +59,13 @@ class XYReflexionSymmetricPeriodicSpectra
   // fileName = name of the state file
   XYReflexionSymmetricPeriodicSpectra(XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName);
 
+  // get the wave function value of a state at a given point
+  //
+  // x, y, z : the position of the point
+  // SizeX, SizeY, SizeZ : the 3D-sizes of the sample
+  // Real, Imaginary : references to the real and imaginary components of the wave function
+  void WaveFunctionValue(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary);
+
   // get the value of impulsion operators with another wavefunction <this|p|another>
   //
   // space = Hilbert space describing the other particle

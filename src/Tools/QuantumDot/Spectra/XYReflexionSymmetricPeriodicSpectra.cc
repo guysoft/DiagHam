@@ -76,6 +76,111 @@ XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYRefle
   File.close();
 }
 
+// get the wave function value of a state at a given point
+//
+// x, y, z : the position of the point
+// SizeX, SizeY, SizeZ : the 3D-sizes of the sample
+// Real, Imaginary : references to the real and imaginary components of the wave function
+
+void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
+{
+  if ((this->LowerImpulsionX == 0) && (this->LowerImpulsionY == 0))
+    {
+      double TmpX = 0.0; double TmpY = 0.0; double TmpZ = 0.0;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      double* TmpRealCoefficients; double* TmpImaginaryCoefficients;
+      double TmpRe2 = 0.0; double TmpIm2 = 0.0;
+      double FactorX = 2.0 * M_PI * x / SizeX; double FactorY = 2.0 * M_PI * y / SizeY; double FactorZ = 2.0 * M_PI * z / SizeZ;
+      double TmpReZ, TmpImZ, TmpReYZ, TmpImYZ;
+      // m = 0
+      TmpX = sqrt(0.5);
+      TmpReYZ = 0.0; TmpImYZ = 0.0;
+      // m = 0; n = 0
+      TmpY = sqrt(0.5);
+      TmpRealCoefficients = this->RealCoefficients[0][0];
+      TmpImaginaryCoefficients = this->ImaginaryCoefficients[0][0];
+      TmpReZ = 0.0; TmpImZ = 0.0;
+      for (int p = 0; p < this->NbrStateZ; ++p)
+	{
+	  TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+	  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+	  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	}
+      TmpReYZ += TmpY * TmpReZ; 
+      TmpImYZ += TmpY * TmpImZ;
+      TmpRe += TmpX * TmpReYZ;
+      TmpIm += TmpX * TmpImYZ;
+
+      // m = 0; n != 0   
+      TmpReYZ = 0.0; TmpImYZ = 0.0;   
+      for (int n = 1; n < this->NbrStateY; ++n)
+	{
+	  TmpY = cos(double(n) * FactorY);
+	  TmpRealCoefficients = this->RealCoefficients[0][n];
+	  TmpImaginaryCoefficients = this->ImaginaryCoefficients[0][n];
+	  TmpReZ = 0.0; TmpImZ = 0.0;
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    {
+	      TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	    }
+	  TmpReYZ += TmpY * TmpReZ; 
+	  TmpImYZ += TmpY * TmpImZ;
+	}
+      TmpRe += TmpX * TmpReYZ;
+      TmpIm += TmpX * TmpImYZ;
+
+      // m != 0
+      for (int m = 1; m < this->NbrStateX; ++m)
+	{
+	  TmpX = cos(double(m) * FactorX);
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  // m != 0; n = 0
+	  TmpY = sqrt(0.5);
+	  TmpRealCoefficients = this->RealCoefficients[m][0];
+	  TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][0];
+	  TmpReZ = 0.0; TmpImZ = 0.0;
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    {
+	      TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	    }
+	  TmpReYZ += TmpY * TmpReZ; 
+	  TmpImYZ += TmpY * TmpImZ;
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+
+	  // m != 0; n!= 0
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  for (int n = 1; n < this->NbrStateY; ++n)
+	    {
+	      TmpY = cos(double(n) * FactorY);
+	      TmpRealCoefficients = this->RealCoefficients[m][n];
+	      TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][n];
+	      TmpReZ = 0.0; TmpImZ = 0.0;
+	      for (int p = 0; p < this->NbrStateZ; ++p)
+		{
+		  TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+		  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+		  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+		  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+		}
+	      TmpReYZ += TmpY * TmpReZ; 
+	      TmpImYZ += TmpY * TmpImZ;
+	    }
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+	}
+      Real = TmpRe * sqrt(8.0 / (SizeX * SizeY * SizeZ));
+      Imaginary = TmpIm * sqrt(8.0 / (SizeX * SizeY * SizeZ));   
+    }  
+}
+
 // get the value of impulsion operators with another wavefunction <this|p|another>
 //
 // space = Hilbert space describing the other particle
@@ -116,8 +221,9 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 
   cout << MaxLowerX << '\t' <<  MaxLowerY << '\t' <<  MaxLowerZ << endl;
   cout << MinUpperX << '\t' << MinUpperY << '\t' << MinUpperZ << endl;
-  */
+  
   int MinStateX = MinUpperX - MaxLowerX, MinStateY = MinUpperY - MaxLowerY, MinStateZ = MinUpperZ - MaxLowerZ;
+  */
 
   ifstream File;
   File.open(fileName, ios::binary | ios::in);

@@ -249,11 +249,11 @@ void PeriodicSpectra::WaveFunctionValue(double x, double SizeX, double y, double
 	      TmpZ = 2 * M_PI * (TmpY + double(p - this->LowerImpulsionZ) * z / SizeZ);
 	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 	      TmpRe += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
-	      TmpRe += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	      TmpIm += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
 	    }
 	}
     }
-  Real = TmpRe; Imaginary = TmpIm;
+  Real = TmpRe / sqrt (SizeX * SizeY * SizeZ); Imaginary = TmpIm / sqrt (SizeX * SizeY * SizeZ);
 }
 
 // get the value of impulsion operators with another wavefunction <this|p|another>

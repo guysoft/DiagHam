@@ -123,40 +123,40 @@ int main(int argc, char** argv)
   double fundamental;
   energy >> fundamental;
   double tmpE;  
-  ofstream polarization ("Polarization.txt");
+  ofstream mean ("MeanZ.txt");
   
-  //ofstream OutFile(out);  
+  ofstream OutFile(out);  
   // void PeriodicSpectra::DensityProbability(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
-  //double PositionX = (double(M) * Lx / 2.0);
-  //double RealValue = 0.0, ImaginaryValue = 0.0;
+  double PositionX = (double(M) * Lx / 2.0);
+  double RealValue = 0.0, ImaginaryValue = 0.0;
 
-  //for (int j = 0; j <= N; ++j)
-  //  {      
-  //    for (int k = 0; k <= H; ++k)
-  //	{
-  //	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
-  //	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
-  //	}
-  //    OutFile << '\n';
-  //  }
-  //OutFile.close();  
- 
-  ofstream PX("PolarizationX.txt");
-  ofstream PZ("PolarizationZ.txt");
-
-  for (int i = 1; i < 80; ++i)
+  for (int j = 0; j <= N; ++j)
+    {      
+      for (int k = 0; k <= H; ++k)
+  	{
+  	  spectra.WaveFunctionValue(PositionX, SizeX, j * Ly, SizeY, k * Lz, SizeZ, RealValue, ImaginaryValue);
+  	  OutFile << (RealValue * RealValue + ImaginaryValue * ImaginaryValue) << " "; 
+  	}
+      OutFile << '\n';
+    }
+  OutFile.close();  
+  
+  double square = 0.0; double moyenne = 0.0;
+  /*
+  for (int i = 1; i < 150; ++i)
     {
       Files[i] = new char[80];
       AddString(Files[i], "eigenvector.", i, "");
-      spectra.GetImpulsion(Space2, Files[i], SizeX, SizeY, SizeZ, ReX, ImX, ReY, ImY, ReZ, ImZ);
+      PeriodicSpectra* spectra = new PeriodicSpectra(Space, Files[i]);
+      spectra->GetMeanValueZ(square);
       energy >> tmpE;
-      polarization << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\t' << ((ReY * ReY) + (ImY * ImY)) << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
-      PX << tmpE - fundamental << '\t' << ((ReX * ReX) + (ImX * ImX)) << '\n';
-      PZ << tmpE - fundamental << '\t' << ((ReZ * ReZ) + (ImZ * ImZ)) << '\n';
+      mean << tmpE - fundamental << '\t' << moyenne << '\t' << square << '\n';
+      delete spectra;
     }
+  */
 
-  PX.close(); PZ.close();
-  energy.close(); polarization.close();
+  //PX.close(); PZ.close();
+  energy.close(); mean.close();
   
 
   /*
@@ -207,11 +207,11 @@ int main(int argc, char** argv)
   char** Files = new char* [1]; int* State = new int[1];
   for (int i = 0; i < 1; ++i)
     {
-      State[i] = 80;
+      State[i] = 150;
       Files[i] = new char[80];
       Files[0] = FileName;
     }
-  DOSSpectra DOS(1, Files, State, 4e-3, -0.16, 0.2, 2e-4);
+  DOSSpectra DOS(1, Files, State, 4e-3, -0.14, 0.28, 2e-4);
   DOS.WriteSpectra(out);
   */
 
@@ -268,11 +268,11 @@ int main(int argc, char** argv)
   char** Files = new char* [Nbr]; int* State = new int[Nbr];
   for (int i = 0; i < Nbr; ++i)
     {
-      State[i] = 79;
+      State[i] = 149;
       Files[i] = new char[80];
       Files[i] = FileName;
     }
-  Spectra Absorption (Nbr, Files, State, 4e-3, 0.03, 0.33, 2e-4);
+  Spectra Absorption (Nbr, Files, State, 4e-3, 0.03, 0.43, 2e-4);
   Absorption.WriteSpectra(out);
 */
 
