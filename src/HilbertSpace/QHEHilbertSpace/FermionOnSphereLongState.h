@@ -166,8 +166,9 @@ class FermionOnSphereLongState
   // stateIndex = index of the state whose occupation has to be set 
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
   // signLookUpTable = pointer to an array containing the parity of the number of one for each integer ranging from 0 to 65535
+  // signLookUpTableMaks = pointer to an array containing the parity of the mask on the bits to keep for each shift that is requested by sign evaluation
   // coefficient = reference on a coefficient which will be multiplied by the sign of the permutation
-  void GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, double& coefficient);
+  void GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, unsigned long* signLookUpTableMaks, double& coefficient);
   
   // swap two states
   //
@@ -504,9 +505,10 @@ inline bool FermionOnSphereLongState::TestAndDecrementOccupation (const int& sta
 // stateIndex = index of the state whose occupation has to be set 
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state) minus 1
 // signLookUpTable = pointer to an array containing the parity of the number of one for each integer ranging from 0 to 65535
+// signLookUpTableMaks = pointer to an array containing the parity of the mask on the bits to keep for each shift that is requested by sign evaluation
 // coefficient = reference on a coefficient which will be multiplied by the sign of the permutation
 
-inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, double& coefficient)
+inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int reducedNbrState, double* signLookUpTable, unsigned long* signLookUpTableMaks, double& coefficient)
 {
 #ifdef  __64_BITS__
   int tmp = (stateIndex >> 6);
@@ -534,21 +536,21 @@ inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int red
    }
 #ifdef  __64_BITS__
   stateIndex &= 0x3f;
-  Mask = (this->StateDescription[tmp] >> stateIndex) & ((unsigned long) 0xffff);
+  Mask = (this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex];
   coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & ((unsigned long) 0xffff);
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16];
   coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 32))  & ((unsigned long) 0xffff);
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 32))  & signLookUpTableMaks[stateIndex + 32];
   coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 48))  & ((unsigned long) 0xffff);
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 48))  & signLookUpTableMaks[stateIndex + 48];
   coefficient *= signLookUpTable[Mask];
 #else
   stateIndex &= 0x1f;
-  Mask = (this->StateDescription[tmp] >> stateIndex) & ((unsigned long) 0xffff);
-  cout << Mask << endl;
+  Mask = (this->StateDescription[tmp] >> stateIndex) & signLookUpTableMaks[stateIndex];
+//  cout << Mask << endl;
   coefficient *= signLookUpTable[Mask];
-  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & ((unsigned long) 0xffff);
-  cout << Mask << endl;
+  Mask = (this->StateDescription[tmp] >> (stateIndex + 16)) & signLookUpTableMaks[stateIndex + 16];
+//  cout << Mask << endl;
   coefficient *= signLookUpTable[Mask];
 #endif
 }

@@ -105,24 +105,25 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      FermionOnDisk Space(NbrFermions, L);
-      FermionOnDiskUnlimited Space2(NbrFermions, L);
-      int MaxMomentum = L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2);
+//      FermionOnDisk Space(NbrFermions, L);
+      FermionOnDiskUnlimited Space(NbrFermions, L);
+/*      int MaxMomentum = L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2);
       cout << "MaxMomentum=" << MaxMomentum << endl;
       cout << Space.GetHilbertSpaceDimension() << " " << Space2.GetHilbertSpaceDimension()<< endl;
       int m4;
-/*      for (int m1 = 0; m1 <= MaxMomentum; ++m1)
+      for (int m1 = 0; m1 <= MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= MaxMomentum; ++m3)*/
+	  for (int m3 = 0; m3 <= MaxMomentum; ++m3)
 	    {
-//	      m4 = m1 + m2 - m3;
-//	      if ((m4 >= 0) && (m3 > m4))
-		{
-		  int m1 = 9;
+	      m4 = m1 + m2 - m3;
+	      if ((m4 >= 0) && (m3 > m4))
+		{*/
+/*		  int m1 = 9;
 		  int m2 = 7;
 		  int m3 = 16;
 		  m4 = 0;
-		  for (int i = 71; i < 72; ++i)//Space.GetHilbertSpaceDimension(); ++i)
+		  for (int i = 71; i < 72; ++i)*//*
+		  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
 		    {
 		      double schmok1 = 0.0;
 		      double schmok2 = 0.0;
@@ -135,16 +136,16 @@ int main(int argc, char** argv)
 	    }
       for (int i = 0 ; i < Space.GetHilbertSpaceDimension(); ++i)
 	Space.PrintState(cout, i) << endl;
-      return 0;
+      return 0;*/
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space.GetHilbertSpaceDimension() << endl;
-      for (int i = 0 ; i < Space.GetHilbertSpaceDimension(); ++i)
-	Space.PrintState(cout, i) << endl;
+/*      for (int i = 0 ; i < Space.GetHilbertSpaceDimension(); ++i)
+	Space.PrintState(cout, i) << endl;*/
       ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(&Space, NbrFermions, Architecture, Memory, LoadPrecalculationFileName);
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
-      if (Hamiltonian->GetHilbertSpaceDimension() < 8500)
+      if (Hamiltonian->GetHilbertSpaceDimension() < 500)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);

@@ -67,6 +67,8 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
 
   // a table containing the parity of the number of one for each integer ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
   // number to evalute size of SignLookUpTable
   int MaximumSignLookUp;
 
