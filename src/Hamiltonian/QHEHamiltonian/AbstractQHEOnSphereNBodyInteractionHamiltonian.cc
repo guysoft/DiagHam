@@ -34,6 +34,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Complex.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -346,3 +347,186 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
     }
   delete TmpParticles;
 }
+
+// get all indices needed to characterize a completly skew symmetric tensor, sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndices = number of indices 
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long  AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
+										  int***& sortedIndicesPerSum)
+{
+  long** BinomialCoefficients = GetBinomialCoefficients(nbrValues);
+  long NbrElements = BinomialCoefficients[nbrValues][nbrIndices];
+  int** Indices = new int* [NbrElements];
+  int* Sum = new int [NbrElements];
+  int Min = nbrIndices - 1;
+  int Max;
+  int Step;
+  int Pos = 0;
+  for (int i = nbrValues - 1; i >= Min; --i)
+    {
+      Step = BinomialCoefficients[i][nbrIndices - 1];
+      for (int j = 0; j < Step; ++j)
+	{
+	  Indices[Pos] = new int [nbrIndices];
+	  Indices[Pos][0] = i;
+	  Sum[Pos] = i;
+	  ++Pos;
+	}
+    }
+  for (int i = 1; i < nbrIndices; ++i)
+    {
+      int Pos = 0;
+      Min = nbrIndices - i - 1;
+      while (Pos < NbrElements)
+	{
+	  Max = Indices[Pos][i - 1] - 1;
+	  for (; Max >= Min; --Max)
+	    {
+	      Step = BinomialCoefficients[Max][Min];
+	      for (int j = 0; j < Step; ++j)
+		{
+		  Indices[Pos][i] = Max;
+		  Sum[Pos] += Max;
+		  ++Pos;
+		}
+	    }
+	}
+    }
+
+  int MaxSum = (((nbrValues - 1) * nbrValues) - ((nbrIndices - 1) * (nbrIndices - 2)))/ 2;
+  int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
+  nbrSortedIndicesPerSum = new int [MaxSum + 1];
+  sortedIndicesPerSum = new int** [MaxSum + 1];
+  for (int i = 0; i < NbrElements; ++i)
+    ++nbrSortedIndicesPerSum[Sum[i]];
+  for (int i = MinSum; i <= MaxSum; ++i)
+    {
+      sortedIndicesPerSum[i] = new int* [nbrSortedIndicesPerSum[i]];
+      nbrSortedIndicesPerSum[i] = 0;
+    }
+  for (int i = 0; i < NbrElements; ++i)
+    {   
+      Pos = Sum[i];
+      Max = nbrSortedIndicesPerSum[Pos];
+      sortedIndicesPerSum[Pos][Max] = Indices[i];
+      ++nbrSortedIndicesPerSum[Pos];
+    }
+
+  delete[] Sum;
+  delete[]Indices;
+  for (int i = 0; i <= nbrValues; ++i)
+    delete[] BinomialCoefficients[i];
+  delete[] BinomialCoefficients;
+  return NbrElements;
+}
+
+// get all indices needed to characterize a completly symmetric tensor, sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndices = number of indices 
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// sortedIndicesPerSumSymmetryFactor = reference on a array where symmetry factor (aka inverse of the product of the factorial of the number 
+//                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long AbstractQHEOnSphereNBodyInteractionHamiltonian::GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum,
+									     double**& sortedIndicesPerSumSymmetryFactor)
+{
+  long** DimensionSymmetricGroup = GetIrreducibleRepresentationDimensionSymmetricGroup(nbrValues);
+  long NbrElements = DimensionSymmetricGroup[nbrValues][nbrIndices];
+
+  int** Indices = new int* [NbrElements];
+  int* Sum = new int [NbrElements];
+  int Max;
+  int Step;
+  int Pos = 0;
+  int TmpNbrIndices;
+  for (int i = nbrValues - 1; i >= 0; --i)
+    {
+      Step = DimensionSymmetricGroup[i + 1][nbrIndices - 1];
+      for (int j = 0; j < Step; ++j)
+	{
+	  Indices[Pos] = new int [nbrIndices];
+	  Indices[Pos][0] = i;
+	  Sum[Pos] = i;
+	  ++Pos;
+	}
+    }
+  for (int i = 1; i < nbrIndices; ++i)
+    {
+      int Pos = 0;
+      TmpNbrIndices = nbrIndices - i - 1;
+      while (Pos < NbrElements)
+	{
+	  Max = Indices[Pos][i - 1];
+	  Step = DimensionSymmetricGroup[Max + 1][TmpNbrIndices];
+	  for (int j = 0; j < Step; ++j)
+	    {
+	      Indices[Pos][i] = Max;
+	      Sum[Pos] += Max;
+	      ++Pos;
+	    }
+	  --Max;
+	  for (; Max >= 0; --Max)
+	    {
+	      Step = DimensionSymmetricGroup[Max + 1][TmpNbrIndices];
+	      for (int j = 0; j < Step; ++j)
+		{
+		  Indices[Pos][i] = Max;
+		  Sum[Pos] += Max;
+		  ++Pos;
+		}
+	    }
+	}
+    }
+
+  int MaxSum = (nbrValues - 1) * nbrIndices;
+  nbrSortedIndicesPerSum = new int [MaxSum + 1];
+  sortedIndicesPerSum = new int** [MaxSum + 1];
+  sortedIndicesPerSumSymmetryFactor = new double* [MaxSum + 1];
+  for (int i = 0; i < NbrElements; ++i)
+    ++nbrSortedIndicesPerSum[Sum[i]];
+  for (int i = 0; i <= MaxSum; ++i)
+    {
+      sortedIndicesPerSum[i] = new int* [nbrSortedIndicesPerSum[i]];
+      sortedIndicesPerSumSymmetryFactor[i] = new double [nbrSortedIndicesPerSum[i]];
+      nbrSortedIndicesPerSum[i] = 0;
+    }
+  for (int i = 0; i < NbrElements; ++i)
+    {   
+      Pos = Sum[i];
+      Max = nbrSortedIndicesPerSum[Pos];
+      sortedIndicesPerSum[Pos][Max] = Indices[i];
+      double& SymmetryFactor = sortedIndicesPerSumSymmetryFactor[Pos][Max];
+      SymmetryFactor = 1.0;
+      int* TmpIndices = Indices[i];
+      for (int j = 1; j < nbrIndices; ++j)
+	{
+	  int TmpSymmetryFactor = 1;
+	  while ((j < nbrIndices) && (TmpIndices[j - 1] == TmpIndices[j]))
+	    {
+	      ++TmpSymmetryFactor;
+	      ++j;
+	    }
+	  if (TmpSymmetryFactor != 1)
+	    for (int k = 2; k <= TmpSymmetryFactor; ++k)
+	      SymmetryFactor *= (double) k;
+	}
+      SymmetryFactor = 1.0 / SymmetryFactor;
+      ++nbrSortedIndicesPerSum[Pos];
+    }
+
+  delete[] Sum;
+  delete[]Indices;
+  for (int i = 0; i <= nbrValues; ++i)
+    delete[] DimensionSymmetricGroup[i];
+  delete[] DimensionSymmetricGroup;
+  return NbrElements;
+}
+

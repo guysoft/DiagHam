@@ -52,5 +52,11 @@ int RecursiveFindGCD(int m, int n);
 // return value = array containing the binomial coefficients (first index (i) corresponding to the number of elements, the second index going from 0 to i)
 long** GetBinomialCoefficients (int n); 
 
+// get all dimensions of irreducible representations of the symmetric group
+//
+// n = maximum number of elements
+// return value = array containing binomial coeffcient (first index corresponds to the number of elements, the second is the number of indices,
+//                if the number of indices is zero, the dimension is then equal to one)
+long** GetIrreducibleRepresentationDimensionSymmetricGroup (int n);
 
 #endif

@@ -102,6 +102,27 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // lastComponent  = index of the last component that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
 
+  // get all indices needed to characterize a completly skew symmetric tensor, ordered by the sum of the indices
+  //
+  // nbrValues = number of different values an index can have
+  // nbrIndices = number of indices 
+  // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+  // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+  // return value = total number of index groups
+  virtual long GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum);
+
+  // get all indices needed to characterize a completly symmetric tensor, sorted by the sum of the indices
+  //
+  // nbrValues = number of different values an index can have
+  // nbrIndices = number of indices 
+  // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+  // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+  // sortedIndicesPerSumSymmetryFactor = reference on a array where symmetry factor (aka inverse of the product of the factorial of the number 
+  //                                      of time each index appears) are stored (first array dimension corresponding to sum of the indices)
+  // return value = total number of index groups
+  virtual long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int***& sortedIndicesPerSum,
+				       double**& sortedIndicesPerSumSymmetryFactor);
+
 };
 
 #endif

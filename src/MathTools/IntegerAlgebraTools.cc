@@ -89,3 +89,36 @@ long** GetBinomialCoefficients (int n)
     }
   return TmpBinomialCoefficients;
 }
+
+// get all dimensions of irreducible representations of the symmetric group
+//
+// n = maximum number of elements
+// return value = array containing binomial coeffcient (first index corresponds to the number of elements, the second is the number of indices,
+//                if the number of indices is zero, the dimension is then equal to one)
+
+long** GetIrreducibleRepresentationDimensionSymmetricGroup (int n)
+{
+  if (n == 0)
+    n = 1;
+  long** TmpBinomialCoefficients =  new long* [n + 1]; 
+  for (int i = 0; i <= n; ++i)
+    {
+      TmpBinomialCoefficients[i] = new long [n + 1];
+    }
+  TmpBinomialCoefficients[0][0] = 1l;
+  TmpBinomialCoefficients[1][0] = 1l;
+  for (int i = 1; i <= n; ++i)
+    {
+      TmpBinomialCoefficients[0][i] = 1l;
+      TmpBinomialCoefficients[1][i] = 1l;
+    }
+
+  for (int i = 2; i <= n; ++i)
+    {
+      TmpBinomialCoefficients[i][0] = 1l;
+      TmpBinomialCoefficients[i][1] = (long) i;
+      for (int j = 2; j <= n; ++j)
+	TmpBinomialCoefficients[i][j] = TmpBinomialCoefficients[i - 1][j] + TmpBinomialCoefficients[i][j - 1];	  
+    }
+  return TmpBinomialCoefficients;
+}

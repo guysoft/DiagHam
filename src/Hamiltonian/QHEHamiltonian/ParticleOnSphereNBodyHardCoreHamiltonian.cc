@@ -160,109 +160,112 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       TmpNormalizationCoeffients[i] = sqrt (TmpBinomial * TmpFactor);
     }
 
-  int MaxSumIndices = this->MaxNBody * this->LzValue;
-  double* TmpInteractionCoeffients = new double[MaxSumIndices + 1];
-  TmpInteractionCoeffients[0] = sqrt (TmpBinomial * TmpFactor);
-  for (int i = 1; i < MaxSumIndices; ++i)
-    {
-      TmpBinomial *= this->LzMax - ((double) i) + 1.0;
-      TmpBinomial /= ((double) i);
-      TmpInteractionCoeffients[i] = sqrt (TmpBinomial * TmpFactor);
-    }
-
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      int MaxNbrMIndices = (this->MaxNBody * (this->MaxNBody - 1)) / 2; 
-      double* TmpFactors = new double [MaxNbrMIndices * MaxNbrMIndices];
-      int** TmpIndices = new int* [MaxNbrMIndices];
-      for (int i = 0; i < MaxNbrMIndices; ++i)
-	{
-	  TmpIndices[i] = new int [this->NbrLzValue]
-	}
-      double* TmpInteractionFactors = new double[MaxNbrMIndices * MaxNbrMIndices];
-      int* TmpMIndices;
-      int* TmpNIndices;
-      int SumIndices;
-      int Pos;
-      double Coefficient;
-      long TmpNbrInteractionFactors;
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
-	    int NbrMIndices = (k * (k - 1)) / 2; 
-	    int* TmpMIndices = TmpIndices[i];
-	    Pos = 0;
-	    double MaxCoefficient = 0.0;
-	    for (int i = 0; i < NbrMIndices; ++i)
+	    int* NbrSortedIndicesPerSum;
+	    int*** SortedIndicesPerSum;
+	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, NbrSortedIndicesPerSum, SortedIndicesPerSum);
+	    long TmpNbrInteraction = 0;
+	    int MaxSum = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
+	    int MinSum = (k * (k - 1)) / 2;
+	    for (int i = MinSum; i <= MaxSum; ++i)
+	      TmpNbrInteraction += NbrSortedIndicesPerSum[i];
+	    this->NBodyMValue[k] = new int* [TmpNbrInteraction * TmpNbrInteraction];
+	    this->NBodyNValue[k] = new int* [TmpNbrInteraction * TmpNbrInteraction];
+	    this->NBodyInteractionFactors[k] = new double [TmpNbrInteraction * TmpNbrInteraction];
+	    double SumCoefficient = 1.0;
+	    double Coefficient;
+	    int Lim;
+	    for (; MinSum <= MaxSum; ++MinSum)
 	      {
-		TmpMIndices = TmpIndices[i];
-		for (int j = 0; j < NbrMIndices; ++j)
+		Lim = NbrSortedIndicesPerSum[MinSum];
+		for (int i = 0; i < Lim; ++i)
 		  {
-		    TmpNIndices = TmpIndices[j];
-		    SumIndices = 0;
+		    int* TmpMIndices = SortedIndicesPerSum[MinSum][i];
+		    Coefficient = SumCoefficient;
 		    for (int l = 0; l < k; ++l)
+		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];
+		    for (int j = 0; j < Lim; ++j)
 		      {
-			SumIndices += TmpMIndices[l];
-			SumIndices -= TmpNIndices[l];
-		      }
-		    if (SumIndices == 0)
-		      {
-			for (int l = 0; l < k; ++l)
-			  SumIndices += TmpMIndices[l];
-			double& TmpCoef = TmpInteractionFactors[Pos];
-			TmpCoef = TmpInteractionCoeffients[SumIndices];			
+			int* TmpNIndices = SortedIndicesPerSum[MinSum][j];
+			this->NBodyMValue[k][TmpNbrInteraction] = TmpMIndices;
+			this->NBodyNValue[k][TmpNbrInteraction] = TmpNIndices;
+			double TmpCoef = Coefficient;
 			for (int l = 0; l < k; ++l)
 			  {
-			    TmpCoef *= TmpNormalizationCoeffients[TmpMIndices[l]];
 			    TmpCoef *= TmpNormalizationCoeffients[TmpNIndices[l]];
 			  }
-			if ((MaxCoefficient == 0.0) || (MaxCoefficient < fabs(TmpCoef)))
-			  {
-			    MaxCoefficient = fabs(TmpCoef);
-			  }
-			++TmpNbrInteractionFactors;
+			this->NBodyInteractionFactors[k][TmpNbrInteraction] = TmpCoef;
+			++TmpNbrInteraction;
 		      }
-		    else
-		      {
-			TmpInteractionFactors[Pos] = 0.0;
-		      }
-		    ++Pos;
 		  }
 	      }
-	    this->NBodyMValue[k] = new int** [TmpNbrInteractionFactors];
-	    this->NBodyNValue[k] = new int** [TmpNbrInteractionFactors];
-	    this->NBodyInteractionFactors = new double [TmpNbrInteractionFactors];
-	    MaxCoefficient *= MACHINE_PRECISION;
-	    TmpNbrInteractionFactors = 0;
-	    Pos = 0;
-	    for (int i = 0; i < NbrMIndices; ++i)
-	      {
-		TmpMIndices = TmpIndices[i];
-		for (int j = 0; j < NbrMIndices; ++j)
-		  {
-		    if (fabs(TmpInteractionFactors[Pos]) > MaxCoefficient)
-		      {
-			this->NBodyMValue[k][TmpNbrInteractionFactors]  = new int [k];
-			this->NBodyNValue[k][TmpNbrInteractionFactors]  = new int [k];
-			for (int l = 0; l < k; ++l)
-			  {
-			    this->NBodyMValue[k][TmpNbrInteractionFactors][l] = TmpMIndices[l];
-			    this->NBodyNValue[k][TmpNbrInteractionFactors][l] = TmpIndices[j][l];
-			  }
-			this->NBodyInteractionFactors[TmpNbrInteractionFactors] = -TmpInteractionFactors[Pos];
-			++TmpNbrInteractionFactors;
-		      }
-		    ++Pos;
-		  }
-	      }
-	    this->NBodyNbrInteractionFactors[k] = TmpNbrInteractionFactors;
+	    delete[] NbrSortedIndicesPerSum;
+	    MinSum = (k * (k - 1)) / 2;
+	    for (; MinSum <= MaxSum; ++MinSum)
+	      delete[] SortedIndicesPerSum[MinSum];
+	    delete[] SortedIndicesPerSum;
+	    this->NBodyNbrInteractionFactors[k] = TmpNbrInteraction;
 	  }
-      delete[] TmpInteractionFactors;
     }
   else
     {
+      for (int k = 2; k <= this->MaxNBody; ++k)
+	if (this->NBodyFlags[k] == true) 
+	  {
+	    int* NbrSortedIndicesPerSum;
+	    int*** SortedIndicesPerSum;
+	    double** SortedIndicesPerSumSymmetryFactor;
+	    GetAllSymmetricIndices(this->NbrLzValue, k, NbrSortedIndicesPerSum, SortedIndicesPerSum,
+				   SortedIndicesPerSumSymmetryFactor);
+	    long TmpNbrInteraction = 0;
+	    int MaxSum = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
+	    int MinSum = (k * (k - 1)) / 2;
+	    for (int i = MinSum; i <= MaxSum; ++i)
+	      TmpNbrInteraction += NbrSortedIndicesPerSum[i];
+	    this->NBodyMValue[k] = new int* [TmpNbrInteraction * TmpNbrInteraction];
+	    this->NBodyNValue[k] = new int* [TmpNbrInteraction * TmpNbrInteraction];
+	    this->NBodyInteractionFactors[k] = new double [TmpNbrInteraction * TmpNbrInteraction];
+	    double SumCoefficient = 1.0;
+	    double Coefficient;
+	    int Lim;
+	    for (; MinSum <= MaxSum; ++MinSum)
+	      {
+		Lim = NbrSortedIndicesPerSum[MinSum];
+		for (int i = 0; i < Lim; ++i)
+		  {
+		    int* TmpMIndices = SortedIndicesPerSum[MinSum][i];
+		    Coefficient = SumCoefficient * SortedIndicesPerSumSymmetryFactor[MinSum][i];
+		    for (int l = 0; l < k; ++l)
+		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];
+		    for (int j = 0; j < Lim; ++j)
+		      {
+			int* TmpNIndices = SortedIndicesPerSum[MinSum][j];
+			this->NBodyMValue[k][TmpNbrInteraction] = TmpMIndices;
+			this->NBodyNValue[k][TmpNbrInteraction] = TmpNIndices;
+			double TmpCoef = Coefficient;
+			for (int l = 0; l < k; ++l)
+			  {
+			    TmpCoef *= TmpNormalizationCoeffients[TmpNIndices[l]];
+			  }
+			this->NBodyInteractionFactors[k][TmpNbrInteraction] = TmpCoef * SortedIndicesPerSumSymmetryFactor[MinSum][j];
+			++TmpNbrInteraction;
+		      }
+		  }
+	      }
+	    delete[] NbrSortedIndicesPerSum;
+	    for (int MinSum = 0; MinSum <= MaxSum; ++MinSum)
+	      {
+		delete[] SortedIndicesPerSum[MinSum];
+	      }
+	    delete[] SortedIndicesPerSum;
+	    delete[] SortedIndicesPerSumSymmetryFactor;
+	    this->NBodyNbrInteractionFactors[k] = TmpNbrInteraction;
+	  }
     }
   delete[] TmpNormalizationCoeffients;
-  delete[] TmpInteractionCoeffients;
 }
 */
