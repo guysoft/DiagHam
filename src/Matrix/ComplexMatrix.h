@@ -36,13 +36,12 @@
 #include "Matrix/Matrix.h"
 #include "Output/MathematicaOutput.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Vector/ComplexVector.h"
+
 #include <iostream>
 
 
 using std::ostream;
-
-
-class ComplexVector;
 
 
 class ComplexMatrix : protected Matrix
