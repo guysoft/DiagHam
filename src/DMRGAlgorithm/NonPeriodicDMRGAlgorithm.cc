@@ -41,7 +41,7 @@
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/DMRGPartialHilbertSpace.h"
+#include "HilbertSpace/DMRGHilbertSpace/DMRGPartialHilbertSpace.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "TensorProduct/FullTensorProductStructure.h"

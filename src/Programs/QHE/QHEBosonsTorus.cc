@@ -1,7 +1,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/BosonOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
 #include "Hamiltonian/QHEHamiltonian/ParticleOnTorusCoulombHamiltonian.h"

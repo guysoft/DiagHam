@@ -1,7 +1,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"

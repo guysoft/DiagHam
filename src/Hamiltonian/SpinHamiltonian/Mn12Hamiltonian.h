@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ThierryChain.h"
+#include "HilbertSpace/SpinHilbertSpace/ThierryChain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 

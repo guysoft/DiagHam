@@ -1,7 +1,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/TrappedBosons.h"
+#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
 #include "Hamiltonian/QHEHamiltonian/TrappedBosonHamiltonian.h"
 
 #include <iostream>

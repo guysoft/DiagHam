@@ -35,7 +35,7 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Operator/AbstractOperator.h"
-#include "HilbertSpace/AbstractSpinChain.h"
+#include "HilbertSpace/SpinHilbertSpace/AbstractSpinChain.h"
 
 #include <iostream.h>
 

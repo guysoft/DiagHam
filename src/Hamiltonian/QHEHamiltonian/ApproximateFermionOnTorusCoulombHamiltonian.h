@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnTorus.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 #include <iostream>

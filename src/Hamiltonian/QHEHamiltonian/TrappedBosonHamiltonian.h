@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/TrappedBosons.h"
+#include "HilbertSpace/QHEHilbertSpace/TrappedBosons.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 #include <iostream>

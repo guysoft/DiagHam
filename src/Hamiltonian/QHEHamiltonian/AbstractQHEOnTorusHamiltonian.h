@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorus.h"
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
 
 #include <iostream>

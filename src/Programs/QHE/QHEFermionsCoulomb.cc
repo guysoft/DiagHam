@@ -1,8 +1,8 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/BosonOnSphere.h"
-#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombHamiltonian.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
 

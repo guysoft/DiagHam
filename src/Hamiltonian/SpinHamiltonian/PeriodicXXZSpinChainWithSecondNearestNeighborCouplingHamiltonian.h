@@ -35,7 +35,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractSpinChain.h"
+#include "HilbertSpace/SpinHilbertSpace/AbstractSpinChain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 

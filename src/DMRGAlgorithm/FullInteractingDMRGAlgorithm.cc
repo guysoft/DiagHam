@@ -41,7 +41,7 @@
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/DMRGPartialHilbertSpace.h"
+#include "HilbertSpace/DMRGHilbertSpace/DMRGPartialHilbertSpace.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "TensorProduct/FullTensorProductStructure.h"
@@ -51,7 +51,8 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
+
 
 void TestPeriodicDiagonalize(TwoSpaceTensor* T);
 

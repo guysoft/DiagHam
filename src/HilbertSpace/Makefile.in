@@ -68,11 +68,11 @@ RANLIB = @RANLIB@
 THREAD_LIBS = @THREAD_LIBS@
 VERSION = @VERSION@
 
-SUBDIRS = 
+SUBDIRS = QHEHilbertSpace SpinHilbertSpace DMRGHilbertSpace QuantumDotHilbertSpace ManyBodyHilbertSpace
 
 noinst_LIBRARIES = libHilbertSpace.a
 
-libHilbertSpace_a_SOURCES = AbstractHilbertSpace.cc AbstractSpinChain.cc AbstractSpinChainWithTranslations.cc DMRGPartialHilbertSpace.cc Fermions.cc SpaceDecomposition.cc Spin1_2Chain.cc Spin1_2ChainWithTranslations.cc Spin1AKLTChain.cc Spin1Chain.cc Spin1FullAKLTChain.cc SubspaceSpaceConverter.cc ThierryChain.cc TrappedBosons.cc ParticleOnSphere.cc FermionOnSphere.cc BosonOnSphere.cc ParticleOnTorus.cc ParticleOnTorusWithMagneticTranslations.cc FermionOnTorus.cc FullFermionOnTorus.cc BosonOnTorus.cc ParticleOnTorusWithSpin.cc FermionOnTorusWithSpin.cc FermionOnTorusWithMagneticTranslations.cc AharonovBohmCages.cc UndescribedHilbertSpace.cc Confined3DOneParticle.cc
+libHilbertSpace_a_SOURCES = AbstractHilbertSpace.cc SpaceDecomposition.cc SubspaceSpaceConverter.cc UndescribedHilbertSpace.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -84,17 +84,8 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libHilbertSpace_a_LIBADD = 
-libHilbertSpace_a_OBJECTS =  AbstractHilbertSpace.o AbstractSpinChain.o \
-AbstractSpinChainWithTranslations.o DMRGPartialHilbertSpace.o \
-Fermions.o SpaceDecomposition.o Spin1_2Chain.o \
-Spin1_2ChainWithTranslations.o Spin1AKLTChain.o Spin1Chain.o \
-Spin1FullAKLTChain.o SubspaceSpaceConverter.o ThierryChain.o \
-TrappedBosons.o ParticleOnSphere.o FermionOnSphere.o BosonOnSphere.o \
-ParticleOnTorus.o ParticleOnTorusWithMagneticTranslations.o \
-FermionOnTorus.o FullFermionOnTorus.o BosonOnTorus.o \
-ParticleOnTorusWithSpin.o FermionOnTorusWithSpin.o \
-FermionOnTorusWithMagneticTranslations.o AharonovBohmCages.o \
-UndescribedHilbertSpace.o Confined3DOneParticle.o
+libHilbertSpace_a_OBJECTS =  AbstractHilbertSpace.o SpaceDecomposition.o \
+SubspaceSpaceConverter.o UndescribedHilbertSpace.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -106,20 +97,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/AbstractHilbertSpace.P .deps/AbstractSpinChain.P \
-.deps/AbstractSpinChainWithTranslations.P .deps/AharonovBohmCages.P \
-.deps/BosonOnSphere.P .deps/BosonOnTorus.P \
-.deps/Confined3DOneParticle.P .deps/DMRGPartialHilbertSpace.P \
-.deps/FermionOnSphere.P .deps/FermionOnTorus.P \
-.deps/FermionOnTorusWithMagneticTranslations.P \
-.deps/FermionOnTorusWithSpin.P .deps/Fermions.P \
-.deps/FullFermionOnTorus.P .deps/ParticleOnSphere.P \
-.deps/ParticleOnTorus.P .deps/ParticleOnTorusWithMagneticTranslations.P \
-.deps/ParticleOnTorusWithSpin.P .deps/SpaceDecomposition.P \
-.deps/Spin1AKLTChain.P .deps/Spin1Chain.P .deps/Spin1FullAKLTChain.P \
-.deps/Spin1_2Chain.P .deps/Spin1_2ChainWithTranslations.P \
-.deps/SubspaceSpaceConverter.P .deps/ThierryChain.P \
-.deps/TrappedBosons.P .deps/UndescribedHilbertSpace.P
+DEP_FILES =  .deps/AbstractHilbertSpace.P .deps/SpaceDecomposition.P \
+.deps/SubspaceSpaceConverter.P .deps/UndescribedHilbertSpace.P
 SOURCES = $(libHilbertSpace_a_SOURCES)
 OBJECTS = $(libHilbertSpace_a_OBJECTS)
 

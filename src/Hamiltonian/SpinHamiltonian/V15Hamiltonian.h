@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 

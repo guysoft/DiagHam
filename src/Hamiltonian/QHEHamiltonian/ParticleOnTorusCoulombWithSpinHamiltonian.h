@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnTorusWithSpin.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithSpin.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 #include <iostream>

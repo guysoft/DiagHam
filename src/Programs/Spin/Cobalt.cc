@@ -9,7 +9,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
 #include "Hamiltonian/SpinHamiltonian/PeriodicAnisotropicSpinChainHamiltonian.h"
 #include "GeneralTools/List.h"
 #include "GeneralTools/ListIterator.h"

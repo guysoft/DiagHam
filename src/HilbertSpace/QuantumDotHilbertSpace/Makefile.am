@@ -1,0 +1,5 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libQuantumDotHilbertSpace.a
+
+libQuantumDotHilbertSpace_a_SOURCES=Confined3DOneParticle.cc

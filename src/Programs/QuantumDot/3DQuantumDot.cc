@@ -4,7 +4,7 @@
 
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/Confined3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
 

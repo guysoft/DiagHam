@@ -35,7 +35,7 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Operator/AbstractOperator.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 
 #include <iostream.h>
 

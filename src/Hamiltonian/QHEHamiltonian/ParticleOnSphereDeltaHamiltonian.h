@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
 #include <iostream>

@@ -5,7 +5,7 @@
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
 #include "Hamiltonian/SpinHamiltonian/MultipleSpinChainHamiltonian.h"
 #include "GeneralTools/List.h"
 #include "GeneralTools/ListIterator.h"

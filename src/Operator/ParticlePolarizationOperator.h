@@ -35,7 +35,7 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Operator/AbstractOperator.h"
-#include "HilbertSpace/ParticleOnTorusWithSpin.h"
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnTorusWithSpin.h"
 
 #include <iostream.h>
 

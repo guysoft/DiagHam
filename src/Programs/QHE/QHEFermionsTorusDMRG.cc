@@ -1,8 +1,8 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/FullFermionOnTorus.h"
-#include "HilbertSpace/FermionOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/FullFermionOnTorus.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnTorus.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnTorusCoulombDMRGReadyHamiltonian.h"
 
 #include "Interaction/InternalInteraction/ParticleOnTorusCoulombInternalInteraction.h"

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/Confined3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
 
 #include <iostream>
 
