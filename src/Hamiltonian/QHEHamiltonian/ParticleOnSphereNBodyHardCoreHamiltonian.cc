@@ -146,7 +146,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
 
 // evaluate all interaction factors
 //   
-
+/*
 void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 {
   double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
@@ -265,3 +265,4 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
   delete[] TmpNormalizationCoeffients;
   delete[] TmpInteractionCoeffients;
 }
+*/
