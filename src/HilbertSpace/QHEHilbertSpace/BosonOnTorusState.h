@@ -66,6 +66,12 @@ class BosonOnTorusState
   // reducedNbrState = reduced number of state (aka the number of unsigned long per state)
   BosonOnTorusState(int reducedNbrState);
   
+  // copy constructor
+  // 
+  // state = reference on the state to copy
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+  BosonOnTorusState(BosonOnTorusState& state, const int& reducedNbrState);
+
   // destructor
   // 
   ~BosonOnTorusState();
@@ -526,8 +532,8 @@ inline void BosonOnTorusState::LeftShiftState(int& reducedNbrState, int& nbrStat
 	{
 	  this->StateDescription[i] = this->StateDescription[i + 1];
 	}      
-      this->StateDescription[reducedNbrState - 1] |= Remainder << (nbrStateRemainder << 8);
-      this->StateDescription[reducedNbrState] = Remainder >> ((4 - nbrStateRemainder) << 8);
+      this->StateDescription[reducedNbrState - 1] |= Remainder << (nbrStateRemainder << 3);
+      this->StateDescription[reducedNbrState] = Remainder >> ((4 - nbrStateRemainder) << 3);
     }
   switch (nbrTranslation & 0x3)
     {
@@ -595,9 +601,9 @@ inline void BosonOnTorusState::LeftShiftState(int& reducedNbrState, int& nbrStat
 		this->StateDescription[i] |= (this->StateDescription[i + 1]  & ((unsigned long) 0xffffff)) << 8;
 	      }
 	    this->StateDescription[ReducedNbrState] >>= 24;
-	    this->StateDescription[ReducedNbrState] |= this->StateDescription[reducedNbrState] << ((3 - nbrStateRemainder) << 8);
-	    this->StateDescription[ReducedNbrState] |= (Remainder << ((4 - nbrStateRemainder) << 8));
-	    this->StateDescription[reducedNbrState] = Remainder >> ((3 - nbrStateRemainder) << 8);
+	    this->StateDescription[ReducedNbrState] |= this->StateDescription[reducedNbrState] << 8;
+	    this->StateDescription[ReducedNbrState] |= (Remainder << ((nbrStateRemainder + 1) << 3));
+	    this->StateDescription[reducedNbrState] = Remainder >> ((3 - nbrStateRemainder) << 3);
 	  }
       }
       break;

@@ -40,6 +40,19 @@ BosonOnTorusState::BosonOnTorusState()
   this->StateDescription = 0;
 }
   
+// copy constructor
+// 
+// state = reference on the state to copy
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+
+BosonOnTorusState::BosonOnTorusState(BosonOnTorusState& state, const int& reducedNbrState)
+{
+  this->StateDescription = new unsigned long [reducedNbrState];
+  for (int i = 0; i < reducedNbrState; ++i)
+    this->StateDescription[i] = state.StateDescription[i];
+}
+  
+  
 // basic constructor
 // 
 // reducedNbrState = reduced number of state (aka the number of unsigned long per state)

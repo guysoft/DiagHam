@@ -90,16 +90,27 @@ int main(int argc, char** argv)
   int L = 0;
   double GroundStateEnergy = 0.0;
 
-  int NbrState = 22;
+  int NbrState = 24;
   int ReducedNbrState = NbrState >> 2;
   int NbrStateRemainder = NbrState - (ReducedNbrState << 2);
-  BosonOnTorusState State (ReducedNbrState + 1);
-  for (int i = 0; i < NbrState; ++i)
-    State.SetOccupation(i, 65 | (i << 1));
-  State.PrintState(cout, ReducedNbrState, NbrStateRemainder) << endl;
-  for (int i = 0; i < NbrState; ++i)
-    cout << State.GetOccupation(i) << " ";
-  cout << endl;
+  if (NbrStateRemainder == 0)
+    {
+      NbrStateRemainder = 4;
+      --ReducedNbrState;
+    }
+  for (int k = 0; k < NbrState; ++k)
+    {
+      BosonOnTorusState State (ReducedNbrState + 1);
+      for (int i = 0; i < NbrState; ++i)
+	State.SetOccupation(i, 65 | (i << 1));
+      BosonOnTorusState TmpState(State, ReducedNbrState + 1);
+      State.LeftShiftState(ReducedNbrState, NbrStateRemainder, k);
+      for (int i = 0; i < NbrState; ++i)
+	if (((i >=  k) && (State.GetOccupation(i - k) != TmpState.GetOccupation(i)))
+	    || ((i <  k) && (State.GetOccupation(NbrState + i -  k) != TmpState.GetOccupation(i))))
+	  cout << "error " << i << endl;
+      State.PrintState(cout, ReducedNbrState, NbrStateRemainder) << endl;
+    }
   return 0;
 
   char* OutputNameLz = new char [512];
