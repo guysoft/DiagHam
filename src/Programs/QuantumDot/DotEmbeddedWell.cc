@@ -9,6 +9,7 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
+#include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.h"
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
   potential->SavePotential("DotPotential.txt");
 
   // define Hilbert space
-  Periodic3DOneParticle Space(M / 2, M / 4, N / 2, N / 4, H, H / 2);
+  Periodic3DOneParticle Space(M / 2 + 1, M / 4, N / 2 + 1, N / 4, H, H / 2);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);
@@ -151,7 +152,8 @@ int main(int argc, char** argv)
   cout << "Sample size in cell unit: " << M << '\t' << N << '\t' << H << endl;
   cout << "Hilbert space dimensions: " << Space.GetNbrStateX() << '\t' << Space.GetNbrStateY() << '\t' << Space.GetNbrStateZ() << endl;
   cout << "Maximal impulsions:       " << Space.GetLowerImpulsionX() << '\t' << Space.GetLowerImpulsionY() << '\t' << Space.GetLowerImpulsionZ() << endl;
-  PeriodicQuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  // PeriodicQuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
   cout << endl;
   gettimeofday (&(PrecalculationEndingTime), 0);
   double Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +

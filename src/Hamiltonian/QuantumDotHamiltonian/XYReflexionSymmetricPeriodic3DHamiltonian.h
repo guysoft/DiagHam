@@ -8,7 +8,7 @@
 //                                                                            //
 //        class of hamiltonian associated quantum dots in 3 dimensions        //
 //                                                                            //
-//                      last modification : 24/11/2003                        //
+//                      last modification : 25/03/2003                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,23 +28,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PERIODICQUANTUMDOTS3DHAMILTONIAN_H
-#define PERIODICQUANTUMDOTS3DHAMILTONIAN_H
-
+#ifndef XYREFLEXIONSYMMETRICPERIODIC3DHAMILTONIAN_H
+#define XYREFLEXIONSYMMETRICPERIODIC3DHAMILTONIAN_H
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+
 #include <iostream>
 
-
 using std::ostream;
-
 
 class MathematicaOutput;
 class ThreeDConstantCellPotential;
 
-class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
+class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
 {
 
  protected:
@@ -55,12 +53,8 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // wave function basis dimension in the x direction
   int NbrStateX;  
 
-  int LowerImpulsionX; 
-
   // wave function basis dimension in the y direction
   int NbrStateY;
-
-  int LowerImpulsionY; 
 
   // wave function basis dimension in the z direction
   int NbrStateZ;
@@ -91,30 +85,24 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // cache for hamiltonian diagonal elements
   double* KineticElements;
 
-  // flag to indicate how many dimensions are precalculated for hamiltonian interaction elements
-  int NbrPrecalculatedDimension;
-
   // tridimensionnal array containing all cell interaction factors
-  double*** InteractionFactors;
-  //ThreeDPotential* InteractionFactors;
+  double*** InteractionFactors;  
 
   // wave function overlaps on a cell in a the x direction (with symmetric access type for the first two indices)
-  double** RealWaveFunctionOverlapX;
-  double** ImaginaryWaveFunctionOverlapX;
+  double*** WaveFunctionOverlapX;
   // wave function overlaps on a cell in a the y direction (with symmetric access type for the first two indices)
-  double** RealWaveFunctionOverlapY;
-  double** ImaginaryWaveFunctionOverlapY;
+  double*** WaveFunctionOverlapY;
   // wave function overlaps on a cell in a the z direction (with symmetric access type for the first two indices)
   double** RealWaveFunctionOverlapZ;
   double** ImaginaryWaveFunctionOverlapZ;  
 
   // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian
   // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
-  double*** RealPrecalculatedHamiltonian;
-  double*** ImaginaryPrecalculatedHamiltonian;
+  double***** RealHamiltonian;
+  double***** ImaginaryHamiltonian;
 
  public:
-
+  
   // constructor from data
   //
   // space = Hilbert space
@@ -128,21 +116,22 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // nbrCellY = number of steps in Y direction
   // nbrCellZ = number of steps in Z direction
   // PotentielInput = pointer to a 3D potential with constant value in a cell
-  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
+  XYReflexionSymmetricPeriodic3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
   // hamiltonian = reference on hamiltonian to copy  
-  PeriodicQuantumDots3DHamiltonian(const PeriodicQuantumDots3DHamiltonian& hamiltonian);
+  XYReflexionSymmetricPeriodic3DHamiltonian(const XYReflexionSymmetricPeriodic3DHamiltonian& hamiltonian);
 
   // destructor
-  //
-  ~PeriodicQuantumDots3DHamiltonian();
+  //  
+  ~XYReflexionSymmetricPeriodic3DHamiltonian();
   
   // clone hamiltonian without duplicating datas
   //
-  // return value = pointer to cloned hamiltonian  
-  AbstractHamiltonian* PeriodicQuantumDots3DHamiltonian::Clone ();
+  // return value = pointer to cloned hamiltonian
+  
+  AbstractHamiltonian* XYReflexionSymmetricPeriodic3DHamiltonian::Clone ();
 
   // set Hilbert space
   //
@@ -172,7 +161,6 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // return value = corresponding matrix element
   
   Complex MatrixElement (RealVector& V1, RealVector& V2);
-
 
   // evaluate matrix element
   //
@@ -221,23 +209,31 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
   
   // evaluate all interaction factors
-  // 
+  //
   void EvaluateInteractionFactors();
-  
+
+  // evaluate wave function overlaps on a cell in a given direction
+  //
+  // size = system length in the choosen direction
+  // nbrStep = number of subdivision in the choosen direction
+  // nbrState = number of state in the choosen direction
+  // return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
+  double*** EvaluateSinusWaveFunctionOverlap(double size, int nbrStep, int nbrState);
+
   // evaluate the wave function overlap
   //
   // nbrStep = number of steps in the given direction
   // nbrState = number of states chosen for this direction
   // realArray = 2D array containing the real elements of the overlap
   // imaginaryArray = 2D array containing the imaginary elements of the overlap
-  bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
+  bool EvaluatePlaneWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
 };
 
 // get Hilbert space on which Hamiltonian acts
 //
 // return value = pointer to used Hilbert space
 
-inline AbstractHilbertSpace* PeriodicQuantumDots3DHamiltonian::GetHilbertSpace ()
+inline AbstractHilbertSpace* XYReflexionSymmetricPeriodic3DHamiltonian::GetHilbertSpace ()
 {
   return this->Space;
 }
@@ -246,7 +242,7 @@ inline AbstractHilbertSpace* PeriodicQuantumDots3DHamiltonian::GetHilbertSpace (
 //
 // return value = corresponding matrix elementdimension
 
-inline int PeriodicQuantumDots3DHamiltonian::GetHilbertSpaceDimension ()
+inline int XYReflexionSymmetricPeriodic3DHamiltonian::GetHilbertSpaceDimension ()
 {
   return this->Space->GetHilbertSpaceDimension ();
 }

@@ -8,7 +8,7 @@
 //                                                                            //
 //        class of hamiltonian associated quantum dots in 3 dimensions        //
 //                                                                            //
-//                      last modification : 26/02/2003                        //
+//                      last modification : 26/02/2004                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //

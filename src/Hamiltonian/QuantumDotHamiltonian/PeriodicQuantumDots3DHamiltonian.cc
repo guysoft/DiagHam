@@ -45,23 +45,19 @@ using std::endl;
 #define PERIODIC_HAMILTONIAN_FACTOR 150.4
 
 
-// constructor from default datas
+// constructor from data
 //
-// space = Hilbert space associated to the system
-// xSize = system dimension in the x direction (in Angstrom unit)
-// ySize = system dimension in the y direction (in Angstrom unit)
-// zSize = system dimension in the z direction (in Angstrom unit)
-// preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
-// postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
-// postConstantRegionPotential = value of the potential in the region after the gradiant zone
-// mux = effective mass in the x direction (in electron mass unit)
-// muy = effective mass in the y direction (in electron mass unit)
-// muz = effective mass in the z direction (in electron mass unit)
-// nbrCellX = number of cells in the x direction
-// nbrCellY = number of cells in the y direction
-// nbrCellZ = number of cells in the z direction
-// overlapingFactors = tridimensionnal array where overlaping factors are stored
-// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// space = Hilbert space
+// xSize = the sample length in X direction
+// ySize = the sample length in Y direction
+// zSize = the sample length in Z direction
+// mux = effective mass in X direction
+// muy = effective mass in Y direction
+// muz = effective mass in Z direction
+// nbrCellX = number of steps in X direction
+// nbrCellY = number of steps in Y direction
+// nbrCellZ = number of steps in Z direction
+// PotentielInput = pointer to a 3D potential with constant value in a cell
 
 PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
 {
@@ -137,6 +133,15 @@ PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(const Periodi
 PeriodicQuantumDots3DHamiltonian::~ PeriodicQuantumDots3DHamiltonian()
 {
   delete[] this->KineticElements;
+  delete[] this->InteractionFactors;
+  delete[] this->RealWaveFunctionOverlapX;
+  delete[] this->ImaginaryWaveFunctionOverlapX;
+  delete[] this->RealWaveFunctionOverlapY;
+  delete[] this->ImaginaryWaveFunctionOverlapY;
+  delete[] this->RealWaveFunctionOverlapZ;
+  delete[] this->ImaginaryWaveFunctionOverlapZ;
+  delete[] this->RealPrecalculatedHamiltonian;
+  delete[] this->ImaginaryPrecalculatedHamiltonian;
 }
 
 // clone hamiltonian without duplicating datas
@@ -475,6 +480,13 @@ void PeriodicQuantumDots3DHamiltonian::EvaluateInteractionFactors()
     }
   delete[] TmpReal; delete[] TmpImaginary;
 }
+
+// evaluate the wave function overlap
+//
+// nbrStep = number of steps in the given direction
+// nbrState = number of states chosen for this direction
+// realArray = 2D array containing the real elements of the overlap
+// imaginaryArray = 2D array containing the imaginary elements of the overlap
 
 bool PeriodicQuantumDots3DHamiltonian::EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray)
 {
