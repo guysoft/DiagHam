@@ -12,15 +12,15 @@ ImpairXPairYPeriodic3DOneParticle.cc \
 PairXImpairYPeriodic3DOneParticle.cc \
 PairXPairYPeriodic3DOneParticle.cc \
 VerticalPeriodicParticleInMagneticField.cc \
-AbstractOneDOneParticle.cc \
+OneDOneParticle.cc \
 PeriodicOneDOneParticle.cc \
 PeriodicReflexionSymmetryOneDOneParticle.cc \
-AbstractTwoDOneParticle.cc \
-AbstractThreeDOneParticle.cc \
+TwoDOneParticle.cc \
+ThreeDOneParticle.cc \
 PeriodicThreeDOneParticle.cc \
 PeriodicXReflexionYZPeriodicThreeDOneParticle.cc \
 PeriodicXYReflexionZPeriodicThreeDOneParticle.cc \
-AbstractPlanarRotationSymmetryThreeDOneParticle.cc \
+PlanarRotationSymmetryThreeDOneParticle.cc \
 PlanarRotationSymmetryZPeriodicOneParticle.cc \
-AbstractThreeDTwoParticles.cc \
+ThreeDTwoParticles.cc \
 PeriodicThreeDTwoParticles.cc
