@@ -1,7 +1,13 @@
 /* src/config_ac.h.in.  Generated from configure.in by autoheader.  */
 
+/* use big endian byte ordering */
+#undef HAVE_BIGENDIAN
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* use little endian byte ordering */
+#undef HAVE_LITTLEENDIAN
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

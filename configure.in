@@ -96,6 +96,24 @@ if test -n "${MPI_CXX}"; then
 
 fi
 
+dnl check byte ordering
+
+
+AC_TRY_RUN([
+int main()
+{
+	short s = 1;
+	short* ptr = &s;
+	unsigned char c = *((char*)ptr);
+	return c;	
+}
+
+]
+, AC_DEFINE(HAVE_BIGENDIAN, [], [use big endian byte ordering])
+, AC_DEFINE(HAVE_LITTLEENDIAN, [], [use little endian byte ordering])
+)
+
+
 dnl Checks for library functions.
 
 dnl CXXFLAGS="-O3 -ffast-math -g -Wall  -march=athlon"

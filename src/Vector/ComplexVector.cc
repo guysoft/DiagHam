@@ -26,6 +26,7 @@
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+#include "GeneralTools/Endian.h"
 
 
 #include <fstream>
@@ -1931,11 +1932,11 @@ bool ComplexVector::WriteVector (char* fileName)
 {
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
-  File.write ((char*) &(this->Dimension), sizeof(int));
+  WriteLittleEndian(File, this->Dimension);
   for (int i = 0; i < this->Dimension; ++i)
     {
-      File.write ((char*) (&(this->RealComponents[i])), sizeof(double));
-      File.write ((char*) (&(this->ImaginaryComponents[i])), sizeof(double));
+      WriteLittleEndian(File, this->RealComponents[i]);
+      WriteLittleEndian(File, this->ImaginaryComponents[i]);
     }
   File.close();
   return true;
@@ -1974,12 +1975,12 @@ bool ComplexVector::ReadVector (char* fileName)
       return false;
     }
   int TmpDimension;
-  File.read ((char*) &(TmpDimension), sizeof(int));
+  ReadLittleEndian(File, TmpDimension);
   this->Resize(TmpDimension);
   for (int i = 0; i < this->Dimension; ++i)
     {
-      File.read ((char*) (&(this->RealComponents[i])), sizeof(double));
-      File.read ((char*) (&(this->ImaginaryComponents[i])), sizeof(double));
+      ReadLittleEndian(File, this->RealComponents[i]);
+      ReadLittleEndian(File, this->ImaginaryComponents[i]);
     }
   File.close();
   return true;

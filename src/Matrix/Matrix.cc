@@ -37,6 +37,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
+#include "GeneralTools/Endian.h"
 
 
 #include <fstream>
@@ -289,30 +290,30 @@ bool Matrix::WriteMatrix (char* fileName)
   if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
     {
       int TmpType = Matrix::RealElements;
-      File.write ((char*) &(TmpType), sizeof(int));
-      File.write ((char*) &(this->NbrRow), sizeof(int));
-      File.write ((char*) &(this->NbrColumn), sizeof(int));
+      WriteLittleEndian(File, TmpType);
+      WriteLittleEndian(File, this->NbrRow);
+      WriteLittleEndian(File, this->NbrColumn);
       double Tmp;
       for (int i = 0; i < this->NbrRow; ++i)
 	for (int j = 0; j < this->NbrColumn; ++j)
 	  {
 	    this->GetMatrixElement(i, j, Tmp);
-	    File.write ((char*) (&Tmp), sizeof(double));
+	    WriteLittleEndian(File, Tmp);
 	  }
     }
   else
     {
       int TmpType = Matrix::ComplexElements;
-      File.write ((char*) &(TmpType), sizeof(int));
-      File.write ((char*) &(this->NbrRow), sizeof(int));
-      File.write ((char*) &(this->NbrColumn), sizeof(int));
+      WriteLittleEndian(File, TmpType);
+      WriteLittleEndian(File, this->NbrRow);
+      WriteLittleEndian(File, this->NbrColumn);
       Complex Tmp;
       for (int i = 0; i < this->NbrRow; ++i)
 	for (int j = 0; j < this->NbrColumn; ++j)
 	  {
 	    this->GetMatrixElement(i, j, Tmp);
-	    File.write ((char*) (&(Tmp.Re)), sizeof(double));
-	    File.write ((char*) (&(Tmp.Im)), sizeof(double));
+	    WriteLittleEndian(File, Tmp.Re);
+	    WriteLittleEndian(File, Tmp.Im);
 	  }
     }
   File.close();
@@ -386,28 +387,32 @@ bool Matrix::ReadMatrix (char* fileName)
     }
   if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
     {
-      File.read ((char*) &(this->NbrRow), sizeof(int));
-      File.read ((char*) &(this->NbrColumn), sizeof(int));
-      this->Resize(this->NbrRow, this->NbrColumn);
+      int TmpNbrRow;
+      int TmpNbrColumn;
+      ReadLittleEndian(File, TmpNbrRow);
+      ReadLittleEndian(File, TmpNbrColumn);
+      this->Resize(TmpNbrRow, TmpNbrColumn);
       double Tmp;
       for (int i = 0; i < this->NbrRow; ++i)
 	for (int j = 0; j < this->NbrColumn; ++j)
 	  {
-	    File.read ((char*) (&Tmp), sizeof(double));
+	    ReadLittleEndian(File, Tmp);
 	    this->SetMatrixElement(i, j, Tmp);
 	  }
     }
   else
     {
-      File.read ((char*) &(this->NbrRow), sizeof(int));
-      File.read ((char*) &(this->NbrColumn), sizeof(int));
-      this->Resize(this->NbrRow, this->NbrColumn);
+      int TmpNbrRow;
+      int TmpNbrColumn;
+      ReadLittleEndian(File, TmpNbrRow);
+      ReadLittleEndian(File, TmpNbrColumn);
+      this->Resize(TmpNbrRow, TmpNbrColumn);
       Complex Tmp;
       for (int i = 0; i < this->NbrRow; ++i)
 	for (int j = 0; j < this->NbrColumn; ++j)
 	  {
-	    File.read ((char*) (&(Tmp.Re)), sizeof(double));
-	    File.read ((char*) (&(Tmp.Im)), sizeof(double));
+	    ReadLittleEndian(File, Tmp.Re);
+	    ReadLittleEndian(File, Tmp.Im);
 	    this->SetMatrixElement(i, j, Tmp);
 	  }
     }

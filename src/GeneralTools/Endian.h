@@ -1,13 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
-//                            DiagHam  version 0.01                           //
+//                            DarkRay version  0.08                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 1998-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                          global configuration file                         //
+//         a set of functions used for little<->big endian convertion         //
 //                                                                            //
-//                        last modification : 18/01/2001                      //
+//                          first release : 05/06/2003                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,84 +27,49 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef CONFIG_H
-#define CONFIG_H
-
-
-#include "config_ac.h"
-
-// all options
-
-// byte ordering
-#ifdef HAVE_LITTLEENDIAN 
-#define __LITTLEENDIAN__
-#else
-#define __BIGENDIAN__
-#endif
-
-// use sstream instead of strstream
-#define  __SSTREAM_STYLE__
-
-// machine precision
-#define MACHINE_PRECISION 1e-14
-
-// SMP flag 
-#define __SMP__
-
-// debug flag
-#define __DEBUG__
-
-// 64 bits architecture
-//#define __64_BITS__
-
-// MPI flag
-#ifdef HAVE_MPI
-#define __MPI__
-#endif
-
-
-// architecture dependant options
+// function to read Little Endian encoded variable from a file
 //
+// file = reference on the input file stream
+// var = reference on the variable to store the result
 
-// DEC CXX specific options
-
-# if defined __DECC || defined __DECCXX
-
-// enable cxx options
-#define __USE_STD_IOSTREAM
-
-// 64 bits architecture
-#ifndef __64_BITS__
-#define __64_BITS__
+template<class ClassName>
+void ReadLittleEndian (ifstream& file, ClassName& var)
+{
+  file.read ((char*) &var, sizeof(ClassName));
+#ifdef __BIGENDIAN__
+  ClassName TmpVar = var;
+  unsigned char* TmpBin1 = (unsigned char*) &var;
+  unsigned char* TmpBin2 = (unsigned char*) &TmpVar;
+  int max = sizeof(ClassName) >> 1;
+  for (int i = 0; i < max; i++)
+    {
+      TmpBin1[i] = TmpBin2[sizeof(ClassName) - i -1];
+      TmpBin1[sizeof(ClassName) - i -1] = TmpBin2[i];
+    }
 #endif
+};
 
+// function to write Little Endian encoded variable from a file using 
+//
+// file = reference on the output file stream
+// var = reference on the variable to store the result
+
+template<class ClassName>
+void WriteLittleEndian (ofstream& file, ClassName& var)
+{
+#ifdef __BIGENDIAN__
+  ClassName TmpVar = var;
+  unsigned char* TmpBin1 = (unsigned char*) &var;
+  unsigned char* TmpBin2 = (unsigned char*) &TmpVar;
+  int max = sizeof(ClassName) >> 1;
+  for (int i = 0; i < max; i++)
+    {
+      TmpBin1[i] = TmpBin2[sizeof(ClassName) - i -1];
+      TmpBin1[sizeof(ClassName) - i -1] = TmpBin2[i];
+    }
+  file.write ((char*) &TmpVar, sizeof(ClassName));
+#else
+  file.write ((char*) &var, sizeof(ClassName));
 #endif
+};
 
-
-
-// xlC and AIX specific options (assume 64bits compilation)
-
-# if defined __TOS_AIX__ && __xlC__
-
-// 64 bits architecture
-#ifndef __64_BITS__
-#define __64_BITS__
-#endif
-
-#endif
-
-
-
-// gcc and x86_64 specific options (assume 64bits compilation)
-
-#ifdef __x86_64__
-
-// 64 bits architecture
-#ifndef __64_BITS__
-#define __64_BITS__
-#endif
-
-#endif
-
-
-#endif

@@ -32,6 +32,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
 #include <fstream>
@@ -2711,9 +2712,9 @@ bool RealVector::WriteVector (char* fileName)
   this->Localize();
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
-  File.write ((char*) &(this->Dimension), sizeof(int));
+  WriteLittleEndian(File, this->Dimension);
   for (int i = 0; i < this->Dimension; ++i)
-    File.write ((char*) (&(this->Components[i])), sizeof(double));
+    WriteLittleEndian(File, this->Components[i]);
   File.close();
   this->Delocalize();
   return true;
@@ -2754,10 +2755,10 @@ bool RealVector::ReadVector (char* fileName)
       return false;
     }
   int TmpDimension;
-  File.read ((char*) &(TmpDimension), sizeof(int));
+  ReadLittleEndian(File, TmpDimension);
   this->Resize(TmpDimension);
   for (int i = 0; i < this->Dimension; ++i)
-    File.read ((char*) (&(this->Components[i])), sizeof(double));
+    ReadLittleEndian(File, this->Components[i]);
   File.close();
   return true;
 }
