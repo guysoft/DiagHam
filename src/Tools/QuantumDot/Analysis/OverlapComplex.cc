@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   
   Complex c = vector1 * vector2;
 
-  cout << c * c;
+  cout << c.Norm ();
 
   return 1;
 }
