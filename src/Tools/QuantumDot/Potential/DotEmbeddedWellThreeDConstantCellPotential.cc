@@ -85,8 +85,9 @@ DotEmbeddedWellThreeDConstantCellPotential::~DotEmbeddedWellThreeDConstantCellPo
 //
 // wellPotential = potential in the well barrier (0 reference: potential in the bulk, outside the dot)
 // dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
+// anisotropy = anisotropy of the dot, equal to Ry / Rx
 
-void DotEmbeddedWellThreeDConstantCellPotential::ConstructPotential(double wellPotential, double dotPotential)
+void DotEmbeddedWellThreeDConstantCellPotential::ConstructPotential(double wellPotential, double dotPotential, double anisotropy)
 {
   // well
   for (int k = 0; k < this->UnderBarrier; ++k)
@@ -116,7 +117,7 @@ void DotEmbeddedWellThreeDConstantCellPotential::ConstructPotential(double wellP
   for (int k = this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth; k < (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight); ++k)
     for (int j = 0; j < this->NumberY; ++j)
       for (int i = 0; i < this->NumberX; ++i)
-	if (this->InTheDot(i, j, k))
+	if (this->InTheEllipticalDot(i, j, k, anisotropy))
 	  {
 	    this->Alloy[k][j][i] = 2;
 	    this->PotentialValue[k][j][i] = dotPotential;  
@@ -149,28 +150,6 @@ void DotEmbeddedWellThreeDConstantCellPotential::ShiftPotential(double delta)
 	this->PotentialValue[k][j][i] += delta;
 }
   
-// determine if a cell is in the dot or wetting layer
-//
-// x = x coordinate of the cell
-// y = y coordinate of the cell
-// z = z coordinate of the cell
-// return = true if the cell is in the dot, false otherwise
-
-bool DotEmbeddedWellThreeDConstantCellPotential::InTheDot(int x, int y, int z)
-{
-  if (z < this->UnderBarrier + this->BelowWettingLayer)
-    return false;
-  if ((z >= (this->UnderBarrier + this->BelowWettingLayer)) && (z < (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth)))
-    return true;
-  if (z >= (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight))
-    return false;
-  double Rk = double(this->BaseRadius) - double(z - (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth)) * double(this->BaseRadius - this->TopRadius) / double(this->DotHeight);
-  if (Rk > sqrt(double((x - this->NumberX / 2) * (x - this->NumberX / 2)) + double((y - this->NumberY / 2) * (y - this->NumberY / 2))))
-    return true;
-  else
-    return false;  
-}
-
 // save the diagram of atoms in a file
 //
 // fileName = name of the file to stock the diagram
@@ -218,4 +197,29 @@ void DotEmbeddedWellThreeDConstantCellPotential::LoadDiagram(char* fileName)
 
 void DotEmbeddedWellThreeDConstantCellPotential::SaveBmpPicture(char* fileName)
 {
+}
+
+// determine if a cell is in an elliptical dot or wetting layer
+//
+// x = x coordinate of the cell
+// y = y coordinate of the cell
+// z = z coordinate of the cell
+// return = true if the cell is in the dot, false otherwise
+
+bool DotEmbeddedWellThreeDConstantCellPotential::InTheEllipticalDot(int x, int y, int z, double anisotropy)
+{
+  if (z < this->UnderBarrier + this->BelowWettingLayer)
+    return false;
+  if ((z >= (this->UnderBarrier + this->BelowWettingLayer)) && (z < (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth)))
+    return true;
+  if (z >= (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth + this->DotHeight))
+    return false;
+  double RkX = double(this->BaseRadius) - double(z - (this->UnderBarrier + this->BelowWettingLayer + this->WettingWidth)) * double(this->BaseRadius - this->TopRadius) / double(this->DotHeight);
+  double RkY = RkX * (1.0 + anisotropy);
+  double TmpX = double((x - this->NumberX / 2) * (x - this->NumberX / 2)) / (RkX * RkX);
+  double TmpY = double((y - this->NumberY / 2) * (y - this->NumberY / 2)) / (RkY * RkY);
+  if ((TmpX + TmpY) < 1.0)
+    return true;
+  else
+    return false;  
 }

@@ -81,21 +81,14 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
   //
   // wellPotential = potential in the well barrier (0 reference: potential in the bulk, outside the dot)
   // dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
-  void ConstructPotential(double wellPotential, double dotPotential);
+  // anisotropy = anisotropy of the dot, equal to Ry / Rx
+  void ConstructPotential(double wellPotential, double dotPotential, double anisotropy = 0.0);
 
   // shift the potential with a given quantity
   //
   // delta = shift value
   virtual void ShiftPotential(double delta);
  
-  // determine if a cell is in the dot or wetting layer
-  //
-  // x = x coordinate of the cell
-  // y = y coordinate of the cell
-  // z = z coordinate of the cell
-  // return = true if the cell is in the dot, false otherwise
-  bool InTheDot(int x, int y, int z);
-
   // save the diagram of atoms in a file
   //
   // fileName = name of the file to stock the diagram
@@ -126,6 +119,17 @@ class DotEmbeddedWellThreeDConstantCellPotential : public ThreeDConstantCellPote
   //
   // fileName = name of the file to stock the diagram presentation
   virtual void SaveBmpPicture(char* fileName);
+
+ private:
+
+  // determine if a cell is in an elliptical dot or wetting layer
+  //
+  // x = x coordinate of the cell
+  // y = y coordinate of the cell
+  // z = z coordinate of the cell
+  // anisotropy = anisotropy of the dot, equal to Ry / Rx
+  // return = true if the cell is in the dot, false otherwise  
+  bool InTheEllipticalDot(int x, int y, int z, double anisotropy = 0.0);
 
 };
 

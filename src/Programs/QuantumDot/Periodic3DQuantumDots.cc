@@ -61,7 +61,7 @@ int main(int argc, char** argv)
   SingleDoubleOption ZMassOption ('\n', "mu-z", "electron effective mass in z direction (in vacuum electron mass unit)", 1.1);
   SingleStringOption CoefficientFileNameOption('\n', "coefficients", "name of the file where interaction coeffcients are stored", 
 					       "/home/regnault/development/DMRG/DiagHam/potentiel_10_10_10_2");
-  BooleanOption CarrierTypeOption('c', "carrier", "carrier type, true for hole, false for electron", true);
+  BooleanOption CarrierTypeOption('c', "carrier", "carrier type, true for hole, false for electron", false);
 
   List<AbstractOption*> OptionList;
   OptionList += &LanczosOption;
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
   double p1 = 0.05; double p2 = 0.377;
 
   // *** Dot geometry ****
-  int Rb = 20, Rt = 5, w = 4;
+  int Rb = 10, Rt = 5, w = 1;
 
    // **** Offset ****
   double Offset = 0.0;
@@ -143,6 +143,7 @@ int main(int argc, char** argv)
   PeriodicPyramidQuantumDotThreeDConstantCellPotential* potential = new PeriodicPyramidQuantumDotThreeDConstantCellPotential(M, N, H, LeftSize, RightSize, w, Rb, Rt);   
   // void ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName); 
   double concentration = 0.0;
+  /*
   if (Carrier)
     {     
       do 
@@ -162,10 +163,12 @@ int main(int argc, char** argv)
       potential->ConstructPotential(p1, p2, Piezo, Lz, Offset, false, "DotInput.txt");
     }
   
-  potential->SavePotential("DotPotential.txt");
+  potential->SavePotential(CoefficientFileName);
+  */
+  potential->LoadPotential(CoefficientFileName);
 
   // define Hilbert space
-  Periodic3DOneParticle Space(M, M / 2, N, N / 2, H, H / 2);
+  Periodic3DOneParticle Space(M, -M / 2, N, -N / 2, H, -H / 2);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);  
@@ -287,8 +290,8 @@ int main(int argc, char** argv)
 	  cout << Eigenvalues[i] << '\t';
 	}
       //compute eigenstates
-      if (EigenstateFlag == true)
-	Eigenstates = (ComplexVector*) Lanczos.GetEigenstates(NbrEigenvalue);
+      //if (EigenstateFlag == true)
+      //Eigenstates = (ComplexVector*) Lanczos.GetEigenstates(NbrEigenvalue);
     
       gettimeofday (&(PrecalculationEndingTime), 0);
       Dt = (double) (PrecalculationEndingTime.tv_sec - PrecalculationStartingTime.tv_sec) +
@@ -299,7 +302,7 @@ int main(int argc, char** argv)
   Input << "Diagonalization time: " << Dt << '\n';
   Input << "To verify: M, N, H, under, above = " << M << ", " << N << ", " << H << ", " << LeftSize << ", " << RightSize << endl;
   Input.close(); 
-
+  /*
   // insert here your code using the eigenvalues and the eigenvectors
   if (EigenstateFlag == true)
     {
@@ -321,6 +324,6 @@ int main(int argc, char** argv)
 	}
       delete[] TmpFileName;
     }
-  
+  */
   return 0;
 }

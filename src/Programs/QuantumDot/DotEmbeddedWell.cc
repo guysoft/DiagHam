@@ -56,15 +56,16 @@ int main(int argc, char** argv)
   BooleanOption EigenstateOption ('e', "eigenstate", "evaluate eigenstates", false);
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 50);
-  SingleIntegerOption NumberXValueOption ('M', "M-cell", "number of cells in the x direction", 160);
-  SingleIntegerOption NumberYValueOption ('N', "N-cell", "number of cells in the y direction", 160);
+  SingleIntegerOption NumberXValueOption ('M', "M-cell", "number of cells in the x direction", 161);
+  SingleIntegerOption NumberYValueOption ('N', "N-cell", "number of cells in the y direction", 161);
   SingleIntegerOption NumberZValueOption ('H', "H-cell", "number of cells in the z direction", 21);
   SingleIntegerOption UnderBarrierValueOption ('\n', "barrier", "number of cells in the well barrier", 2);
   SingleIntegerOption BelowWettingLayerValueOption ('\n', "below", "number of cells between well barrier and wetting layer", 2);
   SingleIntegerOption WettingWidthOption ('\n', "wetting", "number of cells in wetting layer", 1);
   SingleIntegerOption BaseRadiusOption ('\n', "base", "base radius in cell unit", 18);
-  SingleIntegerOption DotHeightOption ('\n', "height", "height of dot in cell unit", 7);
-  SingleIntegerOption TopRadiusOption ('\n', "top", "top radius in cell unit", 6);
+  SingleIntegerOption DotHeightOption ('\n', "height", "height of dot in cell unit", 3);
+  SingleIntegerOption TopRadiusOption ('\n', "top", "top radius in cell unit", 13);
+  SingleDoubleOption AnisotropyOption('a', "anisotropy", "anisotropy factor", 0.0);
   SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 5.65);
   SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 5.65);
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 5.65);
@@ -95,6 +96,7 @@ int main(int argc, char** argv)
   OptionList += &BaseRadiusOption;
   OptionList += &DotHeightOption;
   OptionList += &TopRadiusOption;
+  OptionList += &AnisotropyOption;
   OptionList += &CellXSizeOption;
   OptionList += &CellYSizeOption;
   OptionList += &CellZSizeOption;
@@ -134,6 +136,7 @@ int main(int argc, char** argv)
   int BaseRadius = BaseRadiusOption.GetInteger();
   int DotHeight = DotHeightOption.GetInteger();
   int TopRadius = TopRadiusOption.GetInteger();
+  double Anisotropy = AnisotropyOption.GetDouble();
   double Lx = CellXSizeOption.GetDouble();
   double Ly = CellYSizeOption.GetDouble();
   double Lz = CellZSizeOption.GetDouble();
@@ -152,11 +155,10 @@ int main(int argc, char** argv)
   // DotEmbeddedWellThreeDConstantCellPotential(int numberX, int numberY, int numberZ, int underBarrier, int belowWettingLayer, int wettingWidth, int baseRadius, int dotHeight, int topRadius)
   DotEmbeddedWellThreeDConstantCellPotential* potential = new DotEmbeddedWellThreeDConstantCellPotential(M, N, H, UnderBarrier, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius);
   // ConstructPotential(double wellPotential, double dotPotential)
-  potential->ConstructPotential(WellPotential, DotPotential);
+  potential->ConstructPotential(WellPotential, DotPotential, Anisotropy);
   //potential->LoadPotential("DotPotential.txt");
 
-  InPlaneReflexionSymmetricPeriodic3DOneParticle* Space = new InPlaneReflexionSymmetricPeriodic3DOneParticle(PairX, M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);
-  /*
+  //InPlaneReflexionSymmetricPeriodic3DOneParticle* Space = new InPlaneReflexionSymmetricPeriodic3DOneParticle(PairX, M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);  
   // define Hilbert space
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
@@ -169,8 +171,7 @@ int main(int argc, char** argv)
      if (PairY)
       Space = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);     
     else
-      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);    
-  */
+      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);      
   //Periodic3DOneParticle* Space = new Periodic3DOneParticle((M / 4) * 2 + 1, -M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);
 
   timeval PrecalculationStartingTime;
@@ -182,8 +183,8 @@ int main(int argc, char** argv)
   cout << "Hilbert space dimensions: " << Space->GetNbrStateX() << '\t' << Space->GetNbrStateY() << '\t' << Space->GetNbrStateZ() << endl;
   cout << "Minimal impulsions:       " << Space->GetLowerImpulsionX() << '\t' << Space->GetLowerImpulsionY() << '\t' << Space->GetLowerImpulsionZ() << endl;
 
-  ReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);  
-  // XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
+  //ReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);  
+  XYReflexionSymmetricPeriodic3DHamiltonian Hamiltonian(Space, PairX, PairY, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
   //PeriodicQuantumDots3DHamiltonian Hamiltonian(Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H, potential);
 
   cout << endl;
