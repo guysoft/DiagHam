@@ -22,6 +22,11 @@
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
+#include "Options/AbstractOption.h"
+#include "Options/BooleanOption.h"
+#include "Options/SingleIntegerOption.h"
+#include "Options/SingleDoubleOption.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -39,7 +44,34 @@ void RotateCouplingConstants (double phi, double psi, double theta, double jx, d
 int main(int argc, char** argv)
 {
   cout.precision(14);
-  int NbrSpin = 12;
+  BooleanOption HelpOption ('h', "help", "display this help");
+  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
+  SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
+  SingleIntegerOption NbrPatternOption ('p', "nbr-pattern", "number of pattern", 2);
+  SingleDoubleOption BFieldOption ('b', "bfield", "magnetic field value", 0.0);
+
+  List<AbstractOption*> OptionList;
+  OptionList += &HelpOption;
+  OptionList += &SMPOption;
+  OptionList += &SMPNbrProcessorOption;
+  OptionList += &NbrPatternOption;
+  OptionList += &BFieldOption;
+  if (ProceedOptions(argv, argc, OptionList) == false)
+    {
+      cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
+      return -1;
+    }
+  if (HelpOption.GetBoolean() == true)
+    {
+      DisplayHelp (OptionList, cout);
+      return 0;
+    }
+  bool SMPFlag = SMPOption.GetBoolean();
+  int NbrProcessor = SMPNbrProcessorOption.GetInteger();
+  double BField = BFieldOption.GetDouble();
+  int NbrPattern = NbrPatternOption.GetInteger();
+
+  int NbrSpin = 6 * NbrPattern;
   Spin1_2Chain Chain(NbrSpin, 1000000);
 //    Spin1_2Chain Chain(NbrSpin, 0, 1000000);
   cout << Chain.GetHilbertSpaceDimension() << endl;
@@ -59,15 +91,10 @@ int main(int argc, char** argv)
   double* CouplingConstantsGX = new double [NbrSpin];
   double* CouplingConstantsGY = new double [NbrSpin];
   double* CouplingConstantsGZ = new double [NbrSpin];
+
   double B = 0.0;
   double BMax = 10.0;
   int NbrB = 10;
-  if (argc >= 2)
-    sscanf (argv[1],"%lf", &B);    
-  if (argc >= 3)
-    sscanf (argv[2],"%lf", &BMax);    
-  if (argc >= 4)
-    sscanf (argv[3],"%d", &NbrB);    
   double BInc;
   if (NbrB != 1)
     BInc = (BMax - B) / (double) (NbrB - 1);
@@ -87,8 +114,8 @@ int main(int argc, char** argv)
 
 //  for (;B <= BMax; B += BInc)
     {
-      cout << "B = " << B << endl;
-      double BField = 0;//(0.9274078)/(1.380662) * 0.1;// 0.2;//-0.6717 * B ;//(0.9274078)/(1.380662) * B; 
+      cout << "B = " <<  BField<< endl;
+      double EffectiveBField = (0.9274078)/(1.380662) * BField;// 0.2;//-0.6717 * B ;//(0.9274078)/(1.380662) * B; 
       double JX = 0.0;
       double JY = 0.0;
       double JZ = 400.0;
@@ -115,12 +142,12 @@ int main(int argc, char** argv)
 				      CouplingConstantsJXZ[i], CouplingConstantsJYZ[i]);
 	      //	  cout << CouplingConstantsJXX[i] << " " << CouplingConstantsJYY[i] << " " << CouplingConstantsJZZ[i] << " " 
 	      //	       << CouplingConstantsJXY[i] << " " << CouplingConstantsJXZ[i] << " " << CouplingConstantsJYZ[i] << endl;
-//	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 9.0 * BField, Dummy, Dummy, 
-//				      CouplingConstantsGZ[i], Dummy,
-//				      CouplingConstantsGX[i], CouplingConstantsGY[i]);
-	      CouplingConstantsGX[i] = 2.0 * BField;
-	      CouplingConstantsGY[i] = 2.0 * BField;
-	      CouplingConstantsGZ[i] = 2.0 * BField;
+/*	      RotateCouplingConstants(Angle, Psi, Theta, 2.0 * 0.0, 2.0 * 0.0, 2.0 * EffectiveBField, Dummy, Dummy, 
+				      CouplingConstantsGZ[i], Dummy,
+				      CouplingConstantsGX[i], CouplingConstantsGY[i]);*/
+	      CouplingConstantsGX[i] = 2.0 * 0.0;
+	      CouplingConstantsGY[i] = 2.0 * 0.0;
+	      CouplingConstantsGZ[i] = 2.0 * EffectiveBField;
 	      ++i;
 	      
 	      RotateCouplingConstants(Angle, Psi, Theta, JX, JY, JZ, CouplingConstantsJXX[i], CouplingConstantsJYY[i], 
@@ -128,7 +155,7 @@ int main(int argc, char** argv)
 				      CouplingConstantsJXZ[i], CouplingConstantsJYZ[i]);
 	      //	  cout << CouplingConstantsJXX[i] << " " << CouplingConstantsJYY[i] << " " << CouplingConstantsJZZ[i] << " " 
 	      //	       << CouplingConstantsJXY[i] << " " << CouplingConstantsJXZ[i] << " " << CouplingConstantsJYZ[i] << endl;
-	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * BField, 0.0 * BField, 0.9 * BField, Dummy, Dummy, 
+	      RotateCouplingConstants(Angle, Psi, Theta, 0.0 * EffectiveBField, 0.0 * EffectiveBField, 9.0 * EffectiveBField, Dummy, Dummy, 
 				      CouplingConstantsGZ[i], Dummy,
 				      CouplingConstantsGX[i], CouplingConstantsGY[i]);
 	      

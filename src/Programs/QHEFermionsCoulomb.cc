@@ -46,8 +46,8 @@ int main(int argc, char** argv)
   SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   BooleanOption DeltaOption ('d', "delta", "add a delta interaction component", false);
   SingleDoubleOption CoulombRatioOption ('r', "ratio", "ratio between coulomd interaction and delta interaction", 1.0);
-  List<AbstractOption*> OptionList;
   SingleIntegerOption NbrLzOption ('\n', "nbr-lz", "number of lz value to evaluate", -1);
+  List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
   OptionList += &GroundOption;

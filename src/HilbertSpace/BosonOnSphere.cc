@@ -59,12 +59,6 @@ BosonOnSphere::BosonOnSphere (int nbrBosons, int totalLz, int lzMax)
   this->KeyMultiplicationTable = new int [this->LzMax + 1];
   this->GenerateLookUpTable(0);
 
-  this->RatioSearchTotalDim = 0.0;
-  this->RatioSearchCoarseDeep = 0.0;
-  this->SqrRatioSearchTotalDim = 0.0;
-  this->SqrRatioSearchCoarseDeep = 0.0;
-  this->NbrSearch = 0;
-
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -100,11 +94,6 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
 
-  this->RatioSearchTotalDim = 0.0;
-  this->RatioSearchCoarseDeep = 0.0;
-  this->SqrRatioSearchTotalDim = 0.0;
-  this->SqrRatioSearchCoarseDeep = 0.0;
-  this->NbrSearch = 0;
 }
 
 // destructor
@@ -114,10 +103,29 @@ BosonOnSphere::~BosonOnSphere ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
+      delete[] this->Keys;
+      delete[] this->KeyMultiplicationTable;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	delete[] this->StateDescription[i];
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
+      int Size = (this->LzMax + 2) * this->IncNbrBosons;
+      for (int i = 0; i < Size; ++i)
+	{
+	  if (this->KeyInvertSectorSize[i] > 0)
+	    {
+	      for (int j= 0; j < this->KeyInvertSectorSize[i]; ++j)
+		delete[] this->KeyInvertIndices[i][j];
+	      delete[] this->KeyInvertTable[i];
+	      delete[] this->KeyInvertTableNbrIndices[i];
+	      delete[] this->KeyInvertIndices[i];
+	    }
+	}
+      
+      delete[] this->KeyInvertSectorSize;
+      delete[] this->KeyInvertTable;
+      delete[] this->KeyInvertTableNbrIndices;
+      delete[] this->KeyInvertIndices;
     }
 }
 
@@ -144,12 +152,6 @@ BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
   this->StateDescription = bosons.StateDescription;
   this->StateLzMax = bosons.StateLzMax;
   this->Flag = bosons.Flag;
-
-  this->RatioSearchTotalDim = 0.0;
-  this->RatioSearchCoarseDeep = 0.0;
-  this->SqrRatioSearchTotalDim = 0.0;
-  this->SqrRatioSearchCoarseDeep = 0.0;
-  this->NbrSearch = 0;
 
   return *this;
 }

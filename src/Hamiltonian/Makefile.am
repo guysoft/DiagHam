@@ -25,6 +25,7 @@ V15Hamiltonian.cc \
 XXZSpinChainHamiltonian.cc \
 TrappedBosonHamiltonian.cc \
 ParticleOnTorusCoulombHamiltonian.cc \
+ParticleOnTorusDeltaHamiltonian.cc \
 ParticleOnTorusCoulombDMRGReadyHamiltonian.cc \
 ParticleOnTorusCoulombWithSpinHamiltonian.cc \
 ParticleOnSphereCoulombHamiltonian.cc \

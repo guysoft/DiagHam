@@ -50,6 +50,11 @@ class BosonOnTorus :  public ParticleOnTorus
   // number of Lz values in a state
   int NbrLzValue;
 
+  // index of the momentum orbit
+  int MomentumConstraint;
+  // index of the momentum orbit
+  bool MomentumConstraintFlag;
+
   // array describing each state
   int** StateDescription;
   // array giving maximum Lz value reached for a boson in a given state
@@ -62,6 +67,15 @@ class BosonOnTorus :  public ParticleOnTorus
   // indicate position of the first state with a given number of boson having a given maximum Lz value
   int* MomentumMaxPosition;
 
+  // indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
+  int* KeyInvertSectorSize;
+  // 
+  int** KeyInvertTable;
+  //
+  int** KeyInvertTableNbrIndices;
+  //
+  int*** KeyInvertIndices;
+
  public:
 
   // basic constructor
@@ -69,6 +83,34 @@ class BosonOnTorus :  public ParticleOnTorus
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
   BosonOnTorus (int nbrBosons, int maxMomentum);
+
+  // constructor with a constraint of the total momentum of states
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson
+  // momentumConstraint = index of the momentum orbit
+  BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint);
+
+  // constructor from full datas (with no constraint on the total momentum)
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson
+  // hilbertSpaceDimension = Hilbert space dimension
+  // stateDescription = array describing each state
+  // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
+  BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDimension, 
+		int** stateDescription, int* stateMaxMomentum);
+
+  // constructor from full datas
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson
+  // momentumConstraint = index of the momentum orbit
+  // hilbertSpaceDimension = Hilbert space dimension
+  // stateDescription = array describing each state
+  // stateMaxMomentum = array giving maximum Lz value reached for a boson in a given state
+  BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
+		int** stateDescription, int* stateMaxMomentum);
 
   // copy constructor (without duplicating datas)
   //
@@ -94,6 +136,12 @@ class BosonOnTorus :  public ParticleOnTorus
   //
   // return value = particle statistic
   int GetParticleStatistic();
+
+  // get momemtum value of a given state
+  //
+  // index = state index
+  // return value = state momentum
+  int GetMomentumValue(int index);
 
   // return a list of all possible quantum numbers 
   //
@@ -177,11 +225,21 @@ class BosonOnTorus :  public ParticleOnTorus
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
-// maxMomentum = momentum maximum value for a fermion in the state
-// currentMaxMomentum = momentum maximum value for fermions that are still to be placed
-// pos = position in StateDescription array where to store states
+  // maxMomentum = momentum maximum value for a boson in the state
+  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson in the state
+  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // pos = position in StateDescription array where to store states
+  // currentMomentum = current value of the momentum
+  // return value = position from which new states have to be stored
+  int GenerateStates(int nbrBosons, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum);
 
 };
 

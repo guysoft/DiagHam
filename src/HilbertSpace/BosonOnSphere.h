@@ -66,7 +66,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // indicate position of the first state with a given number of boson having a given maximum Lz value
   int* LzMaxPosition;
 
-  // indicates how many different are store for each sector (a secor is given by its lzmax and the number of bosons that are at lzmax)
+  // indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
   int* KeyInvertSectorSize;
   //
   int** KeyInvertTable;
@@ -74,12 +74,6 @@ class BosonOnSphere :  public ParticleOnSphere
   int** KeyInvertTableNbrIndices;
   //
   int*** KeyInvertIndices;
-
-  int NbrSearch;
-  double RatioSearchTotalDim;
-  double RatioSearchCoarseDeep;
-  double SqrRatioSearchTotalDim;
-  double SqrRatioSearchCoarseDeep;
 
  public:
 
