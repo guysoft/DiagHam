@@ -145,7 +145,7 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian  
-  AbstractHamiltonian* PeriodicQuantumDots3DHamiltonian::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //

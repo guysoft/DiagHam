@@ -44,6 +44,9 @@
 using std::ostream;
 
 
+class ComplexUpperTriangularMatrix;
+
+
 class ComplexMatrix : public Matrix
 {
 

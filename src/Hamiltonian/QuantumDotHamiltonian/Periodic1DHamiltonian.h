@@ -92,7 +92,7 @@ class Periodic1DHamiltonian : public AbstractHamiltonian
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian  
-  AbstractHamiltonian* Periodic1DHamiltonian::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //

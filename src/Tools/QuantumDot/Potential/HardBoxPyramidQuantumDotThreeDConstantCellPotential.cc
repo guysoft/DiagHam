@@ -154,7 +154,13 @@ void HardBoxPyramidQuantumDotThreeDConstantCellPotential::ConstructPotential(dou
     }
 
   // quantum dot
-  bool base[NumberY][NumberX]; bool interface[NumberY][NumberX];
+  bool** base = new bool* [NumberY];
+  bool** interface = new bool* [NumberY];
+  for (int i = 0; i < NumberY; ++i)
+    {
+      base[i] = new bool [NumberX];
+      interface[i] = new bool [NumberX];
+    }
 
   for (int j = 0; j < NumberY; ++j)
     for (int i = 0; i < NumberX; ++i)
@@ -301,6 +307,14 @@ void HardBoxPyramidQuantumDotThreeDConstantCellPotential::ConstructPotential(dou
       this->AboveSize[k] = cellSizeZ;
 
     }
+
+  for (int i = 0; i < NumberY; ++i)
+    {
+      delete[] base[i];
+      delete[] interface[i];
+    }
+  delete[] base;
+  delete[] interface;
 
   double percent =  inNCounter / dotCounter;
   this->Concentration = percent;

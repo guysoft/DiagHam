@@ -101,7 +101,7 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   
-  AbstractHamiltonian* CylindricalHamiltonianInMagneticField::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //

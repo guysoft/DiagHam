@@ -1354,7 +1354,7 @@ double*** XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateCosinusWaveFunction
 	{
 	  Diff = (double) 2 * i;
 	  Tmp = M_PI * Diff * StepInc;	  
-	  TmpArray[i][0][k] = sqrt(2) * M_1_PI * (sin (Tmp * ((double) (k + 1))) - sin (Tmp * ((double) (k)))) / Diff;	  
+	  TmpArray[i][0][k] = M_SQRT2 * M_1_PI * (sin (Tmp * ((double) (k + 1))) - sin (Tmp * ((double) (k)))) / Diff;	  
 	}     
       for (int j = 1; j < i; ++j)
 	{

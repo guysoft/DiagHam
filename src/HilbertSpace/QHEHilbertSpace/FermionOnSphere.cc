@@ -656,7 +656,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   ComplexMatrix Slatter(this->NbrFermions, this->NbrFermions);
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
-  int Indices[this->NbrFermions];
+  int* Indices = new int [this->NbrFermions];
   int Pos;
   int Lz;
   for (int j = 0; j < this->NbrFermions; ++j)
@@ -714,6 +714,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  cout << k << " " << SlatterDet << endl;
 	}
     }
+  delete[] Indices;
   return Value;
 }
 

@@ -103,7 +103,7 @@ class CylindricalQuantumDots3DHamiltonian : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   
-  AbstractHamiltonian* CylindricalQuantumDots3DHamiltonian::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //

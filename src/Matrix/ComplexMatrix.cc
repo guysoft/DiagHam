@@ -868,7 +868,7 @@ Complex ComplexMatrix::Permanent()
   double Sign = 1.0;
   if ((this->NbrColumn & 1) == 0)
     Sign = -1.0;
-  Complex Tmp[this->NbrColumn];
+  Complex* Tmp = new Complex [this->NbrColumn];
   Complex Tmp2;
   int Lim = 1 << this->NbrColumn;
   for (int i = 0; i < this->NbrColumn; ++i)
@@ -916,6 +916,7 @@ Complex ComplexMatrix::Permanent()
       Perm += Sign * Tmp2;
       Sign *= -1.0;
     }
+  delete[] Tmp;
   return Perm;
 }
 
@@ -929,7 +930,7 @@ void ComplexMatrix::PermanentMinorDevelopment(int column, Complex*& minors)
   if (this->NbrColumn != this->NbrRow)
     return;
   int ReducedNbrColumn = this->NbrColumn - 1;
-  Complex Tmp[ReducedNbrColumn];
+  Complex* Tmp = new Complex  [ReducedNbrColumn];
   Complex Tmp2;
   int Lim = 1 << ReducedNbrColumn;
   for (int l = 0; l < this->NbrColumn; ++l)
@@ -1001,6 +1002,7 @@ void ComplexMatrix::PermanentMinorDevelopment(int column, Complex*& minors)
 	  Sign *= -1.0;
 	}
     }
+  delete[] Tmp;
 }
 
 // evaluate permanent associated to the (square) matrix using Ryser algorithm using precalculation array (faster)
@@ -1015,7 +1017,7 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
   double Sign = 1.0;
   if ((this->NbrColumn & 1) == 0)
     Sign = -1.0;
-  Complex Tmp[this->NbrColumn];
+  Complex* Tmp = new Complex [this->NbrColumn];
   Complex Tmp2;
   int Lim = 1 << this->NbrColumn;
   for (int i = 0; i < this->NbrColumn; ++i)
@@ -1045,6 +1047,7 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
       Perm += Sign * Tmp2;
       Sign *= -1.0;
     }
+  delete[] Tmp;
   return Perm;
 }
 
@@ -1059,8 +1062,7 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
 void ComplexMatrix::FastPermanentMinorDevelopment(int* changeBit, int* changeBitSign, int column, Complex*& minors)
 {
   int ReducedNbrColumn = this->NbrColumn - 1;
-  //  Complex* Tmp = new Complex [ReducedNbrColumn];
-  Complex Tmp[ReducedNbrColumn];
+  Complex* Tmp = new Complex [ReducedNbrColumn];
   Complex Tmp2;
   ComplexVector* TmpColumn;
   int Lim = 1 << ReducedNbrColumn;
@@ -1118,6 +1120,7 @@ void ComplexMatrix::FastPermanentMinorDevelopment(int* changeBit, int* changeBit
 	  Sign *= -1.0;
 	}
     }
+  delete[] Tmp;
 }
   
 // evaluate precalculation array  neede for the fast permanent calculation

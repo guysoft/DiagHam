@@ -136,7 +136,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   
-  AbstractHamiltonian* XYReflexionSymmetricPeriodic3DHamiltonian::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //

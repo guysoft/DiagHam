@@ -139,7 +139,7 @@ class ReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   
-  AbstractHamiltonian* ReflexionSymmetricPeriodic3DHamiltonian::Clone ();
+  AbstractHamiltonian* Clone ();
 
   // set Hilbert space
   //
