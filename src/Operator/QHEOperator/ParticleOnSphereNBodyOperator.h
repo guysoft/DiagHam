@@ -46,27 +46,28 @@ class ParticleOnSphereNBodyOperator : public AbstractOperator
   // hilbert space associated to the particles
   ParticleOnSphere* Particle;
   
-  // indices attached to the a+_i a+_j a_k a_l
-  // index of the leftmost creation operator
-  int CreationIndex1;
-  // index of the rightmost creation operator
-  int CreationIndex2;
-  // index of the leftmost annihilation operator
-  int AnnihilationIndex1;
-  // index of the rightmost annihilation operator
-  int AnnihilationIndex2;
+  // array containing the indices of the creation operators from left to right (a+_0.....a+_(n-1))
+  int* CreationIndices;
+  // array containing the indices of the annihilation operators from left to right (a_0.....a_(n-1))
+  int* AnnihilationIndices;
+  // number of creation (or annihilation) operators
+  int NbrNBody;
   
  public:
   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
-  // creationIndex1 = index of the leftmost creation operator
-  // creationIndex2 = index of the rightmost creation operator
-  // annihilationIndex1 = index of the leftmost annihilation operator
-  // annihilationIndex2 = index of the rightmost annihilation operator
-  ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
-					 int annihilationIndex1, int annihilationIndex2);
+  // creationIndices = array containing the indices of the creation operators from left to right (a+_0.....a+_(n-1))
+  // annihilationIndices = rray containing the indices of the annihilation operators from left to right (a_0.....a_(n-1))
+  // nbrNBody = number of creation (or annihilation) operators
+  ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int* creationIndices,
+				int* annihilationIndices, int nbrNBody);
+
+  // copy constructor
+  //
+  // oper = reference on the operator to copy
+  ParticleOnSphereNBodyOperator(const ParticleOnSphereNBodyOperator& oper);
 
   // destructor
   //

@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
-/*  for (int k = 0; k < 10; ++k)
+  for (int k = 0; k < 1; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
@@ -139,6 +139,15 @@ int main(int argc, char** argv)
 	  Location[(i << 1) + 1] = 2.0 * M_PI * drand48();
 	  cout << Location[i << 1] << " " << Location[(i << 1) + 1] << endl;
 	}
+      Location[0] = 0.5 * M_PI;
+      Location[1] =  0.0;
+      Location[2] = 0.5 * M_PI;
+      Location[3] =  0.5 * M_PI;
+      Location[4] = 0.5 * M_PI;
+      Location[5] =  M_PI; 
+      Location[6] = 0.5 * M_PI;
+      Location[7] = - 0.5 * M_PI;
+     
       //  Location[4] = Location[0];
       //  Location[5] = Location[1];
       ParticleOnSphereFunctionBasis Basis(LzMax);
@@ -146,12 +155,12 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
-      Complex ValueLaughlin = LaughlinWaveFunction(Location, NbrBosons) * 0.36563112422012;
+      Complex ValueLaughlin = (*WaveFunction)(Location);
 //      cout << ValueExact  << endl; 
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
     }
-  return 0;*/
+  return 0;
   double Factor = 1.0;
   for (int j = 0; j < NbrBosons; ++j)
     {

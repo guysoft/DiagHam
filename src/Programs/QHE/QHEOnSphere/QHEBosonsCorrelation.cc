@@ -2,8 +2,8 @@
 
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 
-#include "Operator/ParticleOnSphereDensityDensityOperator.h"
-#include "Operator/ParticleOnSphereDensityOperator.h"
+#include "Operator/QHEOperator/ParticleOnSphereDensityDensityOperator.h"
+#include "Operator/QHEOperator/ParticleOnSphereDensityOperator.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "delta");
-  (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before tthe .dat extension)");
+  (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");

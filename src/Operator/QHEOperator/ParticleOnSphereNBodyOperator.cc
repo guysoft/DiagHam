@@ -38,19 +38,39 @@
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// creationIndex1 = index of the leftmost creation operator
-// creationIndex2 = index of the rightmost creation operator
-// annihilationIndex1 = index of the leftmost annihilation operator
-// annihilationIndex2 = index of the rightmost annihilation operator
+// creationIndices = array containing the indices of the creation operators from left to right (a+_0.....a+_(n-1))
+// annihilationIndices = array containing the indices of the annihilation operators from left to right (a_0.....a_(n-1))
+// nbrNBody = number of creation (or annihilation) operators
 
-ParticleOnSphereNBodyOperator::ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
-									       int annihilationIndex1, int annihilationIndex2)
+ParticleOnSphereNBodyOperator::ParticleOnSphereNBodyOperator(ParticleOnSphere* particle, int* creationIndices,
+							     int* annihilationIndices, int nbrNBody)
 {
-  this->Particle= particle;
-  this->CreationIndex1 = creationIndex1;
-  this->CreationIndex2 = creationIndex2;
-  this->AnnihilationIndex1 = annihilationIndex1;
-  this->AnnihilationIndex2 = annihilationIndex2;
+  this->Particle = (ParticleOnSphere*) (particle->Clone());
+  this->NbrNBody = nbrNBody;
+  this->CreationIndices = new int [this->NbrNBody];  
+  this->AnnihilationIndices = new int [this->NbrNBody];
+  for (int i = 0; i < this->NbrNBody; ++i)
+    {
+      this->CreationIndices[i] = creationIndices[i];
+      this->AnnihilationIndices[i] = annihilationIndices[i];
+    }
+}
+
+// copy constructor
+//
+// oper = reference on the operator to copy
+ 
+ParticleOnSphereNBodyOperator::ParticleOnSphereNBodyOperator(const ParticleOnSphereNBodyOperator& oper)
+{
+  this->Particle = (ParticleOnSphere*) (oper.Particle->Clone());
+  this->NbrNBody = oper.NbrNBody;
+  this->CreationIndices = new int [this->NbrNBody];  
+  this->AnnihilationIndices = new int [this->NbrNBody];
+  for (int i = 0; i < this->NbrNBody; ++i)
+    {
+      this->CreationIndices[i] = oper.CreationIndices[i];
+      this->AnnihilationIndices[i] = oper.AnnihilationIndices[i];
+    }
 }
 
 // destructor
@@ -58,7 +78,11 @@ ParticleOnSphereNBodyOperator::ParticleOnSphereNBodyOperator(ParticleOnSphere* p
 
 ParticleOnSphereNBodyOperator::~ParticleOnSphereNBodyOperator()
 {
+  delete this->Particle;
+  delete[] this->CreationIndices;
+  delete[] this->AnnihilationIndices;
 }
+  
   
 // clone operator without duplicating datas
 //
@@ -66,7 +90,7 @@ ParticleOnSphereNBodyOperator::~ParticleOnSphereNBodyOperator()
 
 AbstractOperator* ParticleOnSphereNBodyOperator::Clone ()
 {
-  return 0;
+  return new ParticleOnSphereNBodyOperator(*this);
 }
 
 // set Hilbert space
@@ -110,7 +134,7 @@ Complex ParticleOnSphereNBodyOperator::MatrixElement (RealVector& V1, RealVector
   int Index;
   for (int i = 0; i < Dim; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
       Element += V1[Index] * V2[i] * Coefficient;
     }
   return Complex(Element);
@@ -144,7 +168,7 @@ RealVector& ParticleOnSphereNBodyOperator::Multiply(RealVector& vSource, RealVec
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
       vDestination[Index] = vSource[i] * Coefficient;
     }
   return vDestination;

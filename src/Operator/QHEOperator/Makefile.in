@@ -50,12 +50,17 @@ AR = ar
 ARFLAGS = cru
 libQHEOperator_a_AR = $(AR) $(ARFLAGS)
 libQHEOperator_a_LIBADD =
-am_libQHEOperator_a_OBJECTS = ParticleOnSphereNBodyOperator.$(OBJEXT)
+am_libQHEOperator_a_OBJECTS =  \
+	ParticleOnSphereDensityDensityOperator.$(OBJEXT) \
+	ParticleOnSphereDensityOperator.$(OBJEXT) \
+	ParticleOnSphereNBodyOperator.$(OBJEXT)
 libQHEOperator_a_OBJECTS = $(am_libQHEOperator_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ParticleOnSphereDensityDensityOperator.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDensityOperator.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -158,7 +163,10 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libQHEOperator.a
-libQHEOperator_a_SOURCES = ParticleOnSphereNBodyOperator.cc
+libQHEOperator_a_SOURCES = ParticleOnSphereDensityDensityOperator.cc \
+ParticleOnSphereDensityOperator.cc \
+ParticleOnSphereNBodyOperator.cc
+
 all: all-recursive
 
 .SUFFIXES:
@@ -206,6 +214,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDensityDensityOperator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDensityOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po@am__quote@
 
 .cc.o:
