@@ -327,14 +327,14 @@ void TrappedBosonHamiltonian::EvaluateInteractionFactors()
       this->InteractionFactors[i] = new double [this->LzMax + 1];
       Coef.SetToOne();
       Coef.Power2Divide(i);
-      this->InteractionFactors[i][0] = sqrt(Coef.GetNumericalValue());
+      this->InteractionFactors[i][0] = sqrt(Coef.GetNumericalValue() / (4.0 * M_PI));
       for (int j = 1; j <= this->LzMax; ++j)
 	{      
 	  Coef.SetToOne();
 	  Coef.PartialFactorialMultiply(i + 1, i + j);
 	  Coef.FactorialDivide(j);
 	  Coef.Power2Divide(i+j);
-	  this->InteractionFactors[i][j] = sqrt(Coef.GetNumericalValue());
+	  this->InteractionFactors[i][j] = sqrt(Coef.GetNumericalValue() / (4.0 * M_PI));
 	}
     }
 }

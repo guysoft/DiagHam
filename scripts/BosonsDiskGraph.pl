@@ -134,6 +134,7 @@ sub CreatePostScript
     my $Max;
     my $Min;
     &FindMinMax($FileName, 1, \$Min, \$Max);
+#    $Max = 10.0;
     my $Delta = ($Max - $Min) / 20.0;
     $Max += $Delta;
     $Min -= $Delta;

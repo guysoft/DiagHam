@@ -5,6 +5,7 @@
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaHamiltonian.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaModifiedHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
   SingleIntegerOption VectorMemoryOption ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   SingleStringOption SavePrecalculationOption ('\n', "save-precalculation", "save precalculation in a file",0);
   SingleStringOption LoadPrecalculationOption ('\n', "load-precalculation", "load precalculation from a file",0);
+  SingleDoubleOption CoulombOption ('\n', "add-coulomb", "coefficent in front of the coulomb pseudo-potentials (pure delta if 0)", 0.0);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
@@ -74,6 +76,7 @@ int main(int argc, char** argv)
   OptionList += &ResumeOption;
   OptionList += &LoadPrecalculationOption;
   OptionList += &SavePrecalculationOption;
+  OptionList += &CoulombOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
@@ -99,6 +102,7 @@ int main(int argc, char** argv)
   int VectorMemory = VectorMemoryOption.GetInteger();
   char* LoadPrecalculationFileName = LoadPrecalculationOption.GetString();
   char* SavePrecalculationFileName = SavePrecalculationOption.GetString();
+  double CoulombFactor = CoulombOption.GetDouble();
 
   int InvNu = 2;
   double GroundStateEnergy = 0.0;
@@ -141,7 +145,11 @@ int main(int argc, char** argv)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      ParticleOnSphereDeltaHamiltonian* Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      AbstractQHEOnSphereHamiltonian* Hamiltonian;
+      if (CoulombFactor == 0.0)
+	Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture, Memory, LoadPrecalculationFileName);
+      else
+	Hamiltonian = new ParticleOnSphereCoulombDeltaHamiltonian(&Space, NbrBosons, LzMax, CoulombFactor, Architecture, Memory);
       if (SavePrecalculationFileName != 0)
 	{
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);

@@ -144,6 +144,11 @@ void ParticleOnSphereCoulombDeltaHamiltonian::EvaluateInteractionFactors()
     }
   double TmpVDelta = (((double) this->LzMax) + 1.0);
   TmpVDelta = (TmpVDelta * TmpVDelta) / (4.0 * M_PI * (2.0 * ((double) this->LzMax) + 1.0));
+  for (int j = 0; j <= this->LzMax; ++j)
+    {
+      TmpV[j] *= this->Ratio * TmpVDelta / TmpV[this->LzMax];
+    }
+  TmpV[this->LzMax] = TmpVDelta;
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J;
   int m4;
@@ -154,7 +159,7 @@ void ParticleOnSphereCoulombDeltaHamiltonian::EvaluateInteractionFactors()
   if (this->LzMax & 1)
     Sign = 0;
   double MaxCoefficient = 0.0;
-  double Factor = 4.0 / sqrt (0.5 * ((double) this->LzMax)) * this->Ratio;
+//  double Factor = 4.0 / sqrt (0.5 * ((double) this->LzMax)) * this->Ratio;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
@@ -171,18 +176,18 @@ void ParticleOnSphereCoulombDeltaHamiltonian::EvaluateInteractionFactors()
 		Clebsch.InitializeCoefficientIterator(m1, m2);
 		m4 = m1 + m2 - m3;
 		TmpCoefficient[Pos] = 0.0;
-/*		while (Clebsch.Iterate(J, ClebschCoef))
+		while (Clebsch.Iterate(J, ClebschCoef))
 		  {
 		    if (((J >> 1) & 1) == Sign)
 		      TmpCoefficient[Pos] += TmpV[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		  }*/
-		TmpCoefficient[Pos] *= Factor;
+		  }
+/*		TmpCoefficient[Pos] *= Factor;
 		J = 2 * this->LzMax;
 		if (((J >> 1) & 1) == Sign)
 		  TmpCoefficient[Pos] += TmpVDelta * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
 		J -= 2;
 		if (((J >> 1) & 1) == Sign)
-		  TmpCoefficient[Pos] += TmpVDelta * this->Ratio * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
+		  TmpCoefficient[Pos] += TmpVDelta * this->Ratio * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);*/
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = TmpCoefficient[Pos];
 		++Pos;
@@ -239,18 +244,18 @@ void ParticleOnSphereCoulombDeltaHamiltonian::EvaluateInteractionFactors()
 		Clebsch.InitializeCoefficientIterator(m1, m2);
 		m4 = m1 + m2 - m3;
 		TmpCoefficient[Pos] = 0.0;
-/*		while (Clebsch.Iterate(J, ClebschCoef))
+		while (Clebsch.Iterate(J, ClebschCoef))
 		  {
 		    if (((J >> 1) & 1) != Sign)
 		      TmpCoefficient[Pos] += TmpV[J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		  }
-		TmpCoefficient[Pos] *= Factor;*/
+/*		TmpCoefficient[Pos] *= Factor;
 		J = 2 * this->LzMax;
 		if (((J >> 1) & 1) != Sign)
 		  TmpCoefficient[Pos] += this->Ratio * TmpVDelta * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
 		J -= 4;
 		if (((J >> 1) & 1) != Sign)
-		  TmpCoefficient[Pos] += TmpVDelta * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);
+		  TmpCoefficient[Pos] += TmpVDelta * Clebsch.GetCoefficient(m1, m2, J) * Clebsch.GetCoefficient(m3, m4, J);*/
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = TmpCoefficient[Pos];
 		++Pos;
