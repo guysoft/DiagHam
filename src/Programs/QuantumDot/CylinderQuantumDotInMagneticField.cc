@@ -256,7 +256,7 @@ int main(int argc, char** argv)
           ofstream OutputFile;
           OutputFile.precision(14);
           OutputFile.open("eigenvalues", ios::binary | ios::out | ios::app);
-	  OutputFile << MagneticField << " ";
+	  //OutputFile << MagneticField << " ";
           for (int i = 0; i < NbrEigenvalue; ++i)
             OutputFile << Eigenvalues[i] << " ";
           OutputFile << endl;

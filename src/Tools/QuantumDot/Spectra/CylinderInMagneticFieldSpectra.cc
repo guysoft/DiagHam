@@ -65,7 +65,7 @@ CylinderInMagneticFieldSpectra::CylinderInMagneticFieldSpectra(VerticalPeriodicP
     {
       this->RealCoefficients[i] = new double [this->NbrStateZ];
       this->ImaginaryCoefficients[i] = new double [this->NbrStateZ];         
-      for (int k = 0; k < this->NbrStateZ; ++k)	    
+      for (int k = 0; k < this->NbrStateZ; ++k)		
 	File >> this->RealCoefficients[i][k] >> this->ImaginaryCoefficients[i][k];	    	
     } 
   File.close();
@@ -150,7 +150,7 @@ void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagn
     {
       realCoefficients[i] = new double [nbrStateZ];
       imaginaryCoefficients[i] = new double [nbrStateZ];         
-      for (int k = 0; k < nbrStateZ; ++k)	      
+      for (int k = 0; k < nbrStateZ; ++k)		
 	File >> realCoefficients[i][k] >> imaginaryCoefficients[i][k]; 	
     }
   File.close();  
@@ -221,7 +221,6 @@ void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagn
       realImpulsionX = -TmpIm; realImpulsionY = -TmpIm;
       imaginaryImpulsionX = TmpRe; imaginaryImpulsionY = TmpRe; 
     }
-      
   // z direction
   if (this->NumberM != numberM)
     {
@@ -244,4 +243,107 @@ void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagn
 	}
       realImpulsionZ = realImpulsionZ * 2.0 * M_PI / sizeZ; imaginaryImpulsionZ = imaginaryImpulsionZ * 2.0 * M_PI / sizeZ;	    
     }  
+}
+
+// get mean value of position operator
+//
+// space = Hilbert space describing the other particle
+// fileName = the file to stock the other function
+// sizeZ = size of sample in Z direction
+// positionX, positionY, positionZ = reference to the return values
+
+void CylinderInMagneticFieldSpectra::GetMeanPosition(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ)
+{
+  double OrbitRadius = LENGTH_FACTOR / sqrt(this->Bz);
+  int numberM = space->GetQuantumNumberM();
+  int nbrStateR = space->GetNbrStateR();
+  int nbrStateZ = space->GetNbrStateZ();
+  int lowerImpulsionZ = space->GetLowerImpulsionZ();
+
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Error in open the file: " << fileName << endl;
+      exit(0);
+    }
+  double** realCoefficients = new double* [nbrStateR];
+  double** imaginaryCoefficients = new double* [nbrStateR];
+  for (int i = 0; i < nbrStateR; ++i)
+    {
+      realCoefficients[i] = new double [nbrStateZ];
+      imaginaryCoefficients[i] = new double [nbrStateZ];         
+      for (int k = 0; k < nbrStateZ; ++k)		
+	File >> realCoefficients[i][k] >> imaginaryCoefficients[i][k]; 	
+    }
+  File.close();  
+
+  int MaxLowerZ = this->LowerImpulsionZ;
+  if (this->LowerImpulsionZ < lowerImpulsionZ)
+    MaxLowerZ = lowerImpulsionZ;
+
+  int MinUpperR = this->NbrStateR, MinUpperZ = this->LowerImpulsionZ + this->NbrStateZ;
+  if (MinUpperR > (nbrStateR))
+    MinUpperR = nbrStateR;
+  if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
+    MinUpperZ = lowerImpulsionZ + nbrStateZ;
+
+  realPositionX = 0.0;
+  realPositionY = 0.0;
+  realPositionZ = 0.0;
+  imaginaryPositionX = 0.0;
+  imaginaryPositionY = 0.0;
+  imaginaryPositionZ = 0.0;
+  double TmpRe = 0.0, TmpIm = 0.0;
+  double* Re1; double* Im1; double* Re2; double* Im2; double* Re3; double* Im3;
+  double TmpRe1 = 0.0, TmpIm1 = 0.0;
+
+   // x and y directions
+  if (this->NumberM == numberM)
+    {
+      realPositionX = 0.0;
+      imaginaryPositionX = 0.0;
+      realPositionY = 0.0;
+      imaginaryPositionY = 0.0;
+    } 
+  else
+    {
+      TmpRe = 0.0; TmpIm = 0.0;
+      for (int n = 0; n < (MinUpperR - 1); ++n)
+	{	      
+	  Re1 = this->RealCoefficients[n];
+	  Im1 = this->ImaginaryCoefficients[n];
+	  Re2 = realCoefficients[n];
+	  Im2 = imaginaryCoefficients[n];
+	  Re3 = this->RealCoefficients[n + 1];
+	  Im3 = this->ImaginaryCoefficients[n + 1];
+	  TmpRe1 = 0.0; TmpIm1 = 0.0;
+	  for (int p = MaxLowerZ; p < MinUpperZ; ++p)
+	    {
+	      TmpRe1 += (Re1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]);
+	      TmpIm1 += (-Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
+	      TmpRe1 -= (Re3[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im3[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]);
+	      TmpIm1 -= (-Re3[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] + Im3[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);	      
+	    }
+	  TmpRe += (TmpRe1 * sqrt(double(n + 1)));
+	  TmpIm += (TmpIm1 * sqrt(double(n + 1)));
+	}
+      Re1 = this->RealCoefficients[MinUpperR - 1];
+      Im1 = this->ImaginaryCoefficients[MinUpperR - 1];
+      Re2 = realCoefficients[MinUpperR - 1];
+      Im2 = imaginaryCoefficients[MinUpperR - 1];
+      TmpRe1 = 0.0; TmpIm1 = 0.0;
+      for (int p = MaxLowerZ; p < MinUpperZ; ++p)
+	{
+	  TmpRe1 += (Re1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]);
+	  TmpIm1 += (-Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
+		    
+	}
+      TmpRe += (TmpRe1 * sqrt(double(MinUpperR)));
+      TmpIm += (TmpIm1 * sqrt(double(MinUpperR)));
+      TmpRe *= (OrbitRadius / sqrt(2.0)); TmpIm *= (OrbitRadius / sqrt(2.0)); 
+      realPositionX = -TmpIm; realPositionY = -TmpIm;
+      imaginaryPositionX = TmpRe; imaginaryPositionY = TmpRe;      
+
+    }
 }

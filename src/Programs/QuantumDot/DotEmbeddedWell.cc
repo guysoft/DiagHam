@@ -160,6 +160,7 @@ int main(int argc, char** argv)
 
   //InPlaneReflexionSymmetricPeriodic3DOneParticle* Space = new InPlaneReflexionSymmetricPeriodic3DOneParticle(PairX, M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);  
   // define Hilbert space  
+  
   XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(M / 4, N / 4, H, -H / 2);
   XYReflexionSymmetricPeriodic3DOneParticle* Space;
   if (PairX)
@@ -173,7 +174,7 @@ int main(int argc, char** argv)
     else
       Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);        
   //Periodic3DOneParticle* Space = new Periodic3DOneParticle((M / 4) * 2 + 1, -M / 4, (N / 4) * 2 + 1, -N / 4, H, -H / 2);
-
+  
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);

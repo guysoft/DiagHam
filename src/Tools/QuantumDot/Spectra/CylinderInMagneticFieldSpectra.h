@@ -81,6 +81,14 @@ class CylinderInMagneticFieldSpectra
   // sizeZ = size of sample in Z direction
   // impulsionX, impulsionY, impulsionZ = reference to the return values
   void GetImpulsion(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+
+  // get mean value of position operator
+  //
+  // space = Hilbert space describing the other particle
+  // fileName = the file to stock the other function
+  // sizeZ = size of sample in Z direction
+  // positionX, positionY, positionZ = reference to the return values
+  void GetMeanPosition(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ);
   
 };
 

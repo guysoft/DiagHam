@@ -115,12 +115,12 @@ int main(int argc, char** argv)
   int LeftSize = LeftSizeOption.GetInteger();
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
-
+  //
   // **** PROBABILITIES ****
   double p1 = 0.05; double p2 = 0.377;
 
   // *** Dot geometry ****
-  int Rb = 10, Rt = 5, w = 1;
+  int Rb = 8, Rt = 5, w = 1;
 
    // **** Offset ****
   double Offset = 0.0;
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
   // void ConstructPotential(double noInNProbability, double withInNProbability, double piezoField, double cellSizeZ, double offset, bool scratch, char* fileName); 
   /*
   double concentration = 0.0;
-  /*
+  
   if (Carrier)
     {     
       do 

@@ -661,11 +661,11 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		}	      
 	    }
 	}
-      ++n1Begin;
+      
       // n1 : n1Begin -> NbrStateY
       m1 = m1Begin;
       TmpTotalIndex1 = TotalIndex[m1];
-      for (n1 = n1Begin; n1 < this->NbrStateY; ++n1)
+      for (n1 = n1Begin + 1; n1 < this->NbrStateY; ++n1)
 	{
 	  for (m2 = 0; m2 < m1; ++m2)
 	    {
@@ -783,10 +783,9 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		  }	      
 		}
 	    }
-	}
-      ++m1Begin;      
+	}         
       // m1 : m1Begin + 1 -> m1Limit - 1
-      for (m1 = m1Begin; m1 < m1Limit; ++m1)
+      for (m1 = m1Begin + 1; m1 < m1Limit; ++m1)
 	{
 	  TmpTotalIndex1 = TotalIndex[m1];
 	  for (n1 = 0; n1 < this->NbrStateY; ++n1)

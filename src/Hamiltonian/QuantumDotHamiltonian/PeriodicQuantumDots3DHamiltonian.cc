@@ -538,15 +538,14 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
 	      ++IndexY;
 	    }
 	  ++IndexX;
-	}
-      ++n1Begin;
-      // n1 : n1Begin -> NbrStateY
+	}      
+      // n1 : n1Begin + 1 -> NbrStateY
       IndexX = -m1Begin + OriginX;
       TmpTotalIndex1 = TotalIndex[m1Begin];
       for (m2 = 0; m2 < this->NbrStateX; ++m2)
 	{
 	  TmpTotalIndex2 = TotalIndex[m2];	  
-	  for (n1 = n1Begin; n1 < this->NbrStateY; ++n1)
+	  for (n1 = n1Begin + 1; n1 < this->NbrStateY; ++n1)
 	    {
 	      IndexY = -n1 + OriginY;
 	      for (n2 = 0; n2 < this->NbrStateY; ++n2)
@@ -573,10 +572,9 @@ ComplexVector& PeriodicQuantumDots3DHamiltonian::LowLevelAddMultiply(ComplexVect
 		}
 	    }
 	  ++IndexX;
-	}
-      ++m1Begin;
+	}      
       // m1 : m1Begin -> m1Limit - 1
-      for (m1 = m1Begin; m1 < m1Limit; ++m1)
+      for (m1 = m1Begin + 1; m1 < m1Limit; ++m1)
 	{
 	  IndexX = -m1 + OriginX;
 	  TmpTotalIndex1 = TotalIndex[m1];

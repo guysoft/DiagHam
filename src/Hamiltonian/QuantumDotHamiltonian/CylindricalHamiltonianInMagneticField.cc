@@ -364,10 +364,9 @@ ComplexVector& CylindricalHamiltonianInMagneticField::LowLevelAddMultiply(Comple
 	      vDestination.Im(Index1) += TmpIm;
 	      ++Index1;
 	    }
-	}
-      ++n1Begin;
+	}      
       // n1 : n1Begin + 1 -> n1Limit - 1
-      for (n1 = n1Begin; n1 < n1Limit; ++n1)
+      for (n1 = n1Begin + 1; n1 < n1Limit; ++n1)
 	{
 	  for (n2 = 0; n2 < n1; ++n2)
 	    {
@@ -584,7 +583,7 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
       if (radius > 0.0)
 	{
 	  tk = (radius * radius) / (2.0 * OrbitRadius * OrbitRadius);
-	  //cout << "tk: " << tk << endl;
+	  cout << "tk: " << tk << endl;
 	  tmp = exp(-tk);
 	  Integral[k][0] = 1.0 - tmp;
 	  //cout << Integral[k][0] << " ";
@@ -674,6 +673,8 @@ void CylindricalHamiltonianInMagneticField::EvaluateInteractionFactors(double Bz
 			  TmpSum /= sqrt(double(n1 + 1) * double(n2 + 1));
 			  TmpSum = -TmpSum;
 			}
+		      //if (p == 0)
+			//cout << "n1 : " << n1 << "  n2 :" << n2 << "  k: " << k << "  overlap: " << TmpSum << endl;
 		      TmpRe += (potential->GetPotential(k) * RealWaveFunctionOverlapZ[p][k] * TmpSum);
 		      TmpIm += (potential->GetPotential(k) * ImaginaryWaveFunctionOverlapZ[p][k] * TmpSum);
 		    }
