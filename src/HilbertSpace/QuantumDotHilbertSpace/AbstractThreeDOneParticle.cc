@@ -31,6 +31,9 @@
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDOneParticle.h"
 
+using std::cout;
+using std::endl;
+
 
 // default constructor
 //
@@ -70,9 +73,11 @@ AbstractThreeDOneParticle::AbstractThreeDOneParticle (const AbstractThreeDOnePar
 
 AbstractThreeDOneParticle::~AbstractThreeDOneParticle ()
 {
+  cout << "AbstractThreeDOneParticle destructor is being called ..." << endl;
   delete this->StateX;
   delete this->StateY;
   delete this->StateZ;
+  cout << "AbstractThreeDOneParticle destructor is finished ..." << endl;
 }
 
 // assignement

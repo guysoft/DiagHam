@@ -153,7 +153,9 @@ PeriodicElectronHole3DHamiltonian::PeriodicElectronHole3DHamiltonian(const Perio
 
 PeriodicElectronHole3DHamiltonian::~ PeriodicElectronHole3DHamiltonian()
 {
+  cout << "PeriodicElectronHole3DHamiltonian destructor is being called." << endl;
   delete   this->Space;
+  cout << "Destructor of Hilbert space is being called" << endl;
   delete[] this->IToX;
   delete[] this->IToX1;
   delete[] this->IToX2;
@@ -320,8 +322,7 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	      //cout << "Hole: " << Index1 << " " << Index2 << " " << XY1 << " " << XY2 << " " << X1 << " " << Y1 << " " << X2 << " " << Y2 << endl;
 	      vDestination.Re(Index1) += (tmpRealHole[Y2] * vSource.Re(Index2) - tmpImaginaryHole[Y2] * vSource.Im(Index2));
 	      vDestination.Im(Index1) += (tmpRealHole[Y2] * vSource.Im(Index2) + tmpImaginaryHole[Y2] * vSource.Re(Index2));
-	    }
-	  
+	    }	  
 	}
     }
   return vDestination;

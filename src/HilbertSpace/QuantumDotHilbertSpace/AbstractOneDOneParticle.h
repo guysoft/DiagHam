@@ -61,7 +61,7 @@ class AbstractOneDOneParticle : public AbstractHilbertSpace
 
   // destructor
   //
-  ~AbstractOneDOneParticle ();
+  virtual ~AbstractOneDOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //

@@ -31,6 +31,8 @@
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
 
+using std::cout;
+using std::endl;
 
 // default constructor
 AbstractOneDOneParticle::AbstractOneDOneParticle()
@@ -62,6 +64,7 @@ AbstractOneDOneParticle::AbstractOneDOneParticle(const AbstractOneDOneParticle& 
 
 AbstractOneDOneParticle::~AbstractOneDOneParticle()
 {
+  cout << "AbstractOneDOneParticle destructor is being called" << endl;
 }
 
 // assignement

@@ -69,7 +69,7 @@ class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSp
 
   // destructor
   //
-  ~AbstractPlanarRotationSymmetryThreeDOneParticle ();
+  virtual ~AbstractPlanarRotationSymmetryThreeDOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //

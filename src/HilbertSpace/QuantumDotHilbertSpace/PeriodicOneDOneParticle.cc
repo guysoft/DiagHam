@@ -62,12 +62,14 @@ PeriodicOneDOneParticle::PeriodicOneDOneParticle (const PeriodicOneDOneParticle&
   this->LowerImpulsion = space.LowerImpulsion;
 }
 
+/*
 // destructor
 //
 
 PeriodicOneDOneParticle::~PeriodicOneDOneParticle ()
 {
 }
+*/
 
 // assignement
 //
