@@ -118,7 +118,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQuantumDotHilbertSpace.a
 
-libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc
+libQuantumDotHilbertSpace_a_SOURCES = Confined3DOneParticle.cc Periodic3DOneParticle.cc XYReflexionSymmetricPeriodic3DOneParticle.cc
 subdir = src/HilbertSpace/QuantumDotHilbertSpace
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -128,7 +128,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 libQuantumDotHilbertSpace_a_AR = $(AR) cru
 libQuantumDotHilbertSpace_a_LIBADD =
 am_libQuantumDotHilbertSpace_a_OBJECTS = Confined3DOneParticle.$(OBJEXT) \
-	Periodic3DOneParticle.$(OBJEXT)
+	Periodic3DOneParticle.$(OBJEXT) \
+	XYReflexionSymmetricPeriodic3DOneParticle.$(OBJEXT)
 libQuantumDotHilbertSpace_a_OBJECTS = \
 	$(am_libQuantumDotHilbertSpace_a_OBJECTS)
 
@@ -136,7 +137,8 @@ DEFAULT_INCLUDES =  -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/Confined3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Periodic3DOneParticle.Po
+@AMDEP_TRUE@	./$(DEPDIR)/Periodic3DOneParticle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodic3DOneParticle.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -180,6 +182,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Confined3DOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic3DOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodic3DOneParticle.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)

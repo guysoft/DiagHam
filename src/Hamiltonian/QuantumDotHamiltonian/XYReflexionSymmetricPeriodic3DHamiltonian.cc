@@ -61,7 +61,7 @@ using std::endl;
 // nbrCellZ = number of steps in Z direction
 // PotentielInput = pointer to a 3D potential with constant value in a cell
 
-XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
+XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -74,18 +74,8 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
   this->NbrCellY = nbrCellY;
   this->NbrCellZ = nbrCellZ;
 
-  this->NbrStateX = this->Space->GetLowerImpulsionX();
-  if ((this->Space->GetLowerImpulsionX() * 2 + 1) != this->Space->GetNbrStateX())
-    {
-      cout << "The chosen Hilbert space is not reflexion-symmetric in X. Exit now!" << endl;
-      exit(0);
-    }
-  this->NbrStateY = this->Space->GetLowerImpulsionY();
-  if ((this->Space->GetLowerImpulsionY() * 2 + 1) != this->Space->GetNbrStateY())
-    {
-      cout << "The chosen Hilbert space is not reflexion-symmetric in Y. Exit now!" << endl;
-      exit(0);
-    }  
+  this->NbrStateX = this->Space->GetNbrSinusStateX();
+  this->NbrStateY = this->Space->GetNbrSinusStateY();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
 
@@ -112,9 +102,9 @@ XYReflexionSymmetricPeriodic3DHamiltonian::XYReflexionSymmetricPeriodic3DHamilto
 	    }
 	}	  
     }
-  cout << "Object is being constructed" << endl;
+  cout << "Evaluation of Hamiltionian elements ..." << endl;
   this->EvaluateInteractionFactors();
-  cout << "Object was constructed" << endl;
+  cout << "Evaluation finished ..." << endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -544,14 +534,14 @@ ComplexVector& XYReflexionSymmetricPeriodic3DHamiltonian::LowLevelAddMultiply(Co
 		  TmpTotalIm1 += (TmpRe * vSource.Im(Index2) - TmpIm * vSource.Re(Index2));		  
 
 		  ++Index2;
-		    }
+		}
 	      // case m2 = m1 && n2 = n1 && p2 = p1
 	      TmpRe = TmpRealHamiltonian[IndexZ];
 	      TmpIm = TmpImaginaryHamiltonian[IndexZ];		  
 	      
 	      vDestination.Re(Index2) += (TmpRe * VSourceRe1 + TmpIm * VSourceIm1);
 	      vDestination.Im(Index2) += (TmpRe * VSourceIm1 - TmpIm * VSourceRe1);			  		     
-
+	      // kinetic elements added
 	      vDestination.Re(Index2) += (KineticElements[Index1] * VSourceRe1);
 	      vDestination.Im(Index2) += (KineticElements[Index1] * VSourceIm1);
 		
@@ -629,13 +619,13 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
   int TotalIndex = 0;
   for (int i = 0; i < this->NbrStateX; ++i)
     {
-      FactorX = double(i * i) * InvXFactor;
+      FactorX = double((i + 1) * (i + 1)) * InvXFactor;
       for (int j = 0; j < this->NbrStateY; ++j)
 	{
-	  FactorY = double(j * j) * InvYFactor + FactorX;
+	  FactorY = double((j + 1) * (j + 1)) * InvYFactor + FactorX;
 	  for (int k = 0; k < this->NbrStateZ; ++k)
 	    {	      
-	      this->KineticElements[TotalIndex] = FactorY + double((k - this->LowerImpulsionZ) * (k - this->LowerImpulsionZ)) * InvZFactor;	      
+	      this->KineticElements[TotalIndex] = FactorY + double((k + this->LowerImpulsionZ) * (k + this->LowerImpulsionZ)) * InvZFactor;	      
 	      ++TotalIndex;
 	    }
 	}
@@ -728,7 +718,7 @@ void XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateInteractionFactors()
   delete[] TmpSum;
 }
 
-// evaluate wave function overlaps on a cell in a given direction
+// evaluate sinus wave function overlaps on a cell in a given direction
 //
 // size = system length in the choosen direction
 // nbrStep = number of subdivision in the choosen direction
@@ -768,7 +758,47 @@ double*** XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateSinusWaveFunctionOv
   return TmpArray;
 }
 
-// evaluate the wave function overlap
+// evaluate cosinus wave function overlaps on a cell in a given direction
+//
+// size = system length in the choosen direction
+// nbrStep = number of subdivision in the choosen direction
+// nbrState = number of state in the choosen direction
+// memory = reference on current memory usage (will be increment with memory used to store evaluated overlap)
+// return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
+
+double*** XYReflexionSymmetricPeriodic3DHamiltonian::EvaluateCosinusWaveFunctionOverlap(double size, int nbrStep, int nbrState)
+{
+  double*** TmpArray = new double** [nbrState];
+  double StepInc = 1.0 / ((double) nbrStep);
+  double Tmp;
+  double Diff;
+  for (int i = 0; i < nbrState; ++i)
+    {
+      TmpArray[i] = new double* [i + 1];
+      for (int j = 0; j < i; ++j)
+	{
+	  TmpArray[i][j] = new double [nbrStep];
+	  for (int k = 0; k < nbrStep; ++k)
+	    {
+	      Diff = (double) 2 * (i - j);
+	      Tmp = M_PI * Diff * StepInc;	      
+	      TmpArray[i][j][k] = M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / Diff;
+	      Diff = (double) 2 * (i + j);
+	      Tmp = M_PI * Diff * StepInc;	      
+	      TmpArray[i][j][k] -= M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / Diff;
+	    }
+	}
+      TmpArray[i][i] = new double [nbrStep];
+      for (int k = 0; k < nbrStep; ++k)
+	{
+	  Tmp = M_PI * (double) (4 * i) * StepInc;	      
+	  TmpArray[i][i][k] = StepInc - M_1_PI * (sin (Tmp * ((double) (k + 1))) + sin (Tmp * ((double) (k)))) / ((double) (4 * i + 4));
+	}     
+    }
+  return TmpArray;
+}
+
+// evaluate the plane wave function overlap
 //
 // nbrStep = number of steps in the given direction
 // nbrState = number of states chosen for this direction

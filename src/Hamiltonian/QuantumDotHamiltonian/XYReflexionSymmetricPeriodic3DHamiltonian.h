@@ -33,7 +33,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
 
 #include <iostream>
 
@@ -48,7 +48,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  Periodic3DOneParticle* Space;
+  XYReflexionSymmetricPeriodic3DOneParticle* Space;
 
   // wave function basis dimension in the x direction
   int NbrStateX;  
@@ -116,7 +116,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // nbrCellY = number of steps in Y direction
   // nbrCellZ = number of steps in Z direction
   // PotentielInput = pointer to a 3D potential with constant value in a cell
-  XYReflexionSymmetricPeriodic3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
+  XYReflexionSymmetricPeriodic3DHamiltonian(XYReflexionSymmetricPeriodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
@@ -212,7 +212,7 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   //
   void EvaluateInteractionFactors();
 
-  // evaluate wave function overlaps on a cell in a given direction
+  // evaluate sinus wave function overlaps on a cell in a given direction
   //
   // size = system length in the choosen direction
   // nbrStep = number of subdivision in the choosen direction
@@ -220,7 +220,15 @@ class XYReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
   double*** EvaluateSinusWaveFunctionOverlap(double size, int nbrStep, int nbrState);
 
-  // evaluate the wave function overlap
+  // evaluate cosinus wave function overlaps on a cell in a given direction
+  //
+  // size = system length in the choosen direction
+  // nbrStep = number of subdivision in the choosen direction
+  // nbrState = number of state in the choosen direction
+  // return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
+  double*** EvaluateCosinusWaveFunctionOverlap(double size, int nbrStep, int nbrState);
+
+  // evaluate the plane wave function overlap
   //
   // nbrStep = number of steps in the given direction
   // nbrState = number of states chosen for this direction
