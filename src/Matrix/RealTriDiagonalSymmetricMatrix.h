@@ -370,6 +370,13 @@ class RealTriDiagonalSymmetricMatrix : public Matrix
   // return value = reference on current Matrix
   RealTriDiagonalSymmetricMatrix& SortMatrixUpOrder(RealMatrix& matrix);
 
+  // Sort Matrix such that diagnonal elements are sort in increasing order (offdiagonal elements left unchanged) 
+  // and apply corresponding transformation to column of a given complex matrix 
+  //
+  // matrix = matrix on which transformation has to be applied
+  // return value = reference on current Matrix
+  RealTriDiagonalSymmetricMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
+
   // Sort Matrix such that diagnonal elements are sort in decreasing order (offdiagonal elements left unchanged)
   //
   // return value = reference on current Matrix

@@ -64,6 +64,13 @@ class ComplexMatrix : protected Matrix
   //
   ComplexMatrix();
 
+  // constructor for an empty matrix
+  //
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  // zero = tue if matrix elements have to be set to zero
+  ComplexMatrix(int nbrRow, int nbrColumn, bool zero = false);
+
   // constructor from matrix elements (without duplicating datas)
   //
   // columns = pointer an array of vector

@@ -567,6 +567,24 @@ class ComplexVector : public Vector
   // return value = reference to the current Vector
   ComplexVector& Merge(const RealVector& V, int firstCoordinate, int step = 1);
   
+  // write vector in a file 
+  //
+  // fileName = name of the file where the vector has to be stored
+  // return value = true if no error occurs
+  bool WriteVector (char* fileName);
+
+  // write vector in a file in ascii mode
+  //
+  // fileName = name of the file where the vector has to be stored
+  // return value = true if no error occurs
+  bool WriteAsciiVector (char* fileName);
+
+  // read vector from a file 
+  //
+  // fileName = name of the file where the vector has to be read
+  // return value = true if no error occurs
+  bool ReadVector (char* fileName);
+
   // Output Stream overload
   //
   friend ostream& operator << (ostream& Str, const ComplexVector& P);

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//          class of QHE particle hamiltonian precalculation operation        //
+//              class of NDMAP hamiltonian precalculation operation           //
 //                                                                            //
-//                        last modification : 11/03/2003                      //
+//                        last modification : 03/11/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,25 +28,22 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QHEPARTICLEPRECALCULATIONOPERATION_H
-#define QHEPARTICLEPRECALCULATIONOPERATION_H
+#ifndef NDMAPPRECALCULATIONOPERATION_H
+#define NDMAPPRECALCULATIONOPERATION_H
 
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
+#include "Hamiltonian/SpinHamiltonian/NDMAPSpinChainHamiltonian.h"
 
 
-class ParticleOnSphereDeltaHamiltonian;
-
-
-class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
+class NDMAPPrecalculationOperation: public AbstractPrecalculationOperation
 {
 
  protected:
 
   // pointer to the hamiltonian
-  AbstractQHEHamiltonian* Hamiltonian;
+  NDMAPSpinChainHamiltonian* Hamiltonian;
 
   // flag to indicate if the operation has to be applied to the first pass of the precalculations
   bool FirstPass;
@@ -57,16 +54,16 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
   //
   // hamiltonian = pointer to the hamiltonian to use
   // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
-  QHEParticlePrecalculationOperation(AbstractQHEHamiltonian* hamiltonian, bool firstPass = true);
+  NDMAPPrecalculationOperation(NDMAPSpinChainHamiltonian* hamiltonian, bool firstPass = true);
 
   // copy constructor 
   //
   // operation = reference on operation to copy
-  QHEParticlePrecalculationOperation(const QHEParticlePrecalculationOperation& operation);
+  NDMAPPrecalculationOperation(const NDMAPPrecalculationOperation& operation);
   
   // destructor
   //
-  ~QHEParticlePrecalculationOperation();
+  ~NDMAPPrecalculationOperation();
   
   // set range of indices
   // 
@@ -95,7 +92,7 @@ class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
 // 
 // return value = hilbert space dimension
 
-inline int QHEParticlePrecalculationOperation::GetHilbertSpaceDimension ()
+inline int NDMAPPrecalculationOperation::GetHilbertSpaceDimension ()
 {
   return this->Hamiltonian->GetHilbertSpaceDimension();
 }

@@ -38,6 +38,9 @@
 #include <iostream>
 
 
+class BosonOnTorusState;
+
+
 class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagneticTranslations
 {
 
@@ -50,31 +53,20 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // number of Lz values in a state
   int NbrLzValue;
 
-  // index of the momentum orbit
-  int MomentumConstraint;
-  // index of the momentum orbit
-  bool MomentumConstraintFlag;
+  // momentum value in the x direction (modulo GCD of nbrBosons and maxMomentum)
+  int XMomentum;
+  // momentum value in the y direction (modulo GCD of nbrBosons and maxMomentum)
+  int YMomentum;
+  // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint
+  bool* CompatibilityWithMomentum;
+
+  // array containing rescaling factors when passing from one orbit to another
+  double** RescalingFactors;
+  // number of state in each orbit
+  int* NbrStateInOrbit;
 
   // array describing each state
-  int** StateDescription;
-  // array giving maximum Lz value reached for a boson in a given state
-  int* StateMaxMomentum;
-
-  // multiplicative factors used during key construction
-  int* KeyMultiplicationTable;
-  // keys associated to each state
-  int* Keys;
-  // indicate position of the first state with a given number of boson having a given maximum Lz value
-  int* MomentumMaxPosition;
-
-  // indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
-  int* KeyInvertSectorSize;
-  // 
-  int** KeyInvertTable;
-  //
-  int** KeyInvertTableNbrIndices;
-  //
-  int*** KeyInvertIndices;
+  BosonOnTorusState* StateDescription;
 
  public:
 
@@ -82,35 +74,21 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum);
-
-  // constructor with a constraint of the total momentum of states
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
-  // momentumConstraint = index of the momentum orbit
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int momentumConstraint);
-
-  // constructor from full datas (with no constraint on the total momentum)
-  // 
-  // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
-  // hilbertSpaceDimension = Hilbert space dimension
-  // stateDescription = array describing each state
-  // stateMaxMomentum = array giving maximum Lz value reached for a fermion in a given state
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int hilbertSpaceDimension, 
-		int** stateDescription, int* stateMaxMomentum);
+  // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
+  // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
+  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum);
 
   // constructor from full datas
   // 
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
-  // momentumConstraint = index of the momentum orbit
+  // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
+  // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
   // hilbertSpaceDimension = Hilbert space dimension
   // stateDescription = array describing each state
   // stateMaxMomentum = array giving maximum Lz value reached for a boson in a given state
-  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
-		int** stateDescription, int* stateMaxMomentum);
+  BosonOnTorusWithMagneticTranslations (int nbrBosons, int maxMomentum, int xMomentum, int yMomentum, int hilbertSpaceDimension, 
+					int** stateDescription, int* stateMaxMomentum);
 
   // copy constructor (without duplicating datas)
   //
@@ -170,22 +148,9 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
-  int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
-
-  // return matrix representation of the annihilation operator a_i
-  //
-  // i = operator index
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  Matrix& A (int i, Matrix& M);
-
-  // return matrix representation ofthw creation operator a^+_i
-  //
-  // i = operator index
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  Matrix& Ad (int i, Matrix& M);
+  int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
 
   // print a given State
   //

@@ -38,7 +38,7 @@
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 
 
 // constructor
@@ -128,13 +128,12 @@ bool MonoProcessorArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation*
   return Flag;
 }
  
-// execute an architecture-dependent QHE particle hamiltonian precalculation operation
+// execute an architecture-dependent abstract hamiltonian precalculation operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
 
-bool MonoProcessorArchitecture::ExecuteOperation (QHEParticlePrecalculationOperation* operation)
+bool MonoProcessorArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
   return operation->ApplyOperation();
 }
-    

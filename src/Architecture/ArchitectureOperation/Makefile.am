@@ -9,4 +9,6 @@ AddRealLinearCombinationOperation.cc \
 MultipleComplexScalarProductOperation.cc \
 AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
-QHEParticlePrecalculationOperation.cc
+AbstractPrecalculationOperation.cc \
+QHEParticlePrecalculationOperation.cc \
+NDMAPPrecalculationOperation.cc

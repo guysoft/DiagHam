@@ -36,7 +36,7 @@
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
 
 
@@ -143,12 +143,12 @@ bool AbstractArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* oper
   return false;
 }
 
-// execute an architecture-dependent QHE particle hamiltonian precalculation operation
+// execute an architecture-dependent abstract hamiltonian precalculation operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
 
-bool AbstractArchitecture::ExecuteOperation (QHEParticlePrecalculationOperation* operation)
+bool AbstractArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
   return false;
 }

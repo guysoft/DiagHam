@@ -1652,6 +1652,39 @@ RealTriDiagonalSymmetricMatrix& RealTriDiagonalSymmetricMatrix::SortMatrixUpOrde
   return *this;
 }
 
+// Sort Matrix such that diagnonal elements are sort in increasing order (offdiagonal elements left unchanged) 
+// and apply corresponding transformation to column of a given complex matrix 
+//
+// matrix = matrix on which transformation has to be applied
+// return value = reference on current Matrix
+
+RealTriDiagonalSymmetricMatrix& RealTriDiagonalSymmetricMatrix::SortMatrixUpOrder(ComplexMatrix& matrix)
+{
+  int ReducedDim = this->NbrColumn - 2;
+  ComplexVector TmpV;
+  double tmp;
+  int MinPos;
+  double MinValue;
+  for (int i = 0; i <= ReducedDim; i++)
+    {
+      MinPos = this->NbrColumn - 1;
+      MinValue = this->DiagonalElements[MinPos];
+      for (int j = ReducedDim; j >= i; j--)
+	if (this->DiagonalElements[j] < MinValue)
+	{
+	  MinValue = this->DiagonalElements[j];
+	  MinPos = j;
+	}
+      tmp = this->DiagonalElements[i];
+      this->DiagonalElements[i] = MinValue;
+      this->DiagonalElements[MinPos] = tmp;
+      TmpV = matrix.Columns[i];
+      matrix.Columns[i] = matrix.Columns[MinPos];
+      matrix.Columns[MinPos] = TmpV;
+    }
+  return *this;
+}
+
 // Sort Matrix such that diagnonal elements are sort in decreasing order (offdiagonal elements left unchanged)
 //
 // return value = reference on current Matrix

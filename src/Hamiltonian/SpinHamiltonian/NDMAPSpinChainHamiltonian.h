@@ -43,14 +43,21 @@ using std::ostream;
 
 
 class MathematicaOutput;
+class AbstractArchitecture;
 
 
 class NDMAPSpinChainHamiltonian : public AbstractHamiltonian
 {
 
+  friend class NDMAPPrecalculationOperation;
+
  protected:
-  
+
+  // pointer to the Hilbert space describing the spin chain 
   AbstractSpinChainWithTranslations* Chain;
+
+  // architecture used for precalculation
+  AbstractArchitecture* Architecture;
 
   // coupling constant between spin in the +- and -+ direction 
   double J;
@@ -60,13 +67,16 @@ class NDMAPSpinChainHamiltonian : public AbstractHamiltonian
   double HalfJ;
   // magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction parallel to the chain
   double ParallelMagneticField;
-  // half the value of the magnetic field times the coupling constant with the magnetic field (g mu_b) in the direction parallel to the chain
-  double HalfParallelMagneticField;
   // magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction perpendicular to the chain
   double PerpendicularMagneticField;
+   // half the value of the magnetic field times the coupling constant with the magnetic field (g mu_b) in the direction perpendicular to the chain
+  double HalfPerpendicularMagneticField;
   // single ion anisotropy constant
   double D;
-  // coupling constant between spin in the ++ and -- direction (aka xy direction)
+  // single ion in-plane anisotropy constant
+  double E;
+  // half the single ion in-plane anisotropy constant
+  double HalfE;
 
   // number of spin 
   int NbrSpin;
@@ -79,6 +89,19 @@ class NDMAPSpinChainHamiltonian : public AbstractHamiltonian
   //array containing all the sinus that are needed when computing matrix elements
   double* SinusTable;
 
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  // step between each precalculated index
+  int FastMultiplicationStep;
+  // number of non-null term in the hamiltonian for each state
+  int* NbrInteractionPerComponent;
+  // index of the state obtained for each term of the hamiltonian when applying on a given state
+  int** InteractionPerComponentIndex;
+  // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  double** InteractionPerComponentCoefficient;
+  // number of translations obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  int** InteractionPerComponentNbrTranslations;
+
  public:
 
   // constructor from default datas
@@ -90,8 +113,11 @@ class NDMAPSpinChainHamiltonian : public AbstractHamiltonian
   // parallelMagneticField = magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction parallel to the chain
   // perpendicularMagneticField = magnetic field value times the coupling constant with the magnetic field (g mu_b) in the direction perpendicular to the chain
   // d = single ion anisotropy constant
+  // e = single ion in-plane anisotropy constant
+  // architecture = architecture to use for precalculation
+  // memory = amount of memory (in bytes) that can allocated for precalcutation
   NDMAPSpinChainHamiltonian(AbstractSpinChainWithTranslations* chain, int nbrSpin, double j, double jz, double parallelMagneticField, 
-			    double perpendicularMagneticField, double d);
+			    double perpendicularMagneticField, double d = 0.0, double e = 0.0,  AbstractArchitecture* architecture = 0, unsigned long memory = 100000000);
 
   // destructor
   //
@@ -197,6 +223,29 @@ class NDMAPSpinChainHamiltonian : public AbstractHamiltonian
   // evaluate all matrix elements
   //   
   void EvaluateDiagonalMatrixElements();
+
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // allowedMemory = amount of memory that cam be allocated for fast multiplication
+  // return value = amount of memory needed
+  long FastMultiplicationMemory(long allowedMemory);
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  // return value = number of non-zero matrix element
+  long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+
+  // enable fast multiplication algorithm
+  //
+  void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // lastComponent  = index of the last component that has to be precalcualted
+  void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
 
 };
 

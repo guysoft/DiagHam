@@ -7,6 +7,7 @@
 //                                                                            //
 //                                                                            //
 //              class of  hamiltonian associated to trapped bosons            //
+//                             with delta interaction                         //
 //                                                                            //
 //                        last modification : 11/06/2002                      //
 //                                                                            //

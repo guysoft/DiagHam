@@ -13,4 +13,5 @@ BasicLanczosAlgorithmWithDiskStorage.cc \
 FullReorthogonalizedLanczosAlgorithm.cc \
 FullReorthogonalizedComplexLanczosAlgorithm.cc \
 FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc \
+FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.cc \
 ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc

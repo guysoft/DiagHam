@@ -155,11 +155,11 @@ class SMPArchitecture : public AbstractArchitecture
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
     
-  // execute an architecture-dependent QHE particle hamiltonian precalculation operation
+  // execute an architecture-dependent abstract hamiltonian precalculation operation
   //
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
-  bool ExecuteOperation (QHEParticlePrecalculationOperation* operation);
+  bool ExecuteOperation (AbstractPrecalculationOperation* operation);
 
  protected:
   

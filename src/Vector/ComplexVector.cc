@@ -28,6 +28,12 @@
 #include "Matrix/ComplexMatrix.h"
 
 
+#include <fstream>
+
+
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 using std::endl;
 
   
@@ -1581,5 +1587,63 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v)
     else
       Str << "}";
   return Str;
+}
+
+// write vector in a file 
+//
+// fileName = name of the file where the vector has to be stored
+// return value = true if no error occurs
+
+bool ComplexVector::WriteVector (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  File.write ((char*) &(this->Dimension), sizeof(int));
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      File.write ((char*) (&(this->RealComponents[i])), sizeof(double));
+      File.write ((char*) (&(this->ImaginaryComponents[i])), sizeof(double));
+    }
+  File.close();
+  return true;
+}
+
+// write vector in a file in ascii mode
+//
+// fileName = name of the file where the vector has to be stored
+// return value = true if no error occurs
+
+bool ComplexVector::WriteAsciiVector (char* fileName)
+{
+  ofstream File;
+  File.precision(14);
+  File.open(fileName, ios::binary | ios::out);
+  int ReducedDimension = this->Dimension - 1;
+  for (int i = 0; i < ReducedDimension; ++i)
+    File << this->RealComponents[i] << " " << this->ImaginaryComponents[i] << " ";
+  File << this->RealComponents[ReducedDimension] << " " << this->ImaginaryComponents[ReducedDimension] << endl;  
+  File.close();
+  return true;
+}
+
+// read vector from a file 
+//
+// fileName = name of the file where the vector has to be read
+// return value = true if no error occurs
+
+bool ComplexVector::ReadVector (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  int TmpDimension;
+  File.read ((char*) &(TmpDimension), sizeof(int));
+  this->Resize(TmpDimension);
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      File.read ((char*) (&(this->RealComponents[i])), sizeof(double));
+      File.read ((char*) (&(this->ImaginaryComponents[i])), sizeof(double));
+    }
+  File.close();
+  return true;
 }
 

@@ -1382,6 +1382,9 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   int TmpPos4;
   int Inc;
   M.DiagonalElement(0) = this->DiagonalElements[0];
+  double SquareErr = err * err;
+  if (SquareErr > MACHINE_PRECISION)
+    SquareErr = MACHINE_PRECISION;
   for (int i = 1; i < ReducedNbrRow; i++)
     {
       ReducedNbrRow2 = this->NbrRow - i;
@@ -1397,10 +1400,10 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
       TmpPos = Pos;
       Coef = sqrt(TmpNorm);
       M.UpperDiagonalElement(i- 1) = Coef;
-      TmpNorm = sqrt(TmpNorm - Coef * this->OffDiagonalElements[Pos]);
-      if  (TmpNorm > err)
+      TmpNorm -= Coef * this->OffDiagonalElements[Pos];
+      if  (TmpNorm > SquareErr)
 	{
-	  TmpNorm = 1.0 / TmpNorm;
+	  TmpNorm = 1.0 / sqrt(TmpNorm);
 	  this->OffDiagonalElements[Pos] -= Coef;
 	  for (int j = 0; j < ReducedNbrRow2; j++)
 	    {
@@ -1507,6 +1510,9 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   int TmpPos6;
   int Inc;
   M.DiagonalElement(0) = this->DiagonalElements[0];
+  double SquareErr = err * err;
+  if (SquareErr > MACHINE_PRECISION)
+    SquareErr = MACHINE_PRECISION;
   for (int i = 1; i < ReducedNbrRow; i++)
     {
       ReducedNbrRow2 = this->NbrRow - i;
@@ -1522,10 +1528,10 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
       TmpPos = Pos;
       Coef = sqrt(TmpNorm);
       M.UpperDiagonalElement(i- 1) = Coef;
-      TmpNorm = sqrt(TmpNorm - Coef * this->OffDiagonalElements[Pos]);
-      if  (TmpNorm > err)
+      TmpNorm -= Coef * this->OffDiagonalElements[Pos];
+      if  (TmpNorm > SquareErr)
 	{
-	  TmpNorm = 1.0 / TmpNorm;
+	  TmpNorm = 1.0 / sqrt(TmpNorm);
 	  this->OffDiagonalElements[Pos] -= Coef;
 	  for (int j = 0; j < ReducedNbrRow2; j++)
 	    {

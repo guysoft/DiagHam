@@ -40,7 +40,7 @@
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 
 #ifdef __SMP__
 #include <pthread.h>
@@ -319,12 +319,12 @@ void SMPArchitecture::Multiply (AbstractHamiltonian* hamiltonian, Vector& vSourc
   return;
 }
 
-// execute an architecture-dependent QHE particle hamiltonian precalculation operation
+// execute an architecture-dependent abstract hamiltonian precalculation operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
 
-bool SMPArchitecture::ExecuteOperation (QHEParticlePrecalculationOperation* operation)
+bool SMPArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
   int Step = operation->GetHilbertSpaceDimension() / this->NbrProcesses;
   int FirstComponent = 0;
@@ -332,11 +332,11 @@ bool SMPArchitecture::ExecuteOperation (QHEParticlePrecalculationOperation* oper
   for (int i = 0; i < ReducedNbrProcesses; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
-      ((QHEParticlePrecalculationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      ((AbstractPrecalculationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
   this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((QHEParticlePrecalculationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->
+  ((AbstractPrecalculationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->
     SetIndicesRange(FirstComponent, operation->GetHilbertSpaceDimension() - FirstComponent);  
   this->SendJobs();
   return true;

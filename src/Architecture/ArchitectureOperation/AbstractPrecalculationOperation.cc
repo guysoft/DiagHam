@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//          class of QHE particle hamiltonian precalculation operation        //
+//              class of abstract hamiltonian precalculation operation        //
 //                                                                            //
-//                        last modification : 11/03/2003                      //
+//                        last modification : 13/11/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,76 +28,25 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QHEPARTICLEPRECALCULATIONOPERATION_H
-#define QHEPARTICLEPRECALCULATIONOPERATION_H
-
-
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
-#include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
 
 
-class ParticleOnSphereDeltaHamiltonian;
+// destructor
+//
 
-
-class QHEParticlePrecalculationOperation: public AbstractPrecalculationOperation
+AbstractPrecalculationOperation::~AbstractPrecalculationOperation()
 {
-
- protected:
-
-  // pointer to the hamiltonian
-  AbstractQHEHamiltonian* Hamiltonian;
-
-  // flag to indicate if the operation has to be applied to the first pass of the precalculations
-  bool FirstPass;
-
- public:
+}
   
-  // constructor 
-  //
-  // hamiltonian = pointer to the hamiltonian to use
-  // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
-  QHEParticlePrecalculationOperation(AbstractQHEHamiltonian* hamiltonian, bool firstPass = true);
-
-  // copy constructor 
-  //
-  // operation = reference on operation to copy
-  QHEParticlePrecalculationOperation(const QHEParticlePrecalculationOperation& operation);
-  
-  // destructor
-  //
-  ~QHEParticlePrecalculationOperation();
-  
-  // set range of indices
-  // 
-  // firstComponent = index of the first component
-  // nbrComponent = number of component
-  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
-
-  // get hilbert space dimension
-  // 
-  // return value = hilbert space dimension  
-  int GetHilbertSpaceDimension ();
-
-  // clone operation
-  //
-  // return value = pointer to cloned operation
-  AbstractArchitectureOperation* Clone();
-  
-  // apply operation
-  //
-  // return value = true if no error occurs
-  bool ApplyOperation();
-  
-};
-
-// get hilbert space dimension
+// set range of indices
 // 
-// return value = hilbert space dimension
+// firstComponent = index of the first component
+// nbrComponent = number of component
 
-inline int QHEParticlePrecalculationOperation::GetHilbertSpaceDimension ()
+void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
-  return this->Hamiltonian->GetHilbertSpaceDimension();
+  this->FirstComponent = firstComponent;
+  this->NbrComponent = nbrComponent;
 }
 
-#endif

@@ -49,6 +49,26 @@ ComplexMatrix::ComplexMatrix()
   this->MatrixType = Matrix::ComplexElements;
 }
 
+// constructor for an empty matrix
+//
+// nbrRow = number of rows
+// nbrColumn = number of columns
+// zero = tue if matrix elements have to be set to zero
+
+ComplexMatrix::ComplexMatrix(int nbrRow, int nbrColumn, bool zero)
+{
+  this->ColumnGarbageFlag = new int;
+  *(this->ColumnGarbageFlag) = 1;
+  this->NbrColumn = nbrColumn;
+  this->NbrRow = nbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Columns = new ComplexVector [this->NbrColumn];
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i] = ComplexVector (this->NbrRow, zero);
+  this->MatrixType = Matrix::ComplexElements;
+}
+
 // constructor from matrix elements (without duplicating datas)
 //
 // columns = pointer an array of vector

@@ -44,8 +44,12 @@ int main(int argc, char** argv)
   SingleIntegerOption IterationOption ('\n', "iter-max", "maximum number of lanczos iteration (including resume run)", 3000);
   SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 1);
   SingleDoubleOption AnisotropyConstantOption ('d', "anisotropy-constant", "value of the anisotropy constant", 0.0);
+  SingleDoubleOption InPlaneAnisotropyConstantOption ('e', "inplane-anisotropy-constant", "value of the in-plane anisotropy constant", 0.0);
   SingleDoubleOption PerpendicularBFieldOption ('z', "perpendicular-bfield", "value of b field in the direction perpendicular to the chain", 0.0);
   SingleDoubleOption ParallelBFieldOption ('p', "parallel-bfield", "value of b field in the direction parallel to the chain", 0.0);
+  SingleIntegerOption MemoryOption ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  BooleanOption FixedMomentumOption('\n', "fixed-momentum", "evaluate for one given momentum value");
+  SingleIntegerOption FixedMomentumValueOption ('\n', "momentum", "momentum value if fixed-momentum is fixed to true", 0);
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &SMPOption;
@@ -54,8 +58,12 @@ int main(int argc, char** argv)
   OptionList += &NbrSpinOption;
   OptionList += &NbrEigenvaluesOption;
   OptionList += &AnisotropyConstantOption;
+  OptionList += &InPlaneAnisotropyConstantOption;
   OptionList += &PerpendicularBFieldOption;
   OptionList += &ParallelBFieldOption;
+  OptionList += &MemoryOption;
+  OptionList += &FixedMomentumOption;
+  OptionList += &FixedMomentumValueOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type NDMAPSpinChain -h" << endl;
@@ -72,18 +80,34 @@ int main(int argc, char** argv)
   int MaxNbrIterLanczos = IterationOption.GetInteger();
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
   double AnisotropyConstant = AnisotropyConstantOption.GetDouble();
+  double InPlaneAnisotropyConstant = InPlaneAnisotropyConstantOption.GetDouble();
   double PerpendicularBField = PerpendicularBFieldOption.GetDouble();
   double ParallelBField = ParallelBFieldOption.GetDouble();
-  for (int k = 0; k < NbrSpin; ++k)
+  bool FixedMomentumFlag = FixedMomentumOption.GetBoolean();
+  int FixedMomentum = FixedMomentumValueOption.GetInteger();
+  int Memory = MemoryOption.GetInteger() << 20;
+  int MinMomentum = 0;
+  int MaxMomentum = NbrSpin - 1;
+  if (FixedMomentumFlag == true)
+    {
+      MinMomentum = FixedMomentum;
+      MaxMomentum = FixedMomentum;
+    }  
+  for (int k = MinMomentum; k <= MaxMomentum; ++k)
     {
       cout << "momentum = " << k << endl;
-      Spin1ChainWithTranslations Space(NbrSpin, k, 0, 10000000, 10000000);
+      Spin1ChainWithTranslations Space(NbrSpin, k, 10000000, 10000000);
       AbstractArchitecture* Architecture = 0;
       if (SMPFlag == false)
 	Architecture = new MonoProcessorArchitecture;
       else
 	Architecture = new SMPArchitecture(NbrProcessor);
-      NDMAPSpinChainHamiltonian Hamiltonian(&Space, NbrSpin, 1.0, 1.0, ParallelBField, PerpendicularBField, AnisotropyConstant);
+      NDMAPSpinChainHamiltonian Hamiltonian(&Space, NbrSpin, 1.0, 1.0, ParallelBField, PerpendicularBField, AnisotropyConstant, 
+					    InPlaneAnisotropyConstant, Architecture, Memory);
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      double Dt;
+      gettimeofday (&(TotalStartingTime), 0);
       if (Hamiltonian.GetHilbertSpaceDimension() < 200)
 	{
 	  HermitianMatrix HRep2 (Hamiltonian.GetHilbertSpaceDimension());
@@ -125,10 +149,6 @@ int main(int argc, char** argv)
 	  Lanczos->SetHamiltonian(&Hamiltonian);
 	  Lanczos->InitializeLanczosAlgorithm();
 	  cout << "Run Lanczos Algorithm" << endl;
-	  timeval TotalStartingTime;
-	  timeval TotalEndingTime;
-	  double Dt;
-	  gettimeofday (&(TotalStartingTime), 0);
 	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
 	  RealTriDiagonalSymmetricMatrix TmpMatrix;
@@ -157,6 +177,10 @@ int main(int argc, char** argv)
 	    }
 	  cout << endl;
 	}
+      gettimeofday (&(TotalEndingTime), 0);
+      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+      cout << "time = " << Dt << endl;
     }
   return 0;
 }

@@ -72,6 +72,19 @@ class BosonOnTorusState
   // return value = reference on  the current state
   BosonOnTorusState& Assign(BosonOnTorusState& state, int& reducedNbrState);
 
+  // get hash key associated to the state
+  //
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+  // keyMask = mask giving how many bits have to be kept
+  // return value = hash key
+  unsigned long GetHashKey (int& reducedNbrState, unsigned long& keyMask);
+
+  // get the highest state index for which the state is occupied
+  //
+  // reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+  // return value = highest state index
+  int GetHighestIndex (int& reducedNbrState);
+
   // set occupation of a state 
   //
   // stateIndex = index of the state whose occupation has to be set 
@@ -156,7 +169,7 @@ class BosonOnTorusState
   // put the state in a canonical form
   // 
   // 
-  void PutInCanonicalForm(int& nbrTranslation);
+//  void PutInCanonicalForm(int& nbrTranslation);
 
 };
 
@@ -190,6 +203,71 @@ inline BosonOnTorusState& BosonOnTorusState::Assign(BosonOnTorusState& state, in
   for (int i = 0; i < reducedNbrState; ++i)
     this->StateDescription[i] = state.StateDescription[i];
   return *this;
+}
+
+// get hash key associated to the state
+//
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+// keyMask = mask giving how many bits have to be kept
+// return value = hash key
+
+inline unsigned long BosonOnTorusState::GetHashKey (int& reducedNbrState, unsigned long& keyMask)
+{
+  unsigned long Key = this->StateDescription[0];
+  for (int i = 1; i < reducedNbrState; ++i)
+    Key += this->StateDescription[i];
+  return (Key & keyMask);
+}
+
+// get the highest state index for which the state is occupied
+//
+// reducedNbrState = reduced number of state (aka the number of unsigned long per state)
+// return value = highest state index
+
+inline int BosonOnTorusState::GetHighestIndex (int& reducedNbrState)
+{
+  int Index = 0;
+  for (int i = reducedNbrState - 1; ((i >= 0) && (Index == 0)); --i)
+    {
+#ifdef __64_BITS__
+      if ((this->StateDescription[i] & ((unsigned long) 0xff00000000000000)) != 0)
+	Index = (i << 3) + 7;
+      else
+	if ((this->StateDescription[i] & ((unsigned long) 0xff000000000000)) != 0)
+	  Index = (i << 3) + 6;
+	else
+	  if ((this->StateDescription[i] & ((unsigned long) 0xff0000000000)) != 0)
+	    Index = (i << 3) + 5;
+	  else
+	    if ((this->StateDescription[i] & ((unsigned long) 0xff00000000)) != 0)
+	      Index = (i << 3) + 4;
+	    else
+	      if ((this->StateDescription[i] & ((unsigned long) 0xff000000)) != 0)
+		Index = (i << 3) + 3;
+	      else
+		if ((this->StateDescription[i] & ((unsigned long) 0xff0000)) != 0)
+		  Index = (i << 3) + 2;
+		else
+		  if ((this->StateDescription[i] & ((unsigned long) 0xff00)) != 0)
+		    Index = (i << 3) + 1;
+		  else
+		    if ((this->StateDescription[i] & ((unsigned long) 0xff)) != 0)
+		      Index = (i << 3);
+#else
+      if ((this->StateDescription[i] & ((unsigned long) 0xff000000)) != 0)
+	Index = (i << 2) + 3;
+      else
+	if ((this->StateDescription[i] & ((unsigned long) 0xff0000)) != 0)
+	  Index = (i << 2) + 2;
+	else
+	  if ((this->StateDescription[i] & ((unsigned long) 0xff00)) != 0)
+	    Index = (i << 2) + 1;
+	  else
+	    if ((this->StateDescription[i] & ((unsigned long) 0xff)) != 0)
+	      Index = (i << 2);
+#endif
+    }
+  return Index;  
 }
 
 // set occupation of a state 
@@ -394,9 +472,9 @@ inline bool BosonOnTorusState::LowerOrEqual (BosonOnTorusState& state, int& redu
 // 
 // 
 
-inline void BosonOnTorusState::PutInCanonicalForm(int& nbrTranslation)
-{
+//inline void BosonOnTorusState::PutInCanonicalForm(BosonOnTorusState& tmpState, int& nbrTranslation)
+//{
   //  if ()
-}
+//}
 
 #endif

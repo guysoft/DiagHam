@@ -688,6 +688,52 @@ int Spin1ChainWithTranslations::SmiSmj (int i, int j, int state, double& coeffic
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S+_i S+_i operator on a given state
+//
+// i = position of first S+ operator
+// state = index of the state to be applied on S+_i S+_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state
+
+int Spin1ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation)
+{
+  unsigned long tmpState = this->ChainDescription[state];
+  if (((tmpState >> (i << 1)) & ((unsigned long) 0x3)) !=  ((unsigned long) 0x0))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  coefficient = 2.0;
+  tmpState = this->FindCanonicalForm(tmpState | (((unsigned long) 0x3) << (i << 1)), nbrTranslation, i);
+  if (this->CompatibilityWithMomentum[i] == false)
+    return this->HilbertSpaceDimension;
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
+  return this->FindStateIndex(tmpState);
+}
+
+// return index of resulting state from application of S-_i S-_i operator on a given state
+//
+// i = position of the S- operator
+// state = index of the state to be applied on S-_i S-_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state
+
+int Spin1ChainWithTranslations::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation)
+{
+  unsigned long tmpState = this->ChainDescription[state];
+  if (((tmpState >> (i << 1)) & ((unsigned long) 0x3)) !=  ((unsigned long) 0x3))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  coefficient = 2.0;
+  tmpState = this->FindCanonicalForm(tmpState & ~(((unsigned long) 0x3) << (i << 1)), nbrTranslation, i);
+  if (this->CompatibilityWithMomentum[i] == false)
+    return this->HilbertSpaceDimension;
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[state]][i];
+  return this->FindStateIndex(tmpState);
+}
+
 // return index of resulting state from application of S+_i Sz_j operator on a given state
 //
 // i = position of S+ operator
@@ -1045,8 +1091,9 @@ int Spin1ChainWithTranslations::GenerateStates(long memorySlice)
 	  TmpHilbertSpaceDimension += Pos;
 	}
     }
+  List<long> TmpNbrGeneratedStateList2 (TmpNbrGeneratedStateList);
   this->ChainDescription = SmartMergeArrayListIntoArray(TmpGeneratedStateList, TmpNbrGeneratedStateList);
-  this->NbrStateInOrbit = SmartMergeArrayListIntoArray(TmpNbrStateInOrbitList, TmpNbrGeneratedStateList);
+  this->NbrStateInOrbit = SmartMergeArrayListIntoArray(TmpNbrStateInOrbitList, TmpNbrGeneratedStateList2);
 
   return TmpHilbertSpaceDimension;
 }
@@ -1078,8 +1125,8 @@ int Spin1ChainWithTranslations::GenerateStates(int sz, long memorySlice)
   while (MaximumNbrState > 0)
     {
       unsigned long* TmpGeneratedStates = new unsigned long [memorySlice];
-       int* TmpNbrStateInOrbit = new int [memorySlice];
-     //test each state
+      int* TmpNbrStateInOrbit = new int [memorySlice];
+      //test each state
       long Pos = 0;
       while ((Pos < memorySlice) && (MaximumNbrState > 0))
 	{
@@ -1116,8 +1163,9 @@ int Spin1ChainWithTranslations::GenerateStates(int sz, long memorySlice)
 	  TmpHilbertSpaceDimension += Pos;
 	}
     }
+  List<long> TmpNbrGeneratedStateList2 (TmpNbrGeneratedStateList);
   this->ChainDescription = SmartMergeArrayListIntoArray(TmpGeneratedStateList, TmpNbrGeneratedStateList);
-  this->NbrStateInOrbit = SmartMergeArrayListIntoArray(TmpNbrStateInOrbitList, TmpNbrGeneratedStateList);
+  this->NbrStateInOrbit = SmartMergeArrayListIntoArray(TmpNbrStateInOrbitList, TmpNbrGeneratedStateList2);
 
   return TmpHilbertSpaceDimension;
 }

@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libArchitectureOperation.a
 
-libArchitectureOperation_a_SOURCES = AbstractArchitectureOperation.cc VectorHamiltonianMultiplyOperation.cc MultipleRealScalarProductOperation.cc AddRealLinearCombinationOperation.cc MultipleComplexScalarProductOperation.cc AddComplexLinearCombinationOperation.cc MatrixMatrixMultiplyOperation.cc QHEParticlePrecalculationOperation.cc
+libArchitectureOperation_a_SOURCES = AbstractArchitectureOperation.cc VectorHamiltonianMultiplyOperation.cc MultipleRealScalarProductOperation.cc AddRealLinearCombinationOperation.cc MultipleComplexScalarProductOperation.cc AddComplexLinearCombinationOperation.cc MatrixMatrixMultiplyOperation.cc AbstractPrecalculationOperation.cc QHEParticlePrecalculationOperation.cc NDMAPPrecalculationOperation.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -90,7 +90,8 @@ MultipleRealScalarProductOperation.o \
 AddRealLinearCombinationOperation.o \
 MultipleComplexScalarProductOperation.o \
 AddComplexLinearCombinationOperation.o MatrixMatrixMultiplyOperation.o \
-QHEParticlePrecalculationOperation.o
+AbstractPrecalculationOperation.o QHEParticlePrecalculationOperation.o \
+NDMAPPrecalculationOperation.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -103,11 +104,13 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AbstractArchitectureOperation.P \
+.deps/AbstractPrecalculationOperation.P \
 .deps/AddComplexLinearCombinationOperation.P \
 .deps/AddRealLinearCombinationOperation.P \
 .deps/MatrixMatrixMultiplyOperation.P \
 .deps/MultipleComplexScalarProductOperation.P \
 .deps/MultipleRealScalarProductOperation.P \
+.deps/NDMAPPrecalculationOperation.P \
 .deps/QHEParticlePrecalculationOperation.P \
 .deps/VectorHamiltonianMultiplyOperation.P
 SOURCES = $(libArchitectureOperation_a_SOURCES)

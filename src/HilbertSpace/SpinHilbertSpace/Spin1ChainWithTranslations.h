@@ -58,7 +58,7 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
 
   // momentum 
   int Momentum;
-  // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
+  // array containing flag indicating if a state belonging to an orbit with a given number of member is compatible with momentum constraint
   bool* CompatibilityWithMomentum;
 
   // array containing rescaling factors when passing from one orbit to another
@@ -212,6 +212,24 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of resulting state
   int SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation);
+
+  // return index of resulting state from application of S+_i S+_i operator on a given state
+  //
+  // i = position of first S+ operator
+  // state = index of the state to be applied on S+_i S+_i operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  int SpiSpi (int i, int state, double& coefficient, int& nbrTranslation);
+
+  // return index of resulting state from application of S-_i S-_i operator on a given state
+  //
+  // i = position of the S- operator
+  // state = index of the state to be applied on S-_i S-_i operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of resulting state
+  int SmiSmi (int i, int state, double& coefficient, int& nbrTranslation);
 
   // return index of resulting state from application of S+_i Sz_j operator on a given state
   //

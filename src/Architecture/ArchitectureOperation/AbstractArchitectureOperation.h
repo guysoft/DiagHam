@@ -53,7 +53,11 @@ class AbstractArchitectureOperation
       AddComplexLinearCombination = 0x10,
       MultipleComplexScalarProduct = 0x20,
       Generic = 0x100,
-      QHEParticlePrecalculation = 0x200
+      HamiltonianPrecalculation = 0x200,
+      QHEOperation = 0x10000,
+      SpinOperation = 0x20000,
+      QHEParticlePrecalculation = 0x200,
+      NDMAPPrecalculation = 0x400
     };
 
   // destructor

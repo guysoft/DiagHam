@@ -45,7 +45,7 @@ class AddComplexLinearCombinationOperation;
 class MultipleRealScalarProductOperation;
 class MultipleComplexScalarProductOperation;
 class MatrixMatrixMultiplyOperation;
-class QHEParticlePrecalculationOperation;
+class AbstractPrecalculationOperation;
 
 
 class AbstractArchitecture
@@ -106,12 +106,12 @@ public:
   // return value = true if operation has been completed successfully
   virtual bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
     
-  // execute an architecture-dependent QHE particle hamiltonian precalculation operation
+  // execute an architecture-dependent abstract hamiltonian precalculation operation
   //
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (QHEParticlePrecalculationOperation* operation);
-    
+  virtual bool ExecuteOperation (AbstractPrecalculationOperation* operation);
+
 };
 
 #endif
