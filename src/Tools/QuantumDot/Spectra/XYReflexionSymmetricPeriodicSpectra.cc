@@ -61,6 +61,7 @@ XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYRefle
 
   this->RealCoefficients = new double** [this->NbrStateX];
   this->ImaginaryCoefficients = new double** [this->NbrStateX];
+  cout << "First file ... " << endl;
   for (int i = 0; i < this->NbrStateX; ++i)
     {
       this->RealCoefficients[i] = new double* [this->NbrStateY];
@@ -69,10 +70,10 @@ XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYRefle
 	{
 	  this->RealCoefficients[i][j] = new double [this->NbrStateZ];
 	  this->ImaginaryCoefficients[i][j] = new double [this->NbrStateZ];
-	  for (int k = 0; k < this->NbrStateZ; ++k)
-	    File >> this->RealCoefficients[i][j][k] >> this->ImaginaryCoefficients[i][j][k];
+	  for (int k = 0; k < this->NbrStateZ; ++k)	    
+	    File >> this->RealCoefficients[i][j][k] >> this->ImaginaryCoefficients[i][j][k];	    
 	}
-    }
+    } 
   File.close();
 }
 
@@ -84,6 +85,7 @@ XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYRefle
 
 void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary)
 {
+  // pairX pairY
   if ((this->LowerImpulsionX == 0) && (this->LowerImpulsionY == 0))
     {
       double TmpX = 0.0; double TmpY = 0.0; double TmpZ = 0.0;
@@ -102,7 +104,7 @@ void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double Siz
       TmpReZ = 0.0; TmpImZ = 0.0;
       for (int p = 0; p < this->NbrStateZ; ++p)
 	{
-	  TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	  TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
 	  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 	  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
 	  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
@@ -122,7 +124,7 @@ void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double Siz
 	  TmpReZ = 0.0; TmpImZ = 0.0;
 	  for (int p = 0; p < this->NbrStateZ; ++p)
 	    {
-	      TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	      TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
 	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
 	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
@@ -145,7 +147,7 @@ void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double Siz
 	  TmpReZ = 0.0; TmpImZ = 0.0;
 	  for (int p = 0; p < this->NbrStateZ; ++p)
 	    {
-	      TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+	      TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
 	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
 	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
@@ -165,7 +167,7 @@ void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double Siz
 	      TmpReZ = 0.0; TmpImZ = 0.0;
 	      for (int p = 0; p < this->NbrStateZ; ++p)
 		{
-		  TmpZ = double(p - this->LowerImpulsionZ) * FactorZ;
+		  TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
 		  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
 		  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
 		  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
@@ -176,9 +178,163 @@ void XYReflexionSymmetricPeriodicSpectra::WaveFunctionValue(double x, double Siz
 	  TmpRe += TmpX * TmpReYZ;
 	  TmpIm += TmpX * TmpImYZ;
 	}
-      Real = TmpRe * sqrt(8.0 / (SizeX * SizeY * SizeZ));
-      Imaginary = TmpIm * sqrt(8.0 / (SizeX * SizeY * SizeZ));   
+      Real = TmpRe * sqrt(4.0 / (SizeX * SizeY * SizeZ));
+      Imaginary = TmpIm * sqrt(4.0 / (SizeX * SizeY * SizeZ));   
     }  
+
+  // pairX impairY
+  if ((this->LowerImpulsionX == 0) && (this->LowerImpulsionY == 1))
+    {
+      double TmpX = 0.0; double TmpY = 0.0; double TmpZ = 0.0;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      double* TmpRealCoefficients; double* TmpImaginaryCoefficients;
+      double TmpRe2 = 0.0; double TmpIm2 = 0.0;
+      double FactorX = 2.0 * M_PI * x / SizeX; double FactorY = 2.0 * M_PI * y / SizeY; double FactorZ = 2.0 * M_PI * z / SizeZ;
+      double TmpReZ, TmpImZ, TmpReYZ, TmpImYZ;
+      // m = 0
+      TmpX = sqrt(0.5); 
+      TmpReYZ = 0.0; TmpImYZ = 0.0;   
+      for (int n = 0; n < this->NbrStateY; ++n)
+	{
+	  TmpY = sin(double(n + 1) * FactorY);
+	  TmpRealCoefficients = this->RealCoefficients[0][n];
+	  TmpImaginaryCoefficients = this->ImaginaryCoefficients[0][n];
+	  TmpReZ = 0.0; TmpImZ = 0.0;
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    {
+	      TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
+	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	    }
+	  TmpReYZ += TmpY * TmpReZ; 
+	  TmpImYZ += TmpY * TmpImZ;
+	}
+      TmpRe += TmpX * TmpReYZ;
+      TmpIm += TmpX * TmpImYZ;
+
+      // m != 0
+      for (int m = 1; m < this->NbrStateX; ++m)
+	{
+	  TmpX = cos(double(m) * FactorX);
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  for (int n = 0; n < this->NbrStateY; ++n)
+	    {
+	      TmpY = sin(double(n + 1) * FactorY);
+	      TmpRealCoefficients = this->RealCoefficients[m][n];
+	      TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][n];
+	      TmpReZ = 0.0; TmpImZ = 0.0;
+	      for (int p = 0; p < this->NbrStateZ; ++p)
+		{
+		  TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
+		  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+		  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+		  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+		}
+	      TmpReYZ += TmpY * TmpReZ; 
+	      TmpImYZ += TmpY * TmpImZ;
+	    }
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+	}
+      Real = TmpRe * sqrt(4.0 / (SizeX * SizeY * SizeZ));
+      Imaginary = TmpIm * sqrt(4.0 / (SizeX * SizeY * SizeZ));   
+    }  
+
+  // impairX pairY
+  if ((this->LowerImpulsionX == 1) && (this->LowerImpulsionY == 0))
+    {
+      double TmpX = 0.0; double TmpY = 0.0; double TmpZ = 0.0;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      double* TmpRealCoefficients; double* TmpImaginaryCoefficients;
+      double TmpRe2 = 0.0; double TmpIm2 = 0.0;
+      double FactorX = 2.0 * M_PI * x / SizeX; double FactorY = 2.0 * M_PI * y / SizeY; double FactorZ = 2.0 * M_PI * z / SizeZ;
+      double TmpReZ, TmpImZ, TmpReYZ, TmpImYZ;
+
+      for (int m = 0; m < this->NbrStateX; ++m)
+	{
+	  TmpX = sin(double(m + 1) * FactorX);
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  // n = 0
+	  TmpY = sqrt(0.5);
+	  TmpRealCoefficients = this->RealCoefficients[m][0];
+	  TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][0];
+	  TmpReZ = 0.0; TmpImZ = 0.0;
+	  for (int p = 0; p < this->NbrStateZ; ++p)
+	    {
+	      TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
+	      TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+	      TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+	      TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+	    }
+	  TmpReYZ += TmpY * TmpReZ; 
+	  TmpImYZ += TmpY * TmpImZ;
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+
+	  // n!= 0
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  for (int n = 1; n < this->NbrStateY; ++n)
+	    {
+	      TmpY = cos(double(n) * FactorY);
+	      TmpRealCoefficients = this->RealCoefficients[m][n];
+	      TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][n];
+	      TmpReZ = 0.0; TmpImZ = 0.0;
+	      for (int p = 0; p < this->NbrStateZ; ++p)
+		{
+		  TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
+		  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+		  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+		  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+		}
+	      TmpReYZ += TmpY * TmpReZ; 
+	      TmpImYZ += TmpY * TmpImZ;
+	    }
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+	}
+      Real = TmpRe * sqrt(4.0 / (SizeX * SizeY * SizeZ));
+      Imaginary = TmpIm * sqrt(4.0 / (SizeX * SizeY * SizeZ));   
+    } 
+
+  // impairX impairY
+  if ((this->LowerImpulsionX == 1) && (this->LowerImpulsionY == 1))
+    {
+      double TmpX = 0.0; double TmpY = 0.0; double TmpZ = 0.0;
+      double TmpRe = 0.0; double TmpIm = 0.0;
+      double* TmpRealCoefficients; double* TmpImaginaryCoefficients;
+      double TmpRe2 = 0.0; double TmpIm2 = 0.0;
+      double FactorX = 2.0 * M_PI * x / SizeX; double FactorY = 2.0 * M_PI * y / SizeY; double FactorZ = 2.0 * M_PI * z / SizeZ;
+      double TmpReZ, TmpImZ, TmpReYZ, TmpImYZ;
+
+      for (int m = 0; m < this->NbrStateX; ++m)
+	{
+	  TmpX = sin(double(m + 1) * FactorX);
+	  TmpReYZ = 0.0; TmpImYZ = 0.0;
+	  for (int n = 0; n < this->NbrStateY; ++n)
+	    {
+	      TmpY = sin(double(n + 1) * FactorY);
+	      TmpRealCoefficients = this->RealCoefficients[m][n];
+	      TmpImaginaryCoefficients = this->ImaginaryCoefficients[m][n];
+	      TmpReZ = 0.0; TmpImZ = 0.0;
+	      for (int p = 0; p < this->NbrStateZ; ++p)
+		{
+		  TmpZ = double(p + this->LowerImpulsionZ) * FactorZ;
+		  TmpRe2 = cos(TmpZ); TmpIm2 = sin(TmpZ);
+		  TmpReZ += (TmpRealCoefficients[p] * TmpRe2 - TmpImaginaryCoefficients[p] * TmpIm2);
+		  TmpImZ += (TmpRealCoefficients[p] * TmpIm2 + TmpImaginaryCoefficients[p] * TmpRe2);
+		}
+	      TmpReYZ += TmpY * TmpReZ; 
+	      TmpImYZ += TmpY * TmpImZ;
+	    }
+	  TmpRe += TmpX * TmpReYZ;
+	  TmpIm += TmpX * TmpImYZ;
+	}
+      Real = TmpRe * sqrt(4.0 / (SizeX * SizeY * SizeZ));
+      Imaginary = TmpIm * sqrt(4.0 / (SizeX * SizeY * SizeZ));   
+    } 
+  else
+    return;
 }
 
 // get the value of impulsion operators with another wavefunction <this|p|another>
@@ -213,11 +369,11 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
   if (MinUpperZ > (lowerImpulsionZ + nbrStateZ))
     MinUpperZ = lowerImpulsionZ + nbrStateZ;
   /*
-  cout << this->LowerImpulsionX << '\t' << this->LowerImpulsionY << '\t' << this->LowerImpulsionZ << endl;
-  cout << lowerImpulsionX << '\t' << lowerImpulsionY << '\t' << lowerImpulsionZ << endl;
+  cout << endl << this->LowerImpulsionX << '\t' << this->LowerImpulsionY << '\t' << this->LowerImpulsionZ << endl;
+  cout << lowerImpulsionX << '\t' << lowerImpulsionY << '\t' << lowerImpulsionZ << endl << endl;
 
   cout << this->NbrStateX << '\t' << this->NbrStateY << '\t' << this->NbrStateZ << endl;
-  cout << nbrStateX << '\t' << nbrStateY << '\t' << nbrStateZ << endl;
+  cout << nbrStateX << '\t' << nbrStateY << '\t' << nbrStateZ << endl << endl;
 
   cout << MaxLowerX << '\t' <<  MaxLowerY << '\t' <<  MaxLowerZ << endl;
   cout << MinUpperX << '\t' << MinUpperY << '\t' << MinUpperZ << endl;
@@ -234,6 +390,7 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
     }
   double*** realCoefficients = new double** [nbrStateX];
   double*** imaginaryCoefficients = new double** [nbrStateX];
+  cout << "Second file ... " << endl;
   for (int i = 0; i < nbrStateX; ++i)
     {
       realCoefficients[i] = new double* [nbrStateY];
@@ -242,8 +399,8 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	{
 	  realCoefficients[i][j] = new double [nbrStateZ];
 	  imaginaryCoefficients[i][j] = new double [nbrStateZ];
-	  for (int k = 0; k < nbrStateZ; ++k)
-	    File >> realCoefficients[i][j][k] >> imaginaryCoefficients[i][j][k];
+	  for (int k = 0; k < nbrStateZ; ++k)	      
+	    File >> realCoefficients[i][j][k] >> imaginaryCoefficients[i][j][k];	    
 	}
     }
   File.close();  
@@ -277,10 +434,10 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	      for (int p = MaxLowerZ; p < MinUpperZ; ++p)
 		{
 		  TmpRe += (Re1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]);
-		  TmpRe += (Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
+		  TmpIm += (Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
 		}
 	    }
-	  realImpulsionX += (double(m) * TmpRe); imaginaryImpulsionX += (double(m) * TmpIm);
+	  realImpulsionX += ((double) m * TmpRe); imaginaryImpulsionX += ((double) m * TmpIm);
 	}
       realImpulsionX = realImpulsionX / sizeX; imaginaryImpulsionX = imaginaryImpulsionX / sizeX;
     }
@@ -305,7 +462,7 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPerio
 	      for (int p = MaxLowerZ; p < MinUpperZ; ++p)
 		{
 		  TmpRe += (Re1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ] + Im1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ]);
-		  TmpRe += (Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
+		  TmpIm += (Re1[p - this->LowerImpulsionZ] * Im2[p - lowerImpulsionZ] - Im1[p - this->LowerImpulsionZ] * Re2[p - lowerImpulsionZ]);
 		}
 	      realImpulsionY += (double(n) * TmpRe); imaginaryImpulsionY += (double(n) * TmpIm);
 	    }
