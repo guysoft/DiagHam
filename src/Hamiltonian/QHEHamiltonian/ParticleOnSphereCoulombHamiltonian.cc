@@ -233,7 +233,7 @@ void ParticleOnSphereCoulombHamiltonian::EvaluateInteractionFactors()
       Coef.PartialFactorialDivide(this->LzMax + 2, 2 * this->LzMax + 2);
       Coef.FactorialMultiply(this->LzMax + 1);
       TmpV[j] = Coef.GetNumericalValue();
-//      cout << "TmpV[" << j << "] = " << TmpV[j]<< endl;
+      cout << "TmpV[" << j << "] = " << TmpV[j]<< endl;
     }
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J;
