@@ -1,4 +1,4 @@
-SUBDIRS=
+SUBDIRS=NumericalAnalysis
 
 noinst_LIBRARIES=libMathTools.a
 
