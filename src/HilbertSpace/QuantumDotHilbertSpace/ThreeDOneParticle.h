@@ -28,48 +28,48 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTTHREEDONEPARTICLE_H
-#define ABSTRACTTHREEDONEPARTICLE_H
+#ifndef THREEDONEPARTICLE_H
+#define THREEDONEPARTICLE_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/OneDOneParticle.h"
 
 
-class AbstractThreeDOneParticle : public AbstractHilbertSpace
+class ThreeDOneParticle : public AbstractHilbertSpace
 {
 
  protected:
 
   // wave function basis dimension in the x direction
-  AbstractOneDOneParticle* StateX;
+  OneDOneParticle* StateX;
   // wave function basis dimension in the y direction
-  AbstractOneDOneParticle* StateY;
+  OneDOneParticle* StateY;
   // wave function basis dimension in the z direction
-  AbstractOneDOneParticle* StateZ;
+  OneDOneParticle* StateZ;
 
  public:
 
   // default constructor
   //
-  AbstractThreeDOneParticle ();
+  ThreeDOneParticle ();
 
   // constructor
   //
   // nbrStateX = wave function basis dimension in the x direction
   // nbrStateY = wave function basis dimension in the y direction
   // nbrStateZ = wave function basis dimension in the z direction
-  AbstractThreeDOneParticle (int nbrStateX, int nbrStateY, int nbrStateZ);
+  ThreeDOneParticle (int nbrStateX, int nbrStateY, int nbrStateZ);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  AbstractThreeDOneParticle (const AbstractThreeDOneParticle& space);
+  ThreeDOneParticle (const ThreeDOneParticle& space);
 
   // destructor
   //
-  virtual ~AbstractThreeDOneParticle();
+  virtual ~ThreeDOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -80,7 +80,7 @@ class AbstractThreeDOneParticle : public AbstractHilbertSpace
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  AbstractThreeDOneParticle& operator = (const AbstractThreeDOneParticle& space);
+  ThreeDOneParticle& operator = (const ThreeDOneParticle& space);
 
   // get wave function basis dimension in the x direction
   //
@@ -100,17 +100,17 @@ class AbstractThreeDOneParticle : public AbstractHilbertSpace
   // get the wave function basis in X direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateX ();
+  virtual OneDOneParticle* GetStateX ();
 
   // get the wave function basis in Y direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateY ();
+  virtual OneDOneParticle* GetStateY ();
 
   // get the wave function basis in Z direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateZ ();
+  virtual OneDOneParticle* GetStateZ ();
 
   // return a list of all possible quantum numbers 
   //
@@ -144,7 +144,7 @@ class AbstractThreeDOneParticle : public AbstractHilbertSpace
 //
 // return value = wave function basis dimension in the x direction
 
-inline int AbstractThreeDOneParticle::GetNbrStateX ()
+inline int ThreeDOneParticle::GetNbrStateX ()
 {
   return this->StateX->GetNbrState ();
 }
@@ -153,7 +153,7 @@ inline int AbstractThreeDOneParticle::GetNbrStateX ()
 //
 // return value = wave function basis dimension in the y direction
 
-inline int AbstractThreeDOneParticle::GetNbrStateY ()
+inline int ThreeDOneParticle::GetNbrStateY ()
 {
   return this->StateY->GetNbrState ();
 }
@@ -162,7 +162,7 @@ inline int AbstractThreeDOneParticle::GetNbrStateY ()
 //
 // return value = wave function basis dimension in the z direction
 
-inline int AbstractThreeDOneParticle::GetNbrStateZ ()
+inline int ThreeDOneParticle::GetNbrStateZ ()
 {
   return this->StateZ->GetNbrState ();
 }
@@ -171,9 +171,9 @@ inline int AbstractThreeDOneParticle::GetNbrStateZ ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractThreeDOneParticle::GetStateX ()
+inline OneDOneParticle* ThreeDOneParticle::GetStateX ()
 {
-  AbstractOneDOneParticle* stateX = (AbstractOneDOneParticle*) this->StateX->Clone ();
+  OneDOneParticle* stateX = (OneDOneParticle*) this->StateX->Clone ();
   return stateX;
 }
 
@@ -181,18 +181,18 @@ inline AbstractOneDOneParticle* AbstractThreeDOneParticle::GetStateX ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractThreeDOneParticle::GetStateY ()
+inline OneDOneParticle* ThreeDOneParticle::GetStateY ()
 {
-  AbstractOneDOneParticle* stateY = (AbstractOneDOneParticle*) this->StateY->Clone ();
+  OneDOneParticle* stateY = (OneDOneParticle*) this->StateY->Clone ();
   return stateY;
 }
 
 // get the wave function basis in Z direction
 //
 // return = pointer to 1D one particle basis
-inline AbstractOneDOneParticle* AbstractThreeDOneParticle::GetStateZ ()
+inline OneDOneParticle* ThreeDOneParticle::GetStateZ ()
 {
-  AbstractOneDOneParticle* stateZ = (AbstractOneDOneParticle*) this->StateZ->Clone ();
+  OneDOneParticle* stateZ = (OneDOneParticle*) this->StateZ->Clone ();
   return stateZ;
 }
 

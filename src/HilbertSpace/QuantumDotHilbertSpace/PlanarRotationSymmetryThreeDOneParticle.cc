@@ -29,13 +29,13 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractPlanarRotationSymmetryThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryThreeDOneParticle.h"
 
 
 // default constructor
 //
 
-AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryThreeDOneParticle ()
+PlanarRotationSymmetryThreeDOneParticle::PlanarRotationSymmetryThreeDOneParticle ()
 {
 }
 
@@ -45,11 +45,11 @@ AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryT
 // nbrStateR = wave function basis dimension of the radial coordinate
 // nbrStateZ = wave function basis dimension in the z direction
 
-AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryThreeDOneParticle(int lz, int nbrStateR, int nbrStateZ)
+PlanarRotationSymmetryThreeDOneParticle::PlanarRotationSymmetryThreeDOneParticle(int lz, int nbrStateR, int nbrStateZ)
 {
   this->Lz = lz;
-  this->StateR = new AbstractOneDOneParticle (nbrStateR);
-  this->StateZ = new AbstractOneDOneParticle (nbrStateZ);
+  this->StateR = new OneDOneParticle (nbrStateR);
+  this->StateZ = new OneDOneParticle (nbrStateZ);
   this->HilbertSpaceDimension = this->StateR->GetNbrState () * this->StateZ->GetNbrState ();
 }
 
@@ -57,7 +57,7 @@ AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryT
 //
 // space = reference on Hilbert space to copy
 
-AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryThreeDOneParticle(const AbstractPlanarRotationSymmetryThreeDOneParticle& space)
+PlanarRotationSymmetryThreeDOneParticle::PlanarRotationSymmetryThreeDOneParticle(const PlanarRotationSymmetryThreeDOneParticle& space)
 {
   this->Lz = space.Lz;
   this->StateR = space.StateR;
@@ -68,7 +68,7 @@ AbstractPlanarRotationSymmetryThreeDOneParticle::AbstractPlanarRotationSymmetryT
 // destructor
 //
 
-AbstractPlanarRotationSymmetryThreeDOneParticle::~AbstractPlanarRotationSymmetryThreeDOneParticle()
+PlanarRotationSymmetryThreeDOneParticle::~PlanarRotationSymmetryThreeDOneParticle()
 {
   delete this->StateR;
   delete this->StateZ;
@@ -79,7 +79,7 @@ AbstractPlanarRotationSymmetryThreeDOneParticle::~AbstractPlanarRotationSymmetry
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-AbstractPlanarRotationSymmetryThreeDOneParticle& AbstractPlanarRotationSymmetryThreeDOneParticle::operator = (const AbstractPlanarRotationSymmetryThreeDOneParticle& space)
+PlanarRotationSymmetryThreeDOneParticle& PlanarRotationSymmetryThreeDOneParticle::operator = (const PlanarRotationSymmetryThreeDOneParticle& space)
 {
   this->Lz = space.Lz;
   this->StateR = space.StateR;
@@ -92,16 +92,16 @@ AbstractPlanarRotationSymmetryThreeDOneParticle& AbstractPlanarRotationSymmetryT
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* AbstractPlanarRotationSymmetryThreeDOneParticle::Clone()
+AbstractHilbertSpace* PlanarRotationSymmetryThreeDOneParticle::Clone()
 {
-  return new AbstractPlanarRotationSymmetryThreeDOneParticle(*this);
+  return new PlanarRotationSymmetryThreeDOneParticle(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> AbstractPlanarRotationSymmetryThreeDOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> PlanarRotationSymmetryThreeDOneParticle::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -112,7 +112,7 @@ List<AbstractQuantumNumber*> AbstractPlanarRotationSymmetryThreeDOneParticle::Ge
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* AbstractPlanarRotationSymmetryThreeDOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* PlanarRotationSymmetryThreeDOneParticle::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -123,7 +123,7 @@ AbstractQuantumNumber* AbstractPlanarRotationSymmetryThreeDOneParticle::GetQuant
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* AbstractPlanarRotationSymmetryThreeDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* PlanarRotationSymmetryThreeDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -135,7 +135,7 @@ AbstractHilbertSpace* AbstractPlanarRotationSymmetryThreeDOneParticle::ExtractSu
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& AbstractPlanarRotationSymmetryThreeDOneParticle::PrintState (ostream& Str, int state)
+ostream& PlanarRotationSymmetryThreeDOneParticle::PrintState (ostream& Str, int state)
 {
   int NbrStateZ = this->StateZ->GetNbrState ();
   int i1 = state / NbrStateZ;

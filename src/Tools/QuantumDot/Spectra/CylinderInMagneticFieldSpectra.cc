@@ -43,9 +43,9 @@ using std::ios;
 // space = Hilbert space describing the particle
 // fileName = name of the state file
 // bz = magnetic field in Z direction
-CylinderInMagneticFieldSpectra::CylinderInMagneticFieldSpectra(VerticalPeriodicParticleInMagneticField* space, char* fileName, double bz)
+CylinderInMagneticFieldSpectra::CylinderInMagneticFieldSpectra(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double bz)
 {
-  this->NumberM = space->GetQuantumNumberM();
+  this->NumberM = space->GetLz();
   this->NbrStateR = space->GetNbrStateR();
   this->NbrStateZ = space->GetNbrStateZ();
   this->LowerImpulsionZ = space->GetLowerImpulsionZ();
@@ -129,10 +129,10 @@ double CylinderInMagneticFieldSpectra::ZProbabilityDensity(double z, double size
 // sizeZ = size of sample in Z direction
 // impulsionX, impulsionY, impulsionZ = reference to the return values
 
-void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
+void CylinderInMagneticFieldSpectra::GetImpulsion(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
 {
   double OrbitRadius = LENGTH_FACTOR / sqrt(this->Bz);
-  int numberM = space->GetQuantumNumberM();
+  int numberM = space->GetLz();
   int nbrStateR = space->GetNbrStateR();
   int nbrStateZ = space->GetNbrStateZ();
   int lowerImpulsionZ = space->GetLowerImpulsionZ();
@@ -252,10 +252,10 @@ void CylinderInMagneticFieldSpectra::GetImpulsion(VerticalPeriodicParticleInMagn
 // sizeZ = size of sample in Z direction
 // positionX, positionY, positionZ = reference to the return values
 
-void CylinderInMagneticFieldSpectra::GetMeanPosition(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ)
+void CylinderInMagneticFieldSpectra::GetMeanPosition(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ)
 {
   double OrbitRadius = LENGTH_FACTOR / sqrt(this->Bz);
-  int numberM = space->GetQuantumNumberM();
+  int numberM = space->GetLz();
   int nbrStateR = space->GetNbrStateR();
   int nbrStateZ = space->GetNbrStateZ();
   int lowerImpulsionZ = space->GetLowerImpulsionZ();

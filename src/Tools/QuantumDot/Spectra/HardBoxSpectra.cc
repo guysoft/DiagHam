@@ -42,7 +42,7 @@ using std::ios;
 // space = Hilbert space describing the particle
 // fileName = name of the state file
 
-HardBoxSpectra::HardBoxSpectra(Confined3DOneParticle* space, char* fileName)
+HardBoxSpectra::HardBoxSpectra(ThreeDOneParticle* space, char* fileName)
 {
   this->NbrStateX = space->GetNbrStateX();
   this->NbrStateY = space->GetNbrStateY();
@@ -70,7 +70,7 @@ HardBoxSpectra::HardBoxSpectra(Confined3DOneParticle* space, char* fileName)
   File.close();
 }
 
-void HardBoxSpectra::GetDerivedOverlap (Confined3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &Overlap, double &OverlapX, double &OverlapY)
+void HardBoxSpectra::GetDerivedOverlap (ThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &Overlap, double &OverlapX, double &OverlapY)
 {
   int nbrStateX = space->GetNbrStateX();
   int nbrStateY = space->GetNbrStateY();

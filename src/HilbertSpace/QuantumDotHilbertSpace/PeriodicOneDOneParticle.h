@@ -34,10 +34,10 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/OneDOneParticle.h"
 
 
-class PeriodicOneDOneParticle : public AbstractOneDOneParticle
+class PeriodicOneDOneParticle : public OneDOneParticle
 {
 
  protected:

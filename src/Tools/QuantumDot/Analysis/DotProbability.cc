@@ -6,21 +6,10 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Spectra/Spectra.h"
-#include "Tools/QuantumDot/Spectra/DOSSpectra.h"
-#include "Tools/QuantumDot/Spectra/OverlapSpectra.h"
-#include "Tools/QuantumDot/Spectra/AverageSpectra.h"
-#include "Tools/QuantumDot/Spectra/TimeResolvedPLSpectra.h"
-#include "Tools/QuantumDot/Spectra/CylinderInMagneticFieldSpectra.h"
-#include "Tools/QuantumDot/Spectra/CylinderQuantumDotSpectra.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryZPeriodicOneParticle.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+#include "Tools/QuantumDot/Spectra/Spectra.h"
+#include "Tools/QuantumDot/Spectra/CylinderQuantumDotSpectra.h"
 
 #include "Tools/QuantumDot/Potential/QuantumDotThreeDConstantCylinderPotential.h"
 
@@ -97,7 +86,7 @@ int main(int argc, char** argv)
 
   QuantumDotThreeDConstantCylinderPotential* potential = new QuantumDotThreeDConstantCylinderPotential(Below, WettingWidth, DotNbr, DotHeight, BaseRadius, TopRadius, Above, Barrier, SuperCylinderRadius);
 
-  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ); 
+  PlanarRotationSymmetryZPeriodicOneParticle* Space = new PlanarRotationSymmetryZPeriodicOneParticle (NumberM, NbrStateR, NbrStateZ, LowImpulsionZ); 
 
   CylinderQuantumDotSpectra* spectra = new CylinderQuantumDotSpectra(Space, FileName, 0.0);
   cout << "The probability to find the particle in the dot is: " << spectra->GetDotProbability(potential) << endl;

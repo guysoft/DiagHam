@@ -43,7 +43,7 @@
 PlanarRotationSymmetryZPeriodicOneParticle::PlanarRotationSymmetryZPeriodicOneParticle (int lz, int nbrStateR, int nbrStateZ, int lowerImpulsionZ)
 {
   this->Lz = lz;
-  this->StateR = new AbstractOneDOneParticle (nbrStateR);
+  this->StateR = new OneDOneParticle (nbrStateR);
   this->StateZ = new PeriodicOneDOneParticle (nbrStateZ, lowerImpulsionZ);
   this->HilbertSpaceDimension = this->StateR->GetNbrState () * this->StateZ->GetNbrState ();
 }

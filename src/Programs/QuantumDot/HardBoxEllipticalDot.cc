@@ -5,18 +5,9 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
-#include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
-#include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
-#include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
@@ -170,7 +161,7 @@ int main(int argc, char** argv)
   potential->SetCellSizeZ(Lz);
   // potential->SavePotential("EllipticalDotPotential.txt");
 
-  Confined3DOneParticle* Space = new Confined3DOneParticle (NbrStateX, NbrStateY, NbrStateZ);
+  ThreeDOneParticle* Space = new ThreeDOneParticle (NbrStateX, NbrStateY, NbrStateZ);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);

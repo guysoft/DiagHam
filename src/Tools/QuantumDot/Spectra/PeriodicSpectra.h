@@ -29,7 +29,7 @@
 #define PERIODICSPECTRA_H
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
 #include "Complex.h"
 
 class TetrapodThreeDConstantCellPotential;
@@ -74,7 +74,7 @@ class PeriodicSpectra
   //
   // space = Hilbert space describing the particle
   // fileName = name of the state file
-  PeriodicSpectra(Periodic3DOneParticle* space, char* fileName);
+  PeriodicSpectra(PeriodicThreeDOneParticle* space, char* fileName);
 
   // get mean value in X direction
   //
@@ -114,7 +114,7 @@ class PeriodicSpectra
   // fileName = the file to stock the other function
   // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
   // overlapX, overlapY = reference to the return values
-  void GetDerivedOverlap (Periodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
+  void GetDerivedOverlap (PeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
   
   // get the probability of finding the particle in a cube
   //

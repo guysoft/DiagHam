@@ -29,13 +29,13 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/OneDOneParticle.h"
 
 using std::cout;
 using std::endl;
 
 // default constructor
-AbstractOneDOneParticle::AbstractOneDOneParticle()
+OneDOneParticle::OneDOneParticle()
 {
 }
 
@@ -43,7 +43,7 @@ AbstractOneDOneParticle::AbstractOneDOneParticle()
 //
 // nbrState = number of states
 
-AbstractOneDOneParticle::AbstractOneDOneParticle(int nbrState)
+OneDOneParticle::OneDOneParticle(int nbrState)
 {
   this->NbrState = nbrState;
   this->HilbertSpaceDimension = this->NbrState;
@@ -53,7 +53,7 @@ AbstractOneDOneParticle::AbstractOneDOneParticle(int nbrState)
 //
 // space = reference on Hilbert space to copy
 
-AbstractOneDOneParticle::AbstractOneDOneParticle(const AbstractOneDOneParticle& space)
+OneDOneParticle::OneDOneParticle(const OneDOneParticle& space)
 {
   this->NbrState = space.NbrState;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
@@ -62,7 +62,7 @@ AbstractOneDOneParticle::AbstractOneDOneParticle(const AbstractOneDOneParticle& 
 // destructor
 //
 
-AbstractOneDOneParticle::~AbstractOneDOneParticle()
+OneDOneParticle::~OneDOneParticle()
 {
 }
 
@@ -71,7 +71,7 @@ AbstractOneDOneParticle::~AbstractOneDOneParticle()
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-AbstractOneDOneParticle& AbstractOneDOneParticle::operator = (const AbstractOneDOneParticle& space)
+OneDOneParticle& OneDOneParticle::operator = (const OneDOneParticle& space)
 {
   this->NbrState = space.NbrState;
   this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
@@ -82,16 +82,16 @@ AbstractOneDOneParticle& AbstractOneDOneParticle::operator = (const AbstractOneD
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* AbstractOneDOneParticle::Clone()
+AbstractHilbertSpace* OneDOneParticle::Clone()
 {
-  return new AbstractOneDOneParticle(*this);
+  return new OneDOneParticle(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> AbstractOneDOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> OneDOneParticle::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -102,7 +102,7 @@ List<AbstractQuantumNumber*> AbstractOneDOneParticle::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* AbstractOneDOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* OneDOneParticle::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -113,7 +113,7 @@ AbstractQuantumNumber* AbstractOneDOneParticle::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* AbstractOneDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* OneDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -125,7 +125,7 @@ AbstractHilbertSpace* AbstractOneDOneParticle::ExtractSubspace (AbstractQuantumN
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& AbstractOneDOneParticle::PrintState (ostream& Str, int state)
+ostream& OneDOneParticle::PrintState (ostream& Str, int state)
 {
   Str << "(" << state << ")";
   return Str;

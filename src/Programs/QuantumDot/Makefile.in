@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) $(CylinderQuantumDot_SOURCES) $(CylinderQuantumDotInMagneticField_SOURCES) $(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) $(HardBoxEllipticalDot_SOURCES) $(Isosurface_SOURCES) $(Periodic3DElectronHoleQuantumDot_SOURCES) $(PeriodicContinuum_SOURCES) $(PeriodicFunctionStatistic_SOURCES) $(PeriodicOneDStructure_SOURCES) $(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(PeriodicQuantumDotInMagneticField_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(TetrapodDot_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
+SOURCES = $(CylinderQuantumDot_SOURCES) $(CylinderQuantumDotInMagneticField_SOURCES) $(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) $(HardBoxEllipticalDot_SOURCES) $(Isosurface_SOURCES) $(Periodic3DElectronHoleQuantumDot_SOURCES) $(PeriodicContinuum_SOURCES) $(PeriodicOneDStructure_SOURCES) $(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDot2D_SOURCES) $(PeriodicQuantumDotInMagneticField_SOURCES) $(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) $(TetrapodDot_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,15 +36,13 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = AllSpectra$(EXEEXT) CoulombInteraction$(EXEEXT) \
-	CylinderQuantumDot$(EXEEXT) \
+bin_PROGRAMS = CylinderQuantumDot$(EXEEXT) \
 	CylinderQuantumDotInMagneticField$(EXEEXT) \
 	DotEmbeddedWell$(EXEEXT) EllipticalDot$(EXEEXT) \
 	HardBoxEllipticalDot$(EXEEXT) Isosurface$(EXEEXT) \
 	Periodic3DElectronHoleQuantumDot$(EXEEXT) \
-	PeriodicContinuum$(EXEEXT) PeriodicFunctionStatistic$(EXEEXT) \
-	PeriodicOneDStructure$(EXEEXT) PeriodicQuantumDot2D$(EXEEXT) \
-	PeriodicQuantumDot$(EXEEXT) \
+	PeriodicContinuum$(EXEEXT) PeriodicOneDStructure$(EXEEXT) \
+	PeriodicQuantumDot2D$(EXEEXT) PeriodicQuantumDot$(EXEEXT) \
 	PeriodicQuantumDotInMagneticField$(EXEEXT) QuantumDot$(EXEEXT) \
 	QuantumDot2D$(EXEEXT) TetrapodDot$(EXEEXT) Visual2D$(EXEEXT) \
 	Visual3D$(EXEEXT)
@@ -60,10 +58,6 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_AllSpectra_OBJECTS = AllSpectra.$(OBJEXT)
-AllSpectra_OBJECTS = $(am_AllSpectra_OBJECTS)
-am_CoulombInteraction_OBJECTS = CoulombInteraction.$(OBJEXT)
-CoulombInteraction_OBJECTS = $(am_CoulombInteraction_OBJECTS)
 am_CylinderQuantumDot_OBJECTS = CylinderQuantumDot.$(OBJEXT)
 CylinderQuantumDot_OBJECTS = $(am_CylinderQuantumDot_OBJECTS)
 am_CylinderQuantumDotInMagneticField_OBJECTS =  \
@@ -84,10 +78,6 @@ Periodic3DElectronHoleQuantumDot_OBJECTS =  \
 	$(am_Periodic3DElectronHoleQuantumDot_OBJECTS)
 am_PeriodicContinuum_OBJECTS = PeriodicContinuum.$(OBJEXT)
 PeriodicContinuum_OBJECTS = $(am_PeriodicContinuum_OBJECTS)
-am_PeriodicFunctionStatistic_OBJECTS =  \
-	PeriodicFunctionStatistic.$(OBJEXT)
-PeriodicFunctionStatistic_OBJECTS =  \
-	$(am_PeriodicFunctionStatistic_OBJECTS)
 am_PeriodicOneDStructure_OBJECTS = PeriodicOneDStructure.$(OBJEXT)
 PeriodicOneDStructure_OBJECTS = $(am_PeriodicOneDStructure_OBJECTS)
 am_PeriodicQuantumDot_OBJECTS = Periodic3DQuantumDots.$(OBJEXT)
@@ -113,8 +103,6 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/2DQuantumDot.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/3DQuantumDot.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AllSpectra.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/CoulombInteraction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/CylinderQuantumDot.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/CylinderQuantumDotInMagneticField.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/DotEmbeddedWell.Po \
@@ -125,7 +113,6 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/Periodic3DElectronHoleQuantumDot.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Periodic3DQuantumDots.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicContinuum.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PeriodicFunctionStatistic.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicOneDStructure.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicQuantumDotInMagneticField.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/TetrapodDot.Po ./$(DEPDIR)/Visual2D.Po \
@@ -135,29 +122,23 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) \
-	$(CylinderQuantumDot_SOURCES) \
+SOURCES = $(CylinderQuantumDot_SOURCES) \
 	$(CylinderQuantumDotInMagneticField_SOURCES) \
 	$(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) \
 	$(HardBoxEllipticalDot_SOURCES) $(Isosurface_SOURCES) \
 	$(Periodic3DElectronHoleQuantumDot_SOURCES) \
-	$(PeriodicContinuum_SOURCES) \
-	$(PeriodicFunctionStatistic_SOURCES) \
-	$(PeriodicOneDStructure_SOURCES) $(PeriodicQuantumDot_SOURCES) \
-	$(PeriodicQuantumDot2D_SOURCES) \
+	$(PeriodicContinuum_SOURCES) $(PeriodicOneDStructure_SOURCES) \
+	$(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDot2D_SOURCES) \
 	$(PeriodicQuantumDotInMagneticField_SOURCES) \
 	$(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) \
 	$(TetrapodDot_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
-DIST_SOURCES = $(AllSpectra_SOURCES) $(CoulombInteraction_SOURCES) \
-	$(CylinderQuantumDot_SOURCES) \
+DIST_SOURCES = $(CylinderQuantumDot_SOURCES) \
 	$(CylinderQuantumDotInMagneticField_SOURCES) \
 	$(DotEmbeddedWell_SOURCES) $(EllipticalDot_SOURCES) \
 	$(HardBoxEllipticalDot_SOURCES) $(Isosurface_SOURCES) \
 	$(Periodic3DElectronHoleQuantumDot_SOURCES) \
-	$(PeriodicContinuum_SOURCES) \
-	$(PeriodicFunctionStatistic_SOURCES) \
-	$(PeriodicOneDStructure_SOURCES) $(PeriodicQuantumDot_SOURCES) \
-	$(PeriodicQuantumDot2D_SOURCES) \
+	$(PeriodicContinuum_SOURCES) $(PeriodicOneDStructure_SOURCES) \
+	$(PeriodicQuantumDot_SOURCES) $(PeriodicQuantumDot2D_SOURCES) \
 	$(PeriodicQuantumDotInMagneticField_SOURCES) \
 	$(QuantumDot_SOURCES) $(QuantumDot2D_SOURCES) \
 	$(TetrapodDot_SOURCES) $(Visual2D_SOURCES) $(Visual3D_SOURCES)
@@ -255,8 +236,6 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
-AllSpectra_SOURCES = AllSpectra.cc
-CoulombInteraction_SOURCES = CoulombInteraction.cc
 CylinderQuantumDot_SOURCES = CylinderQuantumDot.cc
 CylinderQuantumDotInMagneticField_SOURCES = CylinderQuantumDotInMagneticField.cc
 DotEmbeddedWell_SOURCES = DotEmbeddedWell.cc
@@ -265,7 +244,6 @@ HardBoxEllipticalDot_SOURCES = HardBoxEllipticalDot.cc
 Isosurface_SOURCES = Isosurface.cc
 Periodic3DElectronHoleQuantumDot_SOURCES = Periodic3DElectronHoleQuantumDot.cc
 PeriodicContinuum_SOURCES = PeriodicContinuum.cc
-PeriodicFunctionStatistic_SOURCES = PeriodicFunctionStatistic.cc
 PeriodicOneDStructure_SOURCES = PeriodicOneDStructure.cc
 PeriodicQuantumDot2D_SOURCES = Periodic2DQuantumDot.cc
 PeriodicQuantumDot_SOURCES = Periodic3DQuantumDots.cc
@@ -275,10 +253,6 @@ QuantumDot2D_SOURCES = 2DQuantumDot.cc
 TetrapodDot_SOURCES = TetrapodDot.cc
 Visual2D_SOURCES = Visual2D.cc
 Visual3D_SOURCES = Visual3D.cc
-AllSpectra_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
-AllSpectra_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
-CoulombInteraction_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
-CoulombInteraction_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lVector -lMatrix -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lSpectra -lVector @MATH_LIBS@ @THREAD_LIBS@
 CylinderQuantumDot_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
 CylinderQuantumDot_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 CylinderQuantumDotInMagneticField_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
@@ -295,8 +269,6 @@ Periodic3DElectronHoleQuantumDot_DEPENDENCIES = $(top_builddir)/src/Architecture
 Periodic3DElectronHoleQuantumDot_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 PeriodicContinuum_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
 PeriodicContinuum_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
-PeriodicFunctionStatistic_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
-PeriodicFunctionStatistic_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 PeriodicOneDStructure_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
 PeriodicOneDStructure_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/BitmapPicture -L$(top_builddir)/src/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/src/Tools/QuantumDot/Potential -L$(top_builddir)/src/Tools/QuantumDot/Spectra -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lArchitectureOperation -lQuantumDotHamiltonian -lHamiltonian -lOperator -lTensorProduct -lTensor -lQuantumDotHilbertSpace -lHilbertSpace -lSpectra -lMatrix -lVector -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lPotential -lBitmapPicture -lColor @MATH_LIBS@ @THREAD_LIBS@
 PeriodicQuantumDot2D_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/BitmapPicture/libBitmapPicture.a $(top_builddir)/src/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
@@ -371,12 +343,6 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-AllSpectra$(EXEEXT): $(AllSpectra_OBJECTS) $(AllSpectra_DEPENDENCIES) 
-	@rm -f AllSpectra$(EXEEXT)
-	$(CXXLINK) $(AllSpectra_LDFLAGS) $(AllSpectra_OBJECTS) $(AllSpectra_LDADD) $(LIBS)
-CoulombInteraction$(EXEEXT): $(CoulombInteraction_OBJECTS) $(CoulombInteraction_DEPENDENCIES) 
-	@rm -f CoulombInteraction$(EXEEXT)
-	$(CXXLINK) $(CoulombInteraction_LDFLAGS) $(CoulombInteraction_OBJECTS) $(CoulombInteraction_LDADD) $(LIBS)
 CylinderQuantumDot$(EXEEXT): $(CylinderQuantumDot_OBJECTS) $(CylinderQuantumDot_DEPENDENCIES) 
 	@rm -f CylinderQuantumDot$(EXEEXT)
 	$(CXXLINK) $(CylinderQuantumDot_LDFLAGS) $(CylinderQuantumDot_OBJECTS) $(CylinderQuantumDot_LDADD) $(LIBS)
@@ -401,9 +367,6 @@ Periodic3DElectronHoleQuantumDot$(EXEEXT): $(Periodic3DElectronHoleQuantumDot_OB
 PeriodicContinuum$(EXEEXT): $(PeriodicContinuum_OBJECTS) $(PeriodicContinuum_DEPENDENCIES) 
 	@rm -f PeriodicContinuum$(EXEEXT)
 	$(CXXLINK) $(PeriodicContinuum_LDFLAGS) $(PeriodicContinuum_OBJECTS) $(PeriodicContinuum_LDADD) $(LIBS)
-PeriodicFunctionStatistic$(EXEEXT): $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicFunctionStatistic_DEPENDENCIES) 
-	@rm -f PeriodicFunctionStatistic$(EXEEXT)
-	$(CXXLINK) $(PeriodicFunctionStatistic_LDFLAGS) $(PeriodicFunctionStatistic_OBJECTS) $(PeriodicFunctionStatistic_LDADD) $(LIBS)
 PeriodicOneDStructure$(EXEEXT): $(PeriodicOneDStructure_OBJECTS) $(PeriodicOneDStructure_DEPENDENCIES) 
 	@rm -f PeriodicOneDStructure$(EXEEXT)
 	$(CXXLINK) $(PeriodicOneDStructure_LDFLAGS) $(PeriodicOneDStructure_OBJECTS) $(PeriodicOneDStructure_LDADD) $(LIBS)
@@ -440,8 +403,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/2DQuantumDot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/3DQuantumDot.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AllSpectra.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CoulombInteraction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylinderQuantumDot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CylinderQuantumDotInMagneticField.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DotEmbeddedWell.Po@am__quote@
@@ -452,7 +413,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic3DElectronHoleQuantumDot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic3DQuantumDots.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicContinuum.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicFunctionStatistic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicOneDStructure.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicQuantumDotInMagneticField.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TetrapodDot.Po@am__quote@

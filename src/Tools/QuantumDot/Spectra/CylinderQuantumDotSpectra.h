@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryZPeriodicOneParticle.h"
 
 class QuantumDotThreeDConstantCylinderPotential;
 class ThreeDConstantCylinderPotential;
@@ -61,7 +61,7 @@ class CylinderQuantumDotSpectra
   // space = Hilbert space describing the particle
   // fileName = name of the state file
   // bz = magnetic field in Z direction
-  CylinderQuantumDotSpectra(VerticalPeriodicParticleInMagneticField* space, char* fileName, double bz);
+  CylinderQuantumDotSpectra(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double bz);
 
   // get the value of impulsion operators with another wavefunction <this|p|another>
   //
@@ -70,7 +70,7 @@ class CylinderQuantumDotSpectra
   // sizeR = size of the super-cylinder in plane
   // sizeZ = size of sample in Z direction
   // impulsionX, impulsionY, impulsionZ = reference to the return values
-  void GetImpulsion (VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeR, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  void GetImpulsion (PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeR, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
   // get the probability integrated in the dot to find the particle
   //

@@ -28,15 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTONEDONEPARTICLE_H
-#define ABSTRACTONEDONEPARTICLE_H
+#ifndef ONEDONEPARTICLE_H
+#define ONEDONEPARTICLE_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 
 
-class AbstractOneDOneParticle : public AbstractHilbertSpace
+class OneDOneParticle : public AbstractHilbertSpace
 {
 
  protected:
@@ -47,21 +47,21 @@ class AbstractOneDOneParticle : public AbstractHilbertSpace
  public:
 
   // default constructor
-  AbstractOneDOneParticle ();
+  OneDOneParticle ();
 
   // constructor
   //
   // nbrState = number of states
-  AbstractOneDOneParticle (int nbrState);
+  OneDOneParticle (int nbrState);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  AbstractOneDOneParticle (const AbstractOneDOneParticle& space);
+  OneDOneParticle (const OneDOneParticle& space);
 
   // destructor
   //
-  virtual ~AbstractOneDOneParticle ();
+  virtual ~OneDOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -72,7 +72,7 @@ class AbstractOneDOneParticle : public AbstractHilbertSpace
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  AbstractOneDOneParticle& operator = (const AbstractOneDOneParticle& space);
+  OneDOneParticle& operator = (const OneDOneParticle& space);
 
   // get number of states
   //
@@ -111,7 +111,7 @@ class AbstractOneDOneParticle : public AbstractHilbertSpace
 //
 // return value = number of states
 
-inline int AbstractOneDOneParticle::GetNbrState ()
+inline int OneDOneParticle::GetNbrState ()
 {
   return this->NbrState;
 }

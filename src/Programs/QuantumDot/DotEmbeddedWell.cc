@@ -5,14 +5,7 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
-#include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/InPlaneReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXYReflexionZPeriodicThreeDOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/ReflexionSymmetricPeriodic3DHamiltonian.h"
@@ -187,20 +180,7 @@ int main(int argc, char** argv)
   potential->AddBarrierPotential (BelowBarrier, AboveBarrier, BarrierPotential);
 
   // define Hilbert space    
-  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
-  XYReflexionSymmetricPeriodic3DOneParticle* Space;
-  if (PairX)
-    if (PairY)
-      Space = new PairXPairYPeriodic3DOneParticle(GeneralSpace);     
-    else
-      Space = new PairXImpairYPeriodic3DOneParticle(GeneralSpace); 
-  else
-     if (PairY)
-      Space = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);     
-    else
-      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);        
-  //InPlaneReflexionSymmetricPeriodic3DOneParticle* Space = new InPlaneReflexionSymmetricPeriodic3DOneParticle(PairX, NbrStateX / 2, NbrStateY, -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
-  //Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, -NbrStateX / 2, NbrStateY, -NbrStateY / 2, NbrStateZ, LowImpulsionZ);
+  PeriodicXYReflexionZPeriodicThreeDOneParticle* Space = new PeriodicXYReflexionZPeriodicThreeDOneParticle (NbrStateX, PairX, NbrStateY, PairY, NbrStateZ, LowImpulsionZ); 
   
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;

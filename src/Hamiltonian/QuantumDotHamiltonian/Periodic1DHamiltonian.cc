@@ -53,7 +53,7 @@ using std::endl;
 // PotentialInput = pointer to a 1D potential with constant value in a cell
 // waveVector = wave vector of Bloch function
 
-Periodic1DHamiltonian::Periodic1DHamiltonian(Periodic1DOneParticle* space, double mu, OneDConstantCellPotential* PotentialInput, double waveVector)
+Periodic1DHamiltonian::Periodic1DHamiltonian(PeriodicOneDOneParticle* space, double mu, OneDConstantCellPotential* PotentialInput, double waveVector)
 {
   this->Space = space;
   this->NbrState = this->Space->GetNbrState();

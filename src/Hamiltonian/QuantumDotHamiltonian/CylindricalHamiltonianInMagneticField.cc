@@ -53,7 +53,7 @@ using std::endl;
 // waveVectorZ = wave vector of Bloch function in Z direction
 // PotentialInput = pointer to a 3D potential with constant value in a cell
 
-CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput)
+CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(PlanarRotationSymmetryZPeriodicOneParticle* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput)
 {
   this->Space = space;
   int nbrCylinder = PotentialInput->GetNbrCylinderZ();
@@ -62,7 +62,7 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(Ver
     this->ZSize += PotentialInput->GetHeight(k);            
   this->Mur = mur;
   this->Muz = muz;
-  this->NumberM = this->Space->GetQuantumNumberM();
+  this->NumberM = this->Space->GetLz ();
   this->NbrStateR = this->Space->GetNbrStateR();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
@@ -83,10 +83,10 @@ CylindricalHamiltonianInMagneticField::CylindricalHamiltonianInMagneticField(con
   this->ZSize = hamiltonian.ZSize;
   this->Mur = hamiltonian.Mur;
   this->Muz = hamiltonian.Muz;
-  this->NumberM = this->Space->GetQuantumNumberM();
-  this->NbrStateR = this->Space->GetNbrStateR();
-  this->NbrStateZ = this->Space->GetNbrStateZ();
-  this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
+  this->NumberM = this->Space->GetLz ();
+  this->NbrStateR = this->Space->GetNbrStateR ();
+  this->NbrStateZ = this->Space->GetNbrStateZ ();
+  this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ ();
   this->PartialDiagonalElement = hamiltonian.PartialDiagonalElement;
   this->RealHamiltonian =  hamiltonian.RealHamiltonian;
   this->ImaginaryHamiltonian =  hamiltonian.ImaginaryHamiltonian;

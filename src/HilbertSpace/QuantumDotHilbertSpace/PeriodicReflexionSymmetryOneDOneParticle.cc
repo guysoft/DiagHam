@@ -32,6 +32,10 @@
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicReflexionSymmetryOneDOneParticle.h"
 
 
+using std::cout;
+using std::endl;
+
+
 // default constructor
 //
 
@@ -46,6 +50,9 @@ PeriodicReflexionSymmetryOneDOneParticle::PeriodicReflexionSymmetryOneDOnePartic
 
 PeriodicReflexionSymmetryOneDOneParticle::PeriodicReflexionSymmetryOneDOneParticle (int nbrState, bool even)
 {
+ if ((nbrState % 2) == 0)
+   cout << "There is one dimension which is not correct: " << nbrState << ". It will be substract by 1" << endl;
+   
   this->Even = Even;
   if (this->Even)
     {

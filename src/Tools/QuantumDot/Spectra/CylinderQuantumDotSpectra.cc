@@ -46,9 +46,9 @@ using std::ios;
 // space = Hilbert space describing the particle
 // fileName = name of the state file
 // bz = magnetic field in Z direction
-CylinderQuantumDotSpectra::CylinderQuantumDotSpectra(VerticalPeriodicParticleInMagneticField* space, char* fileName, double bz)
+CylinderQuantumDotSpectra::CylinderQuantumDotSpectra(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double bz)
 {
-  this->NumberM = space->GetQuantumNumberM();
+  this->NumberM = space->GetLz();
   this->NbrStateR = space->GetNbrStateR();
   this->NbrStateZ = space->GetNbrStateZ();
   this->LowerImpulsionZ = space->GetLowerImpulsionZ();
@@ -82,9 +82,9 @@ CylinderQuantumDotSpectra::CylinderQuantumDotSpectra(VerticalPeriodicParticleInM
 // sizeZ = size of sample in Z direction
 // impulsionX, impulsionY, impulsionZ = reference to the return values
 
-void CylinderQuantumDotSpectra::GetImpulsion(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeR, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
+void CylinderQuantumDotSpectra::GetImpulsion(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeR, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
 {
-  int numberM = space->GetQuantumNumberM();
+  int numberM = space->GetLz();
   int nbrStateR = space->GetNbrStateR();
   int nbrStateZ = space->GetNbrStateZ();
   int lowerImpulsionZ = space->GetLowerImpulsionZ();

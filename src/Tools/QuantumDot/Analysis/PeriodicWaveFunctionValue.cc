@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   
   char* FileName = ((SingleStringOption*) Manager["input"])->GetString();
 
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, LowImpulsionX, NbrStateY, LowImpulsionY, NbrStateZ, LowImpulsionZ);
+  PeriodicThreeDOneParticle* Space = new PeriodicThreeDOneParticle(NbrStateX, LowImpulsionX, NbrStateY, LowImpulsionY, NbrStateZ, LowImpulsionZ);
 
   PeriodicSpectra Spectra (Space, FileName);
   

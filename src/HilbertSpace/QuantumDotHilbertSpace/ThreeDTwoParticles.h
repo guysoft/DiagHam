@@ -28,46 +28,46 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTTHREEDTWOPARTICLES_H
-#define ABSTRACTTHREEDTWOPARTICLES_H
+#ifndef THREEDTWOPARTICLES_H
+#define THREEDTWOPARTICLES_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 
-class AbstractThreeDTwoParticles : public AbstractHilbertSpace
+class ThreeDTwoParticles : public AbstractHilbertSpace
 {
 
  protected:
 
   // Hilbert space of the first particle
-  AbstractThreeDOneParticle* FirstParticle;
+  ThreeDOneParticle* FirstParticle;
 
   // Hilbert space of the second particle
-  AbstractThreeDOneParticle* SecondParticle;
+  ThreeDOneParticle* SecondParticle;
 
  public:
 
   // default constructor
   //
-  AbstractThreeDTwoParticles ();
+  ThreeDTwoParticles ();
 
   // constructor from two abstract particles
   //
   // firstParticle = pointer to the first abstract particle
   // secondParticle = pointer to the second abstract particle
-  AbstractThreeDTwoParticles (AbstractThreeDOneParticle* firstParticle, AbstractThreeDOneParticle* secondParticle);
+  ThreeDTwoParticles (ThreeDOneParticle* firstParticle, ThreeDOneParticle* secondParticle);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  AbstractThreeDTwoParticles (const AbstractThreeDTwoParticles& space);
+  ThreeDTwoParticles (const ThreeDTwoParticles& space);
 
   // destructor
   //
-  virtual ~AbstractThreeDTwoParticles();
+  virtual ~ThreeDTwoParticles();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -78,7 +78,7 @@ class AbstractThreeDTwoParticles : public AbstractHilbertSpace
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  AbstractThreeDTwoParticles& operator = (const AbstractThreeDTwoParticles& space);
+  ThreeDTwoParticles& operator = (const ThreeDTwoParticles& space);
 
   // return a list of all possible quantum numbers 
   //
@@ -109,12 +109,12 @@ class AbstractThreeDTwoParticles : public AbstractHilbertSpace
   // get the Hilbert space description of the first particle
   //
   // return = pointer to the Hilbert space
-  virtual AbstractThreeDOneParticle* GetFirstParticleSpace ();
+  virtual ThreeDOneParticle* GetFirstParticleSpace ();
 
   // get the Hilbert space description of the second particle
   //
   // return = pointer to the Hilbert space
-  virtual AbstractThreeDOneParticle* GetSecondParticleSpace ();
+  virtual ThreeDOneParticle* GetSecondParticleSpace ();
 
 };
 
@@ -122,9 +122,9 @@ class AbstractThreeDTwoParticles : public AbstractHilbertSpace
 //
 // return = pointer to the Hilbert space
 
-inline AbstractThreeDOneParticle* AbstractThreeDTwoParticles::GetFirstParticleSpace ()
+inline ThreeDOneParticle* ThreeDTwoParticles::GetFirstParticleSpace ()
 {
-  AbstractThreeDOneParticle* firstParticle = (AbstractThreeDOneParticle*) this->FirstParticle->Clone ();
+  ThreeDOneParticle* firstParticle = (ThreeDOneParticle*) this->FirstParticle->Clone ();
   return firstParticle;
 }
 
@@ -132,9 +132,9 @@ inline AbstractThreeDOneParticle* AbstractThreeDTwoParticles::GetFirstParticleSp
 //
 // return = pointer to the Hilbert space
 
-inline AbstractThreeDOneParticle* AbstractThreeDTwoParticles::GetSecondParticleSpace ()
+inline ThreeDOneParticle* ThreeDTwoParticles::GetSecondParticleSpace ()
 {
-  AbstractThreeDOneParticle* secondParticle = (AbstractThreeDOneParticle*) this->SecondParticle->Clone ();
+  ThreeDOneParticle* secondParticle = (ThreeDOneParticle*) this->SecondParticle->Clone ();
   return secondParticle;
 }
 

@@ -51,7 +51,7 @@ using std::endl;
 // waveVectorZ = wave vector of Bloch function in Z direction
 // PotentialInput = pointer to a 3D potential with constant value in a cell
 
-CylindricalQuantumDots3DHamiltonian::CylindricalQuantumDots3DHamiltonian(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput)
+CylindricalQuantumDots3DHamiltonian::CylindricalQuantumDots3DHamiltonian(PlanarRotationSymmetryZPeriodicOneParticle* space, double mur, double muz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput)
 {
   this->Space = space;
   int nbrCylinder = PotentialInput->GetNbrCylinderZ();
@@ -61,12 +61,12 @@ CylindricalQuantumDots3DHamiltonian::CylindricalQuantumDots3DHamiltonian(Vertica
     this->ZSize += PotentialInput->GetHeight(k);            
   this->Mur = mur;
   this->Muz = muz;
-  this->NumberM = this->Space->GetQuantumNumberM();
-  this->NbrStateR = this->Space->GetNbrStateR();
+  this->NumberM = this->Space->GetLz ();
+  this->NbrStateR = this->Space->GetNbrStateR ();
   if (this->NbrStateR > NBRBESSELFUNCTION)
     cout << "The number of Bessel functions in the plane is too big" << endl;
-  this->NbrStateZ = this->Space->GetNbrStateZ();
-  this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();
+  this->NbrStateZ = this->Space->GetNbrStateZ ();
+  this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ ();
 
   cout << "Evaluating confinement potential ..." << endl;
   this->EvaluateInteractionFactors(waveVectorZ, PotentialInput);
@@ -84,7 +84,7 @@ CylindricalQuantumDots3DHamiltonian::CylindricalQuantumDots3DHamiltonian(const C
   this->ZSize = hamiltonian.ZSize;
   this->Mur = hamiltonian.Mur;
   this->Muz = hamiltonian.Muz;
-  this->NumberM = this->Space->GetQuantumNumberM();
+  this->NumberM = this->Space->GetLz ();
   this->NbrStateR = this->Space->GetNbrStateR();
   this->NbrStateZ = this->Space->GetNbrStateZ();
   this->LowerImpulsionZ = this->Space->GetLowerImpulsionZ();

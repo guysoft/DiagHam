@@ -2,17 +2,7 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQuantumDotHilbertSpace.a
 
-libQuantumDotHilbertSpace_a_SOURCES=Periodic1DOneParticle.cc \
-Confined3DOneParticle.cc \
-Periodic3DOneParticle.cc \
-InPlaneReflexionSymmetricPeriodic3DOneParticle.cc \
-XYReflexionSymmetricPeriodic3DOneParticle.cc \
-ImpairXImpairYPeriodic3DOneParticle.cc \
-ImpairXPairYPeriodic3DOneParticle.cc \
-PairXImpairYPeriodic3DOneParticle.cc \
-PairXPairYPeriodic3DOneParticle.cc \
-VerticalPeriodicParticleInMagneticField.cc \
-OneDOneParticle.cc \
+libQuantumDotHilbertSpace_a_SOURCES=OneDOneParticle.cc \
 PeriodicOneDOneParticle.cc \
 PeriodicReflexionSymmetryOneDOneParticle.cc \
 TwoDOneParticle.cc \

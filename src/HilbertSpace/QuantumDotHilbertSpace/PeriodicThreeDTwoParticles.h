@@ -35,10 +35,10 @@
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDTwoParticles.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDTwoParticles.h"
 
 
-class PeriodicThreeDTwoParticles : public AbstractThreeDTwoParticles
+class PeriodicThreeDTwoParticles : public ThreeDTwoParticles
 {
 
  protected:
@@ -78,12 +78,12 @@ class PeriodicThreeDTwoParticles : public AbstractThreeDTwoParticles
   // get the Hilbert space description of the first particle
   //
   // return = pointer to the Hilbert space
-  AbstractThreeDOneParticle* GetFirstParticleSpace ();
+  ThreeDOneParticle* GetFirstParticleSpace ();
 
   // get the Hilbert space description of the second particle
   //
   // return = pointer to the Hilbert space
-  AbstractThreeDOneParticle* GetSecondParticleSpace ();
+  ThreeDOneParticle* GetSecondParticleSpace ();
   
 };
 
@@ -91,7 +91,7 @@ class PeriodicThreeDTwoParticles : public AbstractThreeDTwoParticles
 //
 // return = pointer to the Hilbert space
 
-inline AbstractThreeDOneParticle* PeriodicThreeDTwoParticles::GetFirstParticleSpace ()
+inline ThreeDOneParticle* PeriodicThreeDTwoParticles::GetFirstParticleSpace ()
 {
   PeriodicThreeDOneParticle* firstParticle = (PeriodicThreeDOneParticle*) this->FirstParticle->Clone ();
   return firstParticle;
@@ -101,7 +101,7 @@ inline AbstractThreeDOneParticle* PeriodicThreeDTwoParticles::GetFirstParticleSp
 //
 // return = pointer to the Hilbert space
 
-inline AbstractThreeDOneParticle* PeriodicThreeDTwoParticles::GetSecondParticleSpace ()
+inline ThreeDOneParticle* PeriodicThreeDTwoParticles::GetSecondParticleSpace ()
 {
   PeriodicThreeDOneParticle* secondParticle = (PeriodicThreeDOneParticle*) this->SecondParticle->Clone ();
   return secondParticle;

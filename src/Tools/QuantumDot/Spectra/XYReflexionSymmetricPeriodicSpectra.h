@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXYReflexionZPeriodicThreeDOneParticle.h"
 
 
 class XYReflexionSymmetricPeriodicSpectra
@@ -57,7 +57,7 @@ class XYReflexionSymmetricPeriodicSpectra
   //
   // space = Hilbert space describing the particle
   // fileName = name of the state file
-  XYReflexionSymmetricPeriodicSpectra(XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName);
+  XYReflexionSymmetricPeriodicSpectra(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName);
 
   // get the wave function value of a state at a given point
   //
@@ -79,7 +79,7 @@ class XYReflexionSymmetricPeriodicSpectra
   // fileName = the file to stock the other function
   // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
   // impulsionX, impulsionY, impulsionZ = reference to the return values
-  void GetImpulsion(XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  void GetImpulsion(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
   // get the value of impulsion  with a continuum state, described by Z plane waves
   //
@@ -96,7 +96,13 @@ class XYReflexionSymmetricPeriodicSpectra
   // fileName = the file to stock the other function
   // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
   // overlapX, overlapY = reference to the return values
-  void GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
+  void GetDerivedOverlap (PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
+
+  // get the probability of finding the particle in a cube
+  //
+  // minX, maxX, minY, maxY, minZ, maxZ = bounds of the cube in unit of proportion compared to the whole length
+  // return = value of the probability  
+  double GetCubeProbability (double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
 
 };
 

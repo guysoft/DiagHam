@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
 #include <iostream>
 
 
@@ -50,7 +50,7 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  Periodic3DOneParticle* Space;
+  PeriodicThreeDOneParticle* Space;
 
   // wave function basis dimension in the x direction
   int NbrStateX;  
@@ -131,7 +131,7 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // waveVectorX = wave vector of Bloch function in X direction
   // waveVectorY = wave vector of Bloch function in Y direction
   // waveVectorZ = wave vector of Bloch function in Z direction
-  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX = 0.0, double waveVectorY = 0.0, double waveVectorZ = 0.0);
+  PeriodicQuantumDots3DHamiltonian(PeriodicThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX = 0.0, double waveVectorY = 0.0, double waveVectorZ = 0.0);
 
   // copy constructor (without duplicating datas)
   //

@@ -6,7 +6,7 @@
 //                  Copyright (C) 2003-2004 Duc-Phuong Nguyen                 //
 //                                                                            //
 //                                                                            //
-//                     class of hilbert space of one 3d particle              //
+//                     class of hilbert space of one 2d particle              //
 //                                                                            //
 //                        last modification : 11/08/2004                      //
 //                                                                            //
@@ -28,45 +28,45 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTTWODONEPARTICLE_H
-#define ABSTRACTTWODONEPARTICLE_H
+#ifndef TWODONEPARTICLE_H
+#define TWODONEPARTICLE_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/OneDOneParticle.h"
 
 
-class AbstractTwoDOneParticle : public AbstractHilbertSpace
+class TwoDOneParticle : public AbstractHilbertSpace
 {
 
  protected:
 
   // wave function basis dimension in the x direction
-  AbstractOneDOneParticle* StateX;
+  OneDOneParticle* StateX;
   // wave function basis dimension in the y direction
-  AbstractOneDOneParticle* StateY;
+  OneDOneParticle* StateY;
 
  public:
 
   // default constructor
   //
-  AbstractTwoDOneParticle ();
+  TwoDOneParticle ();
 
   // constructor
   //
   // nbrStateX = wave function basis dimension in the x direction
   // nbrStateY = wave function basis dimension in the y direction
-  AbstractTwoDOneParticle (int nbrStateX, int nbrStateY);
+  TwoDOneParticle (int nbrStateX, int nbrStateY);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  AbstractTwoDOneParticle (const AbstractTwoDOneParticle& space);
+  TwoDOneParticle (const TwoDOneParticle& space);
 
   // destructor
   //
- virtual  ~AbstractTwoDOneParticle();
+  virtual  ~TwoDOneParticle();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -77,7 +77,7 @@ class AbstractTwoDOneParticle : public AbstractHilbertSpace
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  AbstractTwoDOneParticle& operator = (const AbstractTwoDOneParticle& space);
+  TwoDOneParticle& operator = (const TwoDOneParticle& space);
 
   // get wave function basis dimension in the x direction
   //
@@ -92,12 +92,12 @@ class AbstractTwoDOneParticle : public AbstractHilbertSpace
   // get the wave function basis in X direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateX ();
+  virtual OneDOneParticle* GetStateX ();
 
   // get the wave function basis in Y direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateY ();
+  virtual OneDOneParticle* GetStateY ();
 
   // return a list of all possible quantum numbers 
   //
@@ -131,7 +131,7 @@ class AbstractTwoDOneParticle : public AbstractHilbertSpace
 //
 // return value = wave function basis dimension in the x direction
 
-inline int AbstractTwoDOneParticle::GetNbrStateX ()
+inline int TwoDOneParticle::GetNbrStateX ()
 {
   return this->StateX->GetNbrState ();
 }
@@ -140,7 +140,7 @@ inline int AbstractTwoDOneParticle::GetNbrStateX ()
 //
 // return value = wave function basis dimension in the y direction
 
-inline int AbstractTwoDOneParticle::GetNbrStateY ()
+inline int TwoDOneParticle::GetNbrStateY ()
 {
   return this->StateY->GetNbrState ();
 }
@@ -149,9 +149,9 @@ inline int AbstractTwoDOneParticle::GetNbrStateY ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractTwoDOneParticle::GetStateX ()
+inline OneDOneParticle* TwoDOneParticle::GetStateX ()
 {
-  AbstractOneDOneParticle* stateX = (AbstractOneDOneParticle*) this->StateX->Clone ();
+  OneDOneParticle* stateX = (OneDOneParticle*) this->StateX->Clone ();
   return stateX;
 }
 
@@ -159,9 +159,9 @@ inline AbstractOneDOneParticle* AbstractTwoDOneParticle::GetStateX ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractTwoDOneParticle::GetStateY ()
+inline OneDOneParticle* TwoDOneParticle::GetStateY ()
 {
-  AbstractOneDOneParticle* stateY = (AbstractOneDOneParticle*) this->StateY->Clone ();
+  OneDOneParticle* stateY = (OneDOneParticle*) this->StateY->Clone ();
   return stateY;
 }
 

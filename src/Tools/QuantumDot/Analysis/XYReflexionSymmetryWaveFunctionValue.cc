@@ -6,11 +6,7 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXYReflexionZPeriodicThreeDOneParticle.h"
 
 #include "Tools/QuantumDot/Spectra/XYReflexionSymmetricPeriodicSpectra.h"
 
@@ -99,18 +95,7 @@ int main(int argc, char** argv)
   char* FileName = ((SingleStringOption*) Manager["input"])->GetString();
   bool Density = ((BooleanOption*) Manager["density"])->GetBoolean();
 
-  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
-  XYReflexionSymmetricPeriodic3DOneParticle* Space;
-  if (PairX)
-    if (PairY)
-      Space = new PairXPairYPeriodic3DOneParticle (GeneralSpace);     
-    else
-      Space = new PairXImpairYPeriodic3DOneParticle (GeneralSpace); 
-  else
-     if (PairY)
-      Space = new ImpairXPairYPeriodic3DOneParticle (GeneralSpace);     
-    else
-      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);  
+  PeriodicXYReflexionZPeriodicThreeDOneParticle* Space = new PeriodicXYReflexionZPeriodicThreeDOneParticle (NbrStateX, PairX, NbrStateY, PairY, NbrStateZ, LowImpulsionZ); 
   
   XYReflexionSymmetricPeriodicSpectra Spectra (Space, FileName);
   

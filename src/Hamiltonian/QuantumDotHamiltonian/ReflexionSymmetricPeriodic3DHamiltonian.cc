@@ -33,7 +33,6 @@
 #include "Complex.h"
 #include "Vector/ComplexVector.h"
 #include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 
 #include <iostream>
 #include <math.h>
@@ -65,7 +64,7 @@ using std::endl;
 // waveVectorY = wave vector of Bloch function in Y direction
 // waveVectorZ = wave vector of Bloch function in Z direction
 
-ReflexionSymmetricPeriodic3DHamiltonian::ReflexionSymmetricPeriodic3DHamiltonian(InPlaneReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorY, double waveVectorZ)
+ReflexionSymmetricPeriodic3DHamiltonian::ReflexionSymmetricPeriodic3DHamiltonian(PeriodicXReflexionYZPeriodicThreeDOneParticle* space, bool pairX, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorY, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;

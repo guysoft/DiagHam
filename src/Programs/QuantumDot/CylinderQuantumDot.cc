@@ -5,10 +5,8 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic1DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryZPeriodicOneParticle.h"
 
-#include "Hamiltonian/QuantumDotHamiltonian/Periodic1DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/CylindricalQuantumDots3DHamiltonian.h"
 
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
@@ -156,8 +154,8 @@ int main(int argc, char** argv)
   potential->ConstructPotential(DotPotential, WellPotential);
 
   // define Hilbert space
-  // VerticalPeriodicParticleInMagneticField(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
-  VerticalPeriodicParticleInMagneticField* Space = new VerticalPeriodicParticleInMagneticField(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ);  
+  // PlanarRotationSymmetryZPeriodicOneParticle(int nbrStateR, int nbrStateZ, int lowerImpulsionZ);
+  PlanarRotationSymmetryZPeriodicOneParticle* Space = new PlanarRotationSymmetryZPeriodicOneParticle(NumberM, NbrStateR, NbrStateZ, LowImpulsionZ);  
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
@@ -168,7 +166,7 @@ int main(int argc, char** argv)
   //cout << "Minimal impulsions:       " << Space->GetLowerImpulsionZ() << endl;
   //cout << "Hilbert space dimension: " << Space->GetHilbertSpaceDimension() << endl;
   
-  // CylindricalQuantumDots3DHamiltonian(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double waveVector, ThreeDConstantCylinderPotential* PotentialInput);
+  // CylindricalQuantumDots3DHamiltonian(PlanarRotationSymmetryZPeriodicOneParticle* space, double mur, double muz, double waveVector, ThreeDConstantCylinderPotential* PotentialInput);
   CylindricalQuantumDots3DHamiltonian Hamiltonian(Space, Mur, Muz, WaveVector, potential);
 
   gettimeofday (&(PrecalculationEndingTime), 0);

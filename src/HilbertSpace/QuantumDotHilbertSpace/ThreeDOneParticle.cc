@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 using std::cout;
 using std::endl;
@@ -38,7 +38,7 @@ using std::endl;
 // default constructor
 //
 
-AbstractThreeDOneParticle::AbstractThreeDOneParticle ()
+ThreeDOneParticle::ThreeDOneParticle ()
 {
 }
 
@@ -48,11 +48,11 @@ AbstractThreeDOneParticle::AbstractThreeDOneParticle ()
 // nbrStateY = wave function basis dimension in the y direction
 // nbrStateZ = wave function basis dimension in the z direction
 
-AbstractThreeDOneParticle::AbstractThreeDOneParticle (int nbrStateX, int nbrStateY, int nbrStateZ)
+ThreeDOneParticle::ThreeDOneParticle (int nbrStateX, int nbrStateY, int nbrStateZ)
 {
-  this->StateX = new AbstractOneDOneParticle (nbrStateX);
-  this->StateY = new AbstractOneDOneParticle (nbrStateY);
-  this->StateZ = new AbstractOneDOneParticle (nbrStateZ);
+  this->StateX = new OneDOneParticle (nbrStateX);
+  this->StateY = new OneDOneParticle (nbrStateY);
+  this->StateZ = new OneDOneParticle (nbrStateZ);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState () * this->StateZ->GetNbrState ();
 }
 
@@ -60,7 +60,7 @@ AbstractThreeDOneParticle::AbstractThreeDOneParticle (int nbrStateX, int nbrStat
 //
 // space = reference on Hilbert space to copy
 
-AbstractThreeDOneParticle::AbstractThreeDOneParticle (const AbstractThreeDOneParticle& space)
+ThreeDOneParticle::ThreeDOneParticle (const ThreeDOneParticle& space)
 {
   this->StateX = space.StateX;
   this->StateY = space.StateY;
@@ -71,7 +71,7 @@ AbstractThreeDOneParticle::AbstractThreeDOneParticle (const AbstractThreeDOnePar
 // destructor
 //
 
-AbstractThreeDOneParticle::~AbstractThreeDOneParticle ()
+ThreeDOneParticle::~ThreeDOneParticle ()
 {
   delete this->StateX;
   delete this->StateY;
@@ -83,7 +83,7 @@ AbstractThreeDOneParticle::~AbstractThreeDOneParticle ()
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-AbstractThreeDOneParticle& AbstractThreeDOneParticle::operator = (const AbstractThreeDOneParticle& space)
+ThreeDOneParticle& ThreeDOneParticle::operator = (const ThreeDOneParticle& space)
 {
   this->StateX = space.StateX;
   this->StateY = space.StateY;
@@ -96,16 +96,16 @@ AbstractThreeDOneParticle& AbstractThreeDOneParticle::operator = (const Abstract
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* AbstractThreeDOneParticle::Clone ()
+AbstractHilbertSpace* ThreeDOneParticle::Clone ()
 {
-  return new AbstractThreeDOneParticle (*this);
+  return new ThreeDOneParticle (*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> AbstractThreeDOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> ThreeDOneParticle::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -116,7 +116,7 @@ List<AbstractQuantumNumber*> AbstractThreeDOneParticle::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* AbstractThreeDOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* ThreeDOneParticle::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -127,7 +127,7 @@ AbstractQuantumNumber* AbstractThreeDOneParticle::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* AbstractThreeDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* ThreeDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -139,7 +139,7 @@ AbstractHilbertSpace* AbstractThreeDOneParticle::ExtractSubspace (AbstractQuantu
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& AbstractThreeDOneParticle::PrintState (ostream& Str, int state)
+ostream& ThreeDOneParticle::PrintState (ostream& Str, int state)
 { 
   int NbrStateY = this->StateY->GetNbrState (); int NbrStateZ = this->StateZ->GetNbrState (); 
   int i1 = state / (NbrStateY * NbrStateZ);

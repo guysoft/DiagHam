@@ -42,7 +42,7 @@ using std::ios;
 // space = Hilbert space describing the particle
 // fileName = name of the state file
 
-XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName)
+XYReflexionSymmetricPeriodicSpectra::XYReflexionSymmetricPeriodicSpectra(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName)
 {
   this->NbrStateX = space->GetNbrStateX();
   this->NbrStateY = space->GetNbrStateY();
@@ -395,7 +395,7 @@ double XYReflexionSymmetricPeriodicSpectra::PlanarProbabilityDensity(double x, d
 // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
 // impulsionX, impulsionY, impulsionZ = reference to the return values
 
-void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
+void XYReflexionSymmetricPeriodicSpectra::GetImpulsion(PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ)
 {
   int nbrStateX = space->GetNbrStateX();
   int nbrStateY = space->GetNbrStateY();
@@ -590,7 +590,7 @@ void XYReflexionSymmetricPeriodicSpectra::GetImpulsionWithContinuum(int impulsio
 // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
 // overlap, overlapX, overlapY = reference to the return values
 
-void XYReflexionSymmetricPeriodicSpectra::GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY)
+void XYReflexionSymmetricPeriodicSpectra::GetDerivedOverlap (PeriodicXYReflexionZPeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY)
 {
   int nbrStateX = space->GetNbrStateX();
   int nbrStateY = space->GetNbrStateY();
@@ -665,4 +665,14 @@ void XYReflexionSymmetricPeriodicSpectra::GetDerivedOverlap (XYReflexionSymmetri
 	} 
   realOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); imaginaryOverlapX *= (4.0 * M_PI * M_PI / (sizeX * sizeX)); 
   realOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); imaginaryOverlapY *= (4.0 * M_PI * M_PI / (sizeY * sizeY)); 
+}
+
+// get the probability of finding the particle in a cube
+//
+// minX, maxX, minY, maxY, minZ, maxZ = bounds of the cube in unit of proportion compared to the whole length
+// return = value of the probability  
+
+double XYReflexionSymmetricPeriodicSpectra::GetCubeProbability (double minX, double maxX, double minY, double maxY, double minZ, double maxZ)
+{
+  
 }

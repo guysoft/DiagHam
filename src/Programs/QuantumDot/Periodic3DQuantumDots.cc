@@ -7,7 +7,7 @@
 #include "Vector/ComplexVector.h"
 
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
   potential->LoadPotential(CoefficientFileName);
 
   // define Hilbert space
-  Periodic3DOneParticle Space(M, -M / 2, N, -N / 2, H, -H / 2);
+  PeriodicThreeDOneParticle Space(M, -M / 2, N, -N / 2, H, -H / 2);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);  

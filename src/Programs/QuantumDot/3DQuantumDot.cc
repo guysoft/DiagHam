@@ -4,7 +4,7 @@
 
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumDots3DHamiltonian.h"
 
@@ -177,12 +177,12 @@ int main(int argc, char** argv)
     }
   */
 
-  Confined3DOneParticle Space(M, N, H);
+  ThreeDOneParticle Space(M, N, H);
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;
   gettimeofday (&(PrecalculationStartingTime), 0);
 
-  //  QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory = -1);
+  //  QuantumDots3DHamiltonian(ThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory = -1);
   QuantumDots3DHamiltonian Hamiltonian(&Space, Lx * ((double) M), Ly * ((double) N),  Lz * ((double) H), Mux, Muy, Muz, M, N, H - LeftSize - RightSize, potential, Memory << 20);
 
   gettimeofday (&(PrecalculationEndingTime), 0);

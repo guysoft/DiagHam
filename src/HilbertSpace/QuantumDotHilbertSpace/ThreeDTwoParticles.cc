@@ -3,13 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Duc-Phuong Nguyen                 //
+//                  Copyright (C) 2003-2004 Duc-Phuong Nguyen                 //
 //                                                                            //
 //                                                                            //
-//              class of hilbert space of one 1d periodic box particle        //
+//                     class of hilbert space of two 3d particles             //
 //                                                                            //
-//                        last modification : 05/07/2004                      //
-
+//                        last modification : 13/10/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,43 +29,48 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic1DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDTwoParticles.h"
 
+using std::cout;
+using std::endl;
 
 // default constructor
 //
 
-Periodic1DOneParticle::Periodic1DOneParticle()
+ThreeDTwoParticles::ThreeDTwoParticles ()
 {
 }
 
-// constructor
+// constructor from two abstract particles
 //
-// nbrState = wave function basis dimension
-// low = lower impulsion
+// firstParticle = pointer to the first abstract particle
+// secondParticle = pointer to the second abstract particle
 
-Periodic1DOneParticle::Periodic1DOneParticle(int nbrState, int low)
+ThreeDTwoParticles::ThreeDTwoParticles (ThreeDOneParticle* firstParticle, ThreeDOneParticle* secondParticle)
 {
-  this->NbrState = nbrState;
-  this->LowerImpulsion = low;
-  this->HilbertSpaceDimension = this->NbrState;
+  this->FirstParticle = firstParticle;
+  this->SecondParticle = secondParticle;
+  this->HilbertSpaceDimension = this->FirstParticle->GetHilbertSpaceDimension () * this->SecondParticle->GetHilbertSpaceDimension ();
 }
 
 // copy constructor
 //
 // space = reference on Hilbert space to copy
 
-Periodic1DOneParticle::Periodic1DOneParticle(const Periodic1DOneParticle& space)
+ThreeDTwoParticles::ThreeDTwoParticles (const ThreeDTwoParticles& space)
 {
-  this->NbrState = space.NbrState;
-  this->LowerImpulsion = space.LowerImpulsion;
+  this->FirstParticle = space.FirstParticle;
+  this->SecondParticle = space.SecondParticle;
+  this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
 }
 
 // destructor
 //
 
-Periodic1DOneParticle::~Periodic1DOneParticle()
+ThreeDTwoParticles::~ThreeDTwoParticles ()
 {
+  delete this->FirstParticle;
+  delete this->SecondParticle;
 }
 
 // assignement
@@ -74,10 +78,11 @@ Periodic1DOneParticle::~Periodic1DOneParticle()
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-Periodic1DOneParticle& Periodic1DOneParticle::operator = (const Periodic1DOneParticle& space)
+ThreeDTwoParticles& ThreeDTwoParticles::operator = (const ThreeDTwoParticles& space)
 {
-  this->NbrState = space.NbrState;
-  this->LowerImpulsion = space.LowerImpulsion;
+  this->FirstParticle = space.FirstParticle;
+  this->SecondParticle = space.SecondParticle;
+  this->HilbertSpaceDimension = space.HilbertSpaceDimension;  
   return *this;
 }
 
@@ -85,16 +90,16 @@ Periodic1DOneParticle& Periodic1DOneParticle::operator = (const Periodic1DOnePar
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* Periodic1DOneParticle::Clone()
+AbstractHilbertSpace* ThreeDTwoParticles::Clone ()
 {
-  return new Periodic1DOneParticle(*this);
+  return new ThreeDTwoParticles (*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> Periodic1DOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> ThreeDTwoParticles::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -105,7 +110,7 @@ List<AbstractQuantumNumber*> Periodic1DOneParticle::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* Periodic1DOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* ThreeDTwoParticles::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -116,7 +121,7 @@ AbstractQuantumNumber* Periodic1DOneParticle::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* Periodic1DOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* ThreeDTwoParticles::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -128,11 +133,11 @@ AbstractHilbertSpace* Periodic1DOneParticle::ExtractSubspace (AbstractQuantumNum
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& Periodic1DOneParticle::PrintState (ostream& Str, int state)
-{
-  
-  Str << "(" << state << ")";
+ostream& ThreeDTwoParticles::PrintState (ostream& Str, int state)
+{ 
+  int dimension2 = this->SecondParticle->GetHilbertSpaceDimension ();
+  int state1 = state / dimension2; int state2 = state - state1 * dimension2;
+
+  Str << "'" << this->FirstParticle->PrintState (Str, state1) << ", " << this->SecondParticle->PrintState (Str, state2) << ")";
   return Str;
 }
-
-

@@ -29,13 +29,13 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractTwoDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/TwoDOneParticle.h"
 
 
 // default constructor
 //
 
-AbstractTwoDOneParticle::AbstractTwoDOneParticle ()
+TwoDOneParticle::TwoDOneParticle ()
 {
 }
 
@@ -44,10 +44,10 @@ AbstractTwoDOneParticle::AbstractTwoDOneParticle ()
 // nbrStateX = wave function basis dimension in the x direction
 // nbrStateY = wave function basis dimension in the y direction
 
-AbstractTwoDOneParticle::AbstractTwoDOneParticle (int nbrStateX, int nbrStateY)
+TwoDOneParticle::TwoDOneParticle (int nbrStateX, int nbrStateY)
 {
-  this->StateX = new AbstractOneDOneParticle (nbrStateX);
-  this->StateY = new AbstractOneDOneParticle (nbrStateY);
+  this->StateX = new OneDOneParticle (nbrStateX);
+  this->StateY = new OneDOneParticle (nbrStateY);
   this->HilbertSpaceDimension = this->StateX->GetNbrState () * this->StateY->GetNbrState ();
 }
 
@@ -55,7 +55,7 @@ AbstractTwoDOneParticle::AbstractTwoDOneParticle (int nbrStateX, int nbrStateY)
 //
 // space = reference on Hilbert space to copy
 
-AbstractTwoDOneParticle::AbstractTwoDOneParticle (const AbstractTwoDOneParticle& space)
+TwoDOneParticle::TwoDOneParticle (const TwoDOneParticle& space)
 {
   this->StateX = space.StateX;
   this->StateY = space.StateY;
@@ -65,7 +65,7 @@ AbstractTwoDOneParticle::AbstractTwoDOneParticle (const AbstractTwoDOneParticle&
 // destructor
 //
 
-AbstractTwoDOneParticle::~AbstractTwoDOneParticle ()
+TwoDOneParticle::~TwoDOneParticle ()
 {
   delete this->StateX;
   delete this->StateY;
@@ -76,7 +76,7 @@ AbstractTwoDOneParticle::~AbstractTwoDOneParticle ()
 // space = reference on Hilbert space to assign
 // return value = reference on current Hilbert space
 
-AbstractTwoDOneParticle& AbstractTwoDOneParticle::operator = (const AbstractTwoDOneParticle& space)
+TwoDOneParticle& TwoDOneParticle::operator = (const TwoDOneParticle& space)
 {
   this->StateX = space.StateX;
   this->StateY = space.StateY;
@@ -88,16 +88,16 @@ AbstractTwoDOneParticle& AbstractTwoDOneParticle::operator = (const AbstractTwoD
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* AbstractTwoDOneParticle::Clone ()
+AbstractHilbertSpace* TwoDOneParticle::Clone ()
 {
-  return new AbstractTwoDOneParticle (*this);
+  return new TwoDOneParticle (*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> AbstractTwoDOneParticle::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> TwoDOneParticle::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   return TmpList;
@@ -108,7 +108,7 @@ List<AbstractQuantumNumber*> AbstractTwoDOneParticle::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* AbstractTwoDOneParticle::GetQuantumNumber (int index)
+AbstractQuantumNumber* TwoDOneParticle::GetQuantumNumber (int index)
 {
   return 0;
 }
@@ -119,7 +119,7 @@ AbstractQuantumNumber* AbstractTwoDOneParticle::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* AbstractTwoDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* TwoDOneParticle::ExtractSubspace (AbstractQuantumNumber& q, 
 							      SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -131,7 +131,7 @@ AbstractHilbertSpace* AbstractTwoDOneParticle::ExtractSubspace (AbstractQuantumN
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& AbstractTwoDOneParticle::PrintState (ostream& Str, int state)
+ostream& TwoDOneParticle::PrintState (ostream& Str, int state)
 { 
   int NbrStateY = this->StateY->GetNbrState ();
   int i1 = state / NbrStateY;

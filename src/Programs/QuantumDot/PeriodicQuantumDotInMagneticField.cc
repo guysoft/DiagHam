@@ -6,7 +6,7 @@
 #include "Vector/ComplexVector.h"
 
 #include "HilbertSpace/UndescribedHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonian.h"
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicQuantumDots3DHamiltonianInMagneticField.h"
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
   potential->SavePotential("DotPotential.txt");
   
   // define Hilbert space
-  Periodic3DOneParticle* Space = new Periodic3DOneParticle(NbrStateX, LowImpulsionX, NbrStateY, LowImpulsionY, NbrStateZ, LowImpulsionZ);
+  PeriodicThreeDOneParticle* Space = new PeriodicThreeDOneParticle (NbrStateX, LowImpulsionX, NbrStateY, LowImpulsionY, NbrStateZ, LowImpulsionZ);
 
   timeval PrecalculationStartingTime;
   timeval PrecalculationEndingTime;

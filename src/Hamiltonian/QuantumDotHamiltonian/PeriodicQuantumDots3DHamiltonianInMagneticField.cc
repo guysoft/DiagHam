@@ -63,7 +63,7 @@ using std::endl;
 // PotentialInput = pointer to a 3D potential with constant value in a cell
 // waveVectorZ = wave vector of Bloch function in Z direction
 
-PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonianInMagneticField(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
+PeriodicQuantumDots3DHamiltonianInMagneticField::PeriodicQuantumDots3DHamiltonianInMagneticField(PeriodicThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, double bx, double by, double bz, ThreeDConstantCellPotential* PotentialInput, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;

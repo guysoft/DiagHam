@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryZPeriodicOneParticle.h"
 
 #include <iostream>
 
@@ -49,7 +49,7 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  VerticalPeriodicParticleInMagneticField* Space;
+  PlanarRotationSymmetryZPeriodicOneParticle* Space;
 
   // quantum number of kinetic momentum in Z direction
   int NumberM;
@@ -86,7 +86,7 @@ class CylindricalHamiltonianInMagneticField : public AbstractHamiltonian
   // bz = Z magnetic field component
   // waveVectorZ = wave vector of Bloch function in Z direction
   // PotentialInput = pointer to a 3D potential with constant value in a cell
-  CylindricalHamiltonianInMagneticField(VerticalPeriodicParticleInMagneticField* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput);
+  CylindricalHamiltonianInMagneticField(PlanarRotationSymmetryZPeriodicOneParticle* space, double mur, double muz, double bz, double waveVectorZ, ThreeDConstantCylinderPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //

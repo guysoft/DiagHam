@@ -65,7 +65,7 @@ using std::endl;
 // overlapingFactors = tridimensionnal array where overlaping factors are stored
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory)
+QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(ThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory)
 {
   this->Space = space;
   this->XSize = xSize;
@@ -129,7 +129,7 @@ QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space,
 // overlapingFactors = tridimensionnal array where overlaping factors are stored
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, EllipticalDotThreeDConstantCellPotential* PotentialInput, int memory)
+QuantumDots3DHamiltonian::QuantumDots3DHamiltonian(ThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, EllipticalDotThreeDConstantCellPotential* PotentialInput, int memory)
 {
   this->Space = space;
   this->XSize = xSize;

@@ -28,16 +28,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPLANARROTATIONSYMMETRYTHREEDONEPARTICLE_H
-#define ABSTRACTPLANARROTATIONSYMMETRYTHREEDONEPARTICLE_H
+#ifndef PLANARROTATIONSYMMETRYTHREEDONEPARTICLE_H
+#define PLANARROTATIONSYMMETRYTHREEDONEPARTICLE_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/OneDOneParticle.h"
 
 
-class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSpace
+class PlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSpace
 {
 
  protected:
@@ -45,31 +45,31 @@ class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSp
   // quantum number of the Z kinetic momentum component
   int Lz;
   // wave function basis dimension of the radial coordinate
-  AbstractOneDOneParticle* StateR;
+  OneDOneParticle* StateR;
   // wave function basis dimension in the Z direction
-  AbstractOneDOneParticle* StateZ;
+  OneDOneParticle* StateZ;
 
  public:
 
   // default constructor
   //
-  AbstractPlanarRotationSymmetryThreeDOneParticle ();
+  PlanarRotationSymmetryThreeDOneParticle ();
 
   // constructor
   //
   // lz = quantum number of the Z kinetic momentum component
   // nbrStateR = wave function basis dimension of the radial coordinate
   // nbrStateZ = wave function basis dimension in the z direction
-  AbstractPlanarRotationSymmetryThreeDOneParticle (int lz, int nbrStateR, int nbrStateZ);
+  PlanarRotationSymmetryThreeDOneParticle (int lz, int nbrStateR, int nbrStateZ);
 
   // copy constructor
   //
   // space = reference on Hilbert space to copy
-  AbstractPlanarRotationSymmetryThreeDOneParticle (const AbstractPlanarRotationSymmetryThreeDOneParticle& space);
+  PlanarRotationSymmetryThreeDOneParticle (const PlanarRotationSymmetryThreeDOneParticle& space);
 
   // destructor
   //
-  virtual ~AbstractPlanarRotationSymmetryThreeDOneParticle ();
+  virtual ~PlanarRotationSymmetryThreeDOneParticle ();
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -80,7 +80,7 @@ class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSp
   //
   // space = reference on Hilbert space to assign
   // return value = reference on current Hilbert space
-  AbstractPlanarRotationSymmetryThreeDOneParticle& operator = (const AbstractPlanarRotationSymmetryThreeDOneParticle& space);
+  PlanarRotationSymmetryThreeDOneParticle& operator = (const PlanarRotationSymmetryThreeDOneParticle& space);
 
   // get the quantum number of the Z kinetic momentum component
   //
@@ -100,12 +100,12 @@ class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSp
   // get the wave function basis in the plane
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateR ();
+  virtual OneDOneParticle* GetStateR ();
 
   // get the wave function basis in Z direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateZ ();
+  virtual OneDOneParticle* GetStateZ ();
 
   // return a list of all possible quantum numbers 
   //
@@ -139,7 +139,7 @@ class AbstractPlanarRotationSymmetryThreeDOneParticle : public AbstractHilbertSp
 //
 // return = value of quantum number of the Z kinetic momentum component
 
-inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetLz ()
+inline int PlanarRotationSymmetryThreeDOneParticle::GetLz ()
 {
   return this->Lz;
 }
@@ -148,7 +148,7 @@ inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetLz ()
 //
 // return value = wave function basis dimension in the plane
 
-inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetNbrStateR ()
+inline int PlanarRotationSymmetryThreeDOneParticle::GetNbrStateR ()
 {
   return this->StateR->GetNbrState ();
 }
@@ -157,7 +157,7 @@ inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetNbrStateR ()
 //
 // return value = wave function basis dimension in the z direction
 
-inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetNbrStateZ ()
+inline int PlanarRotationSymmetryThreeDOneParticle::GetNbrStateZ ()
 {
   return this->StateZ->GetNbrState ();
 }
@@ -166,9 +166,9 @@ inline int AbstractPlanarRotationSymmetryThreeDOneParticle::GetNbrStateZ ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractPlanarRotationSymmetryThreeDOneParticle::GetStateR ()
+inline OneDOneParticle* PlanarRotationSymmetryThreeDOneParticle::GetStateR ()
 {
-  AbstractOneDOneParticle* stateR = (AbstractOneDOneParticle*) this->StateR->Clone ();
+  OneDOneParticle* stateR = (OneDOneParticle*) this->StateR->Clone ();
   return stateR;
 }
 
@@ -176,9 +176,9 @@ inline AbstractOneDOneParticle* AbstractPlanarRotationSymmetryThreeDOneParticle:
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* AbstractPlanarRotationSymmetryThreeDOneParticle::GetStateZ ()
+inline OneDOneParticle* PlanarRotationSymmetryThreeDOneParticle::GetStateZ ()
 {
-  AbstractOneDOneParticle* stateZ = (AbstractOneDOneParticle*) this->StateZ->Clone ();
+  OneDOneParticle* stateZ = (OneDOneParticle*) this->StateZ->Clone ();
   return stateZ;
 }
 

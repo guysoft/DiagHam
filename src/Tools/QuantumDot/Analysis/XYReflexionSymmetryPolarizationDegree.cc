@@ -6,21 +6,13 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Spectra/Spectra.h"
-#include "Tools/QuantumDot/Spectra/OverlapSpectra.h"
-#include "Tools/QuantumDot/Spectra/AverageSpectra.h"
-#include "Tools/QuantumDot/Spectra/DOSSpectra.h"
-#include "Tools/QuantumDot/Spectra/PeriodicSpectra.h"
-#include "Tools/QuantumDot/Spectra/XYReflexionSymmetricPeriodicSpectra.h"
-#include "Tools/QuantumDot/Spectra/HardBoxSpectra.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXYReflexionZPeriodicThreeDOneParticle.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/XYReflexionSymmetricPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ImpairXPairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXImpairYPeriodic3DOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/PairXPairYPeriodic3DOneParticle.h"
+#include "Tools/QuantumDot/Spectra/Spectra.h"
+#include "Tools/QuantumDot/Spectra/XYReflexionSymmetricPeriodicSpectra.h"
+
+
+
 
 #include <iostream>
 #include <fstream>
@@ -82,19 +74,7 @@ int main(int argc, char** argv)
   double SizeX = ((SingleDoubleOption*) Manager["sizeX"])->GetDouble();
   double SizeY = ((SingleDoubleOption*) Manager["sizeY"])->GetDouble();
 
-   // define Hilbert space   
-  XYReflexionSymmetricPeriodic3DOneParticle GeneralSpace(NbrStateX / 2, NbrStateY / 2, NbrStateZ, LowImpulsionZ);
-  XYReflexionSymmetricPeriodic3DOneParticle* Space;
-  if (PairX)
-    if (PairY)
-      Space = new PairXPairYPeriodic3DOneParticle(GeneralSpace);     
-    else
-      Space = new PairXImpairYPeriodic3DOneParticle(GeneralSpace); 
-  else
-     if (PairY)
-      Space = new ImpairXPairYPeriodic3DOneParticle(GeneralSpace);     
-    else
-      Space = new ImpairXImpairYPeriodic3DOneParticle(GeneralSpace);
+  PeriodicXYReflexionZPeriodicThreeDOneParticle* Space = new PeriodicXYReflexionZPeriodicThreeDOneParticle (NbrStateX, PairX, NbrStateY, PairY, NbrStateZ, LowImpulsionZ); 
 
   XYReflexionSymmetricPeriodicSpectra spectra(Space, FileName1);  
 

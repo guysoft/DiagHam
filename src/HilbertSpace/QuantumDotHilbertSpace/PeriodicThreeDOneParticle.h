@@ -35,10 +35,10 @@
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicOneDOneParticle.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 
-class PeriodicThreeDOneParticle : public AbstractThreeDOneParticle
+class PeriodicThreeDOneParticle : public ThreeDOneParticle
 {
 
  protected:
@@ -97,17 +97,17 @@ class PeriodicThreeDOneParticle : public AbstractThreeDOneParticle
   // get the wave function basis in X direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateX ();
+  virtual OneDOneParticle* GetStateX ();
 
   // get the wave function basis in Y direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateY ();
+  virtual OneDOneParticle* GetStateY ();
 
   // get the wave function basis in Z direction
   //
   // return = pointer to 1D one particle basis
-  virtual AbstractOneDOneParticle* GetStateZ ();
+  virtual OneDOneParticle* GetStateZ ();
 };
 
 // get lower impulsion in X
@@ -141,9 +141,9 @@ inline int PeriodicThreeDOneParticle::GetLowerImpulsionZ ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* PeriodicThreeDOneParticle::GetStateX ()
+inline OneDOneParticle* PeriodicThreeDOneParticle::GetStateX ()
 {
-  AbstractOneDOneParticle* stateX = (PeriodicOneDOneParticle*) this->StateX->Clone ();
+  OneDOneParticle* stateX = (PeriodicOneDOneParticle*) this->StateX->Clone ();
   return stateX;
 }
 
@@ -151,18 +151,18 @@ inline AbstractOneDOneParticle* PeriodicThreeDOneParticle::GetStateX ()
 //
 // return = pointer to 1D one particle basis
 
-inline AbstractOneDOneParticle* PeriodicThreeDOneParticle::GetStateY ()
+inline OneDOneParticle* PeriodicThreeDOneParticle::GetStateY ()
 {
-  AbstractOneDOneParticle* stateY = (PeriodicOneDOneParticle*) this->StateY->Clone ();
+  OneDOneParticle* stateY = (PeriodicOneDOneParticle*) this->StateY->Clone ();
   return stateY;
 }
 
 // get the wave function basis in Z direction
 //
 // return = pointer to 1D one particle basis
-inline AbstractOneDOneParticle* PeriodicThreeDOneParticle::GetStateZ ()
+inline OneDOneParticle* PeriodicThreeDOneParticle::GetStateZ ()
 {
-  AbstractOneDOneParticle* stateZ = (PeriodicOneDOneParticle*) this->StateZ->Clone ();
+  OneDOneParticle* stateZ = (PeriodicOneDOneParticle*) this->StateZ->Clone ();
   return stateZ;
 }
 

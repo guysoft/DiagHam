@@ -50,56 +50,34 @@ AR = ar
 ARFLAGS = cru
 libQuantumDotHilbertSpace_a_AR = $(AR) $(ARFLAGS)
 libQuantumDotHilbertSpace_a_LIBADD =
-am_libQuantumDotHilbertSpace_a_OBJECTS =  \
-	Periodic1DOneParticle.$(OBJEXT) \
-	Confined3DOneParticle.$(OBJEXT) \
-	Periodic3DOneParticle.$(OBJEXT) \
-	InPlaneReflexionSymmetricPeriodic3DOneParticle.$(OBJEXT) \
-	XYReflexionSymmetricPeriodic3DOneParticle.$(OBJEXT) \
-	ImpairXImpairYPeriodic3DOneParticle.$(OBJEXT) \
-	ImpairXPairYPeriodic3DOneParticle.$(OBJEXT) \
-	PairXImpairYPeriodic3DOneParticle.$(OBJEXT) \
-	PairXPairYPeriodic3DOneParticle.$(OBJEXT) \
-	VerticalPeriodicParticleInMagneticField.$(OBJEXT) \
-	AbstractOneDOneParticle.$(OBJEXT) \
+am_libQuantumDotHilbertSpace_a_OBJECTS = OneDOneParticle.$(OBJEXT) \
 	PeriodicOneDOneParticle.$(OBJEXT) \
 	PeriodicReflexionSymmetryOneDOneParticle.$(OBJEXT) \
-	AbstractTwoDOneParticle.$(OBJEXT) \
-	AbstractThreeDOneParticle.$(OBJEXT) \
+	TwoDOneParticle.$(OBJEXT) ThreeDOneParticle.$(OBJEXT) \
 	PeriodicThreeDOneParticle.$(OBJEXT) \
 	PeriodicXReflexionYZPeriodicThreeDOneParticle.$(OBJEXT) \
 	PeriodicXYReflexionZPeriodicThreeDOneParticle.$(OBJEXT) \
-	AbstractPlanarRotationSymmetryThreeDOneParticle.$(OBJEXT) \
+	PlanarRotationSymmetryThreeDOneParticle.$(OBJEXT) \
 	PlanarRotationSymmetryZPeriodicOneParticle.$(OBJEXT) \
-	AbstractThreeDTwoParticles.$(OBJEXT) \
+	ThreeDTwoParticles.$(OBJEXT) \
 	PeriodicThreeDTwoParticles.$(OBJEXT)
 libQuantumDotHilbertSpace_a_OBJECTS =  \
 	$(am_libQuantumDotHilbertSpace_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractOneDOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractPlanarRotationSymmetryThreeDOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractThreeDOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractThreeDTwoParticles.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/AbstractTwoDOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Confined3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ImpairXImpairYPeriodic3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ImpairXPairYPeriodic3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/InPlaneReflexionSymmetricPeriodic3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PairXImpairYPeriodic3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PairXPairYPeriodic3DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Periodic1DOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Periodic3DOneParticle.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/OneDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicOneDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicReflexionSymmetryOneDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicThreeDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicThreeDTwoParticles.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicXReflexionYZPeriodicThreeDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicXYReflexionZPeriodicThreeDOneParticle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/PlanarRotationSymmetryThreeDOneParticle.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PlanarRotationSymmetryZPeriodicOneParticle.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/VerticalPeriodicParticleInMagneticField.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodic3DOneParticle.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ThreeDOneParticle.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ThreeDTwoParticles.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/TwoDOneParticle.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -202,27 +180,17 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libQuantumDotHilbertSpace.a
-libQuantumDotHilbertSpace_a_SOURCES = Periodic1DOneParticle.cc \
-Confined3DOneParticle.cc \
-Periodic3DOneParticle.cc \
-InPlaneReflexionSymmetricPeriodic3DOneParticle.cc \
-XYReflexionSymmetricPeriodic3DOneParticle.cc \
-ImpairXImpairYPeriodic3DOneParticle.cc \
-ImpairXPairYPeriodic3DOneParticle.cc \
-PairXImpairYPeriodic3DOneParticle.cc \
-PairXPairYPeriodic3DOneParticle.cc \
-VerticalPeriodicParticleInMagneticField.cc \
-AbstractOneDOneParticle.cc \
+libQuantumDotHilbertSpace_a_SOURCES = OneDOneParticle.cc \
 PeriodicOneDOneParticle.cc \
 PeriodicReflexionSymmetryOneDOneParticle.cc \
-AbstractTwoDOneParticle.cc \
-AbstractThreeDOneParticle.cc \
+TwoDOneParticle.cc \
+ThreeDOneParticle.cc \
 PeriodicThreeDOneParticle.cc \
 PeriodicXReflexionYZPeriodicThreeDOneParticle.cc \
 PeriodicXYReflexionZPeriodicThreeDOneParticle.cc \
-AbstractPlanarRotationSymmetryThreeDOneParticle.cc \
+PlanarRotationSymmetryThreeDOneParticle.cc \
 PlanarRotationSymmetryZPeriodicOneParticle.cc \
-AbstractThreeDTwoParticles.cc \
+ThreeDTwoParticles.cc \
 PeriodicThreeDTwoParticles.cc
 
 all: all-recursive
@@ -272,28 +240,18 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractOneDOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractPlanarRotationSymmetryThreeDOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractThreeDOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractThreeDTwoParticles.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractTwoDOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Confined3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ImpairXImpairYPeriodic3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ImpairXPairYPeriodic3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/InPlaneReflexionSymmetricPeriodic3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PairXImpairYPeriodic3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PairXPairYPeriodic3DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic1DOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Periodic3DOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OneDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicOneDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicReflexionSymmetryOneDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicThreeDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicThreeDTwoParticles.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXReflexionYZPeriodicThreeDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicXYReflexionZPeriodicThreeDOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PlanarRotationSymmetryThreeDOneParticle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PlanarRotationSymmetryZPeriodicOneParticle.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VerticalPeriodicParticleInMagneticField.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodic3DOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ThreeDOneParticle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ThreeDTwoParticles.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TwoDOneParticle.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

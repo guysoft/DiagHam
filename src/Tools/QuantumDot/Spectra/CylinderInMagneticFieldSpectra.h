@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/VerticalPeriodicParticleInMagneticField.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryZPeriodicOneParticle.h"
 
 class CylinderInMagneticFieldSpectra
 {
@@ -59,7 +59,7 @@ class CylinderInMagneticFieldSpectra
   // space = Hilbert space describing the particle
   // fileName = name of the state file
   // bz = magnetic field in Z direction
-  CylinderInMagneticFieldSpectra(VerticalPeriodicParticleInMagneticField* space, char* fileName, double bz);
+  CylinderInMagneticFieldSpectra(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double bz);
 
   // get the wave function value of a state at a given point
   //
@@ -80,7 +80,7 @@ class CylinderInMagneticFieldSpectra
   // fileName = the file to stock the other function
   // sizeZ = size of sample in Z direction
   // impulsionX, impulsionY, impulsionZ = reference to the return values
-  void GetImpulsion(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
+  void GetImpulsion(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeZ, double &realImpulsionX, double &imaginaryImpulsionX, double &realImpulsionY, double &imaginaryImpulsionY, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
   // get mean value of position operator
   //
@@ -88,7 +88,7 @@ class CylinderInMagneticFieldSpectra
   // fileName = the file to stock the other function
   // sizeZ = size of sample in Z direction
   // positionX, positionY, positionZ = reference to the return values
-  void GetMeanPosition(VerticalPeriodicParticleInMagneticField* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ);
+  void GetMeanPosition(PlanarRotationSymmetryZPeriodicOneParticle* space, char* fileName, double sizeZ, double &realPositionX, double &imaginaryPositionX, double &realPositionY, double &imaginaryPositionY, double &realPositionZ, double &imaginaryPositionZ);
 
   // get the value of <phi|r²|phi>
   //

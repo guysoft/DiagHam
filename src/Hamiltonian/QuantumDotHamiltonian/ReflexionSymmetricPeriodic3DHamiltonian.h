@@ -33,7 +33,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/InPlaneReflexionSymmetricPeriodic3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicXReflexionYZPeriodicThreeDOneParticle.h"
 
 #include <iostream>
 
@@ -48,7 +48,7 @@ class ReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  InPlaneReflexionSymmetricPeriodic3DOneParticle* Space;
+  PeriodicXReflexionYZPeriodicThreeDOneParticle* Space;
 
   // wave function basis dimension in the x direction
   int NbrStateX;
@@ -124,7 +124,7 @@ class ReflexionSymmetricPeriodic3DHamiltonian : public AbstractHamiltonian
   // PotentielInput = pointer to a 3D potential with constant value in a cell
   // waveVectorY = wave vector of Bloch function in Y direction
   // waveVectorZ = wave vector of Bloch function in Z direction
-  ReflexionSymmetricPeriodic3DHamiltonian(InPlaneReflexionSymmetricPeriodic3DOneParticle* space, bool pairX, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorY = 0.0, double waveVectorZ = 0.0);
+  ReflexionSymmetricPeriodic3DHamiltonian(PeriodicXReflexionYZPeriodicThreeDOneParticle* space, bool pairX, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorY = 0.0, double waveVectorZ = 0.0);
 
   // copy constructor (without duplicating datas)
   //

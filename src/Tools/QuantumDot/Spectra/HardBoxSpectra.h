@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
 
 
 class HardBoxSpectra
@@ -53,7 +53,7 @@ class HardBoxSpectra
   //
   // space = Hilbert space describing the particle
   // fileName = name of the state file
-  HardBoxSpectra(Confined3DOneParticle* space, char* fileName);
+  HardBoxSpectra(ThreeDOneParticle* space, char* fileName);
 
   // get the overlap of derived functions
   //
@@ -61,7 +61,7 @@ class HardBoxSpectra
   // fileName = the file to stock the other function
   // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
   // overlapX, overlapY = reference to the return values
-  void GetDerivedOverlap (Confined3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &Overlap, double &OverlapX, double &OverlapY);
+  void GetDerivedOverlap (ThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &Overlap, double &OverlapX, double &OverlapY);
 
 };
 

@@ -45,7 +45,7 @@ using std::ios;
 // space: Hilbert space describing the particle
 // fileName: name of the state file
 
-PeriodicSpectra::PeriodicSpectra(Periodic3DOneParticle* space, char* fileName)
+PeriodicSpectra::PeriodicSpectra(PeriodicThreeDOneParticle* space, char* fileName)
 {
   this->NbrStateX = space->GetNbrStateX();
   this->NbrStateY = space->GetNbrStateY();
@@ -328,7 +328,7 @@ void PeriodicSpectra::GetImpulsion(char* fileName, double sizeX, double sizeY, d
 // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
 // overlap, overlapX, overlapY = reference to the return values
 
-void PeriodicSpectra::GetDerivedOverlap (Periodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY)
+void PeriodicSpectra::GetDerivedOverlap (PeriodicThreeDOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY)
 {
   int nbrStateX = space->GetNbrStateX();
   int nbrStateY = space->GetNbrStateY();

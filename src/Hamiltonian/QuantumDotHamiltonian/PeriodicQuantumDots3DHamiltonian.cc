@@ -63,7 +63,7 @@ using std::endl;
 // waveVectorY = wave vector of Bloch function in Y direction
 // waveVectorZ = wave vector of Bloch function in Z direction
 
-PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX, double waveVectorY, double waveVectorZ)
+PeriodicQuantumDots3DHamiltonian::PeriodicQuantumDots3DHamiltonian(PeriodicThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDConstantCellPotential* PotentialInput, double waveVectorX, double waveVectorY, double waveVectorZ)
 {
   this->Space = space;
   this->XSize = xSize;

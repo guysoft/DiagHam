@@ -34,10 +34,11 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/AbstractPlanarRotationSymmetryThreeDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicOneDOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PlanarRotationSymmetryThreeDOneParticle.h"
 
 
-class PlanarRotationSymmetryZPeriodicOneParticle : public AbstractPlanarRotationSymmetryThreeDOneParticle
+class PlanarRotationSymmetryZPeriodicOneParticle : public PlanarRotationSymmetryThreeDOneParticle
 {
 
  protected:
@@ -72,6 +73,19 @@ class PlanarRotationSymmetryZPeriodicOneParticle : public AbstractPlanarRotation
   // return value = reference on current Hilbert space
   PlanarRotationSymmetryZPeriodicOneParticle& operator = (const PlanarRotationSymmetryZPeriodicOneParticle& space);
 
+  // get lower impulsion in Z
+  //
+  // return value = lower value in unit of 2 * Pi / L
+  int GetLowerImpulsionZ ();
 };
+
+// get lower impulsion in Z
+//
+// return value = lower value in unit of 2 * Pi / L
+
+inline int PlanarRotationSymmetryZPeriodicOneParticle::GetLowerImpulsionZ ()
+{
+  return ((PeriodicOneDOneParticle*) this->StateZ)->GetLowerImpulsion ();
+}
 
 #endif

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Periodic1DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/PeriodicOneDOneParticle.h"
 #include <iostream>
 
 
@@ -50,7 +50,7 @@ class Periodic1DHamiltonian : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  Periodic1DOneParticle* Space;
+  PeriodicOneDOneParticle* Space;
 
   // wave function basis dimension 
   int NbrState;  
@@ -78,7 +78,7 @@ class Periodic1DHamiltonian : public AbstractHamiltonian
   // mu = effective mass
   // PotentialInput = pointer to a 1D potential with constant value in a cell
   // waveVector = wave vector of Bloch function
-  Periodic1DHamiltonian(Periodic1DOneParticle* space, double mu, OneDConstantCellPotential* PotentialInput, double waveVector = 0.0);
+  Periodic1DHamiltonian(PeriodicOneDOneParticle* space, double mu, OneDConstantCellPotential* PotentialInput, double waveVector = 0.0);
 
   // copy constructor (without duplicating datas)
   //
