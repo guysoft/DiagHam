@@ -334,7 +334,6 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	  Y2 = XY2 & HEX2; X2 = (XY2 >> NBRBIT2) & HEX1;
 	  
 	  double ReSource =  vSource.Re(Index2), ImSource = vSource.Im(Index2);
-
 	  
 	  // Coulombian term	  	  
 	  if ((X2 + Y2) == Sum1)  
@@ -342,8 +341,8 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	      double tmpCoulomb = this->CoulombianTerm[this->XToI[X1Shifted + X2]];
 	      TmpRe += tmpCoulomb * ReSource;
 	      TmpIm += tmpCoulomb * ImSource;
-	    }
-	  	  
+	    }	  
+	  
 	  // confinement terms for the electrons
 	  if (Y1 == Y2)
 	    {
@@ -353,7 +352,7 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	      TmpRe += (tmpERe * ReSource - tmpEIm * ImSource);
 	      TmpIm += (tmpERe * ImSource + tmpEIm * ReSource);
 	    }
-	  	    
+	  	  
 	  // confinement terms for the holes
 	  if (X1 == X2)
 	    {
@@ -362,8 +361,7 @@ ComplexVector& PeriodicElectronHole3DHamiltonian::LowLevelAddMultiply(ComplexVec
 	      double tmpEIm = this->ImaginaryHoleConfinement[tmpIndex];	      
 	      TmpRe += (tmpERe * ReSource - tmpEIm * ImSource);
 	      TmpIm += (tmpERe * ImSource + tmpEIm * ReSource);
-	    }
-	  
+	    }	  
 	}
       vDestination.Re(Index1) += TmpRe; vDestination.Im(Index1) += TmpIm;
     }
@@ -470,15 +468,11 @@ void PeriodicElectronHole3DHamiltonian::EvaluateKineticTerm (double mex, double 
   int LowerImpulsion2X = secondParticle->GetLowerImpulsionX();
   int LowerImpulsion2Y = secondParticle->GetLowerImpulsionY();
   int LowerImpulsion2Z = secondParticle->GetLowerImpulsionZ();
-
-  //cout << "LowerImpulsion: " << LowerImpulsion1X << " " << LowerImpulsion1Y << " " << LowerImpulsion1Z << " " << LowerImpulsion2X << " " << LowerImpulsion2Y << " " << LowerImpulsion2Z << endl;
-  /*
+  
   double InvXFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mex * xSize * xSize);
   double InvYFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mey * ySize * ySize);
   double InvZFactor1 = PERIODIC_HAMILTONIAN_FACTOR / (mez * zSize * zSize);
-  */
-  double InvXFactor1 = 0.0, InvYFactor1 = 0.0, InvZFactor1 = 0.0;
-
+  
   double InvXFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhx * xSize * xSize);
   double InvYFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhy * ySize * ySize);
   double InvZFactor2 = PERIODIC_HAMILTONIAN_FACTOR / (mhz * zSize * zSize);
@@ -658,7 +652,7 @@ void PeriodicElectronHole3DHamiltonian::EvaluateCoulombianTerm (double xSize, do
 	  else
 	    {
 	      double tmp = ((double )(i - originX) * (i - originX)) / squareX + ((double) (j - originY) * (j - originY)) / squareY + ((double) (k - originZ) * (k - originZ)) / squareZ;
-	      this->CoulombianTerm[index] = factor / tmp;		
+	      this->CoulombianTerm[index] = -factor / tmp;		
 	    }
 	  ++index;
 	}
