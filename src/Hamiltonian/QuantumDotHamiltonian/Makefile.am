@@ -2,4 +2,4 @@ SUBDIRS=
 
 noinst_LIBRARIES=libQuantumDotHamiltonian.a
 
-libQuantumDotHamiltonian_a_SOURCES=QuantumDots3DHamiltonian.cc PeriodicQuantumDots3DHamiltonian.cc NewPeriodicQuantumDots3DHamiltonian.cc
+libQuantumDotHamiltonian_a_SOURCES=QuantumDots3DHamiltonian.cc PeriodicQuantumDots3DHamiltonian.cc

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/Confined3DOneParticle.h"
+#include "HilbertSpace/QuantumDotHilbertSpace/Periodic3DOneParticle.h"
 #include "Tools/QuantumDot/Potential/ThreeDPotential.h"
 
 #include <iostream>
@@ -52,14 +52,22 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
  protected:
 
   // Hilbert space associated to the system
-  Confined3DOneParticle* Space;
+  Periodic3DOneParticle* Space;
 
   // wave function basis dimension in the x direction
   int NbrStateX;
+
+  int LowerImpulsionX;
+
   // wave function basis dimension in the y direction
   int NbrStateY;
+
+  int LowerImpulsionY;
+
   // wave function basis dimension in the z direction
   int NbrStateZ;
+
+  int LowerImpulsionZ;
 
   // number of cells in the x direction
   int NbrCellX;
@@ -75,19 +83,6 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   // system dimension in the z direction (in Angstrom unit)
   double ZSize;
 
-  // number of layers before the active layers
-  int LeftNumber;
-  // region size in the z direction where potential is constant in the plane (regions before active layers)
-  double* PreConstantRegionSize;
-  // value of the potential in the region before the active layers
-  double* PreConstantRegionPotential;
-  // number of layers after the active layers
-  int RightNumber;
-  // region size in the z direction where potential is constant in every direction (regions after active layers)
-  double* PostConstantRegionSize;
-  // value of the potential in the region after the active layers
-  double* PostConstantRegionPotential;
-
   // effective mass in the x direction (in electron mass unit)
   double Mux;
   // effective mass in the y direction (in electron mass unit)
@@ -96,7 +91,7 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   double Muz;
 
   // cache for hamiltonian diagonal elements
-  double* DiagonalElements;
+  double* KineticElements;
 
   // flag to indicate how many dimensions are precalculated for hamiltonian interaction elements
   int NbrPrecalculatedDimension;
@@ -106,61 +101,49 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   //ThreeDPotential* InteractionFactors;
 
   // wave function overlaps on a cell in a the x direction (with symmetric access type for the first two indices)
-  double*** RealWaveFunctionOverlapX;
-  double*** ImaginaryWaveFunctionOverlapX;
+  double** RealWaveFunctionOverlapX;
+  double** ImaginaryWaveFunctionOverlapX;
   // wave function overlaps on a cell in a the y direction (with symmetric access type for the first two indices)
-  double*** RealWaveFunctionOverlapY;
-  double*** ImaginaryWaveFunctionOverlapY;
+  double** RealWaveFunctionOverlapY;
+  double** ImaginaryWaveFunctionOverlapY;
   // wave function overlaps on a cell in a the z direction (with symmetric access type for the first two indices)
-  double*** RealWaveFunctionOverlapZ;
-  double*** ImaginaryWaveFunctionOverlapZ;  
+  double** RealWaveFunctionOverlapZ;
+  double** ImaginaryWaveFunctionOverlapZ;  
 
   // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian
   // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
-  double*** RealPartial2DPrecalculatedHamiltonian;
-  double*** ImaginaryPartial2DPrecalculatedHamiltonian;
-
-  // elements (intergration over z, the first end second indices are of p1, p2)
-  double** RealPartialZPrecalculatedHamiltonian;
-  double** ImaginaryPartialZPrecalculatedHamiltonian;
+  double*** RealPrecalculatedHamiltonian;
+  double*** ImaginaryPrecalculatedHamiltonian;
 
  public:
   
-  // constructor from default datas
+  // constructor from default data
   //
   // space = Hilbert space associated to the system
   // xSize = system dimension in the x direction (in Angstrom unit)
   // ySize = system dimension in the y direction (in Angstrom unit)
   // zSize = system dimension in the z direction (in Angstrom unit)
-  // preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
-  // postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
-  // postConstantRegionPotential = value of the potential in the region after the gradiant zone
   // mux = effective mass in the x direction (in electron mass unit)
   // muy = effective mass in the y direction (in electron mass unit)
   // muz = effective mass in the z direction (in electron mass unit)
   // nbrCellX = number of cells in the x direction
   // nbrCellY = number of cells in the y direction
   // nbrCellZ = number of cells in the z direction
-  // overlapingFactors = tridimensionnal array where overlaping factors are stored
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  
-  PeriodicQuantumDots3DHamiltonian(Confined3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput, int memory);
+  // potentialInput = pointer to a 3D potential  
+  PeriodicQuantumDots3DHamiltonian(Periodic3DOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, ThreeDPotential* PotentialInput);
 
   // copy constructor (without duplicating datas)
   //
-  // hamiltonian = reference on hamiltonian to copy
-  
+  // hamiltonian = reference on hamiltonian to copy  
   PeriodicQuantumDots3DHamiltonian(const PeriodicQuantumDots3DHamiltonian& hamiltonian);
 
   // destructor
-  //
-  
+  //  
   ~PeriodicQuantumDots3DHamiltonian();
   
   // clone hamiltonian without duplicating datas
   //
-  // return value = pointer to cloned hamiltonian
-  
+  // return value = pointer to cloned hamiltonian  
   AbstractHamiltonian* PeriodicQuantumDots3DHamiltonian::Clone ();
 
   // set Hilbert space
@@ -214,14 +197,25 @@ class PeriodicQuantumDots3DHamiltonian : public AbstractHamiltonian
   ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination,
 				  int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current hamiltonian for a given range of indices
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // return value = reference on vectorwhere result has been stored
   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
   
-  void EvaluateInteractionFactors(int memory);
+  // evaluate the all interaction factors
+  // 
+  void EvaluateInteractionFactors();
 
-  bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, int& memory, double*** &realArray, double*** &imaginaryArray);
-
-  bool EvaluateWaveFunctionZOverlap(int& memory, double*** &realArray, double*** &imaginaryArray);
-
+  // evaluate wave function overlap in a given direction
+  //
+  // nbrStep = number of subdivisions in the choosen direction
+  // nbrState = number of states in the restrained Hilbert space in the choosen direction
+  // realArray = reference to a 2D array to stock the real values of overlap
+  // imaginaryArray = reference to a 2D array to stock the imaginary values of overlap
+  bool EvaluateWaveFunctionOverlap(int nbrStep, int nbrState, double** &realArray, double** &imaginaryArray);
 };
 
 // get Hilbert space on which Hamiltonian acts
