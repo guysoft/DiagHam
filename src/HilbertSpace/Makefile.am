@@ -20,11 +20,13 @@ ParticleOnSphere.cc \
 FermionOnSphere.cc \
 BosonOnSphere.cc \
 ParticleOnTorus.cc \
+ParticleOnTorusWithMagneticTranslations.cc \
 FermionOnTorus.cc \
 FullFermionOnTorus.cc \
 BosonOnTorus.cc \
 ParticleOnTorusWithSpin.cc \
 FermionOnTorusWithSpin.cc \
+FermionOnTorusWithMagneticTranslations.cc \
 AharonovBohmCages.cc \
 UndescribedHilbertSpace.cc \
 Confined3DOneParticle.cc

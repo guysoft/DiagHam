@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libHilbertSpace.a
 
-libHilbertSpace_a_SOURCES = AbstractHilbertSpace.cc AbstractSpinChain.cc AbstractSpinChainWithTranslations.cc DMRGPartialHilbertSpace.cc Fermions.cc SpaceDecomposition.cc Spin1_2Chain.cc Spin1_2ChainWithTranslations.cc Spin1AKLTChain.cc Spin1Chain.cc Spin1FullAKLTChain.cc SubspaceSpaceConverter.cc ThierryChain.cc TrappedBosons.cc ParticleOnSphere.cc FermionOnSphere.cc BosonOnSphere.cc ParticleOnTorus.cc FermionOnTorus.cc FullFermionOnTorus.cc BosonOnTorus.cc ParticleOnTorusWithSpin.cc FermionOnTorusWithSpin.cc AharonovBohmCages.cc UndescribedHilbertSpace.cc Confined3DOneParticle.cc
+libHilbertSpace_a_SOURCES = AbstractHilbertSpace.cc AbstractSpinChain.cc AbstractSpinChainWithTranslations.cc DMRGPartialHilbertSpace.cc Fermions.cc SpaceDecomposition.cc Spin1_2Chain.cc Spin1_2ChainWithTranslations.cc Spin1AKLTChain.cc Spin1Chain.cc Spin1FullAKLTChain.cc SubspaceSpaceConverter.cc ThierryChain.cc TrappedBosons.cc ParticleOnSphere.cc FermionOnSphere.cc BosonOnSphere.cc ParticleOnTorus.cc ParticleOnTorusWithMagneticTranslations.cc FermionOnTorus.cc FullFermionOnTorus.cc BosonOnTorus.cc ParticleOnTorusWithSpin.cc FermionOnTorusWithSpin.cc FermionOnTorusWithMagneticTranslations.cc AharonovBohmCages.cc UndescribedHilbertSpace.cc Confined3DOneParticle.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -90,8 +90,10 @@ Fermions.o SpaceDecomposition.o Spin1_2Chain.o \
 Spin1_2ChainWithTranslations.o Spin1AKLTChain.o Spin1Chain.o \
 Spin1FullAKLTChain.o SubspaceSpaceConverter.o ThierryChain.o \
 TrappedBosons.o ParticleOnSphere.o FermionOnSphere.o BosonOnSphere.o \
-ParticleOnTorus.o FermionOnTorus.o FullFermionOnTorus.o BosonOnTorus.o \
-ParticleOnTorusWithSpin.o FermionOnTorusWithSpin.o AharonovBohmCages.o \
+ParticleOnTorus.o ParticleOnTorusWithMagneticTranslations.o \
+FermionOnTorus.o FullFermionOnTorus.o BosonOnTorus.o \
+ParticleOnTorusWithSpin.o FermionOnTorusWithSpin.o \
+FermionOnTorusWithMagneticTranslations.o AharonovBohmCages.o \
 UndescribedHilbertSpace.o Confined3DOneParticle.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -109,14 +111,15 @@ DEP_FILES =  .deps/AbstractHilbertSpace.P .deps/AbstractSpinChain.P \
 .deps/BosonOnSphere.P .deps/BosonOnTorus.P \
 .deps/Confined3DOneParticle.P .deps/DMRGPartialHilbertSpace.P \
 .deps/FermionOnSphere.P .deps/FermionOnTorus.P \
+.deps/FermionOnTorusWithMagneticTranslations.P \
 .deps/FermionOnTorusWithSpin.P .deps/Fermions.P \
 .deps/FullFermionOnTorus.P .deps/ParticleOnSphere.P \
-.deps/ParticleOnTorus.P .deps/ParticleOnTorusWithSpin.P \
-.deps/SpaceDecomposition.P .deps/Spin1AKLTChain.P .deps/Spin1Chain.P \
-.deps/Spin1FullAKLTChain.P .deps/Spin1_2Chain.P \
-.deps/Spin1_2ChainWithTranslations.P .deps/SubspaceSpaceConverter.P \
-.deps/ThierryChain.P .deps/TrappedBosons.P \
-.deps/UndescribedHilbertSpace.P
+.deps/ParticleOnTorus.P .deps/ParticleOnTorusWithMagneticTranslations.P \
+.deps/ParticleOnTorusWithSpin.P .deps/SpaceDecomposition.P \
+.deps/Spin1AKLTChain.P .deps/Spin1Chain.P .deps/Spin1FullAKLTChain.P \
+.deps/Spin1_2Chain.P .deps/Spin1_2ChainWithTranslations.P \
+.deps/SubspaceSpaceConverter.P .deps/ThierryChain.P \
+.deps/TrappedBosons.P .deps/UndescribedHilbertSpace.P
 SOURCES = $(libHilbertSpace_a_SOURCES)
 OBJECTS = $(libHilbertSpace_a_OBJECTS)
 

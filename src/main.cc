@@ -72,6 +72,8 @@
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
+#include "GeneralTools/ArrayTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -97,6 +99,27 @@ int main(int argc, char** argv)
 
   cout.precision(14);
   int dimM = 10;
+  for (int k = 0; k < 10; ++k)
+    {
+      dimM = 10 + ((int) (30.0 * drand48()));      
+      int* TmpArray = new int [dimM];
+      for (int i = 0; i < dimM; ++i)
+	{
+	  TmpArray[i] = (int) (20.0 * drand48());
+	  cout << TmpArray[i] << " " ;      
+	}
+      cout << endl << "-------------------" << endl;
+      SortArrayUpOrdering(TmpArray, dimM);
+      cout << TmpArray[0] << " ";      
+      for (int i = 1; i < dimM; ++i)
+	{
+	  cout << TmpArray[i] << " ";
+	  if (TmpArray[i] < TmpArray[i - 1])
+	    cout << " error ";
+	}
+      cout << endl;
+    }
+  return 0;
 
   RealSymmetricMatrix TmpRM(RandomRealSymmetricMatrix(dimM, 10.0));
   
