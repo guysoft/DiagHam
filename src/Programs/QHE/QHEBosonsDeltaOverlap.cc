@@ -86,7 +86,7 @@ int main(int argc, char** argv)
   BosonOnSphere Space (NbrBosons, 0, LzMax);
   RealVector Location(2 * NbrBosons, true);
   srand48(29457);
-//  for (int k = 0; k < 100; ++k)
+  for (int k = 0; k < 100; ++k)
     {
       for (int i = 0; i < NbrBosons; ++i)
 	{
@@ -102,7 +102,9 @@ int main(int argc, char** argv)
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
       Complex ValueLaughlin = LaughlinWaveFunction(Location, NbrBosons) * 0.36563112422012;
-      cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;  
+      cout << ValueExact  << endl; 
+      cout << "-------------------------------------" << endl;
+//      cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;  
       
     }
   return 0;
