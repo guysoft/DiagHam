@@ -86,7 +86,8 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // chainLength = number of spin
   // momemtum = total momentum of each state
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1ChainWithTranslations (int chainLength, int momentum, int memorySize);
+  // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
+  Spin1ChainWithTranslations (int chainLength, int momentum, int memorySize, int memorySlice);
 
   // constructor for complete Hilbert space corresponding to a given total spin projection Sz
   //
@@ -94,7 +95,7 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize) ;
+  Spin1ChainWithTranslations (int chainLength, int momentum, int sz, int memorySize, int memorySlice);
 
   // copy constructor (without duplicating datas)
   //

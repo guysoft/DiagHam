@@ -160,7 +160,8 @@ ClassName* SmartMergeArrayListIntoArray(List<ClassName*>& arrayList, List<long>&
       ClassName* TmpArray1 = arrayList[Pos];
       ClassName* TmpArray2 = arrayList[Pos + 1];
       long TmpArraySize1 = arraySizeList[Pos];
-      long TmpArraySize2 = arraySizeList[Pos];      
+      long TmpArraySize2 = arraySizeList[Pos + 1];      
+      TmpArraySize += (TmpArraySize1 + TmpArraySize2);     
       ClassName* TmpArrayMerge = new ClassName [TmpArraySize1 + TmpArraySize2];
       long i = 0;
       for (; i < TmpArraySize1; ++i)
@@ -170,7 +171,6 @@ ClassName* SmartMergeArrayListIntoArray(List<ClassName*>& arrayList, List<long>&
       delete[] TmpArray1;
       delete[] TmpArray2;
       TmpArrayList += TmpArrayMerge;
-      TmpArraySize += (TmpArraySize1 + TmpArraySize2);      
       Pos += 2;
       NbrArray -= 2;
     }

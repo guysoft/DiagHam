@@ -35,12 +35,12 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < NbrSpinPerChain; ++i)
     {
-      Spin1ChainWithTranslations Chain(NbrSpinPerChain, i, 100000);
+      Spin1ChainWithTranslations Chain(NbrSpinPerChain, i, 0, 10000000, 10000000);
       cout << "--------------------------------------------" << endl;
       cout << "momentum = " << i << endl;
       cout << "dimension = " << Chain.GetHilbertSpaceDimension() << endl;
-      for (int i = 0; i < Chain.GetHilbertSpaceDimension(); ++i)
-	Chain.PrintState(cout, i) << endl;
+//      for (int i = 0; i < Chain.GetHilbertSpaceDimension(); ++i)
+//	Chain.PrintState(cout, i) << endl;
     }
   return 0;
 }
