@@ -79,6 +79,7 @@ int main(int argc, char** argv)
   (*PotentialGroup) += new SingleIntegerOption ('\n', "top", "top radius in cell unit", 13);
   (*PotentialGroup) += new SingleDoubleOption ('a', "anisotropy", "anisotropy factor", 0.0);
   (*PotentialGroup) += new SingleDoubleOption ('\n', "dot", "potential in the dot", -0.4);
+  (*PotentialGroup) += new SingleDoubleOption ('\n', "strain", "max potential caused by train", 0.01);
 
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-x", "electron effective mass in x direction (in vacuum electron mass unit)", 0.07);
   (*HilbertSpaceGroup) += new SingleDoubleOption ('\n', "mu-y", "electron effective mass in y direction (in vacuum electron mass unit)", 0.07);
@@ -126,6 +127,7 @@ int main(int argc, char** argv)
   int TopRadius = ((SingleIntegerOption*) Manager["top"])->GetInteger();
   double Anisotropy = ((SingleDoubleOption*) Manager["anisotropy"])->GetDouble();
   double DotPotential = ((SingleDoubleOption*) Manager["dot"])->GetDouble();
+  double StrainPotential = ((SingleDoubleOption*) Manager["strain"])->GetDouble();
 
   double Mux = ((SingleDoubleOption*) Manager["mu-x"])->GetDouble();
   double Muy = ((SingleDoubleOption*) Manager["mu-y"])->GetDouble();
@@ -152,7 +154,7 @@ int main(int argc, char** argv)
   EllipticalDotThreeDConstantCellPotential* potential = new EllipticalDotThreeDConstantCellPotential(M, N, H, BelowWettingLayer, WettingWidth, BaseRadius, DotHeight, TopRadius, Anisotropy);
 
   // ConstructPotential(double dotPotential)
-  potential->ConstructPotential(DotPotential);
+  potential->ConstructPotential(DotPotential, StrainPotential);
   potential->SavePotential("EllipticalDotPotential.txt");
 
   // define Hilbert space

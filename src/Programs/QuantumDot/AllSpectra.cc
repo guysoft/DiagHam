@@ -34,8 +34,7 @@ using std::endl;
 
 int main(int argc, char** argv)
 {
-  cout.precision(14);
-  /*
+  cout.precision(14);  
   OptionManager Manager ("AllSpectra" , "0.01");
   OptionGroup* HilbertSpaceGroup = new OptionGroup ("Hilbert space options");
   OptionGroup* FileGroup =  new OptionGroup ("File and energy options");
@@ -52,8 +51,8 @@ int main(int argc, char** argv)
   (*HilbertSpaceGroup) += new BooleanOption ('\n', "pairX", "pair function in X direction", false);
   (*HilbertSpaceGroup) += new BooleanOption ('\n', "pairY", "pair function in Y direciton", false);
 
-  (*FileGroup) += new SingleStringOption('\n', "file1", "name of the first state file", "");
-  (*FileGroup) += new SingleStringOption('\n', "file2", "name of the second state file", "");  
+  (*FileGroup) += new SingleStringOption('\n', "file1", "name of the electron state file", "");
+  (*FileGroup) += new SingleStringOption('\n', "file2", "name of the hole state file", "");  
   (*FileGroup) += new SingleDoubleOption('\n', "e1", "energy of the first particle", 0.0);
   (*FileGroup) += new SingleDoubleOption('\n', "e2", "energy of the second particle", 0.0);
   (*FileGroup) += new SingleDoubleOption('g', "gap", "energy of the normal gap (no strain)", 1.52);  
@@ -122,8 +121,26 @@ int main(int argc, char** argv)
   double tmp2 = re2 * re2 + im2 * im2;
 
   cout << "Polarization degree is: " << ((tmp1 - tmp2) / (tmp1 + tmp2)) << endl;
-  */
 
+  XYReflexionSymmetricPeriodicSpectra spectra2(Space, FileName2);
+  int Number = 50;
+  ofstream Electron ("Function_Electron.txt");
+  ofstream Hole ("Function_Hole.txt");
+  double density = 0.0;
+  for (int j = 0; j <= Number; ++j)
+    {
+      for (int i = 0; i <= Number; ++i)
+	{
+	  density = spectra.PlanarProbabilityDensity(i * SizeX / Number, SizeX, j * SizeY / Number, SizeY);
+	  Electron << density << " ";
+	  density = spectra2.PlanarProbabilityDensity(i * SizeX / Number, SizeX, j * SizeY / Number, SizeY);
+	  Hole << density << " ";
+	}
+      Electron << '\n'; Hole << '\n';
+    }
+  Electron.close(); Hole.close();
+  
+  /*
   // some running options and help 
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFile('\n', "input", "name of the input file", 0);
@@ -221,7 +238,8 @@ int main(int argc, char** argv)
   	}
       OutFile << '\n';
     }
-  OutFile.close();  
+  OutFile.close(); 
+  */
   /*
   double ReX, ImX, ReY, ImY, ReZ, ImZ;
   char** Files = new char* [200];

@@ -66,6 +66,13 @@ class XYReflexionSymmetricPeriodicSpectra
   // Real, Imaginary : references to the real and imaginary components of the wave function
   void WaveFunctionValue(double x, double SizeX, double y, double SizeY, double z, double SizeZ, double& Real, double& Imaginary);
 
+  // get the integrated probability density over z direction
+  //
+  // x, y = coordinates of the point
+  // sizeX, sizeY = dimensions of the system in x and y directions
+  // return = value of the probability density  
+  double XYReflexionSymmetricPeriodicSpectra::PlanarProbabilityDensity(double x, double sizeX, double y, double sizeY);
+
   // get the value of impulsion operators with another wave function <this|p|another>
   //
   // space = Hilbert space describing the other particle
@@ -81,8 +88,16 @@ class XYReflexionSymmetricPeriodicSpectra
   // fileName =  the file to stock the other function
   // sizeZ = size of the sample in Z direction
   // impulsionZ = reference to the return values  
-  void GetImpulsionWithContinuum(int impulsionX, int impulsionY, int nbrStateZ, int lowerImpulsionZ, char* fileName, double sizeZ, double &realImpulsionZ, double &imaginaryImpulsionZ);
-};
+  void GetImpulsionWithContinuum (int impulsionX, int impulsionY, int nbrStateZ, int lowerImpulsionZ, char* fileName, double sizeZ, double &realImpulsionZ, double &imaginaryImpulsionZ);
 
+  // get the overlap of derived functions
+  //
+  // space = Hilbert space describing the other particle
+  // fileName = the file to stock the other function
+  // sizeX, sizeY, sizeZ = size of sample in X, Y and Z directions
+  // overlapX, overlapY = reference to the return values
+  void GetDerivedOverlap (XYReflexionSymmetricPeriodic3DOneParticle* space, char* fileName, double sizeX, double sizeY, double sizeZ, double &realOverlap, double &imaginaryOverlap, double &realOverlapX, double &imaginaryOverlapX, double &realOverlapY, double &imaginaryOverlapY);
+
+};
 
 #endif

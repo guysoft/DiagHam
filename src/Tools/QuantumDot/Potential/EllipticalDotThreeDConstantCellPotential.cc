@@ -127,6 +127,55 @@ void EllipticalDotThreeDConstantCellPotential::ConstructPotential(double dotPote
 	}
 }
 
+// construct potential from physical parameters 
+//
+// dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
+// maxPotential = potential max caused by strain
+
+void EllipticalDotThreeDConstantCellPotential::ConstructPotential(double dotPotential, double maxPotential)
+{
+  // below the wetting layer
+  for (int k = 0; k < this->BelowWettingLayer; ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	{
+	  this->Alloy[k][j][i] = 1;
+	  this->PotentialValue[k][j][i] = 0.0;
+	}
+  // wetting layer
+  for (int k = this->BelowWettingLayer; k < (this->BelowWettingLayer + this->WettingWidth); ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	{
+	  this->Alloy[k][j][i] = 2;
+	  this->PotentialValue[k][j][i] = dotPotential;
+	}
+  // dot
+  for (int k = this->BelowWettingLayer + this->WettingWidth; k < (this->BelowWettingLayer + this->WettingWidth + this->DotHeight); ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	if (this->InTheDot(i, j, k))
+	  {
+	    double RkX = double(this->BaseRadius) - double(k - (this->BelowWettingLayer + this->WettingWidth)) * double(this->BaseRadius - this->TopRadius) / double(this->DotHeight);
+	    double RkY = RkX * (1.0 + this->Anisotropy);
+	    double Tmp = double((i - this->NumberX / 2) * (i - this->NumberX / 2)) / (RkX * RkX) - double((j - this->NumberY / 2) * (j - this->NumberY / 2)) / (RkY * RkY);
+	    this->Alloy[k][j][i] = 2;
+	    this->PotentialValue[k][j][i] = dotPotential + maxPotential * Tmp;  
+	  }
+	else
+	  {
+	    this->Alloy[k][j][i] = 1;
+	    this->PotentialValue[k][j][i] = 0.0;
+	  }
+  // above the dot  
+  for (int k = this->BelowWettingLayer + this->WettingWidth + this->DotHeight; k < this->NumberZ; ++k)
+    for (int j = 0; j < this->NumberY; ++j)
+      for (int i = 0; i < this->NumberX; ++i)
+	{
+	  this->Alloy[k][j][i] = 1;
+	  this->PotentialValue[k][j][i] = 0.0;
+	}
+}
 
 // shift the potential with a given quantity
 //

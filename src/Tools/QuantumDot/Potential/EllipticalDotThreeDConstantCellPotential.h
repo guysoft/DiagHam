@@ -82,6 +82,12 @@ class EllipticalDotThreeDConstantCellPotential : public ThreeDConstantCellPotent
   // dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
   void ConstructPotential(double dotPotential);
 
+  // construct potential from physical parameters 
+  //
+  // dotPotential = potential in the dot (0 reference: potential in the bulk, outside the dot)
+  // maxPotential = potential max caused by strain
+  void ConstructPotential(double dotPotential, double maxPotential);
+
   // shift the potential with a given quantity
   //
   // delta = shift value
