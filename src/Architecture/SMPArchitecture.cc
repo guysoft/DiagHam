@@ -36,7 +36,9 @@
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
@@ -196,6 +198,34 @@ bool SMPArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* opera
   return true;
 }  
 
+// execute an architecture-dependent add complex linear combination operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool SMPArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
+{
+  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrProcesses;
+  int FirstComponent = 0;
+  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  for (int i = 0; i < ReducedNbrProcesses; ++i)
+    {
+      this->ThreadParameters[i].Operation = operation->Clone();
+      ((AddComplexLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      FirstComponent += Step;
+    }
+  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
+  ((AddComplexLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+														  operation->GetDestinationVector()
+														  ->GetVectorDimension() - FirstComponent);  
+  this->SendJobs();
+  for (int i = 0; i < this->NbrProcesses; ++i)
+    {
+      delete this->ThreadParameters[i].Operation;
+    }
+  return true;
+}  
+
 // execute an architecture-dependent multiple real scalar product operation
 //
 // operation = pointer to the operation to execute
@@ -213,7 +243,34 @@ bool SMPArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* oper
       FirstComponent += Step;
     }
   this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((AddRealLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+														  operation->GetNbrScalarProduct() - FirstComponent);  
+  this->SendJobs();
+  for (int i = 0; i < this->NbrProcesses; ++i)
+    {
+      delete this->ThreadParameters[i].Operation;
+    }
+  return true;
+}  
+
+// execute an architecture-dependent multiple complex scalar product operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool SMPArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
+{
+  int Step = operation->GetNbrScalarProduct() / this->NbrProcesses;
+  int FirstComponent = 0;
+  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  for (int i = 0; i < ReducedNbrProcesses; ++i)
+    {
+      this->ThreadParameters[i].Operation = operation->Clone();
+      ((AddRealLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
+      FirstComponent += Step;
+    }
+  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
+  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
 														  operation->GetNbrScalarProduct() - FirstComponent);  
   this->SendJobs();
   for (int i = 0; i < this->NbrProcesses; ++i)

@@ -72,7 +72,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libLanczosAlgorithm.a
 
-libLanczosAlgorithm_a_SOURCES = AbstractLanczosAlgorithm.cc BasicLanczosAlgorithm.cc ComplexBasicLanczosAlgorithm.cc ComplexBasicLanczosAlgorithmWithEigenstates.cc ComplexBasicLanczosAlgorithmWithGroundState.cc BasicLanczosAlgorithmWithGroundState.cc BasicLanczosAlgorithmWithEigenstates.cc BasicLanczosAlgorithmWithDiskStorage.cc FullReorthogonalizedLanczosAlgorithm.cc FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc
+libLanczosAlgorithm_a_SOURCES = AbstractLanczosAlgorithm.cc BasicLanczosAlgorithm.cc ComplexBasicLanczosAlgorithm.cc ComplexBasicLanczosAlgorithmWithEigenstates.cc ComplexBasicLanczosAlgorithmWithGroundState.cc BasicLanczosAlgorithmWithGroundState.cc BasicLanczosAlgorithmWithEigenstates.cc BasicLanczosAlgorithmWithDiskStorage.cc FullReorthogonalizedLanczosAlgorithm.cc FullReorthogonalizedComplexLanczosAlgorithm.cc FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = 
@@ -92,6 +92,7 @@ BasicLanczosAlgorithmWithGroundState.o \
 BasicLanczosAlgorithmWithEigenstates.o \
 BasicLanczosAlgorithmWithDiskStorage.o \
 FullReorthogonalizedLanczosAlgorithm.o \
+FullReorthogonalizedComplexLanczosAlgorithm.o \
 FullReorthogonalizedLanczosAlgorithmWithDiskStorage.o \
 ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.o
 AR = ar
@@ -113,6 +114,7 @@ DEP_FILES =  .deps/AbstractLanczosAlgorithm.P \
 .deps/ComplexBasicLanczosAlgorithm.P \
 .deps/ComplexBasicLanczosAlgorithmWithEigenstates.P \
 .deps/ComplexBasicLanczosAlgorithmWithGroundState.P \
+.deps/FullReorthogonalizedComplexLanczosAlgorithm.P \
 .deps/FullReorthogonalizedLanczosAlgorithm.P \
 .deps/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.P \
 .deps/ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.P

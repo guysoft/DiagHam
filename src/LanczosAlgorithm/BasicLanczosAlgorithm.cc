@@ -42,7 +42,7 @@
 // default constructor
 //
 // architecture = architecture to use for matrix operations
-  // nbrEigenvalue = number of wanted eigenvalues
+// nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration
 
 BasicLanczosAlgorithm::BasicLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter) 

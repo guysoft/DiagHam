@@ -33,8 +33,8 @@
 #include "Vector/ComplexVector.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
-#include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Matrix/RealMatrix.h"
 
 #include <stdlib.h>
@@ -115,7 +115,10 @@ void FullReorthogonalizedComplexLanczosAlgorithm::InitializeLanczosAlgorithm()
   this->LanczosVectors[1] = ComplexVector (Dimension);
   this->LanczosVectors[2] = ComplexVector (Dimension);
   for (int i = 0; i < Dimension; i++)
-    this->LanczosVectors[0][i] = (rand() - 32767) * 0.5;
+    {
+      this->LanczosVectors[0].Re(i) = (rand() - 32767) * 0.5;
+      this->LanczosVectors[0].Im(i) = (rand() - 32767) * 0.5;
+    }
   this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -141,18 +144,6 @@ void FullReorthogonalizedComplexLanczosAlgorithm::InitializeLanczosAlgorithm(con
 
 Vector& FullReorthogonalizedComplexLanczosAlgorithm::GetGroundState()
 {
-  ComplexVector TmpComponents (this->DiagonalizedMatrix.GetNbrRow());
-  this->TridiagonalizedMatrix.Eigenvector(this->GroundStateEnergy, TmpComponents);
-/*  ComplexVector TmpComponents2(TmpComponents, true);
-  TmpComponents2 *= this->TridiagonalizedMatrix;
-  TmpComponents2 /= this->GroundStateEnergy;
-  for (int i = 0; i < this->DiagonalizedMatrix.GetNbrRow(); i++)
-    if (TmpComponents2[i] != TmpComponents[i])
-      cout << i << " : " << TmpComponents2[i] << " " << TmpComponents[i] << endl;*/ 
-  this->GroundState.Copy(this->LanczosVectors[0], TmpComponents[0]);
-  for (int i = 1; i < this->DiagonalizedMatrix.GetNbrRow(); i++)
-    this->GroundState.AddLinearCombination (TmpComponents[i], this->LanczosVectors[i]);
-  this->GroundState /= this->GroundState.Norm();
   return this->GroundState;
 }
 
@@ -179,7 +170,7 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithm::GetEigenstates(int nbrEigen
 	TmpCoefficents[j] = TmpEigenvector(j, i);
       Eigenstates[i] = ComplexVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
-      AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
+      AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
       this->Architecture->ExecuteOperation(&Operation);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
@@ -203,17 +194,17 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
 	this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
-							    this->LanczosVectors[1]);
+							    this->LanczosVectors[1]).Re;
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
 						   DiagonalElement(this->Index), 
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-	this->Architecture->ExecuteOperation(&Operation2);
+      this->Architecture->ExecuteOperation(&Operation2);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
-								       this->LanczosVectors[2]);
+								       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
-								      this->LanczosVectors[2]);
+								      this->LanczosVectors[2]).Re;
     }
   else
     {
@@ -235,7 +226,7 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	  this->Architecture->ExecuteOperation(&Operation4);
 	  for (int j = 0; j < (i - 2); j++)
 	    {
-	      TmpCoef[j] *= -1.0;
+	      TmpCoef[j].Re *= -1.0;
 	    }
 	  AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[i]), this->LanczosVectors, i - 2, TmpCoef);
 	  this->Architecture->ExecuteOperation(&Operation2);
@@ -248,8 +239,10 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	  double tmp = 0;
 	  for (int j = 0; j < this->LanczosVectors[0].GetVectorDimension(); j++)
 	    {
-	      this->LanczosVectors[i][j] = (rand () - 16384) * 0.5;
-	      tmp += this->LanczosVectors[i][j] * this->LanczosVectors[i][j];
+	      this->LanczosVectors[i].Re(j) = (rand () - 16384) * 0.5;
+	      this->LanczosVectors[i].Im(j) = (rand () - 16384) * 0.5;
+	      tmp += ((this->LanczosVectors[i].Re(j) * this->LanczosVectors[i].Re(j)) + 
+		      (this->LanczosVectors[i].Im(j) * this->LanczosVectors[i].Im(j)));
 	    }
 	  tmp = sqrt(tmp);
 	  this->LanczosVectors[i] /= tmp;
@@ -257,12 +250,12 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	  this->Hamiltonian->Multiply(this->LanczosVectors[i], TmpVector);
 	  this->LanczosVectors[i] = TmpVector;
 
-	  double* TmpCoef2 = new double [i];
+	  Complex* TmpCoef2 = new Complex [i];
 	  for (int j = 0; j < i; j++)
 	    {
 	      TmpCoef2[j] = -(this->LanczosVectors[j] * this->LanczosVectors[i]);
 	    }
-	  AddRealLinearCombinationOperation Operation3 (&(this->LanczosVectors[i]), this->LanczosVectors, i, TmpCoef2);
+	  AddComplexLinearCombinationOperation Operation3 (&(this->LanczosVectors[i]), this->LanczosVectors, i, TmpCoef2);
 	  this->Architecture->ExecuteOperation(&Operation3);
 	  delete[] TmpCoef2;
 
@@ -279,9 +272,9 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
       this->Architecture->ExecuteOperation(&Operation);
 
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[i - 1] * 
-								       this->LanczosVectors[i + 1]);
+								       this->LanczosVectors[i + 1]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[i] * 
-								      this->LanczosVectors[i + 1]);
+								      this->LanczosVectors[i + 1]).Re;
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {

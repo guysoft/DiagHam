@@ -194,7 +194,7 @@ RealVector& AbstractHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVe
 
 ComplexVector&AbstractHamiltonian:: LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return vDestination;
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 
@@ -223,7 +223,7 @@ ComplexVector& AbstractHamiltonian::LowLevelMultiply(ComplexVector& vSource, Com
 
 ComplexVector& AbstractHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return vDestination;
+  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 

@@ -32,7 +32,9 @@
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 //#include "Architecture/ArchitectureOperation/GenericOperation.h"
@@ -60,8 +62,14 @@ bool AbstractArchitecture::ExecuteOperation (AbstractArchitectureOperation* oper
     case AbstractArchitectureOperation::AddRealLinearCombination:
       return this->ExecuteOperation((AddRealLinearCombinationOperation*) operation);
       break;
+    case AbstractArchitectureOperation::AddComplexLinearCombination:
+      return this->ExecuteOperation((AddComplexLinearCombinationOperation*) operation);
+      break;
     case AbstractArchitectureOperation::MultipleRealScalarProduct:
       return this->ExecuteOperation((MultipleRealScalarProductOperation*) operation);
+      break;
+    case AbstractArchitectureOperation::MultipleComplexScalarProduct:
+      return this->ExecuteOperation((MultipleComplexScalarProductOperation*) operation);
       break;
     case AbstractArchitectureOperation::MatrixMatrixMultiply:
       return this->ExecuteOperation((MatrixMatrixMultiplyOperation*) operation);
@@ -95,12 +103,32 @@ bool AbstractArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* 
   return false;
 }
 
+// execute an architecture-dependent add complex linear combination operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool AbstractArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
+{
+  return false;
+}
+
 // execute an architecture-dependent multiple real scalar product operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
 
 bool AbstractArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
+{
+  return false;
+}
+
+// execute an architecture-dependent multiple complex scalar product operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool AbstractArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
 {
   return false;
 }

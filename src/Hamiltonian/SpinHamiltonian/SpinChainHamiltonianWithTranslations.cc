@@ -60,7 +60,7 @@ SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(Abstr
   this->Jz = this->J;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
-  this->EvaluateOffDiagonalMatrixElements();
+  this->EvaluateCosinusTable();
 }
 
 // destructor
@@ -69,6 +69,8 @@ SpinChainHamiltonianWithTranslations::SpinChainHamiltonianWithTranslations(Abstr
 SpinChainHamiltonianWithTranslations::~SpinChainHamiltonianWithTranslations() 
 {
   delete[] this->SzSzContributions;
+  delete[] this->CosinusTable;
+  delete[] this->SinusTable;
 }
 
 // set Hilbert space
@@ -81,7 +83,6 @@ void SpinChainHamiltonianWithTranslations::SetHilbertSpace (AbstractHilbertSpace
   this->Chain = (AbstractSpinChainWithTranslations*) hilbertSpace;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
-  this->EvaluateOffDiagonalMatrixElements();
 }
 
 // get Hilbert space on which Hamiltonian acts
@@ -134,29 +135,7 @@ void SpinChainHamiltonianWithTranslations::ShiftHamiltonian (double shift)
 
 Complex SpinChainHamiltonianWithTranslations::MatrixElement (RealVector& V1, RealVector& V2) 
 {
-  double x = 0.0;
-  double coef;
-  int MaxPos = this->NbrSpin - 1;
-  int pos;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-/*
-      // J part of Hamiltonian      
-      for (int j = 0; j < MaxPos; j++)
-	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
-	    x+= V1[pos] * this->HalfJ[j] * coef * V2[i];
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
-	    x+= V1[pos] * this->HalfJ[j] * coef * V2[i];
-	}
-*/
-      // SzSz contributions
-      x += V1[i] * this->SzSzContributions[i] * V2[i];
-    }
-  return Complex(x);
+  return Complex(0);
 }
   
 // evaluate matrix element
@@ -167,103 +146,59 @@ Complex SpinChainHamiltonianWithTranslations::MatrixElement (RealVector& V1, Rea
 
 Complex SpinChainHamiltonianWithTranslations::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
 {
-  return Complex();
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
+  Complex Z (0.0, 0.0);
+  Complex TmpZ;
+  double Coef;
+  int NbrTranslation;
   int pos;
   int MaxPos = this->NbrSpin - 1;
-  for (int i = 0; i < dim; i++)
-    vDestination[i] = this->SzSzContributions[i] * vSource[i];
-  for (int i = 0; i < dim; i++)
+  for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i++)
     {
-/*
-      // J part of Hamiltonian      
+      Z += this->SzSzContributions[i] * (Conj(V1[i]) * V2[i]);
+    }
+  for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i++)
+    {
       for (int j = 0; j < MaxPos; j++)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      TmpZ.Re = this->HalfJ * Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	      TmpZ.Im = this->HalfJ * Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	      Z += Conj(V1[pos]) * TmpZ;
 	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
 	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
+	      TmpZ.Re = this->HalfJ * Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+					      (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	      TmpZ.Im = this->HalfJ * Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+					      (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	      Z += Conj(V1[pos]) * TmpZ;
 	    }
-	}*/
-    }
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-							   int firstComponent, int nbrComponent) 
-{
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  int pos;
-  int MaxPos = this->NbrSpin - 1;
-  for (int i = 0; i < dim; i++)
-    vDestination[i] = this->SzSzContributions[i] * vSource[i];
-  for (int i = 0; i < dim; i++)
-    {
-/*
-      // J part of Hamiltonian      
-      for (int j = 0; j < MaxPos; j++)
+	}    
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
-	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * vSource[i];
-	    }
-	}*/
+	  TmpZ.Re = this->HalfJ * Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	  TmpZ.Im = this->HalfJ * Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	  Z += Conj(V1[pos]) * TmpZ;
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  TmpZ.Re = this->HalfJ * Coef * ((V2.Re(i) * this->CosinusTable[NbrTranslation]) -
+					  (V2.Im(i) * this->SinusTable[NbrTranslation]));
+	  TmpZ.Im = this->HalfJ * Coef * ((V2.Re(i) * this->SinusTable[NbrTranslation]) +
+					  (V2.Im(i) * this->CosinusTable[NbrTranslation]));
+	  Z += Conj(V1[pos]) * TmpZ;
+	}      
     }
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  int pos;
-  int MaxPos = this->NbrSpin - 1;
-  for (int i = 0; i < dim; i++)
-    vDestination[i] = this->SzSzContributions[i] * vSource[i];
-  for (int i = 0; i < dim; i++)
-    {
-    }
-  return vDestination;
+  return Z;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -276,11 +211,119 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVec
 // return value = reference on vector where result has been stored
 
 ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						   int firstComponent, int nbrComponent)
+								      int firstComponent, int nbrComponent)
 {
+  double Coef;
+  int NbrTranslation;
+  int pos;
+  int MaxPos = this->NbrSpin - 1;
+  int Last = firstComponent + nbrComponent;
+  for (int i = firstComponent; i < Last; i++)
+    {
+      vDestination.Re(i) = this->SzSzContributions[i] * vSource.Re(i);
+      vDestination.Im(i) = this->SzSzContributions[i] * vSource.Im(i);
+    }
+  for (int i = firstComponent; i < Last; i++)
+    {
+      for (int j = 0; j < MaxPos; j++)
+	{
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							    (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							    (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	}    
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							(vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							(vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							(vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}      
+    }
   return vDestination;
 }
 
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and add result to another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									 int firstComponent, int nbrComponent)
+{
+  double Coef;
+  int NbrTranslation;
+  int pos;
+  int MaxPos = this->NbrSpin - 1;
+  int Last = firstComponent + nbrComponent;
+  for (int i = firstComponent; i < Last; i++)
+    {
+       vDestination.Re(i) += this->SzSzContributions[i] * vSource.Re(i);
+       vDestination.Im(i) += this->SzSzContributions[i] * vSource.Im(i);
+     for (int j = 0; j < MaxPos; j++)
+	{
+	  pos = this->Chain->SmiSpj(j, j + 1, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							    (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	  pos = this->Chain->SmiSpj(j + 1, j, i, Coef, NbrTranslation);
+	  if (pos != this->Chain->GetHilbertSpaceDimension())
+	    {
+	      vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							    (vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	      vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	    }
+	}    
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							(vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							    (vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, Coef, NbrTranslation);
+      if (pos != this->Chain->GetHilbertSpaceDimension())
+	{
+	  vDestination.Re(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->CosinusTable[NbrTranslation]) -
+							(vSource.Im(i) * this->SinusTable[NbrTranslation]));
+	  vDestination.Im(pos) += this->HalfJ * Coef * ((vSource.Re(i) * this->SinusTable[NbrTranslation]) +
+							(vSource.Im(i) * this->CosinusTable[NbrTranslation]));
+	}      
+    }
+  return vDestination;
+}
+ 
 // return a list of left interaction operators
 //
 // return value = list of left interaction operators
@@ -288,19 +331,6 @@ ComplexVector& SpinChainHamiltonianWithTranslations::LowLevelMultiply(ComplexVec
 List<Matrix*> SpinChainHamiltonianWithTranslations::LeftInteractionOperators()
 {
   List<Matrix*> TmpList;
-  int Dim = this->Chain->GetHilbertSpaceDimension();
-  RealSymmetricMatrix* Sx = new RealSymmetricMatrix (Dim, true);
-  RealAntisymmetricMatrix* Sy = new RealAntisymmetricMatrix (Dim, true);
-  RealSymmetricMatrix* Sz = new RealSymmetricMatrix (Dim, true);
-//  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
-//  this->Chain->Syi(this->NbrSpin - 1, *Sy);
-//  this->Chain->Szi(this->NbrSpin - 1, *Sz);
-//  this->Chain->Sxi(0, *Sx);
-//  this->Chain->Syi(0, *Sy);
-//  this->Chain->Szi(0, *Sz);
-  TmpList += Sx;
-  TmpList += Sy;
-  TmpList += Sz;
   return TmpList;
 }
 
@@ -311,17 +341,22 @@ List<Matrix*> SpinChainHamiltonianWithTranslations::LeftInteractionOperators()
 List<Matrix*> SpinChainHamiltonianWithTranslations::RightInteractionOperators()
 {
   List<Matrix*> TmpList;
-  int Dim = this->Chain->GetHilbertSpaceDimension();
-  RealSymmetricMatrix* Sx = new RealSymmetricMatrix (Dim, true);
-  RealAntisymmetricMatrix* Sy = new RealAntisymmetricMatrix (Dim, true);
-  RealSymmetricMatrix* Sz = new RealSymmetricMatrix (Dim, true);
-//  this->Chain->Sxi(this->NbrSpin - 1, *Sx);
-//  this->Chain->Syi(this->NbrSpin - 1, *Sy);
-//  this->Chain->Szi(this->NbrSpin - 1, *Sz);
-  TmpList += Sx;
-  TmpList += Sy;
-  TmpList += Sz;
   return TmpList;
+}
+
+// evaluate all cosinus/sinus that are needed when computing matrix elements
+//
+
+void SpinChainHamiltonianWithTranslations::EvaluateCosinusTable()
+{
+  this->CosinusTable = new double [this->NbrSpin];
+  this->SinusTable = new double [this->NbrSpin];
+  double Coef = 2.0 * M_PI / ((double) this->NbrSpin) * ((double) this->Chain->GetMomentum());
+  for (int i = 0; i < this->NbrSpin ; ++i)
+    {
+      this->CosinusTable[i] = cos(Coef * ((double) i));
+      this->SinusTable[i] = sin(Coef * ((double) i));
+    }
 }
 
 // evaluate diagonal matrix elements
@@ -331,10 +366,8 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
 
-  // SzSz part
   for (int i = 0; i < dim; i++)
     {
-      // SzSz part
       this->SzSzContributions[i] = 0.0;
       for (int j = 0; j < (this->NbrSpin - 1); j++)
 	{
@@ -342,218 +375,6 @@ void SpinChainHamiltonianWithTranslations::EvaluateDiagonalMatrixElements()
 	}
       this->SzSzContributions[i] += this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
       this->SzSzContributions[i] *= this->Jz;
-    }
-}
-
-// evaluate off diagonal matrix elements
-// 
-
-void SpinChainHamiltonianWithTranslations::EvaluateOffDiagonalMatrixElements()
-{
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double* TmpMatrixElement = new double [dim];
-  this->NbrNonZeroMatrixElement = new int [dim];
-  int NbrMatrixElement = 0;
-  double Coefficient = 0.0;
-  int Translation = 0;
-  int Index = 0;
-  int Index2 =0;
-  int Tmp;
-  cout << dim << endl;
-
-  // first pass : find all possible coefficients and the number of non zero matrix elements
-  for (int i = 0; i < dim; i++)
-    {
-      this->NbrNonZeroMatrixElement[i] = 0;
-      for (int j = 0; j < (this->NbrSpin - 1); j++)
-	{
-	  Index = this->Chain->SmiSpj(j, j + 1, i, Coefficient, Translation);
-	  if (Coefficient != 0.0)
-	    {
-	      Tmp = 0;
-	      while (Tmp < NbrMatrixElement)
-		{
-		  if (Coefficient == TmpMatrixElement[Tmp])
-		    Tmp = NbrMatrixElement + 1;
-		  ++Tmp;
-		}
-	      if (Tmp == NbrMatrixElement)
-		{
-		  TmpMatrixElement[NbrMatrixElement] = Coefficient;
-		  ++NbrMatrixElement;
-		}
-	      ++this->NbrNonZeroMatrixElement[i];
-	    }
-	  Index = this->Chain->SmiSpj(j + 1, j, i, Coefficient, Translation);
-	  if (Coefficient != 0.0)
-	    {
-	      Tmp = 0;
-	      while (Tmp < NbrMatrixElement)
-		{
-		  if (Coefficient == TmpMatrixElement[Tmp])
-		    Tmp = NbrMatrixElement + 1;
-		  ++Tmp;
-		}
-	      if (Tmp == NbrMatrixElement)
-		{
-		  TmpMatrixElement[NbrMatrixElement] = Coefficient;
-		  ++NbrMatrixElement;
-		}
-	      ++this->NbrNonZeroMatrixElement[i];
-	    }
-	}
-      Index = this->Chain->SmiSpj(this->NbrSpin - 1, 0, i, Coefficient, Translation);
-      if (Coefficient != 0.0)
-	{
-	  Tmp = 0;
-	  while (Tmp < NbrMatrixElement)
-	    {
-	      if (Coefficient == TmpMatrixElement[Tmp])
-		Tmp = NbrMatrixElement + 1;
-	      ++Tmp;
-	    }
-	  if (Tmp == NbrMatrixElement)
-	    {
-	      TmpMatrixElement[NbrMatrixElement] = Coefficient;
-	      ++NbrMatrixElement;
-	    }
-	  ++this->NbrNonZeroMatrixElement[i];
-	}
-      Index = this->Chain->SmiSpj(0, this->NbrSpin - 1, i, Coefficient, Translation);
-      if (Coefficient != 0.0)
-	{
-	  Tmp = 0;
-	  while (Tmp < NbrMatrixElement)
-	    {
-	      if (Coefficient == TmpMatrixElement[Tmp])
-		Tmp = NbrMatrixElement + 1;
-	      ++Tmp;
-	    }
-	  if (Tmp == NbrMatrixElement)
-	    {
-	      TmpMatrixElement[NbrMatrixElement] = Coefficient;
-	      ++NbrMatrixElement;
-	    }
-	  ++this->NbrNonZeroMatrixElement[i];
-	}
-    }
-
-  // create table containing all posible matrix element
-  cout << "NbrMatrixElement= " << NbrMatrixElement << endl;
-  this->MatrixElementArray = new double [NbrMatrixElement];
-  for (int i = 0; i < NbrMatrixElement; ++i)
-    {
-      this->MatrixElementArray[i] = TmpMatrixElement[i];
-      cout << TmpMatrixElement[i] << endl;
-    }
-
-  // evaluate all mask and shift needed to access informations about off-diagonal elements
-  this->MatrixElementShift = 1;
-  while (NbrMatrixElement > (1 << this->MatrixElementShift))
-    {
-      ++(this->MatrixElementShift);
-    }
-  this->MomentumShift = 1;
-  while (this->NbrSpin > (1 << this->MomentumShift))
-    ++(this->MomentumShift);
-  Index = 1;
-  while (dim > (1 << Index))
-    ++(Index);
-  this->IndexMask = (0xffffffff) >> (sizeof(int) * 8 - Index);
-  this->MatrixElementMask = ((0xffffffff) >> (sizeof(int) * 8 - this->MatrixElementShift)) << Index;
-  this->MomentumMask = ((0xffffffff) >> (sizeof(int) * 8 - this->MomentumShift)) << (Index + this->MatrixElementShift);  
-  this->MomentumShift = this->MatrixElementShift + Index;
-  this->MatrixElementShift = Index ;
-
-  // second pass : store informations about non zero matrix element
-  this->NonZeroMatrixElement = new int* [dim];
-  for (int i = 0; i < dim; ++i)
-    {
-      if (this->NbrNonZeroMatrixElement[i] == 0)
-	{
-	  this->NonZeroMatrixElement[i] = 0;
-	}
-      else
-	{
-	  this->NonZeroMatrixElement[i] = new int [this->NbrNonZeroMatrixElement[i]];
-	  Index = 0;
-	  for (int j = 0; j < (this->NbrSpin - 1); j++)
-	    {
-	      Index2 = this->Chain->SmiSpj(j, j + 1, i, Coefficient, Translation);
-	      if (Coefficient != 0.0)
-		{
-		  Tmp = 0;
-		  while (Coefficient != this->MatrixElementArray[Tmp])
-		    ++Tmp;
-		  Tmp <<= this->MatrixElementShift;
-		  Tmp |= Translation << this->MomentumShift;
-		  Tmp |= Index2;
-		  this->NonZeroMatrixElement[i][Index] = Tmp;
-		  ++Index;
-		}
-	      Index2 = this->Chain->SmiSpj(j + 1, j, i, Coefficient, Translation);
-	      if (Coefficient != 0.0)
-		{
-		  Tmp = 0;
-		  while (Coefficient != this->MatrixElementArray[Tmp])
-		    ++Tmp;
-		  Tmp <<= this->MatrixElementShift;
-		  Tmp |= Translation << this->MomentumShift;
-		  Tmp |= Index2;
-		  this->NonZeroMatrixElement[i][Index] = Tmp;
-		  ++Index;
-		}
-	    }
-	  Index2 = this->Chain->SmiSpj(this->NbrSpin - 1, 0, i, Coefficient, Translation);
-	  if (Coefficient != 0.0)
-	    {
-	      Tmp = 0;
-	      while (Coefficient != this->MatrixElementArray[Tmp])
-		++Tmp;
-	      Tmp <<= this->MatrixElementShift;
-	      Tmp |= Translation << this->MomentumShift;
-	      Tmp |= Index2;
-	      this->NonZeroMatrixElement[i][Index] = Tmp;
-	      ++Index;
-	    }
-	  Index2 = this->Chain->SmiSpj(0, this->NbrSpin - 1, i, Coefficient, Translation);
-	  if (Coefficient != 0.0)
-	    {
-	      Tmp = 0;
-	      while (Coefficient != this->MatrixElementArray[Tmp])
-		++Tmp;
-	      Tmp <<= this->MatrixElementShift;
-	      Tmp |= Translation << this->MomentumShift;
-	      Tmp |= Index2;
-	      this->NonZeroMatrixElement[i][Index] = Tmp;
-	      ++Index;
-	    }
-	}
-    }
-
-  for (int i = 0; i < NbrMatrixElement; ++i)
-    {
-      this->MatrixElementArray[i] *= this->HalfJ;
-    }
-
-  for (int i = 0; i < dim; ++i)
-    {
-      if (this->NbrNonZeroMatrixElement[i] == 0)
-	{
-	  cout << "state " << i << " not connected" << endl;
-	  this->NonZeroMatrixElement[i] = 0;
-	}
-      else
-	{
-	  cout << "state " << i << " connected to :" << endl;
-	  for (int j = 0; j < this->NbrNonZeroMatrixElement[i]; ++j)
-	    {
-	      Index = this->NonZeroMatrixElement[i][j];
-	      cout << "    state " << (Index & this->IndexMask) << " with coefficient " 
-		   << this->MatrixElementArray[((Index & this->MatrixElementMask) >> this->MatrixElementShift)]
-		   << " and shift " << ((Index & this->MomentumMask) >> this->MomentumShift) << endl;
-	    }
-	}
     }
 }
 
@@ -565,21 +386,25 @@ void SpinChainHamiltonianWithTranslations::EvaluateOffDiagonalMatrixElements()
 
 ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H) 
 {
-  RealVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Chain->GetHilbertSpaceDimension()];
+  ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
+  ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];
   for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Chain->GetHilbertSpaceDimension());
+      TmpV[i] = ComplexVector(H.Chain->GetHilbertSpaceDimension());
       if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
+	{
+	  TmpV2.Re(i - 1) = 0.0;
+	  TmpV2.Im(i - 1) = 0.0;
+	}
+      TmpV2.Re(i) = 1.0;
+      TmpV2.Im(i) = 0.0;
+      ((AbstractHamiltonian*) &H)->LowLevelMultiply (TmpV2, TmpV[i]);
     }
   for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
     {
       for (int j = 0; j < H.Chain->GetHilbertSpaceDimension(); j++)
 	{
-	  Str << TmpV[j][i] << "    ";
+	  Str << "(" << TmpV[j].Re(i) << ", " << TmpV[j].Im(i) << ")    ";
 	}
       Str << endl;
     }
@@ -594,15 +419,15 @@ ostream& operator << (ostream& Str, SpinChainHamiltonianWithTranslations& H)
 
 MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonianWithTranslations& H) 
 {
-  RealVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Chain->GetHilbertSpaceDimension()];
+  ComplexVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
+  ComplexVector* TmpV = new ComplexVector [H.Chain->GetHilbertSpaceDimension()];
   for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
     {
-      TmpV[i] = RealVector(H.Chain->GetHilbertSpaceDimension());
+      TmpV[i] = ComplexVector(H.Chain->GetHilbertSpaceDimension());
       if (i > 0)
 	TmpV2[i - 1] = 0.0;
       TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
+      ((AbstractHamiltonian*) &H)->LowLevelMultiply (TmpV2, TmpV[i]);
     }
   Str << "{";
   for (int i = 0; i < (H.Chain->GetHilbertSpaceDimension() - 1); i++)

@@ -29,21 +29,28 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include "config.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "Vector/ComplexVector.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include <stdlib.h>
 
 
 // default constructor
 //
+// architecture = architecture to use for matrix operations
+// nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration
 
-ComplexBasicLanczosAlgorithm::ComplexBasicLanczosAlgorithm(int maxIter) 
+ComplexBasicLanczosAlgorithm::ComplexBasicLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
   this->V1 = ComplexVector();
   this->V2 = ComplexVector();
+  this->NbrEigenvalue = nbrEigenvalue;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -54,6 +61,9 @@ ComplexBasicLanczosAlgorithm::ComplexBasicLanczosAlgorithm(int maxIter)
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
     }
+  this->Architecture = architecture;
+  this->PreviousLastWantedEigenvalue = 0.0;
+  this->EigenvaluePrecision = MACHINE_PRECISION;
 }
 
 // copy constructor
@@ -67,6 +77,10 @@ ComplexBasicLanczosAlgorithm::ComplexBasicLanczosAlgorithm(const ComplexBasicLan
   this->V1 = algorithm.V1;
   this->V2 = algorithm.V2;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
+  this->Architecture = algorithm.Architecture;
+  this->NbrEigenvalue = algorithm.NbrEigenvalue;
+  this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
+  this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
 }
 
 // destructor
@@ -124,19 +138,21 @@ Vector& ComplexBasicLanczosAlgorithm::GetGroundState()
 
 void ComplexBasicLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter) 
 {
-  int Dimension;
+   int Dimension;
   if (this->Index == 0)
     {
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       if (nbrIter < 2)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
-      this->Hamiltonian->Multiply(this->V1, this->V2);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
       this->V2 /= this->V2.Norm(); 
-      this->Hamiltonian->Multiply(this->V2, this->V3);
+      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
+      this->Architecture->ExecuteOperation(&Operation2);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
@@ -145,20 +161,53 @@ void ComplexBasicLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
     }
+  ComplexVector* TmpVector = new ComplexVector[2];
+  double* TmpCoefficient = new double[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
-      this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1), V2, 
-				    -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index), V1);
+      TmpVector[0] = this->V1;
+      TmpVector[1] = this->V2;
+      TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
+      TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
+      AddComplexLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+      this->Architecture->ExecuteOperation(&Operation4);
       this->V3 /= this->V3.Norm();
       ComplexVector TmpV (this->V1);
       this->V1 = this->V2;
       this->V2 = this->V3;
       this->V3 = TmpV;
       this->Index++;
-      this->Hamiltonian->Multiply(this->V2, this->V3);
+      VectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &this->V2, &this->V3);
+      this->Architecture->ExecuteOperation(&Operation3);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
-  this->Diagonalize();
+  delete[] TmpVector;
+  delete[] TmpCoefficient;
+  if (this->PreviousLastWantedEigenvalue != 0.0)
+    {
+      this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      this->Diagonalize();
+      this->DiagonalizedMatrix.SortMatrixUpOrder();
+    }
+  else
+    {
+      this->Diagonalize();
+      this->DiagonalizedMatrix.SortMatrixUpOrder();
+      this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+    }
 }
   
+// test if convergence has been reached
+//
+// return value = true if convergence has been reached
+
+bool ComplexBasicLanczosAlgorithm::TestConvergence ()
+{
+  if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
+    return true;
+  else
+    return false;
+}
+

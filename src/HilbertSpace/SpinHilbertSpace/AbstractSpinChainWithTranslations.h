@@ -54,6 +54,11 @@ class AbstractSpinChainWithTranslations : public AbstractHilbertSpace
   // return value = spin projection on (Oz)
   int TotalSz (int state);
 
+  // get the momentum of each state in the current Hilbert space
+  //
+  // return value = momentum value
+  virtual int GetMomentum() = 0;
+
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
   // i = first position

@@ -51,12 +51,19 @@ class ComplexBasicLanczosAlgorithm : public AbstractLanczosAlgorithm
 
   int Index;
 
+  // number of wanted eigenvalues
+  int NbrEigenvalue;
+  // value of the last wanted eigenvalue at previous Lanczos iteration
+  double PreviousLastWantedEigenvalue;
+
  public:
 
   // default constructor
   //
+  // architecture = architecture to use for matrix operations
+  // nbrEigenvalue = number of wanted eigenvalues
   // maxIter = an approximation of maximal number of iteration
-  ComplexBasicLanczosAlgorithm(int maxIter = 0);
+  ComplexBasicLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 0);
 
   // copy constructor
   //
@@ -86,6 +93,11 @@ class ComplexBasicLanczosAlgorithm : public AbstractLanczosAlgorithm
   // nbrIter = number of iteration to do 
   void RunLanczosAlgorithm (int nbrIter);
   
+  // test if convergence has been reached
+  //
+  // return value = true if convergence has been reached
+  bool TestConvergence ();
+
 };
 
 #endif

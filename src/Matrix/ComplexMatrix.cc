@@ -116,14 +116,27 @@ ComplexMatrix& ComplexMatrix::operator = (const ComplexMatrix& M)
       else
 	(*(this->ColumnGarbageFlag))--;
     }
-  this->Columns = M.Columns;
-  this->ColumnGarbageFlag = M.ColumnGarbageFlag;
-  (*(this->ColumnGarbageFlag))++;
-  this->NbrRow = M.NbrRow;
-  this->NbrColumn = M.NbrColumn;
-  this->TrueNbrRow = M.TrueNbrRow;
-  this->TrueNbrColumn = M.TrueNbrColumn;  
-  this->MatrixType = Matrix::ComplexElements;
+  if (M.ColumnGarbageFlag != 0)
+    {
+      this->Columns = M.Columns;
+      this->ColumnGarbageFlag = M.ColumnGarbageFlag;
+      (*(this->ColumnGarbageFlag))++;
+      this->NbrRow = M.NbrRow;
+      this->NbrColumn = M.NbrColumn;
+      this->TrueNbrRow = M.TrueNbrRow;
+      this->TrueNbrColumn = M.TrueNbrColumn;  
+      this->MatrixType = Matrix::ComplexElements;
+    }
+  else
+    {
+      this->Columns = 0;
+      this->ColumnGarbageFlag = 0;
+      this->NbrRow = 0;
+      this->NbrColumn = 0;
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;  
+      this->MatrixType = Matrix::ComplexElements;
+    }
   return *this;
 }
 

@@ -34,7 +34,9 @@
 #include "Vector/Vector.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
@@ -85,12 +87,32 @@ bool MonoProcessorArchitecture::ExecuteOperation (AddRealLinearCombinationOperat
   return operation->ApplyOperation();
 }  
 
+// execute an architecture-dependent add complex linear combination operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool MonoProcessorArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
+{
+  return operation->ApplyOperation();
+}  
+
 // execute an architecture-dependent multiple real scalar product operation
 //
 // operation = pointer to the operation to execute
 // return value = true if operation has been completed successfully
 
 bool MonoProcessorArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
+{
+  return operation->ApplyOperation();
+}  
+
+// execute an architecture-dependent multiple complex scalar product operation
+//
+// operation = pointer to the operation to execute
+// return value = true if operation has been completed successfully
+
+bool MonoProcessorArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
 {
   return operation->ApplyOperation();
 }  

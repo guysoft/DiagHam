@@ -11,5 +11,6 @@ BasicLanczosAlgorithmWithGroundState.cc \
 BasicLanczosAlgorithmWithEigenstates.cc \
 BasicLanczosAlgorithmWithDiskStorage.cc \
 FullReorthogonalizedLanczosAlgorithm.cc \
+FullReorthogonalizedComplexLanczosAlgorithm.cc \
 FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc \
 ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc

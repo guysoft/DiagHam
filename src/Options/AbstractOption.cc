@@ -89,30 +89,6 @@ bool ProceedOptions (char** argumentValues, int nbrArgument, List<AbstractOption
 
 bool ProceedOptions (char* inputFile, List<AbstractOption*>& option, ostream& str)
 {
-  int Pos = 1;
-  int Inc;
-  AbstractOption** TmpOption;
-  ListIterator<AbstractOption*> OptionIter(option);
-  while (Pos < nbrArgument)
-    {
-      Inc = 0;
-      OptionIter.DefineList(option);
-      while ((Inc == 0) && ((TmpOption = OptionIter())) )
-	{
-	  Inc = (*TmpOption)->ReadOption(argumentValues, nbrArgument, Pos);
-	  if (Inc == -1)
-	    {
-	      (*TmpOption)->PrintError(cout);
-	      return false; 
-	    }
-	}
-      if (Inc == 0)
-	{
-	  cout << "unknown option " <<  argumentValues[Pos] << endl;
-	  return false;
-	}
-      Pos += Inc;
-    }
   return true;
 }
 
@@ -124,26 +100,9 @@ bool ProceedOptions (char* inputFile, List<AbstractOption*>& option, ostream& st
 // lineNumber = number of the line which has to be parse
 // return value = true if parsing succeded
 
-bool LineParse (char* line, char*& optionName; char*& optionValue)
+bool LineParse (char* line, char*& optionName, char*& optionValue)
 {
-  AbstractOption** TmpOption;
-  ListIterator<AbstractOption*> OptionIter(option);
-  bool Flag = false;
-  while ((Inc == 0) && ((TmpOption = OptionIter())) )
-    {
-      Inc = (*TmpOption)->ReadOption(argumentValues, nbrArgument, Pos);
-      if (Inc == -1)
-	{
-	  (*TmpOption)->PrintError(cout);
-	  return false; 
-	}
-    }
-  if (Inc == 0)
-	{
-	  cout << "unknown option " <<  argumentValues[Pos] << endl;
-	  return false;
-	}
-  
+  return true;
 }
 
 // display help

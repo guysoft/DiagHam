@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1CHAIN_H
-#define SPIN1CHAIN_H
+#ifndef SPIN1CHAINWITHTRANSLATIONS_H
+#define SPIN1CHAINWITHTRANSLATIONS_H
 
 
 #include "config.h"
@@ -58,7 +58,14 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
 
   // momentum 
   int Momentum;
-  
+  // array containing falg indicating if a state beloging to an orbit with a given number of member is compatible with momentum constraint
+  bool* CompatibilityWithMomentum;
+
+  // array containing rescaling factors when passing from one orbit to another
+  double** RescalingFactors;
+  // number of state in each orbit
+  int* NbrStateInOrbit;
+
   // flag to indicate if the total sz component is fixed
   bool FixedQuantumNumberFlag;
   //  total sz component (if fixed)
@@ -132,6 +139,11 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // index = index of the state
   // return value = pointer to corresponding quantum number
   AbstractQuantumNumber* GetQuantumNumber (int index);
+
+  // get the momentum of each state in the current Hilbert space
+  //
+  // return value = momentum value
+  int GetMomentum();
 
   // return value of spin projection on (Oz) for a given state
   //
@@ -232,6 +244,14 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = canonical form of the state
   unsigned long FindCanonicalForm(unsigned long state, int& nbrTranslation);
 
+  // find the canonical form of a state and find how many translations are needed to obtain the same state
+  //
+  // stateDescription = state description
+  // nbrTranslation = reference on a integer where the number of translations needed to obtain the canonical form  will be stored
+  // nbrTranslationToIdentity = reference on the number of translation needed to obtain the same state
+  // return value = canonical form of the state
+  unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslation, int& nbrTranslationToIdentity);
+
   // find how many translations are needed to obtain the same state
   //
   // stateDescription = unsigned integer describing the state
@@ -246,11 +266,10 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // momemtum = total momentum of each state
   // sz = twice the value of total Sz component
   // fixedQuantumNumberFlag = true if hilbert space is restricted to a given quantum number
-  // lookUpTable = look-up table
   // lookUpTableShift = shift to apply to a state to obtain an index to the look-up table 
   // complementaryStateShift = shift to apply to move the spin from one end to the other one
   Spin1ChainWithTranslations (int hilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
-			      int momentum, int sz, bool fixedQuantumNumberFlag, long* lookUpTable, int lookUpTableShift, 
+			      int momentum, int sz, bool fixedQuantumNumberFlag, int lookUpTableShift, 
 			      int complementaryStateShift);
 
   // generate all states with no constraint on total Sz
@@ -266,7 +285,25 @@ class Spin1ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = number of generated states
   int GenerateStates(int sz, long memorySlice);
 
+
+  // create precalculation tables
+  //
+  void CreatePrecalculationTable();
+
+  // create look-up table used to speed up index search
+  //
+  void CreateLookUpTable();
+
 };
+
+// get the momentum of each state in the current Hilbert space
+//
+// return value = momentum value
+
+inline int Spin1ChainWithTranslations::GetMomentum()
+{
+  return this->Momentum;
+}
 
 #endif
 

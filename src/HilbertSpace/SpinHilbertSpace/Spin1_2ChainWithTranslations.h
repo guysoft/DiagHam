@@ -149,6 +149,11 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // return value = pointer to corresponding quantum number
   AbstractQuantumNumber* GetQuantumNumber (int index);
 
+  // get the momentum of each state in the current Hilbert space
+  //
+  // return value = momentum value
+  int GetMomentum();
+
   // return value of spin projection on (Oz) for a given state
   //
   // index = index of the state to test
@@ -281,6 +286,15 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   void ApplyMomentumCriteria ();
 
 };
+
+// get the momentum of each state in the current Hilbert space
+//
+// return value = momentum value
+
+inline int Spin1_2ChainWithTranslations::GetMomentum()
+{
+  return this->Momentum;
+}
 
 #endif
 

@@ -41,7 +41,9 @@ class AbstractHamiltonian;
 class AbstractArchitectureOperation;
 class VectorHamiltonianMultiplyOperation;
 class AddRealLinearCombinationOperation;
+class AddComplexLinearCombinationOperation;
 class MultipleRealScalarProductOperation;
+class MultipleComplexScalarProductOperation;
 class MatrixMatrixMultiplyOperation;
 class QHEParticlePrecalculationOperation;
 
@@ -80,11 +82,23 @@ public:
   // return value = true if operation has been completed successfully
   virtual bool ExecuteOperation (AddRealLinearCombinationOperation* operation);
   
+  // execute an architecture-dependent add complex linear combination operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  virtual bool ExecuteOperation (AddComplexLinearCombinationOperation* operation);
+
   // execute an architecture-dependent multiple real scalar product operation
   //
   // operation = pointer to the operation to execute
   // return value = true if operation has been completed successfully
   virtual bool ExecuteOperation (MultipleRealScalarProductOperation* operation);
+  
+  // execute an architecture-dependent multiple complex scalar product operation
+  //
+  // operation = pointer to the operation to execute
+  // return value = true if operation has been completed successfully
+  virtual bool ExecuteOperation (MultipleComplexScalarProductOperation* operation);
   
   // execute an architecture-dependent matrix matrix multiplication operation
   //

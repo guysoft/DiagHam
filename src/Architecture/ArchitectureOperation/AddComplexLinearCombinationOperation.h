@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ADDREALLINEARCOMBINATIONOPERATION_H
-#define ADDREALLINEARCOMBINATIONOPERATION_H
+#ifndef ADDCOMPLEXLINEARCOMBINATIONOPERATION_H
+#define ADDCOMPLEXLINEARCOMBINATIONOPERATION_H
 
 
 #include "config.h"
@@ -55,8 +55,10 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   ComplexMatrix SourceVectorMatrix;
   // number of vector that have to be added
   int NbrVector;
-  // coefficient of the linear combination
+  // coefficient of the linear combination (null if coefficients are real)
   Complex* Coefficients;
+  // coefficient of the linear combination (null if coefficients are complex)
+  double* RealCoefficients;
 
   // vector where the result has to be stored
   ComplexVector* DestinationVector;  
@@ -78,6 +80,22 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   // nbrVector = number of vector that have to be added
   // coefficients = coefficient of the linear combination
   AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexMatrix& sourceVector, int nbrVector, Complex* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexVector* sourceVector, int nbrVector, double* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = matrix containing the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexMatrix& sourceVector, int nbrVector, double* coefficients);
 
   // copy constructor 
   //

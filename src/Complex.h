@@ -29,7 +29,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-//#include "config.h"
+#include "config.h"
+#include "Output/MathematicaOutput.h"
+
 #include <math.h>
 #include <iostream>
 
@@ -162,6 +164,13 @@ public:
   // z = complex value to print
   // return value = reference on current output stream 
   friend ostream& operator << (ostream& Str, const Complex& z);
+
+  // Mathematica Output Stream overload
+  //
+  // Str = reference on Mathematica output stream
+  // z = complex value to print
+  // return value = reference on output stream
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, const Complex& z);
 
 };
 
@@ -579,6 +588,21 @@ inline Complex I()
 inline ostream& operator << (ostream& Str, const Complex& z)
 {
   Str << "(" << z.Re << "," << z.Im << ")";
+  return Str;
+}
+
+// Mathematica Output Stream overload
+//
+// Str = reference on Mathematica output stream
+// z = complex value to print
+// return value = reference on output stream
+
+inline MathematicaOutput& operator << (MathematicaOutput& Str, const Complex& z)
+{
+  if (z.Im < 0.0)
+    Str << z.Re << z.Im << "I";
+  else
+    Str << z.Re << "+" << z.Im << "I";
   return Str;
 }
 
