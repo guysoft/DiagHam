@@ -46,9 +46,11 @@ using std::ifstream;
 // topRadius = radius of the dot top
 // aboveHeight = height of cylinder above the dot
 // underBarrier = height of the layer serving as well barrier
+// superCylinderRadius = radius of the supercylinder 
 
-QuantumDotThreeDConstantCylinderPotential::QuantumDotThreeDConstantCylinderPotential( double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight, double underBarrier)
+QuantumDotThreeDConstantCylinderPotential::QuantumDotThreeDConstantCylinderPotential( double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight, double underBarrier, double superCylinderRadius)
 {
+  this->SuperCylinderRadius = superCylinderRadius;
   this->NbrCylinderDot = nbrCylinderDot;
   this->NumberZ = this->NbrCylinderDot + 4;
   this->CylinderHeight = new double[this->NumberZ];

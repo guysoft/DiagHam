@@ -73,7 +73,8 @@ class QuantumDotThreeDConstantCylinderPotential : public ThreeDConstantCylinderP
   // topRadius = radius of the dot top
   // aboveHeight = height of cylinder above the dot
   // underBarrier = height of the layer serving as well barrier
-  QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight, double underBarrier = 0.0);
+  // superCylinderRadius = radius of the supercylinder 
+  QuantumDotThreeDConstantCylinderPotential(double belowHeight, double wettingWidth, int nbrCylinderDot, double dotHeight, double baseRadius, double topRadius, double aboveHeight, double underBarrier = 0.0, double superCylinderRadius = -1.0);
   
   // destructor
   //
@@ -84,7 +85,7 @@ class QuantumDotThreeDConstantCylinderPotential : public ThreeDConstantCylinderP
   // dotPotential = dot potential, in comparision with the bulk
   // wellPotential = barrier potential, in comparison with the bulk
   void ConstructPotential(double dotPotential, double wellPotential = 0.0);
-
+  
   // save the whole diagram presentation in a bitmap file
   //
   // fileName = name of the file to stock the diagram presentation

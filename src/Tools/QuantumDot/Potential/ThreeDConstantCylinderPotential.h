@@ -37,6 +37,9 @@ class ThreeDConstantCylinderPotential : public AbstractPotential
 
  protected:
 
+  // radius of the supercylinder
+  double SuperCylinderRadius;
+
   // number of cylinders in Z direction
   int NumberZ;
 
@@ -54,6 +57,10 @@ class ThreeDConstantCylinderPotential : public AbstractPotential
   // destructor
   //
   virtual ~ThreeDConstantCylinderPotential();
+
+  // get the super cylinder radius
+  //
+  double GetSuperCylinderRadius();
 
   // get the number of cylinders in Y direction
   //
@@ -109,6 +116,14 @@ class ThreeDConstantCylinderPotential : public AbstractPotential
   virtual double GetRadius(int k);
 
 };
+
+// get the super cylinder radius
+//
+  
+inline double ThreeDConstantCylinderPotential::GetSuperCylinderRadius()
+{
+  return this->SuperCylinderRadius;
+}
 
 // get the number of cylinders in Y direction
 //
