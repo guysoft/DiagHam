@@ -1,8 +1,13 @@
 #!/usr/bin/perl -w
 
-#  $ARGV[0] = name of the gnuplot script file as input
-#  $ARGV[1] = name of the output file save as eps format
+########################################
+#  Copyright NGUYEN Duc Phuong (2005)  #
+########################################
 
+#  Requirement: the gnuplot script file must contain "set term fig"
+#  Required packages: gnuplot 4.0 (other versions do not work), transfig, tetex
+#  $ARGV[0] = name of the gnuplot script file as input
+#  $ARGV[1] = name of the output file saved as eps format
 
 $GnuplotFile = shift (@ARGV);
 $EPSFile = shift (@ARGV);

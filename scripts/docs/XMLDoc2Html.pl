@@ -7,15 +7,13 @@ use Getopt::Long;
 
 my $HeaderFile = "";
 my $FooterFile = "";
-my $Result = GetOptions ("header:s" => $HeaderFile); 
-$Result = GetOptions ("footer:s" => $FooterFile); 
-$Result = GetOptions ("xml=s" => $XMLFile); 
-
-if ($HeaderFile == "")
+my $XMLFile = "";
+my $Result = GetOptions ("header:s" => \$HeaderFile, "footer:s" => \$FooterFile, "xml=s" => \$XMLFile); 
+if ($HeaderFile eq "")
   {
     $HeaderFile = "docs/built_in_progams/header.html";
   }
-if ($FooterFile == "")
+if ($FooterFile eq "")
   {
     $FooterFile = "docs/built_in_progams/footer.html";
   }
