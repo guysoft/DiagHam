@@ -52,6 +52,8 @@ AbstractOption::~AbstractOption()
 
 bool AbstractOption::IsOptionName (char* optionName)
 {
+  if (strlen(&(this->OptionName[1])) != strlen(optionName))
+    return false;
   if (strncmp(optionName, &(this->OptionName[1]), strlen(this->OptionName) - 1) != 0)
     {
       return false;

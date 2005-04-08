@@ -48,10 +48,11 @@ using std::endl;
 // architecture = architecture to use for precalculation
 // nbrBody = number of particle that interact simultaneously through the hard core interaction
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
-										   AbstractArchitecture* architecture, long memory, 
+										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 										   char* precalculationFileName)
 {
   this->Particles = particles;
@@ -81,6 +82,12 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = onDiskCacheFlag;
+  this->Memory = memory;
+  if (this->DiskStorageFlag == false)
+    cout << "toto" << endl;
+  else
+    cout << "tata" << endl;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -96,9 +103,17 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
 	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (memory > 0)
+	  if (this->DiskStorageFlag == false)
 	    {
+	      cout << "toto" << endl;
 	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      cout << "tata" << endl;
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
 	    }
 	}
     }
@@ -115,11 +130,12 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
 // nBodyFactors = weight of the different n-body interaction terms with respect to each other
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 										   int maxNbrBody, double* nBodyFactors,
-										   AbstractArchitecture* architecture, long memory, 
+										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 										   char* precalculationFileName)
 {
   this->Particles = particles;
@@ -150,6 +166,8 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = onDiskCacheFlag;
+  this->Memory = memory;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -165,9 +183,15 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
 	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (memory > 0)
+	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
 	    }
 	}
     }
@@ -200,20 +224,23 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
 
   if (this->FastMultiplicationFlag == true)
     {
-      long MinIndex;
-      long MaxIndex;
-      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
+      if (this->DiskStorageFlag == false)
 	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
+	  long MinIndex;
+	  long MaxIndex;
+	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	    ++ReducedDim;
+	  for (int i = 0; i < ReducedDim; ++i)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
+	  delete[] this->InteractionPerComponentIndex;
+	  delete[] this->InteractionPerComponentCoefficient;
 	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
     }
 }

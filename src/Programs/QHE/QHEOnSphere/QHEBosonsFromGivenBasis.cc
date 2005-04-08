@@ -32,11 +32,10 @@
 #include <stdio.h>
 
 
+using std::ios;
 using std::cout;
 using std::endl;
-
-
-void SortOverlaps (double* bestOverlaps, double** overlaps, int nbrOverlaps, int nbrTestStates);
+using std::ofstream;
 
 
 int main(int argc, char** argv)
@@ -55,7 +54,9 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*MainGroup) += new SingleStringOption  ('\n', "input-file", "name of the file which contains definition of overlaps to evaluate");
-  (*MainGroup) += new BooleanOption  ('\n', "lsort", "");
+  (*MainGroup) += new SingleStringOption  ('\n', "output-file", "name of the file which contains definition of overlaps to evaluate");
+  (*MainGroup) += new BooleanOption  ('\n', "lsort", "diagonalize in each fixed total l sector");
+  (*MainGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -69,6 +70,9 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
+
+  bool LSortFlag = ((BooleanOption*) Manager["lsort"])->GetBoolean();
+  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
 
   ConfigurationParser OverlapDefinition;
   if (OverlapDefinition.Parse(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
@@ -110,150 +114,235 @@ int main(int argc, char** argv)
   char* VectorBasisName2 = VectorBasisName + strlen(VectorBasisName);
 
   int TotalMaxLz = LzMax * NbrParticles;
-  RealVector** SortedTestVectors = new RealVector*[MaxNbrLz];
   bool Parity = true;
   if ((TotalMaxLz & 1) != 0)
     Parity = false;
-  int* NbrSortedTestVectors = new int [TotalMaxLz];
-  int* TestVectorPosition = new int [TotalMaxLz];
 
-  for (int i = 0; i < MaxNbrLz; ++i)
+  ofstream File;
+  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
     {
-      int Lz = i << 1;
-      if (Parity == false)
-	{
-	  ++Lz;
-	  cout << "Lz = " << Lz << "/2" << endl;
-	}
-      else
-	{
-	  cout << "Lz = " << i << endl;
-	}
-      RealVector* TestVectors = new RealVector[Degeneracy[i]]; 
-      for (int j = 0; j < TotalMaxLz; ++j)  
-	{  
-	  TestVectorPosition[j] = TotalMaxLz;
-	  NbrSortedTestVectors[j] = 0;
-	}
-      
-      for (int j = 0; j < Degeneracy[i]; ++j)
-       {
-	 sprintf (VectorBasisName2, "%d.%d.vec", Lz, j);	      
-	 if (TestVectors[j].ReadVector(VectorBasisName) == false)
-	   {
-	     cout << "error while reading " << VectorBasisName << endl;
-	     return -1;
-	   }
-       }
-     
-     RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
-     BosonOnSphere Space (NbrParticles, Lz, LzMax);
-     
-     if (Degeneracy[i] > 1)
-       {
-	 RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
-	 ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	 for (int k = 0; k < Degeneracy[i]; ++k)
-	    {
-	      for (int l = k; l < Degeneracy[i]; ++l)
-		{	
-		  HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
-		}
-	    }
-	  cout << endl << endl;
-	  
-	  RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
-	  for (int l = 0; l < Degeneracy[i]; ++l)
-	    TmpEigenvector(l, l) = 1.0;
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
-	  HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
-	  TmpTriDiag.Diagonalize(TmpEigenvector);
-	  TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
-	  cout << "angular momentum of test eigenvectors = ";
-	  int TmpAngularMomentum;
-	  for (int k = 0; k < Degeneracy[i]; ++k)	    
-	    {
-	      TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
-	      cout << TmpAngularMomentum << " ";	      
-	      NbrSortedTestVectors[TmpAngularMomentum]++;
-	      if (TestVectorPosition[TmpAngularMomentum] > k)
-		TestVectorPosition[TmpAngularMomentum] = k;
-	    }
-	  
-	  cout << endl;
-	  DiagonalBasis.Multiply(TmpEigenvector);
-	}
-      else
-	if (Degeneracy[i] == 1)
-	  {
-	    ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	    int TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * oper.MatrixElement(TestVectors[0], TestVectors[0]).Re) + 1.0) - 1.0)));
-	    cout << "angular momentum of test eigenvectors = " << TmpAngularMomentum << endl;
-	    NbrSortedTestVectors[TmpAngularMomentum]++;	    
-	    TestVectorPosition[TmpAngularMomentum] = 0;
-	  }
-
-     Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
-     AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrParticles, LzMax, Architecture.GetArchitecture(), 1000000000l);
-     for (int j = 0; j < MaxNbrLz; ++j)
-       {
-	 if (NbrSortedTestVectors[j] > 1)
-	   {
-	     int Shift = TestVectorPosition[j];
-	     RealSymmetricMatrix HRep (NbrSortedTestVectors[j], NbrSortedTestVectors[j]);
-	     for (int k = 0; k < NbrSortedTestVectors[j]; ++k)
-	       {
-		 for (int l = k; l < NbrSortedTestVectors[j]; ++l)
-		   {	
-		     HRep.SetMatrixElement(l, k, Hamiltonian->MatrixElement(DiagonalBasis[k + Shift], DiagonalBasis[l + Shift]).Re);
-		   }
-	       }
-	     RealTriDiagonalSymmetricMatrix TmpTriDiag (NbrSortedTestVectors[j]);
-	     HRep.Householder(TmpTriDiag, 1e-7);
-	     TmpTriDiag.Diagonalize();
-	     TmpTriDiag.SortMatrixUpOrder();
-	     for (int k = 0; k < NbrSortedTestVectors[j]; ++k)
-	       cout << j << " " << TmpTriDiag.DiagonalElement(k) << endl;
-	   }
-	 else
-	   if (NbrSortedTestVectors[j] == 1)
-	     {
-	       int Shift = TestVectorPosition[j];
-	       cout << j << " " << Hamiltonian->MatrixElement(DiagonalBasis[Shift], DiagonalBasis[Shift]).Re << endl;
-	     }
-       }
-
+       File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+       File.precision(14);     
     }
 
+  if (LSortFlag == true)
+    {
+      int* NbrSortedTestVectors = new int [2 * TotalMaxLz];
+      int* TestVectorPosition = new int [2 * TotalMaxLz];
 
-  delete[] Degeneracy;
-  delete[] VectorBasisName;
-  delete[] SortedTestVectors;
-  delete[] NbrSortedTestVectors;
-  delete[] TestVectorPosition;
+      for (int i = 0; i < MaxNbrLz; ++i)
+	{
+	  int Lz = i << 1;
+	  if (Parity == false)
+	    {
+	      ++Lz;
+	      cout << "Lz = " << Lz << "/2" << endl;
+	    }
+	  else
+	    {
+	      cout << "Lz = " << i << endl;
+	    }
+	  RealVector* TestVectors = new RealVector[Degeneracy[i]]; 
+	  for (int j = 0; j < TotalMaxLz; ++j)  
+	    {  
+	      TestVectorPosition[j] = TotalMaxLz;
+	      NbrSortedTestVectors[j] = 0;
+	    }
+	  
+	  for (int j = 0; j < Degeneracy[i]; ++j)
+	    {
+	      sprintf (VectorBasisName2, "%d.%d.vec", Lz, j);	      
+	      if (TestVectors[j].ReadVector(VectorBasisName) == false)
+		{
+		  cout << "error while reading " << VectorBasisName << endl;
+		  return -1;
+		}
+	    }
+	  
+	  RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
+	  BosonOnSphere Space (NbrParticles, Lz, LzMax);
+	  
+	  if (Degeneracy[i] > 1)
+	    {
+	      RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
+	      ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+	      for (int k = 0; k < Degeneracy[i]; ++k)
+		{
+		  for (int l = k; l < Degeneracy[i]; ++l)
+		    {	
+		      HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
+		    }
+		}
+	      cout << endl << endl;
+	      
+	      RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
+	      for (int l = 0; l < Degeneracy[i]; ++l)
+		TmpEigenvector(l, l) = 1.0;
+	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
+	      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+	      TmpTriDiag.Diagonalize(TmpEigenvector);
+	      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+	      cout << "angular momentum of test eigenvectors = ";
+	      int TmpAngularMomentum;
+	      for (int k = 0; k < Degeneracy[i]; ++k)	    
+		{
+		  TmpAngularMomentum = ((int) round((sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
+		  if (Parity == false)
+		    cout << TmpAngularMomentum << "/2 ";	      
+		  else
+		    cout << (TmpAngularMomentum >> 1) << " ";	      
+		  NbrSortedTestVectors[TmpAngularMomentum]++;
+		  if (TestVectorPosition[TmpAngularMomentum] > k)
+		    TestVectorPosition[TmpAngularMomentum] = k;
+		}
+	      
+	      cout << endl;
+	      DiagonalBasis.Multiply(TmpEigenvector);
+	    }
+	  else
+	    if (Degeneracy[i] == 1)
+	      {
+		ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+		int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper.MatrixElement(TestVectors[0], TestVectors[0]).Re) + 1.0) - 1.0)));
+		cout << "angular momentum of test eigenvectors = ";
+		if (Parity == false)
+		  cout << TmpAngularMomentum  << "/2 " << endl;
+		else
+		  cout << (TmpAngularMomentum >> 1)  << endl;
+		NbrSortedTestVectors[TmpAngularMomentum]++;
+		TestVectorPosition[TmpAngularMomentum] = 0;
+	      }
+	  
+	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+	  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrParticles, LzMax, Architecture.GetArchitecture(), Memory);
+	  for (int j = 0; j < MaxNbrLz; ++j)
+	    {
+	      int Pos = j;
+	      if (Parity == false)
+		Pos = (j << 1) + 1;
+	      else
+		Pos = (j << 1);
+	      if (NbrSortedTestVectors[Pos] > 1)
+		{
+		  int Shift = TestVectorPosition[Pos];
+		  RealSymmetricMatrix HRep (NbrSortedTestVectors[Pos], NbrSortedTestVectors[Pos]);
+		  RealVector TmpVector (DiagonalBasis[Shift].GetVectorDimension());
+		  for (int k = 0; k < NbrSortedTestVectors[Pos]; ++k)
+		    {
+		      Hamiltonian->Multiply(DiagonalBasis[k + Shift], TmpVector);
+		      for (int l = k; l < NbrSortedTestVectors[Pos]; ++l)
+			{	
+			  HRep.SetMatrixElement(l, k, (TmpVector * DiagonalBasis[l + Shift]));
+			}
+		    }
+		  RealTriDiagonalSymmetricMatrix TmpTriDiag (NbrSortedTestVectors[Pos]);
+		  HRep.Householder(TmpTriDiag, 1e-7);
+		  TmpTriDiag.Diagonalize();
+		  TmpTriDiag.SortMatrixUpOrder();
+		  for (int k = 0; k < NbrSortedTestVectors[Pos]; ++k)
+		    cout << j << " " << TmpTriDiag.DiagonalElement(k) << endl;
+		  if ((i == 0) && (((SingleStringOption*) Manager["output-file"])->GetString() != 0))
+		    for (int k = 0; k < NbrSortedTestVectors[Pos]; ++k)
+		      File << j << " " << TmpTriDiag.DiagonalElement(k) << endl;		    
+		}
+	      else
+		if (NbrSortedTestVectors[Pos] == 1)
+		  {
+		    int Shift = TestVectorPosition[Pos];
+		    RealVector TmpVector (DiagonalBasis[Shift].GetVectorDimension());
+		    Hamiltonian->Multiply(DiagonalBasis[Shift], TmpVector);
+		    double Scalar = (TmpVector * DiagonalBasis[Shift]);
+		    cout << j << " " << Scalar << endl;
+		    if ((i == 0) && (((SingleStringOption*) Manager["output-file"])->GetString() != 0))
+		      File << j << " " << Scalar << endl;
+		  }
+	    }
+	  delete Hamiltonian;
+	}
+      
+      delete[] Degeneracy;
+      delete[] VectorBasisName;
+      delete[] NbrSortedTestVectors;
+      delete[] TestVectorPosition;
+    }
+  else
+    {
+      for (int i = 0; i < MaxNbrLz; ++i)
+	{
+	  int Lz = i << 1;
+	  if (Parity == false)
+	    {
+	      ++Lz;
+	      cout << "Lz = " << Lz << "/2" << endl;
+	    }
+	  else
+	    {
+	      cout << "Lz = " << i << endl;
+	    }
+	  BosonOnSphere Space (NbrParticles, Lz, LzMax);
+	  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+	  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrParticles, LzMax, Architecture.GetArchitecture(), Memory);
+	  if (Degeneracy[i] > 1)
+	    {
+	      RealSymmetricMatrix HRep (Degeneracy[i]);
+	      RealVector TmpVector;
+	      for (int k = 0; k < Degeneracy[i]; ++k)
+		{
+		  RealVector TestVector;
+		  sprintf (VectorBasisName2, "%d.%d.vec", Lz, k);	      
+		  if (TestVector.ReadVector(VectorBasisName) == false)
+		    {
+		      cout << "error while reading " << VectorBasisName << endl;
+		      return -1;
+		    }
+		  RealVector TmpVector (TestVector.GetVectorDimension());
+		  Hamiltonian->Multiply(TestVector, TmpVector);
+		  HRep.SetMatrixElement(k, k, (TmpVector * TestVector));
+		  for (int l = k + 1; l < Degeneracy[i]; ++l)
+		    {	
+		      sprintf (VectorBasisName2, "%d.%d.vec", Lz, l);	      
+		      if (TestVector.ReadVector(VectorBasisName) == false)
+			{
+			  cout << "error while reading " << VectorBasisName << endl;
+			  return -1;
+			}
+		      HRep.SetMatrixElement(l, k, (TmpVector * TestVector));
+		    }
+		}
+	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
+	      HRep.Householder(TmpTriDiag, 1e-7);
+	      TmpTriDiag.Diagonalize();
+	      TmpTriDiag.SortMatrixUpOrder();
+	      for (int k = 0; k < Degeneracy[i]; ++k)
+		cout << i << " " << TmpTriDiag.DiagonalElement(k) << endl;
+	      if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+		for (int k = 0; k < Degeneracy[i]; ++k)
+		  File << i << " " << TmpTriDiag.DiagonalElement(k) << endl;
+	    }
+	  else
+	    {
+	      RealVector TestVector;
+	      sprintf (VectorBasisName2, "%d.%d.vec", Lz, 0);	      
+	      if (TestVector.ReadVector(VectorBasisName) == false)
+		{
+		  cout << "error while reading " << VectorBasisName << endl;
+		  return -1;
+		}
+	      RealVector TmpVector (TestVector.GetVectorDimension());
+	      Hamiltonian->Multiply(TestVector, TmpVector);
+	      double Scalar = (TmpVector * TestVector);
+	      cout << i << " " << Scalar << endl;
+	      if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+		File << i << " " << Scalar << endl;
+	    }
+	  delete Hamiltonian;
+	}
+    }
+  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+    {
+      File.close();
+    }
   return 0;
 }
 
 
-void SortOverlaps (double* bestOverlaps, double** overlaps, int nbrOverlaps, int nbrTestStates)
-{
-  if (nbrOverlaps <= 1)
-    return;
-  SortArrayUpOrdering(bestOverlaps, overlaps, nbrOverlaps);
-  for (int i = 0; i < (nbrOverlaps - 1); ++i)
-    {
-      for (int j = 0; j < nbrTestStates; ++j)
-	{	  
-	  double Tmp = 0.0;
-	  for (int k = 0; k < nbrTestStates; ++k)
-	    Tmp += overlaps[nbrOverlaps - 1][k] * overlaps[i][k];
-	  overlaps[i][j] -= Tmp * overlaps[i][j];	  
-	}
-      bestOverlaps[i] = 0.0;
-      for (int j = 0; j < nbrTestStates; ++j)
-	{	  
-	  bestOverlaps[i] += overlaps[i][j] * overlaps[i][j];
-	}
-    }
-  SortOverlaps (bestOverlaps, overlaps, nbrOverlaps - 1, nbrTestStates);
-}

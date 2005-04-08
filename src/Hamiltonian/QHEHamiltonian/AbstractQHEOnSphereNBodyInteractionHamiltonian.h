@@ -116,6 +116,11 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // lastComponent  = index of the last component that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
 
+  // enable fast multiplication algorithm
+  //
+  // fileName = prefix of the name of the file where temporary matrix elements will be stored
+  virtual void EnableFastMultiplicationWithDiskStorage(char* fileName);
+
   // get all indices needed to characterize a completly skew symmetric tensor, ordered by the sum of the indices
   //
   // nbrValues = number of different values an index can have

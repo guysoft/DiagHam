@@ -64,9 +64,10 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // architecture = architecture to use for precalculation
   // nbrBody = number of particle that interact simultaneously through the hard core interaction
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
-					   AbstractArchitecture* architecture, long memory = -1, 
+					   AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					   char* precalculationFileName = 0);
 
   // constructor from default datas
@@ -78,10 +79,11 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
   // nBodyFactors = weight of the different n-body interaction terms with respect to each other
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 					   int maxNbrBody, double* nBodyFactors,
-					   AbstractArchitecture* architecture, long memory = -1, 
+					   AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					   char* precalculationFileName = 0);
 
   // destructor

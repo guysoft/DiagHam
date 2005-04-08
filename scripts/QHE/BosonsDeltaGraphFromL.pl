@@ -38,7 +38,7 @@ my $TmpFile;
 foreach $TmpFile (<*>)
   {
     if (($TmpFile =~ /bosons\_delta\_n\_$NbrBosons.*\_l\.dat/ ) || ($TmpFile =~ /bosons\_coulomb\_n\_$NbrBosons.*\_l\.dat/) || 
-	($TmpFile =~ /bosons\_dipolar\_n\_$NbrBosons.*\_l\.dat/) || ($TmpFile =~ /bosons\_v2\_n\_$NbrBosons.*\_l\.dat/))
+	($TmpFile =~ /bosons\_dipolar\_n\_$NbrBosons.*\_l\.dat/) || ($TmpFile =~ /bosons\_v2\_n\_$NbrBosons.*\_l\.dat/) || ($TmpFile =~ /bosons\_.*\_n\_$NbrBosons.*\_l\.dat/))
       {
 	push (@ListFiles, $TmpFile);
       }
@@ -154,8 +154,8 @@ sub CreatePostScript
     $Min -= $Delta;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
-    my @TmpArray = split (/_/,  $OutputFile);
-    my $Title = "N = ".$TmpArray[3]."  2S = ".$TmpArray[5];
+    $FileName =~ /n\_(\d+)\_2s\_(\d*)\_/;
+    my $Title = "N = ".$1."  2S = ".$2;
     open (OUTFILE, ">$TmpFileName");
     print OUTFILE ("set xrange [-1:".($MaxL + 1)."]
 set yrange [".$Min.":".$Max."]\n");

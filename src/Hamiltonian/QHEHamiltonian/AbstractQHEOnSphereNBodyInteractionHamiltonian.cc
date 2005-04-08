@@ -40,12 +40,16 @@
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
+#include <fstream>
 #include <sys/time.h>
 
 
 using std::cout;
 using std::endl;
 using std::ostream;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 
 // destructor
@@ -132,75 +136,172 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	}
       else
 	{
-	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-	  int* TmpIndexArray;
-	  double* TmpCoefficientArray; 
-	  int j;
-	  int TmpNbrInteraction;
-	  firstComponent -= this->PrecalculationShift;
-	  LastComponent -= this->PrecalculationShift;
-	  int Pos = firstComponent / this->FastMultiplicationStep; 
-	  int PosMod = firstComponent % this->FastMultiplicationStep;
-	  if (PosMod != 0)
+	  if (this->DiskStorageFlag == false)
 	    {
-	      ++Pos;
-	      PosMod = this->FastMultiplicationStep - PosMod;
-	    }
-	  int l =  PosMod + firstComponent + this->PrecalculationShift;
-	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
-	    {
-	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
-	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
-	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      Coefficient = vSource[l];
-	      for (j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[l] += this->HamiltonianShift * Coefficient;
-	      l += this->FastMultiplicationStep;
-	      ++Pos;
-	    }
-	  int Index;
-	  int* MIndices;
-	  int* NIndices;
-	  double* TmpInteraction;
-	  double Coefficient2;
-	  firstComponent += this->PrecalculationShift;
-	  LastComponent += this->PrecalculationShift;
-	  for (l = 0; l < this->FastMultiplicationStep; ++l)
-	    if (PosMod != l)
-	      {	
-		for (int k = 2; k <= this->MaxNBody; ++k)
-		  if (this->NBodyFlags[k] == true)
-		    {
-		      for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray; 
+	      int j;
+	      int TmpNbrInteraction;
+	      firstComponent -= this->PrecalculationShift;
+	      LastComponent -= this->PrecalculationShift;
+	      int Pos = firstComponent / this->FastMultiplicationStep; 
+	      int PosMod = firstComponent % this->FastMultiplicationStep;
+	      if (PosMod != 0)
+		{
+		  ++Pos;
+		  PosMod = this->FastMultiplicationStep - PosMod;
+		}
+	      int l =  PosMod + firstComponent + this->PrecalculationShift;
+	      for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+		{
+		  TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+		  TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+		  TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+		  Coefficient = vSource[l];
+		  for (j = 0; j < TmpNbrInteraction; ++j)
+		    vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		  vDestination[l] += this->HamiltonianShift * Coefficient;
+		  l += this->FastMultiplicationStep;
+		  ++Pos;
+		}
+	      int Index;
+	      int* MIndices;
+	      int* NIndices;
+	      double* TmpInteraction;
+	      double Coefficient2;
+	      firstComponent += this->PrecalculationShift;
+	      LastComponent += this->PrecalculationShift;
+	      for (l = 0; l < this->FastMultiplicationStep; ++l)
+		if (PosMod != l)
+		  {	
+		    for (int k = 2; k <= this->MaxNBody; ++k)
+		      if (this->NBodyFlags[k] == true)
 			{
-			  for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 			    {
-			      TmpInteraction = this->NBodyInteractionFactors[k][j];
-			      int Lim = NbrSortedIndicesPerSum[k][j];
-			      MIndices = this->SortedIndicesPerSum[k][j];
-			      for (int i1 = 0; i1 < Lim; ++i1)
+			      for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 				{
-				  Coefficient2 = vSource[i] * TmpInteraction[i1];
-				  NIndices = this->SortedIndicesPerSum[k][j];
-				  for (int i2 = 0; i2 < Lim; ++i2)
+				  TmpInteraction = this->NBodyInteractionFactors[k][j];
+				  int Lim = NbrSortedIndicesPerSum[k][j];
+				  MIndices = this->SortedIndicesPerSum[k][j];
+				  for (int i1 = 0; i1 < Lim; ++i1)
 				    {
-				      Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-				      if (Index < Dim)
-					vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
-				      NIndices += k;
+				      Coefficient2 = vSource[i] * TmpInteraction[i1];
+				      NIndices = this->SortedIndicesPerSum[k][j];
+				      for (int i2 = 0; i2 < Lim; ++i2)
+					{
+					  Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+					  if (Index < Dim)
+					    vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
+					  NIndices += k;
+					}
+				      MIndices += k;
 				    }
-				  MIndices += k;
 				}
-			    }
-			}		      
+			    }		      
+			}
+		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		      vDestination[i] += this->HamiltonianShift * vSource[i];					
+		  }
+	      delete TmpParticles;
+	    }
+	  else
+	    {
+	      int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      int TmpNbrIteration = nbrComponent / this->BufferSize;
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray;
+	      int TmpIncrement; 
+	      int TmpNbrInteraction;
+	      int k = firstComponent;
+	      firstComponent -= this->PrecalculationShift;
+
+	      cout << "check" << this->BufferSize << " " << this->MaxNbrInteractionPerComponent <<endl;
+	      ifstream File;
+	      File.open(this->DiskStorageFileName, ios::binary | ios::in);
+	      long FileOffset = 0;
+	      for (int i = this->DiskStorageStart; i < firstComponent; ++i)
+		FileOffset += this->NbrInteractionPerComponent[i];
+	      File.seekg (FileOffset * (sizeof(int) + sizeof(double)), ios::beg);
+	      for (int i = 0; i < TmpNbrIteration; ++i)
+		{
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  int TmpPos = firstComponent;
+		  for (int j = 0; j < this->BufferSize; ++j)
+		    {
+		      TmpIncrement = this->NbrInteractionPerComponent[TmpPos];
+		      if (TmpIncrement > 0)
+			{
+			  File.read((char*) TmpIndexArray, sizeof(int) * TmpIncrement);
+			  File.read((char*) TmpCoefficientArray, sizeof(double) * TmpIncrement);		      
+			  TmpIndexArray += TmpIncrement;
+			  TmpCoefficientArray += TmpIncrement;
+			}
+		      ++TmpPos;
 		    }
-		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-		  vDestination[i] += this->HamiltonianShift * vSource[i];					
-	      }
-	  delete TmpParticles;
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int l = 0; l < this->BufferSize; ++l)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      if (TmpNbrInteraction > 0)
+			{
+			  Coefficient = vSource[k];
+			  for (int j = 0; j < TmpNbrInteraction; ++j)
+			    if ((TmpIndexArray[j] >= 0) && (TmpIndexArray[j] < 16660))
+			      vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+			    else
+			      cout << i << " " << l << " " << j << " " << firstComponent << " " << TmpNbrInteraction <<  " " << TmpIndexArray[j]  << endl;
+			  vDestination[k] += this->HamiltonianShift * Coefficient;
+			  TmpIndexArray += TmpNbrInteraction;
+			  TmpCoefficientArray += TmpNbrInteraction;
+			}
+		      ++k;
+		      ++firstComponent;
+		    }
+		}
+
+/*	      if ((TmpNbrIteration * this->BufferSize) != nbrComponent)
+		{
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  int TmpPos = firstComponent;
+		  int Lim =  nbrComponent % this->BufferSize;
+		  for (int j = 0; j < Lim; ++j)
+		    {
+		      TmpIncrement = this->NbrInteractionPerComponent[TmpPos];
+		      File.read((char*) TmpIndexArray, sizeof(int) * TmpIncrement);
+		      File.read((char*) TmpCoefficientArray, sizeof(double) * TmpIncrement);		      
+		      TmpIndexArray += TmpIncrement;
+		      TmpCoefficientArray += TmpIncrement;
+		      ++TmpPos;
+		    }
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int i = 0; i < Lim; ++i)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      Coefficient = vSource[k];
+		      for (int j = 0; j < TmpNbrInteraction; ++j)
+			vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		      vDestination[k] += this->HamiltonianShift * Coefficient;
+		      ++k;
+		      ++firstComponent;
+		      TmpIndexArray += TmpNbrInteraction;
+		      TmpCoefficientArray += TmpNbrInteraction;
+		    }
+		}*/
+
+	      File.close();
+	      delete[] BufferIndexArray;
+	      delete[] BufferCoefficientArray;
+	    }
+	  
 	}
-   }
+    }
   return vDestination;
 }
 
@@ -678,6 +779,113 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 	  }
     }
   delete TmpParticles;
+}
+
+// enable fast multiplication algorithm
+//
+// fileName = prefix of the name of the file where temporary matrix elements will be stored
+
+void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWithDiskStorage(char* fileName)
+{
+  if (this->FastMultiplicationStep == 1)
+    {
+      this->DiskStorageFlag = false;
+      this->DiskStorageFileName = 0;
+      this->EnableFastMultiplication();
+      return;
+    }
+
+  this->DiskStorageFlag = true;
+  this->DiskStorageFileName = new char [strlen(fileName) + 8];
+  sprintf (this->DiskStorageFileName, "%s.ham", fileName);
+
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  this->DiskStorageStart = (int) MinIndex;
+  int DiskStorageEnd = (int) MaxIndex;
+
+  int Index;
+  double Coefficient;
+  int* TmpIndexArray;
+  double* TmpCoefficientArray;
+  int Pos;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  this->InteractionPerComponentIndex = 0;
+  this->InteractionPerComponentCoefficient = 0;
+  double* TmpInteraction;
+  int* MIndices;
+  int* NIndices;
+  this->MaxNbrInteractionPerComponent = 0;
+
+  int TotalPos = 0;
+  ofstream File;
+  File.open(this->DiskStorageFileName, ios::binary | ios::out);
+ 
+  cout << "EffectiveHilbertSpaceDimension="<< EffectiveHilbertSpaceDimension << " " << this->DiskStorageStart << " " << DiskStorageEnd << endl;
+
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    if (this->MaxNbrInteractionPerComponent < this->NbrInteractionPerComponent[i])
+      this->MaxNbrInteractionPerComponent = this->NbrInteractionPerComponent[i];
+
+  cout << this->MaxNbrInteractionPerComponent << endl;
+
+  TmpIndexArray = new int [this->MaxNbrInteractionPerComponent];
+  TmpCoefficientArray = new double [this->MaxNbrInteractionPerComponent];      
+
+  for (int i = this->DiskStorageStart; i < DiskStorageEnd; ++i)
+    {
+      if (this->NbrInteractionPerComponent[TotalPos] > 0)
+	{
+	  Pos = 0;
+	  for (int k = 2; k <= this->MaxNBody; ++k)
+	    if (this->NBodyFlags[k] == true)
+	      {
+		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+		  {
+		    TmpInteraction = this->NBodyInteractionFactors[k][j];
+		    int Lim = this->NbrSortedIndicesPerSum[k][j];
+		    MIndices = this->SortedIndicesPerSum[k][j];
+		    for (int i1 = 0; i1 < Lim; ++i1)
+		      {
+			NIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
+			  {
+			    Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
+			    if (Index < this->Particles->GetHilbertSpaceDimension())
+			      {
+				TmpIndexArray[Pos] = Index;
+				TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+				++Pos;
+			      }
+			    NIndices += k;
+			  }
+			MIndices += k;
+		      }
+		  }
+	      }
+	  File.write((char*) TmpIndexArray, sizeof(int) * this->NbrInteractionPerComponent[TotalPos]);
+	  File.write((char*) TmpCoefficientArray, sizeof(double) * this->NbrInteractionPerComponent[TotalPos]);
+	}
+      ++TotalPos;
+    }
+  delete[] TmpIndexArray;
+  delete[] TmpCoefficientArray;
+  File.close();
+
+  this->FastMultiplicationFlag = true;
+  this->BufferSize = this->Memory / ((this->MaxNbrInteractionPerComponent * (sizeof(int) + sizeof(double))) + sizeof(int*) + sizeof(double*));
+
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
 }
 
 // get all indices needed to characterize a completly skew symmetric tensor, sorted by the sum of the indices

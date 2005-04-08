@@ -76,6 +76,8 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
 
+  // amount of memory (in bytes) that can be used to store precalculated matrix elements
+  long Memory; 
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
   // step between each precalculated index
@@ -87,8 +89,21 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
   double** InteractionPerComponentCoefficient;
 
+  // flag to indicate if a hamiltonian is temporary stored on disk
+  bool DiskStorageFlag;
+  // name of the file that contains hamiltonian matrix elements
+  char* DiskStorageFileName;
+  // index of the first row that appears in the on-disk hamiltonian
+  int DiskStorageStart;
+  // maximum number of non-null terms in the hamiltonian for each state
+  int MaxNbrInteractionPerComponent;
+  // size of the in-memory temporary buffer
+  long BufferSize;
+
   // shift to apply to the Hamiltonian diagonal elements
   double HamiltonianShift;
+
+
 
  public:
 

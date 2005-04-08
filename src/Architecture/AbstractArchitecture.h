@@ -193,6 +193,11 @@ class AbstractArchitecture
   template <class Type>
   void Delete (Type*& pointer);
   
+  // get a temporary file name
+  //
+  // return value = string corresponding to a temporary file name
+  virtual char* GetTemporaryFileName();
+  
  protected:
 
   // indicate an allocation of memory to the architecture

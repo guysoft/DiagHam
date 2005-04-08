@@ -49,6 +49,9 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include <sys/time.h>
+#include <string.h>
+
 
 // destructor
 //
@@ -275,3 +278,16 @@ bool AbstractArchitecture::ExecuteOperation (MainTaskOperation* operation)
   return operation->ApplyOperation();
 }
     
+// get a temporary file name
+//
+// return value = string corresponding to a temporary file name
+
+char* AbstractArchitecture::GetTemporaryFileName()
+{
+  timeval Time;
+  gettimeofday (&Time, 0);
+  char* TmpString = new char [32];
+  sprintf (TmpString, "diagam%d%d.tmp",(int)  Time.tv_sec, (int)  Time.tv_usec);
+  return TmpString;
+}
+  
