@@ -33,6 +33,7 @@
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
 
+#include <stdio.h>
 #include <iostream>
 
 
@@ -84,10 +85,6 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
-  if (this->DiskStorageFlag == false)
-    cout << "toto" << endl;
-  else
-    cout << "tata" << endl;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -105,12 +102,10 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
 	  if (this->DiskStorageFlag == false)
 	    {
-	      cout << "toto" << endl;
 	      this->EnableFastMultiplication();
 	    }
 	  else
 	    {
-	      cout << "tata" << endl;
 	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
 	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
 	      delete[] TmpFileName;
@@ -240,6 +235,10 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
 	    }
 	  delete[] this->InteractionPerComponentIndex;
 	  delete[] this->InteractionPerComponentCoefficient;
+	}
+      else
+	{
+	  remove (this->DiskStorageFileName);
 	}
       delete[] this->NbrInteractionPerComponent;
     }

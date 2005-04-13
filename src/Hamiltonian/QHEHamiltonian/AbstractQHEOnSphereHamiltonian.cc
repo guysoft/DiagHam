@@ -606,11 +606,14 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
 	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
-      for (int i = 0; i < ReducedSpaceDimension; ++i)
-	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
-      delete[] this->NbrInteractionPerComponent;
-      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+      if (this->DiskStorageFlag == false)
+	{
+	  int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+	  delete[] this->NbrInteractionPerComponent;
+	  this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+	}
       Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
     }
   else
