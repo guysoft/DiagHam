@@ -110,6 +110,7 @@ JainCFFilledLevelOnSphereWaveFunction::JainCFFilledLevelOnSphereWaveFunction(con
   this->NbrLandauLevels = function.NbrLandauLevels;
   this->TwiceS = function.TwiceS;
   this->JastrowPower = function.JastrowPower;
+  this->JastrowPowerPowers = function.JastrowPowerPowers;
   this->Flag = function.Flag;
   this->NormalizationPrefactors = function.NormalizationPrefactors;
   this->SumPrefactors = function.SumPrefactors;
@@ -217,9 +218,10 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
 //
 // x = point where the function has to be evaluated
+// derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
 // return value = value of the Jastrow factor
 
-Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(RealVector& x)
+Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(RealVector& x, bool derivativeFlag)
 {
   for (int i = 0; i < this->NbrParticles; ++i)
     {
@@ -264,51 +266,53 @@ Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(RealVector& x)
       JastrowFactor *= Tmp;
     }
 
-
-  Complex Tmp2;
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {     
-      Complex** TmpDerivativeFactors = this->DerivativeFactors[i];
-      Complex** TmpDerivativeFactors2 = this->DerivativeFactors2[i];
-      for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
-	for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
-	  TmpDerivativeFactors[k1][k2] = 0.0;
-
-      int Index = 0;
-      for (int j = 1; j < this->NbrParticles; ++j)
-	{
-	  if (Index == i)
-	    ++Index;
-	  if (Index > i)
-	    Tmp2 = this->SpinorVCoordinates[Index] * this->JastrowFactorElements[Index][i];
-	  else
-	    Tmp2 = -this->SpinorVCoordinates[Index] * this->JastrowFactorElements[i][Index];
-	  Tmp = 1.0;
-	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
-	    {
-	      for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
-		{
-		  TmpDerivativeFactors2[k1][k2] = Tmp;
-		}
-	      Tmp *= Tmp2;
-	    }
-	  if (Index > i)
-	    Tmp2 = - this->SpinorUCoordinates[Index] * this->JastrowFactorElements[Index][i];
-	  else
-	    Tmp2 = this->SpinorUCoordinates[Index] * this->JastrowFactorElements[i][Index];
-	  Tmp = 1.0;
-	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
-	    {
-	      for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
-		{
-		  TmpDerivativeFactors2[k2][k1] *= Tmp;
-		}
-	      Tmp *= Tmp2;
-	    }
+  if (derivativeFlag == true)
+    {
+      Complex Tmp2;
+      for (int i = 0; i < this->NbrParticles; ++i)
+	{     
+	  Complex** TmpDerivativeFactors = this->DerivativeFactors[i];
+	  Complex** TmpDerivativeFactors2 = this->DerivativeFactors2[i];
 	  for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
 	    for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
-	      TmpDerivativeFactors[k1][k2] += TmpDerivativeFactors2[k1][k2];
-	  ++Index;
+	      TmpDerivativeFactors[k1][k2] = 0.0;
+	  
+	  int Index = 0;
+	  for (int j = 1; j < this->NbrParticles; ++j)
+	    {
+	      if (Index == i)
+		++Index;
+	      if (Index > i)
+		Tmp2 = this->SpinorVCoordinates[Index] * this->JastrowFactorElements[Index][i];
+	      else
+		Tmp2 = -this->SpinorVCoordinates[Index] * this->JastrowFactorElements[i][Index];
+	      Tmp = 1.0;
+	      for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+		{
+		  for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+		    {
+		      TmpDerivativeFactors2[k1][k2] = Tmp;
+		    }
+		  Tmp *= Tmp2;
+		}
+	      if (Index > i)
+		Tmp2 = - this->SpinorUCoordinates[Index] * this->JastrowFactorElements[Index][i];
+	      else
+		Tmp2 = this->SpinorUCoordinates[Index] * this->JastrowFactorElements[i][Index];
+	      Tmp = 1.0;
+	      for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+		{
+		  for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+		    {
+		      TmpDerivativeFactors2[k2][k1] *= Tmp;
+		    }
+		  Tmp *= Tmp2;
+		}
+	      for (int k1 = 0; k1 < this->NbrLandauLevels; ++k1)
+		for (int k2 = 0; k2 < this->NbrLandauLevels; ++k2)
+		  TmpDerivativeFactors[k1][k2] += TmpDerivativeFactors2[k1][k2];
+	      ++Index;
+	    }
 	}
     }
   return JastrowFactor;
@@ -394,18 +398,6 @@ void JainCFFilledLevelOnSphereWaveFunction::EvaluateSumPrefactors()
 	}
       MaxMomentum += 2;
     }
-/*  MaxMomentum = this->TwiceS;
-  for (int i = 0; i < this->NbrLandauLevels; ++i)  
-    {
-      for (int k = 0; k <= i; ++k) 
-	{ 
-	  for (int j = 0; j <= MaxMomentum; ++j)
-	    {
-	      cout << i << " " << k << " " << j << " " << this->SumPrefactors[i][k][j] << endl;
-	    }
-	}
-      MaxMomentum += 2;
-    }*/
 }
 
 

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//           class of Jain composite fermion wave function on sphere          //
+//    class of unprojected Jain composite fermion wave function on sphere     //
 //                                                                            //
-//                        last modification : 10/01/2005                      //
+//                        last modification : 13/04/2005                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,79 +28,68 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef JAINCFONSPHEREWAVEFUNCTION_H
-#define JAINCFONSPHEREWAVEFUNCTION_H
+#ifndef UNPROJECTEDJAINCFONSPHEREWAVEFUNCTION_H
+#define UNPROJECTEDJAINCFONSPHEREWAVEFUNCTION_H
 
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "Tools/QHE/QHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/JainCFOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/LandauSpectrumOnSphere.h"
 
 
 class ConfigurationParser;
 
 
-class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
+class UnprojectedJainCFOnSphereWaveFunction: public JainCFOnSphereWaveFunction
 {
 
  protected:
 
-  // description of the  occupation of the pseudo-Landau levels
-  LandauSpectrumOnSphere* LevelOccupation;
-
-  // number of wave functions that appear in the linear combination
-  int NbrLinearCombination;
-  // coefficients in front of each wave functions that appear in the linear combination  
-  double* LinearCombinationCoefficients;
 
  public:
-
-  // default constructor
-  //
-  JainCFOnSphereWaveFunction();
 
   // constructor
   //
   // filename = name of the file describing the occupation of the pseudo-Landau levels
-  JainCFOnSphereWaveFunction(char* filename);
+  UnprojectedJainCFOnSphereWaveFunction(char* filename);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  JainCFOnSphereWaveFunction(const JainCFOnSphereWaveFunction& function);
+  UnprojectedJainCFOnSphereWaveFunction(const UnprojectedJainCFOnSphereWaveFunction& function);
 
   // destructor
   //
-   ~JainCFOnSphereWaveFunction();
+   ~UnprojectedJainCFOnSphereWaveFunction();
 
   // clone function 
   //
   // return value = clone of the function 
-  virtual Abstract1DComplexFunction* Clone ();
+  Abstract1DComplexFunction* Clone ();
 
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x);
+  Complex operator ()(RealVector& x);
 
  protected:
 
-  // get occupation information from a formatted string
+  // evaluate monopole spherical harmonic 
   //
-  // descriptionString = pointer to the string containing the description
-  // descriptionArray = reference on the array where description has to be stored
-  // return value = number of particles (0 if an error occured)
-  int ParseOccupationDescription (char* descriptionString, int**& descriptionArray);
+  // coordinate = index of the coordinate
+  // momentum = monopole spherical harmonic Lz momentum (plus S shift)
+  // landauLevel = index of the Landau level
+  // maximumMomentum = maxixum momentum that can be reached in the Landau level
+  // return value = value of the monopole spherical harmonic at the given point
+  Complex EvaluateMonopoleHarmonic (int coordinate, int momentum, int landauLevel, int maximumMomentum);
 
-  // parse general informations about the composite fermion state
-  // 
-  // state = reference on the configuration parser that contains the informations
-  // return value = false if an error occured  
-  bool ParseGeneralInformation(ConfigurationParser& state);
+  // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
+  //
+  void EvaluateSumPrefactors();
 
 };
 

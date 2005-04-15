@@ -52,7 +52,9 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // twice the value of the momentum in the lowest pseudo-Landau level
   int TwiceS;
-  
+  // falg to indicate if flux  is reversed
+  bool ReverseFluxFlag;
+
   // power to which the Jastrow factor has to be raised
   int ActualJastrowPower;
 
@@ -125,8 +127,9 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
   // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
   //
   // x = point where the function has to be evaluated
+  // derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
   // return value = value of the Jastrow factor
-  Complex EvaluateTables(RealVector& x);
+  Complex EvaluateTables(RealVector& x, bool derivativeFlag = true);
 
   // evaluate normalization factors of projected monopole harmonics
   //
@@ -134,7 +137,7 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
   //
-  void EvaluateSumPrefactors();
+  virtual void EvaluateSumPrefactors();
 
   // evaluate composite fermion monopole spherical harmonic 
   //

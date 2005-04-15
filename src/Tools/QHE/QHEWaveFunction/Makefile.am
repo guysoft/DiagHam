@@ -11,5 +11,6 @@ PfaffianOnDiskWaveFunction.cc \
 MooreReadOnDiskWaveFunction.cc \
 JainCFOnSphereWaveFunction.cc \
 LandauSpectrumOnSphere.cc \
+UnprojectedJainCFOnSphereWaveFunction.cc \
 QHEWaveFunctionManager.cc
 

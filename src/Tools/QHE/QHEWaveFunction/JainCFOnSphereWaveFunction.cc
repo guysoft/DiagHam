@@ -42,6 +42,14 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+JainCFOnSphereWaveFunction::JainCFOnSphereWaveFunction()
+{
+  this->NbrParticles = 0;
+}
+
 // constructor
 //
 // filename = name of the file describing the occupation of the pseudo-Landau levels
@@ -111,6 +119,7 @@ JainCFOnSphereWaveFunction::JainCFOnSphereWaveFunction(const JainCFOnSphereWaveF
       this->NbrLandauLevels = function.NbrLandauLevels;
       this->TwiceS = function.TwiceS;
       this->JastrowPower = function.JastrowPower;
+      this->JastrowPowerPowers = function.JastrowPowerPowers;
       this->Flag = function.Flag;
       this->LevelOccupation = function.LevelOccupation;
       this->LinearCombinationCoefficients =  function.LinearCombinationCoefficients;
@@ -280,7 +289,12 @@ bool JainCFOnSphereWaveFunction::ParseGeneralInformation(ConfigurationParser& st
       this->TwiceS = atoi(state["Flux"]);
       if (this->TwiceS < 0)
 	{
-	  return false;
+	  this->TwiceS = - this->TwiceS;
+	  this->ReverseFluxFlag = true;
+	}
+      else
+	{
+	  this->ReverseFluxFlag = false;
 	}
     }
   else
