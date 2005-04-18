@@ -110,12 +110,12 @@ Polynomial::~Polynomial()
 
 Polynomial& Polynomial::operator = (const Polynomial& P)
 {
-  delete this->Coefficient;
+  delete[] this->Coefficient;
   this->Degree = P.Degree;
   this->RootFlag = P.RootFlag;
   this->Coefficient = new double [this->Degree + 1];
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
-    delete this->Root;
+    delete[] this->Root;
   this->RootFlag = P.RootFlag;
   for (int i = 0; i <= this->Degree; i++)
     this->Coefficient[i] = P.Coefficient[i];

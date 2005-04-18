@@ -34,6 +34,11 @@
 
 #include "config.h"
 
+#include <iostream>
+
+
+using std::ostream;
+
 
 class QHEOnSphereLzSortedSpectrum
 {
@@ -84,6 +89,12 @@ class QHEOnSphereLzSortedSpectrum
   //
   ~QHEOnSphereLzSortedSpectrum ();
 
+  // print spectrum
+  //
+  // str = reference on the output stream
+  // showDegeneracy = true if degeneracy has to be written
+  // return value = reference on the output stream  
+  ostream& PrintSpectrum (ostream& str, bool showDegeneracy = false);
 
  protected:
 

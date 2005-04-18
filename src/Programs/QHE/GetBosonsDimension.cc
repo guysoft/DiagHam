@@ -150,11 +150,6 @@ int main(int argc, char** argv)
 	 cout << LzDimensions[(L - StartL) >> 1] << " ";
        }
      cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;
-/*     for (int L = TotalLzMax; L > StartL; L -= 2)
-       {
-	 for (int k = L - 2; k >= StartL; k -=2)
-	   LzDimensions[(k - StartL) >> 1] -= LzDimensions[((L - StartL) >> 1)] ;
-       }*/
      cout << "L = ";
      for (int L = StartL; L < TotalLzMax; L += 2)
        {

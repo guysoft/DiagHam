@@ -40,6 +40,17 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+ComplexPolynomial::ComplexPolynomial ()
+{
+  this->Degree = 0;
+  this->NoRootFlag = false;
+  this->Coefficient = 0;
+  this->RootFlag = false; 
+}
+ 
 // constructor
 //
 // degree = polynomial degree
@@ -63,18 +74,28 @@ ComplexPolynomial::ComplexPolynomial (int degree, Complex* coefficients, bool fl
 
 ComplexPolynomial::ComplexPolynomial (const ComplexPolynomial& P)
 {
-  this->Degree = P.Degree;
-  this->Coefficient = new Complex [this->Degree + 1];
-  this->RootFlag = P.RootFlag;
-  for (int i = 0; i <= this->Degree; i++)
-    this->Coefficient[i] = P.Coefficient[i];
-  this->NoRootFlag = P.NoRootFlag;
-  if (P.RootFlag == true)
+  if (P.Coefficient != 0)
     {
-      this->NbrRoot = P.NbrRoot;
-      this->Root = new Complex [this->NbrRoot];
-      for (int i = 0; i < this->NbrRoot; i++)
-	this->Root[i] = P.Root[i];
+      this->Degree = P.Degree;
+      this->Coefficient = new Complex [this->Degree + 1];
+      this->RootFlag = P.RootFlag;
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] = P.Coefficient[i];
+      this->NoRootFlag = P.NoRootFlag;
+      if (P.RootFlag == true)
+	{
+	  this->NbrRoot = P.NbrRoot;
+	  this->Root = new Complex [this->NbrRoot];
+	  for (int i = 0; i < this->NbrRoot; i++)
+	    this->Root[i] = P.Root[i];
+	}
+    }
+  else
+    {
+      this->Degree = 0;
+      this->NoRootFlag = false;
+      this->Coefficient = 0;
+      this->RootFlag = false; 
     }
 }
 
@@ -85,22 +106,30 @@ ComplexPolynomial::~ComplexPolynomial()
 {
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     delete this->Root;
-  delete[] this->Coefficient;
+  if (this->Coefficient != 0)
+    delete[] this->Coefficient;
 }
 
 // assignement
 
 ComplexPolynomial& ComplexPolynomial::operator = (const ComplexPolynomial& P)
 {
-  delete this->Coefficient;
+  if (this->Coefficient != 0)
+    delete[] this->Coefficient;
+  if ((this->RootFlag == true) && (this->NbrRoot != 0))
+    delete[] this->Root;
   this->Degree = P.Degree;
   this->RootFlag = P.RootFlag;
-  this->Coefficient = new Complex [this->Degree + 1];
-  if ((this->RootFlag == true) && (this->NbrRoot != 0))
-    delete this->Root;
-  this->RootFlag = P.RootFlag;
-  for (int i = 0; i <= this->Degree; i++)
-    this->Coefficient[i] = P.Coefficient[i];
+  if (P.Coefficient != 0)
+    {
+      this->Coefficient = new Complex [this->Degree + 1];
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] = P.Coefficient[i];
+    }
+  else
+    {
+      this->Coefficient = 0;
+    }
   if (P.RootFlag == true)
     {
       this->NbrRoot = P.NbrRoot;
@@ -118,13 +147,17 @@ ComplexPolynomial& ComplexPolynomial::operator = (const ComplexPolynomial& P)
 
 Complex ComplexPolynomial::PolynomialEvaluate (double x)
 {
-  Complex Res = this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1 ; i >= 0; i--)
+  if (this->Coefficient != 0)
     {
-      Res *= x;
-      Res += this->Coefficient[i];
+      Complex Res (this->Coefficient[this->Degree]);
+      for (int i = this->Degree - 1 ; i >= 0; i--)
+	{
+	  Res *= x;
+	  Res += this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Return polynomial value at a given point
@@ -134,13 +167,17 @@ Complex ComplexPolynomial::PolynomialEvaluate (double x)
 
 Complex ComplexPolynomial::PolynomialEvaluate (Complex x)
 {
-  Complex Res = this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1 ; i >= 0; i--)
+  if (this->Coefficient != 0)
     {
-      Res *= x;
-      Res += this->Coefficient[i];
+      Complex Res (this->Coefficient[this->Degree]);
+      for (int i = this->Degree - 1 ; i >= 0; i--)
+	{
+	  Res *= x;
+	  Res += this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Evaluate polynomial derivative 
@@ -150,13 +187,17 @@ Complex ComplexPolynomial::PolynomialEvaluate (Complex x)
 
 Complex ComplexPolynomial::DerivativeEvaluate (double x)
 {
-  Complex Res = Degree * this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1 ; i > 0; i--)
+  if (this->Coefficient != 0)
     {
-      Res *= x;
-      Res += i * this->Coefficient[i];
+      Complex Res = Degree * this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1 ; i > 0; i--)
+	{
+	  Res *= x;
+	  Res += i * this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Evaluate polynomial derivative 
@@ -166,13 +207,17 @@ Complex ComplexPolynomial::DerivativeEvaluate (double x)
 
 Complex ComplexPolynomial::DerivativeEvaluate (Complex x)
 {
-  Complex Res = Degree * this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1 ; i > 0; i--)
+  if (this->Coefficient != 0)
     {
-      Res *= x;
-      Res += i * this->Coefficient[i];
+      Complex Res = Degree * this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1 ; i > 0; i--)
+	{
+	  Res *= x;
+	  Res += i * this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Evaluate polynomial n-th derivative at a given value
@@ -183,21 +228,25 @@ Complex ComplexPolynomial::DerivativeEvaluate (Complex x)
 
 Complex ComplexPolynomial::DerivativeEvaluate (double x, int n)
 {
-  if (n > this->Degree)
-    return 0.0;
-  Complex tmp = 1.0;
-  for (int j = this->Degree - n + 1; j <= this->Degree; j++)
-    tmp *= (double) j;
-  Complex Res = tmp * this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1; i >= n; i--)
+  if (this->Coefficient != 0)
     {
-      tmp = 1.0;
-      for (int j = i - n + 1; j <= i; j++)
-	tmp *= (double) j;      
-      Res *= x;
-      Res += tmp * this->Coefficient[i];
+      if (n > this->Degree)
+	return 0.0;
+      Complex tmp = 1.0;
+      for (int j = this->Degree - n + 1; j <= this->Degree; j++)
+	tmp *= (double) j;
+      Complex Res = tmp * this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1; i >= n; i--)
+	{
+	  tmp = 1.0;
+	  for (int j = i - n + 1; j <= i; j++)
+	    tmp *= (double) j;      
+	  Res *= x;
+	  Res += tmp * this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Evaluate polynomial n-th derivative at a given value
@@ -208,21 +257,25 @@ Complex ComplexPolynomial::DerivativeEvaluate (double x, int n)
 
 Complex ComplexPolynomial::DerivativeEvaluate (Complex x, int n)
 {
-  if (n > this->Degree)
-    return Complex();
-  Complex tmp (1.0);
-  for (int j = this->Degree - n + 1; j <= this->Degree; j++)
-    tmp *= (double) j;
-  Complex Res (tmp * this->Coefficient[this->Degree]);
-  for (int i = this->Degree - 1; i >= n; i--)
+  if (this->Coefficient != 0)
     {
-      tmp = 1.0;
-      for (int j = i - n + 1; j <= i; j++)
-	tmp *= (double) j;      
-      Res *= x;
-      Res += tmp * this->Coefficient[i];
+      if (n > this->Degree)
+	return Complex();
+      Complex tmp (1.0);
+      for (int j = this->Degree - n + 1; j <= this->Degree; j++)
+	tmp *= (double) j;
+      Complex Res (tmp * this->Coefficient[this->Degree]);
+      for (int i = this->Degree - 1; i >= n; i--)
+	{
+	  tmp = 1.0;
+	  for (int j = i - n + 1; j <= i; j++)
+	    tmp *= (double) j;      
+	  Res *= x;
+	  Res += tmp * this->Coefficient[i];
+	}
+      return Res;
     }
-  return Res;
+  return Complex();
 }
   
 // Return Derivative of the polynomial 
@@ -231,12 +284,16 @@ Complex ComplexPolynomial::DerivativeEvaluate (Complex x, int n)
 
 ComplexPolynomial ComplexPolynomial::DerivatePolynomial ()
 {
-  Complex* Coef = new Complex [this->Degree];
-  for (int i = 1; i <= this->Degree; i++)
-    Coef[i-1] = (this->Coefficient[i] * i);
-  ComplexPolynomial P = ComplexPolynomial(this->Degree - 1, Coef);
-  delete Coef;
-  return P;
+  if (this->Coefficient != 0)
+    {
+      Complex* Coef = new Complex [this->Degree];
+      for (int i = 1; i <= this->Degree; i++)
+	Coef[i-1] = (this->Coefficient[i] * i);
+      ComplexPolynomial P (this->Degree - 1, Coef);
+      delete Coef;
+      return P;
+    }
+  return ComplexPolynomial();
 }
 
 // Evaluate polynomial n-th derivative
@@ -246,26 +303,30 @@ ComplexPolynomial ComplexPolynomial::DerivatePolynomial ()
 
 ComplexPolynomial ComplexPolynomial::DerivatePolynomial (int n)
 {
-  if (n > this->Degree)
+  if (this->Coefficient != 0)
     {
-      Complex* Coef = new Complex [1];
-      Coef[0] = 0.0;
-      return ComplexPolynomial(0, Coef, true);
+      if (n > this->Degree)
+	{
+	  Complex* Coef = new Complex [1];
+	  Coef[0] = 0.0;
+	  return ComplexPolynomial(0, Coef, true);
+	}
+      int tmpDegree = this->Degree - n;
+      Complex* Coef = new Complex [tmpDegree + 1];  
+      Complex tmp (1.0);
+      for (int j = this->Degree - n + 1; j <= this->Degree; j++)
+	tmp *= (double) j;
+      Coef[tmpDegree] = tmp * this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1; i >= n; i--)
+	{
+	  tmp = 1.0;
+	  for (int j = i - n + 1; j <= i; j++)
+	    tmp *= (double) j;      
+	  Coef[i - n] = tmp * this->Coefficient[i];
+	}
+      return  ComplexPolynomial(tmpDegree, Coef, true);
     }
-  int tmpDegree = this->Degree - n;
-  Complex* Coef = new Complex [tmpDegree + 1];  
-  Complex tmp (1.0);
-  for (int j = this->Degree - n + 1; j <= this->Degree; j++)
-    tmp *= (double) j;
-  Coef[tmpDegree] = tmp * this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1; i >= n; i--)
-    {
-      tmp = 1.0;
-      for (int j = i - n + 1; j <= i; j++)
-	tmp *= (double) j;      
-      Coef[i - n] = tmp * this->Coefficient[i];
-    }
-  return  ComplexPolynomial(tmpDegree, Coef, true);
+  return ComplexPolynomial();
 }
 
 // arithmetic operators
@@ -273,8 +334,11 @@ ComplexPolynomial ComplexPolynomial::DerivatePolynomial (int n)
 ComplexPolynomial operator - (const ComplexPolynomial& P)
 {
   ComplexPolynomial Pr(P);
-  for (int i = 0; i <= Pr.Degree; i++)
-    Pr.Coefficient[i] = -Pr.Coefficient[i];  
+  if (Pr.Coefficient != 0)
+    {
+      for (int i = 0; i <= Pr.Degree; i++)
+	Pr.Coefficient[i] = -Pr.Coefficient[i];  
+    }
   return Pr;  
 }
 
@@ -381,24 +445,33 @@ ComplexPolynomial operator * (const ComplexPolynomial& P1, const ComplexPolynomi
 ComplexPolynomial operator * (const ComplexPolynomial& P, const double& d)
 {
   ComplexPolynomial Pr(P);
-  for (int i = 0; i <= Pr.Degree; i++)
-    Pr.Coefficient[i] *= d;
+  if (P.Coefficient != 0)
+    {
+      for (int i = 0; i <= Pr.Degree; i++)
+	Pr.Coefficient[i] *= d;
+    }
   return Pr;
 }
 
 ComplexPolynomial operator * (const double& d, const ComplexPolynomial& P)
 {
-  ComplexPolynomial Pr = P;
-  for (int i = 0; i <= Pr.Degree; i++)
-    Pr.Coefficient[i] *= d;
+  ComplexPolynomial Pr (P);
+  if (P.Coefficient != 0)
+    {
+      for (int i = 0; i <= Pr.Degree; i++)
+	Pr.Coefficient[i] *= d;
+    }
   return Pr;
 }
 
 ComplexPolynomial operator / (const ComplexPolynomial& P, const double& d)
 {
-  ComplexPolynomial Pr = P;
-  for (int i = 0; i <= Pr.Degree; i++)
-    Pr.Coefficient[i] /= d;
+  ComplexPolynomial Pr (P);
+  if (Pr.Coefficient != 0)
+    {
+      for (int i = 0; i <= Pr.Degree; i++)
+	Pr.Coefficient[i] /= d;
+    }
   return Pr;
 }
 
@@ -535,65 +608,77 @@ ComplexPolynomial& ComplexPolynomial::operator -= (const ComplexPolynomial& P)
 
 ComplexPolynomial& ComplexPolynomial::operator *= (const double& d)
 {
-  for (int i = 0; i <= this->Degree; i++)
-    this->Coefficient[i] *= d;
+  if (this->Coefficient != 0)
+    {
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] *= d;
+    }
   return *this;
 }
 
 ComplexPolynomial& ComplexPolynomial::operator *= (const ComplexPolynomial& P)
 {
-  int Deg = P.Degree + this->Degree;
-  Complex* Coef = new Complex [Deg + 1];
-  if (P.Degree == 0)
+  if (this->Coefficient != 0)
     {
+      int Deg = P.Degree + this->Degree;
+      Complex* Coef = new Complex [Deg + 1];
+      if (P.Degree == 0)
+	{
+	  delete this->Coefficient;
+	  this->Coefficient = Coef;
+	  return *this;
+	}
+      for (int i = this->Degree; i >= 0; i--)
+	Coef[i + P.Degree] = this->Coefficient[i] * P.Coefficient[P.Degree];
+      for (int i = P.Degree-1; i >= 0; i--)
+	Coef[i] = 0;
+      for (int i = P.Degree - 1; i >= 0; i--)
+	for (int j = this->Degree; j >= 0; j--)
+	  Coef[i+j] += this->Coefficient[j] * P.Coefficient[i];
       delete this->Coefficient;
       this->Coefficient = Coef;
-      return *this;
-    }
-  for (int i = this->Degree; i >= 0; i--)
-    Coef[i + P.Degree] = this->Coefficient[i] * P.Coefficient[P.Degree];
-  for (int i = P.Degree-1; i >= 0; i--)
-    Coef[i] = 0;
-  for (int i = P.Degree - 1; i >= 0; i--)
-    for (int j = this->Degree; j >= 0; j--)
-      Coef[i+j] += this->Coefficient[j] * P.Coefficient[i];
-  delete this->Coefficient;
-  this->Coefficient = Coef;
-  if (this->RootFlag == true)
-    {
-      delete this->Root;
-      this->RootFlag = false;
+      if (this->RootFlag == true)
+	{
+	  delete this->Root;
+	  this->RootFlag = false;
+	}
     }
   return *this;
 }
 
 ComplexPolynomial& ComplexPolynomial::operator /= (const double& d)
 {
-  for (int i = 0; i <= this->Degree; i++)
-    this->Coefficient[i] /= d;
+  if (this->Coefficient != 0)
+    {
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] /= d;
+    }
   return *this;
 }
 
 ComplexPolynomial& ComplexPolynomial::operator /= (const ComplexPolynomial& P)
 {
-  int Deg = this->Degree - P.Degree;
-  Complex* Coef2 = new Complex [Deg+1];
-  Complex c = 1.0 / P.Coefficient[P.Degree];
-  Coef2[Deg] = this->Coefficient[this->Degree] * c;  
-  for (int i = Deg; i > 0; i--)
+  if (this->Coefficient != 0)
     {
-      for (int j = P.Degree - 1; j >= 0; j--)
-	this->Coefficient[i + j] -= Coef2[i] * P.Coefficient[j];
-      Coef2[i-1] = c * this->Coefficient[P.Degree + i - 1]; 
+      int Deg = this->Degree - P.Degree;
+      Complex* Coef2 = new Complex [Deg+1];
+      Complex c = 1.0 / P.Coefficient[P.Degree];
+      Coef2[Deg] = this->Coefficient[this->Degree] * c;  
+      for (int i = Deg; i > 0; i--)
+	{
+	  for (int j = P.Degree - 1; j >= 0; j--)
+	    this->Coefficient[i + j] -= Coef2[i] * P.Coefficient[j];
+	  Coef2[i-1] = c * this->Coefficient[P.Degree + i - 1]; 
+	}
+      delete[] this->Coefficient;
+      if (this->RootFlag == true)
+	{
+	  delete this->Root;
+	  this->RootFlag = false;
+	}
+      this->Coefficient = Coef2;
+      this->Degree = Deg;
     }
-  delete[] this->Coefficient;
-  if (this->RootFlag == true)
-    {
-      delete this->Root;
-      this->RootFlag = false;
-    }
-  this->Coefficient = Coef2;
-  this->Degree = Deg;
   return *this;
 }
 
@@ -604,11 +689,15 @@ ComplexPolynomial& ComplexPolynomial::operator /= (const ComplexPolynomial& P)
 
 ComplexPolynomial ComplexPolynomial::MonomialDivision (const Complex& z0)
 {
-  Complex* Coef1 = new Complex [this->Degree];
-  Coef1[this->Degree - 1] = this->Coefficient[this->Degree];
-  for (int i = this->Degree - 1; i > 0; i--)
-    Coef1[i - 1] = Coef1[i] * z0 + this->Coefficient[i];
-  return ComplexPolynomial(this->Degree - 1, Coef1, true);  
+  if (this->Coefficient != 0)
+    {
+      Complex* Coef1 = new Complex [this->Degree];
+      Coef1[this->Degree - 1] = this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1; i > 0; i--)
+	Coef1[i - 1] = Coef1[i] * z0 + this->Coefficient[i];
+      return ComplexPolynomial(this->Degree - 1, Coef1, true);  
+    }
+  return ComplexPolynomial();
 }
 
 
@@ -617,20 +706,24 @@ ComplexPolynomial ComplexPolynomial::MonomialDivision (const Complex& z0)
 
 ostream& operator << (ostream& Str, const ComplexPolynomial& P)
 {
-  if ((P.RootFlag == true) && (P.NbrRoot != 0))
+  if (P.Coefficient != 0)
     {
-      Str << P.Root[P.Degree];
-      for (int i = 0; i < P.Degree; i++)
-	Str << "(z - " << P.Root[i] << ")";
-      return Str;  
+      if ((P.RootFlag == true) && (P.NbrRoot != 0))
+	{
+	  Str << P.Root[P.Degree];
+	  for (int i = 0; i < P.Degree; i++)
+	    Str << "(z - " << P.Root[i] << ")";
+	  return Str;  
+	}
+      else
+	{
+	  for (int i = P.Degree; i > 0; i--)
+	    Str << P.Coefficient[i] << " z^" << i << " + ";
+	  Str << P.Coefficient[0];
+	  return Str;  
+	}
     }
-  else
-    {
-      for (int i = P.Degree; i > 0; i--)
-	Str << P.Coefficient[i] << " z^" << i << " + ";
-      Str << P.Coefficient[0];
-      return Str;  
-    }
+  return Str;  
 }
 
 // Find Roots of the polynomial

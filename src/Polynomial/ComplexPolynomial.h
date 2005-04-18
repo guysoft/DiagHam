@@ -62,6 +62,10 @@ private:
   bool NoRootFlag;
 
 public:
+
+  // default constructor
+  //
+  ComplexPolynomial ();
  
   // constructor
   //

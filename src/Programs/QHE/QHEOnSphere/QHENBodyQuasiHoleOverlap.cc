@@ -19,6 +19,8 @@
 
 #include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
+#include "Tools/QHE/QHESpectrum/QHEOnSphereLzSortedSpectrum.h"
+
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 
 #include <iostream>
@@ -98,6 +100,13 @@ int main(int argc, char** argv)
       return -1;     
     }
   
+  if (OverlapDefinition["Spectrum"] == 0)
+    {
+      cout << "no Spectrum defined in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
+      return -1;     
+    }
+  QHEOnSphereLzSortedSpectrum Spectrum (OverlapDefinition["Spectrum"]);
+  Spectrum.PrintSpectrum(cout, true);
   
   char* InputVectors = new char [strlen(OverlapDefinition["InputVectors"]) + 24];
   char* OutputVectors = new char [strlen(OverlapDefinition["OutputVectors"]) + 24];
