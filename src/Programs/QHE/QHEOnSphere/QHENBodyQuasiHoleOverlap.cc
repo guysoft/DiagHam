@@ -187,8 +187,18 @@ int main(int argc, char** argv)
 	  int TmpAngularMomentum;
 	  for (int k = 0; k < Degeneracy[i]; ++k)	    
 	    {
-	      TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
-	      cout << TmpAngularMomentum << " ";	      
+	      TmpAngularMomentum = ((int) round((sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
+	      if ((TmpAngularMomentum & 1) == 0)
+		{
+		  TmpAngularMomentum >>= 1;
+		  cout << TmpAngularMomentum << "(" << TmpTriDiag.DiagonalElement(k) << ")" << " ";	      
+		}
+	      else
+		{		  
+		  cout << TmpAngularMomentum << "/2 ";	  
+		  TmpAngularMomentum -= 1;
+		  TmpAngularMomentum >>= 1;		  
+		}
 	      NbrSortedTestVectors[TmpAngularMomentum]++;
 	      if (TestVectorPosition[TmpAngularMomentum] > k)
 		TestVectorPosition[TmpAngularMomentum] = k;
@@ -201,8 +211,19 @@ int main(int argc, char** argv)
 	if (Degeneracy[i] == 1)
 	  {
 	    ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	    int TmpAngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * oper.MatrixElement(TestVectors[0], TestVectors[0]).Re) + 1.0) - 1.0)));
-	    cout << "angular momentum of test eigenvectors = " << TmpAngularMomentum << endl;
+	    int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper.MatrixElement(TestVectors[0], TestVectors[0]).Re) + 1.0) - 1.0)));
+	    cout << "angular momentum of test eigenvectors = ";
+	    if ((TmpAngularMomentum & 1) == 0)
+	      {
+		TmpAngularMomentum >>= 1;
+		cout << TmpAngularMomentum << " " << endl;	      
+	      }
+	    else
+	      {		  
+		cout << TmpAngularMomentum << "/2" << endl;	  
+		TmpAngularMomentum -= 1;
+		TmpAngularMomentum >>= 1;		  
+	      }
 	    NbrSortedTestVectors[TmpAngularMomentum]++;	    
 	    TestVectorPosition[TmpAngularMomentum] = 0;
 	  }
@@ -220,8 +241,19 @@ int main(int argc, char** argv)
 	    }
 	  
 	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	  int AngularMomentum = ((int) round(0.5 * (sqrt ((4.0 * oper.MatrixElement(ReferenceVector, ReferenceVector).Re) + 1.0) - 1.0)));
-	  cout << "angular momentum = " << AngularMomentum << endl;
+	  int AngularMomentum = ((int) round((sqrt ((4.0 * oper.MatrixElement(ReferenceVector, ReferenceVector).Re) + 1.0) - 1.0)));
+	  cout << "angular momentum = ";
+	    if ((AngularMomentum & 1) == 0)
+	      {
+		AngularMomentum >>= 1;
+		cout << AngularMomentum << " " << endl;	      
+	      }
+	    else
+	      {		  
+		cout << AngularMomentum << "/2" << endl;	  
+		AngularMomentum -= 1;
+		AngularMomentum >>= 1;		  
+	      }
 	 
 	  if ((AngularMomentum < MaxNbrLz) && (NbrSortedTestVectors[AngularMomentum] > 0))
 	    {
