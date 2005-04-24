@@ -51,13 +51,15 @@ ARFLAGS = cru
 libQHEMainTask_a_AR = $(AR) $(ARFLAGS)
 libQHEMainTask_a_LIBADD =
 am_libQHEMainTask_a_OBJECTS = QHEOnSphereMainTask.$(OBJEXT) \
-	QHEOnDiskMainTask.$(OBJEXT)
+	QHEOnDiskMainTask.$(OBJEXT) \
+	QHEOnSphereOverlapMainTask.$(OBJEXT)
 libQHEMainTask_a_OBJECTS = $(am_libQHEMainTask_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/QHEOnDiskMainTask.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/QHEOnSphereMainTask.Po
+@AMDEP_TRUE@	./$(DEPDIR)/QHEOnSphereMainTask.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEOnSphereOverlapMainTask.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -161,7 +163,8 @@ target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libQHEMainTask.a
 libQHEMainTask_a_SOURCES = QHEOnSphereMainTask.cc \
-QHEOnDiskMainTask.cc
+QHEOnDiskMainTask.cc \
+QHEOnSphereOverlapMainTask.cc
 
 all: all-recursive
 
@@ -212,6 +215,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnDiskMainTask.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnSphereMainTask.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnSphereOverlapMainTask.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

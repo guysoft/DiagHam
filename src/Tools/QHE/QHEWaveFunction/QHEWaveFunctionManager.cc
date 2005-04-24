@@ -41,6 +41,7 @@
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/UnprojectedJainCFOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnDiskWaveFunction.h"
@@ -100,6 +101,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * read : Read-Rezayi state wave function" << endl;
       str << "  * filledcf : composite fermions wave function (only with filled pseudo Landau levels)" << endl;
       str << "  * genericcf : generic composite fermions wave function" << endl;            
+      str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;            
     }
   else
     if (this->GeometryID == QHEWaveFunctionManager::DiskGeometry)
@@ -146,6 +148,10 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
 	{	  
 	  return new JainCFOnSphereWaveFunction(((SingleStringOption*) (*(this->Options))["cf-file"])->GetString());
+	}
+      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+	{	  
+	  return new UnprojectedJainCFOnSphereWaveFunction(((SingleStringOption*) (*(this->Options))["cf-file"])->GetString());
 	}
       return 0;
     }

@@ -129,20 +129,21 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  Abstract1DComplexFunction* WaveFunction = WaveFunctionManager.GetWaveFunction();
-  if (WaveFunction == 0)
+  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
+  if (TestWaveFunction == 0)
     {
       cout << "no or unknown analytical wave function" << endl;
       return -1;
     }
   BosonOnSphere Space (NbrBosons, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
-//  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
-//  Abstract1DComplexFunction* WaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 2, 1);
-//  Abstract1DComplexFunction* WaveFunction = new JainCFOnSphereWaveFunction("test.cf");
-//  Abstract1DComplexFunction* WaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
-//  Abstract1DComplexFunction* WaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
+  
+//  Abstract1DComplexFunction* TestWaveFunction = new LaughlinOnSphereWaveFunction(NbrBosons, 2);
+//  Abstract1DComplexFunction* TestWaveFunction = new PfaffianOnSphereWaveFunction(NbrBosons);
+//  Abstract1DComplexFunction* TestWaveFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrBosons, 2, 1);
+//  Abstract1DComplexFunction* TestWaveFunction = new JainCFOnSphereWaveFunction("test.cf");
+//  Abstract1DComplexFunction* TestWaveFunction = new MooreReadOnSphereWaveFunction(NbrBosons, 3);
+//  Abstract1DComplexFunction* TestWaveFunction2 = new PfaffianOnSphereWaveFunction(NbrBosons);
   RealVector Location(2 * NbrBosons, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
@@ -184,7 +185,7 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
-      Complex ValueLaughlin = (*WaveFunction)(Location);
+      Complex ValueLaughlin = (*TestWaveFunction)(Location);
 //      cout << ValueExact  << endl; 
       cout << ValueExact  << " " << ValueLaughlin << " " << (Norm(ValueExact) / Norm(ValueLaughlin)) << endl;        
       cout << "-------------------------------------" << endl;
@@ -211,7 +212,7 @@ int main(int argc, char** argv)
       Location[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
       Location[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
     }
-  Tmp = (*WaveFunction)(Location);
+  Tmp = (*TestWaveFunction)(Location);
   double PreviousProbabilities = Norm(Tmp);
   double CurrentProbabilities = PreviousProbabilities;
   double TotalProbability = PreviousProbabilities;
@@ -221,8 +222,8 @@ int main(int argc, char** argv)
       double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
       Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
       Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-      Complex TmpMetropolis = (*WaveFunction)(Location);
-//      Complex TmpMetropolis2 = (*WaveFunction2)(Location);
+      Complex TmpMetropolis = (*TestWaveFunction)(Location);
+//      Complex TmpMetropolis2 = (*TestWaveFunction2)(Location);
 //      cout << TmpMetropolis << " " << (8 * TmpMetropolis2) << endl;
       CurrentProbabilities = Norm(TmpMetropolis);
       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))

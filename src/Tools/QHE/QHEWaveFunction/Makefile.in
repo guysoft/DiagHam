@@ -61,12 +61,13 @@ am_libQHEWaveFunction_a_OBJECTS =  \
 	JainCFOnSphereWaveFunction.$(OBJEXT) \
 	LandauSpectrumOnSphere.$(OBJEXT) \
 	UnprojectedJainCFOnSphereWaveFunction.$(OBJEXT) \
-	QHEWaveFunctionManager.$(OBJEXT)
+	QHEWaveFunctionManager.$(OBJEXT) ExactWaveFunction.$(OBJEXT)
 libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ExactWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/JainCFOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LandauSpectrumOnSphere.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LaughlinOnDiskWaveFunction.Po \
@@ -189,7 +190,8 @@ MooreReadOnDiskWaveFunction.cc \
 JainCFOnSphereWaveFunction.cc \
 LandauSpectrumOnSphere.cc \
 UnprojectedJainCFOnSphereWaveFunction.cc \
-QHEWaveFunctionManager.cc
+QHEWaveFunctionManager.cc \
+ExactWaveFunction.cc
 
 all: all-recursive
 
@@ -238,6 +240,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ExactWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LandauSpectrumOnSphere.Po@am__quote@
