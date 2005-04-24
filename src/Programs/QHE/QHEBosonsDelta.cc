@@ -72,6 +72,7 @@ int main(int argc, char** argv)
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
+  (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -96,6 +97,7 @@ int main(int argc, char** argv)
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
+  bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   double CoulombFactor = ((SingleDoubleOption*) Manager["add-coulomb"])->GetDouble();
   bool FirstRun = true;
 
@@ -126,7 +128,8 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian;
       if (CoulombFactor == 0.0)
-	Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+	Hamiltonian = new ParticleOnSphereDeltaHamiltonian(&Space, NbrBosons, LzMax, Architecture.GetArchitecture(), Memory, DiskCacheFlag,
+							   LoadPrecalculationFileName);
       else
 	Hamiltonian = new ParticleOnSphereCoulombDeltaHamiltonian(&Space, NbrBosons, LzMax, CoulombFactor, Architecture.GetArchitecture(), Memory);
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));

@@ -242,75 +242,178 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	}
       else
 	{
-	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-	  int* TmpIndexArray;
-	  double* TmpCoefficientArray; 
-	  int j;
-	  int TmpNbrInteraction;
-	  firstComponent -= this->PrecalculationShift;
-	  LastComponent -= this->PrecalculationShift;
-	  int Pos = firstComponent / this->FastMultiplicationStep; 
-	  int PosMod = firstComponent % this->FastMultiplicationStep;
-	  if (PosMod != 0)
+	  if (this->DiskStorageFlag == false)
 	    {
-	      ++Pos;
-	      PosMod = this->FastMultiplicationStep - PosMod;
-	    }
-	  int l =  PosMod + firstComponent + this->PrecalculationShift;
-	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
-	    {
-	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
-	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
-	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      Coefficient = vSource[l];
-	      for (j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
-	      vDestination[l] += this->HamiltonianShift * Coefficient;
-	      l += this->FastMultiplicationStep;
-	      ++Pos;
-	    }
-	  int Index;
-	  int m1;
-	  int m2;
-	  int m3;
-	  int m4;
-	  double TmpInteraction;
-	  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-	  firstComponent += this->PrecalculationShift;
-	  LastComponent += this->PrecalculationShift;
-	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
-	    if (PosMod != k)
-	      {		
-		for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
-		  {
-		    m1 = this->M1Value[j];
-		    m2 = this->M2Value[j];
-		    m3 = this->M3Value[j];
-		    TmpInteraction = this->InteractionFactors[j];
+	      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray; 
+	      int j;
+	      int TmpNbrInteraction;
+	      firstComponent -= this->PrecalculationShift;
+	      LastComponent -= this->PrecalculationShift;
+	      int Pos = firstComponent / this->FastMultiplicationStep; 
+	      int PosMod = firstComponent % this->FastMultiplicationStep;
+	      if (PosMod != 0)
+		{
+		  ++Pos;
+		  PosMod = this->FastMultiplicationStep - PosMod;
+		}
+	      int l =  PosMod + firstComponent + this->PrecalculationShift;
+	      for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+		{
+		  TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+		  TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+		  TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+		  Coefficient = vSource[l];
+		  for (j = 0; j < TmpNbrInteraction; ++j)
+		    vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		  vDestination[l] += this->HamiltonianShift * Coefficient;
+		  l += this->FastMultiplicationStep;
+		  ++Pos;
+		}
+	      int Index;
+	      int m1;
+	      int m2;
+	      int m3;
+	      int m4;
+	      double TmpInteraction;
+	      int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
+	      firstComponent += this->PrecalculationShift;
+	      LastComponent += this->PrecalculationShift;
+	      for (int k = 0; k < this->FastMultiplicationStep; ++k)
+		if (PosMod != k)
+		  {		
+		    for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+		      {
+			m1 = this->M1Value[j];
+			m2 = this->M2Value[j];
+			m3 = this->M3Value[j];
+			TmpInteraction = this->InteractionFactors[j];
+			m4 = m1 + m2 - m3;
+			for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+			  {
+			    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+			    if (Index < Dim)
+			      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+			  }
+		      }
+		    m1 = this->M1Value[ReducedNbrInteractionFactors];
+		    m2 = this->M2Value[ReducedNbrInteractionFactors];
+		    m3 = this->M3Value[ReducedNbrInteractionFactors];
+		    TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
 		    m4 = m1 + m2 - m3;
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
 			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 			if (Index < Dim)
 			  vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+			vDestination[i] += this->HamiltonianShift * vSource[i];
 		      }
 		  }
-		m1 = this->M1Value[ReducedNbrInteractionFactors];
-		m2 = this->M2Value[ReducedNbrInteractionFactors];
-		m3 = this->M3Value[ReducedNbrInteractionFactors];
-		TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-		m4 = m1 + m2 - m3;
-		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		  {
-		    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-		    if (Index < Dim)
-		      vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-		    vDestination[i] += this->HamiltonianShift * vSource[i];
-		  }
-	      }
-	  delete TmpParticles;
+	      delete TmpParticles;
+	    }
+	  else
+	    {
+	      int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      int TmpNbrIteration = nbrComponent / this->BufferSize;
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray;
+	      int TmpNbrInteraction;
+	      int k = firstComponent;
+	      int EffectiveHilbertSpaceDimension;
+	      firstComponent -= this->PrecalculationShift;
+
+	      ifstream File;
+	      File.open(this->DiskStorageFileName, ios::binary | ios::in);
+	      File.read ((char*) &EffectiveHilbertSpaceDimension, sizeof(int));
+	      long FileJump = 0;
+	      for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+		FileJump += (long) this->NbrInteractionPerComponent[i];
+	      FileJump *= sizeof(int);
+	      long FileOffset = 0;
+	      for (int i = this->DiskStorageStart; i < firstComponent; ++i)
+		FileOffset += this->NbrInteractionPerComponent[i];
+	      File.seekg (((FileOffset + EffectiveHilbertSpaceDimension + 1) * sizeof(int)), ios::cur);
+	      FileJump += (sizeof(double) - sizeof(int)) * FileOffset;
+
+	      for (int i = 0; i < TmpNbrIteration; ++i)
+		{
+		  int TmpPos = firstComponent;
+		  long ReadBlockSize = 0;
+		  for (int j = 0; j < this->BufferSize; ++j)
+		    {
+		      ReadBlockSize += this->NbrInteractionPerComponent[TmpPos];
+		      ++TmpPos;
+		    }		  
+		  File.read((char*) BufferIndexArray, sizeof(int) * ReadBlockSize);
+		  FileJump -= sizeof(int) * ReadBlockSize;
+		  File.seekg (FileJump, ios::cur);
+		  File.read((char*) BufferCoefficientArray, sizeof(double) * ReadBlockSize);		      
+		  FileJump += sizeof(double) * ReadBlockSize;
+		  File.seekg (-FileJump, ios::cur);
+		  
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int l = 0; l < this->BufferSize; ++l)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      Coefficient = vSource[k];
+		      if (TmpNbrInteraction > 0)
+			{
+			  for (int j = 0; j < TmpNbrInteraction; ++j)
+			    vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+			  TmpIndexArray += TmpNbrInteraction;
+			  TmpCoefficientArray += TmpNbrInteraction;
+			}
+		      vDestination[k] += this->HamiltonianShift * Coefficient;
+		      ++k;
+		      ++firstComponent;
+		    }
+		}
+
+	      if ((TmpNbrIteration * this->BufferSize) != nbrComponent)
+		{
+		  int TmpPos = firstComponent;
+		  int Lim =  nbrComponent % this->BufferSize;
+		  long ReadBlockSize = 0;
+		  for (int j = 0; j < Lim; ++j)
+		    {
+		      ReadBlockSize += this->NbrInteractionPerComponent[TmpPos];
+		      ++TmpPos;
+		    }		  
+		  File.read((char*) BufferIndexArray, sizeof(int) * ReadBlockSize);
+		  FileJump -= sizeof(int) * ReadBlockSize;
+		  File.seekg (FileJump, ios::cur);
+		  File.read((char*) BufferCoefficientArray, sizeof(double) * ReadBlockSize);		      
+		  FileJump += sizeof(double) * ReadBlockSize;
+		  File.seekg (-FileJump, ios::cur);
+
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int i = 0; i < Lim; ++i)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      Coefficient = vSource[k];
+		      if (TmpNbrInteraction > 0)
+			{
+			  for (int j = 0; j < TmpNbrInteraction; ++j)
+			    vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+			  TmpIndexArray += TmpNbrInteraction;
+			  TmpCoefficientArray += TmpNbrInteraction;
+			}
+		      vDestination[k] += this->HamiltonianShift * Coefficient;
+		      ++k;
+		      ++firstComponent;
+		    }
+		}
+
+	      File.close();
+	      delete[] BufferIndexArray;
+	      delete[] BufferCoefficientArray;
+	    }
 	}
-   }
+    }
   return vDestination;
 }
 
@@ -405,84 +508,210 @@ RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiply(RealVect
 	}
       else
 	{
-	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-	  int* TmpIndexArray;
-	  double* TmpCoefficientArray; 
-	  double* Coefficient2 = new double [nbrVectors];
-	  int j;
-	  int TmpNbrInteraction;
-	  firstComponent -= this->PrecalculationShift;
-	  LastComponent -= this->PrecalculationShift;
-	  int Pos2;
-	  int Pos = firstComponent / this->FastMultiplicationStep; 
-	  int PosMod = firstComponent % this->FastMultiplicationStep;
-	  if (PosMod != 0)
+	  if (this->DiskStorageFlag == false)
 	    {
-	      ++Pos;
-	      PosMod = this->FastMultiplicationStep - PosMod;
-	    }
-	  int l =  PosMod + firstComponent + this->PrecalculationShift;
-	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
-	    {
-	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
-	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
-	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      for (int k = 0; k < nbrVectors; ++k)
+	      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray; 
+	      double* Coefficient2 = new double [nbrVectors];
+	      int j;
+	      int TmpNbrInteraction;
+	      firstComponent -= this->PrecalculationShift;
+	      LastComponent -= this->PrecalculationShift;
+	      int Pos2;
+	      int Pos = firstComponent / this->FastMultiplicationStep; 
+	      int PosMod = firstComponent % this->FastMultiplicationStep;
+	      if (PosMod != 0)
 		{
-		  Coefficient2[k] = vSources[k][l];
-		  vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
+		  ++Pos;
+		  PosMod = this->FastMultiplicationStep - PosMod;
 		}
-	      for (j = 0; j < TmpNbrInteraction; ++j)
+	      int l =  PosMod + firstComponent + this->PrecalculationShift;
+	      for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
 		{
-		  Pos2 = TmpIndexArray[j];
-		  Coefficient = TmpCoefficientArray[j];
+		  TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+		  TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+		  TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
 		  for (int k = 0; k < nbrVectors; ++k)
 		    {
-		      vDestinations[k][Pos2] += Coefficient  * Coefficient2[k];
+		      Coefficient2[k] = vSources[k][l];
+		      vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
 		    }
+		  for (j = 0; j < TmpNbrInteraction; ++j)
+		    {
+		      Pos2 = TmpIndexArray[j];
+		      Coefficient = TmpCoefficientArray[j];
+		      for (int k = 0; k < nbrVectors; ++k)
+			{
+			  vDestinations[k][Pos2] += Coefficient  * Coefficient2[k];
+			}
+		    }
+		  l += this->FastMultiplicationStep;
+		  ++Pos;
 		}
-	      l += this->FastMultiplicationStep;
-	      ++Pos;
-	    }
-	  int Index;
-	  int m1;
-	  int m2;
-	  int m3;
-	  int m4;
-	  double TmpInteraction;
-	  firstComponent += this->PrecalculationShift;
-	  LastComponent += this->PrecalculationShift;
-	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
-	    if (PosMod != k)
-	      {		
-		for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-		  {
-		    m1 = this->M1Value[j];
-		    m2 = this->M2Value[j];
-		    m3 = this->M3Value[j];
-		    TmpInteraction = this->InteractionFactors[j];
-		    m4 = m1 + m2 - m3;
-		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+	      int Index;
+	      int m1;
+	      int m2;
+	      int m3;
+	      int m4;
+	      double TmpInteraction;
+	      firstComponent += this->PrecalculationShift;
+	      LastComponent += this->PrecalculationShift;
+	      for (int k = 0; k < this->FastMultiplicationStep; ++k)
+		if (PosMod != k)
+		  {		
+		    for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 		      {
-			Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-			if (Index < Dim)
+			m1 = this->M1Value[j];
+			m2 = this->M2Value[j];
+			m3 = this->M3Value[j];
+			TmpInteraction = this->InteractionFactors[j];
+			m4 = m1 + m2 - m3;
+			for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 			  {
-			    Coefficient *= TmpInteraction;
-			    for (int l = 0; l < nbrVectors; ++l)
-			      vDestinations[l][Index] += Coefficient * vSources[l][i];
+			    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+			    if (Index < Dim)
+			      {
+				Coefficient *= TmpInteraction;
+				for (int l = 0; l < nbrVectors; ++l)
+				  vDestinations[l][Index] += Coefficient * vSources[l][i];
+			      }
 			  }
 		      }
+		    for (int l = 0; l < nbrVectors; ++l)
+		      {
+			RealVector& TmpSourceVector = vSources[l];
+			RealVector& TmpDestinationVector = vDestinations[l];
+			for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+			  TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      }
 		  }
-		for (int l = 0; l < nbrVectors; ++l)
-		  {
-		    RealVector& TmpSourceVector = vSources[l];
-		    RealVector& TmpDestinationVector = vDestinations[l];
-		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
-		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-		  }
-	      }
-	  delete[] Coefficient2;
-	  delete TmpParticles;
+	      delete[] Coefficient2;
+	      delete TmpParticles;
+	    }
+	  else
+	    {
+	      int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];
+	      double* Coefficient2 = new double [nbrVectors];
+	      int TmpNbrIteration = nbrComponent / this->BufferSize;
+	      int* TmpIndexArray;
+	      double* TmpCoefficientArray;
+	      int TmpNbrInteraction;
+	      int k = firstComponent;
+	      int EffectiveHilbertSpaceDimension;
+	      int Pos;
+	      firstComponent -= this->PrecalculationShift;
+
+	      ifstream File;
+	      File.open(this->DiskStorageFileName, ios::binary | ios::in);
+	      File.read ((char*) &EffectiveHilbertSpaceDimension, sizeof(int));
+	      long FileJump = 0;
+	      for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+		FileJump += (long) this->NbrInteractionPerComponent[i];
+	      FileJump *= sizeof(int);
+	      long FileOffset = 0;
+	      for (int i = this->DiskStorageStart; i < firstComponent; ++i)
+		FileOffset += this->NbrInteractionPerComponent[i];
+	      File.seekg (((FileOffset + EffectiveHilbertSpaceDimension + 1) * sizeof(int)), ios::cur);
+	      FileJump += (sizeof(double) - sizeof(int)) * FileOffset;
+
+	      for (int i = 0; i < TmpNbrIteration; ++i)
+		{
+		  int TmpPos = firstComponent;
+		  long ReadBlockSize = 0;
+		  for (int j = 0; j < this->BufferSize; ++j)
+		    {
+		      ReadBlockSize += this->NbrInteractionPerComponent[TmpPos];
+		      ++TmpPos;
+		    }		  
+		  File.read((char*) BufferIndexArray, sizeof(int) * ReadBlockSize);
+		  FileJump -= sizeof(int) * ReadBlockSize;
+		  File.seekg (FileJump, ios::cur);
+		  File.read((char*) BufferCoefficientArray, sizeof(double) * ReadBlockSize);		      
+		  FileJump += sizeof(double) * ReadBlockSize;
+		  File.seekg (-FileJump, ios::cur);
+		  
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int m = 0; m < this->BufferSize; ++m)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      for (int l = 0; l < nbrVectors; ++l)
+			{
+			  Coefficient2[l] = vSources[l][k];
+			  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+			}
+		      if (TmpNbrInteraction > 0)
+			{
+			  for (int j = 0; j < TmpNbrInteraction; ++j)
+			    {
+			      Pos = TmpIndexArray[j];
+			      Coefficient = TmpCoefficientArray[j];
+			      for (int l = 0; l < nbrVectors; ++l)
+				{
+				  vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+				}
+			    }
+			  TmpIndexArray += TmpNbrInteraction;
+			  TmpCoefficientArray += TmpNbrInteraction;
+			}
+		      ++k;
+		      ++firstComponent;
+		    }
+		}
+
+	      if ((TmpNbrIteration * this->BufferSize) != nbrComponent)
+		{
+		  int TmpPos = firstComponent;
+		  int Lim =  nbrComponent % this->BufferSize;
+		  long ReadBlockSize = 0;
+		  for (int j = 0; j < Lim; ++j)
+		    {
+		      ReadBlockSize += this->NbrInteractionPerComponent[TmpPos];
+		      ++TmpPos;
+		    }		  
+		  File.read((char*) BufferIndexArray, sizeof(int) * ReadBlockSize);
+		  FileJump -= sizeof(int) * ReadBlockSize;
+		  File.seekg (FileJump, ios::cur);
+		  File.read((char*) BufferCoefficientArray, sizeof(double) * ReadBlockSize);		      
+		  FileJump += sizeof(double) * ReadBlockSize;
+		  File.seekg (-FileJump, ios::cur);
+
+		  TmpIndexArray = BufferIndexArray;
+		  TmpCoefficientArray = BufferCoefficientArray;
+		  for (int m = 0; m < Lim; ++m)
+		    {
+		      TmpNbrInteraction = this->NbrInteractionPerComponent[firstComponent];
+		      for (int l = 0; l < nbrVectors; ++l)
+			{
+			  Coefficient2[l] = vSources[l][k];
+			  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
+			}
+		      if (TmpNbrInteraction > 0)
+			{
+			  for (int j = 0; j < TmpNbrInteraction; ++j)
+			    {
+			      Pos = TmpIndexArray[j];
+			      Coefficient = TmpCoefficientArray[j];
+			      for (int l = 0; l < nbrVectors; ++l)
+				{
+				  vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+				}
+			    }
+			  TmpIndexArray += TmpNbrInteraction;
+			  TmpCoefficientArray += TmpNbrInteraction;
+			}
+		      ++k;
+		      ++firstComponent;
+		    }
+		}
+
+	      File.close();
+	      delete[] BufferIndexArray;
+	      delete[] BufferCoefficientArray;
+	      delete[] Coefficient2;
+	    }
 	}
    }
   return vDestinations;
@@ -773,6 +1002,110 @@ void AbstractQHEOnSphereHamiltonian::PartialEnableFastMultiplication(int firstCo
 	}
     }
   delete TmpParticles;
+}
+
+// enable fast multiplication algorithm using on disk cache 
+//
+// fileName = prefix of the name of the file where temporary matrix elements will be stored
+
+void AbstractQHEOnSphereHamiltonian::EnableFastMultiplicationWithDiskStorage(char* fileName)
+{
+  if (this->FastMultiplicationStep == 1)
+    {
+      this->DiskStorageFlag = false;
+      this->DiskStorageFileName = 0;
+      this->EnableFastMultiplication();
+      return;
+    }
+  this->DiskStorageFlag = true;
+  this->DiskStorageFileName = new char [strlen(fileName) + 8];
+  sprintf (this->DiskStorageFileName, "%s.ham", fileName);
+
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  this->DiskStorageStart = (int) MinIndex;
+  int DiskStorageEnd = 1 + (int) MaxIndex;
+
+  int Index;
+  int m1;
+  int m2;
+  int m3;
+  int m4;
+  double Coefficient;
+  int* TmpIndexArray;
+  double* TmpCoefficientArray;
+  int Pos;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  this->InteractionPerComponentIndex = 0;
+  this->InteractionPerComponentCoefficient = 0;
+  this->MaxNbrInteractionPerComponent = 0;
+
+  int TotalPos = 0;
+  ofstream File;
+  File.open(this->DiskStorageFileName, ios::binary | ios::out);
+ 
+  File.write((char*) &(EffectiveHilbertSpaceDimension), sizeof(int));
+  File.write((char*) &(this->FastMultiplicationStep), sizeof(int));
+  File.write((char*) this->NbrInteractionPerComponent, sizeof(int) * EffectiveHilbertSpaceDimension);
+
+  long FileJump = 0;
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    {
+      FileJump += (long) this->NbrInteractionPerComponent[i];
+      if (this->MaxNbrInteractionPerComponent < this->NbrInteractionPerComponent[i])
+	this->MaxNbrInteractionPerComponent = this->NbrInteractionPerComponent[i];
+    }
+  FileJump *= sizeof(int);
+
+  TmpIndexArray = new int [this->MaxNbrInteractionPerComponent];
+  TmpCoefficientArray = new double [this->MaxNbrInteractionPerComponent];      
+
+  for (int i = this->DiskStorageStart; i < DiskStorageEnd; ++i)
+    {
+      if (this->NbrInteractionPerComponent[TotalPos] > 0)
+	{
+	  Pos = 0;
+	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      m4 = m1 + m2 - m3;
+	      Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  TmpIndexArray[Pos] = Index;
+		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		  ++Pos;
+		}
+	    }
+	  File.write((char*) TmpIndexArray, sizeof(int) * this->NbrInteractionPerComponent[TotalPos]);
+	  FileJump -= sizeof(int) * this->NbrInteractionPerComponent[TotalPos];
+	  File.seekp(FileJump, ios::cur);
+	  File.write((char*) TmpCoefficientArray, sizeof(double) * this->NbrInteractionPerComponent[TotalPos]);
+	  FileJump += sizeof(double) * this->NbrInteractionPerComponent[TotalPos];
+	  File.seekp(-FileJump, ios::cur);	  
+	}
+      ++TotalPos;
+    }
+  delete[] TmpIndexArray;
+  delete[] TmpCoefficientArray;
+  File.close();
+
+  this->FastMultiplicationFlag = true;
+  this->BufferSize = this->Memory / ((this->MaxNbrInteractionPerComponent * (sizeof(int) + sizeof(double))) + sizeof(int*) + sizeof(double*));
+
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
 }
 
 // save precalculations in a file

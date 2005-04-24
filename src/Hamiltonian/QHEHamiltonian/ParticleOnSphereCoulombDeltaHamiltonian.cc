@@ -77,6 +77,7 @@ ParticleOnSphereCoulombDeltaHamiltonian::ParticleOnSphereCoulombDeltaHamiltonian
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = false;
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);

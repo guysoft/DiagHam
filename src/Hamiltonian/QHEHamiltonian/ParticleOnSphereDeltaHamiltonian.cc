@@ -59,10 +59,12 @@ using std::ostream;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-								   AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+								   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
+								   char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -76,6 +78,7 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = onDiskCacheFlag;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -91,9 +94,15 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
 		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	      else
 		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (memory > 0)
+	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
 	    }
 	}
     }
@@ -112,16 +121,23 @@ ParticleOnSphereDeltaHamiltonian::~ParticleOnSphereDeltaHamiltonian()
   delete[] this->M3Value;
   if (this->FastMultiplicationFlag == true)
     {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
+      if (this->DiskStorageFlag == false)
 	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
+	  int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+	  if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	    ++ReducedDim;
+	  for (int i = 0; i < ReducedDim; ++i)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
+	  delete[] this->InteractionPerComponentIndex;
+	  delete[] this->InteractionPerComponentCoefficient;
 	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
+      else
+	{
+	  remove (this->DiskStorageFileName);
+	}
       delete[] this->NbrInteractionPerComponent;
     }
 }

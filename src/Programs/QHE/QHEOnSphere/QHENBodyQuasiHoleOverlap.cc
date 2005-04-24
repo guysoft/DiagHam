@@ -33,7 +33,15 @@ using std::cout;
 using std::endl;
 
 
-void SortOverlaps (double* bestOverlaps, double** overlaps, int nbrOverlaps, int nbrTestStates);
+// subdivide a basis into different L orthonormal eigenstate
+//
+// vectors = reference on the matrix whose columns are the vectors that span the basis
+// oper = pointer to operator whivh allow to evaluate total L matrix elements
+// totalMaxLz = maximum L value that can be reach by the system (-1/2 if L is half integer)
+// subspaceSize = reference on the array that will be filled  with the dimension of each fixed L subspace (index equal to L if L is integer, L-1/2 if L is half integer)
+// subspacePositions = reference on the array that will be filled  with the position of the first occurence of a vector with a given fixed L subspace 
+//                     (index equal to L if L is integer, L-1/2 if L is half integer)
+void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions);
 
 
 int main(int argc, char** argv)
@@ -93,8 +101,8 @@ int main(int argc, char** argv)
     }
 
   int MaxNbrLz;
-  int* Degeneracy;
-  if (OverlapDefinition.GetAsIntegerArray("Degeneracy", ' ', Degeneracy, MaxNbrLz) == false)
+  int* LzDegeneracy;
+  if (OverlapDefinition.GetAsIntegerArray("Degeneracy", ' ', LzDegeneracy, MaxNbrLz) == false)
     {
       cout << "error while parsing Degeneracy in " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;     
@@ -106,7 +114,11 @@ int main(int argc, char** argv)
       return -1;     
     }
   QHEOnSphereLzSortedSpectrum Spectrum (OverlapDefinition["Spectrum"]);
-  Spectrum.PrintSpectrum(cout, true);
+  if (Spectrum.IsSpectrumValid() == false)
+    {
+      cout << "Spectrum " << OverlapDefinition["Spectrum"] << " is unreadable or is not valid" << endl;
+      return -1;           
+    }
   
   char* InputVectors = new char [strlen(OverlapDefinition["InputVectors"]) + 24];
   char* OutputVectors = new char [strlen(OverlapDefinition["OutputVectors"]) + 24];
@@ -115,263 +127,145 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
 
+  int* LDegeneracy = new int [MaxNbrLz];
+  LDegeneracy[MaxNbrLz - 1] = LzDegeneracy[MaxNbrLz - 1];
+  for (int i = MaxNbrLz - 2; i >= 0; --i)
+    LDegeneracy[i] = LzDegeneracy[i] - LzDegeneracy[i + 1];
+
   int TotalMaxLz = LzMax * NbrParticles;
   RealVector** SortedTestVectors = new RealVector*[MaxNbrLz];
-  int* NbrSortedTestVectors = new int [TotalMaxLz];
+  int* NbrSortedTestVectors = new int [TotalMaxLz + 1];
+  int* ReferenceNbrSortedVectors = new int [TotalMaxLz + 1];
   bool Parity = true;
   if ((TotalMaxLz & 1) != 0)
     Parity = false;
-  double** BestOverlaps = new double* [MaxNbrLz];
-  int* NbrBestOverlaps = new int [MaxNbrLz];
-  double** BestOverlapsPerL = new double* [MaxNbrLz];
-  int** BestOverlapsPerLPosition = new int* [MaxNbrLz];
-  int* NbrBestOverlapsPerL = new int [MaxNbrLz];
-  int* TestVectorPosition = new int [TotalMaxLz];
-  for (int i = 0; i < MaxNbrLz; ++i)
-    {
-      BestOverlapsPerL[i] = new double [TotalMaxLz];
-      BestOverlapsPerLPosition[i] = new int [TotalMaxLz];
-      NbrBestOverlapsPerL[i] = 0;
-    }
+  double* BestOverlaps = new double [MaxNbrLz + 1];
+  int* TestVectorPosition = new int [TotalMaxLz + 1];
+  int* ReferenceVectorPosition = new int [TotalMaxLz + 1];
 
-  for (int i = 0; i < MaxNbrLz; ++i)
-    {
-      int Lz = i << 1;
-      if (Parity == false)
-	{
-	  ++Lz;
-	  cout << "Lz = " << Lz << "/2" << endl;
-	}
-      else
-	{
-	  cout << "Lz = " << i << endl;
-	}
-      BestOverlaps[i] = new double[Degeneracy[i]];
-      double*** Overlaps = new double**[TotalMaxLz]; 
-      int* NbrVectorWithMomentum = new int [TotalMaxLz]; 
-      RealVector* TestVectors = new RealVector[Degeneracy[i]]; 
-      for (int j = 0; j < TotalMaxLz; ++j)    
-	{ 
-	  TestVectorPosition[j] = TotalMaxLz;
-	  NbrSortedTestVectors[j] = 0;
-	  Overlaps[j] = new double*[Degeneracy[i]];
-	  for (int l = 0; l < Degeneracy[i]; ++l)
-	    Overlaps[j][l] = new double [Degeneracy[i]];
-	  NbrVectorWithMomentum[j] = 0;
-	}
-
-      for (int j = 0; j < Degeneracy[i]; ++j)
-	{
-	  sprintf (OutputVectors2, "%d.%d.vec", Lz, j);	      
-	  if (TestVectors[j].ReadVector(OutputVectors) == false)
-	    {
-	      cout << "error while reading " << OutputVectors << endl;
-	      return -1;
-	    }
-	}
-
-      RealMatrix DiagonalBasis (TestVectors, Degeneracy[i]);
-      BosonOnSphere Space (NbrParticles, Lz, LzMax);
-      if (Degeneracy[i] > 1)
-	{
-	  RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
-	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	  for (int k = 0; k < Degeneracy[i]; ++k)
-	    {
-	      for (int l = k; l < Degeneracy[i]; ++l)
-		{	
-		  HRep.SetMatrixElement(l, k,  oper.MatrixElement(TestVectors[k], TestVectors[l]).Re);
-		}
-	    }
-	  cout << endl << endl;
-	  
-	  RealMatrix TmpEigenvector (Degeneracy[i], Degeneracy[i], true);
-	  for (int l = 0; l < Degeneracy[i]; ++l)
-	    TmpEigenvector(l, l) = 1.0;
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (Degeneracy[i]);
-	  HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
-	  TmpTriDiag.Diagonalize(TmpEigenvector);
-	  TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
-	  cout << "angular momentum of test eigenvectors = ";
-	  int TmpAngularMomentum;
-	  for (int k = 0; k < Degeneracy[i]; ++k)	    
-	    {
-	      TmpAngularMomentum = ((int) round((sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
-	      if ((TmpAngularMomentum & 1) == 0)
-		{
-		  TmpAngularMomentum >>= 1;
-		  cout << TmpAngularMomentum << "(" << TmpTriDiag.DiagonalElement(k) << ")" << " ";	      
-		}
-	      else
-		{		  
-		  cout << TmpAngularMomentum << "/2 ";	  
-		  TmpAngularMomentum -= 1;
-		  TmpAngularMomentum >>= 1;		  
-		}
-	      NbrSortedTestVectors[TmpAngularMomentum]++;
-	      if (TestVectorPosition[TmpAngularMomentum] > k)
-		TestVectorPosition[TmpAngularMomentum] = k;
-	    }
-	  
-	  cout << endl;
-	  DiagonalBasis.Multiply(TmpEigenvector);
-	}
-      else
-	if (Degeneracy[i] == 1)
+  for (int i = MaxNbrLz - 1; i >= 0; --i)
+    if (LDegeneracy[i] > 0)
+      {
+	cout << "----------------------------------------------------" << endl;
+	int Lz = i << 1;
+	if (Parity == false)
 	  {
-	    ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	    int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper.MatrixElement(TestVectors[0], TestVectors[0]).Re) + 1.0) - 1.0)));
-	    cout << "angular momentum of test eigenvectors = ";
-	    if ((TmpAngularMomentum & 1) == 0)
-	      {
-		TmpAngularMomentum >>= 1;
-		cout << TmpAngularMomentum << " " << endl;	      
-	      }
-	    else
-	      {		  
-		cout << TmpAngularMomentum << "/2" << endl;	  
-		TmpAngularMomentum -= 1;
-		TmpAngularMomentum >>= 1;		  
-	      }
-	    NbrSortedTestVectors[TmpAngularMomentum]++;	    
-	    TestVectorPosition[TmpAngularMomentum] = 0;
+	    ++Lz;
+	    cout << "L = " << Lz << "/2" << endl;
 	  }
-
-      int NbrNonZeroOverlap = 0;
-      for (int j = 0; j < Degeneracy[i]; ++j)
-	{
-	  sprintf (InputVectors2, "%d.%d.vec", Lz, j);
-	  cout << InputVectors << ":" << endl;
-	  RealVector ReferenceVector;	  
-	  if (ReferenceVector.ReadVector(InputVectors) == false)
-	    {
-	      cout << "error while reading " << InputVectors << endl;
-	      return -1;
-	    }
-	  
-	  ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
-	  int AngularMomentum = ((int) round((sqrt ((4.0 * oper.MatrixElement(ReferenceVector, ReferenceVector).Re) + 1.0) - 1.0)));
-	  cout << "angular momentum = ";
-	    if ((AngularMomentum & 1) == 0)
+	else
+	  {
+	    cout << "L = " << i << endl;
+	  }
+	int* NbrVectorWithMomentum = new int [TotalMaxLz]; 
+	RealVector* TestVectors = new RealVector[LzDegeneracy[i]]; 
+	for (int j = 0; j < TotalMaxLz; ++j)    
+	  { 
+	    NbrVectorWithMomentum[j] = 0;
+	  }
+	for (int j = 0; j < LzDegeneracy[i]; ++j)
+	  {
+	    sprintf (OutputVectors2, "%d.%d.vec", Lz, j);	      
+	    if (TestVectors[j].ReadVector(OutputVectors) == false)
 	      {
-		AngularMomentum >>= 1;
-		cout << AngularMomentum << " " << endl;	      
+		cout << "error while reading " << OutputVectors << endl;
+		return -1;
+	      }
+	  }
+	RealMatrix DiagonalBasis (TestVectors, LzDegeneracy[i]);
+	BosonOnSphere Space (NbrParticles, Lz, LzMax);
+	ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+	LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedTestVectors, TestVectorPosition);
+	cout << endl;
+
+	bool OpenFlag = true;
+	int NbrReferenceStates = 0;
+	int VectorPosition = 0;
+	RealVector* ReferenceVectors = new RealVector[200];	
+	while ((OpenFlag == true) && (NbrReferenceStates < LDegeneracy[i]))
+	  {
+	    int ReferenceDegeneracy = Spectrum.GetDegeneracy(Lz, VectorPosition);
+	    RealVector* TmpReferenceVectors = new RealVector[ReferenceDegeneracy];	
+	    int k = 0;
+	    for (; (k < ReferenceDegeneracy) && (OpenFlag == true); ++k)  
+	      {
+		sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
+		if (TmpReferenceVectors[k].ReadVector(InputVectors) == false)
+		  {
+		    OpenFlag = false;
+		  }
+	      }
+	    if (OpenFlag == true)
+	      {
+		RealMatrix ReferenceDiagonalBasis (TmpReferenceVectors, ReferenceDegeneracy);
+		LSortBasis(ReferenceDiagonalBasis, &oper, TotalMaxLz, ReferenceNbrSortedVectors, ReferenceVectorPosition);
+		for (k = 0; k < ReferenceNbrSortedVectors[i]; ++k)  
+		  {
+		    ReferenceVectors[NbrReferenceStates] = ReferenceDiagonalBasis[ReferenceVectorPosition[i] + k];
+		    ++NbrReferenceStates;
+		  }
+		if ( ReferenceNbrSortedVectors[i] > 0)
+		  for (k = 0; k < ReferenceDegeneracy; ++k)  
+		    {
+		      sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
+		      cout << InputVectors << endl;
+		    }
+	      }
+	    VectorPosition += ReferenceDegeneracy;
+	  }
+	if (NbrReferenceStates == 0)
+	  {
+	    cout << "no possible overlap calculation" << endl;
+	  }
+	else
+	  if (NbrReferenceStates == NbrSortedTestVectors[i])
+	    {
+	      double Scalar = 0.0;
+	      double TmpScalar;
+	      int Shift = TestVectorPosition[i];
+	      cout << "scalar products: ";
+	      for (int k = 0; k < NbrReferenceStates; ++k)
+		for (int l = 0; l < NbrReferenceStates; ++l)		
+		  {
+		    TmpScalar = ReferenceVectors[k] * DiagonalBasis[l + Shift];
+		    TmpScalar *= TmpScalar;
+		    cout << TmpScalar << " ";
+		    Scalar += TmpScalar;
+		  }
+	      cout << endl;
+	      Scalar /= (double) NbrReferenceStates;
+	      BestOverlaps[i] = Scalar;
+	      cout << "overlap = " << Scalar << endl;
+	    }	  
+	  else
+	    if (NbrSortedTestVectors[i] == 1)
+	      {
+		int Shift = TestVectorPosition[i];
+		BestOverlaps[i] = 0.0;
+		for (int k = 0; k < ReferenceNbrSortedVectors[i]; ++k)
+		  {
+		    double Scalar = ReferenceVectors[ReferenceVectorPosition[i] + k] * DiagonalBasis[Shift];
+		    if (fabs(Scalar) > OrthogonalityError)
+		      cout << "    " << OutputVectors << "  = " << Scalar << endl;
+		    BestOverlaps[i] += Scalar * Scalar;
+		  }
+		cout << "overlap = " << BestOverlaps[i]  << endl;
 	      }
 	    else
-	      {		  
-		cout << AngularMomentum << "/2" << endl;	  
-		AngularMomentum -= 1;
-		AngularMomentum >>= 1;		  
+	      {
+		cout << "can't compare vectors if both subspaces don't have the same dimension " << endl;		  
 	      }
-	 
-	  if ((AngularMomentum < MaxNbrLz) && (NbrSortedTestVectors[AngularMomentum] > 0))
-	    {
-	      BestOverlaps[i][NbrNonZeroOverlap] = 0.0;
-	      int Shift = TestVectorPosition[AngularMomentum];
-	      for (int k = 0; k < NbrSortedTestVectors[AngularMomentum]; ++k)
-		{
-		  if (ReferenceVector.GetVectorDimension() != DiagonalBasis[k + Shift].GetVectorDimension())
-		    {
-		      sprintf (OutputVectors2, "%d.%d.vec", Lz, k + Shift);
-		      cout << "dimension mismatch between " << InputVectors << " and " << OutputVectors << endl;
-		      return -1;
-		    }
-		  
-		  double Scalar = ReferenceVector * DiagonalBasis[k + Shift];
-		  Overlaps[AngularMomentum][NbrVectorWithMomentum[AngularMomentum]][k] = Scalar;
-		  if (fabs(Scalar) > OrthogonalityError)
-		    cout << "    " << OutputVectors << "  = " << Scalar << endl;
-		  BestOverlaps[i][NbrNonZeroOverlap] += Scalar * Scalar;
-		}
-	      NbrVectorWithMomentum[AngularMomentum]++;
-	      BestOverlaps[i][NbrNonZeroOverlap] = sqrt(BestOverlaps[i][j]);
-	      BestOverlapsPerL[AngularMomentum][NbrBestOverlapsPerL[AngularMomentum]] = BestOverlaps[i][NbrNonZeroOverlap];
-	      if ((2 * AngularMomentum) == Lz)
-		{
-		  BestOverlapsPerLPosition[AngularMomentum][NbrBestOverlapsPerL[AngularMomentum]] = j;
-		}
-	      else
-		{
-                  BestOverlapsPerLPosition[AngularMomentum][NbrBestOverlapsPerL[AngularMomentum]] = -1;
-		}
-	      NbrBestOverlapsPerL[AngularMomentum]++;
-	      cout << endl << "best overlap = " << BestOverlaps[i][NbrNonZeroOverlap] << endl;
-	      ++NbrNonZeroOverlap;
-	    }
-	  else
-	    {
-	      cout << "no possible overlap " << endl;
-	    }
-	  SortArrayDownOrdering(BestOverlaps[i], NbrNonZeroOverlap);
-	  NbrBestOverlaps[i] = NbrNonZeroOverlap;
-	}
+      }
 
-/*      SortOverlaps(BestOverlaps, Overlaps, Degeneracy[i], Degeneracy[i]);
-      cout << endl << "overlaps = " << endl;
-      for (int j = 0; j < Degeneracy[i]; ++j)
-	{
-	  cout << BestOverlaps[j] << endl;
-	}*/
-
-
-      cout << "----------------------------------------------------" << endl;
-
-       for (int j = 0; j < TotalMaxLz; ++j)    
-	 if (NbrVectorWithMomentum[j] > 0)
-	   {
-	     cout << j << ": ";
-	     for (int k = 0; k < NbrVectorWithMomentum[j]; ++k)
-	       for (int l = k + 1; l < NbrVectorWithMomentum[j]; ++l)
-		 {
-		   double Scalar = 0.0;
-		   for (int m = 0; m < NbrSortedTestVectors[j]; ++m)
-		     {
-		       Scalar += Overlaps[j][k][m] * Overlaps[j][l][m];
-		     }
-		   cout << Scalar << " ";
-		 }
-	     cout << endl;
-	   }
-      cout << "----------------------------------------------------" << endl;
-
-      for (int j = 0; j < Degeneracy[i]; ++j)
-	{
-	  for (int l = 0; l < Degeneracy[i]; ++l)
-	    delete[] Overlaps[j][l];
-	  delete[] Overlaps[j];
-	}
-      delete[] Overlaps;
-//      delete[] TestVectors;
-    }
-  
   
   cout << "----------------------------------------------------" << endl;
   cout << "final results" << endl;
   cout << "----------------------------------------------------" << endl;
-  cout << "Lz sorted results " << endl << endl;
-  for (int i = 0; i < MaxNbrLz; ++i)
-    {
-      int Lz = i << 1;
-      if (Parity == false)
-	{
-	  ++Lz;
-	  cout << "Lz = " << Lz << "/2 : ";
-	}
-      else
-	{
-	  cout << "Lz = " << i <<" : ";
-	}
-      for (int j = 0; j < NbrBestOverlaps[i]; ++j)
-	cout << BestOverlaps[i][j] << " ";
-      cout << endl;
-   }
-  cout << "----------------------------------------------------" << endl;
   cout << "L sorted results " << endl << endl;
   for (int i = 0; i < MaxNbrLz; ++i)
     {
-      if (NbrBestOverlapsPerL[i] > 0)
+      if (LDegeneracy[i] > 0)
 	{
-	  SortArrayDownOrdering(BestOverlapsPerL[i], BestOverlapsPerLPosition[i], NbrBestOverlapsPerL[i]);
 	  int Lz = i << 1;
 	  if (Parity == false)
 	    {
@@ -382,42 +276,13 @@ int main(int argc, char** argv)
 	    {
 	      cout << "L = " << i <<" : ";
 	    }
-	  double CurrentOverlap = BestOverlapsPerL[i][0];
-	  cout << CurrentOverlap;
-	  int NbrOverlaps = 1;
-	  int Pos = BestOverlapsPerLPosition[i][0];
-	  for (int j = 1; j <  NbrBestOverlapsPerL[i]; ++j)
-	    {
-	      if (fabs (BestOverlapsPerL[i][j] - CurrentOverlap) > OrthogonalityError)
-		{
-		  cout << "(" << ((2 * (NbrOverlaps - 1)) + 1 ) << ", " << Pos <<  ") ";
-		  CurrentOverlap = BestOverlapsPerL[i][j];
-		  Pos = BestOverlapsPerLPosition[i][j];
-		  cout << CurrentOverlap;
-		  NbrOverlaps = 1;
-		}
-	      else
-		{
-		  ++NbrOverlaps;
-		  if (Pos < BestOverlapsPerLPosition[i][j])
-		    Pos = BestOverlapsPerLPosition[i][j];
-		}
-	    }
-	  cout << "(" << ((2 * (NbrOverlaps - 1)) + 1 ) << ", " << Pos << ") " << endl;
+	  cout << BestOverlaps[i] << endl;
 	}
-   }
-
-
-  delete[] NbrBestOverlaps;
-  delete[] NbrBestOverlapsPerL;
-  for (int i = 0; i < MaxNbrLz; ++i)
-    {
-      delete[] BestOverlapsPerLPosition[i];
-      delete[] BestOverlapsPerL[i];
     }
-  delete[] BestOverlapsPerLPosition;
-  delete[] BestOverlapsPerL;
-  delete[] Degeneracy;
+
+
+  delete[] BestOverlaps;
+  delete[] LzDegeneracy;
   delete[] InputVectors;
   delete[] OutputVectors;
   delete[] SortedTestVectors;
@@ -426,26 +291,68 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// subdivide a basis into different L orthonormal eigenstate
+//
+// vectors = reference on the matrix whose columns are the vectors that span the basis
+// oper = pointer to operator whivh allow to evaluate total L matrix elements
+// totalMaxLz = maximum L value that can be reach by the system (-1/2 if L is half integer)
+// subspaceSize = reference on the array that will be filled  with the dimension of each fixed L subspace (index equal to L if L is integer, L-1/2 if L is half integer)
+// subspacePositions = reference on the array that will be filled  with the position of the first occurence of a vector with a given fixed L subspace 
+//                     (index equal to L if L is integer, L-1/2 if L is half integer)
 
-void SortOverlaps (double* bestOverlaps, double** overlaps, int nbrOverlaps, int nbrTestStates)
+void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions)
 {
-  if (nbrOverlaps <= 1)
-    return;
-  SortArrayUpOrdering(bestOverlaps, overlaps, nbrOverlaps);
-  for (int i = 0; i < (nbrOverlaps - 1); ++i)
-    {
-      for (int j = 0; j < nbrTestStates; ++j)
-	{	  
-	  double Tmp = 0.0;
-	  for (int k = 0; k < nbrTestStates; ++k)
-	    Tmp += overlaps[nbrOverlaps - 1][k] * overlaps[i][k];
-	  overlaps[i][j] -= Tmp * overlaps[i][j];	  
-	}
-      bestOverlaps[i] = 0.0;
-      for (int j = 0; j < nbrTestStates; ++j)
-	{	  
-	  bestOverlaps[i] += overlaps[i][j] * overlaps[i][j];
-	}
+  for (int j = 0; j <= totalMaxLz; ++j)    
+    { 
+      subspacePositions[j] = totalMaxLz + 1;
+      subspaceSize[j] = 0;
     }
-  SortOverlaps (bestOverlaps, overlaps, nbrOverlaps - 1, nbrTestStates);
+  if (vectors.GetNbrColumn() > 1)
+    {
+      RealSymmetricMatrix HRep (vectors.GetNbrColumn(), vectors.GetNbrColumn());
+      for (int k = 0; k < vectors.GetNbrColumn(); ++k)
+	for (int l = k; l < vectors.GetNbrColumn(); ++l)
+	  HRep.SetMatrixElement(l, k,  oper->MatrixElement(vectors[k], vectors[l]).Re);
+      RealMatrix TmpEigenvector (vectors.GetNbrColumn(), vectors.GetNbrColumn(), true);
+      for (int l = 0; l < vectors.GetNbrColumn(); ++l)
+	TmpEigenvector(l, l) = 1.0;
+      RealTriDiagonalSymmetricMatrix TmpTriDiag (vectors.GetNbrColumn());
+      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+      TmpTriDiag.Diagonalize(TmpEigenvector);
+      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+      int TmpAngularMomentum;
+      for (int k = 0; k < vectors.GetNbrColumn(); ++k)	    
+	{
+	  TmpAngularMomentum = ((int) round((sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
+	  if ((TmpAngularMomentum & 1) == 0)
+	    {
+	      TmpAngularMomentum >>= 1;
+	    }
+	  else
+	    {		  
+	      TmpAngularMomentum -= 1;
+	      TmpAngularMomentum >>= 1;		  
+	    }
+	  subspaceSize[TmpAngularMomentum]++;
+	  if (subspacePositions[TmpAngularMomentum] > k)
+	    subspacePositions[TmpAngularMomentum] = k;
+	}
+      vectors.Multiply(TmpEigenvector);
+    }
+  else
+    {
+      int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper->MatrixElement(vectors[0], vectors[0]).Re) + 1.0) - 1.0)));
+      if ((TmpAngularMomentum & 1) == 0)
+	{
+	  TmpAngularMomentum >>= 1;
+	}
+      else
+	{		  
+	  TmpAngularMomentum -= 1;
+	  TmpAngularMomentum >>= 1;		  
+	}
+      subspaceSize[TmpAngularMomentum]++;	    
+      subspacePositions[TmpAngularMomentum] = 0;
+    }
 }
+

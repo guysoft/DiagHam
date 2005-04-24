@@ -89,6 +89,18 @@ class QHEOnSphereLzSortedSpectrum
   //
   ~QHEOnSphereLzSortedSpectrum ();
 
+  // test if read spectrum is valid
+  //
+  // retur value = true if the spectrum has been read and is valid
+  bool IsSpectrumValid();
+
+  // get degeneracy of a given energy
+  //
+  // lz = twice the value of the total Lz
+  // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
+  // return value = degeneracy
+  int GetDegeneracy (int lz, int index);
+
   // print spectrum
   //
   // str = reference on the output stream
@@ -114,5 +126,16 @@ class QHEOnSphereLzSortedSpectrum
   bool RetrieveInformationFromName(char* fileName, int& nbrParticles, int& lzMax, bool& fermionicFlag);
   
 };
+
+// get degeneracy of a given energy
+//
+// lz = twice the value of the total Lz
+// index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
+// return value = degeneracy
+
+inline int QHEOnSphereLzSortedSpectrum::GetDegeneracy (int lz, int index)
+{
+  return this->Degeneracy[lz >> 1][this->ConvertionTable[lz >> 1][index]];
+}
 
 #endif

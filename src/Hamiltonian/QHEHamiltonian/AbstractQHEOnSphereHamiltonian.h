@@ -275,6 +275,11 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int lastComponent);
+  
+  // enable fast multiplication algorithm using on disk cache 
+  //
+  // fileName = prefix of the name of the file where temporary matrix elements will be stored
+  virtual void EnableFastMultiplicationWithDiskStorage(char* fileName);
 
   // load precalculations from a file
   // 

@@ -914,7 +914,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
   delete TmpParticles;
 }
 
-// enable fast multiplication algorithm
+// enable fast multiplication algorithm using on disk cache 
 //
 // fileName = prefix of the name of the file where temporary matrix elements will be stored
 

@@ -38,6 +38,7 @@
 using std::ifstream;
 using std::ios;
 using std::endl;
+using std::cout;
 
 
 // constructor
@@ -126,7 +127,7 @@ QHEOnSphereLzSortedSpectrum::~QHEOnSphereLzSortedSpectrum ()
 {
   if (this->NbrParticles != 0)
     {
-      for (int i = 0; i < this->MaxTotalLz; ++i)
+      for (int i = 0; i <= this->MaxTotalLz; ++i)
 	{
 	  if (this->NbrEnergies[i] > 0)
 	    {
@@ -141,6 +142,18 @@ QHEOnSphereLzSortedSpectrum::~QHEOnSphereLzSortedSpectrum ()
       delete[] this->NbrEnergies;
       delete[] this->NbrDistinctEnergies;
     }
+}
+
+// test if read spectrum is valid
+//
+// retur value = true if the spectrum has been read and is valid
+
+bool QHEOnSphereLzSortedSpectrum::IsSpectrumValid()
+{
+  if (this->NbrParticles != 0)
+    return true;
+  else
+    return false;
 }
 
 // parse spectrum content from a file 
@@ -165,25 +178,29 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
   while ((File.tellg() < FileSize) && (File.tellg() >= 0))
     {
       File >> TmpLzValue >> Dummy;
-      if (TmpLzValue <= this->MaxTotalLz)
+      if ((TmpLzValue <= this->MaxTotalLz) && (TmpLzValue >= 0))
 	this->NbrEnergies[TmpLzValue]++;
+      TmpLzValue = -1;
     } 
-  File.seekg(0, ios::beg);
-  
+  File.close();
+
   for (int i = 0; i <= this->MaxTotalLz; ++i)
     {
       if (this->NbrEnergies[i] > 0)
 	{
 	  this->Spectrum[i] = new double [this->NbrEnergies[i]];
 	  this->ConvertionTable[i] = new int [this->NbrEnergies[i]];
+	  this->Degeneracy[i] = new int [this->NbrEnergies[i]];
 	  this->NbrEnergies[i] = 0;
 	}
     }
   
-  while ((File.tellg() < FileSize) && (File.tellg() >= 0))
+  ifstream File2;
+  File2.open(fileName, ios::binary | ios::in);
+  while ((File2.tellg() < FileSize) && (File2.tellg() >= 0))
     {
-      File >> TmpLzValue >> Dummy;
-      if (TmpLzValue <= this->MaxTotalLz)
+      File2 >> TmpLzValue >> Dummy;
+      if ((TmpLzValue <= this->MaxTotalLz) && (TmpLzValue >= 0))
 	{
 	  if (this->NbrEnergies[TmpLzValue] == 0)
 	    {
@@ -197,7 +214,7 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
 	      double Diff = fabs(this->Spectrum[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]] - Dummy);
 	      if ((Diff < (this->Error * fabs(Dummy))) || (Diff < this->Error))
 		{
-		  this->Degeneracy[TmpLzValue][this->NbrEnergies[TmpLzValue]]++;
+		  this->Degeneracy[TmpLzValue][this->NbrDistinctEnergies[TmpLzValue]]++;
 		  this->ConvertionTable[TmpLzValue][this->NbrEnergies[TmpLzValue]] = this->NbrDistinctEnergies[TmpLzValue];
 		}
 	      else
@@ -210,9 +227,10 @@ bool QHEOnSphereLzSortedSpectrum::ParseSpectrumFile(char* fileName)
 	      this->NbrEnergies[TmpLzValue]++;
 	    }
 	}
+      TmpLzValue = -1;
     } 
  
-  File.close();
+  File2.close();
 
   for (int i = 0; i <= this->MaxTotalLz; ++i)
     if (this->NbrEnergies[i] > 0)
@@ -247,16 +265,16 @@ bool QHEOnSphereLzSortedSpectrum::RetrieveInformationFromName(char* fileName, in
   TmpString += 3;
   char* TmpError;
   nbrParticles = strtol(TmpString, &TmpError, 0);
-  if ((TmpError == TmpString) || ((*TmpError) != '\0'))
+  if (TmpError == TmpString)
     {
       return false;
     }
   TmpString = strstr (fileName, "_2s_");
   if (TmpString == 0)
     return false;
-  TmpString += 3;
+  TmpString += 4;
   lzMax = strtol(TmpString, &TmpError, 0);
-  if ((TmpError == TmpString) || ((*TmpError) != '\0'))
+  if (TmpError == TmpString)
     {
       return false;
     }
@@ -271,19 +289,22 @@ bool QHEOnSphereLzSortedSpectrum::RetrieveInformationFromName(char* fileName, in
 
 ostream& QHEOnSphereLzSortedSpectrum::PrintSpectrum (ostream& str, bool showDegeneracy)
 {
-  if (showDegeneracy == false)
+  if (this->NbrParticles != 0)
     {
-      for (int i = 0; i <= this->MaxTotalLz; ++i)
-	if (this->NbrEnergies[i] > 0) 
-	  for (int j = 0; j < this->NbrEnergies[i]; ++j)
-	    str << i << " " << this->Spectrum[i][this->ConvertionTable[i][j]] << endl;
-    }
-  else
-    {
-      for (int i = 0; i <= this->MaxTotalLz; ++i)
-	if (this->NbrEnergies[i] > 0) 
-	  for (int j = 0; j < this->NbrDistinctEnergies[i]; ++j)
-	    str << i << " " << this->Spectrum[i][j] << " "  << this->Degeneracy[i][j] << endl;
+      if (showDegeneracy == false)
+	{
+	  for (int i = 0; i <= this->MaxTotalLz; ++i)
+	    if (this->NbrEnergies[i] > 0) 
+	      for (int j = 0; j < this->NbrEnergies[i]; ++j)
+		str << i << " " << this->Spectrum[i][this->ConvertionTable[i][j]] << endl;
+	}
+      else
+	{
+	  for (int i = 0; i <= this->MaxTotalLz; ++i)
+	    if (this->NbrEnergies[i] > 0) 
+	      for (int j = 0; j < this->NbrDistinctEnergies[i]; ++j)
+		str << i << " " << this->Spectrum[i][j] << " "  << this->Degeneracy[i][j] << endl;
+	}
     }
   return str;
 }
