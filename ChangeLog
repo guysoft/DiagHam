@@ -1,5 +1,14 @@
 2005/04/24  Nicolas Regnault:
 
+* add CreateChangelog script to generate ChangeLog from cvs.
+
+* at last, update the ChangeLog!
+
+* start adding main task for QHE overlap calculation on sphere.
+
+
+2005/04/24  Nicolas Regnault:
+
 * clean QHENBodyQuasiHoleOverlap. Now use new formula to evaluate overlap betwen two subspaces of dimensions > 1
 
 * QHEOnSphereLzSortedSpectrum is now completed and working.
