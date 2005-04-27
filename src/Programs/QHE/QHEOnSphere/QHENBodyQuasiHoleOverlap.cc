@@ -58,6 +58,8 @@ int main(int argc, char** argv)
 
   (*MainGroup) += new SingleStringOption  ('\n', "input-file", "name of the file which contains definition of overlaps to evaluate");
   (*MainGroup) += new SingleDoubleOption  ('\n', "ortho-error", "scalar product value below which two states are considered as orthogonal", 1e-12);
+  (*MainGroup) += new SingleIntegerOption  ('\n', "output-precision", "numerical display precision", 14, true, 2, true, 14);
+  (*MainGroup) += new BooleanOption  ('\n', "latex-output", "display final results as a latex table formatted string");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -185,33 +187,38 @@ int main(int argc, char** argv)
 	while ((OpenFlag == true) && (NbrReferenceStates < LDegeneracy[i]))
 	  {
 	    int ReferenceDegeneracy = Spectrum.GetDegeneracy(Lz, VectorPosition);
-	    RealVector* TmpReferenceVectors = new RealVector[ReferenceDegeneracy];	
-	    int k = 0;
-	    for (; (k < ReferenceDegeneracy) && (OpenFlag == true); ++k)  
+	    if (ReferenceDegeneracy > 0)
 	      {
-		sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
-		if (TmpReferenceVectors[k].ReadVector(InputVectors) == false)
+		RealVector* TmpReferenceVectors = new RealVector[ReferenceDegeneracy];	
+		int k = 0;
+		for (; (k < ReferenceDegeneracy) && (OpenFlag == true); ++k)  
 		  {
-		    OpenFlag = false;
+		    sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
+		    if (TmpReferenceVectors[k].ReadVector(InputVectors) == false)
+		      {
+			OpenFlag = false;
+		      }
 		  }
-	      }
-	    if (OpenFlag == true)
-	      {
-		RealMatrix ReferenceDiagonalBasis (TmpReferenceVectors, ReferenceDegeneracy);
-		LSortBasis(ReferenceDiagonalBasis, &oper, TotalMaxLz, ReferenceNbrSortedVectors, ReferenceVectorPosition);
-		for (k = 0; k < ReferenceNbrSortedVectors[i]; ++k)  
+		if (OpenFlag == true)
 		  {
-		    ReferenceVectors[NbrReferenceStates] = ReferenceDiagonalBasis[ReferenceVectorPosition[i] + k];
-		    ++NbrReferenceStates;
+		    RealMatrix ReferenceDiagonalBasis (TmpReferenceVectors, ReferenceDegeneracy);
+		    LSortBasis(ReferenceDiagonalBasis, &oper, TotalMaxLz, ReferenceNbrSortedVectors, ReferenceVectorPosition);
+		    for (k = 0; k < ReferenceNbrSortedVectors[i]; ++k)  
+		      {
+			ReferenceVectors[NbrReferenceStates] = ReferenceDiagonalBasis[ReferenceVectorPosition[i] + k];
+			++NbrReferenceStates;
+		      }
+		    if ( ReferenceNbrSortedVectors[i] > 0)
+		      for (k = 0; k < ReferenceDegeneracy; ++k)  
+			{
+			  sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
+			  cout << InputVectors << endl;
+			}
 		  }
-		if ( ReferenceNbrSortedVectors[i] > 0)
-		  for (k = 0; k < ReferenceDegeneracy; ++k)  
-		    {
-		      sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
-		      cout << InputVectors << endl;
-		    }
+		VectorPosition += ReferenceDegeneracy;
 	      }
-	    VectorPosition += ReferenceDegeneracy;
+	    else
+	      OpenFlag = false;
 	  }
 	if (NbrReferenceStates == 0)
 	  {
@@ -254,14 +261,15 @@ int main(int argc, char** argv)
 	    else
 	      {
 		cout << "can't compare vectors if both subspaces don't have the same dimension " << endl;		  
+		BestOverlaps[i] = -1.0;
 	      }
       }
 
   
   cout << "----------------------------------------------------" << endl;
   cout << "final results" << endl;
-  cout << "----------------------------------------------------" << endl;
-  cout << "L sorted results " << endl << endl;
+  cout << "----------------------------------------------------" << endl << endl;
+  cout.precision(((SingleIntegerOption*) Manager["output-precision"])->GetInteger());
   for (int i = 0; i < MaxNbrLz; ++i)
     {
       if (LDegeneracy[i] > 0)
@@ -278,6 +286,23 @@ int main(int argc, char** argv)
 	    }
 	  cout << BestOverlaps[i] << endl;
 	}
+    }
+  if (((BooleanOption*) Manager["latex-output"])->GetBoolean() == true)
+    {
+      cout << endl << "latex output:" << endl;
+      for (int i = 0; i < (MaxNbrLz - 1); ++i)
+	{
+	  if (LDegeneracy[i] > 0)
+	    {
+	      cout << "$" << BestOverlaps[i] << "$" ;
+	    }
+	  cout << " & ";
+	}
+      if (LDegeneracy[MaxNbrLz - 1] > 0)
+	{
+	  cout << "$" << BestOverlaps[MaxNbrLz - 1] << "$" ;
+	}
+      cout << " \\\\" << endl;
     }
 
 

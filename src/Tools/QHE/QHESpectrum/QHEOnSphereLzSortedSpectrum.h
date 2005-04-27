@@ -98,7 +98,7 @@ class QHEOnSphereLzSortedSpectrum
   //
   // lz = twice the value of the total Lz
   // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
-  // return value = degeneracy
+  // return value = degeneracy (-1 if an error occured)
   int GetDegeneracy (int lz, int index);
 
   // print spectrum
@@ -131,11 +131,14 @@ class QHEOnSphereLzSortedSpectrum
 //
 // lz = twice the value of the total Lz
 // index = index of the state corresponding energy  (absolute index i.e. the one that doesn't take degeneracy into account)
-// return value = degeneracy
+// return value = degeneracy (-1 if an error occured)
 
 inline int QHEOnSphereLzSortedSpectrum::GetDegeneracy (int lz, int index)
 {
-  return this->Degeneracy[lz >> 1][this->ConvertionTable[lz >> 1][index]];
+  if (((lz >> 1) <= MaxTotalLz) && (index < this->NbrEnergies[lz >> 1]))
+    return this->Degeneracy[lz >> 1][this->ConvertionTable[lz >> 1][index]];
+  else
+    return -1;
 }
 
 #endif

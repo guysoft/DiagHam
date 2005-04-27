@@ -4,13 +4,34 @@ use strict 'vars';
 
 if (!(defined($ARGV[0])))
   {
-    die "usage: FermionsGraphFromL nbr_fermions print_flag\n";
+    die "usage: FermionsGraphFromL nbr_fermions [xfig,eps,ps] [print] [maxE]\n";
   }
 my $NbrFermions = $ARGV[0];
-my $PrintFlag = 0;
-if (defined($ARGV[1]))
+my $XFigFlag = 0;
+if( (defined($ARGV[1])) && ($ARGV[1] eq "xfig"))
   {
-    $PrintFlag = 1;
+    $XFigFlag = 1;
+  }
+if( (defined($ARGV[1])) && ($ARGV[1] eq "eps"))
+  {
+    $XFigFlag = 2;
+  }
+my $PrintFlag = 0;
+my $MaxE;
+if (defined($ARGV[2]))
+  {
+    if ($ARGV[2] eq "print")
+      {
+	$PrintFlag = 1;
+	if (defined($ARGV[3]))
+	    {
+	      $MaxE = $ARGV[3];
+	    }
+      }
+    else
+      {
+	$MaxE = $ARGV[2];
+      }
   }
 my @ListFiles;
 my $TmpFile;
@@ -34,7 +55,7 @@ foreach $TmpFile (@ListFiles)
   {
     my $Max;
     my $Min;
-    &CreatePostScript($TmpFile, $PrintFlag);
+    &CreatePostScript($TmpFile, $XFigFlag, $PrintFlag, 14, $MaxE);
     print ("\n\n");
 #    &FindMinMax($TmpFile, 1, \$Min, \$Max, 0, 0, 15);
 #    print ($TmpFile." ".$Min." ".$Max."\n");
@@ -121,33 +142,55 @@ sub FindMinMax
 # create postscript graph from data file
 #
 # $_[0] = file name
-# $_[1] = print flag (1 if true)
+# $_[1] = xfig output flag: 1 if true, 0 if none (use ps instead), 2 if xfig+eps
+# $_[2] = print flag (1 if true)
+# $_[3] = maximum value of L to display
+# $_[4] = maximum energy to display
 
 sub CreatePostScript
   {
     my $FileName = $_[0];
-    my $PrintFlag = $_[1];
+    my $XFigFlag = $_[1];
+    my $PrintFlag = $_[2];
+    my $MaxL = $_[3];
     my $Max;
     my $Min;
-    &FindMinMax($FileName, 1, \$Min, \$Max, 0, 0, 14);
+    &FindMinMax($FileName, 1, \$Min, \$Max, 0, 0, $MaxL);
+    if (defined ($_[4]))
+      {
+	$Max = $_[4];
+      }
     my $Delta = ($Max - $Min) / 20.0;
     $Max += $Delta;
     $Min -= $Delta;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
-    my @TmpArray = split (/_/,  $OutputFile);
-    my $Title = "N = ".$TmpArray[3]."  2S = ".$TmpArray[5];
-    $OutputFile =~ s/\_l\.dat/\.ps/;
+    $FileName =~ /n\_(\d+)\_2s\_(\d*)\_/;
+    my $Title = "N = ".$1."  2S = ".$2;
     open (OUTFILE, ">$TmpFileName");
-    print OUTFILE ("set xrange [-1:15]
-set yrange [".$Min.":".$Max."]
-set xlabel \"Angular Momentum l\"
-set ylabel \"E(L)\"
+    print OUTFILE ("set xrange [-1:".($MaxL + 1)."]
+set yrange [".$Min.":".$Max."]\n");
+    if ($XFigFlag >= 1)
+      {
+	$OutputFile =~ s/\_l\.dat/\.fig/;
+	print OUTFILE ("set xlabel \"L\" font \"default,14\"
+set ylabel \"energy[g]\" font \"default,14\"
+set size 1.0, 1.5
+set terminal fig
+set key bottom right
+set output \"".$OutputFile."\"
+plot \"".$FileName."\" using 1:2 title \"".$Title."\" with points pt 2\n");
+      }
+    else
+      {
+	$OutputFile =~ s/\_l\.dat/\.ps/;
+print OUTFILE ("set xlabel \"L\"
+set ylabel \"energy[g]\"
 set size 1.0, 0.6
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\"
-");
+plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
+     }
     close (OUTFILE);
     open (INFILE, $TmpFileName);
     my $TmpLine;
@@ -163,6 +206,47 @@ plot \"".$FileName."\" using 1:2 title \"".$Title."\"
 	`lpr $OutputFile`;
       }
     `rm -f $TmpFileName`;
+    if ($XFigFlag >= 1)
+      {
+	open (INFILE, $OutputFile);
+	my $XFigFile = "";
+	while ((defined ($TmpLine = <INFILE>)) && (!($TmpLine =~ /N \= \d*/)))
+	  {
+	    $XFigFile .= $TmpLine;
+	  }
+	$XFigFile .= $TmpLine;	
+	while (defined ($TmpLine = <INFILE>))
+	  {
+	    chomp $TmpLine;
+	    $TmpLine =~ s/     / /;
+	    my @Tmp = split (/ /, $TmpLine);
+	    $Tmp[3]++;
+	    $XFigFile .= $Tmp[0]." ".$Tmp[1]." ".$Tmp[2]." ".$Tmp[3]." ".$Tmp[4]." ".$Tmp[5]." ".$Tmp[6]." ".
+	      $Tmp[7]." ".$Tmp[8]."     ".$Tmp[9]." ".$Tmp[10]." ".$Tmp[11]." ".$Tmp[12]." ".$Tmp[13]." ".$Tmp[14]." ".$Tmp[15]."\n";
+	    $TmpLine = <INFILE>;
+	    chomp $TmpLine;
+	    $TmpLine =~ s/^\s*//;
+	    if ($TmpLine ne "")
+	      {
+		@Tmp = split (/ /, $TmpLine);
+		my $Shift = int (($Tmp[4] - $Tmp[0]) / 2);
+		$Tmp[0] -= $Shift;
+		$Tmp[4] += $Shift;
+		$XFigFile .= "	 ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[4]." ".$Tmp[1]."\n";
+	      }
+	    $TmpLine = <INFILE>;
+	    $TmpLine = <INFILE>;
+	  }
+	open (OUTFILE , ">$OutputFile");
+	print OUTFILE $XFigFile;
+	close (OUTFILE);
+	if ($XFigFlag == 2)
+	  {
+	    my $EpsOutputFile = $OutputFile;
+	    $EpsOutputFile =~ s/\.fig/\.eps/;
+	    `fig2dev -L eps $OutputFile $EpsOutputFile`;
+	  }
+      }    
   }
 
 

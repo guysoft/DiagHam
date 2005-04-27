@@ -162,8 +162,8 @@ set yrange [".$Min.":".$Max."]\n");
     if ($XFigFlag >= 1)
       {
 	$OutputFile =~ s/\_l\.dat/\.fig/;
-	print OUTFILE ("set xlabel \"L\" \"default,14\"
-set ylabel \"energy[g]\" \"default,14\"
+	print OUTFILE ("set xlabel \"L\" font \"default,14\"
+set ylabel \"energy[g]\" font \"default,14\"
 set size 1.0, 1.5
 set terminal fig
 set key bottom right

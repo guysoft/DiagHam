@@ -18,7 +18,7 @@ my $Result = GetOptions ("spectrum=s" => \$SpectrumFile, "eigenvalue:s" => \$Eig
 #if (($SpectrumFile eq "") || (!(-e $SpectrumFile)) || (!($Eigenvalue =~ /^[\+\-]?\d*\.?\d*e?\d+$/)) || (!()))
 if ($SpectrumFile eq "")
   {
-    die ("usage: SphereSpectrumDegenracy.pl --spectrum file_name [--eigenvalue 0.0 --error 1.0e-12 --lsort]\n");
+    die ("usage: SphereSpectrumDegenracy.pl --spectrum file_name [--eigenvalue 0.0 --error 1.0e-12 --lsort --sum --latex 0]\n");
   }
 
 if (abs($Eigenvalue) < $Error)
