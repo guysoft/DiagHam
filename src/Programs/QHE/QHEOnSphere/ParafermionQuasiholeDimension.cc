@@ -4,6 +4,8 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 
+#include "MathTools/IntegerAlgebraTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -11,48 +13,78 @@
 using std::cout;
 using std::endl;
 
-// evaluate Hilbert space dimension
-//
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson
-// totalLz = momentum total value
-// return value = Hilbert space dimension
-long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-//
-// nbrBosons = number of bosons
-// lzMax = two times momentum maximum value for a boson plus one 
-// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-// return value = Hilbert space dimension
-long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+// maximum k value size in bits
+#define K_MAXSIZE 4
+// shift and mask associated to the maximum k value
+#ifdef __64_BITS__
+#define K_SHIFT 4
+#define K_MASK 0x15l
+#else
+#define K_SHIFT 3
+#define K_MASK 0x7l
+#endif
 
-// evaluate Hilbert space dimension
+// evaluate Hilbert space dimension for k-type parafermion in a given number of states according to the rules  given by Gurarie
 //
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// return value = Hilbert space dimension
-long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// nbrStates = number of states that can be occupied by the parafermions
+long EvaluateHilbertSpaceDimension(int nbrParafermions, int kType, int nbrStates);
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+// evaluate Hilbert space dimension for k-type parafermion without any constraint
 //
-// nbrFermions = number of fermions
-// lzMax = two times momentum maximum value for a fermion plus one 
-// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// nbrStates = number of states that can be occupied by the parafermions
 // return value = Hilbert space dimension
-long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+long EvaluateUnconstraintHilbertSpaceDimension (int nbrParafermions, int kType, int nbrStates);
 
-// fake run to generate all states corresponding to the constraints
+// evaluate Hilbert space dimension for k-type parafermion without any constraint
+//
+// stateDescription = array that contains state description
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// position = index of the current state description
+// statePosition = index of the one-particle state that has to be currently filled (number of state - 1 except during recursion)
+// return value = new index of the current state description
+int EvaluateUnconstraintStates (long** stateDescription, int nbrParafermions, int kType, int position, int statePosition);
+
+// get the number of ways to put F parafermions in n box
 // 
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson in the state
-// currentLzMax = momentum maximum value for bosons that are still to be placed
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// memory = reference on amount of memory needed
-// return value = position from which new states have to be stored
-int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos, int& memory);
+// nbrParafermions = number of parafermions
+// kType = number of parafermion species
+// nbrBoxes = number of boxes
+// binomialCoeffients = array that contains all usefull binomial coefficients
+// return value = number of way
+long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, long** binomialCoeffients);
+
+// get the number of ways to write sum_i=1^n i a_i = F where F and n (aka number of possibilities to have a state of total momentum F with a 
+// free number of bosons and n one-body state carrying each a Lz momentum ranging from 1 to n)
+// 
+// momentum = total momemtum (aka F)
+// nbrStates = number of states (aka n)
+// return value = number of way
+long GetFixedLzFreeNumberBosonPartitionNumber (int momentum, int nbrStates);
+
+// get all ways to write sum_i=1^n i a_i = F where F and n (aka number of possibilities to have a state of total momentum F with a 
+// free number of bosons and n one-body state carrying each a Lz momentum ranging from 1 to n)
+// 
+// momentum = total momemtum (aka F)
+// nbrStates = number of states (aka n)
+// permutations = reference on the array where permutations will be stored
+// partitionNumber = reference on the integer where the corresponding partition will be stored
+void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, long& partitionNumber);
+
+// recursive function assiacted to GetFixedLzFreeNumberBosonPermutations
+// 
+// momentum = total momemtum
+// nbrStates = number of states
+// permutations = reference on the array where permutations will be stored
+// position = current position in the array
+// return value = new current position in the array
+int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, int position);
+
 
 
 int main(int argc, char** argv)
@@ -63,10 +95,8 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('k', "k-value", "number of particles", 2);
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-parafermions", "number of Z_k parafermions", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-orbitals", "number of orbitals", 2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lz", "number of particles", 20);
-  (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
+  (*SystemGroup) += new SingleIntegerOption  ('q', "nbr-quasiholes", "number of quasiholes", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "l-dimension", "get dimensions of all subspaces with fixed total l value");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -81,202 +111,266 @@ int main(int argc, char** argv)
       return 0;
     }
 
+
   int KValue = ((SingleIntegerOption*) Manager["k-value"])->GetInteger(); 
-  int NbrParafermions  = ((SingleIntegerOption*) Manager["nbr-parafermions"])->GetInteger(); 
-  int NbrOrbitals = ((SingleIntegerOption*) Manager["nbr-orbitals"])->GetInteger(); 
+  int NbrParticles  = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
+  int NbrQuasiholes = ((SingleIntegerOption*) Manager["nbr-quasiholes"])->GetInteger(); 
 
-  long UnconstraintHilbertSpaceDimensio = EvaluateUnconstraintHilbertSpaceDimension(KValue, NbrParafermions, NbrOrbitals);
-
-  if (((BooleanOption*) Manager["l-dimension"])->GetBoolean() == false)
+  if ((NbrParticles % KValue) != 0)
     {
-      for (int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger(); 
-	   NbrBosons <= ((SingleIntegerOption*) Manager["max-particles"])->GetInteger(); ++NbrBosons)
-	{
-	  for (int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger(); 
-	       LzMax <= ((SingleIntegerOption*) Manager["max-lz"])->GetInteger(); ++LzMax)
-	    {
-	      if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-		{
-		  int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
-		  int  L = 0;
-		  if ((abs(Max) & 1) != 0)
-		    L = 1;
-		  cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
-		}
-	      else
-		{
-		  int Max = (LzMax * NbrBosons);
-		  int  L = 0;
-		  if ((abs(Max) & 1) != 0)
-		    L = 1;
-		  cout << EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
-		}
-	    }
-	  cout << endl;
-	}
-    }
-  else
-    {
-     int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger();
-     int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger();
-     int TotalLzMax = 0;
-     int StartL = 0;
-     if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-       {
-	 TotalLzMax = ((LzMax - NbrBosons + 1) * NbrBosons);
-       }
-     else
-       {
-	 TotalLzMax = (LzMax * NbrBosons);
-       }
-     StartL = 0;
-     if ((abs(TotalLzMax) & 1) != 0)
-       StartL = 1;
-     long* LzDimensions = new long [1 + ((TotalLzMax - StartL) >> 1)];
-     for (int L = StartL; L <= TotalLzMax; L += 2)
-       {
-	 long TmpDimension = 0;
-	 if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-	   {
-	     TmpDimension = FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
-	   }
-	 else
-	   {
-	     TmpDimension = EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
-	   }
-	 LzDimensions[(L - StartL) >> 1] = TmpDimension;
-       }
-     cout << "N = " << NbrBosons << endl;
-     cout << "2S = " << LzMax << endl;
-     cout << "Lz = ";
-     for (int L = StartL; L < TotalLzMax; L += 2)
-       {
-	 cout << LzDimensions[(L - StartL) >> 1] << " ";
-       }
-     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;
-     cout << "L = ";
-     for (int L = StartL; L < TotalLzMax; L += 2)
-       {
-	 cout << (LzDimensions[(L - StartL) >> 1] - LzDimensions[1 + ((L - StartL) >> 1)]) << " ";
-       }
-     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;    
-     delete[] LzDimensions;
-    }
-}
-
-// evaluate Hilbert space dimension
-//
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson
-// totalLz = momentum total value
-// return value = Hilbert space dimension
-
-long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
-{
-  return ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax, (totalLz + lzMax * nbrBosons) >> 1);
-}
-
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-//
-// nbrBosons = number of bosons
-// lzMax = two times momentum maximum value for a boson plus one 
-// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-// return value = Hilbert space dimension
-
-long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
-{
-  if ((nbrBosons == 0) || ((nbrBosons * lzMax) < totalLz))
-    return 0;
-  if (((nbrBosons * lzMax) == totalLz) || (lzMax == 0) || (totalLz == 0))
-    {
+      cout << "the number of particles must be an multiple of k" << endl;
       return 1;
     }
-  long TmpDim = 0;
-  while ((totalLz >= 0) && (nbrBosons > 0))
+  if ((NbrQuasiholes % KValue) != 0)
     {
-      TmpDim += ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
-      --nbrBosons;
-      totalLz -= lzMax;
+      cout << "the number of quasiholes must be an multiple of k" << endl;
+      return 1;
     }
-  return TmpDim;
+  
+  int MaxBinomial = (NbrParticles / KValue) + NbrQuasiholes;
+  int Tmp = NbrParticles + KValue - 2;
+  if (Tmp > MaxBinomial)
+    MaxBinomial = Tmp;
+  Tmp = NbrQuasiholes + 2 * NbrParticles * ((KValue - 1) * (KValue - 1));
+  if (Tmp > MaxBinomial)
+    MaxBinomial = Tmp;
+  long** BinomialCoefficients = GetBinomialCoefficients(MaxBinomial);
+
+  long HilbertSpaceDimension = 0;
+  int NbrUnclusteredParafermions = 0;
+  while (NbrUnclusteredParafermions <= NbrParticles)
+    {
+      cout << GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) << " " 
+	   << BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]<< " " 
+	   << (NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)) << " " << NbrQuasiholes << endl;
+      HilbertSpaceDimension += (GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) * 
+				BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]);
+      NbrUnclusteredParafermions += KValue;
+    }
+  cout << HilbertSpaceDimension << endl;
 }
 
-// generate all states corresponding to the constraints
+
+// evaluate Hilbert space dimension for k-type parafermion in a given number of states according to the rules  given by Gurarie
+//
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// nbrStates = number of states that can be occupied by the parafermions
+
+long EvaluateHilbertSpaceDimension(int nbrParafermions, int kType, int nbrStates)
+{
+  long MaximumDimension = EvaluateUnconstraintHilbertSpaceDimension(nbrParafermions, kType, nbrStates);
+  long** StateDescription = new long* [MaximumDimension];
+  int NbrBlock = nbrStates >> K_SHIFT;
+  if ((NbrBlock & K_MASK) != 0)
+    ++NbrBlock;
+  for (int i = 0; i < MaximumDimension; ++i)
+    {
+      StateDescription[i] = new long [NbrBlock];
+      for (int j = 0; j < NbrBlock; ++j)
+	StateDescription[i][j] = 0l;
+    }
+  EvaluateUnconstraintStates(StateDescription, 0, nbrParafermions, kType, nbrStates - 1);
+  long Dimension = 0;
+  for (int i = 0; i < MaximumDimension; ++i)
+    {
+      ++Dimension;
+      delete[] StateDescription[i];      
+    }
+  return Dimension;
+}
+
+// evaluate Hilbert space dimension for k-type parafermion without any constraint
+//
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// nbrStates = number of states that can be occupied by the parafermions
+// return value = Hilbert space dimension
+
+long EvaluateUnconstraintHilbertSpaceDimension (int nbrParafermions, int kType, int nbrStates)
+{
+  if (nbrParafermions == 0)
+    return 0l;
+  if (nbrParafermions == 1)
+    return (long) nbrStates;
+  if (nbrStates == 1)
+    if (nbrParafermions >= kType)
+      return 0l;
+    else
+      return 1l;
+
+  int Max = nbrParafermions;
+  if (kType < Max)
+    Max = kType - 1;
+  long Tmp = 0;
+  for (int i = 0; i <= Max; ++i)
+    Tmp += EvaluateUnconstraintHilbertSpaceDimension(nbrParafermions - i, kType, nbrStates - 1);
+  return Tmp;
+}
+
+// evaluate Hilbert space dimension for k-type parafermion without any constraint
+//
+// stateDescription = array that contains state description
+// nbrParafermions = number of parafermions
+// kType = parafermion type
+// position = index of the current state description
+// statePosition = index of the one-particle state that has to be currently filled (number of state - 1 except during recursion)
+// return value = new index of the current state description
+
+int EvaluateUnconstraintStates (long** stateDescription, int nbrParafermions, int kType, int position, int statePosition)
+{
+  if (statePosition == 0)
+    if (nbrParafermions >= kType)
+      return position;
+    else
+      {
+	stateDescription[position][0] |= ((long) nbrParafermions);
+	return (position + 1);
+      }
+  if (nbrParafermions == 0)
+    return position;
+  if (nbrParafermions == 1)
+    {
+      for (; statePosition >= 0; --statePosition)
+	{
+	  stateDescription[position][statePosition >> K_SHIFT] |= 1l << ((statePosition & K_MASK) * K_MAXSIZE);
+	  ++position;
+	}
+      return position;
+    }
+
+  int Max = nbrParafermions;
+  if (kType < Max)
+    Max = kType - 1;
+  int TmpPos = 0;
+  int Shift = (statePosition & K_MASK) * K_MAXSIZE;
+  int Index = statePosition >> K_SHIFT;
+  for (int i = 0; i <= Max; ++i)
+    {
+      TmpPos = EvaluateUnconstraintStates(stateDescription, nbrParafermions - i, kType, position, statePosition - 1);
+      for (; position < TmpPos; ++position)
+	stateDescription[position][Index] |= ((long) i) << Shift;
+    }
+  return position;
+}
+
+
+// get the number of ways to put F parafermions in n box
 // 
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson in the state
-// currentLzMax = momentum maximum value for bosons that are still to be placed
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// memory = reference on amount of memory needed
-// return value = position from which new states have to be stored
+// nbrParafermions = number of parafermions
+// kType = number of parafermion species
+// nbrBoxes = number of boxes
+// binomialCoeffients = array that contains all usefull binomial coefficients
+// return value = number of way
 
-int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos, int& memory)
+long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, long** binomialCoeffients)
 {
-  if ((nbrBosons == 0) || ((nbrBosons * currentLzMax) < totalLz))
+  if ((nbrParafermions == 0) || (kType == 1))
+    return 1l;
+  if (kType == 2)
     {
-      return pos;
+      if (nbrParafermions <= nbrBoxes)
+        return binomialCoeffients[nbrBoxes][nbrParafermions];
     }
-  if ((nbrBosons * currentLzMax) == totalLz)
+  int** Permutations;
+  long NbrPermutations;
+  GetFixedLzFreeNumberBosonPermutations(nbrParafermions, kType - 1, Permutations, NbrPermutations);
+  long NbrWays = 0l;
+  long Tmp = 1l;
+  int* TmpPermutation;
+  int TmpCoefficient;
+  for (int i = 0; i < NbrPermutations; ++i)
     {
-      if (memory > 0)
-	memory += sizeof(int) * (lzMax + 1);
-      return pos + 1;
+      TmpPermutation = Permutations[i];
+      Tmp = 1l;
+      for (int j = 1; ((j < kType) && (Tmp != 0l)); ++j)
+	{
+	  int k = 1;
+	  TmpCoefficient = (j * nbrBoxes * kType) + ((kType - (2 * (kType - j) * j)) * TmpPermutation[j - 1]);
+	  for (; k < j; ++k)
+	    TmpCoefficient -= (2 * (kType - j) * k) * TmpPermutation[k - 1];
+	  ++k;
+	  for (; k < kType; ++k)
+	    TmpCoefficient -= (2 * (kType - k) * j) * TmpPermutation[k - 1];
+	  if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
+	    Tmp *= binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]];
+	  else
+	    Tmp = 0l;
+	}
+      NbrWays += Tmp;
     }
-  if ((currentLzMax == 0) || (totalLz == 0))
-    {
-      memory += sizeof(int) * (lzMax + 1);
-      return pos + 1;
-    }
-
-  int TmpTotalLz = totalLz / currentLzMax;
-  int TmpNbrBosons = nbrBosons - TmpTotalLz;
-  TmpTotalLz = totalLz - TmpTotalLz * currentLzMax;
-  int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = pos;
-  while (TmpNbrBosons < nbrBosons)
-    {
-      TmpPos = FakeGenerateStates(TmpNbrBosons, lzMax, ReducedCurrentLzMax, TmpTotalLz, pos, memory);
-      ++TmpNbrBosons;
-      pos = TmpPos;
-      TmpTotalLz += currentLzMax;
-    }
-  if (lzMax == currentLzMax)
-    return FakeGenerateStates(nbrBosons, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, pos, memory);
-  else
-    return FakeGenerateStates(nbrBosons, lzMax, ReducedCurrentLzMax, totalLz, pos, memory);
+  return NbrWays;
 }
 
-// evaluate Hilbert space dimension
-//
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// return value = Hilbert space dimension
+// get the number of ways to write sum_i=1^n i a_i = F where F and n (aka number of possibilities to have a state of total momentum F with a 
+// free number of bosons and n one-body state carrying each a Lz momentum ranging from 1 to n)
+// 
+// momentum = total momemtum (aka F)
+// nbrStates = number of states (aka n)
+// return value = number of way
 
-long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long GetFixedLzFreeNumberBosonPartitionNumber (int momentum, int nbrStates)
 {
-  return FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
+  if ((nbrStates == 1) || (momentum == 0))
+    return 1l;
+  int Max = momentum / nbrStates;
+  long Tmp = 0l;
+  for (int i = 0; i <= Max; ++i)
+    Tmp += GetFixedLzFreeNumberBosonPartitionNumber(momentum - (i * nbrStates), nbrStates - 1);
+  return Tmp;
 }
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-//
-// nbrFermions = number of fermions
-// lzMax = two times momentum maximum value for a fermion plus one 
-// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-// return value = Hilbert space dimension
+// get all ways to write sum_i=1^n i a_i = F where F and n (aka number of possibilities to have a state of total momentum F with a 
+// free number of bosons and n one-body state carrying each a Lz momentum ranging from 1 to n)
+// 
+// momentum = total momemtum (aka F)
+// nbrStates = number of states (aka n)
+// permutations = reference on the array where permutations will be stored
+// partitionNumber = reference on the integer where the corresponding partition will be stored
 
-long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, long& partitionNumber)
 {
-  if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return (long) 0;
-  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
-  if (LzTotalMax < totalLz)
-    return (long) 0;
-  if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return (long) 1;
-  if (LzTotalMax == totalLz)
-    return (long) 1;
-  return  (FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
-	   +  FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+  partitionNumber = GetFixedLzFreeNumberBosonPartitionNumber(momentum, nbrStates);
+  permutations = new int* [partitionNumber];
+  for (int i = 0; i < partitionNumber; ++i)
+    {
+      permutations[i] = new int [nbrStates];
+      for (int j = 0; j < nbrStates; ++j)
+	permutations[i][j] = 0;
+    }
+  RecursiveFixedLzFreeNumberBosonPermutations(momentum, nbrStates, permutations, 0);
 }
+
+// recursive function assiacted to GetFixedLzFreeNumberBosonPermutations
+// 
+// momentum = total momemtum
+// nbrStates = number of states
+// permutations = reference on the array where permutations will be stored
+// position = current position in the array
+// return value = new current position in the array
+
+int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, int position)
+{
+  if (nbrStates == 1)
+    {
+      permutations[position][nbrStates - 1] = momentum;
+      return position + 1;
+    }
+  if (momentum == 0)
+    {
+      return position + 1;
+    }    
+  int TmpPosition;
+  int TmpMomentum = momentum;
+  int Tmp = 0;
+  while (TmpMomentum >= 0)
+    {
+      TmpPosition = RecursiveFixedLzFreeNumberBosonPermutations(TmpMomentum, nbrStates - 1, permutations, position);
+      for (; position < TmpPosition; ++position)
+	permutations[position][nbrStates - 1] = Tmp;
+      TmpMomentum -= nbrStates;
+      ++Tmp;
+    }
+  return position;
+}
+

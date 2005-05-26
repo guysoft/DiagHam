@@ -12,13 +12,16 @@ my $LFlag = 0;
 my $RowFlag = 0;
 my $SumFlag = 0;
 my $LatexFlag = 0;
+my $NbrParticles = -1;
+my $NbrFlux = -1;
 my $Result = GetOptions ("spectrum=s" => \$SpectrumFile, "eigenvalue:s" => \$Eigenvalue, "error:s" => \$Error, "lsort" => \$LFlag,
-			"row" => \$RowFlag, "sum" => \$SumFlag, "latex:s" => \$LatexFlag); 
+			"row" => \$RowFlag, "sum" => \$SumFlag, "latex:s" => \$LatexFlag, "particles:s" => \$NbrParticles,
+			"flux" => \$NbrFlux); 
 
 #if (($SpectrumFile eq "") || (!(-e $SpectrumFile)) || (!($Eigenvalue =~ /^[\+\-]?\d*\.?\d*e?\d+$/)) || (!()))
 if ($SpectrumFile eq "")
   {
-    die ("usage: SphereSpectrumDegenracy.pl --spectrum file_name [--eigenvalue 0.0 --error 1.0e-12 --lsort --sum --latex 0]\n");
+    die ("usage: SphereSpectrumDegenracy.pl --spectrum file_name [--eigenvalue 0.0 --error 1.0e-12 --lsort --sum --latex 0 --particles -1 --flux -1]\n");
   }
 
 if (abs($Eigenvalue) < $Error)
@@ -53,15 +56,35 @@ close (INFILE);
 my $Sum = 0;
 if ($SumFlag != 0)
   {
-    foreach $TmpLine (keys(%Degeneracy))
+    if ($NbrParticles == -1)
       {
-	if ($TmpLine != 0)
+	$SpectrumFile =~ /\_n\_(\d+)\_/;
+	$NbrParticles = $1;
+      }
+    if ($NbrFlux == -1)
+      {
+	$SpectrumFile =~ /\_2s\_(\d+)\_/;
+	$NbrFlux = $1;
+      }
+    if ((($NbrParticles * $NbrFlux) % 2) == 0)
+      {
+	foreach $TmpLine (keys(%Degeneracy))
+	  {
+	    if ($TmpLine != 0)
+	      {
+		$Sum += 2 * $Degeneracy{$TmpLine};
+	      }
+	    else
+	      {
+		$Sum += $Degeneracy{$TmpLine};
+	      }
+	  }
+      }
+    else
+      {
+	foreach $TmpLine (keys(%Degeneracy))
 	  {
 	    $Sum += 2 * $Degeneracy{$TmpLine};
-	  }
-	else
-	  {
-	    $Sum += $Degeneracy{$TmpLine};
 	  }
       }
   }
