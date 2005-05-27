@@ -102,7 +102,7 @@ Polynomial::Polynomial (const Polynomial& P)
 Polynomial::~Polynomial()
 {
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
-    delete this->Root;
+    delete[] this->Root;
   delete[] this->Coefficient;
 }
 
@@ -168,7 +168,7 @@ Complex Polynomial::PolynomialEvaluate (Complex x)
 
 double Polynomial::DerivativeEvaluate (double x)
 {
-  double Res = Degree * this->Coefficient[this->Degree];
+  double Res = this->Degree * this->Coefficient[this->Degree];
   for (int i = this->Degree - 1 ; i > 0; i--)
     {
       Res *= x;
@@ -184,7 +184,7 @@ double Polynomial::DerivativeEvaluate (double x)
 
 Complex Polynomial::DerivativeEvaluate (Complex x)
 {
-  Complex Res = Degree * this->Coefficient[this->Degree];
+  Complex Res = this->Degree * this->Coefficient[this->Degree];
   for (int i = this->Degree - 1 ; i > 0; i--)
     {
       Res *= x;
@@ -253,7 +253,7 @@ Polynomial Polynomial::DerivatePolynomial ()
   for (int i = 1; i <= this->Degree; i++)
     Coef[i-1] = (this->Coefficient[i] * i);
   Polynomial P = Polynomial(this->Degree - 1, Coef);
-  delete Coef;
+  delete[] Coef;
   return P;
 }
 
@@ -332,7 +332,7 @@ Polynomial operator + (const Polynomial& P1, const Polynomial& P2)
 	    double* Coef2 = new double [i+1];
 	    for (int j = 0; j <= i; j++)
 	      Coef2[j] = Coef[j];
-	    delete Coef;
+	    delete[] Coef;
 	    return Polynomial(i, Coef2, true);
 	  }
       }
@@ -374,7 +374,7 @@ Polynomial operator - (const Polynomial& P1, const Polynomial& P2)
 	    double* Coef2 = new double [i+1];
 	    for (int j = 0; j <= i; j++)
 	      Coef2[j] = Coef[j];
-	    delete Coef;
+	    delete[] Coef;
 	    return Polynomial(i, Coef2, true);
 	  }
       }
@@ -463,7 +463,7 @@ Polynomial& Polynomial::operator += (const Polynomial& P)
 {
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     {
-      delete this->Root;
+      delete[] this->Root;
       this->RootFlag = false;
     }
   if (P.Degree < this->Degree)
@@ -479,7 +479,7 @@ Polynomial& Polynomial::operator += (const Polynomial& P)
 	TmpCoef[i] += P.Coefficient[i];
       for (int i = this->Degree + 1; i <= P.Degree; i++)
 	TmpCoef[i] = P.Coefficient[i];
-      delete this->Coefficient;
+      delete[] this->Coefficient;
       this->Coefficient = TmpCoef;
       this->Degree = P.Degree;
       return *this;      
@@ -498,7 +498,7 @@ Polynomial& Polynomial::operator += (const Polynomial& P)
 	  this->Degree = i;
 	  for (int j = i; j >= 0; j--)
 	    TmpCoef[j] = this->Coefficient [i]; 
-	  delete this->Coefficient;
+	  delete[] this->Coefficient;
 	  this->Coefficient = TmpCoef;
 	}
       return *this;      
@@ -509,7 +509,7 @@ Polynomial& Polynomial::operator -= (const Polynomial& P)
 {
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     {
-      delete this->Root;
+      delete[] this->Root;
       this->RootFlag = false;
     }
   if (P.Degree < this->Degree)
@@ -525,7 +525,7 @@ Polynomial& Polynomial::operator -= (const Polynomial& P)
 	this->Coefficient[i] -= P.Coefficient[i];
       for (int i = this->Degree + 1; i <= P.Degree; i++)
 	TmpCoef[i] = -P.Coefficient[i];
-      delete this->Coefficient;
+      delete[] this->Coefficient;
       this->Coefficient = TmpCoef;
       this->Degree = P.Degree;
       return *this;      
@@ -544,7 +544,7 @@ Polynomial& Polynomial::operator -= (const Polynomial& P)
 	  this->Degree = i;
 	  for (int j = i; j >= 0; j--)
 	    TmpCoef[j] = this->Coefficient [i]; 
-	  delete this->Coefficient;
+	  delete[] this->Coefficient;
 	  this->Coefficient = TmpCoef;
 	}
       return *this;      
@@ -564,7 +564,7 @@ Polynomial& Polynomial::operator *= (const Polynomial& P)
   double* Coef = new double [Deg + 1];
   if (P.Degree == 0)
     {
-      delete this->Coefficient;
+      delete[] this->Coefficient;
       this->Coefficient = Coef;
       return *this;
     }
@@ -575,11 +575,11 @@ Polynomial& Polynomial::operator *= (const Polynomial& P)
   for (int i = P.Degree - 1; i >= 0; i--)
     for (int j = this->Degree; j >= 0; j--)
       Coef[i+j] += this->Coefficient[j] * P.Coefficient[i];
-  delete this->Coefficient;
+  delete[] this->Coefficient;
   this->Coefficient = Coef;
   if (this->RootFlag == true)
     {
-      delete this->Root;
+      delete[] this->Root;
       this->RootFlag = false;
     }
   return *this;
@@ -607,7 +607,7 @@ Polynomial& Polynomial::operator /= (const Polynomial& P)
   delete[] this->Coefficient;
   if (this->RootFlag == true)
     {
-      delete this->Root;
+      delete[] this->Root;
       this->RootFlag = false;
     }
   this->Coefficient = Coef2;
