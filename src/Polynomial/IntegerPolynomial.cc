@@ -32,9 +32,6 @@
 #include <math.h>
 
 
-#define EPSILON 1E-6
-
-
 using std::cout;
 using std::endl;
 
@@ -45,7 +42,6 @@ using std::endl;
 IntegerPolynomial::IntegerPolynomial ()
 {
   this->Degree = 0;
-  this->NoRootFlag = false;
   this->Coefficient = 0;
   this->RootFlag = false; 
 }
@@ -59,7 +55,6 @@ IntegerPolynomial::IntegerPolynomial ()
 IntegerPolynomial::IntegerPolynomial (int degree, long* coefficients, bool flag)
 {
   this->Degree = degree;
-  this->NoRootFlag = false;
   if (flag == true)
     this->Coefficient = coefficients;
   else
@@ -71,6 +66,10 @@ IntegerPolynomial::IntegerPolynomial (int degree, long* coefficients, bool flag)
   this->RootFlag = false;
 }
 
+// copy constructor
+//
+// P = polynomial to copy
+
 IntegerPolynomial::IntegerPolynomial (const IntegerPolynomial& P)
 {
   if (P.Coefficient != 0)
@@ -80,7 +79,6 @@ IntegerPolynomial::IntegerPolynomial (const IntegerPolynomial& P)
       this->RootFlag = P.RootFlag;
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] = P.Coefficient[i];
-      this->NoRootFlag = P.NoRootFlag;
       if (P.RootFlag == true)
 	{
 	  this->NbrRoot = P.NbrRoot;
@@ -92,10 +90,61 @@ IntegerPolynomial::IntegerPolynomial (const IntegerPolynomial& P)
   else
     {
       this->Degree = 0;
-      this->NoRootFlag = false;
       this->Coefficient = 0;
       this->RootFlag = false; 
     }
+}
+
+// constructor from P1+q^n P2
+//
+// P1 = first polynomial
+// P2 = second polynomial
+// degree = polynomial degree of the monomial with which P2 has to be multiplied 
+
+IntegerPolynomial::IntegerPolynomial (const IntegerPolynomial& P1, const IntegerPolynomial& P2, int degree)
+{
+  this->RootFlag = false; 
+  this->Degree = P2.Degree + degree;
+  if (P2.Coefficient == 0)
+    {
+      if (P1.Coefficient == 0)
+	{
+	  this->Degree = 0;
+	  this->Coefficient = 0;
+	}
+      else
+	{
+	  this->Degree = P1.Degree;
+	  this->Coefficient = new long [this->Degree + 1];
+	  for (int i = 0; i <= this->Degree; ++i)
+	    this->Coefficient[i] = P1.Coefficient[i];
+	}
+    }
+  else
+    if (P1.Degree > this->Degree)
+      {
+	this->Degree = P1.Degree;
+	this->Coefficient = new long [this->Degree + 1];
+	for (int i = 0; i <= this->Degree; ++i)
+	  this->Coefficient[i] = P1.Coefficient[i];
+	for (int i = 0; i <= P2.Degree; ++i)
+	  this->Coefficient[i + degree] += P2.Coefficient[i];      
+      }
+    else
+      {
+	this->Coefficient = new long [this->Degree + 1];
+	if (P1.Coefficient != 0)
+	  for (int i = 0; i < degree; ++i)
+	    this->Coefficient[i] = P1.Coefficient[i];
+	else
+	  for (int i = 0; i < degree; ++i)
+	    this->Coefficient[i] = 0l;
+	for (int i = 0; i <= P2.Degree; ++i)
+	  this->Coefficient[i + degree] = P2.Coefficient[i];      
+	if (P1.Coefficient != 0)
+	  for (int i = degree; i <= P1.Degree; ++i)
+	    this->Coefficient[i] += P1.Coefficient[i];      
+      }
 }
 
 // destructor

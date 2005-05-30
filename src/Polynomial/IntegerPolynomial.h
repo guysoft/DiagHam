@@ -49,17 +49,16 @@ private:
   // array where polynomial coefficients are stored
   long* Coefficient;
   
-  // array where roots are stored
-  Complex* Root;
 
   // polynomial degree
   int Degree;
 
   // number of found roots
   int NbrRoot;
-
+  // flag to indicate of roots have been evaluated
   bool RootFlag;
-  bool NoRootFlag;
+  // array where roots are stored
+  Complex* Root;
 
 public:
 
@@ -79,6 +78,13 @@ public:
   // P = polynomial to copy
   IntegerPolynomial (const IntegerPolynomial& P);
   
+  // constructor from P1+q^n P2
+  //
+  // P1 = first polynomial
+  // P2 = second polynomial
+  // degree = polynomial degree of the monomial with which P2 has to be multiplied 
+  IntegerPolynomial (const IntegerPolynomial& P1, const IntegerPolynomial& P2, int degree);
+
   // destructor
   //
   ~IntegerPolynomial();
