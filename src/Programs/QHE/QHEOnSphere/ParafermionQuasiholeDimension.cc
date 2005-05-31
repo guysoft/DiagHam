@@ -160,20 +160,20 @@ int main(int argc, char** argv)
 //       cout << endl;
 //     }
 
-  IntegerPolynomial TmpPoly (3);
-//  TmpPoly[4] = 1l;
-  TmpPoly[3] = 1l;
-  TmpPoly[2] = 2l;
-  TmpPoly[1] = 2l;
-  TmpPoly[0] = 1l;
-  cout << TmpPoly << endl;
-  MomentumMultipletSet Multiplet1(TmpPoly);
-  cout << Multiplet1 << endl;
-  MomentumMultipletSet Multiplet2(12);
-  Multiplet2.FindMultipletsForBosons(6, 2) ;
-  cout << Multiplet2 << endl;
+//   IntegerPolynomial TmpPoly (3);
+// //  TmpPoly[4] = 1l;
+//   TmpPoly[3] = 1l;
+//   TmpPoly[2] = 2l;
+//   TmpPoly[1] = 2l;
+//   TmpPoly[0] = 1l;
+//   cout << TmpPoly << endl;
+//   MomentumMultipletSet Multiplet1(TmpPoly);
+//   cout << Multiplet1 << endl;
+//   MomentumMultipletSet Multiplet2(12);
+//   Multiplet2.FindMultipletsForBosons(6, 2) ;
+//   cout << Multiplet2 << endl;
  
-//  GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed);
+ GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed);
 
   
   long HilbertSpaceDimension = 0;
@@ -337,15 +337,12 @@ long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType
 	  if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
 	    {
 	      Tmp *= binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]];
-	      cout << binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]] << endl;
 	    }
 	  else
 	    Tmp = 0l;
 	}
-      cout << "final tmp=" << Tmp << endl;
       NbrWays += Tmp;
     }
-  cout << "final NbrWays =" << Tmp << endl;
   for (int i = 0; i < NbrPermutations; ++i)
     delete[] Permutations[i];
   delete[] Permutations;
@@ -440,7 +437,8 @@ void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int
   int** Permutations;
   long NbrPermutations;
   long Constant = 1l;
-   while (NbrUnclusteredParafermions <= nbrParticles)
+  MomentumMultipletSet TotalMultiplet;
+  while (NbrUnclusteredParafermions <= nbrParticles)
     {
       GetFixedLzFreeNumberBosonPermutations(NbrUnclusteredParafermions, kType - 1, Permutations, NbrPermutations);
       IntegerPolynomial TotalP;
@@ -461,7 +459,7 @@ void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int
 	      if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
 		{
 		  Tmp *= binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]);
-		  cout << TmpPermutation[j - 1] << " " << (TmpCoefficient / kType) << " " << binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]) << endl;
+//		  cout << TmpPermutation[j - 1] << " " << (TmpCoefficient / kType) << " " << binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]) << endl;
 		}
 	      else
 		Flag = false;
@@ -469,10 +467,21 @@ void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int
 	  if (Flag == true)
 	    TotalP += Tmp;
 	}
-      cout << TotalP << endl << endl << "P(1) = " << TotalP.PolynomialEvaluate(1l) << endl;
+      if (TotalP.Defined())
+	{
+//	  cout << TotalP << endl;
+	  MomentumMultipletSet Multiplet1(TotalP);
+	  MomentumMultipletSet Multiplet2((nbrQuasiholes * (nbrParticles - NbrUnclusteredParafermions)) / kType);
+	  Multiplet2.FindMultipletsForBosons(nbrQuasiholes, (nbrParticles - NbrUnclusteredParafermions) / kType);
+//	  cout << Multiplet1 << endl << Multiplet2 << endl;
+	  TotalMultiplet.FuseAndAdd(Multiplet1, Multiplet2);
+//	  cout << TotalMultiplet << endl;
+	}
       for (int i = 0; i < NbrPermutations; ++i)
 	delete[] Permutations[i];
       delete[] Permutations;
       NbrUnclusteredParafermions += kType;
     }
+   cout << TotalMultiplet << endl;
+   cout << TotalMultiplet.GetNbrStates() << endl;
 }

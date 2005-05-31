@@ -35,6 +35,7 @@
 #include <iostream>
 
 
+using std::cout;
 using std::endl;
 
 
@@ -143,10 +144,24 @@ MomentumMultipletSet& MomentumMultipletSet::FindMultipletsForBosons (int nbrBoso
   if ((this->MaximumMomentum & 1) == 1)
     ++MinimumMomentum;
   for (int i = this->MaximumMomentum - 2; i >= MinimumMomentum; i -= 2)
-    this->LValues[i] = this->GetFixedLzBosonHilbertSpaceDimension(nbrBosons, maximumMomentum, i + (maximumMomentum * nbrBosons)) - this->LValues[i + 1];
+    this->LValues[i] = this->GetFixedLzBosonHilbertSpaceDimension(nbrBosons, maximumMomentum, (i + (maximumMomentum * nbrBosons)) >> 1);
+  for (int i = MinimumMomentum; i < this->MaximumMomentum; i += 2)
+    this->LValues[i] -= this->LValues[i + 2];
   return *this;
 }
   
+// get the total number of states associated to the current set of multiplets
+//
+// return value = number of states
+
+int MomentumMultipletSet::GetNbrStates()
+{
+  int NbrStates = 0;
+  for (int i = 0; i <= this->MaximumMomentum; ++i)
+    NbrStates += (i + 1) * this->LValues[i];
+  return NbrStates;
+}
+
 // add a set of multiplets to another sets of multiplets (i.e. add the number multiplet for each L value)
 // 
 // multiplets = set of multiplets to add 
@@ -175,9 +190,9 @@ MomentumMultipletSet operator * (MomentumMultipletSet& multiplets1, MomentumMult
   int Max;
   int Min;
   int Coef;
-  for (int i = 0; i < multiplets1.MaximumMomentum; ++i)
+  for (int i = 0; i <= multiplets1.MaximumMomentum; ++i)
     if (multiplets1.LValues[i] != 0)
-      for (int j = 0; j < multiplets2.MaximumMomentum; ++j)      
+      for (int j = 0; j <= multiplets2.MaximumMomentum; ++j)      
 	if (multiplets2.LValues[j] != 0)
 	  {
 	    Max = i + j;
@@ -207,9 +222,9 @@ MomentumMultipletSet& MomentumMultipletSet::FuseAndAdd (MomentumMultipletSet& mu
   int Max;
   int Min;
   int Coef;
-  for (int i = 0; i < multiplets1.MaximumMomentum; ++i)
+  for (int i = 0; i <= multiplets1.MaximumMomentum; ++i)
     if (multiplets1.LValues[i] != 0)
-      for (int j = 0; j < multiplets2.MaximumMomentum; ++j)      
+      for (int j = 0; j <= multiplets2.MaximumMomentum; ++j)      
 	if (multiplets2.LValues[j] != 0)
 	  {
 	    Max = i + j;

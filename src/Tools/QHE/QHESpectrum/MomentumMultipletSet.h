@@ -102,6 +102,11 @@ class MomentumMultipletSet
   // return value = reference on corresponding momentum multiplet set
   MomentumMultipletSet& FindMultipletsForBosons (int nbrBosons, int maximumMomentum);
   
+  // get the total number of states associated to the current set of multiplets
+  //
+  // return value = number of states
+  int GetNbrStates();
+    
   // add a set of multiplets to another sets of multiplets (i.e. add the number multiplet for each L value)
   // 
   // multiplets = set of multiplets to add 

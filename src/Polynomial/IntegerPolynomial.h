@@ -100,6 +100,11 @@ public:
   // return value = reference on current polynomial 
   IntegerPolynomial& operator = (const IntegerPolynomial& P);
 
+  // test if the polynomial has been defined
+  // 
+  // return value = true if the polynomial hass been defined
+  bool Defined();
+
   // Return polynomial value at a given point
   //
   // x = point where to evaluate polynomial
@@ -270,6 +275,15 @@ inline Complex IntegerPolynomial::PolynomialRoot (int n)
 inline long& IntegerPolynomial::operator [] (int n)
 {
   return this->Coefficient[n];
+}
+
+// test if the polynomial has been defined
+// 
+// return value = true if the polynomial hass been defined
+
+inline bool IntegerPolynomial::Defined()
+{
+  return !(this->Coefficient == 0);
 }
 
 #endif
