@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Polynomial/IntegerPolynomial.h"
+#include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
 
@@ -54,6 +55,9 @@ class QDeformedBinomialCoefficients
 
   // array that contained all q-deformed binomial coefficients
   IntegerPolynomial*** Coefficients;
+
+   // garbage flag used for the polynomials
+  GarbageFlag Flag;
 
  public:
 
@@ -76,7 +80,7 @@ class QDeformedBinomialCoefficients
   // m = major index
   // n = minor index
   // return value = reference on the correponding q-deformed binomial coefficient (MUST NOT BE MODIFIED!)
-  IntegerPolynomial& operator (int m, int n);
+  IntegerPolynomial& operator () (int m, int n);
 
   // modify the maximum major index that can be requested
   //
@@ -95,12 +99,12 @@ class QDeformedBinomialCoefficients
 // n = minor index
 // return value = reference on the correponding q-deformed binomial coefficient (MUST NOT BE MODIFIED!)
 
-inline IntegerPolynomial& QDeformedBinomialCoefficients::operator (int m, int n)
+inline IntegerPolynomial& QDeformedBinomialCoefficients::operator ()(int m, int n)
 {
   if ((m < 0) || (n < 0) || (m < n))
     return *(this->NullPolynomial);
-  if (m > this->MaximumIndex()
-      this->Resize(m);
+  if (m > this->MaximumIndex)
+    this->Resize(m);
   if ((n <= (m >> 1)))
     {
       return *(this->Coefficients[m][n]);

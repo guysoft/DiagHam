@@ -50,12 +50,14 @@ AR = ar
 ARFLAGS = cru
 libQHESpectrum_a_AR = $(AR) $(ARFLAGS)
 libQHESpectrum_a_LIBADD =
-am_libQHESpectrum_a_OBJECTS = QHEOnSphereLzSortedSpectrum.$(OBJEXT)
+am_libQHESpectrum_a_OBJECTS = QHEOnSphereLzSortedSpectrum.$(OBJEXT) \
+	MomentumMultipletSet.$(OBJEXT)
 libQHESpectrum_a_OBJECTS = $(am_libQHESpectrum_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/QHEOnSphereLzSortedSpectrum.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/MomentumMultipletSet.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QHEOnSphereLzSortedSpectrum.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -158,7 +160,9 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libQHESpectrum.a
-libQHESpectrum_a_SOURCES = QHEOnSphereLzSortedSpectrum.cc
+libQHESpectrum_a_SOURCES = QHEOnSphereLzSortedSpectrum.cc \
+MomentumMultipletSet.cc
+
 all: all-recursive
 
 .SUFFIXES:
@@ -206,6 +210,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MomentumMultipletSet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEOnSphereLzSortedSpectrum.Po@am__quote@
 
 .cc.o:

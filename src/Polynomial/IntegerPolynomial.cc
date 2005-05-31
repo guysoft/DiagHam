@@ -49,6 +49,20 @@ IntegerPolynomial::IntegerPolynomial ()
 // constructor
 //
 // degree = polynomial degree
+
+IntegerPolynomial::IntegerPolynomial (int degree)
+{
+  this->Degree = degree;
+  this->Coefficient = new long [this->Degree + 1];
+  for (int i = 0; i <= this->Degree; ++i)
+    this->Coefficient[i] = 0l;
+  this->RootFlag = false; 
+  
+}
+
+// constructor from raw datas
+//
+// degree = polynomial degree
 // coefficients = coefficients array ( first element is associated to the -power term)
 // flag = true if coefficients array has to be used directly and not duplicated
 
@@ -193,6 +207,26 @@ IntegerPolynomial& IntegerPolynomial::operator = (const IntegerPolynomial& P)
 // x = point where to evaluate polynomial
 // return value = polynomial value at x
 
+long IntegerPolynomial::PolynomialEvaluate (long x)
+{
+  if (this->Coefficient != 0)
+    {
+      long Res = this->Coefficient[this->Degree];
+      for (int i = this->Degree - 1 ; i >= 0; i--)
+	{
+	  Res *= x;
+	  Res += this->Coefficient[i];
+	}
+      return Res;
+    }
+  return 0l;
+}
+  
+// Return polynomial value at a given point
+//
+// x = point where to evaluate polynomial
+// return value = polynomial value at x
+
 double IntegerPolynomial::PolynomialEvaluate (double x)
 {
   if (this->Coefficient != 0)
@@ -226,6 +260,26 @@ Complex IntegerPolynomial::PolynomialEvaluate (Complex x)
       return Res;
     }
   return Complex();
+}
+  
+// Evaluate polynomial derivative 
+//
+// x = position where to evaluate polynomial derivative
+// return value = polynomial derivative at x
+
+long IntegerPolynomial::DerivativeEvaluate (long x)
+{
+  if (this->Coefficient != 0)
+    {
+      long Res = this->Coefficient[this->Degree] * ((long) this->Degree);
+      for (long i = this->Degree - 1 ; i > 0; i--)
+	{
+	  Res *= x;
+	  Res += i * this->Coefficient[i];
+	}
+      return Res;
+    }
+  return 0l;
 }
   
 // Evaluate polynomial derivative 
@@ -515,6 +569,16 @@ IntegerPolynomial operator * (const long& d, const IntegerPolynomial& P)
 
 IntegerPolynomial& IntegerPolynomial::operator += (const IntegerPolynomial& P)
 {
+  if (P.Coefficient == 0)
+    return *this;
+  if (this->Coefficient == 0)
+    {
+      this->Coefficient = new long [P.Degree + 1];
+      this->Degree = P.Degree;
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] = P.Coefficient[i];
+      return *this;
+   }
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     {
       delete this->Root;
@@ -528,9 +592,9 @@ IntegerPolynomial& IntegerPolynomial::operator += (const IntegerPolynomial& P)
     }
   if (P.Degree > this->Degree) 
     {
-      long* TmpCoef = new long [P.Degree];
+      long* TmpCoef = new long [P.Degree + 1];
       for (int i = 0; i <= this->Degree; i++)
-	TmpCoef[i] += P.Coefficient[i];
+	TmpCoef[i] = this->Coefficient[i] + P.Coefficient[i];
       for (int i = this->Degree + 1; i <= P.Degree; i++)
 	TmpCoef[i] = P.Coefficient[i];
       delete this->Coefficient;
@@ -540,11 +604,10 @@ IntegerPolynomial& IntegerPolynomial::operator += (const IntegerPolynomial& P)
     }
   else
     {
-      long* TmpCoef = new long [this->Degree];
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] += P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (TmpCoef[i] == 0l))
+      while ((i > 0) && (this->Coefficient[i] == 0l))
 	i--;
       if (i != this->Degree)
 	{
@@ -561,6 +624,16 @@ IntegerPolynomial& IntegerPolynomial::operator += (const IntegerPolynomial& P)
 
 IntegerPolynomial& IntegerPolynomial::operator -= (const IntegerPolynomial& P)
 {
+  if (P.Coefficient == 0)
+    return *this;
+  if (this->Coefficient == 0)
+    {
+      this->Coefficient = new long [P.Degree + 1];
+      this->Degree = P.Degree;
+      for (int i = 0; i <= this->Degree; i++)
+	this->Coefficient[i] = -P.Coefficient[i];
+      return *this;
+   }
   if ((this->RootFlag == true) && (this->NbrRoot != 0))
     {
       delete this->Root;
@@ -574,7 +647,7 @@ IntegerPolynomial& IntegerPolynomial::operator -= (const IntegerPolynomial& P)
     }
   if (P.Degree > this->Degree) 
     {
-      long* TmpCoef = new long [P.Degree];
+      long* TmpCoef = new long [P.Degree + 1];
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] -= P.Coefficient[i];
       for (int i = this->Degree + 1; i <= P.Degree; i++)
@@ -586,11 +659,10 @@ IntegerPolynomial& IntegerPolynomial::operator -= (const IntegerPolynomial& P)
     }
   else
     {
-      long* TmpCoef = new long [this->Degree];
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] -= P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (TmpCoef[i] == 0l))
+      while ((i > 0) && (this->Coefficient[i] == 0l))
 	i--;
       if (i != this->Degree)
 	{
@@ -621,21 +693,26 @@ IntegerPolynomial& IntegerPolynomial::operator *= (const IntegerPolynomial& P)
     {
       int Deg = P.Degree + this->Degree;
       long* Coef = new long [Deg + 1];
+      long Tmp = P.Coefficient[P.Degree];
+      for (int i = this->Degree; i >= 0; --i)
+	Coef[i + P.Degree] = this->Coefficient[i] * Tmp;
+      for (int i = 0; i < P.Degree; ++i)
+	Coef[i] = 0;
       if (P.Degree == 0)
 	{
 	  delete[] this->Coefficient;
 	  this->Coefficient = Coef;
 	  return *this;
 	}
-      for (int i = this->Degree; i >= 0; i--)
-	Coef[i + P.Degree] = this->Coefficient[i] * P.Coefficient[P.Degree];
-      for (int i = P.Degree-1; i >= 0; i--)
-	Coef[i] = 0;
-      for (int i = P.Degree - 1; i >= 0; i--)
-	for (int j = this->Degree; j >= 0; j--)
-	  Coef[i+j] += this->Coefficient[j] * P.Coefficient[i];
-      delete this->Coefficient;
+      for (int i = 0; i < P.Degree; ++i)
+	{
+	  Tmp = P.Coefficient[i];
+	  for (int j = 0; j <= this->Degree; ++j)
+	    Coef[i + j] += this->Coefficient[j] * Tmp;
+	}
+      delete[] this->Coefficient;
       this->Coefficient = Coef;
+      this->Degree = Deg;
       if (this->RootFlag == true)
 	{
 	  delete[] this->Root;
@@ -662,7 +739,10 @@ ostream& operator << (ostream& Str, const IntegerPolynomial& P)
       else
 	{
 	  for (int i = P.Degree; i > 0; i--)
-	    Str << P.Coefficient[i] << " q^" << i << " + ";
+	    if (P.Coefficient[i] == 1l)
+	      Str <<"q^" << i << " + ";
+	    else
+	      Str << P.Coefficient[i] << " q^" << i << " + ";
 	  Str << P.Coefficient[0];
 	  return Str;  
 	}

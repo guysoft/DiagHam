@@ -69,6 +69,11 @@ public:
   // constructor
   //
   // degree = polynomial degree
+  IntegerPolynomial (int degree);
+
+  // constructor from raw datas
+  //
+  // degree = polynomial degree
   // coefficients = coefficients array ( first element is associated to the -power term)
   // flag = true if coefficients array has to be used directly and not duplicated
   IntegerPolynomial (int degree, long* coefficients, bool flag = true);
@@ -99,6 +104,12 @@ public:
   //
   // x = point where to evaluate polynomial
   // return value = polynomial value at x
+  long PolynomialEvaluate (long x);
+  
+  // Return polynomial value at a given point
+  //
+  // x = point where to evaluate polynomial
+  // return value = polynomial value at x
   double PolynomialEvaluate (double x);
   
   // Return polynomial value at a given point
@@ -107,6 +118,12 @@ public:
   // return value = polynomial value at x
   Complex PolynomialEvaluate (Complex x);
   
+  // Evaluate polynomial derivative   
+  //
+  // x = position where to evaluate polynomial derivative
+  // return value = polynomial derivative at x
+  long DerivativeEvaluate (long x);
+
   // Evaluate polynomial derivative   
   //
   // x = position where to evaluate polynomial derivative
@@ -157,6 +174,12 @@ public:
   // return value = degree of the polynomial
   int GetPolynomialDegree ();
   
+  // return reference on the coefficient corresponding to the nth-degree
+  //
+  // n = index of the corresponding coefficient
+  // return value = reference on the coefficient
+  long& operator [] (int n);
+
   // return coefficient corresponding to the nth-degree
   //
   // n = index of the corresponding coefficient
@@ -237,6 +260,16 @@ inline long IntegerPolynomial::PolynomialCoefficient (int n)
 inline Complex IntegerPolynomial::PolynomialRoot (int n) 
 {
   return this->Root[n];
+}
+
+// return reference on the coefficient corresponding to the nth-degree
+//
+// n = index of the corresponding coefficient
+// return value = reference on the coefficient
+
+inline long& IntegerPolynomial::operator [] (int n)
+{
+  return this->Coefficient[n];
 }
 
 #endif

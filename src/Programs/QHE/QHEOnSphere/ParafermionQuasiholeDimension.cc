@@ -6,6 +6,12 @@
 
 #include "MathTools/IntegerAlgebraTools.h"
 
+#include "Polynomial/IntegerPolynomial.h"
+#include "Polynomial/QDeformedBinomialCoefficients.h"
+
+#include "Tools/QHE/QHESpectrum/MomentumMultipletSet.h"
+
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -76,7 +82,7 @@ long GetFixedLzFreeNumberBosonPartitionNumber (int momentum, int nbrStates);
 // partitionNumber = reference on the integer where the corresponding partition will be stored
 void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, long& partitionNumber);
 
-// recursive function assiacted to GetFixedLzFreeNumberBosonPermutations
+// recursive function associated to GetFixedLzFreeNumberBosonPermutations
 // 
 // momentum = total momemtum
 // nbrStates = number of states
@@ -85,6 +91,14 @@ void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& 
 // return value = new current position in the array
 int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, int position);
 
+// get the number of ways to put F parafermions in n box
+// 
+// nbrParafermions = number of parafermions
+// kType = number of parafermion species
+// nbrBoxes = number of boxes
+// binomialCoeffients = array that contains all usefull binomial coefficients
+// return value = number of way
+void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoeffients);
 
 
 int main(int argc, char** argv)
@@ -136,13 +150,39 @@ int main(int argc, char** argv)
     MaxBinomial = Tmp;
   long** BinomialCoefficients = GetBinomialCoefficients(MaxBinomial);
 
+//  MaxBinomial = 8;
+  QDeformedBinomialCoefficients QDeformed(MaxBinomial);
+  
+//   for (int i = 0; i <= MaxBinomial; ++i)
+//     {
+//       for (int j = 0; j <= i; ++j)
+// 	cout << QDeformed(i, j) << " | ";
+//       cout << endl;
+//     }
+
+  IntegerPolynomial TmpPoly (3);
+//  TmpPoly[4] = 1l;
+  TmpPoly[3] = 1l;
+  TmpPoly[2] = 2l;
+  TmpPoly[1] = 2l;
+  TmpPoly[0] = 1l;
+  cout << TmpPoly << endl;
+  MomentumMultipletSet Multiplet1(TmpPoly);
+  cout << Multiplet1 << endl;
+  MomentumMultipletSet Multiplet2(12);
+  Multiplet2.FindMultipletsForBosons(6, 2) ;
+  cout << Multiplet2 << endl;
+ 
+//  GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed);
+
+  
   long HilbertSpaceDimension = 0;
   int NbrUnclusteredParafermions = 0;
   while (NbrUnclusteredParafermions <= NbrParticles)
     {
-      cout << GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) << " " 
-	   << BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]<< " " 
-	   << (NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)) << " " << NbrQuasiholes << endl;
+//       cout << GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) << " " 
+// 	   << BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]<< " " 
+// 	   << (NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)) << " " << NbrQuasiholes << endl;
       HilbertSpaceDimension += (GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) * 
 				BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]);
       NbrUnclusteredParafermions += KValue;
@@ -271,6 +311,8 @@ long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType
     {
       if (nbrParafermions <= nbrBoxes)
         return binomialCoeffients[nbrBoxes][nbrParafermions];
+      else
+	return 0l;
     }
   int** Permutations;
   long NbrPermutations;
@@ -293,12 +335,20 @@ long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType
 	  for (; k < kType; ++k)
 	    TmpCoefficient -= (2 * (kType - k) * j) * TmpPermutation[k - 1];
 	  if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
-	    Tmp *= binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]];
+	    {
+	      Tmp *= binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]];
+	      cout << binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]] << endl;
+	    }
 	  else
 	    Tmp = 0l;
 	}
+      cout << "final tmp=" << Tmp << endl;
       NbrWays += Tmp;
     }
+  cout << "final NbrWays =" << Tmp << endl;
+  for (int i = 0; i < NbrPermutations; ++i)
+    delete[] Permutations[i];
+  delete[] Permutations;
   return NbrWays;
 }
 
@@ -341,7 +391,7 @@ void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& 
   RecursiveFixedLzFreeNumberBosonPermutations(momentum, nbrStates, permutations, 0);
 }
 
-// recursive function assiacted to GetFixedLzFreeNumberBosonPermutations
+// recursive function associated to GetFixedLzFreeNumberBosonPermutations
 // 
 // momentum = total momemtum
 // nbrStates = number of states
@@ -374,3 +424,55 @@ int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, in
   return position;
 }
 
+// get the number of ways to put F parafermions in n box
+// 
+// nbrParafermions = number of parafermions
+// kType = number of parafermion species
+// nbrBoxes = number of boxes
+// binomialCoeffients = array that contains all usefull binomial coefficients
+// return value = number of way
+
+void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoeffients)
+{
+  int NbrUnclusteredParafermions = 0;
+  int* TmpPermutation;
+  int TmpCoefficient;
+  int** Permutations;
+  long NbrPermutations;
+  long Constant = 1l;
+   while (NbrUnclusteredParafermions <= nbrParticles)
+    {
+      GetFixedLzFreeNumberBosonPermutations(NbrUnclusteredParafermions, kType - 1, Permutations, NbrPermutations);
+      IntegerPolynomial TotalP;
+      for (int i = 0; i < NbrPermutations; ++i)
+	{
+	  TmpPermutation = Permutations[i];
+	  IntegerPolynomial Tmp (0, &Constant, false);
+	  bool Flag = true;
+	  for (int j = 1; ((j < kType) && (Flag == true)); ++j)
+	    {
+	      int k = 1;
+	      TmpCoefficient = (j * nbrQuasiholes) + ((kType - (2 * (kType - j) * j)) * TmpPermutation[j - 1]);
+	      for (; k < j; ++k)
+		TmpCoefficient -= (2 * (kType - j) * k) * TmpPermutation[k - 1];
+	      ++k;
+	      for (; k < kType; ++k)
+		TmpCoefficient -= (2 * (kType - k) * j) * TmpPermutation[k - 1];
+	      if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
+		{
+		  Tmp *= binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]);
+		  cout << TmpPermutation[j - 1] << " " << (TmpCoefficient / kType) << " " << binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]) << endl;
+		}
+	      else
+		Flag = false;
+	    }
+	  if (Flag == true)
+	    TotalP += Tmp;
+	}
+      cout << TotalP << endl << endl << "P(1) = " << TotalP.PolynomialEvaluate(1l) << endl;
+      for (int i = 0; i < NbrPermutations; ++i)
+	delete[] Permutations[i];
+      delete[] Permutations;
+      NbrUnclusteredParafermions += kType;
+    }
+}

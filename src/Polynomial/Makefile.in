@@ -51,14 +51,16 @@ ARFLAGS = cru
 libPolynomial_a_AR = $(AR) $(ARFLAGS)
 libPolynomial_a_LIBADD =
 am_libPolynomial_a_OBJECTS = Polynomial.$(OBJEXT) \
-	ComplexPolynomial.$(OBJEXT) IntegerPolynomial.$(OBJEXT)
+	ComplexPolynomial.$(OBJEXT) IntegerPolynomial.$(OBJEXT) \
+	QDeformedBinomialCoefficients.$(OBJEXT)
 libPolynomial_a_OBJECTS = $(am_libPolynomial_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ComplexPolynomial.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/IntegerPolynomial.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/Polynomial.Po
+@AMDEP_TRUE@	./$(DEPDIR)/Polynomial.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QDeformedBinomialCoefficients.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -163,7 +165,8 @@ SUBDIRS =
 noinst_LIBRARIES = libPolynomial.a
 libPolynomial_a_SOURCES = Polynomial.cc \
 ComplexPolynomial.cc \
-IntegerPolynomial.cc
+IntegerPolynomial.cc \
+QDeformedBinomialCoefficients.cc
 
 all: all-recursive
 
@@ -215,6 +218,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexPolynomial.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IntegerPolynomial.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Polynomial.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QDeformedBinomialCoefficients.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

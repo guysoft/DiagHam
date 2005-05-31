@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Polynomial/QDeformedBinomialCoefficients.h"
 
+
 // default constructor
 //
 // maximumIndex = new maximum major index (aka the (m) upper index in the [m n] notation)
@@ -39,18 +40,19 @@ QDeformedBinomialCoefficients::QDeformedBinomialCoefficients (int maximumIndex)
 {
   if (maximumIndex < 2)
     maximumIndex = 2;
-  this->MaximumIndex = maximumIndex;
-  long Constant = 0.0;
+  this->MaximumIndex = 2;
+  long Constant = 0l;
   this->NullPolynomial = new IntegerPolynomial(0, &Constant, false);
   this->Coefficients = new IntegerPolynomial** [3];
   this->Coefficients[0] = new IntegerPolynomial* [1];
-  this->Coefficients[0][0] = new IntegerPolynomial(1, &Constant, false);
+  Constant = 1l;
+  this->Coefficients[0][0] = new IntegerPolynomial(0, &Constant, false);
   this->Coefficients[1] = new IntegerPolynomial* [1];
   this->Coefficients[1][0] = this->Coefficients[0][0];
   this->Coefficients[2] = new IntegerPolynomial* [2];
   this->Coefficients[2][0] = this->Coefficients[0][0];
-  this->Coefficients[2][0] = new IntegerPolynomial(*(this->Coefficients[0][0]), *(this->Coefficients[0][0]), 1);  
-  this->Resize(this->MaximumIndex);
+  this->Coefficients[2][1] = new IntegerPolynomial(*(this->Coefficients[0][0]), *(this->Coefficients[0][0]), 1);  
+  this->Resize(maximumIndex);
   this->Flag.Initialize();
 }
 
@@ -105,13 +107,13 @@ QDeformedBinomialCoefficients& QDeformedBinomialCoefficients::Resize(int maximum
       TmpCoefficients[i] = this->Coefficients[i];
   else
     {
-      long Constant = 1.0;
-      TmpCoefficients[0] = new IntegerPolynomial** [1];
-      this->Coefficients[0][0] = new IntegerPolynomial(1, &Constant, false);
+      long Constant = 1l;
+      TmpCoefficients[0] = new IntegerPolynomial* [1];
+      this->Coefficients[0][0] = new IntegerPolynomial(0, &Constant, false);
       for (; i <= this->MaximumIndex; ++i)
 	{	  
 	  int Half = i >> 1;
-	  TmpCoefficients[i] = new IntegerPolynomial** [Half + 1];
+	  TmpCoefficients[i] = new IntegerPolynomial* [Half + 1];
 	  TmpCoefficients[i][0] = TmpCoefficients[0][0];
 	  for (int j = 1; j <= Half; ++j)
 	    TmpCoefficients[i][j] = this->Coefficients[i][j];     
@@ -123,11 +125,22 @@ QDeformedBinomialCoefficients& QDeformedBinomialCoefficients::Resize(int maximum
       int Half = i >> 1;
       TmpCoefficients[i] = new IntegerPolynomial* [Half + 1];
       TmpCoefficients[i][0] = TmpCoefficients[0][0];
-      for (int j = 1; j <= Half; ++j)
+      if ((i & 1) != 0)
+	for (int j = 1; j <= Half; ++j)
+	  {
+	    TmpCoefficients[i][j] = new IntegerPolynomial(*(TmpCoefficients[i - 1][j - 1]), *(TmpCoefficients[i - 1][j]), j);
+	  }
+      else
 	{
-	  TmpCoefficients[i][j] = new IntegerPolynomial(*(this->Coefficients[i - 1][j - 1]), *(this->Coefficients[i - 1][j]), j)
+	  for (int j = 1; j < Half; ++j)
+	    {
+	      TmpCoefficients[i][j] = new IntegerPolynomial(*(TmpCoefficients[i - 1][j - 1]), *(TmpCoefficients[i - 1][j]), j);
+	    }
+	  TmpCoefficients[i][Half] = new IntegerPolynomial(*(TmpCoefficients[i - 1][Half - 1]), *(TmpCoefficients[i - 1][i - 1 - Half]), Half);
 	}
     }
   delete[] this->Coefficients;
   this->Coefficients = TmpCoefficients;
+  this->MaximumIndex = maximumIndex;
+  return *this;
 }
