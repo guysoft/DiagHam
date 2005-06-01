@@ -215,6 +215,12 @@ public:
   IntegerPolynomial& operator *= (const long& d);
   IntegerPolynomial& operator *= (const IntegerPolynomial& P);
 
+  // shift all powers from a given value
+  //
+  // shift = shift to apply
+  // return value = reference on the current polynomial
+  IntegerPolynomial& ShiftPowers(int shift);
+
   //Output Stream overload
   friend ostream& operator << (ostream& Str, const IntegerPolynomial& P);
   

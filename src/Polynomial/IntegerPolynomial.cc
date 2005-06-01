@@ -722,6 +722,28 @@ IntegerPolynomial& IntegerPolynomial::operator *= (const IntegerPolynomial& P)
   return *this;
 }
 
+// shift all powers from a given value
+//
+// shift = shift to apply
+// return value = reference on the current polynomial
+
+IntegerPolynomial& IntegerPolynomial::ShiftPowers(int shift)
+{
+  if ((shift == 0) || (this->Coefficient == 0))
+    return *this;
+  int TmpDegree = this->Degree + shift;
+  long* TmpCoefficients = new long [TmpDegree + 1];
+  int i = 0;
+  for (; i < shift; ++i)
+    TmpCoefficients[i] = 0l;
+  for (; i <= TmpDegree; ++i)
+    TmpCoefficients[i] = this->Coefficient[i - shift];      
+  delete[] this->Coefficient;
+  this->Coefficient = TmpCoefficients;
+  this->Degree = TmpDegree;
+  return *this;
+}
+
 // Output Stream overload
 //
 

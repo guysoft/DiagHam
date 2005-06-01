@@ -3,8 +3,10 @@
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
+#include "Options/SingleStringOption.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
+#include "MathTools/BinomialCoefficients.h"
 
 #include "Polynomial/IntegerPolynomial.h"
 #include "Polynomial/QDeformedBinomialCoefficients.h"
@@ -20,50 +22,23 @@ using std::cout;
 using std::endl;
 
 
-// maximum k value size in bits
-#define K_MAXSIZE 4
-// shift and mask associated to the maximum k value
-#ifdef __64_BITS__
-#define K_SHIFT 4
-#define K_MASK 0x15l
-#else
-#define K_SHIFT 3
-#define K_MASK 0x7l
-#endif
-
-// evaluate Hilbert space dimension for k-type parafermion in a given number of states according to the rules  given by Gurarie
-//
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// nbrStates = number of states that can be occupied by the parafermions
-long EvaluateHilbertSpaceDimension(int nbrParafermions, int kType, int nbrStates);
-
-// evaluate Hilbert space dimension for k-type parafermion without any constraint
-//
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// nbrStates = number of states that can be occupied by the parafermions
-// return value = Hilbert space dimension
-long EvaluateUnconstraintHilbertSpaceDimension (int nbrParafermions, int kType, int nbrStates);
-
-// evaluate Hilbert space dimension for k-type parafermion without any constraint
-//
-// stateDescription = array that contains state description
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// position = index of the current state description
-// statePosition = index of the one-particle state that has to be currently filled (number of state - 1 except during recursion)
-// return value = new index of the current state description
-int EvaluateUnconstraintStates (long** stateDescription, int nbrParafermions, int kType, int position, int statePosition);
+// get the total number of states corresponding to a given parafermionic quasihole system
+// 
+// nbrParticles = number of parafermions
+// nbrQuasiholes = number of qusaiholes (must be a multiple of kType)
+// kType = number of parafermion species
+// binomialCoefficients = array that contains all usefull binomial coefficients
+// return value = number of states
+long GetNumberOfStates (int nbrParticles, int nbrQuasiholes, int kType, BinomialCoefficients& binomialCoefficients);
 
 // get the number of ways to put F parafermions in n box
 // 
 // nbrParafermions = number of parafermions
 // kType = number of parafermion species
 // nbrBoxes = number of boxes
-// binomialCoeffients = array that contains all usefull binomial coefficients
+// binomialCoeffients = reference on the binomial coefficients
 // return value = number of way
-long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, long** binomialCoeffients);
+long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, BinomialCoefficients& binomialCoeffients);
 
 // get the number of ways to write sum_i=1^n i a_i = F where F and n (aka number of possibilities to have a state of total momentum F with a 
 // free number of bosons and n one-body state carrying each a Lz momentum ranging from 1 to n)
@@ -91,14 +66,14 @@ void GetFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& 
 // return value = new current position in the array
 int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, int**& permutations, int position);
 
-// get the number of ways to put F parafermions in n box
+// get the multiplet decomposition corresponding to a given parafermionic quasihole system
 // 
-// nbrParafermions = number of parafermions
+// nbrParticles = number of parafermions
+// nbrQuasiholes = number of qusaiholes (must be a multiple of kType)
 // kType = number of parafermion species
-// nbrBoxes = number of boxes
-// binomialCoeffients = array that contains all usefull binomial coefficients
-// return value = number of way
-void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoeffients);
+// binomialCoefficients = array that contains all usefull q-deformed binomial coefficients
+// return value = corresponding set of multiplets
+MomentumMultipletSet GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoefficients);
 
 
 int main(int argc, char** argv)
@@ -111,7 +86,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('k', "k-value", "number of particles", 2);
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
   (*SystemGroup) += new SingleIntegerOption  ('q', "nbr-quasiholes", "number of quasiholes", 2);
-  (*SystemGroup) += new BooleanOption  ('\n', "l-dimension", "get dimensions of all subspaces with fixed total l value");
+  (*SystemGroup) += new BooleanOption  ('\n', "total-only", "only display the total number of states");
+  (*SystemGroup) += new SingleStringOption  ('\n', "display-style", "set data output display style (raw, pretty, latex)", "raw");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -141,157 +117,67 @@ int main(int argc, char** argv)
       return 1;
     }
   
-  int MaxBinomial = (NbrParticles / KValue) + NbrQuasiholes;
-  int Tmp = NbrParticles + KValue - 2;
-  if (Tmp > MaxBinomial)
-    MaxBinomial = Tmp;
-  Tmp = NbrQuasiholes + 2 * NbrParticles * ((KValue - 1) * (KValue - 1));
-  if (Tmp > MaxBinomial)
-    MaxBinomial = Tmp;
-  long** BinomialCoefficients = GetBinomialCoefficients(MaxBinomial);
-
-//  MaxBinomial = 8;
+  int MaxBinomial = 10;
+  BinomialCoefficients TmpBinomialCoefficients(MaxBinomial);
   QDeformedBinomialCoefficients QDeformed(MaxBinomial);
   
-//   for (int i = 0; i <= MaxBinomial; ++i)
-//     {
-//       for (int j = 0; j <= i; ++j)
-// 	cout << QDeformed(i, j) << " | ";
-//       cout << endl;
-//     }
+  if (((BooleanOption*) Manager["total-only"])->GetBoolean() == false)
+    {
+      MomentumMultipletSet Multiplets(GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed));
+      if (strncmp("pretty", ((SingleStringOption*) Manager["display-style"])->GetString(), 6) == 0)
+	cout << Multiplets << endl;
+      else
+	if (strncmp("latex", ((SingleStringOption*) Manager["display-style"])->GetString(), 5) == 0)
+	  {
+	    cout << "$" << Multiplets.GetNbrStates() << "$  & ";
+	    for (int i = (Multiplets.GetMaximumMomentum() & 1); i < Multiplets.GetMaximumMomentum(); i += 2)
+	      cout << "$" << Multiplets[i] << "$  & ";
+	    cout << "$" << Multiplets[Multiplets.GetMaximumMomentum()] << "$" << endl;
+	  }       
+	else
+	  {
+	    for (int i = (Multiplets.GetMaximumMomentum() & 1); i <= Multiplets.GetMaximumMomentum(); i += 2)
+	      cout << Multiplets[i] << " ";
+	    cout << endl;
+	  }
+      long HilbertSpaceDimension = GetNumberOfStates(NbrParticles, NbrQuasiholes, KValue, TmpBinomialCoefficients);
+      if (HilbertSpaceDimension == Multiplets.GetNbrStates())
+	cout << HilbertSpaceDimension << endl;      
+      else
+	{
+	  cout << "an error occured while evaluating momentum multiplet decomposition producing different number of states (" << Multiplets.GetNbrStates() 
+	       << " and " << HilbertSpaceDimension << ")" << endl;
+	  return -1;
+	}
+    }
+  else
+    {
+      long HilbertSpaceDimension = GetNumberOfStates(NbrParticles, NbrQuasiholes, KValue, TmpBinomialCoefficients);
+      cout << HilbertSpaceDimension << endl;      
+    }
+}
 
-//   IntegerPolynomial TmpPoly (3);
-// //  TmpPoly[4] = 1l;
-//   TmpPoly[3] = 1l;
-//   TmpPoly[2] = 2l;
-//   TmpPoly[1] = 2l;
-//   TmpPoly[0] = 1l;
-//   cout << TmpPoly << endl;
-//   MomentumMultipletSet Multiplet1(TmpPoly);
-//   cout << Multiplet1 << endl;
-//   MomentumMultipletSet Multiplet2(12);
-//   Multiplet2.FindMultipletsForBosons(6, 2) ;
-//   cout << Multiplet2 << endl;
- 
- GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed);
 
-  
+
+// get the total number of states corresponding to a given parafermionic quasihole system
+// 
+// nbrParticles = number of parafermions
+// nbrQuasiholes = number of qusaiholes (must be a multiple of kType)
+// kType = number of parafermion species
+// binomialCoeffients = array that contains all usefull binomial coefficients
+// return value = number of states
+
+long GetNumberOfStates (int nbrParticles, int nbrQuasiholes, int kType, BinomialCoefficients& binomialCoefficients)
+{
   long HilbertSpaceDimension = 0;
   int NbrUnclusteredParafermions = 0;
-  while (NbrUnclusteredParafermions <= NbrParticles)
+  while (NbrUnclusteredParafermions <= nbrParticles)
     {
-//       cout << GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) << " " 
-// 	   << BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]<< " " 
-// 	   << (NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)) << " " << NbrQuasiholes << endl;
-      HilbertSpaceDimension += (GetParafermionPartitionNumber(NbrUnclusteredParafermions, NbrQuasiholes / KValue, KValue, BinomialCoefficients) * 
-				BinomialCoefficients[NbrQuasiholes + ((NbrParticles - NbrUnclusteredParafermions) / KValue)][NbrQuasiholes]);
-      NbrUnclusteredParafermions += KValue;
+      HilbertSpaceDimension += (GetParafermionPartitionNumber(NbrUnclusteredParafermions, nbrQuasiholes / kType, kType, binomialCoefficients) * 
+				binomialCoefficients(nbrQuasiholes + ((nbrParticles - NbrUnclusteredParafermions) / kType), nbrQuasiholes));
+      NbrUnclusteredParafermions += kType;
     }
-  cout << HilbertSpaceDimension << endl;
-}
-
-
-// evaluate Hilbert space dimension for k-type parafermion in a given number of states according to the rules  given by Gurarie
-//
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// nbrStates = number of states that can be occupied by the parafermions
-
-long EvaluateHilbertSpaceDimension(int nbrParafermions, int kType, int nbrStates)
-{
-  long MaximumDimension = EvaluateUnconstraintHilbertSpaceDimension(nbrParafermions, kType, nbrStates);
-  long** StateDescription = new long* [MaximumDimension];
-  int NbrBlock = nbrStates >> K_SHIFT;
-  if ((NbrBlock & K_MASK) != 0)
-    ++NbrBlock;
-  for (int i = 0; i < MaximumDimension; ++i)
-    {
-      StateDescription[i] = new long [NbrBlock];
-      for (int j = 0; j < NbrBlock; ++j)
-	StateDescription[i][j] = 0l;
-    }
-  EvaluateUnconstraintStates(StateDescription, 0, nbrParafermions, kType, nbrStates - 1);
-  long Dimension = 0;
-  for (int i = 0; i < MaximumDimension; ++i)
-    {
-      ++Dimension;
-      delete[] StateDescription[i];      
-    }
-  return Dimension;
-}
-
-// evaluate Hilbert space dimension for k-type parafermion without any constraint
-//
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// nbrStates = number of states that can be occupied by the parafermions
-// return value = Hilbert space dimension
-
-long EvaluateUnconstraintHilbertSpaceDimension (int nbrParafermions, int kType, int nbrStates)
-{
-  if (nbrParafermions == 0)
-    return 0l;
-  if (nbrParafermions == 1)
-    return (long) nbrStates;
-  if (nbrStates == 1)
-    if (nbrParafermions >= kType)
-      return 0l;
-    else
-      return 1l;
-
-  int Max = nbrParafermions;
-  if (kType < Max)
-    Max = kType - 1;
-  long Tmp = 0;
-  for (int i = 0; i <= Max; ++i)
-    Tmp += EvaluateUnconstraintHilbertSpaceDimension(nbrParafermions - i, kType, nbrStates - 1);
-  return Tmp;
-}
-
-// evaluate Hilbert space dimension for k-type parafermion without any constraint
-//
-// stateDescription = array that contains state description
-// nbrParafermions = number of parafermions
-// kType = parafermion type
-// position = index of the current state description
-// statePosition = index of the one-particle state that has to be currently filled (number of state - 1 except during recursion)
-// return value = new index of the current state description
-
-int EvaluateUnconstraintStates (long** stateDescription, int nbrParafermions, int kType, int position, int statePosition)
-{
-  if (statePosition == 0)
-    if (nbrParafermions >= kType)
-      return position;
-    else
-      {
-	stateDescription[position][0] |= ((long) nbrParafermions);
-	return (position + 1);
-      }
-  if (nbrParafermions == 0)
-    return position;
-  if (nbrParafermions == 1)
-    {
-      for (; statePosition >= 0; --statePosition)
-	{
-	  stateDescription[position][statePosition >> K_SHIFT] |= 1l << ((statePosition & K_MASK) * K_MAXSIZE);
-	  ++position;
-	}
-      return position;
-    }
-
-  int Max = nbrParafermions;
-  if (kType < Max)
-    Max = kType - 1;
-  int TmpPos = 0;
-  int Shift = (statePosition & K_MASK) * K_MAXSIZE;
-  int Index = statePosition >> K_SHIFT;
-  for (int i = 0; i <= Max; ++i)
-    {
-      TmpPos = EvaluateUnconstraintStates(stateDescription, nbrParafermions - i, kType, position, statePosition - 1);
-      for (; position < TmpPos; ++position)
-	stateDescription[position][Index] |= ((long) i) << Shift;
-    }
-  return position;
+  return HilbertSpaceDimension;
 }
 
 
@@ -300,17 +186,17 @@ int EvaluateUnconstraintStates (long** stateDescription, int nbrParafermions, in
 // nbrParafermions = number of parafermions
 // kType = number of parafermion species
 // nbrBoxes = number of boxes
-// binomialCoeffients = array that contains all usefull binomial coefficients
+// binomialCoefficients = reference on the binomial coefficients
 // return value = number of way
 
-long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, long** binomialCoeffients)
+long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType, BinomialCoefficients& binomialCoefficients)
 {
   if ((nbrParafermions == 0) || (kType == 1))
     return 1l;
   if (kType == 2)
     {
       if (nbrParafermions <= nbrBoxes)
-        return binomialCoeffients[nbrBoxes][nbrParafermions];
+        return binomialCoefficients(nbrBoxes, nbrParafermions);
       else
 	return 0l;
     }
@@ -336,7 +222,7 @@ long GetParafermionPartitionNumber (int nbrParafermions, int nbrBoxes, int kType
 	    TmpCoefficient -= (2 * (kType - k) * j) * TmpPermutation[k - 1];
 	  if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
 	    {
-	      Tmp *= binomialCoeffients[TmpCoefficient / kType][TmpPermutation[j - 1]];
+	      Tmp *= binomialCoefficients(TmpCoefficient / kType, TmpPermutation[j - 1]);
 	    }
 	  else
 	    Tmp = 0l;
@@ -421,15 +307,15 @@ int RecursiveFixedLzFreeNumberBosonPermutations (int momentum, int nbrStates, in
   return position;
 }
 
-// get the number of ways to put F parafermions in n box
+// get the multiplet decomposition corresponding to a given parafermionic quasihole system
 // 
-// nbrParafermions = number of parafermions
+// nbrParticles = number of parafermions
+// nbrQuasiholes = number of qusaiholes (must be a multiple of kType)
 // kType = number of parafermion species
-// nbrBoxes = number of boxes
-// binomialCoeffients = array that contains all usefull binomial coefficients
-// return value = number of way
+// binomialCoefficients = array that contains all usefull q-deformed binomial coefficients
+// return value = corresponding set of multiplets
 
-void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoeffients)
+MomentumMultipletSet GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int kType, QDeformedBinomialCoefficients& binomialCoefficients)
 {
   int NbrUnclusteredParafermions = 0;
   int* TmpPermutation;
@@ -447,6 +333,19 @@ void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int
 	  TmpPermutation = Permutations[i];
 	  IntegerPolynomial Tmp (0, &Constant, false);
 	  bool Flag = true;
+	  int PowerShift = 0;
+	  for (int j = 1; j < kType; ++ j)
+	    {
+	      int k = 1;
+	      int Tmp = (kType - j) * j * TmpPermutation[j - 1];
+	      for (; k < j; ++k)
+		Tmp += ((kType - j) * k) * TmpPermutation[k - 1];
+	      ++k;
+	      for (; k < kType; ++k)
+		Tmp += ((kType - k) * j) * TmpPermutation[k - 1];	      
+	      PowerShift += Tmp * TmpPermutation[j - 1];
+	    }
+	  PowerShift /= kType;
 	  for (int j = 1; ((j < kType) && (Flag == true)); ++j)
 	    {
 	      int k = 1;
@@ -458,30 +357,28 @@ void GetMomentumMultipletDecomposition (int nbrParticles, int nbrQuasiholes, int
 		TmpCoefficient -= (2 * (kType - k) * j) * TmpPermutation[k - 1];
 	      if ((TmpCoefficient >= 0) && ((TmpCoefficient % kType) == 0) && ((TmpPermutation[j - 1] * kType) <= TmpCoefficient))
 		{
-		  Tmp *= binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]);
-//		  cout << TmpPermutation[j - 1] << " " << (TmpCoefficient / kType) << " " << binomialCoeffients(TmpCoefficient / kType, TmpPermutation[j - 1]) << endl;
+		  Tmp *= binomialCoefficients(TmpCoefficient / kType, TmpPermutation[j - 1]);
 		}
 	      else
 		Flag = false;
 	    }
 	  if (Flag == true)
-	    TotalP += Tmp;
+	    {
+	      Tmp.ShiftPowers(PowerShift);
+	      TotalP += Tmp;
+	    }
 	}
       if (TotalP.Defined())
 	{
-//	  cout << TotalP << endl;
 	  MomentumMultipletSet Multiplet1(TotalP);
 	  MomentumMultipletSet Multiplet2((nbrQuasiholes * (nbrParticles - NbrUnclusteredParafermions)) / kType);
 	  Multiplet2.FindMultipletsForBosons(nbrQuasiholes, (nbrParticles - NbrUnclusteredParafermions) / kType);
-//	  cout << Multiplet1 << endl << Multiplet2 << endl;
 	  TotalMultiplet.FuseAndAdd(Multiplet1, Multiplet2);
-//	  cout << TotalMultiplet << endl;
 	}
       for (int i = 0; i < NbrPermutations; ++i)
 	delete[] Permutations[i];
       delete[] Permutations;
       NbrUnclusteredParafermions += kType;
     }
-   cout << TotalMultiplet << endl;
-   cout << TotalMultiplet.GetNbrStates() << endl;
+  return TotalMultiplet;
 }

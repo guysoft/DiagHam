@@ -52,12 +52,13 @@ libMathTools_a_AR = $(AR) $(ARFLAGS)
 libMathTools_a_LIBADD =
 am_libMathTools_a_OBJECTS = FactorialCoefficient.$(OBJEXT) \
 	ClebschGordanCoefficients.$(OBJEXT) \
-	IntegerAlgebraTools.$(OBJEXT)
+	IntegerAlgebraTools.$(OBJEXT) BinomialCoefficients.$(OBJEXT)
 libMathTools_a_OBJECTS = $(am_libMathTools_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ClebschGordanCoefficients.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/BinomialCoefficients.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ClebschGordanCoefficients.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FactorialCoefficient.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/IntegerAlgebraTools.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -164,7 +165,8 @@ SUBDIRS = NumericalAnalysis RandomNumber
 noinst_LIBRARIES = libMathTools.a
 libMathTools_a_SOURCES = FactorialCoefficient.cc \
 ClebschGordanCoefficients.cc \
-IntegerAlgebraTools.cc
+IntegerAlgebraTools.cc \
+BinomialCoefficients.cc
 
 all: all-recursive
 
@@ -213,6 +215,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BinomialCoefficients.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClebschGordanCoefficients.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FactorialCoefficient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IntegerAlgebraTools.Po@am__quote@

@@ -89,6 +89,11 @@ class MomentumMultipletSet
   // return value = reference on current momentum multiplet set
   MomentumMultipletSet& operator = (const MomentumMultipletSet& multiplets);
 
+  // get twice the maximum momentum that is reached in the current set of multiplets
+  //
+  // return value = maximum momentum  
+  int GetMaximumMomentum();
+
   // get reference on the number of multiplets for a given L value
   //
   // lvalue = twice the L value
@@ -151,6 +156,15 @@ class MomentumMultipletSet
   int GetFixedLzBosonHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
 };
+
+// get twice the maximum momentum that is reached in the current set of multiplets
+//
+// return value = maximum momentum  
+
+inline int MomentumMultipletSet::GetMaximumMomentum()
+{
+  return this->MaximumMomentum;
+}
 
 // get reference on the number of multiplets for a given L value
 //
