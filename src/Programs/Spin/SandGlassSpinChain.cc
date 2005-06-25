@@ -10,7 +10,7 @@
 #include "GeneralTools/List.h"
 #include "GeneralTools/ListIterator.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"

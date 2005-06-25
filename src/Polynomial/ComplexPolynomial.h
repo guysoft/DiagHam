@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include <iostream>
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 using std::ostream;

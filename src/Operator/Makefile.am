@@ -1,7 +1,5 @@
-SUBDIRS=QHEOperator
+SUBDIRS=QHEOperator SpinOperator
 
 noinst_LIBRARIES=libOperator.a
 
-libOperator_a_SOURCES=AbstractOperator.cc \
-PeriodicAnisotropicMagnetizationOperator.cc \
-ParticlePolarizationOperator.cc
+libOperator_a_SOURCES=AbstractOperator.cc

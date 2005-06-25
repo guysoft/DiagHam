@@ -31,7 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnTorusWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"

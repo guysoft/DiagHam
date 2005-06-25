@@ -50,16 +50,12 @@ AR = ar
 ARFLAGS = cru
 libOperator_a_AR = $(AR) $(ARFLAGS)
 libOperator_a_LIBADD =
-am_libOperator_a_OBJECTS = AbstractOperator.$(OBJEXT) \
-	PeriodicAnisotropicMagnetizationOperator.$(OBJEXT) \
-	ParticlePolarizationOperator.$(OBJEXT)
+am_libOperator_a_OBJECTS = AbstractOperator.$(OBJEXT)
 libOperator_a_OBJECTS = $(am_libOperator_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticlePolarizationOperator.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/PeriodicAnisotropicMagnetizationOperator.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractOperator.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -160,12 +156,9 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEOperator
+SUBDIRS = QHEOperator SpinOperator
 noinst_LIBRARIES = libOperator.a
-libOperator_a_SOURCES = AbstractOperator.cc \
-PeriodicAnisotropicMagnetizationOperator.cc \
-ParticlePolarizationOperator.cc
-
+libOperator_a_SOURCES = AbstractOperator.cc
 all: all-recursive
 
 .SUFFIXES:
@@ -214,8 +207,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticlePolarizationOperator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicAnisotropicMagnetizationOperator.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

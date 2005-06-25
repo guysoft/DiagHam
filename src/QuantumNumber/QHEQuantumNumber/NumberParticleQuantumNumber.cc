@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/QHEQuantumNumber/NumberParticleQuantumNumber.h"
 #include <iostream>
 
 

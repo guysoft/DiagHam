@@ -32,7 +32,7 @@
 #include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 // constructor from default datas

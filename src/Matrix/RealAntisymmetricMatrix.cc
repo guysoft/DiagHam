@@ -35,7 +35,7 @@
 #ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #endif
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 #include <stdlib.h>
 

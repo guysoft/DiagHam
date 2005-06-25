@@ -29,8 +29,8 @@
 
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
-#include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/QHEQuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include "QuantumNumber/MomentumQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"

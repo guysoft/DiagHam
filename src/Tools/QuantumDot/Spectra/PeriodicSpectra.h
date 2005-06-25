@@ -30,7 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicThreeDOneParticle.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 class TetrapodThreeDConstantCellPotential;
 

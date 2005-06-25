@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of NDMAP hamiltonian precalculation operation           //
+//           class of QHE particle wave function evaluation operation         //
 //                                                                            //
-//                        last modification : 03/11/2003                      //
+//                        last modification : 29/07/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,41 +29,59 @@
 
 
 #include "config.h"
-#include "Architecture/ArchitectureOperation/NDMAPPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticleWaveFunctionOperation.h"
+#include "Vector/RealVector.h"
+#include "FunctionBasis/AbstractFunctionBasis.h"
 
 
 // constructor 
 //
-// hamiltonian = pointer to the hamiltonian to use
-// firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
+// space = pointer to the Hilbert space to use
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
 
-NDMAPPrecalculationOperation::NDMAPPrecalculationOperation (NDMAPSpinChainHamiltonian* hamiltonian, bool firstPass)
+QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEParticle* space, RealVector* state, RealVector* position, 
+								    AbstractFunctionBasis* basis, int nextCoordinates)
 {
   this->FirstComponent = 0;
-  this->NbrComponent = hamiltonian->GetHilbertSpaceDimension();
-  this->Hamiltonian = hamiltonian;
-  this->OperationType = AbstractArchitectureOperation::NDMAPPrecalculation;
-  this->FirstPass = firstPass;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->NextCoordinates = nextCoordinates;
+  if (this->NextCoordinates != -1)
+    space->InitializeWaveFunctionEvaluation(true);
+  else
+    space->InitializeWaveFunctionEvaluation(false);
+  this->HilbertSpace = (AbstractQHEParticle*) space->Clone();
+  this->State = state;
+  this->Position = position;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Basis = basis;    
 }
 
 // copy constructor 
 //
 // operation = reference on operation to copy
 
-NDMAPPrecalculationOperation::NDMAPPrecalculationOperation(const NDMAPPrecalculationOperation& operation)
+QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEParticleWaveFunctionOperation& operation)
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
-  this->Hamiltonian = operation.Hamiltonian;
-  this->OperationType = AbstractArchitectureOperation::NDMAPPrecalculation;
-  this->FirstPass = operation.FirstPass;
+  this->State = operation.State;
+  this->HilbertSpace = (AbstractQHEParticle*) operation.HilbertSpace->Clone();
+  this->Position = operation.Position;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Basis = operation.Basis;
+  this->Scalar = operation.Scalar;
+  this->NextCoordinates = operation.NextCoordinates;
 }
   
 // destructor
 //
 
-NDMAPPrecalculationOperation::~NDMAPPrecalculationOperation()
+QHEParticleWaveFunctionOperation::~QHEParticleWaveFunctionOperation()
 {
+  delete this->HilbertSpace;
 }
   
 // set range of indices
@@ -71,7 +89,7 @@ NDMAPPrecalculationOperation::~NDMAPPrecalculationOperation()
 // firstComponent = index of the first component
 // nbrComponent = number of component
 
-void NDMAPPrecalculationOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
+void QHEParticleWaveFunctionOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
@@ -81,25 +99,24 @@ void NDMAPPrecalculationOperation::SetIndicesRange (const int& firstComponent, c
 //
 // return value = pointer to cloned operation
 
-AbstractArchitectureOperation* NDMAPPrecalculationOperation::Clone()
+AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
 {
-  return new NDMAPPrecalculationOperation (*this);
+  return new QHEParticleWaveFunctionOperation (*this);
 }
   
 // apply operation
 //
 // return value = true if no error occurs
 
-bool NDMAPPrecalculationOperation::ApplyOperation()
+bool QHEParticleWaveFunctionOperation::ApplyOperation()
 {
-  if (this->FirstPass ==  true)
-    {
-      this->Hamiltonian->PartialFastMultiplicationMemory(this->FirstComponent, this->NbrComponent);
-    }
+  if (this->NextCoordinates == -1)
+    this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
+							    this->FirstComponent, this->NbrComponent);
   else
-    {
-      this->Hamiltonian->PartialEnableFastMultiplication(this->FirstComponent, this->NbrComponent);
-    }
+    this->Scalar = this->HilbertSpace->EvaluateWaveFunctionWithTimeCoherence(*(this->State), *(this->Position), 
+									     *(this->Basis), this->NextCoordinates, 
+									     this->FirstComponent, this->NbrComponent);
   return true;
 }
 

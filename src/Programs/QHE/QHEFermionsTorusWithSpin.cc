@@ -11,10 +11,10 @@
 
 #include "GeneralTools/ListIterator.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
-#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 
-#include "Operator/ParticlePolarizationOperator.h"
+#include "Operator/QHEOperator/ParticlePolarizationOperator.h"
 
 #include <iostream>
 #include <stdlib.h>

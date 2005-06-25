@@ -33,7 +33,7 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/ComplexTriDiagonalHermitianMatrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "GeneralTools/GarbageFlag.h"
 
 

@@ -31,7 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/ManyBodyHilbertSpace/AharonovBohmCages.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 
 #include <math.h>
 

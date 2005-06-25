@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//           class of QHE particle wave function evaluation operation         //
+//          class of QHE particle hamiltonian precalculation operation        //
 //                                                                            //
-//                        last modification : 29/07/2004                      //
+//                        last modification : 11/03/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,59 +29,41 @@
 
 
 #include "config.h"
-#include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
-#include "Vector/RealVector.h"
-#include "FunctionBasis/AbstractFunctionBasis.h"
+#include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 
 // constructor 
 //
-// space = pointer to the Hilbert space to use
-// state = vector corresponding to the state in the Fock basis
-// position = vector whose components give coordinates of the point where the wave function has to be evaluated
-// basis = one body real space basis to use
-// nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+// hamiltonian = pointer to the hamiltonian to use
+// firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
 
-QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEParticle* space, RealVector* state, RealVector* position, 
-								    AbstractFunctionBasis* basis, int nextCoordinates)
+QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (AbstractQHEHamiltonian* hamiltonian, bool firstPass)
 {
   this->FirstComponent = 0;
-  this->NbrComponent = space->GetHilbertSpaceDimension();
-  this->NextCoordinates = nextCoordinates;
-  if (this->NextCoordinates != -1)
-    space->InitializeWaveFunctionEvaluation(true);
-  else
-    space->InitializeWaveFunctionEvaluation(false);
-  this->HilbertSpace = (AbstractQHEParticle*) space->Clone();
-  this->State = state;
-  this->Position = position;
-  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
-  this->Basis = basis;    
+  this->NbrComponent = hamiltonian->GetHilbertSpaceDimension();
+  this->Hamiltonian = hamiltonian;
+  this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
+  this->FirstPass = firstPass;
 }
 
 // copy constructor 
 //
 // operation = reference on operation to copy
 
-QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEParticleWaveFunctionOperation& operation)
+QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation(const QHEParticlePrecalculationOperation& operation)
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
-  this->State = operation.State;
-  this->HilbertSpace = (AbstractQHEParticle*) operation.HilbertSpace->Clone();
-  this->Position = operation.Position;
-  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
-  this->Basis = operation.Basis;
-  this->Scalar = operation.Scalar;
-  this->NextCoordinates = operation.NextCoordinates;
+  this->Hamiltonian = operation.Hamiltonian;
+  this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
+  this->FirstPass = operation.FirstPass;
 }
   
 // destructor
 //
 
-QHEParticleWaveFunctionOperation::~QHEParticleWaveFunctionOperation()
+QHEParticlePrecalculationOperation::~QHEParticlePrecalculationOperation()
 {
-  delete this->HilbertSpace;
 }
   
 // set range of indices
@@ -89,7 +71,7 @@ QHEParticleWaveFunctionOperation::~QHEParticleWaveFunctionOperation()
 // firstComponent = index of the first component
 // nbrComponent = number of component
 
-void QHEParticleWaveFunctionOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
+void QHEParticlePrecalculationOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
@@ -99,24 +81,25 @@ void QHEParticleWaveFunctionOperation::SetIndicesRange (const int& firstComponen
 //
 // return value = pointer to cloned operation
 
-AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
+AbstractArchitectureOperation* QHEParticlePrecalculationOperation::Clone()
 {
-  return new QHEParticleWaveFunctionOperation (*this);
+  return new QHEParticlePrecalculationOperation (*this);
 }
   
 // apply operation
 //
 // return value = true if no error occurs
 
-bool QHEParticleWaveFunctionOperation::ApplyOperation()
+bool QHEParticlePrecalculationOperation::ApplyOperation()
 {
-  if (this->NextCoordinates == -1)
-    this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
-							    this->FirstComponent, this->NbrComponent);
+  if (this->FirstPass ==  true)
+    {
+      this->Hamiltonian->PartialFastMultiplicationMemory(this->FirstComponent, this->NbrComponent);
+    }
   else
-    this->Scalar = this->HilbertSpace->EvaluateWaveFunctionWithTimeCoherence(*(this->State), *(this->Position), 
-									     *(this->Basis), this->NextCoordinates, 
-									     this->FirstComponent, this->NbrComponent);
+    {
+      this->Hamiltonian->PartialEnableFastMultiplication(this->FirstComponent, this->NbrComponent);
+    }
   return true;
 }
 

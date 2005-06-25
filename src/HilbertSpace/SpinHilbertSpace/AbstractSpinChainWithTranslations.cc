@@ -30,7 +30,7 @@
 
 #include "HilbertSpace/SpinHilbertSpace/AbstractSpinChainWithTranslations.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 
 
 // virtual destructor

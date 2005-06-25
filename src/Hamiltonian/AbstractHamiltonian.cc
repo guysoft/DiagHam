@@ -35,7 +35,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "BitmapPicture/AbstractBitmapPicture.h"
 #include "BitmapPicture/TgaFormat.h" 
 #include "Color/PicRGB.h"

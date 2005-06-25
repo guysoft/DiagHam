@@ -35,13 +35,13 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
 #include <sys/time.h>

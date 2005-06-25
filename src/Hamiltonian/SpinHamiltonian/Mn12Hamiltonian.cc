@@ -32,7 +32,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
 
 #include <iostream>

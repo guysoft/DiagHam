@@ -36,7 +36,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
 
 #include <iostream>

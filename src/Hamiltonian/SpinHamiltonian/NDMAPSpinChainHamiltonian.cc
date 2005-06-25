@@ -34,10 +34,10 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/NDMAPPrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/SpinArchitectureOperation/NDMAPPrecalculationOperation.h"
 
 #include <iostream>
 #include <sys/time.h>

@@ -34,7 +34,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
 #endif

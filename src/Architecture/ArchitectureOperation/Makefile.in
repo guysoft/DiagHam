@@ -60,10 +60,7 @@ am_libArchitectureOperation_a_OBJECTS =  \
 	AddComplexLinearCombinationOperation.$(OBJEXT) \
 	MatrixMatrixMultiplyOperation.$(OBJEXT) \
 	AbstractPrecalculationOperation.$(OBJEXT) \
-	QHEParticlePrecalculationOperation.$(OBJEXT) \
-	NDMAPPrecalculationOperation.$(OBJEXT) \
 	AbstractScalarSumOperation.$(OBJEXT) \
-	QHEParticleWaveFunctionOperation.$(OBJEXT) \
 	MainTaskOperation.$(OBJEXT)
 libArchitectureOperation_a_OBJECTS =  \
 	$(am_libArchitectureOperation_a_OBJECTS)
@@ -80,9 +77,6 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleComplexScalarProductOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleRealScalarProductOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleVectorHamiltonianMultiplyOperation.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/NDMAPPrecalculationOperation.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/QHEParticlePrecalculationOperation.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/VectorHamiltonianMultiplyOperation.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -184,7 +178,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = 
+SUBDIRS = QHEArchitectureOperation SpinArchitectureOperation
 noinst_LIBRARIES = libArchitectureOperation.a
 libArchitectureOperation_a_SOURCES = AbstractArchitectureOperation.cc \
 VectorHamiltonianMultiplyOperation.cc \
@@ -195,10 +189,7 @@ MultipleComplexScalarProductOperation.cc \
 AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
-QHEParticlePrecalculationOperation.cc \
-NDMAPPrecalculationOperation.cc \
 AbstractScalarSumOperation.cc \
-QHEParticleWaveFunctionOperation.cc \
 MainTaskOperation.cc
 
 all: all-recursive
@@ -258,9 +249,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleComplexScalarProductOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleRealScalarProductOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleVectorHamiltonianMultiplyOperation.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NDMAPPrecalculationOperation.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticlePrecalculationOperation.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEParticleWaveFunctionOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VectorHamiltonianMultiplyOperation.Po@am__quote@
 
 .cc.o:

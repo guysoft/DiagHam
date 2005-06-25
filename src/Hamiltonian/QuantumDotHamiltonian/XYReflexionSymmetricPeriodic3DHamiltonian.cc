@@ -31,7 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/QuantumDotHilbertSpace/PeriodicReflexionSymmetryOneDOneParticle.h"
 #include "Hamiltonian/QuantumDotHamiltonian/XYReflexionSymmetricPeriodic3DHamiltonian.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Vector/ComplexVector.h"
 #include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"
 

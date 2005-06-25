@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Vector/ComplexVector.h"
 #include "Hamiltonian/QuantumDotHamiltonian/PeriodicElectronHole3DHamiltonian.h"
 #include "Tools/QuantumDot/Potential/ThreeDConstantCellPotential.h"

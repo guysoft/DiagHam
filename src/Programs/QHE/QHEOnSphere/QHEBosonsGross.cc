@@ -1,5 +1,5 @@
 #include "config.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "MathTools/FactorialCoefficient.h"
 
 #include <iostream>

@@ -31,7 +31,7 @@
 #include "config.h"
 #include "Hamiltonian/QuantumDots2DHamiltonian.h"
 #include "Vector/RealVector.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Potential/ThreeDPotential.h"
 
 #include <iostream>

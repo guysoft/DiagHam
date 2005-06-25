@@ -33,10 +33,10 @@
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEOnTorusHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
 #include <sys/time.h>

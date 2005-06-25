@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 class AbstractClusterArchitecture : public AbstractArchitecture

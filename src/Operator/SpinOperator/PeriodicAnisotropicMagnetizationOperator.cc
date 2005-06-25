@@ -28,11 +28,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Operator/PeriodicAnisotropicMagnetizationOperator.h"
+#include "Operator/SpinOperator/PeriodicAnisotropicMagnetizationOperator.h"
 #include "Output/MathematicaOutput.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 using std::cout;

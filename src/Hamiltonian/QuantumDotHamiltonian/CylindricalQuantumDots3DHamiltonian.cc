@@ -26,7 +26,7 @@
 
 #include "config.h"
 #include "Hamiltonian/QuantumDotHamiltonian/CylindricalQuantumDots3DHamiltonian.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "Vector/ComplexVector.h"
 #include "Tools/QuantumDot/Potential/ThreeDConstantCylinderPotential.h"
 #include "MathTools/BesselJZeros.h"

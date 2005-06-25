@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 class Vector;

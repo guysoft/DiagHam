@@ -33,8 +33,8 @@
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SzQuantumNumber.h"
-#include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/QHEQuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include <iostream>
 

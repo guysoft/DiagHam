@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "Tools/QHE/QHEWaveFunction/JainCFOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/LandauSpectrumOnSphere.h"

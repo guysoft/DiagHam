@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
 
 class AbstractScalarSumOperation: public AbstractArchitectureOperation

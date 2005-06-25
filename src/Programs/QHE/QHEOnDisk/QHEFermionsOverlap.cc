@@ -13,7 +13,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-#include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
+#include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticleWaveFunctionOperation.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"

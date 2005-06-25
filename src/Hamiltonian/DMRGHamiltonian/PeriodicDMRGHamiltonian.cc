@@ -31,7 +31,7 @@
 #include "Hamiltonian/DMRGHamiltonian/PeriodicDMRGHamiltonian.h"
 #include "TensorProduct/TensorProductRealVector.h"
 #include "TensorProduct/FullTensorProductStructure.h"
-#include "Complex.h"
+#include "MathTools/Complex.h"
 
   
 // constructor from default datas

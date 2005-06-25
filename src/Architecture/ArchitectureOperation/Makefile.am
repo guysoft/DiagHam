@@ -1,4 +1,4 @@
-SUBDIRS=
+SUBDIRS=QHEArchitectureOperation SpinArchitectureOperation
 
 noinst_LIBRARIES=libArchitectureOperation.a
 
@@ -11,8 +11,5 @@ MultipleComplexScalarProductOperation.cc \
 AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
-QHEParticlePrecalculationOperation.cc \
-NDMAPPrecalculationOperation.cc \
 AbstractScalarSumOperation.cc \
-QHEParticleWaveFunctionOperation.cc \
 MainTaskOperation.cc

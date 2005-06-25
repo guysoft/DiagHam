@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//          class of QHE particle hamiltonian precalculation operation        //
+//              class of NDMAP hamiltonian precalculation operation           //
 //                                                                            //
-//                        last modification : 11/03/2003                      //
+//                        last modification : 03/11/2003                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
+#include "Architecture/ArchitectureOperation/SpinArchitectureOperation/NDMAPPrecalculationOperation.h"
 
 
 // constructor 
@@ -37,12 +37,12 @@
 // hamiltonian = pointer to the hamiltonian to use
 // firstPass = flag to indicate if the operation has to be applied to the first pass of the precalculations
 
-QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (AbstractQHEHamiltonian* hamiltonian, bool firstPass)
+NDMAPPrecalculationOperation::NDMAPPrecalculationOperation (NDMAPSpinChainHamiltonian* hamiltonian, bool firstPass)
 {
   this->FirstComponent = 0;
   this->NbrComponent = hamiltonian->GetHilbertSpaceDimension();
   this->Hamiltonian = hamiltonian;
-  this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
+  this->OperationType = AbstractArchitectureOperation::NDMAPPrecalculation;
   this->FirstPass = firstPass;
 }
 
@@ -50,19 +50,19 @@ QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation (Abstract
 //
 // operation = reference on operation to copy
 
-QHEParticlePrecalculationOperation::QHEParticlePrecalculationOperation(const QHEParticlePrecalculationOperation& operation)
+NDMAPPrecalculationOperation::NDMAPPrecalculationOperation(const NDMAPPrecalculationOperation& operation)
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
   this->Hamiltonian = operation.Hamiltonian;
-  this->OperationType = AbstractArchitectureOperation::QHEParticlePrecalculation;
+  this->OperationType = AbstractArchitectureOperation::NDMAPPrecalculation;
   this->FirstPass = operation.FirstPass;
 }
   
 // destructor
 //
 
-QHEParticlePrecalculationOperation::~QHEParticlePrecalculationOperation()
+NDMAPPrecalculationOperation::~NDMAPPrecalculationOperation()
 {
 }
   
@@ -71,7 +71,7 @@ QHEParticlePrecalculationOperation::~QHEParticlePrecalculationOperation()
 // firstComponent = index of the first component
 // nbrComponent = number of component
 
-void QHEParticlePrecalculationOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
+void NDMAPPrecalculationOperation::SetIndicesRange (const int& firstComponent, const int& nbrComponent)
 {
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
@@ -81,16 +81,16 @@ void QHEParticlePrecalculationOperation::SetIndicesRange (const int& firstCompon
 //
 // return value = pointer to cloned operation
 
-AbstractArchitectureOperation* QHEParticlePrecalculationOperation::Clone()
+AbstractArchitectureOperation* NDMAPPrecalculationOperation::Clone()
 {
-  return new QHEParticlePrecalculationOperation (*this);
+  return new NDMAPPrecalculationOperation (*this);
 }
   
 // apply operation
 //
 // return value = true if no error occurs
 
-bool QHEParticlePrecalculationOperation::ApplyOperation()
+bool NDMAPPrecalculationOperation::ApplyOperation()
 {
   if (this->FirstPass ==  true)
     {

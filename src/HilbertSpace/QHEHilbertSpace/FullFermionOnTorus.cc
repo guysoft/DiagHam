@@ -35,7 +35,7 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
-#include "QuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/QHEQuantumNumber/NumberParticleQuantumNumber.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "Matrix/Matrix.h"
