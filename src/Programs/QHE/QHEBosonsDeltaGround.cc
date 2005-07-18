@@ -15,8 +15,8 @@
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
-#include "BitmapPicture/AbstractBitmapPicture.h"
-#include "BitmapPicture/TgaFormat.h"
+#include "BitmapTools/BitmapPicture/AbstractBitmapPicture.h"
+#include "BitmapTools/BitmapPicture/TgaFormat.h"
 
 #include "Operator/QHEOperator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/QHEOperator/ParticleOnSphereDensityOperator.h"

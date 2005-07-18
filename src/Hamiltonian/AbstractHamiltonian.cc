@@ -36,9 +36,9 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "MathTools/Complex.h"
-#include "BitmapPicture/AbstractBitmapPicture.h"
-#include "BitmapPicture/TgaFormat.h" 
-#include "Color/PicRGB.h"
+#include "BitmapTools/BitmapPicture/AbstractBitmapPicture.h"
+#include "BitmapTools/BitmapPicture/TgaFormat.h" 
+#include "BitmapTools/Color/PicRGB.h"
 
 
 #include <stdlib.h>

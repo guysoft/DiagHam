@@ -25,8 +25,8 @@
 
 
 #include "Tools/QuantumDot/Potential/BinaryThreeDConstantCellPotential.h"
-#include "BitmapPicture/BmpFormat.h"
-#include "Color/PicRGB.h"
+#include "BitmapTools/BitmapPicture/BmpFormat.h"
+#include "BitmapTools/Color/PicRGB.h"
 
 #include <iostream>
 #include <fstream>

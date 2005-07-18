@@ -1,2 +1,2 @@
-SUBDIRS=BitmapPicture Color Architecture DMRGAlgorithm GeneralTools Hamiltonian HilbertSpace Interaction LanczosAlgorithm Matrix Output Polynomial QuantumNumber Tensor TensorProduct Vector Operator MathTools Options FunctionBasis Tools MainTask Programs
+SUBDIRS=Architecture DMRGAlgorithm GeneralTools Hamiltonian HilbertSpace Interaction LanczosAlgorithm Matrix Output Polynomial QuantumNumber Tensor TensorProduct Vector Operator MathTools Options FunctionBasis Tools MainTask Programs
 
