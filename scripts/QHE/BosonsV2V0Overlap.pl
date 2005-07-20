@@ -15,21 +15,30 @@ my $LzMax = 0;
 my $ReferenceVector = "";
 my $PlotFlag = 0;
 my $DiagonalizationProgramOptions = "";
+my $GridFile = "";
+my $KeepFlag = 0;
+
 
 my $Result = GetOptions ("progdiag:s" => \$PathToDiagonalizationProgram, "progoverlap:s" => \$PathToOverlapProgram, 
 			 "diagoption:s" => \$DiagonalizationProgramOptions,
 			 "ref=s" => \$ReferenceVector, "nbrbosons:i" => \$NbrBosons, "lzmax:i" => \$LzMax,
-			 "step=f" => \$Step, "min:f" => \$MinValue, "nbrvalues=i" => \$NbrValues, "plot" => \$PlotFlag);
+			 "step:f" => \$Step, "min:f" => \$MinValue, "nbrvalues:i" => \$NbrValues, "plot" => \$PlotFlag,
+			 "keep" => \$KeepFlag, "grid:s" => \$GridFile);
 
 
-if ($NbrValues <= 0)
+
+if ($GridFile eq "")
   {
-    die ("invalid value for nbrvalues option\n");
+    if ($NbrValues <= 0)
+      {
+	die ("invalid value for nbrvalues option\n");
+      }
+    if ($Step <= 0)
+      {
+	die ("invalid value for step option\n");
+      }
   }
-if ($Step <= 0)
-  {
-    die ("invalid value for step option\n");
-  }
+
 if (($ReferenceVector eq "") || (!(-e $ReferenceVector)))
   {
     die ("invalid value for ref option, or file ".$ReferenceVector." does not exist\n");
@@ -53,6 +62,7 @@ if ($LzMax == 0)
       }
   }
 
+
 my $DataFileName = "bosons_v2v0_n_".$NbrBosons."_2s_".$LzMax;
 unless (open (OUTFILE, ">".$DataFileName.".overlap"))
   {
@@ -66,39 +76,53 @@ if ((($NbrBosons % 2) == 1) && (($LzMax % 2) == 1))
     $ParityValue = 1;
   }
 
-while ($NbrValues > 0)
+if ($GridFile eq "")
   {
-    unless (open (OUTFILE, ">tmppseudopotential.dat"))
+    while ($NbrValues > 0)
       {
-	die ("can't open tmppseudopotential.dat\n");
-      }
-    print OUTFILE "Pseudopotentials = 1 0 ".$MinValue;
-    my $TmpLz = 3;
-    while ($TmpLz <= $LzMax)
-      {
-	print OUTFILE " 0";
-	$TmpLz++;
-      }
-    print OUTFILE "\n";
-    close(OUTFILE);
-    
-    my $DiagOutputFileName = $MinValue;
-    $DiagOutputFileName =~ s/\./\_/;
-    my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz 1 -n 1 --force-reorthogonalize --eigenstate --interaction-name v2v0".$DiagOutputFileName." --interaction-file tmppseudopotential.dat ".$DiagonalizationProgramOptions;
-    `$Command`;
-    $DiagOutputFileName = "bosons_v2v0".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
-    if (-e $DiagOutputFileName."_".$ParityValue.".0.vec")
-      {
-	$Command = $PathToOverlapProgram." -p ".$NbrBosons." -l ".$LzMax." --exact-state ".$ReferenceVector." --use-exact ".$DiagOutputFileName."_".$ParityValue.".0.vec";
-	my $Overlap = `$Command`;
-	chomp ($Overlap);
-	$Overlap =~ s/^overlap \= //; 
-	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
+	unless (open (OUTFILE, ">tmppseudopotential.dat"))
 	  {
-	    die ("can't open ".$DataFileName.".overlap\n");
+	    die ("can't open tmppseudopotential.dat\n");
 	  }
-	print OUTFILE $MinValue." ".($Overlap * $Overlap)."\n";
+	print OUTFILE "Pseudopotentials = 1 0 0.158 0 0 0 ".$MinValue;
+	my $TmpLz = 7;
+	while ($TmpLz <= $LzMax)
+	  {
+	    print OUTFILE " 0";
+	    $TmpLz++;
+	  }
+	print OUTFILE "\n";
 	close(OUTFILE);
+	
+	my $DiagOutputFileName = $MinValue;
+	$DiagOutputFileName =~ s/\./\_/;
+	my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz 1 -n 1 --force-reorthogonalize --eigenstate --interaction-name v2v0".$DiagOutputFileName." --interaction-file tmppseudopotential.dat ".$DiagonalizationProgramOptions;
+	`$Command`;
+	$DiagOutputFileName = "bosons_v2v0".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
+	if (-e $DiagOutputFileName."_".$ParityValue.".0.vec")
+	  {
+	    $Command = $PathToOverlapProgram." -p ".$NbrBosons." -l ".$LzMax." --exact-state ".$ReferenceVector." --use-exact ".$DiagOutputFileName."_".$ParityValue.".0.vec";
+	    my $Overlap = `$Command`;
+	    chomp ($Overlap);
+	    $Overlap =~ s/^overlap \= //; 
+	    unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
+	      {
+		die ("can't open ".$DataFileName.".overlap\n");
+	      }
+	    print OUTFILE $MinValue." ".($Overlap * $Overlap)."\n";
+	    close(OUTFILE);
+	  }
+	if ($KeepFlag == 0)
+	  {
+	    if (-e $DiagOutputFileName."_".$ParityValue.".0.vec")
+	      {
+		unlink($DiagOutputFileName."_".$ParityValue.".0.vec")
+	      }
+	    if (-e $DiagOutputFileName.".dat")
+	      {
+		unlink ($DiagOutputFileName.".dat");
+	      }
+	  }
       }
     $NbrValues--;
     $MinValue += $Step;
