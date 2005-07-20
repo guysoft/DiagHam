@@ -1,5 +1,5 @@
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsNBodyHardCore" , "0.01");
+  OptionManager Manager ("QHEBosonsTwoBodyGeneric" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -53,8 +53,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
-  (*SystemGroup) += new  SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -94,37 +94,41 @@ int main(int argc, char** argv)
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int NbrNBody = ((SingleIntegerOption*) Manager["nbr-nbody"])->GetInteger();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
-  double* NBodyWeightFactors = 0;
-  if (((SingleStringOption*) Manager["nbody-file"])->GetString() != 0)
+  double* PseudoPotentials = 0;
+  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
     {
-      ConfigurationParser NBodyDefinition;
-      if (NBodyDefinition.Parse(((SingleStringOption*) Manager["nbody-file"])->GetString()) == false)
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
+    }
+  else
+    {
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
 	{
-	  NBodyDefinition.DumpErrors(cout) << endl;
+	  InteractionDefinition.DumpErrors(cout) << endl;
 	  return -1;
 	}
-      if ((NBodyDefinition.GetAsSingleInteger("NbrNBody", NbrNBody) == false) || (NbrNBody < 2))
-	{
-	  cout << "NbrNBody is not defined or as a wrong value in " << ((SingleStringOption*) Manager["nbody-file"])->GetString() << endl;
-	  return -1;
-	}
-      int TmpNbrNBody;
-      if ((NBodyDefinition.GetAsDoubleArray("Weights", ' ', NBodyWeightFactors, TmpNbrNBody) == false) || ((TmpNbrNBody - NbrNBody) != 1))
+      int TmpNbrPseudoPotentials;
+      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == false)
 	{
 	  cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["nbody-file"])->GetString() << endl;
 	  return -1;
 	}
+      if (TmpNbrPseudoPotentials != (LzMax +1))
+	{
+	  cout << "Invalid number of pseudo-potentials" << endl;
+	  return -1;	  
+	}
     }
 
-  char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
+  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = 0;
   if ((abs(Max) & 1) != 0)
@@ -149,27 +153,17 @@ int main(int argc, char** argv)
       BosonOnSphere Space (NbrBosons, L, LzMax);
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-      if (NBodyWeightFactors == 0)
-	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
-								     Architecture.GetArchitecture(), 
-								     Memory, DiskCacheFlag,
-								     LoadPrecalculationFileName);
-	}
-      else
-	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
-								     Architecture.GetArchitecture(), 
-								     Memory, DiskCacheFlag,
-								     LoadPrecalculationFileName);
-	}
+      Hamiltonian = new ParticleOnSphereGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials,
+							   Architecture.GetArchitecture(), 
+							   Memory, DiskCacheFlag,
+							   LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, LzMax, L);
+	  EigenvectorName = new char [64];
+	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax, L);
 	}
       QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
