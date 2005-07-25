@@ -17,7 +17,7 @@ my $PlotFlag = 0;
 my $DiagonalizationProgramOptions = "";
 my $GridFile = "";
 my $KeepFlag = 0;
-
+my $ShowBestOverlaps = 1;
 
 my $Result = GetOptions ("progdiag:s" => \$PathToDiagonalizationProgram, "progoverlap:s" => \$PathToOverlapProgram, 
 			 "diagoption:s" => \$DiagonalizationProgramOptions,
@@ -129,7 +129,7 @@ plot \"".$DataFileName.".overlap\" using 1:2 title \"N=".$NbrBosons." 2S=".$LzMa
 else
   {
     my @GridVertices;
-    &ParseGridDefinition ($GridFile, \@GridVertices);
+    &ParseGridDefinition ($GridFile, \@GridVertices, $LzMax);
     if ($#GridVertices == 0)
       {
 	die ($GridFile." is an invalid grid file\n");
@@ -138,6 +138,7 @@ else
     my $VertexPosition;
     foreach $VertexPosition (@GridVertices)
       {
+	print "processing ".$VertexCount."/".$#GridVertices."\r";
 	unless (open (OUTFILE, ">tmppseudopotential.dat"))
 	  {
 	    die ("can't open tmppseudopotential.dat\n");
@@ -146,8 +147,7 @@ else
 	close(OUTFILE);
 
 	my $DiagOutputFileName = "v2v0".$VertexCount;
-	my $Overlap = 0.0;
-#&EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag);
+	my $Overlap = &EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag);
 
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
@@ -158,6 +158,36 @@ else
 
 	unlink("tmppseudopotential.dat");
 	$VertexCount++;
+      }
+    if ($ShowBestOverlaps == 1)
+      {
+	my $Index = 0;
+	my %BestOverlaps;
+	my @BestOverlapPseudoPotentials;
+	unless (open (INFILE, $DataFileName.".overlap"))
+	  {
+	    die ("can't open ".$DataFileName.".overlap\n");
+	  }
+	my $TmpLine;
+	while (defined($TmpLine = <INFILE>))
+	  {
+	    chomp ($TmpLine);
+	    if ($TmpLine ne "")
+	      {
+		my @TmpArray = split (/\|/, $TmpLine);
+		push (@BestOverlapPseudoPotentials, $TmpArray[0]);
+		$BestOverlaps{$Index} = $TmpArray[1];
+		$Index++;
+	      }
+	  }
+	close(INFILE);
+	my @SortedIndices= sort {$BestOverlaps{$b} <=> $BestOverlaps{$a}}(keys(%BestOverlaps));
+	$Index = 0;
+	while (($Index <= $#SortedIndices) && ($Index < 10))
+	  {
+	    print $Index." : ".$BestOverlaps{$SortedIndices[$Index]}." (".$BestOverlapPseudoPotentials[$SortedIndices[$Index]].")\n";
+	    $Index++;
+	  }
       }
   }
 
@@ -171,7 +201,7 @@ else
 # $_[4] = file that contains the reference vector (with path)
 # $_[5] = interaction name
 # $_[6] = flag to indicate if partial datas have to be kept (0 if false)
-# return value = squqre overlap
+# return value = square overlap
 
 sub EvalauteOverlap()
   {
@@ -193,12 +223,12 @@ sub EvalauteOverlap()
     my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz 1 -n 1 --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat ".$DiagonalizationProgramOptions;
     `$Command`;
 
-    $DiagOutputFileName = "bosons_".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
+    my $DiagOutputFileName2 = "bosons_".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
 
     my $Overlap = -1.0;
-    if (-e $DiagOutputFileName."_".$ParityValue.".0.vec")
+    if (-e $DiagOutputFileName2."_".$ParityValue.".0.vec")
       {
-	$Command = $PathToOverlapProgram." -p ".$NbrBosons." -l ".$LzMax." --exact-state ".$ReferenceVector." --use-exact ".$DiagOutputFileName."_".$ParityValue.".0.vec";
+	$Command = $PathToOverlapProgram." -p ".$NbrBosons." -l ".$LzMax." --exact-state ".$ReferenceVector." --use-exact ".$DiagOutputFileName2."_".$ParityValue.".0.vec";
 	$Overlap = `$Command`;
 	chomp ($Overlap);
 	$Overlap =~ s/^overlap \= //; 
@@ -207,13 +237,13 @@ sub EvalauteOverlap()
 
     if ($KeepFlag == 0)
       {
-	if (-e $DiagOutputFileName."_".$ParityValue.".0.vec")
+	if (-e $DiagOutputFileName2."_".$ParityValue.".0.vec")
 	  {
-	    unlink($DiagOutputFileName."_".$ParityValue.".0.vec")
+	    unlink($DiagOutputFileName2."_".$ParityValue.".0.vec")
 	  }
-	if (-e $DiagOutputFileName.".dat")
+	if (-e $DiagOutputFileName2.".dat")
 	  {
-	    unlink ($DiagOutputFileName.".dat");
+	    unlink ($DiagOutputFileName2.".dat");
 	  }
       }
     return $Overlap;
@@ -236,7 +266,7 @@ sub ParseGridDefinition()
       {
 	die ("can't open ".$GridFile."\n");
       }
-    my @Pseudopotentials;
+    my %Pseudopotentials;
     my $TmpLine;
     while (defined($TmpLine = <INFILE>))
       {
@@ -247,15 +277,95 @@ sub ParseGridDefinition()
 	if ($TmpLine ne "")
 	  {
 	    my @TmpArray = split (/\s+/, $TmpLine);
-	    if (($#TmpArray != 4) || (!($TmpArray[0] =~ /^\d+$/)) || (!($TmpArray[1] =~ /^\-?\d*\.?\d+$/)) || (!($TmpArray[2] =~ /^\-?\d*\.?\d+$/))
+	    if (($#TmpArray != 3) || (!($TmpArray[0] =~ /^\d+$/)) || (!($TmpArray[1] =~ /^\-?\d*\.?\d+$/)) || (!($TmpArray[2] =~ /^\-?\d*\.?\d+$/))
 		|| (!($TmpArray[3] =~ /^\d+$/)))
 	      {
 		close (INFILE);
 		return;
 	      }
 	    my $Index = shift (@TmpArray);
-	    $Pseudopotentials[$Index] = \@TmpArray;
+	    $Pseudopotentials{$Index} = \@TmpArray;
 	  }
       }
     close (INFILE);
+
+    my $Index = 0;
+    my @PseudopotentialIndices = sort {$a <=> $b} (keys (%Pseudopotentials));
+
+    my @Strife;
+    $Strife[0] = 1;
+    $Index = 0;
+    while ($Index <= $#PseudopotentialIndices)
+      {
+	my $TmpArray = $Pseudopotentials{$PseudopotentialIndices[$Index]};
+	$Strife[$Index + 1] = $Strife[$Index] * $$TmpArray[2];
+	$Index++;
+      }
+
+    $Index = 1;
+    my $Total = $Strife[$#Strife];
+    my $TmpString = "1";
+    while ($Index < $PseudopotentialIndices[0])
+      {
+	$TmpString .= " 0";
+	$Index++;
+      }
+    $Index = 0;
+    while ($Index < $Total)
+      {
+	push (@$GridVertices, $TmpString);
+	$Index++;
+      }
+
+    $Index = 0;
+    while ($Index <= $#PseudopotentialIndices)
+      {
+	my $TmpArray2 = $Pseudopotentials{$PseudopotentialIndices[$Index]};
+	my $Value = $$TmpArray2[0];
+	my $Step = $$TmpArray2[1];
+	my $NbrValues = $$TmpArray2[2];
+	my @TmpStrings;
+	my $Max = $LzMax + 1;
+	if ($Index < $#PseudopotentialIndices)
+	  {
+	    $Max = $PseudopotentialIndices[$Index + 1];
+	  }
+	my $TmpString = "";
+	my $Index2 = $PseudopotentialIndices[$Index] + 1;
+	while ($Index2 < $Max)
+	  {
+	    $TmpString .= " 0";
+	    $Index2++;
+	  }
+	$Index2 = 0;
+	while ($Index2 < $NbrValues)
+	  {
+	    push (@TmpStrings, " ".$Value.$TmpString);
+	    $Value += $Step;
+	    $Index2++;
+	  }
+	
+	$Index2 = 0;
+	my $Index3 = 0;
+	my $Index4 = 0;
+	my $TmpStrife = $Strife[$Index];
+
+	while ($Index2 < $Total)
+	  {
+	    $Index3 = 0;
+	    while ($Index3 < $NbrValues)
+	      {
+		$TmpString = $TmpStrings[$Index3];
+		$Index4 = 0;
+		while ($Index4 < $TmpStrife)
+		  {
+		    $$GridVertices[$Index2] .= $TmpString;
+		    $Index2++;
+		    $Index4++;
+		  }
+		$Index3++;
+	      }
+	  }
+	$Index++;
+      }
   }
