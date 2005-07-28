@@ -100,6 +100,22 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient) = 0;
 
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // temporaryState = array where the resulting state will be stored (must be allocated before passing as an argument)
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int nbrIndices);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
+
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied

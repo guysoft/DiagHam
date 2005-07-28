@@ -60,6 +60,7 @@ BosonOnSphere::BosonOnSphere (int nbrBosons, int totalLz, int lzMax)
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz);
 //  cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->TemporaryState = new int [this->NbrLzValue];
+  this->ProdATemporaryState = new int [this->NbrLzValue];
   this->Flag.Initialize();
   this->StateDescription = new int* [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
@@ -115,6 +116,7 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
+  this->ProdATemporaryState = new int [this->NbrLzValue];
 }
 
 // destructor
@@ -123,6 +125,7 @@ BosonOnSphere::BosonOnSphere(const BosonOnSphere& bosons)
 BosonOnSphere::~BosonOnSphere ()
 {
   delete[] this->TemporaryState;
+  delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Keys;
@@ -166,6 +169,7 @@ BosonOnSphere::~BosonOnSphere ()
 BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
 {
   delete[] this->TemporaryState;
+  delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Keys;
@@ -218,6 +222,7 @@ BosonOnSphere& BosonOnSphere::operator = (const BosonOnSphere& bosons)
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
+  this->ProdATemporaryState = new int [this->NbrLzValue];
 
   return *this;
 }
@@ -358,6 +363,70 @@ int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
     --NewLzMax;
   int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
+}
+
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnSphere::ProdA (int index, int* n, int nbrIndices)
+{
+  int CurrentLzMax = this->StateLzMax[index];
+  int* State = this->StateDescription[index];
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if ((n[i] > CurrentLzMax) || (State[n[i]] == 0))
+	{
+	  return 0.0;
+	}
+    }
+ 
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->ProdATemporaryState[i] = State[i];
+  for (; i < this->NbrLzValue; ++i)
+    this->ProdATemporaryState[i] = 0;
+  double Coefficient = 1.0;
+  for (i = 0; i < nbrIndices; ++i)
+    {
+      if (this->ProdATemporaryState[n[i]] == 0)
+	{
+	  return 0.0;
+	}
+      Coefficient *= (double) this->ProdATemporaryState[n[i]];
+      --this->ProdATemporaryState[n[i]];
+    }
+  return sqrt(Coefficient);
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
+{
+  int i = 0;
+  for (; i < this->NbrLzValue; ++i)
+    {
+      this->TemporaryState[i] = this->ProdATemporaryState[i];
+    }
+  coefficient = 1.0;
+  for (i = 0; i < nbrIndices; ++i)
+    {
+      ++this->TemporaryState[m[i]];
+      coefficient *= (double) this->TemporaryState[m[i]];
+    }
+  coefficient = sqrt(coefficient);
+  int NewLzMax = this->LzMax;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
 // apply a^+_m a_m operator to a given state 

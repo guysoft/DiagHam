@@ -366,6 +366,94 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
+{
+  this->ProdALzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  --nbrIndices;
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      if ((State & (((unsigned long) (0x1)) << n[i])) == 0)
+	{
+	  return 0.0;
+
+	}
+      for (int j = i + 1; j <= nbrIndices; ++j)
+	if (n[i] == n[j])
+	  {
+	    return 0.0;
+	  }
+    }
+  if (n[nbrIndices] > this->ProdALzMax)
+    {
+      return 0.0;
+    }
+
+  this->ProdATemporaryState = State;
+  int Index;
+  double Coefficient = 1.0;
+  for (int i = nbrIndices; i >= 0; --i)
+    {
+      Index = n[i];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
+#ifdef  __64_BITS__
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+      this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << Index);
+    }
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+    --this->ProdALzMax;
+
+  return Coefficient;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
+{
+  coefficient = 1.0;
+  unsigned long TmpState = this->ProdATemporaryState;
+  int Index;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      Index = m[i];
+      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      if (Index > this->ProdALzMax)
+	{
+	  this->ProdALzMax = Index;
+	}
+      else
+	{
+	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
+#ifdef  __64_BITS__
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+	}
+      TmpState |= (((unsigned long) (0x1)) << Index);
+    }
+  return this->FindStateIndex(TmpState, this->ProdALzMax);
+}
+
 // apply a^+_m a_m operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
