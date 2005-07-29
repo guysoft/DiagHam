@@ -124,6 +124,12 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
   this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
   this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
+  if ((*options)["show-itertime"] != 0)
+    {
+      this->ShowIterationTime = ((BooleanOption*) (*options)["show-itertime"])->GetBoolean();
+    }
+  else
+    this->ShowIterationTime = false;
   this->FirstRun = firstRun;
 }  
  
@@ -240,8 +246,10 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       cout << "Run Lanczos Algorithm" << endl;
       timeval TotalStartingTime;
       timeval TotalEndingTime;
+      timeval TotalCurrentTime;
       double Dt;
       gettimeofday (&(TotalStartingTime), 0);
+      gettimeofday (&(TotalCurrentTime), 0);      
       if (ResumeFlag == false)
 	{
 	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
@@ -258,7 +266,17 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
 	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	  PreviousLowest = Lowest; 
-	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " "<< endl;
+	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " ";
+	  if (this->ShowIterationTime == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+	      cout << "(" << Dt << " s)";
+	      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+	    }
+	  cout << endl;
 	}
       if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	{
@@ -300,9 +318,19 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  this->Architecture->ExecuteOperation(&Operation1);
 		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
 		  cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
-		       << Precision << " "<< endl;
+		       << Precision << " ";
+		  if (this->ShowIterationTime == true)
+		    {
+		      gettimeofday (&(TotalEndingTime), 0);
+		      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+		      cout << "(" << Dt << " s)";
+		      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+		      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+		    }
+		  cout << endl;
 		}
 	    }
 	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];

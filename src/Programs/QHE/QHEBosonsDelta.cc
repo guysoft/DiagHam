@@ -137,7 +137,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [64];
+	  EigenvectorName = new char [256];
 	  sprintf (EigenvectorName, "bosons_delta_n_%d_2s_%d_lz_%d", NbrBosons, LzMax, L);
 	}
       QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);

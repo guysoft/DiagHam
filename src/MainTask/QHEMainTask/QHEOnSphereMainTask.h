@@ -89,6 +89,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   char* EigenvectorFileName;
   // evaluate Lanczos convergence from eigenstate convergence
   bool EigenvectorConvergence;
+  // show time spent for each Lanczos iteration
+  bool ShowIterationTime;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;

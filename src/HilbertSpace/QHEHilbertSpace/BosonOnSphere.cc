@@ -376,30 +376,27 @@ double BosonOnSphere::ProdA (int index, int* n, int nbrIndices)
 {
   int CurrentLzMax = this->StateLzMax[index];
   int* State = this->StateDescription[index];
-  for (int i = 0; i < nbrIndices; ++i)
-    {
-      if ((n[i] > CurrentLzMax) || (State[n[i]] == 0))
-	{
-	  return 0.0;
-	}
-    }
- 
   int i = 0;
   for (; i <= CurrentLzMax; ++i)
     this->ProdATemporaryState[i] = State[i];
-  for (; i < this->NbrLzValue; ++i)
-    this->ProdATemporaryState[i] = 0;
-  double Coefficient = 1.0;
-  for (i = 0; i < nbrIndices; ++i)
+  int TmpCoefficient = 1;
+  for (i = nbrIndices - 1; i >= 0; --i)
     {
-      if (this->ProdATemporaryState[n[i]] == 0)
-	{
-	  return 0.0;
-	}
-      Coefficient *= (double) this->ProdATemporaryState[n[i]];
-      --this->ProdATemporaryState[n[i]];
+      if (n[i] > CurrentLzMax)
+        {
+          return 0.0;
+        }
+      int& Tmp = this->ProdATemporaryState[n[i]];
+      if (Tmp == 0)
+        {
+          return 0.0;
+        }
+      TmpCoefficient *= Tmp;
+      --Tmp;
     }
-  return sqrt(Coefficient);
+  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
+    this->ProdATemporaryState[i] = 0;
+  return sqrt((double) TmpCoefficient);
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -416,13 +413,10 @@ int BosonOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
     {
       this->TemporaryState[i] = this->ProdATemporaryState[i];
     }
-  coefficient = 1.0;
+  int TmpCoefficient = 1;
   for (i = 0; i < nbrIndices; ++i)
-    {
-      ++this->TemporaryState[m[i]];
-      coefficient *= (double) this->TemporaryState[m[i]];
-    }
-  coefficient = sqrt(coefficient);
+    TmpCoefficient *= ++this->TemporaryState[m[i]];
+  coefficient = sqrt((double) TmpCoefficient);
   int NewLzMax = this->LzMax;
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
@@ -524,23 +518,49 @@ int BosonOnSphere::FindStateIndex(int* stateDescription, int lzmax)
   int i;
   int* TmpStateDescription;
   int Start;
-  TmpPos3 = this->KeyInvertTableNbrIndices[Sector][TmpPos];
   int* TmpKeyInvertIndices = this->KeyInvertIndices[Sector][TmpPos];
-  for (int j = 0; j < TmpPos3; ++j)
+
+  TmpPos2 =this->KeyInvertTableNbrIndices[Sector][TmpPos] - 1;
+  TmpPos = 0;
+  while (TmpPos2 != TmpPos)
     {
-      Start = TmpKeyInvertIndices[j];
-      i = 0;
+      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
+      Start = TmpKeyInvertIndices[TmpPos3];
       TmpStateDescription = this->StateDescription[Start];
-      while (i <= lzmax)
-	{
-	  if (stateDescription[i] != TmpStateDescription[i])
-	    i = lzmax + 1;
-	  ++i;
-	}
-      if (i == (lzmax + 1))
-	return Start;
+      i = lzmax;
+      while ((i >= 0) && (stateDescription[i] ==  TmpStateDescription[i]))
+        --i;
+      if (i == -1)
+        {
+          return Start;
+        }
+      if (stateDescription[i] < TmpStateDescription[i])
+        {
+          TmpPos = TmpPos3 + 1;
+        }
+      else
+        {
+           TmpPos2 = TmpPos3 - 1;
+        }
     }
-  return this->HilbertSpaceDimension;
+  return TmpKeyInvertIndices[TmpPos];
+
+//  TmpPos3 = this->KeyInvertTableNbrIndices[Sector][TmpPos];
+//   for (int j = 0; j < TmpPos3; ++j)
+//     {
+//       Start = TmpKeyInvertIndices[j];
+//       i = 0;
+//       TmpStateDescription = this->StateDescription[Start];
+//       while (i <= lzmax)
+// 	{
+// 	  if (stateDescription[i] != TmpStateDescription[i])
+// 	    i = lzmax + 1;
+// 	  ++i;
+// 	}
+//       if (i == (lzmax + 1))
+// 	return Start;
+//     }
+//   return this->HilbertSpaceDimension;
 }
 
 // print a given State
