@@ -33,6 +33,7 @@
 
 #include <string.h>
 #include <fstream>
+#include <math.h>
 
 
 using std::ifstream;
