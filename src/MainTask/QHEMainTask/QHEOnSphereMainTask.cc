@@ -130,6 +130,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   else
     this->ShowIterationTime = false;
+  if ((*options)["initial-vector"] != 0)
+    {
+      this->InitialVectorFileName = ((SingleStringOption*) (*options)["initial-vector"])->GetString();
+    }
+  else
+    {
+      this->InitialVectorFileName = 0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -242,7 +250,18 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       if ((this->DiskFlag == true) && (this->ResumeFlag == true))
 	Lanczos->ResumeLanczosAlgorithm();
       else
-	Lanczos->InitializeLanczosAlgorithm();
+	{
+	  if (this->InitialVectorFileName == 0)
+	    {
+	      Lanczos->InitializeLanczosAlgorithm();
+	    }
+	  else
+	    {	      
+	      RealVector InitialVector;
+	      InitialVector.ReadVector(this->InitialVectorFileName);
+	      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+	    }
+	}
       cout << "Run Lanczos Algorithm" << endl;
       timeval TotalStartingTime;
       timeval TotalEndingTime;
