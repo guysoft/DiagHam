@@ -59,6 +59,7 @@ using std::endl;
 SimpleMPIArchitecture::SimpleMPIArchitecture()
 {
   this->PerformanceIndex = 1.0;
+  this->ArchitectureID = AbstractArchitecture::SMP;
 #ifdef __MPI__
   MPI::Init();
   this->NbrMPINodes = MPI::COMM_WORLD.Get_size();

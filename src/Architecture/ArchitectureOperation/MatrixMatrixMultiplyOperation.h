@@ -92,6 +92,12 @@ class MatrixMatrixMultiplyOperation: public AbstractArchitectureOperation
   // return value = pointer to destination matrix
   Matrix* GetDestinationMatrix ();
 
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ApplyOperation(SMPArchitecture* architecture);
+  
 };
 
 // get destination matrix

@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor 
@@ -216,4 +217,41 @@ bool MultipleRealScalarProductOperation::ApplyOperation()
 	  }
     }
   return true;
+}
+
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MultipleRealScalarProductOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->LeftVector->GetVectorDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  MultipleRealScalarProductOperation** TmpOperations = new MultipleRealScalarProductOperation* [architecture->GetNbrThreads()];
+  architecture->SetThreadOperation(this, 0);
+  this->SetIndicesRange(FirstComponent, Step);
+  FirstComponent += Step;
+  for (int i = 1; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (MultipleRealScalarProductOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      TmpOperations[i]->SetScalarProducts(new double [this->GetNbrScalarProduct()]);
+      FirstComponent += Step;            
+    }
+  TmpOperations[ReducedNbrThreads] = (MultipleRealScalarProductOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->LeftVector->GetVectorDimension() - FirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetScalarProducts(new double [this->GetNbrScalarProduct()]);
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);		
+  architecture->SendJobs();
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      for (int j = 0; j < this->GetNbrScalarProduct(); ++j)
+	this->GetScalarProducts()[j] += TmpOperations[i]->GetScalarProducts()[j];
+      delete[] TmpOperations[i]->GetScalarProducts();
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
+  return true;  
 }

@@ -74,8 +74,8 @@ class SMPArchitecture : public AbstractArchitecture
 
  private:
 
-  // number of processes to run simultaneously (in principle, the number of processors that can be allocated)
-  int NbrProcesses;
+  // number of threads to run simultaneously (in principle, the number of processors that can be allocated)
+  int NbrThreads;
 
   //  parameters for each thread
   ThreadMainParameter* ThreadParameters;
@@ -99,19 +99,23 @@ class SMPArchitecture : public AbstractArchitecture
   
   // constructor
   //
-  // nbrProcesses = number of processes to run simultaneously (in principle, the number of processors that can be allocated)
-  SMPArchitecture(int nbrProcesses);
+  // nbrThreads = number of threads to run simultaneously (in principle, the number of processors that can be allocated)
+  SMPArchitecture(int nbrThreads);
   
   // destructor
   //
   ~SMPArchitecture();
   
-  // multiply a vector by an hamiltonian and store the result in another vector
+  // get the  number of threads that run simultaneously
   //
-  // hamiltonian = pointer to the hamiltonian to use
-  // vSource = vector to multiply 
-  // vDestination = vector where result has to be stored 
-  void Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination);
+  // return value = number of threads
+  int GetNbrThreads();
+
+  // set the operation that has to be executed by a given thread
+  //
+  // operation = pointer to the operation
+  // index = thread index
+  void SetThreadOperation(AbstractArchitectureOperation* operation, int index);
 
   // main function for thread
   //
@@ -173,12 +177,22 @@ class SMPArchitecture : public AbstractArchitecture
   // return value = true if operation has been completed successfully
   bool ExecuteOperation (AbstractPrecalculationOperation* operation);
 
- protected:
+
+  
   
   // send jobs to threads
   //
   void SendJobs ();
   
 };
+
+// get the  number of threads that run simultaneously
+//
+// return value = number of threads
+
+inline int SMPArchitecture::GetNbrThreads()
+{
+  return this->NbrThreads;
+}
 
 #endif

@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // destructor
@@ -50,3 +51,33 @@ void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent
   this->NbrComponent = nbrComponent;
 }
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractPrecalculationOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->GetHilbertSpaceDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  AbstractPrecalculationOperation** TmpOperations = new AbstractPrecalculationOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (AbstractPrecalculationOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (AbstractPrecalculationOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->GetHilbertSpaceDimension() - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    {
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
+  return true;
+}
+  

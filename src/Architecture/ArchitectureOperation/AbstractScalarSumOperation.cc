@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // destructor
@@ -50,3 +51,33 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
   this->NbrComponent = nbrComponent;
 }
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractScalarSumOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->GetDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  AbstractScalarSumOperation** TmpOperations = new AbstractScalarSumOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (AbstractScalarSumOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (AbstractScalarSumOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->GetDimension() - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    {
+      this->GetScalar() += TmpOperations[i]->GetScalar();
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
+  return true;
+}

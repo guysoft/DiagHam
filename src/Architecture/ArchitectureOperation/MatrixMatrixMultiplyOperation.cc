@@ -32,6 +32,7 @@
 #include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
 #include "Matrix/Matrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor 
@@ -102,3 +103,32 @@ bool MatrixMatrixMultiplyOperation::ApplyOperation()
   return true;
 }
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MatrixMatrixMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->LeftMatrix->GetNbrRow() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  MatrixMatrixMultiplyOperation** TmpOperations = new MatrixMatrixMultiplyOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (MatrixMatrixMultiplyOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (MatrixMatrixMultiplyOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->LeftMatrix->GetNbrRow() - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    {
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
+  return true;
+}

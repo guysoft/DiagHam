@@ -71,6 +71,17 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // return value = reference ont the scalar used to store the operation
   virtual Complex& GetScalar();
 
+  // apply operation
+  //
+  // return value = true if no error occurs
+  virtual bool ApplyOperation() = 0;
+  
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ApplyOperation(SMPArchitecture* architecture);
+  
 };
 
 

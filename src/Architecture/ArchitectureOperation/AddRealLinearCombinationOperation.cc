@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Vector/RealVector.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor 
@@ -161,6 +162,36 @@ bool AddRealLinearCombinationOperation::ApplyOperation()
 	  this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
 							this->NbrComponent);
 	}
+  return true;
+}
+
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AddRealLinearCombinationOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  AddRealLinearCombinationOperation** TmpOperations = new AddRealLinearCombinationOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (AddRealLinearCombinationOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (AddRealLinearCombinationOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->DestinationVector->GetVectorDimension() - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    {
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
   return true;
 }
 

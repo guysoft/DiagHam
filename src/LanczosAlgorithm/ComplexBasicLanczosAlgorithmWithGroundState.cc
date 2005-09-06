@@ -33,6 +33,8 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
 #include "Vector/ComplexVector.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+
 #include <stdlib.h>
 
 
@@ -133,7 +135,8 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundState::GetGroundState()
     {
       RealVector TmpComponents (this->DiagonalizedMatrix.GetNbrRow());
       this->TridiagonalizedMatrix.Eigenvector(this->GroundStateEnergy, TmpComponents);
-      this->Architecture->Multiply(this->Hamiltonian, this->InitialState, this->V3);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
       this->V3 /= this->V3.Norm();
       this->V2 *= TmpComponents[this->DiagonalizedMatrix.GetNbrRow() - 1];
@@ -145,7 +148,8 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundState::GetGroundState()
       int lim = this->DiagonalizedMatrix.GetNbrRow() - 3;
       for (int i = 1; i < lim; ++i)
 	{
-	  this->Architecture->Multiply(this->Hamiltonian, this->V3, this->V1);
+	  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V3, &this->V1);
+	  this->Architecture->ExecuteOperation(&Operation2);
 	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i), this->V3, 
 					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 1), this->V2);
 	  this->V1 /= this->V1.Norm();
@@ -177,12 +181,14 @@ void ComplexBasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIt
       if (nbrIter < 2)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
-      this->Architecture->Multiply(this->Hamiltonian, this->V1, this->V2);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
       this->V2 /= this->V2.Norm(); 
-      this->Architecture->Multiply(this->Hamiltonian, this->V2, this->V3);
+      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
+      this->Architecture->ExecuteOperation(&Operation2);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
@@ -202,7 +208,8 @@ void ComplexBasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIt
       this->V2 = this->V3;
       this->V3 = TmpV;
       this->Index++;
-      this->Architecture->Multiply(this->Hamiltonian, this->V2, this->V3);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V2);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
 //      cout << this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) << endl;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;

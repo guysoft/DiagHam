@@ -32,6 +32,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
 #include "Vector/ComplexVector.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include <stdlib.h>
 
@@ -154,15 +155,16 @@ void ComplexBasicLanczosAlgorithmWithEigenstates::RunLanczosAlgorithm (int nbrIt
       if (nbrIter < 2)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
-      this->Architecture->Multiply(this->Hamiltonian, this->LanczosVectors[0], this->LanczosVectors[1]);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->LanczosVectors[0], &this->LanczosVectors[1]);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
 							    this->LanczosVectors[1]).Re;
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
 						   DiagonalElement(this->Index), 
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
-//      this->Hamiltonian->Multiply(this->LanczosVectors[1], this->LanczosVectors[2]);
-      this->Architecture->Multiply(this->Hamiltonian, this->LanczosVectors[1], this->LanczosVectors[2]);
+      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->LanczosVectors[1], &this->LanczosVectors[2]);
+      this->Architecture->ExecuteOperation(&Operation2);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
@@ -189,8 +191,8 @@ void ComplexBasicLanczosAlgorithmWithEigenstates::RunLanczosAlgorithm (int nbrIt
       this->LanczosVectors[i] /= this->LanczosVectors[i].Norm();
       this->Index++;
       this->LanczosVectors[i + 1] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
-      this->Architecture->Multiply(this->Hamiltonian, this->LanczosVectors[i], this->LanczosVectors[i + 1]);
-//      this->Hamiltonian->Multiply(this->LanczosVectors[i], this->LanczosVectors[i + 1]);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->LanczosVectors[i], &this->LanczosVectors[i + 1]);
+      this->Architecture->ExecuteOperation(&Operation1);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[i - 1] * 
 								       this->LanczosVectors[i + 1]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[i] * 

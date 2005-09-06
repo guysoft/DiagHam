@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
+#include "Architecture/AbstractArchitecture.h"
 
 
 // destructor
@@ -38,3 +39,42 @@
 AbstractArchitectureOperation::~AbstractArchitectureOperation()
 {
 }
+
+// apply operation for a given architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* architecture)
+{
+  switch (architecture->GetArchitectureID())
+    {
+    case AbstractArchitecture::SMP:
+      return this->ApplyOperation((SMPArchitecture*) architecture);
+    case AbstractArchitecture::SimpleMPI:
+      return this->ApplyOperation((SimpleMPIArchitecture*) architecture);
+    default:
+      return this->ApplyOperation();
+    }
+}
+  
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractArchitectureOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  return this->ApplyOperation();
+}
+ 
+// apply operation for simple MPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractArchitectureOperation::ApplyOperation(SimpleMPIArchitecture* architecture)
+{
+  return this->ApplyOperation();
+}
+  

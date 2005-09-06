@@ -32,6 +32,7 @@
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor 
@@ -256,6 +257,36 @@ bool AddComplexLinearCombinationOperation::ApplyOperation()
 							    this->NbrComponent);
 	    }
     }
+  return true;
+}
+
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AddComplexLinearCombinationOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  AddComplexLinearCombinationOperation** TmpOperations = new AddComplexLinearCombinationOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (AddComplexLinearCombinationOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (AddComplexLinearCombinationOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->DestinationVector->GetVectorDimension() - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+    {
+      delete TmpOperations[i];
+    }
+  delete[] TmpOperations;
   return true;
 }
 

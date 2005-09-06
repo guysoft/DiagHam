@@ -48,6 +48,7 @@
 
 MonoProcessorArchitecture::MonoProcessorArchitecture()
 {
+  this->ArchitectureID = AbstractArchitecture::MonoProcessor;
 }
   
 // destructor

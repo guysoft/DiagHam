@@ -119,6 +119,12 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
   // return value = true if no error occurs
   bool ApplyOperation();
   
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ApplyOperation(SMPArchitecture* architecture);
+  
 };
 
 // get destination vector 

@@ -62,11 +62,27 @@ class AbstractArchitecture
   // dimension of the Hilbert space on which the architecture has to work
   long HilbertSpaceDimension;
 
+  // architecture ID
+  int ArchitectureID;
+
  public:
+
+  enum ArchitectureIDs
+    {
+      MonoProcessor = 0x01,
+      SMP = 0x02,
+      SimpleMPI = 0x03 
+    };
+
   
   // destructor
   //
   virtual ~AbstractArchitecture();
+
+  // get ID of the architecture
+  //
+  // return value = architecture ID
+  int GetArchitectureID();
   
   // get typical range of indices on which the local architecture acts
   //
@@ -103,13 +119,6 @@ class AbstractArchitecture
   // 
   // dimension = dimension of the Hilbert space
   virtual void SetDimension (long dimension);
-
-  // multiply a vector by an hamiltonian and store the result in another vector
-  //
-  // hamiltonian = pointer to the hamiltonian to use
-  // vSource = vector to multiply 
-  // vDestination = vector where result has to be stored 
-  virtual void Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination);
 
   // execute an architecture-dependent operation
   //
@@ -255,6 +264,15 @@ inline void AbstractArchitecture::AllocateMemory (void* pointer, unsigned long m
 
 inline void AbstractArchitecture::DeallocateMemory (void* pointer)
 {
+}
+
+// get ID of the architecture
+//
+// return value = architecture ID
+
+inline int AbstractArchitecture::GetArchitectureID()
+{
+  return this->ArchitectureID;
 }
 
 #endif

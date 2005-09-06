@@ -35,6 +35,11 @@
 #include "config.h"
 
 
+class AbstractArchitecture;
+class SMPArchitecture;
+class SimpleMPIArchitecture;
+
+
 class AbstractArchitectureOperation
 {
 
@@ -77,6 +82,24 @@ class AbstractArchitectureOperation
   //
   // return value = true if no error occurs
   virtual bool ApplyOperation() = 0;
+  
+  // apply operation for a given architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ApplyOperation(AbstractArchitecture* architecture);
+  
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ApplyOperation(SMPArchitecture* architecture);
+  
+  // apply operation for simple MPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ApplyOperation(SimpleMPIArchitecture* architecture);
   
   // get operation type
   //

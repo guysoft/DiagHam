@@ -33,6 +33,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor 
@@ -112,3 +113,42 @@ bool VectorHamiltonianMultiplyOperation::ApplyOperation()
   return true;
 }
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool VectorHamiltonianMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  VectorHamiltonianMultiplyOperation** TmpOperations = new VectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
+  this->DestinationVector->ClearVector();
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (VectorHamiltonianMultiplyOperation*) this->Clone();
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (VectorHamiltonianMultiplyOperation*) this->Clone();
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, 
+						    this->DestinationVector->GetVectorDimension() - FirstComponent);  
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      TmpOperations[i]->SetDestinationVector(this->DestinationVector->EmptyClone(true));
+    }
+  architecture->SendJobs();
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      (*(this->DestinationVector)) += (*(TmpOperations[i]->DestinationVector));
+      delete TmpOperations[i]->DestinationVector;
+      delete TmpOperations[i];
+    }
+  delete TmpOperations[0];
+  delete[] TmpOperations;
+  return true;  
+}
+  

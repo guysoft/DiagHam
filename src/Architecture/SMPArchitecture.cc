@@ -55,28 +55,6 @@ using std::cout;
 using std::endl;
 
 
-struct ThreadMultiplyParameter
-{
-  int ThreadID;
-  int* Flag;
-#ifdef __SMP__
-  pthread_mutex_t* mut;
-#endif
-
-  int FirstComponent;
-  int NbrComponent;
-  AbstractHamiltonian* Hamiltonian;
-  Vector* SourceVector;
-  Vector* DestinationVector;
-};
-
-
-// function used by a thread for multiplication
-//
-// param = pointer to additional parameters, has to be cast into ThreadMultiplyParameter pointer
-// return value = unused pointer (null)
-void* ThreadMultiply(void* param);
-
 
 // thread for multiplicationmain function
 //
@@ -93,15 +71,16 @@ void* ThreadExecuteOperation(void* param);
 
 // constructor
 //
-// nbrProcesses = number of processes to run simultaneously (in principle, the number of processors that can be allocated)
+// nbrThreads = number of threads to run simultaneously (in principle, the number of processors that can be allocated)
 
-SMPArchitecture::SMPArchitecture(int nbrProcesses)
+SMPArchitecture::SMPArchitecture(int nbrThreads)
 {
-  this->NbrProcesses = nbrProcesses;
+  this->ArchitectureID = AbstractArchitecture::SMP;
+  this->NbrThreads = nbrThreads;
 #ifdef __SMP__
-  this->ThreadParameters = new ThreadMainParameter [this->NbrProcesses];
-  this->Threads = new pthread_t [this->NbrProcesses];
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  this->ThreadParameters = new ThreadMainParameter [this->NbrThreads];
+  this->Threads = new pthread_t [this->NbrThreads];
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       this->ThreadParameters[i].ThreadState = SMPArchitecture::Wait;
       this->ThreadParameters[i].ThreadID = i;
@@ -120,7 +99,7 @@ SMPArchitecture::SMPArchitecture(int nbrProcesses)
 SMPArchitecture::~SMPArchitecture()
 {
 #ifdef __SMP__
-/*  for (int i = 0; i < this->NbrProcesses; ++i)
+/*  for (int i = 0; i < this->NbrThreads; ++i)
     {
       if (this->ThreadParameters[i].ThreadState != SMPArchitecture::Dead)
 	{
@@ -131,13 +110,23 @@ SMPArchitecture::~SMPArchitecture()
 	}
     }
   void* ReturnValue;
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       (void) pthread_join (this->Threads[i], &ReturnValue);
     }*/
 #endif
 }
   
+// set the operation that has to be executed by a given thread
+//
+// operation = pointer to the operation
+// index = thread index
+
+void SMPArchitecture::SetThreadOperation(AbstractArchitectureOperation* operation, int index)
+{
+  this->ThreadParameters[index].Operation = operation;
+}
+
 // execute an architecture-dependent vector hamiltonian multiplication operation
 //
 // operation = pointer to the operation to execute
@@ -145,25 +134,25 @@ SMPArchitecture::~SMPArchitecture()
 
 bool SMPArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* operation)
 {
-  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrProcesses;
+  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  int ReducedNbrThreads = this->NbrThreads - 1;
   operation->GetDestinationVector()->ClearVector();
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 												  operation->GetDestinationVector()->GetVectorDimension() - FirstComponent);  
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       ((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetDestinationVector(operation->GetDestinationVector()->EmptyClone(true));
     }
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       (*(operation->GetDestinationVector())) += (*(((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationVector()));
       delete ((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->GetDestinationVector();
@@ -190,9 +179,9 @@ bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperati
     {
       Dimension = operation->GetDestinationComplexVectors()[0].GetVectorDimension();
     }
-  int Step = Dimension / this->NbrProcesses;
+  int Step = Dimension / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  int ReducedNbrThreads = this->NbrThreads - 1;
   int NbrVectors = operation->GetNbrVectors();
   if (RealFlag == true)
     {
@@ -204,15 +193,15 @@ bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperati
       for (int i = 0; i < NbrVectors; ++i)
 	operation->GetDestinationComplexVectors()[i].ClearVector();
     }
-   for (int i = 0; i < ReducedNbrProcesses; ++i)
+   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, Dimension - FirstComponent);  
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((MultipleVectorHamiltonianMultiplyOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, Dimension - FirstComponent);  
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       if (RealFlag == true)
 	((VectorHamiltonianMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetDestinationVector(operation->GetDestinationRealVectors()[0].EmptyCloneArray(NbrVectors, 
@@ -223,7 +212,7 @@ bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperati
 
     }
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       if (RealFlag == true)
 	{
@@ -249,20 +238,20 @@ bool SMPArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperati
   
 bool SMPArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
 {
-  int Step = operation->GetDimension() / this->NbrProcesses;
+  int Step = operation->GetDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads = this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((AbstractScalarSumOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((AbstractScalarSumOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent,
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((AbstractScalarSumOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent,
 													   operation->GetDimension() - FirstComponent);
   this->SendJobs();
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       operation->GetScalar() += ((AbstractScalarSumOperation*) (this->ThreadParameters[i].Operation))->GetScalar();
       delete this->ThreadParameters[i].Operation;
@@ -277,21 +266,21 @@ bool SMPArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
 
 bool SMPArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* operation)
 {
-  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrProcesses;
+  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads = this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((AddRealLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((AddRealLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((AddRealLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 														  operation->GetDestinationVector()
 														  ->GetVectorDimension() - FirstComponent);  
   this->SendJobs();
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       delete this->ThreadParameters[i].Operation;
     }
@@ -305,21 +294,21 @@ bool SMPArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* opera
 
 bool SMPArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
 {
-  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrProcesses;
+  int Step = operation->GetDestinationVector()->GetVectorDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads = this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((AddComplexLinearCombinationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((AddComplexLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((AddComplexLinearCombinationOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 														  operation->GetDestinationVector()
 														  ->GetVectorDimension() - FirstComponent);  
   this->SendJobs();
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       delete this->ThreadParameters[i].Operation;
     }
@@ -333,26 +322,26 @@ bool SMPArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* op
 
 bool SMPArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
 {
-  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrProcesses;
+  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  int ReducedNbrThreads = this->NbrThreads - 1;
   this->ThreadParameters[0].Operation = operation;
   ((MultipleRealScalarProductOperation*) (this->ThreadParameters[0].Operation))->SetIndicesRange(FirstComponent, Step);
   FirstComponent += Step;
-  for (int i = 1; i < ReducedNbrProcesses; ++i)
+  for (int i = 1; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetScalarProducts(new double [operation->GetNbrScalarProduct()]);
       FirstComponent += Step;            
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 														   operation->GetLeftVector()->GetVectorDimension() - 
 														   FirstComponent);  
-  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetScalarProducts(new double [operation->GetNbrScalarProduct()]);
+  ((MultipleRealScalarProductOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetScalarProducts(new double [operation->GetNbrScalarProduct()]);
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       for (int j = 0; j < operation->GetNbrScalarProduct(); ++j)
 	operation->GetScalarProducts()[j] += ((MultipleRealScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts()[j];
@@ -369,26 +358,26 @@ bool SMPArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* oper
 
 bool SMPArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
 {
-  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrProcesses;
+  int Step = operation->GetLeftVector()->GetVectorDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
+  int ReducedNbrThreads = this->NbrThreads - 1;
   this->ThreadParameters[0].Operation = operation;
   ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[0].Operation))->SetIndicesRange(FirstComponent, Step);
   FirstComponent += Step;
-  for (int i = 1; i < ReducedNbrProcesses; ++i)
+  for (int i = 1; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->SetScalarProducts(new Complex [operation->GetNbrScalarProduct()]);
       FirstComponent += Step;            
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 														   operation->GetLeftVector()->GetVectorDimension() - 
 														   FirstComponent);  
-  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetScalarProducts(new Complex [operation->GetNbrScalarProduct()]);
+  ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetScalarProducts(new Complex [operation->GetNbrScalarProduct()]);
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       for (int j = 0; j < operation->GetNbrScalarProduct(); ++j)
 	operation->GetScalarProducts()[j] += ((MultipleComplexScalarProductOperation*) (this->ThreadParameters[i].Operation))->GetScalarProducts()[j];
@@ -405,38 +394,27 @@ bool SMPArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* o
 
 bool SMPArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* operation)
 {
-  int Step = operation->GetDestinationMatrix()->GetNbrRow() / this->NbrProcesses;
+  int Step = operation->GetDestinationMatrix()->GetNbrRow() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads = this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((MatrixMatrixMultiplyOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((MatrixMatrixMultiplyOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->SetIndicesRange(FirstComponent, 
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((MatrixMatrixMultiplyOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->SetIndicesRange(FirstComponent, 
 													      operation->GetDestinationMatrix()->GetNbrRow() - 
 													      FirstComponent);  
   this->SendJobs();
-  for (int i = 1; i < this->NbrProcesses; ++i)
+  for (int i = 1; i < this->NbrThreads; ++i)
     {
       delete this->ThreadParameters[i].Operation;
     }
   return true;
 }
     
-// multiply a vector by an hamiltonian and store the result in another vector
-//
-// hamiltonian = pointer to the hamiltonian to use
-// vSource = vector to multiply 
-// vDestination = vector where result has to be stored 
-
-void SMPArchitecture::Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination)
-{  
-  return;
-}
-
 // execute an architecture-dependent abstract hamiltonian precalculation operation
 //
 // operation = pointer to the operation to execute
@@ -444,17 +422,17 @@ void SMPArchitecture::Multiply (AbstractHamiltonian* hamiltonian, Vector& vSourc
 
 bool SMPArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
 {
-  int Step = operation->GetHilbertSpaceDimension() / this->NbrProcesses;
+  int Step = operation->GetHilbertSpaceDimension() / this->NbrThreads;
   int FirstComponent = 0;
-  int ReducedNbrProcesses = this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads = this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].Operation = operation->Clone();
       ((AbstractPrecalculationOperation*) (this->ThreadParameters[i].Operation))->SetIndicesRange(FirstComponent, Step);
       FirstComponent += Step;
     }
-  this->ThreadParameters[ReducedNbrProcesses].Operation = operation->Clone();
-  ((AbstractPrecalculationOperation*) (this->ThreadParameters[ReducedNbrProcesses].Operation))->
+  this->ThreadParameters[ReducedNbrThreads].Operation = operation->Clone();
+  ((AbstractPrecalculationOperation*) (this->ThreadParameters[ReducedNbrThreads].Operation))->
     SetIndicesRange(FirstComponent, operation->GetHilbertSpaceDimension() - FirstComponent);  
   this->SendJobs();
   return true;
@@ -470,8 +448,8 @@ void SMPArchitecture::SendJobs ()
 #ifdef __SMP__
   pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 #endif
-  int ReducedNbrProcesses =  this->NbrProcesses - 1;
-  for (int i = 0; i < ReducedNbrProcesses; ++i)
+  int ReducedNbrThreads =  this->NbrThreads - 1;
+  for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->ThreadParameters[i].ThreadID = i;
       this->ThreadParameters[i].Flag = &Flag;
@@ -479,15 +457,15 @@ void SMPArchitecture::SendJobs ()
       this->ThreadParameters[i].mut = &mut;
 #endif
     }
-  this->ThreadParameters[ReducedNbrProcesses].ThreadID = ReducedNbrProcesses;
-  this->ThreadParameters[ReducedNbrProcesses].Flag = &Flag;
+  this->ThreadParameters[ReducedNbrThreads].ThreadID = ReducedNbrThreads;
+  this->ThreadParameters[ReducedNbrThreads].Flag = &Flag;
 #ifdef __SMP__
-  this->ThreadParameters[ReducedNbrProcesses].mut = &mut;
+  this->ThreadParameters[ReducedNbrThreads].mut = &mut;
 #endif
 
 #ifdef __SMP__
-  pthread_t* Threads2 = new pthread_t [this->NbrProcesses];
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  pthread_t* Threads2 = new pthread_t [this->NbrThreads];
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       if (pthread_create (&(Threads2[i]), 0, ThreadExecuteOperation, (void*) &(this->ThreadParameters[i])) )
 	{
@@ -495,20 +473,20 @@ void SMPArchitecture::SendJobs ()
 	  exit(1);
 	}
     }
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       (void) pthread_join (Threads2[i], &ret);
     }
 #endif
 
-/*  for (int i = 0; i < this->NbrProcesses; ++i)
+/*  for (int i = 0; i < this->NbrThreads; ++i)
     {
 //      pthread_mutex_lock(this->ThreadParameters[i].LocalMutex);
       this->ThreadParameters[i].ThreadState = SMPArchitecture::Execute;
 //      pthread_mutex_unlock(this->ThreadParameters[i].LocalMutex);
       pthread_cond_signal(this->ThreadParameters[i].LocalCondition);       
     }
-  for (int i = 0; i < this->NbrProcesses; ++i)
+  for (int i = 0; i < this->NbrThreads; ++i)
     {
       while (this->ThreadParameters[i].ThreadState != SMPArchitecture::Accomplished)
 	pthread_cond_wait (this->ThreadParameters[i].LocalCondition, this->ThreadParameters[i].LocalMutex);      
@@ -519,24 +497,6 @@ void SMPArchitecture::SendJobs ()
     }*/
 }
   
-// function used by a thread for multiplication
-//
-// param = pointer to additional parameters, has to be cast into ThreadMultiplyParameter pointer
-// return value = unused pointer (null)
-
-void* ThreadMultiply(void* param)
-{
-#ifdef __SMP__
-  ThreadMultiplyParameter* TmpParam = (ThreadMultiplyParameter*) param;
-  TmpParam->Hamiltonian->Multiply((*(TmpParam->SourceVector)), (*(TmpParam->DestinationVector)), TmpParam->FirstComponent, 
-				  TmpParam->NbrComponent);
-  pthread_mutex_lock(TmpParam->mut);
-  (*(TmpParam->Flag)) = TmpParam->ThreadID;
-  pthread_mutex_unlock(TmpParam->mut);
-#endif
-  return 0;
-}
-
 // thread for multiplicationmain function
 //
 // param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer

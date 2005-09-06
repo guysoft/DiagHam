@@ -34,6 +34,7 @@
 #include "Vector/Vector.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Architecture/SMPArchitecture.h"
 
 
 // constructor for real vectors
@@ -161,3 +162,74 @@ bool MultipleVectorHamiltonianMultiplyOperation::ApplyOperation()
   return true;
 }
 
+// apply operation for SMP architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MultipleVectorHamiltonianMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+{
+  bool RealFlag = false;
+  int Dimension = 0;
+  if (this->ComplexDestinationVectors == 0)
+    {
+      RealFlag = true;
+      Dimension = this->RealDestinationVectors[0].GetVectorDimension();
+    }
+  else
+    {
+      Dimension = this->ComplexDestinationVectors[0].GetVectorDimension();
+    }
+  int Step = Dimension / architecture->GetNbrThreads();
+  int FirstComponent = 0;
+  int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+  MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
+  if (RealFlag == true)
+    {
+      for (int i = 0; i < this->NbrVectors; ++i)
+	this->RealDestinationVectors[i].ClearVector();
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrVectors; ++i)
+	this->ComplexDestinationVectors[i].ClearVector();
+    }
+   for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
+      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      FirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, Dimension - FirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      if (RealFlag == true)
+	TmpOperations[i]->SetDestinationVectors((RealVector*) this->RealDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
+      else
+	TmpOperations[i]->SetDestinationVectors((ComplexVector*) this->ComplexDestinationVectors[0].EmptyCloneArray(this->NbrVectors, true));
+
+    }
+  architecture->SendJobs();
+  for (int i = 1; i < architecture->GetNbrThreads(); ++i)
+    {
+      if (RealFlag == true)
+	{
+	  for (int j = 0; j < this->NbrVectors; ++j)
+	    this->RealDestinationVectors[j] += TmpOperations[i]->RealDestinationVectors[j];
+	  delete[] TmpOperations[i]->RealDestinationVectors;
+	}
+      else
+	{
+	  for (int j = 0; j < this->NbrVectors; ++j)
+	    this->ComplexDestinationVectors[j] += TmpOperations[i]->ComplexDestinationVectors[j];
+	  delete[] TmpOperations[i]->ComplexDestinationVectors;
+	}
+      delete TmpOperations[i];
+    }
+  delete TmpOperations[0];
+  delete[] TmpOperations;
+  return true;
+}

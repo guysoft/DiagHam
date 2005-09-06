@@ -121,17 +121,6 @@ void AbstractArchitecture::SetDimension (long dimension)
   this->HilbertSpaceDimension = dimension;
 }
 
-// multiply a vector by an hamiltonian and store the result in another vector
-//
-// hamiltonian = pointer to the hamiltonian to use
-// vSource = vector to multiply 
-// vDestination = vector where result has to be stored 
-
-void AbstractArchitecture::Multiply (AbstractHamiltonian* hamiltonian, Vector& vSource, Vector& vDestination)
-{
-  hamiltonian->Multiply(vSource, vDestination);
-}
-
 // execute an architecture-dependent operation
 //
 // operation = pointer to the operation to execute
