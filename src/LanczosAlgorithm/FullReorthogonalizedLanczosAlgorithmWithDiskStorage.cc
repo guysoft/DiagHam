@@ -229,7 +229,7 @@ Vector* FullReorthogonalizedLanczosAlgorithmWithDiskStorage::GetEigenstates(int 
 	      this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
 	    }
 	  AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), ReducedMaxNbrVector, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
       MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) - (MaxPos * ReducedMaxNbrVector);
       for (int j = 0; j < MaxPos; ++j)
@@ -238,8 +238,8 @@ Vector* FullReorthogonalizedLanczosAlgorithmWithDiskStorage::GetEigenstates(int 
 	  this->LanczosVectors[1 + j].ReadVector(TmpVectorName);
 	}
       AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), MaxPos, &(TmpCoefficents[1 + (k * ReducedMaxNbrVector)]));
-      this->Architecture->ExecuteOperation(&Operation);
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
+      Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
   delete[] TmpVectorName;
@@ -261,7 +261,7 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
-	this->Architecture->ExecuteOperation(&Operation1);
+	Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
 							    this->LanczosVectors[1]);
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
@@ -269,7 +269,7 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-	this->Architecture->ExecuteOperation(&Operation2);
+	Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
@@ -305,13 +305,13 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 		  this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
 		}
 	      MultipleRealScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
-	      this->Architecture->ExecuteOperation(&Operation4);
+	      Operation4.ApplyOperation(this->Architecture);
 	      for (int j = 0; j < ReducedMaxNbrVector; j++)
 		{
 		  TmpCoef[j] *= -1.0;
 		}
 	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[4]), ReducedMaxNbrVector, TmpCoef);
-	      this->Architecture->ExecuteOperation(&Operation2);
+	      Operation2.ApplyOperation(this->Architecture);
 	    }
 	  MaxPos = (i - 3) - (MaxPos * ReducedMaxNbrVector);
 	  for (int j = 0; j < MaxPos; ++j)
@@ -320,13 +320,13 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 	      this->LanczosVectors[4 + j].ReadVector(TmpVectorName);
 	    }
 	  MultipleRealScalarProductOperation Operation4 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation4);
+	  Operation4.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= MaxPos; j++)
 	    {
 	      TmpCoef[j] *= -1.0;
 	    }
 	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[2]), &(this->LanczosVectors[3]), MaxPos + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation2);	  
+	  Operation2.ApplyOperation(this->Architecture);	  
 	  delete[] TmpCoef;
 	}
 
@@ -352,7 +352,7 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
 	      TmpCoef2[j] = -(this->LanczosVectors[j] * this->LanczosVectors[i]);
 	    }
 	  AddRealLinearCombinationOperation Operation3 (&(this->LanczosVectors[2]), this->LanczosVectors, i, TmpCoef2);
-	  this->Architecture->ExecuteOperation(&Operation3);
+	  Operation3.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef2;
 
 	  VectorNorm = this->LanczosVectors[i].Norm();
@@ -366,7 +366,7 @@ void FullReorthogonalizedLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (i
       this->LanczosVectors[3] = TmpV;
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
 
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]);

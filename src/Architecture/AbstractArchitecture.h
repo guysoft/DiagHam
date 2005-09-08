@@ -39,21 +39,6 @@ class Vector;
 class RealVector;
 class ComplexVector;
 
-class AbstractHamiltonian;
-
-class AbstractArchitectureOperation;
-class VectorHamiltonianMultiplyOperation;
-class MultipleVectorHamiltonianMultiplyOperation;
-class AddRealLinearCombinationOperation;
-class AddComplexLinearCombinationOperation;
-class MultipleRealScalarProductOperation;
-class MultipleComplexScalarProductOperation;
-class MatrixMatrixMultiplyOperation;
-class AbstractPrecalculationOperation;
-class AbstractScalarSumOperation;
-class MainTaskOperation;
-
-
 class AbstractArchitecture
 {
 
@@ -119,72 +104,6 @@ class AbstractArchitecture
   // 
   // dimension = dimension of the Hilbert space
   virtual void SetDimension (long dimension);
-
-  // execute an architecture-dependent operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (AbstractArchitectureOperation* operation);
-
-  // execute an architecture-dependent vector hamiltonian multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
-  
-  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
-
-  // execute an architecture-dependent vector abstact scalar sum operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (AbstractScalarSumOperation* operation);
-
-  // execute an architecture-dependent add real linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (AddRealLinearCombinationOperation* operation);
-  
-  // execute an architecture-dependent add complex linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (AddComplexLinearCombinationOperation* operation);
-
-  // execute an architecture-dependent multiple real scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MultipleRealScalarProductOperation* operation);
-  
-  // execute an architecture-dependent multiple complex scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MultipleComplexScalarProductOperation* operation);
-  
-  // execute an architecture-dependent matrix matrix multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
-    
-  // execute an architecture-dependent abstract hamiltonian precalculation operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (AbstractPrecalculationOperation* operation);
-
-  // execute an architecture-dependent main task operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MainTaskOperation* operation);
 
   // request a given amount of memory for an array of Type element
   //

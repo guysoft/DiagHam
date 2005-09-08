@@ -143,11 +143,11 @@ AbstractArchitectureOperation* MultipleVectorHamiltonianMultiplyOperation::Clone
   return new MultipleVectorHamiltonianMultiplyOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool MultipleVectorHamiltonianMultiplyOperation::ApplyOperation()
+bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
   if (this->RealSourceVectors != 0)
     {
@@ -167,7 +167,7 @@ bool MultipleVectorHamiltonianMultiplyOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool MultipleVectorHamiltonianMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   bool RealFlag = false;
   int Dimension = 0;

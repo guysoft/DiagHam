@@ -79,11 +79,11 @@ class MainTaskOperation: public AbstractArchitectureOperation
   // return value = pointer to the main task
   AbstractMainTask* GetMainTask();
 
-  // apply operation
+  // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool ApplyOperation();
-  
+  bool RawApplyOperation();
+
 };
 
 // set range of indices

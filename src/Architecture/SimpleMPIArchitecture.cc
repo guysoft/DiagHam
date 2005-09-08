@@ -68,10 +68,12 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
 
   if (this->MPIRank != 0)
     {
+      this->MasterNodeFlag = false;
       MPI::COMM_WORLD.Send(&this->PerformanceIndex, 1, MPI::DOUBLE, 0, 1);
     }
   else
     {
+      this->MasterNodeFlag = true;
       this->TotalPerformanceIndex = this->PerformanceIndex;
       this->ClusterPerformanceArray[0] = this->PerformanceIndex;
       for (int i = 1; i < this->NbrMPINodes; ++i)
@@ -87,12 +89,13 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
   MPI::COMM_WORLD.Bcast(&this->TotalPerformanceIndex, 1, MPI::DOUBLE, 0);
 #else
+  this->MasterNodeFlag = true;
   this->NbrMPINodes = 1;
   this->MPIRank = 0;
   this->ClusterPerformanceArray = 0;
   this->TotalPerformanceIndex = this->PerformanceIndex;
 #endif
-  if (this->MPIRank == 0)
+  if (this->MasterNodeFlag == true)
     {
       cout << this->NbrMPINodes << " " << this->TotalPerformanceIndex << endl;
     }
@@ -155,6 +158,34 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
   cout << this->MPIRank << " " << this->MinimumIndex << " " << this->MaximumIndex << endl;
 }
 
+// request an operation to the slave nodes and wait till they are ready to get operation parameters
+//
+// operationType = operation ID
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::RequestOperation (int operationType)
+{
+#ifdef __MPI__
+  if (this->MasterNodeFlag)
+    {
+      MPI::COMM_WORLD.Bcast(&operationType, 1, MPI::INT, 0);
+      int NbrMPINodes = MPI::COMM_WORLD.Get_size();
+      bool Flag = true;
+      int Acknowledge = 0;
+      for (int i = 1; i < NbrMPINodes; ++i)
+	{
+	  MPI::COMM_WORLD.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	  if ((Flag == true) && (Acknowledge == 0))
+	    Flag = false;
+	}
+      return true;
+    }
+#endif
+  return false;
+}
+
+
+/*
 // execute an architecture-dependent vector hamiltonian multiplication operation
 //
 // operation = pointer to the operation to execute
@@ -354,7 +385,7 @@ bool SimpleMPIArchitecture::ExecuteOperation (MultipleComplexScalarProductOperat
 
 bool SimpleMPIArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* operation)
 {
-  return this->LocalArchitecture->ExecuteOperation(operation);
+  return operation->ApplyOperation(this->LocalArchitecture);
 }
  
 // execute an architecture-dependent abstract hamiltonian precalculation operation
@@ -372,3 +403,4 @@ bool SimpleMPIArchitecture::ExecuteOperation (AbstractPrecalculationOperation* o
   return false;
 #endif
 }
+*/

@@ -114,16 +114,18 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
   
-  // apply operation
+  // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool ApplyOperation();
+  bool RawApplyOperation();
   
+ protected:
+
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  bool ApplyOperation(SMPArchitecture* architecture);
+  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
 };
 

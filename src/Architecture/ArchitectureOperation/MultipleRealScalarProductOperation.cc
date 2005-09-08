@@ -159,11 +159,11 @@ AbstractArchitectureOperation* MultipleRealScalarProductOperation::Clone()
   return new MultipleRealScalarProductOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool MultipleRealScalarProductOperation::ApplyOperation()
+bool MultipleRealScalarProductOperation::RawApplyOperation()
 {
   if (this->Strategy == MultipleRealScalarProductOperation::VectorSubdivision)
     {
@@ -224,7 +224,7 @@ bool MultipleRealScalarProductOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool MultipleRealScalarProductOperation::ApplyOperation(SMPArchitecture* architecture)
+bool MultipleRealScalarProductOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->LeftVector->GetVectorDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

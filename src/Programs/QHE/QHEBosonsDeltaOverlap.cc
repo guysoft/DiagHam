@@ -182,7 +182,7 @@ int main(int argc, char** argv)
       //  Location[5] = Location[1];
       ParticleOnSphereFunctionBasis Basis(LzMax);
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
-      Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
       Complex ValueLaughlin = (*TestWaveFunction)(Location);
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == false)
 	TimeCoherence = -1;
       QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
-      Architecture.GetArchitecture()->ExecuteOperation(&Operation);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
       Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
       Tmp2bis = (ValueExact.Re * ValueExact.Re) + (ValueExact.Im * ValueExact.Im);

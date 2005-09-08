@@ -156,7 +156,7 @@ void ComplexBasicLanczosAlgorithmWithEigenstates::RunLanczosAlgorithm (int nbrIt
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->LanczosVectors[0], &this->LanczosVectors[1]);
-      this->Architecture->ExecuteOperation(&Operation1);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
 							    this->LanczosVectors[1]).Re;
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
@@ -164,7 +164,7 @@ void ComplexBasicLanczosAlgorithmWithEigenstates::RunLanczosAlgorithm (int nbrIt
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->LanczosVectors[1], &this->LanczosVectors[2]);
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
@@ -192,7 +192,7 @@ void ComplexBasicLanczosAlgorithmWithEigenstates::RunLanczosAlgorithm (int nbrIt
       this->Index++;
       this->LanczosVectors[i + 1] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->LanczosVectors[i], &this->LanczosVectors[i + 1]);
-      this->Architecture->ExecuteOperation(&Operation1);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[i - 1] * 
 								       this->LanczosVectors[i + 1]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[i] * 

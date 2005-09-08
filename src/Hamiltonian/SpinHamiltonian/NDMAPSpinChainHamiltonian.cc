@@ -976,7 +976,7 @@ long NDMAPSpinChainHamiltonian::FastMultiplicationMemory(long allowedMemory)
   cout << "start" << endl;
  
   NDMAPPrecalculationOperation Operation(this);
-  this->Architecture->ExecuteOperation(&Operation);
+  Operation.ApplyOperation(this->Architecture);
 
   long Memory = 0;
   for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); ++i)

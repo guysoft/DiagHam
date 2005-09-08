@@ -102,11 +102,11 @@ AbstractArchitectureOperation* VectorHamiltonianMultiplyOperation::Clone()
   return new VectorHamiltonianMultiplyOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool VectorHamiltonianMultiplyOperation::ApplyOperation()
+bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 {
   this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 			      this->NbrComponent);
@@ -118,7 +118,7 @@ bool VectorHamiltonianMultiplyOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool VectorHamiltonianMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;
@@ -151,4 +151,33 @@ bool VectorHamiltonianMultiplyOperation::ApplyOperation(SMPArchitecture* archite
   delete[] TmpOperations;
   return true;  
 }
+  
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+  if (architecture->IsMasterNode())
+    {
+      if (architecture->RequestOperation(this->OperationType) == false)
+	{
+	  return false;
+	}
+    }
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  this->RawApplyOperation();
+//  architecture->SumVector(this->DestinationVector);
+  return true;
+#else
+  return this->RawApplyOperation();
+#endif
+}
+
   

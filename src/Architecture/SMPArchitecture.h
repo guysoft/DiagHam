@@ -117,69 +117,6 @@ class SMPArchitecture : public AbstractArchitecture
   // index = thread index
   void SetThreadOperation(AbstractArchitectureOperation* operation, int index);
 
-  // main function for thread
-  //
-  // param = pointer to additional parameters, has to be cast into ThreadMainParameter pointer
-  // return value = unused pointer (null)
-  friend void* ThreadMain(void* param);
-
-  // execute an architecture-dependent vector hamiltonian multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
-  
-  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
-
-  // execute an architecture-dependent vector abstact scalar sum operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AbstractScalarSumOperation* operation);
-
-  // execute an architecture-dependent add real linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AddRealLinearCombinationOperation* operation);
-
-  // execute an architecture-dependent add complex linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AddComplexLinearCombinationOperation* operation);
-
-  // execute an architecture-dependent multiple real scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MultipleRealScalarProductOperation* operation);
-  
-  // execute an architecture-dependent multiple complex scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MultipleComplexScalarProductOperation* operation);
-  
-  // execute an architecture-dependent matrix matrix multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
-    
-  // execute an architecture-dependent abstract hamiltonian precalculation operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AbstractPrecalculationOperation* operation);
-
-
-  
-  
   // send jobs to threads
   //
   void SendJobs ();

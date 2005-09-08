@@ -56,7 +56,7 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AbstractScalarSumOperation::ApplyOperation(SMPArchitecture* architecture)
+bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->GetDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

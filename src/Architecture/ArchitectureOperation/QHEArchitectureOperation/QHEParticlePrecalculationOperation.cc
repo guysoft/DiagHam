@@ -86,11 +86,11 @@ AbstractArchitectureOperation* QHEParticlePrecalculationOperation::Clone()
   return new QHEParticlePrecalculationOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool QHEParticlePrecalculationOperation::ApplyOperation()
+bool QHEParticlePrecalculationOperation::RawApplyOperation()
 {
   if (this->FirstPass ==  true)
     {

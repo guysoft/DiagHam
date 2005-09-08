@@ -503,7 +503,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::FastMultiplicationMe
   cout << "start" << endl;
 
   QHEParticlePrecalculationOperation Operation(this);
-  this->Architecture->ExecuteOperation(&Operation);
+  Operation.ApplyOperation(this->Architecture);
 
   long Memory = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)

@@ -222,7 +222,7 @@ Vector& FullReorthogonalizedBlockLanczosAlgorithm::GetGroundState()
   this->GroundState = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
   this->GroundState.Copy(this->LanczosVectors[0], TmpEigenvector(0, 0));
   AddRealLinearCombinationOperation Operation (&(this->GroundState), &(this->LanczosVectors[1]), this->ReducedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
-  this->Architecture->ExecuteOperation(&Operation);
+  Operation.ApplyOperation(this->Architecture);
   this->GroundState /= this->GroundState.Norm();
   delete[] TmpCoefficents;
 
@@ -256,7 +256,7 @@ Vector* FullReorthogonalizedBlockLanczosAlgorithm::GetEigenstates(int nbrEigenst
       Eigenstates[i] = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->ReducedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
   delete[] TmpCoefficents;
@@ -281,19 +281,19 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 // 	{
 // 	  this->LanczosVectors[k + this->BlockSize] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 // 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k]), &(this->LanczosVectors[k + this->BlockSize]));
-// 	  this->Architecture->ExecuteOperation(&Operation);
+// 	  Operation.ApplyOperation(this->Architecture);
 // 	}
 
       for (int k = 0; k < this->BlockSize; ++k)
 	this->LanczosVectors[k + this->BlockSize] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, this->LanczosVectors, &(this->LanczosVectors[this->BlockSize]), this->BlockSize);
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
  
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize]), this->LanczosVectors,   
 							i + 1, this->TemporaryCoefficients);
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {
 	      this->ReducedMatrix(i, j) = this->TemporaryCoefficients[j];
@@ -306,7 +306,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	    this->TemporaryCoefficients[j] = -this->ReducedMatrix(i, j);
 	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[this->BlockSize + i]), this->LanczosVectors, 
 						       this->BlockSize, this->TemporaryCoefficients);
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	}
 
       this->ReorthogonalizeVectors(&(this->LanczosVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, 0, this->BlockSize);
@@ -316,20 +316,20 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 // 	  this->LanczosVectors[k + (2 * this->BlockSize)] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 // 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k + this->BlockSize]),
 // 							&(this->LanczosVectors[k + (2 * this->BlockSize)]));
-// 	  this->Architecture->ExecuteOperation(&Operation);
+// 	  Operation.ApplyOperation(this->Architecture);
 // 	}
       for (int k = 0; k < this->BlockSize; ++k)
 	this->LanczosVectors[k + (2 * this->BlockSize)] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
 							     &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
-      this->Architecture->ExecuteOperation(&Operation3);
+      Operation3.ApplyOperation(this->Architecture);
  
       for (int i = 0; i < this->BlockSize; ++i)
 	{
 	  MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + (2 * this->BlockSize)]), 
 							&(this->LanczosVectors[this->BlockSize]),   
 							i + 1, this->TemporaryCoefficients);
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= i; ++j)
 	    {
 	      this->ReducedMatrix(this->BlockSize + i, this->BlockSize + j) = this->TemporaryCoefficients[j];
@@ -355,7 +355,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + NewVectorPosition]), &(this->LanczosVectors[Lim + j]), 
 							2 * this->BlockSize - j,
 							this->TemporaryCoefficients);	  
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	}
 
       if (this->Index > 2)
@@ -364,14 +364,14 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	    {
 	      MultipleRealScalarProductOperation Operation4 (&(this->LanczosVectors[k + NewVectorPosition]), this->LanczosVectors, Lim, 
 							     this->TemporaryCoefficients);
-	      this->Architecture->ExecuteOperation(&Operation4);
+	      Operation4.ApplyOperation(this->Architecture);
 	      for (int j = 0; j < Lim; j++)
 		{
 		  this->TemporaryCoefficients[j] *= -1.0;
 		}
 	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[k + NewVectorPosition]), this->LanczosVectors, Lim,
 							    this->TemporaryCoefficients);
-	      this->Architecture->ExecuteOperation(&Operation2);
+	      Operation2.ApplyOperation(this->Architecture);
 	    }
 	}
 
@@ -383,14 +383,14 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	this->LanczosVectors[k + this->BlockSize + NewVectorPosition] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
       MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[NewVectorPosition]), 
 							     &(this->LanczosVectors[this->BlockSize + NewVectorPosition]), this->BlockSize);
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
  
 //       for (int k = 0; k < this->BlockSize; ++k)
 // 	{
 // 	  this->LanczosVectors[k + this->BlockSize + NewVectorPosition] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 // 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k + NewVectorPosition]),
 // 							&(this->LanczosVectors[k + this->BlockSize + NewVectorPosition]));
-// 	  this->Architecture->ExecuteOperation(&Operation);
+// 	  Operation.ApplyOperation(this->Architecture);
 // 	}
 
       for (int k = 0; k < this->BlockSize; ++k)
@@ -398,7 +398,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter
 	  MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[k + NewVectorPosition + this->BlockSize]), 
 							&(this->LanczosVectors[NewVectorPosition]),   
 							k + 1, this->TemporaryCoefficients);
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	  for (int j = 0; j <= k; ++j)
 	    {
 	      this->ReducedMatrix(NewVectorPosition + k, NewVectorPosition + j) = this->TemporaryCoefficients[j];
@@ -499,7 +499,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVect
       MultipleRealScalarProductOperation Operation (&(vectors[i]), 
 						    vectors,   
 						    i, this->TemporaryCoefficients);
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       for (int j = 0; j < i; ++j)
 	{
 	  matrix(rowShift + i, columnShift + j) = this->TemporaryCoefficients[j];
@@ -507,7 +507,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVect
 	}
       AddRealLinearCombinationOperation Operation2 (&(vectors[i]), vectors, 
 						    i, this->TemporaryCoefficients);	  
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       TmpNorm = vectors[i].Norm();      
       matrix(rowShift + i, columnShift + i) = TmpNorm;
       vectors[i] /= TmpNorm;      

@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	}
       QHEOnDiskMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
-      Architecture.GetArchitecture()->ExecuteOperation(&TaskOperation);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
       if (EigenvectorName != 0)
 	{

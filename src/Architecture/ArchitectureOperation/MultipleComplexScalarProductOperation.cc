@@ -165,7 +165,7 @@ AbstractArchitectureOperation* MultipleComplexScalarProductOperation::Clone()
 //
 // return value = true if no error occurs
 
-bool MultipleComplexScalarProductOperation::ApplyOperation()
+bool MultipleComplexScalarProductOperation::RawApplyOperation()
 {
   if (this->Strategy == MultipleComplexScalarProductOperation::VectorSubdivision)
     {
@@ -226,7 +226,7 @@ bool MultipleComplexScalarProductOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool MultipleComplexScalarProductOperation::ApplyOperation(SMPArchitecture* architecture)
+bool MultipleComplexScalarProductOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->LeftVector->GetVectorDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

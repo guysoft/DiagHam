@@ -48,6 +48,8 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   int NbrMPINodes;
   // rank of the current MPI node
   int MPIRank;
+  // flag to inidcate if local node is the master mode
+  bool MasterNodeFlag;
 
   // pointer to the architecture used for local operation
   AbstractArchitecture* LocalArchitecture;
@@ -86,60 +88,26 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // dimension = dimension of the Hilbert space
   void SetDimension (long dimension);
 
-  // execute an architecture-dependent vector abstact scalar sum operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AbstractScalarSumOperation* operation);
-
-  // execute an architecture-dependent vector hamiltonian multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (VectorHamiltonianMultiplyOperation* operation);
+  // indicate if the local node is the master node
+  // 
+  // return value = true if the local node is the master node
+  bool IsMasterNode();
   
-  // execute an architecture-dependent multiple vector hamiltonian multiplication operation
+  // request an operation to the slave nodes 
   //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  virtual bool ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation);
-
-  // execute an architecture-dependent add real linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AddRealLinearCombinationOperation* operation);
-
-  // execute an architecture-dependent add complex linear combination operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AddComplexLinearCombinationOperation* operation);
-
-  // execute an architecture-dependent multiple real scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MultipleRealScalarProductOperation* operation);
-  
-  // execute an architecture-dependent multiple complex scalar product operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MultipleComplexScalarProductOperation* operation);
-  
-  // execute an architecture-dependent matrix matrix multiplication operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (MatrixMatrixMultiplyOperation* operation);
-    
-  // execute an architecture-dependent abstract hamiltonian precalculation operation
-  //
-  // operation = pointer to the operation to execute
-  // return value = true if operation has been completed successfully
-  bool ExecuteOperation (AbstractPrecalculationOperation* operation);
+  // operationType = operation ID
+  // return value = true if np error occured
+  bool RequestOperation (int operationType);
 
 };
+
+// indicate if the local node is the master node
+// 
+// return value = true if the local node is the master node
+
+inline bool SimpleMPIArchitecture::IsMasterNode()
+{
+  return this->MasterNodeFlag;
+}
 
 #endif

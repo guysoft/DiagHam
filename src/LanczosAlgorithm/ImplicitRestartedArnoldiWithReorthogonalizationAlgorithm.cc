@@ -182,7 +182,7 @@ Vector* ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::GetEigenstates
       Eigenstates[i] = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
   delete[] TmpCoefficents;
@@ -242,7 +242,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::RunLanczosAlgorit
   Q.Resize(this->NbrIteration, this->NbrEigenvectors + 1);
   this->LanczosVectors.Resize(this->Hamiltonian->GetHilbertSpaceDimension(), this->NbrIteration);
   MatrixMatrixMultiplyOperation Operation(&this->LanczosVectors, &Q);
-  this->Architecture->ExecuteOperation(&Operation);
+  Operation.ApplyOperation(this->Architecture);
 //  this->LanczosVectors.Multiply(Q);
   this->LanczosVectors.Resize(this->Hamiltonian->GetHilbertSpaceDimension(), this->NbrIteration + 1); 
   // construct last lanczos vector
@@ -290,7 +290,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::RunLanczosAlgorit
       this->ConvergedValues[this->NbrConvergedValue] = this->DiagonalizedMatrix.DiagonalElement(TmpLockPos);
       this->LanczosVectors.Resize(this->LanczosVectors.GetNbrRow(),  this->TridiagonalizedMatrix.GetNbrRow());
       MatrixMatrixMultiplyOperation LockFlagOperation(&this->LanczosVectors, &Q2);
-      this->Architecture->ExecuteOperation(&LockFlagOperation);
+      LockFlagOperation.ApplyOperation(this->Architecture);
       this->LanczosVectors.Resize(this->LanczosVectors.GetNbrRow(), this->NbrIteration + 1);
 /*      for (int i = 0; i < TmpVector.GetVectorDimension(); ++i)
 	{
@@ -313,13 +313,13 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::RunLanczosAlgorit
 //	this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
       double* TmpCoef = new double [this->NbrConvergedValue];
       MultipleRealScalarProductOperation Operation4 (&this->LanczosVectors[0], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-      this->Architecture->ExecuteOperation(&Operation4);
+      Operation4.ApplyOperation(this->Architecture);
       for (int j = 0; j < this->NbrConvergedValue; j++)
 	{
 	  TmpCoef[j] *= -1.0;
 	}
       AddRealLinearCombinationOperation Operation2 (&this->LanczosVectors[0], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
       delete[] TmpCoef;
       this->Index = 0;
@@ -344,13 +344,13 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::RunLanczosAlgorit
 	TmpVector[i] = (drand48() - 0.5) * 2.0;
       double* TmpCoef = new double [this->NbrConvergedValue];
       MultipleRealScalarProductOperation Operation4 (&TmpVector, this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-      this->Architecture->ExecuteOperation(&Operation4);
+      Operation4.ApplyOperation(this->Architecture);
       for (int j = 0; j < this->NbrConvergedValue; j++)
 	{
 	  TmpCoef[j] *= -1.0;
 	}
       AddRealLinearCombinationOperation Operation2 (&TmpVector, this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       TmpVector /= TmpVector.Norm();
       delete[] TmpCoef;
       this->Index = 0;
@@ -389,7 +389,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
   if (this->Index == 0)
     {
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
-      this->Architecture->ExecuteOperation(&Operation1);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(0) = (this->LanczosVectors[0] * this->LanczosVectors[1]);
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), 
 						   this->LanczosVectors[0]);
@@ -398,13 +398,13 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
 	{
 	  double* TmpCoef = new double [this->NbrConvergedValue];
 	  MultipleRealScalarProductOperation Operation6 (&this->LanczosVectors[1], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation6);
+	  Operation6.ApplyOperation(this->Architecture);
 	  for (int j = 0; j < this->NbrConvergedValue; j++)
 	    {
 	      TmpCoef[j] *= -1.0;
 	    }
 	  AddRealLinearCombinationOperation Operation7 (&this->LanczosVectors[1], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation7);
+	  Operation7.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef;
 	}
 
@@ -416,7 +416,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
       this->TridiagonalizedMatrix.UpperDiagonalElement(0) = this->LastVectorNorm;
       this->LanczosVectors[1] /= this->LastVectorNorm; 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(1) = (this->LanczosVectors[1] * this->LanczosVectors[2]);
       this->LanczosVectors[2].AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(1), 
 						   this->LanczosVectors[1], -this->TridiagonalizedMatrix.UpperDiagonalElement(0), 
@@ -426,13 +426,13 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
 	{
 	  double* TmpCoef = new double [this->NbrConvergedValue];
 	  MultipleRealScalarProductOperation Operation5 (&this->LanczosVectors[2], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation5);
+	  Operation5.ApplyOperation(this->Architecture);
 	  for (int j = 0; j < this->NbrConvergedValue; j++)
 	    {
 	      TmpCoef[j] *= -1.0;
 	    }
 	  AddRealLinearCombinationOperation Operation3 (&this->LanczosVectors[2], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation3);
+	  Operation3.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef;
 	}
       
@@ -446,7 +446,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
       this->TridiagonalizedMatrix.UpperDiagonalElement(i - 1) = this->LastVectorNorm;
       this->LanczosVectors[i] /= this->LastVectorNorm;
       VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[i]), &(this->LanczosVectors[i + 1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(i) = (this->LanczosVectors[i] * this->LanczosVectors[i + 1]);
       this->LanczosVectors[i + 1].AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i), 
 						       this->LanczosVectors[i], -this->TridiagonalizedMatrix.UpperDiagonalElement(i - 1), 
@@ -456,20 +456,20 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
 	{
 	  double* TmpCoef2 = new double [this->NbrConvergedValue];
 	  MultipleRealScalarProductOperation Operation6 (&this->LanczosVectors[i + 1], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef2);
-	  this->Architecture->ExecuteOperation(&Operation6);
+	  Operation6.ApplyOperation(this->Architecture);
 	  for (int j = 0; j < this->NbrConvergedValue; j++)
 	    {
 	      TmpCoef2[j] *= -1.0;
 	    }
 	  AddRealLinearCombinationOperation Operation7 (&this->LanczosVectors[i + 1], this->ConvergedEigenvectors, this->NbrConvergedValue, TmpCoef2);
-	  this->Architecture->ExecuteOperation(&Operation7);
+	  Operation7.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef2;
 	}
       if (i > 2)
 	{
 //	  MultipleRealScalarProductOperation Operation4 (&(this->LanczosVectors[i]), this->LanczosVectors, i - 1, TmpCoef);
 	  MultipleRealScalarProductOperation Operation4 (&(this->LanczosVectors[i + 1]), this->LanczosVectors, i + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation4);
+	  Operation4.ApplyOperation(this->Architecture);
 //	  for (int j = 0; j < (i - 1); j++)
 	  for (int j = 0; j <= i; j++)
 	    {
@@ -477,7 +477,7 @@ void ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm::StandardArnoldiSt
 	    }
 //	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[i]), this->LanczosVectors, i - 1, TmpCoef);
 	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[i + 1]), this->LanczosVectors, i + 1, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	}
       this->LastVectorNorm = this->LanczosVectors[i + 1].Norm();
       ++this->Index;

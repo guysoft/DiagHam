@@ -67,11 +67,11 @@ AbstractArchitectureOperation* MainTaskOperation::Clone()
   return new MainTaskOperation(*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool MainTaskOperation::ApplyOperation()
+bool MainTaskOperation::RawApplyOperation()
 {
   if (this->Task->ExecuteMainTask() != 0)
     return false;

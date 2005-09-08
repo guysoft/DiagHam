@@ -146,13 +146,13 @@ void ComplexBasicLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
-      this->Architecture->ExecuteOperation(&Operation1);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
       this->V2 /= this->V2.Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
@@ -170,7 +170,7 @@ void ComplexBasicLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
       TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
       TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
       AddComplexLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
-      this->Architecture->ExecuteOperation(&Operation4);
+      Operation4.ApplyOperation(this->Architecture);
       this->V3 /= this->V3.Norm();
       ComplexVector TmpV (this->V1);
       this->V1 = this->V2;
@@ -178,7 +178,7 @@ void ComplexBasicLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
       this->V3 = TmpV;
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &this->V2, &this->V3);
-      this->Architecture->ExecuteOperation(&Operation3);
+      Operation3.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }

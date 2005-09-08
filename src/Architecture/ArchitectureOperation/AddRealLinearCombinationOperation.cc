@@ -137,11 +137,11 @@ AbstractArchitectureOperation* AddRealLinearCombinationOperation::Clone()
   return new AddRealLinearCombinationOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool AddRealLinearCombinationOperation::ApplyOperation()
+bool AddRealLinearCombinationOperation::RawApplyOperation()
 {
   if (this->SourceVector != 0)
     for (int i = 0; i < this->NbrVector; ++i)
@@ -170,7 +170,7 @@ bool AddRealLinearCombinationOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AddRealLinearCombinationOperation::ApplyOperation(SMPArchitecture* architecture)
+bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

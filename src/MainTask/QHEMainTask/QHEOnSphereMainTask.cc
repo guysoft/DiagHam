@@ -321,7 +321,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  if (this->EigenvectorConvergence == true)
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
-	      this->Architecture->ExecuteOperation(&Operation1);
+	      Operation1.ApplyOperation(this->Architecture);
 	      double Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 	      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
 	      while (Precision > 1e-7)
@@ -334,7 +334,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  delete[] Eigenvectors;
 		  Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
 		  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
-		  this->Architecture->ExecuteOperation(&Operation1);
+		  Operation1.ApplyOperation(this->Architecture);
 		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
@@ -356,7 +356,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  for (int i = 0; i < this->NbrEigenvalue; ++i)
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
-	      this->Architecture->ExecuteOperation(&Operation1);
+	      Operation1.ApplyOperation(this->Architecture);
 	      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
 	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
 	      Eigenvectors[i].WriteVector(TmpVectorName);

@@ -182,7 +182,7 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithm::GetEigenstates(int nbrEigen
       Eigenstates[i] = ComplexVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
   delete[] TmpCoefficents;
@@ -203,7 +203,7 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
-	this->Architecture->ExecuteOperation(&Operation1);
+	Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
 							    this->LanczosVectors[1]).Re;
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
@@ -211,7 +211,7 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-      this->Architecture->ExecuteOperation(&Operation2);
+      Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 
@@ -234,13 +234,13 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	{
 	  Complex* TmpCoef = new Complex [i];
 	  MultipleComplexScalarProductOperation Operation4 (&(this->LanczosVectors[i]), this->LanczosVectors, i - 2, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation4);
+	  Operation4.ApplyOperation(this->Architecture);
 	  for (int j = 0; j < (i - 2); j++)
 	    {
 	      TmpCoef[j].Re *= -1.0;
 	    }
 	  AddComplexLinearCombinationOperation Operation2 (&(this->LanczosVectors[i]), this->LanczosVectors, i - 2, TmpCoef);
-	  this->Architecture->ExecuteOperation(&Operation2);
+	  Operation2.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef;
 	}
       double VectorNorm = this->LanczosVectors[i].Norm();
@@ -267,7 +267,7 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
 	      TmpCoef2[j] = -(this->LanczosVectors[j] * this->LanczosVectors[i]);
 	    }
 	  AddComplexLinearCombinationOperation Operation3 (&(this->LanczosVectors[i]), this->LanczosVectors, i, TmpCoef2);
-	  this->Architecture->ExecuteOperation(&Operation3);
+	  Operation3.ApplyOperation(this->Architecture);
 	  delete[] TmpCoef2;
 
 /*	  for (int j = 0; j < i; j++)
@@ -280,7 +280,7 @@ void FullReorthogonalizedComplexLanczosAlgorithm::RunLanczosAlgorithm (int nbrIt
       this->Index++;
       this->LanczosVectors[i + 1] = ComplexVector(this->Hamiltonian->GetHilbertSpaceDimension());
       VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[i]), &(this->LanczosVectors[i + 1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
 
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[i - 1] * 
 								       this->LanczosVectors[i + 1]).Re;

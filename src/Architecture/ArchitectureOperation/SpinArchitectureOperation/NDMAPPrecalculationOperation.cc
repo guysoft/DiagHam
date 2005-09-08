@@ -86,11 +86,11 @@ AbstractArchitectureOperation* NDMAPPrecalculationOperation::Clone()
   return new NDMAPPrecalculationOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool NDMAPPrecalculationOperation::ApplyOperation()
+bool NDMAPPrecalculationOperation::RawApplyOperation()
 {
   if (this->FirstPass ==  true)
     {

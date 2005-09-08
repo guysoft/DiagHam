@@ -81,10 +81,12 @@ class NDMAPPrecalculationOperation: public AbstractPrecalculationOperation
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
   
-  // apply operation
+ protected:
+
+  // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool ApplyOperation();
+  bool RawApplyOperation();
   
 };
 

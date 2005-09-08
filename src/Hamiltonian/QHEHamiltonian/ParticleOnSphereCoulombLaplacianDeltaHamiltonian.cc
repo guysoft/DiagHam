@@ -677,7 +677,7 @@ long ParticleOnSphereCoulombLaplacianDeltaHamiltonian::FastMultiplicationMemory(
   cout << "start" << endl;
 
   QHEParticlePrecalculationOperation Operation(this);
-  this->Architecture->ExecuteOperation(&Operation);
+  Operation.ApplyOperation(this->Architecture);
 
   long Memory = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
@@ -784,7 +784,7 @@ void ParticleOnSphereCoulombLaplacianDeltaHamiltonian::EnableFastMultiplication(
 
 /*  AbstractArchitecture* Architecture = new MonoProcessorArchitecture;
   GenericOperation<ParticleOnSphereDeltaHamiltonian> Operation(this, &(ParticleOnSphereDeltaHamiltonian::PartialEnableFastMultiplication));
-  if (Architecture->ExecuteOperation(&Operation) == false)
+  if Operation) == false.ApplyOperation((Architecture)
     cout << "error" << endl;
   else
     cout << "success" << endl;*/

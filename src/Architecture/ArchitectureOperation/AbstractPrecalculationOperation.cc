@@ -56,7 +56,7 @@ void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AbstractPrecalculationOperation::ApplyOperation(SMPArchitecture* architecture)
+bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->GetHilbertSpaceDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

@@ -50,11 +50,11 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
   switch (architecture->GetArchitectureID())
     {
     case AbstractArchitecture::SMP:
-      return this->ApplyOperation((SMPArchitecture*) architecture);
+      return this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture);
     case AbstractArchitecture::SimpleMPI:
-      return this->ApplyOperation((SimpleMPIArchitecture*) architecture);
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);
     default:
-      return this->ApplyOperation();
+      return this->RawApplyOperation();
     }
 }
   
@@ -63,9 +63,9 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AbstractArchitectureOperation::ApplyOperation(SMPArchitecture* architecture)
+bool AbstractArchitectureOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  return this->ApplyOperation();
+  return this->RawApplyOperation();
 }
  
 // apply operation for simple MPI architecture
@@ -73,8 +73,8 @@ bool AbstractArchitectureOperation::ApplyOperation(SMPArchitecture* architecture
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AbstractArchitectureOperation::ApplyOperation(SimpleMPIArchitecture* architecture)
+bool AbstractArchitectureOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
-  return this->ApplyOperation();
+  return this->RawApplyOperation();
 }
   

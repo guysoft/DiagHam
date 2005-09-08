@@ -104,11 +104,11 @@ AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
   return new QHEParticleWaveFunctionOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool QHEParticleWaveFunctionOperation::ApplyOperation()
+bool QHEParticleWaveFunctionOperation::RawApplyOperation()
 {
   if (this->NextCoordinates == -1)
     this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),

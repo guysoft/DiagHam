@@ -63,16 +63,11 @@ class AbstractPrecalculationOperation: public AbstractArchitectureOperation
   // return value = hilbert space dimension  
   virtual int GetHilbertSpaceDimension () = 0;
 
-  // apply operation
-  //
-  // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
-  
   // apply operation for SMP architecture
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  virtual bool ApplyOperation(SMPArchitecture* architecture);
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
 };
 

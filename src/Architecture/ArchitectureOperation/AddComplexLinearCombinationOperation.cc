@@ -96,7 +96,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
-  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
 // constructor 
@@ -160,7 +160,7 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
   this->DestinationVector = destinationVector;  
-  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
 
 // copy constructor 
@@ -207,11 +207,11 @@ AbstractArchitectureOperation* AddComplexLinearCombinationOperation::Clone()
   return new AddComplexLinearCombinationOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool AddComplexLinearCombinationOperation::ApplyOperation()
+bool AddComplexLinearCombinationOperation::RawApplyOperation()
 {
   if (this->RealCoefficients == 0)
     {
@@ -265,7 +265,7 @@ bool AddComplexLinearCombinationOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool AddComplexLinearCombinationOperation::ApplyOperation(SMPArchitecture* architecture)
+bool AddComplexLinearCombinationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
   int FirstComponent = 0;

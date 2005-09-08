@@ -89,11 +89,11 @@ AbstractArchitectureOperation* MatrixMatrixMultiplyOperation::Clone()
   return new MatrixMatrixMultiplyOperation (*this);
 }
   
-// apply operation
+// apply operation (architecture independent)
 //
 // return value = true if no error occurs
 
-bool MatrixMatrixMultiplyOperation::ApplyOperation()
+bool MatrixMatrixMultiplyOperation::RawApplyOperation()
 {
   if ((this->LeftMatrix->GetMatrixType() == Matrix::RealElements) && (this->RightMatrix->GetMatrixType() == Matrix::RealElements))
     {
@@ -108,7 +108,7 @@ bool MatrixMatrixMultiplyOperation::ApplyOperation()
 // architecture = pointer to the architecture
 // return value = true if no error occurs
 
-bool MatrixMatrixMultiplyOperation::ApplyOperation(SMPArchitecture* architecture)
+bool MatrixMatrixMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   int Step = this->LeftMatrix->GetNbrRow() / architecture->GetNbrThreads();
   int FirstComponent = 0;
@@ -132,3 +132,4 @@ bool MatrixMatrixMultiplyOperation::ApplyOperation(SMPArchitecture* architecture
   delete[] TmpOperations;
   return true;
 }
+

@@ -213,7 +213,7 @@ Vector* FullReorthogonalizedBandLanczosAlgorithm::GetEigenstates(int nbrEigensta
       Eigenstates[i] = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->TridiagonalizedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
-      this->Architecture->ExecuteOperation(&Operation);
+      Operation.ApplyOperation(this->Architecture);
       Eigenstates[i] /= Eigenstates[i].Norm();
     }
   delete[] TmpCoefficents;
@@ -239,7 +239,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	{
 	  this->LanczosVectors[k + this->BlockDimension[0]] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k]), &(this->LanczosVectors[k + this->BlockDimension[0]]));
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
 
       int Lim = this->BlockPosition[1] + this->CurrentBlockSize;
@@ -247,7 +247,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	{
 	  MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[i]), &(this->LanczosVectors[i - this->BlockPosition[1]]),   
 							this->CurrentBlockSize + i - this->BlockPosition[1], this->TemporaryCoefficient);
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	  for (int j = i - this->BlockPosition[1]; j < this->BlockPosition[1]; ++j)
 	    {
 	      this->ReducedMatrix(i, j) = this->TemporaryCoefficient[j -i + this->BlockPosition[1]];
@@ -259,7 +259,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	  for (int j = 0; j < this->CurrentBlockSize; ++j)
 	    this->TemporaryCoefficient[j] = -this->ReducedMatrix(i, j);
 	  AddRealLinearCombinationOperation Operation (&(this->LanczosVectors[i]), this->LanczosVectors, this->CurrentBlockSize, this->TemporaryCoefficient);
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
 	  
       double TmpNorm;
@@ -285,7 +285,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	{
 	  this->LanczosVectors[k + this->BlockDimension[1]] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k]), &(this->LanczosVectors[k + this->BlockDimension[1]]));
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
 
       Lim = this->BlockPosition[2] + this->CurrentBlockSize;
@@ -316,7 +316,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	  for (; j < this->BlockPosition[Index]; ++j)
 	    this->TemporaryCoefficient[j] = -this->ReducedMatrix(i, j);
 	  AddRealLinearCombinationOperation Operation (&(this->LanczosVectors[i]), this->LanczosVectors, this->BlockPosition[Index], this->TemporaryCoefficient);
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
 
       double VectorNorm = this->LanczosVectors[i].Norm();
@@ -345,7 +345,7 @@ void FullReorthogonalizedBandLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	{
 	  this->LanczosVectors[k + this->CurrentBlockSize] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
 	  VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->LanczosVectors[k]), &(this->LanczosVectors[k + this->CurrentBlockSize]));
-	  this->Architecture->ExecuteOperation(&Operation);
+	  Operation.ApplyOperation(this->Architecture);
 	}
 
       Lim = this->BlockPosition[this->Index] + this->CurrentBlockSize;

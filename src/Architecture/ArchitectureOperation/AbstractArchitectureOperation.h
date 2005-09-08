@@ -33,11 +33,9 @@
 
 
 #include "config.h"
-
-
-class AbstractArchitecture;
-class SMPArchitecture;
-class SimpleMPIArchitecture;
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/SMPArchitecture.h"
+#include "Architecture/SimpleMPIArchitecture.h"
 
 
 class AbstractArchitectureOperation
@@ -78,45 +76,37 @@ class AbstractArchitectureOperation
   // return value = pointer to cloned operation
   virtual AbstractArchitectureOperation* Clone() = 0;
   
-  // apply operation
-  //
-  // return value = true if no error occurs
-  virtual bool ApplyOperation() = 0;
-  
   // apply operation for a given architecture
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
   virtual bool ApplyOperation(AbstractArchitecture* architecture);
   
-  // apply operation for SMP architecture
-  //
-  // architecture = pointer to the architecture
-  // return value = true if no error occurs
-  virtual bool ApplyOperation(SMPArchitecture* architecture);
-  
-  // apply operation for simple MPI architecture
-  //
-  // architecture = pointer to the architecture
-  // return value = true if no error occurs
-  virtual bool ApplyOperation(SimpleMPIArchitecture* architecture);
-  
   // get operation type
   //
   // return value = code corresponding to the operation
   int GetOperationType ();
 
+  // apply operation (architecture independent)
+  //
+  // return value = true if no error occurs
+  virtual bool RawApplyOperation() = 0;
+  
+ protected:
+
+  // apply operation for SMP architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  
+  // apply operation for simple MPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
 };
-
-// get operation type
-//
-// return value = code corresponding to the operation
-
-inline int AbstractArchitectureOperation::GetOperationType ()
-{
-  return this->OperationType;
-}
-
 
 
 #endif
