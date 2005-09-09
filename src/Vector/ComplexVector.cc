@@ -158,6 +158,52 @@ ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag)
     }
 }
 
+#ifdef __MPI__
+
+// constructor from informations sent using MPI
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts or sends the vector
+// broadcast = true if the vector is broadcasted
+
+ComplexVector::ComplexVector(MPI::Intracomm& communicator, int id, bool broadcast)
+{
+  this->VectorType = Vector::ComplexDatas;
+  int TmpArray[3];
+  if (broadcast == true)
+    communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+  else
+    communicator.Recv(TmpArray, 3, MPI::INT, id, 1);   
+  this->Dimension = TmpArray[0];
+  this->VectorId = TmpArray[1];
+  this->RealComponents = new double [this->Dimension + 1];
+  this->ImaginaryComponents = new double [this->Dimension + 1];
+  if (TmpArray[2] == 1)
+    for (int i = 0; i <= this->Dimension; ++i) 
+      {
+	this->RealComponents[i] = 0.0;
+	this->ImaginaryComponents[i] = 0.0;
+      }
+  else
+    if (TmpArray[2] == 2)
+      {
+	if (broadcast == true)
+	  {
+	    communicator.Bcast(this->RealComponents, this->Dimension, MPI::DOUBLE, id);      
+	    communicator.Bcast(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id);      
+	  }
+	else
+	  {
+	    communicator.Recv(this->RealComponents, this->Dimension, MPI::DOUBLE, id, 1);   
+	    communicator.Recv(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id, 1);   
+	  }
+      }
+  this->TrueDimension = this->Dimension;
+  this->Flag.Initialize();
+}
+
+#endif
+
 // destructor
 //
 
@@ -2206,6 +2252,66 @@ Vector& ComplexVector::SumVector(MPI::Intracomm& communicator, int id)
       delete[] TmpComponents;
     }
   return *this;
+}
+
+// create a new vector on each MPI node which is an exact clone of the broadcasted one
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new vector 
+
+Vector* ComplexVector::BroadcastClone(MPI::Intracomm& communicator, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->Dimension;
+      TmpArray[1] = this->VectorId;
+      TmpArray[2] = 2;
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+      communicator.Bcast(this->RealComponents, this->Dimension, MPI::DOUBLE, id);      
+      communicator.Bcast(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id);      
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new ComplexVector(communicator, id);
+    }
+  return 0;
+}
+
+// create a new vector on each MPI node with same size and same type but non-initialized components
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new vector 
+
+Vector* ComplexVector::BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int id, bool zeroFlag)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->VectorType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->Dimension;
+      TmpArray[1] = this->VectorId;
+      TmpArray[2] = 0;
+      if (zeroFlag == true)
+	{
+	  TmpArray[2] = 1;
+	}
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new ComplexVector(communicator, id);
+    }
+  return 0;
 }
 
 #endif

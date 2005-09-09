@@ -33,15 +33,6 @@
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
-#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
-#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
-#include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
-#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
-#include "Architecture/ArchitectureOperation/MatrixMatrixMultiplyOperation.h"
-#include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
-#include "Architecture/ArchitectureOperation/AbstractScalarSumOperation.h"
 
 #include <iostream>
 #ifdef __MPI__
@@ -184,6 +175,190 @@ bool SimpleMPIArchitecture::RequestOperation (int operationType)
   return false;
 }
 
+
+// send acknowledge to the master node 
+//
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::SendAcknowledge (int operationType)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(&Acknowledge, 1, MPI::INT, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// broadcast an integer from master node to slave nodes
+// 
+// value = integer to broadcast
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::BroadcastToSlaves(int& value)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(&value, 1, MPI::INT, 0); 
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// broadcast an integer array from master node to slave nodes
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::BroadcastToSlaves(int* values, int nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(values, nbrValues, MPI::INT, 0); 
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// broadcast a double from master node to slave nodes
+// 
+// value = integer to broadcast
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::BroadcastToSlaves(double& value)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(&value, 1, MPI::DOUBLE, 0); 
+  return true;
+#else
+  return false;
+#endif  
+}
+
+// broadcast a double array from master node to slave nodes
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::BroadcastToSlaves(double* values, int nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(values, nbrValues, MPI::DOUBLE, 0); 
+  return true;
+#else
+  return false;
+#endif  
+}
+  
+// broadcast a vector on each slave node
+//
+// vector = pointer to the vector tobroadcast  (only usefull for the master node)
+// return value = pointer to the broadcasted vector or null pointer if an error occured
+
+Vector* SimpleMPIArchitecture::BroadcastVector(Vector* vector)
+{
+#ifdef __MPI__
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      vector->BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+      return vector;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	Vector TmpVector;
+	return TmpVector.BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+      }
+#endif  
+  return 0;
+}
+
+// broadcast a vector type and allocate a vector based on it on each slave node
+//
+// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// return value = pointer to the cloned vector or null pointer if an error occured
+
+Vector* SimpleMPIArchitecture::BroadcastVectorType(Vector* vector)
+{
+#ifdef __MPI__
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      vector->BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+      return vector;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	Vector TmpVector;
+	return TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+      }
+#endif  
+  return 0;
+}
+
+// broadcast an array of vectors on each slave node
+//
+// nbrVectors = reference on the number of vectors to broadcast or get
+// vector = pointer to the vector tobroadcast  (only usefull for the master node)
+// return value =  pointer to the array of broadcasted vectors or null pointer if an error occured null pointer if an error occured
+
+Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* vector)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(&nbrVectors, 1, MPI::INT, 0); 
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      for (int i = 0; i < nbrVectors; ++i)
+	vector[i].BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+      return 0;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	
+	Vector** TmpVectorArray = new Vector*[nbrVectors];
+	Vector TmpVector;
+	for (int i = 0; i < nbrVectors; ++i)
+	  TmpVectorArray[i] = TmpVector.BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+	return TmpVectorArray;
+      }
+#endif  
+  return 0;
+}
+
+// broadcast vector type and allocate an array of vectors based on it on each slave node
+//
+// nbrVectors = reference on the number of vectors to broadcast or get
+// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// return value =  pointer to the array of cloned vector or null pointer if an error occurednull pointer if an error occured
+
+Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector* vector)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Bcast(&nbrVectors, 1, MPI::INT, 0); 
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      vector[0].BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+      return 0;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	Vector** TmpVectorArray = new Vector*[nbrVectors];
+	Vector TmpVector;
+	TmpVectorArray[0] = TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+	for (int i = 1; i < nbrVectors; ++i)
+	  TmpVectorArray[i] = TmpVectorArray[0]->EmptyClone();
+	return TmpVectorArray;
+      }
+#endif  
+  return 0;
+}
 
 /*
 // execute an architecture-dependent vector hamiltonian multiplication operation

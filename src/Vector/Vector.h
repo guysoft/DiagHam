@@ -234,6 +234,22 @@ class Vector
   // return value = reference on the current vector
   virtual Vector& SumVector(MPI::Intracomm& communicator, int id);
 
+  // create a new vector on each MPI node which is an exact clone of the broadcasted one
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new vector 
+  virtual Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on each MPI node with same size and same type but non-initialized components
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new vector 
+  virtual Vector* BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
+
 #endif
 
 };

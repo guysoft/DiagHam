@@ -94,6 +94,11 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
   // operation = reference on operation to copy
   AddRealLinearCombinationOperation(const AddRealLinearCombinationOperation& operation);
   
+  // constructor from a master node information
+  //
+  // architecture = pointer to the distributed architecture to use for communications
+  AddRealLinearCombinationOperation(SimpleMPIArchitecture* architecture);
+  
   // destructor
   //
   ~AddRealLinearCombinationOperation();
@@ -126,6 +131,12 @@ class AddRealLinearCombinationOperation: public AbstractArchitectureOperation
   // architecture = pointer to the architecture
   // return value = true if no error occurs
   bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
   
 };
 

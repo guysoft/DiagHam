@@ -109,6 +109,14 @@ AddRealLinearCombinationOperation::AddRealLinearCombinationOperation(const AddRe
   this->DestinationVector = operation.DestinationVector;  
   this->SourceVectorMatrix = operation.SourceVectorMatrix;
 }
+
+// constructor from a master node information
+//
+// architecture = pointer to the distributed architecture to use for communications
+
+AddRealLinearCombinationOperation::AddRealLinearCombinationOperation(SimpleMPIArchitecture* architecture)
+{
+}
   
 // destructor
 //
@@ -194,4 +202,37 @@ bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SMPA
   delete[] TmpOperations;
   return true;
 }
+
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+  if (architecture->IsMasterNode())
+    {
+      if (architecture->RequestOperation(this->OperationType) == false)
+	{
+	  return false;
+	}
+    }
+/*  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+  operation->ApplyOperation();
+  for (int i = 0; i < this->NbrMPINodes; ++i)
+    if (i == this->MPIRank)
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
+      }
+    else
+      {
+	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
+      }*/
+  return true;
+#else
+  return false;
+#endif
+}
+  
 

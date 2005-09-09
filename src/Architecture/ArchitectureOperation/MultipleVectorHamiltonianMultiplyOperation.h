@@ -89,6 +89,12 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   // operation = reference on operation to copy
   MultipleVectorHamiltonianMultiplyOperation(const MultipleVectorHamiltonianMultiplyOperation& operation);
   
+  // constructor from a master node information
+  //
+  // hamiltonian = pointer to the hamiltonian to use
+  // architecture = pointer to the distributed architecture to use for communications
+  MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, SimpleMPIArchitecture* architecture);
+  
   // destructor
   //
   ~MultipleVectorHamiltonianMultiplyOperation();
@@ -142,6 +148,12 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   // return value = true if no error occurs
   bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
 
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
 };
 
 // get number of vectors that have to be evaluated together

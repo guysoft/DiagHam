@@ -34,6 +34,11 @@
 
 #include "config.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Vector/Vector.h"
+
+#ifdef __MPI__
+#include <mpi.h>
+#endif
 
 
 class AbstractArchitectureOperation;
@@ -96,8 +101,71 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // request an operation to the slave nodes 
   //
   // operationType = operation ID
-  // return value = true if np error occured
+  // return value = true if no error occured
   bool RequestOperation (int operationType);
+
+  // send acknowledge to the master node 
+  //
+  // return value = true if no error occured
+  bool SendAcknowledge (int operationType);
+
+  // broadcast an integer from master node to slave nodes
+  // 
+  // value = integer to broadcast
+  // return value = true if no error occured
+  bool BroadcastToSlaves(int& value);
+
+  // broadcast an integer array from master node to slave nodes
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  bool BroadcastToSlaves(int* values, int nbrValues);
+
+  // broadcast a double from master node to slave nodes
+  // 
+  // value = integer to broadcast
+  // return value = true if no error occured
+  bool BroadcastToSlaves(double& value);
+
+  // broadcast a double array from master node to slave nodes
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  bool BroadcastToSlaves(double* values, int nbrValues);
+
+  // broadcast a vector on each slave node
+  //
+  // vector = pointer to the vector tobroadcast  (only usefull for the master node)
+  // return value = pointer to the broadcasted vector or null pointer if an error occured
+  Vector* BroadcastVector(Vector* vector = 0);
+
+  // broadcast a vector type and allocate a vector based on it on each slave node
+  //
+  // vector = pointer to the vector to be used as reference (only usefull for the master node)
+  // return value = pointer to the cloned vector or null pointer if an error occured
+  Vector* BroadcastVectorType(Vector* vector = 0);
+
+  // broadcast an array of vectors on each slave node
+  //
+  // nbrVectors = reference on the number of vectors to broadcast or get
+  // vector = pointer to the vector tobroadcast  (only usefull for the master node)
+  // return value =  pointer to the array of broadcasted vectors or null pointer if an error occured null pointer if an error occured
+  Vector** BroadcastVectorArray(int& nbrVectors, Vector* vector = 0);
+
+  // broadcast vector type and allocate an array of vectors based on it on each slave node
+  //
+  // nbrVectors = reference on the number of vectors to broadcast or get
+  // vector = pointer to the vector to be used as reference (only usefull for the master node)
+  // return value =  pointer to the array of cloned vector or null pointer if an error occurednull pointer if an error occured
+  Vector** BroadcastVectorTypeArray(int& nbrVectors, Vector* vector = 0);
+
+  // add current vector to the one of the master nide
+  // 
+  // vector = reference on the vector to add (or the destination vector of the master node)
+  // return value = reference on the vector
+  Vector& SumVector(Vector& vector);
 
 };
 
@@ -108,6 +176,16 @@ class SimpleMPIArchitecture : public AbstractArchitecture
 inline bool SimpleMPIArchitecture::IsMasterNode()
 {
   return this->MasterNodeFlag;
+}
+
+// add current vector to the one of the master nide
+// 
+// vector = reference on the vector to add (or the destination vector of the master node)
+// return value = reference on the vector
+
+inline Vector& SimpleMPIArchitecture::SumVector(Vector& vector)
+{
+  return vector.SumVector(MPI::COMM_WORLD, 0);
 }
 
 #endif

@@ -290,5 +290,61 @@ Vector& Vector::SumVector(MPI::Intracomm& communicator, int id)
   return *this;
 }
 
+// create a new vector on each MPI node which is an exact clone of the broadcasted one
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new vector 
+
+Vector* Vector::BroadcastClone(MPI::Intracomm& communicator, int id)
+{
+  int Type = this->VectorType;
+  communicator.Bcast(&Type, 1, MPI::INT, id);  
+  if (id != communicator.Get_rank())
+    {
+      switch (Type)
+	{
+	case (Vector::RealDatas):
+	  return new RealVector(communicator, id);
+	  break;
+	case (Vector::ComplexDatas):
+	  return new ComplexVector(communicator, id);
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  return 0;
+}
+
+// create a new vector on each MPI node with same size and same type but non-initialized components
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new vector 
+
+Vector* Vector::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
+{
+  int Type = this->VectorType;
+  communicator.Bcast(&Type, 1, MPI::INT, id);  
+  if (id != communicator.Get_rank())
+    {
+      switch (Type)
+	{
+	case (Vector::RealDatas):
+	  return new RealVector(communicator, id);
+	  break;
+	case (Vector::ComplexDatas):
+	  return new ComplexVector(communicator, id);
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  return 0;
+}
+
 #endif
 

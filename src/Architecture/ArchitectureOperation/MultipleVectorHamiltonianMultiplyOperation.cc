@@ -96,6 +96,47 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
 }
   
+// constructor from a master node information
+//
+// hamiltonian = pointer to the hamiltonian to use
+// architecture = pointer to the distributed architecture to use for communications
+
+MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, SimpleMPIArchitecture* architecture)
+{
+  this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
+  this->Hamiltonian = hamiltonian;
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  Vector** TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
+  Vector** TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
+  if (TmpSourceVectors[0]->GetVectorType() == Vector::RealDatas)
+    {
+      this->RealSourceVectors = new RealVector[this->NbrVectors];
+      this->RealDestinationVectors = new RealVector[this->NbrVectors];
+      for (int i = 0; i < this->NbrVectors; ++i)
+	{
+	  this->RealSourceVectors[i] = *((RealVector*) TmpSourceVectors[i]);
+	  this->RealDestinationVectors[i] = *((RealVector*) TmpDestinationVectors[i]);
+	  delete TmpSourceVectors[i];
+	  delete TmpDestinationVectors[i];
+	}
+      delete[] TmpSourceVectors;
+      delete[] TmpDestinationVectors;
+      this->ComplexSourceVectors = 0;
+      this->ComplexDestinationVectors = 0;       
+    }
+  else
+    {
+      this->RealSourceVectors = 0;
+      this->RealDestinationVectors = 0;
+      this->ComplexSourceVectors = (ComplexVector*) TmpSourceVectors;
+      this->ComplexDestinationVectors = (ComplexVector*) TmpDestinationVectors;       
+    }
+}
+  
 // destructor
 //
 
@@ -233,3 +274,64 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   delete[] TmpOperations;
   return true;
 }
+
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+  if (architecture->IsMasterNode())
+    {
+      if (architecture->RequestOperation(this->OperationType) == false)
+	{
+	  return false;
+	}
+      if (this->RealDestinationVectors != 0)
+	{
+	  architecture->BroadcastVectorArray(this->NbrVectors, this->RealSourceVectors);
+	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->RealDestinationVectors);  
+	}
+      else
+	{
+	  architecture->BroadcastVectorArray(this->NbrVectors, this->ComplexSourceVectors);
+	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->ComplexDestinationVectors);  
+	}
+    }
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  this->RawApplyOperation();
+/*  if (this->RealDestinationVectors != 0)
+    {
+      for (int i = 0; i < this->NbrVectors; ++i)
+	architecture->SumVector(*(this->RealDestinationVectors[i]));
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrVectors; ++i)
+	architecture->SumVector(*(this->ComplexDestinationVectors[i]));
+    }*/
+  if (architecture->IsMasterNode() == false)
+    {
+      if (this->RealDestinationVectors != 0)
+	{
+	  delete[] this->RealDestinationVectors;
+	  delete[] this->RealSourceVectors;
+	}
+      else
+	{
+	  delete[] this->ComplexDestinationVectors;
+	  delete[] this->ComplexSourceVectors;
+	}
+    }
+  return true;
+#else
+  return this->RawApplyOperation();
+#endif
+}
+  

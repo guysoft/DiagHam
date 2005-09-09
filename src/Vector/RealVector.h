@@ -127,6 +127,15 @@ class RealVector : public Vector
   // vector = vector to copy
   RealVector(const Vector& vector);
 
+#ifdef __MPI__
+  // constructor from informations sent using MPI
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts or sends the vector
+  // broadcast = true if the vector is broadcasted
+  RealVector(MPI::Intracomm& communicator, int id, bool broadcast = true);
+#endif
+
   // destructor
   //
   ~RealVector ();
@@ -912,6 +921,22 @@ class RealVector : public Vector
   // id = id of the destination MPI process
   // return value = reference on the current vector
   Vector& SumVector(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on each MPI node which is an exact clone of the broadcasted one
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new vector 
+  Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on each MPI node with same size and same type but non-initialized components
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new vector 
+  Vector* BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
 
 #endif
 

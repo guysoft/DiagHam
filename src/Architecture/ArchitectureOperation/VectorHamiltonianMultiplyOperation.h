@@ -71,6 +71,12 @@ class VectorHamiltonianMultiplyOperation: public AbstractArchitectureOperation
   //
   // operation = reference on operation to copy
   VectorHamiltonianMultiplyOperation(const VectorHamiltonianMultiplyOperation& operation);
+
+  // constructor from a master node information
+  //
+  // hamiltonian = pointer to the hamiltonian to use
+  // architecture = pointer to the distributed architecture to use for communications
+  VectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, SimpleMPIArchitecture* architecture);
   
   // destructor
   //

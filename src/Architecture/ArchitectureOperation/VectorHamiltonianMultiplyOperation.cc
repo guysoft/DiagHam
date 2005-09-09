@@ -34,6 +34,7 @@
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 #include "Architecture/SMPArchitecture.h"
+#include "Architecture/SimpleMPIArchitecture.h"
 
 
 // constructor 
@@ -64,6 +65,24 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation(const Vec
   this->SourceVector = operation.SourceVector;
   this->DestinationVector = operation.DestinationVector;  
   this->OperationType = AbstractArchitectureOperation::VectorHamiltonianMultiply;
+}
+  
+// constructor from a master node information
+//
+// hamiltonian = pointer to the hamiltonian to use
+// architecture = pointer to the distributed architecture to use for communications
+
+VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation(AbstractHamiltonian* hamiltonian, SimpleMPIArchitecture* architecture)
+{
+  this->Hamiltonian = hamiltonian;
+  this->OperationType = AbstractArchitectureOperation::VectorHamiltonianMultiply;
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+  this->SourceVector = architecture->BroadcastVector();
+  this->DestinationVector = architecture->BroadcastVectorType();  
 }
   
 // destructor
@@ -166,6 +185,8 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
 	{
 	  return false;
 	}
+      architecture->BroadcastVector(this->SourceVector);
+      architecture->BroadcastVectorType(this->DestinationVector);  
     }
   long TmpMinimumIndex = 0;
   long TmpMaximumIndex = 0;
@@ -173,7 +194,12 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
   this->RawApplyOperation();
-//  architecture->SumVector(this->DestinationVector);
+  architecture->SumVector(*(this->DestinationVector));
+  if (architecture->IsMasterNode() == false)
+    {
+      delete this->DestinationVector;
+      delete this->SourceVector;
+    }
   return true;
 #else
   return this->RawApplyOperation();
