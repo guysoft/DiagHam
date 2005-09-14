@@ -54,6 +54,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
+
 #include <iostream>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -151,6 +153,20 @@ QHEOnSphereMainTask::~QHEOnSphereMainTask()
     delete[] this->EigenvectorFileName;
 }
   
+// set architecture binded to the task
+// 
+// architecture = pointer to the architecture to use
+
+void QHEOnSphereMainTask::SetArchitecture(AbstractArchitecture* architecture)
+{
+  this->Architecture = architecture;
+  if ((this->Architecture->GetArchitectureID() & AbstractArchitecture::WithCommunicator) != 0)
+    if (this->OperationManagers.GetNbrElement() == 0)
+      {
+	this->OperationManagers += new ArchitectureBaseOperationManager((SimpleMPIArchitecture*) this->Architecture, this->Hamiltonian);
+      }
+}
+
 // execute the main task
 // 
 // return value = 0 if no error occurs, else return error code

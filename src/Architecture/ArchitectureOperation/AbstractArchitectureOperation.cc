@@ -32,6 +32,13 @@
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Architecture/AbstractArchitecture.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 
 // destructor
 //

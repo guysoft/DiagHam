@@ -861,7 +861,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 		NIndices = this->SortedIndicesPerSum[k][j];
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    Coefficient2 = this->Particles->ProdA(i, NIndices, k);
+		    Coefficient2 = this->Particles->ProdA(i + this->PrecalculationShift, NIndices, k);
 		    if (Coefficient2 != 0)
 		      {
 			MIndices = this->SortedIndicesPerSum[k][j];

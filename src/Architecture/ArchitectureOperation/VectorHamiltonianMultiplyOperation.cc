@@ -36,6 +36,12 @@
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // constructor 
 //
@@ -179,27 +185,28 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
 bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
 {
 #ifdef __MPI__
-  if (architecture->IsMasterNode())
-    {
-      if (architecture->RequestOperation(this->OperationType) == false)
-	{
-	  return false;
-	}
-      architecture->BroadcastVector(this->SourceVector);
-      architecture->BroadcastVectorType(this->DestinationVector);  
-    }
-  long TmpMinimumIndex = 0;
-  long TmpMaximumIndex = 0;
-  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
-  this->FirstComponent = (int) TmpMinimumIndex;  
-  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  this->RawApplyOperation();
-  architecture->SumVector(*(this->DestinationVector));
-  if (architecture->IsMasterNode() == false)
-    {
-      delete this->DestinationVector;
-      delete this->SourceVector;
-    }
+   if (architecture->IsMasterNode())
+     {
+       if (architecture->RequestOperation(this->OperationType) == false)
+ 	{
+ 	  return false;
+ 	}
+       architecture->BroadcastVector(this->SourceVector);
+       architecture->BroadcastVectorType(this->DestinationVector);  
+     }
+   long TmpMinimumIndex = 0;
+   long TmpMaximumIndex = 0;
+   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+   this->FirstComponent = (int) TmpMinimumIndex;  
+   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+   this->RawApplyOperation();
+   architecture->SumVector(*(this->DestinationVector));
+   if (architecture->IsMasterNode() == false)
+     {
+       delete this->DestinationVector;
+       delete this->SourceVector;
+     }
+
   return true;
 #else
   return this->RawApplyOperation();

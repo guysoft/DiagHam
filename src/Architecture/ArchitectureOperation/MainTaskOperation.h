@@ -79,11 +79,25 @@ class MainTaskOperation: public AbstractArchitectureOperation
   // return value = pointer to the main task
   AbstractMainTask* GetMainTask();
 
+  // apply operation for a given architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ApplyOperation(AbstractArchitecture* architecture);
+
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs
   bool RawApplyOperation();
 
+ protected:
+
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
 };
 
 // set range of indices

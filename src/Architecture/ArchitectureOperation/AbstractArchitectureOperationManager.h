@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of abstract main task                        //
+//              class of abstract architecture operation manager              //
 //                                                                            //
-//                        last modification : 09/06/2004                      //
+//                        last modification : 13/09/2005                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,49 +28,42 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef ABSTRACTARCHITECTUREOPERATIONMANAGER_H
+#define ABSTRACTARCHITECTUREOPERATIONMANAGER_H
+
 
 #include "config.h"
-#include "MainTask/AbstractMainTask.h"
-#include "Architecture/ArchitectureOperation/AbstractArchitectureOperationManager.h"
-#include "GeneralTools/ListIterator.h"
+#include "Architecture/SimpleMPIArchitecture.h"
+#include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 
 
-// virtual destructor
-//  
-
-AbstractMainTask::~AbstractMainTask()
+class AbstractArchitectureOperationManager
 {
-}
 
-// set architecture binded to the task
-// 
-// architecture = pointer to the architecture to use
+ protected:
 
-void AbstractMainTask::SetArchitecture(AbstractArchitecture* architecture)
-{
-  this->Architecture = architecture;
-}
+  // pointer to the architecture (must provide a communicator)
+  SimpleMPIArchitecture* Architecture;
 
-// execute a given architecture-dependent operation requested by the main task
-//
-// operationID = architecture operation ID
-// return value = true if no error occured
+ public:
+  
+  // destructor
+  //
+  virtual ~AbstractArchitectureOperationManager();
 
-bool AbstractMainTask::ExecuteOperation(int operationID)
-{
-  AbstractArchitectureOperationManager** TmpOperationManager;
-  ListIterator<AbstractArchitectureOperationManager*> OperationManagerIterator(this->OperationManagers);
-  while ((TmpOperationManager = OperationManagerIterator()))
-    {
-      if ((*TmpOperationManager)->IsHandled(operationID))
-	{
-	  AbstractArchitectureOperation* TmpOperation = (*TmpOperationManager)->GetOperation(operationID);
-	  if (TmpOperation == 0)
-	    return false;
-	  else
-	    return TmpOperation->ApplyOperation(this->Architecture);
-	}
-    }
-  return false;
-}
+  // test if an operation can be handled by the manager
+  // 
+  // operationI = ID of the operation to get
+  // return value = true if the operation can be handled
+  virtual bool IsHandled(int operationID) = 0;
+  
+  // retrieve an operation from its ID, and initialize using information communicated through the archiecture communicator
+  //
+  // operationI = ID of the operation to get
+  // return value = pointer to the operation (null if not handled by the manager, or if error occured during initialization)
+  virtual AbstractArchitectureOperation* GetOperation(int operationID) = 0;
+  
+};
 
+
+#endif

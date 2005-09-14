@@ -306,16 +306,16 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
   this->RawApplyOperation();
-/*  if (this->RealDestinationVectors != 0)
+  if (this->RealDestinationVectors != 0)
     {
       for (int i = 0; i < this->NbrVectors; ++i)
-	architecture->SumVector(*(this->RealDestinationVectors[i]));
+	architecture->SumVector(this->RealDestinationVectors[i]);
     }
   else
     {
       for (int i = 0; i < this->NbrVectors; ++i)
-	architecture->SumVector(*(this->ComplexDestinationVectors[i]));
-    }*/
+	architecture->SumVector(this->ComplexDestinationVectors[i]);
+    }
   if (architecture->IsMasterNode() == false)
     {
       if (this->RealDestinationVectors != 0)

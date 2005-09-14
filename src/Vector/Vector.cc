@@ -27,7 +27,10 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include <iostream>
 
+
+using std::cout;
 using std::endl;
 
 
@@ -300,9 +303,9 @@ Vector& Vector::SumVector(MPI::Intracomm& communicator, int id)
 Vector* Vector::BroadcastClone(MPI::Intracomm& communicator, int id)
 {
   int Type = this->VectorType;
-  communicator.Bcast(&Type, 1, MPI::INT, id);  
   if (id != communicator.Get_rank())
     {
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
       switch (Type)
 	{
 	case (Vector::RealDatas):

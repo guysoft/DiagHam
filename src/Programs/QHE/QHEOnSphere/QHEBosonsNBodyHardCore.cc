@@ -22,6 +22,9 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
+#ifdef __MPI__
+#include <mpi.h>
+#endif
 
 
 using std::ios;
@@ -184,6 +187,7 @@ int main(int argc, char** argv)
       if (FirstRun == true)
 	FirstRun = false;
     }
+//  cout << "check toto3" << " " << MPI::COMM_WORLD.Get_rank() << endl;
 
   return 0;
 }

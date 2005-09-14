@@ -81,3 +81,17 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArc
   return true;
 }
   
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->SetIndicesRange((int) TmpMinimumIndex, (int) (TmpMaximumIndex - TmpMinimumIndex + 1));
+  return this->RawApplyOperation();
+}
+  

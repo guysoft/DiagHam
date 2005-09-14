@@ -117,6 +117,11 @@ class QHEOnSphereMainTask: public AbstractMainTask
   //  
   ~QHEOnSphereMainTask();
   
+  // set architecture binded to the task
+  // 
+  // architecture = pointer to the architecture to use
+  void SetArchitecture(AbstractArchitecture* architecture);
+
   // execute the main task
   // 
   // return value = 0 if no error occurs, else return error code

@@ -12,4 +12,6 @@ AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
 AbstractScalarSumOperation.cc \
-MainTaskOperation.cc
+MainTaskOperation.cc \
+AbstractArchitectureOperationManager.cc \
+ArchitectureBaseOperationManager.cc

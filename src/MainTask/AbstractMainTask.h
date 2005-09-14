@@ -33,9 +33,11 @@
 
 
 #include "config.h"
+#include "GeneralTools/List.h"
 
 
 class AbstractArchitecture;
+class AbstractArchitectureOperationManager;
 
 
 class AbstractMainTask
@@ -45,6 +47,9 @@ class AbstractMainTask
 
   // pointer to the architecture 
   AbstractArchitecture* Architecture;
+
+  // list of managers of architecture operations that can be used by the main task
+  List<AbstractArchitectureOperationManager*> OperationManagers;
 
  public:
 
@@ -61,6 +66,12 @@ class AbstractMainTask
   // 
   // architecture = pointer to the architecture to use
   virtual void SetArchitecture(AbstractArchitecture* architecture);
+
+  // execute a given architecture-dependent operation requested by the main task
+  //
+  // operationID = architecture operation ID
+  // return value = true if no error occured
+  virtual bool ExecuteOperation(int operationID);
 
 };
 

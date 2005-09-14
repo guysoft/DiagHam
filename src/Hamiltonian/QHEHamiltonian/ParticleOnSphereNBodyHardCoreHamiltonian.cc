@@ -111,6 +111,10 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	      delete[] TmpFileName;
 	    }
 	}
+      else
+	{
+	  this->FastMultiplicationFlag = false;
+	}
     }
   else
     this->LoadPrecalculation(precalculationFileName);
@@ -188,6 +192,10 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
 	      delete[] TmpFileName;
 	    }
+	}
+      else
+	{
+	  this->FastMultiplicationFlag = false;
 	}
     }
   else

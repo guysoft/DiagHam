@@ -216,7 +216,7 @@ void FullReorthogonalizedLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	Dimension = this->TridiagonalizedMatrix.GetNbrRow() + 2;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->LanczosVectors[0]), &(this->LanczosVectors[1]));
-	Operation1.ApplyOperation(this->Architecture);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->LanczosVectors[0] * 
 							    this->LanczosVectors[1]);
       this->LanczosVectors[1].AddLinearCombination(-this->TridiagonalizedMatrix.
@@ -224,7 +224,7 @@ void FullReorthogonalizedLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 						   this->LanczosVectors[0]);
       this->LanczosVectors[1] /= this->LanczosVectors[1].Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[1]), &(this->LanczosVectors[2]));
-	Operation2.ApplyOperation(this->Architecture);
+      Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->LanczosVectors[0] * 
 								       this->LanczosVectors[2]);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[1] * 

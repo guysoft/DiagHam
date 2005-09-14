@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of abstract main task                        //
+//              class of abstract architecture operation manager              //
 //                                                                            //
-//                        last modification : 09/06/2004                      //
+//                        last modification : 13/09/2005                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,49 +28,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-
 #include "config.h"
-#include "MainTask/AbstractMainTask.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperationManager.h"
-#include "GeneralTools/ListIterator.h"
 
 
-// virtual destructor
-//  
-
-AbstractMainTask::~AbstractMainTask()
-{
-}
-
-// set architecture binded to the task
-// 
-// architecture = pointer to the architecture to use
-
-void AbstractMainTask::SetArchitecture(AbstractArchitecture* architecture)
-{
-  this->Architecture = architecture;
-}
-
-// execute a given architecture-dependent operation requested by the main task
+// destructor
 //
-// operationID = architecture operation ID
-// return value = true if no error occured
 
-bool AbstractMainTask::ExecuteOperation(int operationID)
+AbstractArchitectureOperationManager::~AbstractArchitectureOperationManager()
 {
-  AbstractArchitectureOperationManager** TmpOperationManager;
-  ListIterator<AbstractArchitectureOperationManager*> OperationManagerIterator(this->OperationManagers);
-  while ((TmpOperationManager = OperationManagerIterator()))
-    {
-      if ((*TmpOperationManager)->IsHandled(operationID))
-	{
-	  AbstractArchitectureOperation* TmpOperation = (*TmpOperationManager)->GetOperation(operationID);
-	  if (TmpOperation == 0)
-	    return false;
-	  else
-	    return TmpOperation->ApplyOperation(this->Architecture);
-	}
-    }
-  return false;
 }
 

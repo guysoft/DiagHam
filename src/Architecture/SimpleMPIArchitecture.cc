@@ -33,6 +33,8 @@
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
+#include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
 #ifdef __MPI__
@@ -50,7 +52,7 @@ using std::endl;
 SimpleMPIArchitecture::SimpleMPIArchitecture()
 {
   this->PerformanceIndex = 1.0;
-  this->ArchitectureID = AbstractArchitecture::SMP;
+  this->ArchitectureID = AbstractArchitecture::SimpleMPI;
 #ifdef __MPI__
   MPI::Init();
   this->NbrMPINodes = MPI::COMM_WORLD.Get_size();
@@ -146,6 +148,8 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
       Tmp += this->ClusterPerformanceArray[this->MPIRank];      
       this->MaximumIndex = (long) (Tmp * ((double) dimension)) - (long) 1;
     }
+//   this->MinimumIndex = (long) 0;
+//   this->MaximumIndex = dimension - 1;
   cout << this->MPIRank << " " << this->MinimumIndex << " " << this->MaximumIndex << endl;
 }
 
@@ -169,7 +173,31 @@ bool SimpleMPIArchitecture::RequestOperation (int operationType)
 	  if ((Flag == true) && (Acknowledge == 0))
 	    Flag = false;
 	}
-      return true;
+      return Flag;
+    }
+#endif
+  return false;
+}
+
+// wait an operation request from the master node  (without sending acknowledge)
+//
+// operationType = reference on the integer where the operation ID will be stored
+// return value = true until the free slave signal is sent or an error occurs
+
+bool SimpleMPIArchitecture::WaitOperation (int& operationType)
+{
+#ifdef __MPI__
+  if (this->MasterNodeFlag == false)
+    {
+      MPI::COMM_WORLD.Bcast(&operationType, 1, MPI::INT, 0);
+      if (operationType == SimpleMPIArchitecture::FreeSlaveSignal)
+	{
+	  return false;
+	}
+      else
+	{
+	  return true;
+	}
     }
 #endif
   return false;
@@ -178,14 +206,17 @@ bool SimpleMPIArchitecture::RequestOperation (int operationType)
 
 // send acknowledge to the master node 
 //
+// acknowledge = true to send a positive answer
 // return value = true if no error occured
 
-bool SimpleMPIArchitecture::SendAcknowledge (int operationType)
+bool SimpleMPIArchitecture::SendAcknowledge (bool acknowledge)
 {
 #ifdef __MPI__
   if (!this->MasterNodeFlag)
     {
-      int Acknowledge = 1;
+      int Acknowledge = 0;
+      if (acknowledge == true)
+	 Acknowledge = 1;
       MPI::COMM_WORLD.Send(&Acknowledge, 1, MPI::INT, 0, 1); 
       return true;
     }
@@ -272,7 +303,7 @@ Vector* SimpleMPIArchitecture::BroadcastVector(Vector* vector)
     if (this->MasterNodeFlag == false)
       {
 	Vector TmpVector;
-	return TmpVector.BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+	return TmpVector.BroadcastClone(MPI::COMM_WORLD, 0);
       }
 #endif  
   return 0;
@@ -295,7 +326,7 @@ Vector* SimpleMPIArchitecture::BroadcastVectorType(Vector* vector)
     if (this->MasterNodeFlag == false)
       {
 	Vector TmpVector;
-	return TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+	return TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, 0);
       }
 #endif  
   return 0;
@@ -313,8 +344,17 @@ Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* ve
   MPI::COMM_WORLD.Bcast(&nbrVectors, 1, MPI::INT, 0); 
   if ((this->MasterNodeFlag) && (vector != 0))
     {
-      for (int i = 0; i < nbrVectors; ++i)
-	vector[i].BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+      switch (vector->GetVectorType())
+	{
+	case Vector::RealDatas:
+	  for (int i = 0; i < nbrVectors; ++i)
+	    ((RealVector*) vector)[i].BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+	  break;
+	case Vector::ComplexDatas:	    
+	  for (int i = 0; i < nbrVectors; ++i)
+	    ((ComplexVector*) vector)[i].BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+	  break;
+	}
       return 0;
     }
   else
@@ -324,7 +364,7 @@ Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* ve
 	Vector** TmpVectorArray = new Vector*[nbrVectors];
 	Vector TmpVector;
 	for (int i = 0; i < nbrVectors; ++i)
-	  TmpVectorArray[i] = TmpVector.BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+	  TmpVectorArray[i] = TmpVector.BroadcastClone(MPI::COMM_WORLD, 0);
 	return TmpVectorArray;
       }
 #endif  
@@ -351,7 +391,7 @@ Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector
       {
 	Vector** TmpVectorArray = new Vector*[nbrVectors];
 	Vector TmpVector;
-	TmpVectorArray[0] = TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, this->MPIRank);
+	TmpVectorArray[0] = TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, 0);
 	for (int i = 1; i < nbrVectors; ++i)
 	  TmpVectorArray[i] = TmpVectorArray[0]->EmptyClone();
 	return TmpVectorArray;

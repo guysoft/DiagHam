@@ -32,6 +32,12 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "MainTask/AbstractMainTask.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // constructor 
 //
@@ -67,6 +73,23 @@ AbstractArchitectureOperation* MainTaskOperation::Clone()
   return new MainTaskOperation(*this);
 }
   
+// apply operation for a given architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MainTaskOperation::ApplyOperation(AbstractArchitecture* architecture)
+{
+  switch (architecture->GetArchitectureID())
+    {
+    case AbstractArchitecture::SimpleMPI:
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);
+    default:
+      this->Task->SetArchitecture(architecture);
+      return this->RawApplyOperation();
+    }
+}
+  
 // apply operation (architecture independent)
 //
 // return value = true if no error occurs
@@ -79,3 +102,36 @@ bool MainTaskOperation::RawApplyOperation()
     return true;
 }
  
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MainTaskOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+  this->Task->SetArchitecture(architecture);
+#ifdef __MPI__
+  int TmpOperationID = 0x0;
+  if (architecture->IsMasterNode())
+    {
+      bool Flag = true;
+      architecture->RequestOperation(SimpleMPIArchitecture::SynchronizeSignal);
+      if (this->Task->ExecuteMainTask() != 0)
+  	Flag = false;
+      architecture->RequestOperation(SimpleMPIArchitecture::FreeSlaveSignal);
+      return Flag;
+    }
+  else
+    {
+      while (architecture->WaitOperation(TmpOperationID) == true)
+	{
+	  architecture->SendAcknowledge();
+	  this->Task->ExecuteOperation(TmpOperationID);
+	}
+      architecture->SendAcknowledge();
+      return true;
+    }
+#else
+    return false;
+#endif
+}

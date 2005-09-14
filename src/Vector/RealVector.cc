@@ -3066,7 +3066,7 @@ Vector* RealVector::BroadcastClone(MPI::Intracomm& communicator, int id)
 // zeroFlag = true if all coordinates have to be set to zero
 // return value = pointer to new vector 
 
-Vector* RealVector::BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int id, bool zeroFlag)
+Vector* RealVector::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
 {
   if (id == communicator.Get_rank())
     {
@@ -3079,7 +3079,7 @@ Vector* RealVector::BroadcastEmptyCloneVector(MPI::Intracomm& communicator, int 
 	{
 	  TmpArray[2] = 1;
 	}
-       communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
     }
   else
     {

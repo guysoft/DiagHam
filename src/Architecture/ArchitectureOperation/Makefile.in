@@ -61,17 +61,21 @@ am_libArchitectureOperation_a_OBJECTS =  \
 	MatrixMatrixMultiplyOperation.$(OBJEXT) \
 	AbstractPrecalculationOperation.$(OBJEXT) \
 	AbstractScalarSumOperation.$(OBJEXT) \
-	MainTaskOperation.$(OBJEXT)
+	MainTaskOperation.$(OBJEXT) \
+	AbstractArchitectureOperationManager.$(OBJEXT) \
+	ArchitectureBaseOperationManager.$(OBJEXT)
 libArchitectureOperation_a_OBJECTS =  \
 	$(am_libArchitectureOperation_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractArchitectureOperation.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/AbstractArchitectureOperationManager.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractPrecalculationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractScalarSumOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AddComplexLinearCombinationOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AddRealLinearCombinationOperation.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ArchitectureBaseOperationManager.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MainTaskOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MatrixMatrixMultiplyOperation.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MultipleComplexScalarProductOperation.Po \
@@ -190,7 +194,9 @@ AddComplexLinearCombinationOperation.cc \
 MatrixMatrixMultiplyOperation.cc \
 AbstractPrecalculationOperation.cc \
 AbstractScalarSumOperation.cc \
-MainTaskOperation.cc
+MainTaskOperation.cc \
+AbstractArchitectureOperationManager.cc \
+ArchitectureBaseOperationManager.cc
 
 all: all-recursive
 
@@ -240,10 +246,12 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractArchitectureOperation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractArchitectureOperationManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractPrecalculationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractScalarSumOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddComplexLinearCombinationOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddRealLinearCombinationOperation.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ArchitectureBaseOperationManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MainTaskOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MatrixMatrixMultiplyOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultipleComplexScalarProductOperation.Po@am__quote@
