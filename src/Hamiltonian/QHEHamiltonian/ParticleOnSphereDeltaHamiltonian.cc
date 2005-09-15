@@ -123,8 +123,12 @@ ParticleOnSphereDeltaHamiltonian::~ParticleOnSphereDeltaHamiltonian()
     {
       if (this->DiskStorageFlag == false)
 	{
-	  int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-	  if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	  long MinIndex;
+	  long MaxIndex;
+	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
 	    ++ReducedDim;
 	  for (int i = 0; i < ReducedDim; ++i)
 	    {
@@ -578,105 +582,6 @@ void ParticleOnSphereDeltaHamiltonian::EvaluateInteractionFactors()
   delete[] TmpCoefficient;
 }
 
-// enable fast multiplication algorithm
-//
-
-void ParticleOnSphereDeltaHamiltonian::EnableFastMultiplication()
-{
-  int Index;
-  double Coefficient;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  int Pos;
-  timeval TotalStartingTime2;
-  timeval TotalEndingTime2;
-  double Dt2;
-  gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
-  int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-    ++ReducedSpaceDimension;
-  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
-  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
-
-  int TotalPos = 0;
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
-    {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-      Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = m1 + m2 - m3;
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      ++Pos;
-	    }
-	}
-      ++TotalPos;
-    }
-  this->FastMultiplicationFlag = true;
-  gettimeofday (&(TotalEndingTime2), 0);
-  cout << "------------------------------------------------------------------" << endl << endl;;
-  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-  cout << "time = " << Dt2 << endl;
-}
-
-// enable fast multiplication algorithm (partial evaluation)
-//
-// firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
-
-void ParticleOnSphereDeltaHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
-{
-  int Index;
-  double Coefficient;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  int Pos;
-  int Min = firstComponent / this->FastMultiplicationStep;
-  int Max = lastComponent / this->FastMultiplicationStep;
-  
-  for (int i = Min; i < Max; ++i)
-    {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[i];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-      Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = m1 + m2 - m3;
-	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      ++Pos;
-	    }
-	}
-    }
-}
 
 // Output Stream overload
 //

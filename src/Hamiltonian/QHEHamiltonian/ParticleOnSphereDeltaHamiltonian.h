@@ -120,15 +120,6 @@ class ParticleOnSphereDeltaHamiltonian : public AbstractQHEOnSphereHamiltonian
   //   
   void EvaluateInteractionFactors();
 
-  // enable fast multiplication algorithm
-  //
-  void EnableFastMultiplication();
-
-  // enable fast multiplication algorithm (partial evaluation)
-  //
-  // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
-  // nbrJob = number of jobs that proceed the fast multiplication evaluation
-  void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
 
 };
 

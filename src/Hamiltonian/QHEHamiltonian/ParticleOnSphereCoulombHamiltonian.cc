@@ -113,8 +113,12 @@ ParticleOnSphereCoulombHamiltonian::~ParticleOnSphereCoulombHamiltonian()
   delete[] this->M3Value;
   if (this->FastMultiplicationFlag == true)
     {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
 	++ReducedDim;
       for (int i = 0; i < ReducedDim; ++i)
 	{
