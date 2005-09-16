@@ -20,8 +20,9 @@ foreach $TmpLine (<INFILE>)
   {
     if ($TmpLine =~ /CXXFLAGS\=\"\-O2 \-g \-Wall \"/)
       {
-	$TmpLine =~ s/CXXFLAGS\=\"\-O2 \-g \-Wall \"/CXXFLAGS\=\"\-O2 \"/;
+	$TmpLine =~ s/CXXFLAGS\=\"\-O2 \-g \-Wall \"/CXXFLAGS\=\"\-O2 \-bbigtoc\"/;
       }
+    $TmpLine =~ s/mpiCC/\"mpCC\_r \-cpp\"/g;
     $TmpFile .= $TmpLine;
   }
 close(INFILE);
