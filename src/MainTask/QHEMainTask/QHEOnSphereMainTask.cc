@@ -140,6 +140,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->InitialVectorFileName = 0;
     }
+  if ((*options)["partial-lanczos"] != 0)
+    {
+      this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
+    }
+  else
+    {
+      this->PartialLanczos = false;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -292,7 +300,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	}
       RealTriDiagonalSymmetricMatrix TmpMatrix;
       while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) ||
-						       ((this->DiskFlag == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos))))
+						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+							((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
 	  CurrentNbrIterLanczos += this->SizeBlockLanczos;
 	  Lanczos->RunLanczosAlgorithm(1);
@@ -313,7 +322,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	    }
 	  cout << endl;
 	}
-      if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
+      if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
 	{
 	  cout << "too much Lanczos iterations" << endl;
 	  File << "too much Lanczos iterations" << endl;
@@ -334,7 +343,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	{
 	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
 	  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	  if (this->EigenvectorConvergence == true)
+	  if ((this->EigenvectorConvergence == true) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
 	      Operation1.ApplyOperation(this->Architecture);
@@ -368,13 +377,20 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  cout << endl;
 		}
 	    }
-	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
 	  for (int i = 0; i < this->NbrEigenvalue; ++i)
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
 	      Operation1.ApplyOperation(this->Architecture);
-	      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
-	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+	      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
+	      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
+		{	  
+		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+		}
+	      else
+		{
+		  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+		}
 	      Eigenvectors[i].WriteVector(TmpVectorName);
 	    }
 	  cout << endl;

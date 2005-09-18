@@ -93,6 +93,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool ShowIterationTime;
   // name of the file that contains the vector to use as initial vector for the Lanczos algorithm (null if a random vector has to be picked)
   char* InitialVectorFileName;
+  // allow to only run a given number of Lanczos iterations
+  bool PartialLanczos;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
