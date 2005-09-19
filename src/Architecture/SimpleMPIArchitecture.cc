@@ -36,6 +36,8 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include <sys/time.h>
+#include <string.h>
 #include <iostream>
 #ifdef __MPI__
 #include <mpi.h>
@@ -399,6 +401,22 @@ Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector
 #endif  
   return 0;
 }
+
+// get a temporary file name
+//
+// return value = string corresponding to a temporary file name
+
+char* SimpleMPIArchitecture::GetTemporaryFileName()
+{
+  timeval Time;
+  gettimeofday (&Time, 0);
+  char* TmpString = new char [64];
+  sprintf (TmpString, "diagam%d%d_node%d.tmp",(int)  Time.tv_sec, (int)  Time.tv_usec, this->MPIRank);
+  return TmpString;
+}
+  
+
+
 
 /*
 // execute an architecture-dependent vector hamiltonian multiplication operation

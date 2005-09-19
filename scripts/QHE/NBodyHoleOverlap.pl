@@ -26,7 +26,7 @@ if ((!($KValue =~ /^\d+$/)) || ($KValue == 0) || (!($NbrHoles =~ /^\d+$/)) || ($
     die ("usage: NBodyHoleOverlap.pl --kvalue k --nbrholes h [--datapath --diaghampath --error 1e-12 --latex --precision 4 --maxparticles 100 --debug]\n");
   }
 
-my $QHENBodyQuasiHoleOverlap = $DiagHamPath."/src/Programs/QHE/QHEOnSphere/QHENBodyQuasiHoleOverlap";
+my $QHENBodyQuasiHoleOverlap = $DiagHamPath."/build/src/Programs/QHE/QHEOnSphere/QHENBodyQuasiHoleOverlap";
 my $SphereSpectrumDegeneracy = $DiagHamPath."/scripts/QHE/SphereSpectrumDegeneracy.pl";
 if (!(-x $QHENBodyQuasiHoleOverlap))
   {

@@ -179,6 +179,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = reference on the vector
   Vector& SumVector(Vector& vector);
 
+  // get a temporary file name
+  //
+  // return value = string corresponding to a temporary file name
+  char* GetTemporaryFileName();
+
 };
 
 // indicate if the local node is the master node
