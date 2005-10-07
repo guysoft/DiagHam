@@ -145,6 +145,12 @@ class MomentumMultipletSet
   // return value = reference on the output stream
   friend ostream& operator << (ostream& str, const MomentumMultipletSet& multiplets);
 
+  // display mulitplet with respect to Lz instead of L (output only half integer momenta if no integer momentum is present, idem for integer momenta)
+  //
+  // str = reference on the output stream
+  // return value = reference on the output stream
+  ostream& PrintLz (ostream& str);
+
  private:
 
   // evaluate Hilbert space dimension for bosons with fixed total Lz value and a given L per particle

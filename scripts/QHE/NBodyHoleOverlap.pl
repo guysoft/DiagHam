@@ -69,7 +69,7 @@ Spectrum = ".$DeltaPrefix.".dat\n";
 	  {
 	    print "===============================================================\nNew input file:\n".$TemporaryOverlapDefinition."\n\n";
 	  }
-	my $OverlapCommand = $QHENBodyQuasiHoleOverlap." --input-file ".$TemporaryFileName." --output-precision ".$Precision;
+	my $OverlapCommand = $QHENBodyQuasiHoleOverlap." --global-overlap --input-file ".$TemporaryFileName." --output-precision ".$Precision;
 	if ($LatexFlag == 1)
 	  {
 	    $OverlapCommand .= " --latex-output";
@@ -107,9 +107,9 @@ Spectrum = ".$DeltaPrefix.".dat\n";
 	      }
 	    $FinalOutput .= "\$"." & ".$LatexValue."\n";
 	    my @TmpArray2 = split (/ /, $SpectrumOutput);
-	    if ($#TmpArray2 > $MaxLz)
+	    if (($#TmpArray2 - 1) > $MaxLz)
 	      {
-		$MaxLz = $#TmpArray2;
+		$MaxLz = $#TmpArray2 - 1;
 	      }
 	  }	
 	else
@@ -127,7 +127,7 @@ if ($LatexFlag == 1)
   {
     print "\\begin{table*}
 \\begin{ruledtabular}
-\\begin{tabular}{c";
+\\begin{tabular}{cc";
     my $Index = 0;
     while ($Index <= $MaxLz)
       {
@@ -135,11 +135,11 @@ if ($LatexFlag == 1)
 	$Index++;
       }
     print "}
-\$N\$ & \$L=0\$ ";
+\$N\$ & \$\\cal{O}^{".$KValue.",".$NbrHoles."}\$ & \$\\cal{O}_0^{".$KValue.",".$NbrHoles."}\$ ";
     $Index = 1;
     while ($Index <= $MaxLz)
       {
-	print " & \$".$Index."\$";
+	print " & \$\\cal{O}_".$Index."^{".$KValue.",".$NbrHoles."}\$";
 	$Index++;
       }
     print " \\\\\\hline\n";

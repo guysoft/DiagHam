@@ -87,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
   (*SystemGroup) += new SingleIntegerOption  ('q', "nbr-quasiholes", "number of quasiholes", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "total-only", "only display the total number of states");
+  (*SystemGroup) += new BooleanOption  ('\n', "lz-values", "display lz degeneracy instead of l degeneracy");
   (*SystemGroup) += new SingleStringOption  ('\n', "display-style", "set data output display style (raw, pretty, latex)", "raw");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -105,6 +106,7 @@ int main(int argc, char** argv)
   int KValue = ((SingleIntegerOption*) Manager["k-value"])->GetInteger(); 
   int NbrParticles  = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int NbrQuasiholes = ((SingleIntegerOption*) Manager["nbr-quasiholes"])->GetInteger(); 
+  bool LzFlag = ((BooleanOption*) Manager["lz-values"])->GetBoolean();
 
   if ((NbrParticles % KValue) != 0)
     {
@@ -125,20 +127,54 @@ int main(int argc, char** argv)
     {
       MomentumMultipletSet Multiplets(GetMomentumMultipletDecomposition(NbrParticles, NbrQuasiholes, KValue, QDeformed));
       if (strncmp("pretty", ((SingleStringOption*) Manager["display-style"])->GetString(), 6) == 0)
-	cout << Multiplets << endl;
+	if (LzFlag == false)
+	  cout << Multiplets << endl;
+	else
+	  {
+	    Multiplets.PrintLz(cout) << endl;
+	  }
       else
 	if (strncmp("latex", ((SingleStringOption*) Manager["display-style"])->GetString(), 5) == 0)
 	  {
-	    cout << "$" << Multiplets.GetNbrStates() << "$  & ";
-	    for (int i = (Multiplets.GetMaximumMomentum() & 1); i < Multiplets.GetMaximumMomentum(); i += 2)
-	      cout << "$" << Multiplets[i] << "$  & ";
-	    cout << "$" << Multiplets[Multiplets.GetMaximumMomentum()] << "$" << endl;
+	    if (LzFlag == false)
+	      {
+		cout << "$" << Multiplets.GetNbrStates() << "$  & ";
+		for (int i = (Multiplets.GetMaximumMomentum() & 1); i < Multiplets.GetMaximumMomentum(); i += 2)
+		  cout << "$" << Multiplets[i] << "$  & ";
+		cout << "$" << Multiplets[Multiplets.GetMaximumMomentum()] << "$" << endl;
+	      }
+	    else
+	      {
+		cout << "$" << Multiplets.GetNbrStates() << "$  & ";
+		for (int i = (Multiplets.GetMaximumMomentum() & 1); i < Multiplets.GetMaximumMomentum(); i += 2)
+		  {
+		    int Value = 0;
+		    for (int j = i; j <=  Multiplets.GetMaximumMomentum(); j += 2)
+		      Value += Multiplets[j];
+		    cout << "$" << Value << "$ & ";
+		  }
+		cout << "$" << Multiplets[Multiplets.GetMaximumMomentum()] << "$" << endl;
+	      }
 	  }       
 	else
 	  {
-	    for (int i = (Multiplets.GetMaximumMomentum() & 1); i <= Multiplets.GetMaximumMomentum(); i += 2)
-	      cout << Multiplets[i] << " ";
-	    cout << endl;
+	    if (LzFlag == false)
+	      {
+		for (int i = (Multiplets.GetMaximumMomentum() & 1); i <= Multiplets.GetMaximumMomentum(); i += 2)
+		  cout << Multiplets[i] << " ";
+		cout << endl;
+	      }
+	    else
+	      {
+		for (int i = (Multiplets.GetMaximumMomentum() & 1); i <= Multiplets.GetMaximumMomentum(); i += 2)
+		  {
+		    int Value = 0;
+		    for (int j = i; j <=  Multiplets.GetMaximumMomentum(); j += 2)
+		      Value += Multiplets[j];
+		    cout << Value << " ";
+		  }
+		cout << endl;
+	      }
 	  }
       long HilbertSpaceDimension = GetNumberOfStates(NbrParticles, NbrQuasiholes, KValue, TmpBinomialCoefficients);
       if (HilbertSpaceDimension == Multiplets.GetNbrStates())

@@ -320,6 +320,75 @@ ostream& operator << (ostream& str, const MomentumMultipletSet& multiplets)
   return str;
 }
 
+// display mulitplet with respect to Lz instead of L (output only half integer momenta if no integer momentum is present, idem for integer momenta)
+//
+// str = reference on the output stream
+// return value = reference on the output stream
+
+ostream& MomentumMultipletSet::PrintLz (ostream& str)
+{
+  int i = 0;
+  bool Flag = false;
+  while ((i <= this->MaximumMomentum) && (Flag == false))
+    {
+      if (this->LValues[i] != 0)
+	Flag = true;
+      i += 2;
+    }
+  if (Flag == false)
+    {
+      i = 1;
+      while (i <= this->MaximumMomentum)
+	{
+	  int Value = 0;
+	  for (int j = i; j <= this->MaximumMomentum; j += 2)
+	    Value += this->LValues[j];
+	  str << i << "/2: " << Value << "  ";
+	  i += 2;
+	}
+      return str;
+    }
+  Flag = false;
+  i = 1;
+  while ((i <= this->MaximumMomentum) && (Flag == false))
+    {
+      if (this->LValues[i] != 0)
+	Flag = true;
+      i += 2;
+    }
+  if (Flag == false)
+    {
+      i = 0;
+      while (i <= this->MaximumMomentum)
+	{
+	  int Value = 0;
+	  for (int j = i; j <= this->MaximumMomentum; j += 2)
+	    Value += this->LValues[j];
+	  str << (i >> 1) << ": " << Value << "  ";
+	  i += 2;
+	}
+      return str;
+    }
+  i = 0;
+  while (i <= this->MaximumMomentum)
+    {
+      int Value = 0;
+      for (int j = i; j <= this->MaximumMomentum; j += 2)
+	Value += this->LValues[j];
+      str << (i >> 1) << ": " << Value << "  ";
+      ++i;
+      if (i <= this->MaximumMomentum)
+	{
+	  Value = 0;
+	  for (int j = i; j <= this->MaximumMomentum; j += 2)
+	    Value += this->LValues[j];
+	  str << i << "/2: " << Value << "  ";
+	  ++i;
+	}
+    }
+  return str;
+}
+
 // evaluate Hilbert space dimension for bosons with fixed total Lz value and a given L per particle
 //
 // nbrBosons = number of bosons

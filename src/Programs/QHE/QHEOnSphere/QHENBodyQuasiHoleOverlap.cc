@@ -55,11 +55,12 @@ int main(int argc, char** argv)
 
   Manager += MiscGroup;
   Manager += MainGroup;
-
+ 
   (*MainGroup) += new SingleStringOption  ('\n', "input-file", "name of the file which contains definition of overlaps to evaluate");
   (*MainGroup) += new SingleDoubleOption  ('\n', "ortho-error", "scalar product value below which two states are considered as orthogonal", 1e-12);
   (*MainGroup) += new SingleIntegerOption  ('\n', "output-precision", "numerical display precision", 14, true, 2, true, 14);
   (*MainGroup) += new BooleanOption  ('\n', "latex-output", "display final results as a latex table formatted string");
+  (*MainGroup) += new BooleanOption  ('\n', "global-overlap", "display the global overlap for the whole quasihole subspace");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -270,6 +271,28 @@ int main(int argc, char** argv)
   cout << "final results" << endl;
   cout << "----------------------------------------------------" << endl << endl;
   cout.precision(((SingleIntegerOption*) Manager["output-precision"])->GetInteger());
+  double GlobalOverlap = 0.0;
+  if (((BooleanOption*) Manager["global-overlap"])->GetBoolean() == true)
+    {
+      cout << endl << "global overlap = ";
+      int TotalDegeneracy = 0;
+      int TmpLValue = 1;
+      if (Parity == false)
+	{
+	  TmpLValue = 2;
+	}
+      for (int i = 0; i < MaxNbrLz; ++i)
+	{
+	  if (LDegeneracy[i] > 0)
+	    {
+	      GlobalOverlap +=  ((double) (LDegeneracy[i] * TmpLValue)) * BestOverlaps[i];
+	      TotalDegeneracy += LDegeneracy[i] * TmpLValue;
+	    }
+	  TmpLValue += 2;
+	}
+      GlobalOverlap /= ((double) TotalDegeneracy);
+      cout << "total overlap =" << GlobalOverlap << endl;
+    }
   for (int i = 0; i < MaxNbrLz; ++i)
     {
       if (LDegeneracy[i] > 0)
@@ -290,6 +313,10 @@ int main(int argc, char** argv)
   if (((BooleanOption*) Manager["latex-output"])->GetBoolean() == true)
     {
       cout << endl << "latex output:" << endl;
+      if (((BooleanOption*) Manager["global-overlap"])->GetBoolean() == true)
+	{
+	  cout << "$" << GlobalOverlap << "$ & " ;
+	}
       for (int i = 0; i < (MaxNbrLz - 1); ++i)
 	{
 	  if (LDegeneracy[i] > 0)
