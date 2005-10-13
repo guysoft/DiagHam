@@ -59,7 +59,8 @@ am_libQuantumDotHamiltonian_a_OBJECTS =  \
 	PeriodicQuantumDots3DHamiltonianInMagneticField.$(OBJEXT) \
 	CylindricalHamiltonianInMagneticField.$(OBJEXT) \
 	CylindricalQuantumDots3DHamiltonian.$(OBJEXT) \
-	PeriodicElectronHole3DHamiltonian.$(OBJEXT)
+	PeriodicElectronHole3DHamiltonian.$(OBJEXT) \
+	QuantumWellHamiltonianInMagneticField.$(OBJEXT)
 libQuantumDotHamiltonian_a_OBJECTS =  \
 	$(am_libQuantumDotHamiltonian_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
@@ -72,6 +73,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicQuantumDots3DHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicQuantumDots3DHamiltonianInMagneticField.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QuantumDots3DHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QuantumWellHamiltonianInMagneticField.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ReflexionSymmetricPeriodic3DHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodic3DHamiltonian.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -184,7 +186,8 @@ ReflexionSymmetricPeriodic3DHamiltonian.cc \
 PeriodicQuantumDots3DHamiltonianInMagneticField.cc \
 CylindricalHamiltonianInMagneticField.cc \
 CylindricalQuantumDots3DHamiltonian.cc \
-PeriodicElectronHole3DHamiltonian.cc
+PeriodicElectronHole3DHamiltonian.cc \
+QuantumWellHamiltonianInMagneticField.cc
 
 all: all-recursive
 
@@ -240,6 +243,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicQuantumDots3DHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicQuantumDots3DHamiltonianInMagneticField.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuantumDots3DHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuantumWellHamiltonianInMagneticField.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ReflexionSymmetricPeriodic3DHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodic3DHamiltonian.Po@am__quote@
 

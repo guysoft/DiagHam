@@ -21,12 +21,14 @@ my $KeepFlag = 0;
 my $ShowBestOverlaps = 1;
 my $KValue = 0;
 my $MaxDegeneracy = 0;
+my $OverlapOnlyFlag = 0;
 
 my $Result = GetOptions ("progdiag:s" => \$PathToDiagonalizationProgram, "progoverlap:s" => \$PathToOverlapProgram, 
 			 "diagoption:s" => \$DiagonalizationProgramOptions, "progdeg:s" => \$PathToDegeneracyProgram,
 			 "ref=s" => \$ReferenceVector, "nbrbosons:i" => \$NbrBosons, "lzmax:i" => \$LzMax,
 			 "step:f" => \$Step, "min:f" => \$MinValue, "nbrvalues:i" => \$NbrValues, "plot" => \$PlotFlag,
-			 "kvalue:f" => \$KValue, "keep" => \$KeepFlag, "grid:s" => \$GridFile, "maxdeg:i" => \$MaxDegeneracy);
+			 "kvalue:f" => \$KValue, "keep" => \$KeepFlag, "grid:s" => \$GridFile, "maxdeg:i" => \$MaxDegeneracy,
+			 "overlaponly" => \$OverlapOnlyFlag);
 
 
 
@@ -116,7 +118,7 @@ if ($GridFile eq "")
 	$DiagOutputFileName =~ s/\./\_/;
 	$DiagOutputFileName = "v2v0".$DiagOutputFileName;
 	my $Overlap = &EvaluateOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
-				      $Degeneracy, $MaxDegeneracy, $NbrLz);
+				      $Degeneracy, $MaxDegeneracy, $NbrLz, $OverlapOnlyFlag);
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
 	    die ("can't open ".$DataFileName.".overlap\n");
@@ -171,8 +173,8 @@ else
 	close(OUTFILE);
 
 	my $DiagOutputFileName = "v2v0".$VertexCount;
-	my $Overlap = &EvaluateOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
-				       $Degeneracy, $MaxDegeneracy, $NbrLz);
+	my $Overlap = &EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
+				      $Degeneracy, $MaxDegeneracy, $NbrLz, $OverlapOnlyFlag);
 
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
@@ -229,6 +231,7 @@ else
 # $_[7] = quasihole ground state L-degeneracy
 # $_[8] = maximum degeneracy in a given Lz sector
 # $_[9] = number of Lz value to evaluate
+# $_[10] = 1 if only overlaps have to be evaluated (eigenvectores and eigenvalues are retrieved from current directory instead of being evaluated)
 # return value = square overlap
 
 sub EvaluateOverlap()
@@ -243,6 +246,7 @@ sub EvaluateOverlap()
     my $Degeneracy = $_[7];
     my $MaxDegeneracy = $_[8];
     my $NbrLz = $_[9];
+    my $OverlapOnlyFlag = $_[10];
 
     my $ParityValue = 0;
     my $MaxLz = 2 * ($NbrLz - 1);
@@ -252,8 +256,11 @@ sub EvaluateOverlap()
 	$MaxLz += 1;
       }
 
-    my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz ".($NbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat --full-diag 3000 ".$DiagonalizationProgramOptions;
-    system($Command);
+    if ($OverlapOnlyFlag != 1)
+      {
+	my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz ".($NbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat  --full-diag 3000 -S ".$DiagonalizationProgramOptions;
+	system($Command);
+      }
 
     my $DiagOutputFileName2 = "bosons_".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
 
@@ -294,7 +301,7 @@ InputVectors=".$DiagOutputFileName2."_\n");
 	  }
       }
 
-    if ($KeepFlag == 0)
+    if (($KeepFlag == 0) && ($OverlapOnlyFlag != 1))
       {
 	my $Lz = $ParityValue;
 	while ($Lz <= $MaxLz)

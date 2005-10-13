@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2005 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
 //        class of hamiltonian associated quantum dots in 3 dimensions        //
 //                                                                            //
-//                      last modification : 26/02/2003                        //
+//                      last modification : 10/13/2005                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,29 +28,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QUANTUMDOTS3DHAMILTONIAN_H
-#define QUANTUMDOTS3DHAMILTONIAN_H
+#ifndef QUANTUMWELLDHAMILTONIANINMAGNETICFIELD_H
+#define QUANTUMWELLDHAMILTONIANINMAGNETICFIELD_H
 
 
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "HilbertSpace/QuantumDotHilbertSpace/ThreeDOneParticle.h"
+#include "Matrix/HermitianMatrix.h"
+#include "MathTools/Complex.h"
+
 
 #include <iostream>
 
 using std::ostream;
 
 class MathematicaOutput;
-class HardBoxPyramidQuantumDotThreeDConstantCellPotential;
-class EllipticalDotThreeDConstantCellPotential;
+
+
 
 class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
 {
 
  protected:
 
-  // Hilbert space associated to the system
-  ThreeDOneParticle* Space;
+  // hamiltonian representation 
+  HermitianMatrix Hamiltonian;
 
   // wave function basis dimension in the x direction
   int NbrStateX;
@@ -75,94 +77,62 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
   // system dimension in the z direction (in Angstrom unit)
   double ZSize;
 
-  // number of layers before the active layers
-  int LeftNumber;
-  // region size in the z direction where potential is constant in the plane (regions before active layers)
-  double* PreConstantRegionSize;
-  // value of the potential in the region before the active layers
-  double* PreConstantRegionPotential;
-  // number of layers after the active layers
-  int RightNumber;
-  // region size in the z direction where potential is constant in every direction (regions after active layers)
-  double* PostConstantRegionSize;
-  // value of the potential in the region after the active layers
-  double* PostConstantRegionPotential;
+  // effective mass  (in electron mass unit)
+  double Mass;
 
-  // effective mass in the x direction (in electron mass unit)
-  double Mux;
-  // effective mass in the y direction (in electron mass unit)
-  double Muy;
-  // effective mass in the z direction (in electron mass unit)
-  double Muz;
+  // B field value (in Tesla)
+  double BField;
+  // value of the magnetic length (in Angstrom unit)
+  double MagneticLength;
+  // value of the cyclotron energy (in meV unit)
+  double CyclotronEnergy;
+  // degeneracy of each Landau level
+  int LandauDegeneracy;
 
-  // cache for hamiltonian diagonal elements
-  double* DiagonalElements;
+  // z confinement in the first subband
+  double ZEnergy1;
+  // z confinement in the second subband
+  double ZEnergy2;
+  // landauIndex1 = Landau index of the first subband
+  int LandauIndex1;
+  // landauIndex2 = Landau index of the second subband
+  int LandauIndex2;
 
-  // flag to indicate how many dimensions are precalculated for hamiltonian interaction elements
-  int NbrPrecalculatedDimension;
+  
+  double MailleParameter;
+  // conduction band offset between GaAs and InAs
+  double BandOffset;
+  // In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
+  double InDopage;
+  // number of crystal elementary cell in the qunatum well
+  int NbrCells;
 
-  // tridimensionnal array containing all cell interaction factors
-  double*** InteractionFactors;
-  //ThreeDPotential* InteractionFactors;
-
-  // wave function overlaps on a cell in a the x direction (with symmetric access type for the first two indices)
-  double*** WaveFunctionOverlapX;
-  // wave function overlaps on a cell in a the y direction (with symmetric access type for the first two indices)
-  double*** WaveFunctionOverlapY;
-  // wave function overlaps on a cell in a the z direction (with symmetric access type for the first two indices)
-  double*** WaveFunctionOverlapZ;
-
-  // bidimensionnal array (with symmetric access type i > j) to store hamiltonian when all matrix elements can be stored in memory
-  double** FullPrecalculatedHamiltonian;
-
-  // tridimensionnal array (with symmetric access type i > j for the two first indices) to store partial calculation to construct hamiltonian
-  // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
-  double***** Partial2DPrecalculatedHamiltonian;
-  // bidimensionnal array to store partial diagonal calculation to construct hamiltonian
-  // elements (integration over two dimensions, first and second indices are of the form n1 * dim + m1)
-  double** Partial2DDiagonalPrecalculatedHamiltonian;
-  // elements (intergration over z, the first end second indices are of p1, p2)
-  double ** PartialZPrecalculatedHamiltonian;
+  double* GaXPosition;
+  double* GaYPosition;
+  double* GaZPosition;
+  double* InXPosition;
+  double* InYPosition;
+  double* InZPosition;
+  
 
  public:
 
   // constructor from default data
   //
-  // space = Hilbert space associated to the system
   // xSize = system dimension in the x direction (in Angstrom unit)
   // ySize = system dimension in the y direction (in Angstrom unit)
   // zSize = system dimension in the z direction (in Angstrom unit)
-  // preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
-  // postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
-  // postConstantRegionPotential = value of the potential in the region after the gradiant zone
-  // mux = effective mass in the x direction (in electron mass unit)
-  // muy = effective mass in the y direction (in electron mass unit)
-  // muz = effective mass in the z direction (in electron mass unit)
-  // nbrCellX = number of cells in the x direction
-  // nbrCellY = number of cells in the y direction
-  // nbrCellZ = number of cells in the z direction
-  // overlapingFactors = tridimensionnal array where overlaping factors are stored
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  QuantumWellHamiltonianInMagneticField(ThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, HardBoxPyramidQuantumDotThreeDConstantCellPotential* PotentialInput, int memory = -1);
-
-  // constructor from default data
-  //
-  // space = Hilbert space associated to the system
-  // xSize = system dimension in the x direction (in Angstrom unit)
-  // ySize = system dimension in the y direction (in Angstrom unit)
-  // zSize = system dimension in the z direction (in Angstrom unit)
-  // preConstantRegionSize = region size in the z direction where potential is constant in every direction (region before gradiant zone)
-  // postConstantRegionSize = region size in the z direction where potential is constant in every direction (region after gradiant zone)
-  // postConstantRegionPotential = value of the potential in the region after the gradiant zone
-  // mux = effective mass in the x direction (in electron mass unit)
-  // muy = effective mass in the y direction (in electron mass unit)
-  // muz = effective mass in the z direction (in electron mass unit)
-  // nbrCellX = number of cells in the x direction
-  // nbrCellY = number of cells in the y direction
-  // nbrCellZ = number of cells in the z direction
-  // overlapingFactors = tridimensionnal array where overlaping factors are stored
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  QuantumWellHamiltonianInMagneticField(ThreeDOneParticle* space, double xSize, double ySize, double zSize, double mux, double muy, double muz, int nbrCellX, int nbrCellY, int nbrCellZ, EllipticalDotThreeDConstantCellPotential* PotentialInput, int memory = -1);
+  // mass = effective mass in the x direction (in electron mass unit)
+  // bField = B field value (in Tesla)
+  // zEnergy1 = z confinement in the first subband
+  // zEnergy2 = z confinement in the second subband
+  // landauIndex1 = Landau index of the first subband
+  // landauIndex2 = Landau index of the second subband
+  // mailleParameter =
+  // bandOffset = conduction band offset between GaAs and InAs
+  // inDopage = In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
+  QuantumWellHamiltonianInMagneticField(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy1, double zEnergy2,
+					int landauIndex1, int landauIndex2, double mailleParameter, double bandOffset, double inDopage);
 
   // copy constructor (without duplicating datas)
   //
@@ -212,132 +182,17 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
   // return value = corresponding matrix element
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
+  // store Hamiltonian into an hermitian matrix
   //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
- 
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  List<Matrix*> RightInteractionOperators();  
-
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, QuantumWellHamiltonianInMagneticField& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, QuantumWellHamiltonianInMagneticField& H);
-
-  // determine the maximal value of partial diagonal array
-  //
-  // return = the wanted value
-  double MaxPartialDiagonalElement();
-
+  // M = reference on matrix where Hamiltonian has to be stored
+  // return value = reference on  corresponding hermitian matrix
+  HermitianMatrix& GetHamiltonian (HermitianMatrix& M);
+  
  private:
  
   // evaluate all interaction factors
   //   
-  // memory = amount of memory available to store precalculated values
-  void EvaluateInteractionFactors(int memory);
-
-  // evaluate wave function overlaps on a cell in a given direction
-  //
-  // size = system length in the choosen direction
-  // nbrStep = number of subdivision in the choosen direction
-  // nbrState = number of state in the choosen direction
-  // memory = reference on current memory usage (will be increment with memory used to store evaluated overlap)
-  // return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
-  double*** EvaluateWaveFunctionOverlap(double size, int nbrStep, int nbrState, int& memory);
-
-  // evaluate wave function overlaps on a cell in the z direction
-  //
-  // memory = reference on current memory usage (will be increment with memory used to store evaluated overlap)
-  // return value = tridimensionnal array containg all matrix elements for all cells (first two indices using symmetric storage)
-  double*** EvaluateWaveFunctionZOverlap(int& memory);
+  void EvaluateInteractionFactors();
 
 };
 
@@ -347,7 +202,7 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
 
 inline AbstractHilbertSpace* QuantumWellHamiltonianInMagneticField::GetHilbertSpace ()
 {
-  return this->Space;
+  return 0;
 }
 
 // return dimension of Hilbert space where Hamiltonian acts
@@ -356,7 +211,7 @@ inline AbstractHilbertSpace* QuantumWellHamiltonianInMagneticField::GetHilbertSp
 
 inline int QuantumWellHamiltonianInMagneticField::GetHilbertSpaceDimension ()
 {
-  return this->Space->GetHilbertSpaceDimension ();
+  return (this->LandauDegeneracy * 2);
 }
   
 #endif

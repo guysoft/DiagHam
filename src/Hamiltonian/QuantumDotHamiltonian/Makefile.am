@@ -10,4 +10,5 @@ ReflexionSymmetricPeriodic3DHamiltonian.cc \
 PeriodicQuantumDots3DHamiltonianInMagneticField.cc \
 CylindricalHamiltonianInMagneticField.cc \
 CylindricalQuantumDots3DHamiltonian.cc \
-PeriodicElectronHole3DHamiltonian.cc
+PeriodicElectronHole3DHamiltonian.cc \
+QuantumWellHamiltonianInMagneticField.cc
