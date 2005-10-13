@@ -5,9 +5,9 @@ use strict 'vars';
 use Getopt::Long;
 
 
-my $PathToDiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEOnSphere/QHEBosonsTwoBodyGeneric";
-my $PathToOverlapProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEOnSphere/QHENBodyQuasiHoleOverlap";
-my $PathToDegeneracyProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEOnSphere/ParafermionQuasiholeDimension";
+my $PathToDiagonalizationProgram = "/home/regnault/development/DMRG/DiagHam/build/src/Programs/QHE/QHEOnSphere/QHEBosonsTwoBodyGeneric";
+my $PathToOverlapProgram = "/home/regnault/development/DMRG/DiagHam/build/src/Programs/QHE/QHEOnSphere/QHENBodyQuasiHoleOverlap";
+my $PathToDegeneracyProgram = "/home/regnault/development/DMRG/DiagHam/build/src/Programs/QHE/QHEOnSphere/ParafermionQuasiholeDimension";
 my $Step = 0;
 my $MinValue = 0.0;
 my $NbrValues = 0;
@@ -115,7 +115,7 @@ if ($GridFile eq "")
 	my $DiagOutputFileName = $MinValue;
 	$DiagOutputFileName =~ s/\./\_/;
 	$DiagOutputFileName = "v2v0".$DiagOutputFileName;
-	my $Overlap = &EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
+	my $Overlap = &EvaluateOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
 				      $Degeneracy, $MaxDegeneracy, $NbrLz);
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
@@ -171,7 +171,8 @@ else
 	close(OUTFILE);
 
 	my $DiagOutputFileName = "v2v0".$VertexCount;
-	my $Overlap = &EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag);
+	my $Overlap = &EvaluateOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrBosons, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag,
+				       $Degeneracy, $MaxDegeneracy, $NbrLz);
 
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
@@ -230,7 +231,7 @@ else
 # $_[9] = number of Lz value to evaluate
 # return value = square overlap
 
-sub EvalauteOverlap()
+sub EvaluateOverlap()
   {
     my $PathToDiagonalizationProgram = $_[0];
     my $PathToOverlapProgram = $_[1];
@@ -251,8 +252,8 @@ sub EvalauteOverlap()
 	$MaxLz += 1;
       }
 
-    my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz ".($NbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat ".$DiagonalizationProgramOptions;
-    `$Command`;
+    my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz ".($NbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat --full-diag 3000 ".$DiagonalizationProgramOptions;
+    system($Command);
 
     my $DiagOutputFileName2 = "bosons_".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
 
@@ -299,7 +300,7 @@ InputVectors=".$DiagOutputFileName2."_\n");
 	while ($Lz <= $MaxLz)
 	  {
 	    my $Index = 0;
-	    while ($Index < $MaxDegeneracy)
+	    while ($Index <= $MaxDegeneracy)
 	      {
 		if (-e $DiagOutputFileName2."_".$Lz.".".$Index.".vec")
 		  {
