@@ -2,6 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/HermitianMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumWellHamiltonianInMagneticField.h"
 
@@ -104,7 +105,7 @@ int main(int argc, char** argv)
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
 
-  QuantumWellHamiltonianInMagneticField Hamiltonian (1800.0, 1800.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, 600, 0.53);
+  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, 600, 0.53);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
   HermitianMatrix HamiltonianRepresentation;
   Hamiltonian.GetHamiltonian(HamiltonianRepresentation);
@@ -114,7 +115,34 @@ int main(int argc, char** argv)
       HamiltonianRepresentation.GetMatrixElement(i, i, TmpElement);
       cout << TmpElement << " ";
     }
-  cout << endl;
+  cout << endl << endl;
+
+
+  cout << "start diagonalization" << endl;
+  RealDiagonalMatrix DiagonalizedHamiltonian (HamiltonianRepresentation.GetNbrRow());
+  HamiltonianRepresentation.Diagonalize(DiagonalizedHamiltonian);
+
+  char FileName[256];
+  sprintf (FileName,"eigenvalues%f.dat", BField);
+  ofstream File;
+  File.open(FileName, ios::out); 
+  File.precision(14); 
+  double Energy = 100.0;
+  int NbrEnergySteps = 2000;
+  double EnergyInc = 100.0 / 2000.0;
+  double Gamma = 1.0;
+  for (int j = 0; j < NbrEnergySteps; ++j)
+    {
+      double DOS = 0.0;
+      for (int i = 0; i < HamiltonianRepresentation.GetNbrRow(); ++i)
+	{
+	  DOS += 1.0 / ((DiagonalizedHamiltonian[i] - Energy) * (DiagonalizedHamiltonian[i] - Energy) + (Gamma * Gamma));
+	}
+      DOS *= Gamma / M_PI;      
+      File << Energy << " " << DOS << endl;
+      Energy += EnergyInc;
+    }
+  File.close();
   return 0;
 }
 

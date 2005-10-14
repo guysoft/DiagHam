@@ -33,9 +33,12 @@
  
 #include <math.h>
 #include <iostream>
+#include <stdlib.h>
+
 
 using std::cout;
 using std::endl;
+
 
 #define HBARE_M0 0.115767635
 #define HBAR 1.05457168e-34
@@ -184,6 +187,68 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
     {      
       this->Hamiltonian.SetMatrixElement(i, i, DiagonalTerm1);
       this->Hamiltonian.SetMatrixElement(i + 1, i + 1, DiagonalTerm2);
+    }
+
+  double XInc = this->MailleParameter * 0.5;
+  double YInc = this->MailleParameter * 0.5;
+  double ZInc = this->MailleParameter;
+  int NbrXCells = (int)  (2.0 * this->XSize / this->MailleParameter);
+  int NbrYCells = (int)  (2.0 * this->YSize / this->MailleParameter);
+  int NbrZCells = (int)  (this->ZSize / this->MailleParameter);
+  double X = 0.5 * XInc;
+  double Y = 0.5 * YInc;
+  double Z = 0.5 * ZInc;
+  int ProbabilityThreshold = (int) (((double) RAND_MAX) * this->InDopage);
+  double GaCoefficient = this->MailleParameter * this->MailleParameter * this->MailleParameter * 0.25 * (2.0 / (this->YSize * this->ZSize)) * this->BandOffset;
+  double InCoefficient = GaCoefficient * (this->InDopage - 1.0);
+  GaCoefficient *= this->InDopage;
+  double Coefficient;
+  double KCoeffcient = 2.0 * M_PI / this->YSize;
+  double XCoeffcient = this->MagneticLength * this->MagneticLength * KCoeffcient;
+  double LandauPrefactor = pow(M_PI * this->MagneticLength * this->MagneticLength, -0.25);  
+  for (int k = 0; k < NbrZCells; ++k)
+    {
+      X = 0.5 * XInc;
+      double ZPartValue1 = sin (M_PI * Z / this->ZSize);
+      double ZPartValue2 = sin (2.0 * M_PI * Z / this->ZSize);
+      for (int i = 0; i < NbrXCells; ++i)
+	{
+	  Y = 0.5 * YInc;
+	  for (int j = 0; j < NbrYCells; ++j)
+	    {
+	      if (rand() < this->InDopage)
+		Coefficient = InCoefficient;
+	      else
+		Coefficient = GaCoefficient;
+	      for (int m = 0; m < this->LandauDegeneracy; ++m)
+		{
+		  double ShiftXM = (X / this->MagneticLength) + (this->MagneticLength * KCoeffcient * m);
+		  double Landau11 = LandauPrefactor * exp (-0.5 * (ShiftXM * ShiftXM));
+		  double Landau21 = Landau11 * M_SQRT1_2 * (2.0 * ShiftXM * ShiftXM -1.0);
+		  for (int n = m; n < this->LandauDegeneracy; ++n)
+		    {	
+		      double ShiftXN = (X / this->MagneticLength) + (this->MagneticLength * KCoeffcient * n);
+		      double Landau12 = LandauPrefactor * exp (-0.5 * (ShiftXN * ShiftXN));
+		      double Landau22 = Landau12 * M_SQRT1_2 * (2.0 * ShiftXN * ShiftXN -1.0);
+		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), sin (Y* KCoeffcient *((double) (n - m))));
+		      Complex Tmp22 (Tmp11);
+		      Complex Tmp12 (Tmp11);
+		      Complex Tmp21 (Tmp11);
+		      Tmp11 *= Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
+		      Tmp21 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau12 * Landau22;
+		      Tmp12 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau22;
+		      Tmp22 *= Coefficient * ZPartValue2 * ZPartValue2 * Landau22 * Landau21;
+		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n, Tmp11);
+		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n + 1, Tmp12);
+		      this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * n, Tmp21);
+		      this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * n + 1, Tmp22);
+		    }
+		}
+	      Y += YInc;	      
+	    }
+	  X += XInc;
+	}
+      Z += ZInc;
     }
 }
 
