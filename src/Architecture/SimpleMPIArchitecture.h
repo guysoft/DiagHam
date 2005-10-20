@@ -202,7 +202,11 @@ inline bool SimpleMPIArchitecture::IsMasterNode()
 
 inline Vector& SimpleMPIArchitecture::SumVector(Vector& vector)
 {
+#ifdef __MPI__
   return vector.SumVector(MPI::COMM_WORLD, 0);
+#else
+  return vector;
+#endif
 }
 
 #endif

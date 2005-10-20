@@ -123,14 +123,25 @@ int main(int argc, char** argv)
   HamiltonianRepresentation.Diagonalize(DiagonalizedHamiltonian);
 
   char FileName[256];
+  sprintf (FileName,"eigenvalues%f.raw", BField);
+  ofstream File0;
+  File0.open(FileName, ios::out); 
+  File0.precision(14); 
+   for (int i = 0; i < HamiltonianRepresentation.GetNbrRow(); ++i)
+    {
+      File0 << DiagonalizedHamiltonian[i] << endl;
+    }
+  File0.close();
+
   sprintf (FileName,"eigenvalues%f.dat", BField);
   ofstream File;
   File.open(FileName, ios::out); 
   File.precision(14); 
-  double Energy = 100.0;
+  double Energy = 170.0;
+  double EnergyMax = 200.0;
   int NbrEnergySteps = 2000;
-  double EnergyInc = 100.0 / 2000.0;
-  double Gamma = 1.0;
+  double EnergyInc =  (EnergyMax - Energy) / ((double) NbrEnergySteps);
+  double Gamma = 0.1;
   for (int j = 0; j < NbrEnergySteps; ++j)
     {
       double DOS = 0.0;
