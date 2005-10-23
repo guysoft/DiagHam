@@ -206,6 +206,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
   double KCoeffcient = 2.0 * M_PI / this->YSize;
   double XCoeffcient = this->MagneticLength * this->MagneticLength * KCoeffcient;
   double LandauPrefactor = pow(M_PI * this->MagneticLength * this->MagneticLength, -0.25);  
+  int Threshold = (int) (this->InDopage * ((double) RAND_MAX));
   for (int k = 0; k < NbrZCells; ++k)
     {
       X = 0.5 * XInc;
@@ -216,20 +217,20 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 	  Y = 0.5 * YInc;
 	  for (int j = 0; j < NbrYCells; ++j)
 	    {
-	      if (rand() < this->InDopage)
+	      if (rand() < Threshold)
 		Coefficient = InCoefficient;
 	      else
 		Coefficient = GaCoefficient;
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
 		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
-		  double Landau11 = LandauPrefactor * exp (-0.5 * (ShiftXM * ShiftXM));
-		  double Landau21 = Landau11 * M_SQRT1_2 * (2.0 * ShiftXM * ShiftXM -1.0);
+		  double Landau11 = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
+		  double Landau21 = Landau11 * M_SQRT1_2 * ((2.0 * ShiftXM * ShiftXM) - 1.0);
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
-		      double Landau12 = LandauPrefactor * exp (-0.5 * (ShiftXN * ShiftXN));
-		      double Landau22 = Landau12 * M_SQRT1_2 * (2.0 * ShiftXN * ShiftXN -1.0);
+		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
+		      double Landau22 = Landau12 * M_SQRT1_2 * ((2.0 * ShiftXN * ShiftXN) -1.0);
 		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
 		      Complex Tmp22 (Tmp11);
 		      Complex Tmp12 (Tmp11);
