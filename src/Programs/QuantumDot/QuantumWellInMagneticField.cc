@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 2.64);  
   SingleDoubleOption MassOption ('\n', "mass", "electron effective mass (in bare electron mass unit)", 0.050);
   SingleDoubleOption BFieldOption ('\n', "bfield", "B field (in Tesla unit)", 31.09);
+  SingleDoubleOption BandOffsetOption ('\n', "band-offset", "band offset value (in meV unit)", 600);
   SingleStringOption CoefficientFileNameOption('\n', "coefficients", "name of the file where interaction coeffcients are stored", 
 					       "/home/regnault/development/DMRG/DiagHam/potentiel_10_10_10_2");
   BooleanOption CarrierTypeOption('c', "carrier", "carrier type, true for hole, false for electron", true);
@@ -76,6 +77,7 @@ int main(int argc, char** argv)
   OptionList += &RightSizeOption;
   OptionList += &MemoryOption;
   OptionList += &CarrierTypeOption; 
+  OptionList += &BandOffsetOption;
 
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -104,12 +106,12 @@ int main(int argc, char** argv)
   int LeftSize = LeftSizeOption.GetInteger();
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
-
+  double BandOffset = BandOffsetOption.GetDouble();
 
   timeval CurrentTime;
   gettimeofday (&(CurrentTime), 0);
   srand(CurrentTime.tv_usec);
-  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, 600, 0.53);
+  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, BandOffset, 0.53);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
   HermitianMatrix HamiltonianRepresentation;
   Hamiltonian.GetHamiltonian(HamiltonianRepresentation);
