@@ -105,6 +105,10 @@ int main(int argc, char** argv)
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
 
+
+  timeval CurrentTime;
+  gettimeofday (&(CurrentTime), 0);
+  srand(CurrentTime.tv_usec);
   QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, 600, 0.53);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
   HermitianMatrix HamiltonianRepresentation;

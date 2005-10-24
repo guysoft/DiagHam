@@ -231,7 +231,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
 		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
 		      double Landau22 = Landau12 * M_SQRT1_2 * ((2.0 * ShiftXN * ShiftXN) -1.0);
-		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
+		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), sin (Y* KCoeffcient *((double) (n - m))));
 		      Complex Tmp22 (Tmp11);
 		      Complex Tmp12 (Tmp11);
 		      Complex Tmp21 (Tmp11);
