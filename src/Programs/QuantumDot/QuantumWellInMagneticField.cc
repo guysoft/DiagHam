@@ -3,6 +3,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 
 #include "Hamiltonian/QuantumDotHamiltonian/QuantumWellHamiltonianInMagneticField.h"
 
@@ -115,29 +116,29 @@ int main(int argc, char** argv)
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
   HermitianMatrix HamiltonianRepresentation;
   Hamiltonian.GetHamiltonian(HamiltonianRepresentation);
-  double TmpElement;
-  for (int i = 0; i < HamiltonianRepresentation.GetNbrRow(); ++i)
-    {
-      HamiltonianRepresentation.GetMatrixElement(i, i, TmpElement);
-      cout << TmpElement << " ";
-    }
-  cout << endl << endl;
 
 
   cout << "start diagonalization" << endl;
   RealDiagonalMatrix DiagonalizedHamiltonian (HamiltonianRepresentation.GetNbrRow());
-  HamiltonianRepresentation.Diagonalize(DiagonalizedHamiltonian);
+  ComplexMatrix Eigenvectors(HamiltonianRepresentation.GetNbrRow(), HamiltonianRepresentation.GetNbrRow());
+  HamiltonianRepresentation.Diagonalize(DiagonalizedHamiltonian, Eigenvectors);
 
   char FileName[256];
   sprintf (FileName,"eigenvalues%f.raw", BField);
+  char EigenvectorFileName[256];
   ofstream File0;
   File0.open(FileName, ios::out); 
   File0.precision(14); 
-   for (int i = 0; i < HamiltonianRepresentation.GetNbrRow(); ++i)
+  for (int i = 0; i < HamiltonianRepresentation.GetNbrRow(); ++i)
     {
       File0 << DiagonalizedHamiltonian[i] << endl;
+      sprintf (EigenvectorFileName,"eigenvalues%f.%d.vec", BField, i);
+      if (EigenstateFlag == true)
+	Eigenvectors[i].WriteVector(EigenvectorFileName);
     }
   File0.close();
+
+  
 
   sprintf (FileName,"eigenvalues%f.dat", BField);
   ofstream File;

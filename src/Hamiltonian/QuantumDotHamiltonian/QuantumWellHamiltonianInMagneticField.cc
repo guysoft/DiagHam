@@ -231,7 +231,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
 		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
 		      double Landau22 = Landau12 * M_SQRT1_2 * ((2.0 * ShiftXN * ShiftXN) -1.0);
-		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), sin (Y* KCoeffcient *((double) (n - m))));
+		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
 		      Complex Tmp22 (Tmp11);
 		      Complex Tmp12 (Tmp11);
 		      Complex Tmp21 (Tmp11);
@@ -246,7 +246,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 		    }
 		  this->Hamiltonian.AddToMatrixElement(2 * m, 2 * m, Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau11);
 		  this->Hamiltonian.AddToMatrixElement(2 * m, 2 * m + 1, Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau21);
-		  this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * m + 1, Coefficient * ZPartValue2 * ZPartValue2 * Landau21 * Landau21);		  
+		  this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * m + 1, (Coefficient * ZPartValue2 * ZPartValue2 * Landau21 * Landau21));		  
 		}
 	      Y += YInc;	      
 	    }
