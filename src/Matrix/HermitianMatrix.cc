@@ -1595,10 +1595,10 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
   for (int i = 0; i < M.GetNbrRow(); ++i)
     {
       M[i] = TmpMatrix2[2 * i];
-      for (int j = 0; i < M.GetNbrRow(); ++j)
+      for (int j = 0; j < M.GetNbrRow(); ++j)
 	{
-	  Q[i].Re(j) = TmpMatrix3[i][j];
-	  Q[i].Im(j) = TmpMatrix3[i][j + M.GetNbrRow()];	  
+	  Q[i].Re(j) = TmpMatrix3[2 * i][j];
+	  Q[i].Im(j) = TmpMatrix3[2 * i][j + M.GetNbrRow()];	  
 	}
     }
   

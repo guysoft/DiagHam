@@ -135,6 +135,9 @@ int main(int argc, char** argv)
       sprintf (EigenvectorFileName,"eigenvalues%f.%d.vec", BField, i);
       if (EigenstateFlag == true)
 	Eigenvectors[i].WriteVector(EigenvectorFileName);
+      ComplexVector TmpVec (Eigenvectors[i].GetVectorDimension());
+      TmpVec.Multiply(HamiltonianRepresentation, Eigenvectors[i]);
+      cout << (Eigenvectors[i] * TmpVec) << endl;
     }
   File0.close();
 
