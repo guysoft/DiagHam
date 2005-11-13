@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2005 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//        class of hamiltonian associated quantum dots in 3 dimensions        //
+//        class of hamiltonian associated quantum well in mangetic field      //
+//             resricted to one subband and one Landau level                  //
 //                                                                            //
-//                      last modification : 10/13/2005                        //
+//                      last modification : 11/13/2005                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/QuantumDotHamiltonian/QuantumWellHamiltonianInMagneticField.h"
+#include "Hamiltonian/QuantumDotHamiltonian/QuantumWellHamiltonianInMagneticField1Level.h"
  
 #include <math.h>
 #include <iostream>
@@ -54,28 +55,24 @@ using std::endl;
 // zSize = system dimension in the z direction (in Angstrom unit)
 // mass = effective mass in the x direction (in electron mass unit)
 // bField = B field value (in Tesla)
-// zEnergy1 = z confinement in the first subband
-// zEnergy2 = z confinement in the second subband
-// landauIndex1 = Landau index of the first subband
-// landauIndex2 = Landau index of the second subband
+// zEnergy = z confinement
+// landauIndex = Landau level index
 // mailleParameter =
 // bandOffset = conduction band offset between GaAs and InAs
 // inDopage = In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
 // potentialDescription = name of the file that contains the potential description (null if the potential has to be evaluated)
 
-QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy1, double zEnergy2,
-									     int landauIndex1, int landauIndex2, double mailleParameter, double bandOffset, double inDopage, 
-									     char* potentialDescription)
+QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticField1Level(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy,
+											 int landauIndex, double mailleParameter, double bandOffset, double inDopage, 
+											 char* potentialDescription)
 {
   this->XSize = xSize;
   this->YSize = ySize;
   this->ZSize = zSize;
   this->Mass = mass;
   this->BField = bField;
-  this->ZEnergy1 = zEnergy1;
-  this->ZEnergy2 = zEnergy2;
-  this->LandauIndex1 = landauIndex1;
-  this->LandauIndex2 = landauIndex2;
+  this->ZEnergy = zEnergy;
+  this->LandauIndex = landauIndex;
   this->MailleParameter = mailleParameter;
   this->BandOffset = bandOffset;
   this->InDopage = inDopage;
@@ -128,14 +125,14 @@ QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(dou
 //
 // hamiltonian = reference on hamiltonian to copy
 
-QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(const QuantumWellHamiltonianInMagneticField& hamiltonian)
+QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticField1Level(const QuantumWellHamiltonianInMagneticField1Level& hamiltonian)
 {
 }
 
 // destructor
 //
 
-QuantumWellHamiltonianInMagneticField::~QuantumWellHamiltonianInMagneticField()
+QuantumWellHamiltonianInMagneticField1Level::~QuantumWellHamiltonianInMagneticField1Level()
 {
   delete this->Potential;
 }
@@ -144,9 +141,9 @@ QuantumWellHamiltonianInMagneticField::~QuantumWellHamiltonianInMagneticField()
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractHamiltonian* QuantumWellHamiltonianInMagneticField::Clone ()
+AbstractHamiltonian* QuantumWellHamiltonianInMagneticField1Level::Clone ()
 {
-  return new QuantumWellHamiltonianInMagneticField(*this);
+  return new QuantumWellHamiltonianInMagneticField1Level(*this);
 }
 
 
@@ -154,7 +151,7 @@ AbstractHamiltonian* QuantumWellHamiltonianInMagneticField::Clone ()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void QuantumWellHamiltonianInMagneticField::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void QuantumWellHamiltonianInMagneticField1Level::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
 }
 
@@ -162,7 +159,7 @@ void QuantumWellHamiltonianInMagneticField::SetHilbertSpace (AbstractHilbertSpac
 //
 // shift = shift value
 
-void QuantumWellHamiltonianInMagneticField::ShiftHamiltonian (double shift)
+void QuantumWellHamiltonianInMagneticField1Level::ShiftHamiltonian (double shift)
 {
 }
 
@@ -173,7 +170,7 @@ void QuantumWellHamiltonianInMagneticField::ShiftHamiltonian (double shift)
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex QuantumWellHamiltonianInMagneticField::MatrixElement (RealVector& V1, RealVector& V2)
+Complex QuantumWellHamiltonianInMagneticField1Level::MatrixElement (RealVector& V1, RealVector& V2)
 {
   Complex Tmp;
   return Tmp;
@@ -185,7 +182,7 @@ Complex QuantumWellHamiltonianInMagneticField::MatrixElement (RealVector& V1, Re
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex QuantumWellHamiltonianInMagneticField::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex QuantumWellHamiltonianInMagneticField1Level::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
   Complex Tmp;
   return Tmp;
@@ -196,7 +193,7 @@ Complex QuantumWellHamiltonianInMagneticField::MatrixElement (ComplexVector& V1,
 // M = reference on matrix where Hamiltonian has to be stored
 // return value = reference on  corresponding hermitian matrix
 
-HermitianMatrix& QuantumWellHamiltonianInMagneticField::GetHamiltonian (HermitianMatrix& M)
+HermitianMatrix& QuantumWellHamiltonianInMagneticField1Level::GetHamiltonian (HermitianMatrix& M)
 {
   M = this->Hamiltonian;
   return M;
@@ -205,16 +202,13 @@ HermitianMatrix& QuantumWellHamiltonianInMagneticField::GetHamiltonian (Hermitia
 // evaluate all interaction factors
 //   
 
-void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
+void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 {
-  int Lim = 2 * this->LandauDegeneracy;
-  double DiagonalTerm1 = this->ZEnergy1 + ((0.5 + ((double) this->LandauIndex1)) * this->CyclotronEnergy);
-  double DiagonalTerm2 = this->ZEnergy2 + ((0.5 + ((double) this->LandauIndex2)) * this->CyclotronEnergy);
+  double DiagonalTerm1 = this->ZEnergy + ((0.5 + ((double) this->LandauIndex)) * this->CyclotronEnergy);
   
-  for (int i = 0; i < Lim; i += 2)
+  for (int i = 0; i < this->LandauDegeneracy; ++i)
     {      
       this->Hamiltonian.SetMatrixElement(i, i, DiagonalTerm1);
-      this->Hamiltonian.SetMatrixElement(i + 1, i + 1, DiagonalTerm2);
     }
 
   double XInc = this->MailleParameter * 0.5;
@@ -230,8 +224,8 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
   for (int k = 0; k < this->NbrZCells; ++k)
     {
       Y = 0.5 * YInc;
-      double ZPartValue1 = sin (2.0 * M_PI * Z / this->ZSize);
-      double ZPartValue2 = sin (M_PI * Z / this->ZSize);
+      double ZPartValue1 = sin (M_PI * Z / this->ZSize);
+      double ZPartValue2 = sin (2.0 * M_PI * Z / this->ZSize);
       for (int j = 0; j < this->NbrYCells; ++j)
 	{
 	  X = 0.5 * XInc;
@@ -241,29 +235,16 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
 		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
-		  double Landau11 = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
-		  double Landau21 = Landau11 * M_SQRT1_2 * ((2.0 * ShiftXM * ShiftXM) - 1.0);
+		  double Landau = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
 		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
-		      double Landau22 = Landau12 * M_SQRT1_2 * ((2.0 * ShiftXN * ShiftXN) -1.0);
 		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
-		      Complex Tmp22 (Tmp11);
-		      Complex Tmp12 (Tmp11);
-		      Complex Tmp21 (Tmp11);
 		      Tmp11 *= Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
-		      Tmp21 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau12 * Landau22;
-		      Tmp12 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau22;
-		      Tmp22 *= Coefficient * ZPartValue2 * ZPartValue2 * Landau22 * Landau21;
-		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n, Tmp11);
-		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n + 1, Tmp12);
-		      this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * n, Tmp21);
-		      this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * n + 1, Tmp22);
+		      this->Hamiltonian.AddToMatrixElement(m, n, Tmp11);
 		    }
-		  this->Hamiltonian.AddToMatrixElement(2 * m, 2 * m, Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau11);
-		  this->Hamiltonian.AddToMatrixElement(2 * m, 2 * m + 1, Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau21);
-		  this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * m + 1, (Coefficient * ZPartValue2 * ZPartValue2 * Landau21 * Landau21));		  
+		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau11);
 		}
 	      X += XInc;
 	    }
@@ -278,7 +259,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 // filename = name of the file (with path) where potential has to be saved
 // return value = true if no error occured
 
-bool QuantumWellHamiltonianInMagneticField::SavePotential(char* filename)
+bool QuantumWellHamiltonianInMagneticField1Level::SavePotential(char* filename)
 {
   this->Potential->SaveDiagram(filename);
   return true;

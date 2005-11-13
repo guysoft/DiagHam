@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2005 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//        class of hamiltonian associated quantum dots in 3 dimensions        //
+//        class of hamiltonian associated quantum well in mangetic field      //
+//             resricted to one subband and one Landau level                  //
 //                                                                            //
-//                      last modification : 10/13/2005                        //
+//                      last modification : 11/13/2005                        //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QUANTUMWELLDHAMILTONIANINMAGNETICFIELD_H
-#define QUANTUMWELLDHAMILTONIANINMAGNETICFIELD_H
+#ifndef QUANTUMWELLDHAMILTONIANINMAGNETICFIELD1LEVEL_H
+#define QUANTUMWELLDHAMILTONIANINMAGNETICFIELD1LEVEL_H
 
 
 #include "config.h"
@@ -47,7 +48,7 @@ class MathematicaOutput;
 
 
 
-class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
+class QuantumWellHamiltonianInMagneticField1Level : public AbstractHamiltonian
 {
 
  protected:
@@ -90,14 +91,10 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
   // degeneracy of each Landau level
   int LandauDegeneracy;
 
-  // z confinement in the first subband
-  double ZEnergy1;
-  // z confinement in the second subband
-  double ZEnergy2;
-  // landauIndex1 = Landau index of the first subband
-  int LandauIndex1;
-  // landauIndex2 = Landau index of the second subband
-  int LandauIndex2;
+  // z confinement
+  double ZEnergy;
+  // landauIndex1 = Landau level index
+  int LandauIndex;
 
   
   double MailleParameter;
@@ -128,25 +125,23 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
   // zSize = system dimension in the z direction (in Angstrom unit)
   // mass = effective mass in the x direction (in electron mass unit)
   // bField = B field value (in Tesla)
-  // zEnergy1 = z confinement in the first subband
-  // zEnergy2 = z confinement in the second subband
-  // landauIndex1 = Landau index of the first subband
-  // landauIndex2 = Landau index of the second subband
+  // zEnergy = z confinement
+  // landauIndex = Landau level
   // mailleParameter =
   // bandOffset = conduction band offset between GaAs and InAs
   // inDopage = In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
   // potentialDescription = name of the file that contains the potential description (null if the potential has to be evaluated)
-  QuantumWellHamiltonianInMagneticField(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy1, double zEnergy2,
-					int landauIndex1, int landauIndex2, double mailleParameter, double bandOffset, double inDopage, char* potentialDescription = 0);
+  QuantumWellHamiltonianInMagneticField1Level(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy,
+					      int landauIndex, double mailleParameter, double bandOffset, double inDopage, char* potentialDescription = 0);
 
   // copy constructor (without duplicating datas)
   //
   // hamiltonian = reference on hamiltonian to copy
-  QuantumWellHamiltonianInMagneticField(const QuantumWellHamiltonianInMagneticField& hamiltonian);
+  QuantumWellHamiltonianInMagneticField1Level(const QuantumWellHamiltonianInMagneticField1Level& hamiltonian);
 
   // destructor
   //
-  ~QuantumWellHamiltonianInMagneticField();
+  ~QuantumWellHamiltonianInMagneticField1Level();
 
   // clone hamiltonian without duplicating datas
   //
@@ -211,7 +206,7 @@ class QuantumWellHamiltonianInMagneticField : public AbstractHamiltonian
 //
 // return value = pointer to used Hilbert space
 
-inline AbstractHilbertSpace* QuantumWellHamiltonianInMagneticField::GetHilbertSpace ()
+inline AbstractHilbertSpace* QuantumWellHamiltonianInMagneticField1Level::GetHilbertSpace ()
 {
   return 0;
 }
@@ -220,9 +215,9 @@ inline AbstractHilbertSpace* QuantumWellHamiltonianInMagneticField::GetHilbertSp
 //
 // return value = corresponding matrix elementdimension
 
-inline int QuantumWellHamiltonianInMagneticField::GetHilbertSpaceDimension ()
+inline int QuantumWellHamiltonianInMagneticField1Level::GetHilbertSpaceDimension ()
 {
-  return (this->LandauDegeneracy * 2);
+  return this->LandauDegeneracy;
 }
   
 #endif

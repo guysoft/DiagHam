@@ -55,6 +55,8 @@ int main(int argc, char** argv)
   SingleDoubleOption BandOffsetOption ('\n', "band-offset", "band offset value (in meV unit)", 600);
   SingleStringOption CoefficientFileNameOption('\n', "coefficients", "name of the file where interaction coeffcients are stored", 
 					       "/home/regnault/development/DMRG/DiagHam/potentiel_10_10_10_2");
+  SingleStringOption SavePotentialFileNameOption('\n', "save-potential", "save potential description into a given file");
+  SingleStringOption LoadPotentialFileNameOption('\n', "load-potential", "load potential description from a given file");
   BooleanOption CarrierTypeOption('c', "carrier", "carrier type, true for hole, false for electron", true);
 
   List<AbstractOption*> OptionList;
@@ -79,6 +81,8 @@ int main(int argc, char** argv)
   OptionList += &MemoryOption;
   OptionList += &CarrierTypeOption; 
   OptionList += &BandOffsetOption;
+  OptionList += &SavePotentialFileNameOption;
+  OptionList += &LoadPotentialFileNameOption;
 
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
@@ -108,11 +112,15 @@ int main(int argc, char** argv)
   int RightSize = RightSizeOption.GetInteger();
   bool Carrier = CarrierTypeOption.GetBoolean();
   double BandOffset = BandOffsetOption.GetDouble();
+  char* SavePotentialFileName = SavePotentialFileNameOption.GetString();
+  char* LoadPotentialFileName = LoadPotentialFileNameOption.GetString();
 
   timeval CurrentTime;
   gettimeofday (&(CurrentTime), 0);
   srand(CurrentTime.tv_usec);
-  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 0.0, 143.0, 2, 0, 5.87, BandOffset, 0.53);
+  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 143.0, 0.0, 0, 2, 5.87, BandOffset, 0.53, LoadPotentialFileName);
+  if (SavePotentialFileName != 0)    
+    Hamiltonian.SavePotential(SavePotentialFileName);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
   HermitianMatrix HamiltonianRepresentation;
   Hamiltonian.GetHamiltonian(HamiltonianRepresentation);
