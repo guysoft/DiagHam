@@ -70,6 +70,16 @@ class BinaryThreeDConstantCellPotential : public ThreeDConstantCellPotential
   // fileName = name of the file in which the diagram is stocked
   virtual void LoadDiagram(char* fileName);
 
+  // save the potential description of atoms in a file (binary mode)
+  //
+  // fileName = name of the file to stock the potential description
+  virtual void SaveBinaryPotential(char* fileName);
+
+  // load the potential description of atoms from a file (binary mode)
+  //
+  // fileName = name of the file in which the potential description is stocked
+  virtual void LoadBinaryPotential(char* fileName);
+
   // assign the potential a value at a given position
   //
   // i = x coordinate of the considered cell

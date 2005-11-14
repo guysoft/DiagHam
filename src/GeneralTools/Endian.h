@@ -27,6 +27,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include <fstream>
+
+
+using std::ofstream;
+using std::ifstream;
+
+
 // function to read Little Endian encoded variable from a file
 //
 // file = reference on the input file stream

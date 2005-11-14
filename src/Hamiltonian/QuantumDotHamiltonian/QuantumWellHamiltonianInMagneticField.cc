@@ -106,9 +106,9 @@ QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(dou
       double GaCoefficient = this->MailleParameter * this->MailleParameter * this->MailleParameter * 0.25 * (2.0 / (this->YSize * this->ZSize)) * this->BandOffset;
       double InCoefficient = GaCoefficient * (this->InDopage - 1.0);
       GaCoefficient *= this->InDopage;
-      for (int k = 0; k < NbrZCells; ++k)
-	for (int j = 0; j < NbrYCells; ++j)
-	  for (int i = 0; i < NbrXCells; ++i)
+      for (int k = 0; k < this->NbrZCells; ++k)
+	for (int j = 0; j < this->NbrYCells; ++j)
+	  for (int i = 0; i < this->NbrXCells; ++i)
 	    {
 	      if (rand() < Threshold)
 		this->Potential->SetPotential(i, j, k, InCoefficient);
@@ -119,9 +119,9 @@ QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(dou
   else
     {
       this->Potential = new BinaryThreeDConstantCellPotential(NbrXCells, NbrYCells, NbrZCells);
-      this->Potential->LoadDiagram(potentialDescription);
+      this->Potential->LoadBinaryPotential(potentialDescription);
     }
-  this->EvaluateInteractionFactors();
+//  this->EvaluateInteractionFactors();
 }
 
 // copy constructor (without duplicating datas)
@@ -280,6 +280,6 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 
 bool QuantumWellHamiltonianInMagneticField::SavePotential(char* filename)
 {
-  this->Potential->SaveDiagram(filename);
+  this->Potential->SaveBinaryPotential(filename);
   return true;
 }

@@ -91,7 +91,7 @@ QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticFie
   this->InXPosition = new double [this->NbrCells];
   this->InYPosition = new double [this->NbrCells];
   this->InZPosition = new double [this->NbrCells];
-  HermitianMatrix TmpHamiltonian(this->LandauDegeneracy * 2, true);
+  HermitianMatrix TmpHamiltonian(this->LandauDegeneracy, true);
   this->Hamiltonian = TmpHamiltonian;
   this->NbrXCells = (int)  (2.0 * this->XSize / this->MailleParameter);
   this->NbrYCells = (int)  (2.0 * this->YSize / this->MailleParameter);
@@ -115,8 +115,8 @@ QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticFie
     }
   else
     {
-      this->Potential = new BinaryThreeDConstantCellPotential(NbrXCells, NbrYCells, NbrZCells);
-      this->Potential->LoadDiagram(potentialDescription);
+      cout << "check " << endl;
+      this->Potential->LoadBinaryPotential(potentialDescription);
     }
   this->EvaluateInteractionFactors();
 }
@@ -224,8 +224,7 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
   for (int k = 0; k < this->NbrZCells; ++k)
     {
       Y = 0.5 * YInc;
-      double ZPartValue1 = sin (M_PI * Z / this->ZSize);
-      double ZPartValue2 = sin (2.0 * M_PI * Z / this->ZSize);
+      double ZPartValue = sin (M_PI * Z / this->ZSize);
       for (int j = 0; j < this->NbrYCells; ++j)
 	{
 	  X = 0.5 * XInc;
@@ -235,16 +234,16 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
 		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
-		  double Landau = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
+		  double Landau11 = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
 		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
 		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
-		      Tmp11 *= Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
+		      Tmp11 *= Coefficient * ZPartValue * ZPartValue * Landau11 * Landau12;
 		      this->Hamiltonian.AddToMatrixElement(m, n, Tmp11);
 		    }
-		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau11);
+		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * ZPartValue * ZPartValue * Landau11 * Landau11);
 		}
 	      X += XInc;
 	    }
@@ -261,6 +260,6 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 
 bool QuantumWellHamiltonianInMagneticField1Level::SavePotential(char* filename)
 {
-  this->Potential->SaveDiagram(filename);
+  this->Potential->SaveBinaryPotential(filename);
   return true;
 }

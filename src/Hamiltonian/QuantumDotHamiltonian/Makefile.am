@@ -11,4 +11,5 @@ PeriodicQuantumDots3DHamiltonianInMagneticField.cc \
 CylindricalHamiltonianInMagneticField.cc \
 CylindricalQuantumDots3DHamiltonian.cc \
 PeriodicElectronHole3DHamiltonian.cc \
-QuantumWellHamiltonianInMagneticField.cc
+QuantumWellHamiltonianInMagneticField.cc \
+QuantumWellHamiltonianInMagneticField1Level.cc
