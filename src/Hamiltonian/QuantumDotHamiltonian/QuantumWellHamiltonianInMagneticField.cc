@@ -121,7 +121,7 @@ QuantumWellHamiltonianInMagneticField::QuantumWellHamiltonianInMagneticField(dou
       this->Potential = new BinaryThreeDConstantCellPotential(NbrXCells, NbrYCells, NbrZCells);
       this->Potential->LoadBinaryPotential(potentialDescription);
     }
-//  this->EvaluateInteractionFactors();
+  this->EvaluateInteractionFactors();
 }
 
 // copy constructor (without duplicating datas)
