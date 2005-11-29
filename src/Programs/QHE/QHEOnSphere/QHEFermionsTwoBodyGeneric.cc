@@ -1,4 +1,5 @@
-#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsTwoBodyGeneric" , "0.01");
+  OptionManager Manager ("QHEFermionsTwoBodyGeneric" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -80,11 +81,12 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsNBodyHardCore -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsNBodyHardCore -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -95,11 +97,12 @@ int main(int argc, char** argv)
 
 
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
+  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
@@ -131,8 +134,10 @@ int main(int argc, char** argv)
     }
 
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
-  int Max = (LzMax * NbrBosons);
+  sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax);
+
+  int Max = ((LzMax - NbrFermions + 1) * NbrFermions);
+
   int  L = 0;
   if ((abs(Max) & 1) != 0)
      L = 1;
@@ -153,22 +158,41 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      BosonOnSphere Space (NbrBosons, L, LzMax);
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+       ParticleOnSphere* Space;
+#ifdef __64_BITS__
+      if (LzMax <= 63)
+        {
+          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+        }
+      else
+        {
+          Space = new FermionOnSphereUnlimited(NbrFermions, L, LzMax, MemorySpace);
+        }
+#else
+      if (LzMax <= 31)
+        {
+          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+        }
+      else
+        {
+          Space = new FermionOnSphereUnlimited(NbrFermions, L, LzMax, MemorySpace);
+        }
+#endif
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnSphereGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials,
+      Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);
-      double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
+      double Shift = - 0.5 * ((double) (NbrFermions * NbrFermions)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax, L);
+	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
