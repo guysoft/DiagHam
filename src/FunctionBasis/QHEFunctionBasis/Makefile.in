@@ -52,13 +52,15 @@ libQHEFunctionBasis_a_AR = $(AR) $(ARFLAGS)
 libQHEFunctionBasis_a_LIBADD =
 am_libQHEFunctionBasis_a_OBJECTS =  \
 	ParticleOnSphereFunctionBasis.$(OBJEXT) \
-	ParticleOnDiskFunctionBasis.$(OBJEXT)
+	ParticleOnDiskFunctionBasis.$(OBJEXT) \
+	ParticleOnSphereGenericLLFunctionBasis.$(OBJEXT)
 libQHEFunctionBasis_a_OBJECTS = $(am_libQHEFunctionBasis_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ParticleOnDiskFunctionBasis.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereFunctionBasis.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereFunctionBasis.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereGenericLLFunctionBasis.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -162,7 +164,8 @@ target_alias = @target_alias@
 SUBDIRS = 
 noinst_LIBRARIES = libQHEFunctionBasis.a
 libQHEFunctionBasis_a_SOURCES = ParticleOnSphereFunctionBasis.cc \
-ParticleOnDiskFunctionBasis.cc
+ParticleOnDiskFunctionBasis.cc \
+ParticleOnSphereGenericLLFunctionBasis.cc
 
 all: all-recursive
 
@@ -213,6 +216,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnDiskFunctionBasis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereFunctionBasis.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereGenericLLFunctionBasis.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
