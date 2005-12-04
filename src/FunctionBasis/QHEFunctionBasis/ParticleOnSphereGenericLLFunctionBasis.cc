@@ -71,17 +71,33 @@ ParticleOnSphereGenericLLFunctionBasis::~ParticleOnSphereGenericLLFunctionBasis 
 
 void ParticleOnSphereGenericLLFunctionBasis::GetFunctionValue(RealVector& value, Complex& result, int index)
 {
-  Complex TmpU (cos(0.5 * value[1]), sin(0.5 * value[1]));
-  Complex TmpV = Conj(TmpU);
-  TmpU *= cos (0.5 * value[0]);
-  TmpV *= sin (0.5 * value[0]);
-  result.Re = 0.0;
-  result.Im = 0.0;
+  double Cos = cos (0.5 * value[0]);
+  double Sin = sin (0.5 * value[0]);
+  int Max = this->LzMax + (2 * this->LandauLevel);
+  result.Re = value[1] * (((double) index) - 0.5 * ((double) Max));
+  result.Im = sin(result.Re);
+  result.Re = cos(result.Re);
   double* TmpCoefficients = this->SumPrefactors[index];
-  for (int i = 0; i <= this->LandauLevel; ++i)
+  int Min = this->LandauLevel - index;
+  if (Min < 0)
+    Min = 0;
+  Max -= index;
+  double DMin = (double) (Max + this->LandauLevel - (2 * Min));  
+  if (Max > this->LandauLevel)
     {
+      Max = this->LandauLevel;
+    }
+  double Tmp = 0.0;
+  double TmpCos = pow (Cos, (double) Min);
+  Cos *= Cos;
+  Max -= Min;
+  for (; Min <= Max; ++Min)
+    {
+      Tmp += TmpCoefficients[Min] * TmpCos * pow(Sin, DMin);
+      TmpCos *= Cos;
+      DMin -= 2.0;
     }  
-  result *= this->NormalizationPrefactors[index];
+  result *= (this->NormalizationPrefactors[index] * Tmp);
 }
 
 
@@ -154,21 +170,27 @@ void ParticleOnSphereGenericLLFunctionBasis::EvaluateSumPrefactors()
       this->SumPrefactors = new double* [this->LandauLevel + 1];
       FactorialCoefficient Coef;
       int MaxMomentum = this->LzMax + (2 * this->LandauLevel);      
-      double Factor = 1.0;
-      if ((this->LandauLevel & 1) != 0)
-	Factor = -1.0;
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
-	  this->SumPrefactors[j] = new double [this->LandauLevel + 1];
 	  double Factor = 1.0;
-	  for (int k = 0; k <= this->LandauLevel; ++k)  
+	  int Min = this->LandauLevel - j;
+	  if (Min < 0)
+	    Min = 0;
+	  else
+	    if ((Min & 1) != 0)
+	      Factor *= -1.0;
+	  int Max = MaxMomentum - j;
+	  if (Max > this->LandauLevel)
+	    Max = this->LandauLevel;
+	  this->SumPrefactors[j] = new double [Max - Min + 1];
+	  for (int k = Min; k <= Max; ++k)  
 	    {
 	      Coef.SetToOne();
 	      Coef.PartialFactorialMultiply(k + 1, this->LandauLevel);
 	      Coef.FactorialDivide(this->LandauLevel - k);
 	      Coef.PartialFactorialMultiply(j + k - this->LandauLevel + 1, this->LzMax + this->LandauLevel);	  
-	      Coef.FactorialDivide(this->LzMax + (2 * this->LandauLevel) -j - k);	  
-	      this->SumPrefactors[k][j] = Factor * Coef.GetNumericalValue();
+	      Coef.FactorialDivide(this->LzMax + (2 * this->LandauLevel) - j - k);	  
+	      this->SumPrefactors[j][k - Min] = Factor * Coef.GetNumericalValue();
 	      Factor *= -1.0;	      
 	    }
 	}
