@@ -64,7 +64,9 @@ am_libQHEHilbertSpace_a_OBJECTS = Fermions.$(OBJEXT) \
 	FermionOnDisk.$(OBJEXT) FermionOnSphereLongState.$(OBJEXT) \
 	FermionOnDiskUnlimited.$(OBJEXT) \
 	FermionOnSphereUnlimited.$(OBJEXT) \
-	BosonOnSphereState.$(OBJEXT) AbstractQHEParticle.$(OBJEXT)
+	BosonOnSphereState.$(OBJEXT) AbstractQHEParticle.$(OBJEXT) \
+	ParticleOnSphereWithSpin.$(OBJEXT) \
+	FermionOnSphereWithSpinNoTab.$(OBJEXT)
 libQHEHilbertSpace_a_OBJECTS = $(am_libQHEHilbertSpace_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -81,6 +83,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphere.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereLongState.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereUnlimited.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereWithSpinNoTab.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnTorusWithMagneticTranslations.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnTorusWithSpin.Po \
@@ -88,6 +91,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/FullFermionOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnDisk.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphere.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpin.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusWithMagneticTranslations.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusWithSpin.Po
@@ -214,7 +218,9 @@ FermionOnSphereLongState.cc \
 FermionOnDiskUnlimited.cc \
 FermionOnSphereUnlimited.cc \
 BosonOnSphereState.cc \
-AbstractQHEParticle.cc
+AbstractQHEParticle.cc \
+ParticleOnSphereWithSpin.cc \
+FermionOnSphereWithSpinNoTab.cc
 
 all: all-recursive
 
@@ -275,6 +281,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphere.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereLongState.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereUnlimited.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereWithSpinNoTab.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnTorusWithMagneticTranslations.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnTorusWithSpin.Po@am__quote@
@@ -282,6 +289,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FullFermionOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnDisk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphere.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusWithMagneticTranslations.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusWithSpin.Po@am__quote@
