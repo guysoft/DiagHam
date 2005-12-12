@@ -238,6 +238,7 @@ bool MultipleRealScalarProductOperation::ArchitectureDependentApplyOperation(SMP
       TmpOperations[i] = (MultipleRealScalarProductOperation*) this->Clone();
       TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
       TmpOperations[i]->SetScalarProducts(new double [this->GetNbrScalarProduct()]);
+      architecture->SetThreadOperation(TmpOperations[i], i);		
       FirstComponent += Step;            
     }
   TmpOperations[ReducedNbrThreads] = (MultipleRealScalarProductOperation*) this->Clone();

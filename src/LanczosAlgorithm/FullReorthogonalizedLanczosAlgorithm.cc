@@ -297,6 +297,7 @@ void FullReorthogonalizedLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 								       this->LanczosVectors[i + 1]);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->LanczosVectors[i] * 
 								      this->LanczosVectors[i + 1]);
+
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {

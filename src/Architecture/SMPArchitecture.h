@@ -48,17 +48,8 @@ struct ThreadMainParameter
   int ThreadID;
   int* Flag;
 #ifdef __SMP__
-  // pointer to the global mutex used for the rendering queue (common to all threads)
-  pthread_mutex_t* GlobalMutex;
-  // pointer to the global condition used for the rendering queue (common to all threads)
-  pthread_cond_t* GlobalCondition;
-
-  // pointer to the local mutex used for the rendering queue
-  pthread_mutex_t* LocalMutex;
-  // pointer to the local condition used for the rendering queue
-  pthread_cond_t* LocalCondition;
-
-  pthread_mutex_t* mut;
+  // pointer to the mutex condition
+  pthread_mutex_t* mut; 
 #endif
   
   int ThreadState;

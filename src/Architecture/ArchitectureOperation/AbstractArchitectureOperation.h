@@ -109,4 +109,13 @@ class AbstractArchitectureOperation
 };
 
 
+// get operation type
+//
+// return value = code corresponding to the operation
+
+inline int AbstractArchitectureOperation::GetOperationType ()
+{
+  return this->OperationType;
+}
+
 #endif

@@ -99,7 +99,15 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 	  if (TmpMemory < (1 << 30))
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
-	    cout  << "fast = " << (TmpMemory >> 30) << "." << (((TmpMemory - ((TmpMemory >> 30) << 30)) * 100l) >> 30)  << " Gb ";
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
 	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();

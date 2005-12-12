@@ -240,6 +240,7 @@ bool MultipleComplexScalarProductOperation::ArchitectureDependentApplyOperation(
       TmpOperations[i] = (MultipleComplexScalarProductOperation*) this->Clone();
       TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
       TmpOperations[i]->SetScalarProducts(new Complex [this->GetNbrScalarProduct()]);
+      architecture->SetThreadOperation(TmpOperations[i], i);		
       FirstComponent += Step;            
     }
   TmpOperations[ReducedNbrThreads] = (MultipleComplexScalarProductOperation*) this->Clone();
