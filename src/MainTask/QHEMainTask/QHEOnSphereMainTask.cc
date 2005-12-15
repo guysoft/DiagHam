@@ -43,6 +43,7 @@
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
@@ -249,7 +250,10 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
 	{
 	  if (this->DiskFlag == false)
-	    Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    if (this->EvaluateEigenvectors == true)
+	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);
+	    else
+	      Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	  else
 	    Lanczos = new BasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	}

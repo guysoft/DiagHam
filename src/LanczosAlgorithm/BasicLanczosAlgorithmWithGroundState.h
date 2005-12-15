@@ -50,11 +50,21 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   RealVector V2;
   RealVector V3;
 
+  // vector that contains the initial state
   RealVector InitialState;
 
+  //vector that contains the ground state (if GroundStateFlag is set to true)
+  RealVector GroundState;
+
+  // flag to indicate if ground state has already been compute
   bool GroundStateFlag;
 
   int Index;
+
+  // number of wanted eigenvalues
+  int NbrEigenvalue;
+  // value of the last wanted eigenvalue at previous Lanczos iteration
+  double PreviousLastWantedEigenvalue;
 
  public:
 
@@ -82,6 +92,12 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // vector = reference to the vector used as first step vector
   void InitializeLanczosAlgorithm(const Vector& vector);
 
+  // get the n first eigenstates (limited to the ground state fro this class, return NULL if nbrEigenstates > 1)
+  //
+  // nbrEigenstates = number of needed eigenstates
+  // return value = array containing the eigenstates
+  Vector* GetEigenstates(int nbrEigenstates);
+
   // get ground state (by re-running Lanczos algorithm)
   //
   // return value = reference on ground state
@@ -91,6 +107,11 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   //
   // nbrIter = number of iteration to do 
   void RunLanczosAlgorithm (int nbrIter);
+  
+  // test if convergence has been reached
+  //
+  // return value = true if convergence has been reached
+  bool TestConvergence ();
   
 };
 
