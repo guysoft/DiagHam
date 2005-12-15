@@ -38,7 +38,7 @@
 #include "Matrix/RealMatrix.h"
 
 #include <stdlib.h>
-#include <stdio.h>
+#include <math.h>
 #include <iostream>
 
 
@@ -115,9 +115,11 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
   this->V1 = RealVector (Dimension);
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
+  int Shift = RAND_MAX / 2;
+  double Scale = 1.0 / ((double) Shift);
   for (int i = 0; i < Dimension; i++)
     {
-      this->V1[i] = (rand() - 32767) * 0.5;
+      this->V1[i] = Scale * ((double) (rand() - Shift));
     }
   this->V1 /= this->V1.Norm();
   this->InitialState = RealVector (this->V1, true);
@@ -169,7 +171,6 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 {
   if (this->GroundStateFlag == false)
     {
-//      RealVector TmpComponents (this->DiagonalizedMatrix.GetNbrRow());
       RealMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
       for (int i = 0; i < this->TridiagonalizedMatrix.GetNbrRow(); ++i)
 	TmpEigenvector(i, i) = 1.0;
@@ -184,22 +185,21 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  TmpComponents[j] = TmpEigenvector(j, 0);
 	}
 
-//      this->TridiagonalizedMatrix.Eigenvector(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1), TmpComponents);
       this->GroundState.Copy(this->InitialState, TmpComponents[0]);
-      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->GroundState, &this->V3);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
       this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
       this->V3 /= this->V3.Norm();
       this->V2.Copy(this->InitialState);
       this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
-      for (int i = 1; i <  this->DiagonalizedMatrix.GetNbrRow(); ++i)
+      for (int i = 2; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
 	{
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
 	  Operation1.ApplyOperation(this->Architecture);
-	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i), this->V3, 
-					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 1), this->V2);
+	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i - 1), this->V3, 
+					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2), this->V2);
 	  this->V1 /= this->V1.Norm();
-	  this->GroundState.AddLinearCombination(TmpComponents[i + 1], this->V1);
+	  this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
 	  RealVector TmpV (this->V2);
 	  this->V2 = this->V3;
 	  this->V3 = this->V1;
@@ -207,6 +207,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  cout << ".";
 	  cout.flush();
 	}
+
       cout << endl;
       this->GroundState /= this->GroundState.Norm();
       this->GroundStateFlag = true;
