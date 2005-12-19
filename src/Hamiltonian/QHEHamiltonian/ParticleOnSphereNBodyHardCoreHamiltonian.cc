@@ -255,6 +255,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
       else
 	{
 	  remove (this->DiskStorageFileName);
+	  delete[] this->DiskStorageFileName;
 	}
       delete[] this->NbrInteractionPerComponent;
     }

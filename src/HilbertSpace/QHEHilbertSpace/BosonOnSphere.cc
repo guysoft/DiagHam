@@ -158,6 +158,7 @@ BosonOnSphere::~BosonOnSphere ()
 	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
+      delete[] LzMaxPosition;
     }
 }
 

@@ -79,6 +79,7 @@ ClebschGordanCoefficients::~ClebschGordanCoefficients ()
 	  delete[] this->JMin[i];
 	}
       delete[] this->JMin;
+      delete[] this->Coefficients;
     }
 }
 

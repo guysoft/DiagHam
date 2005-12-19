@@ -76,6 +76,7 @@ SMPArchitecture::SMPArchitecture(int nbrThreads)
 SMPArchitecture::~SMPArchitecture()
 {
 #ifdef __SMP__
+  delete[] this->Threads;
 #endif
 }
   
@@ -128,6 +129,7 @@ void SMPArchitecture::SendJobs ()
     {
       (void) pthread_join (Threads2[i], &ret);
     }
+  delete[] Threads2;
 #endif
 
 }

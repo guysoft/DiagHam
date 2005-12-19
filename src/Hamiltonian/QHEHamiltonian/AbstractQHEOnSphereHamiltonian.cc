@@ -1093,7 +1093,7 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplicationWithDiskStorage(cha
 	      m2 = this->M2Value[j];
 	      m3 = this->M3Value[j];
 	      m4 = m1 + m2 - m3;
-	      Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
+	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  TmpIndexArray[Pos] = Index;

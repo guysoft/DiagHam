@@ -83,6 +83,7 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
+  this->Memory = memory;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -154,6 +155,7 @@ ParticleOnSphereGenericHamiltonian::~ParticleOnSphereGenericHamiltonian()
        else
 	 {
 	  remove (this->DiskStorageFileName);
+	  delete[] this->DiskStorageFileName;
 	 }
        delete[] this->NbrInteractionPerComponent;
     }

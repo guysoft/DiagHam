@@ -211,6 +211,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
       cout << endl;
       this->GroundState /= this->GroundState.Norm();
       this->GroundStateFlag = true;
+      delete[] TmpComponents;
     }
   return this->GroundState;
 }
