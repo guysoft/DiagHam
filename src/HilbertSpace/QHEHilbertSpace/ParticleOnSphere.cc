@@ -114,6 +114,18 @@ int ParticleOnSphere::AdAdAdAdAAAA (int index, int m1, int m2, int m3, int m4, i
   return ProdAdProdA(index, TmpM, TmpN, 4, coefficient);
 }
 
+// apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphere::AA (int index, int n1, int n2)
+{
+  return 0.0;
+}
+
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
 //
 // index = index of the state on which the operator has to be applied
@@ -126,7 +138,19 @@ double ParticleOnSphere::ProdA (int index, int* n, int nbrIndices)
   return 0.0;
 }
 
-  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::AdAd (int m1, int m2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
 //
 // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
 // nbrIndices = number of creation (or annihilation) operators
@@ -137,6 +161,8 @@ int ParticleOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
   return this->HilbertSpaceDimension;
 }
+
+
 
 // evaluate wave function in real space using a given basis
 //

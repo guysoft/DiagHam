@@ -366,6 +366,33 @@ int BosonOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
   return DestIndex;
 }
 
+// apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnSphere::AA (int index, int n1, int n2)
+{
+  int CurrentLzMax = this->StateLzMax[index];
+  int* State = this->StateDescription[index];
+  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || (State[n1] == 0) || (State[n2] == 0) || ((n1 == n2) && (State[n1] == 1)))
+    {
+      return 0.0;
+    }
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->ProdATemporaryState[i] = State[i];
+  double Coefficient = this->ProdATemporaryState[n2];
+  --this->ProdATemporaryState[n2];
+  Coefficient *= this->ProdATemporaryState[n1];
+  --this->ProdATemporaryState[n1];
+  for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
+    this->ProdATemporaryState[i] = 0;
+  return Coefficient;
+}
+
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
 //
 // index = index of the state on which the operator has to be applied
@@ -398,6 +425,31 @@ double BosonOnSphere::ProdA (int index, int* n, int nbrIndices)
   for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
     this->ProdATemporaryState[i] = 0;
   return sqrt((double) TmpCoefficient);
+}
+
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphere::AdAd (int m1, int m2, double& coefficient)
+{
+  int i = 0;
+  for (; i < this->NbrLzValue; ++i)
+    {
+      this->TemporaryState[i] = this->ProdATemporaryState[i];
+    }
+  ++this->TemporaryState[m2];
+  coefficient *= this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+  int NewLzMax = this->LzMax;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
