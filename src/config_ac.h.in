@@ -15,6 +15,9 @@
 /* define if we are using MPI */
 #undef HAVE_MPI
 
+/* define if we are using LAPACK */
+#undef HAVE_LAPACK
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 

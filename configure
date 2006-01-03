@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -855,11 +855,18 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-lapack         enable LAPACK support
   --enable-mpi            enable MPI support
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-blas-libs="LIBS" BLAS libraries ["-llapack"]
+  --with-lapack-libs="LIBS"
+                          LAPACK libraries ["-llapack"]
+  --with-blas-libdir=DIR  BLAS library directory [BLASROOT/lib]
+  --with-lapack-libdir=DIR
+                          LAPACK library directory [LAPACKROOT/lib]
   --with-mpi-cxx          use MPI C++ compiler (enables MPI) [mpiCC]
   --with-mpi-libs="LIBS"  MPI libraries ["-lmpi"]
   --with-mpi-incdir=DIR   MPI include directory [MPIROOT/include]
@@ -4363,6 +4370,93 @@ fi
 
 
 
+# Check whether --enable-lapack or --disable-lapack was given.
+if test "${enable_lapack+set}" = set; then
+  enableval="$enable_lapack"
+  HAVE_PKG_LAPACK=$enableval
+else
+  HAVE_PKG_LAPACK=no
+fi;
+
+
+# Check whether --with-blas-libs or --without-blas-libs was given.
+if test "${with_blas_libs+set}" = set; then
+  withval="$with_blas_libs"
+  BLAS_LIBS=${withval}
+echo "$as_me:$LINENO: checking user-defined BLAS libraries" >&5
+echo $ECHO_N "checking user-defined BLAS libraries... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${BLAS_LIBS}" >&5
+echo "${ECHO_T}${BLAS_LIBS}" >&6
+
+
+fi;
+
+
+# Check whether --with-lapack-libs or --without-lapack-libs was given.
+if test "${with_lapack_libs+set}" = set; then
+  withval="$with_lapack_libs"
+  LAPACK_LIBS=${withval}
+echo "$as_me:$LINENO: checking user-defined Lapack libraries" >&5
+echo $ECHO_N "checking user-defined Lapack libraries... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${LAPACK_LIBS}" >&5
+echo "${ECHO_T}${LAPACK_LIBS}" >&6
+
+
+fi;
+
+
+# Check whether --with-blas-libdir or --without-blas-libdir was given.
+if test "${with_blas_libdir+set}" = set; then
+  withval="$with_blas_libdir"
+
+BLAS_LIBDIR=${withval}
+echo "$as_me:$LINENO: checking user-defined BLAS library directory" >&5
+echo $ECHO_N "checking user-defined BLAS library directory... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${BLAS_LIBDIR}" >&5
+echo "${ECHO_T}${BLAS_LIBDIR}" >&6
+
+
+fi;
+
+
+# Check whether --with-lapack-libdir or --without-lapack-libdir was given.
+if test "${with_lapack_libdir+set}" = set; then
+  withval="$with_lapack_libdir"
+
+LAPACK_LIBDIR=${withval}
+echo "$as_me:$LINENO: checking user-defined LAPACK library directory" >&5
+echo $ECHO_N "checking user-defined LAPACK library directory... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${LAPACK_LIBDIR}" >&5
+echo "${ECHO_T}${LAPACK_LIBDIR}" >&6
+
+
+fi;
+
+echo "$as_me:$LINENO: checking whether we are using LAPACK" >&5
+echo $ECHO_N "checking whether we are using LAPACK... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_PKG_LAPACK}" >&5
+echo "${ECHO_T}${HAVE_PKG_LAPACK}" >&6
+
+if test X${HAVE_PKG_LAPACK} = Xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LAPACK
+_ACEOF
+
+fi
+
+
+
+if test X${HAVE_PKG_LAPACK} = Xyes; then
+  BUILD_LAPACK_TRUE=
+  BUILD_LAPACK_FALSE='#'
+else
+  BUILD_LAPACK_TRUE='#'
+  BUILD_LAPACK_FALSE=
+fi
+
+
+
 # Check whether --enable-mpi or --disable-mpi was given.
 if test "${enable_mpi+set}" = set; then
   enableval="$enable_mpi"
@@ -4695,6 +4789,13 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"am__fastdepCXX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${BUILD_LAPACK_TRUE}" && test -z "${BUILD_LAPACK_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"BUILD_LAPACK\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"BUILD_LAPACK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -5344,6 +5445,8 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
+s,@BUILD_LAPACK_TRUE@,$BUILD_LAPACK_TRUE,;t t
+s,@BUILD_LAPACK_FALSE@,$BUILD_LAPACK_FALSE,;t t
 s,@BUILD_MPI_TRUE@,$BUILD_MPI_TRUE,;t t
 s,@BUILD_MPI_FALSE@,$BUILD_MPI_FALSE,;t t
 s,@MPI_CXX_EXISTS@,$MPI_CXX_EXISTS,;t t
