@@ -856,14 +856,15 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-lapack         enable LAPACK support
+  --enable-lapack-only    use LAPACK routines instead of DiagHam ones
   --enable-mpi            enable MPI support
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-blas-libs="LIBS" BLAS libraries ["-llapack"]
+  --with-blas-libs="LIBS" BLAS libraries ["-lblas"]
   --with-lapack-libs="LIBS"
-                          LAPACK libraries ["-llapack"]
+                          LAPACK libraries ["-llapack -lgc2f"]
   --with-blas-libdir=DIR  BLAS library directory [BLASROOT/lib]
   --with-lapack-libdir=DIR
                           LAPACK library directory [LAPACKROOT/lib]
@@ -4455,6 +4456,26 @@ else
   BUILD_LAPACK_FALSE=
 fi
 
+
+# Check whether --enable-lapack-only or --disable-lapack-only was given.
+if test "${enable_lapack_only+set}" = set; then
+  enableval="$enable_lapack_only"
+  USE_PKG_LAPACK_ONLY=$enableval
+else
+  USE_PKG_LAPACK_ONLY=no
+fi;
+echo "$as_me:$LINENO: checking whether we are using only LAPACK routines" >&5
+echo $ECHO_N "checking whether we are using only LAPACK routines... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${USE_PKG_LAPACK_ONLY}" >&5
+echo "${ECHO_T}${USE_PKG_LAPACK_ONLY}" >&6
+
+if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LAPACK_ONLY
+_ACEOF
+
+fi
 
 
 # Check whether --enable-mpi or --disable-mpi was given.

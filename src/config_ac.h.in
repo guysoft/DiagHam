@@ -6,6 +6,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* define if we are using LAPACK */
+#undef HAVE_LAPACK
+
+/* define if we are using LAPACK only */
+#undef HAVE_LAPACK_ONLY
+
 /* use little endian byte ordering */
 #undef HAVE_LITTLEENDIAN
 
@@ -14,9 +20,6 @@
 
 /* define if we are using MPI */
 #undef HAVE_MPI
-
-/* define if we are using LAPACK */
-#undef HAVE_LAPACK
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H

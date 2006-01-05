@@ -43,6 +43,10 @@
 #include <fstream>
 
 
+#ifdef HAVE_LAPACK
+
+#endif
+
 using std::endl;
 
 
@@ -1713,6 +1717,9 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
 
 RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, double err, int maxIter)
 {
+#ifdef __LAPACKONLY__
+  return this->LapackDiagonalize(M, err, maxIter);
+#endif
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
@@ -1733,6 +1740,9 @@ RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, dou
 
 RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter)
 {
+#ifdef __LAPACKONLY__
+  return this->LapackDiagonalize(M, Q, err, maxIter);
+#endif
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
@@ -1742,6 +1752,50 @@ RealDiagonalMatrix& RealSymmetricMatrix::Diagonalize (RealDiagonalMatrix& M, Rea
     M[i] = TmpMatrix.DiagonalElement(i);
   return M;
 }
+
+#ifdef __LAPACK__
+
+// Diagonalize a real symmetric matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
+  this->Householder(TmpMatrix, err);
+  TmpMatrix.Diagonalize(maxIter);
+  for (int i = 0; i < this->NbrRow; ++i)
+    M[i] = TmpMatrix.DiagonalElement(i);
+  return M;
+}
+
+// Diagonalize a real symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
+  this->Householder(TmpMatrix, err, Q);
+  TmpMatrix.Diagonalize(Q, maxIter);
+  for (int i = 0; i < this->NbrRow; ++i)
+    M[i] = TmpMatrix.DiagonalElement(i);
+  return M;
+}
+
+#endif
+
 
 // output file stream overload
 //

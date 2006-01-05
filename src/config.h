@@ -63,6 +63,16 @@
 #endif
 
 
+// LAPACK flag
+#ifdef HAVE_LAPACK
+#define __LAPACK__
+#endif
+
+// use LAPACK routines instead of DiagHam routines
+#ifdef HAVE_LAPACK_ONLY
+#define __LAPACKONLY__
+#endif
+
 // architecture dependant options
 //
 

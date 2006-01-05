@@ -25,14 +25,14 @@ dnl parse lapack option
 
 AC_ARG_ENABLE(lapack, [AC_HELP_STRING([--enable-lapack],[enable LAPACK support])], [HAVE_PKG_LAPACK=$enableval],[HAVE_PKG_LAPACK=no])
 
-AC_ARG_WITH(blas-libs,[AC_HELP_STRING([--with-blas-libs="LIBS"],[BLAS libraries @<:@"-llapack"@:>@])],
+AC_ARG_WITH(blas-libs,[AC_HELP_STRING([--with-blas-libs="LIBS"],[BLAS libraries @<:@"-lblas"@:>@])],
 [BLAS_LIBS=${withval}
 AC_MSG_CHECKING(user-defined BLAS libraries)
 AC_MSG_RESULT([${BLAS_LIBS}])
 ]
 )
 
-AC_ARG_WITH(lapack-libs,[AC_HELP_STRING([--with-lapack-libs="LIBS"],[LAPACK libraries @<:@"-llapack"@:>@])],
+AC_ARG_WITH(lapack-libs,[AC_HELP_STRING([--with-lapack-libs="LIBS"],[LAPACK libraries @<:@"-llapack -lgc2f"@:>@])],
 [LAPACK_LIBS=${withval}
 AC_MSG_CHECKING(user-defined Lapack libraries)
 AC_MSG_RESULT([${LAPACK_LIBS}])
@@ -62,9 +62,19 @@ AC_MSG_RESULT([${HAVE_PKG_LAPACK}])
  
 if test X${HAVE_PKG_LAPACK} = Xyes; then
   AC_DEFINE(HAVE_LAPACK,,[define if we are using LAPACK])
+dnl   AC_CHECK_LIB(blas, $sgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas"], AC_MSG_ERROR(blas lib not found))
+dnl   AC_CHECK_LIB(lapack, $cheev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgc2f"], AC_MSG_ERROR(lapack lib not found))
 fi
 
 AM_CONDITIONAL(BUILD_LAPACK, test X${HAVE_PKG_LAPACK} = Xyes)
+
+AC_ARG_ENABLE(lapack-only, [AC_HELP_STRING([--enable-lapack-only],[use LAPACK routines instead of DiagHam ones])], [USE_PKG_LAPACK_ONLY=$enableval],[USE_PKG_LAPACK_ONLY=no])
+AC_MSG_CHECKING(whether we are using only LAPACK routines)
+AC_MSG_RESULT([${USE_PKG_LAPACK_ONLY}])
+ 
+if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
+  AC_DEFINE(HAVE_LAPACK_ONLY,,[define if we are using LAPACK only])
+fi
 
 dnl parse mpi options
 

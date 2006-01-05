@@ -420,6 +420,27 @@ class RealSymmetricMatrix : public Matrix
   // return value = reference on real tridiagonal symmetric matrix
   RealDiagonalMatrix& Diagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err = 1e-7, int maxIter = 50);
 
+#ifdef __LAPACK__
+
+  // Diagonalize a real symmetric matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter);
+
+  // Diagonalize a real symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter);
+
+#endif
+
   // Output Stream overload
   //
   // Str = reference on output stream
