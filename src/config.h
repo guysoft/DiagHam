@@ -66,12 +66,18 @@
 // LAPACK flag
 #ifdef HAVE_LAPACK
 #define __LAPACK__
+#ifdef __STDC__
+#define FORTRAN_NAME(n_)	n_ ## _
+#else
+#define FORTRAN_NAME(n_)	n_/**/_
+#endif
 #endif
 
 // use LAPACK routines instead of DiagHam routines
 #ifdef HAVE_LAPACK_ONLY
 #define __LAPACKONLY__
 #endif
+
 
 // architecture dependant options
 //

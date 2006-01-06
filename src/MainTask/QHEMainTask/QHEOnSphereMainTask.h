@@ -95,6 +95,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   char* InitialVectorFileName;
   // allow to only run a given number of Lanczos iterations
   bool PartialLanczos;
+  // use LAPACK libraries instead of DiagHam libraries
+  bool LapackFlag;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;

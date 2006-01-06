@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP F77 FFLAGS ac_ct_F77 BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS BLAS_LIBS LAPACK_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -778,6 +778,14 @@ ac_env_CPP_set=${CPP+set}
 ac_env_CPP_value=$CPP
 ac_cv_env_CPP_set=${CPP+set}
 ac_cv_env_CPP_value=$CPP
+ac_env_F77_set=${F77+set}
+ac_env_F77_value=$F77
+ac_cv_env_F77_set=${F77+set}
+ac_cv_env_F77_value=$F77
+ac_env_FFLAGS_set=${FFLAGS+set}
+ac_env_FFLAGS_value=$FFLAGS
+ac_cv_env_FFLAGS_set=${FFLAGS+set}
+ac_cv_env_FFLAGS_value=$FFLAGS
 
 #
 # Report the --help message.
@@ -864,7 +872,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-blas-libs="LIBS" BLAS libraries ["-lblas"]
   --with-lapack-libs="LIBS"
-                          LAPACK libraries ["-llapack -lgc2f"]
+                          LAPACK libraries ["-llapack -lg2c"]
   --with-blas-libdir=DIR  BLAS library directory [BLASROOT/lib]
   --with-lapack-libdir=DIR
                           LAPACK library directory [LAPACKROOT/lib]
@@ -883,6 +891,8 @@ Some influential environment variables:
   CXX         C++ compiler command
   CXXFLAGS    C++ compiler flags
   CPP         C preprocessor
+  F77         Fortran 77 compiler command
+  FFLAGS      Fortran 77 compiler flags
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -4397,8 +4407,8 @@ fi;
 if test "${with_lapack_libs+set}" = set; then
   withval="$with_lapack_libs"
   LAPACK_LIBS=${withval}
-echo "$as_me:$LINENO: checking user-defined Lapack libraries" >&5
-echo $ECHO_N "checking user-defined Lapack libraries... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking user-defined LAPACK libraries" >&5
+echo $ECHO_N "checking user-defined LAPACK libraries... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: ${LAPACK_LIBS}" >&5
 echo "${ECHO_T}${LAPACK_LIBS}" >&6
 
@@ -4409,8 +4419,7 @@ fi;
 # Check whether --with-blas-libdir or --without-blas-libdir was given.
 if test "${with_blas_libdir+set}" = set; then
   withval="$with_blas_libdir"
-
-BLAS_LIBDIR=${withval}
+  BLAS_LIBDIR=${withval}
 echo "$as_me:$LINENO: checking user-defined BLAS library directory" >&5
 echo $ECHO_N "checking user-defined BLAS library directory... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: ${BLAS_LIBDIR}" >&5
@@ -4443,6 +4452,363 @@ if test X${HAVE_PKG_LAPACK} = Xyes; then
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LAPACK
 _ACEOF
+
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+  ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+if test -n "$ac_tool_prefix"; then
+  for ac_prog in g77 f77 xlf frt pgf77 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+  do
+    # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
+set dummy $ac_tool_prefix$ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_F77+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$F77"; then
+  ac_cv_prog_F77="$F77" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_F77="$ac_tool_prefix$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+F77=$ac_cv_prog_F77
+if test -n "$F77"; then
+  echo "$as_me:$LINENO: result: $F77" >&5
+echo "${ECHO_T}$F77" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+    test -n "$F77" && break
+  done
+fi
+if test -z "$F77"; then
+  ac_ct_F77=$F77
+  for ac_prog in g77 f77 xlf frt pgf77 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_F77+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_F77"; then
+  ac_cv_prog_ac_ct_F77="$ac_ct_F77" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_F77="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+ac_ct_F77=$ac_cv_prog_ac_ct_F77
+if test -n "$ac_ct_F77"; then
+  echo "$as_me:$LINENO: result: $ac_ct_F77" >&5
+echo "${ECHO_T}$ac_ct_F77" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$ac_ct_F77" && break
+done
+
+  F77=$ac_ct_F77
+fi
+
+
+# Provide some information about the compiler.
+echo "$as_me:4553:" \
+     "checking for Fortran 77 compiler version" >&5
+ac_compiler=`set X $ac_compile; echo $2`
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
+  (eval $ac_compiler --version </dev/null >&5) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -v </dev/null >&5\"") >&5
+  (eval $ac_compiler -v </dev/null >&5) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -V </dev/null >&5\"") >&5
+  (eval $ac_compiler -V </dev/null >&5) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }
+rm -f a.out
+
+# If we don't use `.F' as extension, the preprocessor is not run on the
+# input file.  (Note that this only needs to work for GNU compilers.)
+ac_save_ext=$ac_ext
+ac_ext=F
+echo "$as_me:$LINENO: checking whether we are using the GNU Fortran 77 compiler" >&5
+echo $ECHO_N "checking whether we are using the GNU Fortran 77 compiler... $ECHO_C" >&6
+if test "${ac_cv_f77_compiler_gnu+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+      program main
+#ifndef __GNUC__
+       choke me
+#endif
+
+      end
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_f77_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_compiler_gnu=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_compiler_gnu=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_cv_f77_compiler_gnu=$ac_compiler_gnu
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_f77_compiler_gnu" >&5
+echo "${ECHO_T}$ac_cv_f77_compiler_gnu" >&6
+ac_ext=$ac_save_ext
+ac_test_FFLAGS=${FFLAGS+set}
+ac_save_FFLAGS=$FFLAGS
+FFLAGS=
+echo "$as_me:$LINENO: checking whether $F77 accepts -g" >&5
+echo $ECHO_N "checking whether $F77 accepts -g... $ECHO_C" >&6
+if test "${ac_cv_prog_f77_g+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  FFLAGS=-g
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+
+      end
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_f77_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_prog_f77_g=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_prog_f77_g=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_prog_f77_g" >&5
+echo "${ECHO_T}$ac_cv_prog_f77_g" >&6
+if test "$ac_test_FFLAGS" = set; then
+  FFLAGS=$ac_save_FFLAGS
+elif test $ac_cv_prog_f77_g = yes; then
+  if test "x$ac_cv_f77_compiler_gnu" = xyes; then
+    FFLAGS="-g -O2"
+  else
+    FFLAGS="-g"
+  fi
+else
+  if test "x$ac_cv_f77_compiler_gnu" = xyes; then
+    FFLAGS="-O2"
+  else
+    FFLAGS=
+  fi
+fi
+
+G77=`test $ac_compiler_gnu = yes && echo yes`
+ac_ext=f
+ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
+ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_f77_compiler_gnu
+
+
+echo "$as_me:$LINENO: checking for dgemm in -lblas" >&5
+echo $ECHO_N "checking for dgemm in -lblas... $ECHO_C" >&6
+if test "${ac_cv_lib_blas_dgemm+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dgemm
+      end
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_f77_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_blas_dgemm=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_blas_dgemm=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_blas_dgemm" >&5
+echo "${ECHO_T}$ac_cv_lib_blas_dgemm" >&6
+if test $ac_cv_lib_blas_dgemm = yes; then
+  HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lg2c"
+else
+  { { echo "$as_me:$LINENO: error: BLAS lib not found" >&5
+echo "$as_me: error: BLAS lib not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+  echo "$as_me:$LINENO: checking for dsyev in -llapack" >&5
+echo $ECHO_N "checking for dsyev in -llapack... $ECHO_C" >&6
+if test "${ac_cv_lib_lapack_dsyev+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llapack "-lblas" $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+      program main
+      call dsyev
+      end
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_f77_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_lapack_dsyev=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_lapack_dsyev=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_dsyev" >&5
+echo "${ECHO_T}$ac_cv_lib_lapack_dsyev" >&6
+if test $ac_cv_lib_lapack_dsyev = yes; then
+  HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lg2c"
+else
+  { { echo "$as_me:$LINENO: error: LAPACK lib not found" >&5
+echo "$as_me: error: LAPACK lib not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
 
@@ -4695,6 +5061,8 @@ fi
 
 CXXFLAGS="-O2 -g -Wall "
 INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
+
+
 
 
 
@@ -5466,6 +5834,9 @@ s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
+s,@F77@,$F77,;t t
+s,@FFLAGS@,$FFLAGS,;t t
+s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@BUILD_LAPACK_TRUE@,$BUILD_LAPACK_TRUE,;t t
 s,@BUILD_LAPACK_FALSE@,$BUILD_LAPACK_FALSE,;t t
 s,@BUILD_MPI_TRUE@,$BUILD_MPI_TRUE,;t t
@@ -5474,6 +5845,8 @@ s,@MPI_CXX_EXISTS@,$MPI_CXX_EXISTS,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@MATH_LIBS@,$MATH_LIBS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
+s,@BLAS_LIBS@,$BLAS_LIBS,;t t
+s,@LAPACK_LIBS@,$LAPACK_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

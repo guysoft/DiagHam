@@ -428,7 +428,7 @@ class RealSymmetricMatrix : public Matrix
   // err = absolute error on matrix element
   // maxIter = maximum number of iteration to fund an eigenvalue
   // return value = reference on real tridiagonal symmetric matrix
-  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter);
+  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, double err = 1e-7, int maxIter = 50);
 
   // Diagonalize a real symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
   //
@@ -437,7 +437,7 @@ class RealSymmetricMatrix : public Matrix
   // err = absolute error on matrix element
   // maxIter = maximum number of iteration to fund an eigenvalue
   // return value = reference on real tridiagonal symmetric matrix
-  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter);
+  RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err = 1e-7, int maxIter = 50);
 
 #endif
 

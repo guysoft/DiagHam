@@ -37,6 +37,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("QHEBosonsTwoBodyGeneric" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -46,6 +47,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -80,6 +82,9 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)

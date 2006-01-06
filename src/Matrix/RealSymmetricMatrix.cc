@@ -45,7 +45,20 @@
 
 #ifdef HAVE_LAPACK
 
+// binding to the LAPACK dsyev function
+//
+extern "C" void FORTRAN_NAME(dsyev)(const char* jobz, const char* uplo, const int* dimension, const double* matrix, const int* leadingDimension,
+				    const double* eigenvalues, const double* workingArea, const int* workingAreaSize, const int* information);
+
+// binding to the LAPACK dsyevd function
+//
+extern "C" void FORTRAN_NAME(dsyevd)(const char* jobz, const char* uplo, const int* dimension, const double* matrix, const int* leadingDimension,
+                                     const double* eigenvalues, const double* workingArea, const int* workingAreaSize, 
+				     const int* integerWorkingArea, const int* integerWorkingAreaSize, const int* information);
+
 #endif
+
+
 
 using std::endl;
 
@@ -1766,11 +1779,37 @@ RealDiagonalMatrix& RealSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& 
 {
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
-  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
-  this->Householder(TmpMatrix, err);
-  TmpMatrix.Diagonalize(maxIter);
+  double* TmpMatrix = new double [this->NbrRow * this->NbrRow];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  double TmpWorkingArea;
+  char Jobz = 'N';
+  char UpperLower = 'L';
+  int TotalIndex = 0;
+  int Index2 = 0;
   for (int i = 0; i < this->NbrRow; ++i)
-    M[i] = TmpMatrix.DiagonalElement(i);
+    {
+      for (int j = 0; j < i; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[i];
+      ++TotalIndex;
+      for (int j = i + 1; j < this->NbrRow; ++j)
+	{
+	  TmpMatrix[TotalIndex] = this->OffDiagonalElements[Index2];
+	  ++TotalIndex;
+	  ++Index2;
+	}
+      Index2 += this->Increment;
+    }
+  FORTRAN_NAME(dsyev)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dsyev)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, WorkingArea, &WorkingAreaSize, &Information);  
+  delete[] WorkingArea;
+  delete[] TmpMatrix;
   return M;
 }
 
@@ -1786,11 +1825,50 @@ RealDiagonalMatrix& RealSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& 
 {
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
-  RealTriDiagonalSymmetricMatrix TmpMatrix(this->NbrRow);
-  this->Householder(TmpMatrix, err, Q);
-  TmpMatrix.Diagonalize(Q, maxIter);
+  double* TmpMatrix = new double [this->NbrRow * this->NbrRow];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  double TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz = 'V';
+  char UpperLower = 'L';
+  int TotalIndex = 0;
+  int Index2 = 0;
   for (int i = 0; i < this->NbrRow; ++i)
-    M[i] = TmpMatrix.DiagonalElement(i);
+    {
+      for (int j = 0; j < i; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[i];
+      ++TotalIndex;
+      for (int j = i + 1; j < this->NbrRow; ++j)
+	{
+	  TmpMatrix[TotalIndex] = this->OffDiagonalElements[Index2];
+	  ++TotalIndex;
+	  ++Index2;
+	}
+      Index2 += this->Increment;
+     }
+  FORTRAN_NAME(dsyevd)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &IntegerWorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  IntegerWorkingAreaSize = TmpIntegerWorkingArea;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+  FORTRAN_NAME(dsyevd)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &IntegerWorkingAreaSize, &Information);  
+  TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	Q(j, i) = TmpMatrix[TotalIndex];
+	++TotalIndex;
+      }
+  delete[] WorkingArea;
+  delete[] IntegerWorkingArea;
+  delete[] TmpMatrix;
+  return M;
   return M;
 }
 

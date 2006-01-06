@@ -32,17 +32,16 @@ AC_MSG_RESULT([${BLAS_LIBS}])
 ]
 )
 
-AC_ARG_WITH(lapack-libs,[AC_HELP_STRING([--with-lapack-libs="LIBS"],[LAPACK libraries @<:@"-llapack -lgc2f"@:>@])],
+AC_ARG_WITH(lapack-libs,[AC_HELP_STRING([--with-lapack-libs="LIBS"],[LAPACK libraries @<:@"-llapack -lg2c"@:>@])],
 [LAPACK_LIBS=${withval}
-AC_MSG_CHECKING(user-defined Lapack libraries)
+AC_MSG_CHECKING(user-defined LAPACK libraries)
 AC_MSG_RESULT([${LAPACK_LIBS}])
 ]
 )
 
 AC_ARG_WITH(blas-libdir,
 [AC_HELP_STRING([--with-blas-libdir=DIR],[BLAS library directory @<:@BLASROOT/lib@:>@])],
-[
-BLAS_LIBDIR=${withval}
+[BLAS_LIBDIR=${withval}
 AC_MSG_CHECKING(user-defined BLAS library directory)
 AC_MSG_RESULT([${BLAS_LIBDIR}])
 ]
@@ -62,6 +61,10 @@ AC_MSG_RESULT([${HAVE_PKG_LAPACK}])
  
 if test X${HAVE_PKG_LAPACK} = Xyes; then
   AC_DEFINE(HAVE_LAPACK,,[define if we are using LAPACK])
+  AC_LANG_PUSH(Fortran 77)
+  AC_CHECK_LIB(blas, dgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lg2c"],AC_MSG_ERROR(BLAS lib not found))
+  AC_CHECK_LIB(lapack, dsyev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lg2c"], AC_MSG_ERROR(LAPACK lib not found), "-lblas")
+  AC_LANG_POP(Fortran 77)
 dnl   AC_CHECK_LIB(blas, $sgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas"], AC_MSG_ERROR(blas lib not found))
 dnl   AC_CHECK_LIB(lapack, $cheev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgc2f"], AC_MSG_ERROR(lapack lib not found))
 fi
@@ -178,5 +181,7 @@ AC_SUBST(CXXFLAGS)
 AC_SUBST(INCLUDES)
 AC_SUBST(MATH_LIBS)
 AC_SUBST(THREAD_LIBS)
+AC_SUBST(BLAS_LIBS)
+AC_SUBST(LAPACK_LIBS)
 
 AC_OUTPUT(Makefile src/Makefile src/Programs/Makefile src/Programs/QHE/Makefile src/Programs/QHE/QHEOnSphere/Makefile src/Programs/QHE/QHEOnDisk/Makefile src/Programs/QuantumDot/Makefile src/Programs/Spin/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/Architecture/ArchitectureOperation/QHEArchitectureOperation/Makefile src/Architecture/ArchitectureOperation/SpinArchitectureOperation/Makefile src/FunctionBasis/Makefile src/FunctionBasis/QHEFunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/QuantumNumber/QHEQuantumNumber/Makefile src/QuantumNumber/SpinQuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/QHEHilbertSpace/Makefile src/HilbertSpace/SpinHilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/QuantumDotHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/QHEHamiltonian/Makefile src/Hamiltonian/QuantumDotHamiltonian/Makefile src/Hamiltonian/SpinHamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/Tools/QuantumDot/Makefile src/Tools/QuantumDot/Potential/Makefile src/Tools/QuantumDot/Spectra/Makefile src/MainTask/Makefile src/MainTask/QHEMainTask/Makefile src/Architecture/ClusterArchitecture/Makefile src/Tools/QuantumDot/Analysis/Makefile src/Tools/QHE/Makefile src/Tools/QHE/QHEWaveFunction/Makefile src/Tools/QHE/QHESpectrum/Makefile src/Operator/QHEOperator/Makefile src/Operator/SpinOperator/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile )
