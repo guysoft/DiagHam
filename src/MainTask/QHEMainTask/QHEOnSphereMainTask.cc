@@ -158,6 +158,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->LapackFlag = false;
     }
+  if ((*options)["limit-time"] != 0)
+    {
+      this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());
+    }
+  else
+    {
+      this->MaximumAllowedTime = 0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -340,14 +348,17 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       timeval TotalCurrentTime;
       double Dt;
       gettimeofday (&(TotalStartingTime), 0);
-      gettimeofday (&(TotalCurrentTime), 0);      
+      int StartTimeSecond = TotalStartingTime.tv_sec;
       if (ResumeFlag == false)
 	{
 	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
 	}
       RealTriDiagonalSymmetricMatrix TmpMatrix;
-      while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) ||
+      gettimeofday (&(TotalCurrentTime), 0); 
+      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
 						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
 							((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
@@ -359,9 +370,10 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	  PreviousLowest = Lowest; 
 	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " ";
+	  gettimeofday (&(TotalEndingTime), 0);
+	  CurrentTimeSecond = TotalEndingTime.tv_sec;
 	  if (this->ShowIterationTime == true)
 	    {
-	      gettimeofday (&(TotalEndingTime), 0);
 	      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
 		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
 	      cout << "(" << Dt << " s)";

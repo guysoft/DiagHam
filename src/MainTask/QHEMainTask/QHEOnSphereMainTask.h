@@ -77,6 +77,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   int NbrEigenvalue;
   // number of lanczos iteration (for the current run)
   int NbrIterLanczos;
+  // maximum time allowed for Lanczos iterations (in seconds)
+  int MaximumAllowedTime;
   // maximum number of Lanczos iteration
   int MaxNbrIterLanczos;
   // maximum number of vector in RAM during Lanczos iteration

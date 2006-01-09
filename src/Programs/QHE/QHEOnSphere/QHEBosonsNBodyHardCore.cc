@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("QHEBosonsNBodyHardCore" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
   (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
   (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
@@ -83,6 +85,9 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)

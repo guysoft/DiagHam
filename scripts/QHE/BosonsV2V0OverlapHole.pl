@@ -258,8 +258,33 @@ sub EvaluateOverlap()
 
     if ($OverlapOnlyFlag != 1)
       {
-	my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --nbr-lz ".($NbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat  --full-diag 3000 -S ".$DiagonalizationProgramOptions;
-	system($Command);
+	my $StartLz = 0;
+	if ($ParityValue == 1)
+	  {
+	    $StartLz++;
+	  }
+	my $ReducedNbrLz = $NbrLz;
+	while (($ReducedNbrLz >= 0) && (-e $DiagOutputFileName2."_".$StartLz.".".($MaxDegeneracy - 1).".vec"))
+	  {
+	    $StartLz += 2;
+	    $ReducedNbrLz--;
+	  }
+	if ($ReducedNbrLz >= 0)
+	  {
+	    if ($StartLz > 0)
+	      {
+		rename($DiagOutputFileName2.".dat", $DiagOutputFileName2.".dat.0")
+	      }
+	    my $Command = $PathToDiagonalizationProgram." -p ".$NbrBosons." -l ".$LzMax." --initial-lz ".$StartLz." --nbr-lz ".($ReducedNbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat  --full-diag 3000 -S ".$DiagonalizationProgramOptions;
+	    system($Command);
+	    if ($StartLz > 0)
+	      {
+		$Command = "cat ".$DiagOutputFileName2.".dat >> ".$DiagOutputFileName2.".dat.0";
+		`$Command`;
+		unlink ($DiagOutputFileName2.".dat");
+		rename($DiagOutputFileName2.".dat.0", $DiagOutputFileName2.".dat")
+	      }
+	  }
       }
 
     my $DiagOutputFileName2 = "bosons_".$DiagOutputFileName."_n_".$NbrBosons."_2s_".$LzMax."_lz";
