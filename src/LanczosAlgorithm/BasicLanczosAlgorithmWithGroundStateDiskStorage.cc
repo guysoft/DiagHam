@@ -3,14 +3,14 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2006 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                       class of basic Lanczos algorithm                     //
-//                  (without re-orthogonalization at each step)               //
-//                 and storing each iteration information on disk             //
+//               class of basic Lanczos algorithm with real vectors           //
+//            and ground state evaluation and disk storage capabilities       //
+//                      (without any re-orthogonalization)                    //
 //                                                                            //
-//                        last modification : 16/03/2003                      //
+//                        last modification : 10/01/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,42 +30,41 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "config.h"
-#include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
-#include "Vector/ComplexVector.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
+#include "Vector/RealVector.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
+#include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
-#include <string.h>
-#include <fstream>
+#include <math.h>
+#include <iostream>
 
 
-using std::ofstream;
-using std::ifstream;
-using std::ios;
 using std::cout;
 using std::endl;
+using std::ios;
 
 
 // default constructor
 //
 // architecture = architecture to use for matrix operations
-// directory  = directory where informations about Lanczos iterations have to be stored
-// nbrEigenvalue = number of wanted eigenvalues
+// nbrIter = maximum number of iterations when evaluating the ground state eigenvector (0 if all iterations needed for convergence have to be done)
 // maxIter = an approximation of maximal number of iteration
 
-BasicLanczosAlgorithmWithDiskStorage::BasicLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, 
-									   int maxIter) 
+BasicLanczosAlgorithmWithGroundStateDiskStorage::BasicLanczosAlgorithmWithGroundStateDiskStorage(AbstractArchitecture* architecture,
+												 int nbrIter, int maxIter) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
-  this->NbrEigenvalue = nbrEigenvalue;
   this->V1 = RealVector();
   this->V2 = RealVector();
   this->V3 = RealVector();
+  this->InitialState = RealVector();
+  this->GroundState = RealVector();
+  this->GroundStateFlag = false;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -76,67 +75,62 @@ BasicLanczosAlgorithmWithDiskStorage::BasicLanczosAlgorithmWithDiskStorage(Abstr
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
     }
+  this->NbrIterationsGroundState = nbrIter;
   this->Architecture = architecture;
   this->PreviousLastWantedEigenvalue = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
-  this->V1FileName = new char [8];
-  this->V2FileName = new char [8];
-  this->V3FileName = new char [8];
-  strcpy(this->V1FileName, "vector1");
-  strcpy(this->V2FileName, "vector2");
-  strcpy(this->V3FileName, "vector3");
-  this->LanczosFileName = new char [12];
-  strcpy(this->LanczosFileName, "lanczos.dat");
+  this->NbrEigenvalue = 1;
+  this->GroundStateEvaluationFlag = 0;
 }
 
 // copy constructor
 //
 // algorithm = algorithm from which new one will be created
 
-BasicLanczosAlgorithmWithDiskStorage::BasicLanczosAlgorithmWithDiskStorage(const BasicLanczosAlgorithmWithDiskStorage& algorithm) 
+BasicLanczosAlgorithmWithGroundStateDiskStorage::BasicLanczosAlgorithmWithGroundStateDiskStorage(const BasicLanczosAlgorithmWithGroundStateDiskStorage& algorithm) 
 {
   this->Index = algorithm.Index;
   this->Hamiltonian = algorithm.Hamiltonian;
   this->V1 = algorithm.V1;
   this->V2 = algorithm.V2;
+  this->V3 = algorithm.V3;
+  this->InitialState = algorithm.InitialState;
+  this->GroundState = algorithm.GroundState;
+  this->GroundStateFlag = algorithm.GroundStateFlag;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
   this->Architecture = algorithm.Architecture;
-  this->NbrEigenvalue = algorithm.NbrEigenvalue;
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
-  this->V1FileName = new char [8];
-  this->V2FileName = new char [8];
-  this->V3FileName = new char [8];
-  this->LanczosFileName = new char [12];
-  strcpy(this->V1FileName, algorithm.V1FileName);
-  strcpy(this->V2FileName, algorithm.V2FileName);
-  strcpy(this->V3FileName, algorithm.V3FileName);
-  strcpy(this->LanczosFileName, algorithm.LanczosFileName);
+  this->NbrEigenvalue = 1;
+  this->GroundStateEvaluationFlag = algorithm.GroundStateEvaluationFlag;
+  this->NbrIterationsGroundState = algorithm.NbrIterationsGroundState;
 }
 
 // destructor
 //
 
-BasicLanczosAlgorithmWithDiskStorage::~BasicLanczosAlgorithmWithDiskStorage() 
+BasicLanczosAlgorithmWithGroundStateDiskStorage::~BasicLanczosAlgorithmWithGroundStateDiskStorage() 
 {
-  delete[] this->V1FileName;
-  delete[] this->V2FileName;
-  delete[] this->V3FileName;
-  delete[] this->LanczosFileName;  
 }
 
 // initialize Lanczos algorithm with a random vector
 //
 
-void BasicLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgorithm() 
+void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->V1 = RealVector (Dimension);
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
+  int Shift = RAND_MAX / 2;
+  double Scale = 1.0 / ((double) Shift);
   for (int i = 0; i < Dimension; i++)
-    this->V1[i] = (rand() - 32767) * 0.5;
+    {
+      this->V1[i] = Scale * ((double) (rand() - Shift));
+    }
   this->V1 /= this->V1.Norm();
+  this->InitialState = RealVector (this->V1, true);
+  this->InitialState.WriteVector("vector.0");
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
@@ -145,43 +139,151 @@ void BasicLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgorithm()
 //
 // vector = reference to the vector used as first step vector
 
-void BasicLanczosAlgorithmWithDiskStorage::InitializeLanczosAlgorithm(const Vector& vector) 
+void BasicLanczosAlgorithmWithGroundStateDiskStorage::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->V1 = vector;
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
+  this->InitialState = RealVector (vector, true);
   this->Index = 0;
+  this->InitialState.WriteVector("vector.0");
+  this->GroundStateFlag = false;
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
 
 // resume Lanczos algorithm from disk datas in current directory
 //
 
-void BasicLanczosAlgorithmWithDiskStorage::ResumeLanczosAlgorithm()
-{
+void BasicLanczosAlgorithmWithGroundStateDiskStorage::ResumeLanczosAlgorithm()
+{ 
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  this->ReadState();
+  this->InitialState = RealVector (Dimension);
   this->V1 = RealVector (Dimension);
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
-  this->ReadState();
+  this->InitialState.ReadVector("vector.0");
+  this->V1.ReadVector("vector.1");
+  this->V2.ReadVector("vector.2");
+  this->V3.ReadVector("vector.3");
+  if (this->TestConvergence() == true)
+    {
+      this->GroundState.ReadVector("vector.4");
+    }
 }
   
+// get the n first eigenstates (limited to the ground state for this class, return NULL if nbrEigenstates > 1)
+//
+// nbrEigenstates = number of needed eigenstates
+// return value = array containing the eigenstates
+
+Vector* BasicLanczosAlgorithmWithGroundStateDiskStorage::GetEigenstates(int nbrEigenstates)
+{
+  if (nbrEigenstates != 1)
+    {
+      return 0;
+    }
+  else
+    {
+      this->GetGroundState();
+      RealVector* TmpVectors = new RealVector [1];
+      TmpVectors[0] = this->GroundState;
+      return TmpVectors;
+    }
+}
+
 // get last produced vector
 //
 // return value = reference on last produced vector
 
-Vector& BasicLanczosAlgorithmWithDiskStorage::GetGroundState()
+Vector& BasicLanczosAlgorithmWithGroundStateDiskStorage::GetGroundState()
 {
-  return this->V2;
+  if (this->GroundStateFlag == false)
+    {
+      RealMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
+      for (int i = 0; i < this->TridiagonalizedMatrix.GetNbrRow(); ++i)
+	TmpEigenvector(i, i) = 1.0;
+      
+      RealTriDiagonalSymmetricMatrix SortedDiagonalizedMatrix (this->TridiagonalizedMatrix.GetNbrRow());
+      SortedDiagonalizedMatrix.Copy(this->TridiagonalizedMatrix);
+      SortedDiagonalizedMatrix.Diagonalize(TmpEigenvector);
+      SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
+      double* TmpComponents = new double [this->TridiagonalizedMatrix.GetNbrRow()];
+      for (int j = 0; j < this->TridiagonalizedMatrix.GetNbrRow(); ++j)
+	{
+	  TmpComponents[j] = TmpEigenvector(j, 0);
+	}
+
+      if (this->GroundStateEvaluationFlag == 0)
+	{
+	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
+	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
+	  Operation1.ApplyOperation(this->Architecture);
+	  this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
+	  this->V3 /= this->V3.Norm();
+	  this->V2.Copy(this->InitialState);
+	  this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
+	  if (this->Index > 0)
+	    {
+	      this->NbrIterationsGroundState -= (this->Index % this->NbrIterationsGroundState);
+	      if (this->NbrIterationsGroundState <= 0)
+		{
+		  this->NbrIterationsGroundState = 1;
+		}
+	    }
+	  this->Index = 2;
+	  this->GroundStateEvaluationFlag = 1;
+	  this->WriteState();
+	}
+      int Lim = this->DiagonalizedMatrix.GetNbrRow();
+      if (this->NbrIterationsGroundState > 0)
+	{
+	  cout << this->NbrIterationsGroundState << " " << this->Index << " " << Lim << " " << this->DiagonalizedMatrix.GetNbrRow() << endl;
+	  Lim = this->Index + this->NbrIterationsGroundState;
+	  if (Lim > this->DiagonalizedMatrix.GetNbrRow())
+	    Lim = this->DiagonalizedMatrix.GetNbrRow();
+	}
+      for (int i = this->Index; i < Lim; ++i)
+	{
+	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
+	  Operation1.ApplyOperation(this->Architecture);
+	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i - 1), this->V3, 
+					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2), this->V2);
+	  this->V1 /= this->V1.Norm();
+	  this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
+	  RealVector TmpV (this->V2);
+	  this->V2 = this->V3;
+	  this->V3 = this->V1;
+	  this->V1 = TmpV;
+	  this->V1.WriteVector("vector.1");
+	  this->V2.WriteVector("vector.2");
+	  this->V3.WriteVector("vector.3");
+	  this->GroundState.WriteVector("vector.4");
+	  this->WriteState();
+	  cout << ".";
+	  cout.flush();
+	  ++this->Index;
+	}
+      cout << endl;
+      if (Lim != this->DiagonalizedMatrix.GetNbrRow())
+	{
+	  cout << "need " << (this->DiagonalizedMatrix.GetNbrRow() - Lim) << " more iterations to get the ground state" << endl;
+	}
+      this->GroundState /= this->GroundState.Norm();
+      this->GroundStateFlag = true;
+      delete[] TmpComponents;
+    }
+  return this->GroundState;
 }
 
 // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
 //
 // nbrIter = number of iteration to do 
 
-void BasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter) 
+void BasicLanczosAlgorithmWithGroundStateDiskStorage::RunLanczosAlgorithm (int nbrIter) 
 {
+  this->GroundStateFlag = false;
   int Dimension;
   if (this->Index == 0)
     {
@@ -199,10 +301,6 @@ void BasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter)
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
-      this->V1.WriteVector(this->V1FileName);
-      this->V2.WriteVector(this->V2FileName);
-      this->V3.WriteVector(this->V3FileName);
-      this->WriteState();
     }
   else
     {
@@ -211,7 +309,7 @@ void BasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter)
     }
   RealVector* TmpVector = new RealVector[2];
   double* TmpCoefficient = new double[2];
-  for (int i = this->Index + 2; i < Dimension; ++i)
+  for (int i = this->Index + 2; i < Dimension; i++)
     {
       TmpVector[0] = this->V1;
       TmpVector[1] = this->V2;
@@ -220,21 +318,18 @@ void BasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter)
       AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
       Operation4.ApplyOperation(this->Architecture);
       this->V3 /= this->V3.Norm();
-      this->V3.WriteVector(this->V3FileName);
       RealVector TmpV (this->V1);
       this->V1 = this->V2;
       this->V2 = this->V3;
       this->V3 = TmpV;
-      char* TmpName = this->V1FileName;
-      this->V1FileName = this->V2FileName;
-      this->V2FileName = this->V3FileName;
-      this->V3FileName = TmpName;
       this->Index++;
-      VectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &this->V2, &this->V3);
-      Operation3.ApplyOperation(this->Architecture);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
+      Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
-      this->V3.WriteVector(this->V3FileName);
+      this->V1.WriteVector("vector.1");
+      this->V2.WriteVector("vector.2");
+      this->V3.WriteVector("vector.3");
       this->WriteState();
     }
   delete[] TmpVector;
@@ -253,12 +348,12 @@ void BasicLanczosAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter)
     }
   this->WriteState();
 }
-
+  
 // test if convergence has been reached
 //
 // return value = true if convergence has been reached
 
-bool BasicLanczosAlgorithmWithDiskStorage::TestConvergence ()
+bool BasicLanczosAlgorithmWithGroundStateDiskStorage::TestConvergence ()
 {
   if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
        (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
@@ -271,27 +366,27 @@ bool BasicLanczosAlgorithmWithDiskStorage::TestConvergence ()
 //
 // return value = true if no error occurs
 
-bool BasicLanczosAlgorithmWithDiskStorage::WriteState()
+bool BasicLanczosAlgorithmWithGroundStateDiskStorage::WriteState()
 {
   ofstream File;
-  File.open(this->LanczosFileName, ios::binary | ios::out);
+  File.open("lanczos.dat", ios::binary | ios::out);
   WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->GroundStateEvaluationFlag);
   WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
   WriteLittleEndian(File, this->EigenvaluePrecision);
+  WriteLittleEndian(File, this->NbrEigenvalue);
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
   WriteLittleEndian(File, TmpDimension);
-  File.write(this->V1FileName, strlen(this->V1FileName) + 1);
-  File.write(this->V2FileName, strlen(this->V2FileName) + 1);
-  File.write(this->V3FileName, strlen(this->V3FileName) + 1);
-  for (int i = 0; i <= (this->Index + 1); ++i)    
+  for (int i = 0; i < TmpDimension; ++i)    
     {    
       WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
-  for (int i = 0; i <= this->Index; ++i)
+  --TmpDimension;
+  for (int i = 0; i < TmpDimension; ++i)
     {
       WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
-  File.close();  
+  File.close();
   return true;
 }
 
@@ -299,30 +394,24 @@ bool BasicLanczosAlgorithmWithDiskStorage::WriteState()
 //
 // return value = true if no error occurs
 
-bool BasicLanczosAlgorithmWithDiskStorage::ReadState()
+bool BasicLanczosAlgorithmWithGroundStateDiskStorage::ReadState()
 {
   ifstream File;
-  File.open(this->LanczosFileName, ios::binary | ios::in);
+  File.open("lanczos.dat", ios::binary | ios::in);
   ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->GroundStateEvaluationFlag);
   ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
   ReadLittleEndian(File, this->EigenvaluePrecision);
+  ReadLittleEndian(File, this->NbrEigenvalue);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
-  this->V1FileName = new char [8];
-  File.read(this->V1FileName, 8);
-  this->V2FileName = new char [8];
-  File.read(this->V2FileName, 8);
-  this->V3FileName = new char [8];
-  File.read(this->V3FileName, 8);
-  this->V1.ReadVector(this->V1FileName);
-  this->V2.ReadVector(this->V2FileName);
-  this->V3.ReadVector(this->V3FileName);
-  for (int i = 0; i <= (this->Index + 1); ++i)
+  for (int i = 0; i < TmpDimension; ++i)
     {
       ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
-  for (int i = 0; i <= this->Index; ++i)
+  --TmpDimension;
+  for (int i = 0; i < TmpDimension; ++i)
     {
       ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
@@ -331,5 +420,4 @@ bool BasicLanczosAlgorithmWithDiskStorage::ReadState()
   this->DiagonalizedMatrix.SortMatrixUpOrder();
   return true;
 }
-
 

@@ -64,7 +64,8 @@ am_libLanczosAlgorithm_a_OBJECTS = AbstractLanczosAlgorithm.$(OBJEXT) \
 	FullReorthogonalizedLanczosAlgorithmWithDiskStorage.$(OBJEXT) \
 	FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.$(OBJEXT) \
 	FullReorthogonalizedBlockLanczosAlgorithm.$(OBJEXT) \
-	ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.$(OBJEXT)
+	ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.$(OBJEXT) \
+	BasicLanczosAlgorithmWithGroundStateDiskStorage.$(OBJEXT)
 libLanczosAlgorithm_a_OBJECTS = $(am_libLanczosAlgorithm_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -74,6 +75,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/BasicLanczosAlgorithmWithDiskStorage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BasicLanczosAlgorithmWithEigenstates.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/BasicLanczosAlgorithmWithGroundState.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/BasicLanczosAlgorithmWithGroundStateDiskStorage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithm.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithDiskStorage.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithEigenstates.Po \
@@ -207,7 +209,8 @@ FullReorthogonalizedComplexLanczosAlgorithm.cc \
 FullReorthogonalizedLanczosAlgorithmWithDiskStorage.cc \
 FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage.cc \
 FullReorthogonalizedBlockLanczosAlgorithm.cc \
-ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc
+ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc \
+BasicLanczosAlgorithmWithGroundStateDiskStorage.cc
 
 all: all-recursive
 
@@ -261,6 +264,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BasicLanczosAlgorithmWithDiskStorage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BasicLanczosAlgorithmWithEigenstates.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BasicLanczosAlgorithmWithGroundState.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BasicLanczosAlgorithmWithGroundStateDiskStorage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithDiskStorage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ComplexBasicLanczosAlgorithmWithEigenstates.Po@am__quote@

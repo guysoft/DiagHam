@@ -36,6 +36,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
+#include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -275,21 +276,21 @@ bool ComplexBasicLanczosAlgorithmWithDiskStorage::WriteState()
 {
   ofstream File;
   File.open(this->LanczosFileName, ios::binary | ios::out);
-  File.write((char*) (&this->Index), sizeof(int));
-  File.write((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
-  File.write((char*) (&this->EigenvaluePrecision), sizeof(double));
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  WriteLittleEndian(File, this->EigenvaluePrecision);
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
-  File.write((char*) (&TmpDimension), sizeof(int));
+  WriteLittleEndian(File, TmpDimension);
   File.write(this->V1FileName, strlen(this->V1FileName) + 1);
   File.write(this->V2FileName, strlen(this->V2FileName) + 1);
   File.write(this->V3FileName, strlen(this->V3FileName) + 1);
   for (int i = 0; i <= (this->Index + 1); ++i)    
     {    
-      File.write((char*) (&this->TridiagonalizedMatrix.DiagonalElement(i)), sizeof(double));
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
   for (int i = 0; i <= this->Index; ++i)
     {
-      File.write((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
   File.close();  
   return true;
@@ -303,11 +304,11 @@ bool ComplexBasicLanczosAlgorithmWithDiskStorage::ReadState()
 {
   ifstream File;
   File.open(this->LanczosFileName, ios::binary | ios::in);
-  File.read((char*) (&this->Index), sizeof(int));
-  File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
-  File.read((char*) (&this->EigenvaluePrecision), sizeof(double));
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  ReadLittleEndian(File, this->EigenvaluePrecision);
   int TmpDimension;
-  File.read((char*) (&TmpDimension), sizeof(int));
+  ReadLittleEndian(File, TmpDimension);
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
   this->V1FileName = new char [8];
   File.read(this->V1FileName, 8);
@@ -320,11 +321,11 @@ bool ComplexBasicLanczosAlgorithmWithDiskStorage::ReadState()
   this->V3.ReadVector(this->V3FileName);
   for (int i = 0; i <= (this->Index + 1); ++i)
     {
-      File.read((char*) (&this->TridiagonalizedMatrix.DiagonalElement(i)), sizeof(double));
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
   for (int i = 0; i <= this->Index; ++i)
     {
-      File.read((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
   File.close();  
   this->Diagonalize();

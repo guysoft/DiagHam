@@ -37,6 +37,7 @@
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Matrix/RealMatrix.h"
+#include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -443,23 +444,23 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::WriteState()
 {
   ofstream File;
   File.open("lanczos.dat", ios::binary | ios::out);
-  File.write((char*) (&this->Index), sizeof(int));
-  File.write((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
-  File.write((char*) (&this->EigenvaluePrecision), sizeof(double));
-  File.write((char*) (&this->NbrEigenvalue), sizeof(int));
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  WriteLittleEndian(File, this->EigenvaluePrecision);
+  WriteLittleEndian(File, this->NbrEigenvalue);
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
-  File.write((char*) (&TmpDimension), sizeof(int));
+  WriteLittleEndian(File, TmpDimension);
   for (int i = 0; i <= (this->Index + 1); ++i)    
     {    
-      File.write((char*) (&this->TridiagonalizedMatrix.DiagonalElement(i)), sizeof(double));
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
   for (int i = 0; i <= this->Index; ++i)
     {
-      File.write((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
   for (int i = 0; i < this->NbrEigenvalue; ++i)
     {
-      File.write((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
+      WriteLittleEndian(File, this->PreviousWantedEigenvalues[i]);
     }
   File.close();
   return true;
@@ -473,27 +474,27 @@ bool FullReorthogonalizedLanczosAlgorithmWithDiskStorage::ReadState()
 {
   ifstream File;
   File.open("lanczos.dat", ios::binary | ios::in);
-  File.read((char*) (&this->Index), sizeof(int));
-  File.read((char*) (&this->PreviousLastWantedEigenvalue), sizeof(double));
-  File.read((char*) (&this->EigenvaluePrecision), sizeof(double));
-  File.read((char*) (&this->NbrEigenvalue), sizeof(int));
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  ReadLittleEndian(File, this->EigenvaluePrecision);
+  ReadLittleEndian(File, this->NbrEigenvalue);
   int TmpDimension;
-  File.read((char*) (&TmpDimension), sizeof(int));
+  ReadLittleEndian(File, TmpDimension);
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
   for (int i = 0; i <= (this->Index + 1); ++i)
     {
-      File.read((char*) (&this->TridiagonalizedMatrix.DiagonalElement(i)), sizeof(double));
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
     }
   for (int i = 0; i <= this->Index; ++i)
     {
-      File.read((char*) (&this->TridiagonalizedMatrix.UpperDiagonalElement(i)), sizeof(double));
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
     }
   if (this->PreviousWantedEigenvalues != 0)
     delete[] this->PreviousWantedEigenvalues;
   this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
     {
-      File.read((char*) (&this->PreviousWantedEigenvalues[i]), sizeof(double));
+      ReadLittleEndian(File, this->PreviousWantedEigenvalues[i]);
       this->PreviousWantedEigenvalues[i] *= 2.0;
     }
   File.close();  
