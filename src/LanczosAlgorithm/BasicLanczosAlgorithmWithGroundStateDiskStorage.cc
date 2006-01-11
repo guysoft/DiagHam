@@ -260,10 +260,10 @@ Vector& BasicLanczosAlgorithmWithGroundStateDiskStorage::GetGroundState()
 	  this->V2.WriteVector("vector.2");
 	  this->V3.WriteVector("vector.3");
 	  this->GroundState.WriteVector("vector.4");
-	  this->WriteState();
 	  cout << ".";
 	  cout.flush();
 	  ++this->Index;
+	  this->WriteState();
 	}
       cout << endl;
       if (Lim != this->DiagonalizedMatrix.GetNbrRow())
