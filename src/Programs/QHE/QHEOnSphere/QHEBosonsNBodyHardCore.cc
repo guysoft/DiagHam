@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("QHEBosonsNBodyHardCore" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
-  OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 

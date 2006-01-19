@@ -9,6 +9,9 @@
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
+
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 
@@ -16,6 +19,8 @@
 
 #include "GeneralTools/ListIterator.h"
 
+#include "Options/OptionManager.h"
+#include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
@@ -38,37 +43,56 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  BooleanOption HelpOption ('h', "help", "display this help");
-  BooleanOption SMPOption ('S', "SMP", "enable SMP mode");
-  SingleIntegerOption SMPNbrProcessorOption ('\n', "processors", "number of processors to use in SMP mode", 2);
-  SingleIntegerOption IterationOption ('i', "iter-max", "maximum number of lanczos iteration", 3000);
-  SingleIntegerOption NbrEigenvaluesOption ('n', "nbr-eigen", "number of eigenvalues", 40);
-  BooleanOption GroundOption ('g', "ground", "restrict to the largest subspace");
-  SingleIntegerOption NbrBosonOption ('p', "nbr-particles", "number of particles", 5);
-  SingleIntegerOption MaxMomentumOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
-  SingleIntegerOption MomentumOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
-  SingleDoubleOption RatioOption ('r', "ratio", "ratio between the two torus lengths", 0.57735026919);
+  OptionManager Manager ("QHEBosonsTorus" , "0.01");
+  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* MiscGroup = new OptionGroup ("misc options");
+  OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
-  List<AbstractOption*> OptionList;
-  OptionList += &HelpOption;
-  OptionList += &SMPOption;
-  OptionList += &GroundOption;
-  OptionList += &SMPNbrProcessorOption;
-  OptionList += &IterationOption;
-  OptionList += &NbrEigenvaluesOption;
-  OptionList += &NbrBosonOption;
-  OptionList += &MaxMomentumOption;
-  OptionList += &MomentumOption;
-  OptionList += &RatioOption;
+  ArchitectureManager Architecture;
 
-  if (ProceedOptions(argv, argc, OptionList) == false)
+  Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
+  Manager += LanczosGroup;
+  Manager += PrecalculationGroup;
+  Manager += MiscGroup;
+
+  (*SystemGroup) += new SingleIntegerOption ('p', "nbr-particles", "number of particles", 5);
+  (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 15);
+  (*SystemGroup) += new SingleIntegerOption ('m', "momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
+  (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 0.57735026919);
+  (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+
+  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
+  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
+						"maximum Hilbert space dimension for which full diagonalization is applied", 
+						500, true, 100);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
+  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);  
+  (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
+  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
+  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
+  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
+  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
+					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
+  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
+  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
+
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+  if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsTorus -h" << endl;
+      cout << "see man page for option syntax or type QHEBosonsNBodyHardCore -h" << endl;
       return -1;
     }
-  if (HelpOption.GetBoolean() == true)
+  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
     {
-      DisplayHelp (OptionList, cout);
+      Manager.DisplayHelp (cout);
       return 0;
     }
 
