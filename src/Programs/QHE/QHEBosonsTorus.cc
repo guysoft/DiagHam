@@ -25,6 +25,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
+#include "Options/SingleStringOption.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -80,8 +81,8 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
-  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
+  (*LanczosGroup) += new SingleStringOption ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
+  (*LanczosGroup) += new BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -97,15 +98,15 @@ int main(int argc, char** argv)
     }
 
 
-  bool GroundFlag = GroundOption.GetBoolean();
-  bool SMPFlag = SMPOption.GetBoolean();
-  int NbrProcessor = SMPNbrProcessorOption.GetInteger();
-  int MaxNbrIterLanczos = IterationOption.GetInteger();
-  int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
-  int NbrBosons = NbrBosonOption.GetInteger();
-  int MaxMomentum = MaxMomentumOption.GetInteger();
-  int Momentum = MomentumOption.GetInteger();
-  double XRatio = RatioOption.GetDouble();
+  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
+  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
+  int Momentum = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
+  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+
+  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
+  int FullDiagonalizationLimit = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
 
   int L = 0;
   double GroundStateEnergy = 0.0;
@@ -126,43 +127,17 @@ int main(int argc, char** argv)
     {     
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-//      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum);//, Momentum);
-      BosonOnTorus TotalSpace (NbrBosons, MaxMomentum, Momentum);
-      cout << " Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " = ";
-	  TotalSpace.PrintState(cout, i) << endl;
-	}*/
-/*	List<AbstractQuantumNumber*> QuantumNumbers ( TotalSpace.GetQuantumNumbers());
-      ListIterator<AbstractQuantumNumber*> QuantumNumberIter (QuantumNumbers);
-      AbstractQuantumNumber** TmpQuantumNumber;
-      while ((TmpQuantumNumber = QuantumNumberIter()))
-	{
-	  cout << "momentum = " << (**TmpQuantumNumber) << endl;
-	  SubspaceSpaceConverter Converter;
-	  BosonOnTorus* Space = (BosonOnTorus*) TotalSpace.ExtractSubspace (**TmpQuantumNumber, Converter);
-	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	    {
-	      cout << i << " = ";
-	      Space->PrintState(cout, i) << endl;
-	    }
-	  cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
-	}*/
+      BosonOnTorus Space (NbrBosons, MaxMomentum, Momentum);
+      cout << " Hilbert space dimension = " << Space.GetHilbertSpaceDimension() << endl;
 
-      AbstractArchitecture* Architecture = 0;
-      if (SMPFlag == false)
-	Architecture = new MonoProcessorArchitecture;
-      else
-	Architecture = new SMPArchitecture(NbrProcessor);
-//      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio);
-      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusDeltaHamiltonian (&TotalSpace, NbrBosons, MaxMomentum, XRatio, Architecture);
+      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+      AbstractHamiltonian* Hamiltonian = new ParticleOnTorusDeltaHamiltonian (&Space, NbrBosons, MaxMomentum, XRatio, Architecture.GetArchitecture());
 
-      if (Hamiltonian->GetHilbertSpaceDimension() < 300)
+      if (Hamiltonian->GetHilbertSpaceDimension() < FullDiagonalizationLimit)
 	{
 	  RealSymmetricMatrix HRep (Hamiltonian->GetHilbertSpaceDimension());
 	  Hamiltonian->GetHamiltonian(HRep);
-//	  cout << HRep << endl;
+	  cout << HRep << endl;
 	  if (Hamiltonian->GetHilbertSpaceDimension() > 1)
 	    {
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension());
@@ -186,9 +161,9 @@ int main(int argc, char** argv)
 	{
 	  AbstractLanczosAlgorithm* Lanczos = 0;
 	  if (NbrEigenvalue > 1)
-	    Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	    Lanczos = new FullReorthogonalizedLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	  else
-	    Lanczos = new BasicLanczosAlgorithm (Architecture, NbrEigenvalue, MaxNbrIterLanczos);
+	    Lanczos = new BasicLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
 	    
 	  double Precision = 1.0;
 	  double PreviousLowest = 1e50;
