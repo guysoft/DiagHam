@@ -75,7 +75,7 @@ ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
-  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
+  double WignerEnergy = 0.0;//his->EvaluateWignerCrystalEnergy() / 2.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;
   this->EvaluateInteractionFactors();

@@ -147,7 +147,18 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  // apply a^+_m1_d a^+_m2_u a_n1_d a_n2_u operator to a given state (with m1+m2=n1+n2, one spin up an one spin own)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin up)
+  // n1 = first index for annihilation operator (spin down)
+  // n2 = second index for annihilation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+ // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator

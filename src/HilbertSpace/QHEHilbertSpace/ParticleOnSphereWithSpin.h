@@ -82,7 +82,7 @@ class ParticleOnSphereWithSpin :  public AbstractQHEParticle
   // n2 = second index for annihilation operator (spin up)
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
 
   // apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
   //

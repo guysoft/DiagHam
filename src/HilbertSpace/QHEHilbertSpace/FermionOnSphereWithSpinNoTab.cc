@@ -325,6 +325,21 @@ int FermionOnSphereWithSpinNoTab::AddAddAdAd (int index, int m1, int m2, int n1,
 
 }
 
+// apply a^+_m1_d a^+_m2_u a_n1_d a_n2_u operator to a given state (with m1+m2=n1+n2, one spin up an one spin own)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin up)
+// n1 = first index for annihilation operator (spin down)
+// n2 = second index for annihilation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinNoTab::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m_u a_m_u operator to a given state  (only spin up)
 //
 // index = index of the state on which the operator has to be applied
