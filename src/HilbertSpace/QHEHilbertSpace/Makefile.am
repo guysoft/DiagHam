@@ -25,4 +25,5 @@ FermionOnSphereUnlimited.cc \
 BosonOnSphereState.cc \
 AbstractQHEParticle.cc \
 ParticleOnSphereWithSpin.cc \
-FermionOnSphereWithSpinNoTab.cc
+FermionOnSphereWithSpin.cc \
+UnsignedIntegerTools.cc

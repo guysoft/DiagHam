@@ -38,8 +38,7 @@
 
 #include <iostream>
 
-
-class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
+class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 {
 
   // number of fermions
@@ -58,7 +57,7 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // array describing each state
   unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLzMax;
+  int* StateLargestBit;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -79,22 +78,22 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSpin = twce the total spin value
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinNoTab (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
+  FermionOnSphereWithSpin (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereWithSpinNoTab(const FermionOnSphereWithSpinNoTab& fermions);
+  FermionOnSphereWithSpin(const FermionOnSphereWithSpin& fermions);
 
   // destructor
   //
-  ~FermionOnSphereWithSpinNoTab ();
+  ~FermionOnSphereWithSpin ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereWithSpinNoTab& operator = (const FermionOnSphereWithSpinNoTab& fermions);
+  FermionOnSphereWithSpin& operator = (const FermionOnSphereWithSpin& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -147,18 +146,19 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m1_d a^+_m2_u a_n1_d a_n2_u operator to a given state (with m1+m2=n1+n2, one spin up an one spin own)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin up)
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin up)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+// apply a^+_d_m1 a^+_u_m2 a_d_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
 
- // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
@@ -204,6 +204,7 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // return value = corresponding index
   int FindStateIndex(unsigned long stateDescription, int lzmax);
 
+
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions
@@ -235,7 +236,7 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
   // totalSz = spin total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int totalSz, int pos);
+  int GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz);
 
   // compute sign
   //
@@ -249,7 +250,7 @@ class FermionOnSphereWithSpinNoTab :  public ParticleOnSphereWithSpin
 //
 // return value = particle statistic
 
-inline int FermionOnSphereWithSpinNoTab::GetParticleStatistic()
+inline int FermionOnSphereWithSpin::GetParticleStatistic()
 {
   return ParticleOnSphereWithSpin::FermionicStatistic;
 }

@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//          Copyright (C) 2001-2005 Gunnar Moller and Nicolas Regnault        //
 //                                                                            //
 //                                                                            //
-//                          class of fermions on sphere                       //
+//                   class of fermions on sphere with spin without            //
+//                            sign precalculation table                       //
 //                                                                            //
-//                        last modification : 24/06/2002                      //
+//                        last modification : 12/12/2005                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -36,16 +37,15 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
-
+#include "UnsignedIntegerTools.h"
 #include <math.h>
-
+#include <bitset>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
-
-
+using std::bitset;
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -65,16 +65,17 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
-  this->MaximumSignLookUp = 16;
+  this->StateLargestBit = new int [this->HilbertSpaceDimension];
+  if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin) != this->HilbertSpaceDimension)
+    {
+      cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSpin!" << endl;
+      exit(1);
+    }
   this->GenerateLookUpTable(memory);
+  
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-  UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
@@ -83,6 +84,17 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
       cout << (UsedMemory >> 10) << "ko" <<  endl;
   else
     cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+
 #endif
 }
 
@@ -92,22 +104,21 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
 
 FermionOnSphereWithSpin::FermionOnSphereWithSpin(const FermionOnSphereWithSpin& fermions)
 {
+  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->Flag = fermions.Flag;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
-  this->Flag = fermions.Flag;
+  this->TotalSpin = fermions.TotalSpin;
+  this->StateDescription = fermions.StateDescription;
+  this->StateLargestBit = fermions.StateLargestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LookUpTable = fermions.LookUpTable;  
+
 }
 
 // destructor
@@ -118,13 +129,7 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateLzMax;
-      delete[] this->SignLookUpTable;
-      delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+      delete[] this->StateLargestBit;
     }
 }
 
@@ -138,30 +143,22 @@ FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSph
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateLzMax;
-      delete[] this->SignLookUpTable;
-      delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+      delete[] this->StateLargestBit;
     }
+  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->Flag = fermions.Flag;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
-  this->Flag = fermions.Flag;
+  this->TotalSpin = fermions.TotalSpin;
+  this->StateDescription = fermions.StateDescription;
+  this->StateLargestBit = fermions.StateLargestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->LookUpTable = fermions.LookUpTable;  
   return *this;
 }
 
@@ -217,82 +214,84 @@ AbstractHilbertSpace* FermionOnSphereWithSpin::ExtractSubspace (AbstractQuantumN
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
+//#include <bitset>
 int FermionOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int StateLzMax = this->StateLzMax[index];
+  int StateLargestBit = this->StateLargestBit[index];
   unsigned long State = this->StateDescription[index];
-  n1 <<= 1;
-  n2 <<= 1;  
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (0x1l << n1)) == 0) 
-      || ((State & (0x1l << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  unsigned long signs = 0x0l;
+  //bitset<32> tmpB = State;
+  n1 = (n1<<1) + 1;
+  n2 = (n2<<1) + 1;  
+  //cout << "Examining uuuu: " << tmpB << " LzMax: " << StateLargestBit <<" for n's = (" << n1 << ", "<< n2 << ") coeff: " << coefficient << endl;
+  if ((n1 > StateLargestBit) || (n2 > StateLargestBit) || ((State & (0x1l << n1)) == 0) 
+      || ((State & (0x1l << n2)) == 0) || (n1 == n2) || (m1 == m2)) 
     {
+      coefficient = 0.0;
+      //cout << "First exit" << endl;
+      return this->HilbertSpaceDimension;
+    }
+  // evaluate bit positions corresponding to (m1,up), (m2,up)
+  m1 = (m1<<1) + 1;
+  m2 = (m2<<1) + 1;
+  int NewLargestBit = StateLargestBit;
+  //cout << " m's: (" << m1 << ", " << m2 << ")" << endl;
+  signs = State & ((0x1l<<n2) -1); // & mask with all bits set at positions right of n2
+  State &= ~(0x1l << n2);
+  
+  /*tmpB = State;
+  cout << "Unset n2:  " << tmpB << endl;
+  tmpB = signs;
+  cout << "signs:     " << tmpB << endl;*/
+  signs ^= State & ((0x1l<<n1) -1);
+  State &= ~(0x1l << n1);
+  /*tmpB = State;
+  cout << "Unset n1:  " << tmpB  << endl;
+  tmpB = signs;
+  cout << "signs:     " << tmpB << endl;*/
+  
+  // test if possible to create particles at m1, m2:
+  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
+    {
+      //cout << "Third exit" << endl;
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  m1 <<= 1;
-  m2 <<= 1;
+  // recalculate NewLargestBit taking into account the above operations:
+  
+  if ((NewLargestBit == n2)|| (NewLargestBit == n1))
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
 
-  int NewLzMax = StateLzMax;
-  unsigned long TmpState = State;
-  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
-#endif
-  TmpState &= ~(0x1l << n2);
-  if (NewLzMax == n2)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  TmpState &= ~(0x1l << n1);
-  if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0)
-      NewLzMax -= 2;
-  if ((TmpState & (0x1l << m2))!= 0)
+  signs ^= State & ((0x1l<<m2)-1);
+  State |= (0x1l << m2);
+  /*tmpB = State;
+  cout << "Set m2:    " << tmpB << endl;
+  tmpB = signs;
+  cout << "signs:     " << tmpB << endl;*/
+
+  if (m1 > NewLargestBit)
     {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      NewLargestBit = m1;
     }
-  if (m2 > NewLzMax)
-    {
-      NewLzMax = m2;
-    }
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
-#endif
-    }
-  TmpState |= (0x1l << m2);
-  if ((TmpState & (0x1l << m1)) != 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m1 > NewLzMax)
-    {
-      NewLzMax = m1;
-    }
-  else
-    {      
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-    }
-  TmpState |= (0x1l << m1);
-  return this->FindStateIndex(TmpState, NewLzMax);
+
+  // in ParticleOnSphereWithSpin Hamiltonian, always m2>m1! -> we can leave these lines out!
+  if (m2 > NewLargestBit) 
+    { 
+      NewLargestBit = m2; 
+    } 
+  
+  
+  signs ^= State & ((0x1l<<m1)-1);
+  State |= (0x1l << m1);
+  /*tmpB = State;
+  cout << "Set m1:    " << tmpB << endl;
+  tmpB = signs;
+  cout << "signs:     " << tmpB << endl;*/
+  
+  coefficient = ComputeSign (signs);
+  //  cout << "Non-zero result found: "  << coefficient << " New Largest Bit: " << NewLargestBit <<endl;
+  return this->FindStateIndex(State, NewLargestBit);
 }
 
 // apply a^+_d_m1 a^+_d_m2 a_d_n1 a_d_n2 operator to a given state (with m1+m2=n1+n2)
@@ -307,253 +306,143 @@ int FermionOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int 
 
 int FermionOnSphereWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int StateLzMax = this->StateLzMax[index];
+  int StateLargestBit = this->StateLargestBit[index];
   unsigned long State = this->StateDescription[index];
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
+  unsigned long signs = 0x0l;
+  n1 <<= 1;
+  n2 <<= 1;  
+  if ((n1 > StateLargestBit) || (n2 > StateLargestBit) || ((State & (0x1l << n1)) == 0) 
+      || ((State & (0x1l << n2)) == 0) || (n1 == n2) || (m1 == m2)) // the last two are superflous, though adding some security
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int NewLzMax = StateLzMax;
-  unsigned long TmpState = State;
-  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
-#endif
-  TmpState &= ~(((unsigned long) (0x1)) << n2);
-  if (NewLzMax == n2)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  TmpState &= ~(((unsigned long) (0x1)) << n1);
-  if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
+  // evaluate bit positions corresponding to (m1,down), (m2,down)
+  m1 <<= 1;
+  m2 <<= 1;
+  int NewLargestBit = StateLargestBit;
+  
+  signs = State & ((0x1l<<n2) -1); // & mask with all bits set at positions right of n2
+  State &= ~(0x1l << n2);
+  
+  signs ^= State & ((0x1l<<n1) -1);
+  State &= ~(0x1l << n1);
+
+  // test if possible to create particles at m1, m2:
+  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  if (m2 > NewLzMax)
+  // recalculate NewLargestBit taking into account the above operations:
+  
+  if ((NewLargestBit == n2)|| (NewLargestBit == n1))
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  signs ^= State & ((0x1l<<m2)-1);
+  State |= (0x1l << m2);
+  
+  if (m1 > NewLargestBit)
     {
-      NewLzMax = m2;
+      NewLargestBit = m1;
     }
-  else
+
+  // if called from ParticleOnSphereWithSpin... Hamiltonian, always m1>m2!
+   if (m2 > NewLargestBit)
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
-#endif
+      NewLargestBit = m2;
     }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m1 > NewLzMax)
-    {
-      NewLzMax = m1;
-    }
-  else
-    {      
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m1);
-  return this->FindStateIndex(TmpState, NewLzMax);
+
+
+  signs ^= State & ((0x1l<<m1)-1);
+  State |= (0x1l << m1);
+
+  coefficient = ComputeSign (signs);
+  
+  return this->FindStateIndex(State, NewLargestBit);
+
 }
 
-// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+// apply a^+_d_m1 a^+_u_m2 a_d_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
-// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
-// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
-// nbrIndices = number of creation (or annihilation) operators
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int StateLzMax = this->StateLzMax[index];
+  int StateLargestBit = this->StateLargestBit[index];
   unsigned long State = this->StateDescription[index];
-  --nbrIndices;
-  for (int i = 0; i < nbrIndices; ++i)
-    {
-      if ((n[i] > StateLzMax) || ((State & (((unsigned long) (0x1)) << n[i])) == 0))
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      for (int j = i + 1; j <= nbrIndices; ++j)
-	if ((n[i] == n[j]) || (m[i] == m[j]))
-	  {
-	    coefficient = 0.0;
-	    return this->HilbertSpaceDimension; 	    
-	  }
-    }
-  if (n[nbrIndices] > StateLzMax)
+  unsigned long signs = 0x0l;
+  n1 <<= 1;
+  n2 = (n2<<1) + 1;  
+  if ((n1 > StateLargestBit) || (n2 > StateLargestBit) || ((State & (0x1l << n1)) == 0) 
+      || ((State & (0x1l << n2)) == 0))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
+  // evaluate bit positions corresponding to (m1,up), (m2,up)
+  m1 <<= 1;
+  m2 = (m2<<1) + 1;
+  int NewLargestBit = StateLargestBit;
+  
+  signs = State & ((0x1l<<n2) -1); // & mask with all bits set at positions right of n2
+  State &= ~(0x1l << n2);
+  
+  signs ^= State & ((0x1l<<n1) -1);
+  State &= ~(0x1l << n1);
 
-  int NewLzMax = StateLzMax;
-  unsigned long TmpState = State;
+  // test if possible to create particles at m1, m2:
+  if (((State & (0x1l << m2))!= 0)|| ((State & (0x1l << m1)) != 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  
+  // recalculate NewLargestBit taking into account the above operations:
+  
+  if ((NewLargestBit == n2)|| (NewLargestBit == n1))
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
 
-  int Index;
-  coefficient = 1.0;
-  for (int i = nbrIndices; i >= 0; --i)
+  if (m2 > NewLargestBit)
     {
-      Index = n[i];
-      coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-      TmpState &= ~(((unsigned long) (0x1)) << Index);
-      if (NewLzMax == Index)
-	while ((TmpState >> NewLzMax) == 0)
-	  --NewLzMax;
+      NewLargestBit = m2;
     }
-  for (int i = nbrIndices; i >= 0; --i)
+
+  signs ^= State & ((0x1l<<m2)-1);
+  State |= (0x1l << m2);
+  
+  if (m1 > NewLargestBit)
     {
-      Index = m[i];
-      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      if (Index > NewLzMax)
-	{
-	  NewLzMax = Index;
-	}
-      else
-	{
-	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
-#ifdef  __64_BITS__
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << Index);
+      NewLargestBit = m1;
     }
-  return this->FindStateIndex(TmpState, NewLzMax);
+
+  signs ^= State & ((0x1l<<m1)-1);
+  State |= (0x1l << m1);
+
+  coefficient = ComputeSign (signs);
+  
+  return this->FindStateIndex(State, NewLargestBit);
+
 }
 
-// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
-//
-// index = index of the state on which the operator has to be applied
-// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
-// nbrIndices = number of creation (or annihilation) operators
-// return value =  multiplicative factor 
 
-double FermionOnSphereWithSpin::ProdA (int index, int* n, int nbrIndices)
-{
-  this->ProdALzMax = this->StateLzMax[index];
-  unsigned long State = this->StateDescription[index];
-  --nbrIndices;
-  for (int i = 0; i < nbrIndices; ++i)
-    {
-      if ((State & (((unsigned long) (0x1)) << n[i])) == 0)
-	{
-	  return 0.0;
-
-	}
-      for (int j = i + 1; j <= nbrIndices; ++j)
-	if (n[i] == n[j])
-	  {
-	    return 0.0;
-	  }
-    }
-  if (n[nbrIndices] > this->ProdALzMax)
-    {
-      return 0.0;
-    }
-
-  this->ProdATemporaryState = State;
-  int Index;
-  double Coefficient = 1.0;
-  for (int i = nbrIndices; i >= 0; --i)
-    {
-      Index = n[i];
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
-#ifdef  __64_BITS__
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-      this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << Index);
-    }
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
-
-  return Coefficient;
-}
-
-// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
-//
-// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
-// nbrIndices = number of creation (or annihilation) operators
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int FermionOnSphereWithSpin::ProdAd (int* m, int nbrIndices, double& coefficient)
-{
-  coefficient = 1.0;
-  unsigned long TmpState = this->ProdATemporaryState;
-  int Index;
-  for (int i = nbrIndices - 1; i >= 0; --i)
-    {
-      Index = m[i];
-      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      if (Index > this->ProdALzMax)
-	{
-	  this->ProdALzMax = Index;
-	}
-      else
-	{
-	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
-#ifdef  __64_BITS__
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << Index);
-    }
-  return this->FindStateIndex(TmpState, this->ProdALzMax);
-}
-
-// apply a^+_u_m a_u_m operator to a given state 
+// apply a^+_m_u a_m_u operator to a given state  (only spin up)
 //
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_u_m a_u_m
+// return value = coefficient obtained when applying a^+_m a_m
 
 double FermionOnSphereWithSpin::AduAu (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
+  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
     return 1.0;
   else
     return 0.0;
@@ -567,7 +456,7 @@ double FermionOnSphereWithSpin::AduAu (int index, int m)
 
 double FermionOnSphereWithSpin::AddAd (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
+  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
     return 1.0;
   else
     return 0.0;
@@ -605,6 +494,8 @@ int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int 
     return PosMin;
 }
 
+
+
 // print a given State
 //
 // Str = reference on current output stream 
@@ -615,20 +506,20 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  for (int i = this->NbrLzValue-1; i >=0 ; --i)
     {
       Tmp = ((TmpState >> (i << 1)) & ((unsigned long) 0x3));
-      if (Tmp = 0x1l)
+      if (Tmp == 0x1l)
+	Str << "d ";
+      else if (Tmp == 0x2l)
 	Str << "u ";
-      else
-	if (Tmp = 0x2l)
-	  Str << "d ";
-	else
-	  Str << "0 ";
+      else if (Tmp == 0x3l)
+	Str << "X ";
+      else Str << "0 ";
     }
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
-  if (state !=  this->FindStateIndex(TmpState, this->StateLzMax[state]))
-    Str << " error! ";
+  Str << " position = " << this->FindStateIndex(TmpState, this->StateLargestBit[state]);
+  if (state !=  this->FindStateIndex(TmpState, this->StateLargestBit[state]))
+        Str << " error! ";
   return Str;
 }
 
@@ -642,38 +533,85 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int totalSz, int pos)
+int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz)
 {
-  if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
-    return pos;
-  int LzTotalMax = ((2 * currentLzMax - nbrFermions + 1) * nbrFermions) >> 1;
-  if (totalLz > LzTotalMax)
-    return pos;
-  if ((nbrFermions == 1) && (currentLzMax >= totalLz))
-    {
-      this->StateDescription[pos] = ((unsigned long) 0x1) << totalLz;
-      this->StateLzMax[pos] = lzMax;
-      return pos + 1;
-    }
-  if (LzTotalMax == totalLz)
-    {
-      unsigned long Mask = 0;
-      for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
-	Mask |= (((unsigned long) 1) << i);
-      this->StateDescription[pos] = Mask;
-      this->StateLzMax[pos] = lzMax;
-      return pos + 1;
-    }
+  //  codage des etats sur deux bits, -lzMax up down on the lsb's
+  
+  /*----------------DECLARES---------------*/
+  int Is_Lz, Is_Spin;
+  unsigned long i, coeff, testLzMax;
+  int k, position; 
+  int CheckLz;
+  int counter;
+  int DimOrbit = lzMax+1;
+  int currentLargestBit=2*lzMax+1;
+  /*-------------INITS---------------------*/
+  
+  CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
 
-  int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = this->GenerateStates(nbrFermions - 1, lzMax, ReducedCurrentLzMax, totalLz - currentLzMax, pos);
-  unsigned long Mask = ((unsigned long) 1) << currentLzMax;
-  for (int i = pos; i < TmpPos; i++)
-    this->StateDescription[i] |= Mask;
-  if (lzMax == currentLzMax)
-    return this->GenerateStates(nbrFermions, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, TmpPos);
-  else
-    return this->GenerateStates(nbrFermions, lzMax, ReducedCurrentLzMax, totalLz, TmpPos);
+  i = biggestOne(nbrFermions,2*DimOrbit);
+  testLzMax=1u << currentLargestBit;
+  
+  counter = 0;        // on exit: dim of subspace
+  
+  while (i)
+    {
+      Is_Lz=0;
+      Is_Spin=0;
+      
+      for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
+	{  
+          position = 2*k;                         // meaning 2*k
+          coeff = ((i&(3u<<position))>>position);
+          
+          switch(coeff)
+	    {
+            case 3:
+	      {      // neutral to spin!
+		Is_Lz += position;
+	      }
+	      break;
+	      
+            case 2:
+	      { Is_Spin +=1;
+	         Is_Lz +=k;}
+	      break;
+	      
+            case 1:
+	      { Is_Spin -=1;
+	         Is_Lz +=k;}
+	      break;
+	      
+            case 0:
+	      // neutral to Spin and Lz
+	      break;
+	      
+            default:
+	      printf("severe error in fermion states");
+	      break;
+	      
+	    }
+          
+          
+	}
+      
+      
+      if((Is_Lz == CheckLz) && (Is_Spin == totalSz) ) // project onto fixed spin and Lz
+	{
+	  this->StateDescription[counter]=i;
+	  this->StateLargestBit[counter]=currentLargestBit;
+	  counter++;
+	}	
+      
+      i=lastone(i);
+      // test if lzMax lowered in next word:
+      if (!(i&testLzMax)) 
+	{
+	  --currentLargestBit;
+	  testLzMax=1u << currentLargestBit;
+	}
+    }
+  return counter;
 }
 
 // generate look-up table associated to current Hilbert space
@@ -683,29 +621,29 @@ int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int curr
 void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
-  memory /= (sizeof(int*) * this->NbrLzValue);
+  memory /= (sizeof(int*) * 2*this->NbrLzValue);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > this->NbrLzValue)
-    this->MaximumLookUpShift = this->NbrLzValue;
+  if (this->MaximumLookUpShift > 2*this->NbrLzValue)
+    this->MaximumLookUpShift = 2*this->NbrLzValue;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [this->NbrLzValue];
-  this->LookUpTableShift = new int [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  this->LookUpTable = new int* [2*this->NbrLzValue];
+  this->LookUpTableShift = new int [2*this->NbrLzValue];
+  for (int i = 0; i < 2*this->NbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentLzMax = this->StateLzMax[0];
-  int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-  if (CurrentLzMax < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentLzMax] = 0;
+  int CurrentLargestBit = this->StateLargestBit[0];
+  int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
+  if (CurrentLargestBit < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentLargestBit] = 0;
   else
-    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentLzMax];
+    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentLargestBit];
   unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
   unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
   while (CurrentLookUpTableValue > TmpLookUpTableValue)
@@ -716,7 +654,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      if (CurrentLzMax != this->StateLzMax[i])
+      if (CurrentLargestBit != this->StateLargestBit[i])
 	{
 	  while (CurrentLookUpTableValue > 0)
 	    {
@@ -727,13 +665,13 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 	  /*	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
 	    cout << TmpLookUpTable[j] << " ";
 	    cout << endl << "-------------------------------------------" << endl;*/
- 	  CurrentLzMax = this->StateLzMax[i];
-	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-	  if (CurrentLzMax < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentLzMax] = 0;
+ 	  CurrentLargestBit = this->StateLargestBit[i];
+	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
+	  if (CurrentLargestBit < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentLargestBit] = 0;
 	  else
-	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
+	    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentLargestBit];
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
 	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
@@ -767,44 +705,22 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   /*  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
     cout << TmpLookUpTable[j] << " ";
     cout << endl << "-------------------------------------------" << endl;*/
-  
-  // look-up tables for evaluating sign when applying creation/annihilation operators
-  int Size = 1 << this->MaximumSignLookUp;
-  this->SignLookUpTable = new double [Size];
-  int Count;
-  int TmpNbr;
-  for (int j = 0; j < Size; ++j)
-    {
-      Count = 0;
-      TmpNbr = j;
-      while (TmpNbr != 0)
-	{
-	  if (TmpNbr & 0x1)
-	    ++Count;
-	  TmpNbr >>= 1;
-	}
-      if (Count & 1)
-	this->SignLookUpTable[j] = -1.0;
-      else
-	this->SignLookUpTable[j] = 1.0;
-    }
-#ifdef __64_BITS__
-  this->SignLookUpTableMask = new unsigned long [128];
-  for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = 0xffffl;
-  for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = 0xffffl >> (i - 48);
-  for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = 0x0l;
-#else
-  this->SignLookUpTableMask = new unsigned long [64];
-  for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = 0xffffl;
-  for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = 0xffffl >> (i - 16);
-  for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = 0l;
-#endif
+}
+
+// compute sign
+//
+// signs = 
+// return value = sign value (+1.0 or -1.0)
+
+double FermionOnSphereWithSpin::ComputeSign(unsigned long signs)
+{
+  unsigned result=0;
+  while(signs) {
+    result++;
+    signs &= signs-1;
+  }
+  if (result & 1u) return -1.0;
+  else return 1.0;
 }
 
 // evaluate Hilbert space dimension
@@ -817,32 +733,75 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 
 int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
 {
- BinomialCoefficients Coef (nbrFermions);
- long Tmp = Coef(nbrFermions, ((nbrFermions + totalSpin) >> 1));
- return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1) * ((int) Tmp);
+  //  codage des etats sur deux bits, -lzMax up down on the lsb's
+  
+  /*----------------DECLARES---------------*/
+  
+  int Is_Lz, Is_Spin;
+  unsigned long i, coeff;
+  int k, position; 
+  int CheckLz;
+  int counter;
+  int DimOrbit = lzMax+1;
+  /*-------------INITS---------------------*/
+  
+  CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
+
+  i = biggestOne(nbrFermions,2*DimOrbit);
+  
+  counter = 0;        // on exit: dim of subspace
+  
+  while (i)
+    {
+      Is_Lz=0;
+      Is_Spin=0;
+      
+      for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
+	{  
+          position = 2*k;                         // meaning 2*k
+          coeff = ((i&(3u<<position))>>position);
+          
+          switch(coeff)
+	    {
+            case 3:
+	      {      // neutral to spin!
+		Is_Lz += position;
+	      }
+	      break;
+	      
+            case 2:
+	      { Is_Spin +=1;
+	         Is_Lz +=k;}
+	      break;
+	      
+            case 1:
+	      { Is_Spin -=1;
+	         Is_Lz +=k;}
+	      break;
+	      
+            case 0:
+	      // neutral to Spin and Lz
+	      break;
+	      
+            default:
+	      printf("severe error in fermion states");
+	      break;
+	      
+	    }
+          
+          
+	}
+      
+      
+      if((Is_Lz == CheckLz) && (Is_Spin == totalSpin) ) // project onto fixed spin and Lz
+	counter++;
+	
+      
+      i=lastone(i);
+    }
+  return counter;
 }
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-//
-// nbrFermions = number of fermions
-// lzMax = two times momentum maximum value for a fermion plus one 
-// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-// return value = Hilbert space dimension
-
-int FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
-{
-  if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return 0;
-  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
-  if (LzTotalMax < totalLz)
-    return 0;
-  if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1;
-  if (LzTotalMax == totalLz)
-    return 1;
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
-}
 
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
@@ -854,7 +813,7 @@ int FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermion
 // return value = wave function evaluated at the given location
 
 Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-						       int firstComponent, int nbrComponent)
+							    int firstComponent, int nbrComponent)
 {
   Complex Value;
   Complex Tmp;
