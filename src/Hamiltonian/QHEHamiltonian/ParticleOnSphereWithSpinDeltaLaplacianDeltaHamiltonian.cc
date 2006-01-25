@@ -3,11 +3,11 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//          Copyright (C) 2001-2006 Gunnar Moller and Nicolas Regnault        //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a sphere with spin       //
-//       and interacting with a delta interaction in the s and p-wave channels   //
+//     class of hamiltonian associated to particles on a sphere with spin     //
+//     and interacting with a delta interaction in the s and p-wave channels  //
 //                                                                            //
 //                        last modification : 13/01/2006                      //
 //                                                                            //
@@ -311,7 +311,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
 		if (((J0 >> 1) & 1) == Sign)
 		  TmpCoefficient[Pos] += V0 * TmpV * Clebsch.GetCoefficient(m1, m2, J0) * Clebsch.GetCoefficient(m3, m4, J0);
 		//Clebsch.InitializeCoefficientIterator(m1, m2);
-		if (((J1 >> 1) & 1) == Sign)
+		if ((((J1 >> 1) & 1) == Sign) && (m1 != m2) && (m3 != m4))
 		  TmpCoefficient[Pos] += V1 * TmpV * Clebsch.GetCoefficient(m1, m2, J1) * Clebsch.GetCoefficient(m3, m4, J1);
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);

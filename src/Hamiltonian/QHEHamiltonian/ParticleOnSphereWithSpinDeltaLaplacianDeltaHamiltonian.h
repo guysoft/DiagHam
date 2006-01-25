@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//          Copyright (C) 2001-2006 Gunnar Moller and Nicolas Regnault        //
 //                                                                            //
 //                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //

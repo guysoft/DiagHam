@@ -120,8 +120,8 @@ ClebschGordanCoefficients& ClebschGordanCoefficients::operator = (const ClebschG
 
 double ClebschGordanCoefficients::GetCoefficient (int m1, int m2, int j)
 {
-  int TmpPos1 = (this-> J1 + m1) >> 1;
-  int TmpPos2 = (this-> J2 + m2) >> 1;
+  int TmpPos1 = (this->J1 + m1) >> 1;
+  int TmpPos2 = (this->J2 + m2) >> 1;
   return this->Coefficients[TmpPos1][TmpPos2][(j - this->JMin[TmpPos1][TmpPos2]) >> 1];
 }
 

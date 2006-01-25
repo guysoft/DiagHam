@@ -41,9 +41,9 @@
 
 unsigned long nextone (unsigned long i)
 {
-  unsigned long bit=1;
+  unsigned long bit=1ul;
   int count=-1;
-  if (i==0u) return 0u;
+  if (i==0ul) return 0ul;
   /* find first one bit */
   while (!(bit&i)) bit<<=1;
   /* find next zero bit */
@@ -52,7 +52,7 @@ unsigned long nextone (unsigned long i)
       count++;
       bit<<=1;
     }
-  if (!bit) {printf("overflow in nextone");return (~0u);}
+  if (!bit) {printf("overflow in nextone");return (~0ul);}
   
   i &= (~(bit-1));           /* clear lower bits */
   
@@ -75,9 +75,9 @@ unsigned long lastone (unsigned long i)
   int exitOn=32;
 #endif
 
-  unsigned long  bit = 0x1l;
+  unsigned long  bit = 0x1ul;
   int count=0, spacing=-1;
-  if (i==0x0l) return 0u;
+  if (i==0x0ul) return 0ul;
   
   /* count set bits on the left */
   while (bit&i) { ++count; bit<<=1;}
@@ -85,7 +85,7 @@ unsigned long lastone (unsigned long i)
 
 
   /* find next non-zero bit */
-  if (!(i&(~(bit-1)))) return 0x0l; // if non existant, exit
+  if (!(i&(~(bit-1)))) return 0x0ul; // if non existant, exit
   while (!(bit&i))
     {
       bit<<=1;
@@ -94,7 +94,7 @@ unsigned long lastone (unsigned long i)
   
   i &= ~((bit<<1)-1);           /* clear lower bits */
 
-  i |= (bit>>1) | ( ( (0x1l<<(count+spacing))-1) ^ ( (0x1l<<(spacing))-1) ); /* put them in new places */
+  i |= (bit>>1) | ( ( (0x1l<<(count+spacing))-1) ^ ( (0x1ul<<(spacing))-1) ); /* put them in new places */
   
   return i;
 }
@@ -119,14 +119,14 @@ int bitcount (unsigned long i)
 
 int leftmostBit(unsigned long i)
 {
-  if (i==0x0l) return 0;
+  if (i==0x0ul) return 0;
   else {
 #ifdef  __64_BITS__
     int maxBit=64;
 #else
     int maxBit=32;
 #endif
-    unsigned long bit=0x1l << (maxBit-1);
+    unsigned long bit=0x1ul << (maxBit-1);
     while (!(i&bit))
       {
 	bit >>= 1;

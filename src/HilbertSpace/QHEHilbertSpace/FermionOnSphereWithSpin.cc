@@ -46,6 +46,8 @@ using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -550,8 +552,9 @@ int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int tota
   CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
 
   i = biggestOne(nbrFermions,2*DimOrbit);
-  testLzMax=1u << currentLargestBit;
-  
+
+
+  testLzMax=0x1ul << currentLargestBit;
   counter = 0;        // on exit: dim of subspace
   
   while (i)
@@ -562,7 +565,7 @@ int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int tota
       for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
 	{  
           position = 2*k;                         // meaning 2*k
-          coeff = ((i&(3u<<position))>>position);
+          coeff = ((i&(3ul<<position))>>position);
           
           switch(coeff)
 	    {
@@ -608,7 +611,7 @@ int FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int tota
       if (!(i&testLzMax)) 
 	{
 	  --currentLargestBit;
-	  testLzMax=1u << currentLargestBit;
+	  testLzMax=1ul << currentLargestBit;
 	}
     }
   return counter;
@@ -638,6 +641,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   for (int i = 0; i < 2*this->NbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
   int CurrentLargestBit = this->StateLargestBit[0];
+  cout << this->NbrLzValue << " " << CurrentLargestBit << endl;
   int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
   if (CurrentLargestBit < this->MaximumLookUpShift)
     this->LookUpTableShift[CurrentLargestBit] = 0;
@@ -662,9 +666,6 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
-	  /*	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
-	    cout << TmpLookUpTable[j] << " ";
-	    cout << endl << "-------------------------------------------" << endl;*/
  	  CurrentLargestBit = this->StateLargestBit[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
 	  if (CurrentLargestBit < this->MaximumLookUpShift)
@@ -691,7 +692,6 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 		  TmpLookUpTable[CurrentLookUpTableValue] = i;
 		  --CurrentLookUpTableValue;
 		}
-//	      CurrentLookUpTableValue = TmpLookUpTableValue;
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
 	    }
 	}
@@ -759,7 +759,7 @@ int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int 
       for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
 	{  
           position = 2*k;                         // meaning 2*k
-          coeff = ((i&(3u<<position))>>position);
+          coeff = ((i&(3ul<<position))>>position);
           
           switch(coeff)
 	    {

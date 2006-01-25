@@ -72,7 +72,7 @@ int bitcount (unsigned long i);
 
 inline unsigned long smallestOne (int numBits)
 {
-  return ( (0x1l << numBits) - 1); 
+  return ( (0x1ul << numBits) - 1); 
 }
 
 // generate a word with a given number of bits right of highest Bit,
@@ -85,8 +85,8 @@ inline unsigned long smallestOne (int numBits)
 
 inline unsigned long biggestOne (int numBits, int highestBit)
 {
-  if (numBits>highestBit) return 0;
-  return ( ( ( (0x1l << (highestBit-1)) - 1) | (0x1l << (highestBit-1)) ) ^ ((0x1l << (highestBit-numBits)) -1));
+  if (numBits>highestBit) return 0ul;
+  return ( ( ( (0x1ul << (highestBit-1)) - 1) | (0x1ul << (highestBit-1)) ) ^ ((0x1ul << (highestBit-numBits)) -1));
 }
 
 #endif

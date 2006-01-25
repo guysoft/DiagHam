@@ -37,8 +37,9 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("QHEFermionsLaplacianDelta" , "0.01");
+  OptionManager Manager ("QHEFermionsSphereWithSpin" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -48,6 +49,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -78,11 +80,14 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
+      cout << "see man page for option syntax or type QHEFermionsSphereWithSpin -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -142,7 +147,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      double Shift = 0.0;
+      double Shift = -10.0;
       ParticleOnSphereWithSpin* Space;
 #ifdef __64_BITS__
       if (LzMax <= 31)
