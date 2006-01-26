@@ -338,7 +338,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
 	      Min = 0;
 	    for (int m3 = Min; m3 <= Lim; ++m3)
 	      {
-		if ( fabs(TmpCoefficient[Pos]) > MaxCoefficient)//non-negligleable matrix element
+		if (( fabs(TmpCoefficient[Pos]) > MaxCoefficient))//non-negligleable matrix element
 		  {
 		    this->UDInteractionFactors[this->UDNbrInteractionFactors] = Factor * TmpCoefficient[Pos];
 		    this->UDM1Value[this->UDNbrInteractionFactors] = m1;
@@ -477,7 +477,7 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddM
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
 RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				int firstComponent, int nbrComponent)
+											int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
@@ -715,8 +715,8 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddM
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddMultiplyPartialFastMultiply
-  (RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddMultiplyPartialFastMultiply 
+(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
@@ -769,7 +769,7 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddM
 	    m3 = this->UUM3Value[j];
 	    TmpInteraction = this->UUInteractionFactors[j];
 	    m4 = m1 + m2 - m3;
-	    for (int i = firstComponent; i < LastComponent; ++i)
+	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
 		// Interactions of Fermions with Spin up:
 		Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
@@ -787,7 +787,7 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddM
 	m3 = this->UUM3Value[ReducedNbrInteractionFactors];
 	TmpInteraction = this->UUInteractionFactors[ReducedNbrInteractionFactors];
 	m4 = m1 + m2 - m3;
-	for (int i = firstComponent; i < LastComponent; ++i)
+	for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	  {
 	    // Interactions of Fermions with Spin up:
 	    Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
@@ -809,7 +809,7 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelAddM
 	    m3 = this->UDM3Value[j];
 	    TmpInteraction = this->UDInteractionFactors[j];
 	    m4 = m1 + m2 - m3;
-	    for (int i = firstComponent; i < LastComponent; ++i)
+	    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 	      {
 		// Interactions of Fermions Interactions mixing both spin species:
 		Index = this->Particles->AddAduAdAu(i, m1, m2, m3, m4, Coefficient);
@@ -988,7 +988,6 @@ long ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::FastMultiplicationM
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
-      this->FastMultiplicationSubStep = 0;
       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
       while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
 	{
@@ -1001,66 +1000,18 @@ long ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::FastMultiplicationM
 	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-           long Memory2 = Memory;
       Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
-      long ResidualMemory = allowedMemory - Memory;
-      if (ResidualMemory > 0)
-	{
-/*	  this->FastMultiplicationSubStep = this->FastMultiplicationStep;
-	  int ReducedSpaceDimension2  = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-	  TmpMemory = ResidualMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2;
-	  while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory2))
-	    {
-	      this->FastMultiplicationSubStep += this->FastMultiplicationStep;
-	      ReducedSpaceDimension2 = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-	      if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension2 * this->FastMultiplicationSubStep))
-		++ReducedSpaceDimension2;
-	      TmpMemory = ResidualMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2;
-	      Memory2 = 0;
-	      for (int i = 1; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationSubStep)
-		Memory2 += this->NbrInteractionPerComponent[i];
-	    }
-	  Memory += ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2) + (Memory2 * (sizeof (int) + sizeof(double)));*/
-
-	  if (this->DiskStorageFlag == false)
-	    {
-//	      int TotalReducedSpaceDimension = ReducedSpaceDimension + ReducedSpaceDimension2;
-	      int TotalReducedSpaceDimension = ReducedSpaceDimension;
-	      int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
-	      int i = 0;
-	      int Pos = 0;
-	      for (; i < ReducedSpaceDimension; ++i)
-		{
-		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
-		  Pos += this->FastMultiplicationStep;
-		}
-	      Pos = 1;
-	      for (; i < TotalReducedSpaceDimension; ++i)
-		{
-		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
-		  Pos += this->FastMultiplicationSubStep;
-		}
-	      delete[] this->NbrInteractionPerComponent;
-	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-	    }
-	}
-      else
-	if (this->DiskStorageFlag == false)
-	  {
-	    int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
-	    for (int i = 0; i < ReducedSpaceDimension; ++i)
-	      TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
-	    delete[] this->NbrInteractionPerComponent;
-	    this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-	  }
-    }
+      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+      for (int i = 0; i < ReducedSpaceDimension; ++i)
+	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
+      delete[] this->NbrInteractionPerComponent;
+      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
+   }
   else
     {
       Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
       this->FastMultiplicationStep = 1;
-      this->FastMultiplicationSubStep = 0;
     }
-  this->FastMultiplicationSubStep = 0;
   
   cout << "reduction factor=" << this->FastMultiplicationStep << endl;
   gettimeofday (&(TotalEndingTime2), 0);
@@ -1099,15 +1050,8 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EnableFastMultiplic
   int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
     ++ReducedSpaceDimension;
-  int ReducedSpaceDimension2  = 0;
-  if (this->FastMultiplicationSubStep > 0)
-    {
-      ReducedSpaceDimension2  = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-      if ((ReducedSpaceDimension2 * this->FastMultiplicationSubStep) != EffectiveHilbertSpaceDimension)
-	++ReducedSpaceDimension2;
-    }
-  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension + ReducedSpaceDimension2];
-  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension + ReducedSpaceDimension2];
+  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
 
   int TotalPos = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
@@ -1155,58 +1099,6 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EnableFastMultiplic
 	}
       ++TotalPos;
     }
-  if (this->FastMultiplicationSubStep > 0)
-    {
-      this->FastMultiplicationSubStepPosition = TotalPos;
-      for (int i = 1; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationSubStep)
-	{	
-	  this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-	  this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-	  TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-	  TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-	  Pos = 0;
-	  for (int j = 0; j < this->UUNbrInteractionFactors; ++j) 
-	    {
-	      m1 = this->UUM1Value[j];
-	      m2 = this->UUM2Value[j];
-	      m3 = this->UUM3Value[j];
-	      m4 = m1 + m2 - m3;
-	      Index = this->Particles->AddAddAdAd(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->UUInteractionFactors[j];
-		  ++Pos;
-		}
-	      Index = this->Particles->AduAduAuAu(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->UUInteractionFactors[j];
-		  ++Pos;
-		}
-	    }
-	  for (int j = 0; j < this->UDNbrInteractionFactors; ++j) 
-	    {
-	      m1 = this->UDM1Value[j];
-	      m2 = this->UDM2Value[j];
-	      m3 = this->UDM3Value[j];
-	      m4 = m1 + m2 - m3;
-	      Index = this->Particles->AddAduAdAu(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
-		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->UDInteractionFactors[j];
-		  ++Pos;
-		}
-	    }
-	  ++TotalPos;
-	}
-    }
-  else
-    {
-      this->FastMultiplicationSubStepPosition = -1;
-    }  
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
