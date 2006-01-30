@@ -9,7 +9,7 @@
 //     class of hamiltonian associated to particles on a sphere with spin     //
 //     and interacting with a delta interaction in the s and p-wave channels  //
 //                                                                            //
-//                        last modification : 13/01/2006                      //
+//                        last modification : 27/01/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -308,10 +308,8 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
 		m4 = m1 + m2 - m3;
 		TmpCoefficient[Pos] = 0.0;
 		Clebsch.InitializeCoefficientIterator(m1, m2);
-		if (((J0 >> 1) & 1) == Sign)
-		  TmpCoefficient[Pos] += V0 * TmpV * Clebsch.GetCoefficient(m1, m2, J0) * Clebsch.GetCoefficient(m3, m4, J0);
-		//Clebsch.InitializeCoefficientIterator(m1, m2);
-		if ((((J1 >> 1) & 1) == Sign) && (m1 != m2) && (m3 != m4))
+		TmpCoefficient[Pos] += V0 * TmpV * Clebsch.GetCoefficient(m1, m2, J0) * Clebsch.GetCoefficient(m3, m4, J0);
+		if ( (m1 != m2) && ( m3 != m4) )  // && (abs(m1 + m2) <= J1) && (abs(m3 + m4) <= J1))
 		  TmpCoefficient[Pos] += V1 * TmpV * Clebsch.GetCoefficient(m1, m2, J1) * Clebsch.GetCoefficient(m3, m4, J1);
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
@@ -323,7 +321,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
       this->UDM2Value = new int [Pos];
       this->UDM3Value = new int [Pos];
       this->UDInteractionFactors = new double [Pos];
-      cout << "nbr interaction = " << Pos << endl;
+      //      cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
       double Factor = - 1.0; // (0.5 * ((double) this->LzMax));  // A revoir! xxx
@@ -374,8 +372,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
 		if ( m4 < m3 )
 		  {
 		    TmpCoefficient[Pos] = 0.0;
-		    if (((J1 >> 1) & 1) == Sign)
-		      TmpCoefficient[Pos] += TmpV * Clebsch.GetCoefficient(m1, m2, J1) * Clebsch.GetCoefficient(m3, m4, J1);
+		    TmpCoefficient[Pos] += TmpV * Clebsch.GetCoefficient(m1, m2, J1) * Clebsch.GetCoefficient(m3, m4, J1);
 		    if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -1146,7 +1143,6 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EnableFastMultiplic
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
-  int Dim=this->Particles->GetHilbertSpaceDimension();
   gettimeofday (&(TotalStartingTime2), 0);
   cout << "start" << endl;
   this->InteractionPerComponentIndex = 0;
@@ -1184,26 +1180,22 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EnableFastMultiplic
 	      m2 = this->UUM2Value[j];
 	      m3 = this->UUM3Value[j];
 	      m4 = m1 + m2 - m3;
-	      
 	      // Interactions of Fermions with Spin up:
 	      Index = this->Particles->AduAduAuAu(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < Dim)
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  TmpIndexArray[Pos] = Index;
 		  TmpCoefficientArray[Pos] = Coefficient * this->UUInteractionFactors[j];
 		  ++Pos;
 		}
-
-      
 	      // Interactions of Fermions with Spin down:
 	      Index = this->Particles->AddAddAdAd(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < Dim)
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  TmpIndexArray[Pos] = Index;
 		  TmpCoefficientArray[Pos] = Coefficient * this->UUInteractionFactors[j];
 		  ++Pos;
 		}
-
 	    }
       
 	  // now treat mixed spin cases:
@@ -1215,7 +1207,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EnableFastMultiplic
 	      m4 = m1 + m2 - m3;
 	      // Interactions of Fermions Interactions mixing both spin species:
 	      Index = this->Particles->AddAduAdAu(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < Dim)
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  TmpIndexArray[Pos] = Index;
 		  TmpCoefficientArray[Pos] = Coefficient * this->UDInteractionFactors[j];
