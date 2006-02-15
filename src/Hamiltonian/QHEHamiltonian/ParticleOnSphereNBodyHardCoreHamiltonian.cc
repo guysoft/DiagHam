@@ -282,11 +282,35 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
-	    double SumCoefficient = 0.0;
+	    double SumCoefficient = 1.0;
 	    double Coefficient;
 	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k]);
 	    this->MaxSumIndices = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
 	    this->MinSumIndices = (k * (k - 1)) / 2;
+	    double* TmpInteractionCoeffients = new double[MaxSumIndices + 1];
+	    TmpInteractionCoeffients[0] = 1.0;
+	    TmpInteractionCoeffients[1] = 1.0;
+	    for (int i = 2; i <= MaxSumIndices; ++i)
+	      {
+		Coefficient = 1.0;
+		for (int j = 1; j < i; ++j)
+		  {
+		    double Coefficient2 = TmpInteractionCoeffients[j];
+		    TmpInteractionCoeffients[j] += Coefficient;
+		    Coefficient = Coefficient2;
+		  }
+		TmpInteractionCoeffients[i] = 1.0;
+	      }
+	    Coefficient = 4.0 * M_PI / (((double) MaxSumIndices) + 1.0);
+	    double Radius = 2.0 / ((double) this->LzMax);
+	    for (int i = 2; i <= k; ++i)
+	      {
+		Coefficient *= (double) (i * i);	  
+		Coefficient *= Radius;
+	      }
+	    for (int i = 0; i <= MaxSumIndices; ++i)
+	      TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
+
 	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
 	    int Lim;
 	    for (int MinSum = this->MinSumIndices; MinSum <= MaxSumIndices; ++MinSum)
@@ -295,15 +319,21 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		this->NBodyInteractionFactors[k][MinSum] = new double [Lim];
 		double* TmpNBodyInteractionFactors = this->NBodyInteractionFactors[k][MinSum];		  
 		int* TmpMIndices = this->SortedIndicesPerSum[k][MinSum];
+		cout << MinSum << " : " << endl;
 		for (int i = 0; i < Lim; ++i)
 		  {
-		    Coefficient = SumCoefficient;
+		    Coefficient = TmpInteractionCoeffients[MinSum];
 		    for (int l = 0; l < k; ++l)
-		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
+		      {
+			Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
+			cout << TmpMIndices[l] << " ";
+		      }
 		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
+		    cout << " = " <<  Coefficient << " " << TmpNBodyInteractionFactors[i]  << endl;
 		    TmpMIndices += k;
 		  }
 	      }
+	    delete[] TmpInteractionCoeffients;
 	  }
     }
   else
