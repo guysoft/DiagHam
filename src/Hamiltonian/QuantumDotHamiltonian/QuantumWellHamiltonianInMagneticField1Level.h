@@ -95,7 +95,8 @@ class QuantumWellHamiltonianInMagneticField1Level : public AbstractHamiltonian
   double ZEnergy;
   // landauIndex1 = Landau level index
   int LandauIndex;
-
+  //subband index (starting from 1)
+  int SubbandIndex;
   
   double MailleParameter;
   // conduction band offset between GaAs and InAs
@@ -127,12 +128,14 @@ class QuantumWellHamiltonianInMagneticField1Level : public AbstractHamiltonian
   // bField = B field value (in Tesla)
   // zEnergy = z confinement
   // landauIndex = Landau level
+  // subbandIndex = subband index (starting from 1)
   // mailleParameter =
   // bandOffset = conduction band offset between GaAs and InAs
   // inDopage = In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
   // potentialDescription = name of the file that contains the potential description (null if the potential has to be evaluated)
   QuantumWellHamiltonianInMagneticField1Level(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy,
-					      int landauIndex, double mailleParameter, double bandOffset, double inDopage, char* potentialDescription = 0);
+					      int landauIndex, int subbandIndex, double mailleParameter, double bandOffset, 
+					      double inDopage, char* potentialDescription = 0);
 
   // copy constructor (without duplicating datas)
   //

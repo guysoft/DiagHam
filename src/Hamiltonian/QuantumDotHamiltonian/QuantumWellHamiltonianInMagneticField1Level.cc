@@ -57,14 +57,15 @@ using std::endl;
 // bField = B field value (in Tesla)
 // zEnergy = z confinement
 // landauIndex = Landau level index
+// subbandIndex = subband index (starting from 1)
 // mailleParameter =
 // bandOffset = conduction band offset between GaAs and InAs
 // inDopage = In/Ga dopage ratio (=x with Ga_(1-x) In_x As)
 // potentialDescription = name of the file that contains the potential description (null if the potential has to be evaluated)
 
 QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticField1Level(double xSize, double ySize, double zSize, double mass, double bField, double zEnergy,
-											 int landauIndex, double mailleParameter, double bandOffset, double inDopage, 
-											 char* potentialDescription)
+											 int landauIndex, int subbandIndex, double mailleParameter, double bandOffset, 
+											 double inDopage, char* potentialDescription)
 {
   this->XSize = xSize;
   this->YSize = ySize;
@@ -73,6 +74,7 @@ QuantumWellHamiltonianInMagneticField1Level::QuantumWellHamiltonianInMagneticFie
   this->BField = bField;
   this->ZEnergy = zEnergy;
   this->LandauIndex = landauIndex;
+  this->SubbandIndex = subbandIndex;
   this->MailleParameter = mailleParameter;
   this->BandOffset = bandOffset;
   this->InDopage = inDopage;
@@ -224,7 +226,7 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
   for (int k = 0; k < this->NbrZCells; ++k)
     {
       Y = 0.5 * YInc;
-      double ZPartValue = sin (M_PI * Z / this->ZSize);
+      double ZPartValue = sin (((double) this->SubbandIndex) * M_PI * Z / this->ZSize);
       for (int j = 0; j < this->NbrYCells; ++j)
 	{
 	  X = 0.5 * XInc;
