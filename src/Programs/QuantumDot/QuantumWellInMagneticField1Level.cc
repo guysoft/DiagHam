@@ -51,8 +51,10 @@ int main(int argc, char** argv)
   SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 2.97);
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 2.64);  
   SingleDoubleOption MassOption ('\n', "mass", "electron effective mass (in bare electron mass unit)", 0.050);
-  SingleDoubleOption BFieldOption ('\n', "bfield", "B field (in Tesla unit)", 31.09);
+  SingleDoubleOption BFieldOption ('\n', "bfield", "B field (in Tesla unit)", 30.90);
+  SingleDoubleOption ZKineticEnergyOption ('\n', "z-kinetic", "kinetic energy (in meV) due to the z confinment", 0.0);
   SingleIntegerOption SubbandIndexOption ('\n', "subband-index", "subband index", 1);
+  SingleIntegerOption LandauIndexOption ('\n', "landau-index", "Landau level index (lowest Landau level is 0)", 0);
   SingleDoubleOption BandOffsetOption ('\n', "band-offset", "band offset value (in meV unit)", 600);
   SingleStringOption CoefficientFileNameOption('\n', "coefficients", "name of the file where interaction coeffcients are stored", 
 					       "/home/regnault/development/DMRG/DiagHam/potentiel_10_10_10_2");
@@ -76,6 +78,8 @@ int main(int argc, char** argv)
   OptionList += &CellZSizeOption;
   OptionList += &MassOption;
   OptionList += &BFieldOption;
+  OptionList += &ZKineticEnergyOption;
+  OptionList += &LandauIndexOption;
   OptionList += &SubbandIndexOption;
   OptionList += &CoefficientFileNameOption;
   OptionList += &LeftSizeOption;
@@ -110,6 +114,8 @@ int main(int argc, char** argv)
   double Lz = CellZSizeOption.GetDouble();
   double Mass = MassOption.GetDouble();
   double BField = BFieldOption.GetDouble();
+  double ZKineticEnergy = ZKineticEnergyOption.GetDouble();
+  int LandauIndex = LandauIndexOption.GetInteger();
   int SubbandIndex = SubbandIndexOption.GetInteger();
   int LeftSize = LeftSizeOption.GetInteger();
   int RightSize = RightSizeOption.GetInteger();
@@ -121,7 +127,7 @@ int main(int argc, char** argv)
   timeval CurrentTime;
   gettimeofday (&(CurrentTime), 0);
   srand(CurrentTime.tv_usec);
-  QuantumWellHamiltonianInMagneticField1Level Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField,  0.0, 0, SubbandIndex, 5.87, BandOffset, 0.53, LoadPotentialFileName);
+  QuantumWellHamiltonianInMagneticField1Level Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField,  ZKineticEnergy, LandauIndex, SubbandIndex, 5.87, BandOffset, 0.53, LoadPotentialFileName);
   if (SavePotentialFileName != 0)    
     Hamiltonian.SavePotential(SavePotentialFileName);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;

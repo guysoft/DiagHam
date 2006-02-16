@@ -203,6 +203,13 @@ class QuantumWellHamiltonianInMagneticField1Level : public AbstractHamiltonian
   //   
   void EvaluateInteractionFactors();
 
+  // compute the normalization factor in front of the Landau eigenfunction
+  //
+  // magneticLength = magnetic length
+  // landauLevel = index of the Landau level (lowest Landau level is 0)
+  // return value = normalization factor
+  double EvaluateLandauPrefactor(double magneticLength, int landauLevel);
+
 };
 
 // get Hilbert space on which Hamiltonian acts

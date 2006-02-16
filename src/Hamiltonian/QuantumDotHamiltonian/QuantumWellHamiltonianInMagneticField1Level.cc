@@ -222,7 +222,7 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
   double Coefficient;
   double KCoeffcient = 2.0 * M_PI / this->YSize;
   double XCoeffcient = this->MagneticLength * this->MagneticLength * KCoeffcient;
-  double LandauPrefactor = pow(M_PI * this->MagneticLength * this->MagneticLength, -0.25);  
+  double LandauPrefactor = this->EvaluateLandauPrefactor(this->MagneticLength, this->LandauIndex);
   for (int k = 0; k < this->NbrZCells; ++k)
     {
       Y = 0.5 * YInc;
@@ -237,6 +237,10 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 		{
 		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
 		  double Landau11 = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
+		  if (this->LandauIndex == 2)
+		    {
+		      Landau11 *= (2.0 * ShiftXM * ShiftXM) - 1.0;
+		    }
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
@@ -264,4 +268,22 @@ bool QuantumWellHamiltonianInMagneticField1Level::SavePotential(char* filename)
 {
   this->Potential->SaveBinaryPotential(filename);
   return true;
+}
+
+// compute the normalization factor in front of the Landau eigenfunction
+//
+// magneticLength = magnetic length
+// landauLevel = index of the Landau level (lowest Landau level is 0)
+// return value = normalization factor
+
+double QuantumWellHamiltonianInMagneticField1Level::EvaluateLandauPrefactor(double magneticLength, int landauLevel)
+{
+  if (landauLevel == 0)
+    return pow(M_PI * magneticLength * magneticLength, -0.25);  
+  if (landauLevel == 2)
+    {
+      return (M_SQRT1_2 * pow(M_PI * magneticLength * magneticLength, -0.25));  
+    }
+  else
+    return 0.0;
 }
