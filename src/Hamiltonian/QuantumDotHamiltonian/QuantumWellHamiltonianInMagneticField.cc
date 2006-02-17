@@ -253,7 +253,7 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 		      Complex Tmp12 (Tmp11);
 		      Complex Tmp21 (Tmp11);
 		      Tmp11 *= Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
-		      Tmp21 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau12 * Landau22;
+		      Tmp21 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau12 * Landau21;
 		      Tmp12 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau22;
 		      Tmp22 *= Coefficient * ZPartValue2 * ZPartValue2 * Landau22 * Landau21;
 		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n, Tmp11);
