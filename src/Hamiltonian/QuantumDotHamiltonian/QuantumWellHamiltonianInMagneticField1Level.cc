@@ -213,47 +213,48 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
       this->Hamiltonian.SetMatrixElement(i, i, DiagonalTerm1);
     }
 
-  double XInc = this->MailleParameter * 0.5;
-  double YInc = this->MailleParameter * 0.5;
+  double XInc = this->MailleParameter * 0.5 / this->MagneticLength;
+  double YInc = this->MailleParameter * 0.5 / this->MagneticLength;
   double ZInc = this->MailleParameter;
   double X = 0.5 * XInc;
   double Y = 0.5 * YInc;
   double Z = 0.5 * ZInc;
   double Coefficient;
-  double KCoeffcient = 2.0 * M_PI / this->YSize;
-  double XCoeffcient = this->MagneticLength * this->MagneticLength * KCoeffcient;
+  double KCoeffcient = this->MagneticLength * 2.0 * M_PI / this->YSize;
   double LandauPrefactor = this->EvaluateLandauPrefactor(this->MagneticLength, this->LandauIndex);
+  Complex Tmp11;
   for (int k = 0; k < this->NbrZCells; ++k)
     {
       Y = 0.5 * YInc;
       double ZPartValue = sin (((double) this->SubbandIndex) * M_PI * Z / this->ZSize);
+      ZPartValue *= ZPartValue;
       for (int j = 0; j < this->NbrYCells; ++j)
 	{
 	  X = 0.5 * XInc;
 	  for (int i = 0; i < this->NbrXCells; ++i)
 	    {
-	      Coefficient = this->Potential->GetPotential(i, j, k);
+	      Coefficient = ZPartValue * LandauPrefactor * LandauPrefactor * this->Potential->GetPotential(i, j, k);
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
-		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
-		  double Landau11 = LandauPrefactor * exp (-0.5 * (ShiftXM * ShiftXM));
+		  double ShiftXM = X - (KCoeffcient * m);
+		  double Landau11 = exp (-0.5 * (ShiftXM * ShiftXM));
 		  if (this->LandauIndex == 2)
 		    {
 		      Landau11 *= (2.0 * ShiftXM * ShiftXM) - 1.0;
 		    }
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
-		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
-		      double Landau12 = LandauPrefactor * exp (-0.5 * (ShiftXN * ShiftXN));
+		      double ShiftXN = X - (KCoeffcient * n);
+		      double Landau12 = Coefficient * Landau11 * exp (-0.5 * (ShiftXN * ShiftXN));
 		      if (this->LandauIndex == 2)
 			{
 			  Landau12 *= (2.0 * ShiftXN * ShiftXN) - 1.0;
 			}
-		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
-		      Tmp11 *= Coefficient * ZPartValue * ZPartValue * Landau11 * Landau12;
+		      Tmp11.Re = Landau12 * cos(Y * KCoeffcient *((double) (n - m)));
+		      Tmp11.Im = -Landau12 * sin (Y* KCoeffcient *((double) (n - m)));
 		      this->Hamiltonian.AddToMatrixElement(m, n, Tmp11);
 		    }
-		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * ZPartValue * ZPartValue * Landau11 * Landau11);
+		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * Landau11 * Landau11);
 		}
 	      X += XInc;
 	    }
@@ -286,7 +287,7 @@ double QuantumWellHamiltonianInMagneticField1Level::EvaluateLandauPrefactor(doub
     return pow(M_PI * magneticLength * magneticLength, -0.25);  
   if (landauLevel == 2)
     {
-      return (sqrt(0.125) * pow(M_PI * magneticLength * magneticLength, -0.25));  
+      return (sqrt(0.5) * pow(M_PI * magneticLength * magneticLength, -0.25));  
     }
   else
     return 0.0;

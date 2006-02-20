@@ -217,15 +217,14 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
       this->Hamiltonian.SetMatrixElement(i + 1, i + 1, DiagonalTerm2);
     }
 
-  double XInc = this->MailleParameter * 0.5;
-  double YInc = this->MailleParameter * 0.5;
+  double XInc = this->MailleParameter * 0.5 / this->MagneticLength;
+  double YInc = this->MailleParameter * 0.5 / this->MagneticLength;
   double ZInc = this->MailleParameter;
   double X = 0.5 * XInc;
   double Y = 0.5 * YInc;
   double Z = 0.5 * ZInc;
   double Coefficient;
-  double KCoeffcient = 2.0 * M_PI / this->YSize;
-  double XCoeffcient = this->MagneticLength * this->MagneticLength * KCoeffcient;
+  double KCoeffcient = this->MagneticLength * 2.0 * M_PI / this->YSize;
   double LandauPrefactor = pow(M_PI * this->MagneticLength * this->MagneticLength, -0.25);  
   for (int k = 0; k < this->NbrZCells; ++k)
     {
@@ -240,22 +239,22 @@ void QuantumWellHamiltonianInMagneticField::EvaluateInteractionFactors()
 	      Coefficient = this->Potential->GetPotential(i, j, k);
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
-		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
+		  double ShiftXM = X - (KCoeffcient * m);
 		  double Landau11 = LandauPrefactor * exp (-0.5 * (ShiftXM * ShiftXM));
-		  double Landau21 = Landau11 * sqrt(0.125) * ((2.0 * ShiftXM * ShiftXM) - 1.0);
+		  double Landau21 = Landau11 * sqrt(0.5) * ((2.0 * ShiftXM * ShiftXM) - 1.0);
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
-		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
+		      double ShiftXN = X - (KCoeffcient * n);
 		      double Landau12 = LandauPrefactor * exp (-0.5 * (ShiftXN * ShiftXN));
-		      double Landau22 = Landau12 * sqrt(0.125) * ((2.0 * ShiftXN * ShiftXN) -1.0);
-		      Complex Tmp11 (cos(Y* KCoeffcient *((double) (n - m))), -sin (Y* KCoeffcient *((double) (n - m))));
+		      double Landau22 = Landau12 * sqrt(0.5) * ((2.0 * ShiftXN * ShiftXN) -1.0);
+		      Complex Tmp11 (Coefficient * cos(Y* KCoeffcient *((double) (n - m))), - Coefficient * sin (Y* KCoeffcient *((double) (n - m))));
 		      Complex Tmp22 (Tmp11);
 		      Complex Tmp12 (Tmp11);
 		      Complex Tmp21 (Tmp11);
-		      Tmp11 *= Coefficient * ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
-		      Tmp21 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau12 * Landau21;
-		      Tmp12 *= Coefficient * ZPartValue1 * ZPartValue2 * Landau11 * Landau22;
-		      Tmp22 *= Coefficient * ZPartValue2 * ZPartValue2 * Landau22 * Landau21;
+		      Tmp11 *= ZPartValue1 * ZPartValue1 * Landau11 * Landau12;
+		      Tmp21 *= ZPartValue1 * ZPartValue2 * Landau12 * Landau21;
+		      Tmp12 *= ZPartValue1 * ZPartValue2 * Landau11 * Landau22;
+		      Tmp22 *= ZPartValue2 * ZPartValue2 * Landau22 * Landau21;
 		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n, Tmp11);
 		      this->Hamiltonian.AddToMatrixElement(2 * m, 2 * n + 1, Tmp12);
 		      this->Hamiltonian.AddToMatrixElement(2 * m + 1, 2 * n, Tmp21);
