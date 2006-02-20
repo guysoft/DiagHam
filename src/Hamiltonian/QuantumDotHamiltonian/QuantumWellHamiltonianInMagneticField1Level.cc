@@ -236,7 +236,7 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 	      for (int m = 0; m < this->LandauDegeneracy; ++m)
 		{
 		  double ShiftXM = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * m);
-		  double Landau11 = LandauPrefactor * exp (-0.25 * (ShiftXM * ShiftXM));
+		  double Landau11 = LandauPrefactor * exp (-0.5 * (ShiftXM * ShiftXM));
 		  if (this->LandauIndex == 2)
 		    {
 		      Landau11 *= (2.0 * ShiftXM * ShiftXM) - 1.0;
@@ -244,7 +244,7 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
 		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
 		    {	
 		      double ShiftXN = (X / this->MagneticLength) - (this->MagneticLength * KCoeffcient * n);
-		      double Landau12 = LandauPrefactor * exp (-0.25 * (ShiftXN * ShiftXN));
+		      double Landau12 = LandauPrefactor * exp (-0.5 * (ShiftXN * ShiftXN));
 		      if (this->LandauIndex == 2)
 			{
 			  Landau12 *= (2.0 * ShiftXN * ShiftXN) - 1.0;
@@ -286,7 +286,7 @@ double QuantumWellHamiltonianInMagneticField1Level::EvaluateLandauPrefactor(doub
     return pow(M_PI * magneticLength * magneticLength, -0.25);  
   if (landauLevel == 2)
     {
-      return (M_SQRT1_2 * pow(M_PI * magneticLength * magneticLength, -0.25));  
+      return (sqrt(0.125) * pow(M_PI * magneticLength * magneticLength, -0.25));  
     }
   else
     return 0.0;
