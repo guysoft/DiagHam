@@ -242,5 +242,6 @@ int main(int argc, char** argv)
       if (FirstRun == true)
 	FirstRun = false; 
     }
+  delete [] OutputNameLz;
   return 0;
 }
