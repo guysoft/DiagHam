@@ -309,7 +309,7 @@ void ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::EvaluateInteraction
 		TmpCoefficient[Pos] = 0.0;
 		Clebsch.InitializeCoefficientIterator(m1, m2);
 		TmpCoefficient[Pos] += V0 * TmpV * Clebsch.GetCoefficient(m1, m2, J0) * Clebsch.GetCoefficient(m3, m4, J0);
-		if ( (m1 != m2) && ( m3 != m4) )  // && (abs(m1 + m2) <= J1) && (abs(m3 + m4) <= J1))
+		if ( (m1 != m2) && ( m3 != m4) && (abs(m1 + m2) <= J1) && (abs(m3 + m4) <= J1))
 		  TmpCoefficient[Pos] += V1 * TmpV * Clebsch.GetCoefficient(m1, m2, J1) * Clebsch.GetCoefficient(m3, m4, J1);
 		if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
