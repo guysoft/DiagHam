@@ -132,6 +132,10 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
     {
       delete[] this->StateDescription;
       delete[] this->StateLargestBit;
+      delete[] this->LookUpTableShift;
+      for (int i = 0; i < 2*this->NbrLzValue; ++i)
+	delete[] this->LookUpTable[i];
+      delete[] this->LookUpTable;
     }
 }
 
