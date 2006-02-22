@@ -18,6 +18,7 @@
 #endif
 #include <string>
 #include <unistd.h>
+#include <dirent.h>
 
 
 using std::cout;
@@ -31,7 +32,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);  
   OptionManager Manager ("AbsorptionInQuantumWellBField" , "0.01");
-  OptionGroup* AbsorptionInQuantumWellBFieldGroup = new OptionGroup ("AbsorptionInQuantumWellBField");
+  OptionGroup* AbsorptionInQuantumWellBFieldGroup = new OptionGroup ("system options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   
   Manager += AbsorptionInQuantumWellBFieldGroup;
@@ -95,4 +96,27 @@ int main(int argc, char** argv)
   AbsorptionInQuantumWellBField.WriteSpectra(OutputFile);
 
   return 1;
+}
+
+
+// list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
+//
+// pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
+// 
+// retum value = the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path)
+
+List<char*>& GetAllDirectories(char* pattern, List<char*>& )
+{
+  char* Path = strrchr(pattern, '/');
+  DIR* TmpDirectoryTest;
+  if (Path == 0)
+    {
+      TmpDirectoryTest = opendir(".");
+    }
+  else
+    {
+      long PathLength = (pattern - Path);
+      TmpDirectoryTest = opendir(fileName);      
+    }
+  closedir(TmpDirectoryTest);
 }
