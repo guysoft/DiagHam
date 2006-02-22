@@ -33,6 +33,7 @@
 
 #include "Tools/QuantumDot/Spectra/QuantumWellBFieldAbsorptionSpectra.h"
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include <fstream>
 #include <math.h>
@@ -49,21 +50,26 @@ using std::endl;
 // fileNumber=  number of files
 // files = name of files
 // stateNumber = integer array containing number of states in each file
+// thetaPolarizationAngle = angle between the z axis and the polarization vector
+// phiPolarizationAngle = angle between the x axis and the projection of the polarization vector onto the x-y plane
+// zSize = system dimension in the z direction (in Angstrom unit)
 // gamma = lorentzian broadening parameter
 // beta = beta factor (inverse of the temperature in energy unit 1/kT) 
 // eMin = photon minimum energy
 // eMax = photon maximum energy
 // deltaE = photon energy step
 
-QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int fileNumber, char** files, int* stateNumber, double gamma, double beta, 
-								       double eMin, double eMax, double deltaE)
+QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int fileNumber, int nbrInitialStates, char** initialStateSpectrumFiles, char** initialStateEigenstateFiles, 	  
+								       int nbrFinalStates, char** finalStateSpectrumFiles, char** finalStateEigenstateFiles,
+								       double thetaPolarizationAngle, double phiPolarizationAngle, double zSize, 
+								       double gamma, double beta, double eMin, double eMax, double deltaE)
 {
   int N = (int) ((eMax - eMin) / deltaE);
   double* Energy = new double [N];
   double* Absorption = new double [N]; 
   double tmp1 = eMin; 
   double tmp2 = 0.0; 
-  double g = Gamma * Gamma * 0.25;
+  double g = Gamma * Gamma * 0.25;  
 
   for (int i = 0; i < N; ++i)
     {
@@ -72,7 +78,9 @@ QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int fileN
       tmp1 += deltaE;
     }
 
-  for (int i = 0; i < FileNumber; ++i)
+  this->ComputeOscillatorStrengthMatrix(thetaPolarizationAngle, phiPolarizationAngle, zSize);
+
+  for (int i = 0; i < fileNumber; ++i)
     {
       int TmpNbrStates = StateNumber[i];
       double* tmp = new double [TmpNbrStates];
@@ -116,8 +124,8 @@ QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int fileN
 }
 
 
-void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* initialStateSpectrumFileName, char* finalStateSpectrumFileName,
-						  char** initialEigenstateFileNames, char** finalEigenstateFileNames)
+void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* initialStateSpectrumFileName, char** initialEigenstateFileNames,
+						  int nbrFinalStates, char* finalStateSpectrumFileName, char** finalEigenstateFileNames)
 {
   int NbrFinalStates = 2 * nbrInitialStates;
   double* InitialEnergies = new double [nbrInitialStates];
@@ -149,30 +157,61 @@ void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* in
   File2.close();
       
   ComplexVector TmpInitialVector(nbrInitialStates);
+  ComplexVector TmpInitialVector2(nbrInitialStates);
   ComplexVector TmpFinalVector(NbrFinalStates);
-  for (int k = 0; k < this->NbrValues; ++k)
+  Complex Tmp;
+  tmp = 0.0;
+  for (int i = 0; i < NbrFinalStates; ++i)
     {
-      double TmpEnergy = this->Energies[k];
-      tmp = 0.0;
-      for (int i = 0; i < NbrFinalStates; ++i)
-	{
-	  TmpFinalVector.ReadVector();      
-	  for (int j = 0; j < nbrInitialStates; ++j)
-	    if (FinalEnergies[j] > InitialEnergies[i])
+      TmpFinalVector.ReadVector(finalEigenstateFileNames[i]);   
+      TmpInitialVector2.Multiply(this->OscillatorStrength, TmpFinalVector);
+      for (int j = 0; j < nbrInitialStates; ++j)
+	if (FinalEnergies[i] > InitialEnergies[j])
+	  {
+	    TmpInitialVector.ReadVector(initialEigenstateFileNames[j]);
+	    Tmp = (TmpInitialVector * TmpInitialVector2) * exp (this->Beta * this->FinalEnergies[i]);
+	    for (int k = 0; k < this->NbrValues; ++k)
 	      {
-		TmpInitialVector.ReadVector();
-		for (int l = 0; l < nbrInitialStates; ++l)
-		  {
-		    
-		  }
-		Complex Tmp = TmpInitialVector * TmpFinalVector;
+		double TmpEnergy = this->Energies[k];
+		Tmp;
+
+		for 
 		tmp += / (((this->FinalEnergies[i] - this->InitialEnergy[j] - TmpEnergy) * (this->FinalEnergies[i] - this->InitialEnergy[j] - TmpEnergy)) 
 			  + (this->Gamma * this->Gamma));
 	      }
-	  tmp *= exp (this->Beta * this->FinalEnergies[i]);
+	  tmp *= ;
 	}
     }
 
   delete[] InitialEnergies;
   delete[] FinalEnergies;
+}
+
+// compute the oscillator strength matrix 
+//
+// thetaPolarizationAngle = angle between the z axis and the polarization vector
+// phiPolarizationAngle = angle between the x axis and the projection of the polarization vector onto the x-y plane
+// zSize = system dimension in the z direction (in Angstrom unit)
+
+void ComputeOscillatorStrengthMatrix(double thetaPolarizationAngle, double phiPolarizationAngle, double zSize)
+{
+  double CosTheta = cos (thetaPolarizationAngle);
+  this->OscillatorStrength = ComplexMatrix (this->NbrInitialStates, this->NbrFinalStates, true);
+  int HalfNbrFinalStates = this->NbrFinalStates / 2;
+
+  double ZFactor = cos (thetaPolarizationAngle) * 2.0 * zSize / (M_PI * M_PI);
+  double Tmp = 0;
+  int Diff = 2 - 1;
+  int Sum = 2 + 1;
+  if ((Diff & 1) != 0)
+    Tmp += 2.0 / ((double) (Diff * Diff));
+  if ((Sum & 1) != 0)
+    Tmp -= 2.0 / ((double) (Sum * Sum));
+  ZFactor *= Tmp;
+
+  for (int m = 0; m < HalfNbrFinalStates; ++m)
+    for (int n = 0; n < this->NbrInitialStates; ++n)
+      {
+	this->OscillatorStrength.SetMatrixElement(n, 2 * m, ZFactor);
+      }
 }

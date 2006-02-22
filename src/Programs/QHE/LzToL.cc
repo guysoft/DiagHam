@@ -23,10 +23,12 @@ int main(int argc, char** argv)
   BooleanOption HelpOption ('h', "help", "display this help");
   SingleStringOption InputFileOption ('\0', "lz-file", "name of the file containing the lz sorted spectrum", 0);
   SingleDoubleOption PrecisionOption ('\n', "precision", "precision used to compare two energy values", 1e-7);
+  BooleanOption FullOption ('f', "full", "indicates that all Lz value are contained in the file (if not L output will have one less value that the Lz counterpart)");
   List<AbstractOption*> OptionList;
   OptionList += &HelpOption;
   OptionList += &InputFileOption;
   OptionList += &PrecisionOption;
+  OptionList += &FullOption;
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type LzToL -h" << endl;
@@ -44,6 +46,7 @@ int main(int argc, char** argv)
   InputFile.open(InputName, ios::binary | ios::in);
   InputFile.seekg(0, ios::end);
   int FileSize = InputFile.tellg();
+  --FileSize;
   InputFile.seekg(0, ios::beg);
   int NbrValue = 1;
   int TotalSize = 0;
@@ -69,7 +72,7 @@ int main(int argc, char** argv)
   ifstream InputFile2;
   InputFile2.open(InputName, ios::binary | ios::in);
   InputFile2 >> CurrentLzValue >> Dummy;
-  Dimensions[Pos] = 1;
+  Dimensions[Pos] = 1;  
   while ((InputFile2.tellg() < FileSize) && (InputFile2.tellg() >= 0))
     {
       InputFile2 >> TmpLzValue >> Dummy;
@@ -112,10 +115,20 @@ int main(int argc, char** argv)
   bool* Degeneracy = new bool [TotalSize];
   bool Flag;
   double TmpEigenvalue;
-  for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
+  if (FullOption.GetBoolean() == false)
+    for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
+      {
+	Spectrum[i] = Eigenvalues[NbrValue - 1][i];
+	++SpectrumSize;
+      }
+  else
     {
-      Spectrum[i] = Eigenvalues[NbrValue - 1][i];
-      ++SpectrumSize;
+      for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
+	{
+	  Spectrum[i] = Eigenvalues[NbrValue - 1][i];
+	  cout << (NbrValue - 1) << " " << Eigenvalues[NbrValue - 1][i] << endl;
+	  ++SpectrumSize;
+	}
     }
   for (int  L = NbrValue - 2; L >= 0; --L)
     {
