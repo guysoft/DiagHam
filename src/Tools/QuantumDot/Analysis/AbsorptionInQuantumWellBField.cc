@@ -9,6 +9,11 @@
 #include "Tools/QuantumDot/Spectra/Spectra.h"
 #include "Tools/QuantumDot/Spectra/DOSSpectra.h"
 
+#include "GeneralTools/List.h"
+#include "GeneralTools/ListIterator.h"
+#include "GeneralTools/ArrayTools.h"
+
+
 #include <iostream>
 #include <fstream>
 #ifdef __SSTREAM_STYLE__
@@ -26,6 +31,15 @@ using std::ifstream;
 using std::ofstream;
 using std::ios;
 using std::endl;
+
+// list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
+//
+// pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
+// matchedFileArray = reference on the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path), 
+//                    memory allocation isd one by the function itself
+// suffix = optional suffix  to test
+// return value = number of matched files
+int GetAllDirectories(char* pattern, char**& matchedFileArray, char* suffix = 0);
 
 
 int main(int argc, char** argv)
@@ -78,7 +92,7 @@ int main(int argc, char** argv)
   int Begin = ((SingleIntegerOption*) Manager["begin"])->GetInteger();
   int End = ((SingleIntegerOption*) Manager["end"])->GetInteger();
   int Number = End - Begin + 1;
-  char* Prefixbis = new char [100]; char* InputFilebis = new char [100];
+/*  char* Prefixbis = new char [100]; char* InputFilebis = new char [100];
   AddString (Prefixbis, Prefix, 0, "");  strcpy(InputFilebis, "/"); strcat(InputFilebis, InputFile);
   char** Files = new char* [Number]; int* State = new int[Number];
   for (int i = Begin; i <= End; ++i)
@@ -93,8 +107,29 @@ int main(int argc, char** argv)
 	cout << Files[i - Begin] << endl;
     }
   DOSSpectra AbsorptionInQuantumWellBField(Number, Files, State, Gamma, Min, Max, Step);
-  AbsorptionInQuantumWellBField.WriteSpectra(OutputFile);
+  AbsorptionInQuantumWellBField.WriteSpectra(OutputFile);*/
 
+  char** MatchedDirectories;
+  int NbrMatchedDirectories = GetAllDirectories("/home/regnault/results/quantumwell/quantumwell/v_2level2/bfield_20/run_0", MatchedDirectories);
+  if (NbrMatchedDirectories == 0)
+    {
+      return -1;
+    }
+  char** MatchedSpectra = new char* [NbrMatchedDirectories];
+  char*** MatchedEigenvectors = new char** [NbrMatchedDirectories];
+  for (int i = 0; i < NbrMatchedDirectories; ++i)
+    {
+      int TmpLength = strlen(MatchedDirectories[i]);
+      char* TmpPattern = new char[TmpLength + 2 + strlen(InputFile)];
+      strcpy(TmpPattern, MatchedDirectories[i]);
+      TmpPattern[TmpLength] = '/';
+      strcpy(TmpPattern + TmpLength + 1, InputFile);
+      cout << TmpPattern << endl;
+      int TmpNbrEigenvectors = GetAllDirectories(TmpPattern, MatchedEigenvectors[i], ".vec"); 
+      delete[] MatchedDirectories[i];
+      delete[] TmpPattern;
+    }
+  
   return 1;
 }
 
@@ -102,21 +137,105 @@ int main(int argc, char** argv)
 // list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
 //
 // pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
-// 
-// retum value = the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path)
+// matchedFileArray = reference on the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path), 
+//                    memory allocation isd one by the function itself
+// suffix = optional suffix  to test
+// return value = number of matched files
 
-List<char*>& GetAllDirectories(char* pattern, List<char*>& )
+int GetAllDirectories(char* pattern, char**& matchedFileArray, char* suffix)
 {
   char* Path = strrchr(pattern, '/');
-  DIR* TmpDirectoryTest;
+  char* TmpPattern;
+  long PatternLength;
+  DIR* TmpDirectory;
+  long PathLength = 0;
   if (Path == 0)
     {
-      TmpDirectoryTest = opendir(".");
+      TmpDirectory = opendir(".");
+      PatternLength = strlen(pattern);
+      TmpPattern = new char [PatternLength + 1];
+      strcpy(TmpPattern, pattern);
     }
   else
     {
-      long PathLength = (pattern - Path);
-      TmpDirectoryTest = opendir(fileName);      
+      PathLength = (Path - pattern) + 1;
+      PatternLength = strlen(Path) - 1;
+      TmpPattern = new char [PatternLength + 1];
+      strcpy(TmpPattern, Path + 1); 
+      char* TmpPath = new char [PathLength + 1];
+      strncpy (TmpPath, pattern, PathLength);
+      TmpPath[PathLength] = '\0';
+      TmpDirectory = opendir(TmpPath); 
+      delete[] TmpPath;
     }
-  closedir(TmpDirectoryTest);
+  dirent* DirectoryContent;
+  List<char*> MatchedFiles;
+  if (suffix == 0)
+    {
+      while ((DirectoryContent = readdir(TmpDirectory)))
+	{
+	  if ((strncmp(DirectoryContent->d_name, TmpPattern, PatternLength) == 0) && ((*(DirectoryContent->d_name + PatternLength)) >= '0') && 
+	  ((*(DirectoryContent->d_name + PatternLength)) <= '9'))
+	    {
+	      char* TmpName  = new char [strlen(DirectoryContent->d_name) + 1];
+	      strcpy (TmpName, DirectoryContent->d_name);
+	      MatchedFiles += TmpName;
+	    }
+	}
+    }
+  else
+    {
+      while ((DirectoryContent = readdir(TmpDirectory)))
+	{
+	  if (strncmp(DirectoryContent->d_name, TmpPattern, PatternLength) == 0)
+	    {
+	      char* EndPos = DirectoryContent->d_name + PatternLength;
+	      while (((*EndPos) != '\0') && ((*EndPos) >= '0') && ((*EndPos) <= '9'))
+		++EndPos;
+	      if (((*EndPos) != '\0') && (EndPos != (DirectoryContent->d_name + PatternLength)) && (strcmp(suffix, EndPos) == 0))
+		{
+		  char* TmpName  = new char [strlen(DirectoryContent->d_name) + 1];
+		  strcpy (TmpName, DirectoryContent->d_name);
+		  MatchedFiles += TmpName;		
+		}
+	    }
+	}
+    }
+  closedir(TmpDirectory);
+  if (MatchedFiles.GetNbrElement() == 0)
+    {
+      matchedFileArray = 0;
+      return 0;
+    }
+  ListIterator<char*> MatchedFileIterator(MatchedFiles);
+  char** TmpName2;
+  int* FileIndices = new int [MatchedFiles.GetNbrElement()];
+  matchedFileArray = new char* [MatchedFiles.GetNbrElement()];
+  int Pos = 0;
+  while ((TmpName2 = MatchedFileIterator()))
+    {
+      FileIndices[Pos] = atoi ((*TmpName2) + PatternLength); 
+      if (PathLength == 0)
+	{
+	  matchedFileArray[Pos] = (*TmpName2);
+	}
+      else
+	{
+	  char* TmpName3 = new char[PathLength + 2 + strlen(*TmpName2)];
+	  strncpy (TmpName3, pattern, PathLength);
+	  TmpName3[PathLength] = '/';
+	  strcpy (TmpName3 + PathLength + 1,(*TmpName2));	  
+	  matchedFileArray[Pos] = TmpName3;
+	  delete[] (*TmpName2);
+	}
+      ++Pos;
+    }
+  SortArrayUpOrdering<char*>(FileIndices, matchedFileArray, Pos);
+  for (int i = 0; i < Pos; ++i)
+    {
+      cout << FileIndices[i] << " " << matchedFileArray[i] << endl;
+    }
+  delete[] FileIndices;
+  delete[] TmpPattern;
+  return Pos;
 }
