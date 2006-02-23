@@ -47,121 +47,105 @@ using std::endl;
 
 // constructor from a set of energy files. Each peak is assimilated to a Lorentzian function.
 //
-// fileNumber=  number of files
+// NbrFiles=  number of files
 // files = name of files
 // stateNumber = integer array containing number of states in each file
+// nbrInitialStates = number of initial states per sample
+// initialStateSpectrumFiles = array of names of the file containing the initial state spectrum
+// initialStateEigenstateFiles = pointers to arrays that contains names of the eigenvectors associated to each spectrum (for a given spectrum, 
+//                               eigenvectors have to be sorted in the same manner as the eigenvalues)
+// nbrFinalStates = number of final states per sample
+// finalStateSpectrumFiles = array of names of the file containing the  final state spectrum
+// finalStateEigenstateFiles = pointers to arrays that contains names of the eigenvectors associated to each spectrum (for a given spectrum, 
+//                             eigenvectors have to be sorted in the same manner as the eigenvalues)
 // thetaPolarizationAngle = angle between the z axis and the polarization vector
 // phiPolarizationAngle = angle between the x axis and the projection of the polarization vector onto the x-y plane
 // zSize = system dimension in the z direction (in Angstrom unit)
 // gamma = lorentzian broadening parameter
-// beta = beta factor (inverse of the temperature in energy unit 1/kT) 
-// eMin = photon minimum energy
-// eMax = photon maximum energy
-// deltaE = photon energy step
+// beta = beta factor (inverse of the temperature in spectrum data energy unit) 
+// eMin = photon minimum energy (must use same unit than the spectrum datas)
+// eMax = photon maximum energy (must use same unit than the spectrum datas)
+// deltaE = photon energy step (must use same unit than the spectrum datas)
 
-QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int fileNumber, int nbrInitialStates, char** initialStateSpectrumFiles, char** initialStateEigenstateFiles, 	  
-								       int nbrFinalStates, char** finalStateSpectrumFiles, char** finalStateEigenstateFiles,
+QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int NbrFiles, int nbrInitialStates, char** initialStateSpectrumFiles, char*** initialStateEigenstateFiles, 	  
+								       int nbrFinalStates, char** finalStateSpectrumFiles, char*** finalStateEigenstateFiles,
 								       double thetaPolarizationAngle, double phiPolarizationAngle, double zSize, 
 								       double gamma, double beta, double eMin, double eMax, double deltaE)
 {
+  this->Gamma = gamma;
+  this->Beta = beta;
+  this->ZSize = zSize;
+  this->NbrInitialStates = nbrInitialStates;
+  this->NbrFinalStates = nbrFinalStates;
+
   int N = (int) ((eMax - eMin) / deltaE);
   double* Energy = new double [N];
   double* Absorption = new double [N]; 
   double tmp1 = eMin; 
-  double tmp2 = 0.0; 
-  double g = Gamma * Gamma * 0.25;  
-
   for (int i = 0; i < N; ++i)
     {
-      Energy[i] = tmp1;
+      Energy[i] = eMin;
       Absorption[i] = 0.0;
       tmp1 += deltaE;
     }
 
+  this->AxeX = new RealVector(Energy, N);
+  this->AxeY = new RealVector(N);
+
   this->ComputeOscillatorStrengthMatrix(thetaPolarizationAngle, phiPolarizationAngle, zSize);
 
-  for (int i = 0; i < fileNumber; ++i)
+  for (int i = 0; i < NbrFiles; ++i)
     {
-      int TmpNbrStates = StateNumber[i];
-      double* tmp = new double [TmpNbrStates];
-      ifstream file;
-      file.open(Files[i],ios::out);
-      if (!file.is_open())
-        {
-	  cout << "Error in open the file: " << Files[i] << "Exit now" << endl;
-	  exit(0);
-	}
-      for (int j = 0; j < TmpNbrStates; ++j)
-	{
-	  file >> tmp[j];
-	}
-      file.close();
-      
-      tmp1 = eMin; 
-      for (int j = 0; j < N; ++j)
-	{
-	  tmp2 = 0.0;
-	  for (int k = 0; k < nbrStates; ++k)
-	    {
-	      tmp3 = 0.0;
-	      for (int l = k + 1; l < nbrStates; ++l)
-		tmp3 += 1.0 / ((tmp1 - tmp[k]) * (tmp1 - tmp[k]) + g);
-	      
-	    }
-	  Absorption[j] += tmp2;
-	  tmp1 += deltaE;
-	}
-      tmp = 0;
-      delete[] tmp;
+      this->AddSample(nbrInitialStates, initialStateSpectrumFiles[i], initialStateEigenstateFiles[i],
+		      nbrFinalStates, finalStateSpectrumFiles[i], finalStateEigenstateFiles[i]);
     }
-  double tmp3 = Gamma / (2.0 * M_PI * ((double) FileNumber));
+  double tmp3 = 1.0 / ((double) NbrFiles);
   for (int i = 0; i < N; ++i)
-    Absorption[i] *= tmp3;
+    this->AxeY[i] *= tmp3;
 
-  this->AxeX = new RealVector(Energy, N);
-  this->AxeY = new RealVector(Absorption, N);
   this->PointNumber = N;
 }
 
+// add contribution of a given sample to the absorption spectrum
+//
+// nbrInitialStates = number of initial states
+// initialStateSpectrumFileName = name of the file containing the initial state spectrum
+// initialStateEigenstateFile = array that contains names of the eigenvectors associated to the spectrum (for a given spectrum, 
+//                              eigenvectors have to be sorted in the same manner as the eigenvalues)
+// nbrFinalStates = number of final states
+// finalStateSpectrumFiles = name of the file containing the final state spectrum
+// finalStateEigenstateFileName = array that contains names of the eigenvectors associated to the spectrum (for a given spectrum, 
+//                                eigenvectors have to be sorted in the same manner as the eigenvalues)
 
-void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* initialStateSpectrumFileName, char** initialEigenstateFileNames,
-						  int nbrFinalStates, char* finalStateSpectrumFileName, char** finalEigenstateFileNames)
+void QuantumWellBFieldAbsorptionSpectra::AddSample (int nbrInitialStates, char* initialStateSpectrumFileName, char** initialEigenstateFileNames,
+						    int nbrFinalStates, char* finalStateSpectrumFileName, char** finalEigenstateFileNames)
 {
   int NbrFinalStates = 2 * nbrInitialStates;
   double* InitialEnergies = new double [nbrInitialStates];
-  double** FinalEnergies = new double [NbrFinalStates];
+  double* FinalEnergies = new double [NbrFinalStates];
 
-  ifstream File1;
-  File1.open(initialStateSpectrumFileName, ios::out);
-  if (!File1.is_open())
+  if (this->ReadSpectrum(initialStateSpectrumFileName, InitialEnergies, nbrInitialStates) == false)
     {
-      cout << "Error in open the file: " << initialStateSpectrumFileName << "Exit now" << endl;
-      exit(0);
+      delete[] InitialEnergies;
+      delete[] FinalEnergies;
+      return;
     }
-  for (int j = 0; j < nbrInitialStates; ++j)
+  if (this->ReadSpectrum(finalStateSpectrumFileName, FinalEnergies, nbrFinalStates) == false)
     {
-      File1 >> InitialEnergies[j];
+      delete[] InitialEnergies;
+      delete[] FinalEnergies;
+      return;
     }
-  File1.close();
-  ifstream File2;
-  File2.open(finalStateSpectrumFileName, ios::out);
-  if (!File2.is_open())
-    {
-      cout << "Error in open the file: " << finalStateSpectrumFileName << "Exit now" << endl;
-      exit(0);
-    }
-  for (int j = 0; j < NbrFinalStates; ++j)
-    {
-      File2 >> FinalEnergies[j];
-    }
-  File2.close();
       
   ComplexVector TmpInitialVector(nbrInitialStates);
   ComplexVector TmpInitialVector2(nbrInitialStates);
   ComplexVector TmpFinalVector(NbrFinalStates);
-  Complex Tmp;
-  tmp = 0.0;
-  for (int i = 0; i < NbrFinalStates; ++i)
+  double Tmp;
+  int TmpNbrValues = this->AxeX->GetVectorDimension();
+  double Factor = this->Gamma / (2.0 * M_PI);
+  double GammaSqr = this->Gamma * this->Gamma;
+  double TmpEnergy;
+  for (int i = 0; i < nbrFinalStates; ++i)
     {
       TmpFinalVector.ReadVector(finalEigenstateFileNames[i]);   
       TmpInitialVector2.Multiply(this->OscillatorStrength, TmpFinalVector);
@@ -169,17 +153,12 @@ void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* in
 	if (FinalEnergies[i] > InitialEnergies[j])
 	  {
 	    TmpInitialVector.ReadVector(initialEigenstateFileNames[j]);
-	    Tmp = (TmpInitialVector * TmpInitialVector2) * exp (this->Beta * this->FinalEnergies[i]);
-	    for (int k = 0; k < this->NbrValues; ++k)
+	    Tmp = Factor * Norm(TmpInitialVector * TmpInitialVector2) * exp (this->Beta * FinalEnergies[i]);
+	    for (int k = 0; k < TmpNbrValues; ++k)
 	      {
-		double TmpEnergy = this->Energies[k];
-		Tmp;
-
-		for 
-		tmp += / (((this->FinalEnergies[i] - this->InitialEnergy[j] - TmpEnergy) * (this->FinalEnergies[i] - this->InitialEnergy[j] - TmpEnergy)) 
-			  + (this->Gamma * this->Gamma));
+		TmpEnergy = FinalEnergies[i] - InitialEnergies[j] - (*(this->AxeX))[k];
+		(*(this->AxeY))[k] += Tmp / ((TmpEnergy *TmpEnergy) + GammaSqr);
 	      }
-	  tmp *= ;
 	}
     }
 
@@ -193,9 +172,8 @@ void QuantumWellBFieldAbsorptionSpectra::AddSort (int nbrInitialStates, char* in
 // phiPolarizationAngle = angle between the x axis and the projection of the polarization vector onto the x-y plane
 // zSize = system dimension in the z direction (in Angstrom unit)
 
-void ComputeOscillatorStrengthMatrix(double thetaPolarizationAngle, double phiPolarizationAngle, double zSize)
+void QuantumWellBFieldAbsorptionSpectra::ComputeOscillatorStrengthMatrix(double thetaPolarizationAngle, double phiPolarizationAngle, double zSize)
 {
-  double CosTheta = cos (thetaPolarizationAngle);
   this->OscillatorStrength = ComplexMatrix (this->NbrInitialStates, this->NbrFinalStates, true);
   int HalfNbrFinalStates = this->NbrFinalStates / 2;
 
@@ -214,4 +192,36 @@ void ComputeOscillatorStrengthMatrix(double thetaPolarizationAngle, double phiPo
       {
 	this->OscillatorStrength.SetMatrixElement(n, 2 * m, ZFactor);
       }
+}
+
+
+// read spectrum raw data from a file
+// 
+// filename = name of  the file that conatins the spectrum (with optional relative/absolute path)
+// energies = array where energy values will be stored
+// nbrValues = number of energy values to retrieve from the file
+// return value = true if no error occured
+
+bool QuantumWellBFieldAbsorptionSpectra::ReadSpectrum(char* filename, double* energies, int nbrValues)
+{
+  ifstream File;
+  File.open(filename, ios::out);
+  if (!File.is_open())
+    {
+      cout << "error while opening file : " << filename << endl;
+      return false;
+    }
+  for (int j = 0; j < nbrValues; ++j)
+    {
+      if (File.tellg() < 0)
+	{
+	  cout << filename <<  " has to few eigenvalues" << endl;
+	  File.close();
+	  return false;
+	}
+      else
+	File >> energies[j];
+    }
+  File.close();
+  return true;  
 }

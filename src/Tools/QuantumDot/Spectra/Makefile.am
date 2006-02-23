@@ -11,4 +11,5 @@ PeriodicSpectra.cc \
 XYReflexionSymmetricPeriodicSpectra.cc \
 CylinderInMagneticFieldSpectra.cc \
 CylinderQuantumDotSpectra.cc \
-HardBoxSpectra.cc
+HardBoxSpectra.cc \
+QuantumWellBFieldAbsorptionSpectra.cc

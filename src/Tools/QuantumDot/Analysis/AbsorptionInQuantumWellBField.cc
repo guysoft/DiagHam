@@ -6,12 +6,9 @@
 #include "Options/SingleStringOption.h"
 #include "Options/SingleDoubleOption.h"
 
-#include "Tools/QuantumDot/Spectra/Spectra.h"
-#include "Tools/QuantumDot/Spectra/DOSSpectra.h"
+#include "Tools/QuantumDot/Spectra/QuantumWellBFieldAbsorptionSpectra.h"
 
-#include "GeneralTools/List.h"
-#include "GeneralTools/ListIterator.h"
-#include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 
 #include <iostream>
@@ -32,36 +29,37 @@ using std::ofstream;
 using std::ios;
 using std::endl;
 
-// list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
-//
-// pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
-// matchedFileArray = reference on the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path), 
-//                    memory allocation isd one by the function itself
-// suffix = optional suffix  to test
-// return value = number of matched files
-int GetAllDirectories(char* pattern, char**& matchedFileArray, char* suffix = 0);
+
+#define ME_KB 11.60451
 
 
 int main(int argc, char** argv)
 {
   cout.precision(14);  
   OptionManager Manager ("AbsorptionInQuantumWellBField" , "0.01");
-  OptionGroup* AbsorptionInQuantumWellBFieldGroup = new OptionGroup ("system options");
+  OptionGroup* InputOptionGroup = new OptionGroup ("input options");
+  OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   
-  Manager += AbsorptionInQuantumWellBFieldGroup;
+  Manager += InputOptionGroup;
+  Manager += PlotOptionGroup;
   Manager += MiscGroup;
 
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleStringOption('\n', "input", "name of the input file (directory mode only)", "eigenvalues");
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleStringOption('\n', "prefix", "prefix of the directories containing spectrum (directory mode only)", "");
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleIntegerOption('\n', "begin", "number of the first directory (directory mode only)", 0);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleIntegerOption('\n', "end", "number of the last directory (directory mode only)", 0);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleIntegerOption('n', "nbr-state", "number of states", 10);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleDoubleOption('\n', "min", "lower limit of the spectrum (in eV unit)", 0.0);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleDoubleOption('\n', "max", "upper limit of the spectrum (in eV unit)", 0.0);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleDoubleOption('g', "gamma", "full width at half maximum of each Lorentzian peak (in eV unit)", 0.01);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleDoubleOption('\n', "step", "length of each discretized step (in eV unit) in the spectrum", 2e-4);
-  (*AbsorptionInQuantumWellBFieldGroup) += new SingleStringOption('\n', "output", "name of the output file", "AbsorptionInQuantumWellBField.txt");
+  (*InputOptionGroup) += new SingleStringOption('\n', "initial-dir", "pattern to identify directories that contain initial states description (if pattern is mydir/run, any directory in mydir such that runx where x is an integer will be considered)");
+  (*InputOptionGroup) += new SingleStringOption('\n', "final-dir", "pattern to identify directories that contain final states description (using same conventions than initial-directory)");
+  (*InputOptionGroup) += new SingleStringOption('\n', "initial-input", "beginning of the name of file describing initial states (without relative/absolute path, files has to be of the form NAMEraw for eigenvalues and NAMEx.vec for eigenvectors where x is an integer");
+  (*InputOptionGroup) += new SingleStringOption('\n', "final-input", "beginning of the name of file describing final states (using same conventions than initial-input, use same name as initial-input if not defined)");
+  (*InputOptionGroup) += new SingleIntegerOption('\n', "begin", "number of the first directory", 0);
+  (*InputOptionGroup) += new SingleIntegerOption('\n', "end", "number of the last directory (0 if it has to be detected automatically)", 0);
+  (*InputOptionGroup) += new SingleIntegerOption('n', "nbr-state", "number of initial states (0 if it has to be detected automatically)", 0);
+  (*InputOptionGroup) += new SingleDoubleOption('z', "z-size", "sample size ine the z direction (in Angstrom)", 58.7);
+
+  (*PlotOptionGroup) += new SingleDoubleOption('\n', "min", "lower limit of the spectrum (in meV unit)", 0.0);
+  (*PlotOptionGroup) += new SingleDoubleOption('\n', "max", "upper limit of the spectrum (in meV unit)", 0.0);
+  (*PlotOptionGroup) += new SingleDoubleOption('t', "temperature", "temperature (in Kelvin unit)", 10.0);
+  (*PlotOptionGroup) += new SingleDoubleOption('g', "gamma", "full width at half maximum of each Lorentzian peak (in meV unit)", 0.01);
+  (*PlotOptionGroup) += new SingleDoubleOption('\n', "step", "length of each discretized step (in meV unit) in the spectrum", 2e-4);
+  (*PlotOptionGroup) += new SingleStringOption('\n', "output", "name of the output file", "absorption.dat");
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
   (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false);
@@ -77,165 +75,182 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrState = ((SingleIntegerOption*) Manager["nbr-state"])->GetInteger();
+  char* InitialStateDirectory = ((SingleStringOption*) Manager["initial-dir"])->GetString();
+  char* FinalStateDirectory = ((SingleStringOption*) Manager["final-dir"])->GetString();
+  char* InitialStateInputFile = ((SingleStringOption*) Manager["initial-input"])->GetString();
+  char* FinalStateInputFile = ((SingleStringOption*) Manager["final-input"])->GetString();
+  if (FinalStateInputFile == 0)
+    {
+      FinalStateInputFile = InitialStateInputFile;
+    }
+  int Begin = ((SingleIntegerOption*) Manager["begin"])->GetInteger();
+  int End = ((SingleIntegerOption*) Manager["end"])->GetInteger();
+
+
+  int NbrStates = ((SingleIntegerOption*) Manager["nbr-state"])->GetInteger();
   double Min = ((SingleDoubleOption*) Manager["min"])->GetDouble();
   double Max = ((SingleDoubleOption*) Manager["max"])->GetDouble();
   double Gamma = ((SingleDoubleOption*) Manager["gamma"])->GetDouble();
+  double Beta =  ME_KB / ((SingleDoubleOption*) Manager["temperature"])->GetDouble();
   double Step = ((SingleDoubleOption*) Manager["step"])->GetDouble();
+  double ZSize = ((SingleDoubleOption*) Manager["z-size"])->GetDouble();
   char* OutputFile = ((SingleStringOption*) Manager["output"])->GetString();
 
-  bool VerboseFlag = ((BooleanOption*) Manager["verbose"])->GetBoolean();
-
-
-  char* InputFile = ((SingleStringOption*) Manager["input"])->GetString();
-  char* Prefix = ((SingleStringOption*) Manager["prefix"])->GetString();
-  int Begin = ((SingleIntegerOption*) Manager["begin"])->GetInteger();
-  int End = ((SingleIntegerOption*) Manager["end"])->GetInteger();
-  int Number = End - Begin + 1;
-/*  char* Prefixbis = new char [100]; char* InputFilebis = new char [100];
-  AddString (Prefixbis, Prefix, 0, "");  strcpy(InputFilebis, "/"); strcat(InputFilebis, InputFile);
-  char** Files = new char* [Number]; int* State = new int[Number];
-  for (int i = Begin; i <= End; ++i)
+  char** InitialStateMatchedDirectories;
+  int InitialStateNbrMatchedDirectories = GetAllFilesDirectories(InitialStateDirectory, InitialStateMatchedDirectories);
+  if (InitialStateNbrMatchedDirectories == 0)
     {
-      State[i - Begin] = NbrState;
-      Files[i - Begin] = new char[200];
-      if (i < 10)
-	AddString(Files[i - Begin], Prefixbis, i, InputFilebis);
-      else
-	AddString(Files[i - Begin], Prefix, i, InputFilebis);
-      if (VerboseFlag)
-	cout << Files[i - Begin] << endl;
+      cout << "found no matching directories "  << InitialStateDirectory << endl;
+      return -1;
     }
-  DOSSpectra AbsorptionInQuantumWellBField(Number, Files, State, Gamma, Min, Max, Step);
-  AbsorptionInQuantumWellBField.WriteSpectra(OutputFile);*/
+  char** FinalStateMatchedDirectories;
+  int FinalStateNbrMatchedDirectories = GetAllFilesDirectories(FinalStateDirectory, FinalStateMatchedDirectories);
+  if (FinalStateNbrMatchedDirectories == 0)
+    {
+      
+      cout << "found no matching directories "  << FinalStateDirectory << endl;
+      return -1;
+    }
 
-  char** MatchedDirectories;
-  int NbrMatchedDirectories = GetAllDirectories("/home/regnault/results/quantumwell/quantumwell/v_2level2/bfield_20/run_0", MatchedDirectories);
-  if (NbrMatchedDirectories == 0)
+  bool ErrorFlag = false;
+  char** InitialStateMatchedSpectra = new char* [InitialStateNbrMatchedDirectories];
+  char*** InitialStateMatchedEigenvectors = new char** [InitialStateNbrMatchedDirectories];
+  int* InitialStateNbrMatchedEigenvectors = new int [InitialStateNbrMatchedDirectories];
+  int InitialStateNbrEigenvectors = 0;
+  char* InitialStateSpectrumName = AddExtensionToFileName(InitialStateInputFile, "raw");  
+  for (int i = 0; i < InitialStateNbrMatchedDirectories; ++i)
+    {
+      char* TmpPattern = ConcatenatePathAndFileName(InitialStateMatchedDirectories[i], InitialStateInputFile);
+      InitialStateNbrMatchedEigenvectors[i] = GetAllFilesDirectories(TmpPattern, InitialStateMatchedEigenvectors[i], ".vec"); 
+      if (InitialStateNbrEigenvectors == 0)
+	{
+	  InitialStateNbrEigenvectors = InitialStateNbrMatchedEigenvectors[i];
+	}
+      else
+	if (InitialStateNbrEigenvectors == InitialStateNbrMatchedEigenvectors[i])
+	  {
+	    ErrorFlag = true;
+	    cout << "wrong number of eigenvectors in " << InitialStateMatchedDirectories[i] << "(found " << InitialStateNbrMatchedEigenvectors[i] << ", need " << InitialStateNbrEigenvectors << ")" << endl;
+	  }
+      InitialStateMatchedSpectra[i] = ConcatenatePathAndFileName(InitialStateMatchedDirectories[i], InitialStateSpectrumName);
+      if (IsFile(InitialStateMatchedSpectra[i]) == false)
+	{
+	  ErrorFlag = true;
+	  cout << "can't open spectrum " << InitialStateMatchedSpectra[i] << endl;
+	}
+      delete[] InitialStateMatchedDirectories[i];
+      delete[] TmpPattern;
+    }
+  char** FinalStateMatchedSpectra = new char* [FinalStateNbrMatchedDirectories];
+  char*** FinalStateMatchedEigenvectors = new char** [FinalStateNbrMatchedDirectories];
+  int* FinalStateNbrMatchedEigenvectors = new int [FinalStateNbrMatchedDirectories];
+  int FinalStateNbrEigenvectors = 0;
+  char* FinalStateSpectrumName = AddExtensionToFileName(FinalStateInputFile, "raw");  
+  for (int i = 0; i < FinalStateNbrMatchedDirectories; ++i)
+    {
+      char* TmpPattern = ConcatenatePathAndFileName(FinalStateMatchedDirectories[i], FinalStateInputFile);
+      FinalStateNbrMatchedEigenvectors[i] = GetAllFilesDirectories(TmpPattern, FinalStateMatchedEigenvectors[i], ".vec"); 
+      if (FinalStateNbrEigenvectors == 0)
+	{
+	  FinalStateNbrEigenvectors = FinalStateNbrMatchedEigenvectors[i];
+	}
+      else
+	if (FinalStateNbrEigenvectors == FinalStateNbrMatchedEigenvectors[i])
+	  {
+	    ErrorFlag = true;
+	    cout << "wrong number of eigenvectors in " << FinalStateMatchedDirectories[i] << "(found " << FinalStateNbrMatchedEigenvectors[i] << ", need " << FinalStateNbrEigenvectors << ")" << endl;
+	  }
+      FinalStateMatchedSpectra[i] = ConcatenatePathAndFileName(FinalStateMatchedDirectories[i], FinalStateSpectrumName);
+      if (IsFile(FinalStateMatchedSpectra[i]) == false)
+	{
+	  ErrorFlag = true;
+	  cout << "can't open spectrum " << FinalStateMatchedSpectra[i] << endl;
+	}
+      delete[] FinalStateMatchedDirectories[i];
+      delete[] TmpPattern;
+    }
+
+  if (End == 0)
+    {
+      if (FinalStateNbrMatchedDirectories >= InitialStateNbrMatchedDirectories)
+	End = InitialStateNbrMatchedDirectories;
+      else
+	End = FinalStateNbrMatchedDirectories;
+    }
+  else
+    {
+      if (End > FinalStateNbrMatchedDirectories)
+	{
+	  End = FinalStateNbrMatchedDirectories;
+	  cout << "warning : maximum requested sample has been reduced to " << End << endl;
+	}
+      if (End > InitialStateNbrMatchedDirectories)
+	{
+	  End = InitialStateNbrMatchedDirectories;
+	  cout << "warning : maximum requested sample has been reduced to " << End << endl;
+	}      
+    }
+  if (Begin > End)
+    {
+      cout << "error : minimum requested sample (" << Begin << ") is higer than the maximum avalaible one (" << End << ")" << endl;
+      ErrorFlag = true;
+    }
+
+  if (NbrStates == 0)
+    {
+      NbrStates = InitialStateNbrEigenvectors;      
+      if (FinalStateNbrEigenvectors != (2 * InitialStateNbrEigenvectors))
+	{
+	  cout << "final states must have twice the number of initial states" << endl;
+	  ErrorFlag = true;
+	}
+    }
+  else
+    {
+      if (InitialStateNbrEigenvectors < NbrStates)
+	{
+	  cout << "not enough initial states" << endl;
+	  ErrorFlag = true;
+	}
+      if (FinalStateNbrEigenvectors < (2 * NbrStates))
+	{
+	  cout << "not enough final states" << endl;
+	  ErrorFlag = true;
+	}
+    }
+
+  if (ErrorFlag == false)
+    {  
+      QuantumWellBFieldAbsorptionSpectra AbsorptionSpectrum(End - Begin + 1, NbrStates, InitialStateMatchedSpectra, InitialStateMatchedEigenvectors,
+							    2 * NbrStates, FinalStateMatchedSpectra, FinalStateMatchedEigenvectors,
+							    0.0, 0.0, ZSize, Gamma, Beta, Min, Max, Step);
+      AbsorptionSpectrum.WriteSpectra(OutputFile);    
+    }
+
+  for (int i = 0; i < InitialStateNbrMatchedDirectories; ++i)
+    {
+      for (int j = 0; j < InitialStateNbrMatchedEigenvectors[i]; ++j)
+	delete[] InitialStateMatchedEigenvectors[i][j];
+      delete[] InitialStateMatchedEigenvectors[i];
+      delete[] InitialStateMatchedSpectra[i];
+    }
+  delete[] InitialStateMatchedDirectories;
+  delete[] InitialStateNbrMatchedEigenvectors;
+  for (int i = 0; i < FinalStateNbrMatchedDirectories; ++i)
+    {
+      for (int j = 0; j < FinalStateNbrMatchedEigenvectors[i]; ++j)
+	delete[] FinalStateMatchedEigenvectors[i][j];
+      delete[] FinalStateMatchedEigenvectors[i];
+      delete[] FinalStateMatchedSpectra[i];
+    }
+  delete[] FinalStateMatchedDirectories;
+  delete[] FinalStateNbrMatchedEigenvectors;
+
+  if (ErrorFlag == true)
     {
       return -1;
     }
-  char** MatchedSpectra = new char* [NbrMatchedDirectories];
-  char*** MatchedEigenvectors = new char** [NbrMatchedDirectories];
-  for (int i = 0; i < NbrMatchedDirectories; ++i)
-    {
-      int TmpLength = strlen(MatchedDirectories[i]);
-      char* TmpPattern = new char[TmpLength + 2 + strlen(InputFile)];
-      strcpy(TmpPattern, MatchedDirectories[i]);
-      TmpPattern[TmpLength] = '/';
-      strcpy(TmpPattern + TmpLength + 1, InputFile);
-      cout << TmpPattern << endl;
-      int TmpNbrEigenvectors = GetAllDirectories(TmpPattern, MatchedEigenvectors[i], ".vec"); 
-      delete[] MatchedDirectories[i];
-      delete[] TmpPattern;
-    }
-  
   return 1;
 }
 
 
-// list all files or directories that obey a given pattern (that can include relative/absolute path) /to/directory/patternxxxsuffix where xxx is an integer
-//
-// pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
-// matchedFileArray = reference on the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path), 
-//                    memory allocation isd one by the function itself
-// suffix = optional suffix  to test
-// return value = number of matched files
-
-int GetAllDirectories(char* pattern, char**& matchedFileArray, char* suffix)
-{
-  char* Path = strrchr(pattern, '/');
-  char* TmpPattern;
-  long PatternLength;
-  DIR* TmpDirectory;
-  long PathLength = 0;
-  if (Path == 0)
-    {
-      TmpDirectory = opendir(".");
-      PatternLength = strlen(pattern);
-      TmpPattern = new char [PatternLength + 1];
-      strcpy(TmpPattern, pattern);
-    }
-  else
-    {
-      PathLength = (Path - pattern) + 1;
-      PatternLength = strlen(Path) - 1;
-      TmpPattern = new char [PatternLength + 1];
-      strcpy(TmpPattern, Path + 1); 
-      char* TmpPath = new char [PathLength + 1];
-      strncpy (TmpPath, pattern, PathLength);
-      TmpPath[PathLength] = '\0';
-      TmpDirectory = opendir(TmpPath); 
-      delete[] TmpPath;
-    }
-  dirent* DirectoryContent;
-  List<char*> MatchedFiles;
-  if (suffix == 0)
-    {
-      while ((DirectoryContent = readdir(TmpDirectory)))
-	{
-	  if ((strncmp(DirectoryContent->d_name, TmpPattern, PatternLength) == 0) && ((*(DirectoryContent->d_name + PatternLength)) >= '0') && 
-	  ((*(DirectoryContent->d_name + PatternLength)) <= '9'))
-	    {
-	      char* TmpName  = new char [strlen(DirectoryContent->d_name) + 1];
-	      strcpy (TmpName, DirectoryContent->d_name);
-	      MatchedFiles += TmpName;
-	    }
-	}
-    }
-  else
-    {
-      while ((DirectoryContent = readdir(TmpDirectory)))
-	{
-	  if (strncmp(DirectoryContent->d_name, TmpPattern, PatternLength) == 0)
-	    {
-	      char* EndPos = DirectoryContent->d_name + PatternLength;
-	      while (((*EndPos) != '\0') && ((*EndPos) >= '0') && ((*EndPos) <= '9'))
-		++EndPos;
-	      if (((*EndPos) != '\0') && (EndPos != (DirectoryContent->d_name + PatternLength)) && (strcmp(suffix, EndPos) == 0))
-		{
-		  char* TmpName  = new char [strlen(DirectoryContent->d_name) + 1];
-		  strcpy (TmpName, DirectoryContent->d_name);
-		  MatchedFiles += TmpName;		
-		}
-	    }
-	}
-    }
-  closedir(TmpDirectory);
-  if (MatchedFiles.GetNbrElement() == 0)
-    {
-      matchedFileArray = 0;
-      return 0;
-    }
-  ListIterator<char*> MatchedFileIterator(MatchedFiles);
-  char** TmpName2;
-  int* FileIndices = new int [MatchedFiles.GetNbrElement()];
-  matchedFileArray = new char* [MatchedFiles.GetNbrElement()];
-  int Pos = 0;
-  while ((TmpName2 = MatchedFileIterator()))
-    {
-      FileIndices[Pos] = atoi ((*TmpName2) + PatternLength); 
-      if (PathLength == 0)
-	{
-	  matchedFileArray[Pos] = (*TmpName2);
-	}
-      else
-	{
-	  char* TmpName3 = new char[PathLength + 2 + strlen(*TmpName2)];
-	  strncpy (TmpName3, pattern, PathLength);
-	  TmpName3[PathLength] = '/';
-	  strcpy (TmpName3 + PathLength + 1,(*TmpName2));	  
-	  matchedFileArray[Pos] = TmpName3;
-	  delete[] (*TmpName2);
-	}
-      ++Pos;
-    }
-  SortArrayUpOrdering<char*>(FileIndices, matchedFileArray, Pos);
-  for (int i = 0; i < Pos; ++i)
-    {
-      cout << FileIndices[i] << " " << matchedFileArray[i] << endl;
-    }
-  delete[] FileIndices;
-  delete[] TmpPattern;
-  return Pos;
-}

@@ -55,7 +55,8 @@ am_libSpectra_a_OBJECTS = Spectra.$(OBJEXT) OverlapSpectra.$(OBJEXT) \
 	TimeResolvedPLSpectra.$(OBJEXT) PeriodicSpectra.$(OBJEXT) \
 	XYReflexionSymmetricPeriodicSpectra.$(OBJEXT) \
 	CylinderInMagneticFieldSpectra.$(OBJEXT) \
-	CylinderQuantumDotSpectra.$(OBJEXT) HardBoxSpectra.$(OBJEXT)
+	CylinderQuantumDotSpectra.$(OBJEXT) HardBoxSpectra.$(OBJEXT) \
+	QuantumWellBFieldAbsorptionSpectra.$(OBJEXT)
 libSpectra_a_OBJECTS = $(am_libSpectra_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -67,6 +68,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/HardBoxSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/OverlapSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicSpectra.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/QuantumWellBFieldAbsorptionSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/Spectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/TimeResolvedPLSpectra.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/XYReflexionSymmetricPeriodicSpectra.Po
@@ -188,7 +190,8 @@ PeriodicSpectra.cc \
 XYReflexionSymmetricPeriodicSpectra.cc \
 CylinderInMagneticFieldSpectra.cc \
 CylinderQuantumDotSpectra.cc \
-HardBoxSpectra.cc
+HardBoxSpectra.cc \
+QuantumWellBFieldAbsorptionSpectra.cc
 
 all: all-recursive
 
@@ -244,6 +247,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HardBoxSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OverlapSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicSpectra.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuantumWellBFieldAbsorptionSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Spectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TimeResolvedPLSpectra.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/XYReflexionSymmetricPeriodicSpectra.Po@am__quote@
