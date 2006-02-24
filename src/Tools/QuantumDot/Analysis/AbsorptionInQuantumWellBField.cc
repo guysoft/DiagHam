@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 	  InitialStateNbrEigenvectors = InitialStateNbrMatchedEigenvectors[i];
 	}
       else
-	if (InitialStateNbrEigenvectors == InitialStateNbrMatchedEigenvectors[i])
+	if (InitialStateNbrEigenvectors != InitialStateNbrMatchedEigenvectors[i])
 	  {
 	    ErrorFlag = true;
 	    cout << "wrong number of eigenvectors in " << InitialStateMatchedDirectories[i] << "(found " << InitialStateNbrMatchedEigenvectors[i] << ", need " << InitialStateNbrEigenvectors << ")" << endl;
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 	  FinalStateNbrEigenvectors = FinalStateNbrMatchedEigenvectors[i];
 	}
       else
-	if (FinalStateNbrEigenvectors == FinalStateNbrMatchedEigenvectors[i])
+	if (FinalStateNbrEigenvectors != FinalStateNbrMatchedEigenvectors[i])
 	  {
 	    ErrorFlag = true;
 	    cout << "wrong number of eigenvectors in " << FinalStateMatchedDirectories[i] << "(found " << FinalStateNbrMatchedEigenvectors[i] << ", need " << FinalStateNbrEigenvectors << ")" << endl;
@@ -176,6 +176,7 @@ int main(int argc, char** argv)
 	End = InitialStateNbrMatchedDirectories;
       else
 	End = FinalStateNbrMatchedDirectories;
+      --End;
     }
   else
     {

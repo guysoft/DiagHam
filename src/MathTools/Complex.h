@@ -76,13 +76,15 @@ public:
   friend double Real(const Complex& z);
 // return imaginary part of z
   friend double Imag(const Complex& z);
-//return norm of z
+  //return norm of z
   friend double Norm(const Complex& z);
-// return argument of z 
+  // return square of the z modulus 
+  friend double SqrNorm(const Complex& z);
+  // return argument of z 
   friend double Arg(const Complex& z);
-//return complex conjugate
+  //return complex conjugate
   friend Complex Conj(const Complex& z);
-// return complex corresponding to the polar definition
+  // return complex corresponding to the polar definition
   friend Complex Polar(double r,double theta);
   
 
@@ -248,6 +250,12 @@ inline double Imag(const Complex& z)
 inline double Norm(const Complex& z)
 {
   return sqrt(z.Re * z.Re + z.Im * z.Im);
+}
+
+// return square of the z modulus 
+inline double SqrNorm(const Complex& z)
+{
+  return (z.Re * z.Re + z.Im * z.Im);
 }
 
 // return argument of z 

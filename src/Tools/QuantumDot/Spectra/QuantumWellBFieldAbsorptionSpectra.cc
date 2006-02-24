@@ -84,7 +84,7 @@ QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int NbrFi
   double tmp1 = eMin; 
   for (int i = 0; i < N; ++i)
     {
-      Energy[i] = eMin;
+      Energy[i] = tmp1;
       Absorption[i] = 0.0;
       tmp1 += deltaE;
     }
@@ -96,12 +96,13 @@ QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int NbrFi
 
   for (int i = 0; i < NbrFiles; ++i)
     {
+      cout << "evaluate contribution of " << initialStateSpectrumFiles[i] << " and " << finalStateSpectrumFiles[i] << endl;
       this->AddSample(nbrInitialStates, initialStateSpectrumFiles[i], initialStateEigenstateFiles[i],
-		      nbrFinalStates, finalStateSpectrumFiles[i], finalStateEigenstateFiles[i]);
+		      nbrFinalStates, finalStateSpectrumFiles[i], finalStateEigenstateFiles[i]);      
     }
   double tmp3 = 1.0 / ((double) NbrFiles);
   for (int i = 0; i < N; ++i)
-    this->AxeY[i] *= tmp3;
+    (*(this->AxeY))[i] *= tmp3;
 
   this->PointNumber = N;
 }
@@ -141,19 +142,21 @@ void QuantumWellBFieldAbsorptionSpectra::AddSample (int nbrInitialStates, char* 
   ComplexVector TmpInitialVector2(nbrInitialStates);
   ComplexVector TmpFinalVector(NbrFinalStates);
   double Tmp;
+  double Tmp2;
   int TmpNbrValues = this->AxeX->GetVectorDimension();
   double Factor = this->Gamma / (2.0 * M_PI);
-  double GammaSqr = this->Gamma * this->Gamma;
+  double GammaSqr = 0.25 * this->Gamma * this->Gamma;
   double TmpEnergy;
   for (int i = 0; i < nbrFinalStates; ++i)
     {
       TmpFinalVector.ReadVector(finalEigenstateFileNames[i]);   
       TmpInitialVector2.Multiply(this->OscillatorStrength, TmpFinalVector);
+      Tmp2 = Factor;// * exp (-this->Beta * FinalEnergies[i]);
       for (int j = 0; j < nbrInitialStates; ++j)
 	if (FinalEnergies[i] > InitialEnergies[j])
 	  {
 	    TmpInitialVector.ReadVector(initialEigenstateFileNames[j]);
-	    Tmp = Factor * Norm(TmpInitialVector * TmpInitialVector2) * exp (this->Beta * FinalEnergies[i]);
+	    Tmp = SqrNorm(TmpInitialVector * TmpInitialVector2) * Tmp2;
 	    for (int k = 0; k < TmpNbrValues; ++k)
 	      {
 		TmpEnergy = FinalEnergies[i] - InitialEnergies[j] - (*(this->AxeX))[k];
@@ -161,7 +164,6 @@ void QuantumWellBFieldAbsorptionSpectra::AddSample (int nbrInitialStates, char* 
 	      }
 	}
     }
-
   delete[] InitialEnergies;
   delete[] FinalEnergies;
 }
@@ -178,7 +180,7 @@ void QuantumWellBFieldAbsorptionSpectra::ComputeOscillatorStrengthMatrix(double 
   int HalfNbrFinalStates = this->NbrFinalStates / 2;
 
   double ZFactor = cos (thetaPolarizationAngle) * 2.0 * zSize / (M_PI * M_PI);
-  double Tmp = 0;
+  double Tmp = 0.0;
   int Diff = 2 - 1;
   int Sum = 2 + 1;
   if ((Diff & 1) != 0)
@@ -186,7 +188,7 @@ void QuantumWellBFieldAbsorptionSpectra::ComputeOscillatorStrengthMatrix(double 
   if ((Sum & 1) != 0)
     Tmp -= 2.0 / ((double) (Sum * Sum));
   ZFactor *= Tmp;
-
+  cout << "ZFactor = " << ZFactor << endl;
   for (int m = 0; m < HalfNbrFinalStates; ++m)
     for (int n = 0; n < this->NbrInitialStates; ++n)
       {

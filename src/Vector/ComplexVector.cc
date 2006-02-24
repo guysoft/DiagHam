@@ -1589,15 +1589,15 @@ ComplexVector& ComplexVector::AddMultiply (const HermitianMatrix&  M, ComplexVec
 
 ComplexVector& ComplexVector::Multiply (const RealMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
+  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
     return *this;
-  if (V.Dimension != M.NbrRow)
+  if (V.Dimension != M.NbrColumn)
     V.Resize(M.NbrRow);
-  for (int i = 0; i < V.Dimension; ++i)
+  for (int i = 0; i < this->Dimension; ++i)
     {
       this->RealComponents[i] = 0.0;
       this->ImaginaryComponents[i] = 0.0;
-      for (int j = 0; j < this->Dimension; ++j)
+      for (int j = 0; j < V.Dimension; ++j)
 	{
 	  this->RealComponents[i] += M.Columns[j].Components[i] * V.RealComponents[j];
 	  this->ImaginaryComponents[i] += M.Columns[j].Components[i] * V.ImaginaryComponents[j];
@@ -1614,15 +1614,15 @@ ComplexVector& ComplexVector::Multiply (const RealMatrix&  M, ComplexVector& V)
 
 ComplexVector& ComplexVector::Multiply (const ComplexMatrix&  M, ComplexVector& V)
 {
-  if ((this->Dimension == 0) || (this->Dimension != M.NbrColumn))
+  if ((this->Dimension == 0) || (this->Dimension != M.NbrRow))
     return *this;
-  if (V.Dimension != M.NbrRow)
-    V.Resize(M.NbrRow);
-  for (int i = 0; i < V.Dimension; ++i)
+  if (V.Dimension != M.NbrColumn)
+    V.Resize(M.NbrColumn);
+  for (int i = 0; i < this->Dimension; ++i)
     {
       this->RealComponents[i] = 0.0;
       this->ImaginaryComponents[i] = 0.0;
-      for (int j = 0; j < this->Dimension; ++j)
+      for (int j = 0; j < V.Dimension; ++j)
 	{
 	  this->RealComponents[i] += (M.Columns[j].RealComponents[i] * V.RealComponents[j] -  
 				      M.Columns[j].ImaginaryComponents[i] * V.ImaginaryComponents[j]);

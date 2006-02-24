@@ -1673,10 +1673,10 @@ RealVector& RealVector::Multiply (const RealMatrix&  M, RealVector& V)
   V.Localize();
   if (this->Dimension != M.NbrRow)
    this->Resize(M.NbrRow);
-  for (int i = 0; i < V.Dimension; i ++)
+  for (int i = 0; i < this->Dimension; i ++)
     {
       this->Components[i] = M.Columns[0].Components[i] * V.Components[0];
-      for (int j = 1; j < this->Dimension; j++)
+      for (int j = 1; j < V.Dimension; j++)
 	this->Components[i] += M.Columns[j].Components[i] * V.Components[j];
     }
   this->Delocalize(true);
