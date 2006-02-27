@@ -222,46 +222,60 @@ void QuantumWellHamiltonianInMagneticField1Level::EvaluateInteractionFactors()
   double Coefficient;
   double KCoeffcient = this->MagneticLength * 2.0 * M_PI / this->YSize;
   double LandauPrefactor = this->EvaluateLandauPrefactor(this->MagneticLength, this->LandauIndex);
-  Complex Tmp11;
+  double* TmpSin = new double [this->NbrZCells];
   for (int k = 0; k < this->NbrZCells; ++k)
     {
-      Y = 0.5 * YInc;
-      double ZPartValue = sin (((double) this->SubbandIndex) * M_PI * Z / this->ZSize);
-      ZPartValue *= ZPartValue;
-      for (int j = 0; j < this->NbrYCells; ++j)
-	{
-	  X = 0.5 * XInc;
-	  for (int i = 0; i < this->NbrXCells; ++i)
-	    {
-	      Coefficient = ZPartValue * LandauPrefactor * LandauPrefactor * this->Potential->GetPotential(i, j, k);
-	      for (int m = 0; m < this->LandauDegeneracy; ++m)
-		{
-		  double ShiftXM = X - (KCoeffcient * m);
-		  double Landau11 = exp (-0.5 * (ShiftXM * ShiftXM));
-		  if (this->LandauIndex == 2)
-		    {
-		      Landau11 *= (2.0 * ShiftXM * ShiftXM) - 1.0;
-		    }
-		  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
-		    {	
-		      double ShiftXN = X - (KCoeffcient * n);
-		      double Landau12 = Coefficient * Landau11 * exp (-0.5 * (ShiftXN * ShiftXN));
-		      if (this->LandauIndex == 2)
-			{
-			  Landau12 *= (2.0 * ShiftXN * ShiftXN) - 1.0;
-			}
-		      Tmp11.Re = Landau12 * cos(Y * KCoeffcient *((double) (n - m)));
-		      Tmp11.Im = -Landau12 * sin (Y* KCoeffcient *((double) (n - m)));
-		      this->Hamiltonian.AddToMatrixElement(m, n, Tmp11);
-		    }
-		  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * Landau11 * Landau11);
-		}
-	      X += XInc;
-	    }
-	  Y += YInc;	      
-	}
+      TmpSin[k] = sin (((double) this->SubbandIndex) * M_PI * Z / this->ZSize);
+      TmpSin[k] *= TmpSin[k] * LandauPrefactor * LandauPrefactor;
       Z += ZInc;
     }
+  double* TmpLandau = new double [this->LandauDegeneracy];
+
+  Complex Tmp1;
+  Complex Tmp2;
+  for (int i = 0; i < this->NbrXCells; ++i)
+    {
+      for (int m = 0; m < this->LandauDegeneracy; ++m)
+	{
+	  double ShiftXM = X - (KCoeffcient * m);
+	  double Landau11 = exp (-0.5 * (ShiftXM * ShiftXM));
+	  if (this->LandauIndex == 2)
+	    {
+	      Landau11 *= (2.0 * ShiftXM * ShiftXM) - 1.0;
+	    }
+	  TmpLandau[m] = Landau11;
+	}
+      for (int m = 0; m < this->LandauDegeneracy; ++m)
+	{
+	  double Landau11 = TmpLandau[m];
+	  for (int n = m + 1; n < this->LandauDegeneracy; ++n)
+	    {	
+	      double Landau12 = Landau11 * TmpLandau[n];
+	      Y = 0.5 * YInc;
+	      Tmp2 = 0.0;
+	      for (int j = 0; j < this->NbrYCells; ++j)
+		{		      
+		  Tmp1.Re = Landau12 * cos(Y * KCoeffcient *((double) (n - m)));
+		  Tmp1.Im = -Landau12 * sin (Y* KCoeffcient *((double) (n - m)));
+		  Coefficient = 0.0;
+		  for (int k = 0; k < this->NbrZCells; ++k)
+		    Coefficient += this->Potential->GetPotential(i, j, k) * TmpSin[k];
+		  Tmp1 *= Coefficient;
+		  Tmp2 += Tmp1;
+		  Y += YInc;
+		}
+	      this->Hamiltonian.AddToMatrixElement(m, n, Tmp2);
+	    }
+	  Coefficient = 0.0;
+	  for (int j = 0; j < this->NbrYCells; ++j)
+	    for (int k = 0; k < this->NbrZCells; ++k)
+	      Coefficient += this->Potential->GetPotential(i, j, k) * TmpSin[k];
+	  this->Hamiltonian.AddToMatrixElement(m, m, Coefficient * Landau11 * Landau11);	  
+	}
+      X += XInc;
+    }
+  delete[] TmpSin;
+  delete[] TmpLandau;
 }
 
 // save potential on disk
