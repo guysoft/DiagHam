@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 2.97);
   SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 2.97);
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 2.64);  
+  SingleDoubleOption ZSizeOption ('\n', "zsize", "size in the z direction in Angstrom", 58.7);
   SingleDoubleOption MassOption ('\n', "mass", "electron effective mass (in bare electron mass unit)", 0.050);
   SingleDoubleOption BFieldOption ('\n', "bfield", "B field (in Tesla unit)", 31.09);
   SingleDoubleOption BandOffsetOption ('\n', "band-offset", "band offset value (in meV unit)", 600);
@@ -73,6 +74,7 @@ int main(int argc, char** argv)
   OptionList += &CellXSizeOption;
   OptionList += &CellYSizeOption;
   OptionList += &CellZSizeOption;
+  OptionList += &ZSizeOption;
   OptionList += &MassOption;
   OptionList += &BFieldOption;
   OptionList += &CoefficientFileNameOption;
@@ -106,6 +108,7 @@ int main(int argc, char** argv)
   double Lx = CellXSizeOption.GetDouble();
   double Ly = CellYSizeOption.GetDouble();
   double Lz = CellZSizeOption.GetDouble();
+  double ZSize = ZSizeOption.GetDouble();
   double Mass = MassOption.GetDouble();
   double BField = BFieldOption.GetDouble();
   int LeftSize = LeftSizeOption.GetInteger();
@@ -118,7 +121,7 @@ int main(int argc, char** argv)
   timeval CurrentTime;
   gettimeofday (&(CurrentTime), 0);
   srand(CurrentTime.tv_usec);
-  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField, 143.0, 0.0, 0, 2, 5.87, BandOffset, 0.53, LoadPotentialFileName);
+  QuantumWellHamiltonianInMagneticField Hamiltonian (1000.0, 1000.0, ZSize, Mass, BField, 143.0, 0.0, 0, 2, 5.87, BandOffset, 0.53, LoadPotentialFileName);
   if (SavePotentialFileName != 0)    
     Hamiltonian.SavePotential(SavePotentialFileName);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;

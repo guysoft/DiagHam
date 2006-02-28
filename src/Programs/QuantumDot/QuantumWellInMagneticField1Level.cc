@@ -50,6 +50,7 @@ int main(int argc, char** argv)
   SingleDoubleOption CellXSizeOption ('X', "cell-xsize", "cell size in the x direction in Angstrom", 2.97);
   SingleDoubleOption CellYSizeOption ('Y', "cell-ysize", "cell size in the y direction in Angstrom", 2.97);
   SingleDoubleOption CellZSizeOption ('Z', "cell-zsize", "cell size in the z direction in Angstrom", 2.64);  
+  SingleDoubleOption ZSizeOption ('\n', "zsize", "size in the z direction in Angstrom", 58.7);
   SingleDoubleOption MassOption ('\n', "mass", "electron effective mass (in bare electron mass unit)", 0.050);
   SingleDoubleOption BFieldOption ('\n', "bfield", "B field (in Tesla unit)", 30.90);
   SingleDoubleOption ZKineticEnergyOption ('\n', "z-kinetic", "kinetic energy (in meV) due to the z confinment", 0.0);
@@ -76,6 +77,7 @@ int main(int argc, char** argv)
   OptionList += &CellXSizeOption;
   OptionList += &CellYSizeOption;
   OptionList += &CellZSizeOption;
+  OptionList += &ZSizeOption;
   OptionList += &MassOption;
   OptionList += &BFieldOption;
   OptionList += &ZKineticEnergyOption;
@@ -112,6 +114,7 @@ int main(int argc, char** argv)
   double Lx = CellXSizeOption.GetDouble();
   double Ly = CellYSizeOption.GetDouble();
   double Lz = CellZSizeOption.GetDouble();
+  double ZSize = ZSizeOption.GetDouble();
   double Mass = MassOption.GetDouble();
   double BField = BFieldOption.GetDouble();
   double ZKineticEnergy = ZKineticEnergyOption.GetDouble();
@@ -127,7 +130,7 @@ int main(int argc, char** argv)
   timeval CurrentTime;
   gettimeofday (&(CurrentTime), 0);
   srand(CurrentTime.tv_usec);
-  QuantumWellHamiltonianInMagneticField1Level Hamiltonian (1000.0, 1000.0, 58.7, Mass, BField,  ZKineticEnergy, LandauIndex, SubbandIndex, 5.87, BandOffset, 0.53, LoadPotentialFileName);
+  QuantumWellHamiltonianInMagneticField1Level Hamiltonian (1000.0, 1000.0, ZSize, Mass, BField,  ZKineticEnergy, LandauIndex, SubbandIndex, 5.87, BandOffset, 0.53, LoadPotentialFileName);
   if (SavePotentialFileName != 0)    
     Hamiltonian.SavePotential(SavePotentialFileName);
   cout << Hamiltonian.GetHilbertSpaceDimension() << endl;
