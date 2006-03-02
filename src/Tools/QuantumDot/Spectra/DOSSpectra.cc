@@ -68,3 +68,106 @@ DOSSpectra::DOSSpectra(int FileNumber, char** Files, int * StateNumber, double G
   this->AxeY = new RealVector(DOS, N);
   this->PointNumber = N;
 }
+
+// constructor from a set of energy files. Each peak is assimilated to a Lorentzian function.
+//
+// nbrFiles=  number of files
+// spectrumFiles = array of names of the file containing the state spectrum
+// nbrStates = number of initial states per sample
+// gamma = lorentzian broadening parameter
+// eMin = photon minimum energy (must use same unit than the spectrum datas)
+// eMax = photon maximum energy (must use same unit than the spectrum datas)
+// deltaE = photon energy step (must use same unit than the spectrum datas)
+
+DOSSpectra::DOSSpectra(int nbrFiles, char** spectrumFiles, int nbrStates,  double gamma, double eMin, double eMax, double deltaE)
+{
+  int N = (int) ((eMax - eMin) / deltaE);
+  double* Energy = new double [N];
+  double tmp1 = eMin; 
+  double tmp2;
+  double g = gamma * gamma / 4.0;
+  for (int i = 0; i < N; ++i)
+    {
+      Energy[i] = tmp1;
+      tmp1 += deltaE;
+    }
+
+  this->AxeX = new RealVector(Energy, N);
+  this->AxeY = new RealVector(N, true);
+
+  double* TmpSpectrum = 0;
+  if (nbrStates == 0)
+    {
+      TmpSpectrum = new double[nbrStates];
+    }
+  for (int i = 0; i < nbrFiles; ++i)
+    {
+      this->ReadSpectrum(spectrumFiles[i], TmpSpectrum, nbrStates);
+      cout << spectrumFiles[i] << " " <<  nbrStates << endl;
+      for (int j = 0; j < N; ++j)
+	{
+	  tmp1 = Energy[j];
+	  tmp2 = 0.0;
+	  for (int k = 0; k < nbrStates; ++k)
+	    tmp2 += 1.0 / ((tmp1 - TmpSpectrum[k]) * (tmp1 - TmpSpectrum[k]) + g);
+	  (*(this->AxeY))[j] += tmp2;
+	}
+    }
+  delete[] TmpSpectrum;
+
+  double tmp3 = gamma / (2.0 * M_PI * ((double) nbrFiles));
+  for (int i = 0; i < N; ++i)
+    (*(this->AxeY))[i] *= tmp3;
+
+  this->PointNumber = N;
+}
+
+// read spectrum raw data from a file
+// 
+// filename = name of  the file that conatins the spectrum (with optional relative/absolute path)
+// energies = reference ont the array where energy values will be stored
+// nbrValues = reference on the number of energy values to retrieve from the file (0 it has to be automatically determined, and so is energy array allocation)
+// return value = true if no error occured
+
+bool DOSSpectra::ReadSpectrum(char* filename, double*& energies, int& nbrValues)
+{
+  if (nbrValues == 0)
+    {
+      ifstream File2;
+      File2.open(filename, ios::out);
+      if (!File2.is_open())
+	{
+	  cout << "error while opening file : " << filename << endl;
+	  return false;
+	}
+      double Dummy;
+      while (File2.tellg() >= 0)
+	{
+	  File2 >> Dummy;
+	  ++nbrValues;
+	}      
+      --nbrValues;
+      File2.close();
+      energies = new double[nbrValues];
+    }
+  ifstream File;
+  File.open(filename, ios::out);
+  if (!File.is_open())
+    {
+      cout << "error while opening file : " << filename << endl;
+      return false;
+    }
+  for (int j = 0; j < nbrValues; ++j)
+    {
+      if (File.tellg() < 0)
+	{
+	  cout << filename <<  " has to few eigenvalues" << endl;
+	  File.close();
+	  return false;
+	}
+      else
+	File >> energies[j];
+    }
+  File.close();
+  return true;  
+}

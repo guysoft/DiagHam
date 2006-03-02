@@ -47,9 +47,7 @@ using std::endl;
 
 // constructor from a set of energy files. Each peak is assimilated to a Lorentzian function.
 //
-// NbrFiles=  number of files
-// files = name of files
-// stateNumber = integer array containing number of states in each file
+// nbrFiles=  number of files
 // nbrInitialStates = number of initial states per sample
 // initialStateSpectrumFiles = array of names of the file containing the initial state spectrum
 // initialStateEigenstateFiles = pointers to arrays that contains names of the eigenvectors associated to each spectrum (for a given spectrum, 
@@ -67,7 +65,7 @@ using std::endl;
 // eMax = photon maximum energy (must use same unit than the spectrum datas)
 // deltaE = photon energy step (must use same unit than the spectrum datas)
 
-QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int NbrFiles, int nbrInitialStates, char** initialStateSpectrumFiles, char*** initialStateEigenstateFiles, 	  
+QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int nbrFiles, int nbrInitialStates, char** initialStateSpectrumFiles, char*** initialStateEigenstateFiles, 	  
 								       int nbrFinalStates, char** finalStateSpectrumFiles, char*** finalStateEigenstateFiles,
 								       double thetaPolarizationAngle, double phiPolarizationAngle, double zSize, 
 								       double gamma, double beta, double eMin, double eMax, double deltaE)
@@ -80,27 +78,25 @@ QuantumWellBFieldAbsorptionSpectra::QuantumWellBFieldAbsorptionSpectra(int NbrFi
 
   int N = (int) ((eMax - eMin) / deltaE);
   double* Energy = new double [N];
-  double* Absorption = new double [N]; 
   double tmp1 = eMin; 
   for (int i = 0; i < N; ++i)
     {
       Energy[i] = tmp1;
-      Absorption[i] = 0.0;
       tmp1 += deltaE;
     }
 
   this->AxeX = new RealVector(Energy, N);
-  this->AxeY = new RealVector(N);
+  this->AxeY = new RealVector(N, true);
 
   this->ComputeOscillatorStrengthMatrix(thetaPolarizationAngle, phiPolarizationAngle, zSize);
 
-  for (int i = 0; i < NbrFiles; ++i)
+  for (int i = 0; i < nbrFiles; ++i)
     {
       cout << "evaluate contribution of " << initialStateSpectrumFiles[i] << " and " << finalStateSpectrumFiles[i] << endl;
       this->AddSample(nbrInitialStates, initialStateSpectrumFiles[i], initialStateEigenstateFiles[i],
 		      nbrFinalStates, finalStateSpectrumFiles[i], finalStateEigenstateFiles[i]);      
     }
-  double tmp3 = 1.0 / ((double) NbrFiles);
+  double tmp3 = 1.0 / ((double) nbrFiles);
   for (int i = 0; i < N; ++i)
     (*(this->AxeY))[i] *= tmp3;
 

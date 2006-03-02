@@ -62,9 +62,7 @@ class QuantumWellBFieldAbsorptionSpectra : public Spectra
   
   // constructor from a set of energy files. Each peak is assimilated to a Lorentzian function.
   //
-  // NbrFiles=  number of files
-  // files = name of files
-  // stateNumber = integer array containing number of states in each file
+  // nbrFiles=  number of files
   // nbrInitialStates = number of initial states per sample
   // initialStateSpectrumFiles = array of names of the file containing the initial state spectrum
   // initialStateEigenstateFiles = pointers to arrays that contains names of the eigenvectors associated to each spectrum (for a given spectrum, 
