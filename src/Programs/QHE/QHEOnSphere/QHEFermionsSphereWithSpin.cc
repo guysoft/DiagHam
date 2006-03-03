@@ -71,7 +71,6 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
   (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
-
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 15);
@@ -237,14 +236,19 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_V_%g_W_%g.ev",
-		   NbrFermions, LzMax,SzTotal,V0,V1);
+	  sprintf (EigenvectorName, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_%d_V_%g_W_%g.ev",
+		   NbrFermions, LzMax, SzTotal, L, V0, V1);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
       delete Space;
+      if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	  EigenvectorName = 0;
+	}
       if (FirstRun == true)
 	FirstRun = false; 
     }
