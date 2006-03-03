@@ -156,7 +156,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-  int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //
