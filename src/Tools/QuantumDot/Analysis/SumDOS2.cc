@@ -122,10 +122,12 @@ int main(int argc, char** argv)
       ErrorFlag = true;
     }
 
+  cout << "truc = " << OutputFile << endl;
   if (ErrorFlag == false)
     {  
       DOSSpectra SumDOS(End - Begin + 1, StateMatchedSpectra + Begin, NbrState, Gamma, Min, Max, Step);
       SumDOS.WriteSpectra(OutputFile);      
+      cout << "troc = " << OutputFile << endl;
     }
 
    for (int i = 0; i < StateNbrMatchedDirectories; ++i)
