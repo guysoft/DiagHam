@@ -235,7 +235,7 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [64];
+	  EigenvectorName = new char [120];
 	  sprintf (EigenvectorName, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_%d_V_%g_W_%g.ev",
 		   NbrFermions, LzMax, SzTotal, L, V0, V1);
 	}
