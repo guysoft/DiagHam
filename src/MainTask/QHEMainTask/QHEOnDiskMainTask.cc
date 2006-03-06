@@ -37,14 +37,18 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Hamiltonian/QHEHamiltonian/AbstractQHEHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 
 #include "Options/OptionManager.h"
 #include "Options/AbstractOption.h"
@@ -52,6 +56,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -103,12 +109,64 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
   this->MaxNbrIterLanczos = ((SingleIntegerOption*) (*options)["iter-max"])->GetInteger();
   this->NbrIterLanczos = ((SingleIntegerOption*) (*options)["nbr-iter"])->GetInteger();
   this->NbrEigenvalue = ((SingleIntegerOption*) (*options)["nbr-eigen"])->GetInteger();
+  if (this->NbrEigenvalue > this->Space->GetHilbertSpaceDimension())
+    {
+      this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
+    }
   this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
+  this->BlockLanczosFlag = false;
+  if ((*options)["block-lanczos"] != 0)
+    {
+      this->BlockLanczosFlag = ((BooleanOption*) (*options)["block-lanczos"])->GetBoolean();
+    }
+  this->SizeBlockLanczos = 1;
+  if ((*options)["block-size"] != 0)
+    {
+      this->SizeBlockLanczos = ((SingleIntegerOption*) (*options)["block-size"])->GetInteger();
+    }
   this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
   this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
   this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
   this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
   this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
+  if ((*options)["show-itertime"] != 0)
+    {
+      this->ShowIterationTime = ((BooleanOption*) (*options)["show-itertime"])->GetBoolean();
+    }
+  else
+    this->ShowIterationTime = false;
+  if ((*options)["initial-vector"] != 0)
+    {
+      this->InitialVectorFileName = ((SingleStringOption*) (*options)["initial-vector"])->GetString();
+    }
+  else
+    {
+      this->InitialVectorFileName = 0;
+    }
+  if ((*options)["partial-lanczos"] != 0)
+    {
+      this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
+    }
+  else
+    {
+      this->PartialLanczos = false;
+    }
+  if ((*options)["use-lapack"] != 0)
+    {
+      this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
+    }
+  else
+    {
+      this->LapackFlag = false;
+    }
+  if ((*options)["limit-time"] != 0)
+    {
+      this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());
+    }
+  else
+    {
+      this->MaximumAllowedTime = 0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -155,35 +213,70 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 //      cout << HRep << endl;
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	  if (this->EvaluateEigenvectors == false)
+#ifdef __LAPACK__
+	  if (this->LapackFlag == true)
 	    {
-	      HRep.Householder(TmpTriDiag, MACHINE_PRECISION);
-	      TmpTriDiag.Diagonalize();
-	      TmpTriDiag.SortMatrixUpOrder();
+	      RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+	      if (this->EvaluateEigenvectors == false)
+		{
+		  HRep.LapackDiagonalize(TmpDiag);
+		}
+	      else
+		{
+		  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+		  HRep.LapackDiagonalize(TmpDiag, Q);
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		    {
+		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		      Q[j].WriteVector(TmpVectorName);
+		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+		    }	      
+		  cout << endl;
+		  delete[] TmpVectorName;
+		}
+	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		{
+		  File << this->LValue << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+		}
 	    }
 	  else
 	    {
-	      RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-	      HRep.Householder(TmpTriDiag, 1e-7, Q);
-	      TmpTriDiag.Diagonalize(Q);
-	      TmpTriDiag.SortMatrixUpOrder(Q);
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	      for (int j = 0; j < this->NbrEigenvalue; ++j)
+#endif
+	      RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
+	      if (this->EvaluateEigenvectors == false)
 		{
-		  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		  Q[j].WriteVector(TmpVectorName);
-		  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " ";		  
-		}	      
-	      cout << endl;
-	      delete[] TmpVectorName;
+		  HRep.Householder(TmpTriDiag, MACHINE_PRECISION);
+		  TmpTriDiag.Diagonalize();
+		  TmpTriDiag.SortMatrixUpOrder();
+		}
+	      else
+		{
+		  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+		  HRep.Householder(TmpTriDiag, 1e-7, Q);
+		  TmpTriDiag.Diagonalize(Q);
+		  TmpTriDiag.SortMatrixUpOrder(Q);
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		    {
+		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		      Q[j].WriteVector(TmpVectorName);
+		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " ";		  
+		    }	      
+		  cout << endl;
+		  delete[] TmpVectorName;
+		}
+	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		{
+		  File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+		}
+#ifdef __LAPACK__
 	    }
-	  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-	    {
-	      File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
-	    }
+#endif
 	}
       else
 	{
@@ -196,14 +289,25 @@ int QHEOnDiskMainTask::ExecuteMainTask()
       if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
 	{
 	  if (this->DiskFlag == false)
-	    Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    if (this->EvaluateEigenvectors == true)
+	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);
+	    else
+	      Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	  else
-	    Lanczos = new BasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    if (this->EvaluateEigenvectors == true)
+	      Lanczos = new BasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
+	    else
+	      Lanczos = new BasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	}
       else
 	{
 	  if (this->DiskFlag == false)
-	    Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    {
+	      if (this->BlockLanczosFlag == true)
+		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos);
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    }
 	  else
 	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
 	}
@@ -216,29 +320,65 @@ int QHEOnDiskMainTask::ExecuteMainTask()
       if ((this->DiskFlag == true) && (this->ResumeFlag == true))
 	Lanczos->ResumeLanczosAlgorithm();
       else
-	Lanczos->InitializeLanczosAlgorithm();
+	{
+	  if (this->InitialVectorFileName == 0)
+	    {
+	      Lanczos->InitializeLanczosAlgorithm();
+	    }
+	  else
+	    {	      
+	      RealVector InitialVector;
+	      InitialVector.ReadVector(this->InitialVectorFileName);
+	      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+	    }
+	}
       cout << "Run Lanczos Algorithm" << endl;
       timeval TotalStartingTime;
       timeval TotalEndingTime;
+      timeval TotalCurrentTime;
       double Dt;
       gettimeofday (&(TotalStartingTime), 0);
+      int StartTimeSecond = TotalStartingTime.tv_sec;
       if (ResumeFlag == false)
 	{
 	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
 	}
       RealTriDiagonalSymmetricMatrix TmpMatrix;
-      while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) ||
-						       ((this->DiskFlag == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos))))
+      gettimeofday (&(TotalCurrentTime), 0); 
+      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+      while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+							((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
-	  ++CurrentNbrIterLanczos;
+	  if (this->BlockLanczosFlag == true)
+	    CurrentNbrIterLanczos += this->SizeBlockLanczos;
+	  else
+	    ++CurrentNbrIterLanczos;
 	  Lanczos->RunLanczosAlgorithm(1);
 	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	  TmpMatrix.SortMatrixUpOrder();
 	  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
 	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
 	  PreviousLowest = Lowest; 
-	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " "<< endl;
+	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " ";
+	  gettimeofday (&(TotalEndingTime), 0);
+	  CurrentTimeSecond = TotalEndingTime.tv_sec;
+	  if (this->ShowIterationTime == true)
+	    {
+	      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")";
+	      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+	    }
+	  cout << endl;
+	}
+      if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
+	{
+	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+	  TmpMatrix.SortMatrixUpOrder();
 	}
       if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
 	{
@@ -257,46 +397,73 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	  File << this->LValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
 	}
       cout << endl;
-      if (this->EvaluateEigenvectors == true)
+      if ((this->EvaluateEigenvectors == true) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+										 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+						   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+						    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
 	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
-	  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	  if (this->EigenvectorConvergence == true)
+	  if ((Eigenvectors != 0) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
 	    {
-	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
-	      Operation1.ApplyOperation(this->Architecture);
-	      double Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-	      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
-	      while (Precision > 1e-7)
+	      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+	      if (this->EigenvectorConvergence == true)
 		{
-		  ++CurrentNbrIterLanczos;
-		  Lanczos->RunLanczosAlgorithm(1);
-		  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
-		  TmpMatrix.SortMatrixUpOrder();
-		  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
-		  delete[] Eigenvectors;
-		  Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
-		  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
 		  Operation1.ApplyOperation(this->Architecture);
-		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-		  Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+		  double Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
-		  cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
-		       << Precision << " "<< endl;
+		  while (Precision > 1e-7)
+		    {
+		      ++CurrentNbrIterLanczos;
+		      Lanczos->RunLanczosAlgorithm(1);
+		      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+		      TmpMatrix.SortMatrixUpOrder();
+		      Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
+		      delete[] Eigenvectors;
+		      Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+		      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+		      Operation1.ApplyOperation(this->Architecture);
+		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
+		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+		      cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
+			   << Precision << " ";
+		      if (this->ShowIterationTime == true)
+			{
+			  gettimeofday (&(TotalEndingTime), 0);
+			  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+			    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+			  cout << "(" << Dt << " s)";
+			  TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+			  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+			}
+		      cout << endl;
+		    }
 		}
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      for (int i = 0; i < this->NbrEigenvalue; ++i)
+		{
+		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
+		  Operation1.ApplyOperation(this->Architecture);
+		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
+		  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
+		    {	  
+		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+		    }
+		  else
+		    {
+		      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+		    }
+		  Eigenvectors[i].WriteVector(TmpVectorName);
+		}
+	      cout << endl;
+	      delete[] TmpVectorName;
+	      delete[] Eigenvectors;
 	    }
-	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	  for (int i = 0; i < this->NbrEigenvalue; ++i)
+	  else
 	    {
-	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
-	      Operation1.ApplyOperation(this->Architecture);
-	      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
-	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
-	      Eigenvectors[i].WriteVector(TmpVectorName);
+	      cout << "eigenvectors can't be computed" << endl;
 	    }
-	  cout << endl;
-	  delete[] TmpVectorName;
-	  delete[] Eigenvectors;
 	}
       gettimeofday (&(TotalEndingTime), 0);
       cout << "------------------------------------------------------------------" << endl << endl;;

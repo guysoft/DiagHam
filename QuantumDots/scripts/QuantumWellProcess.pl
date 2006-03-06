@@ -8,8 +8,9 @@ my $MainDirectory = ".";
 my $PngFlag = 0;
 my $PdfFlag = 0;
 my $PsFlag = 0;
+my $BinaryDirectory = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis";
 
-my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag);
+my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag, "bindir" => \$BinaryDirectory);
 
 if (!(-d $MainDirectory))
   {
@@ -35,23 +36,28 @@ my %FinalDirectories;
 my $BField;
 my $TmpDirectory1;
 my $TmpDirectory2;
-while (($BField, $TmpDirectory1) = each(%InitialDirectories))
-  {
+my $BroadeningOuptut = "";
+my @TmpBFileds = sort {$a <=> $b} (keys(%InitialDirectories));
+foreach $BField (@TmpBFileds)
+  {    
     if (defined($FinalDirectories{$BField}))
       {
+	$TmpDirectory1 = $InitialDirectories{$BField};
 	print "parsing B=".$BField."T :\n";
 	my $InitialDOS = "initialdos".$BField.".dat";
         my $FinalDOS = "finaldos".$BField.".dat";
 	my $Absorption = "absorption".$BField.".dat";
 	my $Input = sprintf("%.6f", $BField);
-	my $Command = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$TmpDirectory1."/run_ --input eigenvalues".$Input.". --output ".$InitialDOS;
-	print $Command."\n";
+	my $Command = $BinaryDirectory."/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$TmpDirectory1."/run_ --input eigenvalues".$Input.". --output ".$InitialDOS;
 	system($Command);
-	$Command = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$FinalDirectories{$BField}."/run_ --input eigenvalues".$Input.". --output ".$FinalDOS;
+	$Command = $BinaryDirectory."/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$FinalDirectories{$BField}."/run_ --input eigenvalues".$Input.". --output ".$FinalDOS;
         system($Command);
-	$Command = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis/AbsorptionInQuantumWellBField --gamma 0.2 --min 0 --max 250 --step 0.1 --initial-dir ".$TmpDirectory1."/run_ --final-dir ".$FinalDirectories{$BField}."/run_ --initial-input eigenvalues".$Input.". -z 125.6 --output ".$Absorption;
+	$Command = $BinaryDirectory."/AbsorptionInQuantumWellBField --gamma 0.2 --min 0 --max 250 --step 0.1 --initial-dir ".$TmpDirectory1."/run_ --final-dir ".$FinalDirectories{$BField}."/run_ --initial-input eigenvalues".$Input.". -z 125.6 --output ".$Absorption;
 	system($Command);
-        if ($PsFlag == 1)
+        $Command = $BinaryDirectory."/EvaluateBroadening --half-height 0.36787944 ".$Absorption;
+	$BroadeningOuptut .= "B = ".$BField." T \n";
+	$BroadeningOuptut .= `$Command`;
+	if ($PsFlag == 1)
           {
             &PlotDOS($InitialDOS, "initial B=".$BField."T", "DOS", 0, 250, "ps");
             &PlotDOS($FinalDOS, "final B=".$BField."T", "DOS", 0, 250, "ps");
@@ -71,6 +77,13 @@ while (($BField, $TmpDirectory1) = each(%InitialDirectories))
           }
       }
   }
+unless (open(OUTFILE, ">broadening.log"))
+  {
+    die ("can't create file broadening.log\n");
+  }
+print OUTFILE $BroadeningOuptut;
+close (OUTFILE);
+
 
 # get all directories for different b field (directory names have to be of the form bfield_xxxx)
 #

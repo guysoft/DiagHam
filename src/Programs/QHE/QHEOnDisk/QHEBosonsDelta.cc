@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   // some running options and help
   OptionManager Manager ("QHEBosonsDiskDelta" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -53,6 +54,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
+  Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -60,12 +62,14 @@ int main(int argc, char** argv)
  (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
  (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
 
-  (*LanczosGroup) += new SingleIntegerOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   (*LanczosGroup) += new SingleIntegerOption ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup) += new SingleIntegerOption ('\n', "full-diag", 
 					      "maximum Hilbert space dimension for which full diagonalization is applied", 
 					      500, true, 100);
 
+  (*LanczosGroup) += new SingleIntegerOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
+  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
+  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);  
   (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
   (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
   (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
@@ -74,10 +78,16 @@ int main(int argc, char** argv)
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
+  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
+  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
+  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
 

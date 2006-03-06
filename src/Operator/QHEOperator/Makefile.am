@@ -4,5 +4,6 @@ noinst_LIBRARIES=libQHEOperator.a
 
 libQHEOperator_a_SOURCES=ParticleOnSphereDensityDensityOperator.cc \
 ParticleOnSphereDensityOperator.cc \
+ParticleOnDiskDensityOperator.cc \
 ParticleOnSphereNBodyOperator.cc \
 ParticleOnSphereSquareTotalMomentumOperator.cc

@@ -383,7 +383,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	    {
 	      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
 		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-	      cout << "(" << Dt << " s)";
+	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")";
 	      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
 	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 	    }

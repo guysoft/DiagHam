@@ -77,6 +77,7 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
       int* NIndices;
       double* TmpInteraction;
       double Coefficient2;
+      double Coefficient3;
       ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
@@ -87,19 +88,23 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
 		  {
 		    TmpInteraction = this->NBodyInteractionFactors[k][j];
 		    int Lim = NbrSortedIndicesPerSum[k][j];
-		    MIndices = this->SortedIndicesPerSum[k][j];
+		    NIndices = this->SortedIndicesPerSum[k][j];
 		    for (int i1 = 0; i1 < Lim; ++i1)
 		      {
-			Coefficient2 = vSource[i] * TmpInteraction[i1];
-			NIndices = this->SortedIndicesPerSum[k][j];
-			for (int i2 = 0; i2 < Lim; ++i2)
+			Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+			if (Coefficient3 != 0.0)
 			  {
-			    Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			    if (Index < Dim)
-			      vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
-			    NIndices += k;
+			    Coefficient2 = Coefficient3 * vSource[i] * TmpInteraction[i1];
+			    MIndices = this->SortedIndicesPerSum[k][j];
+			    for (int i2 = 0; i2 < Lim; ++i2)
+			      {
+				Index = TmpParticles->ProdAd(MIndices, k, Coefficient);
+				if (Index < Dim)
+				  vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
+				MIndices += k;
+			      }
 			  }
-			MIndices += k;
+			NIndices += k;
 		      }
 		  }
 	      }
@@ -164,6 +169,7 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
 	  int* NIndices;
 	  double* TmpInteraction;
 	  double Coefficient2;
+	  double Coefficient3;
 	  firstComponent += this->PrecalculationShift;
 	  LastComponent += this->PrecalculationShift;
 	  for (l = 0; l < this->FastMultiplicationStep; ++l)
@@ -178,19 +184,23 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
 			    {
 			      TmpInteraction = this->NBodyInteractionFactors[k][j];
 			      int Lim = NbrSortedIndicesPerSum[k][j];
-			      MIndices = this->SortedIndicesPerSum[k][j];
+			      NIndices = this->SortedIndicesPerSum[k][j];
 			      for (int i1 = 0; i1 < Lim; ++i1)
 				{
-				  Coefficient2 = vSource[i] * TmpInteraction[i1];
-				  NIndices = this->SortedIndicesPerSum[k][j];
-				  for (int i2 = 0; i2 < Lim; ++i2)
+				  Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+				  if (Coefficient3 != 0.0)
 				    {
-				      Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-				      if (Index < Dim)
-					vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
-				      NIndices += k;
+				      Coefficient2 = Coefficient3 * vSource[i] * TmpInteraction[i1];
+				      MIndices = this->SortedIndicesPerSum[k][j];
+				      for (int i2 = 0; i2 < Lim; ++i2)
+					{
+					  Index = TmpParticles->ProdAd(MIndices, k, Coefficient);
+					  if (Index < Dim)
+					    vDestination[Index] += Coefficient * TmpInteraction[i2] * Coefficient2;
+					  MIndices += k;
+					}
 				    }
-				  MIndices += k;
+				  NIndices += k;
 				}
 			    }
 			}		      
@@ -214,6 +224,7 @@ long AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialFastMultiplicationMemo
 {
   int Index;
   double Coefficient;
+  double Coefficient2;
   long Memory = 0;
   int* MIndices;
   int* NIndices;
@@ -227,21 +238,25 @@ long AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialFastMultiplicationMemo
 	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
 		int Lim = NbrSortedIndicesPerSum[k][j];
-		MIndices = this->SortedIndicesPerSum[k][j];
+		NIndices = this->SortedIndicesPerSum[k][j];
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    NIndices = this->SortedIndicesPerSum[k][j];
-		    for (int i2 = 0; i2 < Lim; ++i2)
+		    Coefficient2 = TmpParticles->ProdA(i, NIndices, k);
+		    if (Coefficient2 != 0.0)
 		      {
-			Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			if (Index < this->Particles->GetHilbertSpaceDimension())
+			MIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
 			  {
-			    ++Memory;
-			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    Index = TmpParticles->ProdAd(MIndices, k, Coefficient);
+			    if (Index < this->Particles->GetHilbertSpaceDimension())
+			      {
+				++Memory;
+				++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      }
+			    MIndices += k;
 			  }
-			NIndices += k;
 		      }
-		    MIndices += k;
+		    NIndices += k;
 		  }
 	      }
 	  }
@@ -262,6 +277,7 @@ void AbstractQHEOnDiskNBodyInteractionHamiltonian::EnableFastMultiplication()
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int Index;
   double Coefficient;
+  double Coefficient2;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int Pos;
@@ -294,22 +310,26 @@ void AbstractQHEOnDiskNBodyInteractionHamiltonian::EnableFastMultiplication()
 	      {
 		TmpInteraction = this->NBodyInteractionFactors[k][j];
 		int Lim = this->NbrSortedIndicesPerSum[k][j];
-		MIndices = this->SortedIndicesPerSum[k][j];
+		NIndices = this->SortedIndicesPerSum[k][j];
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    NIndices = this->SortedIndicesPerSum[k][j];
-		    for (int i2 = 0; i2 < Lim; ++i2)
+		    Coefficient2 = this->Particles->ProdA(i + this->PrecalculationShift, NIndices, k);
+		    if (Coefficient2 != 0)
 		      {
-			Index = this->Particles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			if (Index < this->Particles->GetHilbertSpaceDimension())
+			MIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
 			  {
-			    TmpIndexArray[Pos] = Index;
-			    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
-			    ++Pos;
+			    Index = this->Particles->ProdAd(MIndices, k, Coefficient);
+			    if (Index < this->Particles->GetHilbertSpaceDimension())
+			      {
+				TmpIndexArray[Pos] = Index;
+				TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2] * Coefficient2;
+				++Pos;
+			      }
+			    MIndices += k;
 			  }
-			NIndices += k;
 		      }
-		    MIndices += k;
+		    NIndices += k;
 		  }
 	      }
 	  }
@@ -332,6 +352,7 @@ void AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialEnableFastMultiplicati
 {
   int Index;
   double Coefficient;
+  double Coefficient2;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int Pos;
@@ -356,22 +377,26 @@ void AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialEnableFastMultiplicati
 	      {
 		TmpInteraction = this->NBodyInteractionFactors[k][j];
 		int Lim = NbrSortedIndicesPerSum[k][j];
-		MIndices = this->SortedIndicesPerSum[k][j];
+		NIndices = this->SortedIndicesPerSum[k][j];
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    NIndices = this->SortedIndicesPerSum[k][j];
-		    for (int i2 = 0; i2 < Lim; ++i2)
+		    Coefficient2 = TmpParticles->ProdA(i, NIndices, k);
+		    if (Coefficient2 != 0.0)
 		      {
-			Index = TmpParticles->ProdAdProdA(i, MIndices, NIndices, k, Coefficient);
-			if (Index < this->Particles->GetHilbertSpaceDimension())
+			MIndices = this->SortedIndicesPerSum[k][j];
+			for (int i2 = 0; i2 < Lim; ++i2)
 			  {
-			    TmpIndexArray[Pos] = Index;
-			    TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
-			    ++Pos;
+			    Index = TmpParticles->ProdAd(MIndices, k, Coefficient);
+			    if (Index < this->Particles->GetHilbertSpaceDimension())
+			      {
+				TmpIndexArray[Pos] = Index;
+				TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2] * Coefficient2;
+				++Pos;
+			      }
+			    MIndices += k;
 			  }
-			NIndices += k;
 		      }
-		    MIndices += k;
+		    NIndices += k;
 		  }
 	      }
 	  }

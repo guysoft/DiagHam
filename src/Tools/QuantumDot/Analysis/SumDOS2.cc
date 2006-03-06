@@ -94,7 +94,6 @@ int main(int argc, char** argv)
   char* StateSpectrumName = AddExtensionToFileName(StateInputFile, "raw");  
   for (int i = 0; i < StateNbrMatchedDirectories; ++i)
     {
-      cout << StateMatchedDirectories[i] << endl;
       StateMatchedSpectra[i] = ConcatenatePathAndFileName(StateMatchedDirectories[i], StateSpectrumName);
       if (IsFile(StateMatchedSpectra[i]) == false)
 	{
@@ -122,12 +121,10 @@ int main(int argc, char** argv)
       ErrorFlag = true;
     }
 
-  cout << "truc = " << OutputFile << endl;
   if (ErrorFlag == false)
     {  
       DOSSpectra SumDOS(End - Begin + 1, StateMatchedSpectra + Begin, NbrState, Gamma, Min, Max, Step);
       SumDOS.WriteSpectra(OutputFile);      
-      cout << "troc = " << OutputFile << endl;
     }
 
    for (int i = 0; i < StateNbrMatchedDirectories; ++i)

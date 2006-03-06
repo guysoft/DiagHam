@@ -69,10 +69,16 @@ class QHEOnDiskMainTask: public AbstractMainTask
   bool DiskFlag;
   // resume from disk datas
   bool ResumeFlag;
+  // enable block Lanczos algorithm
+  bool BlockLanczosFlag;
+  // size of the blocks used in the block Lanczos algorithm
+  int SizeBlockLanczos;
   // number of eigenvalues to evaluate 
   int NbrEigenvalue;
   // number of lanczos iteration (for the current run)
   int NbrIterLanczos;
+  // maximum time allowed for Lanczos iterations (in seconds)
+  int MaximumAllowedTime;
   // maximum number of Lanczos iteration
   int MaxNbrIterLanczos;
   // maximum number of vector in RAM during Lanczos iteration
@@ -85,6 +91,14 @@ class QHEOnDiskMainTask: public AbstractMainTask
   char* EigenvectorFileName;
   // evaluate Lanczos convergence from eigenstate convergence
   bool EigenvectorConvergence;
+  // show time spent for each Lanczos iteration
+  bool ShowIterationTime;
+  // name of the file that contains the vector to use as initial vector for the Lanczos algorithm (null if a random vector has to be picked)
+  char* InitialVectorFileName;
+  // allow to only run a given number of Lanczos iterations
+  bool PartialLanczos;
+  // use LAPACK libraries instead of DiagHam libraries
+  bool LapackFlag;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;

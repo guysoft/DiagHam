@@ -15,6 +15,7 @@
 #endif
 #include <string>
 #include <unistd.h>
+#include <math.h>
 
 
 using std::cout;
@@ -57,8 +58,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*InputOptionGroup) += new SingleStringOption('\0', "input", "data input file (two column formatted text)");
-  (*PrecisionOptionGroup) += new SingleDoubleOption('\n', "maximum-precision", "relative precision allowed for maximum detection", 0.001);
-  (*PrecisionOptionGroup) += new SingleDoubleOption('\n', "", "data input file (two column formatted text)", 0.5);
+  (*PrecisionOptionGroup) += new SingleDoubleOption('\n', "maximum-precision", "relative precision allowed for maximum detection", 0.01);
+  (*PrecisionOptionGroup) += new SingleDoubleOption('\n', "half-height", "multiplicative factor to use with maximum value to find broadening", 0.5);
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
 
   char* InputFile = ((SingleStringOption*) Manager["input"])->GetString();
   double MaxPrecision = ((SingleDoubleOption*) Manager["maximum-precision"])->GetDouble();
-
+  double HalfHeight = ((SingleDoubleOption*) Manager["half-height"])->GetDouble();
   
 
   double* XValues = 0;
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
     }
   cout << "true maximum = " << TrueMaximum << endl << "guessed maximum = " << Maximum << " at " << XValues[MaximumPosition] << "(pos = " << MaximumPosition << ") with slope = " << LocalSlope << endl;
 
-  double HalfMaximum = 0.5 * Maximum;
+  double HalfMaximum = HalfHeight * Maximum;
   int LeftmostPosition = SearchValueInArray(YValues, HalfMaximum, 0, MaximumPosition);
   int RightmostPosition = SearchValueInArray(YValues, HalfMaximum, MaximumPosition, ReducedNbrValues);
   

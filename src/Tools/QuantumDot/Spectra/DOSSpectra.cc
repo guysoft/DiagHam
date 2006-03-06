@@ -103,7 +103,6 @@ DOSSpectra::DOSSpectra(int nbrFiles, char** spectrumFiles, int nbrStates,  doubl
   for (int i = 0; i < nbrFiles; ++i)
     {
       this->ReadSpectrum(spectrumFiles[i], TmpSpectrum, nbrStates);
-      cout << spectrumFiles[i] << " " <<  nbrStates << endl;
       for (int j = 0; j < N; ++j)
 	{
 	  tmp1 = Energy[j];
