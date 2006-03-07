@@ -869,3 +869,83 @@ void BosonOnDisk::InitializeWaveFunctionEvaluation (bool timeCoherence)
 }
 
 
+// forge an eigenstate from a description given by a file
+//
+// filename = name of the file that contains the state description
+// state = reference on the vector where the state has to be stored
+// return value = true if no error occured
+
+bool BosonOnDisk::ForgeEigenstate(char* filename, RealVector& state)
+{
+  int NbrComponents;
+  Complex* Coefficients;
+  int** ComponentDescription;
+  if (this->LoadEigenstateDescrition(filename, this->TotalLz + 1, true, NbrComponents, Coefficients, ComponentDescription) == false)    
+    return false;
+
+  state.Resize(this->HilbertSpaceDimension);
+  state.ClearVector();
+  
+  double TmpNorm = 0.0;
+  for (int i = 0; i < NbrComponents; ++i)
+    {
+      TmpNorm += Coefficients[i].Re * Coefficients[i].Re;
+    }
+  TmpNorm = 1.0 / sqrt(TmpNorm);
+  int Pos = 0;
+  bool SuccessfullParsing = true;
+  for (int i = 0; i < NbrComponents; ++i)
+    {
+      int TmpNbrParticles = 0;
+      int TmpMomentum = 0;
+      bool ErrorFlag = false;
+      int* TmpDescription = ComponentDescription[i];
+      int TmpLzMax = 0;
+      for (int j = 0; j <= this->TotalLz; ++j)
+	{
+	  if (TmpDescription[j] < 0)
+	    {
+	      ErrorFlag = true;
+	    }
+	  else
+	    {
+	      this->TemporaryState[j] = TmpDescription[j];
+	      if (TmpDescription[j] > 0)
+		{
+		  TmpLzMax = j;
+		  TmpMomentum += (TmpDescription[j] * j);
+		  TmpNbrParticles += TmpDescription[j];
+		}
+	    }
+	}
+      if (TmpMomentum != this->TotalLz)
+	{
+	  cout << "wrong total momentum in state description ";
+	  for (int j = 0; j <= this->TotalLz; ++j)
+	    cout << TmpDescription[j] << " ";
+	  cout << endl;
+	  SuccessfullParsing = false;
+	}
+      else
+	if (TmpNbrParticles != this->NbrBosons)
+	  {
+	    cout << "wrong number of particles in state description ";
+	    for (int j = 0; j <= this->TotalLz; ++j)
+	      cout << TmpDescription[j] << " ";
+	    cout << endl;
+	    SuccessfullParsing = false;
+	  }
+	else
+	  {
+	    int TmpIndex = this->FindStateIndex(this->TemporaryState, TmpLzMax);
+	    if (TmpIndex < this->HilbertSpaceDimension)
+	      state[TmpIndex] = Coefficients[i].Re * TmpNorm;
+	  }
+      delete[] TmpDescription;
+   }
+
+  delete[] Coefficients;
+  delete[] ComponentDescription;
+  return SuccessfullParsing;
+}
+

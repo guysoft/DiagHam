@@ -30,6 +30,13 @@
 
 #include "config.h"
 #include "HilbertSpace/QHEHilbertSpace/AbstractQHEParticle.h"
+#include "GeneralTools/ConfigurationParser.h"
+
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 // virtual destructor
@@ -92,9 +99,9 @@ Complex AbstractQHEParticle::EvaluateWaveFunction (RealVector& state, RealVector
 // return value = wave function evaluated at the given location
 
 Complex AbstractQHEParticle::EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, 
-								 AbstractFunctionBasis& basis, 
-								 int nextCoordinates, int firstComponent, 
-								 int nbrComponent)
+								    AbstractFunctionBasis& basis, 
+								    int nextCoordinates, int firstComponent, 
+								    int nbrComponent)
 {
   return Complex(0.0, 0.0);
 }
@@ -107,3 +114,107 @@ void AbstractQHEParticle::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
                                     
+// forge an eigenstate from a description given by a file
+//
+// filename = name of the file that contains the state description
+// state = reference on the vector where the state has to be stored
+// return value = true if no error occured
+
+bool AbstractQHEParticle::ForgeEigenstate(char* filename, RealVector& state)
+{
+  return false;
+}
+
+// forge an eigenstate from a description given by a file
+//
+// filename = name of the file that contains the state description
+// state = reference on the vector where the state has to be stored
+// return value = true if no error occured
+
+bool AbstractQHEParticle::ForgeEigenstate(char* filename, ComplexVector& state)
+{
+  return false;
+}
+
+// forge an eigenstate from a description given by a file
+//
+// filename = name of the file that contains the state description
+// nbrElements = number of elements per basis state 
+// realFlag = flag to indicates if coefficients are real numbers (true for real, false for complex)
+// nbrComponents = reference om the integer where the number of components will be stored
+// coefficients = reference on the array where coefficients (memory allocation is done by the method itself)
+// componentDescription = reference on the array where components description (memory allocation is done by the method itself)
+// return value = true if no error occured
+
+bool AbstractQHEParticle::LoadEigenstateDescrition(char* filename, int nbrElements, bool realFlag, int& nbrComponents, Complex*& coefficients, int**& componentDescription)
+{
+  ConfigurationParser Configuration;
+  if (Configuration.Parse(filename) == false)
+    {
+      Configuration.DumpErrors(cout);
+      return false;
+    }
+
+  double* TmpCoefficients;
+  int TmpNbrCoefficients;
+  if (Configuration.GetAsDoubleArray("coefficients", ' ', TmpCoefficients, TmpNbrCoefficients) == false)
+    {
+      Configuration.DumpErrors(cout);
+      return false;
+    }
+  if (realFlag == true)
+    {
+      nbrComponents = TmpNbrCoefficients;
+      coefficients = new Complex[nbrComponents];
+      for (int i = 0; i < nbrComponents; ++i)
+	coefficients[i] = TmpCoefficients[i];
+    }
+  else
+    {
+      if ((TmpNbrCoefficients & 1) != 0)
+	{
+	  cout << "wrong number of elements for complex definition" << endl;
+	  delete[] TmpCoefficients;
+	  return false;
+	}
+      nbrComponents = TmpNbrCoefficients >> 1;
+      coefficients = new Complex[nbrComponents];
+      for (int i = 0; i < TmpNbrCoefficients; ++i)
+	{
+	  coefficients[i >> 1].Re = TmpCoefficients[i];
+	  ++i;
+	  coefficients[i >> 1].Im = TmpCoefficients[i];
+	}
+    }
+  delete[] TmpCoefficients;
+
+  int* TmpElements;
+  int TmpNbrElements;
+  if (Configuration.GetAsIntegerArray("descriptions", ' ', TmpElements, TmpNbrElements) == false)
+    {
+      delete[] coefficients;
+      Configuration.DumpErrors(cout);
+      return false;
+    }
+  if (TmpNbrElements != (nbrElements * nbrComponents))
+    {
+      cout << "wrong number of elements for basis state definition" << endl;
+      delete[] coefficients;
+      delete[] TmpElements;
+      return false;
+    }
+  int Pos = 0;
+  componentDescription = new int*[nbrComponents];
+  for (int i = 0; i < nbrComponents; ++i)
+    {
+      componentDescription[i] = new int[nbrElements];      
+      for (int j = 0; j < nbrElements; ++j)
+	{
+	  componentDescription[i][j] = TmpElements[Pos];
+	  ++Pos;
+	}
+    }
+  delete[] TmpElements;
+  return true;
+}
+

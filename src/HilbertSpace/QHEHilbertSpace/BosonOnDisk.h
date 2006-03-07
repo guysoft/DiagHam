@@ -262,6 +262,13 @@ class BosonOnDisk :  public ParticleOnDisk
 
   void ErasthothenesSlieve(int maxNumber, int nbrWantedPrime, int factor);
 
+  // forge an eigenstate from a description given by a file
+  //
+  // filename = name of the file that contains the state description
+  // state = reference on the vector where the state has to be stored
+  // return value = true if no error occured
+  bool ForgeEigenstate(char* filename, RealVector& state);
+
 };
 
 // get the particle statistic 

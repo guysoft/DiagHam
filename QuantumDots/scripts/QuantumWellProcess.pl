@@ -10,7 +10,7 @@ my $PdfFlag = 0;
 my $PsFlag = 0;
 my $BinaryDirectory = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis";
 
-my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag, "bindir" => \$BinaryDirectory);
+my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag, "bindir:s" => \$BinaryDirectory);
 
 if (!(-d $MainDirectory))
   {

@@ -38,6 +38,7 @@
 
 
 class RealVector;
+class ComplexVector;
 class AbstractFunctionBasis;
 
 
@@ -60,6 +61,20 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   //
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
+
+  // forge an eigenstate from a description given by a file
+  //
+  // filename = name of the file that contains the state description
+  // state = reference on the vector where the state has to be stored
+  // return value = true if no error occured
+  virtual bool ForgeEigenstate(char* filename, RealVector& state);
+
+  // forge an eigenstate from a description given by a file
+  //
+  // filename = name of the file that contains the state description
+  // state = reference on the vector where the state has to be stored
+  // return value = true if no error occured
+  virtual bool ForgeEigenstate(char* filename, ComplexVector& state);
 
   // evaluate wave function in real space using a given basis
   //
@@ -109,6 +124,20 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
 
+ protected:
+
+  // forge an eigenstate from a description given by a file
+  //
+  // filename = name of the file that contains the state description
+  // nbrElements = number of elements per basis state 
+  // realFlag = flag to indicates if coefficients are real numbers (true for real, false for complex)
+  // nbrComponents = reference om the integer where the number of components will be stored
+  // coefficients = reference on the array where coefficients (memory allocation is done by the method itself)
+  // componentDescription = reference on the array where components description (memory allocation is done by the method itself)
+  // return value = true if no error occured
+  virtual bool LoadEigenstateDescrition(char* filename, int nbrElements, bool realFlag, int& nbrComponents, Complex*& coefficients, int**& componentDescription);
+
+  
 };
 
 #endif
