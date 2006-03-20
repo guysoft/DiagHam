@@ -60,6 +60,7 @@ ClebschGordanCoefficients::ClebschGordanCoefficients (const ClebschGordanCoeffic
   this->Coefficients = coefficients.Coefficients;
   this->JMin = coefficients.JMin;
   this->CurrentPosition = -1;
+  this->Flag = coefficients.Flag;
 }
 
 // destructor
@@ -103,6 +104,7 @@ ClebschGordanCoefficients& ClebschGordanCoefficients::operator = (const ClebschG
 	}
       delete[] this->JMin;
     }
+  this->Flag = coefficients.Flag;
   this->J1 = coefficients.J1;
   this->J2 = coefficients.J2;
   this->Coefficients = coefficients.Coefficients;

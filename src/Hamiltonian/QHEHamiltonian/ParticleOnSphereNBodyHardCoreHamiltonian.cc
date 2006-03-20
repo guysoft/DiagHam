@@ -32,9 +32,11 @@
 #include "config.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "MathTools/ClebschGordanCoefficients.h"
 
 #include <stdio.h>
 #include <iostream>
+#include <stdlib.h>
 
 
 using std::cout;
@@ -282,7 +284,6 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
-	    double SumCoefficient = 1.0;
 	    double Coefficient;
 	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k]);
 	    this->MaxSumIndices = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
@@ -319,19 +320,19 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		this->NBodyInteractionFactors[k][MinSum] = new double [Lim];
 		double* TmpNBodyInteractionFactors = this->NBodyInteractionFactors[k][MinSum];		  
 		int* TmpMIndices = this->SortedIndicesPerSum[k][MinSum];
-		cout << MinSum << " : " << endl;
+		double* TmpProjectorCoefficients = this->ComputeProjectorCoefficients(k, TmpMIndices, Lim);
 		for (int i = 0; i < Lim; ++i)
 		  {
-		    Coefficient = TmpInteractionCoeffients[MinSum];
+		    Coefficient = TmpInteractionCoeffients[MinSum] * TmpProjectorCoefficients[i];
 		    for (int l = 0; l < k; ++l)
 		      {
 			Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
-			cout << TmpMIndices[l] << " ";
 		      }
-		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
-		    cout << " = " <<  Coefficient << " " << TmpNBodyInteractionFactors[i]  << endl;
+		    //		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
+		    TmpNBodyInteractionFactors[i] = TmpProjectorCoefficients[i] * this->NBodyInteractionWeightFactors[k];
 		    TmpMIndices += k;
 		  }
+		delete[] TmpProjectorCoefficients;
 	      }
 	    delete[] TmpInteractionCoeffients;
 	  }
@@ -400,3 +401,51 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
   delete[] TmpNormalizationCoeffients;
 }
 
+// compute all projector coefficient associated to a given a 
+//
+// nbrIndices = number of indices per set
+// indices = array that contains all possible sets of indices (size of the array is nbrIndices * nbrIndexSets)
+// nbrIndexSets = number of sets
+
+double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(int nbrIndices, int* indices, int nbrIndexSets)
+{
+  double* TmpCoefficients = new double [nbrIndexSets];
+  int JValue = (nbrIndices * (this->LzMax - (nbrIndices - 1)));
+  switch (nbrIndices)
+    {
+    case 2:
+      {
+	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    TmpCoefficients[i] = Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1) - this->LzMax), JValue);
+	    indices += 2;
+	  }
+      }
+      break;
+    case 3:
+      {
+	int MaxJ = 2 * this->LzMax;
+	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
+	ClebschGordanCoefficients Clebsh2 (2 * this->LzMax, this->LzMax);
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    int* TmpIndices = indices;
+	    double Tmp = 0.0;
+	    int Sum = TmpIndices[0] + TmpIndices[1]  - (2 * this->LzMax);
+	    for (int j = abs(Sum); j <= MaxJ; j += 2)
+	      {
+		Tmp += (Clebsh.GetCoefficient((TmpIndices[0] - this->LzMax), (TmpIndices[1] - this->LzMax), j) * 
+			Clebsh2.GetCoefficient(Sum, (TmpIndices[2] - this->LzMax), JValue)); 
+	      }
+	    TmpCoefficients[i] = Tmp;
+	    indices += nbrIndices;
+	  }
+      }
+      break;
+    default:
+      {
+      }
+    }
+  return TmpCoefficients;
+}

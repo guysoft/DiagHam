@@ -98,6 +98,13 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
 
  protected:
  
+  // compute all projector coefficient associated to a given a 
+  //
+  // nbrIndices = number of indices per set
+  // indices = array that contains all possible sets of indices (size of the array is nbrIndices * nbrIndexSets)
+  // nbrIndexSets = number of sets
+  double* ComputeProjectorCoefficients(int nbrIndices, int* indices, int nbrIndexSets);
+
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();

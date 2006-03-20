@@ -41,6 +41,8 @@
 class BosonOnSphere :  public ParticleOnSphere
 {
 
+ protected:
+
   // number of bosons
   int NbrBosons;
   // number of bosons plus 1
@@ -251,7 +253,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // timeCoherence = true if time coherence has to be used
   void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
 
- private:
+ protected:
 
   // find state index
   //
@@ -259,14 +261,6 @@ class BosonOnSphere :  public ParticleOnSphere
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
   int FindStateIndex(int* stateDescription, int lzmax);
-
-  // evaluate Hilbert space dimension
-  //
-  // nbrBosons = number of bosons
-  // lzMax = momentum maximum value for a boson
-  // totalLz = momentum total value
-  // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -288,6 +282,14 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = key associated to the state
   int GenerateKey(int* stateDescription, int lzmax);
     
+  // evaluate Hilbert space dimension
+  //
+  // nbrBosons = number of bosons
+  // lzMax = momentum maximum value for a boson
+  // totalLz = momentum total value
+  // return value = Hilbert space dimension
+  virtual int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
@@ -296,7 +298,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
+  virtual int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
 
 };
 

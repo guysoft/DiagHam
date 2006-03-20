@@ -427,6 +427,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
   coefficient = 1.0;
   unsigned long TmpState = this->ProdATemporaryState;
+  int NewLzMax = this->ProdALzMax;
   int Index;
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
@@ -436,9 +437,9 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
-      if (Index > this->ProdALzMax)
+      if (Index > NewLzMax)
 	{
-	  this->ProdALzMax = Index;
+	  NewLzMax = Index;
 	}
       else
 	{
@@ -451,7 +452,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 	}
       TmpState |= (((unsigned long) (0x1)) << Index);
     }
-  return this->FindStateIndex(TmpState, this->ProdALzMax);
+  return this->FindStateIndex(TmpState, NewLzMax);
 }
 
 // apply a^+_m a_m operator to a given state 
