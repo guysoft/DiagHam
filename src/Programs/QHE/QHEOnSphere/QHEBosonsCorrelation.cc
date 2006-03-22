@@ -52,7 +52,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "delta");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
-
+  (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -114,7 +115,11 @@ int main(int argc, char** argv)
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);
   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrBosons * NbrBosons));
-  double Factor2 = sqrt (0.5 * LzMax );
+  double Factor2;
+    if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
+    Factor2 = 1.0;
+  else
+    Factor2 = sqrt (0.5 * LzMax );
   for (int x = 0; x < NbrPoints; ++x)
     {
       Value[0] = X;
