@@ -82,6 +82,6 @@ int main(int argc, char** argv)
   for (int i=0; i<State1.GetVectorDimension(); ++i)
     sp+=State1[i]*State2[i];
 
-  cout << "The overlap is: |<1|2>|^2 = " << sp << endl;
+  cout << "The overlap is: |<1|2>|^2 = " << sp*sp << endl;
   
 }
