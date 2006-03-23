@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 #ifdef __64_BITS__
       if (LzMax <= 31)
         {
-          Space = new FermionOnSphereWithSpin(NbrFermions, Lz, LzMax);
+          Space = new FermionOnSphereWithSpin(NbrFermions, Lz, LzMax, Sz, 0);
         }
       else
         {
