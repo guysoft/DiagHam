@@ -43,6 +43,13 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian()
+{
+}
+
 // constructor from default datas
 //
 // particles = Hilbert space associated to the system

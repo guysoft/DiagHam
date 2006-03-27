@@ -670,6 +670,33 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
 
+//   if (this->NBodyFlags[1] == true)
+//     {
+//       for (int i = firstComponent; i < LastComponent; ++i)
+// 	{
+// 	  for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
+// 	    {
+// 	      int Lim = NbrSortedIndicesPerSum[k][j];
+// 	      NIndices = this->SortedIndicesPerSum[k][j];
+// 	      for (int i1 = 0; i1 < Lim; ++i1)
+// 		{
+// 		  MIndices = this->SortedIndicesPerSum[k][j];
+// 		  for (int i2 = 0; i2 < Lim; ++i2)
+// 		    {
+// 		      Index = TmpParticles->AdA(MIndices, k, Coefficient);
+// 		      if (Index < this->Particles->GetHilbertSpaceDimension())
+// 			{
+// 			  ++Memory;
+// 			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+// 			}
+// 		      MIndices += k;
+// 		    }
+// 		}
+// 	      NIndices += k;
+// 	    }
+// 	}
+//     }
+
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {

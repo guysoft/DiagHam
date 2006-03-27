@@ -67,14 +67,13 @@ class BosonOnSphere :  public ParticleOnSphere
   int* Keys;
   // indicate position of the first state with a given number of boson having a given maximum Lz value
   int* LzMaxPosition;
-
-  // indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
+  // array that indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
   int* KeyInvertSectorSize;
-  //
+  // array that contains sorted possible key for each sector
   int** KeyInvertTable;
-  //
+  // array that contains number of indices that have the same key per sector 
   int** KeyInvertTableNbrIndices;
-  //
+  // array that contains state index per sector and per key
   int*** KeyInvertIndices;
 
   // pointer to an integer which indicate which coordinates are kept for the next time step iteration
@@ -88,6 +87,10 @@ class BosonOnSphere :  public ParticleOnSphere
   int* ProdATemporaryState;
 
  public:
+
+  // default constructor
+  //
+  BosonOnSphere ();
 
   // basic constructor
   // 
@@ -103,7 +106,7 @@ class BosonOnSphere :  public ParticleOnSphere
 
   // destructor
   //
-  ~BosonOnSphere ();
+  virtual ~BosonOnSphere ();
 
   // assignement (without duplicating datas)
   //
@@ -119,26 +122,26 @@ class BosonOnSphere :  public ParticleOnSphere
   // get the particle statistic 
   //
   // return value = particle statistic
-  int GetParticleStatistic();
+  virtual int GetParticleStatistic();
 
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  List<AbstractQuantumNumber*> GetQuantumNumbers ();
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  AbstractQuantumNumber* GetQuantumNumber (int index);
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
-  AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
-					 SubspaceSpaceConverter& converter);
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
+						 SubspaceSpaceConverter& converter);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -149,7 +152,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
   //
@@ -159,7 +162,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
 
   // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
   //
@@ -167,7 +170,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AA (int index, int n1, int n2);
+  virtual double AA (int index, int n1, int n2);
 
   // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //
@@ -175,7 +178,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
   // nbrIndices = number of creation (or annihilation) operators
   // return value =  multiplicative factor 
-  double ProdA (int index, int* n, int nbrIndices);
+  virtual double ProdA (int index, int* n, int nbrIndices);
 
   // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
   //
@@ -183,7 +186,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdAd (int m1, int m2, double& coefficient);
+  virtual int AdAd (int m1, int m2, double& coefficient);
 
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   //
@@ -191,21 +194,21 @@ class BosonOnSphere :  public ParticleOnSphere
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int ProdAd (int* m, int nbrIndices, double& coefficient);
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
-  double AdA (int index, int m);
+  virtual double AdA (int index, int m);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate wave function in real space using a given basis
   //
@@ -273,7 +276,22 @@ class BosonOnSphere :  public ParticleOnSphere
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(int memory);
+  virtual void GenerateLookUpTable(int memory);
+
+  // generate look-up table associated to current Hilbert space (core part of the look-up table generation)
+  // 
+  // dimension = Hilbert space dimension
+  // lzMax = maximum Lz value that can be reached by a particle
+  // stateDescription = array that contains state description
+  // stateLzMax = array giving maximum Lz value reached for a boson in a given state
+  // keys = keys associated to each state
+  // lzMaxPosition = indicate position of the first state with a given number of boson having a given maximum Lz value
+  // keyInvertSectorSize = array that indicates how many different states are store for each sector
+  // keyInvertTable = array that contains sorted possible key for each sector
+  // keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
+  // keyInvertIndices = array that contains state index per sector and per key
+  void CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
+			       int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -298,7 +316,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
+  int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
 
 };
 

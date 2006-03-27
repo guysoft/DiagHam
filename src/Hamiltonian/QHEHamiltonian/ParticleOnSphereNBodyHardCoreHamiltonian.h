@@ -56,6 +56,10 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
 
  public:
 
+  // default constructor
+  //
+  ParticleOnSphereNBodyHardCoreHamiltonian();
+
   // constructor from default datas
   //
   // particles = Hilbert space associated to the system

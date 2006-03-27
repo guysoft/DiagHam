@@ -26,4 +26,5 @@ BosonOnSphereState.cc \
 AbstractQHEParticle.cc \
 ParticleOnSphereWithSpin.cc \
 FermionOnSphereWithSpin.cc \
-UnsignedIntegerTools.cc
+UnsignedIntegerTools.cc \
+FullBosonOnSphere.cc

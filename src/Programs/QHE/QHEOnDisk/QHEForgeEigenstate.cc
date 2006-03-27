@@ -42,7 +42,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermions", "use fermion statistics");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "name of the vector output file", "output.vec");
   (*SystemGroup) += new SingleStringOption  ('i', "input", "name of the file that contains the eigenstate description");
-
+  (*SystemGroup) += new SingleStringOption  ('\n', "additional-state", "name of the file that contains an optional state that will be added to the one describde by the input file");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "additional-coefficient", "multiplicative coefficient that will be used on the additional state", 0.0);
+  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -69,6 +71,11 @@ int main(int argc, char** argv)
   char* InputName = ((SingleStringOption*) Manager["input"])->GetString();
   
   RealVector State;
+  if (((SingleStringOption*) Manager["additional-state"])->GetString() != 0)
+    {
+      State.ReadVector(((SingleStringOption*) Manager["additional-state"])->GetString());
+      State *= ((SingleDoubleOption*) Manager["additional-coefficient"])->GetDouble();
+    }
   ParticleOnDisk* Space = 0;
   if (BosonFlag == true)
     {

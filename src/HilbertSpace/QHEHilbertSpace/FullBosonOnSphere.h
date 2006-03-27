@@ -42,7 +42,26 @@ class FullBosonOnSphere : public BosonOnSphere
 {
 
   // array giving total Lz value for each state
-  int* StateLzMax;
+  int* StateTotalLz;
+  // index of the first occurence of a given total Lz value in StateDescription
+  int* TotalLzPosition;
+  
+  // twice the maximum total Lz value that can be reached  
+  int MaxTotalLz;
+
+  // indicate position of the first state with a given number of boson having a given maximum Lz value
+  int** FullLzMaxPosition;
+  // array that indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
+  int** FullKeyInvertSectorSize;
+  // array that contains sorted possible key for each sector
+  int*** FullKeyInvertTable;
+  // array that contains number of indices that have the same key per sector 
+  int*** FullKeyInvertTableNbrIndices;
+  // array that contains state index per sector and per key
+  int**** FullKeyInvertIndices;
+
+  // total Lz value of the temporary state used when applying ProdA operator
+  int ProdATemporaryStateTotalLz;
 
  public:
 
@@ -72,11 +91,6 @@ class FullBosonOnSphere : public BosonOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  int GetParticleStatistic();
-
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -96,6 +110,74 @@ class FullBosonOnSphere : public BosonOnSphere
   AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 					 SubspaceSpaceConverter& converter);
 
+  // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+
+  // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AA (int index, int n1, int n2);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  double ProdA (int index, int* n, int nbrIndices);
+
+  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdAd (int m1, int m2, double& coefficient);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int ProdAd (int* m, int nbrIndices, double& coefficient);
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int FullBosonOnSphere::AdA (int index, int m, int n, double& coefficient);
+
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  ostream& PrintState (ostream& Str, int state);
 
  protected:
 
@@ -103,15 +185,16 @@ class FullBosonOnSphere : public BosonOnSphere
   //
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
+  // totalLz = state total Lz value
   // return value = corresponding index
-  int FindStateIndex(int* stateDescription, int lzmax);
+  int FindStateIndex(int* stateDescription, int lzmax, int totalLz);
 
   // generate all states
   // 
   // nbrBosons = number of bosons
   // lzMax = momentum maximum value for a boson in the state
-// return value = Hilbert space size
-  int GenerateStates(int nbrBosons, int lzMax);
+  // return value = Hilbert space size
+  int FullGenerateStates(int nbrBosons, int lzMax);
 
   // evaluate Hilbert space dimension
   //

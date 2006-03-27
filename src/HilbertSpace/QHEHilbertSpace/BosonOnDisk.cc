@@ -883,8 +883,7 @@ bool BosonOnDisk::ForgeEigenstate(char* filename, RealVector& state)
   if (this->LoadEigenstateDescrition(filename, this->TotalLz + 1, true, NbrComponents, Coefficients, ComponentDescription) == false)    
     return false;
 
-  state.Resize(this->HilbertSpaceDimension);
-  state.ClearVector();
+  state.ResizeAndClean(this->HilbertSpaceDimension);
   
   double TmpNorm = 0.0;
   for (int i = 0; i < NbrComponents; ++i)
@@ -939,11 +938,13 @@ bool BosonOnDisk::ForgeEigenstate(char* filename, RealVector& state)
 	  {
 	    int TmpIndex = this->FindStateIndex(this->TemporaryState, TmpLzMax);
 	    if (TmpIndex < this->HilbertSpaceDimension)
-	      state[TmpIndex] = Coefficients[i].Re * TmpNorm;
+	      {
+		state[TmpIndex] += Coefficients[i].Re * TmpNorm;
+	      }
 	  }
       delete[] TmpDescription;
    }
-
+  state /= state.Norm();
   delete[] Coefficients;
   delete[] ComponentDescription;
   return SuccessfullParsing;

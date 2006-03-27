@@ -43,6 +43,13 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+BosonOnSphere::BosonOnSphere ()
+{
+}
+
 // basic constructor
 // 
 // nbrBosons = number of bosons
@@ -158,7 +165,7 @@ BosonOnSphere::~BosonOnSphere ()
 	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
-      delete[] LzMaxPosition;
+      delete[] this->LzMaxPosition;
     }
 }
 
@@ -497,53 +504,6 @@ double BosonOnSphere::AdA (int index, int m)
 
 int BosonOnSphere::FindStateIndex(int* stateDescription, int lzmax)
 {
-/*  int TmpKey = this->GenerateKey(stateDescription, lzmax);
-  int i;
-  int* TmpStateDescription;
-  int Start = this->LzMaxPosition[lzmax * this->IncNbrBosons + stateDescription[lzmax]];
-  int* TmpKey2 = &(this->Keys[Start]);
-  int NbrCoarseSearch = 0;
-  int NbrDeepSearch = 0;
-  for (; Start < this->HilbertSpaceDimension; ++Start)    
-    {
-      ++NbrCoarseSearch;
-      if ((*TmpKey2) == TmpKey)
-	{
-	  ++NbrDeepSearch;
-	  i = 0;
-	  TmpStateDescription = this->StateDescription[Start];
-	  while (i <= lzmax)
-	    {
-	      if (stateDescription[i] != TmpStateDescription[i])
-		i = lzmax + 2;
-	      ++i;
-	    }
-	  if (i == (lzmax + 1))
-	    {
-	      ++this->NbrSearch;
-	      this->RatioSearchTotalDim += ((double) NbrCoarseSearch) / ((double) HilbertSpaceDimension);
-	      this->RatioSearchCoarseDeep += ((double) NbrDeepSearch) / ((double) NbrCoarseSearch);
-	      this->SqrRatioSearchTotalDim += (((double) NbrCoarseSearch) / ((double) HilbertSpaceDimension)) * (((double) NbrCoarseSearch) / ((double) HilbertSpaceDimension));
-	      this->SqrRatioSearchCoarseDeep += (((double) NbrDeepSearch) / ((double) NbrCoarseSearch)) * (((double) NbrDeepSearch) / ((double) NbrCoarseSearch));
-	      
-	      if (this->NbrSearch >= 100000)
-		{
-		  cout << "search/total dim = " << (this->RatioSearchTotalDim / this->NbrSearch) << " +/- "  
-		       << sqrt (this->SqrRatioSearchTotalDim / this->NbrSearch - (this->RatioSearchTotalDim / this->NbrSearch) * (this->RatioSearchTotalDim / this->NbrSearch))<< endl;
-		  cout << "deep/coarse =" << (this->RatioSearchCoarseDeep / this->NbrSearch) << " +/- "  
-		       << sqrt (this->SqrRatioSearchCoarseDeep / this->NbrSearch - (this->RatioSearchCoarseDeep / this->NbrSearch) * (this->RatioSearchCoarseDeep / this->NbrSearch))<< endl;
-		  this->RatioSearchTotalDim = 0.0;
-		  this->RatioSearchCoarseDeep = 0.0;
-		  this->SqrRatioSearchTotalDim = 0.0;
-		  this->SqrRatioSearchCoarseDeep = 0.0;
-		  this->NbrSearch = 0;
-		}
-	      return Start;
-	    }
-	}
-      ++TmpKey2;
-    }
-  return this->HilbertSpaceDimension;*/
   int TmpKey = this->GenerateKey(stateDescription, lzmax);
   int Sector = lzmax * this->IncNbrBosons + stateDescription[lzmax];
   int TmpPos = 0;
@@ -597,23 +557,6 @@ int BosonOnSphere::FindStateIndex(int* stateDescription, int lzmax)
         }
     }
   return TmpKeyInvertIndices[TmpPos];
-
-//  TmpPos3 = this->KeyInvertTableNbrIndices[Sector][TmpPos];
-//   for (int j = 0; j < TmpPos3; ++j)
-//     {
-//       Start = TmpKeyInvertIndices[j];
-//       i = 0;
-//       TmpStateDescription = this->StateDescription[Start];
-//       while (i <= lzmax)
-// 	{
-// 	  if (stateDescription[i] != TmpStateDescription[i])
-// 	    i = lzmax + 1;
-// 	  ++i;
-// 	}
-//       if (i == (lzmax + 1))
-// 	return Start;
-//     }
-//   return this->HilbertSpaceDimension;
 }
 
 // print a given State
@@ -631,8 +574,9 @@ ostream& BosonOnSphere::PrintState (ostream& Str, int state)
     Str << TmpState[i] << " ";
   for (; i <= this->LzMax; ++i)
     Str << "0 ";
-  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
-      << " position = " << FindStateIndex(TmpState, Max);
+  Str << " key = " << this->Keys[state] << " lzmax  = " << this->StateLzMax[state]<< " position = " << FindStateIndex(TmpState, Max);
+//    Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
+//        << " position = " << FindStateIndex(TmpState, Max);
   return Str;
 }
 
@@ -707,87 +651,111 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
   this->KeyInvertTable = new int* [Size];
   this->KeyInvertTableNbrIndices = new int* [Size];
   this->KeyInvertIndices = new int** [Size];
+  this->CoreGenerateLookUpTable(this->HilbertSpaceDimension, this->LzMax, this->StateDescription, this->StateLzMax, this->Keys, this->LzMaxPosition, this->KeyInvertSectorSize, 
+				this->KeyInvertTable, this->KeyInvertTableNbrIndices, this->KeyInvertIndices);
+}
+
+// generate look-up table associated to current Hilbert space (core part of the look-up table generation)
+// 
+// dimension = Hilbert space dimension
+// lzMax = maximum Lz value that can be reached by a particle
+// stateDescription = array that contains state description
+// stateLzMax = array giving maximum Lz value reached for a boson in a given state
+// keys = keys associated to each state
+// lzMaxPosition = indicate position of the first state with a given number of boson having a given maximum Lz value
+// keyInvertSectorSize = array that indicates how many different states are store for each sector
+// keyInvertTable = array that contains sorted possible key for each sector
+// keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
+// keyInvertIndices = array that contains state index per sector and per key
+
+void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
+					    int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices)
+{
+  int Size = (lzMax + 2) * this->IncNbrBosons;
   for (int i = 0; i < Size; ++i)
-    this->KeyInvertSectorSize[i] =0;
-  int CurrentLzMax = this->LzMax;
-  int CurrentNbrLzMax = 1;
-  this->LzMaxPosition[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 0; 
-  this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 0;   
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    keyInvertSectorSize[i] =0;
+  int CurrentLzMax = stateLzMax[0];
+  int CurrentNbrLzMax = stateDescription[0][CurrentLzMax];
+  lzMaxPosition[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 0; 
+  keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 0;   
+  for (int i = 0; i < dimension; ++i)
     {
-      this->Keys[i] = this->GenerateKey(this->StateDescription[i], this->StateLzMax[i]);
-      if (CurrentLzMax != this->StateLzMax[i])
+      keys[i] = this->GenerateKey(stateDescription[i], stateLzMax[i]);
+      if (CurrentLzMax != stateLzMax[i])
 	{
-	  CurrentLzMax = this->StateLzMax[i];
-	  CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
-	  this->LzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i; 
-	  this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	  CurrentLzMax = stateLzMax[i];
+	  CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
+	  lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i; 
+	  keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	  //	  cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	}
       else
-	if (this->StateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
+	if (stateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
 	  {
-	    CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
-	    this->LzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i;
-	    this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	    CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
+	    lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i;
+	    keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	    //	    cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	  }
 	else
 	  {
-	    ++this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]; 
+	    ++keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]; 
+	    //	    cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	  }
     }
-  
+
   for (int i = 0; i < Size; ++i)
     {
-      if (this->KeyInvertSectorSize[i] > 0)
+      if (keyInvertSectorSize[i] > 0)
 	{
-	  this->KeyInvertTable[i] = new int [this->KeyInvertSectorSize[i]];
-	  this->KeyInvertTableNbrIndices[i] = new int [this->KeyInvertSectorSize[i]];
+	  keyInvertTable[i] = new int [keyInvertSectorSize[i]];
+	  keyInvertTableNbrIndices[i] = new int [keyInvertSectorSize[i]];
 	}
       else
 	{
-	  this->KeyInvertTable[i] = 0; 
-	  this->KeyInvertTableNbrIndices[i] = 0;
+	  keyInvertTable[i] = 0; 
+	  keyInvertTableNbrIndices[i] = 0;
 	}
     }
 
-  CurrentLzMax = this->StateLzMax[0];
-  CurrentNbrLzMax = this->StateDescription[0][CurrentLzMax];
-  int CurrentKeyInvertSectorSize = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-  this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
-  int* TmpKeyInvertTable = this->KeyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-  int* TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-  TmpKeyInvertTable[0] = this->Keys[0];
+  CurrentLzMax = stateLzMax[0];
+  CurrentNbrLzMax = stateDescription[0][CurrentLzMax];
+  int CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+  keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+  int* TmpKeyInvertTable = keyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+  int* TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+  TmpKeyInvertTable[0] = keys[0];
   TmpKeyInvertTableNbrIndices[0] = 1;
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+  for (int i = 1; i < dimension; ++i)
     {
-      if (CurrentLzMax != this->StateLzMax[i])
+      if (CurrentLzMax != stateLzMax[i])
 	{
-	  CurrentLzMax = this->StateLzMax[i];
-	  CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
-	  CurrentKeyInvertSectorSize = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	  this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
-	  TmpKeyInvertTable = this->KeyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	  TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	  TmpKeyInvertTable[0] = this->Keys[i];
+	  CurrentLzMax = stateLzMax[i];
+	  CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
+	  CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	  keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	  TmpKeyInvertTable = keyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	  TmpKeyInvertTable[0] = keys[i];
 	  TmpKeyInvertTableNbrIndices[0] = 1;
 	}
       else
-	if (this->StateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
+	if (stateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
 	  {
-	    CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
-	    CurrentKeyInvertSectorSize = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	    this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
-	    TmpKeyInvertTable = this->KeyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	    TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-	    TmpKeyInvertTable[0] = this->Keys[i];
+	    CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
+	    CurrentKeyInvertSectorSize = keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	    keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
+	    TmpKeyInvertTable = keyInvertTable[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	    TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	    TmpKeyInvertTable[0] = keys[i];
 	    TmpKeyInvertTableNbrIndices[0] = 1;
 	  }
 	else
 	  {
-	    int Lim = this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+	    int Lim = keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
 	    int j = 0;
 	    bool Flag = false;
-	    int TmpKey = this->Keys[i];
+	    int TmpKey = keys[i];
 	    for (; ((j < Lim) && (Flag == false)); ++j)
 	      if (TmpKeyInvertTable[j] == TmpKey)
 		{
@@ -800,9 +768,9 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
 	      }
 	    else
 	      {
-		TmpKeyInvertTable[this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]] = TmpKey;
-		TmpKeyInvertTableNbrIndices[this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]] = 1;
-		++this->KeyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+		TmpKeyInvertTable[keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]] = TmpKey;
+		TmpKeyInvertTableNbrIndices[keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]] = 1;
+		++keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
 	      }
 	  }
     }
@@ -812,11 +780,12 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
   int TmpSize;
   for (int i = 0; i < Size; ++i)
     {
-      if (this->KeyInvertSectorSize[i] > 0)
+      if (keyInvertSectorSize[i] > 0)
 	{
-	  int Lim = this->KeyInvertSectorSize[i];
-	  TmpKeyInvertTable = this->KeyInvertTable[i];
-	  TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[i];
+	  //	  cout << "looking at sector " << i << "(" << (i / this->IncNbrBosons) << " " << (i % this->IncNbrBosons) << ") size=" << keyInvertSectorSize[i] << endl;
+	  int Lim = keyInvertSectorSize[i];
+	  TmpKeyInvertTable = keyInvertTable[i];
+	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[i];
 	  int* TmpKeyInvertTable2 = new int [Lim];
 	  int* TmpKeyInvertTableNbrIndices2 = new int [Lim];
 	  int Tmp;
@@ -837,120 +806,121 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
 	    }
 	  delete[] TmpKeyInvertTable;
 	  delete[] TmpKeyInvertTableNbrIndices;
-	  this->KeyInvertTable[i] = TmpKeyInvertTable2;
-	  this->KeyInvertTableNbrIndices[i] = TmpKeyInvertTableNbrIndices2;
-	  this->KeyInvertIndices[i] = new int* [Lim];
+	  keyInvertTable[i] = TmpKeyInvertTable2;
+	  keyInvertTableNbrIndices[i] = TmpKeyInvertTableNbrIndices2;
+	  keyInvertIndices[i] = new int* [Lim];
 	  for (int j = 0; j < Lim; ++j)
 	    {
-	      this->KeyInvertIndices[i][j] = new int [this->KeyInvertTableNbrIndices[i][j]];
-	      this->KeyInvertTableNbrIndices[i][j] = 0;
+	      keyInvertIndices[i][j] = new int [keyInvertTableNbrIndices[i][j]];
+	      keyInvertTableNbrIndices[i][j] = 0;
 	    }
 	}
     }
 
   // find all hilbert space indices that have the same key in each sector
-  CurrentLzMax = this->LzMax;
+  CurrentLzMax = lzMax;
   CurrentNbrLzMax = 1;
-  TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
-  int** TmpKeyInvertIndices = this->KeyInvertIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
+  int** TmpKeyInvertIndices = keyInvertIndices[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax];
   int TmpPos2;
   int TmpPos3;
   int TmpPos4 = CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax;
-  TmpSize = this->KeyInvertSectorSize[TmpPos4];
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  TmpSize = keyInvertSectorSize[TmpPos4];
+  TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
+  TmpKeyInvertTable = keyInvertTable[TmpPos4];
+  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
+  for (int i = 0; i < dimension; ++i)
     {
-      int TmpKey = this->Keys[i];
-      if (CurrentLzMax != this->StateLzMax[i])
+      //      this->PrintState(cout, i) << " tmpsize=" << TmpSize << endl;
+      int TmpKey = keys[i];
+      if (CurrentLzMax != stateLzMax[i])
 	{
-	  CurrentLzMax = this->StateLzMax[i];
-	  CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
+	  CurrentLzMax = stateLzMax[i];
+	  CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
 	  TmpPos4 = CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax;
-	  TmpKeyInvertIndices = this->KeyInvertIndices[TmpPos4];
-	  TmpKeyInvertTable = this->KeyInvertTable[TmpPos4];
-	  TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[TmpPos4];
-	  TmpSize = this->KeyInvertSectorSize[TmpPos4];
+	  TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
+	  TmpKeyInvertTable = keyInvertTable[TmpPos4];
+	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
+	  TmpSize = keyInvertSectorSize[TmpPos4];
 	  TmpPos = 0;
 	  TmpPos2 = TmpSize - 1;
-	  while (TmpPos2 != TmpPos)
+	  while ((TmpPos2 - TmpPos) > 1)
 	    {
 	      TmpPos3 = (TmpPos2 + TmpPos) >> 1;
 	      if (TmpKey < TmpKeyInvertTable[TmpPos3])
-		{
-		  TmpPos2 = TmpPos3 - 1;
-		}
+		TmpPos2 = TmpPos3;
 	      else
-		if (TmpKey > TmpKeyInvertTable[TmpPos3])
-		  {
-		    TmpPos = TmpPos3 + 1;
-		  }
-		else
-		  {
-		    TmpPos2 = TmpPos3;
-		    TmpPos = TmpPos3;		    
-		  }
+		TmpPos = TmpPos3;
 	    }
-	  TmpKeyInvertIndices[TmpPos][0] = i;
-	  TmpKeyInvertTableNbrIndices[TmpPos] = 1;
+	  if (TmpKey == TmpKeyInvertTable[TmpPos])
+	    {
+	      TmpKeyInvertIndices[TmpPos][0] = i;
+	      TmpKeyInvertTableNbrIndices[TmpPos] = 1;
+	    }
+	  else
+	    {
+	      TmpKeyInvertIndices[TmpPos2][0] = i;
+	      TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
+	    }
 	}
       else
-	if (this->StateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
+	if (stateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
 	  {
-	    CurrentNbrLzMax = this->StateDescription[i][CurrentLzMax];
+	    CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
 	    TmpPos4 = CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax;
-	    TmpKeyInvertIndices = this->KeyInvertIndices[TmpPos4];
-	    TmpKeyInvertTable = this->KeyInvertTable[TmpPos4];
-	    TmpKeyInvertTableNbrIndices = this->KeyInvertTableNbrIndices[TmpPos4];
-	    TmpSize = this->KeyInvertSectorSize[TmpPos4];
+	    TmpKeyInvertIndices = keyInvertIndices[TmpPos4];
+	    TmpKeyInvertTable = keyInvertTable[TmpPos4];
+	    TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
+	    TmpSize = keyInvertSectorSize[TmpPos4];
 	    TmpPos = 0;
 	    TmpPos2 = TmpSize - 1;
-	    while (TmpPos2 != TmpPos)
+	    while ((TmpPos2 - TmpPos) > 1)
 	      {
 		TmpPos3 = (TmpPos2 + TmpPos) >> 1;
 		if (TmpKey < TmpKeyInvertTable[TmpPos3])
-		  {
-		    TmpPos2 = TmpPos3 - 1;
-		  }
-	      else
-		if (TmpKey > TmpKeyInvertTable[TmpPos3])
-		  {
-		    TmpPos = TmpPos3 + 1;
-		  }
+		  TmpPos2 = TmpPos3;
 		else
-		  {
-		    TmpPos2 = TmpPos3;
-		    TmpPos = TmpPos3;		    
-		  }
+		  TmpPos = TmpPos3;
 	      }
-	    TmpKeyInvertIndices[TmpPos][0] = i;
-	    TmpKeyInvertTableNbrIndices[TmpPos] = 1;
+	    if (TmpKey == TmpKeyInvertTable[TmpPos])
+	      {
+		TmpKeyInvertIndices[TmpPos][0] = i;
+		TmpKeyInvertTableNbrIndices[TmpPos] = 1;
+	      }
+	    else
+	      {
+		TmpKeyInvertIndices[TmpPos2][0] = i;
+		TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
+	      }
 	  }
 	else
 	  {
 	    TmpPos = 0;
 	    TmpPos2 = TmpSize - 1;
-	    while (TmpPos2 != TmpPos)
+	    while ((TmpPos2 - TmpPos) > 1)
 	      {
 		TmpPos3 = (TmpPos2 + TmpPos) >> 1;
+		//		cout << TmpPos3 << endl;
 		if (TmpKey < TmpKeyInvertTable[TmpPos3])
 		  {
-		    TmpPos2 = TmpPos3 - 1;
-		  }
-	      else
-		if (TmpKey > TmpKeyInvertTable[TmpPos3])
-		  {
-		    TmpPos = TmpPos3 + 1;
+		    TmpPos2 = TmpPos3;
 		  }
 		else
-		  {
-		    TmpPos2 = TmpPos3;
-		    TmpPos = TmpPos3;		    
-		  }
+		  TmpPos = TmpPos3;
 	      }
-	    TmpKeyInvertIndices[TmpPos][TmpKeyInvertTableNbrIndices[TmpPos]] = i;
-	    ++TmpKeyInvertTableNbrIndices[TmpPos];
+	    //	    cout << endl;
+	    if (TmpKey == TmpKeyInvertTable[TmpPos])
+	      {
+		TmpKeyInvertIndices[TmpPos][TmpKeyInvertTableNbrIndices[TmpPos]] = i;
+		++TmpKeyInvertTableNbrIndices[TmpPos];
+	      }
+	    else
+	      {
+		TmpKeyInvertIndices[TmpPos2][TmpKeyInvertTableNbrIndices[TmpPos2]] = i;
+		++TmpKeyInvertTableNbrIndices[TmpPos2];
+	      }
 	  }
     }
-
 }
 
 // generate look-up table associated to current Hilbert space
