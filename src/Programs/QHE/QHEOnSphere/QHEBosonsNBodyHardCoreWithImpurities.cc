@@ -153,6 +153,7 @@ int main(int argc, char** argv)
 								 Memory, DiskCacheFlag,
 								 LoadPrecalculationFileName);
     }
+
   double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) LzMax));
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;

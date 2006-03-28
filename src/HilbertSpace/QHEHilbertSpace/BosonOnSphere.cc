@@ -71,7 +71,12 @@ BosonOnSphere::BosonOnSphere (int nbrBosons, int totalLz, int lzMax)
   this->Flag.Initialize();
   this->StateDescription = new int* [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->ShiftedTotalLz, 0);
+  int TmpLzMax = this->LzMax;
+  if (this->ShiftedTotalLz < TmpLzMax)
+    {
+      TmpLzMax = this->ShiftedTotalLz;	  
+    }
+  this->GenerateStates(this->NbrBosons, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
   this->KeyMultiplicationTable = new int [this->LzMax + 1];
   this->GenerateLookUpTable(0);
   this->KeptCoordinates = new int;
@@ -667,9 +672,10 @@ void BosonOnSphere::GenerateLookUpTable(int memory)
 // keyInvertTable = array that contains sorted possible key for each sector
 // keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
 // keyInvertIndices = array that contains state index per sector and per key
+// indexShift = optional shift to apply before storing any index
 
 void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
-					    int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices)
+					    int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices, int indexShift)
 {
   int Size = (lzMax + 2) * this->IncNbrBosons;
   for (int i = 0; i < Size; ++i)
@@ -685,22 +691,19 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
 	{
 	  CurrentLzMax = stateLzMax[i];
 	  CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
-	  lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i; 
+	  lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = indexShift + i; 
 	  keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
-	  //	  cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	}
       else
 	if (stateDescription[i][CurrentLzMax] != CurrentNbrLzMax)
 	  {
 	    CurrentNbrLzMax = stateDescription[i][CurrentLzMax];
-	    lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = i;
+	    lzMaxPosition[CurrentLzMax * this->IncNbrBosons + CurrentNbrLzMax] = indexShift + i;
 	    keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax] = 1;
-	    //	    cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	  }
 	else
 	  {
 	    ++keyInvertSectorSize[CurrentLzMax * (this->IncNbrBosons) + CurrentNbrLzMax]; 
-	    //	    cout << "hit " << CurrentLzMax << " " << CurrentNbrLzMax << endl;
 	  }
     }
 
@@ -782,7 +785,6 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
     {
       if (keyInvertSectorSize[i] > 0)
 	{
-	  //	  cout << "looking at sector " << i << "(" << (i / this->IncNbrBosons) << " " << (i % this->IncNbrBosons) << ") size=" << keyInvertSectorSize[i] << endl;
 	  int Lim = keyInvertSectorSize[i];
 	  TmpKeyInvertTable = keyInvertTable[i];
 	  TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[i];
@@ -831,7 +833,6 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
   TmpKeyInvertTableNbrIndices = keyInvertTableNbrIndices[TmpPos4];
   for (int i = 0; i < dimension; ++i)
     {
-      //      this->PrintState(cout, i) << " tmpsize=" << TmpSize << endl;
       int TmpKey = keys[i];
       if (CurrentLzMax != stateLzMax[i])
 	{
@@ -854,12 +855,12 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
 	    }
 	  if (TmpKey == TmpKeyInvertTable[TmpPos])
 	    {
-	      TmpKeyInvertIndices[TmpPos][0] = i;
+	      TmpKeyInvertIndices[TmpPos][0] = indexShift + i;
 	      TmpKeyInvertTableNbrIndices[TmpPos] = 1;
 	    }
 	  else
 	    {
-	      TmpKeyInvertIndices[TmpPos2][0] = i;
+	      TmpKeyInvertIndices[TmpPos2][0] = indexShift + i;
 	      TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
 	    }
 	}
@@ -884,12 +885,12 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
 	      }
 	    if (TmpKey == TmpKeyInvertTable[TmpPos])
 	      {
-		TmpKeyInvertIndices[TmpPos][0] = i;
+		TmpKeyInvertIndices[TmpPos][0] = indexShift + i;
 		TmpKeyInvertTableNbrIndices[TmpPos] = 1;
 	      }
 	    else
 	      {
-		TmpKeyInvertIndices[TmpPos2][0] = i;
+		TmpKeyInvertIndices[TmpPos2][0] = indexShift + i;
 		TmpKeyInvertTableNbrIndices[TmpPos2] = 1;
 	      }
 	  }
@@ -900,7 +901,6 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
 	    while ((TmpPos2 - TmpPos) > 1)
 	      {
 		TmpPos3 = (TmpPos2 + TmpPos) >> 1;
-		//		cout << TmpPos3 << endl;
 		if (TmpKey < TmpKeyInvertTable[TmpPos3])
 		  {
 		    TmpPos2 = TmpPos3;
@@ -908,15 +908,14 @@ void BosonOnSphere::CoreGenerateLookUpTable(int dimension, int lzMax, int** stat
 		else
 		  TmpPos = TmpPos3;
 	      }
-	    //	    cout << endl;
 	    if (TmpKey == TmpKeyInvertTable[TmpPos])
 	      {
-		TmpKeyInvertIndices[TmpPos][TmpKeyInvertTableNbrIndices[TmpPos]] = i;
+		TmpKeyInvertIndices[TmpPos][TmpKeyInvertTableNbrIndices[TmpPos]] = indexShift + i;
 		++TmpKeyInvertTableNbrIndices[TmpPos];
 	      }
 	    else
 	      {
-		TmpKeyInvertIndices[TmpPos2][TmpKeyInvertTableNbrIndices[TmpPos2]] = i;
+		TmpKeyInvertIndices[TmpPos2][TmpKeyInvertTableNbrIndices[TmpPos2]] = indexShift + i;
 		++TmpKeyInvertTableNbrIndices[TmpPos2];
 	      }
 	  }

@@ -290,8 +290,9 @@ class BosonOnSphere :  public ParticleOnSphere
   // keyInvertTable = array that contains sorted possible key for each sector
   // keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
   // keyInvertIndices = array that contains state index per sector and per key
+  // indexShift = optional shift to apply before storing any index
   void CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
-			       int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices);
+			       int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices, int indexShift = 0);
 
   // generate look-up table associated to current Hilbert space
   // 

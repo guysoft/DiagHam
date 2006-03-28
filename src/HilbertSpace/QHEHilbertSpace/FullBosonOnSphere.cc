@@ -57,7 +57,7 @@ FullBosonOnSphere::FullBosonOnSphere (int nbrBosons, int lzMax)
   this->MaxTotalLz = this->NbrBosons * this->LzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax);
-  cout << "dim = " << this->HilbertSpaceDimension << endl;
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
   this->Flag.Initialize();
@@ -71,11 +71,6 @@ FullBosonOnSphere::FullBosonOnSphere (int nbrBosons, int lzMax)
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
-
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     {
-//       this->PrintState(cout, i) << endl;
-//     }
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -579,33 +574,24 @@ int FullBosonOnSphere::FindStateIndex(int* stateDescription, int lzmax, int tota
   int TmpPos2 = this->FullKeyInvertSectorSize[totalLz][Sector] - 1;
   int TmpPos3;
   int* TmpKeyInvertTable = this->FullKeyInvertTable[totalLz][Sector];
-  while (TmpPos2 != TmpPos)
+  while ((TmpPos2 - TmpPos) > 1)
     {
-//      cout << Sector << " " << totalLz << " " << lzmax << " " << TmpPos << " " << TmpPos2 << endl;
       TmpPos3 = (TmpPos2 + TmpPos) >> 1;
       if (TmpKey < TmpKeyInvertTable[TmpPos3])
-	{
-	  TmpPos2 = TmpPos3 - 1;
-	}
+	TmpPos2 = TmpPos3;
       else
-	if (TmpKey > TmpKeyInvertTable[TmpPos3])
-	  {
-	    TmpPos = TmpPos3 + 1;
-	  }
-	else
-	  {
-	    TmpPos2 = TmpPos3;
-	    TmpPos = TmpPos3;		    
-	  }
+	TmpPos = TmpPos3;
     }
+  if (TmpKey == TmpKeyInvertTable[TmpPos2])
+    TmpPos = TmpPos2;
   int i;
   int* TmpStateDescription;
   int Start;
   int* TmpKeyInvertIndices = this->FullKeyInvertIndices[totalLz][Sector][TmpPos];
 
-  TmpPos2 =this->FullKeyInvertTableNbrIndices[totalLz][Sector][TmpPos] - 1;
+  TmpPos2 = this->FullKeyInvertTableNbrIndices[totalLz][Sector][TmpPos] - 1;
   TmpPos = 0;
-  while (TmpPos2 != TmpPos)
+  while ((TmpPos2 - TmpPos) > 1)
     {
       TmpPos3 = (TmpPos2 + TmpPos) >> 1;
       Start = TmpKeyInvertIndices[TmpPos3];
@@ -618,15 +604,20 @@ int FullBosonOnSphere::FindStateIndex(int* stateDescription, int lzmax, int tota
           return Start;
         }
       if (stateDescription[i] < TmpStateDescription[i])
-        {
-          TmpPos = TmpPos3 + 1;
-        }
+	TmpPos = TmpPos3;
       else
-        {
-           TmpPos2 = TmpPos3 - 1;
-        }
+	TmpPos2 = TmpPos3;
     }
-  return TmpKeyInvertIndices[TmpPos];
+  Start = TmpKeyInvertIndices[TmpPos];
+  TmpStateDescription = this->StateDescription[Start];
+  i = lzmax;
+  while ((i >= 0) && (stateDescription[i] ==  TmpStateDescription[i]))
+    --i;
+  if (i == -1)
+    {
+      return TmpKeyInvertIndices[TmpPos];
+    }
+  return TmpKeyInvertIndices[TmpPos2];
 }
 
 // print a given State
@@ -709,7 +700,7 @@ void FullBosonOnSphere::GenerateLookUpTable(int memory)
       this->CoreGenerateLookUpTable(this->TotalLzPosition[i + 1] - this->TotalLzPosition[i], TmpLzMax,
 				    this->StateDescription + this->TotalLzPosition[i], this->StateLzMax + this->TotalLzPosition[i], this->Keys + this->TotalLzPosition[i], 
 				    this->FullLzMaxPosition[i], this->FullKeyInvertSectorSize[i], this->FullKeyInvertTable[i], 
-				    this->FullKeyInvertTableNbrIndices[i], this->FullKeyInvertIndices[i]);
+				    this->FullKeyInvertTableNbrIndices[i], this->FullKeyInvertIndices[i], this->TotalLzPosition[i]);
     }
 }
 
