@@ -376,32 +376,17 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
 double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
 {
   this->ProdALzMax = this->StateLzMax[index];
-  unsigned long State = this->StateDescription[index];
-  --nbrIndices;
-  for (int i = 0; i < nbrIndices; ++i)
+  this->ProdATemporaryState = this->StateDescription[index];
+  int Index;
+  double Coefficient = 1.0;
+  for (int i = nbrIndices - 1; i >= 0; --i)
     {
-      if ((State & (((unsigned long) (0x1)) << n[i])) == 0)
+      Index = n[i];
+      if (((this->ProdATemporaryState & 0x1l) << Index) == 0)
 	{
 	  return 0.0;
 
 	}
-      for (int j = i + 1; j <= nbrIndices; ++j)
-	if (n[i] == n[j])
-	  {
-	    return 0.0;
-	  }
-    }
-  if (n[nbrIndices] > this->ProdALzMax)
-    {
-      return 0.0;
-    }
-
-  this->ProdATemporaryState = State;
-  int Index;
-  double Coefficient = 1.0;
-  for (int i = nbrIndices; i >= 0; --i)
-    {
-      Index = n[i];
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
 #ifdef  __64_BITS__
