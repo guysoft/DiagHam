@@ -35,6 +35,19 @@
 #include <math.h>
 
 
+// default constructor
+//
+
+ClebschGordanCoefficients::ClebschGordanCoefficients()
+{
+  this->J1 = -1;
+  this->J2 = -1;
+  this->CurrentPosition = -1;
+  this->JMin = 0l;
+  this->Coefficients = 0l;
+}
+
+
 // constructor 
 //
 // j1 = first angular momentum (twice the value to avoid half integer value)

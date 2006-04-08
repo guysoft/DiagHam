@@ -70,6 +70,10 @@ class ClebschGordanCoefficients
 
  public:
 
+  // default constructor
+  //
+  ClebschGordanCoefficients();
+
   // constructor 
   //
   // j1 = first angular momentum (twice the value to avoid half integer value)

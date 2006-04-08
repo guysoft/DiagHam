@@ -86,6 +86,9 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
+	    double Sign = 1.0;
+	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	      Sign = -1.0;
 	    for (int i = firstComponent; i < LastComponent; ++i)
 	      {
 		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
@@ -95,7 +98,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		    NIndices = this->SortedIndicesPerSum[k][j];
 		    for (int i1 = 0; i1 < Lim; ++i1)
 		      {
-			Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+			Coefficient3 = Sign * TmpParticles->ProdA(i, NIndices, k);
 			if (Coefficient3 != 0.0)
 			  {
 			    Coefficient2 = Coefficient3 * vSource[i] * TmpInteraction[i1];
@@ -184,6 +187,9 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		    for (int k = 2; k <= this->MaxNBody; ++k)
 		      if (this->NBodyFlags[k] == true)
 			{
+			  double Sign = 1.0;
+			  if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+			    Sign = -1.0;
 			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 			    {
 			      for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
@@ -193,7 +199,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 				  NIndices = this->SortedIndicesPerSum[k][j];
 				  for (int i1 = 0; i1 < Lim; ++i1)
 				    {
-				      Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+				      Coefficient3 = Sign * TmpParticles->ProdA(i, NIndices, k);
 				      if (Coefficient3 != 0.0)
 					{
 					  Coefficient2 = Coefficient3 * vSource[i] * TmpInteraction[i1];
@@ -350,6 +356,9 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
+	    double Sign = 1.0;
+	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	      Sign = -1.0;
 	    for (int i = firstComponent; i < LastComponent; ++i)
 	      {
 		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
@@ -359,7 +368,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		    NIndices = this->SortedIndicesPerSum[k][j];
 		    for (int i1 = 0; i1 < Lim; ++i1)
 		      {
-			Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+			Coefficient3 = Sign * TmpParticles->ProdA(i, NIndices, k);
 			if (Coefficient3 != 0.0)
 			  {
 			    for (int l = 0; l < nbrVectors; ++l)
@@ -483,6 +492,9 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		    for (int k = 2; k <= this->MaxNBody; ++k)
 		      if (this->NBodyFlags[k] == true)
 			{
+			  double Sign = 1.0;
+			  if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+			    Sign = -1.0;
 			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 			    {
 			      for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
@@ -492,7 +504,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				  NIndices = this->SortedIndicesPerSum[k][j];
 				  for (int i1 = 0; i1 < Lim; ++i1)
 				    {
-				      Coefficient3 = TmpParticles->ProdA(i, NIndices, k);
+				      Coefficient3 = Sign * TmpParticles->ProdA(i, NIndices, k);
 				      if (Coefficient3 != 0.0)
 					{
 					  for (int l = 0; l < nbrVectors; ++l)
@@ -773,6 +785,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
+	    double Sign = 1.0;
+	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	      Sign = -1.0;
 	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
 		TmpInteraction = this->NBodyInteractionFactors[k][j];
@@ -780,7 +795,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 		NIndices = this->SortedIndicesPerSum[k][j];
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    Coefficient2 = this->Particles->ProdA(i + this->PrecalculationShift, NIndices, k);
+		    Coefficient2 = Sign * this->Particles->ProdA(i + this->PrecalculationShift, NIndices, k);
 		    if (Coefficient2 != 0)
 		      {
 			MIndices = this->SortedIndicesPerSum[k][j];
@@ -840,6 +855,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
+	    double Sign = 1.0;
+	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	      Sign = -1.0;
 	    for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	      {
 		TmpInteraction = this->NBodyInteractionFactors[k][j];
@@ -847,7 +865,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 		NIndices = this->SortedIndicesPerSum[k][j];		
 		for (int i1 = 0; i1 < Lim; ++i1)
 		  {
-		    Coefficient2 = TmpParticles->ProdA(i, NIndices, k);
+		    Coefficient2 = Sign * TmpParticles->ProdA(i, NIndices, k);
 		    if (Coefficient2 != 0.0)
 		      {
 			MIndices = this->SortedIndicesPerSum[k][j];
@@ -942,6 +960,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 	  for (int k = 2; k <= this->MaxNBody; ++k)
 	    if (this->NBodyFlags[k] == true)
 	      {
+		double Sign = 1.0;
+		if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+		  Sign = -1.0;
 		for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 		  {
 		    TmpInteraction = this->NBodyInteractionFactors[k][j];
@@ -949,7 +970,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 		    NIndices = this->SortedIndicesPerSum[k][j];
 		    for (int i1 = 0; i1 < Lim; ++i1)
 		      {
-			Coefficient2 = this->Particles->ProdA(i, NIndices, k);
+			Coefficient2 = Sign * this->Particles->ProdA(i, NIndices, k);
 			if (Coefficient2 != 0.0)
 			  {
 			    MIndices = this->SortedIndicesPerSum[k][j];

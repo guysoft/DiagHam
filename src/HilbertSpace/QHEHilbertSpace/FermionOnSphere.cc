@@ -382,10 +382,9 @@ double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       Index = n[i];
-      if (((this->ProdATemporaryState & 0x1l) << Index) == 0)
+      if ((this->ProdATemporaryState & (0x1l << Index)) == 0)
 	{
 	  return 0.0;
-
 	}
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
@@ -393,7 +392,7 @@ double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
       Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
-      this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << Index);
+      this->ProdATemporaryState &= ~(0x1l << Index);
     }
   while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
     --this->ProdALzMax;
@@ -417,7 +416,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
       Index = m[i];
-      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
+      if ((TmpState & (0x1l << Index)) != 0)
 	{
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
@@ -435,7 +434,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
 	}
-      TmpState |= (((unsigned long) (0x1)) << Index);
+      TmpState |= (0x1l << Index);
     }
   return this->FindStateIndex(TmpState, NewLzMax);
 }
