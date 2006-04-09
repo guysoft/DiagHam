@@ -219,6 +219,17 @@ int SingleIntegerOption::GetInteger()
   return this->Integer;
 }
 
+// get option value as a string
+// 
+// return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+
+char* SingleIntegerOption::GetAsAString()
+{
+  char* TmpString = new char [24];
+  sprintf (TmpString, "%d", this->Integer);
+  return TmpString;
+}
+
 // print the current option and its values
 //  
 // output = reference on output stream;

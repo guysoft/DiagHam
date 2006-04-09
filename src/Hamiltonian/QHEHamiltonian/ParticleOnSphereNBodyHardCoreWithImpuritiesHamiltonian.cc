@@ -284,18 +284,17 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::~ParticleOnSphereNBodyHa
 
 void ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::EvaluateInteractionFactorsWithImpurities()
 {
-  this->EvaluateInteractionFactors()
+  this->EvaluateInteractionFactors();
   ParticleOnSphereFunctionBasis FunctionBasis(this->LzMax);
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    {
-      int j = i;
-      if (this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic)
-	{
-	}
-      for (; j < this->NbrLzValue; ++j)
-	{
+//   for (int i = 0; i < this->NbrLzValue; ++i)
+//     {
+//       int j = i;
+//       if (this->Particles->GetParticleStatistic() == ParticleOnSphere::BosonicStatistic)
+// 	{
+// 	}
+//       for (; j < this->NbrLzValue; ++j)
+// 	{
 	  
-	}
-    }
+// 	}
 }
 

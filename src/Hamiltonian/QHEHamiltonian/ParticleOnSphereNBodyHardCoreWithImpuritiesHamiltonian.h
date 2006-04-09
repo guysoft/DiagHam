@@ -103,7 +103,7 @@ class ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian : public ParticleOn
 
   // destructor
   //
-  ~ParticleOnSphereNBodyHardCoreHamiltonian();
+  ~ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //

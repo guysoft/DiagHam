@@ -79,7 +79,8 @@ am_libQHEHamiltonian_a_OBJECTS =  \
 	ParticleOnDiskNBodyHardCoreHamiltonian.$(OBJEXT) \
 	ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.$(OBJEXT) \
 	ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.$(OBJEXT) \
-	ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.$(OBJEXT)
+	ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.$(OBJEXT) \
+	ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.$(OBJEXT)
 libQHEHamiltonian_a_OBJECTS = $(am_libQHEHamiltonian_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -105,6 +106,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereGenericHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereLaplacianDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po \
@@ -250,7 +252,8 @@ AbstractQHEOnDiskNBodyInteractionHamiltonian.cc \
 ParticleOnDiskNBodyHardCoreHamiltonian.cc \
 ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian.cc \
-ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.cc
+ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.cc \
+ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.cc
 
 all: all-recursive
 
@@ -320,6 +323,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereGenericHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereLaplacianDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po@am__quote@

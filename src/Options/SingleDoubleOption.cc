@@ -219,6 +219,17 @@ double SingleDoubleOption::GetDouble()
   return this->Double;
 }
 
+// get option value as a string
+// 
+// return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+
+char* SingleDoubleOption::GetAsAString()
+{
+  char* TmpString = new char [32];
+  sprintf (TmpString, "%.14f", this->Double);
+  return TmpString;
+}
+
 // print the current option and its values
 //  
 // output = reference on output stream;

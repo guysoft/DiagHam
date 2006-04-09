@@ -81,6 +81,11 @@ class SingleStringOption : public AbstractOption
   // return value = pointer to string
   char* GetString();
 
+  // get option value as a string
+  // 
+  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+  char* GetAsAString();
+
   // print the current option and its values
   //  
   // output = reference on output stream;

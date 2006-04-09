@@ -116,6 +116,11 @@ class SingleDoubleOption : public AbstractOption
   // return value = double value
   double GetDouble();
 
+  // get option value as a string
+  // 
+  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+  char* GetAsAString();
+
 };
 
 #endif

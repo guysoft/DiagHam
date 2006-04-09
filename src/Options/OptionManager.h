@@ -104,6 +104,12 @@ class OptionManager
   // return value = reference on current output stream
   ostream& DisplayHelp (ostream& output);
 
+  // dump some of the options into a formatted string
+  //
+  // format = string describing the format to use (each symbol %optionname% is replaced by the value associated to the option referred as optionname)
+  // return value = formatted string (deallocation has to be done manually)
+  char* GetFormattedString (char* format);
+
 };
 
 #endif

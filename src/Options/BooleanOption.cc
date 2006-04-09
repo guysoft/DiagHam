@@ -108,6 +108,21 @@ bool BooleanOption::GetBoolean()
   return this->Boolean;
 }
 
+// get option value as a string
+// 
+// return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+
+char* BooleanOption::GetAsAString()
+{
+  char* TmpString = new char [2];
+  if (this->Boolean == false)
+    TmpString[0] = '0';
+  else
+    TmpString[0] = '1';
+  TmpString[1] = '\0';
+  return TmpString;
+}
+
 // print the current option and its values
 //  
 // output = reference on output stream;

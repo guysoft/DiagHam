@@ -234,3 +234,85 @@ ostream& OptionManager::DisplayHelp (ostream& output)
   return output;
 }
 
+// dump some of the options into a formatted string
+//
+// format = string describing the format to use (each symbol %optionname% is replaced by the value associated to the option referred as optionname)
+// return value = formatted string (deallocation has to be done manually, 0 if an error occured)
+
+char* OptionManager::GetFormattedString (char* format)
+{
+  int StringLength = 0;
+  List<char*> Values;
+  char* TmpFormat = format;
+  char* TmpFormat2;
+  char** TmpValue;
+  AbstractOption* TmpOption;
+  while ((*TmpFormat) != '\0')
+    {
+      while (((*TmpFormat) != '%') && ((*TmpFormat) != '\0'))
+	{
+	  ++TmpFormat;
+	  ++StringLength;
+	}
+      if ((*TmpFormat) != '\0')
+	{
+	  ++TmpFormat;
+	  TmpFormat2 = TmpFormat;
+	  while ((*TmpFormat) != '%')
+	    {
+	      ++TmpFormat;
+	    }
+	  (*TmpFormat) = '\0';
+	  TmpOption = (*this)[TmpFormat2];
+	  if (TmpOption == 0)
+	    {
+	      ListIterator<char*> IterValues(Values);
+	      while ((TmpValue = IterValues()))
+		{
+		  delete[] (*TmpValue);
+		} 
+	      return 0l;
+	    }
+	  else
+	    {
+	      Values += TmpOption->GetAsAString();
+	    }
+	  (*TmpFormat) = '%';
+	  ++TmpFormat;
+	}
+    }
+  TmpFormat = format;
+  ListIterator<char*> IterValues(Values);
+  while ((TmpValue = IterValues()))
+    {
+      StringLength += strlen(*TmpValue);
+    } 
+  IterValues.DefineList(Values);
+  char* TmpFormattedString = new char [StringLength + 1];
+  char* TmpFormattedString2 = TmpFormattedString;
+  StringLength = 0;
+  while ((*TmpFormat) != '\0')
+    {
+      while (((*TmpFormat) != '%') && ((*TmpFormat) != '\0'))
+	{
+	  (*TmpFormattedString2) = (*TmpFormat);
+	  ++TmpFormattedString2;
+	  ++TmpFormat;
+	}
+      if ((*TmpFormat) != '\0')
+	{
+	  while ((*TmpFormat) != '%')
+	    {
+	      ++TmpFormat;	  
+	    }
+	  ++TmpFormat;
+	  TmpValue = IterValues();
+	  strcpy (TmpFormattedString2, *TmpValue);
+	  TmpFormattedString2 += strlen(*TmpValue);
+	  delete[] (*TmpValue);
+	}
+    }
+  TmpFormattedString2 = '\0';
+  return TmpFormattedString;
+}
+

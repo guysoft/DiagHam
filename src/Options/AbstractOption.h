@@ -78,6 +78,11 @@ class AbstractOption
   // return value = number of arguments that have been read (-1 if an error occured)
   virtual int ReadOption(char** argumentValues, int nbrArgument, int argumentPosition) = 0;
 
+  // get option value as a string
+  // 
+  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+  virtual  char* GetAsAString() = 0;
+
   // print error message on output stream
   //
   // output = reference on output stream;

@@ -136,6 +136,7 @@ int main(int argc, char** argv)
     }
 
   char* OutputNameLz = new char [256];
+//  cout << Manager.GetFormattedString("bosons_hardcore_nbody_%nbody-file%_n_%nbr-particles%_2s_%lzmax%_lz.dat") << endl;
   sprintf (OutputNameLz, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = 0;

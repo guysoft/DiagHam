@@ -149,6 +149,17 @@ char* SingleStringOption::GetString()
   return this->String;
 }
 
+// get option value as a string
+// 
+// return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+
+char* SingleStringOption::GetAsAString()
+{
+  char* TmpString = new char [strlen(this->String) + 1];
+  strcpy (TmpString, this->String);
+  return TmpString;
+}
+
 // print the current option and its values
 //  
 // output = reference on output stream;
