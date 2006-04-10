@@ -135,70 +135,6 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
     }
   else
     this->LoadPrecalculation(precalculationFileName);
-//   int Indices[2];
-//   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-//     {
-//       this->Particles->PrintState(cout, i) << endl;
-//       for (int m1 = 0; m1 <= this->LzMax; ++m1)
-// 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
-// 	  {
-// 	    Indices[0] = m1;
-// 	    Indices[1] = m2;
-// 	    double TmpCoef = this->Particles->ProdA(i, Indices, 2);
-// 	    for (int m3 = 0; m3 <= this->LzMax; ++m3)
-// 	      {
-// 		int m4 = m1 + m2 - m3;
-// 		if ((m4 > m3) && (m4 <= this->LzMax))
-// 		  {
-// 		    if (TmpCoef != 0.0)
-// 		      {
-// 			Indices[0] = m3;
-// 			Indices[1] = m4;		  
-// 			double Coef1; 
-// 			int Index1 = this->Particles->ProdAd(Indices, 2, Coef1);
-// 			Coef1 *= TmpCoef;
-// 			double Coef2; 
-// 			int Index2 = this->Particles->AdAdAA(i, m3, m4, m1, m2, Coef2);
-// 			if ((Index1 != Index2) || (Coef1 != Coef2))
-// 			  {
-// 			    cout << "error at index " << i << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << " gives " << Index1 << "(" << Index2 
-// 				 << ") and " << Coef1 << "(" << Coef2<< ")" << endl;
-// 			  }
-// 			else
-// 			  {
-// 			    cout << "OK at index " << i << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << endl;
-// 			  }
-// 		      }
-// 		    else
-// 		      {
-// 			double Coef2; 
-// 			int Index2 = this->Particles->AdAdAA(i, m3, m4, m1, m2, Coef2);
-// 			if (Index2 != this->Particles->GetHilbertSpaceDimension())
-// 			  {
-// 			    cout << "(null) error at index " << i << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << " gives " 
-// 				 << this->Particles->GetHilbertSpaceDimension() <<  "(" << Index2 
-// 				 << ") and 0 (" << Coef2<< ")" << endl;
-// 			  }
-// 			else
-// 			  {
-// 			    cout << "(null) OK at index " << i << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << endl;
-// 			  }
-// 		      }
-// 		  }
-// 	      }
-// 	  }
-// //     }
-//    cout << "MinSumIndices " << this->MinSumIndices << "  MaxSumIndices " << this->MaxSumIndices << endl;
-//    for (int i = this->MinSumIndices; i <= this->MaxSumIndices; ++i)
-//     {
-//       cout << "sum = " << i << "    nbr indices = " << this->NbrSortedIndicesPerSum[3][i] << endl;
-//       int* Indices2 = this->SortedIndicesPerSum[3][i];
-//       for (int j = 0; j < this->NbrSortedIndicesPerSum[3][i]; ++j)
-// 	{
-// 	  cout << Indices2[0] << " " << Indices2[1] << " " << Indices2[2] << endl; 
-// 	  Indices2 += 3;
-// 	}
-//     }
 }
 
 // constructor from default datas
@@ -481,8 +417,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(int nbrIndices, int* indices, int nbrIndexSets)
 {
   double* TmpCoefficients = new double [nbrIndexSets];
-  //  int JValue = (nbrIndices * (this->LzMax - (nbrIndices - 1)));
-  int JValue = (nbrIndices * this->LzMax);
+  int JValue = (nbrIndices * (this->LzMax - (nbrIndices - 1)));
   switch (nbrIndices)
     {
     case 2:
@@ -497,27 +432,43 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
       break;
     case 3:
       {
-	int MaxJ = 2 * this->LzMax;
+	int MaxJ = 2 * this->LzMax - 2;
 	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
 	ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
 	int MinJ = JValue - this->LzMax;
 	if (MinJ < 0)
 	  MinJ = 0;
-	for (int j = MinJ; j <= MaxJ; j += 2)
+	for (int j = MaxJ; j >= MinJ; j -= 4)
 	  ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
 	for (int i = 0; i < nbrIndexSets; ++i)
 	  {
 	    double Tmp = 0.0;
 	    int Sum = ((indices[0] + indices[1]) << 1)  - (2 * this->LzMax);
-	    int j = MinJ;
-	    if (j < abs(Sum))
-	      j = abs(Sum);
-	    for (; j <= MaxJ; j += 2)
+	    int TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum))
+	      TmpMinJ = abs(Sum);
+	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
 	      {
-// 		cout << ((indices[0] << 1) - this->LzMax) << " " << ((indices[1] << 1)- this->LzMax) << " " << j 
-// 		     << " " << Sum << " " << ((indices[2] << 1) - this->LzMax) << " " << JValue << endl;
 		Tmp += (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j) * 
 			ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue)); 
+	      }
+	    Sum = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
+	    TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum))
+	      TmpMinJ = abs(Sum);
+	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
+	      {
+		Tmp += (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
+			ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
+	      }
+	    Sum = ((indices[2] + indices[0]) << 1)  - (2 * this->LzMax);
+	    TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum))
+	      TmpMinJ = abs(Sum);
+	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
+	      {
+		Tmp += (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) * 
+			ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
 	      }
 	    TmpCoefficients[i] = Tmp;
 	    indices += 3;

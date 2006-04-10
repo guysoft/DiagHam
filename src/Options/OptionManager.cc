@@ -39,7 +39,7 @@
 
 using std::ostream;
 using std::endl;
-
+using std::cout;
 
 // constructor
 //
@@ -241,10 +241,10 @@ ostream& OptionManager::DisplayHelp (ostream& output)
 
 char* OptionManager::GetFormattedString (char* format)
 {
+  char* TmpScratch = new char [strlen(format)];
   int StringLength = 0;
   List<char*> Values;
   char* TmpFormat = format;
-  char* TmpFormat2;
   char** TmpValue;
   AbstractOption* TmpOption;
   while ((*TmpFormat) != '\0')
@@ -257,13 +257,25 @@ char* OptionManager::GetFormattedString (char* format)
       if ((*TmpFormat) != '\0')
 	{
 	  ++TmpFormat;
-	  TmpFormat2 = TmpFormat;
-	  while ((*TmpFormat) != '%')
+	  int TmpSize = 0;
+	  while (((*TmpFormat) != '%') && ((*TmpFormat) != '\0'))
 	    {
+	      TmpScratch[TmpSize] = (*TmpFormat);
+	      ++TmpSize;
 	      ++TmpFormat;
 	    }
-	  (*TmpFormat) = '\0';
-	  TmpOption = (*this)[TmpFormat2];
+	  if ((*TmpFormat) == '\0')
+	    {
+	      ListIterator<char*> IterValues(Values);
+	      while ((TmpValue = IterValues()))
+		{
+		  delete[] (*TmpValue);
+		} 
+	      delete[] TmpScratch;
+	      return 0l;
+	    }
+	  TmpScratch[TmpSize] = '\0';
+	  TmpOption = (*this)[TmpScratch];
 	  if (TmpOption == 0)
 	    {
 	      ListIterator<char*> IterValues(Values);
@@ -271,26 +283,22 @@ char* OptionManager::GetFormattedString (char* format)
 		{
 		  delete[] (*TmpValue);
 		} 
+	      delete[] TmpScratch;
 	      return 0l;
 	    }
 	  else
 	    {
-	      Values += TmpOption->GetAsAString();
+	      char* TmpString = TmpOption->GetAsAString();
+	      StringLength += strlen (TmpString);
+	      Values += TmpString;
 	    }
-	  (*TmpFormat) = '%';
 	  ++TmpFormat;
 	}
     }
   TmpFormat = format;
   ListIterator<char*> IterValues(Values);
-  while ((TmpValue = IterValues()))
-    {
-      StringLength += strlen(*TmpValue);
-    } 
-  IterValues.DefineList(Values);
   char* TmpFormattedString = new char [StringLength + 1];
   char* TmpFormattedString2 = TmpFormattedString;
-  StringLength = 0;
   while ((*TmpFormat) != '\0')
     {
       while (((*TmpFormat) != '%') && ((*TmpFormat) != '\0'))
@@ -301,6 +309,7 @@ char* OptionManager::GetFormattedString (char* format)
 	}
       if ((*TmpFormat) != '\0')
 	{
+	  ++TmpFormat;
 	  while ((*TmpFormat) != '%')
 	    {
 	      ++TmpFormat;	  
@@ -312,7 +321,8 @@ char* OptionManager::GetFormattedString (char* format)
 	  delete[] (*TmpValue);
 	}
     }
-  TmpFormattedString2 = '\0';
+  delete[] TmpScratch;
+  (*TmpFormattedString2) = '\0';
   return TmpFormattedString;
 }
 

@@ -135,9 +135,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = new char [256];
-//  cout << Manager.GetFormattedString("bosons_hardcore_nbody_%nbody-file%_n_%nbr-particles%_2s_%lzmax%_lz.dat") << endl;
-  sprintf (OutputNameLz, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz.dat", NbrNBody, NbrBosons, LzMax);
+  char* OutputNameLz = Manager.GetFormattedString("bosons_hardcore_nbody_%nbr-nbody%_n_%nbr-particles%_2s_%lzmax%_lz.dat");
   int Max = (LzMax * NbrBosons);
   int  L = 0;
   if ((abs(Max) & 1) != 0)
