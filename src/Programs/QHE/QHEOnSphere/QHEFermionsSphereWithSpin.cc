@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('w', "V1-Interaction", "Interaction in p-wave channel", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace","-g",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -119,9 +119,8 @@ int main(int argc, char** argv)
   bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
   bool FirstRun = true;
 
-  char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_V_%g_W_%g.dat",
-	   NbrFermions, LzMax,SzTotal,V0,V1);
+  char* OutputNameLz = Manager.GetFormattedString("fermions_sphere_spin_n_%nbr-particles%_2S_%lzmax%_Sz_%SzTotal%_V_%V0-Interaction%_W_%V1-Interaction%_lz%ground%.dat");
+  //sprintf (OutputNameLz, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_V_%g_W_%g.dat", NbrFermions, LzMax,SzTotal,V0,V1);
 
   int NbrUp = (NbrFermions + SzTotal)/2;
   int NbrDown = (NbrFermions - SzTotal)/2;
