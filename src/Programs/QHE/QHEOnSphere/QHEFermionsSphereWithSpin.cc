@@ -24,6 +24,9 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
+#ifdef __MPI__
+#include <mpi.h>
+#endif
 
 
 using std::ios;
