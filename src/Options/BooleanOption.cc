@@ -54,6 +54,40 @@ BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDesc
   this->OptionDescription = new char [strlen(optionDescription) + 1];
   strcpy (this->OptionDescription, optionDescription);
   this->Boolean = defaultValue;
+  this->FalseString=NULL;
+  this->TrueString=NULL;
+}
+
+// constructor from default datas
+//
+// optionCode = character associated to the option
+// optionName = string corresponding to option name
+// optionDescription = string describing option (used for -h option)
+// trueString = string output by Manager.GetFormattedString if optionvalue is true
+// falseString = string output by Manager.GetFormattedString if optionvalue is false
+// defaultValue = boolean default value 
+BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDescription,
+			     char* trueString, char* falseString, bool defaultValue)
+{
+  this->OptionCode = optionCode;
+  this->OptionName = new char [strlen(optionName) + 2];
+  this->OptionName[0] = '-';
+  strcpy (&(this->OptionName[1]), optionName);
+  this->OptionDescription = new char [strlen(optionDescription) + 1];
+  strcpy (this->OptionDescription, optionDescription);
+  this->Boolean = defaultValue;
+  if (falseString!=NULL)
+    {
+      this->FalseString=new char [strlen(falseString) + 1];
+      strcpy (this->FalseString, falseString);
+    }
+  else this->FalseString=NULL;
+  if (trueString!=NULL)
+    {
+      this->TrueString=new char [strlen(trueString) + 1];
+      strcpy (this->TrueString, trueString);
+    }
+  else this->TrueString=NULL;
 }
 
 // destructor
@@ -114,12 +148,45 @@ bool BooleanOption::GetBoolean()
 
 char* BooleanOption::GetAsAString()
 {
-  char* TmpString = new char [2];
-  if (this->Boolean == false)
-    TmpString[0] = '0';
+  char* TmpString;
+  if ((FalseString==NULL)&&(TrueString==NULL))
+    {
+      TmpString = new char [2];
+      if (this->Boolean == false)
+	TmpString[0] = '0';
+      else
+	TmpString[0] = '1';
+      TmpString[1] = '\0';
+    }
   else
-    TmpString[0] = '1';
-  TmpString[1] = '\0';
+    {
+      if (this->Boolean == false)
+	{
+	  if (FalseString!=NULL)
+	    {
+	      TmpString = new char[strlen(FalseString)+1];
+	      strcpy(TmpString,FalseString);
+	    }
+	  else
+	    {
+	      TmpString = new char[1];
+	      TmpString[0]='\0';
+	    }
+	}
+      else
+	{	  
+	  if (TrueString!=NULL)
+	    {
+	      TmpString = new char[strlen(TrueString)+1];
+	      strcpy(TmpString,TrueString);
+	    }
+	  else
+	    {
+	      TmpString = new char[1];
+	      TmpString[0]='\0';
+	    }
+	}
+    }
   return TmpString;
 }
 

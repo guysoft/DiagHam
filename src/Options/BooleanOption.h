@@ -33,7 +33,7 @@
 
 #include "config.h"
 #include "Options/AbstractOption.h"
-
+#include <string>
 
 class BooleanOption : public AbstractOption
 {
@@ -41,6 +41,9 @@ class BooleanOption : public AbstractOption
  protected:
   
   bool Boolean;
+
+  char *FalseString;
+  char *TrueString;
   
  public:
 
@@ -55,7 +58,17 @@ class BooleanOption : public AbstractOption
   // optionName = string corresponding to option name
   // optionDescription = string describing option (used for -h option)
   // defaultValue = boolean default value 
-  BooleanOption(char optionCode, char* optionName, char* optionDescription, bool defaultValue = false); 
+  BooleanOption(char optionCode, char* optionName, char* optionDescription, bool defaultValue = false);
+
+  // constructor from default datas
+  //
+  // optionCode = character associated to the option
+  // optionName = string corresponding to option name
+  // optionDescription = string describing option (used for -h option)
+  // trueString = string output by Manager.GetFormattedString if optionvalue is true
+  // falseString = string output by Manager.GetFormattedString if optionvalue is false
+  // defaultValue = boolean default value 
+  BooleanOption(char optionCode, char* optionName, char* optionDescription, char* trueString, char* falseString, bool defaultValue = false);
 
   // destructor
   //
