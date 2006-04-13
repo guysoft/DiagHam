@@ -45,7 +45,7 @@ foreach $TmpFile (<*>)
       {
 	push (@ListFiles, $TmpFile);
       }
-    if ($TmpFile =~ /fermions\_[^_]*\_n\_$NbrFermions.*\_l\./)
+    if ($TmpFile =~ /fermions\_.+\_n\_$NbrFermions.*\_l\.dat$/)
       {
 	push (@ListFiles, $TmpFile);
       }

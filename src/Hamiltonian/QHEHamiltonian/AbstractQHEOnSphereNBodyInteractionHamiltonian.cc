@@ -901,7 +901,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 		  MIndices = this->SortedIndicesPerSum[1][j];
 		  for (int i2 = 0; i2 < Lim; ++i2)
 		    {
-		      Index = this->Particles->AdA(i, MIndices[i1], NIndices[i2], Coefficient);
+		      Index = this->Particles->AdA(i + this->PrecalculationShift, MIndices[i1], NIndices[i2], Coefficient);
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
