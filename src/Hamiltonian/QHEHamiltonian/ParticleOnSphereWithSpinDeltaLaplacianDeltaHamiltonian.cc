@@ -446,9 +446,7 @@ RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelMult
 RealVector& ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 			       int firstComponent, int nbrComponent)
 {
-  int LastComponent = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < LastComponent; ++i)
-    vDestination[i] = 0.0;
+  vDestination.ClearVector();
   return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
 }
 
