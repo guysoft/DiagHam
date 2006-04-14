@@ -118,9 +118,13 @@ int main(int argc, char** argv)
   char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
   bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
   bool FirstRun = true;
-
+  
+#ifdef __MPI__
+  char* OutputNameLz = Manager.GetFormattedString("fermions_sphere_spin_n_%nbr-particles%_2S_%lzmax%_Sz_%SzTotal%_V_%V0-Interaction%_W_%V1-Interaction%_lz%mpi%%ground%.dat");
+#else 
   char* OutputNameLz = Manager.GetFormattedString("fermions_sphere_spin_n_%nbr-particles%_2S_%lzmax%_Sz_%SzTotal%_V_%V0-Interaction%_W_%V1-Interaction%_lz%ground%.dat");
-  //sprintf (OutputNameLz, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_V_%g_W_%g.dat", NbrFermions, LzMax,SzTotal,V0,V1);
+#endif
+
 
   int NbrUp = (NbrFermions + SzTotal)/2;
   int NbrDown = (NbrFermions - SzTotal)/2;

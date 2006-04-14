@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "szmax", "twice the total z-component of the spin", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('S', "SpinCode", "Code for Spin-channel in bits 0bxxxx, x= u/d = 1/0, (0=dddd, 9=uddu, 10=udud, 15=uuuu) ", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('c', "SpinCode", "Code for Spin-channel in bits 0bxxxx, x= u/d = 1/0, (0=dddd, 9=uddu, 10=udud, 15=uuuu) ", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");

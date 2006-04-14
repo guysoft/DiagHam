@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('e', "expansion-file", "file containing expansion coefficients", 0);
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "generic");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
-  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
+  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 200);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -92,11 +92,11 @@ int main(int argc, char** argv)
   char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
   if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
     {
-      sprintf (OutputNameCorr, "corr_%s_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), LzMax);
+      sprintf (OutputNameCorr, "corr_%s_2s_%d.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), LzMax);
     }
   else
     {
-      sprintf (OutputNameCorr, "fermions_%s_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), LzMax,
+      sprintf (OutputNameCorr, "fermions_%s_2s_%d_%s.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), LzMax,
 	       ((SingleStringOption*) Manager["add-filename"])->GetString());
     }
 
