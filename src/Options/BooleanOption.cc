@@ -63,8 +63,8 @@ BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDesc
 // optionCode = character associated to the option
 // optionName = string corresponding to option name
 // optionDescription = string describing option (used for -h option)
-// trueString = string output by Manager.GetFormattedString if optionvalue is true
-// falseString = string output by Manager.GetFormattedString if optionvalue is false
+// trueString = string output by GetAsString() if optionvalue is true
+// falseString = string output by GetAsString() if optionvalue is false
 // defaultValue = boolean default value 
 BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDescription,
 			     char* trueString, char* falseString, bool defaultValue)
@@ -97,6 +97,8 @@ BooleanOption::~BooleanOption()
 {
   delete[] this->OptionName;
   delete[] this->OptionDescription;
+  if (FalseString!=NULL) delete [] FalseString;
+  if (TrueString!=NULL) delete [] TrueString;
 }
  
 // Test if an argument corresponds to the current option and read its content
