@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2006 Nicolas Regnault and Gunnar Moeller                 //
+//          Copyright (C) 2001-2006 Nicolas Regnault and Gunnar Moeller       //
 //                                                                            //
 //                                                                            //
 //           class of Jain composite fermion wave function on sphere          //
@@ -35,6 +35,10 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "Vector/RealVector.h"
 
+#include "DerivativeProductFactor.h"
+#include "DerivativeProduct.h"
+#include "SumDerivativeProduct.h"
+
 #include <iostream>
 
 using std::cout;
@@ -55,7 +59,8 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals()
 // nbrLandauLevel = number of Landau levels filled with composite fermions
 // jastrowPower = power to which the Jastrow factor has to be raised
 
-JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels, int nbrEffectiveFlux, int jastrowPower)
+JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels,
+					       int nbrEffectiveFlux, int jastrowPower)
 {
   this->NbrParticles = nbrParticles;
   this->NbrLandauLevels = nbrLandauLevels;
@@ -89,13 +94,15 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   this->SpinorVCoordinatePower = new Complex*[NbrParticles];
   if (ReverseFluxFlag)
     {
-      this->MaxSpinorPower = (this->NbrLandauLevels - 1); 
-      this->MaxDerivativeNum = this->NbrLandauLevels + this->TwiceS;
+      this->MaxSpinorPower = (this->NbrLandauLevels - 1); // *2; ?? 
+      this->MaxDerivativeNum = 2*this->NbrLandauLevels + this->TwiceS;
+      this->LLLDerivativeNum = this->TwiceS;
     }
   else
     {
       this->MaxSpinorPower = this->TwiceS + (this->NbrLandauLevels - 1); // *2; ?? 
       this->MaxDerivativeNum = this->NbrLandauLevels;
+      this->LLLDerivativeNum = 0;
     }
   for (int i = 0; i < this->NbrParticles; ++i)
     {
@@ -109,6 +116,7 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
 	  this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum];
 	}
     }
+  this->EvaluateDerivativeStructure();
 }
 
 // copy constructor
@@ -149,6 +157,7 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
 	  this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum];
 	}
     }
+  this->EvaluateDerivativeStructure();
 }
 
 // destructor
@@ -176,7 +185,7 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
       for (int j = 0; j < this->MaxDerivativeNum; ++j)
 	{
 	  delete[] this->DerivativeFactors[i][j];
-	  delete[] this->DerivativeFactors2[i][j];
+	  delete[] this->DerivativeFactors2[i][j];	  
 	}
       delete[] this->DerivativeFactors[i];
       delete[] this->DerivativeFactors2[i];
@@ -189,6 +198,9 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
   delete[] this->SpinorVCoordinatePower;
   delete[] this->DerivativeFactors;
   delete[] this->DerivativeFactors2;
+  for (int i = 0; i < this->NbrLandauLevels; ++i)
+    delete[] this->DerivativeStructure[i];
+  delete[] this->DerivativeStructure;
 }
 
 // clone function 
@@ -465,6 +477,67 @@ void JainCFOnSphereOrbitals::EvaluateSumPrefactors()
     }
 }
 
+// recursive functions calculating the DerivativeStructure: Derivatives in V
+//
+SumDerivativeProduct JainCFOnSphereOrbitals::VRecursion(int VDerivatives)
+{
+  if (VDerivatives>1)
+    {
+      SumDerivativeProduct tmp=VRecursion(VDerivatives-1);
+      SumDerivativeProduct rst=tmp;
+      rst*=DerivativeProductFactor(this,0,1);
+      rst+=tmp.Derivative(0,1);
+      return (rst);
+    }
+  else if (VDerivatives==1)
+    return SumDerivativeProduct(DerivativeProductFactor(this,0,1)); // = G
+  else if (VDerivatives==0) return SumDerivativeProduct(DerivativeProductFactor(this,0,0)); // = 1
+  else return SumDerivativeProduct(this); // =0
+}
+
+// recursive functions calculating the DerivativeStructure: Derivatives in U
+//
+SumDerivativeProduct JainCFOnSphereOrbitals::URecursion(int UDerivatives, int VDerivatives)
+{
+  if (UDerivatives>0)
+    {
+      SumDerivativeProduct tmp=URecursion(UDerivatives-1, VDerivatives);
+      SumDerivativeProduct rst=tmp;
+      //cout << "in URecursion("<<UDerivatives<<VDerivatives<<"): prior element: " << tmp<<endl;
+      rst*=DerivativeProductFactor(this,1,0);
+      //cout << "F*~: "<< rst << endl;
+      rst+=tmp.Derivative(1,0);
+      //cout << "result: "<< rst << endl;
+      return (rst);
+    }
+  else if (UDerivatives==0) return VRecursion(VDerivatives);
+  else return SumDerivativeProduct(this); // =0
+}
+
+
+// evaluate Structure of Derivatives
+//
+// DerivativeStructure[n][dU] initialized with J^-p (d/du)^dU (d/dv)^(LLLDerivativeNum+n-dU) J^p
+//
+void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
+{
+  int MaxDerivative=LLLDerivativeNum;
+  
+  DerivativeStructure = new SumDerivativeProduct*[this->NbrLandauLevels];
+  for (int i=0; i<this->NbrLandauLevels; ++i)
+    {
+      DerivativeStructure[i] = new SumDerivativeProduct[MaxDerivative+1](this);
+      cout << "For Landau Level " << i << endl;
+      for (int j=0; j <= MaxDerivative; ++j)
+	{
+	  DerivativeStructure[i][j]=URecursion(j, MaxDerivative-j);
+	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] << endl;
+	}
+      ++MaxDerivative;
+    }	
+}
+
+
 
 // evaluate composite fermion monopole spherical harmonic 
 //
@@ -476,7 +549,8 @@ void JainCFOnSphereOrbitals::EvaluateSumPrefactors()
 
 // Implementation for negative Flux remains to be added!
 
-Complex JainCFOnSphereOrbitals::EvaluateCFMonopoleHarmonic (int coordinate, int momentum, int landauLevel, int maximumMomentum)
+Complex JainCFOnSphereOrbitals::EvaluateCFMonopoleHarmonic (int coordinate, int momentum,
+							    int landauLevel, int maximumMomentum)
 {
   Complex Tmp(0.0);
   int i = landauLevel - momentum;
@@ -523,7 +597,7 @@ Complex JainCFOnSphereOrbitals::EvaluateCFMonopoleHarmonicDerivative(int index, 
 	    Tmp = this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][1];
 	    break;
 	  case 2:
-	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1] 
+	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
 		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][2]);
 	    break;
 	  case 3:

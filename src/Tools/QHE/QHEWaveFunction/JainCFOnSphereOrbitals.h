@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//         Copyright (C) 2001-2002 Nicolas Regnault and Gunnar Moeller        //
 //                                                                            //
 //                                                                            //
 //           class of Jain composite fermion wave function on sphere          //
@@ -38,10 +38,17 @@
 #include "MathTools/Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
+class DerivativeProductFactor;
+class DerivativeProduct;
+class SumDerivativeProduct;
 
 class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
 {
 
+ private:
+  
+  friend class DerivativeProductFactor;
+  
  protected:
 
   // number of particles
@@ -66,6 +73,9 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
 
   // number of derivatives to be calculated (differs for positive and negative flux)
   int MaxDerivativeNum;
+
+  // number of derivatives to be calculated for the LLL
+  int LLLDerivativeNum;
 
   // array with powers of JastrowPower
   double* JastrowPowerPowers;
@@ -94,6 +104,9 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   Complex** SpinorUCoordinatePower;
   // temporary array used to store powers of the v spinor coordinates
   Complex** SpinorVCoordinatePower;
+
+  // Structure for calculating and storing the form of the derivatives
+  SumDerivativeProduct** DerivativeStructure;
 
  public:
 
@@ -144,6 +157,14 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
   //
   virtual void EvaluateSumPrefactors();
+
+  // evaluate Structure of Derivatives
+  //
+  void EvaluateDerivativeStructure();
+
+  SumDerivativeProduct VRecursion(int VDerivatives);
+  
+  SumDerivativeProduct URecursion(int UDerivatives, int VDerivatives);
 
   // evaluate composite fermion monopole spherical harmonic 
   //
