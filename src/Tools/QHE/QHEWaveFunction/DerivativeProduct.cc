@@ -64,6 +64,7 @@ DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<Derivati
   this->PreFactor=Reference.PreFactor;
   this->ProductFactors=PriorFactors;
   this->ProductFactors.Link(LaterFactors);
+  //cout << "Nbr Elements after Link: " << this->ProductFactors.GetNbrElement();
 }
 
 DerivativeProduct::~DerivativeProduct()
@@ -94,7 +95,7 @@ void DerivativeProduct::Simplify()
 }
 
 
-SumDerivativeProduct DerivativeProduct::Derivative( int DeriveU, int DeriveV)
+SumDerivativeProduct DerivativeProduct::Derivative(int DeriveU, int DeriveV)
 {
   SumDerivativeProduct result(this->CFOrbitals);
   List<DerivativeProductFactor> PriorFactors;
@@ -113,6 +114,7 @@ SumDerivativeProduct DerivativeProduct::Derivative( int DeriveU, int DeriveV)
 	  LaterFactors.DeleteList();
 	  if (pos+1 < elements) LaterFactors=Extract(this->ProductFactors, pos+1);      
 	  DerivativeProduct tmp(*this,PriorFactors,LaterFactors);
+	  //cout << "other terms: " << tmp << endl;
 	  tmp*=derivative;
 	  //cout << "Full term: " << tmp << endl;
 	  result +=tmp;
@@ -122,7 +124,7 @@ SumDerivativeProduct DerivativeProduct::Derivative( int DeriveU, int DeriveV)
 }
 
 
-DerivativeProduct& DerivativeProduct::operator*= (DerivativeProductFactor &toMultiply)
+/*DerivativeProduct& DerivativeProduct::operator*= (DerivativeProductFactor &toMultiply)
 {
   DerivativeProductFactor *Factor;
   bool toBeInserted=true;
@@ -152,16 +154,67 @@ DerivativeProduct& DerivativeProduct::operator*= (DerivativeProductFactor &toMul
   if (toBeInserted) this->ProductFactors+=toMultiply;
   return *this;
 }
+*/
+
+DerivativeProduct& DerivativeProduct::operator*= (DerivativeProductFactor &toMultiply)
+{
+  DerivativeProductFactor *Factor;
+  bool toBeInserted=true;
+  if (this->ProductFactors.GetNbrElement()>0)
+    {
+      for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+	{
+	  if ( Factor->Multiply(toMultiply) )
+	    {
+	      toBeInserted=false;
+	      break;
+	    }
+	}
+    }
+  if (toBeInserted) this->ProductFactors+=toMultiply;
+  //cout << "before simplify: " << *this << endl;
+  this->Simplify();
+  //cout << "after simplify:  " << *this << endl;;
+  return *this;
+}
 
 DerivativeProduct& DerivativeProduct::operator*= (const DerivativeProduct &toMultiply)
 {
   DerivativeProductFactor *Factor;
-  for (ListIterator<DerivativeProductFactor> LI(toMultiply.ProductFactors); (Factor=LI())!=NULL; )
-    {
-      (*this)*=(*Factor);
-    }
+  if (this->ProductFactors.GetNbrElement()>0)
+    for (ListIterator<DerivativeProductFactor> LI(toMultiply.ProductFactors); (Factor=LI())!=NULL; )
+      {
+	(*this)*=(*Factor);
+      }
+  else *this = toMultiply;
   return *this;
 }
+
+/*
+bool DerivativeProduct::operator ^ (DerivativeProduct &other)
+{
+  if (this->ProductFactors.GetNbrElement() != other.ProductFactors.GetNbrElement())
+    return false;
+  else
+    {
+      //cout <<"this  "<< this->ProductFactors;
+      //cout << "other "<< other.ProductFactors;
+      this->ProductFactors.UpOrder();
+      other.ProductFactors.UpOrder();
+      //cout <<"this  "<< this->ProductFactors;
+      //cout << "other "<< other.ProductFactors;
+      ListIterator<DerivativeProductFactor> OtherLI(other.ProductFactors);
+      DerivativeProductFactor *Factor;
+      DerivativeProductFactor *OtherFactor;
+      for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+	{
+	  OtherFactor=OtherLI();
+	  if ( (*Factor) !=  (*OtherFactor) ) return false;
+	}
+      return true;
+    }
+}
+*/
 
 bool DerivativeProduct::operator ^ (DerivativeProduct &other)
 {
@@ -169,8 +222,12 @@ bool DerivativeProduct::operator ^ (DerivativeProduct &other)
     return false;
   else
     {
-      this->ProductFactors.DownOrder();
-      other.ProductFactors.DownOrder();      
+      //cout <<"this  "<< this->ProductFactors;
+      //cout << "other "<< other.ProductFactors;
+      this->ProductFactors.UpOrder();
+      other.ProductFactors.UpOrder();
+      //cout <<"this  "<< this->ProductFactors;
+      //cout << "other "<< other.ProductFactors;
       ListIterator<DerivativeProductFactor> OtherLI(other.ProductFactors);
       DerivativeProductFactor *Factor;
       DerivativeProductFactor *OtherFactor;
@@ -233,7 +290,7 @@ ostream& operator << (ostream& str, DerivativeProduct& D)
       for (; (Factor=LI())!=NULL;)
 	str <<"*"<< (*Factor);    
     }
-  else str << "0.0";
+  else str << "1.0";
   str << " ";
   return str;
 }

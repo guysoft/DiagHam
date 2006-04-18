@@ -136,7 +136,7 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
   this->MaxDerivativeNum = function.MaxDerivativeNum;
   this->NormalizationPrefactors = function.NormalizationPrefactors;
   this->SumPrefactors = function.SumPrefactors;
-  this->JastrowFactorElements = new Complex*[this->NbrParticles - 1];
+  this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i = 1; i < this->NbrParticles; ++i)
     this->JastrowFactorElements[i] = new Complex[i];
   this->DerivativeFactors = new Complex** [this->NbrParticles];
@@ -166,18 +166,19 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
 JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
 {
   if (this->Flag.Shared() == false)
-    {
-      delete[] this->NormalizationPrefactors;
+    {      
       for (int i = 0; i < this->NbrLandauLevels; ++i)
 	{
-	  for (int j = 0; j < this->NbrLandauLevels; ++j)
+	  delete[] this->NormalizationPrefactors[i];
+	  for (int j = 0; j <= i; ++j)
 	    delete[] this->SumPrefactors[i][j];
 	  delete[] this->SumPrefactors[i];
 	}
+      delete[] this->NormalizationPrefactors;
       delete[] this->SumPrefactors;
       delete[] this->JastrowPowerPowers;
     }
-  for (int i = 0; i < this->NbrParticles; ++i)
+  for (int i = 1; i < this->NbrParticles; ++i)
     delete[] this->JastrowFactorElements[i];
   delete[] this->JastrowFactorElements;
   for (int i = 0; i < this->NbrParticles; ++i)
@@ -503,11 +504,13 @@ SumDerivativeProduct JainCFOnSphereOrbitals::URecursion(int UDerivatives, int VD
     {
       SumDerivativeProduct tmp=URecursion(UDerivatives-1, VDerivatives);
       SumDerivativeProduct rst=tmp;
-      //cout << "in URecursion("<<UDerivatives<<VDerivatives<<"): prior element: " << tmp<<endl;
+      cout << "in URecursion("<<UDerivatives<<VDerivatives<<"): prior element: " << tmp<<endl;
       rst*=DerivativeProductFactor(this,1,0);
-      //cout << "F*~: "<< rst << endl;
-      rst+=tmp.Derivative(1,0);
-      //cout << "result: "<< rst << endl;
+      cout << "F* ~ = "<< rst << endl;
+      SumDerivativeProduct tmp2 = tmp.Derivative(1,0);
+      cout << "d/du(~) = " << tmp2;
+      rst+=tmp2;
+      cout << "result: "<< rst << endl;
       return (rst);
     }
   else if (UDerivatives==0) return VRecursion(VDerivatives);

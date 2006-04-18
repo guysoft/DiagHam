@@ -103,6 +103,7 @@ SumDerivativeProduct& SumDerivativeProduct::operator+= ( DerivativeProduct &toAd
   DerivativeProduct *Summand;
   bool toBeInserted=true;
   int pos=0;
+  //cout << "Adding " << toAdd << " to Sum " << *this << endl;
   for (ListIterator<DerivativeProduct> LI(this->Summands); (Summand=LI())!=NULL; ++pos)
     {
       if ( *Summand ^ toAdd ) // may be added together
@@ -114,6 +115,7 @@ SumDerivativeProduct& SumDerivativeProduct::operator+= ( DerivativeProduct &toAd
 	}
     }
   if (toBeInserted) this->Summands+=toAdd;
+  //cout << "Result: " << *this<< endl;
   return *this;
 }
 

@@ -30,6 +30,10 @@
 #include "DerivativeProductFactor.h"
 #include "DerivativeProduct.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 DerivativeProductFactor::DerivativeProductFactor(JainCFOnSphereOrbitals *CFOs,
 						 int UDerivatives, int VDerivatives,
 						 int Power, double preFactor)
@@ -143,26 +147,16 @@ DerivativeProduct DerivativeProductFactor::Derivative( int DeriveU, int DeriveV)
 
 bool DerivativeProductFactor::operator < (const DerivativeProductFactor &other)
 {
-  if(this->UDerivatives+this->VDerivatives < other.UDerivatives+other.VDerivatives)
-    return true;
-  if(this->VDerivatives < other.VDerivatives)
-    return true;
-  else if(this->UDerivatives < other.UDerivatives)
-    return true;
-  else return false;
+  int order1 = this->VDerivatives | (this->UDerivatives << 10) | (this->Power<<20);
+  int order2 = other.VDerivatives | (other.UDerivatives << 10) | (other.Power<<20);
+  return (order1 < order2);
 }
 
 bool DerivativeProductFactor::operator > (const DerivativeProductFactor &other)
 {
-  if(this->UDerivatives +this->VDerivatives > other.UDerivatives+other.VDerivatives)
-    return true;
-  if(this->UDerivatives > other.UDerivatives)
-    return true;
-  else if(this->VDerivatives > other.VDerivatives)
-    return true;
-  else if(this->Power > other.Power)
-    return true;
-  else return false;
+  int order1 = this->VDerivatives | (this->UDerivatives << 10) | (this->Power<<20);
+  int order2 = other.VDerivatives | (other.UDerivatives << 10) | (other.Power<<20);
+  return (order1 > order2);
 }
   
 bool DerivativeProductFactor::operator ^ (const DerivativeProductFactor &other)
@@ -185,7 +179,7 @@ bool DerivativeProductFactor::operator == (const DerivativeProductFactor &other)
 
 bool DerivativeProductFactor::operator != (const DerivativeProductFactor &other)
 {
-  if (&other==0) return false;
+  if (&other==0) return true;
   else if ((this->UDerivatives == other.UDerivatives) && (this->VDerivatives == other.VDerivatives)
       && (this->Power == other.Power) && (this->CFOrbitals == other.CFOrbitals ))
     return false;
