@@ -87,11 +87,19 @@ Complex DerivativeProduct::getValue()
 void DerivativeProduct::Simplify()
 {
   DerivativeProductFactor *Factor;
-  for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+  int pos=0;
+  for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;++pos)
     {
       this->PreFactor*=Factor->PreFactor;
       Factor->PreFactor=1.0;
+      if (Factor->isScalar())
+	{
+	  cout << "found scalar factor to simplify!" << endl;
+	  this->ProductFactors.DeleteElement(pos);
+	}
     }
+  if (this->PreFactor==0.0)
+    this->ProductFactors.DeleteList();
 }
 
 
@@ -105,8 +113,8 @@ SumDerivativeProduct DerivativeProduct::Derivative(int DeriveU, int DeriveV)
   for (int pos=0; pos < elements; ++pos)
     {
       DerivativeProduct derivative = this->ProductFactors[pos].Derivative(DeriveU,DeriveV);
-      //cout << "Element " << pos << "= " << this->ProductFactors[pos]<< endl;
-      //cout << "its der. " << derivative << endl;      
+      cout << "Element " << pos << "= " << this->ProductFactors[pos]<< endl;
+      cout << "its der. " << derivative << endl;      
       if (derivative.isNonZero())
 	{
 	  PriorFactors.DeleteList();
@@ -114,9 +122,9 @@ SumDerivativeProduct DerivativeProduct::Derivative(int DeriveU, int DeriveV)
 	  LaterFactors.DeleteList();
 	  if (pos+1 < elements) LaterFactors=Extract(this->ProductFactors, pos+1);      
 	  DerivativeProduct tmp(*this,PriorFactors,LaterFactors);
-	  //cout << "other terms: " << tmp << endl;
+	  cout << "other terms: " << tmp << endl;
 	  tmp*=derivative;
-	  //cout << "Full term: " << tmp << endl;
+	  cout << "Full term: " << tmp << endl;
 	  result +=tmp;
 	}
     }
@@ -172,9 +180,7 @@ DerivativeProduct& DerivativeProduct::operator*= (DerivativeProductFactor &toMul
 	}
     }
   if (toBeInserted) this->ProductFactors+=toMultiply;
-  //cout << "before simplify: " << *this << endl;
   this->Simplify();
-  //cout << "after simplify:  " << *this << endl;;
   return *this;
 }
 
@@ -182,27 +188,29 @@ DerivativeProduct& DerivativeProduct::operator*= (const DerivativeProduct &toMul
 {
   DerivativeProductFactor *Factor;
   if (this->ProductFactors.GetNbrElement()>0)
-    for (ListIterator<DerivativeProductFactor> LI(toMultiply.ProductFactors); (Factor=LI())!=NULL; )
-      {
+    {
+      this->PreFactor*=toMultiply.PreFactor;
+      for (ListIterator<DerivativeProductFactor> LI(toMultiply.ProductFactors); (Factor=LI())!=NULL; )
 	(*this)*=(*Factor);
-      }
-  else *this = toMultiply;
+    }
+  else
+    {
+      double storePreFactor=this->PreFactor;
+      *this = toMultiply;
+      this->PreFactor*=storePreFactor;
+    }
   return *this;
 }
 
-/*
+
 bool DerivativeProduct::operator ^ (DerivativeProduct &other)
 {
   if (this->ProductFactors.GetNbrElement() != other.ProductFactors.GetNbrElement())
     return false;
   else
     {
-      //cout <<"this  "<< this->ProductFactors;
-      //cout << "other "<< other.ProductFactors;
       this->ProductFactors.UpOrder();
       other.ProductFactors.UpOrder();
-      //cout <<"this  "<< this->ProductFactors;
-      //cout << "other "<< other.ProductFactors;
       ListIterator<DerivativeProductFactor> OtherLI(other.ProductFactors);
       DerivativeProductFactor *Factor;
       DerivativeProductFactor *OtherFactor;
@@ -210,35 +218,38 @@ bool DerivativeProduct::operator ^ (DerivativeProduct &other)
 	{
 	  OtherFactor=OtherLI();
 	  if ( (*Factor) !=  (*OtherFactor) ) return false;
+	}
+      return true;
+    }
+}
+
+/*  // Alternative formulation of the comparation operator
+bool DerivativeProduct::operator ^ (DerivativeProduct &other)
+{
+  this->Simplify();
+  other.Simplify();
+  if (this->ProductFactors.GetNbrElement() != other.ProductFactors.GetNbrElement())
+    return false;
+  else
+  {
+      DerivativeProductFactor *Factor;
+      DerivativeProductFactor *OtherFactor;
+      bool isPresent;
+      for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+	{
+	  isPresent=false;
+	  for (ListIterator<DerivativeProductFactor> OtherLI(other.ProductFactors); (OtherFactor=OtherLI())!=NULL;)
+	    if ( (*Factor) == (*OtherFactor) )
+	      {
+		isPresent=true;
+		break;
+	      }
+	  if (isPresent==false) return false;
 	}
       return true;
     }
 }
 */
-
-bool DerivativeProduct::operator ^ (DerivativeProduct &other)
-{
-  if (this->ProductFactors.GetNbrElement() != other.ProductFactors.GetNbrElement())
-    return false;
-  else
-    {
-      //cout <<"this  "<< this->ProductFactors;
-      //cout << "other "<< other.ProductFactors;
-      this->ProductFactors.UpOrder();
-      other.ProductFactors.UpOrder();
-      //cout <<"this  "<< this->ProductFactors;
-      //cout << "other "<< other.ProductFactors;
-      ListIterator<DerivativeProductFactor> OtherLI(other.ProductFactors);
-      DerivativeProductFactor *Factor;
-      DerivativeProductFactor *OtherFactor;
-      for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
-	{
-	  OtherFactor=OtherLI();
-	  if ( (*Factor) !=  (*OtherFactor) ) return false;
-	}
-      return true;
-    }
-}
 
 bool DerivativeProduct::operator < (DerivativeProduct &other)
 {
