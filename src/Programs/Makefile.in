@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(ExplicitMatrixExample_SOURCES) $(GenericOverlap_SOURCES) $(ResizeLanczos_SOURCES)
+SOURCES = $(ExplicitMatrixExample_SOURCES) $(GenericOverlap_SOURCES) $(ResizeLanczos_SOURCES) $(VectorBinary2Ascii_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -37,7 +37,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 bin_PROGRAMS = ExplicitMatrixExample$(EXEEXT) ResizeLanczos$(EXEEXT) \
-	GenericOverlap$(EXEEXT)
+	GenericOverlap$(EXEEXT) VectorBinary2Ascii$(EXEEXT)
 subdir = src/Programs
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -56,21 +56,25 @@ am_GenericOverlap_OBJECTS = GenericOverlap.$(OBJEXT)
 GenericOverlap_OBJECTS = $(am_GenericOverlap_OBJECTS)
 am_ResizeLanczos_OBJECTS = ResizeLanczos.$(OBJEXT)
 ResizeLanczos_OBJECTS = $(am_ResizeLanczos_OBJECTS)
+am_VectorBinary2Ascii_OBJECTS = VectorBinary2Ascii.$(OBJEXT)
+VectorBinary2Ascii_OBJECTS = $(am_VectorBinary2Ascii_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ExplicitMatrixExample.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/GenericOverlap.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ResizeLanczos.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ResizeLanczos.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/VectorBinary2Ascii.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 SOURCES = $(ExplicitMatrixExample_SOURCES) $(GenericOverlap_SOURCES) \
-	$(ResizeLanczos_SOURCES)
+	$(ResizeLanczos_SOURCES) $(VectorBinary2Ascii_SOURCES)
 DIST_SOURCES = $(ExplicitMatrixExample_SOURCES) \
-	$(GenericOverlap_SOURCES) $(ResizeLanczos_SOURCES)
+	$(GenericOverlap_SOURCES) $(ResizeLanczos_SOURCES) \
+	$(VectorBinary2Ascii_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -175,12 +179,15 @@ SUBDIRS = QHE QuantumDot Spin
 ExplicitMatrixExample_SOURCES = ExplicitMatrixExample.cc
 ResizeLanczos_SOURCES = ResizeLanczos.cc
 GenericOverlap_SOURCES = GenericOverlap.cc
+VectorBinary2Ascii_SOURCES = VectorBinary2Ascii.cc
 ExplicitMatrixExample_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/QHEArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/QuantumNumber/QHEQuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/QuantumNumber/SpinQuantumNumber/libSpinQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a
 ExplicitMatrixExample_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation/QHEArchitectureOperation -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/src/Hamiltonian/QHEHamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/src/HilbertSpace/QHEHilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/src/QuantumNumber/SpinQuantumNumber -L$(top_builddir)/src/QuantumNumber/QHEQuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/Base/src/BitmapTools/BitmapPicture -L$(top_builddir)/Base/src/BitmapTools/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lSpinQuantumNumber -lQHEQuantumNumber -lQuantumNumber -lSpinQuantumNumber -lQHEQuantumNumber -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@
 ResizeLanczos_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/Hamiltonian/QuantumDotHamiltonian/libQuantumDotHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/QuantumDotHilbertSpace/libQuantumDotHilbertSpace.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/Tools/QuantumDot/Potential/libPotential.a $(top_builddir)/src/Tools/QuantumDot/Spectra/libSpectra.a
 ResizeLanczos_LDADD = -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -lMatrix -lVector -lGeneralTools -lGeneralTools -lOutput -lOptions @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@
 GenericOverlap_DEPENDENCIES = $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a
 GenericOverlap_LDADD = -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
+VectorBinary2Ascii_DEPENDENCIES = $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a
+VectorBinary2Ascii_LDADD = -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -lVector -lOptions -lGeneralTools -lOutput
 all: all-recursive
 
 .SUFFIXES:
@@ -246,6 +253,9 @@ GenericOverlap$(EXEEXT): $(GenericOverlap_OBJECTS) $(GenericOverlap_DEPENDENCIES
 ResizeLanczos$(EXEEXT): $(ResizeLanczos_OBJECTS) $(ResizeLanczos_DEPENDENCIES) 
 	@rm -f ResizeLanczos$(EXEEXT)
 	$(CXXLINK) $(ResizeLanczos_LDFLAGS) $(ResizeLanczos_OBJECTS) $(ResizeLanczos_LDADD) $(LIBS)
+VectorBinary2Ascii$(EXEEXT): $(VectorBinary2Ascii_OBJECTS) $(VectorBinary2Ascii_DEPENDENCIES) 
+	@rm -f VectorBinary2Ascii$(EXEEXT)
+	$(CXXLINK) $(VectorBinary2Ascii_LDFLAGS) $(VectorBinary2Ascii_OBJECTS) $(VectorBinary2Ascii_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -256,6 +266,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ExplicitMatrixExample.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GenericOverlap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ResizeLanczos.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VectorBinary2Ascii.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

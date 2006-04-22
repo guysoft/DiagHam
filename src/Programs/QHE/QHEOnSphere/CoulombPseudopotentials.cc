@@ -8,6 +8,9 @@
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
+#include "Vector/RealVector.h"
+ 
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
 
@@ -39,7 +42,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
 
-  (*SystemGroup) += new SingleIntegerOption  ('l', "landau-level", "index of the Landau level (0 for the lowest Landau level)", 1, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "landau-level", "index of the Landau level (0 for the lowest Landau level)", 0, true, 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (i.e. twice the maximum momentum for a single particle)", 8);
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -69,18 +72,18 @@ int main(int argc, char** argv)
       strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
     }
 
-  cout <<   OutputFile << endl;
   double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel);
 
   ofstream File;
   File.open(OutputFile, ios::binary | ios::out);
   File.precision(14);
-  File << "// pseudopotentials on the sphere for coulomb interaction " << endl
-       << "// in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl
-       << "//" << endl
-       << "// PseudoPotentials = V_0 V_1 ..." << endl << endl
-       << "PseudoPotentials =";
-  for (int i = 0; i <= NbrFlux; ++i)
+  File << "# pseudopotentials on the sphere for coulomb interaction " << endl
+       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl
+       << "#" << endl
+       << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
+       << "Pseudopotentials =";
+  int MaxMomentum = NbrFlux + (LandauLevel << 1);
+  for (int i = 0; i <= MaxMomentum; ++i)
     File << " " << Pseudopotentials[i];
   File << endl;
   File.close();
@@ -100,23 +103,36 @@ int main(int argc, char** argv)
 
 double* EvaluatePseudopotentials(int nbrFlux, int landauLevel)
 {
-  double* Pseudopotentials = new double [nbrFlux + 1];
-  ParticleOnSphereGenericLLFunctionBasis Basis(nbrFlux, landauLevel);
-  int MaxSum = 2 * nbrFlux;
-  int** Indices = new int* [MaxSum + 1];
-  for (int i = 0; i <= MaxSum; ++i)
+  cout.precision(14);
+  int MaxMomentum = nbrFlux + (landauLevel << 1);
+  double* Pseudopotentials = new double [MaxMomentum + 1];
+  ClebschGordanCoefficients MainCoefficients(MaxMomentum, MaxMomentum);
+  ClebschGordanCoefficients* Coefficients = new ClebschGordanCoefficients[MaxMomentum + 1];
+  for (int l = 0; l <= MaxMomentum; ++l)
+    Coefficients[l] = ClebschGordanCoefficients(MaxMomentum, l << 1);  
+  for (int l = 0; l <= MaxMomentum; ++l)
     {
-      int NbrSum = (MaxSum >> 1) + 1;
-      int* TmpIndices = new int[2 * NbrSum];
-      Indices[i] = TmpIndices;
-      for (int j = 0; j < NbrSum; ++j)
-	{
-	  (*TmpIndices) = MaxSum - j;
-	  ++TmpIndices;
-	  (*TmpIndices) = j;
-	  ++TmpIndices;
-	}
+      double TmpPseudopotentials = 0.0;
+      for (int m1 = -MaxMomentum; m1 <= MaxMomentum; m1 +=2)
+	for (int m2 = -MaxMomentum; m2 <= MaxMomentum; m2 +=2)
+	  {
+	    double TmpCoef = 0.0;
+	    double TmpCoef2;
+	    int Min = abs(m1 - m2) >> 1;
+	    double Sign = 1.0;
+	    for (int j = Min; j <= MaxMomentum; ++j)
+	      {
+		TmpCoef2 = Coefficients[j].GetCoefficient(m1, m2 - m1, MaxMomentum) * Coefficients[j].GetCoefficient(nbrFlux, 0, MaxMomentum);
+		TmpCoef += Sign * TmpCoef2 * TmpCoef2;
+		Sign *= -1.0;
+	      }
+	    TmpPseudopotentials += (MainCoefficients.GetCoefficient(m1, -m1, l << 1) * 
+				    MainCoefficients.GetCoefficient(m2, -m2, l << 1) * TmpCoef);
+	  }
+      Pseudopotentials[MaxMomentum - l] = TmpPseudopotentials / sqrt (0.5 * nbrFlux);
+      cout << "V[" << (MaxMomentum - l) << "] = " << Pseudopotentials[MaxMomentum - l] << endl;
     }
+  delete[] Coefficients;
   return Pseudopotentials;
 }
 

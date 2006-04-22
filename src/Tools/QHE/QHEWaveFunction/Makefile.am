@@ -19,10 +19,3 @@ DerivativeProduct.cc \
 DerivativeProductFactor.cc \
 SumDerivativeProduct.cc
 
-bin_PROGRAMS=test
-
-test_SOURCES=test.cc
-
-test_DEPENDENCIES=libQHEWaveFunction.a
-
-test_LDADD=libQHEWaveFunction.a $(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a
