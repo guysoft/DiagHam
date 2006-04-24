@@ -167,6 +167,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->MaximumAllowedTime = 0;
     }
+  if ((((*options)["use-hilbert"]) != 0) && (((SingleStringOption*) (*options)["use-hilbert"])->GetString() != 0))
+    {
+      this->ReducedHilbertSpaceDescription = ((SingleStringOption*) (*options)["use-hilbert"])->GetString();
+    }
+  else
+    {
+      this->ReducedHilbertSpaceDescription = 0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -214,6 +222,13 @@ int QHEOnSphereMainTask::ExecuteMainTask()
   cout.precision(14);
   cout << "----------------------------------------------------------------" << endl;
   cout << " LzTotal = " << this->LValue << endl;
+  if (this->ReducedHilbertSpaceDescription != 0)
+    {
+      this->DiagonalizeInHilbertSubspace(this->ReducedHilbertSpaceDescription);
+      cout << "----------------------------------------------------------------" << endl;
+      File.close(); 
+      return 0;
+    }
   cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
   if (this->SavePrecalculationFileName != 0)
     {
@@ -489,5 +504,13 @@ int QHEOnSphereMainTask::ExecuteMainTask()
   cout << "----------------------------------------------------------------" << endl;
   File.close(); 
   return 0;
+}
+
+// do the Hamiltonian diagonalization in a given Hilbert subspace
+//
+// subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+
+void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription)
+{
 }
 

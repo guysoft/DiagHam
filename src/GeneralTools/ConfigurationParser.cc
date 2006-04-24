@@ -558,3 +558,90 @@ bool ConfigurationParser::GetAsDoubleArray (char* parameterName, char separator,
   return true;
 }
 
+// get string value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// separator = character which is used as separator between integer values in the string 
+//             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+// array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+// nbrValues = reference on the integer where the number of read values has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator, char**& array, int& nbrValues)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+
+  nbrValues = 0;
+  if ((separator != ' ')  && (separator != '\t'))
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if ((*Start) == separator)
+	    ++nbrValues;
+	  ++Start;
+	}
+      array = new char* [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != separator))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = new char [Error - Start + 1];
+	  strncpy(array[nbrValues], Start, Error - Start);
+	  array[nbrValues][Error - Start] = '\0';
+	  ++nbrValues;
+	  if ((*End) == separator)
+	    ++End;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  else
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if (((*Start) == ' ') || ((*Start) == '\t'))
+	    {
+	      ++nbrValues;
+	      while (((*Start) != '\0') && (((*Start) == ' ') || ((*Start) == '\t')))
+		++Start;		
+	    }
+	  else
+	    ++Start;
+	}      
+      array = new char* [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = new char [Error - Start + 1];
+	  strncpy(array[nbrValues], Start, Error - Start);
+	  array[nbrValues][Error - Start] = '\0';
+	  ++nbrValues;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  return true;
+}

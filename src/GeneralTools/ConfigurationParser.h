@@ -118,6 +118,16 @@ class ConfigurationParser
   // return value = true if no error occured
   bool GetAsDoubleArray (char* parameterName, char separator, double*& array, int& nbrValues);
 
+  // get string value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // separator = character which is used as separator between integer values in the string 
+  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+  // nbrValues = reference on the integer where the number of read values has to be stored
+  // return value = true if no errro occured
+  bool GetAsStringArray (char* parameterName, char separator, char**& array, int& nbrValues);
+
   // dump configuration file
   //
   // str = reference on the output stream

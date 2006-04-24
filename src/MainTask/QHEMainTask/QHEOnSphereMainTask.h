@@ -99,6 +99,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool PartialLanczos;
   // use LAPACK libraries instead of DiagHam libraries
   bool LapackFlag;
+  // name of the file that contains the vector files used to describe the Hilbert subspace
+  char* ReducedHilbertSpaceDescription;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
@@ -132,6 +134,13 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // 
   // return value = 0 if no error occurs, else return error code
   int ExecuteMainTask();
+
+ protected:
+
+  // do the Hamiltonian diagonalization in a given Hilbert subspace
+  //
+  // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+  void DiagonalizeInHilbertSubspace(char* subspaceDescription);
 
 };
 
