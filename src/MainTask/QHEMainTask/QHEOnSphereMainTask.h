@@ -36,6 +36,11 @@
 
 #include "MainTask/AbstractMainTask.h"
 
+#include <iostream>
+
+
+using std::ofstream;
+
 
 class AbstractQHEHamiltonian;
 class AbstractHilbertSpace;
@@ -140,7 +145,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // do the Hamiltonian diagonalization in a given Hilbert subspace
   //
   // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
-  void DiagonalizeInHilbertSubspace(char* subspaceDescription);
+  // file = reference on the output file stream where eigenvalues have to be stored
+  void DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
 
 };
 

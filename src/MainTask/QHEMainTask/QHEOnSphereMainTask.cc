@@ -59,6 +59,8 @@
 
 #include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
 
+#include "GeneralTools/ConfigurationParser.h"
+
 #include <iostream>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -224,7 +226,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
   cout << " LzTotal = " << this->LValue << endl;
   if (this->ReducedHilbertSpaceDescription != 0)
     {
-      this->DiagonalizeInHilbertSubspace(this->ReducedHilbertSpaceDescription);
+      this->DiagonalizeInHilbertSubspace(this->ReducedHilbertSpaceDescription, File);
       cout << "----------------------------------------------------------------" << endl;
       File.close(); 
       return 0;
@@ -509,8 +511,94 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 // do the Hamiltonian diagonalization in a given Hilbert subspace
 //
 // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+// file = reference on the output file stream where eigenvalues have to be stored
 
-void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription)
+void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file)
 {
+  ConfigurationParser ReducedBasis;
+  if (ReducedBasis.Parse(subspaceDescription) == false)
+    {
+      ReducedBasis.DumpErrors(cout) << endl;
+      return;
+    }
+  int TmpHilbertSpaceDimension;
+  char** VectorFileNames;
+  if (ReducedBasis.GetAsStringArray("Basis", ' ', VectorFileNames, TmpHilbertSpaceDimension) == false)
+    {
+      cout << "Vectors are not defined or have a wrong value in " << subspaceDescription << endl;
+      return;
+    }
+  RealVector* Basis = new RealVector[TmpHilbertSpaceDimension];
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      cout << VectorFileNames[i] << endl;
+      if (Basis[i].ReadVector(VectorFileNames[i]) == false)
+	{
+	  cout << "error while reading " << VectorFileNames[i] << endl;
+	  delete[] Basis;
+	  for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
+	    delete[] VectorFileNames[j];
+	  delete[] VectorFileNames;
+	  return;
+	}
+    }
+  RealSymmetricMatrix HRep (TmpHilbertSpaceDimension);
+  RealVector TmpVector (Basis[0].GetVectorDimension(), true);
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Basis[i]), &TmpVector);
+      Operation1.ApplyOperation(this->Architecture);      
+      for (int j = i; j < TmpHilbertSpaceDimension; ++j)
+	{
+	  HRep(i ,j) = Basis[j] * TmpVector;
+	}
+    }
+  if (TmpHilbertSpaceDimension > 1)
+    {
+#ifdef __LAPACK__
+      if (this->LapackFlag == true)
+	{
+	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	  if (this->EvaluateEigenvectors == false)
+	    {
+	      HRep.LapackDiagonalize(TmpDiag);
+	    }
+	  else
+	    {
+	    }
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      file << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+	    }
+	}
+      else
+	{
+#endif
+	  RealTriDiagonalSymmetricMatrix TmpTriDiag (TmpHilbertSpaceDimension);
+	  if (this->EvaluateEigenvectors == false)
+	    {
+	      HRep.Householder(TmpTriDiag, 1e-7);
+	      TmpTriDiag.Diagonalize();
+	      TmpTriDiag.SortMatrixUpOrder();
+	    }
+	  else
+	    {
+	    }
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      file << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+	    }
+#ifdef __LAPACK__
+	}
+#endif
+    }
+  else
+    {
+      file << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
+    }
+  delete[] Basis;
+  for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
+    delete[] VectorFileNames[j];
+  delete[] VectorFileNames;
 }
 

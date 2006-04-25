@@ -594,9 +594,9 @@ bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator,
 	    {
 	      ++End;
 	    }	  
-	  array[nbrValues] = new char [Error - Start + 1];
-	  strncpy(array[nbrValues], Start, Error - Start);
-	  array[nbrValues][Error - Start] = '\0';
+	  array[nbrValues] = new char [End - Start + 1];
+	  strncpy(array[nbrValues], Start, End - Start);
+	  array[nbrValues][End - Start] = '\0';
 	  ++nbrValues;
 	  if ((*End) == separator)
 	    ++End;
@@ -621,6 +621,7 @@ bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator,
 	  else
 	    ++Start;
 	}      
+      cout << nbrValues << endl;
       array = new char* [nbrValues + 1];
       nbrValues = 0;
       Start = TmpValue;
@@ -632,9 +633,10 @@ bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator,
 	    {
 	      ++End;
 	    }	  
-	  array[nbrValues] = new char [Error - Start + 1];
-	  strncpy(array[nbrValues], Start, Error - Start);
-	  array[nbrValues][Error - Start] = '\0';
+	  array[nbrValues] = new char [End - Start + 1];
+	  strncpy(array[nbrValues], Start, End - Start);
+	  array[nbrValues][End - Start] = '\0';
+	  cout << array[nbrValues] << endl;
 	  ++nbrValues;
 	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
 	    {
