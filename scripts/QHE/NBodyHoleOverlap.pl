@@ -12,18 +12,20 @@ my $RowFlag = 0;
 my $SumFlag = 0;
 my $LatexFlag = 0;
 my $DebugFlag = 0;
+my $FermionFlag = 0;
 my $Precision = 4;
 my $MaxNbrParticles = 100;
-my $DataPath = "/home/regnault/public_html/qhe/QHEOnSphere/bosons";
+my $DataPath = "/home/regnault/public_html/qhe/QHEOnSphere";
 my $DiagHamPath = "/home/regnault/development/DMRG/DiagHam";
+my $TrueIntercationName = "delta";
 my $Result = GetOptions ("kvalue=s" => \$KValue, "nbrholes=s" => \$NbrHoles, "error:s" => \$Error, 
 			 "datapath:s" => \$DataPath, "diaghampath:s" => \$DiagHamPath, "latex" => \$LatexFlag, "precision" => \$Precision,
-			 "maxparticles:s" => \$MaxNbrParticles, "debug" => \$DebugFlag); 
+			 "maxparticles:s" => \$MaxNbrParticles, "debug" => \$DebugFlag, "fermion" => \$FermionFlag, "interaction:s" => \$TrueIntercationName); 
 
 if ((!($KValue =~ /^\d+$/)) || ($KValue == 0) || (!($NbrHoles =~ /^\d+$/)) || ($NbrHoles == 0) || (!($Precision =~ /^\d+$/)) || ($Precision <= 2) ||
     (!($MaxNbrParticles =~ /^\d+$/)) || ($MaxNbrParticles <= 4))
   {
-    die ("usage: NBodyHoleOverlap.pl --kvalue k --nbrholes h [--datapath --diaghampath --error 1e-12 --latex --precision 4 --maxparticles 100 --debug]\n");
+    die ("usage: NBodyHoleOverlap.pl --kvalue k --nbrholes h [--datapath --diaghampath --error 1e-12 --latex --precision 4 --maxparticles 100 --debug --fermion --interaction delta]\n");
   }
 
 my $QHENBodyQuasiHoleOverlap = $DiagHamPath."/build/src/Programs/QHE/QHEOnSphere/QHENBodyQuasiHoleOverlap";
@@ -39,19 +41,28 @@ if (!(-x $SphereSpectrumDegeneracy))
 
 my $NbrParticles = 2 * $KValue;
 my $SValue = 2 + $NbrHoles;
+my $Statistics = "bosons";
+if ($FermionFlag == 1)
+  {
+     $Statistics = "fermions";
+     $NbrParticles = 2 * $KValue;
+     $SValue = (2 * $KValue) + 1 + $NbrHoles;
+  }
+$DataPath .= "/".$Statistics;
 my $FinalOutput = "";
 my $MaxLz = 0;
 
 while ($NbrParticles < $MaxNbrParticles)
   {
-    my $HardcorePrefix = $DataPath."/hardcore_".($KValue + 1)."/n_".$NbrParticles."/2s_".$SValue."/bosons_hardcore_nbody_".($KValue + 1)."_n_".$NbrParticles."_2s_".$SValue."_lz";
+    my $HardcorePrefix = $DataPath."/hardcore_".($KValue + 1)."/n_".$NbrParticles."/2s_".$SValue."/".$Statistics."_hardcore_nbody_".($KValue + 1)."_n_".$NbrParticles."_2s_".$SValue."_lz";
     my $SpectrumName = $HardcorePrefix.".dat";
+    print $SpectrumName."\n";
     if (-e $SpectrumName)
       {
 	my $SpectrumCommand = $SphereSpectrumDegeneracy." -spectrum ".$SpectrumName." --row --error ".$Error;
 	my $SpectrumOutput = `$SpectrumCommand`;
 	chomp ($SpectrumOutput);
-	my $DeltaPrefix = $DataPath."/delta/n_".$NbrParticles."/2s_".$SValue."/bosons_delta_n_".$NbrParticles."_2s_".$SValue."_lz";
+	my $DeltaPrefix = $DataPath."/".$TrueIntercationName."/n_".$NbrParticles."/2s_".$SValue."/".$Statistics."_".$TrueIntercationName."_n_".$NbrParticles."_2s_".$SValue."_lz";
 	my $TemporaryOverlapDefinition = "NbrParticles = ".$NbrParticles."
 LzMax = ".$SValue."
 Degeneracy = ".$SpectrumOutput."
@@ -120,7 +131,14 @@ Spectrum = ".$DeltaPrefix.".dat\n";
 	`rm -f $TemporaryFileName`;
       }
     $NbrParticles += $KValue;
-    $SValue += 2;
+    if ($FermionFlag == 1)
+      {
+	$SValue += $KValue + 2;
+      }
+    else
+      {
+	$SValue += 2;
+      }
   }
 
 if ($LatexFlag == 1)

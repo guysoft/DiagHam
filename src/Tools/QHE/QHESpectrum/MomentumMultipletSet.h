@@ -103,9 +103,16 @@ class MomentumMultipletSet
   // find all multiplets that can obtained when putting a given number of bosons where each of them having the same maximum momentum
   //
   // nbrBosons = number of bosons
-  // maximumMomentum = twice the maximum momentum that can have a bosons
+  // maximumMomentum = twice the maximum momentum that can have a boson
   // return value = reference on corresponding momentum multiplet set
   MomentumMultipletSet& FindMultipletsForBosons (int nbrBosons, int maximumMomentum);
+  
+  // find all multiplets that can obtained when putting a given number of fermions where each of them having the same maximum momentum
+  //
+  // nbrFermions = number of fermions
+  // maximumMomentum = twice the maximum momentum that can have a fermion
+  // return value = reference on corresponding momentum multiplet set
+  MomentumMultipletSet& FindMultipletsForFermions (int nbrFermions, int maximumMomentum);
   
   // get the total number of states associated to the current set of multiplets
   //
@@ -160,6 +167,14 @@ class MomentumMultipletSet
   // totalLz = momentum total value plus nbrBosons  * (momentum maximum value for a plusnbrBosons + 1)
   // return value = Hilbert space dimension
   int GetFixedLzBosonHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+
+  // evaluate Hilbert space dimension for fermions with fixed total Lz value and a given L per particle
+  //
+  // nbrFermions = number of fermions
+  // lzMax = two times momentum maximum value for a fermion plus one 
+  // totalLz = momentum total value plus nbrFermions  * (momentum maximum value for a plus nbrFermions + 1)
+  // return value = Hilbert space dimension
+  int GetFixedLzFermionHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
 };
 

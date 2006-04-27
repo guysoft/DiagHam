@@ -60,6 +60,7 @@
 #include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <sys/time.h>
@@ -529,18 +530,29 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
       return;
     }
   RealVector* Basis = new RealVector[TmpHilbertSpaceDimension];
+  char* DirectoryName = ReducedBasis["Directory"];
+  char* TmpName;
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
     {
-      cout << VectorFileNames[i] << endl;
-      if (Basis[i].ReadVector(VectorFileNames[i]) == false)
+      TmpName = VectorFileNames[i];
+      if (DirectoryName != 0)
 	{
-	  cout << "error while reading " << VectorFileNames[i] << endl;
+	  TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
+	}
+      cout << TmpName << endl;
+      if (Basis[i].ReadVector(TmpName) == false)
+	{
+	  cout << "error while reading " << TmpName << endl;
 	  delete[] Basis;
-	  for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
+	  if (DirectoryName != 0)
+	    delete[] TmpName;
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    delete[] VectorFileNames[j];
 	  delete[] VectorFileNames;
 	  return;
 	}
+      if (DirectoryName != 0)
+	delete[] TmpName;
     }
   RealSymmetricMatrix HRep (TmpHilbertSpaceDimension);
   RealVector TmpVector (Basis[0].GetVectorDimension(), true);

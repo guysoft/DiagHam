@@ -133,7 +133,7 @@ MomentumMultipletSet& MomentumMultipletSet::operator = (const MomentumMultipletS
 // find all multiplets that can obtained when putting a given number of bosons where each of them having the same maximum momentum
 //
 // nbrBosons = number of bosons
-// maximumMomentum = twice the maximum momentum that can have a bosons
+// maximumMomentum = twice the maximum momentum that can have a boson
 // return value = reference on corresponding momentum multiplet set
 
 MomentumMultipletSet& MomentumMultipletSet::FindMultipletsForBosons (int nbrBosons, int maximumMomentum)
@@ -145,6 +145,26 @@ MomentumMultipletSet& MomentumMultipletSet::FindMultipletsForBosons (int nbrBoso
     ++MinimumMomentum;
   for (int i = this->MaximumMomentum - 2; i >= MinimumMomentum; i -= 2)
     this->LValues[i] = this->GetFixedLzBosonHilbertSpaceDimension(nbrBosons, maximumMomentum, (i + (maximumMomentum * nbrBosons)) >> 1);
+  for (int i = MinimumMomentum; i < this->MaximumMomentum; i += 2)
+    this->LValues[i] -= this->LValues[i + 2];
+  return *this;
+}
+  
+// find all multiplets that can obtained when putting a given number of fermions where each of them having the same maximum momentum
+//
+// nbrFermions = number of fermions
+// maximumMomentum = twice the maximum momentum that can have a fermion
+// return value = reference on corresponding momentum multiplet set
+
+MomentumMultipletSet& MomentumMultipletSet::FindMultipletsForFermions (int nbrFermions, int maximumMomentum)
+{
+  this->Resize(nbrFermions * (maximumMomentum - nbrFermions + 1));
+  this->LValues[this->MaximumMomentum] = 1;
+  int MinimumMomentum = 0;
+  if ((this->MaximumMomentum & 1) == 1)
+    ++MinimumMomentum;
+  for (int i = this->MaximumMomentum - 2; i >= MinimumMomentum; i -= 2)
+    this->LValues[i] = this->GetFixedLzFermionHilbertSpaceDimension(nbrFermions, maximumMomentum, (i + (maximumMomentum * nbrFermions)) >> 1);
   for (int i = MinimumMomentum; i < this->MaximumMomentum; i += 2)
     this->LValues[i] -= this->LValues[i + 2];
   return *this;
@@ -412,5 +432,27 @@ int MomentumMultipletSet::GetFixedLzBosonHilbertSpaceDimension(int nbrBosons, in
       totalLz -= lzMax;
     }
   return TmpDim; 
+}
+
+// evaluate Hilbert space dimension for fermions with fixed total Lz value and a given L per particle
+//
+// nbrFermions = number of fermions
+// lzMax = two times momentum maximum value for a fermion plus one 
+// totalLz = momentum total value plus nbrFermions  * (momentum maximum value for a fermions + 1)
+// return value = Hilbert space dimension
+
+int MomentumMultipletSet::GetFixedLzFermionHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+{
+  if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
+    return (long) 0;
+  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
+  if (LzTotalMax < totalLz)
+    return (long) 0;
+  if ((nbrFermions == 1) && (lzMax >= totalLz))
+    return (long) 1;
+  if (LzTotalMax == totalLz)
+    return (long) 1;
+  return  (this->GetFixedLzFermionHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
+	   +  this->GetFixedLzFermionHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
 

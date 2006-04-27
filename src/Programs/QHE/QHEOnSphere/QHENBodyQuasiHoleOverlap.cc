@@ -22,6 +22,8 @@
 #include "Tools/QHE/QHESpectrum/QHEOnSphereLzSortedSpectrum.h"
 
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphereUnlimited.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -91,6 +93,7 @@ int main(int argc, char** argv)
       cout << "LzMax is not defined or as a wrong value" << endl;
       return -1;
     }
+  cout << "LzMax=" 
   if ((OverlapDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
     {
       cout << "NbrParticles is not defined or as a wrong value" << endl;
@@ -129,13 +132,22 @@ int main(int argc, char** argv)
   strcpy (OutputVectors, OverlapDefinition["OutputVectors"]);
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
-
+  bool FermionFlag = false;
+  if ((OverlapDefinition["statistics"] != 0) && (strcmp ("fermions", OverlapDefinition["statistics"]) == 0))
+    {
+      FermionFlag = true;
+    }
+  long MemorySpace = 9l << 20;
   int* LDegeneracy = new int [MaxNbrLz];
   LDegeneracy[MaxNbrLz - 1] = LzDegeneracy[MaxNbrLz - 1];
   for (int i = MaxNbrLz - 2; i >= 0; --i)
     LDegeneracy[i] = LzDegeneracy[i] - LzDegeneracy[i + 1];
 
   int TotalMaxLz = LzMax * NbrParticles;
+  if (FermionFlag == true)
+    {
+      TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
+    }
   RealVector** SortedTestVectors = new RealVector*[MaxNbrLz];
   int* NbrSortedTestVectors = new int [TotalMaxLz + 1];
   int* ReferenceNbrSortedVectors = new int [TotalMaxLz + 1];
@@ -176,8 +188,35 @@ int main(int argc, char** argv)
 	      }
 	  }
 	RealMatrix DiagonalBasis (TestVectors, LzDegeneracy[i]);
-	BosonOnSphere Space (NbrParticles, Lz, LzMax);
-	ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+
+	ParticleOnSphere* Space;
+	if (FermionFlag == true)
+	  {
+#ifdef __64_BITS__
+	    if (LzMax <= 63)
+	      {
+		Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
+	      }
+	    else
+	      {
+		Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	      }
+#else
+	    if (LzMax <= 31)
+	      {
+		Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
+	      }
+	    else
+	      {
+		Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	      }
+#endif
+	  }
+	else
+	  {
+	    Space = new BosonOnSphere(NbrParticles, Lz, LzMax);
+	  }
+	ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
 	LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedTestVectors, TestVectorPosition);
 	cout << endl;
 
@@ -264,6 +303,7 @@ int main(int argc, char** argv)
 		cout << "can't compare vectors if both subspaces don't have the same dimension " << endl;		  
 		BestOverlaps[i] = -1.0;
 	      }
+	delete Space;
       }
 
   
