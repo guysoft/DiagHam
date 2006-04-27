@@ -6,7 +6,7 @@ if (!(defined($ARGV[0])))
   {
     die "usage: PlotEigenvalueDensity spectrum [xfig,eps,ps] [print] [maxE]\n";
   }
-my $NbrFermions = $ARGV[0];
+my $Spectrum = $ARGV[0];
 my $XFigFlag = 0;
 if( (defined($ARGV[1])) && ($ARGV[1] eq "xfig"))
   {
@@ -33,57 +33,63 @@ if (defined($ARGV[2]))
 	$MaxE = $ARGV[2];
       }
   }
-my @ListFiles;
-my $TmpFile;
-foreach $TmpFile (<*>)
-  {
-    if ($TmpFile =~ /fermions\_coulomb\_n\_$NbrFermions.*\_l\./)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-    if ($TmpFile =~ /fermions\_laplaciandelta\_n\_$NbrFermions.*\_l\./)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-    if ($TmpFile =~ /fermions\_.+\_n\_$NbrFermions.*\_l\.dat$/)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-  }
 
-foreach $TmpFile (@ListFiles)
-  {
-    my $Max;
-    my $Min;
-    &CreatePostScript($TmpFile, $XFigFlag, $PrintFlag, 14, $MaxE);
-    print ("\n\n");
-#    &FindMinMax($TmpFile, 1, \$Min, \$Max, 0, 0, 15);
-#    print ($TmpFile." ".$Min." ".$Max."\n");
-  }
+my $TmpFile = "truc.dat";
+ConvertToHistogram($Spectrum, $TmpFile, 0);
+&CreatePostScript($TmpFile, $XFigFlag, $PrintFlag, 14, $MaxE);
+
 
 # convert a spectrum file into a histogram file
 #
 # $_[0] = input file name
 # $_[1] = output file name
+# $_[2] = column corresponding to datas to sort
 
 sub ConvertToHistogram
   {
     my $InputFileName = $_[0];
     my $OutputFileName = $_[1];
+    my $Column = $_[2];
     my $Min;
     my $Max;
-    FindMinMax($InputFileName, 1, \$Min, \$Max);
+    FindMinMax($InputFileName, $Column, \$Min, \$Max);
     my $TmpLine;
     unless (open (INFILE, $InputFileName))
       {
 	die ("can't open ".$InputFileName."\n");
       }
+    my $NbrBoxes = 200;
+    my $Step  = ($Max - $Min) / $NbrBoxes;    
+    my @Histogram;
+    my $Pos = 0;
+    while ($Pos < $NbrBoxes)
+      {
+	$Histogram[$Pos] = 0;
+	$Pos++;
+      }
     while (defined($TmpLine = <INFILE>))
       {
-	
+	chomp ($TmpLine);
+	if ($TmpLine ne "")
+	  {
+	    my @TmpArray = split (/ /, $TmpLine);
+	    $Pos = ($TmpArray[$Column] - $Min) / $Step;
+	    $Histogram[$Pos]++;
+	  }
       }
     close (INFILE);
-  }
+    $Pos = 0;
+    unless (open (OUTFILE, ">".$OutputFileName))
+      {
+	die ("can't open ".$OutputFileName."\n");
+      }
+    while ($Pos < $NbrBoxes)
+      {
+	print OUTFILE ($Min + ($Pos * $Step))." ".$Histogram[$Pos]."\n";
+	$Pos++;
+      }  
+    close (OUTFILE);
+}
 
 # find minimum and maximum values in a file
 #
@@ -188,31 +194,29 @@ sub CreatePostScript
     $Min -= $Delta;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
-    $FileName =~ /n\_(\d+)\_2s\_(\d*)\_/;
-    my $Title = "N = ".$1."  2S = ".$2;
     open (OUTFILE, ">$TmpFileName");
-    print OUTFILE ("set xrange [-1:".($MaxL + 1)."]
-set yrange [".$Min.":".$Max."]\n");
+#    print OUTFILE ("set xrange [-1:".($MaxL + 1)."]
+#set yrange [".$Min.":".$Max."]\n");
     if ($XFigFlag >= 1)
       {
-	$OutputFile =~ s/\_l\.dat/\.fig/;
-	print OUTFILE ("set xlabel \"L\" font \"default,14\"
-set ylabel \"energy[g]\" font \"default,14\"
+	$OutputFile =~ s/\.dat/\.fig/;
+	print OUTFILE ("set xlabel \"E\" font \"default,14\"
+set ylabel \"D(E)\" font \"default,14\"
 set size 1.0, 1.5
 set terminal fig
 set key bottom right
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\" with points pt 2\n");
+plot \"".$FileName."\" using 1:2 notitle with histeps\n");
       }
     else
       {
-	$OutputFile =~ s/\_l\.dat/\.ps/;
-print OUTFILE ("set xlabel \"L\"
-set ylabel \"energy[g]\"
+	$OutputFile =~ s/\.dat/\.ps/;
+print OUTFILE ("set xlabel \"E\"
+set ylabel \"D(E)\"
 set size 1.0, 0.6
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
+plot \"".$FileName."\" using 1:2 notitle with histeps\n");
      }
     close (OUTFILE);
     open (INFILE, $TmpFileName);
@@ -229,47 +233,6 @@ plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
 	`lpr $OutputFile`;
       }
     `rm -f $TmpFileName`;
-    if ($XFigFlag >= 1)
-      {
-	open (INFILE, $OutputFile);
-	my $XFigFile = "";
-	while ((defined ($TmpLine = <INFILE>)) && (!($TmpLine =~ /N \= \d*/)))
-	  {
-	    $XFigFile .= $TmpLine;
-	  }
-	$XFigFile .= $TmpLine;	
-	while (defined ($TmpLine = <INFILE>))
-	  {
-	    chomp $TmpLine;
-	    $TmpLine =~ s/     / /;
-	    my @Tmp = split (/ /, $TmpLine);
-	    $Tmp[3]++;
-	    $XFigFile .= $Tmp[0]." ".$Tmp[1]." ".$Tmp[2]." ".$Tmp[3]." ".$Tmp[4]." ".$Tmp[5]." ".$Tmp[6]." ".
-	      $Tmp[7]." ".$Tmp[8]."     ".$Tmp[9]." ".$Tmp[10]." ".$Tmp[11]." ".$Tmp[12]." ".$Tmp[13]." ".$Tmp[14]." ".$Tmp[15]."\n";
-	    $TmpLine = <INFILE>;
-	    chomp $TmpLine;
-	    $TmpLine =~ s/^\s*//;
-	    if ($TmpLine ne "")
-	      {
-		@Tmp = split (/ /, $TmpLine);
-		my $Shift = int (($Tmp[4] - $Tmp[0]) / 2);
-		$Tmp[0] -= $Shift;
-		$Tmp[4] += $Shift;
-		$XFigFile .= "	 ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[4]." ".$Tmp[1]."\n";
-	      }
-	    $TmpLine = <INFILE>;
-	    $TmpLine = <INFILE>;
-	  }
-	open (OUTFILE , ">$OutputFile");
-	print OUTFILE $XFigFile;
-	close (OUTFILE);
-	if ($XFigFlag == 2)
-	  {
-	    my $EpsOutputFile = $OutputFile;
-	    $EpsOutputFile =~ s/\.fig/\.eps/;
-	    `fig2dev -L eps $OutputFile $EpsOutputFile`;
-	  }
-      }    
   }
 
 

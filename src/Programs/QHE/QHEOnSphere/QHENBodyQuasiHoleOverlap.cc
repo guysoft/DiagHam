@@ -93,7 +93,7 @@ int main(int argc, char** argv)
       cout << "LzMax is not defined or as a wrong value" << endl;
       return -1;
     }
-  cout << "LzMax=" 
+  cout << "LzMax=" << LzMax << endl;
   if ((OverlapDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
     {
       cout << "NbrParticles is not defined or as a wrong value" << endl;
