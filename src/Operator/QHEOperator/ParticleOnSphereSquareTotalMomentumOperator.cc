@@ -143,24 +143,49 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& 
   double Element = 0.0;
   int Index = 0;
   double Coefficient = 0.0;
-  for (int i = 0; i < Dim; ++i)
+  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      for (int j = 0; j < this->LzMax; ++j)
+      for (int i = 0; i < Dim; ++i)
 	{
-	  for (int  k = 1; k <= this->LzMax; ++k)
+	  for (int j = 0; j < this->LzMax; ++j)
 	    {
-	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-	      if (Index != this->Particle->GetHilbertSpaceDimension())
+	      for (int  k = 1; k <= this->LzMax; ++k)
 		{
-		  Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
+		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+		  if (Index != this->Particle->GetHilbertSpaceDimension())
+		    {
+		      Element -= V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
+		    }
 		}
 	    }
+	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
+	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
+	  for (int k = 1; k < this->LzMax; ++k)
+	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+	  Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
 	}
-      Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-      Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-      for (int k = 1; k < this->LzMax; ++k)
-	Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-      Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
+    }
+  else
+    {
+      for (int i = 0; i < Dim; ++i)
+	{
+	  for (int j = 0; j < this->LzMax; ++j)
+	    {
+	      for (int  k = 1; k <= this->LzMax; ++k)
+		{
+		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+		  if (Index != this->Particle->GetHilbertSpaceDimension())
+		    {
+		      Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
+		    }
+		}
+	    }
+	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
+	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
+	  for (int k = 1; k < this->LzMax; ++k)
+	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+	  Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
+	}
     }
   return Complex(Element);
 }
@@ -195,25 +220,50 @@ RealVector& ParticleOnSphereSquareTotalMomentumOperator::Multiply(RealVector& vS
     {
       vDestination[i] = vSource[i] * this->Shift;
     }
-  for (int i = firstComponent; i < Last; ++i)
+  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      for (int j = 0; j < this->LzMax; ++j)
+      for (int i = firstComponent; i < Last; ++i)
 	{
-	  for (int k = 1; k <= this->LzMax; ++k)
+	  for (int j = 0; j < this->LzMax; ++j)
 	    {
-	      Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-	      if (Index != this->Particle->GetHilbertSpaceDimension())
+	      for (int k = 1; k <= this->LzMax; ++k)
 		{
-		  vDestination[Index] += 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
+		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+		  if (Index != this->Particle->GetHilbertSpaceDimension())
+		    {
+		      vDestination[Index] -= 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
+		    }
 		}
 	    }
+	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
+	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
+	  for (int k = 1; k < this->LzMax; ++k)
+	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+	  vDestination[i] += vSource[i] * Coefficient;
 	}
-      Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-      Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-      for (int k = 1; k < this->LzMax; ++k)
-	Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-      vDestination[i] += vSource[i] * Coefficient;
     }
+  else
+    {
+      for (int i = firstComponent; i < Last; ++i)
+	{
+	  for (int j = 0; j < this->LzMax; ++j)
+	    {
+	      for (int k = 1; k <= this->LzMax; ++k)
+		{
+		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+		  if (Index != this->Particle->GetHilbertSpaceDimension())
+		    {
+		      vDestination[Index] += 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
+		    }
+		}
+	    }
+	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
+	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
+	  for (int k = 1; k < this->LzMax; ++k)
+	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
+	  vDestination[i] += vSource[i] * Coefficient;
+	}
+   }
   return vDestination;
 }
   

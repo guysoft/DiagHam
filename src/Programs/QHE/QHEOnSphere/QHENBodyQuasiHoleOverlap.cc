@@ -93,7 +93,6 @@ int main(int argc, char** argv)
       cout << "LzMax is not defined or as a wrong value" << endl;
       return -1;
     }
-  cout << "LzMax=" << LzMax << endl;
   if ((OverlapDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
     {
       cout << "NbrParticles is not defined or as a wrong value" << endl;
@@ -133,7 +132,7 @@ int main(int argc, char** argv)
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
   bool FermionFlag = false;
-  if ((OverlapDefinition["statistics"] != 0) && (strcmp ("fermions", OverlapDefinition["statistics"]) == 0))
+  if ((OverlapDefinition["Statistics"] != 0) && (strcmp ("fermions", OverlapDefinition["Statistics"]) == 0))
     {
       FermionFlag = true;
     }
@@ -434,6 +433,7 @@ void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int
   else
     {
       int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper->MatrixElement(vectors[0], vectors[0]).Re) + 1.0) - 1.0)));
+      cout << "TmpAngularMomentum=" << TmpAngularMomentum << " " << oper->MatrixElement(vectors[0], vectors[0]).Re << endl;
       if ((TmpAngularMomentum & 1) == 0)
 	{
 	  TmpAngularMomentum >>= 1;

@@ -64,6 +64,7 @@ while ($NbrParticles < $MaxNbrParticles)
 	chomp ($SpectrumOutput);
 	my $DeltaPrefix = $DataPath."/".$TrueIntercationName."/n_".$NbrParticles."/2s_".$SValue."/".$Statistics."_".$TrueIntercationName."_n_".$NbrParticles."_2s_".$SValue."_lz";
 	my $TemporaryOverlapDefinition = "NbrParticles = ".$NbrParticles."
+Statistics = ".$Statistics."
 LzMax = ".$SValue."
 Degeneracy = ".$SpectrumOutput."
 InputVectors = ".$DeltaPrefix."_
