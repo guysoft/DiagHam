@@ -546,7 +546,6 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		  for (int k = 0; k < nbrVectors; ++k)
 		    {
 		      Coefficient2[k] = vSources[k][l];
-		      vDestinations[k][l] += this->HamiltonianShift * Coefficient2[k];
 		    }
 		  for (j = 0; j < TmpNbrInteraction; ++j)
 		    {
@@ -615,16 +614,16 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				      Coefficient3 = Sign * TmpParticles->ProdA(i, NIndices, k);
 				      if (Coefficient3 != 0.0)
 					{
-					  for (int l = 0; l < nbrVectors; ++l)
-					    Coefficient2[l] = Coefficient3 * vSources[l][i] * TmpInteraction[i1];
+					  for (int p = 0; p < nbrVectors; ++p)
+					    Coefficient2[p] = Coefficient3 * vSources[p][i] * TmpInteraction[i1];
 					  MIndices = this->SortedIndicesPerSum[k][j];
 					  for (int i2 = 0; i2 < Lim; ++i2)
 					    {
 					      Index = TmpParticles->ProdAd(MIndices, k, Coefficient);
 					      if (Index < Dim)
 						{
-						  for (int l = 0; l < nbrVectors; ++l)
-						    vDestinations[l][Index] += Coefficient * TmpInteraction[i2] * Coefficient2[l];
+						  for (int p = 0; p < nbrVectors; ++p)
+						    vDestinations[p][Index] += Coefficient * TmpInteraction[i2] * Coefficient2[p];
 						}
 					      MIndices += k;
 					    }
@@ -634,14 +633,14 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				}
 			    }		      
 			}
-		    for (int l = 0; l < nbrVectors; ++l)
-		      {
-			RealVector& TmpSourceVector = vSources[l];
-			RealVector& TmpDestinationVector = vDestinations[l];
-			for (int i = firstComponent; i < LastComponent; ++i)
-			  TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-		      }
 		  }
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  RealVector& TmpSourceVector = vSources[p];
+		  RealVector& TmpDestinationVector = vDestinations[p];
+		  for (int i = firstComponent; i < LastComponent; ++i)
+		    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		}
 	      delete[] Coefficient2;
 	      delete TmpParticles;
 	    }
