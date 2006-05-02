@@ -6,7 +6,7 @@ my $InputFile = $ARGV[0];
 $InputFile =~ /\_n\_(\d+)\_/;
 my $NbrParticles = $1;
 my $OutputName = "laughlin";
-my $SpectrumType = "Lz";
+my $SpectrumType = "L";
 my $DimensionFile = "bosons_n_8_2s_14.dim";
 $OutputName .= "_".$NbrParticles;
 

@@ -7,6 +7,7 @@ if (!(defined($ARGV[0])))
     die "usage: PlotEigenvalueDensity spectrum [xfig,eps,ps] [print] [maxE]\n";
   }
 my $Spectrum = $ARGV[0];
+my $ColumnIndex = 0;
 my $XFigFlag = 0;
 if( (defined($ARGV[1])) && ($ARGV[1] eq "xfig"))
   {
@@ -34,8 +35,9 @@ if (defined($ARGV[2]))
       }
   }
 
-my $TmpFile = "truc.dat";
-ConvertToHistogram($Spectrum, $TmpFile, 0);
+my $TmpFile = $Spectrum;
+$TmpFile =~ s/\.dat/\_de\.dat/;
+ConvertToHistogram($Spectrum, $TmpFile, $ColumnIndex);
 &CreatePostScript($TmpFile, $XFigFlag, $PrintFlag, 14, $MaxE);
 
 
@@ -83,9 +85,11 @@ sub ConvertToHistogram
       {
 	die ("can't open ".$OutputFileName."\n");
       }
+    my $ScalingFactor = 10.0 / $NbrBoxes;
     while ($Pos < $NbrBoxes)
       {
-	print OUTFILE ($Min + ($Pos * $Step))." ".$Histogram[$Pos]."\n";
+#	print OUTFILE ($Min + ($Pos * $Step))." ".$Histogram[$Pos]."\n";
+	print OUTFILE ($Pos * $ScalingFactor)." ".$Histogram[$Pos]."\n";
 	$Pos++;
       }  
     close (OUTFILE);
@@ -184,14 +188,14 @@ sub CreatePostScript
     my $MaxL = $_[3];
     my $Max;
     my $Min;
-    &FindMinMax($FileName, 1, \$Min, \$Max, 0, 0, $MaxL);
-    if (defined ($_[4]))
-      {
-	$Max = $_[4];
-      }
-    my $Delta = ($Max - $Min) / 20.0;
-    $Max += $Delta;
-    $Min -= $Delta;
+#    &FindMinMax($FileName, 1, \$Min, \$Max, 0, 0, $MaxL);
+#    if (defined ($_[4]))
+#      {
+#	$Max = $_[4];
+#      }
+#    my $Delta = ($Max - $Min) / 20.0;
+#    $Max += $Delta;
+#    $Min -= $Delta;
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
     open (OUTFILE, ">$TmpFileName");

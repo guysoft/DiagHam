@@ -82,19 +82,15 @@ if ($GridFile eq "")
 	  {
 	    die ("can't open tmppseudopotential.dat\n");
 	  }
-	print OUTFILE "Pseudopotentials = 1 0 ".$MinValue;
-	my $TmpLz = 3;
-	while ($TmpLz <= $LzMax)
-	  {
-	    print OUTFILE " 0";
-	    $TmpLz++;
-	  }
-	print OUTFILE "\n";
+	my $TmpV1 = $BasePseudopotentials[1];
+	$BasePseudopotentials[1] += $MinValue;
+	print OUTFILE "Pseudopotentials = ".join(" ", @BasePseudopotentials)."\n";
+	$BasePseudopotentials[1] = $TmpV1;
 	close(OUTFILE);
 	
 	my $DiagOutputFileName = $MinValue;
 	$DiagOutputFileName =~ s/\./\_/;
-	$DiagOutputFileName = "v2v0".$DiagOutputFileName;
+	$DiagOutputFileName = "coulomb_1_dv1_".$DiagOutputFileName;
 	my $Overlap = &EvalauteOverlap($PathToDiagonalizationProgram, $PathToOverlapProgram, $NbrFermions, $LzMax, $ReferenceVector, $DiagOutputFileName, $KeepFlag);
 	unless (open (OUTFILE, ">>".$DataFileName.".overlap"))
 	  {
@@ -115,9 +111,9 @@ if ($GridFile eq "")
 	  {
 	    die ("can't create file ".$DataFileName.".p\n");
 	  }
-	print OUTFILE ("set xrange [0:".$MinValue."]
+	print OUTFILE ("set xrange [".(-$MinValue).":".$MinValue."]
 set yrange [0:1.1]
-set xlabel \"V2/V0\"
+set xlabel \"dV1\"
 set ylabel \"overlap\"
 set size 1, 0.9
 set terminal postscript landscape enhanced \"Helvetica\" 14
@@ -224,7 +220,7 @@ sub EvalauteOverlap()
       }
 
     my $Command = $PathToDiagonalizationProgram." -p ".$NbrFermions." -l ".$LzMax." --nbr-lz 1 -n 1 --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat ".$DiagonalizationProgramOptions;
-    `$Command`;
+    system($Command);
 
     my $DiagOutputFileName2 = "fermions_".$DiagOutputFileName."_n_".$NbrFermions."_2s_".$LzMax."_lz";
 
@@ -390,9 +386,9 @@ sub ParsePseudopotentials
     while (defined($TmpLine = <INFILE>))
       {
 	chomp($TmpLine);
-	if ($TmpLine =~ /^\s*PseudoPotentials\s*\=/)
+	if ($TmpLine =~ /^\s*Pseudopotentials\s*\=/)
 	  {
-	    $TmpLine =~ s/^\s*PseudoPotentials\s*\=\s*//;
+	    $TmpLine =~ s/^\s*Pseudopotentials\s*\=\s*//;
 	    @$Pseudopotentials = split (/ /, $TmpLine);
 	  }
       }
