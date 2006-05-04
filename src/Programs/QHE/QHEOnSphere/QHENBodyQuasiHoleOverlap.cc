@@ -125,10 +125,10 @@ int main(int argc, char** argv)
       return -1;           
     }
   
-  char* InputVectors = new char [strlen(OverlapDefinition["InputVectors"]) + 24];
-  char* OutputVectors = new char [strlen(OverlapDefinition["OutputVectors"]) + 24];
-  strcpy (InputVectors, OverlapDefinition["InputVectors"]);
-  strcpy (OutputVectors, OverlapDefinition["OutputVectors"]);
+  char* InputVectors = new char [strlen(OverlapDefinition["ExactStates"]) + 24];
+  char* OutputVectors = new char [strlen(OverlapDefinition["QuasiholeStates"]) + 24];
+  strcpy (InputVectors, OverlapDefinition["ExactStates"]);
+  strcpy (OutputVectors, OverlapDefinition["QuasiholeStates"]);
   char* InputVectors2 = InputVectors + strlen(InputVectors);
   char* OutputVectors2 = OutputVectors + strlen(OutputVectors);
   bool FermionFlag = false;
@@ -433,7 +433,6 @@ void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int
   else
     {
       int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper->MatrixElement(vectors[0], vectors[0]).Re) + 1.0) - 1.0)));
-      cout << "TmpAngularMomentum=" << TmpAngularMomentum << " " << oper->MatrixElement(vectors[0], vectors[0]).Re << endl;
       if ((TmpAngularMomentum & 1) == 0)
 	{
 	  TmpAngularMomentum >>= 1;

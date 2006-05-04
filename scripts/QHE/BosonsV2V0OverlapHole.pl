@@ -297,8 +297,8 @@ sub EvaluateOverlap()
 LzMax=".$LzMax."
 Degeneracy=".$Degeneracy."
 Spectrum=".$DiagOutputFileName2.".dat
-OutputVectors=".$ReferenceVector."
-InputVectors=".$DiagOutputFileName2."_\n");
+QuasiholeStates=".$ReferenceVector."
+ExactStates=".$DiagOutputFileName2."_\n");
     close (OUTFILE);
 
     my $Overlap = "-1";
