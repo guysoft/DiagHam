@@ -987,7 +987,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 	{
 	  for (int j = this->MinSumIndices; j <= this->MaxSumIndices; ++j)
 	    {
-	      int Lim = NbrSortedIndicesPerSum[1][j];
+	      int Lim = this->NbrSortedIndicesPerSum[1][j];
 	      NIndices = this->SortedIndicesPerSum[1][j];
 	      for (int i1 = 0; i1 < Lim; ++i1)
 		{
