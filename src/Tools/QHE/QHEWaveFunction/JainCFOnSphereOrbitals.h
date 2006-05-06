@@ -35,24 +35,27 @@
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "Matrix/ComplexMatrix.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
 class DerivativeProductFactor;
 class DerivativeProduct;
 class SumDerivativeProduct;
 
-class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
+class JainCFOnSphereOrbitals
 {
 
  private:
   
   friend class DerivativeProductFactor;
-  
+
  protected:
 
   // number of particles
   int NbrParticles;
+
+  // number of orbitals
+  int NbrOrbitals;
 
   // number of Landau levels filled with composite fermions
   int NbrLandauLevels;
@@ -77,13 +80,19 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   // number of derivatives to be calculated for the LLL
   int LLLDerivativeNum;
 
-  // array with powers of JastrowPower
-  double* JastrowPowerPowers;
+  // maximal power to which the derivative has to be raised
+  int **MaxDerivativePower;
+
+  // array with factorial and sign prefactors to the DerivativeFactors
+  double* FactorialSignFactors;
 
   // array containing prefactors of each projected monopole harmonic
+  // indices: [LL-index n][Momentum m (0=-S-n)]
   double** NormalizationPrefactors;
 
   // array containing constant factors that appears in the sum of projected monopole harmonic (except LLL)
+  // indices: [LL-index n][s from Jains notation(summation index)][momentum m (0=-S-n)]
+  // factor nonzero for n-s<= m <= MaxMomentum - s
   double*** SumPrefactors;
 
   // garbage flag to avoid duplication of precalculation array
@@ -91,9 +100,12 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
 
   // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
   Complex** JastrowFactorElements;
-  // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic 
-  Complex*** DerivativeFactors;
-  // a duplicate array of DerivativeFactors used for precalculations
+  // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic
+  // indices are: [#u][#v][Power][particle#]
+  Complex**** DerivativeFactors;
+  
+  // a duplicate array of DerivativeFactors used for precalculations with different organisation:
+  // indices are: [particle#][#u][#v]
   Complex*** DerivativeFactors2;
 
   // temporary array used to store u spinor coordinates
@@ -106,8 +118,12 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   Complex** SpinorVCoordinatePower;
 
   // Structure for calculating and storing the form of the derivatives
+  // indices: [LL-index n][derivatives / u]
   SumDerivativeProduct** DerivativeStructure;
 
+  // Matrix to store return values:  
+  ComplexMatrix *Orbitals;
+    
  public:
 
   // default constructor
@@ -130,16 +146,17 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   //
   ~JainCFOnSphereOrbitals();
 
-  // clone function 
-  //
-  // return value = clone of the function 
-  virtual Abstract1DComplexFunction* Clone ();
-
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
-  // return value = function value at x  
-  virtual Complex operator ()(RealVector& x);
+  // return value = Slater-Determinant with CF Orbitals
+  ComplexMatrix& operator ()(RealVector& x);
+
+
+  // access for data members:
+  int GetNbrParticles(){return NbrParticles;}
+
+  int GetNbrOrbitals(){return NbrOrbitals;}
 
  protected:
 
@@ -156,7 +173,7 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
 
   // evaluate constant factors that appears in the sum of projected monopole harmonic (except LLL)
   //
-  virtual void EvaluateSumPrefactors();
+  void EvaluateSumPrefactors();
 
   // evaluate Structure of Derivatives
   //
@@ -166,22 +183,12 @@ class JainCFOnSphereOrbitals: public Abstract1DComplexFunction
   
   SumDerivativeProduct URecursion(int UDerivatives, int VDerivatives);
 
-  // evaluate composite fermion monopole spherical harmonic 
-  //
-  // coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
+  // evaluates one line of CF orbitals and stores in internal matrix Orbitals
+  // Index = line where to store results
   // momentum = monopole spherical harmonic Lz momentum
   // landauLevel = index of the pseudo Landau level
   // maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
-  // return value = value of the monopole spherical harmonic at the givne point
-  Complex EvaluateCFMonopoleHarmonic (int coordinate, int momentum, int landauLevel, int maximumMomentum);
-
-  // evaluate derivative part of the composite fermion monopole spherical harmonic 
-  //
-  // index = particle index
-  // alpha = number of (d\du) derivates
-  // beta = number of (d\dv) derivates
-  // return value = derivative contribution to the monopole spherical harmonic  
-  Complex EvaluateCFMonopoleHarmonicDerivative(int index, int alpha, int beta);
+  void EvaluateOrbitals (int Index, int momentum, int landauLevel, int maximumMomentum);
 
 };
 

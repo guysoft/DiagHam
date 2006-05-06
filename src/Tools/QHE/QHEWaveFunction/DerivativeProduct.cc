@@ -41,6 +41,8 @@ DerivativeProduct::DerivativeProduct()
 {
   this->CFOrbitals=NULL;
   this->PreFactor=1.0;
+  this->Flag.Initialize();
+  this->TmpProduct = NULL;
 }
 
 DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
@@ -48,6 +50,9 @@ DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
   this->CFOrbitals=toWrap.CFOrbitals;
   this->PreFactor=1.0;
   this->ProductFactors+=toWrap;
+  this->Flag.Initialize();
+  if (this->CFOrbitals!=NULL) this->TmpProduct = new Complex[this->CFOrbitals->GetNbrParticles()];
+  else this->TmpProduct = NULL;
 }
 
 DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
@@ -55,6 +60,8 @@ DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
   this->CFOrbitals=toCopy.CFOrbitals;
   this->PreFactor=toCopy.PreFactor;
   this->ProductFactors=toCopy.ProductFactors;
+  this->Flag = toCopy.Flag;
+  this->TmpProduct=toCopy.TmpProduct;
 }
 
 DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<DerivativeProductFactor> PriorFactors,
@@ -64,11 +71,17 @@ DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<Derivati
   this->PreFactor=Reference.PreFactor;
   this->ProductFactors=PriorFactors;
   this->ProductFactors.Link(LaterFactors);
+  this->Flag = Reference.Flag;
+  this->TmpProduct=Reference.TmpProduct;
   //cout << "Nbr Elements after Link: " << this->ProductFactors.GetNbrElement();
 }
 
 DerivativeProduct::~DerivativeProduct()
 {
+  if ((this->TmpProduct != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->TmpProduct;
+    }
 }
 
 bool DerivativeProduct::isNonZero()
@@ -79,9 +92,36 @@ bool DerivativeProduct::isNonZero()
   return true;
 }
 
-Complex DerivativeProduct::getValue()
+Complex DerivativeProduct::getValue(int particle)
 {
-  return Complex();
+  Complex result = this->PreFactor;
+  DerivativeProductFactor *Factor;
+  for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+    result *=Factor->getValue(particle);
+  return result;
+}
+
+Complex* DerivativeProduct::getValues()
+{
+  Complex *MyTmpProduct, *CPtr;
+  for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+    TmpProduct[i] = this->PreFactor;
+  DerivativeProductFactor *Factor;
+  for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+    {
+      MyTmpProduct=Factor->getValues();
+      CPtr=TmpProduct;
+      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+	*(CPtr++) *= *(MyTmpProduct++);
+    }
+  return TmpProduct;
+}
+
+void DerivativeProduct::TestHighestPowers()
+{
+  DerivativeProductFactor *Factor;
+  for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
+    Factor->TestHighestPowers();
 }
 
 void DerivativeProduct::Simplify()
@@ -94,7 +134,7 @@ void DerivativeProduct::Simplify()
       Factor->PreFactor=1.0;
       if (Factor->isScalar())
 	{
-	  cout << "found scalar factor to simplify!" << endl;
+	  //cout << "found scalar factor to simplify!" << endl;
 	  this->ProductFactors.DeleteElement(pos);
 	}
     }
@@ -113,8 +153,8 @@ SumDerivativeProduct DerivativeProduct::Derivative(int DeriveU, int DeriveV)
   for (int pos=0; pos < elements; ++pos)
     {
       DerivativeProduct derivative = this->ProductFactors[pos].Derivative(DeriveU,DeriveV);
-      cout << "Element " << pos << "= " << this->ProductFactors[pos]<< endl;
-      cout << "its der. " << derivative << endl;      
+      //cout << "Element " << pos << "= " << this->ProductFactors[pos]<< endl;
+      //cout << "its der. " << derivative << endl;      
       if (derivative.isNonZero())
 	{
 	  PriorFactors.DeleteList();
@@ -122,13 +162,24 @@ SumDerivativeProduct DerivativeProduct::Derivative(int DeriveU, int DeriveV)
 	  LaterFactors.DeleteList();
 	  if (pos+1 < elements) LaterFactors=Extract(this->ProductFactors, pos+1);      
 	  DerivativeProduct tmp(*this,PriorFactors,LaterFactors);
-	  cout << "other terms: " << tmp << endl;
+	  //cout << "other terms: " << tmp << endl;
 	  tmp*=derivative;
-	  cout << "Full term: " << tmp << endl;
+	  //cout << "Full term: " << tmp << endl;
 	  result +=tmp;
 	}
     }
   return result;
+}
+
+// assignment operator
+DerivativeProduct& DerivativeProduct::operator = (const DerivativeProduct& Assign)
+{
+  this->CFOrbitals=Assign.CFOrbitals;
+  this->PreFactor=Assign.PreFactor;
+  this->ProductFactors=Assign.ProductFactors;
+  this->Flag = Assign.Flag;
+  this->TmpProduct = Assign.TmpProduct;
+  return *this;
 }
 
 

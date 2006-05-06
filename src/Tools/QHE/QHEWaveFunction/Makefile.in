@@ -213,6 +213,65 @@ SumDerivativeProduct.cc
 
 all: all-recursive
 
+<<<<<<< .mine
+
+bin_PROGRAMS = test
+
+test_SOURCES = test.cc
+
+test_DEPENDENCIES = libQHEWaveFunction.a
+
+test_LDADD = libQHEWaveFunction.a $(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = ../../../../src/config_ac.h
+CONFIG_CLEAN_FILES = 
+LIBRARIES =  $(noinst_LIBRARIES)
+
+
+DEFS = @DEFS@ -I. -I$(srcdir) -I../../../../src
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+libQHEWaveFunction_a_LIBADD = 
+libQHEWaveFunction_a_OBJECTS =  LaughlinOnSphereWaveFunction.o \
+PfaffianOnSphereWaveFunction.o JainCFFilledLevelOnSphereWaveFunction.o \
+JainCFOnSphereOrbitals.o MooreReadOnSphereWaveFunction.o \
+LaughlinOnDiskWaveFunction.o PfaffianOnDiskWaveFunction.o \
+MooreReadOnDiskWaveFunction.o JainCFOnSphereWaveFunction.o \
+LandauSpectrumOnSphere.o UnprojectedJainCFOnSphereWaveFunction.o \
+QHEWaveFunctionManager.o ExactWaveFunction.o DerivativeProduct.o \
+DerivativeProductFactor.o SumDerivativeProduct.o
+AR = ar
+PROGRAMS =  $(bin_PROGRAMS)
+
+test_OBJECTS =  test.o
+test_LDFLAGS = 
+CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
+DIST_COMMON =  Makefile.am Makefile.in
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+TAR = tar
+GZIP_ENV = --best
+DEP_FILES =  .deps/DerivativeProduct.P .deps/DerivativeProductFactor.P \
+.deps/ExactWaveFunction.P .deps/JainCFFilledLevelOnSphereWaveFunction.P \
+.deps/JainCFOnSphereOrbitals.P .deps/JainCFOnSphereWaveFunction.P \
+.deps/LandauSpectrumOnSphere.P .deps/LaughlinOnDiskWaveFunction.P \
+.deps/LaughlinOnSphereWaveFunction.P \
+.deps/MooreReadOnDiskWaveFunction.P \
+.deps/MooreReadOnSphereWaveFunction.P \
+.deps/PfaffianOnDiskWaveFunction.P .deps/PfaffianOnSphereWaveFunction.P \
+.deps/QHEWaveFunctionManager.P .deps/SumDerivativeProduct.P \
+.deps/UnprojectedJainCFOnSphereWaveFunction.P .deps/test.P
+SOURCES = $(libQHEWaveFunction_a_SOURCES) $(test_SOURCES)
+OBJECTS = $(libQHEWaveFunction_a_OBJECTS) $(test_OBJECTS)
+
+all: all-redirect
+=======
+>>>>>>> .r407
 .SUFFIXES:
 .SUFFIXES: .cc .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)

@@ -9,7 +9,7 @@
 //           class of Jain composite fermion wave function on sphere          //
 //                      with filled (pseudo) Landau levels                    //
 //                                                                            //
-//                        last modification : 15/04/2006                      //
+//                        last modification : 07/05/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -67,6 +67,8 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   this->TwiceS = abs(nbrEffectiveFlux);
   if (nbrEffectiveFlux<0) this->ReverseFluxFlag=true;
   else this->ReverseFluxFlag=false;
+  this->NbrOrbitals = NbrLandauLevels*(NbrLandauLevels+TwiceS);
+  this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);
   this->ActualJastrowPower = jastrowPower;
   if ((this->ActualJastrowPower & 1) == 1)
     {
@@ -76,17 +78,12 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
     {
       this->JastrowPower = jastrowPower >> 1;
     }
-  this->JastrowPowerPowers = new double [this->NbrLandauLevels];
-  this->JastrowPowerPowers[0] = 1.0;
-  for (int i = 1; i < this->NbrLandauLevels; ++i)
-    this->JastrowPowerPowers[i] = this->JastrowPowerPowers[i - 1] * ((double) this->JastrowPower);
   this->Flag.Initialize();
   this->EvaluateNormalizationPrefactors();
   this->EvaluateSumPrefactors();
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i = 1; i < this->NbrParticles; ++i)
     this->JastrowFactorElements[i] = new Complex[i];
-  this->DerivativeFactors = new Complex** [this->NbrParticles];
   this->DerivativeFactors2 = new Complex** [this->NbrParticles];
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
@@ -94,28 +91,34 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   this->SpinorVCoordinatePower = new Complex*[NbrParticles];
   if (ReverseFluxFlag)
     {
-      this->MaxSpinorPower = (this->NbrLandauLevels - 1); // *2; ?? 
-      this->MaxDerivativeNum = 2*this->NbrLandauLevels + this->TwiceS;
+      this->MaxSpinorPower = (this->NbrLandauLevels - 1);
+      this->MaxDerivativeNum = this->NbrLandauLevels + this->TwiceS;
       this->LLLDerivativeNum = this->TwiceS;
     }
   else
     {
-      this->MaxSpinorPower = this->TwiceS + (this->NbrLandauLevels - 1); // *2; ?? 
+      this->MaxSpinorPower = this->TwiceS + (this->NbrLandauLevels - 1)*2;
       this->MaxDerivativeNum = this->NbrLandauLevels;
       this->LLLDerivativeNum = 0;
     }
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       this->SpinorUCoordinatePower[i] = new Complex[this->MaxSpinorPower + 1];
-      this->SpinorVCoordinatePower[i] = new Complex[this->MaxSpinorPower + 1];
-      this->DerivativeFactors[i] = new Complex* [this->MaxDerivativeNum]; 
+      this->SpinorVCoordinatePower[i] = new Complex[this->MaxSpinorPower + 1];      
       this->DerivativeFactors2[i] = new Complex* [this->MaxDerivativeNum];
-      for (int j = 0; j < this->NbrLandauLevels; ++j)
+      for (int j = 0; j < this->MaxDerivativeNum; ++j)
 	{
-	  this->DerivativeFactors[i][j] = new Complex [this->MaxDerivativeNum]; 
-	  this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum];
+	  this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum-j];
 	}
     }
+  FactorialSignFactors = new double[MaxDerivativeNum];
+  FactorialSignFactors[0]=1.0;
+  FactorialSignFactors[1]=this->JastrowPower;
+  for (int i=2; i<MaxDerivativeNum;++i)
+    FactorialSignFactors[i] = (1-i)*FactorialSignFactors[i-1];
+  MaxDerivativePower = new int*[MaxDerivativeNum];
+  for (int j = 0; j < this->MaxDerivativeNum; ++j)
+    MaxDerivativePower[j] = new int[MaxDerivativeNum-j];
   this->EvaluateDerivativeStructure();
 }
 
@@ -127,19 +130,20 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
 {
   this->NbrParticles = function.NbrParticles;
   this->NbrLandauLevels = function.NbrLandauLevels;
+  this->NbrOrbitals =  function.NbrOrbitals;
   this->TwiceS = function.TwiceS;
   this->JastrowPower = function.JastrowPower;
-  this->JastrowPowerPowers = function.JastrowPowerPowers;
   this->Flag = function.Flag;
   this->ReverseFluxFlag=function.ReverseFluxFlag;
   this->MaxSpinorPower = function.MaxSpinorPower;
   this->MaxDerivativeNum = function.MaxDerivativeNum;
   this->NormalizationPrefactors = function.NormalizationPrefactors;
   this->SumPrefactors = function.SumPrefactors;
+  this->FactorialSignFactors = function.FactorialSignFactors;
+  this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i = 1; i < this->NbrParticles; ++i)
     this->JastrowFactorElements[i] = new Complex[i];
-  this->DerivativeFactors = new Complex** [this->NbrParticles];
   this->DerivativeFactors2 = new Complex** [this->NbrParticles];
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
@@ -149,14 +153,12 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
     {
       this->SpinorUCoordinatePower[i] = new Complex[MaxSpinorPower + 1];
       this->SpinorVCoordinatePower[i] = new Complex[MaxSpinorPower + 1];
-      this->DerivativeFactors[i] = new Complex* [this->MaxDerivativeNum]; // MaxDerivativeNum ??
       this->DerivativeFactors2[i] = new Complex* [this->MaxDerivativeNum];
-      for (int j = 0; j < this->NbrLandauLevels; ++j)
-	{
-	  this->DerivativeFactors[i][j] = new Complex [this->MaxDerivativeNum]; // MaxDerivativeNum ??
-	  this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum];
-	}
+      for (int j = 0; j < this->MaxDerivativeNum; ++j)
+	this->DerivativeFactors2[i][j] = new Complex [this->MaxDerivativeNum-j];
     }
+  for (int j = 0; j < this->MaxDerivativeNum; ++j)
+    MaxDerivativePower[j] = new int[MaxDerivativeNum];
   this->EvaluateDerivativeStructure();
 }
 
@@ -176,7 +178,7 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
 	}
       delete[] this->NormalizationPrefactors;
       delete[] this->SumPrefactors;
-      delete[] this->JastrowPowerPowers;
+      delete[] this->FactorialSignFactors;
     }
   for (int i = 1; i < this->NbrParticles; ++i)
     delete[] this->JastrowFactorElements[i];
@@ -184,11 +186,7 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       for (int j = 0; j < this->MaxDerivativeNum; ++j)
-	{
-	  delete[] this->DerivativeFactors[i][j];
-	  delete[] this->DerivativeFactors2[i][j];	  
-	}
-      delete[] this->DerivativeFactors[i];
+	delete[] this->DerivativeFactors2[i][j];
       delete[] this->DerivativeFactors2[i];
       delete[] this->SpinorUCoordinatePower[i];
       delete[] this->SpinorVCoordinatePower[i];
@@ -197,49 +195,51 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
   delete[] this->SpinorVCoordinates;
   delete[] this->SpinorUCoordinatePower;
   delete[] this->SpinorVCoordinatePower;
-  delete[] this->DerivativeFactors;
   delete[] this->DerivativeFactors2;
+  
+  for (int k1=0; k1<MaxDerivativeNum;++k1)
+    {
+      for (int k2=0; k2<MaxDerivativeNum-k1;++k2)
+	{
+	  for (int pwr=0; pwr<MaxDerivativePower[k1][k2];++pwr)
+	    delete[] DerivativeFactors[k1][k2][pwr];
+	  delete[] DerivativeFactors[k1][k2];
+	}
+      delete[] DerivativeFactors[k1];
+    }
+  delete[] DerivativeFactors;
+  delete Orbitals;
+  for (int j = 0; j < this->MaxDerivativeNum; ++j)
+    delete[] MaxDerivativePower[j];
+  delete[] MaxDerivativePower;
   for (int i = 0; i < this->NbrLandauLevels; ++i)
     delete[] this->DerivativeStructure[i];
   delete[] this->DerivativeStructure;
 }
 
-// clone function 
-//
-// return value = clone of the function 
-
-Abstract1DComplexFunction* JainCFOnSphereOrbitals::Clone ()
-{
-  return new JainCFOnSphereOrbitals(*this);
-}
 
 // evaluate function at a given point
 //
 // x = point where the function has to be evaluated
-// return value = function value at x  
-
-Complex JainCFOnSphereOrbitals::operator ()(RealVector& x)
+// return value = Slater-Determinant with CF Orbitals
+ComplexMatrix& JainCFOnSphereOrbitals::operator ()(RealVector& x)
 {
-  ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
-  Complex JastrowFactor = this->EvaluateTables(x);
-
-  for (int i = 0; i < this->NbrParticles; ++i)
+  int Index = 0;
+  int MaxMomentum = this->TwiceS;
+  this->EvaluateTables(x);
+  for (int j = 0; j < this->NbrLandauLevels; ++j)
     {
-      int Index = 0;
-      int MaxMomentum = this->TwiceS;
-      for (int j = 0; j < this->NbrLandauLevels; ++j)
+      for (int k = 0; k <= MaxMomentum; ++k)
 	{
-	  for (int k = 0; k <= MaxMomentum; ++k)
-	    {
-	      Slater.SetMatrixElement(Index, i, EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
-	      ++Index;
-	    }
-	  MaxMomentum += 2;
+	  this->EvaluateOrbitals(Index, k, j, MaxMomentum);
+	  ++Index;
 	}
-    }  
-
-  return JastrowFactor * Slater.Determinant();
+      MaxMomentum += 2;
+    }
+  return *Orbitals;
 }
+
+
 
 // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
 //
@@ -296,12 +296,11 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
     {
       Complex Tmp2;
       for (int i = 0; i < this->NbrParticles; ++i)
-	{     
-	  Complex** TmpDerivativeFactors = this->DerivativeFactors[i];
+	{     	  
 	  Complex** TmpDerivativeFactors2 = this->DerivativeFactors2[i]; 
 	  for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
-	    for (int k2 = 0; k2 < this->MaxDerivativeNum; ++k2)
-	      TmpDerivativeFactors[k1][k2] = 0.0;
+	    for (int k2 = 0; k2 < this->MaxDerivativeNum-k1; ++k2)
+	      DerivativeFactors[k1][k2][0][i] = 0.0;
 	  
 	  int Index = 0;
 	  for (int j = 1; j < this->NbrParticles; ++j)
@@ -315,7 +314,7 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 	      Tmp = 1.0;
 	      for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
 		{
-		  for (int k2 = 0; k2 < this->MaxDerivativeNum; ++k2)
+		  for (int k2 = 0; k2 < this->MaxDerivativeNum-k1; ++k2) // check!
 		    {
 		      TmpDerivativeFactors2[k1][k2] = Tmp;
 		    }
@@ -328,17 +327,24 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 	      Tmp = 1.0;
 	      for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
 		{
-		  for (int k2 = 0; k2 < this->MaxDerivativeNum; ++k2)
+		  for (int k2 = 0; k2 < this->MaxDerivativeNum-k1; ++k2) // check!
 		    {
 		      TmpDerivativeFactors2[k2][k1] *= Tmp;
 		    }
 		  Tmp *= Tmp2;
 		}
 	      for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
-		for (int k2 = 0; k2 < this->MaxDerivativeNum; ++k2)
-		  TmpDerivativeFactors[k1][k2] += TmpDerivativeFactors2[k1][k2];
+		for (int k2 = 0; k2 < this->MaxDerivativeNum-k1; ++k2) // check! 
+		  DerivativeFactors[k1][k2][0][i] += TmpDerivativeFactors2[k1][k2];	      
 	      ++Index;
 	    }
+	  for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
+	    for (int k2 = 0; k2 < this->MaxDerivativeNum-k1; ++k2)
+	      {
+		DerivativeFactors[k1][k2][0][i] *= FactorialSignFactors[k1+k2]; // set proper prefactors...
+		for (int pwr = 1; pwr < this->MaxDerivativePower[k1][k2]; ++pwr)
+		  DerivativeFactors[k1][k2][pwr][i]=DerivativeFactors[k1][k2][0][i]*DerivativeFactors[k1][k2][pwr-1][i];
+	      }
 	}
     }
   return JastrowFactor;
@@ -504,13 +510,9 @@ SumDerivativeProduct JainCFOnSphereOrbitals::URecursion(int UDerivatives, int VD
     {
       SumDerivativeProduct tmp=URecursion(UDerivatives-1, VDerivatives);
       SumDerivativeProduct rst=tmp;
-      cout << "in URecursion("<<UDerivatives<<VDerivatives<<"): prior element: " << tmp<<endl;
       rst*=DerivativeProductFactor(this,1,0);
-      cout << "F* ~ = "<< rst << endl;
       SumDerivativeProduct tmp2 = tmp.Derivative(1,0);
-      cout << "d/du(~) = " << tmp2;
       rst+=tmp2;
-      cout << "result: "<< rst << endl;
       return (rst);
     }
   else if (UDerivatives==0) return VRecursion(VDerivatives);
@@ -522,6 +524,8 @@ SumDerivativeProduct JainCFOnSphereOrbitals::URecursion(int UDerivatives, int VD
 //
 // DerivativeStructure[n][dU] initialized with J^-p (d/du)^dU (d/dv)^(LLLDerivativeNum+n-dU) J^p
 //
+// reserves proper memory for DerivativeFactor after counting the required powers...
+
 void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
 {
   int MaxDerivative=LLLDerivativeNum;
@@ -529,137 +533,82 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
   DerivativeStructure = new SumDerivativeProduct*[this->NbrLandauLevels];
   for (int i=0; i<this->NbrLandauLevels; ++i)
     {
-      DerivativeStructure[i] = new SumDerivativeProduct[MaxDerivative+1];
+      DerivativeStructure[i] = new SumDerivativeProduct[MaxDerivative+1](this);
       cout << "For Landau Level " << i << endl;
       for (int j=0; j <= MaxDerivative; ++j)
 	{
 	  DerivativeStructure[i][j]=URecursion(j, MaxDerivative-j);
-	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] << endl;
+	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] << endl;	  
 	}
       ++MaxDerivative;
-    }	
+    }
+  // find the highest Powers of Derivatives occurring in the sums:
+  for (int i=0; i<MaxDerivativeNum;++i)
+    for (int j=0; j<MaxDerivativeNum-i;++j)
+      MaxDerivativePower[i][j]=0;
+  for (int j=0; j < MaxDerivative; ++j)
+    DerivativeStructure[this->NbrLandauLevels-1][j].TestHighestPowers();
+  MaxDerivativePower[0][0]=1; // Add this by convention
+  // Reserve DerivativeFactors as needed!
+  DerivativeFactors = new Complex***[MaxDerivativeNum];
+  for (int k1=0; k1<MaxDerivativeNum;++k1)
+    {
+      DerivativeFactors[k1] = new Complex**[MaxDerivativeNum-k1];
+      for (int k2=0; k2<MaxDerivativeNum-k1;++k2)
+	{
+	  DerivativeFactors[k1][k2] = new Complex*[MaxDerivativePower[k1][k2]];
+	  for (int pwr=0; pwr<MaxDerivativePower[k1][k2];++pwr)
+	    DerivativeFactors[k1][k2][pwr] = new Complex[NbrParticles];
+	}
+    }
 }
 
 
 
 // evaluate composite fermion monopole spherical harmonic 
-//
-// coordinate = index of the main coordinate (aka coordinate before project onto the lowest Landau level)
+// Index = number of the orbital to be evaluated
 // momentum = monopole spherical harmonic Lz momentum (plus S shift)
 // landauLevel = index of the pseudo Landau level
 // maximumMomentum = maxixum momentum that can be reached in the current pseudo Landau level
-// return value = value of the monopole spherical harmonic at the given point
 
-// Implementation for negative Flux remains to be added!
-
-Complex JainCFOnSphereOrbitals::EvaluateCFMonopoleHarmonic (int coordinate, int momentum,
-							    int landauLevel, int maximumMomentum)
+void JainCFOnSphereOrbitals::EvaluateOrbitals (int Index, int momentum, int landauLevel, int maximumMomentum)
 {
-  Complex Tmp(0.0);
-  int i = landauLevel - momentum;
-  if (i < 0)
-    i = 0;
-  int UPower = momentum + i - landauLevel;
+  Complex *Tmp, *Tmp2;
+  int s = landauLevel - momentum;
+  if (s < 0)
+    s = 0;
   int Max = maximumMomentum - momentum;
-  int VPower = Max - i;
+  int UPower, VPower, UDerivatives;
+  if (this->ReverseFluxFlag)
+    {
+      UDerivatives=momentum + s - landauLevel;
+      UPower = s;
+      VPower = landauLevel - s;
+    }
+  else
+    {
+      UDerivatives = s;
+      UPower = momentum + s - landauLevel;
+      VPower = Max - s;
+    }
   if (Max > landauLevel)
     Max = landauLevel;
-  for (; i <= Max; ++i)
+  // get first term in the sum:
+  Tmp = this->DerivativeStructure[landauLevel][UDerivatives].getValues();
+  for (int i=0; i<NbrParticles; ++i) Tmp[i] *=
+    this->SpinorUCoordinatePower[i][UPower] * this->SpinorVCoordinatePower[i][VPower] *
+    this->SumPrefactors[landauLevel][s][momentum];
+  ++s; ++UDerivatives; ++UPower; --VPower;
+  for (; s <= Max; ++s)
     {
-      Tmp += (this->SumPrefactors[landauLevel][i][momentum] * this->SpinorUCoordinatePower[coordinate][UPower] * 
-	      this->SpinorVCoordinatePower[coordinate][VPower] * this->EvaluateCFMonopoleHarmonicDerivative(coordinate, i, landauLevel - i));
-      ++UPower;
-      --VPower;
+      Tmp2 = this->DerivativeStructure[landauLevel][UDerivatives].getValues();
+      for (int i=0; i<NbrParticles; ++i)
+	Tmp[i] += this->SpinorUCoordinatePower[i][UPower] * this->SpinorVCoordinatePower[i][VPower] *
+	this->SumPrefactors[landauLevel][s][momentum]*Tmp2[i];
+      ++UDerivatives; ++UPower; --VPower;
     }
-  return (this->NormalizationPrefactors[landauLevel][momentum] * Tmp);
+  for (int i=0; i<NbrParticles; ++i)
+    Orbitals->SetMatrixElement(i,Index,Tmp[i]*this->NormalizationPrefactors[landauLevel][momentum]);
 }
 
 
-// evaluate derivative part of the composite fermion monopole spherical harmonic 
-//
-// index = particle index
-// alpha = number of (d\du) derivates
-// beta = number of (d\dv) derivates
-// return value = derivative contribution to the monopole spherical harmonic
-
-// Implementation for negative flux, and arbitrary level of CF remains to be added!
-
-Complex JainCFOnSphereOrbitals::EvaluateCFMonopoleHarmonicDerivative(int index, int alpha, int beta)
-{
-  Complex Tmp;
-  switch (alpha)
-    {
-    case 0:
-      {
-	switch (beta)
-	  {
-	  case 0:
-	    Tmp = 1.0;
-	    break;
-	  case 1:
-	    Tmp = this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][1];
-	    break;
-	  case 2:
-	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
-		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][2]);
-	    break;
-	  case 3:
-	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
-		   - 3 * this->JastrowPowerPowers[2] * this->DerivativeFactors[index][0][2] * this->DerivativeFactors[index][0][1]
-		   + 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][0][3]);
-	    break;
-	  }
-      }
-      break;
-    case 1:
-      {
-	switch (beta)
-	  {
-	  case 0:
-	    Tmp = this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][0];
-	    break;
-	  case 1:
-	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1] 
-		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][1]);
-	    break;
-	  case 2:
-	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][0][1]
-		   - this->JastrowPowerPowers[2] * (2 * this->DerivativeFactors[index][1][1] * this->DerivativeFactors[index][0][1]
-						    + this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][2])
-		   - 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][1][2]);
-	    break;
-	  }
-      }
-      break;
-    case 2:
-      {
-	switch (beta)
-	  {
-	  case 0:
-	    Tmp = (this->JastrowPowerPowers[2] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] 
-		   - this->JastrowPowerPowers[1] * this->DerivativeFactors[index][2][0]);
-	    break;
-	  case 1:
-	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][0][1]
-		   - this->JastrowPowerPowers[2] * (2 * this->DerivativeFactors[index][1][1] * this->DerivativeFactors[index][1][0]
-						    + this->DerivativeFactors[index][0][1] * this->DerivativeFactors[index][2][0])
-		   - 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][2][1]);
-	    break;
-	  }
-      }
-      break;
-    case 3:
-      {
-	switch (beta)
-	  {
-	  case 0:
-	    Tmp = (this->JastrowPowerPowers[3] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0] * this->DerivativeFactors[index][1][0]
-		   - 3 * this->JastrowPowerPowers[2] * this->DerivativeFactors[index][2][0] * this->DerivativeFactors[index][1][0]
-		   + 2 * this->JastrowPowerPowers[1] * this->DerivativeFactors[index][3][0]);
-	    break;
-	  }
-      }
-      break;	    
-    }
-  return Tmp;
-}

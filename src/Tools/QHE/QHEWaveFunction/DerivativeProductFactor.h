@@ -53,7 +53,9 @@ class DerivativeProductFactor
   
   ~DerivativeProductFactor(){};
   
-  Complex getValue();
+  Complex* getValues();
+  Complex getValue(int particle);
+  void TestHighestPowers();
   DerivativeProduct Derivative( int DeriveU, int DeriveV=0);
 
   bool isScalar();

@@ -67,9 +67,38 @@ SumDerivativeProduct::~SumDerivativeProduct()
 {
 }
 
-Complex SumDerivativeProduct::getValue()
+Complex SumDerivativeProduct::getValue(int particle)
 {
-  return Complex();
+  Complex Sum(0.0);
+  DerivativeProduct *Product;
+  for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
+    Sum+=Product->getValue(particle);
+  return Sum;
+}
+
+Complex* SumDerivativeProduct::getValues()
+{
+  Complex *result, *CPtr, *TmpSummand;
+  DerivativeProduct *Product;
+  ListIterator<DerivativeProduct> LI(this->Summands);
+  Product=LI();
+  result = Product->getValues();
+  while((Product=LI())!=NULL)
+    {
+      TmpSummand=Product->getValues();
+      CPtr=result;
+      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+	*(CPtr++) *= *(TmpSummand++);
+    }
+  return result;
+}
+
+
+void SumDerivativeProduct::TestHighestPowers()
+{
+  DerivativeProduct *Product;
+  for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
+    Product->TestHighestPowers();
 }
 
 SumDerivativeProduct SumDerivativeProduct::Derivative(int DeriveU, int DeriveV)
@@ -80,6 +109,15 @@ SumDerivativeProduct SumDerivativeProduct::Derivative(int DeriveU, int DeriveV)
   for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
     result += Product->Derivative(DeriveU, DeriveV);
   return result;
+}
+
+SumDerivativeProduct& SumDerivativeProduct::operator = (const SumDerivativeProduct& Assign)
+{
+  this->CFOrbitals=Assign.CFOrbitals;
+  this->Summands=Assign.Summands;
+  //this->Flag=Assign.Flag;
+  //this->TmpSum=Assign.TmpSum;
+  return *this;
 }
 
 SumDerivativeProduct& SumDerivativeProduct::operator*=(const DerivativeProduct &toMultiply)

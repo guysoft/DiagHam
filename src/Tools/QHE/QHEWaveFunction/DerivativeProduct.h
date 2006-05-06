@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "GeneralTools/List.h"
+#include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
 #include "DerivativeProductFactor.h"
 #include "JainCFOnSphereOrbitals.h"
@@ -57,9 +58,15 @@ class DerivativeProduct
 
   bool isNonZero();
 
-  Complex getValue();
+  Complex* getValues();
+  Complex getValue(int particle);
+
+  void TestHighestPowers();
   
   SumDerivativeProduct Derivative( int DeriveU, int DeriveV=0);
+
+  // assignment operator
+  DerivativeProduct& operator = (const DerivativeProduct& Assign);
   
   DerivativeProduct& operator*= (const DerivativeProduct &toMultiply);
   DerivativeProduct& operator*= (DerivativeProductFactor &toMultiply);
@@ -80,6 +87,8 @@ class DerivativeProduct
   JainCFOnSphereOrbitals *CFOrbitals;
   List<DerivativeProductFactor> ProductFactors;
   double PreFactor;
+  GarbageFlag Flag;
+  Complex* TmpProduct;
 };
 
 

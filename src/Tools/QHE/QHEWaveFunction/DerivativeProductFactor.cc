@@ -30,10 +30,6 @@
 #include "DerivativeProductFactor.h"
 #include "DerivativeProduct.h"
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 DerivativeProductFactor::DerivativeProductFactor(JainCFOnSphereOrbitals *CFOs,
 						 int UDerivatives, int VDerivatives,
 						 int Power, double preFactor)
@@ -73,9 +69,21 @@ DerivativeProductFactor::DerivativeProductFactor()
   this->PreFactor=1.0;
 }
 
-Complex DerivativeProductFactor::getValue()
+Complex* DerivativeProductFactor::getValues()
 {
-  return Complex();
+  return this->CFOrbitals->DerivativeFactors[this->UDerivatives][this->VDerivatives][this->Power-1];
+}
+
+Complex DerivativeProductFactor::getValue(int particle)
+{
+  return this->CFOrbitals->DerivativeFactors[this->UDerivatives][this->VDerivatives][this->Power-1][particle];
+}
+
+void DerivativeProductFactor::TestHighestPowers()
+{
+  if (CFOrbitals!=NULL)
+    if(CFOrbitals->MaxDerivativePower[this->UDerivatives][this->VDerivatives] < this->Power)
+      CFOrbitals->MaxDerivativePower[this->UDerivatives][this->VDerivatives] = this->Power;
 }
 
 bool DerivativeProductFactor::isScalar()
