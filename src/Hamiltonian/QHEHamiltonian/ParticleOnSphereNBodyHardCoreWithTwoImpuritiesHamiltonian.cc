@@ -73,11 +73,15 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+  this->MinSumIndices = new int [this->MaxNBody + 1];
+  this->MaxSumIndices = new int [this->MaxNBody + 1];
 
   this->ImpurityPotential = impurityPotential;
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
+      this->MinSumIndices[k] = 1;
+      this->MaxSumIndices[k] = 0;      
       this->NBodyFlags[k] = false;
       this->NBodyInteractionWeightFactors[k] = 0.0;
     }
@@ -165,11 +169,15 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+  this->MinSumIndices = new int [this->MaxNBody + 1];
+  this->MaxSumIndices = new int [this->MaxNBody + 1];
 
   this->ImpurityPotential = impurityPotential;
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
+      this->MinSumIndices[k] = 1;
+      this->MaxSumIndices[k] = 0;      
       if (nBodyFactors[k] == 0.0)
 	this->NBodyFlags[k] = false;
       else
@@ -228,7 +236,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBod
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
-	for (int MinSum = this->MinSumIndices; MinSum <= this->MaxSumIndices; ++MinSum)
+	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	  {
 	    delete[] this->SortedIndicesPerSum[k][MinSum];
 	    delete[] this->NBodyInteractionFactors[k][MinSum];
@@ -242,6 +250,8 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBod
   delete[] this->SortedIndicesPerSum;
   delete[] this->NbrSortedIndicesPerSum;
   delete[] this->NBodyInteractionWeightFactors;
+  delete[] this->MinSumIndices;
+  delete[] this->MaxSumIndices;
 
   if (this->FastMultiplicationFlag == true)
     {
@@ -278,14 +288,22 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
 {
   this->EvaluateInteractionFactors();
   this->NBodyFlags[1] = true;
-  this->NbrSortedIndicesPerSum[1] = new int [this->NbrLzValue];
-  this->SortedIndicesPerSum[1] = new int* [this->NbrLzValue];  
-//  double TmpFactor = sqrt ();
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    {
-      this->NbrSortedIndicesPerSum[1][i] = 1;
-      this->SortedIndicesPerSum[1][i] = new int [1];
-      this->SortedIndicesPerSum[1][i][0] = i;
-    }
+  this->NbrSortedIndicesPerSum[1] = new int [2];
+  this->SortedIndicesPerSum[1] = new int* [2];  
+  this->NBodyInteractionFactors[1] = new double* [2];
+  double TmpFactor = sqrt (fabs(this->ImpurityPotential) * ((double) this->NbrLzValue) / (4.0 * M_PI));
+  this->MinSumIndices[1] = 0;
+  this->MaxSumIndices[1] = 1;
+  this->NbrSortedIndicesPerSum[1][0] = 1;
+  this->SortedIndicesPerSum[1][0] = new int [1];
+  this->SortedIndicesPerSum[1][0][0] = 0;
+  this->NBodyInteractionFactors[1][0] = new double[1];
+  this->NBodyInteractionFactors[1][0][0] = TmpFactor;
+  this->NbrSortedIndicesPerSum[1][1] = 1;
+  this->SortedIndicesPerSum[1][1] = new int [1];
+  this->SortedIndicesPerSum[1][1][0] = this->LzMax;
+  this->NBodyInteractionFactors[1][1] = new double[1];
+  this->NBodyInteractionFactors[1][1][0] = TmpFactor;
+
 }
 

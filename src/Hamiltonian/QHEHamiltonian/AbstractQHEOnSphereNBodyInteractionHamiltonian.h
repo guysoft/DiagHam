@@ -53,10 +53,10 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // indicates which n-body interaction terms are present in the Hamiltonian
   bool* NBodyFlags;
 
-  // maximum value that the sum of idices can reach
-  int MaxSumIndices;
-  // minimum value that the sum of idices can reach
-  int MinSumIndices;
+  // maximum value that the sum of indices can reach per n-body interaction
+  int* MaxSumIndices;
+  // minimum value that the sum of indices can reach per n-body interaction
+  int* MinSumIndices;
   // array containing all interaction factors per N body interaction (first index for interaction type and second for index sum)
   double*** NBodyInteractionFactors;
   // array containing the number of index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators

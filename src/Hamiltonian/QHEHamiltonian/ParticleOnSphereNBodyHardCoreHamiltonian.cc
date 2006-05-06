@@ -77,9 +77,13 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+  this->MinSumIndices = new int [this->MaxNBody + 1];
+  this->MaxSumIndices = new int [this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
+      this->MinSumIndices[k] = 1;
+      this->MaxSumIndices[k] = 0;      
       this->NBodyFlags[k] = false;
       this->NBodyInteractionWeightFactors[k] = 0.0;
     }
@@ -166,9 +170,13 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+  this->MinSumIndices = new int [this->MaxNBody + 1];
+  this->MaxSumIndices = new int [this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
+      this->MinSumIndices[k] = 1;
+      this->MaxSumIndices[k] = 0;      
       if (nBodyFactors[k] == 0.0)
 	this->NBodyFlags[k] = false;
       else
@@ -227,7 +235,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
-	for (int MinSum = this->MinSumIndices; MinSum <= this->MaxSumIndices; ++MinSum)
+	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	  {
 	    delete[] this->SortedIndicesPerSum[k][MinSum];
 	    delete[] this->NBodyInteractionFactors[k][MinSum];
@@ -241,6 +249,8 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
   delete[] this->SortedIndicesPerSum;
   delete[] this->NbrSortedIndicesPerSum;
   delete[] this->NBodyInteractionWeightFactors;
+  delete[] this->MinSumIndices;
+  delete[] this->MaxSumIndices;
 
   if (this->FastMultiplicationFlag == true)
     {
@@ -293,12 +303,12 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	  {
 	    double Coefficient;
 	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k]);
-	    this->MaxSumIndices = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
-	    this->MinSumIndices = (k * (k - 1)) / 2;
-	    double* TmpInteractionCoeffients = new double[MaxSumIndices + 1];
+	    this->MaxSumIndices[k] = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
+	    this->MinSumIndices[k] = (k * (k - 1)) / 2;
+	    double* TmpInteractionCoeffients = new double[this->MaxSumIndices[k] + 1];
 	    TmpInteractionCoeffients[0] = 1.0;
 	    TmpInteractionCoeffients[1] = 1.0;
-	    for (int i = 2; i <= MaxSumIndices; ++i)
+	    for (int i = 2; i <= this->MaxSumIndices[k]; ++i)
 	      {
 		Coefficient = 1.0;
 		for (int j = 1; j < i; ++j)
@@ -309,19 +319,19 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		  }
 		TmpInteractionCoeffients[i] = 1.0;
 	      }
-	    Coefficient = 4.0 * M_PI / (((double) MaxSumIndices) + 1.0);
+	    Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[k]) + 1.0);
 	    double Radius = 2.0 / ((double) this->LzMax);
 	    for (int i = 2; i <= k; ++i)
 	      {
 		Coefficient *= (double) (i * i);	  
 		Coefficient *= Radius;
 	      }
-	    for (int i = 0; i <= MaxSumIndices; ++i)
+	    for (int i = 0; i <= this->MaxSumIndices[k]; ++i)
 	      TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
 
-	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
+	    this->NBodyInteractionFactors[k] = new double* [this->MaxSumIndices[k] + 1];
 	    int Lim;
-	    for (int MinSum = this->MinSumIndices; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
 		this->NBodyInteractionFactors[k][MinSum] = new double [Lim];
@@ -349,13 +359,13 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
-	    this->MinSumIndices = 0;
-	    this->MaxSumIndices = this->LzMax * k;
-	    double* TmpInteractionCoeffients = new double[MaxSumIndices + 1];
+	    this->MinSumIndices[k] = 0;
+	    this->MaxSumIndices[k] = this->LzMax * k;
+	    double* TmpInteractionCoeffients = new double[this->MaxSumIndices[k] + 1];
 	    double Coefficient;
 	    TmpInteractionCoeffients[0] = 1.0;
 	    TmpInteractionCoeffients[1] = 1.0;
-	    for (int i = 2; i <= MaxSumIndices; ++i)
+	    for (int i = 2; i <= this->MaxSumIndices[k]; ++i)
 	      {
 		Coefficient = 1.0;
 		for (int j = 1; j < i; ++j)
@@ -366,22 +376,22 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		  }
 		TmpInteractionCoeffients[i] = 1.0;
 	      }
-	    Coefficient = 4.0 * M_PI / (((double) MaxSumIndices) + 1.0);
+	    Coefficient = 4.0 * M_PI / (((double) this->MaxSumIndices[k]) + 1.0);
 	    double Radius = 2.0 / ((double) this->LzMax);
 	    for (int i = 2; i <= k; ++i)
 	      {
 		Coefficient *= (double) (i * i);	  
 		Coefficient *= Radius;
 	      }
-	    for (int i = 0; i <= MaxSumIndices; ++i)
+	    for (int i = 0; i <= this->MaxSumIndices[k]; ++i)
 	      TmpInteractionCoeffients[i] = sqrt(Coefficient / TmpInteractionCoeffients[i]);
 
 	    double** SortedIndicesPerSumSymmetryFactor;
 	    GetAllSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k],
 				   SortedIndicesPerSumSymmetryFactor);
-	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
+	    this->NBodyInteractionFactors[k] = new double* [this->MaxSumIndices[k] + 1];
  	    int Lim;
-	    for (int MinSum = 0; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
 		double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
@@ -397,7 +407,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    TmpMIndices += k;
 		  }
 	      }
-	    for (int MinSum = 0; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	      }
