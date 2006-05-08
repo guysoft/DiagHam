@@ -46,13 +46,7 @@ using std::ostream;
 class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public ParticleOnSphereNBodyHardCoreHamiltonian
 {
 
- private:
-
-  // number of particle that interact simultaneously through the hard core interaction
-  int NbrNbody;
-  
-  // weight of the different n-body interaction terms with respect to each other
-  double* NBodyInteractionWeightFactors;
+ protected:
 
   // potential strength associted to the impurities
   double ImpurityPotential;

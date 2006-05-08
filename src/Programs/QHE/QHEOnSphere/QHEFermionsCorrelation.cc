@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  (*SystemGroup) += new BooleanOption  ('n', "density", "plot density insted of density-density correlation", false);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -73,6 +74,7 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
+  bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
       cout << "QHEFermionsCorrelation requires a state" << endl;
@@ -85,17 +87,28 @@ int main(int argc, char** argv)
       return -1;      
     }
   char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-    {
-      sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax);
-    }
+  if (DensityFlag == false)
+    if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+      {
+	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax);
+      }
+    else
+      {
+	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax,
+		 ((SingleStringOption*) Manager["add-filename"])->GetString());
+      }
   else
-    {
-      sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax,
-	       ((SingleStringOption*) Manager["add-filename"])->GetString());
-    }
+    if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+      {
+	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d.rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax);
+      }
+    else
+      {
+	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_%s.rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax,
+		 ((SingleStringOption*) Manager["add-filename"])->GetString());
+      }
 
-      ParticleOnSphere* Space;
+  ParticleOnSphere* Space;
 #ifdef __64_BITS__
       if (LzMax <= 63)
         {
@@ -125,12 +138,19 @@ int main(int argc, char** argv)
   double XInc = M_PI / ((double) NbrPoints);
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
 	  
-  for (int i = 0; i <= LzMax; ++i)
-    {
-      Basis.GetFunctionValue(Value, TmpValue, LzMax);
-      ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
-      PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-    }
+  if (DensityFlag == false)
+    for (int i = 0; i <= LzMax; ++i)
+      {
+	Basis.GetFunctionValue(Value, TmpValue, LzMax);
+	ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
+	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+      }
+  else
+    for (int i = 0; i <= LzMax; ++i)
+      {
+	ParticleOnSphereDensityOperator Operator (Space, i);
+	PrecalculatedValues[i] = Operator.MatrixElement(State, State);
+      }
   ofstream File;
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);

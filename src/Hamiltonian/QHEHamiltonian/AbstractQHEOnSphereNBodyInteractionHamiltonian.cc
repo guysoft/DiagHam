@@ -93,6 +93,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		{
 		  int Lim = NbrSortedIndicesPerSum[1][j];
 		  NIndices = this->SortedIndicesPerSum[1][j];
+		  TmpInteraction = this->NBodyInteractionFactors[1][j];
 		  for (int i1 = 0; i1 < Lim; ++i1)
 		    {
 		      Coefficient2 = vSource[i] * TmpInteraction[i1];
@@ -422,6 +423,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 	    {
 	      for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
 		{
+		  TmpInteraction = this->NBodyInteractionFactors[1][j];
 		  int Lim = NbrSortedIndicesPerSum[1][j];
 		  NIndices = this->SortedIndicesPerSum[1][j];
 		  for (int i1 = 0; i1 < Lim; ++i1)
@@ -590,6 +592,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 			    for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
 			      {
 				int Lim = NbrSortedIndicesPerSum[1][j];
+				TmpInteraction = this->NBodyInteractionFactors[1][j];
 				NIndices = this->SortedIndicesPerSum[1][j];
 				for (int i1 = 0; i1 < Lim; ++i1)
 				  {
@@ -916,8 +919,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 	  int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 	  for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
 	    {
-	      int Lim = NbrSortedIndicesPerSum[1][j];
+	      int Lim = this->NbrSortedIndicesPerSum[1][j];
 	      NIndices = this->SortedIndicesPerSum[1][j];
+	      TmpInteraction = this->NBodyInteractionFactors[1][j];
 	      for (int i1 = 0; i1 < Lim; ++i1)
 		{
 		  MIndices = this->SortedIndicesPerSum[1][j];
@@ -1016,6 +1020,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 	    {
 	      int Lim = this->NbrSortedIndicesPerSum[1][j];
 	      NIndices = this->SortedIndicesPerSum[1][j];
+	      TmpInteraction = this->NBodyInteractionFactors[1][j];
 	      for (int i1 = 0; i1 < Lim; ++i1)
 		{
 		  MIndices = this->SortedIndicesPerSum[1][j];
@@ -1149,6 +1154,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 		{
 		  int Lim = NbrSortedIndicesPerSum[1][j];
 		  NIndices = this->SortedIndicesPerSum[1][j];
+		  TmpInteraction = this->NBodyInteractionFactors[1][j];
 		  for (int i1 = 0; i1 < Lim; ++i1)
 		    {
 		      MIndices = this->SortedIndicesPerSum[1][j];

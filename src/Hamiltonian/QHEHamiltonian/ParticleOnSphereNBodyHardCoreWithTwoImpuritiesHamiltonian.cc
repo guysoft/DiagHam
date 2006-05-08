@@ -233,52 +233,6 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
 
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian()
 {
-  for (int k = 2; k <= this->MaxNBody; ++k)
-    if (this->NBodyFlags[k] == true)
-      {
-	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
-	  {
-	    delete[] this->SortedIndicesPerSum[k][MinSum];
-	    delete[] this->NBodyInteractionFactors[k][MinSum];
-	  }
-	delete[] this->NbrSortedIndicesPerSum[k];
-	delete[] this->SortedIndicesPerSum[k];
-	delete[] this->NBodyInteractionFactors[k];
-      }
-  delete[] this->NBodyFlags;
-  delete[] this->NBodyInteractionFactors;
-  delete[] this->SortedIndicesPerSum;
-  delete[] this->NbrSortedIndicesPerSum;
-  delete[] this->NBodyInteractionWeightFactors;
-  delete[] this->MinSumIndices;
-  delete[] this->MaxSumIndices;
-
-  if (this->FastMultiplicationFlag == true)
-    {
-      if (this->DiskStorageFlag == false)
-	{
-	  long MinIndex;
-	  long MaxIndex;
-	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	    ++ReducedDim;
-	  for (int i = 0; i < ReducedDim; ++i)
-	    {
-	      delete[] this->InteractionPerComponentIndex[i];
-	      delete[] this->InteractionPerComponentCoefficient[i];
-	    }
-	  delete[] this->InteractionPerComponentIndex;
-	  delete[] this->InteractionPerComponentCoefficient;
-	}
-      else
-	{
-	  remove (this->DiskStorageFileName);
-	  delete[] this->DiskStorageFileName;
-	}
-      delete[] this->NbrInteractionPerComponent;
-    }
 }
 
 // evaluate all interaction factors (including those arising from impurities)
@@ -306,4 +260,6 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
   this->NBodyInteractionFactors[1][1][0] = TmpFactor;
 
 }
+
+
 

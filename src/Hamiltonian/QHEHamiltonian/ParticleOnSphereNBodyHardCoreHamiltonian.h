@@ -46,7 +46,7 @@ using std::ostream;
 class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
 {
 
- private:
+ protected:
 
   // number of particle that interact simultaneously through the hard core interaction
   int NbrNbody;

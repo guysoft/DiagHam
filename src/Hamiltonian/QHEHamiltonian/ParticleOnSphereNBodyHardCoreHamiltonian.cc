@@ -232,7 +232,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 
 ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamiltonian()
 {
-  for (int k = 2; k <= this->MaxNBody; ++k)
+  for (int k = 1; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
 	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
@@ -297,7 +297,6 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
     }
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      // useless part (trivially equal to zero for fermions), to be used as an example for other interactions
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
@@ -345,7 +344,6 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		      {
 			Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
 		      }
-		    //		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
 		    TmpNBodyInteractionFactors[i] = TmpProjectorCoefficients[i] * this->NBodyInteractionWeightFactors[k];
 		    TmpMIndices += k;
 		  }

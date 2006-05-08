@@ -1,6 +1,7 @@
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
+#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -60,7 +61,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
-  (*SystemGroup) += new  SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
+  (*SystemGroup) += new SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
+  (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "impurity-potential", "potential assosciated to each impurity", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -185,19 +188,41 @@ int main(int argc, char** argv)
 #endif
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-      if (NBodyWeightFactors == 0)
+      if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == false)
 	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
-								     Architecture.GetArchitecture(), 
-								     Memory, DiskCacheFlag,
-								     LoadPrecalculationFileName);
+	  if (NBodyWeightFactors == 0)
+	    {
+	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
+									 Architecture.GetArchitecture(), 
+									 Memory, DiskCacheFlag,
+									 LoadPrecalculationFileName);
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
+									 Architecture.GetArchitecture(), 
+									 Memory, DiskCacheFlag,
+									 LoadPrecalculationFileName);
+	    }
 	}
       else
 	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
-								     Architecture.GetArchitecture(), 
-								     Memory, DiskCacheFlag,
-								     LoadPrecalculationFileName);
+	  if (NBodyWeightFactors == 0)
+	    {
+	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
+											  Architecture.GetArchitecture(), 
+											  Memory, DiskCacheFlag,
+											  LoadPrecalculationFileName);
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),						  
+											  Architecture.GetArchitecture(), 
+											  Memory, DiskCacheFlag,
+											  LoadPrecalculationFileName);
+	    }
 	}
       double Shift = - 0.5 * ((double) (NbrFermions * NbrFermions)) / (0.5 * ((double) LzMax));
       Hamiltonian->ShiftHamiltonian(Shift);
