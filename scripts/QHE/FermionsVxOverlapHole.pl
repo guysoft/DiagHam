@@ -90,7 +90,7 @@ unless (open (OUTFILE, ">".$DataFileName.".overlap"))
   }
 close(OUTFILE);
 
-my $Command = $PathToDegeneracyProgram." --lz-values -p ".$NbrFermions." -k ".$KValue." -q ".int(($LzMax + 2) * $KValue - (2 * $NbrFermions));
+my $Command = $PathToDegeneracyProgram." --lz-values -p ".$NbrFermions." -k ".$KValue." -q ".int(($LzMax + 3) * $KValue - (($KValue + 2) * $NbrFermions));
 my @TmpArrayDegeneracy = split (/\n/, `$Command`);
 my $Degeneracy = shift (@TmpArrayDegeneracy);
 my @TmpArrayDegeneracy2 = split (/ /, $Degeneracy);
@@ -257,6 +257,7 @@ sub EvaluateOverlap()
 	$MaxLz += 1;
       }
 
+    my $DiagOutputFileName2 = "fermions_".$DiagOutputFileName."_n_".$NbrFermions."_2s_".$LzMax."_lz";
     if ($OverlapOnlyFlag != 1)
       {
 	my $StartLz = 0;
@@ -276,7 +277,7 @@ sub EvaluateOverlap()
 	      {
 		rename($DiagOutputFileName2.".dat", $DiagOutputFileName2.".dat.0")
 	      }
-	    my $Command = $PathToDiagonalizationProgram." -p ".$NbrFermions." -l ".$LzMax." --initial-lz ".$StartLz." --nbr-lz ".($ReducedNbrLz + 1)." -n ".$MaxDegeneracy." --force-reorthogonalize --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat  --full-diag 3000 -S ".$DiagonalizationProgramOptions;
+	    my $Command = $PathToDiagonalizationProgram." -p ".$NbrFermions." -l ".$LzMax." --initial-lz ".$StartLz." --nbr-lz ".($ReducedNbrLz + 1)." -n ".$MaxDegeneracy." --eigenstate --interaction-name ".$DiagOutputFileName." --interaction-file tmppseudopotential.dat  --full-diag 3000 -S --processors 4 --memory 4000 ".$DiagonalizationProgramOptions;
 	    system($Command);
 	    if ($StartLz > 0)
 	      {
@@ -288,18 +289,17 @@ sub EvaluateOverlap()
 	  }
       }
 
-    my $DiagOutputFileName2 = "fermions_".$DiagOutputFileName."_n_".$NbrFermions."_2s_".$LzMax."_lz";
-
     unless (open(OUTFILE, ">tmpoverlap.dat"))
       {	
 	die ("can't create  tmpoverlap.dat\n");
       }
     print OUTFILE ("NbrParticles=".$NbrFermions."
+Statistics=fermions
 LzMax=".$LzMax."
 Degeneracy=".$Degeneracy."
 Spectrum=".$DiagOutputFileName2.".dat
-OutputVectors=".$ReferenceVector."
-InputVectors=".$DiagOutputFileName2."_\n");
+QuasiholeStates=".$ReferenceVector."
+ExactStates=".$DiagOutputFileName2."_\n");
     close (OUTFILE);
 
     my $Overlap = "-1";
