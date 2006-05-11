@@ -60,16 +60,13 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHENBodyQuasiHoleOverlap" , "0.01");
+  OptionManager Manager ("EigenstateLzToL" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* DataGroup = new OptionGroup ("data options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
-  ArchitectureManager Architecture;
-
   Manager += SystemGroup;
   Manager += DataGroup;
-  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
  
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
@@ -98,13 +95,13 @@ int main(int argc, char** argv)
   double OrthogonalityError = ((SingleDoubleOption*) Manager["ortho-error"])->GetDouble();
   double LError = ((SingleDoubleOption*) Manager["l-error"])->GetDouble();
 
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
+  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz"])->GetInteger();
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
     FermionFlag = true;
-  if (FindSystemInfoFromFileName(NbrBosons, LzMax, FermionFlag) == false)
+  if (FindSystemInfoFromFileName(((SingleStringOption*) Manager["file-prefix"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
     {
       return -1;
     }
@@ -139,7 +136,7 @@ int main(int argc, char** argv)
   char* VectorPrefix = new char [strlen(((SingleStringOption*) Manager["file-prefix"])->GetString()) + 24];
   sprintf (VectorPrefix , "%s_%d.", ((SingleStringOption*) Manager["file-prefix"])->GetString(), Lz);
   char** VectorFiles;
-  int NbrVectorFiles = GetAllFilesDirectories(VectorPrefix, VectorPrefix, ".vec");
+  int NbrVectorFiles = GetAllFilesDirectories(VectorPrefix, VectorFiles, ".vec");
   if (NbrVectorFiles == 0)
     {
       cout << "no available vector" << endl;
@@ -147,10 +144,33 @@ int main(int argc, char** argv)
     }
 
   long MemorySpace = 9l << 20;
-  int* LDegeneracy = new int [MaxNbrLz];
-  LDegeneracy[MaxNbrLz - 1] = LzDegeneracy[MaxNbrLz - 1];
-  for (int i = MaxNbrLz - 2; i >= 0; --i)
-    LDegeneracy[i] = LzDegeneracy[i] - LzDegeneracy[i + 1];
+  ParticleOnSphere* Space;
+  if (FermionFlag == true)
+    {
+#ifdef __64_BITS__
+      if (LzMax <= 63)
+	{
+	  Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
+	}
+      else
+	{
+	  Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	}
+#else
+      if (LzMax <= 31)
+	{
+	  Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
+	}
+      else
+	{
+	  Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	}
+#endif
+    }
+  else
+    {
+      Space = new BosonOnSphere(NbrParticles, Lz, LzMax);
+    }
 
   int TotalMaxLz = LzMax * NbrParticles;
   if (FermionFlag == true)
@@ -158,238 +178,31 @@ int main(int argc, char** argv)
       TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
     }
 
-  RealVector** SortedTestVectors = new RealVector*[MaxNbrLz];
-  int* NbrSortedTestVectors = new int [TotalMaxLz + 1];
-  int* ReferenceNbrSortedVectors = new int [TotalMaxLz + 1];
-  bool Parity = true;
-  if ((TotalMaxLz & 1) != 0)
-    Parity = false;
-  double* BestOverlaps = new double [MaxNbrLz + 1];
-  int* TestVectorPosition = new int [TotalMaxLz + 1];
-  int* ReferenceVectorPosition = new int [TotalMaxLz + 1];
+   ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
 
-  for (int i = MaxNbrLz - 1; i >= 0; --i)
-    if (LDegeneracy[i] > 0)
-      {
-	cout << "----------------------------------------------------" << endl;
-	int Lz = i << 1;
-	if (Parity == false)
-	  {
-	    ++Lz;
-	    cout << "L = " << Lz << "/2" << endl;
-	  }
-	else
-	  {
-	    cout << "L = " << i << endl;
-	  }
-	int* NbrVectorWithMomentum = new int [TotalMaxLz]; 
-	RealVector* TestVectors = new RealVector[LzDegeneracy[i]]; 
-	for (int j = 0; j < TotalMaxLz; ++j)    
-	  { 
-	    NbrVectorWithMomentum[j] = 0;
-	  }
-	for (int j = 0; j < LzDegeneracy[i]; ++j)
-	  {
-	    sprintf (OutputVectors2, "%d.%d.vec", Lz, j);	      
-	    if (TestVectors[j].ReadVector(OutputVectors) == false)
-	      {
-		cout << "error while reading " << OutputVectors << endl;
-		return -1;
-	      }
-	  }
-	RealMatrix DiagonalBasis (TestVectors, LzDegeneracy[i]);
-
-	ParticleOnSphere* Space;
-	if (FermionFlag == true)
-	  {
-#ifdef __64_BITS__
-	    if (LzMax <= 63)
-	      {
-		Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
-	      }
-	    else
-	      {
-		Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
-	      }
-#else
-	    if (LzMax <= 31)
-	      {
-		Space = new FermionOnSphere(NbrParticles, Lz, LzMax, MemorySpace);
-	      }
-	    else
-	      {
-		Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
-	      }
-#endif
-	  }
-	else
-	  {
-	    Space = new BosonOnSphere(NbrParticles, Lz, LzMax);
-	  }
-	ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
-	LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedTestVectors, TestVectorPosition);
-	cout << endl;
-
-	bool OpenFlag = true;
-	int NbrReferenceStates = 0;
-	int VectorPosition = 0;
-	RealVector* ReferenceVectors = new RealVector[200];	
-	while ((OpenFlag == true) && (NbrReferenceStates < LDegeneracy[i]))
-	  {
-	    int ReferenceDegeneracy = Spectrum.GetDegeneracy(Lz, VectorPosition);
-	    if (ReferenceDegeneracy > 0)
-	      {
-		RealVector* TmpReferenceVectors = new RealVector[ReferenceDegeneracy];	
-		int k = 0;
-		for (; (k < ReferenceDegeneracy) && (OpenFlag == true); ++k)  
-		  {
-		    sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
-		    if (TmpReferenceVectors[k].ReadVector(InputVectors) == false)
-		      {
-			OpenFlag = false;
-		      }
-		  }
-		if (OpenFlag == true)
-		  {
-		    RealMatrix ReferenceDiagonalBasis (TmpReferenceVectors, ReferenceDegeneracy);
-		    LSortBasis(ReferenceDiagonalBasis, &oper, TotalMaxLz, ReferenceNbrSortedVectors, ReferenceVectorPosition);
-		    for (k = 0; k < ReferenceNbrSortedVectors[i]; ++k)  
-		      {
-			ReferenceVectors[NbrReferenceStates] = ReferenceDiagonalBasis[ReferenceVectorPosition[i] + k];
-			++NbrReferenceStates;
-		      }
-		    if ( ReferenceNbrSortedVectors[i] > 0)
-		      for (k = 0; k < ReferenceDegeneracy; ++k)  
-			{
-			  sprintf (InputVectors2, "%d.%d.vec", Lz, VectorPosition + k);
-			  cout << InputVectors << endl;
-			}
-		  }
-		VectorPosition += ReferenceDegeneracy;
-	      }
-	    else
-	      OpenFlag = false;
-	  }
-	if (NbrReferenceStates == 0)
-	  {
-	    cout << "no possible overlap calculation" << endl;
-	  }
-	else
-	  if (NbrReferenceStates == NbrSortedTestVectors[i])
-	    {
-	      double Scalar = 0.0;
-	      double TmpScalar;
-	      int Shift = TestVectorPosition[i];
-	      cout << "scalar products: ";
-	      for (int k = 0; k < NbrReferenceStates; ++k)
-		for (int l = 0; l < NbrReferenceStates; ++l)		
-		  {
-		    TmpScalar = ReferenceVectors[k] * DiagonalBasis[l + Shift];
-		    TmpScalar *= TmpScalar;
-		    cout << TmpScalar << " ";
-		    Scalar += TmpScalar;
-		  }
-	      cout << endl;
-	      Scalar /= (double) NbrReferenceStates;
-	      BestOverlaps[i] = Scalar;
-	      cout << "overlap = " << Scalar << endl;
-	    }	  
-	  else
-	    if (NbrSortedTestVectors[i] == 1)
-	      {
-		int Shift = TestVectorPosition[i];
-		BestOverlaps[i] = 0.0;
-		for (int k = 0; k < ReferenceNbrSortedVectors[i]; ++k)
-		  {
-		    double Scalar = ReferenceVectors[ReferenceVectorPosition[i] + k] * DiagonalBasis[Shift];
-		    if (fabs(Scalar) > OrthogonalityError)
-		      cout << "    " << OutputVectors << "  = " << Scalar << endl;
-		    BestOverlaps[i] += Scalar * Scalar;
-		  }
-		cout << "overlap = " << BestOverlaps[i]  << endl;
-	      }
-	    else
-	      {
-		cout << "can't compare vectors if both subspaces don't have the same dimension " << endl;		  
-		BestOverlaps[i] = -1.0;
-	      }
-	delete Space;
-      }
-
-  
-  cout << "----------------------------------------------------" << endl;
-  cout << "final results" << endl;
-  cout << "----------------------------------------------------" << endl << endl;
-  cout.precision(((SingleIntegerOption*) Manager["output-precision"])->GetInteger());
-  double GlobalOverlap = 0.0;
-  if (((BooleanOption*) Manager["global-overlap"])->GetBoolean() == true)
+  int CurrentVector = 0;
+  int* NbrSortedVectors = new int [TotalMaxLz];
+  int* VectorPosition = new int [TotalMaxLz];
+  while (CurrentVector < NbrVectorFiles)
     {
-      cout << endl << "global overlap = ";
-      int TotalDegeneracy = 0;
-      int TmpLValue = 1;
-      if (Parity == false)
+      int TmpDegeneracy = Spectrum.GetDegeneracy(Lz,CurrentVector );
+      RealVector* TmpVectors = new RealVector[TmpDegeneracy]; 
+      for (int j = 0; j < TmpDegeneracy; ++j)
 	{
-	  TmpLValue = 2;
-	}
-      for (int i = 0; i < MaxNbrLz; ++i)
-	{
-	  if (LDegeneracy[i] > 0)
+	  if (TmpVectors[j].ReadVector(VectorFiles[j + CurrentVector]) == false)
 	    {
-	      GlobalOverlap +=  ((double) (LDegeneracy[i] * TmpLValue)) * BestOverlaps[i];
-	      TotalDegeneracy += LDegeneracy[i] * TmpLValue;
+	      cout << "error while reading " << VectorFiles[j + CurrentVector] << endl;
+	      return -1;
 	    }
-	  TmpLValue += 2;
 	}
-      GlobalOverlap /= ((double) TotalDegeneracy);
-      cout << "total overlap =" << GlobalOverlap << endl;
-    }
-  for (int i = 0; i < MaxNbrLz; ++i)
-    {
-      if (LDegeneracy[i] > 0)
-	{
-	  int Lz = i << 1;
-	  if (Parity == false)
-	    {
-	      ++Lz;
-	      cout << "L = " << Lz << "/2 : ";
-	    }
-	  else
-	    {
-	      cout << "L = " << i <<" : ";
-	    }
-	  cout << BestOverlaps[i] << endl;
-	}
-    }
-  if (((BooleanOption*) Manager["latex-output"])->GetBoolean() == true)
-    {
-      cout << endl << "latex output:" << endl;
-      if (((BooleanOption*) Manager["global-overlap"])->GetBoolean() == true)
-	{
-	  cout << "$" << GlobalOverlap << "$ & " ;
-	}
-      for (int i = 0; i < (MaxNbrLz - 1); ++i)
-	{
-	  if (LDegeneracy[i] > 0)
-	    {
-	      cout << "$" << BestOverlaps[i] << "$" ;
-	    }
-	  cout << " & ";
-	}
-      if (LDegeneracy[MaxNbrLz - 1] > 0)
-	{
-	  cout << "$" << BestOverlaps[MaxNbrLz - 1] << "$" ;
-	}
-      cout << " \\\\" << endl;
+      RealMatrix DiagonalBasis (TmpVectors, TmpDegeneracy);      
+      LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedVectors, VectorPosition);   
+      CurrentVector += TmpDegeneracy;
+      delete[] TmpVectors;
     }
 
-
-  delete[] BestOverlaps;
-  delete[] LzDegeneracy;
-  delete[] InputVectors;
-  delete[] OutputVectors;
-  delete[] SortedTestVectors;
-  delete[] NbrSortedTestVectors;
-  delete[] TestVectorPosition;
+  delete[] NbrSortedVectors;
+  delete[] VectorPosition;
   return 0;
 }
 
@@ -509,7 +322,7 @@ bool FindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, b
 	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	    {
 	      StrNbrParticles[SizeString] = '\0';
-	      LzMax = atoi(StrNbrParticles);
+	      lzMax = atoi(StrNbrParticles);
 	      StrNbrParticles[SizeString] = '_';
 	      StrNbrParticles += SizeString;
 	    }

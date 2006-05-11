@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
-  (*SystemGroup) += new BooleanOption  ('n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -155,6 +155,8 @@ int main(int argc, char** argv)
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);
   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
+  if (DensityFlag == true)
+    Factor1 = 1.0;
   double Factor2;
   if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
     Factor2 = 1.0;
