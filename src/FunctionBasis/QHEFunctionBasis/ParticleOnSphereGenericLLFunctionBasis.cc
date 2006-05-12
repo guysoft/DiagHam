@@ -88,10 +88,10 @@ void ParticleOnSphereGenericLLFunctionBasis::GetFunctionValue(RealVector& value,
       Max = this->LandauLevel;
     }
   double Tmp = 0.0;
-  double TmpCos = pow (Cos, (double) Min);
+  double TmpCos = pow (Cos, (double) (index + (2 * Min) - this->LandauLevel));
   Cos *= Cos;
   Max -= Min;
-  for (; Min <= Max; ++Min)
+  for (Min = 0; Min <= Max; ++Min)
     {
       Tmp += TmpCoefficients[Min] * TmpCos * pow(Sin, DMin);
       TmpCos *= Cos;
@@ -188,7 +188,7 @@ void ParticleOnSphereGenericLLFunctionBasis::EvaluateSumPrefactors()
 	      Coef.SetToOne();
 	      Coef.PartialFactorialMultiply(k + 1, this->LandauLevel);
 	      Coef.FactorialDivide(this->LandauLevel - k);
-	      Coef.PartialFactorialMultiply(j + k - this->LandauLevel + 1, this->LzMax + this->LandauLevel);	  
+	      Coef.PartialFactorialMultiply(j + k + 1, this->LzMax + this->LandauLevel);	  
 	      Coef.FactorialDivide(this->LzMax + (2 * this->LandauLevel) - j - k);	  
 	      this->SumPrefactors[j][k - Min] = Factor * Coef.GetNumericalValue();
 	      Factor *= -1.0;	      

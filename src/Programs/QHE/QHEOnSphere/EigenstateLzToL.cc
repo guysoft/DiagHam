@@ -43,7 +43,9 @@ using std::endl;
 // subspaceSize = reference on the array that will be filled  with the dimension of each fixed L subspace (index equal to L if L is integer, L-1/2 if L is half integer)
 // subspacePositions = reference on the array that will be filled  with the position of the first occurence of a vector with a given fixed L subspace 
 //                     (index equal to L if L is integer, L-1/2 if L is half integer)
-void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions);
+// lError = allowed error on L determination, if relative error between <L> and int(<L>) is greater than lError, no  L orthonormal eigenstates van be extracted
+// vectorNames = array that contains file name of each vectors (used to identify vector in error message, 0 if vector index has to be used instead)
+void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions, double lError, char** vectorNames = 0);
 
 // try to guess system information from file name
 //
@@ -75,7 +77,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('s', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
 
   (*DataGroup) += new SingleStringOption  ('f', "file-prefix", "prefix for all data files (vectors have to be of the form prefix_x.y.vec and Lz spectrum prefix.dat)");
-  (*DataGroup) += new SingleDoubleOption  ('\n', "ortho-error", "scalar product value below which two states are considered as orthogonal", 1e-12);
   (*DataGroup) += new SingleDoubleOption  ('\n', "l-error", "error above which a vector is no more considerated as an eigenvector of L^2", 1e-12);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -92,14 +93,13 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  double OrthogonalityError = ((SingleDoubleOption*) Manager["ortho-error"])->GetDouble();
   double LError = ((SingleDoubleOption*) Manager["l-error"])->GetDouble();
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz"])->GetInteger();
   bool FermionFlag = false;
-  if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
+  if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (FindSystemInfoFromFileName(((SingleStringOption*) Manager["file-prefix"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
     {
@@ -119,8 +119,15 @@ int main(int argc, char** argv)
 	{
 	  cout << ((SingleStringOption*) Manager["statistics"])->GetString() << " is an undefined statistics" << endl;
 	}  
+  int Parity = Lz & 1;
+  if (Parity != ((NbrParticles * LzMax) & 1))
+    {
+      cout << "Lz and (NbrParticles * LzMax) must have the parity" << endl;
+      return -1;           
+    }
 
   char* SpectrumFilename = AddExtensionToFileName(((SingleStringOption*) Manager["file-prefix"])->GetString(), "dat");
+  cout << SpectrumFilename << endl;
   if (IsFile(SpectrumFilename) == false)
     {
       cout << "Spectrum " << SpectrumFilename << " does not exist or can't be opened" << endl;
@@ -181,8 +188,13 @@ int main(int argc, char** argv)
    ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
 
   int CurrentVector = 0;
-  int* NbrSortedVectors = new int [TotalMaxLz];
-  int* VectorPosition = new int [TotalMaxLz];
+  int* NbrSortedVectors = new int [TotalMaxLz + 1];
+  int* VectorPosition = new int [TotalMaxLz + 1];
+  int* GlobalPosition = new int [TotalMaxLz + 1];
+  for (int i = 0; i <= TotalMaxLz; ++i)
+    GlobalPosition[i] = 0;
+
+  char* OutputVectorPrefix = new char [strlen(((SingleStringOption*) Manager["file-prefix"])->GetString()) + 64];
   while (CurrentVector < NbrVectorFiles)
     {
       int TmpDegeneracy = Spectrum.GetDegeneracy(Lz,CurrentVector );
@@ -196,13 +208,30 @@ int main(int argc, char** argv)
 	    }
 	}
       RealMatrix DiagonalBasis (TmpVectors, TmpDegeneracy);      
-      LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedVectors, VectorPosition);   
+      LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedVectors, VectorPosition, LError, VectorFiles + CurrentVector);   
+      int Pos = 0;
+      for (int j = 0; j <= TotalMaxLz; ++j)
+	if (NbrSortedVectors[j] > 0)
+	  {
+	    Pos = VectorPosition[j];
+	    for  (int k = 0; k < NbrSortedVectors[j]; ++k)
+	      {
+		sprintf (OutputVectorPrefix , "%s_%d_l_%d.%d.vec", ((SingleStringOption*) Manager["file-prefix"])->GetString(), Lz, ((2 * j) + Parity), GlobalPosition[j]);
+		cout << "write " << OutputVectorPrefix << endl;
+		TmpVectors[Pos].WriteVector(OutputVectorPrefix);
+		++GlobalPosition[j];
+		++Pos;
+	      }
+	  }
       CurrentVector += TmpDegeneracy;
-      delete[] TmpVectors;
     }
 
+  for (int i = 0; i < NbrVectorFiles; ++i)
+    delete[] VectorFiles[i];
+  delete[] VectorFiles;
   delete[] NbrSortedVectors;
   delete[] VectorPosition;
+  delete[] GlobalPosition;
   return 0;
 }
 
@@ -214,8 +243,10 @@ int main(int argc, char** argv)
 // subspaceSize = reference on the array that will be filled  with the dimension of each fixed L subspace (index equal to L if L is integer, L-1/2 if L is half integer)
 // subspacePositions = reference on the array that will be filled  with the position of the first occurence of a vector with a given fixed L subspace 
 //                     (index equal to L if L is integer, L-1/2 if L is half integer)
+// lError = allowed error on L determination, if relative error between <L> and int(<L>) is greater than lError, no  L orthonormal eigenstates van be extracted
+// vectorNames = array that contains file name of each vectors (used to identify vector in error message, 0 if vector index has to be used instead)
 
-void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions)
+void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions, double lError, char** vectorNames)
 {
   for (int j = 0; j <= totalMaxLz; ++j)    
     { 
@@ -236,9 +267,22 @@ void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int
       TmpTriDiag.Diagonalize(TmpEigenvector);
       TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
       int TmpAngularMomentum;
+      double RawTmpAngularMomentum;
       for (int k = 0; k < vectors.GetNbrColumn(); ++k)	    
 	{
-	  TmpAngularMomentum = ((int) round((sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0)));
+	  RawTmpAngularMomentum = (sqrt ((4.0 * TmpTriDiag.DiagonalElement(k)) + 1.0) - 1.0);
+	  if (RawTmpAngularMomentum < 0.0)
+	    RawTmpAngularMomentum = 0.0;
+	  TmpAngularMomentum = ((int) round(RawTmpAngularMomentum));
+	  if (((TmpAngularMomentum == 0) && (fabs(RawTmpAngularMomentum) > lError)) ||
+	      (fabs(RawTmpAngularMomentum - round(RawTmpAngularMomentum)) > (lError * fabs(RawTmpAngularMomentum))))
+	    {
+	      cout << "error while processing vectors ";
+	      cout << vectorNames[0] << " ";
+	      for (int i = 1; i < vectors.GetNbrColumn(); ++i)
+		cout << "," << vectorNames[i] << " ";
+	      cout << endl << "<2L> = " << RawTmpAngularMomentum << endl;
+	    }
 	  if ((TmpAngularMomentum & 1) == 0)
 	    {
 	      TmpAngularMomentum >>= 1;
@@ -256,7 +300,15 @@ void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int
     }
   else
     {
-      int TmpAngularMomentum = ((int) round((sqrt ((4.0 * oper->MatrixElement(vectors[0], vectors[0]).Re) + 1.0) - 1.0)));
+      double RawTmpAngularMomentum = (sqrt ((4.0 * oper->MatrixElement(vectors[0], vectors[0]).Re) + 1.0) - 1.0);
+      if (RawTmpAngularMomentum < 0.0)
+	RawTmpAngularMomentum = 0.0;
+      int TmpAngularMomentum = ((int) round(RawTmpAngularMomentum));
+      if (((TmpAngularMomentum == 0) && (fabs(RawTmpAngularMomentum) > lError)) ||
+	  (fabs(RawTmpAngularMomentum - round(RawTmpAngularMomentum)) > (lError * fabs(RawTmpAngularMomentum))))
+	{
+	  cout << "error while processing vectors " << vectorNames[0] << endl << "<2L> = " << RawTmpAngularMomentum << endl;
+	}
       if ((TmpAngularMomentum & 1) == 0)
 	{
 	  TmpAngularMomentum >>= 1;
@@ -338,9 +390,9 @@ bool FindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, b
     }
   if (statistics == true)
     {
-      if (strstr(StrNbrParticles, "fermion") == 0)
+      if (strstr(filename, "fermion") == 0)
 	{
-	  if (strstr(StrNbrParticles, "boson") == 0)
+	  if (strstr(filename, "boson") == 0)
 	    {
 	      cout << "can't guess particle statistics from file name " << filename << endl
 		   << "use --statistics option" << endl;

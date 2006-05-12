@@ -6,6 +6,7 @@
 #include "Operator/QHEOperator/ParticleOnSphereDensityDensityOperator.h"
 #include "Operator/QHEOperator/ParticleOnSphereDensityOperator.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "laplaciandelta");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
@@ -73,6 +75,7 @@ int main(int argc, char** argv)
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
+  int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
@@ -110,25 +113,29 @@ int main(int argc, char** argv)
 
   ParticleOnSphere* Space;
 #ifdef __64_BITS__
-      if (LzMax <= 63)
-        {
-          Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
-        }
-      else
-        {
-          Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
-        }
+  if (LzMax <= 63)
+    {
+      Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+    }
+  else
+    {
+      Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
+    }
 #else
-      if (LzMax <= 31)
-        {
-          Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
-        }
-      else
-        {
-          Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
-        }
+  if (LzMax <= 31)
+    {
+      Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+    }
+  else
+    {
+      Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
+    }
 #endif
-  ParticleOnSphereFunctionBasis Basis(LzMax);
+  AbstractFunctionBasis* Basis;
+  if (LandauLevel == 0)
+    Basis = new ParticleOnSphereFunctionBasis(LzMax);
+  else
+    Basis = new ParticleOnSphereGenericLLFunctionBasis(LzMax - (2 * LandauLevel), LandauLevel);
 
   Complex Sum (0.0, 0.0);
   Complex Sum2 (0.0, 0.0);
@@ -141,7 +148,7 @@ int main(int argc, char** argv)
   if (DensityFlag == false)
     for (int i = 0; i <= LzMax; ++i)
       {
-	Basis.GetFunctionValue(Value, TmpValue, LzMax);
+	Basis->GetFunctionValue(Value, TmpValue, LzMax);
 	ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
 	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
       }
@@ -169,7 +176,7 @@ int main(int argc, char** argv)
       Sum = 0.0;
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  Basis.GetFunctionValue(Value, TmpValue, i);
+	  Basis->GetFunctionValue(Value, TmpValue, i);
 	  Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
 	  ++Pos;
 	}
@@ -218,6 +225,7 @@ int main(int argc, char** argv)
 
   delete[] OutputNameCorr;	  
   delete[] PrecalculatedValues;
+//  delete Basis;
 
   return 0;
 }
