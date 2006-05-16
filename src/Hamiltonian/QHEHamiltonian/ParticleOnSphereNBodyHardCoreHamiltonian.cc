@@ -79,6 +79,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
+  this->NBodySign = new double[this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
@@ -86,6 +87,9 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
       this->MaxSumIndices[k] = 0;      
       this->NBodyFlags[k] = false;
       this->NBodyInteractionWeightFactors[k] = 0.0;
+      this->NBodySign[k] = 1.0;
+      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	this->NBodySign[k] = -1.0;
     }
   this->NBodyFlags[this->NbrNbody] = true;
   this->NBodyInteractionWeightFactors[this->NbrNbody] = 1.0;
@@ -172,6 +176,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
+  this->NBodySign = new double[this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
@@ -182,6 +187,14 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
       else
 	this->NBodyFlags[k] = true;
       this->NBodyInteractionWeightFactors[k] = nBodyFactors[k];
+      this->NBodySign[k] = 1.0;
+      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	this->NBodySign[k] = -1.0;
+      if (this->NBodyInteractionWeightFactors[k] < 0.0)
+	{
+	  this->NBodyInteractionWeightFactors[k] *= -1.0;
+	  this->NBodySign[k] *= -1.0;
+	}
     }
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
@@ -251,7 +264,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
   delete[] this->NBodyInteractionWeightFactors;
   delete[] this->MinSumIndices;
   delete[] this->MaxSumIndices;
-
+  delete[] this->NBodySign;
   if (this->FastMultiplicationFlag == true)
     {
       if (this->DiskStorageFlag == false)

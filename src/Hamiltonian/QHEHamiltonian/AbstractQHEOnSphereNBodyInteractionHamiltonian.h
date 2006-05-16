@@ -63,6 +63,8 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   int** NbrSortedIndicesPerSum;
   // array containing the index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators
   int*** SortedIndicesPerSum;
+  // sign in front of each n-body interaction term (including the one coming from the statistics)
+  double* NBodySign;
 
  public:
 

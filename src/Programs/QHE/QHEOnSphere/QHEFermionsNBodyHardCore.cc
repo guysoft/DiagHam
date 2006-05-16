@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
   (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "impurity-potential", "potential assosciated to each impurity", 0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL, only useful when adding impurities)", 0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -167,6 +168,8 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
        ParticleOnSphere* Space;
+//        if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == false)
+// 	 {
 #ifdef __64_BITS__
       if (LzMax <= 63)
         {
@@ -211,6 +214,7 @@ int main(int argc, char** argv)
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
+											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
 											  LoadPrecalculationFileName);
@@ -219,6 +223,7 @@ int main(int argc, char** argv)
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),						  
+											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
 											  LoadPrecalculationFileName);

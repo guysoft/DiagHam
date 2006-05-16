@@ -57,8 +57,7 @@ ParticleOnSphereGenericLLFunctionBasis::ParticleOnSphereGenericLLFunctionBasis(i
 ParticleOnSphereGenericLLFunctionBasis::~ParticleOnSphereGenericLLFunctionBasis ()
 {
   delete[] this->NormalizationPrefactors;
-  int MaxMomentum = this->LzMax + (2 * this->LandauLevel);      
-  for (int i = 0; i <= MaxMomentum; ++i)
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     delete[] this->SumPrefactors[i];
   delete[] this->SumPrefactors;
 }
@@ -73,7 +72,7 @@ void ParticleOnSphereGenericLLFunctionBasis::GetFunctionValue(RealVector& value,
 {
   double Cos = cos (0.5 * value[0]);
   double Sin = sin (0.5 * value[0]);
-  int Max = this->LzMax + (2 * this->LandauLevel);
+  int Max = this->HilbertSpaceDimension - 1;
   result.Re = value[1] * (((double) index) - 0.5 * ((double) Max));
   result.Im = sin(result.Re);
   result.Re = cos(result.Re);
@@ -107,17 +106,17 @@ void ParticleOnSphereGenericLLFunctionBasis::GetFunctionValue(RealVector& value,
 
 void ParticleOnSphereGenericLLFunctionBasis::EvaluateNormalizationPrefactors()
 {
-  int MaxMomentum = this->LzMax + (2 * this->LandauLevel);
+  int MaxMomentum = this->HilbertSpaceDimension - 1;
   FactorialCoefficient Coef;
   this->NormalizationPrefactors = new double[MaxMomentum + 1];
+  double Factor = ((double) this->HilbertSpaceDimension) / (4.0  * M_PI);
   if (this->LandauLevel == 0)
     {
-      double Factor = ((double) (MaxMomentum + 1)) / (4.0  * M_PI);
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
 	  Coef.SetToOne();
-	  Coef.PartialFactorialDivide(MaxMomentum - j + 1, MaxMomentum);
-	  Coef.FactorialMultiply(j);
+	  Coef.PartialFactorialMultiply(this->HilbertSpaceDimension - j, MaxMomentum);
+	  Coef.FactorialDivide(j);
 	  this->NormalizationPrefactors[j] = sqrt(Factor * Coef.GetNumericalValue());
 	  if ((j & 1) != 0)
 	    {
@@ -127,7 +126,6 @@ void ParticleOnSphereGenericLLFunctionBasis::EvaluateNormalizationPrefactors()
     }
   else
     {
-      double Factor = ((double) (MaxMomentum + 1)) / (4.0  * M_PI);
       double Sign = 1.0;
       if ((this->LzMax & 1) != 0)
 	Sign = -1.0;
@@ -150,26 +148,19 @@ void ParticleOnSphereGenericLLFunctionBasis::EvaluateNormalizationPrefactors()
 
 void ParticleOnSphereGenericLLFunctionBasis::EvaluateSumPrefactors()
 {
+  this->SumPrefactors = new double* [this->HilbertSpaceDimension];
   if (this->LandauLevel == 0)
     {
-      double TmpFactor = ((double) (this->LzMax + 1)) / (4.0 * M_PI);
-      double TmpBinomial = 1.0;
-      this->SumPrefactors = new double* [this->LzMax + 1];
-      this->SumPrefactors[0] = new double [1];
-      this->SumPrefactors[0][0] = sqrt (TmpBinomial * TmpFactor);
-      for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
 	  this->SumPrefactors[i] = new double [1];
-	  TmpBinomial *= this->LzMax - ((double) i) + 1.0;
-	  TmpBinomial /= ((double) i);
-	  this->SumPrefactors[i][0] = sqrt (TmpBinomial * TmpFactor);
+	  this->SumPrefactors[i][0] = 1.0;
 	}
     }
   else
     {
-      this->SumPrefactors = new double* [this->LandauLevel + 1];
       FactorialCoefficient Coef;
-      int MaxMomentum = this->LzMax + (2 * this->LandauLevel);      
+      int MaxMomentum = this->HilbertSpaceDimension - 1;      
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
 	  double Factor = 1.0;
@@ -188,8 +179,8 @@ void ParticleOnSphereGenericLLFunctionBasis::EvaluateSumPrefactors()
 	      Coef.SetToOne();
 	      Coef.PartialFactorialMultiply(k + 1, this->LandauLevel);
 	      Coef.FactorialDivide(this->LandauLevel - k);
-	      Coef.PartialFactorialMultiply(j + k + 1, this->LzMax + this->LandauLevel);	  
-	      Coef.FactorialDivide(this->LzMax + (2 * this->LandauLevel) - j - k);	  
+	      Coef.PartialFactorialMultiply(j + k + 1 - this->LandauLevel, this->LzMax + this->LandauLevel);	  
+	      Coef.FactorialDivide(MaxMomentum - j - k);	  
 	      this->SumPrefactors[j][k - Min] = Factor * Coef.GetNumericalValue();
 	      Factor *= -1.0;	      
 	    }

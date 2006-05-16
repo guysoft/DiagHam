@@ -87,6 +87,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	{
 	  int TmpMinSumIndices = this->MinSumIndices[1];
 	  int TmpMaxSumIndices = this->MaxSumIndices[1];	      
+	  double Sign = this->NBodySign[1];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -96,7 +97,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		  TmpInteraction = this->NBodyInteractionFactors[1][j];
 		  for (int i1 = 0; i1 < Lim; ++i1)
 		    {
-		      Coefficient2 = vSource[i] * TmpInteraction[i1];
+		      Coefficient2 = Sign * vSource[i] * TmpInteraction[i1];
 		      MIndices = this->SortedIndicesPerSum[1][j];
 		      for (int i2 = 0; i2 < Lim; ++i2)
 			{
@@ -115,9 +116,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    double Sign = 1.0;
-	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	      Sign = -1.0;
+	    double Sign = this->NBodySign[k];
 	    int TmpMinSumIndices = this->MinSumIndices[k];
 	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 	    for (int i = firstComponent; i < LastComponent; ++i)
@@ -217,6 +216,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		  {	
 		    if (this->NBodyFlags[1] == true)
 		      {
+			double Sign = this->NBodySign[1];
 			int TmpMinSumIndices = this->MinSumIndices[1];
 			int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
@@ -228,7 +228,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
                                 TmpInteraction = this->NBodyInteractionFactors[1][j];
 				for (int i1 = 0; i1 < Lim; ++i1)
 				  {
-				    Coefficient2 = vSource[i] * TmpInteraction[i1];
+				    Coefficient2 = Sign * vSource[i] * TmpInteraction[i1];
 				    MIndices = this->SortedIndicesPerSum[1][j];
 				    for (int i2 = 0; i2 < Lim; ++i2)
 				      {
@@ -247,9 +247,7 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		    for (int k = 2; k <= this->MaxNBody; ++k)
 		      if (this->NBodyFlags[k] == true)
 			{
-			  double Sign = 1.0;
-			  if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-			    Sign = -1.0;
+			  double Sign = this->NBodySign[k];
 			  int TmpMinSumIndices = this->MinSumIndices[k];
 			  int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
@@ -417,6 +415,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       if (this->NBodyFlags[1] == true)
 	{
+	  double Sign = this->NBodySign[1];
 	  int TmpMinSumIndices = this->MinSumIndices[1];
 	  int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 	  for (int i = firstComponent; i < LastComponent; ++i)
@@ -429,7 +428,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		  for (int i1 = 0; i1 < Lim; ++i1)
 		    {
 		      for (int l = 0; l < nbrVectors; ++l)
-			Coefficient2[l] = vSources[l][i] * TmpInteraction[i1];
+			Coefficient2[l] = Sign * vSources[l][i] * TmpInteraction[i1];
 		      MIndices = this->SortedIndicesPerSum[1][j];
 		      for (int i2 = 0; i2 < Lim; ++i2)
 			{
@@ -449,9 +448,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    double Sign = 1.0;
-	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	      Sign = -1.0;
+	    double Sign = this->NBodySign[k];
 	    int TmpMinSumIndices = this->MinSumIndices[k];
 	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 	    for (int i = firstComponent; i < LastComponent; ++i)
@@ -585,6 +582,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		  {	
 		    if (this->NBodyFlags[1] == true)
 		      {
+			double Sign = this->NBodySign[1];
 			int TmpMinSumIndices = this->MinSumIndices[1];
 			int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
@@ -597,7 +595,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				for (int i1 = 0; i1 < Lim; ++i1)
 				  {
 				    for (int l = 0; l < nbrVectors; ++l)
-				      Coefficient2[l] = vSources[l][i] * TmpInteraction[i1];
+				      Coefficient2[l] = Sign * vSources[l][i] * TmpInteraction[i1];
 				    MIndices = this->SortedIndicesPerSum[1][j];
 				    for (int i2 = 0; i2 < Lim; ++i2)
 				      {
@@ -617,9 +615,7 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		    for (int k = 2; k <= this->MaxNBody; ++k)
 		      if (this->NBodyFlags[k] == true)
 			{
-			  double Sign = 1.0;
-			  if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-			    Sign = -1.0;
+			  double Sign = this->NBodySign[k];
 			  int TmpMinSumIndices = this->MinSumIndices[k];
 			  int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
@@ -915,6 +911,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
       Pos = 0;
       if (this->NBodyFlags[1] == true)
 	{
+	  double Sign = this->NBodySign[1];
 	  int TmpMinSumIndices = this->MinSumIndices[1];
 	  int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 	  for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -931,7 +928,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
-			  TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+			  TmpCoefficientArray[Pos] = Sign * Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
 			  ++Pos;
 			}
 		      ++MIndices;
@@ -943,9 +940,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    double Sign = 1.0;
-	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	      Sign = -1.0;
+	    double Sign = this->NBodySign[k];
 	    int TmpMinSumIndices = this->MinSumIndices[k];
 	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 	    for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -1014,6 +1009,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
       Pos = 0;
       if (this->NBodyFlags[1] == true)
 	{
+	  double Sign = this->NBodySign[1];
 	  int TmpMinSumIndices = this->MinSumIndices[1];
 	  int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 	  for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -1030,7 +1026,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
-			  TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+			  TmpCoefficientArray[Pos] = Sign * Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
 			  ++Pos;
 			}
 		      ++MIndices;
@@ -1042,9 +1038,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
      for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
-	    double Sign = 1.0;
-	    if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	      Sign = -1.0;
+	    double Sign = this->NBodySign[k];
 	    int TmpMinSumIndices = this->MinSumIndices[k];
 	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 	    for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -1148,6 +1142,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 	  Pos = 0;
 	  if (this->NBodyFlags[1] == true)
 	    {
+	      double Sign = this->NBodySign[1];
 	      int TmpMinSumIndices = this->MinSumIndices[1];
 	      int TmpMaxSumIndices = this->MaxSumIndices[1];	      
 	      for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
@@ -1164,7 +1159,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 			  if (Index < this->Particles->GetHilbertSpaceDimension())
 			    {
 			      TmpIndexArray[Pos] = Index;
-			      TmpCoefficientArray[Pos] = Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
+			      TmpCoefficientArray[Pos] = Sign * Coefficient * TmpInteraction[i1] *  TmpInteraction[i2];
 			      ++Pos;
 			    }
 			  ++MIndices;
@@ -1176,9 +1171,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 	  for (int k = 2; k <= this->MaxNBody; ++k)
 	    if (this->NBodyFlags[k] == true)
 	      {
-		double Sign = 1.0;
-		if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-		  Sign = -1.0;
+		double Sign = this->NBodySign[k];
 		int TmpMinSumIndices = this->MinSumIndices[k];
 		int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 		for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)

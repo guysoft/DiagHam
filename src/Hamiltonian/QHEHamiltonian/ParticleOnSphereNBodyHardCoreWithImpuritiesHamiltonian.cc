@@ -77,6 +77,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
+  this->NBodySign = new double[this->MaxNBody + 1];
 
   this->NbrImpurities = nbrImpurities;
   this->ImpurityLocation = impurityLocations;
@@ -88,6 +89,9 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
       this->MaxSumIndices[k] = 0;      
       this->NBodyFlags[k] = false;
       this->NBodyInteractionWeightFactors[k] = 0.0;
+      this->NBodySign[k] = 1.0;
+      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	this->NBodySign[k] = -1.0;
     }
   this->NBodyFlags[this->NbrNbody] = true;
   this->NBodyInteractionWeightFactors[this->NbrNbody] = 1.0;
@@ -178,6 +182,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
+  this->NBodySign = new double[this->MaxNBody + 1];
 
   this->NbrImpurities = nbrImpurities;
   this->ImpurityLocation = impurityLocations;
@@ -192,6 +197,14 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
       else
 	this->NBodyFlags[k] = true;
       this->NBodyInteractionWeightFactors[k] = nBodyFactors[k];
+      this->NBodySign[k] = 1.0;
+      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	this->NBodySign[k] = -1.0;
+      if (this->NBodyInteractionWeightFactors[k] < 0.0)
+	{
+	  this->NBodyInteractionWeightFactors[k] *= -1.0;
+	  this->NBodySign[k] *= -1.0;
+	}
     }
   this->Architecture = architecture;
   this->EvaluateInteractionFactorsWithImpurities();

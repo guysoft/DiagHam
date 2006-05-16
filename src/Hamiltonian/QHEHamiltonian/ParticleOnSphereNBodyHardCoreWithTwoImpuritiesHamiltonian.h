@@ -50,6 +50,9 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
 
   // potential strength associted to the impurities
   double ImpurityPotential;
+  // index of the Landau level where calculations have to be done (0 being the LLL)  
+  int LandauLevel;
+
 
  public:
 
@@ -61,10 +64,11 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
   // architecture = architecture to use for precalculation
   // nbrBody = number of particle that interact simultaneously through the hard core interaction
   // impurityPotential = potential strength associted to the impurities
+  // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, double impurityPotential,
+  ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, double impurityPotential, int landauLevel,
 							    AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 							    char* precalculationFileName = 0);
 
@@ -77,11 +81,12 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
   // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
   // nBodyFactors = weight of the different n-body interaction terms with respect to each other
   // impurityPotential = potential strength associted to the impurities
+  // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-							 int maxNbrBody, double* nBodyFactors, double impurityPotential,
+							 int maxNbrBody, double* nBodyFactors, double impurityPotential, int landauLevel,
 							 AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 							 char* precalculationFileName = 0);
 

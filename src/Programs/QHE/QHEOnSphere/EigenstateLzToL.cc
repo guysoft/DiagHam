@@ -133,7 +133,7 @@ int main(int argc, char** argv)
       cout << "Spectrum " << SpectrumFilename << " does not exist or can't be opened" << endl;
       return -1;           
     }
-  QHEOnSphereLzSortedSpectrum Spectrum (SpectrumFilename);
+  QHEOnSphereLzSortedSpectrum Spectrum (SpectrumFilename, 1e-12);
   if (Spectrum.IsSpectrumValid() == false)
     {
       cout << "Spectrum " << SpectrumFilename << " is not valid" << endl;
