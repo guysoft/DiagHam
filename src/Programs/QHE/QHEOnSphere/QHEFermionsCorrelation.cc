@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0, true, 0);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "laplaciandelta");
@@ -75,6 +75,12 @@ int main(int argc, char** argv)
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
+  bool InverseLzFlag = false;
+  if (Lz < 0)
+    {
+      InverseLzFlag = true;
+      Lz *= -1;
+    }
   int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
@@ -174,12 +180,22 @@ int main(int argc, char** argv)
       Value[0] = X;
       int Pos = 0;
       Sum = 0.0;
-      for (int i = 0; i <= LzMax; ++i)
-	{
-	  Basis->GetFunctionValue(Value, TmpValue, i);
-	  Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
-	  ++Pos;
-	}
+      if (InverseLzFlag == true)
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    Basis->GetFunctionValue(Value, TmpValue, LzMax - i);
+	    Complex TmpValue2;
+	    Basis->GetFunctionValue(Value, TmpValue2, i);	    
+	    Sum += 0.5 * PrecalculatedValues[Pos] * ((Conj(TmpValue) * TmpValue) + (Conj(TmpValue2) * TmpValue2));
+	    ++Pos;
+	  }
+      else
+	for (int i = 0; i <= LzMax; ++i)
+	  {
+	    Basis->GetFunctionValue(Value, TmpValue, i);
+	    Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
+	    ++Pos;
+	  }
       File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
       X += XInc;
     }

@@ -265,27 +265,21 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
   if (this->ImpurityPotential < 0.0)
     this->NBodySign[1] *= -1.0;
   this->NBodyFlags[1] = true;
-//   double TmpFactor = fabs(this->ImpurityPotential) * ((double) this->NbrLzValue) / (4.0 * M_PI);
   int Shift = this->LandauLevel + 1;
-//   this->NbrSortedIndicesPerSum[1] = new int [2 * Shift];
-//   this->SortedIndicesPerSum[1] = new int* [2 * Shift];  
-//   this->NBodyInteractionFactors[1] = new double* [2 * Shift];
-//   this->MinSumIndices[1] = 0;
-//   this->MaxSumIndices[1] = (2 * this->LandauLevel) + 1;
   FactorialCoefficient Coef;
   ParticleOnSphereGenericLLFunctionBasis Basis (this->LzMax - (2 * this->LandauLevel),this-> LandauLevel);
   RealVector Value(2, true);
   Complex TmpValue;
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      Value[0] = 0.0;
-      Basis.GetFunctionValue(Value, TmpValue, i);
-      cout << TmpValue << " ";
-      Value[0] = M_PI;
-      Basis.GetFunctionValue(Value, TmpValue, i);
-      cout << TmpValue << " ";     
-    }
-  cout << endl;
+ //  for (int i = 0; i <= this->LzMax; ++i)
+//     {
+//       Value[0] = 0.0;
+//       Basis.GetFunctionValue(Value, TmpValue, i);
+//       cout << TmpValue << " ";
+//       Value[0] = M_PI;
+//       Basis.GetFunctionValue(Value, TmpValue, i);
+//       cout << TmpValue << " ";     
+//     }
+//   cout << endl;
   
   double TmpFactor = sqrt (fabs(this->ImpurityPotential));
   this->NbrSortedIndicesPerSum[1] = new int [2];
@@ -299,17 +293,15 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
   this->SortedIndicesPerSum[1][0][0] = this->LandauLevel;
   Value[0] = M_PI;
   Basis.GetFunctionValue(Value, TmpValue, this->LandauLevel);
-  cout << TmpValue << " " << Norm(TmpValue) << endl;     
   this->NBodyInteractionFactors[1][0][0] = TmpFactor * Norm(TmpValue);
+
   this->NbrSortedIndicesPerSum[1][1] = 1;
   this->SortedIndicesPerSum[1][1] = new int [1];
   this->NBodyInteractionFactors[1][1] = new double[1];
   this->SortedIndicesPerSum[1][1][0] = this->LzMax - this->LandauLevel;
   Value[0] = 0.0;
   Basis.GetFunctionValue(Value, TmpValue, this->LzMax - this->LandauLevel);
-  cout << TmpValue << " " << Norm(TmpValue) << endl;     
   this->NBodyInteractionFactors[1][1][0] = TmpFactor * Norm(TmpValue);
-  cout << this->NBodyInteractionFactors[1][0][0] << " " << this->NBodyInteractionFactors[1][1][0] << endl;
 
 
 //   for (int i = 0; i <= this->LandauLevel; ++i) 
