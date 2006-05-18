@@ -49,6 +49,20 @@ ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSpher
 {
   this->Particle= particle;
   this->OperatorIndex = index;
+  this->OperatorIndexDagger = index;
+}
+
+// constructor when dealing with two different Hilbert spaces
+//
+// particle = hilbert space associated to the right hand state (target space has to be fixed to the hilbert space associated to the left hand state)
+// indexDagger = index of the creation operator that is part of the density operator
+// index = index of the annihilation operator that is part of the density operator
+ 
+ParticleOnSphereDensityOperator::ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int indexDagger, int index)
+{
+  this->Particle= particle;
+  this->OperatorIndexDagger = indexDagger;
+  this->OperatorIndex = index;
 }
 
 // destructor
@@ -102,11 +116,26 @@ int ParticleOnSphereDensityOperator::GetHilbertSpaceDimension ()
 
 Complex ParticleOnSphereDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
-  int Dim = this->Particle->GetHilbertSpaceDimension();
   double Element = 0.0;
-  for (int i = 0; i < Dim; ++i)
+  if (this->OperatorIndexDagger == this->OperatorIndex)
     {
-      Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
+      int Dim = this->Particle->GetHilbertSpaceDimension();
+      for (int i = 0; i < Dim; ++i)
+	{
+	  Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
+	}
+    }
+  else
+    {
+      int TmpIndex;
+      double TmpCoefficient = 0.0;
+      int Dim = this->Particle->GetHilbertSpaceDimension();
+      for (int i = 0; i < Dim; ++i)
+	{
+	  TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	  if (TmpCoefficient != 0.0)
+	    Element += V1[TmpIndex] * V2[i] * TmpCoefficient;
+	}
     }
   return Complex(Element);
 }
@@ -134,10 +163,13 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (ComplexVector& V1, Compl
 RealVector& ParticleOnSphereDensityOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
 						      int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;;
-  for (int i = firstComponent; i < Last; ++i)
+  if (this->OperatorIndexDagger == this->OperatorIndex)
     {
-      vDestination[i] = vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
+      int Last = firstComponent + nbrComponent;;
+      for (int i = firstComponent; i < Last; ++i)
+	{
+	  vDestination[i] = vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
+	}
     }
   return vDestination;
 }

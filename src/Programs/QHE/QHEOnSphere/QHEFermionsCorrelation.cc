@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrize", "use symmetrize combination of the lz and -lz eigenstate (assuming lz -lz symmetry)", false);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -149,8 +150,43 @@ int main(int argc, char** argv)
   RealVector Value(2, true);
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
+
+  if ((DensityFlag == true) && (((BooleanOption*) Manager["symmetrize"])->GetBoolean() == true))
+    {
+      Complex* PrecalculatedValues = new Complex [LzMax + 1];
+      ParticleOnSphere* TargetSpace;
+#ifdef __64_BITS__
+      if (LzMax <= 63)
+	{
+	  TargetSpace = new FermionOnSphere(NbrFermions, -Lz, LzMax);
+	}
+      else
+	{
+	  TargetSpace = new FermionOnSphereUnlimited(NbrFermions, -Lz, LzMax);
+	}
+#else
+      if (LzMax <= 31)
+	{
+	  TargetSpace = new FermionOnSphere(NbrFermions, -Lz, LzMax);
+	}
+      else
+	{
+	  TargetSpace = new FermionOnSphereUnlimited(NbrFermions, -Lz, LzMax);
+	}
+#endif
+      Space->SetTargetSpace(TargetSpace);
+      int Pos = 0;
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  for (int j = 0; j < 0; ++j)
+	    {
+	      ParticleOnSphereDensityOperator Operator (Space, i);
+	      PrecalculatedValues[Pos] = Operator.MatrixElement(State, State);
+	      ++Pos;
+	    }
+	}      
+    }
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
-	  
   if (DensityFlag == false)
     for (int i = 0; i <= LzMax; ++i)
       {

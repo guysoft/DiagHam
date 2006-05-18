@@ -51,6 +51,11 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphere* targetSpace);
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied

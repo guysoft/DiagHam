@@ -54,6 +54,7 @@ using std::dec;
 
 FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
@@ -89,6 +90,7 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
 
 FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
 {
+  this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -204,6 +206,15 @@ AbstractHilbertSpace* FermionOnSphere::ExtractSubspace (AbstractQuantumNumber& q
   return 0;
 }
 
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void FermionOnSphere::SetTargetSpace(ParticleOnSphere* targetSpace)
+{
+  this->TargetSpace = (FermionOnSphere*) targetSpace;
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -284,7 +295,7 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
-  return this->FindStateIndex(TmpState, NewLzMax);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
 // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
@@ -363,7 +374,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
 	}
       TmpState |= (((unsigned long) (0x1)) << Index);
     }
-  return this->FindStateIndex(TmpState, NewLzMax);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -436,7 +447,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 	}
       TmpState |= (0x1l << Index);
     }
-  return this->FindStateIndex(TmpState, NewLzMax);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -451,6 +462,57 @@ double FermionOnSphere::AdA (int index, int m)
     return 1.0;
   else
     return 0.0;
+}
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(((unsigned long) (0x1)) << n);
+  if (NewLzMax == n)
+    while ((TmpState >> NewLzMax) == 0)
+      --NewLzMax;
+  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (((unsigned long) (0x1)) << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
 // find state index

@@ -39,6 +39,14 @@ ParticleOnSphere::~ParticleOnSphere ()
 {
 }
 
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void ParticleOnSphere::SetTargetSpace(ParticleOnSphere* targetSpace)
+{
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied

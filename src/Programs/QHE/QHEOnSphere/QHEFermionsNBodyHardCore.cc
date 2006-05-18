@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
   (*SystemGroup) += new SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
@@ -147,15 +147,14 @@ int main(int argc, char** argv)
 
   int Max = ((LzMax - NbrFermions + 1) * NbrFermions);
 
-  int  L = 0;
-  if ((abs(Max) & 1) != 0)
-     L = 1;
-  if (InitialLz >= 0)
-    {
-      L = InitialLz;
-      if ((abs(Max) & 1) != (InitialLz & 1))
-	L += 1;
-    }
+  int  L =InitialLz;
+  if (L < -Max)
+    L = -Max;
+  else
+  if (L > Max)
+    L = Max;
+  if ((abs(Max) & 1) != (abs(InitialLz) & 1))
+    L += 1;
   if (GroundFlag == true)
       Max = L;
   else

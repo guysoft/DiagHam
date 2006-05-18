@@ -51,7 +51,9 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // hilbert space associated to the particles
   ParticleOnSphere* Particle;
   
-  // index attached to the a+_i a_i
+  // index of the creation operator that is part of the density operator (i.e. a+_i)
+  int OperatorIndexDagger;
+  // index of the annihilation operator that is part of the density operator (i.e. a_i)
   int OperatorIndex;
   
  public:
@@ -61,6 +63,13 @@ class ParticleOnSphereDensityOperator : public AbstractOperator
   // particle = hilbert space associated to the particles
   // index = index of the density operator
   ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int index);
+
+  // constructor when dealing with two different Hilbert spaces
+  //
+  // particle = hilbert space associated to the right hand state (target space has to be fixed to the hilbert space associated to the left hand state)
+  // indexDagger = index of the creation operator that is part of the density operator
+  // index = index of the annihilation operator that is part of the density operator
+  ParticleOnSphereDensityOperator(ParticleOnSphere* particle, int indexDagger, int index);
 
   // destructor
   //
