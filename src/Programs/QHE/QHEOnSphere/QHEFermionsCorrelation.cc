@@ -176,15 +176,15 @@ int main(int argc, char** argv)
 #endif
       Space->SetTargetSpace(TargetSpace);
       int Pos = 0;
-      for (int i = 0; i <= LzMax; ++i)
-	{
-	  for (int j = 0; j < 0; ++j)
-	    {
-	      ParticleOnSphereDensityOperator Operator (Space, i);
-	      PrecalculatedValues[Pos] = Operator.MatrixElement(State, State);
-	      ++Pos;
-	    }
-	}      
+//       for (int i = 0; i <= LzMax; ++i)
+// 	{
+//                              	  for (int j = 0; j < 0; ++j)
+// 	    {
+// 	      ParticleOnSphereDensityOperator Operator (Space, i);
+// 	      PrecalculatedValues[Pos] = Operator.MatrixElement(State, State);
+// 	      ++Pos;
+// 	    }
+// 	}      
     }
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
   if (DensityFlag == false)
