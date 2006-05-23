@@ -2721,7 +2721,29 @@ RealVector& RealVector::Merge(RealVector& V, int firstCoordinate, int step)
   V.Delocalize();
   return *this;
 }
-  
+
+// reverse elements of the current vector (i.e. exchanging i <-> N - i)
+//
+// return value = reference to the current Vector
+
+RealVector& RealVector::ReverseVector()
+{
+  if (this->Dimension != 0)
+    {
+      this->Localize();
+      int Max = this->Dimension - 1;
+      double Tmp;
+      for (int i = 0; i < this->Dimension; ++i)
+	{
+	  Tmp = this->Components[i];
+	  this->Components[i] = this->Components[Max - i];
+	  this->Components[Max - i] = Tmp;
+	}
+      this->Delocalize(true);
+    }
+  return *this;
+}
+
 // Output Stream overload
 //
 // str = reference on output stream

@@ -151,9 +151,11 @@ int main(int argc, char** argv)
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
 
+  Complex* SymmetrizePrecalculatedValues = new Complex [LzMax + 1];
   if ((DensityFlag == true) && (((BooleanOption*) Manager["symmetrize"])->GetBoolean() == true))
     {
-      Complex* PrecalculatedValues = new Complex [LzMax + 1];
+      RealVector SymmetricVector;
+      SymmetricVector.Copy(State);
       ParticleOnSphere* TargetSpace;
 #ifdef __64_BITS__
       if (LzMax <= 63)
@@ -175,16 +177,19 @@ int main(int argc, char** argv)
 	}
 #endif
       Space->SetTargetSpace(TargetSpace);
-      int Pos = 0;
-//       for (int i = 0; i <= LzMax; ++i)
-// 	{
-//                              	  for (int j = 0; j < 0; ++j)
-// 	    {
-// 	      ParticleOnSphereDensityOperator Operator (Space, i);
-// 	      PrecalculatedValues[Pos] = Operator.MatrixElement(State, State);
-// 	      ++Pos;
-// 	    }
-// 	}      
+      int TmpIndex;
+       for (int i = 0; i <= LzMax; ++i)
+ 	{
+	  TmpIndex = abs(LzMax + i - Lz);
+	  if (TmpIndex <= LzMax)
+ 	    {
+ 	      ParticleOnSphereDensityOperator Operator (Space, TmpIndex, i);
+ 	      SymmetrizePrecalculatedValues[i] = Operator.MatrixElement(SymmetricVector, State);
+ 	    }
+	  else
+	    SymmetrizePrecalculatedValues[i] = 0.0;
+	  cout << i << " " << SymmetrizePrecalculatedValues[i] << endl;
+ 	}      
     }
   Complex* PrecalculatedValues = new Complex [LzMax + 1];
   if (DensityFlag == false)
@@ -216,15 +221,32 @@ int main(int argc, char** argv)
       Value[0] = X;
       int Pos = 0;
       Sum = 0.0;
-      if (InverseLzFlag == true)
-	for (int i = 0; i <= LzMax; ++i)
-	  {
-	    Basis->GetFunctionValue(Value, TmpValue, LzMax - i);
-	    Complex TmpValue2;
-	    Basis->GetFunctionValue(Value, TmpValue2, i);	    
-	    Sum += 0.5 * PrecalculatedValues[Pos] * ((Conj(TmpValue) * TmpValue) + (Conj(TmpValue2) * TmpValue2));
-	    ++Pos;
-	  }
+      if (((BooleanOption*) Manager["symmetrize"])->GetBoolean() == true)
+	{
+	  Complex TmpValue2;
+	  int TmpIndex;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      Basis->GetFunctionValue(Value, TmpValue, LzMax - i);	      
+	      Basis->GetFunctionValue(Value, TmpValue2, i);	    
+	      Sum += 0.5 * PrecalculatedValues[i] * ((Conj(TmpValue) * TmpValue) + (Conj(TmpValue2) * TmpValue2));
+	      TmpIndex = LzMax + i - Lz;
+	      if ((TmpIndex >= 0) && (TmpIndex <= LzMax))
+		{
+		  Basis->GetFunctionValue(Value, TmpValue, TmpIndex);	      
+		  Sum -= 0.5 * SymmetrizePrecalculatedValues[i] * (Conj(TmpValue2) * TmpValue);
+		}
+	      else		
+		{
+		  TmpIndex *= -1;
+		  if ((TmpIndex >= 0) && (TmpIndex <= LzMax))
+		    {
+		      Basis->GetFunctionValue(Value, TmpValue, TmpIndex);	      
+		      Sum -= 0.5 * SymmetrizePrecalculatedValues[i] * (Conj(TmpValue) * TmpValue2);
+		    }		  
+		}
+	    }
+	}
       else
 	for (int i = 0; i <= LzMax; ++i)
 	  {
@@ -235,45 +257,7 @@ int main(int argc, char** argv)
       File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
       X += XInc;
     }
-//   Complex** PrecalculatedValues = new Complex* [LzMax + 1];
-  
-//   for (int i = 0; i <= LzMax; ++i)
-//     {
-//       PrecalculatedValues[i] = new Complex [LzMax + 1];
-//       for (int j = 0; j <= LzMax; ++j)
-// 	{
-// 	  Basis.GetFunctionValue(Value, TmpValue, LzMax);
-// 	  ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, j, LzMax);
-// 	  PrecalculatedValues[i][j] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-// 	}
-//     }
-//   ofstream File;
-//   File.precision(14);
-//   File.open(OutputNameCorr, ios::binary | ios::out);
-//   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
-//   double Factor2 = sqrt (0.5 * LzMax );
-//   Complex TmpValue2;
-//   for (int x = 0; x < NbrPoints; ++x)
-//     {
-//       Value[0] = X;
-//       int Pos = 0;
-//       Sum = 0.0;
-//       for (int i = 0; i <= LzMax; ++i)
-// 	{
-// 	  int Pos2 = 0;
-// 	  Basis.GetFunctionValue(Value, TmpValue, i);
-// 	  for (int j = 0; j <= LzMax; ++j)
-// 	    {
-// 	      Basis.GetFunctionValue(Value, TmpValue2, j);
-// 	      Sum += PrecalculatedValues[Pos][Pos2] * (Conj(TmpValue) * TmpValue2);
-// 	      ++Pos2;
-// 	    }
-// 	  ++Pos;
-// 	}
-//       File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
-//       X += XInc;
-//     }
-  File.close();
+
 
   delete[] OutputNameCorr;	  
   delete[] PrecalculatedValues;

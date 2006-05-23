@@ -512,7 +512,6 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
-  cout << coefficient << endl;
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
