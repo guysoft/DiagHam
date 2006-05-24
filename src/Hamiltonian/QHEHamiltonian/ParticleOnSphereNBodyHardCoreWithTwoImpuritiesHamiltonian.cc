@@ -55,14 +55,16 @@ using std::endl;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // nbrBody = number of particle that interact simultaneously through the hard core interaction
-// impurityPotential = potential strength associted to the impurities
+// northPoleImpurityPotential = potential strength associted to the impurity at the north pole
+// southPoleImpurityPotential = potential strength associted to the impurity at the south pole
 // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-														     int nbrBody, double impurityPotential, int landauLevel,
+														     int nbrBody, double northPoleImpurityPotential, 
+														     double southPoleImpurityPotential, int landauLevel,
 														     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 														     char* precalculationFileName)
 {
@@ -82,7 +84,8 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
 
-  this->ImpurityPotential = impurityPotential;
+  this->NorthPoleImpurityPotential = northPoleImpurityPotential;
+  this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;
 
   for (int k = 0; k <= this->MaxNBody; ++k)
@@ -157,16 +160,19 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
 // architecture = architecture to use for precalculation
 // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
 // nBodyFactors = weight of the different n-body interaction terms with respect to each other
-// impurityPotential = potential strength associted to the impurities
+// northPoleImpurityPotential = potential strength associted to the impurity at the north pole
+// southPoleImpurityPotential = potential strength associted to the impurity at the south pole
 // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-													       int maxNbrBody, double* nBodyFactors, double impurityPotential, int landauLevel,
-													       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-													       char* precalculationFileName)
+														     int maxNbrBody, double* nBodyFactors, 
+														     double northPoleImpurityPotential, double southPoleImpurityPotential, 
+														     int landauLevel,
+														     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+														     char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -184,7 +190,8 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
 
-  this->ImpurityPotential = impurityPotential;
+  this->NorthPoleImpurityPotential = northPoleImpurityPotential;
+  this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;
 
   for (int k = 0; k <= this->MaxNBody; ++k)
@@ -262,7 +269,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBod
 void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteractionFactorsWithTwoImpurities()
 {
   this->EvaluateInteractionFactors();
-  if (this->ImpurityPotential < 0.0)
+  if (this->SouthPoleImpurityPotential < 0.0)
     this->NBodySign[1] *= -1.0;
   this->NBodyFlags[1] = true;
   int Shift = this->LandauLevel + 1;
@@ -281,7 +288,6 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
 //     }
 //   cout << endl;
   
-  double TmpFactor = sqrt (fabs(this->ImpurityPotential));
   this->NbrSortedIndicesPerSum[1] = new int [2];
   this->SortedIndicesPerSum[1] = new int* [2];  
   this->NBodyInteractionFactors[1] = new double* [2];
@@ -293,7 +299,7 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
   this->SortedIndicesPerSum[1][0][0] = this->LandauLevel;
   Value[0] = M_PI;
   Basis.GetFunctionValue(Value, TmpValue, this->LandauLevel);
-  this->NBodyInteractionFactors[1][0][0] = TmpFactor * Norm(TmpValue);
+  this->NBodyInteractionFactors[1][0][0] = sqrt (fabs(this->SouthPoleImpurityPotential)) * Norm(TmpValue);
 
   this->NbrSortedIndicesPerSum[1][1] = 1;
   this->SortedIndicesPerSum[1][1] = new int [1];
@@ -301,7 +307,7 @@ void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteract
   this->SortedIndicesPerSum[1][1][0] = this->LzMax - this->LandauLevel;
   Value[0] = 0.0;
   Basis.GetFunctionValue(Value, TmpValue, this->LzMax - this->LandauLevel);
-  this->NBodyInteractionFactors[1][1][0] = TmpFactor * Norm(TmpValue);
+  this->NBodyInteractionFactors[1][1][0] = sqrt (fabs(this->NorthPoleImpurityPotential)) * Norm(TmpValue);
 
 
 //   for (int i = 0; i <= this->LandauLevel; ++i) 

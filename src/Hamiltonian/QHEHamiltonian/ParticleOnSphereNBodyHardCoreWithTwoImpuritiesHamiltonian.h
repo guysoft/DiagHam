@@ -48,8 +48,10 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
 
  protected:
 
-  // potential strength associted to the impurities
-  double ImpurityPotential;
+  // potential strength associted to the impurity at the north pole
+  double NorthPoleImpurityPotential;
+  // potential strength associted to the impurity at the south pole
+  double SouthPoleImpurityPotential;
   // index of the Landau level where calculations have to be done (0 being the LLL)  
   int LandauLevel;
 
@@ -63,12 +65,14 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
   // lzmax = maximum Lz value reached by a particle in the state
   // architecture = architecture to use for precalculation
   // nbrBody = number of particle that interact simultaneously through the hard core interaction
-  // impurityPotential = potential strength associted to the impurities
+  // northPoleImpurityPotential = potential strength associted to the impurity at the north pole
+  // southPoleImpurityPotential = potential strength associted to the impurity at the south pole
   // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, double impurityPotential, int landauLevel,
+  ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, 
+							    double northPoleImpurityPotential, double southPoleImpurityPotential, int landauLevel,
 							    AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 							    char* precalculationFileName = 0);
 
@@ -80,15 +84,17 @@ class ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian : public Particl
   // architecture = architecture to use for precalculation
   // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
   // nBodyFactors = weight of the different n-body interaction terms with respect to each other
-  // impurityPotential = potential strength associted to the impurities
+  // northPoleImpurityPotential = potential strength associted to the impurity at the north pole
+  // southPoleImpurityPotential = potential strength associted to the impurity at the south pole
   // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-							 int maxNbrBody, double* nBodyFactors, double impurityPotential, int landauLevel,
-							 AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-							 char* precalculationFileName = 0);
+							    int maxNbrBody, double* nBodyFactors, 
+							    double northPoleImpurityPotential, double southPoleImpurityPotential, int landauLevel,
+							    AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+							    char* precalculationFileName = 0);
 
   // destructor
   //
