@@ -73,6 +73,17 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   int* M2Value;
   int* M3Value;
 
+  // flag to indicate if there is any one body terms in the Hamiltonian
+  bool OneBodyTermFlag;
+  // array containing all factors fo the one body terms
+  double* OneBodyInteractionFactors;
+  // number of one body terms
+  int NbrOneBodyInteractionFactors;
+  // arrays for indices attached to each one body term
+  int* OneBodyMValues;
+  int* OneBodyNValues;
+  
+
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
 

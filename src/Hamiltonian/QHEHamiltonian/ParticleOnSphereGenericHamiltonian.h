@@ -54,8 +54,11 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
 
  protected:
 
-  // array with the psedo-potentials (ordered such that the last element corresponds to the delta interaction)
+  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   double* PseudoPotential;
+
+  // array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  double* OneBodyPotentials;
 
  public:
 
@@ -65,7 +68,7 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
   // architecture = architecture to use for precalculation
-  // pseudoPotential = array with the psedo-potentials (ordered such that the first element corresponds to the delta interaction)
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
@@ -73,6 +76,22 @@ class ParticleOnSphereGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
 				     AbstractArchitecture* architecture, long memory = -1, 
 				     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
+  // constructor with one body terms
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // architecture = architecture to use for precalculation
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+  // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+				     double* pseudoPotential, double* oneBodyPotentials,
+				     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
+				     char* precalculationFileName);
+    
   // destructor
   //
   ~ParticleOnSphereGenericHamiltonian();

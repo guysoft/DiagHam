@@ -79,6 +79,7 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
+  this->OneBodyTermFlag = false;
   this->Memory = memory;
   if (precalculationFileName == 0)
     {

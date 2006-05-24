@@ -4,6 +4,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -32,6 +33,15 @@ using std::endl;
 // return value = array that conatins the pseudopotentials
 double* EvaluatePseudopotentials(int nbrFlux, int landauLevel);
 
+// evalute one body potentials for two impurities located at the poles in a given Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// northPolePotential = potential of the impurity located at the north pole
+// southPolePotential = potential of the impurity located at the south pole
+// return value = array that conatins the pseudopotentials
+double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPolePotential, double southPolePotential);
+
 
 int main(int argc, char** argv)
 {
@@ -44,6 +54,10 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('l', "landau-level", "index of the Landau level (0 for the lowest Landau level)", 0, true, 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (i.e. twice the maximum momentum for a single particle)", 8);
+  (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential assosciated to the impurity at the north pole", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
+
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -73,19 +87,35 @@ int main(int argc, char** argv)
     }
 
   double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel);
-
+  double* OneBodyPotentials = 0;
+  if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == true)
+    OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
+						  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
+						  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
   ofstream File;
   File.open(OutputFile, ios::binary | ios::out);
   File.precision(14);
   File << "# pseudopotentials on the sphere for coulomb interaction " << endl
-       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl
-       << "#" << endl
+       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
+  if (OneBodyPotentials != 0)
+    {
+      File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+	   << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
+    }
+  File << "#" << endl
        << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
        << "Pseudopotentials =";
   int MaxMomentum = NbrFlux + (LandauLevel << 1);
   for (int i = 0; i <= MaxMomentum; ++i)
     File << " " << Pseudopotentials[i];
   File << endl;
+  if (OneBodyPotentials != 0)
+    {
+      File << endl << "Onebodypotentials =";
+      for (int i = 0; i <= MaxMomentum; ++i)
+	File << " " << OneBodyPotentials[i];
+     File << endl;
+    }
   File.close();
   
 
@@ -134,5 +164,31 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel)
     }
   delete[] Coefficients;
   return Pseudopotentials;
+}
+
+// evalute one body potentials for two impurities located at the poles in a given Landau level
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// northPolePotential = potential of the impurity located at the north pole
+// southPolePotential = potential of the impurity located at the south pole
+// return value = array that conatins the pseudopotentials
+
+double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPolePotential, double southPolePotential)
+{
+  int MaxMomentum = nbrFlux + (landauLevel << 1);
+  double* OneBodyPotentials = new double [MaxMomentum + 1];
+  for (int i = 0; i <= MaxMomentum; ++i)
+    OneBodyPotentials[i] = 0.0;
+  ParticleOnSphereGenericLLFunctionBasis Basis (nbrFlux, landauLevel);
+  RealVector Value(2, true);
+  Complex TmpValue;
+  Value[0] = M_PI;
+  Basis.GetFunctionValue(Value, TmpValue, landauLevel);
+  OneBodyPotentials[landauLevel] = southPolePotential * SqrNorm(TmpValue);
+  Value[0] = 0.0;
+  Basis.GetFunctionValue(Value, TmpValue, MaxMomentum - landauLevel);
+  OneBodyPotentials[MaxMomentum - landauLevel] = northPolePotential * SqrNorm(TmpValue);  
+  return OneBodyPotentials;
 }
 

@@ -86,6 +86,7 @@ ParticleOnSphereCoulombLaplacianDeltaHamiltonian::ParticleOnSphereCoulombLaplaci
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = false;
+  this->OneBodyTermFlag = false;
   if (precalculationFileName == 0)
     {
       if (memory > 0)

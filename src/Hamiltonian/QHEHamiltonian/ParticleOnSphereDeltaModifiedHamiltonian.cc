@@ -66,6 +66,7 @@ ParticleOnSphereDeltaModifiedHamiltonian::ParticleOnSphereDeltaModifiedHamiltoni
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->DiskStorageFlag = false;
+  this->OneBodyTermFlag = false;
   this->EvaluateInteractionFactors();
   int TmpMemory = this->FastMultiplicationMemory();
   if (TmpMemory < 1024)

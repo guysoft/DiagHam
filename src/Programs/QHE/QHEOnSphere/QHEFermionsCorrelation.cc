@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrize", "use symmetrize combination of the lz and -lz eigenstate (assuming lz -lz symmetry)", false);
   
@@ -85,6 +86,8 @@ int main(int argc, char** argv)
   int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();
+  bool ChordFlag = ((BooleanOption*) Manager["chord"])->GetBoolean();
+
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
       cout << "QHEFermionsCorrelation requires a state" << endl;
@@ -210,12 +213,12 @@ int main(int argc, char** argv)
   File.open(OutputNameCorr, ios::binary | ios::out);
   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
   if (DensityFlag == true)
-    Factor1 = 1.0;
+    Factor1 = M_PI * sqrt (((double) LzMax));
   double Factor2;
   if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
     Factor2 = 1.0;
   else
-    Factor2 = sqrt (0.5 * LzMax );
+    Factor2 = sqrt (0.5 * LzMax);
   for (int x = 0; x < NbrPoints; ++x)
     {
       Value[0] = X;
@@ -254,7 +257,10 @@ int main(int argc, char** argv)
 	    Sum += PrecalculatedValues[Pos] * (Conj(TmpValue) * TmpValue);
 	    ++Pos;
 	  }
-      File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
+      if (ChordFlag == false)
+	File << (X * Factor2) << " " << Norm(Sum)  * Factor1 << endl;
+      else
+	File << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
       X += XInc;
     }
 
