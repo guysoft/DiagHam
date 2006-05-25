@@ -213,7 +213,7 @@ int main(int argc, char** argv)
   File.open(OutputNameCorr, ios::binary | ios::out);
   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
   if (DensityFlag == true)
-    Factor1 = M_PI * sqrt (((double) LzMax));
+    Factor1 = 1.0;//4.0 * M_PI;
   double Factor2;
   if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
     Factor2 = 1.0;

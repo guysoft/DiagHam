@@ -212,7 +212,8 @@ int main(int argc, char** argv)
 	  if (NBodyWeightFactors == 0)
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
-											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 0.0,
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
 											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
@@ -221,7 +222,8 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
-											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 0.0,
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 
+											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
 											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
