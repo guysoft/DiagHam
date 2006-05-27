@@ -84,6 +84,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
 
+  this->OneBodyTermFlag = true;
   this->NorthPoleImpurityPotential = northPoleImpurityPotential;
   this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;
@@ -190,6 +191,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
 
+  this->OneBodyTermFlag = true;
   this->NorthPoleImpurityPotential = northPoleImpurityPotential;
   this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;
@@ -261,6 +263,12 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
 
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian()
 {
+  if (this->OneBodyTermFlag == true)
+    {
+      delete[] this->OneBodyMValues;
+      delete[] this->OneBodyNValues;
+      delete[] this->OneBodyInteractionFactors;
+    }
 }
 
 // evaluate all interaction factors (including those arising from impurities)
@@ -269,99 +277,57 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::~ParticleOnSphereNBod
 void ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::EvaluateInteractionFactorsWithTwoImpurities()
 {
   this->EvaluateInteractionFactors();
-  if (this->SouthPoleImpurityPotential < 0.0)
-    this->NBodySign[1] *= -1.0;
-  this->NBodyFlags[1] = true;
-  int Shift = this->LandauLevel + 1;
-  FactorialCoefficient Coef;
-  ParticleOnSphereGenericLLFunctionBasis Basis (this->LzMax - (2 * this->LandauLevel),this-> LandauLevel);
+
+  this->NbrOneBodyInteractionFactors = 2;
+  this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
+  this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
+  this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
+  ParticleOnSphereGenericLLFunctionBasis Basis (this->LzMax - (2 * this->LandauLevel), this->LandauLevel);
   RealVector Value(2, true);
   Complex TmpValue;
- //  for (int i = 0; i <= this->LzMax; ++i)
-//     {
-//       Value[0] = 0.0;
-//       Basis.GetFunctionValue(Value, TmpValue, i);
-//       cout << TmpValue << " ";
-//       Value[0] = M_PI;
-//       Basis.GetFunctionValue(Value, TmpValue, i);
-//       cout << TmpValue << " ";     
-//     }
-//   cout << endl;
-  
-  this->NbrSortedIndicesPerSum[1] = new int [2];
-  this->SortedIndicesPerSum[1] = new int* [2];  
-  this->NBodyInteractionFactors[1] = new double* [2];
-  this->MinSumIndices[1] = 0;
-  this->MaxSumIndices[1] = 1;
-  this->NbrSortedIndicesPerSum[1][0] = 1;
-  this->SortedIndicesPerSum[1][0] = new int [1];
-  this->NBodyInteractionFactors[1][0] = new double[1];
-  this->SortedIndicesPerSum[1][0][0] = this->LandauLevel;
   Value[0] = M_PI;
   Basis.GetFunctionValue(Value, TmpValue, this->LandauLevel);
-  this->NBodyInteractionFactors[1][0][0] = sqrt (fabs(this->SouthPoleImpurityPotential)) * Norm(TmpValue);
-
-  this->NbrSortedIndicesPerSum[1][1] = 1;
-  this->SortedIndicesPerSum[1][1] = new int [1];
-  this->NBodyInteractionFactors[1][1] = new double[1];
-  this->SortedIndicesPerSum[1][1][0] = this->LzMax - this->LandauLevel;
+  this->OneBodyMValues[0] = this->LandauLevel;
+  this->OneBodyNValues[0] = this->LandauLevel;
+  this->OneBodyInteractionFactors[0] = -this->SouthPoleImpurityPotential * SqrNorm(TmpValue);
   Value[0] = 0.0;
   Basis.GetFunctionValue(Value, TmpValue, this->LzMax - this->LandauLevel);
-  this->NBodyInteractionFactors[1][1][0] = sqrt (fabs(this->NorthPoleImpurityPotential)) * Norm(TmpValue);
-
-
-//   for (int i = 0; i <= this->LandauLevel; ++i) 
-//     {
-//       this->NbrSortedIndicesPerSum[1][i] = 1;
-//       this->SortedIndicesPerSum[1][i] = new int [1];
-//       this->NBodyInteractionFactors[1][i] = new double[1];
-//       this->SortedIndicesPerSum[1][i][0] = this->LandauLevel - i;
-//       Coef.SetToOne();
-//       Coef.PartialFactorialMultiply(this->LandauLevel - i + 1,this->LandauLevel);      
-//       Coef.FactorialDivide(i);
-//       Coef.PartialFactorialMultiply(this->LzMax - this->LandauLevel + 1, this->LzMax + i - this->LandauLevel);      
-//       Coef.FactorialDivide(i);
-//       this->NBodyInteractionFactors[1][i][0] = sqrt (TmpFactor * Coef.GetNumericalValue());
-//       Value[0] = 0.0;
-//       Basis.GetFunctionValue(Value, TmpValue, this->LandauLevel - i);
-//       cout << sqrt (Coef.GetNumericalValue()) << " " << TmpValue << endl;
-
-
-//       this->NbrSortedIndicesPerSum[1][i + Shift] = 1;
-//       this->SortedIndicesPerSum[1][i + Shift] = new int [1];
-//       this->NBodyInteractionFactors[1][i + Shift] = new double[1];
-//       this->SortedIndicesPerSum[1][i + Shift][0] = this->LzMax - i;
-//       Coef.SetToOne();
-//       Coef.PartialFactorialMultiply(this->LandauLevel - i + 1,this->LandauLevel);      
-//       Coef.FactorialDivide(i);
-//       Coef.PartialFactorialMultiply(this->LzMax - this->LandauLevel + 1, this->LzMax - i);      
-//       Coef.FactorialDivide(this->LandauLevel - i);
-//       this->NBodyInteractionFactors[1][i + Shift][0] = sqrt (TmpFactor * Coef.GetNumericalValue());
-//       Value[0] = M_PI;
-//       Basis.GetFunctionValue(Value, TmpValue, this->LzMax - i);
-//       cout << sqrt (Coef.GetNumericalValue()) << " " << TmpValue << endl;
-// //      this->NBodyInteractionFactors[1][i + Shift][0] = this->NBodyInteractionFactors[1][i][0];
-//     }
+  this->OneBodyMValues[1] = this->LzMax - this->LandauLevel;
+  this->OneBodyNValues[1] = this->LzMax - this->LandauLevel;
+  this->OneBodyInteractionFactors[1] = -this->NorthPoleImpurityPotential * SqrNorm(TmpValue);  
 
 
 
+//   if (this->SouthPoleImpurityPotential < 0.0)
+//     this->NBodySign[1] *= 1.0;
+//   this->NBodyFlags[1] = true;
+//   int Shift = this->LandauLevel + 1;
+//   FactorialCoefficient Coef;
+//   ParticleOnSphereGenericLLFunctionBasis Basis (this->LzMax - (2 * this->LandauLevel),this-> LandauLevel);
+//   RealVector Value(2, true);
+//   Complex TmpValue;
 
-
-//   this->NbrSortedIndicesPerSum[1] = new int [this->LzMax + 1];
-//   this->SortedIndicesPerSum[1] = new int* [this->LzMax + 1];  
-//   this->NBodyInteractionFactors[1] = new double* [this->LzMax + 1];
+  
+//   this->NbrSortedIndicesPerSum[1] = new int [2];
+//   this->SortedIndicesPerSum[1] = new int* [2];  
+//   this->NBodyInteractionFactors[1] = new double* [2];
 //   this->MinSumIndices[1] = 0;
-//   this->MaxSumIndices[1] = this->LzMax;
+//   this->MaxSumIndices[1] = 1;
+//   this->NbrSortedIndicesPerSum[1][0] = 1;
+//   this->SortedIndicesPerSum[1][0] = new int [1];
+//   this->NBodyInteractionFactors[1][0] = new double[1];
+//   this->SortedIndicesPerSum[1][0][0] = this->LandauLevel;
+//   Value[0] = M_PI;
+//   Basis.GetFunctionValue(Value, TmpValue, this->LandauLevel);
+//   this->NBodyInteractionFactors[1][0][0] = sqrt (fabs(this->SouthPoleImpurityPotential)) * Norm(TmpValue);
 
-
-//   for (int i = 0; i <= this->LzMax; ++i) 
-//     {
-//       this->NbrSortedIndicesPerSum[1][i] = 1;
-//       this->SortedIndicesPerSum[1][i] = new int [1];
-//       this->NBodyInteractionFactors[1][i] = new double[1];
-//       this->SortedIndicesPerSum[1][i][0] = i;
-//       this->NBodyInteractionFactors[1][i][0] = sqrt((double) i);
-//     }
+//   this->NbrSortedIndicesPerSum[1][1] = 1;
+//   this->SortedIndicesPerSum[1][1] = new int [1];
+//   this->NBodyInteractionFactors[1][1] = new double[1];
+//   this->SortedIndicesPerSum[1][1][0] = this->LzMax - this->LandauLevel;
+//   Value[0] = 0.0;
+//   Basis.GetFunctionValue(Value, TmpValue, this->LzMax - this->LandauLevel);
+//   this->NBodyInteractionFactors[1][1][0] = sqrt (fabs(this->NorthPoleImpurityPotential)) * Norm(TmpValue);
 
 }
 
