@@ -12,4 +12,5 @@ XYReflexionSymmetricPeriodicSpectra.cc \
 CylinderInMagneticFieldSpectra.cc \
 CylinderQuantumDotSpectra.cc \
 HardBoxSpectra.cc \
-QuantumWellBFieldAbsorptionSpectra.cc
+QuantumWellBFieldAbsorptionSpectra.cc \
+QuantumWellBFieldEscapeProbability.cc

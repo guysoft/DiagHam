@@ -163,3 +163,34 @@ void AddString(char* s, char* s1, int n, char* s2)
   strcat (s, temp);
   strcat(s, s2);
 }
+
+// read spectrum raw data from a file
+// 
+// filename = name of  the file that conatins the spectrum (with optional relative/absolute path)
+// energies = array where energy values will be stored
+// nbrValues = number of energy values to retrieve from the file
+// return value = true if no error occured
+
+bool Spectra::ReadSpectrum(char* filename, double* energies, int nbrValues)
+{
+  ifstream File;
+  File.open(filename, ios::out);
+  if (!File.is_open())
+    {
+      cout << "error while opening file : " << filename << endl;
+      return false;
+    }
+  for (int j = 0; j < nbrValues; ++j)
+    {
+      if (File.tellg() < 0)
+	{
+	  cout << filename <<  " has to few eigenvalues" << endl;
+	  File.close();
+	  return false;
+	}
+      else
+	File >> energies[j];
+    }
+  File.close();
+  return true;  
+}
