@@ -108,14 +108,6 @@ class QuantumWellBFieldAbsorptionSpectra : public Spectra
   // zSize = system dimension in the z direction (in Angstrom unit)
   void ComputeOscillatorStrengthMatrix(double thetaPolarizationAngle, double phiPolarizationAngle, double zSize);
 
-  // read spectrum raw data from a file
-  // 
-  // filename = name of  the file that conatins the spectrum (with optional relative/absolute path)
-  // energies = array where energy values will be stored
-  // nbrValues = number of energy values to retrieve from the file
-  // return value = true if no error occured
-  bool ReadSpectrum(char* filename, double* energies, int nbrValues);
-
 };
 
 

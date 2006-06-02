@@ -58,16 +58,20 @@ using std::endl;
 // timeStep = time step value (in hbar/E units)
 // nbrTimeSteps = number of time steps
 // initialStateIndex = index of the initial state (-1 if probality has to evaluated for all possible states)
+// subbandSum =  true if it has to compute the probability to stay in the same subband that the initial state instead of the probability to stay in the initial state
+// logarithmicPlot = true if the -log of the probability has to be plotted instead of the probability
 
 QuantumWellBFieldEscapeProbability::QuantumWellBFieldEscapeProbability(int nbrFiles, int nbrStates, char** stateSpectrumFiles, char*** stateEigenstateFiles, 	  
-								       double timeStep, int nbrTimeSteps, int initialStateIndex)
+								       double timeStep, int nbrTimeSteps, int initialStateIndex, bool subbandSum, bool logarithmicPlot)
 
 {
   this->TimeStep = timeStep;
   this->NbrTimeSteps = nbrTimeSteps;
   this->NbrStates = nbrStates;
   this->InitialStateIndex = initialStateIndex;
-
+  this->LogarithmicPlotFlag = logarithmicPlot;
+  this->SubbandSumFlag = subbandSum;
+  
   double* TimeValues = new double [this->NbrTimeSteps];
   double tmp1 = 0.0; 
   for (int i = 0; i < this->NbrTimeSteps; ++i)
@@ -81,6 +85,7 @@ QuantumWellBFieldEscapeProbability::QuantumWellBFieldEscapeProbability(int nbrFi
   
   this->Probabilities = RealMatrix(this->NbrTimeSteps, this->NbrStates, true);
 
+//  nbrFiles = 1;
   for (int i = 0; i < nbrFiles; ++i)
     {
       cout << "evaluate contribution of " << stateSpectrumFiles[i] << endl;
@@ -120,19 +125,18 @@ void QuantumWellBFieldEscapeProbability::AddSample (int nbrStates, char* stateSp
      
   int Shift = 0;
   HermitianMatrix ReducedHamiltonian (nbrStates, true);
-  for (int n = 0; n < nbrStates; ++n)
+  for (int n = 0; n < TotalHilbertSpaceSize; ++n)
     {
       ComplexVector& TmpVector2 = TmpVectors[n];
       for (int i1 = 0; i1 < nbrStates; ++i1)
-	for (int i2 = 0; i2 < nbrStates; ++i2)
-	  ReducedHamiltonian.AddToMatrixElement(i1, i2, Energies[n] * Conj(TmpVector2[(2 * i1) + Shift]) * TmpVector2[(2 * i2) + Shift]);
+ 	for (int i2 = 0; i2 < nbrStates; ++i2)
+ 	  ReducedHamiltonian.AddToMatrixElement(i1, i2, Energies[n] * Conj(TmpVector2[(2 * i1) + Shift]) * TmpVector2[(2 * i2) + Shift]);
     }
   RealDiagonalMatrix DiagonalizedHamiltonian (ReducedHamiltonian.GetNbrRow());
   ComplexMatrix Eigenvectors(ReducedHamiltonian.GetNbrRow(), ReducedHamiltonian.GetNbrRow());
   ReducedHamiltonian.Diagonalize(DiagonalizedHamiltonian, Eigenvectors);
 
 
-  double* TmpCoefficients = new double [TotalHilbertSpaceSize];
   int n = 0;
   int Lim = nbrStates;
   if ((this->InitialStateIndex >= 0) && (this->InitialStateIndex < nbrStates))
@@ -140,33 +144,84 @@ void QuantumWellBFieldEscapeProbability::AddSample (int nbrStates, char* stateSp
       n = this->InitialStateIndex;
       Lim = this->InitialStateIndex + 1;
     }
-  for (; n < Lim; ++n)
+  if (this->SubbandSumFlag == false)
     {
-      ComplexVector& TmpVector3 = Eigenvectors[n];
-      for (int i = 0; i < TotalHilbertSpaceSize; ++i)
+      double* TmpCoefficients = new double [TotalHilbertSpaceSize];
+      for (; n < Lim; ++n)
 	{
-	  Complex Tmp = 0.0;
-	  ComplexVector& TmpVector2 = TmpVectors[i];
-	  for (int j = 0; j < nbrStates; ++j)
-	    Tmp += Conj(TmpVector2[(2 * j) + Shift]) * TmpVector3[j];
-	  TmpCoefficients[i] = SqrNorm(Tmp);
-	}
-
-      double Time = 0.0;
-      for (int t = 0; t < this->NbrTimeSteps; ++t)
-	{
-	  Complex Tmp = 0.0;
+	  ComplexVector& TmpVector3 = Eigenvectors[n];
 	  for (int i = 0; i < TotalHilbertSpaceSize; ++i)
 	    {
-	      Tmp.Re += TmpCoefficients[i] * cos (Time * Energies[i]);
-	      Tmp.Im += TmpCoefficients[i] * sin (Time * Energies[i]);
+	      Complex Tmp = 0.0;
+	      ComplexVector& TmpVector2 = TmpVectors[i];
+	      for (int j = 0; j < nbrStates; ++j)
+		Tmp += Conj(TmpVector2[(2 * j) + Shift]) * TmpVector3[j];
+	      TmpCoefficients[i] = SqrNorm(Tmp);
 	    }
-	  this->Probabilities(t, n) += SqrNorm(Tmp);
-	  Time += this->TimeStep;
+	  
+	  double Time = 0.0;
+	  for (int t = 0; t < this->NbrTimeSteps; ++t)
+	    {
+	      Complex Tmp = 0.0;
+	      for (int i = 0; i < TotalHilbertSpaceSize; ++i)
+		{
+		  Tmp.Re += TmpCoefficients[i] * cos (Time * Energies[i]);
+		  Tmp.Im += TmpCoefficients[i] * sin (Time * Energies[i]);
+		}
+	      this->Probabilities(t, n) += SqrNorm(Tmp);
+	      Time += this->TimeStep;
+	    }
 	}
+      delete[] TmpCoefficients;      
+    }
+  else
+    {
+      ComplexMatrix ProjectedScalarProducts(TotalHilbertSpaceSize, TotalHilbertSpaceSize, true);
+      for (int i = 0; i < TotalHilbertSpaceSize; ++i)
+	{
+	  ComplexVector& TmpVector2 = TmpVectors[i];
+	  Complex Tmp;
+	  for (int j = i; j < TotalHilbertSpaceSize; ++j)
+	    {
+	      ProjectedScalarProducts.SetMatrixElement(i, j, TmpVector2.PartialScalarProduct(TmpVectors[j], Shift, nbrStates, 2));	  
+	    }
+	}
+      Complex* TmpCoefficients = new Complex [TotalHilbertSpaceSize];
+      for (; n < Lim; ++n)
+	{
+	  ComplexVector& TmpVector3 = Eigenvectors[n];
+	  for (int i = 0; i < TotalHilbertSpaceSize; ++i)
+	    {
+	      Complex Tmp = 0.0;
+	      ComplexVector& TmpVector2 = TmpVectors[i];
+	      for (int j = 0; j < nbrStates; ++j)
+		Tmp += Conj(TmpVector2[(2 * j) + Shift]) * TmpVector3[j];
+	      TmpCoefficients[i] = Tmp;
+	    }
+	  
+	  double Time = 0.0;
+	  Complex Tmp2;
+	  for (int t = 0; t < this->NbrTimeSteps; ++t)
+	    {
+	      double Tmp = 0.0;
+	      for (int i = 0; i < TotalHilbertSpaceSize; ++i)
+		{
+		  Tmp += SqrNorm(TmpCoefficients[i]) * ProjectedScalarProducts[i][i].Re;
+		  for (int j = i + 1; j < TotalHilbertSpaceSize; ++j)
+		    {
+		      Tmp2 = ProjectedScalarProducts[j][i] * Conj(TmpCoefficients[i]) * (TmpCoefficients[j]);		      
+		      Tmp += 2.0 * cos (Time * (Energies[i] - Energies[j])) * Tmp2.Re;
+		      Tmp -= 2.0 * sin (Time * (Energies[i] - Energies[j])) * Tmp2.Im;
+		    }
+		}
+	      this->Probabilities(t, n) += Tmp;
+	      Time += this->TimeStep;
+	    }
+	}
+      delete[] TmpCoefficients;      
     }
 
-  delete[] TmpCoefficients;
+
   delete[] Energies;
   delete[] TmpVectors;
 }
@@ -184,11 +239,18 @@ bool QuantumWellBFieldEscapeProbability::WriteSpectra(char* fileName)
   for (int i = 0; i < this->PointNumber; ++i)
     {
       File << (*AxeX)[i] << '\t';
-      if (this->InitialStateIndex < 0)
-	for (int j = 0; j < NbrStates; ++j)
-	  File << '\t' <<  this->Probabilities(i, j);
+      if (this->LogarithmicPlotFlag == false)
+	if (this->InitialStateIndex < 0)
+	  for (int j = 0; j < NbrStates; ++j)
+	    File << '\t' <<  this->Probabilities(i, j);
+	else
+	  File << '\t' <<  this->Probabilities(i, this->InitialStateIndex);	
       else
-	File << '\t' <<  this->Probabilities(i, this->InitialStateIndex);	
+	if (this->InitialStateIndex < 0)
+	  for (int j = 0; j < NbrStates; ++j)
+	    File << '\t' <<  -log (this->Probabilities(i, j));
+	else
+	  File << '\t' <<  -log (this->Probabilities(i, this->InitialStateIndex));	
       File << endl;
     }
   File.close();

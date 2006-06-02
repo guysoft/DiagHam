@@ -45,11 +45,13 @@ int main(int argc, char** argv)
   (*InputOptionGroup) += new SingleIntegerOption('\n', "begin", "number of the first directory", 0);
   (*InputOptionGroup) += new SingleIntegerOption('\n', "end", "number of the last directory (0 if it has to be detected automatically)", 0);
   (*InputOptionGroup) += new SingleIntegerOption('n', "nbr-state", "number of initial states (0 if it has to be detected automatically)", 0);
+  (*InputOptionGroup) += new SingleIntegerOption('\n', "initial-index", "index of the initial state (-1 if probality has to evaluated for all possible states)", -1);
+  (*InputOptionGroup) += new BooleanOption('\n', "subband", "compute the probability to stay in the same subband that the initial state instead of the probability to stay in the initial state");
 
   (*PlotOptionGroup) += new SingleDoubleOption('t', "time-step", "time step (in hbar/E unit)", 0.5);
   (*PlotOptionGroup) += new SingleIntegerOption('\n', "nbr-step", "number of time steps", 10000);
-  (*PlotOptionGroup) += new SingleIntegerOption('\n', "initial-index", "index of the initial state (-1 if probality has to evaluated for all possible states)", -1);
   (*PlotOptionGroup) += new SingleStringOption('\n', "output", "name of the output file", "absorption.dat");
+  (*PlotOptionGroup) += new BooleanOption('\n', "log", "plot -log of the probability");
 
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
   (*MiscGroup) += new BooleanOption ('v', "verbose", "verbose mode", false);
@@ -142,7 +144,8 @@ int main(int argc, char** argv)
   if (ErrorFlag == false)
     {  
       QuantumWellBFieldEscapeProbability EscapeProbability(End - Begin + 1, NbrStates >> 1, StateMatchedSpectra, StateMatchedEigenvectors,
-							   TimeStep, NbrTimeSteps, InitialStateIndex);
+							   TimeStep, NbrTimeSteps, InitialStateIndex, ((BooleanOption*) Manager["subband"])->GetBoolean(),
+							   ((BooleanOption*) Manager["log"])->GetBoolean());
       EscapeProbability.WriteSpectra(OutputFile);    
     }
 

@@ -56,6 +56,11 @@ class QuantumWellBFieldEscapeProbability : public Spectra
   // array that contains the probability as a function of time for each possible state in the lowest Landau level
   RealMatrix Probabilities;
 
+  // flag to indicate if it has to compute the probability to stay in the same subband that the initial state instead of the probability to stay in the initial state
+  bool SubbandSumFlag;
+  // flag to indicate if the -log of the probability has to be plotted instead of the probability
+  bool LogarithmicPlotFlag;
+
  public:
   
   // constructor from a set of energy files
@@ -68,8 +73,11 @@ class QuantumWellBFieldEscapeProbability : public Spectra
   // timeStep = time step value (in hbar/E units)
   // nbrTimeSteps = number of time steps
   // initialStateIndex = index of the initial state (-1 if probality has to evaluated for all possible states)
+  // subbandSum =  true if it has to compute the probability to stay in the same subband that the initial state instead of the probability to stay in the initial state
+  // logarithmicPlot = true if the -log of the probability has to be plotted instead of the probability
   QuantumWellBFieldEscapeProbability(int nbrFiles, int nbrStates, char** stateSpectrumFiles, char*** stateEigenstateFiles, 	  
-				     double timeStep, int nbrTimeSteps, int initialStateIndex);
+				     double timeStep, int nbrTimeSteps, int initialStateIndex, 
+				     bool subbandSum = false, bool logarithmicPlot = false);
     
   
   // virtual method to write the spectrum in a file in ASCII mode
