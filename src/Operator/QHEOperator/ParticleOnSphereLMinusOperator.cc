@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of particle on sphere density-density operator           //
+//         class of particle on sphere lowering momentum L operator           //
 //                                                                            //
-//                        last modification : 10/12/2002                      //
+//                        last modification : 06/06/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,52 +29,72 @@
 
 
 #include "config.h"
-#include "Operator/QHEOperator/ParticleOnSphereDensityDensityOperator.h"
-#include "Output/MathematicaOutput.h"
+#include "Operator/QHEOperator/ParticleOnSphereLMinusOperator.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
 
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 // constructor from default datas
 //
-// particle = hilbert space associated to the particles
-// creationIndex1 = index of the leftmost creation operator
-// creationIndex2 = index of the rightmost creation operator
-// annihilationIndex1 = index of the leftmost annihilation operator
-// annihilationIndex2 = index of the rightmost annihilation operator
+// particle = hilbert space associated to the particles with totalLz  Lz momentum, target space has to be fixed to hilbert space totalLz - 1 Lz momentum
+// totalLz = momentum total value
+// lzMax = maximum Lz value reached by a fermion
 
-ParticleOnSphereDensityDensityOperator::ParticleOnSphereDensityDensityOperator(ParticleOnSphere* particle, int creationIndex1, int creationIndex2,
-									       int annihilationIndex1, int annihilationIndex2)
+ParticleOnSphereLMinusOperator::ParticleOnSphereLMinusOperator(ParticleOnSphere* particle, int totalLz, int lzMax)
 {
-  this->Particle= particle;
-  this->CreationIndex1 = creationIndex1;
-  this->CreationIndex2 = creationIndex2;
-  this->AnnihilationIndex1 = annihilationIndex1;
-  this->AnnihilationIndex2 = annihilationIndex2;
+  this->Particle = (ParticleOnSphere*) (particle->Clone());
+  this->TotalLz = totalLz;
+  this->LzMax = lzMax;
+  this->Coefficients = RealVector(this->LzMax + 1);
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      this->Coefficients[i] = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
+    }
+}
+
+// copy constructor
+//
+// oper = reference on the operator to copy
+ 
+ParticleOnSphereLMinusOperator::ParticleOnSphereLMinusOperator(const ParticleOnSphereLMinusOperator& oper)
+{
+  this->Particle = (ParticleOnSphere*) (oper.Particle->Clone());
+  this->TotalLz = oper.TotalLz;
+  this->LzMax = oper.LzMax;
+  this->Coefficients = oper.Coefficients;
 }
 
 // destructor
 //
 
-ParticleOnSphereDensityDensityOperator::~ParticleOnSphereDensityDensityOperator()
+ParticleOnSphereLMinusOperator::~ParticleOnSphereLMinusOperator()
 {
+  delete this->Particle;
 }
+  
   
 // clone operator without duplicating datas
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractOperator* ParticleOnSphereDensityDensityOperator::Clone ()
+AbstractOperator* ParticleOnSphereLMinusOperator::Clone ()
 {
-  return 0;
+  return new ParticleOnSphereLMinusOperator(*this);
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereDensityDensityOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereLMinusOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particle = (ParticleOnSphere*) hilbertSpace;
 }
@@ -83,7 +103,7 @@ void ParticleOnSphereDensityDensityOperator::SetHilbertSpace (AbstractHilbertSpa
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereDensityDensityOperator::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereLMinusOperator::GetHilbertSpace ()
 {
   return this->Particle;
 }
@@ -92,7 +112,7 @@ AbstractHilbertSpace* ParticleOnSphereDensityDensityOperator::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnSphereDensityDensityOperator::GetHilbertSpaceDimension ()
+int ParticleOnSphereLMinusOperator::GetHilbertSpaceDimension ()
 {
   return this->Particle->GetHilbertSpaceDimension();
 }
@@ -103,16 +123,25 @@ int ParticleOnSphereDensityDensityOperator::GetHilbertSpaceDimension ()
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereLMinusOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  double Coefficient = 0.0;
+  int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
   double Element = 0.0;
-  int Index;
+  int Index = 0;
+  double Coefficient = 0.0;
+  double Tmp;
   for (int i = 0; i < Dim; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+      Tmp = V2[i];
+      for (int j = 1; j <= this->LzMax; ++j)
+	{
+	  Index = this->Particle->AdA(i, j - 1, j, Coefficient);
+	  if (Index != TargetDim)
+	    {
+	      Element += V1[Index] * Tmp * Coefficient * this->Coefficients[j];		  
+	    }
+	}
     }
   return Complex(Element);
 }
@@ -123,7 +152,7 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, R
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereDensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex ParticleOnSphereLMinusOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
   return Complex();
 }
@@ -137,18 +166,30 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (ComplexVector& V1
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereDensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-								     int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereLMinusOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							     int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
-  int Index;
+  int Index = 0;
   double Coefficient = 0.0;
+  int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
+  double Tmp;
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      vDestination[Index] = vSource[i] * Coefficient;
+      vDestination[i] = 0.0;
+    }
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      Tmp = vSource[i];
+      for (int j = 1; j <= this->LzMax; ++j)
+	{
+	  Index = this->Particle->AdA(i, j - 1, j, Coefficient);
+	  if (Index != TargetDim)
+	    {
+	      vDestination[Index] += Tmp * Coefficient * this->Coefficients[j];		  
+	    }
+	}
     }
   return vDestination;
 }
   
-

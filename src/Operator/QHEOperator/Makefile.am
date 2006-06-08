@@ -7,4 +7,5 @@ ParticleOnSphereWithSpinDensityDensityOperator.cc \
 ParticleOnSphereDensityOperator.cc \
 ParticleOnDiskDensityOperator.cc \
 ParticleOnSphereNBodyOperator.cc \
-ParticleOnSphereSquareTotalMomentumOperator.cc
+ParticleOnSphereSquareTotalMomentumOperator.cc \
+ParticleOnSphereLMinusOperator.cc

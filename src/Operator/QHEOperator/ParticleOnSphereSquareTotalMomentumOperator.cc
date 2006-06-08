@@ -210,8 +210,8 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (ComplexVecto
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereSquareTotalMomentumOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-								  int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereSquareTotalMomentumOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+									  int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Index = 0;
@@ -267,19 +267,5 @@ RealVector& ParticleOnSphereSquareTotalMomentumOperator::Multiply(RealVector& vS
   return vDestination;
 }
   
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnSphereSquareTotalMomentumOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								     int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
 
 

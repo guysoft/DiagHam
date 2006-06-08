@@ -182,8 +182,8 @@ Complex ParticleOnSphereWithSpinDensityDensityOperator::MatrixElement (ComplexVe
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereWithSpinDensityDensityOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-							     int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+									     int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Index;
@@ -193,21 +193,6 @@ RealVector& ParticleOnSphereWithSpinDensityDensityOperator::Multiply(RealVector&
       Index = (Particle->*ptToAdAdAA)(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
       vDestination[Index] = sign * vSource[i] * Coefficient;
     }
-  return vDestination;
-}
-  
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnSphereWithSpinDensityDensityOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								int firstComponent, int nbrComponent)
-{
   return vDestination;
 }
 

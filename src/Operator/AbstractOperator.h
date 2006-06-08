@@ -34,12 +34,13 @@
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "Vector/RealVector.h"
 
 #include <iostream>
 
 
 class ComplexVector;
-class RealVector;
+//class RealVector;
 class Complex;
 class Matrix;
 class RealSymmetricMatrix;
@@ -138,8 +139,8 @@ class AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& Multiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent) = 0;
+  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
 
   // multiply a vector by the current operator and store result in another vector
   //
@@ -156,8 +157,8 @@ class AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent) = 0;
+  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					  int firstComponent, int nbrComponent);
 
   // Output Stream overload
   //

@@ -115,21 +115,9 @@ class ParticleOnSphereNBodyOperator : public AbstractOperator
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& Multiply(RealVector& vSource, RealVector& vDestination, 
-		       int firstComponent, int nbrComponent);
+  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+			       int firstComponent, int nbrComponent);
   
-  // multiply a vector by the current operator for a given range of indices 
-  // and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-			  int firstComponent, int nbrComponent);
-
-
 };
 
 #endif

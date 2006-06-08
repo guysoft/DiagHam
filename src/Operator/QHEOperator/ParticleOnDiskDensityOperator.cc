@@ -131,8 +131,8 @@ Complex ParticleOnDiskDensityOperator::MatrixElement (ComplexVector& V1, Complex
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnDiskDensityOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-						      int firstComponent, int nbrComponent)
+RealVector& ParticleOnDiskDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							    int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   for (int i = firstComponent; i < Last; ++i)
@@ -141,19 +141,5 @@ RealVector& ParticleOnDiskDensityOperator::Multiply(RealVector& vSource, RealVec
     }
   return vDestination;
 }
-  
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnDiskDensityOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						       int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
 

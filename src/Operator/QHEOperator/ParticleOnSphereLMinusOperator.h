@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of particle on disk density operator                //
+//         class of particle on sphere lowering momentum L operator           //
 //                                                                            //
-//                        last modification : 04/03/2006                      //
+//                        last modification : 06/06/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,43 +28,50 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONDISKDENSITYOPERATOR_H
-#define PARTICLEONDISKDENSITYOPERATOR_H
+#ifndef PARTICLEONSPHERELMINUSOPERATOR_H
+#define PARTICLEONSPHERELMINUSOPERATOR_H
 
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Operator/AbstractOperator.h"
-#include "HilbertSpace/QHEHilbertSpace/ParticleOnDisk.h"
-
-#include <iostream>
-
-
-class MathematicaOutput;
+#include "HilbertSpace/QHEHilbertSpace/ParticleOnSphere.h"
+#include "Vector/RealVector.h"
 
 
-class ParticleOnDiskDensityOperator : public AbstractOperator
+class ParticleOnSphereLMinusOperator : public AbstractOperator
 {
 
  protected:
 
-  // hilbert space associated to the particles
-  ParticleOnDisk* Particle;
-  
-  // index attached to the a+_i a_i
-  int OperatorIndex;
-  
+  // hilbert space associated to the particles with totalLz  Lz momentum, target space has to be fixed to hilbert space totalLz - 1 Lz momentum
+  ParticleOnSphere* Particle;
+
+  // momentum total value
+  int TotalLz;
+  // maximum Lz value reached by a particle
+  int LzMax;
+
+  // vector where all coefficents that come from the L- operator are stored
+  RealVector Coefficients;
+
  public:
   
   // constructor from default datas
   //
-  // particle = hilbert space associated to the particles
-  // index = index of the density operator
-  ParticleOnDiskDensityOperator(ParticleOnDisk* particle, int index);
+  // particle = hilbert space associated to the particles with totalLz  Lz momentum, target space has to be fixed to hilbert space totalLz - 1 Lz momentum
+  // totalLz = momentum total value of the source hilbert space associated
+  // lzMax = maximum Lz value reached by a fermion
+  ParticleOnSphereLMinusOperator(ParticleOnSphere* particle, int totalLz, int lzMax);
+
+  // copy constructor
+  //
+  // oper = reference on the operator to copy
+  ParticleOnSphereLMinusOperator(const ParticleOnSphereLMinusOperator& oper);
 
   // destructor
   //
-  ~ParticleOnDiskDensityOperator();
+  ~ParticleOnSphereLMinusOperator();
   
   // clone operator without duplicating datas
   //

@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
   (*PlotOptionGroup) += new SingleDoubleOption('\n', "min", "lower limit of the spectrum (in meV unit)", 0.0);
   (*PlotOptionGroup) += new SingleDoubleOption('\n', "max", "upper limit of the spectrum (in meV unit)", 0.0);
-  (*PlotOptionGroup) += new SingleDoubleOption('t', "temperature", "temperature (in Kelvin unit)", 10.0);
+  (*PlotOptionGroup) += new SingleDoubleOption('t', "temperature", "temperature (in Kelvin unit, any negative value for infinite temperature)", -1.0);
   (*PlotOptionGroup) += new SingleDoubleOption('g', "gamma", "full width at half maximum of each Lorentzian peak (in meV unit)", 0.01);
   (*PlotOptionGroup) += new SingleDoubleOption('\n', "step", "length of each discretized step (in meV unit) in the spectrum", 2e-4);
   (*PlotOptionGroup) += new SingleStringOption('\n', "output", "name of the output file", "absorption.dat");
@@ -92,6 +92,8 @@ int main(int argc, char** argv)
   double Max = ((SingleDoubleOption*) Manager["max"])->GetDouble();
   double Gamma = ((SingleDoubleOption*) Manager["gamma"])->GetDouble();
   double Beta =  ME_KB / ((SingleDoubleOption*) Manager["temperature"])->GetDouble();
+  if (Beta < 0.0)
+    Beta = 0.0;
   double Step = ((SingleDoubleOption*) Manager["step"])->GetDouble();
   double ZSize = ((SingleDoubleOption*) Manager["z-size"])->GetDouble();
   char* OutputFile = ((SingleStringOption*) Manager["output"])->GetString();

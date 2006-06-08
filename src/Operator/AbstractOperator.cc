@@ -134,9 +134,23 @@ Matrix* AbstractOperator::GetOperator ()
 
 RealVector& AbstractOperator::Multiply(RealVector& vSource, RealVector& vDestination)
 {
-  return this->Multiply(vSource, vDestination, 0, vSource.GetVectorDimension());
+  return this->LowLevelMultiply(vSource, vDestination, 0, vSource.GetVectorDimension());
 }
    
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
+{
+  return vDestination;
+}
 
 // multiply a vector by the current operator and store result in another vector
 //
@@ -146,7 +160,21 @@ RealVector& AbstractOperator::Multiply(RealVector& vSource, RealVector& vDestina
 
 ComplexVector& AbstractOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination)
 {
-  return this->Multiply(vSource, vDestination, 0, vSource.GetVectorDimension());
+  return this->LowLevelMultiply(vSource, vDestination, 0, vSource.GetVectorDimension());
+}
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{
+  return vDestination;
 }
 
 // Output Stream overload

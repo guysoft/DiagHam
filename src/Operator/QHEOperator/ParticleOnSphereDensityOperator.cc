@@ -160,8 +160,8 @@ Complex ParticleOnSphereDensityOperator::MatrixElement (ComplexVector& V1, Compl
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereDensityOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-						      int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							      int firstComponent, int nbrComponent)
 {
   if (this->OperatorIndexDagger == this->OperatorIndex)
     {
@@ -174,18 +174,5 @@ RealVector& ParticleOnSphereDensityOperator::Multiply(RealVector& vSource, RealV
   return vDestination;
 }
   
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnSphereDensityOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
 

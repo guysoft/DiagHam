@@ -179,17 +179,6 @@ Complex PeriodicAnisotropicMagnetizationOperator::MatrixElement (ComplexVector& 
   return Complex(x, y);
 }
 
-// multiply a vector by the current operator and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& PeriodicAnisotropicMagnetizationOperator::Multiply(RealVector& vSource, RealVector& vDestination)
-{
-  return vDestination;
-}
- 
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //
@@ -199,112 +188,8 @@ RealVector& PeriodicAnisotropicMagnetizationOperator::Multiply(RealVector& vSour
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& PeriodicAnisotropicMagnetizationOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-							       int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}							       
-
-// multiply a vector by the current operator and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vector where result has been stored
-
-ComplexVector& PeriodicAnisotropicMagnetizationOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  double coef;
-  int pos;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double TmpCoef1;
-  double TmpCoef2;
-  TmpCoef1 = this->SzFactor[0];
-  for (int i = 0; i < dim; ++i)
-    {	 	    
-      pos = this->Chain->Szi(0, i, coef);
-      if (pos != dim)
-	{
-	  coef *= TmpCoef1;
-	  vDestination.Re(pos) = coef * vSource.Re(i);
-	  vDestination.Im(pos) = coef * vSource.Im(i);
-	}
-      else
-	{
-	  vDestination.Re(pos) = 0;
-	  vDestination.Im(pos) = 0;
-	}
-    }
-  if ((this->SpFactorRe[0] != 0) || (this->SpFactorIm[0] != 0))
-    {
-      TmpCoef1 = this->SpFactorRe[0];
-      TmpCoef2 = this->SpFactorIm[0];
-      for (int i = 0; i < dim; ++i)
-	{	 	    
-	  pos = this->Chain->Spi(0, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination.Re(pos) += coef * (vSource.Re(i) * TmpCoef1 - vSource.Im(i) * TmpCoef2);
-	      vDestination.Im(pos) += coef * (vSource.Re(i) * TmpCoef2 + vSource.Im(i) * TmpCoef1);
-	    }
-	  pos = this->Chain->Smi(0, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination.Re(pos) += coef * (vSource.Re(i) * TmpCoef1 + vSource.Im(i) * TmpCoef2);
-	      vDestination.Im(pos) += coef * (vSource.Im(i) * TmpCoef1 - vSource.Re(i) * TmpCoef2);
-	    }
-	}
-    }
-  for (int j = 1; j < this->NbrSpin; ++j)
-    {
-      if (this->SzFactor[j] != 0)
-	{
-	  TmpCoef1 = this->SzFactor[j];
-	  for (int i = 0; i < dim; ++i)
-	    {	 	    
-	      pos = this->Chain->Szi(j, i, coef);
-	      if (pos != dim)
-		{
-		  coef *= TmpCoef1;
-		  vDestination.Re(pos) = coef * vSource.Re(i);
-		  vDestination.Im(pos) = coef * vSource.Im(i);
-		}
-	    }
-	  if ((this->SpFactorRe[j] != 0) || (this->SpFactorIm[j] != 0))
-	    {
-	      TmpCoef1 = this->SpFactorRe[j];
-	      TmpCoef2 = this->SpFactorIm[j];
-	      for (int i = 0; i < dim; ++i)
-		{	 	    
-		  pos = this->Chain->Spi(j, i, coef);
-		  if (pos != dim)
-		    {
-		      vDestination.Re(pos) += coef * (vSource.Re(i) * TmpCoef1 - vSource.Im(i) * TmpCoef2);
-		      vDestination.Im(pos) += coef * (vSource.Re(i) * TmpCoef2 + vSource.Im(i) * TmpCoef1);
-		    }
-		  pos = this->Chain->Smi(j, i, coef);
-		  if (pos != dim)
-		    {
-		      vDestination.Re(pos) += coef * (vSource.Re(i) * TmpCoef1 + vSource.Im(i) * TmpCoef2);
-		      vDestination.Im(pos) += coef * (vSource.Im(i) * TmpCoef1 - vSource.Re(i) * TmpCoef2);
-		    }
-		}
-	    }
-	}
-    }
-  return vDestination;
-}
-
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& PeriodicAnisotropicMagnetizationOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								  int firstComponent, int nbrComponent)
+ComplexVector& PeriodicAnisotropicMagnetizationOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									  int firstComponent, int nbrComponent)
 {
   double coef;
   int pos;

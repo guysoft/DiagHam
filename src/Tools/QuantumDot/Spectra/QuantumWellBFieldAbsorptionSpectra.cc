@@ -147,7 +147,7 @@ void QuantumWellBFieldAbsorptionSpectra::AddSample (int nbrInitialStates, char* 
     {
       TmpFinalVector.ReadVector(finalEigenstateFileNames[i]);   
       TmpInitialVector2.Multiply(this->OscillatorStrength, TmpFinalVector);
-      Tmp2 = Factor;// * exp (-this->Beta * FinalEnergies[i]);
+      Tmp2 = Factor * exp (-this->Beta * FinalEnergies[i]);
       for (int j = 0; j < nbrInitialStates; ++j)
 	if (FinalEnergies[i] > InitialEnergies[j])
 	  {

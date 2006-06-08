@@ -124,17 +124,6 @@ Complex ParticlePolarizationOperator::MatrixElement (ComplexVector& V1, ComplexV
   return Complex();
 }
 
-// multiply a vector by the current operator and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& ParticlePolarizationOperator::Multiply(RealVector& vSource, RealVector& vDestination)
-{
-  return this->Multiply(vSource, vDestination, 0, this->Particle->GetHilbertSpaceDimension());
-}
- 
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //
@@ -144,8 +133,8 @@ RealVector& ParticlePolarizationOperator::Multiply(RealVector& vSource, RealVect
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticlePolarizationOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-						   int firstComponent, int nbrComponent)
+RealVector& ParticlePolarizationOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							   int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   double Factor = 2.0 / ((double) this->NbrParticle);
@@ -157,32 +146,6 @@ RealVector& ParticlePolarizationOperator::Multiply(RealVector& vSource, RealVect
     }
   return vDestination;
 }							       
-
-// multiply a vector by the current operator and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticlePolarizationOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  return vDestination;
-}
-
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticlePolarizationOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						      int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
 
 // Output Stream overload
 //

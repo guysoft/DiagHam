@@ -160,8 +160,8 @@ Complex ParticleOnSphereNBodyOperator::MatrixElement (ComplexVector& V1, Complex
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereNBodyOperator::Multiply(RealVector& vSource, RealVector& vDestination, 
-						    int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereNBodyOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+							    int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Index;
@@ -171,21 +171,6 @@ RealVector& ParticleOnSphereNBodyOperator::Multiply(RealVector& vSource, RealVec
       Index = this->Particle->ProdAdProdA(i, this->CreationIndices, this->AnnihilationIndices, this->NbrNBody, Coefficient);
       vDestination[Index] = vSource[i] * Coefficient;
     }
-  return vDestination;
-}
-  
-// multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnSphereNBodyOperator::Multiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						       int firstComponent, int nbrComponent)
-{
   return vDestination;
 }
 

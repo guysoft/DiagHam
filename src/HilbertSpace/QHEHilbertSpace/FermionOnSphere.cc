@@ -145,6 +145,10 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
+  if (this->TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -213,6 +217,15 @@ AbstractHilbertSpace* FermionOnSphere::ExtractSubspace (AbstractQuantumNumber& q
 void FermionOnSphere::SetTargetSpace(ParticleOnSphere* targetSpace)
 {
   this->TargetSpace = (FermionOnSphere*) targetSpace;
+}
+
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+
+int FermionOnSphere::GetTargetHilbertSpaceDimension()
+{
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
