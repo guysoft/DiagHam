@@ -8,9 +8,11 @@ my $MainDirectory = ".";
 my $PngFlag = 0;
 my $PdfFlag = 0;
 my $PsFlag = 0;
+my $Temperature = -1.0;
 my $BinaryDirectory = "/home/regnault/development/Physics/DiagHam/build/src/Tools/QuantumDot/Analysis";
 
-my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag, "bindir:s" => \$BinaryDirectory);
+my $Result = GetOptions ("directory:s" => \$MainDirectory, "png" => \$PngFlag, "pdf" => \$PdfFlag, "ps" => \$PsFlag, "bindir:s" => \$BinaryDirectory,
+			 "temperature:s" => \$Temperature);
 
 if (!(-d $MainDirectory))
   {
@@ -32,7 +34,13 @@ my %InitialDirectories;
 my %FinalDirectories;
 &GetBFieldDirectories ($FinalDirectory, \%FinalDirectories);
 
-
+my $TemperatureCaption = "";
+my $TemperatureSuffix = "";
+if ($Temperature > 0)
+  {
+    $TemperatureCaption = " T=".$Temperature."K ";
+    $TemperatureSuffix = "_t".$Temperature;
+  }
 my $BField;
 my $TmpDirectory1;
 my $TmpDirectory2;
@@ -46,13 +54,13 @@ foreach $BField (@TmpBFileds)
 	print "parsing B=".$BField."T :\n";
 	my $InitialDOS = "initialdos".$BField.".dat";
         my $FinalDOS = "finaldos".$BField.".dat";
-	my $Absorption = "absorption".$BField.".dat";
+	my $Absorption = "absorption".$BField.$TemperatureSuffix.".dat";
 	my $Input = sprintf("%.6f", $BField);
 	my $Command = $BinaryDirectory."/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$TmpDirectory1."/run_ --input eigenvalues".$Input.". --output ".$InitialDOS;
 	system($Command);
 	$Command = $BinaryDirectory."/SumDOS2 --gamma 0.2 --min 0 --max 250 --step 0.1 --directory ".$FinalDirectories{$BField}."/run_ --input eigenvalues".$Input.". --output ".$FinalDOS;
         system($Command);
-	$Command = $BinaryDirectory."/AbsorptionInQuantumWellBField --gamma 0.2 --min 0 --max 250 --step 0.1 --initial-dir ".$TmpDirectory1."/run_ --final-dir ".$FinalDirectories{$BField}."/run_ --initial-input eigenvalues".$Input.". -z 125.6 --output ".$Absorption;
+	$Command = $BinaryDirectory."/AbsorptionInQuantumWellBField --gamma 0.2 --min 0 --max 250 --step 0.1 --initial-dir ".$TmpDirectory1."/run_ --final-dir ".$FinalDirectories{$BField}."/run_ --initial-input eigenvalues".$Input.". -z 125.6 --output ".$Absorption. " --temperature ".$Temperature;
 	system($Command);
         $Command = $BinaryDirectory."/EvaluateBroadening --half-height 0.36787944 ".$Absorption;
 	$BroadeningOuptut .= "B = ".$BField." T \n";
@@ -61,25 +69,25 @@ foreach $BField (@TmpBFileds)
           {
             &PlotDOS($InitialDOS, "initial B=".$BField."T", "DOS", 0, 250, "ps");
             &PlotDOS($FinalDOS, "final B=".$BField."T", "DOS", 0, 250, "ps");
-	    &PlotDOS($Absorption, "B=".$BField."T", "absorption (a.u.)", 100, 200, "ps");
+	    &PlotDOS($Absorption, "B=".$BField."T".$TemperatureCaption, "absorption (a.u.)", 100, 200, "ps");
           }
 	if ($PngFlag == 1)
 	  {
 	    &PlotDOS($InitialDOS, "initial B=".$BField."T", "DOS", 0, 250, "png");
             &PlotDOS($FinalDOS, "final B=".$BField."T", "DOS", 0, 250, "png");
-	    &PlotDOS($Absorption, "B=".$BField."T", "absorption (a.u.)", 100, 200, "png");
+	    &PlotDOS($Absorption, "B=".$BField."T".$TemperatureCaption, "absorption (a.u.)", 100, 200, "png");
 	  }
 	if ($PdfFlag == 1)
 	  {
             &PlotDOS($InitialDOS, "initial B=".$BField."T", "DOS", 0, 250, "pdf");
             &PlotDOS($FinalDOS, "final B=".$BField."T", "DOS", 0, 250, "pdf");
-	    &PlotDOS($Absorption, "B=".$BField."T", "absorption (a.u.)", 100, 200, "pdf");
+	    &PlotDOS($Absorption, "B=".$BField."T".$TemperatureCaption, "absorption (a.u.)", 100, 200, "pdf");
           }
       }
   }
-unless (open(OUTFILE, ">broadening.log"))
+unless (open(OUTFILE, ">broadening".$TemperatureSuffix.".log"))
   {
-    die ("can't create file broadening.log\n");
+    die ("can't create file broadening".$TemperatureSuffix.".log\n");
   }
 print OUTFILE $BroadeningOuptut;
 close (OUTFILE);

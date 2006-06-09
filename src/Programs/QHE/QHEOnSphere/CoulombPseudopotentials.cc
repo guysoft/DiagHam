@@ -179,7 +179,7 @@ double* EvaluateOneBodyPotentials(int nbrFlux, int landauLevel, double northPole
   int MaxMomentum = nbrFlux + (landauLevel << 1);
   double* OneBodyPotentials = new double [MaxMomentum + 1];
   for (int i = 0; i <= MaxMomentum; ++i)
-    OneBodyPotentials[i] = 0.0;
+   OneBodyPotentials[i] = 0.0;
   ParticleOnSphereGenericLLFunctionBasis Basis (nbrFlux, landauLevel);
   RealVector Value(2, true);
   Complex TmpValue;

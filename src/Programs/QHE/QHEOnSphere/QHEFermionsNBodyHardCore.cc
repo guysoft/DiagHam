@@ -151,8 +151,8 @@ int main(int argc, char** argv)
   if (L < -Max)
     L = -Max;
   else
-  if (L > Max)
-    L = Max;
+    if (L > Max)
+      L = Max;
   if ((abs(Max) & 1) != (abs(InitialLz) & 1))
     L += 1;
   if (GroundFlag == true)

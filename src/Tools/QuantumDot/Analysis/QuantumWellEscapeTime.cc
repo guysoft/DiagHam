@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  cout << Begin << " " << End << endl;
+  cout << "found " << (End - Begin + 1) << " samples with " << NbrStates << " states each" << endl;
   if (ErrorFlag == false)
     {  
       QuantumWellBFieldEscapeProbability EscapeProbability(End - Begin + 1, NbrStates >> 1, StateMatchedSpectra, StateMatchedEigenvectors,

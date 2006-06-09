@@ -78,11 +78,6 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
   bool InverseLzFlag = false;
-  if (Lz < 0)
-    {
-      InverseLzFlag = true;
-      Lz *= -1;
-    }
   int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool DensityFlag = ((BooleanOption*) Manager["density"])->GetBoolean();

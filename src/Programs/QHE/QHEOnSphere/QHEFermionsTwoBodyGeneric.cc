@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
@@ -153,15 +153,14 @@ int main(int argc, char** argv)
 
   int Max = ((LzMax - NbrFermions + 1) * NbrFermions);
 
-  int  L = 0;
-  if ((abs(Max) & 1) != 0)
-     L = 1;
-  if (InitialLz >= 0)
-    {
-      L = InitialLz;
-      if ((abs(Max) & 1) != (InitialLz & 1))
-	L += 1;
-    }
+  int  L = InitialLz;
+  if (L < -Max)
+    L = -Max;
+  else
+    if (L > Max)
+      L = Max;
+  if ((abs(Max) & 1) != (abs(InitialLz) & 1))
+    L += 1;
   if (GroundFlag == true)
       Max = L;
   else

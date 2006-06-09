@@ -153,7 +153,7 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
   this->OneBodyTermFlag = true;
   this->OneBodyPotentials = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
-    this->OneBodyPotentials[i] = oneBodyPotentials[this->LzMax - i];
+    this->OneBodyPotentials[i] = oneBodyPotentials[i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -379,7 +379,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
       cout << "nbr interaction = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
-      double Factor = - 4.0 / sqrt (0.5 * ((double) this->LzMax));
+      double Factor = - 4.0;// / sqrt (0.5 * ((double) this->LzMax));
       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  {
@@ -525,6 +525,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 	      {
 		this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
 		this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = i;
+		cout << this->OneBodyPotentials[i] << endl;
 		this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->OneBodyPotentials[i] * Sign;
 		++this->NbrOneBodyInteractionFactors;
 	      }	  
