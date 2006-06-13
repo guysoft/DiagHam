@@ -141,7 +141,7 @@ sub CreatePostScript
     my $TmpFileName = "tmp".time().".p";
     my $OutputFile = $FileName;
     my $MaxL = $OutputFile;
-    $MaxL =~ s/^.*\_l\_(\d*).*$/$1/;
+    $MaxL =~ s/^.*\_lz\_(\d*).*$/$1/;
     my $N = $OutputFile;;
     $N =~ s/^.*\_n\_(\d*).*$/$1/;
     my $Title = "N = ".$N;
