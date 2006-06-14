@@ -247,6 +247,8 @@ bool FindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, i
 	{
 	  StrNbrParticles += 4;
 	  int SizeString = 0;
+	  if (StrNbrParticles[SizeString] == '-')
+	    ++SizeString;
 	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 		 && (StrNbrParticles[SizeString] <= '9'))
 	    ++SizeString;
