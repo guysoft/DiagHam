@@ -1,6 +1,6 @@
-SUBDIRS=QHEOnSphere QHEOnDisk
+SUBDIRS=QHEOnSphere QHEOnDisk QHEOnTorus
 
-bin_PROGRAMS=QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaOverlap QHEBosonsDipolar QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsV3 QHEBosonsV2 QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation QHEFermionsLaplacianDelta QHEFermionsLaplacianDeltaOverlap QHEFermionsDipolar QHEBosonsTorusWithTranslations LzToL 
+bin_PROGRAMS=QHEFermions QHEBosons QHEFermionsTorus QHEFermionsCircle ApproximateQHE QHEFermionsTorusWithSpin QHEBosonsDelta QHEBosonsDeltaOverlap QHEBosonsDipolar QHEBosonsDeltaGround QHEBosonsCoulomb QHEFermionsCoulomb QHEFermionsV3 QHEBosonsV2 QHEFermionsTorusDMRG GetBosonsDimension QHEFermionsTorusWithTranslation QHEFermionsLaplacianDelta QHEFermionsLaplacianDeltaOverlap QHEFermionsDipolar QHEBosonsTorusWithTranslations
 
 GetBosonsDimension_SOURCES=GetBosonsDimension.cc
 
@@ -43,8 +43,6 @@ ApproximateQHE_SOURCES=ApproximateQHE.cc
 QHEFermionsTorusWithTranslation_SOURCES=QHEFermionsTorusWithTranslation.cc
 
 QHEBosonsTorusWithTranslations_SOURCES=QHEBosonsTorusWithTranslations.cc
-
-LzToL_SOURCES=LzToL.cc
 
 
 GetBosonsDimension_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Architecture/ArchitectureOperation/QHEArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/src/Hamiltonian/QHEHamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/HilbertSpace/QHEHilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/QuantumNumber/SpinQuantumNumber/libSpinQuantumNumber.a $(top_builddir)/src/QuantumNumber/QHEQuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/src/FunctionBasis/QHEFunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/src/MainTask/QHEMainTask/libQHEMainTask.a
