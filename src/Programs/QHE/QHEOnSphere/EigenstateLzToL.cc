@@ -20,6 +20,7 @@
 #include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Tools/QHE/QHESpectrum/QHEOnSphereLzSortedSpectrum.h"
+#include "Tools/QHE/QHEFiles/QHEOnSphereFileTools.h"
 
 #include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
@@ -46,15 +47,6 @@ using std::endl;
 // lError = allowed error on L determination, if relative error between <L> and int(<L>) is greater than lError, no  L orthonormal eigenstates van be extracted
 // vectorNames = array that contains file name of each vectors (used to identify vector in error message, 0 if vector index has to be used instead)
 void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int* subspaceSize, int* subspacePositions, double lError, char** vectorNames = 0);
-
-// try to guess system information from file name
-//
-// filename = file name
-// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
-// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
-// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
-// return value = true if no error occured
-bool FindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, bool& statistics);
 
 
 int main(int argc, char** argv)
@@ -101,7 +93,7 @@ int main(int argc, char** argv)
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
-  if (FindSystemInfoFromFileName(((SingleStringOption*) Manager["file-prefix"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
+  if (QHEOnSphereFindSystemInfoFromFileName(((SingleStringOption*) Manager["file-prefix"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
     {
       return -1;
     }
@@ -323,90 +315,3 @@ void LSortBasis(RealMatrix& vectors, AbstractOperator* oper, int totalMaxLz, int
     }
 }
 
-// try to guess system information from file name
-//
-// filename = file name
-// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
-// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
-// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
-// return value = true if no error occured
- 
-bool FindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, bool& statistics)
-{
-  char* StrNbrParticles;
-  if (nbrParticles == 0)
-    {
-      StrNbrParticles = strstr(filename, "_n_");
-      if (StrNbrParticles != 0)
-	{
-	  StrNbrParticles += 3;
-	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
-	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
-	    {
-	      StrNbrParticles[SizeString] = '\0';
-	      nbrParticles = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '_';
-	      StrNbrParticles += SizeString;
-	    }
-	  else
-	    StrNbrParticles = 0;
-	}
-      if (StrNbrParticles == 0)
-	{
-	  cout << "can't guess number of particles from file name " << filename << endl
-	       << "use --nbr-particles option" << endl;
-	  return false;            
-	}
-    }
-  if (lzMax == 0)
-    {
-      StrNbrParticles = strstr(filename, "_2s_");
-      if (StrNbrParticles != 0)
-	{
-	  StrNbrParticles += 4;
-	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
-	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
-	    {
-	      StrNbrParticles[SizeString] = '\0';
-	      lzMax = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '_';
-	      StrNbrParticles += SizeString;
-	    }
-	  else
-	    StrNbrParticles = 0;
-	}
-      if (StrNbrParticles == 0)
-	{
-	  cout << "can't guess maximum momentum from file name " << filename << endl
-	       << "use --lzmax option" << endl;
-	  return false;            
-	}
-    }
-  if (statistics == true)
-    {
-      if (strstr(filename, "fermion") == 0)
-	{
-	  if (strstr(filename, "boson") == 0)
-	    {
-	      cout << "can't guess particle statistics from file name " << filename << endl
-		   << "use --statistics option" << endl;
-	      return false;	  
-	    }
-	  else
-	    {
-	      statistics = false;
-	    }
-	}
-      else
-	{
-	  statistics = true;
-	}
-    }
-  return true;
-}
