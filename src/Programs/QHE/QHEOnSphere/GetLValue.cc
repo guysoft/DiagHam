@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHENBodyQuasiHoleOverlap -h" << endl;
+      cout << "see man page for option syntax or type GetLValue -h" << endl;
       return -1;
     }
   
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
   if(((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
-      cout << "no input state" << endl << "see man page for option syntax or type QHENBodyQuasiHoleOverlap -h" << endl;
+      cout << "no input state" << endl << "see man page for option syntax or type GetLValue -h" << endl;
       return -1;
     }
 

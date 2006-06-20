@@ -165,5 +165,6 @@ bool QHEOnSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticl
 	  return false;            
 	}
     }
+  return true;
 }
 
