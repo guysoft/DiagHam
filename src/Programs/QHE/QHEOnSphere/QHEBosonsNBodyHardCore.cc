@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
   (*SystemGroup) += new  SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
       if (NBodyWeightFactors == 0)
 	{
 	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
+								     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 								     Architecture.GetArchitecture(), 
 								     Memory, DiskCacheFlag,
 								     LoadPrecalculationFileName);
@@ -170,6 +172,7 @@ int main(int argc, char** argv)
       else
 	{
 	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
+								     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 								     Architecture.GetArchitecture(), 
 								     Memory, DiskCacheFlag,
 								     LoadPrecalculationFileName);

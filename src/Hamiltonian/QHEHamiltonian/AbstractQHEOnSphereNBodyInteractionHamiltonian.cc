@@ -35,6 +35,7 @@
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -415,6 +416,8 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	  
 	}
     }
+  if (this->L2Operator != 0)
+    this->L2Operator->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
   return vDestination;
 }
 
@@ -853,6 +856,9 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 	    }
 	}
     }
+  if (this->L2Operator != 0)
+    for (int l = 0; l < nbrVectors; ++l)
+      this->L2Operator->LowLevelAddMultiply(vSources[l], vDestinations[l], firstComponent, nbrComponent);
   return vDestinations;
 }
 

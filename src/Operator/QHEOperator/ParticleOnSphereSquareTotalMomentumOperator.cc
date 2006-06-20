@@ -45,22 +45,25 @@ using std::endl;
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// totalLz = momentum total value
 // lzMax = maximum Lz value reached by a fermion
+// factor = multiplicative factor in front of the L^2 operator
+// memory = amount of memory (in bytes) that can be used for precalculations (none if memory < 0)
 
-ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentumOperator(ParticleOnSphere* particle, int totalLz, int lzMax)
+ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentumOperator(ParticleOnSphere* particle, int lzMax, double factor, long memory)
 {
   this->Particle = (ParticleOnSphere*) (particle->Clone());
-  this->TotalLz = totalLz;
   this->LzMax = lzMax;
-  this->Coefficients = RealMatrix(this->LzMax + 1, this->LzMax + 1);
-  this->Shift = 0.25 * ((double) (this->TotalLz * this->TotalLz));
+  RealMatrix Coefficients (this->LzMax + 1, this->LzMax + 1);
+  this->TotalLz = 0;
+  for (int k = 0; k <= this->LzMax; ++k)
+    this->TotalLz += ((2 * k) - this->LzMax) * (int) this->Particle->AdA(0, k);
+  this->Shift = 0.25 * factor * ((double) (this->TotalLz * this->TotalLz));
   for (int i = 0; i <= this->LzMax; ++i)
     {
       double TmpCoefficient = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax + 2))))));
       for (int j = 0; j <= this->LzMax; ++j)
 	{
-     	  this->Coefficients(i, j) = TmpCoefficient;
+     	  Coefficients(i, j) = TmpCoefficient;
 	}
     }
   for (int i = 0; i <= this->LzMax; ++i)
@@ -68,9 +71,28 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
       double TmpCoefficient = sqrt(0.25 * ((double) ((((this->LzMax + 2) * this->LzMax) - (((2 * i) - this->LzMax) * ((2 * i) - this->LzMax - 2))))));
       for (int j = 0; j <= this->LzMax; ++j)
 	{
-     	  this->Coefficients(j, i) *= 0.5 * TmpCoefficient;
+     	  Coefficients(j, i) *= 0.5 * TmpCoefficient;
 	}
     }
+
+  double Coefficient = 2.0;
+  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    Coefficient = -2.0;
+  this->TwoBodyCoefficients = new double [this->LzMax * this->LzMax];
+  double* TmpTwoBodyCoefficients = this->TwoBodyCoefficients;
+  for (int j = 0; j < this->LzMax; ++j)
+    for (int k = 1; k <= this->LzMax; ++k)
+      {
+	(*TmpTwoBodyCoefficients) = factor * Coefficient * Coefficients(j, k);
+	++TmpTwoBodyCoefficients;
+      }
+
+  this->OneBodyCoefficients = new double [this->LzMax + 1];
+  this->OneBodyCoefficients[0] = factor * Coefficients(0, 1);
+  for (int k = 1; k < this->LzMax; ++k)
+    this->OneBodyCoefficients[k] = factor * (Coefficients(k, k + 1) + Coefficients(k - 1, k));
+  this->OneBodyCoefficients[this->LzMax] = factor * Coefficients(this->LzMax - 1, this->LzMax);
+  
 }
 
 // copy constructor
@@ -80,10 +102,15 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
 ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentumOperator(const ParticleOnSphereSquareTotalMomentumOperator& oper)
 {
   this->Particle = (ParticleOnSphere*) (oper.Particle->Clone());
-  this->TotalLz = oper.TotalLz;
   this->LzMax = oper.LzMax;
-  this->Coefficients = oper.Coefficients;
   this->Shift = oper.Shift;
+  int Lim = this->LzMax * this->LzMax;
+  this->TwoBodyCoefficients = new double [Lim];
+  this->OneBodyCoefficients = new double [this->LzMax + 1];
+  for (int k = 0; k < Lim; ++k)
+    this->TwoBodyCoefficients[k] = oper.TwoBodyCoefficients[k];
+  for (int k = 0; k <= this->LzMax; ++k)
+    this->OneBodyCoefficients[k] = oper.OneBodyCoefficients[k];  
 }
 
 // destructor
@@ -92,6 +119,8 @@ ParticleOnSphereSquareTotalMomentumOperator::ParticleOnSphereSquareTotalMomentum
 ParticleOnSphereSquareTotalMomentumOperator::~ParticleOnSphereSquareTotalMomentumOperator()
 {
   delete this->Particle;
+  delete[] this->TwoBodyCoefficients;
+  delete[] this->OneBodyCoefficients;
 }
   
   
@@ -143,49 +172,23 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (RealVector& 
   double Element = 0.0;
   int Index = 0;
   double Coefficient = 0.0;
-  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+  for (int i = 0; i < Dim; ++i)
     {
-      for (int i = 0; i < Dim; ++i)
-	{
-	  for (int j = 0; j < this->LzMax; ++j)
-	    {
-	      for (int  k = 1; k <= this->LzMax; ++k)
-		{
-		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-		  if (Index != this->Particle->GetHilbertSpaceDimension())
-		    {
-		      Element -= V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
-		    }
-		}
-	    }
-	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-	  for (int k = 1; k < this->LzMax; ++k)
-	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-	  Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
-	}
-    }
-  else
-    {
-      for (int i = 0; i < Dim; ++i)
-	{
-	  for (int j = 0; j < this->LzMax; ++j)
-	    {
-	      for (int  k = 1; k <= this->LzMax; ++k)
-		{
-		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-		  if (Index != this->Particle->GetHilbertSpaceDimension())
-		    {
-		      Element += V1[Index] * 2.0 * V2[i] * Coefficient * this->Coefficients(j, k);		  
-		    }
-		}
-	    }
-	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-	  for (int k = 1; k < this->LzMax; ++k)
-	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-	  Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
-	}
+      double* TmpTwoBodyCoefficients = this->TwoBodyCoefficients;
+      for (int j = 0; j < this->LzMax; ++j)
+	for (int  k = 1; k <= this->LzMax; ++k)
+	  {
+	    Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	    if (Index != this->Particle->GetHilbertSpaceDimension())
+	      {
+		Element += V1[Index] * V2[i] * Coefficient * (*TmpTwoBodyCoefficients);		  
+	      }
+	    ++TmpTwoBodyCoefficients;
+	  }
+      Coefficient = 0.0;
+      for (int k = 0; k <= this->LzMax; ++k)
+	Coefficient += this->OneBodyCoefficients[k] * this->Particle->AdA(i, k);
+      Element += V1[i] * V2[i] * (Coefficient + this->Shift); 
     }
   return Complex(Element);
 }
@@ -202,7 +205,7 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (ComplexVecto
 }
    
 // multiply a vector by the current operator for a given range of indices 
-// and store result in another vector
+// and add result to another vector
 //
 // vSource = vector to be multiplied
 // vDestination = vector where result has to be stored
@@ -210,60 +213,30 @@ Complex ParticleOnSphereSquareTotalMomentumOperator::MatrixElement (ComplexVecto
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereSquareTotalMomentumOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-									  int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereSquareTotalMomentumOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									     int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
   int Index = 0;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-      vDestination[i] = vSource[i] * this->Shift;
+      double* TmpTwoBodyCoefficients = this->TwoBodyCoefficients;
+      for (int j = 0; j < this->LzMax; ++j)
+	for (int k = 1; k <= this->LzMax; ++k)
+	  {
+	    Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
+	    if (Index != this->Particle->GetHilbertSpaceDimension())
+	      {
+		vDestination[Index] += vSource[i] * Coefficient * (*TmpTwoBodyCoefficients);		  
+	      }
+	    ++TmpTwoBodyCoefficients;
+	  }
+      Coefficient = 0.0;
+      for (int k = 0; k <= this->LzMax; ++k)
+	Coefficient += this->OneBodyCoefficients[k] * this->Particle->AdA(i, k);
+      vDestination[i] += vSource[i] * (Coefficient + this->Shift);
     }
-  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    {
-      for (int i = firstComponent; i < Last; ++i)
-	{
-	  for (int j = 0; j < this->LzMax; ++j)
-	    {
-	      for (int k = 1; k <= this->LzMax; ++k)
-		{
-		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-		  if (Index != this->Particle->GetHilbertSpaceDimension())
-		    {
-		      vDestination[Index] -= 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
-		    }
-		}
-	    }
-	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-	  for (int k = 1; k < this->LzMax; ++k)
-	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-	  vDestination[i] += vSource[i] * Coefficient;
-	}
-    }
-  else
-    {
-      for (int i = firstComponent; i < Last; ++i)
-	{
-	  for (int j = 0; j < this->LzMax; ++j)
-	    {
-	      for (int k = 1; k <= this->LzMax; ++k)
-		{
-		  Index = this->Particle->AdAdAA(i, k - 1, j + 1, k, j, Coefficient);
-		  if (Index != this->Particle->GetHilbertSpaceDimension())
-		    {
-		      vDestination[Index] += 2.0 * vSource[i] * Coefficient * this->Coefficients(j, k);		  
-		    }
-		}
-	    }
-	  Coefficient = this->Coefficients(0, 1) * this->Particle->AdA(i, 0);
-	  Coefficient += this->Coefficients(this->LzMax - 1, this->LzMax) * this->Particle->AdA(i, this->LzMax);
-	  for (int k = 1; k < this->LzMax; ++k)
-	    Coefficient += (this->Coefficients(k, k + 1) + this->Coefficients(k - 1, k)) * this->Particle->AdA(i, k);
-	  vDestination[i] += vSource[i] * Coefficient;
-	}
-   }
   return vDestination;
 }
   

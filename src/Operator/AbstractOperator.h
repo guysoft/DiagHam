@@ -142,6 +142,17 @@ class AbstractOperator
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
 
+  // multiply a vector by the current operator for a given range of indices 
+  // and add result to another vector
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+					  int firstComponent, int nbrComponent);
+ 
   // multiply a vector by the current operator and store result in another vector
   //
   // vSource = vector to be multiplied
@@ -159,6 +170,17 @@ class AbstractOperator
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					  int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current operator for a given range of indices 
+  // and add result to another vector
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
   // Output Stream overload
   //

@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
-  (*SystemGroup) += new SingleStringOption  ('s', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
+  (*SystemGroup) += new SingleStringOption  ('s', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*DataGroup) += new SingleDoubleOption  ('\n', "l-error", "error above which a vector is no more considerated as an eigenvector of L^2", 1e-12);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
       TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
     }
 
-   ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
+   ParticleOnSphereSquareTotalMomentumOperator oper(Space, LzMax);
    double RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * oper.MatrixElement(State, State).Re) + 1.0) - 1.0);
    cout << "<L> = " << RawTmpAngularMomentum << endl;
    return 0;

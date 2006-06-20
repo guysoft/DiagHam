@@ -145,6 +145,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  this->L2Operator = 0;
 }
 
 // constructor from default datas
@@ -248,6 +249,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  this->L2Operator = 0;
 }
 
 // destructor

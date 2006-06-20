@@ -149,6 +149,22 @@ RealVector& AbstractOperator::Multiply(RealVector& vSource, RealVector& vDestina
 
 RealVector& AbstractOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
+  vDestination.ClearVector();
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+}
+
+// multiply a vector by the current operator for a given range of indices 
+// and add result to another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						  int firstComponent, int nbrComponent)
+{
   return vDestination;
 }
 
@@ -173,6 +189,22 @@ ComplexVector& AbstractOperator::Multiply(ComplexVector& vSource, ComplexVector&
 // return value = reference on vector where result has been stored
 
 ComplexVector& AbstractOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+{
+  vDestination.ClearVector();
+  return this->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+}
+
+// multiply a vector by the current operator for a given range of indices 
+// and add result to another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& AbstractOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						     int firstComponent, int nbrComponent)
 {
   return vDestination;
 }

@@ -52,19 +52,23 @@ class ParticleOnSphereSquareTotalMomentumOperator : public AbstractOperator
   // maximum Lz value reached by a particle
   int LzMax;
 
-  // matrix where all coefficents that come from the L+L- terms are stored
-  RealMatrix Coefficients;
   // shift due to the Lz^2 term
   double Shift;
 
+  // array where all coefficents that come from the L+L- terms and that are of two-body form are stored
+  double* TwoBodyCoefficients;
+  // array where all coefficents that come from the L+L- terms and that are of one-body form are stored
+  double* OneBodyCoefficients;
+  
  public:
   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
-  // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
-  ParticleOnSphereSquareTotalMomentumOperator(ParticleOnSphere* particle, int totalLz, int lzMax);
+  // factor = multiplicative factor in front of the L^2 operator
+  // memory = amount of memory (in bytes) that can be used for precalculations (none if memory < 0)
+  ParticleOnSphereSquareTotalMomentumOperator(ParticleOnSphere* particle, int lzMax, double factor = 1.0, long memory = -1);
 
   // copy constructor
   //
@@ -110,15 +114,15 @@ class ParticleOnSphereSquareTotalMomentumOperator : public AbstractOperator
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
    
   // multiply a vector by the current operator for a given range of indices 
-  // and store result in another vector
+  // and add result to another vector
   //
   // vSource = vector to be multiplied
   // vDestination = vector where result has to be stored
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
+  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+				  int firstComponent, int nbrComponent);
   
 };
 

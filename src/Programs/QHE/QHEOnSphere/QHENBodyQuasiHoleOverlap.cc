@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 	  {
 	    Space = new BosonOnSphere(NbrParticles, Lz, LzMax);
 	  }
-	ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
+	ParticleOnSphereSquareTotalMomentumOperator oper(Space, LzMax);
 	LSortBasis(DiagonalBasis, &oper, TotalMaxLz, NbrSortedTestVectors, TestVectorPosition);
 	cout << endl;
 

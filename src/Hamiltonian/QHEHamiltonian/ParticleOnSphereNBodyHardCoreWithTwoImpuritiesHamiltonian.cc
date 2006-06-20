@@ -35,6 +35,7 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Vector/RealVector.h"
 #include "FunctionBasis/QHEFunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
@@ -53,18 +54,19 @@ using std::endl;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
-// architecture = architecture to use for precalculation
 // nbrBody = number of particle that interact simultaneously through the hard core interaction
 // northPoleImpurityPotential = potential strength associted to the impurity at the north pole
 // southPoleImpurityPotential = potential strength associted to the impurity at the south pole
 // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+// architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 														     int nbrBody, double northPoleImpurityPotential, 
-														     double southPoleImpurityPotential, int landauLevel,
+														     double southPoleImpurityPotential, int landauLevel, double l2Factor,
 														     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 														     char* precalculationFileName)
 {
@@ -151,6 +153,14 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
 }
 
 // constructor from default datas
@@ -158,12 +168,13 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
-// architecture = architecture to use for precalculation
 // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
 // nBodyFactors = weight of the different n-body interaction terms with respect to each other
 // northPoleImpurityPotential = potential strength associted to the impurity at the north pole
 // southPoleImpurityPotential = potential strength associted to the impurity at the south pole
 // landauLevel = index of the Landau level where calculations have to be done (0 being the LLL)
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+// architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
@@ -171,7 +182,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 														     int maxNbrBody, double* nBodyFactors, 
 														     double northPoleImpurityPotential, double southPoleImpurityPotential, 
-														     int landauLevel,
+														     int landauLevel, double l2Factor,
 														     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 														     char* precalculationFileName)
 {
@@ -256,6 +267,14 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
 }
 
 // destructor

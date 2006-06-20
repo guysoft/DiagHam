@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "impurity-potential", "potential assosciated to each impurity", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL, only useful when adding impurities)", 0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -195,6 +196,7 @@ int main(int argc, char** argv)
 	  if (NBodyWeightFactors == 0)
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
+									 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 									 Architecture.GetArchitecture(), 
 									 Memory, DiskCacheFlag,
 									 LoadPrecalculationFileName);
@@ -202,6 +204,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
+									 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 									 Architecture.GetArchitecture(), 
 									 Memory, DiskCacheFlag,
 									 LoadPrecalculationFileName);
@@ -215,6 +218,7 @@ int main(int argc, char** argv)
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
 											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
+											  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
 											  LoadPrecalculationFileName);
@@ -225,6 +229,7 @@ int main(int argc, char** argv)
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(), 
 											  ((SingleDoubleOption*) Manager["impurity-potential"])->GetDouble(),
 											  ((SingleIntegerOption*) Manager["landau-level"])->GetInteger(),
+											  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 											  Architecture.GetArchitecture(), 
 											  Memory, DiskCacheFlag,
 											  LoadPrecalculationFileName);

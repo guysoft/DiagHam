@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 	  if (Degeneracy[i] > 1)
 	    {
 	      RealSymmetricMatrix HRep (Degeneracy[i], Degeneracy[i]);
-	      ParticleOnSphereSquareTotalMomentumOperator oper(&Space, Lz, LzMax);
+	      ParticleOnSphereSquareTotalMomentumOperator oper(&Space, LzMax);
 	      for (int k = 0; k < Degeneracy[i]; ++k)
 		{
 		  for (int l = k; l < Degeneracy[i]; ++l)

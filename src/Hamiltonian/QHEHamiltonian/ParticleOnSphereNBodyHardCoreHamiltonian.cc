@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "Hamiltonian/QHEHamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -55,13 +56,14 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
-// architecture = architecture to use for precalculation
 // nbrBody = number of particle that interact simultaneously through the hard core interaction
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+// architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
+ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, double l2Factor,
 										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 										   char* precalculationFileName)
 {
@@ -144,6 +146,16 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
+
 }
 
 // constructor from default datas
@@ -154,12 +166,13 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 // architecture = architecture to use for precalculation
 // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
 // nBodyFactors = weight of the different n-body interaction terms with respect to each other
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-										   int maxNbrBody, double* nBodyFactors,
+										   int maxNbrBody, double* nBodyFactors, double l2Factor,
 										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 										   char* precalculationFileName)
 {
@@ -240,6 +253,14 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
 }
 
 // destructor
@@ -267,6 +288,8 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
   delete[] this->MinSumIndices;
   delete[] this->MaxSumIndices;
   delete[] this->NBodySign;
+  if (this->L2Operator != 0)
+    delete this->L2Operator;
   if (this->FastMultiplicationFlag == true)
     {
       if (this->DiskStorageFlag == false)

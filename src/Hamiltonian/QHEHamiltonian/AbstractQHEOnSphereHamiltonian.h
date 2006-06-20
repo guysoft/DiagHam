@@ -44,6 +44,7 @@ using std::ostream;
 
 
 class AbstractArchitecture;
+class ParticleOnSphereSquareTotalMomentumOperator;
 
 
 class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
@@ -82,7 +83,9 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // arrays for indices attached to each one body term
   int* OneBodyMValues;
   int* OneBodyNValues;
-  
+
+  // pointer to an optional L^2 operator in the Hamiltonian 
+  ParticleOnSphereSquareTotalMomentumOperator* L2Operator;
 
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;

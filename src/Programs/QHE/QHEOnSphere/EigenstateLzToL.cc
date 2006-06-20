@@ -177,7 +177,7 @@ int main(int argc, char** argv)
       TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
     }
 
-   ParticleOnSphereSquareTotalMomentumOperator oper(Space, Lz, LzMax);
+   ParticleOnSphereSquareTotalMomentumOperator oper(Space, LzMax);
 
   int CurrentVector = 0;
   int* NbrSortedVectors = new int [TotalMaxLz + 1];

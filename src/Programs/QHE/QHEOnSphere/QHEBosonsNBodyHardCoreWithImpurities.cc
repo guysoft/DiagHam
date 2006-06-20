@@ -141,15 +141,15 @@ int main(int argc, char** argv)
   AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
   if (NBodyWeightFactors == 0)
     {
-      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
+      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 0.0, 
 								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
 								 LoadPrecalculationFileName);
     }
   else
     {
-      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
-								     Architecture.GetArchitecture(), 
+      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors, 0.0,
+								 Architecture.GetArchitecture(), 
 								 Memory, DiskCacheFlag,
 								 LoadPrecalculationFileName);
     }
