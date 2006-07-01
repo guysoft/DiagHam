@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
   (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
+  (*LanczosGroup) += new  SingleDoubleOption ('\n', "energy-shift", "apply a given shift to all energies while doing Lanczos iterations (final values do not include this shift)" , 0.0);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -235,7 +236,7 @@ int main(int argc, char** argv)
 											  LoadPrecalculationFileName);
 	    }
 	}
-      double Shift = - 0.5 * ((double) (NbrFermions * NbrFermions)) / (0.5 * ((double) LzMax));
+      double Shift = - 0.5 * ((double) (NbrFermions * NbrFermions)) / (0.5 * ((double) LzMax)) + ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	

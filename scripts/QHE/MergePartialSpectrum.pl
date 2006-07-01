@@ -4,23 +4,42 @@ use strict 'vars';
 
 if (!(defined($ARGV[1])))
   {
-    die "usage: MergePartialSpectrum file1 file2 [file 3] ...\n";
+    die "usage: MergePartialSpectrum [--help --require-overlap] file1 file2 [file 3] ...\n";
   }
+
+
 
 my @Files;
 my $TmpFile;
+my %EnableOptions;
 foreach $TmpFile (@ARGV)
   {
-    if (!(-e $TmpFile))
+    if (!($TmpFile =~ /^\-\-\w/))
       {
-	die ("can't find file ".$TmpFile."\n");
+	if (!(-e $TmpFile))
+	  {
+	    die ("can't find file ".$TmpFile."\n");
+	  }
+	else
+	  {
+	    push (@Files, $TmpFile);
+	  }
       }
     else
       {
-	push (@Files, $TmpFile);
+	$TmpFile =~ s/^\-\-//;
+	$EnableOptions{$TmpFile} = "";
       }
   }
-
+if (defined($EnableOptions{"help"}))
+  {
+    die "usage: MergePartialSpectrum [--help --require-overlap] file1 file2 [file 3] ...\n";
+  }
+my $RequireSpectrumOverlap = 0;
+if (defined($EnableOptions{"require-overlap"}))
+  {
+    $RequireSpectrumOverlap = 1;
+  }
 &OrderFiles (\@Files);
 
 my $TmpSpectrum = "";
@@ -50,7 +69,7 @@ foreach $TmpFile (@Files)
   else
     {
       my $MinLz = &TestOverlap ($PreviousFile, $TmpFile);
-      if ($MinLz < 0)
+      if (($MinLz < 0) && ($RequireSpectrumOverlap == 1))
 	{
 	  die ("no overlap between files ".$PreviousFile." and ".$TmpFile."\n");
 	}
