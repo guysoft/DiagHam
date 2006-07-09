@@ -78,24 +78,30 @@ int main(int argc, char** argv)
       return -1;
     }
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
-    {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-      return -1;      
-    }
-  char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-    {
-      sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
-    }
-  else
-    {
-      sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax,
-	       ((SingleStringOption*) Manager["add-filename"])->GetString());
-    }
+//   if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
+//     {
+//       cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+//       return -1;      
+//     }
+   char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
+//   if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+//     {
+//       sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
+//     }
+//   else
+//     {
+//       sprintf (OutputNameCorr, "bosons_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax,
+// 	       ((SingleStringOption*) Manager["add-filename"])->GetString());
+//     }
 
   BosonOnSphere Space (NbrBosons, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
+
+  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+    {
+      Space.PrintState(cout, i) << endl;
+    }
+  return 0;
 
   Complex Sum (0.0, 0.0);
   Complex Sum2 (0.0, 0.0);

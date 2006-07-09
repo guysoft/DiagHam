@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                          class of fermions on sphere                       //
+//             class of fermions on sphere using the Haldane basis            //
 //                                                                            //
-//                        last modification : 24/06/2002                      //
+//                        last modification : 06/07/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/QHEHilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/QHEHilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -52,7 +52,7 @@ using std::dec;
 // lzMax = twice the maximum Lz value reached by a fermion
 // memory = amount of memory granted for precalculations
 
-FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
+FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -61,10 +61,17 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  this->ReferenceState = 0x1l;
+  for (int i = 1; i < this->NbrFermions; ++i)
+    {
+      this->ReferenceState <<= 3;
+      this->ReferenceState |= 0x1l;
+    }
   this->Flag.Initialize();
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+  this->StateDescription = new unsigned long [10 * this->HilbertSpaceDimension];
+  this->StateLzMax = new int [10 * this->HilbertSpaceDimension];
+  this->GenerateStates(this->LzMax, this->LzMax, this->ReferenceState, 0);
+  this->FilterHaldaneBasis();
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
@@ -88,7 +95,7 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
+FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHaldaneBasis& fermions)
 {
   this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
@@ -112,7 +119,7 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
 // destructor
 //
 
-FermionOnSphere::~FermionOnSphere ()
+FermionOnSphereHaldaneBasis::~FermionOnSphereHaldaneBasis ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -132,7 +139,7 @@ FermionOnSphere::~FermionOnSphere ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
+FermionOnSphereHaldaneBasis& FermionOnSphereHaldaneBasis::operator = (const FermionOnSphereHaldaneBasis& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -172,16 +179,16 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnSphere::Clone()
+AbstractHilbertSpace* FermionOnSphereHaldaneBasis::Clone()
 {
-  return new FermionOnSphere(*this);
+  return new FermionOnSphereHaldaneBasis(*this);
 }
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> FermionOnSphere::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> FermionOnSphereHaldaneBasis::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -193,7 +200,7 @@ List<AbstractQuantumNumber*> FermionOnSphere::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* FermionOnSphere::GetQuantumNumber (int index)
+AbstractQuantumNumber* FermionOnSphereHaldaneBasis::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -204,7 +211,7 @@ AbstractQuantumNumber* FermionOnSphere::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* FermionOnSphere::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* FermionOnSphereHaldaneBasis::ExtractSubspace (AbstractQuantumNumber& q, 
 							SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -214,16 +221,16 @@ AbstractHilbertSpace* FermionOnSphere::ExtractSubspace (AbstractQuantumNumber& q
 //
 // targetSpace = pointer to the target space
 
-void FermionOnSphere::SetTargetSpace(ParticleOnSphere* targetSpace)
+void FermionOnSphereHaldaneBasis::SetTargetSpace(ParticleOnSphere* targetSpace)
 {
-  this->TargetSpace = (FermionOnSphere*) targetSpace;
+  this->TargetSpace = (FermionOnSphereHaldaneBasis*) targetSpace;
 }
 
 // return Hilbert space dimension of the target space
 //
 // return value = Hilbert space dimension
 
-int FermionOnSphere::GetTargetHilbertSpaceDimension()
+int FermionOnSphereHaldaneBasis::GetTargetHilbertSpaceDimension()
 {
   return this->TargetSpace->HilbertSpaceDimension;
 }
@@ -238,7 +245,7 @@ int FermionOnSphere::GetTargetHilbertSpaceDimension()
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnSphereHaldaneBasis::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
@@ -320,7 +327,7 @@ int FermionOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& 
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+int FermionOnSphereHaldaneBasis::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
@@ -397,7 +404,7 @@ int FermionOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, dou
 // nbrIndices = number of creation (or annihilation) operators
 // return value =  multiplicative factor 
 
-double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
+double FermionOnSphereHaldaneBasis::ProdA (int index, int* n, int nbrIndices)
 {
   this->ProdALzMax = this->StateLzMax[index];
   this->ProdATemporaryState = this->StateDescription[index];
@@ -431,7 +438,7 @@ double FermionOnSphere::ProdA (int index, int* n, int nbrIndices)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
+int FermionOnSphereHaldaneBasis::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
   coefficient = 1.0;
   unsigned long TmpState = this->ProdATemporaryState;
@@ -469,7 +476,7 @@ int FermionOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient)
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
 
-double FermionOnSphere::AdA (int index, int m)
+double FermionOnSphereHaldaneBasis::AdA (int index, int m)
 {
   if ((this->StateDescription[index] & (((unsigned long) (0x1)) << m)) != 0)
     return 1.0;
@@ -485,7 +492,7 @@ double FermionOnSphere::AdA (int index, int m)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
   
-int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
+int FermionOnSphereHaldaneBasis::AdA (int index, int m, int n, double& coefficient)
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
@@ -534,7 +541,7 @@ int FermionOnSphere::AdA (int index, int m, int n, double& coefficient)
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
+int FermionOnSphereHaldaneBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
@@ -566,7 +573,7 @@ int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphere::PrintState (ostream& Str, int state)
+ostream& FermionOnSphereHaldaneBasis::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
@@ -580,52 +587,48 @@ ostream& FermionOnSphere::PrintState (ostream& Str, int state)
 
 // generate all states corresponding to the constraints
 // 
-// nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion in the state
 // currentLzMax = momentum maximum value for fermions that are still to be placed
 // totalLz = momentum total value
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnSphere::GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
+int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, int currentLzMax, unsigned long referenceState, int pos)
 {
-  if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
-    return pos;
-  int LzTotalMax = ((2 * currentLzMax - nbrFermions + 1) * nbrFermions) >> 1;
-  if (totalLz > LzTotalMax)
-    return pos;
-  if ((nbrFermions == 1) && (currentLzMax >= totalLz))
+  if (currentLzMax == 0)
     {
-      this->StateDescription[pos] = ((unsigned long) 0x1) << totalLz;
+      this->StateDescription[pos] = referenceState;
       this->StateLzMax[pos] = lzMax;
       return pos + 1;
     }
-  if (LzTotalMax == totalLz)
+  while ((currentLzMax > 0) && ((referenceState & (0x1l << currentLzMax)) == 0l))
+    --currentLzMax;
+  if (currentLzMax == 0) 
     {
-      unsigned long Mask = 0;
-      for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
-	Mask |= (((unsigned long) 1) << i);
-      this->StateDescription[pos] = Mask;
+      this->StateDescription[pos] = referenceState;
       this->StateLzMax[pos] = lzMax;
       return pos + 1;
     }
+  pos = this->GenerateStates(lzMax, currentLzMax - 1, referenceState, pos);
+  int TmpcurrentLzMax = 0;
+  while ((currentLzMax > 0) && ((referenceState & (0x1l << currentLzMax)) != 0l))
+    --currentLzMax;
+  if (currentLzMax == 0) 
+    {
+      this->StateDescription[pos] = referenceState;
+      this->StateLzMax[pos] = lzMax;
+      return pos + 1;
+    }
+  ++currentLzMax;
 
-  int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = this->GenerateStates(nbrFermions - 1, lzMax, ReducedCurrentLzMax, totalLz - currentLzMax, pos);
-  unsigned long Mask = ((unsigned long) 1) << currentLzMax;
-  for (int i = pos; i < TmpPos; i++)
-    this->StateDescription[i] |= Mask;
-  if (lzMax == currentLzMax)
-    return this->GenerateStates(nbrFermions, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, TmpPos);
-  else
-    return this->GenerateStates(nbrFermions, lzMax, ReducedCurrentLzMax, totalLz, TmpPos);
+  return 0;
 }
 
 // generate look-up table associated to current Hilbert space
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnSphere::GenerateLookUpTable(unsigned long memory)
+void FermionOnSphereHaldaneBasis::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
   memory /= (sizeof(int*) * this->NbrLzValue);
@@ -759,7 +762,7 @@ void FermionOnSphere::GenerateLookUpTable(unsigned long memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnSphere::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+int FermionOnSphereHaldaneBasis::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
 }
@@ -771,7 +774,7 @@ int FermionOnSphere::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, i
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-int FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+int FermionOnSphereHaldaneBasis::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
     return 0;
@@ -786,6 +789,90 @@ int FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int l
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
 
+// apply reverse squeezing criteron to decipher Haldane basis
+//
+
+void FermionOnSphereHaldaneBasis::FilterHaldaneBasis()
+{
+  int TmpHilbertSpaceSize = 0;
+  unsigned long TmpState;
+  unsigned long TmpReference;
+  unsigned long TmpMask;
+  unsigned long TmpMaskLimit = 1l << (this->LzMax + 1);
+  int Pos;
+  int Pos2;
+  int TmpLzMax;
+  bool* HaldaneStateFlag = new bool[this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      TmpState = this->StateDescription[i];
+      TmpMask = 1 << this->LzMax;
+      TmpReference = this->ReferenceState;
+      TmpLzMax = this->LzMax;
+      while ((TmpState != TmpReference) && (TmpMask != TmpMaskLimit))
+	{
+	  cout << i << " " << hex << TmpState << " " << TmpReference;
+	  while ((TmpReference & 0x1l) == (TmpState & 0x1l))
+	    {
+	      TmpReference >>= 1;
+	      TmpState >>= 1;
+	    }
+	  cout << " " << TmpState;
+	  if ((TmpState & 0x1l) == 0l)
+	    {
+	      while ((TmpReference & TmpMask) == (TmpState & TmpMask))
+		{
+		  TmpReference &= ~TmpMask;
+		  TmpState &= ~TmpMask;
+		  TmpMask >>=1;
+		  --TmpLzMax;
+		}
+	      if ((TmpState & TmpMask) == 0l)
+		{
+		  cout << " " << TmpState;
+		  Pos = 1; 
+		  while ((TmpState & (0x1l << Pos)) == 0)
+		    ++Pos;
+		  Pos2 = TmpLzMax - 1;
+		  while ((TmpState & (0x1l << Pos2)) == 0)
+		    --Pos2;
+		  cout << " " << dec << Pos << " " << Pos2;
+		  if (Pos2 != Pos)
+		    {
+		      TmpState &= ~(0x1l << Pos);
+		      TmpState |= (0x1l << (Pos - 1));
+		      TmpState &= ~(0x1l << Pos2);
+		      TmpState |= (0x1l << (Pos2 + 1));
+		    }
+		  else
+		    {
+		      TmpMask = TmpMaskLimit;
+		    }
+		}
+	      else
+		{
+		  TmpMask = TmpMaskLimit;
+		}
+	    }
+	  else
+	    {
+	      TmpMask = TmpMaskLimit;
+	    }
+	  cout << dec << endl;
+	}
+      if (TmpState == TmpReference)
+	{
+	  HaldaneStateFlag[i] = true;
+	  ++TmpHilbertSpaceSize;
+	  this->PrintState(cout, i) << endl;
+	}
+      else
+	HaldaneStateFlag[i] = false;      
+    }
+  cout << TmpHilbertSpaceSize << " / " << this->HilbertSpaceDimension << endl;
+  delete[] HaldaneStateFlag;
+}
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis
@@ -795,8 +882,8 @@ int FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int l
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
 
-Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-					       int firstComponent, int nbrComponent)
+Complex FermionOnSphereHaldaneBasis::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+							   int firstComponent, int nbrComponent)
 {
   Complex Value;
   Complex Tmp;
@@ -858,7 +945,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 //
 // timeCoherence = true if time coherence has to be used
 
-void FermionOnSphere::InitializeWaveFunctionEvaluation (bool timeCoherence)
+void FermionOnSphereHaldaneBasis::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
   

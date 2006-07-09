@@ -136,6 +136,7 @@ int main(int argc, char** argv)
       Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
     }
 #endif
+
   AbstractFunctionBasis* Basis;
   if (LandauLevel == 0)
     Basis = new ParticleOnSphereFunctionBasis(LzMax);

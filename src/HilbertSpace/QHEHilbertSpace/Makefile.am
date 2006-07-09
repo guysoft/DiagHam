@@ -27,4 +27,5 @@ AbstractQHEParticle.cc \
 ParticleOnSphereWithSpin.cc \
 FermionOnSphereWithSpin.cc \
 UnsignedIntegerTools.cc \
-FullBosonOnSphere.cc
+FullBosonOnSphere.cc \
+FermionOnSphereHaldaneBasis.cc
