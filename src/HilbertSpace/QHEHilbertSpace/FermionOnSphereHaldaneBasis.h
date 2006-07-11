@@ -86,6 +86,8 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // topmost state 
   unsigned long ReferenceState;
 
+  int* Level;
+
  public:
 
   // basic constructor
@@ -263,7 +265,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int lzMax, int currentLzMax, unsigned long referenceState, int pos);
+  int GenerateStates(int lzMax, int currentLzMax, unsigned long referenceState, int pos, int recDepth);
 
   // apply reverse squeezing criteron to decipher Haldane basis
   //

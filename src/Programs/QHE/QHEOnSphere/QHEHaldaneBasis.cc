@@ -76,48 +76,50 @@ int main(int argc, char** argv)
       cout << "QHEHaldaneSphere requires a state" << endl;
       return -1;
     }
-  RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
-    {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-      return -1;      
-    }
+//   RealVector State;
+//   if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
+//     {
+//       cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+//       return -1;      
+//     }
 
 
-  ParticleOnSphere* Space;
-#ifdef __64_BITS__
-  if (LzMax <= 63)
-    {
-      Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
-    }
-  else
-    {
-      Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
-    }
-#else
-  if (LzMax <= 31)
-    {
-      Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
-    }
-  else
-    {
-      Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
-    }
-#endif
+//   ParticleOnSphere* Space;
+// #ifdef __64_BITS__
+//   if (LzMax <= 63)
+//     {
+//       Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+//     }
+//   else
+//     {
+//       Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
+//     }
+// #else
+//   if (LzMax <= 31)
+//     {
+//       Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
+//     }
+//   else
+//     {
+//       Space = new FermionOnSphereUnlimited(NbrFermions, Lz, LzMax);
+//     }
+// #endif
 
 
-  int NbrNonZeroComponents = 0;
-  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-    {
-      if (fabs(State[i]) > 1e-12)
-	{
-	  Space->PrintState(cout, i) << " : " << (State[i]) << endl;
-	  ++NbrNonZeroComponents;
-	}
-    }
-  cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
+//   int NbrNonZeroComponents = 0;
+//   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+//     {
+//       if (fabs(State[i]) > 1e-12)
+// 	{
+// // 	  Space->PrintState(cout, i) << " : " << (State[i]) << endl;
+// 	  ++NbrNonZeroComponents;
+// 	}
+//     }
+//   cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
 
   FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax);
+//   for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
+//     ReducedSpace.PrintState(cout, i) << endl;
   cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
   return 0;
 }
