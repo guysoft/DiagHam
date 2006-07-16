@@ -118,8 +118,8 @@ int main(int argc, char** argv)
 //   cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
 
   FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax);
-//   for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
-//     ReducedSpace.PrintState(cout, i) << endl;
+  //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
+  //    ReducedSpace.PrintState(cout, i) << endl;
   cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
   return 0;
 }

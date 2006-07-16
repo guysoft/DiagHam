@@ -5059,7 +5059,7 @@ fi
 
 
 
-CXXFLAGS="-O2 -g -Wall "
+CXXFLAGS="-O2 -g -Wall"
 INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 

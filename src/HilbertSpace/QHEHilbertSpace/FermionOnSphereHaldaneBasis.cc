@@ -69,12 +69,30 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
       this->ReferenceState |= 0x1l;
     }
   this->Flag.Initialize();
-  this->StateDescription = new unsigned long [10 * this->HilbertSpaceDimension];
-  this->StateLzMax = new int [10 * this->HilbertSpaceDimension];
-  this->Level = new int [10 * this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateLzMax = new int [this->HilbertSpaceDimension];
+  int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
+  this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
+  this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
   this->StateDescription[0] = this->ReferenceState;
   this->StateLzMax[0] = this->LzMax;
-  this->HilbertSpaceDimension = this->GenerateStates(this->LzMax, this->LzMax, this->ReferenceState, 1, 0);  
+  long Memory = 0l;
+  this->NbrSearches =  new int [MaxSweeps * 110];
+  this->NbrMisses = new int [MaxSweeps * 110];
+  for (int i = 0; i < (110 * MaxSweeps); ++i)
+    {
+      this->NbrSearches[i] = 0;
+      this->NbrMisses[i] = 0;
+    }
+  this->HilbertSpaceDimension = this->GenerateStates(this->LzMax, this->ReferenceState, 1, Memory);  
+  int Truc = 1;
+  while (this->NbrSearches[Truc] > 0)
+    {
+      cout <<  Truc<< "   " << this->NbrSearches[Truc] << "   " << this->NbrMisses[Truc] << "   " << (((double) this->NbrMisses[Truc]) / ((double) this->NbrSearches[Truc]) * 100.0) << endl;
+      ++Truc;
+    }
+  delete[] this->TmpGeneratedStates;
+  delete[] this->TmpGeneratedStatesLzMax;
 //  SortArrayDownOrdering(this->StateDescription, this->StateLzMax, this->HilbertSpaceDimension);
 //   this->FilterHaldaneBasis();
   this->MaximumSignLookUp = 16;
@@ -593,17 +611,17 @@ ostream& FermionOnSphereHaldaneBasis::PrintState (ostream& Str, int state)
 // generate all states corresponding to the constraints
 // 
 // lzMax = momentum maximum value for a fermion in the state
-// currentLzMax = momentum maximum value for fermions that are still to be placed
 // totalLz = momentum total value
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, int currentLzMax, unsigned long referenceState, int pos, int recDepth)
+int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory)
 {
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
-  unsigned long* TmpGeneratedStates = new unsigned long [MaxSweeps];
-  int* TmpLzMax = new int [MaxSweeps];
-
+  unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
+  int* TmpLzMax = this->TmpGeneratedStatesLzMax  + (MaxSweeps  * memory);  
+  memory += 1;
+  ++this->NbrSearches[memory];
   int TmpCurrentLzMax = 2;
   int TmpCurrentLzMax2;
   int TmpMax = lzMax - 1;
@@ -618,18 +636,17 @@ int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, int currentLzMax, uns
       if (TmpCurrentLzMax < TmpMax)
 	{
 	  TmpReferenceState = (referenceState & ~(0x3l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
-	  TmpCurrentLzMax2 = 0;
-	  TmpMax2 = TmpCurrentLzMax - 1;
-	  while (TmpCurrentLzMax2 < TmpMax2)
+	  TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+	  while (TmpCurrentLzMax2 >= 0)
 	    {
-	      while ((TmpCurrentLzMax2 < TmpMax2) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
-		++TmpCurrentLzMax2;
-	      if (TmpCurrentLzMax2 < TmpMax2)
+	      while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
+		--TmpCurrentLzMax2;
+	      if (TmpCurrentLzMax2 >= 0)
 		{
-		  TmpGeneratedStates[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
+		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
 		  TmpLzMax[NbrEntries] = lzMax;
 		  ++NbrEntries;
-		  ++TmpCurrentLzMax2;
+		  --TmpCurrentLzMax2;
 		}	      
 	    }
 	  ++TmpCurrentLzMax;
@@ -638,31 +655,30 @@ int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, int currentLzMax, uns
   if (((referenceState >> TmpCurrentLzMax) & 0x3l) == 0x2l)
     {
       TmpReferenceState = (referenceState & ~(0x3l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
-      TmpCurrentLzMax2 = 0;
-      TmpMax2 = TmpCurrentLzMax - 1;
-      while (TmpCurrentLzMax2 < TmpMax2)
+      TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+      while (TmpCurrentLzMax2 >= 0)
 	{
-	  while ((TmpCurrentLzMax2 < TmpMax2) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
-	    ++TmpCurrentLzMax2;
-	  if (TmpCurrentLzMax2 < TmpMax2)
+	  while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
+	    --TmpCurrentLzMax2;
+	  if (TmpCurrentLzMax2 >= 0)
 	    {
-	      TmpGeneratedStates[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
-	      TmpLzMax[NbrEntries] = lzMax;
+	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
+	      TmpLzMax[NbrEntries] = lzMax - 1;
 	      ++NbrEntries;
-	      ++TmpCurrentLzMax2;
+	      --TmpCurrentLzMax2;
 	    }
 	}      
     }
 
-  int OldPos = pos;
   int MinIndex;
   int MaxIndex;
   int MidIndex;
+  int NbrNewEntries = 0;
   for (int i = 0; i < NbrEntries; ++i)
     {
-      TmpReferenceState = TmpGeneratedStates[i];
+      TmpReferenceState = TmpGeneratedStates2[i];
       MinIndex = 0;
-      MaxIndex = OldPos - 1;
+      MaxIndex = pos - 1;
       while ((MaxIndex - MinIndex) > 1)
 	{
 	  MidIndex = (MaxIndex + MinIndex) >> 1;
@@ -671,26 +687,44 @@ int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, int currentLzMax, uns
 	  else
 	    MaxIndex = MidIndex;
 	}
-      if ((this->StateDescription[MaxIndex] != TmpReferenceState) && (this->StateDescription[MinIndex] != TmpReferenceState))
-	{
-	  this->StateDescription[pos] = TmpGeneratedStates[i];
-	  this->StateLzMax[pos] = TmpLzMax[i];
-	  ++pos;      
-	}
+      if ((this->StateDescription[MaxIndex] == TmpReferenceState) || (this->StateDescription[MinIndex] == TmpReferenceState))
+	TmpGeneratedStates2[i] = 0x0l;
       else
-	TmpGeneratedStates[i] = 0x0l;
+	++NbrNewEntries;
     }
-  if (NbrEntries > 0)
+  if (NbrNewEntries > 0)
     {
-      SortArrayDownOrdering(this->StateDescription, this->StateLzMax, pos);
-      for (int i = 0; i < NbrEntries; ++i)
+      MinIndex = pos - 1;
+      MaxIndex = MinIndex + NbrNewEntries;
+      MidIndex = NbrEntries - 1;
+      while (MidIndex >= 0)
 	{
-	  if (TmpGeneratedStates[i] != 0x0l)
-	    pos = this->GenerateStates(TmpLzMax[i], currentLzMax, TmpGeneratedStates[i], pos, recDepth + 1);
+	  while ((MidIndex >= 0) && (TmpGeneratedStates2[MidIndex] == 0x0l))
+	    --MidIndex;
+	  if (MidIndex >= 0)
+	    {
+	      TmpReferenceState = TmpGeneratedStates2[MidIndex];
+	      while (this->StateDescription[MinIndex] < TmpReferenceState)
+		{
+		  this->StateDescription[MaxIndex] = this->StateDescription[MinIndex];
+		  this->StateLzMax[MaxIndex] = this->StateLzMax[MinIndex];
+		  --MinIndex;
+		  --MaxIndex;
+		}	      
+	      this->StateDescription[MaxIndex] = TmpReferenceState;
+	      this->StateLzMax[MaxIndex] = TmpLzMax[MidIndex];
+	      --MaxIndex;
+	      --MidIndex;
+	    }
 	}
+      pos += NbrNewEntries;
+      for (int i = 0; i < NbrEntries; ++i)
+	if (TmpGeneratedStates2[i] != 0x0l)
+	  pos = this->GenerateStates(TmpLzMax[i], TmpGeneratedStates2[i], pos, memory);
     }
-  delete[] TmpGeneratedStates;
-  delete[] TmpLzMax;
+  else
+    ++this->NbrMisses[memory];
+  memory -= 1;
   return pos;
 }
 

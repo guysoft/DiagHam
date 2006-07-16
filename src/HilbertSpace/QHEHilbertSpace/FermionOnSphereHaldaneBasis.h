@@ -86,7 +86,11 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // topmost state 
   unsigned long ReferenceState;
 
-  int* Level;
+  unsigned long* TmpGeneratedStates;
+  int* TmpGeneratedStatesLzMax;
+
+  int* NbrSearches;
+  int* NbrMisses;
 
  public:
 
@@ -261,11 +265,10 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // generate all states corresponding to the constraints
   // 
   // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int lzMax, int currentLzMax, unsigned long referenceState, int pos, int recDepth);
+  int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
 
   // apply reverse squeezing criteron to decipher Haldane basis
   //
