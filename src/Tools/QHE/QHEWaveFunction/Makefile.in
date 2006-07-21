@@ -55,6 +55,7 @@ libQHEWaveFunction_a_LIBADD =
 am_libQHEWaveFunction_a_OBJECTS =  \
 	LaughlinOnSphereWaveFunction.$(OBJEXT) \
 	PfaffianOnSphereWaveFunction.$(OBJEXT) \
+	PfaffianOnSphereTwoQuasiholeWaveFunction.$(OBJEXT) \
 	JainCFFilledLevelOnSphereWaveFunction.$(OBJEXT) \
 	JainCFOnSphereOrbitals.$(OBJEXT) \
 	MooreReadOnSphereWaveFunction.$(OBJEXT) \
@@ -88,6 +89,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnDiskWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnDiskWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereTwoQuasiholeWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEWaveFunctionManager.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/SumDerivativeProduct.Po \
@@ -204,6 +206,7 @@ SUBDIRS =
 noinst_LIBRARIES = libQHEWaveFunction.a
 libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc \
 PfaffianOnSphereWaveFunction.cc \
+PfaffianOnSphereTwoQuasiholeWaveFunction.cc \
 JainCFFilledLevelOnSphereWaveFunction.cc \
 JainCFOnSphereOrbitals.cc \
 MooreReadOnSphereWaveFunction.cc \
@@ -307,6 +310,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnDiskWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnDiskWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereTwoQuasiholeWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEWaveFunctionManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SumDerivativeProduct.Po@am__quote@

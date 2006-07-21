@@ -41,6 +41,7 @@
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+#include "Tools/QHE/QHEWaveFunction/PfaffianOnSphereTwoQuasiholeWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/UnprojectedJainCFOnSphereWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/QHE/QHEWaveFunction/MooreReadOnDiskWaveFunction.h"
@@ -98,6 +99,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
     {
       str << "  * laughlin : Laughlin wave function" << endl;
       str << "  * pfaffian : pfaffian state wave function" << endl;
+      str << "  * pfaffian2qh : pfaffian state wave function with 2 quasiholes" << endl;
       str << "  * read : Read-Rezayi state wave function" << endl;
       str << "  * filledcf : composite fermions wave function (only with filled pseudo Landau levels)" << endl;
       str << "  * genericcf : generic composite fermions wave function" << endl;            
@@ -133,6 +135,10 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian") == 0)
 	{
 	  return new PfaffianOnSphereWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger());
+	}
+      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian2qh") == 0)
+	{
+	  return new PfaffianOnSphereTwoQuasiholeWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 0.0, 0.0, M_PI, 0.0);
 	}
       if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "read") == 0)
 	{

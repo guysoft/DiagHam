@@ -4,6 +4,7 @@ noinst_LIBRARIES=libQHEWaveFunction.a
 
 libQHEWaveFunction_a_SOURCES=LaughlinOnSphereWaveFunction.cc \
 PfaffianOnSphereWaveFunction.cc \
+PfaffianOnSphereTwoQuasiholeWaveFunction.cc \
 JainCFFilledLevelOnSphereWaveFunction.cc \
 JainCFOnSphereOrbitals.cc \
 MooreReadOnSphereWaveFunction.cc \

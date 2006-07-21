@@ -92,6 +92,8 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   int* NbrSearches;
   int* NbrMisses;
 
+  int* LzMaxSectorPosition;
+
  public:
 
   // basic constructor
