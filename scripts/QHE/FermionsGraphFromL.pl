@@ -2,6 +2,16 @@
 
 use strict 'vars';
 
+use Getopt::Long;
+
+
+#my $OutputFormat = "ps";
+#my $MaxE;
+#my $NbrFermions = 0;
+#my $printFlag = 0;
+
+#my $Result = GetOptions ("maxE:f" => \$MaxE, "log:s" => \$OutputLog); 
+
 if (!(defined($ARGV[0])))
   {
     die "usage: FermionsGraphFromL nbr_fermions [xfig,eps,ps] [print] [maxE]\n";
@@ -35,21 +45,22 @@ if (defined($ARGV[2]))
   }
 my @ListFiles;
 my $TmpFile;
-foreach $TmpFile (<*>)
-  {
-    if ($TmpFile =~ /fermions\_coulomb\_n\_$NbrFermions.*\_l\./)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-    if ($TmpFile =~ /fermions\_laplaciandelta\_n\_$NbrFermions.*\_l\./)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-    if ($TmpFile =~ /fermions\_.+\_n\_$NbrFermions.*\_l\.dat$/)
-      {
-	push (@ListFiles, $TmpFile);
-      }
-  }
+#foreach $TmpFile (<*>)
+#  {
+#    if ($TmpFile =~ /fermions\_coulomb\_n\_$NbrFermions.*\_l\./)
+#      {
+#	push (@ListFiles, $TmpFile);
+#      }
+#    if ($TmpFile =~ /fermions\_laplaciandelta\_n\_$NbrFermions.*\_l\./)
+#      {
+#	push (@ListFiles, $TmpFile);
+#      }
+#    if ($TmpFile =~ /fermions\_.+\_n\_$NbrFermions.*\_l\.dat$/)
+#      {
+#	push (@ListFiles, $TmpFile);
+#      }
+#  }
+@ListFiles = $ARGV[0];
 
 foreach $TmpFile (@ListFiles)
   {
@@ -174,12 +185,12 @@ set yrange [".$Min.":".$Max."]\n");
       {
 	$OutputFile =~ s/\_l\.dat/\.fig/;
 	print OUTFILE ("set xlabel \"L\" font \"default,14\"
-set ylabel \"energy[g]\" font \"default,14\"
+set ylabel \"energy\" font \"default,14\"
 set size 1.0, 1.5
-set terminal fig
+set terminal fig textspecial fontsize 18
 set key bottom right
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\" with points pt 2\n");
+plot \"".$FileName."\" using 1:2 title \"".$Title."\"  with points pt 2\n");
       }
     else
       {
@@ -189,7 +200,7 @@ set ylabel \"energy[g]\"
 set size 1.0, 0.6
 set terminal postscript portrait enhanced \"Helvetica\" 14
 set output \"".$OutputFile."\"
-plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
+plot \"".$FileName."\" using 1:2 title \"".$Title."\" \n");
      }
     close (OUTFILE);
     open (INFILE, $TmpFileName);
@@ -229,7 +240,7 @@ plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
 	    if ($TmpLine ne "")
 	      {
 		@Tmp = split (/ /, $TmpLine);
-		my $Shift = int (($Tmp[4] - $Tmp[0]) / 2);
+		my $Shift = int (($Tmp[4] - $Tmp[0]) / 3);
 		$Tmp[0] -= $Shift;
 		$Tmp[4] += $Shift;
 		$XFigFile .= "	 ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[0]." ".$Tmp[1]." ".$Tmp[4]." ".$Tmp[1]."\n";
@@ -245,6 +256,9 @@ plot \"".$FileName."\" using 1:2 title \"".$Title."\"\n");
 	    my $EpsOutputFile = $OutputFile;
 	    $EpsOutputFile =~ s/\.fig/\.eps/;
 	    `fig2dev -L eps $OutputFile $EpsOutputFile`;
+	    my $PngOutputFile = $OutputFile;
+	    $PngOutputFile =~ s/\.fig/\.png/;
+	    `fig2dev -L png $OutputFile $PngOutputFile`;
 	  }
       }    
   }

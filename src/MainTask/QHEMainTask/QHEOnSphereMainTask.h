@@ -57,6 +57,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
 
   // twice the total momentum value of the system
   int LValue;
+  // twice the maximum Lz value reached by a fermion
+  int LzMax;
 
   // energy shift applied to the hamiltonian
   double EnergyShift;
@@ -106,6 +108,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool LapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;
+  // compute l value for each eigenvalue
+  bool ComputeLValueFlag;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
@@ -122,9 +126,10 @@ class QHEOnSphereMainTask: public AbstractMainTask
   // outputFileName = name of the file where results have to be stored
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+  // lzMax = twice the maximum Lz value reached by a particle
   QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 		      AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0);
+		      bool firstRun = true, char* eigenvectorFileName = 0, int lzMax = 0);
   
   // destructor
   //  

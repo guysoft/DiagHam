@@ -39,6 +39,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -59,11 +60,12 @@ using std::ostream;
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the psedo-potentials (ordered such that the first element corresponds to the delta interaction)
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential,
+ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double* pseudoPotential, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 								       char* precalculationFileName)
 {
@@ -122,6 +124,15 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
 }
 
 // constructor with one body terms
@@ -132,12 +143,13 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
 // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-								       double* pseudoPotential, double* oneBodyPotentials,
+								       double* pseudoPotential, double* oneBodyPotentials, double l2Factor,
 								       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
 								       char* precalculationFileName)
 {
@@ -199,6 +211,15 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+
+  if (l2Factor != 0.0)
+    {
+      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
+    }
+  else
+    {
+      this->L2Operator = 0;
+    }
 }
 
 // destructor
@@ -213,6 +234,8 @@ ParticleOnSphereGenericHamiltonian::~ParticleOnSphereGenericHamiltonian()
   delete[] this->PseudoPotential;
   if (this->OneBodyTermFlag == true)
     delete[] this->OneBodyPotentials;
+  if (this->L2Operator != 0)
+    delete this->L2Operator;
   if (this->FastMultiplicationFlag == true)
     {
        if (this->DiskStorageFlag == false)

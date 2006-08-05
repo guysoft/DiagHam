@@ -34,6 +34,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -191,7 +192,7 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								  int firstComponent, int nbrComponent)
+								int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
@@ -275,14 +276,16 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
 	{
 	  if (this->DiskStorageFlag == false)
 	    {
-	      return this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
+	      this->LowLevelAddMultiplyPartialFastMultiply(vSource, vDestination, firstComponent, nbrComponent);
 	    }
 	  else
 	    {
-	      return this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);
+	      this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);
 	    }
 	}
     }
+  if (this->L2Operator != 0)
+    this->L2Operator->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
   return vDestination;
 }
 
@@ -699,14 +702,17 @@ RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiply(RealVect
 	{
 	  if (this->DiskStorageFlag == false)
 	    {
-	      return this->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+	      this->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	    }
 	  else
 	    {
-	      return this->LowLevelMultipleAddMultiplyDiskStorage(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+	      this->LowLevelMultipleAddMultiplyDiskStorage(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	    }
 	}
    }
+  if (this->L2Operator != 0)
+    for (int l = 0; l < nbrVectors; ++l)
+      this->L2Operator->LowLevelAddMultiply(vSources[l], vDestinations[l], firstComponent, nbrComponent);
   return vDestinations;
 }
 

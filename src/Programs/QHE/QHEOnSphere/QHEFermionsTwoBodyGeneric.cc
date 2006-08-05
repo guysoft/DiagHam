@@ -60,6 +60,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
@@ -196,11 +198,13 @@ int main(int argc, char** argv)
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (OneBodyPotentials == 0)
 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
+							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 							     Architecture.GetArchitecture(), 
 							     Memory, DiskCacheFlag,
 							     LoadPrecalculationFileName);
       else
 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, OneBodyPotentials,
+							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 							     Architecture.GetArchitecture(), 
 							     Memory, DiskCacheFlag,
 							     LoadPrecalculationFileName);
@@ -212,7 +216,7 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)

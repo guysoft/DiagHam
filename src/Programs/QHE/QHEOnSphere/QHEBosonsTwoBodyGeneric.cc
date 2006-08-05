@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       Hamiltonian = new ParticleOnSphereGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials,
+							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
 							   LoadPrecalculationFileName);

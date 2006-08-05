@@ -59,6 +59,8 @@
 
 #include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
 
+#include "Operator/QHEOperator/ParticleOnSphereSquareTotalMomentumOperator.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 
@@ -85,10 +87,11 @@ using std::ofstream;
 // outputFileName = name of the file where results have to be stored
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+// lzMax = twice the maximum Lz value reached by a particle
 
 QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 					 AbstractQHEHamiltonian* hamiltonian, int lValue, double shift, char* outputFileName,
-					 bool firstRun, char* eigenvectorFileName)
+					 bool firstRun, char* eigenvectorFileName, int lzMax)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -106,6 +109,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->Hamiltonian = hamiltonian;
   this->Space = space;
   this->LValue = lValue;
+  this->LzMax = lzMax;
   this->EnergyShift = shift;
   this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
   this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
@@ -178,6 +182,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ReducedHilbertSpaceDescription = 0;
     }
+  if ((*options)["get-lvalue"] != 0)
+    {
+      this->ComputeLValueFlag = ((BooleanOption*) (*options)["get-lvalue"])->GetBoolean();
+    }
+  else
+    {
+      this->ComputeLValueFlag = false;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -242,47 +254,61 @@ int QHEOnSphereMainTask::ExecuteMainTask()
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
-//      cout << HRep << endl;
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
 #ifdef __LAPACK__
 	  if (this->LapackFlag == true)
 	    {
 	      RealDiagonalMatrix TmpDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	      if (this->EvaluateEigenvectors == false)
+	      if ((this->EvaluateEigenvectors == false) && (this->ComputeLValueFlag == false))
 		{
 		  HRep.LapackDiagonalize(TmpDiag);
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << endl;
 		}
 	      else
 		{
 		  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
 		  HRep.LapackDiagonalize(TmpDiag, Q);
-		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
-		    }	      
-		  cout << endl;
-		  delete[] TmpVectorName;
-		}
-	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		{
-		  File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		      for (int j = 0; j < this->NbrEigenvalue; ++j)
+			{
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			  Q[j].WriteVector(TmpVectorName);
+			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			}
+		      cout << endl;			  
+		      delete[] TmpVectorName;
+		    }
+		  if (this->ComputeLValueFlag == false)
+		    for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		      File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+		  else
+		    {
+		      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			{
+			  File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << " " 
+			       << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Q[j], Q[j]).Re) + 1.0) - 1.0)) << endl;
+			}
+		    }
 		}
 	    }
 	  else
 	    {
 #endif
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
-	      if (this->EvaluateEigenvectors == false)
+	      if ((this->EvaluateEigenvectors == false) && (this->ComputeLValueFlag == false))
 		{
 		  HRep.Householder(TmpTriDiag, 1e-7);
 		  TmpTriDiag.Diagonalize();
 		  TmpTriDiag.SortMatrixUpOrder();
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
 		}
 	      else
 		{
@@ -290,21 +316,32 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  HRep.Householder(TmpTriDiag, 1e-7, Q);
 		  TmpTriDiag.Diagonalize(Q);
 		  TmpTriDiag.SortMatrixUpOrder(Q);
-		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
-		    }	      
-		  cout << endl;
-		  delete[] TmpVectorName;
-		}
-	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		{
-		  File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		      for (int j = 0; j < this->NbrEigenvalue; ++j)
+			{
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			  Q[j].WriteVector(TmpVectorName);
+			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			}	      
+		      cout << endl;
+		      delete[] TmpVectorName;
+		    }
+		  if (this->ComputeLValueFlag == false)
+		    for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		      File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+		  else
+		    {
+		      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
+		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+			{
+			  File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << " " 
+			       << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Q[j], Q[j]).Re) + 1.0) - 1.0)) << endl;
+			}
+		    }
 		}
 #ifdef __LAPACK__
 	    }
@@ -312,7 +349,12 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
+	  if (this->ComputeLValueFlag == false)
+	    File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
+	  else
+	    {
+	      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
+	    }
 	}
     }
   else
@@ -321,12 +363,12 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
 	{
 	  if (this->DiskFlag == false)
-	    if (this->EvaluateEigenvectors == true)
+	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
 	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);
 	    else
 	      Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	  else
-	    if (this->EvaluateEigenvectors == true)
+	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
 	      Lanczos = new BasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
 	    else
 	      Lanczos = new BasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
@@ -426,13 +468,15 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-	  File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
+	  if  (this->ComputeLValueFlag == false)
+	    File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
 	}
       cout << endl;
-      if ((this->EvaluateEigenvectors == true) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
-										 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-						   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-						    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+      if (((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true)) && 
+	  (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+					 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+	   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+	    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
 	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
 	  if (Eigenvectors != 0)
@@ -472,24 +516,36 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		      cout << endl;
 		    }
 		}
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
-	      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	      if (this->EvaluateEigenvectors == true)
 		{
-		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
-		  Operation1.ApplyOperation(this->Architecture);
-		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
-		  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
-		    {	  
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
-		    }
-		  else
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
 		    {
-		      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+		      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
+		      Operation1.ApplyOperation(this->Architecture);
+		      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
+		      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
+			{	  
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			}
+		      else
+			{
+			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			}
+		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
-		  Eigenvectors[i].WriteVector(TmpVectorName);
+		  cout << endl;
+		  delete[] TmpVectorName;
 		}
-	      cout << endl;
-	      delete[] TmpVectorName;
+	      if (this->ComputeLValueFlag == true)
+		{
+		  ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		    {
+		      File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " " 
+			   << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0)) << endl;
+		    }
+		}
 	      delete[] Eigenvectors;
 	    }
 	  else
