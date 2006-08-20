@@ -175,7 +175,7 @@ int main()
 dnl Checks for library functions.
 
 CXXFLAGS="-O2 -Wall"
-INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src -I\$(top_srcdir)/QuantumDots/src -I\$(top_srcdir)/FQHE/src -I\$(top_srcdir)/Spin/src"
+INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 dnl check for debugging/profiling mode 
 
@@ -192,13 +192,46 @@ AC_MSG_RESULT([${HAVE_DEBUG}])
 AC_MSG_CHECKING(whether we are using profile mode)
 AC_MSG_RESULT([${HAVE_PROFILE}])
 
-dnl check for debugging/profiling mode 
+dnl check which packages to compile
 
-AC_ARG_ENABLE(quantumdots, [AC_HELP_STRING([--enable-quantumdots],[enable quantum dot module])], [HAVE_QUANTUMDOTS=$enableval
-QUANTUMDOTS="QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile"
-],[HAVE_QUANTUMDOTS=no
-QUANTUMDOTS=""])
+AC_ARG_ENABLE(quantumdots, [AC_HELP_STRING([--enable-quantumdots],[enable the quantum dot package])], [HAVE_QUANTUMDOTS=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/QuantumDots/src"
+], [HAVE_QUANTUMDOTS=no])
 
+AC_ARG_ENABLE(fqhe, [AC_HELP_STRING([--enable-fqhe],[enable the fractional quantum Hall effect package])], [HAVE_FQHE=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/FQHE/src"
+], [HAVE_FQHE=no])
+
+AC_ARG_ENABLE(spin, [AC_HELP_STRING([--enable-spin],[enable the spin system package])], [HAVE_SPIN=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/Spin/src"
+], [HAVE_SPIN=no])
+
+AC_MSG_CHECKING(whether we are compiling the quantum dot package)
+AC_MSG_RESULT([${HAVE_QUANTUMDOTS}])
+
+AC_MSG_CHECKING(whether we are compiling the spin system package)
+AC_MSG_RESULT([${HAVE_SPIN}])
+
+AC_MSG_CHECKING(whether we are compiling the fractional quantum Hall effect package)
+AC_MSG_RESULT([${HAVE_FQHE}])
+
+if test "$HAVE_QUANTUMDOTS" = yes; then
+       MAYBE_QUANTUMDOTS="QuantumDots"
+     else
+       MAYBE_QUANTUMDOTS=""
+fi
+
+if test "$HAVE_SPIN" = yes; then
+       MAYBE_SPIN="Spin"
+     else
+       MAYBE_SPIN=""
+fi
+
+if test "$HAVE_FQHE" = yes; then
+       MAYBE_FQHE="FQHE"
+     else
+       MAYBE_FQHE=""
+fi
 
 dnl end of configure
 
@@ -208,5 +241,8 @@ AC_SUBST(MATH_LIBS)
 AC_SUBST(THREAD_LIBS)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(MAYBE_QUANTUMDOTS)
+AC_SUBST(MAYBE_SPIN)
+AC_SUBST(MAYBE_FQHE)
 
-AC_OUTPUT(Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/QuantumNumber/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile )
+AC_OUTPUT(Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile )

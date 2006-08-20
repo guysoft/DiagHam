@@ -57,7 +57,6 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -112,6 +111,9 @@ LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MATH_LIBS = @MATH_LIBS@
+MAYBE_FQHE = @MAYBE_FQHE@
+MAYBE_QUANTUMDOTS = @MAYBE_QUANTUMDOTS@
+MAYBE_SPIN = @MAYBE_SPIN@
 MPI_CXX_EXISTS = @MPI_CXX_EXISTS@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
@@ -159,7 +161,8 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = Base src QuantumDots Spin FQHE
+SUBDIRS = Base src $(MAYBE_QUANTUMDOTS) $(MAYBE_SPIN) $(MAYBE_FQHE)
+DIST_SUBDIRS = Base src QuantumDots Spin FQHE
 all: all-recursive
 
 .SUFFIXES:
@@ -347,7 +350,7 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	list='$(SUBDIRS)'; for subdir in $$list; do \
+	list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
 	  if test "$$subdir" = .; then :; else \
 	    test -d "$(distdir)/$$subdir" \
 	    || mkdir "$(distdir)/$$subdir" \

@@ -51,7 +51,7 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+
 
 #include <math.h>
 

@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP F77 FFLAGS ac_ct_F77 BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS BLAS_LIBS LAPACK_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP F77 FFLAGS ac_ct_F77 BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS BLAS_LIBS LAPACK_LIBS MAYBE_QUANTUMDOTS MAYBE_SPIN MAYBE_FQHE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -868,7 +868,9 @@ Optional Features:
   --enable-mpi            enable MPI support
   --enable-debug          enable debug mode
   --enable-profile        enable profile mode
-  --enable-quantumdots    enable quantum dot module
+  --enable-quantumdots    enable the quantum dot package
+  --enable-fqhe           enable the fractional quantum Hall effect package
+  --enable-spin           enable the spin system package
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4553,7 +4555,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:4556:" \
+echo "$as_me:4558:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5063,7 +5065,7 @@ fi
 
 
 CXXFLAGS="-O2 -Wall"
-INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src -I\$(top_srcdir)/QuantumDots/src -I\$(top_srcdir)/FQHE/src -I\$(top_srcdir)/Spin/src"
+INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 
 # Check whether --enable-debug or --disable-debug was given.
@@ -5099,14 +5101,65 @@ echo "${ECHO_T}${HAVE_PROFILE}" >&6
 # Check whether --enable-quantumdots or --disable-quantumdots was given.
 if test "${enable_quantumdots+set}" = set; then
   enableval="$enable_quantumdots"
-  HAVE_QUANTUMDOTS=$enableval
-QUANTUMDOTS="QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile"
+  HAVE_QUANTUMDOTS=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/QuantumDots/src"
 
 else
   HAVE_QUANTUMDOTS=no
-QUANTUMDOTS=""
 fi;
 
+# Check whether --enable-fqhe or --disable-fqhe was given.
+if test "${enable_fqhe+set}" = set; then
+  enableval="$enable_fqhe"
+  HAVE_FQHE=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/FQHE/src"
+
+else
+  HAVE_FQHE=no
+fi;
+
+# Check whether --enable-spin or --disable-spin was given.
+if test "${enable_spin+set}" = set; then
+  enableval="$enable_spin"
+  HAVE_SPIN=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/Spin/src"
+
+else
+  HAVE_SPIN=no
+fi;
+
+echo "$as_me:$LINENO: checking whether we are compiling the quantum dot package" >&5
+echo $ECHO_N "checking whether we are compiling the quantum dot package... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_QUANTUMDOTS}" >&5
+echo "${ECHO_T}${HAVE_QUANTUMDOTS}" >&6
+
+echo "$as_me:$LINENO: checking whether we are compiling the spin system package" >&5
+echo $ECHO_N "checking whether we are compiling the spin system package... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_SPIN}" >&5
+echo "${ECHO_T}${HAVE_SPIN}" >&6
+
+echo "$as_me:$LINENO: checking whether we are compiling the fractional quantum Hall effect package" >&5
+echo $ECHO_N "checking whether we are compiling the fractional quantum Hall effect package... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_FQHE}" >&5
+echo "${ECHO_T}${HAVE_FQHE}" >&6
+
+if test "$HAVE_QUANTUMDOTS" = yes; then
+       MAYBE_QUANTUMDOTS="QuantumDots"
+     else
+       MAYBE_QUANTUMDOTS=""
+fi
+
+if test "$HAVE_SPIN" = yes; then
+       MAYBE_SPIN="Spin"
+     else
+       MAYBE_SPIN=""
+fi
+
+if test "$HAVE_FQHE" = yes; then
+       MAYBE_FQHE="FQHE"
+     else
+       MAYBE_FQHE=""
+fi
 
 
 
@@ -5116,7 +5169,10 @@ fi;
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/QuantumNumber/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile"
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ac_config_files="$ac_config_files Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5755,7 +5811,6 @@ do
   "Spin/src/Architecture/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Architecture/Makefile" ;;
   "Spin/src/Programs/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Programs/Makefile" ;;
   "Spin/src/Architecture/ArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Architecture/ArchitectureOperation/Makefile" ;;
-  "Spin/src/QuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/QuantumNumber/Makefile" ;;
   "Spin/src/HilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/HilbertSpace/Makefile" ;;
   "Spin/src/Hamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Hamiltonian/Makefile" ;;
   "Spin/src/Operator/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Operator/Makefile" ;;
@@ -5905,6 +5960,9 @@ s,@MATH_LIBS@,$MATH_LIBS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@BLAS_LIBS@,$BLAS_LIBS,;t t
 s,@LAPACK_LIBS@,$LAPACK_LIBS,;t t
+s,@MAYBE_QUANTUMDOTS@,$MAYBE_QUANTUMDOTS,;t t
+s,@MAYBE_SPIN@,$MAYBE_SPIN,;t t
+s,@MAYBE_FQHE@,$MAYBE_FQHE,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

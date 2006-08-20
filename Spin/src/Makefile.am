@@ -1,1 +1,1 @@
-SUBDIRS=Architecture HilbertSpace Hamiltonian Operator QuantumNumber Programs
+SUBDIRS=Architecture HilbertSpace Hamiltonian Operator Programs

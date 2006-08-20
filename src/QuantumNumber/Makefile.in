@@ -53,7 +53,7 @@ libQuantumNumber_a_LIBADD =
 am_libQuantumNumber_a_OBJECTS = AbstractQuantumNumber.$(OBJEXT) \
 	MomentumQuantumNumber.$(OBJEXT) \
 	PeriodicMomentumQuantumNumber.$(OBJEXT) \
-	VectorQuantumNumber.$(OBJEXT)
+	VectorQuantumNumber.$(OBJEXT) SzQuantumNumber.$(OBJEXT)
 libQuantumNumber_a_OBJECTS = $(am_libQuantumNumber_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -61,6 +61,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/AbstractQuantumNumber.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MomentumQuantumNumber.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PeriodicMomentumQuantumNumber.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/SzQuantumNumber.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/VectorQuantumNumber.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -122,6 +123,9 @@ LIBS = @LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MATH_LIBS = @MATH_LIBS@
+MAYBE_FQHE = @MAYBE_FQHE@
+MAYBE_QUANTUMDOTS = @MAYBE_QUANTUMDOTS@
+MAYBE_SPIN = @MAYBE_SPIN@
 MPI_CXX_EXISTS = @MPI_CXX_EXISTS@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
@@ -174,7 +178,8 @@ noinst_LIBRARIES = libQuantumNumber.a
 libQuantumNumber_a_SOURCES = AbstractQuantumNumber.cc \
 MomentumQuantumNumber.cc \
 PeriodicMomentumQuantumNumber.cc \
-VectorQuantumNumber.cc
+VectorQuantumNumber.cc \
+SzQuantumNumber.cc
 
 all: all-recursive
 
@@ -226,6 +231,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQuantumNumber.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MomentumQuantumNumber.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PeriodicMomentumQuantumNumber.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SzQuantumNumber.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VectorQuantumNumber.Po@am__quote@
 
 .cc.o:
