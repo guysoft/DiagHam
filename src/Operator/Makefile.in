@@ -163,7 +163,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEOperator SpinOperator
+SUBDIRS = 
 noinst_LIBRARIES = libOperator.a
 libOperator_a_SOURCES = AbstractOperator.cc
 all: all-recursive

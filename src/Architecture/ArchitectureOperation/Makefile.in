@@ -189,7 +189,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEArchitectureOperation SpinArchitectureOperation
+SUBDIRS = 
 noinst_LIBRARIES = libArchitectureOperation.a
 libArchitectureOperation_a_SOURCES = AbstractArchitectureOperation.cc \
 VectorHamiltonianMultiplyOperation.cc \

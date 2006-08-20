@@ -1,1 +1,1 @@
-SUBDIRS=QuantumDot QHE
+SUBDIRS=

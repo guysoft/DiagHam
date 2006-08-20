@@ -43,11 +43,9 @@ using std::ostream;
 class AbstractQuantumNumber
 {
 
- protected:
+ public:
 
   int QuantumNumberType;
-
- public:
 
   enum QuantumNumberID
   {
@@ -88,40 +86,45 @@ class AbstractQuantumNumber
   // return value = Hilbert space dimension
   int GetQuantumNumberType();
 
-  // add two quantum numbers
+  // add a quantum nunber to the current one
   //
-  // Q1 = first quantum number
-  // Q2 = second quantum number
-  // return value = pointer to the sum of the two quantum numbers
-  friend AbstractQuantumNumber* operator + (const AbstractQuantumNumber& Q1, 
-					    const AbstractQuantumNumber& Q2);
+  // number = quantum number to add 
+  // return value = reference to the current quantum number
+  virtual AbstractQuantumNumber& operator += (const AbstractQuantumNumber& number);
 
-  // substract two quantum numbers
+  // substract a quantum nunber to the current one
   //
-  // Q1 = first quantum number
-  // Q2 = second quantum number
-  // return value = pointer to the difference of the two quantum numbers
-  friend AbstractQuantumNumber* operator - (const AbstractQuantumNumber& Q1, 
-					    const AbstractQuantumNumber& Q2);
+  // number = quantum number to add 
+  // return value = reference to the current quantum number
+  virtual AbstractQuantumNumber& operator -= (const AbstractQuantumNumber& number);
+
+  // add a quantum nunber to the current one and return a new quantum number (not modifying the current one)
+  //
+  // number = quantum number to add to the current one
+  // return value = pointer on cloned quantum number corresponding to the sum 
+  virtual AbstractQuantumNumber* Add (const AbstractQuantumNumber& number);
+
+  // substract a quantum nunber to the current one and return a new quantum number (not modifying the current one)
+  //
+  // number = quantum number to substract to the current one
+  // return value = pointer on cloned quantum number corresponding to the difference 
+  virtual AbstractQuantumNumber* Sub (const AbstractQuantumNumber& number);
 
   // test if two quantum numbers are identical
   //
-  // Q1 = first quantum number
-  // Q2 = second quantum number
-  friend bool operator == (const AbstractQuantumNumber& Q1, const AbstractQuantumNumber& Q2);
+  // number = quantum number to compare to the current one
+  virtual bool IsEqual (const AbstractQuantumNumber& number);
 
   // test if two quantum numbers are different
   //
-  // Q1 = first quantum number
-  // Q2 = second quantum number
-  friend bool operator != (const AbstractQuantumNumber& Q1, const AbstractQuantumNumber& Q2);
+  // number = quantum number to compare to the current one
+  virtual bool IsDifferent (const AbstractQuantumNumber& number);
 
   // print quantum number
   //
-  // Str = reference on current output stream 
-  // Q = quantum number to print
+  // str = reference on current output stream 
   // return value = reference on current output stream 
-  friend ostream& operator << (ostream& Str, const AbstractQuantumNumber& Q1);
+  virtual ostream& PrintQuantumNumber (ostream& str);
 
 };
 

@@ -144,7 +144,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = Potential Spectra Analysis
+SUBDIRS = 
 all: all-recursive
 
 .SUFFIXES:

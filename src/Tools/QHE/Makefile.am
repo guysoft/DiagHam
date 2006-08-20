@@ -1,1 +1,1 @@
-SUBDIRS=QHEWaveFunction QHESpectrum QHEFiles
+SUBDIRS=

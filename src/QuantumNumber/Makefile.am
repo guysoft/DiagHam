@@ -1,4 +1,4 @@
-SUBDIRS=SpinQuantumNumber QHEQuantumNumber
+SUBDIRS=
 
 noinst_LIBRARIES=libQuantumNumber.a
 

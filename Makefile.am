@@ -1,1 +1,1 @@
-SUBDIRS=Base src
+SUBDIRS=Base src QuantumDots Spin FQHE

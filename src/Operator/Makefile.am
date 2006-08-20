@@ -1,4 +1,4 @@
-SUBDIRS=QHEOperator SpinOperator
+SUBDIRS=
 
 noinst_LIBRARIES=libOperator.a
 

@@ -146,100 +146,91 @@ AbstractQuantumNumber* VectorQuantumNumber::operator [] (int index)
   return this->QuantumNumbers[index];
 }
 
-// add two quantum numbers
+// add a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = sum of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-VectorQuantumNumber operator + (VectorQuantumNumber& Q1, VectorQuantumNumber& Q2) 
+AbstractQuantumNumber& VectorQuantumNumber::operator += (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumbers.GetNbrElement() != Q2.QuantumNumbers.GetNbrElement())
-    return VectorQuantumNumber();
+  if (this->QuantumNumbers.GetNbrElement() != ((VectorQuantumNumber&) number).QuantumNumbers.GetNbrElement())
+    return *this;
   List<AbstractQuantumNumber*> TmpQ;
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(Q1.QuantumNumbers);
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(Q2.QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(this->QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(((VectorQuantumNumber&) number).QuantumNumbers);
   AbstractQuantumNumber** TmpQuantumNumber1;
   AbstractQuantumNumber** TmpQuantumNumber2;
   while (((TmpQuantumNumber1 = IterQuantumNumber1())) && ((TmpQuantumNumber2 = IterQuantumNumber2())))
     {
-      TmpQ += ((**TmpQuantumNumber1) + (**TmpQuantumNumber2));
+      (**TmpQuantumNumber1) += (**TmpQuantumNumber2);
     }
-  return VectorQuantumNumber(TmpQ);
+  return *this;
 }
 
-// substract two quantum numbers
+// substract a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = quantum number to substract
-// return value = sum of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-VectorQuantumNumber operator - (VectorQuantumNumber& Q1, VectorQuantumNumber& Q2) 
+AbstractQuantumNumber& VectorQuantumNumber::operator -= (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumbers.GetNbrElement() != Q2.QuantumNumbers.GetNbrElement())
-    return VectorQuantumNumber();
+  if (this->QuantumNumbers.GetNbrElement() != ((VectorQuantumNumber&) number).QuantumNumbers.GetNbrElement())
+    return *this;
   List<AbstractQuantumNumber*> TmpQ;
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(Q1.QuantumNumbers);
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(Q2.QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(this->QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(((VectorQuantumNumber&) number).QuantumNumbers);
   AbstractQuantumNumber** TmpQuantumNumber1;
   AbstractQuantumNumber** TmpQuantumNumber2;
   while (((TmpQuantumNumber1 = IterQuantumNumber1())) && ((TmpQuantumNumber2 = IterQuantumNumber2())))
     {
-      TmpQ += ((**TmpQuantumNumber1) - (**TmpQuantumNumber2));
+      (**TmpQuantumNumber1) -= (**TmpQuantumNumber2);
     }
-  return VectorQuantumNumber(TmpQ);
+  return *this;
 }
 
 // test if two quantum numbers are identical
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = true if quantum numbers are identical
+// number = quantum number to compare to the current one
 
-bool operator == (const VectorQuantumNumber& Q1, const VectorQuantumNumber& Q2) 
+bool VectorQuantumNumber::IsEqual (const AbstractQuantumNumber& number)
 {
   bool Flag = true;
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(Q1.QuantumNumbers);
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(Q2.QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(this->QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(((VectorQuantumNumber &) number).QuantumNumbers);
   AbstractQuantumNumber** TmpQuantumNumber1;
   AbstractQuantumNumber** TmpQuantumNumber2;
   while ((Flag == true) && ((TmpQuantumNumber1 = IterQuantumNumber1())) && ((TmpQuantumNumber2 = IterQuantumNumber2())))
-  if ((**TmpQuantumNumber1) != (**TmpQuantumNumber2))
-    Flag = false;
+    Flag = ((**TmpQuantumNumber1).IsEqual(**TmpQuantumNumber2));
   return Flag;
 }
 
 // test if two quantum numbers are different
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = true if quantum numbers are different
+// number = quantum number to compare to the current one
 
-bool operator != (const VectorQuantumNumber& Q1, const VectorQuantumNumber& Q2) 
+bool VectorQuantumNumber::IsDifferent (const AbstractQuantumNumber& number)
 {
   bool Flag = true;
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(Q1.QuantumNumbers);
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(Q2.QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber1(this->QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber2(((VectorQuantumNumber &) number).QuantumNumbers);
   AbstractQuantumNumber** TmpQuantumNumber1;
   AbstractQuantumNumber** TmpQuantumNumber2;
   while ((Flag == true) && ((TmpQuantumNumber1 = IterQuantumNumber1())) && ((TmpQuantumNumber2 = IterQuantumNumber2())))
-  if ((**TmpQuantumNumber1) != (**TmpQuantumNumber2))
-    Flag = false;
+    Flag = (**TmpQuantumNumber1).IsEqual(**TmpQuantumNumber2);
   return !Flag;
 }
 
 // print quantum number
 //
-// Str = reference on current output stream 
-// Q = quantum number to print
+// str = reference on current output stream 
 // return value = reference on current output stream 
 
-ostream& operator << (ostream& Str, const VectorQuantumNumber& Q)
+ostream& VectorQuantumNumber::PrintQuantumNumber (ostream& str)
 {
-  ListIterator<AbstractQuantumNumber*> IterQuantumNumber(Q.QuantumNumbers);
+  ListIterator<AbstractQuantumNumber*> IterQuantumNumber(this->QuantumNumbers);
   AbstractQuantumNumber** TmpQuantumNumber;
   while ((TmpQuantumNumber = IterQuantumNumber()))
-    Str << (**TmpQuantumNumber) << " ";
-  return Str;
+    (*TmpQuantumNumber)->PrintQuantumNumber(str) << " ";
+  return str;
 }
 

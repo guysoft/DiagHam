@@ -168,7 +168,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEHilbertSpace SpinHilbertSpace DMRGHilbertSpace QuantumDotHilbertSpace ManyBodyHilbertSpace
+SUBDIRS = DMRGHilbertSpace ManyBodyHilbertSpace
 noinst_LIBRARIES = libHilbertSpace.a
 libHilbertSpace_a_SOURCES = AbstractHilbertSpace.cc \
 SpaceDecomposition.cc \

@@ -51,7 +51,7 @@
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Interaction/BasicInteraction.h"
-#include "HilbertSpace/SpinHilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2Chain.h"
 
 #include <math.h>
 
@@ -151,7 +151,7 @@ void FullInteractingDMRGAlgorithm::RunDMRG(int currentBlockIndex)
       ListIterator<AbstractQuantumNumber*> IterListQ2(TmpListQ2);
       while ((TmpQ2 = IterListQ2()))
 	{
-	  SumQ[Pos++] = (**TmpQ1) + (**TmpQ2);
+	  SumQ[Pos++] = (*TmpQ1)->Add(**TmpQ2);
 	}      
     }
 
@@ -172,7 +172,7 @@ void FullInteractingDMRGAlgorithm::RunDMRG(int currentBlockIndex)
 	{
 	  DimensionDirectSumSubspace[NbrSubspace] = 0; 
 	  for (int j = i + 1; j < Lim; j++)
-	    if ((SumQ[j] != 0) && ((*(SumQ[j])) == (*(SumQ[i]))))
+	    if ((SumQ[j] != 0) && (SumQ[j]->IsEqual(*(SumQ[i]))))
 	      {
 		delete SumQ[j];
 		SumQ[j] = 0;
@@ -378,8 +378,7 @@ void FullInteractingDMRGAlgorithm::RunDMRG(int currentBlockIndex)
       ListIterator<ExplicitHamiltonian*> IterListH2(LeftHamiltonians);
       while ((TmpH2 = IterListH2()))
 	{
-	  SumQ[Pos++] = *(((*TmpH1)->GetHilbertSpace())->GetQuantumNumber(0)) + 
-	    *(((*TmpH2)->GetHilbertSpace())->GetQuantumNumber(0));
+	  SumQ[Pos++] = (((*TmpH1)->GetHilbertSpace())->GetQuantumNumber(0))->Add(*(((*TmpH2)->GetHilbertSpace())->GetQuantumNumber(0)));
 	}      
     }
   NbrSubspace = 0;
@@ -391,13 +390,13 @@ void FullInteractingDMRGAlgorithm::RunDMRG(int currentBlockIndex)
     {
       if ((SumQ[i] != 0) && ((GlobalQuantumNumberConstraint == false) || 
 			     ((GlobalQuantumNumberConstraint == true) &&
-			      ((*(this->GlobalQuantumNumber)) == (*(SumQ[i]))))))
+			      (this->GlobalQuantumNumber->IsEqual(*(SumQ[i]))))))
 	{	  
 	  int NbrDirectSum = 0;
 	  DirectSumSubspaces[NbrSubspace] = new int [2 * (Lim - NbrSumDeleted)];
 	  NbrDirectSumSubspace[NbrSubspace] = 0;
 	  for (int j = i + 1; j < Lim; j++)
-	    if ((SumQ[j] != 0) && ((*(SumQ[j])) == (*(SumQ[i]))))
+	    if ((SumQ[j] != 0) && (SumQ[j]->IsEqual(*(SumQ[i]))))
 	      {
 		delete SumQ[j];
 		SumQ[j] = 0;

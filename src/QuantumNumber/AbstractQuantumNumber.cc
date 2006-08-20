@@ -29,8 +29,8 @@
 
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
-#include "QuantumNumber/SpinQuantumNumber/SzQuantumNumber.h"
-#include "QuantumNumber/QHEQuantumNumber/NumberParticleQuantumNumber.h"
+#include "QuantumNumber/SzQuantumNumber.h"
+#include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
 #include "QuantumNumber/MomentumQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
@@ -89,205 +89,77 @@ int AbstractQuantumNumber::GetQuantumNumberType()
   return this->QuantumNumberType;
 }
 
-// add two quantum numbers
+// add a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = pointer to the sum of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-AbstractQuantumNumber* operator + (const AbstractQuantumNumber& Q1, 
-				   const AbstractQuantumNumber& Q2)
+AbstractQuantumNumber& AbstractQuantumNumber::operator += (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumberType != Q2.QuantumNumberType)
-    return 0;
-  switch (Q1.QuantumNumberType)
-    {
-    case AbstractQuantumNumber::Sz:
-      {
-	return new SzQuantumNumber (((SzQuantumNumber&) Q1) + ((SzQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::NumberParticle:
-      {
-	return new NumberParticleQuantumNumber (((NumberParticleQuantumNumber&) Q1) +
-						((NumberParticleQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Vector:
-      {
-	return new VectorQuantumNumber(((VectorQuantumNumber&) Q1) + ((VectorQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Momentum:
-      {
-	return new  MomentumQuantumNumber (((MomentumQuantumNumber&) Q1) + ((MomentumQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::PeriodicMomentum:
-      {
-	return new  PeriodicMomentumQuantumNumber (((PeriodicMomentumQuantumNumber&) Q1) + ((PeriodicMomentumQuantumNumber&) Q2));  
-      }
-      break;
-    }
-  return 0;
+  return *this;
 }
 
-// substract two quantum numbers
+// substract a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = pointer to the difference of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-AbstractQuantumNumber* operator - (const AbstractQuantumNumber& Q1, 
-				   const AbstractQuantumNumber& Q2)
+AbstractQuantumNumber& AbstractQuantumNumber::operator -= (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumberType != Q2.QuantumNumberType)
-    return 0;
-  switch (Q1.QuantumNumberType)
-    {
-    case AbstractQuantumNumber::Sz:
-      {
-	return new SzQuantumNumber (((SzQuantumNumber&) Q1) - ((SzQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::NumberParticle:
-      {
-	return new NumberParticleQuantumNumber (((NumberParticleQuantumNumber&) Q1) -
-						((NumberParticleQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Vector:
-      {
-	return new VectorQuantumNumber(((VectorQuantumNumber&) Q1) - ((VectorQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Momentum:
-      {
-	return new  MomentumQuantumNumber (((MomentumQuantumNumber&) Q1) - ((MomentumQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::PeriodicMomentum:
-      {
-	return new  PeriodicMomentumQuantumNumber (((PeriodicMomentumQuantumNumber&) Q1) - ((PeriodicMomentumQuantumNumber&) Q2));  
-      }
-      break;
-    }
-  return 0;
+  return *this;
+}
+
+// add a quantum nunber to the current one and return a new quantum number (not modifying the current one)
+//
+// number = quantum number to add to the current one
+  // return value = pointer on cloned quantum number corresponding to the sum 
+
+AbstractQuantumNumber* AbstractQuantumNumber::Add (const AbstractQuantumNumber& number)
+{
+  return this->Clone();
+}
+
+// substract a quantum nunber to the current one and return a new quantum number (not modifying the current one)
+//
+// number = quantum number to substract to the current one
+// return value = pointer on cloned quantum number corresponding to the difference 
+
+AbstractQuantumNumber* AbstractQuantumNumber::Sub (const AbstractQuantumNumber& number)
+{
+  return this->Clone();
 }
 
 // test if two quantum numbers are identical
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
+// number = quantum number to compare to the current one
 
-bool operator == (const AbstractQuantumNumber& Q1, const AbstractQuantumNumber& Q2) 
+bool AbstractQuantumNumber::IsEqual (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumberType != Q2.QuantumNumberType)
+  if (this->QuantumNumberType == number.QuantumNumberType)
+    return true;
+  else
     return false;
-  switch (Q1.QuantumNumberType)
-    {
-    case AbstractQuantumNumber::Sz:
-      {
-	return (((SzQuantumNumber&) Q1) == ((SzQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::NumberParticle:
-      {
-	return (((NumberParticleQuantumNumber&) Q1) == ((NumberParticleQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Vector:
-      {
-	return (((VectorQuantumNumber&) Q1) == ((VectorQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Momentum:
-      {
-	return (((MomentumQuantumNumber&) Q1) == ((MomentumQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::PeriodicMomentum:
-      {
-	return (((PeriodicMomentumQuantumNumber&) Q1) == ((PeriodicMomentumQuantumNumber&) Q2));  
-      }
-      break;
-    }
-  return false;
 }
 
 // test if two quantum numbers are different
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
+// number = quantum number to compare to the current one
 
-bool operator != (const AbstractQuantumNumber& Q1, const AbstractQuantumNumber& Q2) 
+bool AbstractQuantumNumber::IsDifferent (const AbstractQuantumNumber& number)
 {
-  if (Q1.QuantumNumberType != Q2.QuantumNumberType)
+  if (this->QuantumNumberType != number.QuantumNumberType)
     return true;
-  switch (Q1.QuantumNumberType)
-    {
-    case AbstractQuantumNumber::Sz:
-      {
-	return (((SzQuantumNumber&) Q1) != ((SzQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::NumberParticle:
-      {
-	return (((NumberParticleQuantumNumber&) Q1) != ((NumberParticleQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Vector:
-      {
-	return (((VectorQuantumNumber&) Q1) != ((VectorQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::Momentum:
-      {
-	return (((MomentumQuantumNumber&) Q1) != ((MomentumQuantumNumber&) Q2));
-      }
-      break;
-    case AbstractQuantumNumber::PeriodicMomentum:
-      {
-	return (((PeriodicMomentumQuantumNumber&) Q1) != ((PeriodicMomentumQuantumNumber&) Q2));  
-      }
-      break;
-    }
-  return true;
+  else
+    return false;
 }
 
 // print quantum number
 //
-// Str = reference on current output stream 
-// Q = quantum number to print
+// str = reference on current output stream 
 // return value = reference on current output stream 
 
-ostream& operator << (ostream& Str, const AbstractQuantumNumber& Q)
+ostream& AbstractQuantumNumber::PrintQuantumNumber (ostream& str)
 {
-  if ((Q.QuantumNumberType & AbstractQuantumNumber::Vector) != 0)
-    return (Str << ((VectorQuantumNumber&) Q));  
-  switch (Q.QuantumNumberType)
-    {
-    case AbstractQuantumNumber::Sz:
-      {
-	return (Str << ((SzQuantumNumber&) Q));  
-      }
-      break;
-    case AbstractQuantumNumber::NumberParticle:
-      {
-	return (Str << ((NumberParticleQuantumNumber&) Q));  
-      }
-      break;
-    case AbstractQuantumNumber::Momentum:
-      {
-	return (Str << ((MomentumQuantumNumber&) Q));  
-      }
-      break;
-    case AbstractQuantumNumber::PeriodicMomentum:
-      {
-	return (Str << ((PeriodicMomentumQuantumNumber&) Q));  
-      }
-      break;
-    }
-  return Str;
+  return str;
 }
 

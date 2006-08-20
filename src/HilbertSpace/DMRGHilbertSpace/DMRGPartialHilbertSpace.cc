@@ -182,7 +182,7 @@ AbstractHilbertSpace* DMRGPartialHilbertSpace::ExtractSubspace (AbstractQuantumN
   AbstractQuantumNumber** TmpQ = 0;
   ListIterator<AbstractQuantumNumber*> IterQ(this->ListQuantumNumber);
   int Pos = 0;
-  while (((TmpQ = IterQ())) && ((**TmpQ) != q))
+  while (((TmpQ = IterQ())) && ((*TmpQ)->IsDifferent(q)))
     Pos++;
   if (TmpQ == 0)
     return new DMRGPartialHilbertSpace();

@@ -163,7 +163,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = QHEMainTask
+SUBDIRS = 
 noinst_LIBRARIES = libMainTask.a
 libMainTask_a_SOURCES = AbstractMainTask.cc
 all: all-recursive

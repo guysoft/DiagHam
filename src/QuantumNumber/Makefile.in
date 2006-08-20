@@ -169,7 +169,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = SpinQuantumNumber QHEQuantumNumber
+SUBDIRS = 
 noinst_LIBRARIES = libQuantumNumber.a
 libQuantumNumber_a_SOURCES = AbstractQuantumNumber.cc \
 MomentumQuantumNumber.cc \

@@ -1,4 +1,4 @@
-SUBDIRS=QHEFunctionBasis
+SUBDIRS=
 
 noinst_LIBRARIES=libFunctionBasis.a
 

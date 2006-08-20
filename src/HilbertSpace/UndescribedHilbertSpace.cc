@@ -153,7 +153,7 @@ AbstractHilbertSpace* UndescribedHilbertSpace::ExtractSubspace (AbstractQuantumN
 {
   if (this->QuantumNumber == 0)
     return 0;
-  if ((q != (*(this->QuantumNumber))))
+  if (q.IsDifferent((*(this->QuantumNumber))))
     return 0;
   else
     return this;

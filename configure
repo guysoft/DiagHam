@@ -866,6 +866,9 @@ Optional Features:
   --enable-lapack         enable LAPACK support
   --enable-lapack-only    use LAPACK routines instead of DiagHam ones
   --enable-mpi            enable MPI support
+  --enable-debug          enable debug mode
+  --enable-profile        enable profile mode
+  --enable-quantumdots    enable quantum dot module
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4550,7 +4553,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:4553:" \
+echo "$as_me:4556:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5059,8 +5062,50 @@ fi
 
 
 
-CXXFLAGS="-O2 -g -Wall"
-INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
+CXXFLAGS="-O2 -Wall"
+INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src -I\$(top_srcdir)/QuantumDots/src -I\$(top_srcdir)/FQHE/src -I\$(top_srcdir)/Spin/src"
+
+
+# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
+  HAVE_DEBUG=$enableval
+CXXFLAGS="${CXXFLAGS} -g"
+
+else
+  HAVE_DEBUG=no
+fi;
+# Check whether --enable-profile or --disable-profile was given.
+if test "${enable_profile+set}" = set; then
+  enableval="$enable_profile"
+  HAVE_PROFILE=$enableval
+CXXFLAGS="${CXXFLAGS} -g -pg"
+
+else
+  HAVE_PROFILE=no
+fi;
+
+echo "$as_me:$LINENO: checking whether we are using debug mode" >&5
+echo $ECHO_N "checking whether we are using debug mode... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_DEBUG}" >&5
+echo "${ECHO_T}${HAVE_DEBUG}" >&6
+
+echo "$as_me:$LINENO: checking whether we are using profile mode" >&5
+echo $ECHO_N "checking whether we are using profile mode... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: ${HAVE_PROFILE}" >&5
+echo "${ECHO_T}${HAVE_PROFILE}" >&6
+
+
+# Check whether --enable-quantumdots or --disable-quantumdots was given.
+if test "${enable_quantumdots+set}" = set; then
+  enableval="$enable_quantumdots"
+  HAVE_QUANTUMDOTS=$enableval
+QUANTUMDOTS="QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile"
+
+else
+  HAVE_QUANTUMDOTS=no
+QUANTUMDOTS=""
+fi;
 
 
 
@@ -5068,7 +5113,10 @@ INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile src/Makefile src/Programs/Makefile src/Programs/QHE/Makefile src/Programs/QHE/QHEOnSphere/Makefile src/Programs/QHE/QHEOnDisk/Makefile src/Programs/QHE/QHEOnTorus/Makefile src/Programs/QuantumDot/Makefile src/Programs/Spin/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/Architecture/ArchitectureOperation/QHEArchitectureOperation/Makefile src/Architecture/ArchitectureOperation/SpinArchitectureOperation/Makefile src/FunctionBasis/Makefile src/FunctionBasis/QHEFunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/QuantumNumber/QHEQuantumNumber/Makefile src/QuantumNumber/SpinQuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/QHEHilbertSpace/Makefile src/HilbertSpace/SpinHilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/QuantumDotHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/QHEHamiltonian/Makefile src/Hamiltonian/QuantumDotHamiltonian/Makefile src/Hamiltonian/SpinHamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/Tools/QuantumDot/Makefile src/Tools/QuantumDot/Potential/Makefile src/Tools/QuantumDot/Spectra/Makefile src/MainTask/Makefile src/MainTask/QHEMainTask/Makefile src/Architecture/ClusterArchitecture/Makefile src/Tools/QuantumDot/Analysis/Makefile src/Tools/QHE/Makefile src/Tools/QHE/QHEWaveFunction/Makefile src/Tools/QHE/QHESpectrum/Makefile src/Tools/QHE/QHEFiles/Makefile src/Operator/QHEOperator/Makefile src/Operator/SpinOperator/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile"
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/QuantumNumber/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5642,29 +5690,15 @@ do
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "src/Programs/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/Makefile" ;;
-  "src/Programs/QHE/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/QHE/Makefile" ;;
-  "src/Programs/QHE/QHEOnSphere/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/QHE/QHEOnSphere/Makefile" ;;
-  "src/Programs/QHE/QHEOnDisk/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/QHE/QHEOnDisk/Makefile" ;;
-  "src/Programs/QHE/QHEOnTorus/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/QHE/QHEOnTorus/Makefile" ;;
-  "src/Programs/QuantumDot/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/QuantumDot/Makefile" ;;
-  "src/Programs/Spin/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Programs/Spin/Makefile" ;;
   "src/Architecture/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Architecture/Makefile" ;;
   "src/Architecture/ArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Architecture/ArchitectureOperation/Makefile" ;;
-  "src/Architecture/ArchitectureOperation/QHEArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Architecture/ArchitectureOperation/QHEArchitectureOperation/Makefile" ;;
-  "src/Architecture/ArchitectureOperation/SpinArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Architecture/ArchitectureOperation/SpinArchitectureOperation/Makefile" ;;
   "src/FunctionBasis/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/FunctionBasis/Makefile" ;;
-  "src/FunctionBasis/QHEFunctionBasis/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/FunctionBasis/QHEFunctionBasis/Makefile" ;;
   "src/Tensor/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tensor/Makefile" ;;
   "src/QuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/QuantumNumber/Makefile" ;;
-  "src/QuantumNumber/QHEQuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/QuantumNumber/QHEQuantumNumber/Makefile" ;;
-  "src/QuantumNumber/SpinQuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/QuantumNumber/SpinQuantumNumber/Makefile" ;;
   "src/Interaction/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Interaction/Makefile" ;;
   "src/Interaction/InternalInteraction/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Interaction/InternalInteraction/Makefile" ;;
   "src/HilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/Makefile" ;;
-  "src/HilbertSpace/QHEHilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/QHEHilbertSpace/Makefile" ;;
-  "src/HilbertSpace/SpinHilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/SpinHilbertSpace/Makefile" ;;
   "src/HilbertSpace/DMRGHilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/DMRGHilbertSpace/Makefile" ;;
-  "src/HilbertSpace/QuantumDotHilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/QuantumDotHilbertSpace/Makefile" ;;
   "src/HilbertSpace/ManyBodyHilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/HilbertSpace/ManyBodyHilbertSpace/Makefile" ;;
   "src/Output/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Output/Makefile" ;;
   "src/GeneralTools/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/GeneralTools/Makefile" ;;
@@ -5673,9 +5707,6 @@ do
   "src/Matrix/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Matrix/Makefile" ;;
   "src/LanczosAlgorithm/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/LanczosAlgorithm/Makefile" ;;
   "src/Hamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Hamiltonian/Makefile" ;;
-  "src/Hamiltonian/QHEHamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Hamiltonian/QHEHamiltonian/Makefile" ;;
-  "src/Hamiltonian/QuantumDotHamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Hamiltonian/QuantumDotHamiltonian/Makefile" ;;
-  "src/Hamiltonian/SpinHamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Hamiltonian/SpinHamiltonian/Makefile" ;;
   "src/Hamiltonian/DMRGHamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Hamiltonian/DMRGHamiltonian/Makefile" ;;
   "src/TensorProduct/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/TensorProduct/Makefile" ;;
   "src/DMRGAlgorithm/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/DMRGAlgorithm/Makefile" ;;
@@ -5685,24 +5716,49 @@ do
   "src/MathTools/RandomNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/MathTools/RandomNumber/Makefile" ;;
   "src/Options/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Options/Makefile" ;;
   "src/Tools/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/Makefile" ;;
-  "src/Tools/QuantumDot/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QuantumDot/Makefile" ;;
-  "src/Tools/QuantumDot/Potential/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QuantumDot/Potential/Makefile" ;;
-  "src/Tools/QuantumDot/Spectra/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QuantumDot/Spectra/Makefile" ;;
   "src/MainTask/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/MainTask/Makefile" ;;
-  "src/MainTask/QHEMainTask/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/MainTask/QHEMainTask/Makefile" ;;
   "src/Architecture/ClusterArchitecture/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Architecture/ClusterArchitecture/Makefile" ;;
-  "src/Tools/QuantumDot/Analysis/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QuantumDot/Analysis/Makefile" ;;
-  "src/Tools/QHE/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QHE/Makefile" ;;
-  "src/Tools/QHE/QHEWaveFunction/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QHE/QHEWaveFunction/Makefile" ;;
-  "src/Tools/QHE/QHESpectrum/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QHE/QHESpectrum/Makefile" ;;
-  "src/Tools/QHE/QHEFiles/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Tools/QHE/QHEFiles/Makefile" ;;
-  "src/Operator/QHEOperator/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Operator/QHEOperator/Makefile" ;;
-  "src/Operator/SpinOperator/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Operator/SpinOperator/Makefile" ;;
   "Base/Makefile" ) CONFIG_FILES="$CONFIG_FILES Base/Makefile" ;;
   "Base/src/Makefile" ) CONFIG_FILES="$CONFIG_FILES Base/src/Makefile" ;;
   "Base/src/BitmapTools/Makefile" ) CONFIG_FILES="$CONFIG_FILES Base/src/BitmapTools/Makefile" ;;
   "Base/src/BitmapTools/Color/Makefile" ) CONFIG_FILES="$CONFIG_FILES Base/src/BitmapTools/Color/Makefile" ;;
   "Base/src/BitmapTools/BitmapPicture/Makefile" ) CONFIG_FILES="$CONFIG_FILES Base/src/BitmapTools/BitmapPicture/Makefile" ;;
+  "QuantumDots/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/Makefile" ;;
+  "QuantumDots/src/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Makefile" ;;
+  "QuantumDots/src/Tools/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Tools/Makefile" ;;
+  "QuantumDots/src/HilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/HilbertSpace/Makefile" ;;
+  "QuantumDots/src/Hamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Hamiltonian/Makefile" ;;
+  "QuantumDots/src/Tools/Spectra/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Tools/Spectra/Makefile" ;;
+  "QuantumDots/src/Tools/Potential/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Tools/Potential/Makefile" ;;
+  "QuantumDots/src/Tools/Analysis/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Tools/Analysis/Makefile" ;;
+  "QuantumDots/src/Programs/Makefile" ) CONFIG_FILES="$CONFIG_FILES QuantumDots/src/Programs/Makefile" ;;
+  "FQHE/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/Makefile" ;;
+  "FQHE/src/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Makefile" ;;
+  "FQHE/src/Architecture/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Architecture/Makefile" ;;
+  "FQHE/src/Tools/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Tools/Makefile" ;;
+  "FQHE/src/Programs/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Programs/Makefile" ;;
+  "FQHE/src/Programs/FQHEOnSphere/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Programs/FQHEOnSphere/Makefile" ;;
+  "FQHE/src/Programs/FQHEOnDisk/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Programs/FQHEOnDisk/Makefile" ;;
+  "FQHE/src/Programs/FQHEOnTorus/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Programs/FQHEOnTorus/Makefile" ;;
+  "FQHE/src/Architecture/ArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Architecture/ArchitectureOperation/Makefile" ;;
+  "FQHE/src/FunctionBasis/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/FunctionBasis/Makefile" ;;
+  "FQHE/src/QuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/QuantumNumber/Makefile" ;;
+  "FQHE/src/HilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/HilbertSpace/Makefile" ;;
+  "FQHE/src/Hamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Hamiltonian/Makefile" ;;
+  "FQHE/src/MainTask/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/MainTask/Makefile" ;;
+  "FQHE/src/Tools/FQHEWaveFunction/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Tools/FQHEWaveFunction/Makefile" ;;
+  "FQHE/src/Tools/FQHESpectrum/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Tools/FQHESpectrum/Makefile" ;;
+  "FQHE/src/Tools/FQHEFiles/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Tools/FQHEFiles/Makefile" ;;
+  "FQHE/src/Operator/Makefile" ) CONFIG_FILES="$CONFIG_FILES FQHE/src/Operator/Makefile" ;;
+  "Spin/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/Makefile" ;;
+  "Spin/src/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Makefile" ;;
+  "Spin/src/Architecture/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Architecture/Makefile" ;;
+  "Spin/src/Programs/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Programs/Makefile" ;;
+  "Spin/src/Architecture/ArchitectureOperation/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Architecture/ArchitectureOperation/Makefile" ;;
+  "Spin/src/QuantumNumber/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/QuantumNumber/Makefile" ;;
+  "Spin/src/HilbertSpace/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/HilbertSpace/Makefile" ;;
+  "Spin/src/Hamiltonian/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Hamiltonian/Makefile" ;;
+  "Spin/src/Operator/Makefile" ) CONFIG_FILES="$CONFIG_FILES Spin/src/Operator/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "src/config_ac.h" ) CONFIG_HEADERS="$CONFIG_HEADERS src/config_ac.h:src/config_ac.h.in" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5

@@ -5,9 +5,6 @@
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
 
-#include "HilbertSpace/QHEHilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/QHEHamiltonian/ParticleOnSphereDeltaHamiltonian.h"
-
 #include "LanczosAlgorithm/BasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "Architecture/MonoProcessorArchitecture.h"
@@ -33,6 +30,8 @@ int main(int argc, char** argv)
 {
   cout.precision(14); 
 
+  // this first part of the code shows how to handle command arguments
+
   // some running options and help
   BooleanOption LanczosOption ('l', "lanczos", "enable lanczos diagonalization algorithm", false);
   BooleanOption HelpOption ('h', "help", "display this help");
@@ -49,6 +48,8 @@ int main(int argc, char** argv)
   OptionList += &IterationOption;
   OptionList += &NbrEigenvaluesOption;
   OptionList += &EigenstateOption;
+
+  // this is thee way to parse the command arguments, if an error occured it displays the way to get help
   if (ProceedOptions(argv, argc, OptionList) == false)
     {
       cout << "see man page for option syntax or type ExplicitMatrixExample -h" << endl;
@@ -67,27 +68,14 @@ int main(int argc, char** argv)
   int NbrEigenvalue = NbrEigenvaluesOption.GetInteger();
 
 
-  // initialize matrix associated to the hamiltonian
-
-  // delete this part (just an example)
-  BosonOnSphere Space (6, 0, 6);
-  ParticleOnSphereDeltaHamiltonian Hamiltonian2(&Space, 6, 6, 0);
-  RealSymmetricMatrix HRep (Hamiltonian2.GetHilbertSpaceDimension());
-  Hamiltonian2.GetHamiltonian(HRep);
- // stop delete
-
-  // enter here hilbert space dimension
-  int Dimension = Hamiltonian2.GetHilbertSpaceDimension();
-
+  // in this example, we explicilty build the hamiltonian corresponding to closed three 1/2 spin chain   
+  int Dimension = 8;
   RealSymmetricMatrix HamiltonianRepresentation (Dimension);
-
-
-  cout << "dim = " << (Hamiltonian2.GetHilbertSpaceDimension()) << endl;
   for (int i = 0; i < Dimension; ++i)
     for (int j = 0; j <= i; ++j)
       {
 	// insert here your algorithm to fill the hamiltonian representation
-	HamiltonianRepresentation(j, i) = HRep(j, i);
+	HamiltonianRepresentation(j, i) = 0;
       }
 
   // store matrix in an hamiltonian class and create corresponding hilbert space
@@ -189,27 +177,29 @@ int main(int argc, char** argv)
 	}
       cout << endl;
       
-      //compute eigenstates
+      // compute eigenstates
       if (EigenstateFlag == true)
 	Eigenstates = (RealVector*) Lanczos.GetEigenstates(NbrEigenvalue);
     }
 
 
-  // insert here your code using the eigenvalues and the eigenvectors
+  // here is an example of code using the eigenvalues (just print them on screen)
   for (int i = 0; i < NbrEigenvalue; ++i)
     {
       cout << Eigenvalues[i] << " ";
     }
   cout << endl;
+
+  // here is an example of code using the eigenvalues (save them on disk in ASCII format)
   if ((EigenstateFlag == true) && (Eigenstates != 0))
     {
+      char* TmpVectorName = new char [32];
       for (int i = 0; i < NbrEigenvalue; ++i)
 	{
-	  RealVector TmpVector (Dimension);
-	  TmpVector.Multiply(HRep, Eigenstates[i]);	  
-	  cout << (TmpVector * (RealVector&) Eigenstates[i]) << " ";
+	  sprintf (TmpVectorName, "vector%d.vec", i);
+	  Eigenstates[i].WriteAsciiVector(TmpVectorName);
 	}
-      cout << endl;
+      delete[] TmpVectorName;
     }
 
   return 0;

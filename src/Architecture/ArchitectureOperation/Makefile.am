@@ -1,4 +1,4 @@
-SUBDIRS=QHEArchitectureOperation SpinArchitectureOperation
+SUBDIRS=
 
 noinst_LIBRARIES=libArchitectureOperation.a
 

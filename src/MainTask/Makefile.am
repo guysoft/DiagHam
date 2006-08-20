@@ -1,4 +1,4 @@
-SUBDIRS=QHEMainTask
+SUBDIRS=
 
 noinst_LIBRARIES=libMainTask.a
 

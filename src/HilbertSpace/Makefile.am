@@ -1,4 +1,4 @@
-SUBDIRS=QHEHilbertSpace SpinHilbertSpace DMRGHilbertSpace QuantumDotHilbertSpace ManyBodyHilbertSpace
+SUBDIRS= DMRGHilbertSpace ManyBodyHilbertSpace
 
 noinst_LIBRARIES=libHilbertSpace.a
 

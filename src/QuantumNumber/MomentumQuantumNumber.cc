@@ -109,37 +109,38 @@ int MomentumQuantumNumber::GetMomentum ()
   return this->Momentum;
 }
 
-// add two quantum numbers
+// add a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = sum of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-MomentumQuantumNumber operator + (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& Q2) 
+AbstractQuantumNumber& MomentumQuantumNumber::operator += (const AbstractQuantumNumber& number)
 {
-  return MomentumQuantumNumber(Q1.Momentum + Q2.Momentum);
+  if (this->QuantumNumberType == number.QuantumNumberType)
+    this->Momentum += ((MomentumQuantumNumber&) number).Momentum;
+  return *this;
 }
 
-// substract two quantum numbers
+// substract a quantum nunber to the current one
 //
-// Q1 = first quantum number
-// Q2 = quantum number to substract
-// return value = sum of the two quantum numbers
+// number = quantum number to add 
+// return value = reference to the current quantum number
 
-MomentumQuantumNumber operator - (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& Q2) 
+AbstractQuantumNumber& MomentumQuantumNumber::operator -= (const AbstractQuantumNumber& number)
 {
-  return MomentumQuantumNumber(Q1.Momentum - Q2.Momentum);
+  if (this->QuantumNumberType == number.QuantumNumberType)
+    this->Momentum -= ((MomentumQuantumNumber&) number).Momentum;
+  return *this;
 }
 
 // test if two quantum numbers are identical
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = true if quantum numbers are identical
+// number = quantum number to compare to the current one
 
-bool operator == (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& Q2) 
+bool MomentumQuantumNumber::IsEqual (const AbstractQuantumNumber& number)
 {
-  if (Q1.Momentum == Q2.Momentum)
+  if ((this->QuantumNumberType == number.QuantumNumberType) && 
+      (this->Momentum == ((MomentumQuantumNumber&) number).Momentum))
     return true;
   else
     return false;
@@ -147,13 +148,12 @@ bool operator == (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& 
 
 // test if two quantum numbers are different
 //
-// Q1 = first quantum number
-// Q2 = second quantum number
-// return value = true if quantum numbers are different
+// number = quantum number to compare to the current one
 
-bool operator != (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& Q2) 
+bool MomentumQuantumNumber::IsDifferent (const AbstractQuantumNumber& number)
 {
-  if (Q1.Momentum != Q2.Momentum)
+  if ((this->QuantumNumberType != number.QuantumNumberType) || 
+      (this->Momentum != ((MomentumQuantumNumber&) number).Momentum))
     return true;
   else
     return false;
@@ -161,13 +161,12 @@ bool operator != (const MomentumQuantumNumber& Q1, const MomentumQuantumNumber& 
 
 // print quantum number
 //
-// Str = reference on current output stream 
-// Q = quantum number to print
+// str = reference on current output stream 
 // return value = reference on current output stream 
 
-ostream& operator << (ostream& Str, const MomentumQuantumNumber& Q)
+ostream& MomentumQuantumNumber::PrintQuantumNumber (ostream& str)
 {
-  Str << "P = " << Q.Momentum;
-  return Str;
+  str << "P = " << this->Momentum;
+  return str;
 }
 

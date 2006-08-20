@@ -1,4 +1,4 @@
-SUBDIRS=DMRGHamiltonian QHEHamiltonian QuantumDotHamiltonian SpinHamiltonian
+SUBDIRS=DMRGHamiltonian
 
 noinst_LIBRARIES=libHamiltonian.a
 
