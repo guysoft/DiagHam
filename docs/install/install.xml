@@ -14,14 +14,29 @@
     </ul>
     or<br>
     <i>tar -xzvf DiagHamxxxxxxxx.tar</i> (if supported by your <b>tar</b> version)
-      Go into the DiagHam directory and run the configure file<br>
-    <i>./configure</i><br>
+      DiagHam uses the standard autotools. Its default configuration only includes the basic libraries. In principle, you are in interested in at least, one package related to a given type of physicl problems. See section \ref{additionalpackages} for a complete list of available packages. As an example, we will assume you want to compile the package related to the fractional quantum Hall effect. Go into the DiagHam directory and run the configure file<br>
+    <i>./configure --enable-fqhe</i><br>
     If no error happened, you can now compile the whole program with<br>
     <i>make</i> (use the -jx with x equal to the number of processors on your computers if x>1)<br>
     <p>
-    The compilation process is quite long, you can go and drink a coffee. Now you are back from the coffee machine, the compilation shall be over. If you go in the subdirectories of <i>src/Program</i> and you shall find all the examples described in <a href="../documentation/index.html">the documentation</a> (and more).<br>
+    The compilation process is quite long, you can go and drink a coffee. Now you are back from the coffee machine, the compilation shall be over. If you go in the subdirectories of <i>FQHE/src/Program</i> and you shall find all the examples described in <a href="../documentation/index.html">the documentation</a> (and more).<br>
     <p>
-      If you encounter any problem during the installation stage please first refer to the <a href="../faqs/index.html">faqs</a>. If you did't find any answer there, you can send a <a href="../bug/index.html">bug report</a>
+      If you have encountered any problem during the installation stage, please first refer to the \ref{faqs}. If you didn't find any useful answer there, you can send a \ref{bug report}.
+
+</section>
+
+<section name="available packages">
+
+In addition to its libraries to define physical systems and diagonalize Hamiltonian, DiagHam has already three built-in packages that address different types of physical systems.
+
+<subsection name="fractional quantum Hall effect">
+</subsection>
+
+<subsection name="quantum dots">
+</subsection>
+
+<subsection name="spin systems">
+</subsection>
 
 </section>
 
@@ -32,6 +47,10 @@ DiagHam offers the possibility to enable/disable some advanced functionalities o
 <subsection name="MPI support">
 DiagHam supports distributed computing using MPI. This option is disable by default. To enable the MPI support, use the \longoption{enble-mpi}. There is also other options to specify some particularities of your MPI local installation
 \begin{itemize}
+\item \commandoption{--with-mpi-cxx} : forces the name of the MPI C++ compiler to use (the default value is mpiCC).
+\item \commandoption{--with-mpi-libs="LIBS"} indicates the option related to thq MPI libraries that have to be used when compiling (the default value is "-lmpi").
+\item \commandoption{--with-mpi-incdir=DIR} forces the MPI include directory (the default value is [MPIROOT/include])
+\item \commandoption{--with-mpi-libdir=DIR} forces the MPI library directory (the default value is [MPIROOT/lib])
 \end{itemize}
 
 </subsection>

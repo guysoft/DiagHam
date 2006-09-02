@@ -94,6 +94,9 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 
   int* LzMaxSectorPosition;
 
+  unsigned long** StateDescriptionPerLz;
+  int* LzSectorSize;
+
  public:
 
   // basic constructor
