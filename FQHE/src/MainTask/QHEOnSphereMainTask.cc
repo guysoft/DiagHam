@@ -190,6 +190,15 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ComputeLValueFlag = false;
     }
+  if ((*options)["get-hvalue"] != 0)
+    {
+      this->ComputeEnergyFlag = ((BooleanOption*) (*options)["get-hvalue"])->GetBoolean();
+    }
+  else
+    {
+      this->ComputeEnergyFlag = false;
+    }
+
   this->FirstRun = firstRun;
 }  
  
@@ -516,14 +525,20 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		      cout << endl;
 		    }
 		}
-	      if (this->EvaluateEigenvectors == true)
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+	      ParticleOnSphereSquareTotalMomentumOperator* OperMomentum = 0;
+	      if (this->ComputeLValueFlag == true)
 		{
-		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
-		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		  OperMomentum = new ParticleOnSphereSquareTotalMomentumOperator ((ParticleOnSphere*) Space, this->LzMax);
+		}
+	      for (int i = 0; i < this->NbrEigenvalue; ++i)
+		{
+		  File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
+		  Operation1.ApplyOperation(this->Architecture);
+		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
-		      Operation1.ApplyOperation(this->Architecture);
-		      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
 		      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
 			{	  
 			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
@@ -534,19 +549,21 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 			}
 		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
-		  cout << endl;
-		  delete[] TmpVectorName;
-		}
-	      if (this->ComputeLValueFlag == true)
-		{
-		  ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
-		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		  if (this->ComputeEnergyFlag == true)
 		    {
-		      File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " " 
-			   << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0)) << endl;
+		      File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift);
 		    }
+		  if (this->ComputeLValueFlag == true)
+		    {
+		      File << " " << (0.5 * (sqrt ((4.0 * OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0)) << endl;
+		    }
+		  File << endl;
 		}
+	      cout << endl;
+	      delete[] TmpVectorName;
 	      delete[] Eigenvectors;
+	      if (this->ComputeLValueFlag == true)
+		delete OperMomentum;
 	    }
 	  else
 	    {

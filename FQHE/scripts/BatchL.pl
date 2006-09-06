@@ -4,7 +4,7 @@ use strict 'vars';
 
 my $NbrFermions = $ARGV[0];
 my $SValue = $ARGV[1];
-my $LProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEOnSphere/GetLValue";
+my $LProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/GetLValue";
 
 
 my $TmpFile;

@@ -170,7 +170,7 @@ class FullBosonOnSphere : public BosonOnSphere
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int FullBosonOnSphere::AdA (int index, int m, int n, double& coefficient);
+  int AdA (int index, int m, int n, double& coefficient);
 
   // print a given State
   //

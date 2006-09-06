@@ -95,7 +95,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   this->LzSectorSize = new int [this->LzMax + 1];
   for (int i = this->NbrFermions - 1; i <= LzMax; ++i)    
     {
-      this->StateDescriptionPerLz[i] = new unsigned long [100000];
+      this->StateDescriptionPerLz[i] = new unsigned long [this->HilbertSpaceDimension / 2];
       this->LzSectorSize[i] = 0;
     }
   this->StateDescriptionPerLz[this->LzMax][0] = this->ReferenceState;
@@ -127,11 +127,11 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
     }
   for (int i = 0; i <= this->LzMax; ++i)
     cout << i << " " << this->LzMaxSectorPosition[i] << endl;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      cout << i << " = ";
-      this->PrintState(cout, i) << endl;
-    }
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//     {
+//       cout << i << " = ";
+//       this->PrintState(cout, i) << endl;
+//     }
   delete[] this->TmpGeneratedStates;
   delete[] this->TmpGeneratedStatesLzMax;
 //  SortArrayDownOrdering(this->StateDescription, this->StateLzMax, this->HilbertSpaceDimension);
@@ -765,7 +765,7 @@ int FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long referen
 	  while ((MinIndex >= 0) && (NbrNewEntries > 0))
 	    {
 	      TmpReferenceState = TmpGeneratedStates2[MidIndex];
-	      while (TmpStateDescriptionPerLz[MinIndex] < TmpReferenceState)
+	      while ((MinIndex >= 0) && (TmpStateDescriptionPerLz[MinIndex] < TmpReferenceState))
 		{
 		  TmpStateDescriptionPerLz[MaxIndex] = TmpStateDescriptionPerLz[MinIndex];
 		  --MinIndex;

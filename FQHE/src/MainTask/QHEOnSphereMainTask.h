@@ -110,6 +110,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   char* ReducedHilbertSpaceDescription;
   // compute l value for each eigenvalue
   bool ComputeLValueFlag;
+  // compute hamiltonian mean value for each eigenvalue
+  bool ComputeEnergyFlag;
 
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
