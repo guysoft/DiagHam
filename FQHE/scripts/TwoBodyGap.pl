@@ -93,6 +93,7 @@ while ($NbrPoints > 0)
 	$Gap = 0.0
       }
     close (INFILE);
+    rename ($DataFile, $DataFile.".".$Lambda);
     unless (open (OUTFILE, ">>".$OutputFile))
       {
 	die ("can't open ".$OutputFile."\n");
