@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsLaplacianDelta -h" << endl;
+      cout << "see man page for option syntax or type GetBosonsDimension -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)

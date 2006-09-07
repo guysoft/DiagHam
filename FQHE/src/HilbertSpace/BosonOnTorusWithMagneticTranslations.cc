@@ -72,9 +72,9 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
   this->TemporaryState2.Resize(this->ReducedNbrState);
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
-  cout << this->HilbertSpaceDimension << endl;
+//  cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
-  cout << this->HilbertSpaceDimension << endl;
+//  cout << this->HilbertSpaceDimension << endl;
 
   this->HashKeyMask = (unsigned long) 0x1;
   unsigned long TmpMemory = this->MaxMomentum * ((this->HashKeyMask + 1) * ((this->HilbertSpaceDimension * sizeof(int)) + 
