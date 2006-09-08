@@ -416,10 +416,23 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
       this->CompatibilityWithYMomentum[i]= true;	  
     }
 
-  int MaxHilbertSpaceDimension = this->HilbertSpaceDimension;
-  this->TemporaryStateDescription = new BosonOnTorusState* [MaxHilbertSpaceDimension];
-  for (int i = 0; i < MaxHilbertSpaceDimension; ++i)
+  int MaxHilbertSpaceDimension = 0;
+  int MaxTmpHilbertSpaceDimension = 0;
+
+  for (int i = 1; i < this->MaxMomentum; ++i)
+    for (int j = 1; j <= this->NbrBosons; ++j)
+      {
+	int Pos = this->RawGenerateStatesDryRun(this->NbrBosons - j, i - 1, 0, j * i);
+	if (Pos > MaxTmpHilbertSpaceDimension)
+	  MaxTmpHilbertSpaceDimension = Pos;
+	MaxHilbertSpaceDimension += Pos;
+      }
+  cout << MaxTmpHilbertSpaceDimension << " " << MaxHilbertSpaceDimension << endl;
+
+  this->TemporaryStateDescription = new BosonOnTorusState* [MaxTmpHilbertSpaceDimension];
+  for (int i = 0; i < MaxTmpHilbertSpaceDimension; ++i)
     this->TemporaryStateDescription[i] = new BosonOnTorusState (this->ReducedNbrState);
+
   BosonOnTorusState** InternalTemporaryStateDescription = new BosonOnTorusState* [MaxHilbertSpaceDimension];
   int* TmpStateSymmetries = new int [MaxHilbertSpaceDimension];
   BosonOnTorusState* TmpState;
@@ -461,12 +474,6 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
 										   this->ReducedNbrState, this->RemainderNbrState, 
 										   this->MaxMomentum, 
 										   this->XMomentumTranslationStep);
-/*	      this->TemporaryStateDescription[k]->PrintState(cout, this->ReducedNbrState, this->RemainderNbrState) << "      " << StateSymmetry << endl; 
-	      if (this->CompatibilityWithXMomentum[StateSymmetry] == true) 
-		cout << "check1" << endl;
-	      if ((this->HilbertSpaceDimension < 0) || 
-		  (InternalTemporaryStateDescription[this->HilbertSpaceDimension]->Lesser(*(this->TemporaryStateDescription[k]), this->ReducedNbrState))) 
-		cout << "check2" << endl;*/
 	      if ((this->CompatibilityWithXMomentum[StateSymmetry] == true) &&
 		  ((this->HilbertSpaceDimension < 0) || 
 		   (InternalTemporaryStateDescription[this->HilbertSpaceDimension]->Lesser(*(this->TemporaryStateDescription[k]), 
@@ -484,7 +491,7 @@ int BosonOnTorusWithMagneticTranslations::GenerateStates()
     }  
 
   ++this->HilbertSpaceDimension;
-  for (int i = 0; i < MaxHilbertSpaceDimension; ++i)
+  for (int i = 0; i < MaxTmpHilbertSpaceDimension; ++i)
     delete this->TemporaryStateDescription[i];
   delete[] this->TemporaryStateDescription;
   this->TemporaryStateDescription = 0;
@@ -550,6 +557,50 @@ int BosonOnTorusWithMagneticTranslations::RawGenerateStates(int nbrBosons, int c
 	{
 	  this->TemporaryStateDescription[i]->SetOccupation (currentMaxMomentum, TmpNbrBosons);
 	}      
+      ++TmpNbrBosons;
+      pos = TmpPos;
+    }
+  return pos;
+}
+
+// generate all states corresponding to the constraints without storage
+// 
+// nbrBosons = number of bosons
+// currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+// pos = position in StateDescription array where to store states
+// currentYMomentum = current value of the momentum in the y direction
+// return value = position from which new states have to be stored
+
+int BosonOnTorusWithMagneticTranslations::RawGenerateStatesDryRun(int nbrBosons, int currentMaxMomentum, 
+								  int pos, int currentYMomentum)
+{
+  if (nbrBosons == 0)
+    {
+      if (this->CompatibilityWithYMomentum[currentYMomentum] == true)
+	{
+	  return pos + 1;
+	}
+      else
+	{
+ 	  return pos;
+	}
+    }
+  if (currentMaxMomentum == 0)
+    {
+      if (this->CompatibilityWithYMomentum[currentYMomentum] == true)
+	{
+	  return pos + 1;
+	}
+      else
+	return pos;
+    }
+
+  int TmpNbrBosons = 0;
+  int DecCurrentMaxMomentum = currentMaxMomentum - 1;
+  int TmpPos = pos;
+  while (TmpNbrBosons <= nbrBosons)
+    {
+      TmpPos = this->RawGenerateStatesDryRun(nbrBosons - TmpNbrBosons, DecCurrentMaxMomentum, pos, currentYMomentum + (TmpNbrBosons * currentMaxMomentum));
       ++TmpNbrBosons;
       pos = TmpPos;
     }

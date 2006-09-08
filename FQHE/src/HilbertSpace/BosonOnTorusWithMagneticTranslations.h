@@ -205,6 +205,15 @@ class BosonOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnetic
   // return value = position from which new states have to be stored
   int RawGenerateStates(int nbrBosons, int currentMaxMomentum, int pos, int currentYMomentum);
 
+  // generate all states corresponding to the constraints without storage
+  // 
+  // nbrBosons = number of bosons
+  // currentMaxMomentum = momentum maximum value for bosons that are still to be placed
+  // pos = position in StateDescription array where to store states
+  // currentYMomentum = current value of the momentum in the y direction
+  // return value = position from which new states have to be stored
+  int RawGenerateStatesDryRun(int nbrBosons, int currentMaxMomentum, int pos, int currentYMomentum);
+
 };
 
 // get the particle statistic 
