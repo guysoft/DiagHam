@@ -79,6 +79,7 @@ ParticleOnSphereCoulombDeltaHamiltonian::ParticleOnSphereCoulombDeltaHamiltonian
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = false;
   this->OneBodyTermFlag = false;
+  this->L2Operator = 0;
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);

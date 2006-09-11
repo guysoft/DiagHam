@@ -74,6 +74,7 @@ ParticleOnSphereDeltaHamiltonian::ParticleOnSphereDeltaHamiltonian(ParticleOnSph
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
+  this->L2Operator = 0;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);

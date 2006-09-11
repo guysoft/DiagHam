@@ -71,7 +71,7 @@ BosonOnTorusWithMagneticTranslations::BosonOnTorusWithMagneticTranslations (int 
   this->TemporaryState.Resize(this->ReducedNbrState);
   this->TemporaryState2.Resize(this->ReducedNbrState);
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum);
+  this->HilbertSpaceDimension = (2 * this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->MaxMomentum)) / (this->MomentumModulo);
 //  cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
 //  cout << this->HilbertSpaceDimension << endl;

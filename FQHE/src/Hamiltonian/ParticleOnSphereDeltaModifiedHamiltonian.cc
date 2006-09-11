@@ -68,6 +68,7 @@ ParticleOnSphereDeltaModifiedHamiltonian::ParticleOnSphereDeltaModifiedHamiltoni
   this->DiskStorageFlag = false;
   this->OneBodyTermFlag = false;
   this->EvaluateInteractionFactors();
+  this->L2Operator = 0;
   int TmpMemory = this->FastMultiplicationMemory();
   if (TmpMemory < 1024)
     cout  << "fast = " <<  TmpMemory << "b ";

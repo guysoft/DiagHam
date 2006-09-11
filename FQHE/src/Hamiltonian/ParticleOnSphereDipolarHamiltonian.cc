@@ -78,6 +78,7 @@ ParticleOnSphereDipolarHamiltonian::ParticleOnSphereDipolarHamiltonian(ParticleO
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = false;
   this->OneBodyTermFlag = false;
+  this->L2Operator = 0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
