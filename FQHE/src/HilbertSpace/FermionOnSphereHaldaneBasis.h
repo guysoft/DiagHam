@@ -92,10 +92,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   int* NbrSearches;
   int* NbrMisses;
 
-  int* LzMaxSectorPosition;
-
-  unsigned long** StateDescriptionPerLz;
-  int* LzSectorSize;
+  bool* KeepStateFlag;
 
  public:
 
@@ -275,9 +272,15 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // return value = position from which new states have to be stored
   int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
 
-  // apply reverse squeezing criteron to decipher Haldane basis
-  //
-  void FilterHaldaneBasis();
+  // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
+  // 
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion
+  // currentLzMax = momentum maximum value for fermions that are still to be placed
+  // totalLz = momentum total value
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
 
 
 };
