@@ -28,4 +28,5 @@ ParticleOnSphereWithSpin.cc \
 FermionOnSphereWithSpin.cc \
 UnsignedIntegerTools.cc \
 FullBosonOnSphere.cc \
-FermionOnSphereHaldaneBasis.cc
+FermionOnSphereHaldaneBasis.cc \
+FermionOnSphereHaldaneHugeBasis.cc

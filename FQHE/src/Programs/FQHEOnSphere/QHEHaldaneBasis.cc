@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
@@ -52,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -117,10 +119,18 @@ int main(int argc, char** argv)
 //     }
 //   cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
 
-  FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax);
-  //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
-  //    ReducedSpace.PrintState(cout, i) << endl;
-  cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+  if (((BooleanOption*) Manager["huge"])->GetBoolean() == true)
+    {
+      FermionOnSphereHaldaneHugeBasis ReducedSpace(NbrFermions, Lz, LzMax);
+      cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+    }
+  else
+    {
+      FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax);
+      //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
+      //    ReducedSpace.PrintState(cout, i) << endl;
+      cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+    }
   return 0;
 }
 

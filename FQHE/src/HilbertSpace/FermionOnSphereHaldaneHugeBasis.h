@@ -61,13 +61,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned long* StateDescription;
 
   // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
+  unsigned long MaximumLookUpShift;
   // memory used for the look-up table in a given lzmax sector
   unsigned long LookUpTableMemorySize;
   // shift used in each lzmax sector
   int* LookUpTableShift;
   // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
+  unsigned long** LookUpTable;
 
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
@@ -237,9 +237,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // find state index
   //
   // stateDescription = unsigned integer describing the state
-  // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  unsigned long FindStateIndex(unsigned long stateDescription, int lzmax);
+  unsigned long FindStateIndex(unsigned long stateDescription);
 
   // evaluate upper bound for the Haldane basis
   //
