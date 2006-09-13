@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREHALDANEBASIS_H
-#define FERMIONONSPHEREHALDANEBASIS_H
+#ifndef FERMIONONSPHEREHALDANEHUGEBASIS_H
+#define FERMIONONSPHEREHALDANEHUGEBASIS_H
 
 
 #include "config.h"
@@ -38,10 +38,13 @@
 #include <iostream>
 
 
-class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
+class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 {
 
  protected:
+
+  // Hilbert space dimension
+  unsigned long HugeHilbertSpaceDimension;
 
   // number of fermions
   int NbrFermions;
@@ -56,8 +59,6 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 
   // array describing each state
   unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLzMax;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -81,7 +82,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   int ProdALzMax;
 
   // pointer to the target space when an index is require after applying basic operation
-  FermionOnSphereHaldaneBasis* TargetSpace;
+  FermionOnSphereHaldaneHugeBasis* TargetSpace;
 
   // topmost state 
   unsigned long ReferenceState;
@@ -99,22 +100,22 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
-  FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereHaldaneBasis(const FermionOnSphereHaldaneBasis& fermions);
+  FermionOnSphereHaldaneHugeBasis(const FermionOnSphereHaldaneHugeBasis& fermions);
 
   // destructor
   //
-  virtual ~FermionOnSphereHaldaneBasis ();
+  virtual ~FermionOnSphereHaldaneHugeBasis ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereHaldaneBasis& operator = (const FermionOnSphereHaldaneBasis& fermions);
+  FermionOnSphereHaldaneHugeBasis& operator = (const FermionOnSphereHaldaneHugeBasis& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -224,7 +225,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
+					int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
@@ -238,7 +239,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  unsigned long FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate upper bound for the Haldane basis
   //
@@ -246,7 +247,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual unsigned long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // evaluate upper bound for the Haldane basis with shifted values for lzMax and totalLz
   //
@@ -254,7 +255,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  unsigned long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -267,7 +268,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
+  unsigned long  GenerateStates(int lzMax, unsigned long referenceState, unsigned long pos, long& memory);
 
   // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
   // 
@@ -277,7 +278,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  unsigned long  RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, unsigned long pos);
 
 
 };
@@ -286,7 +287,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 //
 // return value = particle statistic
 
-inline int FermionOnSphereHaldaneBasis::GetParticleStatistic()
+inline int FermionOnSphereHaldaneHugeBasis::GetParticleStatistic()
 {
   return ParticleOnSphere::FermionicStatistic;
 }
