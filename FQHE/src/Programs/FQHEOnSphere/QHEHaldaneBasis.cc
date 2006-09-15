@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -121,7 +122,7 @@ int main(int argc, char** argv)
 
   if (((BooleanOption*) Manager["huge"])->GetBoolean() == true)
     {
-      FermionOnSphereHaldaneHugeBasis ReducedSpace(NbrFermions, Lz, LzMax);
+      FermionOnSphereHaldaneHugeBasis ReducedSpace(NbrFermions, Lz, LzMax, ((SingleIntegerOption*) Manager["file-size"])->GetInteger());
       cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
     }
   else

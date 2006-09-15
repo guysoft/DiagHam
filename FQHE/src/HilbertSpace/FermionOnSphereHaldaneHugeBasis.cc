@@ -36,6 +36,7 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/ListIterator.h"
 
 #include <math.h>
 
@@ -55,9 +56,10 @@ using std::dec;
 // nbrFermions = number of fermions
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
+// maxFileSize = maximum file size (in MBytes)
 // memory = amount of memory granted for precalculations
 
-FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
+FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, unsigned long memory)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -66,147 +68,156 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
+  this->SizeLimit = maxFileSize << 17;
   this->HugeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  this->ReferenceState = 0x1l;
-  for (int i = 1; i < this->NbrFermions; ++i)
+  ListIterator<unsigned long> IterFileSizes(this->FileSizes);
+  unsigned long* TmpFileSize;
+  while ((TmpFileSize = IterFileSizes()))
     {
-      this->ReferenceState <<= 3;
-      this->ReferenceState |= 0x1l;
+      cout << "LzMax = " << ((*TmpFileSize) & 0xffffl) << " N = "  << (((*TmpFileSize) >> 16) & 0xffffl) << " Total Lz = " << ((*TmpFileSize) >> 32) << " dim = " 
+	   << this->ShiftedEvaluateHilbertSpaceDimension2((((*TmpFileSize) >> 16) & 0xffffl), ((*TmpFileSize) & 0xffffl), ((*TmpFileSize) >> 32)) << endl;
     }
-  this->Flag.Initialize();
-  this->StateDescription = new unsigned long [this->HugeHilbertSpaceDimension];
-#ifdef  __64_BITS__
-  unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 6) + 1l;
-#else
-  unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 5) + 1l;
-#endif
-  this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
-  for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
-    this->KeepStateFlag[i] = 0x0l;
-  this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
-  this->GenerateLookUpTable(memory);
+  cout << " nbr files = " << this->FileSizes.GetNbrElement() << endl;
+//   this->ReferenceState = 0x1l;
+//   for (int i = 1; i < this->NbrFermions; ++i)
+//     {
+//       this->ReferenceState <<= 3;
+//       this->ReferenceState |= 0x1l;
+//     }
+//   this->Flag.Initialize();
+//   this->StateDescription = new unsigned long [this->HugeHilbertSpaceDimension];
+// #ifdef  __64_BITS__
+//   unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 6) + 1l;
+// #else
+//   unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 5) + 1l;
+// #endif
+//   this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
+//   for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
+//     this->KeepStateFlag[i] = 0x0l;
+//   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+//   this->GenerateLookUpTable(memory);
 
-  int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
-  this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
-  this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
-  long Memory = 0l;
+//   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
+//   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
+//   this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
+//   long Memory = 0l;
 
-  unsigned long TmpIndex = this->FindStateIndex(this->ReferenceState | (((unsigned long) this->LzMax) << HUGE_BASIS_STATE_SHIFT));
-#ifdef  __64_BITS__
-  this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
-#else
-  this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
-#endif
-  this->GenerateStates(this->LzMax, this->ReferenceState, 1l, Memory);  
+//   unsigned long TmpIndex = this->FindStateIndex(this->ReferenceState | (((unsigned long) this->LzMax) << HUGE_BASIS_STATE_SHIFT));
+// #ifdef  __64_BITS__
+//   this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
+// #else
+//   this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
+// #endif
+//   this->GenerateStates(this->LzMax, this->ReferenceState, 1l, Memory);  
 
-  unsigned long NewHilbertSpaceDimension = 0;
-  unsigned long TmpKeepStateFlag;
-  int TmpNbrOne[] = {  
-  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
-  for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
-    {
-      TmpKeepStateFlag = this->KeepStateFlag[i];
-      NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
-#ifdef  __64_BITS__
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
-#endif
-    }
+//   unsigned long NewHilbertSpaceDimension = 0;
+//   unsigned long TmpKeepStateFlag;
+//   int TmpNbrOne[] = {  
+//   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+//   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+//   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+//   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+//   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+//   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+//   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+//   4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+//   for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
+//     {
+//       TmpKeepStateFlag = this->KeepStateFlag[i];
+//       NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
+// #ifdef  __64_BITS__
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
+//       NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
+// #endif
+//     }
 
-  delete[] this->SignLookUpTable;
-  delete[] this->SignLookUpTableMask;
-  delete[] this->LookUpTableShift;
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    delete[] this->LookUpTable[i];
-  delete[] this->LookUpTable;
-  unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
-  NewHilbertSpaceDimension = 0l;
-  unsigned long TotalIndex = 0l;
-#ifdef  __64_BITS__
-  if ((this->HilbertSpaceDimension & 0x3f) != 0)
-#else
-  if ((this->HilbertSpaceDimension & 0x1f) != 0)
-#endif
-    --ReducedHilbertSpaceDimension;
-  for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
-    {
-      TmpKeepStateFlag = this->KeepStateFlag[i];
-#ifdef  __64_BITS__
-      for (int j = 0; j < 64; ++j)
-#else
-      for (int j = 0; j < 32; ++j)
-#endif
-	{
-	  if ((TmpKeepStateFlag >> j) & 0x1l)
-	    {
-	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	      ++NewHilbertSpaceDimension;
-	    }
-	  ++TotalIndex;
-	}
-    }
-#ifdef  __64_BITS__
-  this->HugeHilbertSpaceDimension &= 0x3fl;
-#else
-  this->HugeHilbertSpaceDimension &= 0x1fl;
-#endif
-  TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-  for (unsigned long j = 0; j < this->HugeHilbertSpaceDimension; ++j)
-    {
-      if ((TmpKeepStateFlag >> j) & 0x1l)
-	{
-	  TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	  ++NewHilbertSpaceDimension;
-	}
-      ++TotalIndex;
-    }
+//   delete[] this->SignLookUpTable;
+//   delete[] this->SignLookUpTableMask;
+//   delete[] this->LookUpTableShift;
+//   for (int i = 0; i < this->NbrLzValue; ++i)
+//     delete[] this->LookUpTable[i];
+//   delete[] this->LookUpTable;
+//   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
+//   NewHilbertSpaceDimension = 0l;
+//   unsigned long TotalIndex = 0l;
+// #ifdef  __64_BITS__
+//   if ((this->HilbertSpaceDimension & 0x3f) != 0)
+// #else
+//   if ((this->HilbertSpaceDimension & 0x1f) != 0)
+// #endif
+//     --ReducedHilbertSpaceDimension;
+//   for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
+//     {
+//       TmpKeepStateFlag = this->KeepStateFlag[i];
+// #ifdef  __64_BITS__
+//       for (int j = 0; j < 64; ++j)
+// #else
+//       for (int j = 0; j < 32; ++j)
+// #endif
+// 	{
+// 	  if ((TmpKeepStateFlag >> j) & 0x1l)
+// 	    {
+// 	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+// 	      ++NewHilbertSpaceDimension;
+// 	    }
+// 	  ++TotalIndex;
+// 	}
+//     }
+// #ifdef  __64_BITS__
+//   this->HugeHilbertSpaceDimension &= 0x3fl;
+// #else
+//   this->HugeHilbertSpaceDimension &= 0x1fl;
+// #endif
+//   TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
+//   for (unsigned long j = 0; j < this->HugeHilbertSpaceDimension; ++j)
+//     {
+//       if ((TmpKeepStateFlag >> j) & 0x1l)
+// 	{
+// 	  TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+// 	  ++NewHilbertSpaceDimension;
+// 	}
+//       ++TotalIndex;
+//     }
 
   
-  delete[] this->StateDescription;
-  delete[] this->KeepStateFlag;
-  this->StateDescription = TmpStateDescription;
-  this->HugeHilbertSpaceDimension = NewHilbertSpaceDimension;
+//   delete[] this->StateDescription;
+//   delete[] this->KeepStateFlag;
+//   this->StateDescription = TmpStateDescription;
+//   this->HugeHilbertSpaceDimension = NewHilbertSpaceDimension;
 
-  delete[] this->TmpGeneratedStates;
-  delete[] this->TmpGeneratedStatesLzMax;
+//   delete[] this->TmpGeneratedStates;
+//   delete[] this->TmpGeneratedStatesLzMax;
 
-  this->GenerateLookUpTable(memory);
-#ifdef __DEBUG__
-  int UsedMemory = 0;
-  UsedMemory += this->HugeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-  UsedMemory += this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-#endif
-  cout << "Hilbert space dimension " << this->HugeHilbertSpaceDimension << endl;
+//   this->GenerateLookUpTable(memory);
+// #ifdef __DEBUG__
+//   int UsedMemory = 0;
+//   UsedMemory += this->HugeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+//   UsedMemory += this->NbrLzValue * sizeof(int);
+//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+//   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+//   cout << "memory requested for Hilbert space = ";
+//   if (UsedMemory >= 1024)
+//     if (UsedMemory >= 1048576)
+//       cout << (UsedMemory >> 20) << "Mo" << endl;
+//     else
+//       cout << (UsedMemory >> 10) << "ko" <<  endl;
+//   else
+//     cout << UsedMemory << endl;
+// #endif
+//   cout << "Hilbert space dimension " << this->HugeHilbertSpaceDimension << endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -997,8 +1008,36 @@ unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimens
     return 1l;
   if (LzTotalMax == totalLz)
     return 1l;
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+  unsigned long Tmp1 = this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax);
+  unsigned long Tmp2 = this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz);  
+  if ((Tmp1 < this->SizeLimit) && (Tmp2 < this->SizeLimit) && ((Tmp1 + Tmp2) > this->SizeLimit))
+    {
+      this->FileSizes += ((((unsigned long) (nbrFermions - 1)) << 16) | ((unsigned long) (lzMax - 1)) | (((unsigned long) (totalLz - lzMax)) << 32));
+      this->FileSizes += ((((unsigned long) nbrFermions) << 16) | ((unsigned long) (lzMax - 1)) | (((unsigned long) totalLz) << 32));
+    }
+  return (Tmp1 + Tmp2);
+}
+
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+//
+// nbrFermions = number of fermions
+// lzMax = two times momentum maximum value for a fermion plus one 
+// totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+// return value = Hilbert space dimension
+
+unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimension2(int nbrFermions, int lzMax, int totalLz)
+{
+  if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
+    return 0l;
+  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
+  if (LzTotalMax < totalLz)
+    return 0l;
+  if ((nbrFermions == 1) && (lzMax >= totalLz))
+    return 1l;
+  if (LzTotalMax == totalLz)
+    return 1l;
+  return (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax) +
+	  this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));  
 }
 
 // evaluate wave function in real space using a given basis and only for agiven range of components

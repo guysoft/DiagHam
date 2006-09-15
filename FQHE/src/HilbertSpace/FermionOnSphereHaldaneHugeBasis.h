@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "GeneralTools/List.h"
 
 #include <iostream>
 
@@ -92,6 +93,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   int* TmpGeneratedStatesLzMax;
   unsigned long* KeepStateFlag;
 
+  List<unsigned long> FileSizes;
+
+  // maximum size for a file
+  unsigned long SizeLimit;
+  
+
  public:
 
   // basic constructor
@@ -99,8 +106,9 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // nbrFermions = number of fermions
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
+  // maxFileSize = maximum file size (in MBytes)
   // memory = amount of memory granted for precalculations
-  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -255,6 +263,14 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
   unsigned long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+
+  // evaluate upper bound for the Haldane basis with shifted values for lzMax and totalLz
+  //
+  // nbrFermions = number of fermions
+  // lzMax = two times momentum maximum value for a fermion plus one 
+  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+  // return value = Hilbert space dimension  
+  unsigned long ShiftedEvaluateHilbertSpaceDimension2(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
