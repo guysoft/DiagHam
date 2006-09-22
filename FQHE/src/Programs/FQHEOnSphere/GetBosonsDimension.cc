@@ -5,13 +5,17 @@
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
+#include "Options/SingleStringOption.h"
 
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
+#include <fstream>
 
 using std::cout;
 using std::endl;
+using std::ios;
+using std::ofstream;
 
 // evaluate Hilbert space dimension
 //
@@ -45,36 +49,28 @@ long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalL
 // return value = Hilbert space dimension
 long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
-// fake run to generate all states corresponding to the constraints
-// 
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson in the state
-// currentLzMax = momentum maximum value for bosons that are still to be placed
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// memory = reference on amount of memory needed
-// return value = position from which new states have to be stored
-int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos, int& memory);
-
 
 int main(int argc, char** argv)
 {
   OptionManager Manager ("GetBosonsDimension" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
   Manager += SystemGroup;
+  Manager += OutputGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-particles", "number of particles", 20);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lz", "number of particles", 2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lz", "number of particles", 20);
+  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
-  (*SystemGroup) += new BooleanOption  ('\n', "l-dimension", "get dimensions of all subspaces with fixed total l value");
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
+  (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
+  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_torus_n_nbrparticles_q_nbrfluxquanta.dim");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type GetBosonsDimension -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereGetDimension -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -83,80 +79,93 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (((BooleanOption*) Manager["l-dimension"])->GetBoolean() == false)
+  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
+  int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
+  int  LzMin = 0;
+  if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
+    LzMin = 1;
+  if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
     {
-      for (int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger(); 
-	   NbrBosons <= ((SingleIntegerOption*) Manager["max-particles"])->GetInteger(); ++NbrBosons)
-	{
-	  for (int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger(); 
-	       LzMax <= ((SingleIntegerOption*) Manager["max-lz"])->GetInteger(); ++LzMax)
-	    {
-	      if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-		{
-		  int Max = ((LzMax - NbrBosons + 1) * NbrBosons);
-		  int  L = 0;
-		  if ((abs(Max) & 1) != 0)
-		    L = 1;
-		  cout << FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
-		}
-	      else
-		{
-		  int Max = (LzMax * NbrBosons);
-		  int  L = 0;
-		  if ((abs(Max) & 1) != 0)
-		    L = 1;
-		  cout << EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L) << " ";
-		}
-	    }
-	  cout << endl;
-	}
+      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	cout << EvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
+      else
+	cout << FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
     }
   else
     {
-     int NbrBosons = ((SingleIntegerOption*) Manager["min-particles"])->GetInteger();
-     int LzMax = ((SingleIntegerOption*) Manager["min-lz"])->GetInteger();
-     int TotalLzMax = 0;
-     int StartL = 0;
-     if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-       {
-	 TotalLzMax = ((LzMax - NbrBosons + 1) * NbrBosons);
-       }
-     else
-       {
-	 TotalLzMax = (LzMax * NbrBosons);
-       }
-     StartL = 0;
-     if ((abs(TotalLzMax) & 1) != 0)
-       StartL = 1;
-     long* LzDimensions = new long [1 + ((TotalLzMax - StartL) >> 1)];
-     for (int L = StartL; L <= TotalLzMax; L += 2)
-       {
-	 long TmpDimension = 0;
-	 if (((BooleanOption*) Manager["fermion"])->GetBoolean() == true)
-	   {
-	     TmpDimension = FermionEvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
-	   }
-	 else
-	   {
-	     TmpDimension = EvaluateHilbertSpaceDimension(NbrBosons, LzMax, L);
-	   }
-	 LzDimensions[(L - StartL) >> 1] = TmpDimension;
-       }
-     cout << "N = " << NbrBosons << endl;
-     cout << "2S = " << LzMax << endl;
-     cout << "Lz = ";
-     for (int L = StartL; L < TotalLzMax; L += 2)
-       {
-	 cout << LzDimensions[(L - StartL) >> 1] << " ";
-       }
-     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;
-     cout << "L = ";
-     for (int L = StartL; L < TotalLzMax; L += 2)
-       {
-	 cout << (LzDimensions[(L - StartL) >> 1] - LzDimensions[1 + ((L - StartL) >> 1)]) << " ";
-       }
-     cout << LzDimensions[( TotalLzMax- StartL) >> 1] << endl;    
-     delete[] LzDimensions;
+      int LzMax = 0;
+      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	LzMax = (NbrParticles * NbrFluxQuanta);
+      else
+	LzMax = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
+      long* LzDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
+      long* LDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
+      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	for (int x = LzMin; x <= LzMax; x += 2)
+	  LzDimensions[(x - LzMin) >> 1] = EvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+      else
+	for (int x = LzMin; x <= LzMax; x += 2)
+	  LzDimensions[(x - LzMin) >> 1] =  FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+      LDimensions[(LzMax - LzMin) >> 1] = LzDimensions[(LzMax - LzMin) >> 1];
+      long TotalDimension = LzDimensions[(LzMax - LzMin) >> 1];
+      for (int x = LzMax - 2; x >= LzMin; x -= 2)
+	{
+	  LDimensions[(x - LzMin) >> 1] =  LzDimensions[(x - LzMin) >> 1] - LzDimensions[((x - LzMin) >> 1) + 1];
+	  TotalDimension += LzDimensions[(x - LzMin) >> 1];
+	}
+            
+      if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	{
+	  char* OutputFileName = 0;
+	  if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+	    {
+	      OutputFileName = new char[256];
+	      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+		sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+	      else
+		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+	    }
+	  else
+	    {
+	      OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+	      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+	    }
+	  ofstream File;
+	  File.open(OutputFileName, ios::binary | ios::out);
+	  File << "# Hilbert space dimension in each L and Lz sector for " << NbrParticles << " ";
+	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	    File << "bosons";
+	  else
+	    File << "femions";
+	  File << " on the sphere geometry with " << NbrFluxQuanta << " flux quanta" << endl;
+	  File << "# total Hilbert space dimension = " << TotalDimension << endl << endl 
+	       << "N = " << NbrParticles << endl
+	       << "2S = " << NbrFluxQuanta << endl << endl
+	       << "#  dimensions for the Lz subspaces (starting from 2Lz = " << LzMin << " " << (LzMin + 2) << " ..." << endl
+	       << "Lz =";
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    File << " " << LzDimensions[(x - LzMin) >> 1];
+	  File << endl
+	       << "#  dimensions for the L subspaces (starting from 2L = " << LzMin << " " << (LzMin + 2) << " ..." << endl
+	       << "L =";
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    File << " " << LDimensions[(x - LzMin) >> 1];
+	  File << endl;
+	  File.close();
+	  delete[] OutputFileName;
+	}
+      else
+	{
+	  cout << "Lz =";
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    cout << " " << LzDimensions[(x - LzMin) >> 1];
+	  cout << endl << "L =";
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    cout << " " << LDimensions[(x - LzMin) >> 1];	  
+	  cout << endl;
+	}
+      delete[] LzDimensions;
+      delete[] LDimensions;
     }
 }
 
@@ -182,10 +191,10 @@ long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
   if ((nbrBosons == 0) || ((nbrBosons * lzMax) < totalLz))
-    return 0;
+    return 0l;
   if (((nbrBosons * lzMax) == totalLz) || (lzMax == 0) || (totalLz == 0))
     {
-      return 1;
+      return 1l;
     }
   long TmpDim = 0;
   while ((totalLz >= 0) && (nbrBosons > 0))
@@ -195,52 +204,6 @@ long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
       totalLz -= lzMax;
     }
   return TmpDim;
-}
-
-// generate all states corresponding to the constraints
-// 
-// nbrBosons = number of bosons
-// lzMax = momentum maximum value for a boson in the state
-// currentLzMax = momentum maximum value for bosons that are still to be placed
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// memory = reference on amount of memory needed
-// return value = position from which new states have to be stored
-
-int FakeGenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos, int& memory)
-{
-  if ((nbrBosons == 0) || ((nbrBosons * currentLzMax) < totalLz))
-    {
-      return pos;
-    }
-  if ((nbrBosons * currentLzMax) == totalLz)
-    {
-      if (memory > 0)
-	memory += sizeof(int) * (lzMax + 1);
-      return pos + 1;
-    }
-  if ((currentLzMax == 0) || (totalLz == 0))
-    {
-      memory += sizeof(int) * (lzMax + 1);
-      return pos + 1;
-    }
-
-  int TmpTotalLz = totalLz / currentLzMax;
-  int TmpNbrBosons = nbrBosons - TmpTotalLz;
-  TmpTotalLz = totalLz - TmpTotalLz * currentLzMax;
-  int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = pos;
-  while (TmpNbrBosons < nbrBosons)
-    {
-      TmpPos = FakeGenerateStates(TmpNbrBosons, lzMax, ReducedCurrentLzMax, TmpTotalLz, pos, memory);
-      ++TmpNbrBosons;
-      pos = TmpPos;
-      TmpTotalLz += currentLzMax;
-    }
-  if (lzMax == currentLzMax)
-    return FakeGenerateStates(nbrBosons, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, pos, memory);
-  else
-    return FakeGenerateStates(nbrBosons, lzMax, ReducedCurrentLzMax, totalLz, pos, memory);
 }
 
 // evaluate Hilbert space dimension
