@@ -64,8 +64,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
+  (*SystemGroup) += new BooleanOption ('\n', "use-files", "use dimension files that have been previously generated to increase speed. Files must be in current directory and obey the statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim naming convention");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
-  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_torus_n_nbrparticles_q_nbrfluxquanta.dim");
+  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)

@@ -4747,7 +4747,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_blas_dgemm" >&5
 echo "${ECHO_T}$ac_cv_lib_blas_dgemm" >&6
 if test $ac_cv_lib_blas_dgemm = yes; then
-  HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lg2c"
+  HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lgfortran"
 else
   { { echo "$as_me:$LINENO: error: BLAS lib not found" >&5
 echo "$as_me: error: BLAS lib not found" >&2;}
@@ -4802,7 +4802,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_dsyev" >&5
 echo "${ECHO_T}$ac_cv_lib_lapack_dsyev" >&6
 if test $ac_cv_lib_lapack_dsyev = yes; then
-  HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lg2c"
+  HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgfortran"
 else
   { { echo "$as_me:$LINENO: error: LAPACK lib not found" >&5
 echo "$as_me: error: LAPACK lib not found" >&2;}
