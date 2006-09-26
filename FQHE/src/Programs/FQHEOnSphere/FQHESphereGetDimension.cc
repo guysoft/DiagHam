@@ -17,23 +17,23 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-// evaluate Hilbert space dimension
+// evaluate Hilbert space dimension for bosons
 //
 // nbrBosons = number of bosons
 // lzMax = momentum maximum value for a boson
 // totalLz = momentum total value
 // return value = Hilbert space dimension
-long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+long BosonEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz for bosons
 //
 // nbrBosons = number of bosons
 // lzMax = two times momentum maximum value for a boson plus one 
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
-long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+long BosonShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
-// evaluate Hilbert space dimension
+// evaluate Hilbert space dimension for fermions
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
@@ -41,13 +41,27 @@ long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 // return value = Hilbert space dimension
 long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz for fermions
 //
 // nbrFermions = number of fermions
 // lzMax = two times momentum maximum value for a fermion plus one 
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+
+// save dimensions in a given file
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array taht contains dimension of each Lz sector
+// lDimensions = array that contains dimension of each L sector (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value
+// lzMax = twice the maximum Lz value
+// totalDimension = total Hilbert space dimension
+bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			  long* lzDimensions, long* lDimensions, int lzMin, int lzMax, long totalDimension);
 
 
 int main(int argc, char** argv)
@@ -88,7 +102,7 @@ int main(int argc, char** argv)
   if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
     {
       if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	cout << EvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
+	cout << BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
       else
 	cout << FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
     }
@@ -103,7 +117,7 @@ int main(int argc, char** argv)
       long* LDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
       if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
 	for (int x = LzMin; x <= LzMax; x += 2)
-	  LzDimensions[(x - LzMin) >> 1] = EvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+	  LzDimensions[(x - LzMin) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
       else
 	for (int x = LzMin; x <= LzMax; x += 2)
 	  LzDimensions[(x - LzMin) >> 1] =  FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
@@ -131,28 +145,8 @@ int main(int argc, char** argv)
 	      OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
 	      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
 	    }
-	  ofstream File;
-	  File.open(OutputFileName, ios::binary | ios::out);
-	  File << "# Hilbert space dimension in each L and Lz sector for " << NbrParticles << " ";
-	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	    File << "bosons";
-	  else
-	    File << "femions";
-	  File << " on the sphere geometry with " << NbrFluxQuanta << " flux quanta" << endl;
-	  File << "# total Hilbert space dimension = " << TotalDimension << endl << endl 
-	       << "N = " << NbrParticles << endl
-	       << "2S = " << NbrFluxQuanta << endl << endl
-	       << "#  dimensions for the Lz subspaces (starting from 2Lz = " << LzMin << " " << (LzMin + 2) << " ..." << endl
-	       << "Lz =";
-	  for (int x = LzMin; x <= LzMax; x += 2)
-	    File << " " << LzDimensions[(x - LzMin) >> 1];
-	  File << endl
-	       << "#  dimensions for the L subspaces (starting from 2L = " << LzMin << " " << (LzMin + 2) << " ..." << endl
-	       << "L =";
-	  for (int x = LzMin; x <= LzMax; x += 2)
-	    File << " " << LDimensions[(x - LzMin) >> 1];
-	  File << endl;
-	  File.close();
+	  WriteDimensionToDisk (OutputFileName, NbrParticles, NbrParticles, ((BooleanOption*) Manager["boson"])->GetBoolean(),
+				LzDimensions, LDimensions, LzMin, LzMax, TotalDimension);
 	  delete[] OutputFileName;
 	}
       else
@@ -170,26 +164,26 @@ int main(int argc, char** argv)
     }
 }
 
-// evaluate Hilbert space dimension
+// evaluate Hilbert space dimension for bosons
 //
 // nbrBosons = number of bosons
 // lzMax = momentum maximum value for a boson
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-long EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+long BosonEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
-  return ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax, (totalLz + lzMax * nbrBosons) >> 1);
+  return BosonShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax, (totalLz + lzMax * nbrBosons) >> 1);
 }
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz for bosons
 //
 // nbrBosons = number of bosons
 // lzMax = two times momentum maximum value for a boson plus one 
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+long BosonShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
 {
   if ((nbrBosons == 0) || ((nbrBosons * lzMax) < totalLz))
     return 0l;
@@ -200,14 +194,14 @@ long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
   long TmpDim = 0;
   while ((totalLz >= 0) && (nbrBosons > 0))
     {
-      TmpDim += ShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
+      TmpDim += BosonShiftedEvaluateHilbertSpaceDimension(nbrBosons, lzMax - 1, totalLz);
       --nbrBosons;
       totalLz -= lzMax;
     }
   return TmpDim;
 }
 
-// evaluate Hilbert space dimension
+// evaluate Hilbert space dimension for fermions
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
@@ -219,7 +213,7 @@ long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalL
   return FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
 }
 
-// evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+// evaluate Hilbert space dimension with shifted values for lzMax and totalLz for fermions
 //
 // nbrFermions = number of fermions
 // lzMax = two times momentum maximum value for a fermion plus one 
@@ -239,4 +233,62 @@ long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int
     return (long) 1;
   return  (FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   +  FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+}
+
+// evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// return value = Hilbert space dimension
+
+// long EvaluateHilbertSpaceDimensionWithDiskStorage(int nbrParticles, int nbrFluxQuanta, bool statistics,
+// 						  long* lzDimensions, long* lDimensions, int lzMin, int lzMax)
+// {
+//   OutputFileName = new char[256];
+//   if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+//     sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+//   else
+//     sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+  
+//   return FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
+// }
+
+// save dimensions in a given file
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array taht contains dimension of each Lz sector
+// lDimensions = array that contains dimension of each L sector (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value
+// lzMax = twice the maximum Lz value
+// totalDimension = total Hilbert space dimension
+
+bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			  long* lzDimensions, long* lDimensions, int lzMin, int lzMax, long totalDimension)
+{
+  ofstream File;
+  File.open(outputFileName, ios::binary | ios::out);
+  File << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " ";
+  if (statistics == true)
+    File << "bosons";
+  else
+    File << "femions";
+  File << " on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  File << "# total Hilbert space dimension = " << totalDimension << endl << endl 
+       << "N = " << nbrParticles << endl
+       << "2S = " << nbrFluxQuanta << endl << endl
+       << "#  dimensions for the Lz subspaces (starting from 2Lz = " << lzMin << " " << (lzMin + 2) << " ..." << endl
+       << "Lz =";
+  for (int x = lzMin; x <= lzMax; x += 2)
+    File << " " << lzDimensions[(x - lzMin) >> 1];
+  File << endl
+       << "#  dimensions for the L subspaces (starting from 2L = " << lzMin << " " << (lzMin + 2) << " ..." << endl
+       << "L =";
+  for (int x = lzMin; x <= lzMax; x += 2)
+    File << " " << lDimensions[(x - lzMin) >> 1];
+  File << endl;
+  File.close();
 }

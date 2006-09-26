@@ -60,6 +60,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 
   // array describing each state
   unsigned long* StateDescription;
+  // number of states that are used to described the highest Lz part of the full Hilbert space  
+  unsigned long PartialHilbertSpaceDimension;
+
+  // mask to apply to get the highest Lz part of a state
+  unsigned long HighestLzStateMask;
 
   // maximum shift used for searching a position in the look-up table
   unsigned long MaximumLookUpShift;

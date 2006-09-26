@@ -69,53 +69,91 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->SizeLimit = maxFileSize << 17;
+  this->HilbertSpaceDimension = 0;
+  this->ReferenceState = 0x1l;
+  for (int i = 1; i < this->NbrFermions; ++i)
+    {
+       this->ReferenceState <<= 3;
+       this->ReferenceState |= 0x1l;
+     }
+   this->Flag.Initialize();
+
   this->HugeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  cout << "total dimemsion = " << this->HugeHilbertSpaceDimension << endl;
+  cout << "total dimension = " << this->HugeHilbertSpaceDimension << endl;
   ListIterator<unsigned long> IterFileSizes(this->FileSizes);
   unsigned long* TmpFileSize;
   int MinCommonLz = this->LzMax;
   while ((TmpFileSize = IterFileSizes()))
     {
-      cout << "LzMax = " << ((*TmpFileSize) & 0xffffl) << " N = "  << (((*TmpFileSize) >> 16) & 0xffffl) << " Total Lz = " << ((*TmpFileSize) >> 32) << " dim = " 
-	   << this->ShiftedEvaluateHilbertSpaceDimension2((((*TmpFileSize) >> 16) & 0xffffl), ((*TmpFileSize) & 0xffffl), ((*TmpFileSize) >> 32)) << endl;
-      if (MinCommonLz > ((int) ((*TmpFileSize) & 0xffffl)))
-	MinCommonLz = ((*TmpFileSize) & 0xffffl);
+      if (MinCommonLz > ((int) ((*TmpFileSize) & 0xffl)))
+	MinCommonLz = ((*TmpFileSize) & 0xffl);
     }  
   cout << " nbr files = " << this->FileSizes.GetNbrElement() << endl;
   cout << MinCommonLz << endl;
   int MaxPartialNbrFermions = this->LzMax - MinCommonLz;  
   this->HugeHilbertSpaceDimension = 0l;
-  int ShiftedTotalLz = (this->TotalLz + this->NbrFermions * this->LzMax) >> 1;
-  for (int i = 0; i <= MaxPartialNbrFermions; ++i)
+  int ShiftedTotalLz = (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1;
+  this->PartialHilbertSpaceDimension = 0l;
+  int NbrFiles = 0;
+  unsigned long LargestFile = 0;
+  for (int i = MaxPartialNbrFermions; i >= 0; --i)
     {
       int TmpMin = ((i * (i - 1)) >> 1);
-      int TmpMax = (MaxPartialNbrFermions * i) - ((i * (i - 1)) >> 1);
+      int TmpMax = ((MaxPartialNbrFermions - 1) * i) - ((i * (i - 1)) >> 1);
       int ShiftedTotalLz2 = ShiftedTotalLz - (i * (MinCommonLz + 1));
-      int ShiftedTotalLz3  = ShiftedTotalLz - (((this->NbrFermions - i) * ((2 * MinCommonLz) + (this->NbrFermions - i) - 1)) >> 1);
-      cout << TmpMin << " " << TmpMax << " " << ShiftedTotalLz2 << endl;
+      int ShiftedTotalLz3  = ShiftedTotalLz2 - (((this->NbrFermions - i) * ((2 * MinCommonLz) - (this->NbrFermions - i) + 1)) >> 1);
+      int ShiftedTotalLz4 = ShiftedTotalLz2 - (((this->NbrFermions - i) * (this->NbrFermions - i - 1)) >> 1);
       if (TmpMin < ShiftedTotalLz3)
 	TmpMin = ShiftedTotalLz3;
-      if (TmpMax > ShiftedTotalLz2)	
-	TmpMax = ShiftedTotalLz2;
-      for (; TmpMin <= TmpMax; ++TmpMin)
+      if (TmpMax > ShiftedTotalLz4)	
+	TmpMax = ShiftedTotalLz4;
+      for (; TmpMax >= TmpMin; --TmpMax)
 	{
-          unsigned long TmpPartialDimension1 = this->ShiftedEvaluateHilbertSpaceDimension2(i, MaxPartialNbrFermions, TmpMin);	  
-	  unsigned long TmpPartialDimension2 = this->ShiftedEvaluateHilbertSpaceDimension2(this->NbrFermions - i, MinCommonLz, ShiftedTotalLz2 - TmpMin);
-	  this->HugeHilbertSpaceDimension += 1l * TmpPartialDimension2;
-	  cout << "(" << i << "," << MaxPartialNbrFermions << "," << TmpMin << ") x (" << (this->NbrFermions - i) << "," << MinCommonLz << "," 
-	       << (ShiftedTotalLz2 - TmpMin) << ") " 
-	       << TmpPartialDimension1 << " x " << TmpPartialDimension2 << "    " << this->HugeHilbertSpaceDimension << endl;
-//	  this->HugeHilbertSpaceDimension += TmpPartialDimension1 * TmpPartialDimension2;
+          unsigned long TmpPartialDimension1 = this->ShiftedEvaluateHilbertSpaceDimension2(i, MaxPartialNbrFermions - 1, TmpMax);	  
+	  unsigned long TmpPartialDimension2 = this->ShiftedEvaluateHilbertSpaceDimension2(this->NbrFermions - i, MinCommonLz, ShiftedTotalLz2 - TmpMax);
+	  if (TmpPartialDimension1 == 0l)
+	    TmpPartialDimension1 = 1l;
+	  if (LargestFile < TmpPartialDimension2)
+	    LargestFile = TmpPartialDimension2;
+	  this->HugeHilbertSpaceDimension += TmpPartialDimension1 * TmpPartialDimension2;
+	  this->PartialHilbertSpaceDimension += TmpPartialDimension1;
+	  ++NbrFiles;
+// 	  cout << "(" << i << "," << MaxPartialNbrFermions << "," << TmpMin << ") x (" << (this->NbrFermions - i) << "," << MinCommonLz << "," 
+// 	       << (ShiftedTotalLz2 - TmpMin) << ") " 
+// 	       << TmpPartialDimension1 << " x " << TmpPartialDimension2 << "    " << this->HugeHilbertSpaceDimension << endl;
 	}
     }
-  cout << "total dimemsion = " << this->HugeHilbertSpaceDimension << endl;
-//   this->ReferenceState = 0x1l;
-//   for (int i = 1; i < this->NbrFermions; ++i)
-//     {
-//       this->ReferenceState <<= 3;
-//       this->ReferenceState |= 0x1l;
-//     }
-//   this->Flag.Initialize();
+  cout << "total dimension = " << this->HugeHilbertSpaceDimension << "  (" << this->PartialHilbertSpaceDimension << ")" << endl;
+  cout << "nbr files = " << NbrFiles << endl;
+  cout << "largest file = " << (LargestFile >> 7) << "KBytes (" << LargestFile<< " elements)" << endl;
+ 
+  this->StateDescription = new unsigned long [this->PartialHilbertSpaceDimension];
+  this->PartialHilbertSpaceDimension = 0l;
+  for (int i = MaxPartialNbrFermions; i >= 1; --i)
+    {
+      int TmpMin = ((i * (i - 1)) >> 1);
+      int TmpMax = ((MaxPartialNbrFermions - 1) * i) - ((i * (i - 1)) >> 1);
+      int ShiftedTotalLz2 = ShiftedTotalLz - (i * (MinCommonLz + 1));
+      int ShiftedTotalLz3  = ShiftedTotalLz2 - (((this->NbrFermions - i) * ((2 * MinCommonLz) - (this->NbrFermions - i) + 1)) >> 1);
+      int ShiftedTotalLz4 = ShiftedTotalLz2 - (((this->NbrFermions - i) * (this->NbrFermions - i - 1)) >> 1);
+      if (TmpMin < ShiftedTotalLz3)
+	TmpMin = ShiftedTotalLz3;
+      if (TmpMax > ShiftedTotalLz4)	
+	TmpMax = ShiftedTotalLz4;
+      for (; TmpMax >= TmpMin; --TmpMax)	  
+	{
+	  this->PartialHilbertSpaceDimension = this->RawGenerateStates(i, MaxPartialNbrFermions - 1, MaxPartialNbrFermions - 1, TmpMax, this->PartialHilbertSpaceDimension);
+	}
+      
+    }
+  for (unsigned long i = 0; i < this->PartialHilbertSpaceDimension; ++i)  
+    this->StateDescription[i] <<= (MinCommonLz + 1);
+  this->StateDescription[this->PartialHilbertSpaceDimension] = 0l;
+  ++this->PartialHilbertSpaceDimension;
+  cout << "total dimension = " << this->HugeHilbertSpaceDimension << "  (" << this->PartialHilbertSpaceDimension << ")" << endl;
+  this->HighestLzStateMask = ~((0x1l << (MinCommonLz + 1)) - 1);
+  
+
 //   this->StateDescription = new unsigned long [this->HugeHilbertSpaceDimension];
 // #ifdef  __64_BITS__
 //   unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 6) + 1l;
@@ -248,7 +286,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 //   else
 //     cout << UsedMemory << endl;
 // #endif
-//   cout << "Hilbert space dimension " << this->HugeHilbertSpaceDimension << endl;
+  cout << "Hilbert space dimension " << this->HugeHilbertSpaceDimension << endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -1043,8 +1081,8 @@ unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimens
   unsigned long Tmp2 = this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz);  
   if ((Tmp1 < this->SizeLimit) && (Tmp2 < this->SizeLimit) && ((Tmp1 + Tmp2) > this->SizeLimit))
     {
-      this->FileSizes += ((((unsigned long) (nbrFermions - 1)) << 16) | ((unsigned long) (lzMax - 1)) | (((unsigned long) (totalLz - lzMax)) << 32));
-      this->FileSizes += ((((unsigned long) nbrFermions) << 16) | ((unsigned long) (lzMax - 1)) | (((unsigned long) totalLz) << 32));
+      this->FileSizes += ((((unsigned long) (nbrFermions - 1)) << 8) | ((unsigned long) (lzMax - 1)) | (((unsigned long) (totalLz - lzMax)) << 16));
+      this->FileSizes += ((((unsigned long) nbrFermions) << 8) | ((unsigned long) (lzMax - 1)) | (((unsigned long) totalLz) << 16));
     }
   return (Tmp1 + Tmp2);
 }
@@ -1081,7 +1119,7 @@ unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimens
 // return value = wave function evaluated at the given location
 
 Complex FermionOnSphereHaldaneHugeBasis::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-							   int firstComponent, int nbrComponent)
+							       int firstComponent, int nbrComponent)
 {
   Complex Value;
   Complex Tmp;
