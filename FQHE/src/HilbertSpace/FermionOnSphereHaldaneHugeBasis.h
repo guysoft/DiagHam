@@ -62,9 +62,29 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned long* StateDescription;
   // number of states that are used to described the highest Lz part of the full Hilbert space  
   unsigned long PartialHilbertSpaceDimension;
+  // shift to get the global index from the local index in a given lowest Lz part of the full Hilbert space 
+  unsigned long* StateDescriptionIndexShift;
+  // index of the lowest Lz part file for a given highest Lz part
+  int* StateDescriptionFileIndex;
 
   // mask to apply to get the highest Lz part of a state
   unsigned long HighestLzStateMask;
+
+  // temporary buffers used to store the lowest Lz part of the full Hilbert space  
+  unsigned long** StateDescriptionBuffers;
+  // number of temporary buffers
+  int NbrBuffers;
+  // file index of each buffer
+  int* BufferIndices;
+  // age of each buffer
+  int* BufferAges;
+
+  // name of the files that contains the lowest Lz part of the full Hilbert space 
+  char** StateDescriptionFileNames;
+  // size (in sizeof(unsigned long) units) of the files that contains the lowest Lz part of the full Hilbert space  
+  unsigned long* StateDescriptionFileSizes;
+  // number of files used to store the lowest Lz part of the full Hilbert space  
+  int NbrFiles;
 
   // maximum shift used for searching a position in the look-up table
   unsigned long MaximumLookUpShift;
@@ -300,6 +320,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = position from which new states have to be stored
   unsigned long  RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, unsigned long pos);
 
+  // load a lowest Lz part file into memory
+  //
+  // fileIndex = index of the file to read
+  // return file = index of the buffer that has been loaded
+  int LoadLowestLzBuffer(int fileIndex);
 
 };
 
