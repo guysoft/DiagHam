@@ -66,6 +66,10 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned long* StateDescriptionIndexShift;
   // index of the lowest Lz part file for a given highest Lz part
   int* StateDescriptionFileIndex;
+  // convertion array to translate from the highest Lz part to its corresponding index in StateDescription
+  int* StateHighestLzToIndex;
+  // right shift to apply to get the highest Lz part
+  int StateHighestLzShift;
 
   // mask to apply to get the highest Lz part of a state
   unsigned long HighestLzStateMask;
@@ -78,6 +82,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   int* BufferIndices;
   // age of each buffer
   int* BufferAges;
+  // convertion array to get buffer id from file id
+  int* FileToBuffer;
 
   // name of the files that contains the lowest Lz part of the full Hilbert space 
   char** StateDescriptionFileNames;
@@ -85,15 +91,6 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned long* StateDescriptionFileSizes;
   // number of files used to store the lowest Lz part of the full Hilbert space  
   int NbrFiles;
-
-  // maximum shift used for searching a position in the look-up table
-  unsigned long MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  unsigned long** LookUpTable;
 
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
@@ -118,6 +115,7 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   int* TmpGeneratedStatesLzMax;
   unsigned long* KeepStateFlag;
 
+  // temporary list used during first Hilbert space size evaluation
   List<unsigned long> FileSizes;
 
   // maximum size for a file

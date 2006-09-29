@@ -73,7 +73,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 16;
   this->SizeLimit = maxFileSize << 17;
   this->HilbertSpaceDimension = 0;
   this->ReferenceState = 0x1l;
@@ -154,6 +153,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->PartialHilbertSpaceDimension = 0l;
   this->NbrFiles = 0;
   this->StateDescriptionIndexShift[0] = 0l;
+  this->StateHighestLzToIndex = new int [1 << ((this->LzMax - MinCommonLz) + 2)];
   for (int i = MaxPartialNbrFermions; i >= 1; --i)
     {
       unsigned long TmpPartialHilbertSpaceDimension;
@@ -182,8 +182,13 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   ++this->PartialHilbertSpaceDimension;
   SortArrayDownOrdering(this->StateDescription, this->StateDescriptionFileIndex, this->PartialHilbertSpaceDimension);
   this->StateDescriptionIndexShift[0] = 0l;
+  this->StateHighestLzToIndex[this->StateDescription[0] >> (MinCommonLz + 1)] = 0;
+  this->StateHighestLzShift = MinCommonLz + 1;
   for (unsigned long i = 1; i < this->PartialHilbertSpaceDimension; ++i)
-    this->StateDescriptionIndexShift[i] = this->StateDescriptionIndexShift[i - 1] + this->StateDescriptionFileSizes[this->StateDescriptionFileIndex[i - 1]];
+    {
+      this->StateDescriptionIndexShift[i] = this->StateDescriptionIndexShift[i - 1] + this->StateDescriptionFileSizes[this->StateDescriptionFileIndex[i - 1]];
+      this->StateHighestLzToIndex[this->StateDescription[i] >> this->StateHighestLzShift] = i;
+    }
   this->HighestLzStateMask = ~((0x1l << (MinCommonLz + 1)) - 1);
   this->NbrBuffers = memory / (LargestFile << 3);
   if (this->NbrBuffers < 2)
@@ -232,6 +237,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
     }
   this->BufferIndices[0] = this->NbrFiles - 1;
   this->BufferAges[0] = 1;
+  this->FileToBuffer = new int [this->NbrFiles];
+  for (int i = 0; i < this->NbrFiles; ++i)
+    this->FileToBuffer[i] = -1;
+  this->FileToBuffer[this->NbrFiles - 1] = 0;
 
 #ifdef  __64_BITS__
    unsigned long ReducedHilbertSpaceDimension = (this->HugeHilbertSpaceDimension >> 6) + 1l;
@@ -336,14 +345,14 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 
   
 //   delete[] this->StateDescription;
-//   delete[] this->KeepStateFlag;
+   delete[] this->KeepStateFlag;
 //   this->StateDescription = TmpStateDescription;
 //   this->HugeHilbertSpaceDimension = NewHilbertSpaceDimension;
 
 //   delete[] this->TmpGeneratedStates;
 //   delete[] this->TmpGeneratedStatesLzMax;
 
-//   this->GenerateLookUpTable(memory);
+   this->GenerateLookUpTable(memory);
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
 //   UsedMemory += this->HugeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -378,10 +387,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(const FermionOn
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -419,10 +424,6 @@ FermionOnSphereHaldaneHugeBasis& FermionOnSphereHaldaneHugeBasis::operator = (co
       delete[] this->StateDescription;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
     }
   if (this->TargetSpace != &fermions)
     this->TargetSpace = fermions.TargetSpace;
@@ -437,10 +438,6 @@ FermionOnSphereHaldaneHugeBasis& FermionOnSphereHaldaneHugeBasis::operator = (co
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -821,59 +818,29 @@ int FermionOnSphereHaldaneHugeBasis::AdA (int index, int m, int n, double& coeff
 
 unsigned long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stateDescription)
 {
-  unsigned long TmpHighestLz = stateDescription & this->HighestLzStateMask;
-  unsigned long PosMax = 0;
-  unsigned long PosMin = this->PartialHilbertSpaceDimension - 1;
-  unsigned long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
-//  cout << hex << " " << stateDescription << " " << TmpHighestLz << " " << CurrentState << " " << this->StateDescription[0] << endl;
-  while ((PosMax != PosMid) && (CurrentState != TmpHighestLz))
-    {
-//      cout << dec << PosMin << " " << PosMax << " " << hex << TmpHighestLz << " " << CurrentState << endl;
-      if (CurrentState > TmpHighestLz)
-	{
-	  PosMax = PosMid;
-	}
-      else
-	{
-	  PosMin = PosMid;
-	} 
-      PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = this->StateDescription[PosMid];
-    }
-  if (CurrentState != TmpHighestLz)
-    PosMid = PosMin;
-
-  //  cout << hex << CurrentState << " ";
-  int TmpFileIndex = this->StateDescriptionFileIndex[PosMid];
-  int TmpBufferIndex = 0;
-  while ((TmpBufferIndex < this->NbrBuffers) && (this->BufferIndices[TmpBufferIndex] != TmpFileIndex))
-    ++TmpBufferIndex;
-  if (TmpBufferIndex == this->NbrBuffers)
+  unsigned long TmpHighestLz = stateDescription >> this->StateHighestLzShift;
+  int TmpBufferIndex =  this->StateHighestLzToIndex[TmpHighestLz];
+  TmpHighestLz = this->StateDescriptionIndexShift[TmpBufferIndex];
+  int TmpFileIndex = this->StateDescriptionFileIndex[TmpBufferIndex];
+  TmpBufferIndex = this->FileToBuffer[TmpFileIndex];
+  if (TmpBufferIndex < 0)
     TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
 
   stateDescription &= ~this->HighestLzStateMask;
-  TmpHighestLz = this->StateDescriptionIndexShift[PosMid];
-  PosMax = 0;
-  PosMin = this->StateDescriptionFileSizes[TmpFileIndex] - 1;
-  PosMid = (PosMin + PosMax) >> 1;
+  unsigned long PosMax = 0;
+  unsigned long PosMin = this->StateDescriptionFileSizes[TmpFileIndex] - 1;
+  unsigned long PosMid = (PosMin + PosMax) >> 1;
   unsigned long* TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
-  CurrentState = TmpStateDescriptionBuffers[PosMid];
+  unsigned long CurrentState = TmpStateDescriptionBuffers[PosMid];
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
-	{
-	  PosMax = PosMid;
-	}
+	PosMax = PosMid;
       else
-	{
-	  PosMin = PosMid;
-	} 
+	PosMin = PosMid;
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = TmpStateDescriptionBuffers[PosMid];
     }
-  //  cout << TmpHighestLz  << " " << PosMid << endl;
-  //  cout << (TmpHighestLz + PosMid) << " ";
   ++this->NbrHits;
   if (CurrentState == stateDescription)
     return (TmpHighestLz + PosMid);
@@ -893,6 +860,7 @@ int FermionOnSphereHaldaneHugeBasis::LoadLowestLzBuffer(int fileIndex)
   while (this->BufferAges[Index] < this->NbrBuffers)
     ++Index;
 //  cout << dec << Index << endl;
+  this->FileToBuffer[this->BufferIndices[Index]] = -1;
   unsigned long* TmpBuffer = this->StateDescriptionBuffers[Index];
   unsigned long TmpSize = this->StateDescriptionFileSizes[fileIndex];
   ifstream File;
@@ -904,6 +872,7 @@ int FermionOnSphereHaldaneHugeBasis::LoadLowestLzBuffer(int fileIndex)
   this->BufferIndices[Index] = fileIndex;
   for (int i = 0; i < this->NbrBuffers; ++i)
     ++this->BufferAges[i];
+  this->FileToBuffer[this->BufferIndices[Index]] = Index;
   return Index;
 }
 
@@ -915,7 +884,7 @@ int FermionOnSphereHaldaneHugeBasis::LoadLowestLzBuffer(int fileIndex)
 
 ostream& FermionOnSphereHaldaneHugeBasis::PrintState (ostream& Str, int state)
 {
-  unsigned long TmpState = (this->StateDescription[state] & HUGE_BASIS_STATE_MASK);
+  unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
   return Str;
@@ -1066,85 +1035,6 @@ unsigned long FermionOnSphereHaldaneHugeBasis::RawGenerateStates(int nbrFermions
 
 void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
 {
-  // evaluate look-up table size
-  memory /= (sizeof(int*) * this->NbrLzValue);
-  this->MaximumLookUpShift = 1;
-  while (memory > 0)
-    {
-      memory >>= 1;
-      ++this->MaximumLookUpShift;
-    }
-  if (this->MaximumLookUpShift > ((unsigned long) this->NbrLzValue))
-    this->MaximumLookUpShift = ((unsigned long) this->NbrLzValue);
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-
-  // construct  look-up tables for searching states
-  this->LookUpTable = new unsigned long* [this->NbrLzValue];
-  this->LookUpTableShift = new int [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->LookUpTable[i] = new unsigned long [this->LookUpTableMemorySize + 1];
-  unsigned long CurrentLzMax = (this->StateDescription[0] >>  HUGE_BASIS_STATE_SHIFT);
-  unsigned long* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-  if (CurrentLzMax < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentLzMax] = 0;
-  else
-    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
-  unsigned long TmpLookUpTableValue = (this->StateDescription[0] & HUGE_BASIS_STATE_MASK) >> CurrentShift;
-  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = 0;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[CurrentLookUpTableValue] = 0;
-  for (unsigned long i = 0; i < this->HugeHilbertSpaceDimension; ++i)
-    {
-      if (CurrentLzMax != (this->StateDescription[i] >> HUGE_BASIS_STATE_SHIFT))
-	{
-	  while (CurrentLookUpTableValue > 0)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[0] = i;
- 	  CurrentLzMax = (this->StateDescription[i] >> HUGE_BASIS_STATE_SHIFT);
-	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-	  if (CurrentLzMax < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentLzMax] = 0;
-	  else
-	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
-	  TmpLookUpTableValue = (this->StateDescription[i] & HUGE_BASIS_STATE_MASK) >> CurrentShift;
-	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
-	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[CurrentLookUpTableValue] = i;
-	}
-      else
-	{
-	  TmpLookUpTableValue = (this->StateDescription[i] & HUGE_BASIS_STATE_MASK) >> CurrentShift;
-	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
-	    {
-	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
-		{
-		  TmpLookUpTable[CurrentLookUpTableValue] = i;
-		  --CurrentLookUpTableValue;
-		}
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	    }
-	}
-    }
-  while (CurrentLookUpTableValue > 0)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = this->HugeHilbertSpaceDimension - 1l;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[0] = this->HugeHilbertSpaceDimension - 1l;
-  
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];
