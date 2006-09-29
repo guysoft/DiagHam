@@ -462,6 +462,8 @@ void SortArrayDownOrdering(ClassName* array, int* integerArray, long nbrValue)
 	int Pivot2 = integerArray[i];
 	array[i] = array[j];
 	array[j] = Pivot;
+	integerArray[i] = integerArray[j];
+	integerArray[j] = Pivot2;	    
 	i = 0;
 	while (true)
 	  {

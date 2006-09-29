@@ -122,7 +122,9 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 
   // maximum size for a file
   unsigned long SizeLimit;
-  
+
+  unsigned long NbrHits;
+  unsigned long NbrMisses;
 
  public:
 
