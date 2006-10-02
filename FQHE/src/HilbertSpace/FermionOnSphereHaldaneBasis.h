@@ -99,7 +99,9 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
-  FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  // referenceState = array that describes the reference state to start from
+  FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, int* referenceState,
+			       unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

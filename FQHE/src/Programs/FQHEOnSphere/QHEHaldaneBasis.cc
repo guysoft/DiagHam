@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldabe algorithm from (can be laughlin or pfaffian)", "laughlin");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -121,15 +122,28 @@ int main(int argc, char** argv)
 //     }
 //   cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
 
+  int* ReferenceState = new int[LzMax + 1];
+  for (int i = 0; i <= LzMax; ++i)
+    ReferenceState[i] = 0;
+  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
+    for (int i = 0; i <= LzMax; i += 3)
+      ReferenceState[i] = 1;
+  else
+    if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
+      for (int i = 0; i <= LzMax; i += 4)
+	{
+	  ReferenceState[i] = 1;
+	  ReferenceState[i + 1] = 1;
+	}
   if (((BooleanOption*) Manager["huge"])->GetBoolean() == true)
     {
       FermionOnSphereHaldaneHugeBasis ReducedSpace(NbrFermions, Lz, LzMax, ((SingleIntegerOption*) Manager["file-size"])->GetInteger(),
-						   ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20);
+						   ReferenceState, ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20);
       cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
     }
   else
     {
-      FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax);
+      FermionOnSphereHaldaneBasis ReducedSpace(NbrFermions, Lz, LzMax, ReferenceState);
       //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
       //    ReducedSpace.PrintState(cout, i) << endl;
       cout << ReducedSpace.GetHilbertSpaceDimension() << endl;

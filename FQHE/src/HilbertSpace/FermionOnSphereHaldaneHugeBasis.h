@@ -76,6 +76,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 
   // temporary buffers used to store the lowest Lz part of the full Hilbert space  
   unsigned long** StateDescriptionBuffers;
+  // temporary buffers used to store positon of eqch mqximum Lz sector in the lowest Lz part of the full Hilbert space  
+  unsigned long** StateDescriptionLzSectorBuffers;
   // number of temporary buffers
   int NbrBuffers;
   // file index of each buffer
@@ -121,9 +123,6 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // maximum size for a file
   unsigned long SizeLimit;
 
-  unsigned long NbrHits;
-  unsigned long NbrMisses;
-
  public:
 
   // basic constructor
@@ -133,7 +132,9 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // lzMax = maximum Lz value reached by a fermion
   // maxFileSize = maximum file size (in MBytes)
   // memory = amount of memory granted for precalculations
-  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, unsigned long memory = 10000000);
+  // referenceState = array that describes the reference state to start from
+  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState,
+				   unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -325,6 +326,14 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // fileIndex = index of the file to read
   // return file = index of the buffer that has been loaded
   int LoadLowestLzBuffer(int fileIndex);
+
+  // find position of each sector with a given maximum Lz
+  // 
+  // stateDescription = array that contains state description
+  // dimension = dimension of the stateDescription array
+  // lzSectors = array that where the position of each sector with a given maximum Lz will be stored
+  // lzMax = maximum momentum value for a fermion
+  void FindLzMaxSectors(unsigned long* stateDescription, unsigned long dimension, unsigned long* lzSectors, int lzMax);
 
 };
 

@@ -52,8 +52,10 @@ using std::dec;
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // memory = amount of memory granted for precalculations
+// referenceState = array that describes the reference state to start from
 
-FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
+FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, int* referenceState,
+							  unsigned long memory)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -62,13 +64,16 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  this->ReferenceState = 0x1l;
-  for (int i = 1; i < this->NbrFermions; ++i)
+  this->ReferenceState = 0x0l;
+  int ReferenceStateLzMax = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
     {
-      this->ReferenceState <<= 3;
-      this->ReferenceState |= 0x1l;
+      this->ReferenceState |= ((unsigned long) (referenceState[i] & 1)) << i;
+      if (referenceState[i] == 1)
+	ReferenceStateLzMax = i;
     }
   this->Flag.Initialize();
+
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
 #ifdef  __64_BITS__
@@ -87,13 +92,13 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
   long Memory = 0l;
 
-  int TmpIndex = this->FindStateIndex(this->ReferenceState,this->LzMax);
+  int TmpIndex = this->FindStateIndex(this->ReferenceState, ReferenceStateLzMax);
 #ifdef  __64_BITS__
   this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
 #else
   this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
 #endif
-  this->GenerateStates(this->LzMax, this->ReferenceState, 1, Memory);  
+  this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1, Memory);  
 
   int NewHilbertSpaceDimension = 0;
   unsigned long TmpKeepStateFlag;
