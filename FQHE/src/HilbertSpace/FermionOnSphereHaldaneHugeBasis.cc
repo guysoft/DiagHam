@@ -220,7 +220,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 	  ofstream File; 
 	  File.open(this->StateDescriptionFileNames[CurrentFileIndex], ios::binary | ios::out);
 	  for (int i = 0; i <= this->StateHighestLzShift; ++i)
-	    WriteLittleEndian(File, this->StateDescriptionLzSectorBuffers[i]);
+	    WriteLittleEndian(File, this->StateDescriptionLzSectorBuffers[0][i]);
 	  for (unsigned long i = 0; i < this->StateDescriptionFileSizes[CurrentFileIndex]; ++i)
 	    WriteLittleEndian(File, this->StateDescription[i]);
 	  File.close();
@@ -775,13 +775,11 @@ unsigned long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stat
     TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
 
   stateDescription &= ~this->HighestLzStateMask;
-  int TmpLzMax = this->StateHighestLzShift - 1;
+  int TmpLzMax = this->StateHighestLzShift;
   while (((stateDescription >> TmpLzMax) & 0x1l) == 0l)
     --TmpLzMax;
   unsigned long PosMax = this->StateDescriptionLzSectorBuffers[TmpBufferIndex][TmpLzMax + 1];
   unsigned long PosMin = this->StateDescriptionLzSectorBuffers[TmpBufferIndex][TmpLzMax] - 1l;
-//  unsigned long PosMax = 0l;
-//  unsigned long PosMin = this->StateDescriptionFileSizes[TmpFileIndex] - 1l;
   unsigned long PosMid = (PosMin + PosMax) >> 1;
   unsigned long* TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
   unsigned long CurrentState = TmpStateDescriptionBuffers[PosMid];
@@ -810,7 +808,8 @@ int FermionOnSphereHaldaneHugeBasis::LoadLowestLzBuffer(int fileIndex)
   int Index = 0;  
   while (this->BufferAges[Index] < this->NbrBuffers)
     ++Index;
-  this->FileToBuffer[this->BufferIndices[Index]] = -1;
+  if (this->BufferIndices[Index] >= 0)
+    this->FileToBuffer[this->BufferIndices[Index]] = -1;
   unsigned long* TmpBuffer = this->StateDescriptionBuffers[Index];
   unsigned long* TmpBuffer2 = this->StateDescriptionLzSectorBuffers[Index];
   unsigned long TmpSize = this->StateDescriptionFileSizes[fileIndex];
@@ -1098,6 +1097,8 @@ unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimens
 
 void FermionOnSphereHaldaneHugeBasis::FindLzMaxSectors(unsigned long* stateDescription, unsigned long dimension, unsigned long* lzSectors, int lzMax)
 {
+  for (int i = 0; i <= lzMax; ++i)
+    lzSectors[i] = 0xffffffffl;
   unsigned long TmpStateDescription;
   int CurrentLzMax = lzMax;
   int TmpLzMax;
