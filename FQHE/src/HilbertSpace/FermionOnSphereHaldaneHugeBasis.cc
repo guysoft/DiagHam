@@ -775,8 +775,13 @@ unsigned long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stat
     TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
 
   stateDescription &= ~this->HighestLzStateMask;
-  unsigned long PosMax = 0;
-  unsigned long PosMin = this->StateDescriptionFileSizes[TmpFileIndex] - 1;
+  int TmpLzMax = this->StateHighestLzShift - 1;
+  while (((stateDescription >> TmpLzMax) & 0x1l) == 0l)
+    --TmpLzMax;
+  unsigned long PosMax = this->StateDescriptionLzSectorBuffers[TmpBufferIndex][TmpLzMax + 1];
+  unsigned long PosMin = this->StateDescriptionLzSectorBuffers[TmpBufferIndex][TmpLzMax] - 1l;
+//  unsigned long PosMax = 0l;
+//  unsigned long PosMin = this->StateDescriptionFileSizes[TmpFileIndex] - 1l;
   unsigned long PosMid = (PosMin + PosMax) >> 1;
   unsigned long* TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
   unsigned long CurrentState = TmpStateDescriptionBuffers[PosMid];
@@ -1093,6 +1098,26 @@ unsigned long FermionOnSphereHaldaneHugeBasis::ShiftedEvaluateHilbertSpaceDimens
 
 void FermionOnSphereHaldaneHugeBasis::FindLzMaxSectors(unsigned long* stateDescription, unsigned long dimension, unsigned long* lzSectors, int lzMax)
 {
+  unsigned long TmpStateDescription;
+  int CurrentLzMax = lzMax;
+  int TmpLzMax;
+  unsigned long Position = 0l;
+  lzSectors[lzMax + 1] = 0l;
+  while (Position < dimension)
+    {
+      TmpLzMax = CurrentLzMax;
+      TmpStateDescription = stateDescription[Position];
+      while (((TmpStateDescription >> TmpLzMax) & 0x1l) == 0x0l)
+	--TmpLzMax;
+      if (CurrentLzMax != TmpLzMax)
+	{
+	  lzSectors[CurrentLzMax] = Position;
+	  lzSectors[TmpLzMax + 1] = Position;
+	  CurrentLzMax = TmpLzMax;
+	}
+      ++Position;
+    }
+  lzSectors[CurrentLzMax] = dimension;
 }
 
 // evaluate wave function in real space using a given basis and only for agiven range of components
