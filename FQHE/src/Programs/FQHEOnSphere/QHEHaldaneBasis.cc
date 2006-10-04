@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldabe algorithm from (can be laughlin or pfaffian)", "laughlin");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldabe algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -134,6 +134,19 @@ int main(int argc, char** argv)
 	{
 	  ReferenceState[i] = 1;
 	  ReferenceState[i + 1] = 1;
+	}
+    else
+      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
+	for (int i = 0; i <= LzMax; i += 5)
+	  {
+	    ReferenceState[i] = 1;
+	    ReferenceState[i + 1] = 1;
+	    ReferenceState[i + 2] = 1;
+	  }
+      else
+	{
+	  cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
+	  return -1;
 	}
   if (((BooleanOption*) Manager["huge"])->GetBoolean() == true)
     {
