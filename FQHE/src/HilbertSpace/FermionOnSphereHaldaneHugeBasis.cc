@@ -152,7 +152,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->NbrFiles = 0;
   this->StateDescriptionIndexShift[0] = 0l;
   this->StateHighestLzToIndex = new int [1 << ((this->LzMax - MinCommonLz) + 2)];
-  for (int i = MaxPartialNbrFermions; i >= 1; --i)
+  for (int i = MaxPartialNbrFermions; i >= 0; --i)
     {
       unsigned long TmpPartialHilbertSpaceDimension;
       int TmpMin = ((i * (i - 1)) >> 1);
@@ -170,13 +170,9 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 	  for (; this->PartialHilbertSpaceDimension < TmpPartialHilbertSpaceDimension; ++this->PartialHilbertSpaceDimension)
 	    this->StateDescriptionFileIndex[this->PartialHilbertSpaceDimension] = this->NbrFiles;
 	  ++this->NbrFiles;	  
-	}      
+	  }      
     }
 
-  this->StateDescription[this->PartialHilbertSpaceDimension] = 0l;
-  this->StateDescriptionFileIndex[this->PartialHilbertSpaceDimension] = this->NbrFiles;
-  ++this->NbrFiles;
-  ++this->PartialHilbertSpaceDimension;
   SortArrayDownOrdering(this->StateDescription, this->StateDescriptionFileIndex, this->PartialHilbertSpaceDimension);
   this->StateDescriptionIndexShift[0] = 0l;
   this->StateHighestLzToIndex[this->StateDescription[0]] = 0;
@@ -951,6 +947,11 @@ unsigned long FermionOnSphereHaldaneHugeBasis::GenerateStates(int lzMax, unsigne
 
 unsigned long FermionOnSphereHaldaneHugeBasis::RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, unsigned long pos)
 {
+  if ((nbrFermions == 0) && (totalLz == 0))
+    {
+      this->StateDescription[pos] = 0l;
+      return pos + 1l;
+    }
   if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
     return pos;
   int LzTotalMax = ((2 * currentLzMax - nbrFermions + 1) * nbrFermions) >> 1;
