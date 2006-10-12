@@ -69,7 +69,8 @@ am_libQHEHilbertSpace_a_OBJECTS = Fermions.$(OBJEXT) \
 	FermionOnSphereWithSpin.$(OBJEXT) \
 	UnsignedIntegerTools.$(OBJEXT) FullBosonOnSphere.$(OBJEXT) \
 	FermionOnSphereHaldaneBasis.$(OBJEXT) \
-	FermionOnSphereHaldaneHugeBasis.$(OBJEXT)
+	FermionOnSphereHaldaneHugeBasis.$(OBJEXT) \
+	FermionOnSphereWithSU4Spin.$(OBJEXT)
 libQHEHilbertSpace_a_OBJECTS = $(am_libQHEHilbertSpace_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -88,6 +89,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereHaldaneHugeBasis.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereLongState.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereUnlimited.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereWithSU4Spin.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnSphereWithSpin.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnTorus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FermionOnTorusWithMagneticTranslations.Po \
@@ -241,7 +243,8 @@ FermionOnSphereWithSpin.cc \
 UnsignedIntegerTools.cc \
 FullBosonOnSphere.cc \
 FermionOnSphereHaldaneBasis.cc \
-FermionOnSphereHaldaneHugeBasis.cc
+FermionOnSphereHaldaneHugeBasis.cc \
+FermionOnSphereWithSU4Spin.cc
 
 all: all-recursive
 
@@ -304,6 +307,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereHaldaneHugeBasis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereLongState.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereUnlimited.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereWithSU4Spin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnSphereWithSpin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnTorus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FermionOnTorusWithMagneticTranslations.Po@am__quote@

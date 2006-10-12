@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(CoulombPseudopotentials_SOURCES) $(EigenstateLzToL_SOURCES) $(FQHESphereGetDimension_SOURCES) $(GetLValue_SOURCES) $(LMinus_SOURCES) $(LzToL_SOURCES) $(ParafermionQuasiholeDimension_SOURCES) $(QHEBosons_SOURCES) $(QHEBosonsCorrelation_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsDeltaOverlap_SOURCES) $(QHEBosonsDipolar_SOURCES) $(QHEBosonsFromGivenBasis_SOURCES) $(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyCorrelation_SOURCES) $(QHEBosonsNBodyHardCore_SOURCES) $(QHEBosonsNBodyHardCoreWithImpurities_SOURCES) $(QHEBosonsTwoBodyGeneric_SOURCES) $(QHEFermions_SOURCES) $(QHEFermionsCorrelation_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsDipolar_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEFermionsLaplacianDeltaOverlap_SOURCES) $(QHEFermionsNBodyHardCore_SOURCES) $(QHEFermionsSphereWithSpin_SOURCES) $(QHEFermionsTwoBodyGeneric_SOURCES) $(QHEFermionsWithSpinCorrelation_SOURCES) $(QHEGenericCorrelation_SOURCES) $(QHEHaldaneBasis_SOURCES) $(QHENBodyQuasiHoleOverlap_SOURCES)
+SOURCES = $(CoulombPseudopotentials_SOURCES) $(EigenstateLzToL_SOURCES) $(FQHESphereFermionsGraphene_SOURCES) $(FQHESphereGetDimension_SOURCES) $(GetLValue_SOURCES) $(LMinus_SOURCES) $(LzToL_SOURCES) $(ParafermionQuasiholeDimension_SOURCES) $(QHEBosons_SOURCES) $(QHEBosonsCorrelation_SOURCES) $(QHEBosonsCoulomb_SOURCES) $(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) $(QHEBosonsDeltaOverlap_SOURCES) $(QHEBosonsDipolar_SOURCES) $(QHEBosonsFromGivenBasis_SOURCES) $(QHEBosonsGross_SOURCES) $(QHEBosonsNBodyCorrelation_SOURCES) $(QHEBosonsNBodyHardCore_SOURCES) $(QHEBosonsNBodyHardCoreWithImpurities_SOURCES) $(QHEBosonsTwoBodyGeneric_SOURCES) $(QHEFermions_SOURCES) $(QHEFermionsCorrelation_SOURCES) $(QHEFermionsCoulomb_SOURCES) $(QHEFermionsDipolar_SOURCES) $(QHEFermionsLaplacianDelta_SOURCES) $(QHEFermionsLaplacianDeltaOverlap_SOURCES) $(QHEFermionsNBodyHardCore_SOURCES) $(QHEFermionsSphereWithSpin_SOURCES) $(QHEFermionsTwoBodyGeneric_SOURCES) $(QHEFermionsWithSpinCorrelation_SOURCES) $(QHEGenericCorrelation_SOURCES) $(QHEHaldaneBasis_SOURCES) $(QHENBodyQuasiHoleOverlap_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -58,7 +58,8 @@ bin_PROGRAMS = QHEFermions$(EXEEXT) QHEBosons$(EXEEXT) \
 	FQHESphereGetDimension$(EXEEXT) \
 	QHEFermionsLaplacianDelta$(EXEEXT) \
 	QHEFermionsLaplacianDeltaOverlap$(EXEEXT) \
-	QHEFermionsDipolar$(EXEEXT) QHEHaldaneBasis$(EXEEXT)
+	QHEFermionsDipolar$(EXEEXT) QHEHaldaneBasis$(EXEEXT) \
+	FQHESphereFermionsGraphene$(EXEEXT)
 subdir = FQHE/src/Programs/FQHEOnSphere
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -77,6 +78,10 @@ CoulombPseudopotentials_OBJECTS =  \
 	$(am_CoulombPseudopotentials_OBJECTS)
 am_EigenstateLzToL_OBJECTS = EigenstateLzToL.$(OBJEXT)
 EigenstateLzToL_OBJECTS = $(am_EigenstateLzToL_OBJECTS)
+am_FQHESphereFermionsGraphene_OBJECTS =  \
+	FQHESphereFermionsGraphene.$(OBJEXT)
+FQHESphereFermionsGraphene_OBJECTS =  \
+	$(am_FQHESphereFermionsGraphene_OBJECTS)
 am_FQHESphereGetDimension_OBJECTS = FQHESphereGetDimension.$(OBJEXT)
 FQHESphereGetDimension_OBJECTS = $(am_FQHESphereGetDimension_OBJECTS)
 am_GetLValue_OBJECTS = GetLValue.$(OBJEXT)
@@ -168,6 +173,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/CoulombPseudopotentials.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/EigenstateLzToL.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/FQHESphereFermionsGraphene.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FQHESphereGetDimension.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/GetLValue.Po ./$(DEPDIR)/LMinus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LzToL.Po \
@@ -204,8 +210,10 @@ CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 SOURCES = $(CoulombPseudopotentials_SOURCES) \
-	$(EigenstateLzToL_SOURCES) $(FQHESphereGetDimension_SOURCES) \
-	$(GetLValue_SOURCES) $(LMinus_SOURCES) $(LzToL_SOURCES) \
+	$(EigenstateLzToL_SOURCES) \
+	$(FQHESphereFermionsGraphene_SOURCES) \
+	$(FQHESphereGetDimension_SOURCES) $(GetLValue_SOURCES) \
+	$(LMinus_SOURCES) $(LzToL_SOURCES) \
 	$(ParafermionQuasiholeDimension_SOURCES) $(QHEBosons_SOURCES) \
 	$(QHEBosonsCorrelation_SOURCES) $(QHEBosonsCoulomb_SOURCES) \
 	$(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) \
@@ -226,8 +234,10 @@ SOURCES = $(CoulombPseudopotentials_SOURCES) \
 	$(QHEGenericCorrelation_SOURCES) $(QHEHaldaneBasis_SOURCES) \
 	$(QHENBodyQuasiHoleOverlap_SOURCES)
 DIST_SOURCES = $(CoulombPseudopotentials_SOURCES) \
-	$(EigenstateLzToL_SOURCES) $(FQHESphereGetDimension_SOURCES) \
-	$(GetLValue_SOURCES) $(LMinus_SOURCES) $(LzToL_SOURCES) \
+	$(EigenstateLzToL_SOURCES) \
+	$(FQHESphereFermionsGraphene_SOURCES) \
+	$(FQHESphereGetDimension_SOURCES) $(GetLValue_SOURCES) \
+	$(LMinus_SOURCES) $(LzToL_SOURCES) \
 	$(ParafermionQuasiholeDimension_SOURCES) $(QHEBosons_SOURCES) \
 	$(QHEBosonsCorrelation_SOURCES) $(QHEBosonsCoulomb_SOURCES) \
 	$(QHEBosonsDelta_SOURCES) $(QHEBosonsDeltaGround_SOURCES) \
@@ -384,6 +394,7 @@ GetLValue_SOURCES = GetLValue.cc
 LMinus_SOURCES = LMinus.cc
 LzToL_SOURCES = LzToL.cc
 QHEHaldaneBasis_SOURCES = QHEHaldaneBasis.cc
+FQHESphereFermionsGraphene_SOURCES = FQHESphereFermionsGraphene.cc
 FQHESphereGetDimension_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/FQHE/src/Architecture/ArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/FQHE/src/Hamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/FQHE/src/HilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/FQHE/src/QuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/FQHE/src/FunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/FQHE/src/MainTask/libQHEMainTask.a
 FQHESphereGetDimension_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/FQHE/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/FQHE/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/FQHE/src/Hamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/FQHE/src/HilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/FQHE/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/Base/src/BitmapTools/BitmapPicture -L$(top_builddir)/Base/src/BitmapTools/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/FQHE/src/FunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/FQHE/src/MainTask -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture -lQHEOperator -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lVector -lMatrix -lQHEQuantumNumber -lQuantumNumber -lQHEQuantumNumber -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lBitmapPicture -lColor -lOptions -lFunctionBasis -lQHEFunctionBasis @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@
 QHEFermions_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/FQHE/src/Architecture/ArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/FQHE/src/Hamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/FQHE/src/HilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/FQHE/src/QuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/FQHE/src/FunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/FQHE/src/MainTask/libQHEMainTask.a
@@ -450,6 +461,8 @@ LzToL_DEPENDENCIES = $(top_builddir)/src/Options/libOptions.a
 LzToL_LDADD = -L$(top_builddir)/src/Options -lOptions
 QHEHaldaneBasis_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/FQHE/src/Architecture/ArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/FQHE/src/Operator/libQHEOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/FQHE/src/Hamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/FQHE/src/HilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/FQHE/src/QuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/FQHE/src/FunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/FQHE/src/MainTask/libQHEMainTask.a $(top_builddir)/FQHE/src/Tools/FQHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/FQHE/src/Tools/FQHESpectrum/libQHESpectrum.a $(top_builddir)/FQHE/src/Tools/FQHEFiles/libQHEFiles.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/FQHE/src/Operator/libQHEOperator.a
 QHEHaldaneBasis_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/FQHE/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/FQHE/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/FQHE/src/Hamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/FQHE/src/HilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/FQHE/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/Base/src/BitmapTools/BitmapPicture -L$(top_builddir)/Base/src/BitmapTools/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/FQHE/src/FunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/FQHE/src/MainTask -L$(top_builddir)/src/MathTools/NumericalAnalysis -L$(top_builddir)/FQHE/src/Tools/FQHEWaveFunction -L$(top_builddir)/FQHE/src/Tools/FQHESpectrum -L$(top_builddir)/FQHE/src/Tools/FQHEFiles -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture  -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture -lQHEOperator -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lQHEWaveFunction -lNumericalAnalysis -lVector -lMatrix -lQHEQuantumNumber -lQuantumNumber -lQHEQuantumNumber -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lQHESpectrum -lQHEFiles -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@
+FQHESphereFermionsGraphene_DEPENDENCIES = $(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/FQHE/src/Architecture/ArchitectureOperation/libQHEArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/FQHE/src/Operator/libQHEOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a  $(top_builddir)/FQHE/src/Hamiltonian/libQHEHamiltonian.a $(top_builddir)/src/TensorProduct/libTensorProduct.a $(top_builddir)/src/Tensor/libTensor.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/FQHE/src/HilbertSpace/libQHEHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/FQHE/src/QuantumNumber/libQHEQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a $(top_builddir)/FQHE/src/FunctionBasis/libQHEFunctionBasis.a $(top_builddir)/src/MainTask/libMainTask.a $(top_builddir)/FQHE/src/MainTask/libQHEMainTask.a $(top_builddir)/FQHE/src/Tools/FQHEWaveFunction/libQHEWaveFunction.a $(top_builddir)/FQHE/src/Tools/FQHESpectrum/libQHESpectrum.a $(top_builddir)/FQHE/src/Tools/FQHEFiles/libQHEFiles.a $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/FQHE/src/Operator/libQHEOperator.a
+FQHESphereFermionsGraphene_LDADD = -L$(top_builddir)/src/Architecture -L$(top_builddir)/src/Architecture/ArchitectureOperation -L$(top_builddir)/FQHE/src/Architecture/ArchitectureOperation -L$(top_builddir)/src/Interaction -L$(top_builddir)/src/Interaction/InternalInteraction -L$(top_builddir)/src/Operator -L$(top_builddir)/FQHE/src/Operator -L$(top_builddir)/src/LanczosAlgorithm -L$(top_builddir)/src/Hamiltonian -L$(top_builddir)/FQHE/src/Hamiltonian -L$(top_builddir)/src/TensorProduct -L$(top_builddir)/src/Tensor -L$(top_builddir)/src/HilbertSpace -L$(top_builddir)/FQHE/src/HilbertSpace -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/QuantumNumber -L$(top_builddir)/FQHE/src/QuantumNumber -L$(top_builddir)/src/Output -L$(top_builddir)/src/Polynomial -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/Base/src/BitmapTools/BitmapPicture -L$(top_builddir)/Base/src/BitmapTools/Color -L$(top_builddir)/src/Options -L$(top_builddir)/src/FunctionBasis -L$(top_builddir)/FQHE/src/FunctionBasis -L$(top_builddir)/src/MainTask -L$(top_builddir)/FQHE/src/MainTask -L$(top_builddir)/src/MathTools/NumericalAnalysis -L$(top_builddir)/FQHE/src/Tools/FQHEWaveFunction -L$(top_builddir)/FQHE/src/Tools/FQHESpectrum -L$(top_builddir)/FQHE/src/Tools/FQHEFiles -lInteraction -lInternalInteraction -lLanczosAlgorithm -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture  -lArchitectureOperation -lQHEHamiltonian -lHamiltonian -lQHEMainTask -lMainTask -lLanczosAlgorithm  -lArchitecture -lQHEArchitectureOperation -lArchitectureOperation -lArchitecture -lQHEOperator -lOperator -lTensorProduct -lTensor -lQHEHilbertSpace -lHilbertSpace -lQHEWaveFunction -lNumericalAnalysis -lVector -lMatrix -lQHEQuantumNumber -lQuantumNumber -lQHEQuantumNumber -lQuantumNumber -lOutput -lPolynomial -lGeneralTools -lMathTools -lGeneralTools -lBitmapPicture -lColor -lOptions -lQHEFunctionBasis -lQHESpectrum -lQHEFiles -lFunctionBasis @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@
 all: all-recursive
 
 .SUFFIXES:
@@ -512,6 +525,9 @@ CoulombPseudopotentials$(EXEEXT): $(CoulombPseudopotentials_OBJECTS) $(CoulombPs
 EigenstateLzToL$(EXEEXT): $(EigenstateLzToL_OBJECTS) $(EigenstateLzToL_DEPENDENCIES) 
 	@rm -f EigenstateLzToL$(EXEEXT)
 	$(CXXLINK) $(EigenstateLzToL_LDFLAGS) $(EigenstateLzToL_OBJECTS) $(EigenstateLzToL_LDADD) $(LIBS)
+FQHESphereFermionsGraphene$(EXEEXT): $(FQHESphereFermionsGraphene_OBJECTS) $(FQHESphereFermionsGraphene_DEPENDENCIES) 
+	@rm -f FQHESphereFermionsGraphene$(EXEEXT)
+	$(CXXLINK) $(FQHESphereFermionsGraphene_LDFLAGS) $(FQHESphereFermionsGraphene_OBJECTS) $(FQHESphereFermionsGraphene_LDADD) $(LIBS)
 FQHESphereGetDimension$(EXEEXT): $(FQHESphereGetDimension_OBJECTS) $(FQHESphereGetDimension_DEPENDENCIES) 
 	@rm -f FQHESphereGetDimension$(EXEEXT)
 	$(CXXLINK) $(FQHESphereGetDimension_LDFLAGS) $(FQHESphereGetDimension_OBJECTS) $(FQHESphereGetDimension_LDADD) $(LIBS)
@@ -614,6 +630,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CoulombPseudopotentials.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/EigenstateLzToL.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FQHESphereFermionsGraphene.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FQHESphereGetDimension.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GetLValue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LMinus.Po@am__quote@
