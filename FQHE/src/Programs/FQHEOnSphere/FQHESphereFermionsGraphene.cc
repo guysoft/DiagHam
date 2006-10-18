@@ -151,9 +151,9 @@ int main(int argc, char** argv)
       double Shift = -10.0;
       ParticleOnSphereWithSpin* Space;
 #ifdef __64_BITS__
-      if (LzMax <= 15)
+      if (LzMax <= 31)
 #else
-      if (LzMax <= 7)
+      if (LzMax <= 15)
 #endif
         {
           Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, MemorySpace);

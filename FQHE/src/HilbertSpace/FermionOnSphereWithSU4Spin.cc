@@ -67,22 +67,25 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   this->TotalIsospin = totalIsospin;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, 
-								    this->TotalSpin, this->TotalIsospin);
-  this->Flag.Initialize();
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
+//   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, 
+// 								    this->TotalSpin, this->TotalIsospin);
+//   this->Flag.Initialize();
+//   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
+  this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+									   (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1);
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLargestBit = new int [this->HilbertSpaceDimension];
-  if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin, this->TotalIsospin) != this->HilbertSpaceDimension)
-     {
-       cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
-       exit(1);
-     }
-  for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
-    {
-      cout << i << " = ";
-      this->PrintState(cout, i)  << endl;
-    }
+//   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin, this->TotalIsospin) != this->HilbertSpaceDimension)
+//      {
+//        cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
+//        exit(1);
+//      }
+//   for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
+//     {
+//       cout << i << " = ";
+//       this->PrintState(cout, i)  << endl;
+//     }
 //   this->GenerateLookUpTable(memory);
   
 // #ifdef __DEBUG__
@@ -572,12 +575,12 @@ int FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int t
   int CheckLz;
   int counter;
   int DimOrbit = lzMax+1;
-  int currentLargestBit=2*lzMax+1;
+  int currentLargestBit= 4 * lzMax + 1;
   /*-------------INITS---------------------*/
   
   CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
 
-  i = biggestOne(nbrFermions,2*DimOrbit);
+  i = biggestOne(nbrFermions,4 * DimOrbit);
 
 
   testLzMax=0x1ul << currentLargestBit;
@@ -825,6 +828,48 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 //   if (result & 1u) return -1.0;
 //   else return 1.0;
 // }
+
+// evaluate Hilbert space dimension
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = twce the total spin value
+// return value = Hilbert space dimension
+
+long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+{
+  if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0))
+    return 1l;
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) || (lzMax < 0) || (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
+    return 0l;
+
+//  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
+//  if (LzTotalMax < totalLz)
+//    return 0l;
+    
+  if ((nbrFermions == 1) && (lzMax >= totalLz))
+    return 1l;
+
+  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
+
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
+	   + (2l * this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1)
+
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1)
+
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
+}
 
 // evaluate Hilbert space dimension
 //
