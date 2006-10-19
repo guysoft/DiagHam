@@ -68,7 +68,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
 //   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, 
-// 								    this->TotalSpin, this->TotalIsospin);
+//  								    this->TotalSpin, this->TotalIsospin);
 //   this->Flag.Initialize();
 //   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
@@ -650,7 +650,7 @@ int FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int t
 	      break;	      
 	    case 7:
 	      {    
-		++Is_Spin;
+		--Is_Spin;
 		--Is_Isospin;
 		Is_Lz += (k * 3);
 	      }
@@ -839,36 +839,86 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 
 long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
 {
-  if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0))
-    return 1l;
-  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) || (lzMax < 0) || (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) ||  
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
+    return 0l;
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz))
+    return 0l;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+
+  if ((lzMax == 0)  && (totalLz != 0))
     return 0l;
 
-//  int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
-//  if (LzTotalMax < totalLz)
-//    return 0l;
-    
-  if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1l;
+  unsigned long Tmp = 0l;
+  if (nbrFermions >= 3)    
+    {
+      Tmp += (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
+	      + (2l * this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1));
 
-  return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
+      if (nbrFermions > 3)
+	{
+	  Tmp += (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1));
+	  if (nbrFermions == 4)
+	    {
+	      if ((totalLz == (4 * lzMax)) && (totalSpin == 2) && (totalIsospin == 2))
+		++Tmp;      
+	    }
+	  else
+	    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2);
+	}
+      else
+	if ((totalLz == (3 * lzMax)) && (((totalSpin == 2) || (totalSpin == 1)) && ((totalIsospin == 2) || (totalIsospin == 1))))
+	  ++Tmp;
+    }
+  else
+    if (totalLz == (2 * lzMax))
+      {
+ 	switch (totalSpin)
+ 	  {
+ 	  case 2:
+	    if (totalIsospin == 1)
+	      ++Tmp;
+ 	    break;
+ 	  case 1:
+	    switch (totalIsospin)
+	      {
+	      case 2:
+		++Tmp;
+		break;
+	      case 1:
+		Tmp += 2l;
+		break;
+	      case 0:
+		++Tmp;
+		break;
+	      }
+	    break;
+ 	  case 0:
+	    if (totalIsospin == 1) 
+	      ++Tmp;
+	    break; 
+ 	  }
+      }
+
+  return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
-
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
-	   + (2l * this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1)
-
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1)
-
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
+
 }
 
 // evaluate Hilbert space dimension
@@ -963,7 +1013,7 @@ int FermionOnSphereWithSU4Spin::EvaluateHilbertSpaceDimension(int nbrFermions, i
 	      break;	      
 	    case 7:
 	      {    
-		++Is_Spin;
+		--Is_Spin;
 		--Is_Isospin;
 		Is_Lz += (k * 3);
 	      }
