@@ -49,6 +49,15 @@ long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalL
 // return value = Hilbert space dimension
 long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
+// evaluate Hilbert space dimension for fermions with SU(4) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = twce the total spin value
+// return value = Hilbert space dimension
+long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+
 // save dimensions in a given file
 //
 // outputFileName = output file name
@@ -77,6 +86,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
   (*SystemGroup) += new BooleanOption ('\n', "use-files", "use dimension files that have been previously generated to increase speed. Files must be in current directory and obey the statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim naming convention");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
@@ -99,69 +110,96 @@ int main(int argc, char** argv)
   int  LzMin = 0;
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
     LzMin = 1;
-  if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
-    {
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	cout << BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
-      else
-	cout << FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
-    }
+  if ((((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == false))
+    if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
+      {
+	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	  cout << BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
+	else
+	  cout << FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, LzMin) << endl;
+      }
+    else
+      {
+	int LzMax = 0;
+	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	  LzMax = (NbrParticles * NbrFluxQuanta);
+	else
+	  LzMax = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
+	long* LzDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
+	long* LDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
+	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    LzDimensions[(x - LzMin) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+	else
+	  for (int x = LzMin; x <= LzMax; x += 2)
+	    LzDimensions[(x - LzMin) >> 1] =  FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+	LDimensions[(LzMax - LzMin) >> 1] = LzDimensions[(LzMax - LzMin) >> 1];
+	long TotalDimension = LzDimensions[(LzMax - LzMin) >> 1];
+	for (int x = LzMax - 2; x >= LzMin; x -= 2)
+	  {
+	    LDimensions[(x - LzMin) >> 1] =  LzDimensions[(x - LzMin) >> 1] - LzDimensions[((x - LzMin) >> 1) + 1];
+	    TotalDimension += LzDimensions[(x - LzMin) >> 1];
+	  }
+	
+	if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	  {
+	    char* OutputFileName = 0;
+	    if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+	      {
+		OutputFileName = new char[256];
+		if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+		  sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		else
+		  sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+	      }
+	    else
+	      {
+		OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+		strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+	      }
+	    WriteDimensionToDisk (OutputFileName, NbrParticles, NbrParticles, ((BooleanOption*) Manager["boson"])->GetBoolean(),
+				  LzDimensions, LDimensions, LzMin, LzMax, TotalDimension);
+	    delete[] OutputFileName;
+	  }
+	else
+	  {
+	    cout << "Lz =";
+	    for (int x = LzMin; x <= LzMax; x += 2)
+	      cout << " " << LzDimensions[(x - LzMin) >> 1];
+	    cout << endl << "L =";
+	    for (int x = LzMin; x <= LzMax; x += 2)
+	      cout << " " << LDimensions[(x - LzMin) >> 1];	  
+	    cout << endl;
+	  }
+	delete[] LzDimensions;
+	delete[] LDimensions;
+      }
   else
     {
-      int LzMax = 0;
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	LzMax = (NbrParticles * NbrFluxQuanta);
-      else
-	LzMax = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
-      long* LzDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
-      long* LDimensions = new long [1 + ((LzMax - LzMin) >> 1)];
-      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	for (int x = LzMin; x <= LzMax; x += 2)
-	  LzDimensions[(x - LzMin) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
-      else
-	for (int x = LzMin; x <= LzMax; x += 2)
-	  LzDimensions[(x - LzMin) >> 1] =  FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
-      LDimensions[(LzMax - LzMin) >> 1] = LzDimensions[(LzMax - LzMin) >> 1];
-      long TotalDimension = LzDimensions[(LzMax - LzMin) >> 1];
-      for (int x = LzMax - 2; x >= LzMin; x -= 2)
+      int Sz = 0;
+      if (NbrParticles & 1)
+	Sz = 1;
+      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false)
 	{
-	  LDimensions[(x - LzMin) >> 1] =  LzDimensions[(x - LzMin) >> 1] - LzDimensions[((x - LzMin) >> 1) + 1];
-	  TotalDimension += LzDimensions[(x - LzMin) >> 1];
-	}
-            
-      if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
-	{
-	  char* OutputFileName = 0;
-	  if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
 	    {
-	      OutputFileName = new char[256];
-	      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-		sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
-	      else
-		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+	      cout << "SU(4) mode for bosons not yet available" << endl;	
+	      return -1;
 	    }
-	  else
-	    {
-	      OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
-	      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
-	    }
-	  WriteDimensionToDisk (OutputFileName, NbrParticles, NbrParticles, ((BooleanOption*) Manager["boson"])->GetBoolean(),
-				LzDimensions, LDimensions, LzMin, LzMax, TotalDimension);
-	  delete[] OutputFileName;
+	  int Iz = 0;
+	  if (NbrParticles & 1)
+	    Iz = 1;
+	  if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
+	    cout << FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+								   (Sz + NbrParticles) >> 1, (Iz + NbrParticles) >> 1)<< endl;
 	}
       else
 	{
-	  cout << "Lz =";
-	  for (int x = LzMin; x <= LzMax; x += 2)
-	    cout << " " << LzDimensions[(x - LzMin) >> 1];
-	  cout << endl << "L =";
-	  for (int x = LzMin; x <= LzMax; x += 2)
-	    cout << " " << LDimensions[(x - LzMin) >> 1];	  
-	  cout << endl;
+	  cout << "SU(2) mode not yet available" << endl;	
+	  return -1;
 	}
-      delete[] LzDimensions;
-      delete[] LDimensions;
     }
+
 }
 
 // evaluate Hilbert space dimension for bosons
@@ -233,6 +271,97 @@ long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int
     return (long) 1;
   return  (FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   +  FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
+}
+
+// evaluate Hilbert space dimension for fermions with SU(4) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = twce the total spin value
+// return value = Hilbert space dimension
+
+long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+{
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) ||  
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
+    return 0l;
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz))
+    return 0l;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+
+  if ((lzMax == 0)  && (totalLz != 0))
+    return 0l;
+
+  unsigned long Tmp = 0l;
+  if (nbrFermions >= 3)    
+    {
+      Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
+	      + (2l * FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1));
+
+      if (nbrFermions > 3)
+	{
+	  Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
+		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
+		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
+		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1));
+	  if (nbrFermions == 4)
+	    {
+	      if ((totalLz == (4 * lzMax)) && (totalSpin == 2) && (totalIsospin == 2))
+		++Tmp;      
+	    }
+	  else
+	    Tmp += FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2);
+	}
+      else
+	if ((totalLz == (3 * lzMax)) && (((totalSpin == 2) || (totalSpin == 1)) && ((totalIsospin == 2) || (totalIsospin == 1))))
+	  ++Tmp;
+    }
+  else
+    if (totalLz == (2 * lzMax))
+      {
+ 	switch (totalSpin)
+ 	  {
+ 	  case 2:
+	    if (totalIsospin == 1)
+	      ++Tmp;
+ 	    break;
+ 	  case 1:
+	    switch (totalIsospin)
+	      {
+	      case 2:
+		++Tmp;
+		break;
+	      case 1:
+		Tmp += 2l;
+		break;
+	      case 0:
+		++Tmp;
+		break;
+	      }
+	    break;
+ 	  case 0:
+	    if (totalIsospin == 1) 
+	      ++Tmp;
+	    break; 
+ 	  }
+      }
+
+  return  (Tmp + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
 }
 
 // evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)
