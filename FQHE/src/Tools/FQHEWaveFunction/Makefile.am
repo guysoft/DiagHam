@@ -18,7 +18,10 @@ QHEWaveFunctionManager.cc \
 ExactWaveFunction.cc \
 DerivativeProduct.cc \
 DerivativeProductFactor.cc \
-SumDerivativeProduct.cc
+SumDerivativeProduct.cc \
+AbstractFQHEWaveFunctionOneOverR.cc \
+LaughlinOnDiskWaveFunctionOneOverR.cc \
+HalperinOnDiskWaveFunctionOneOverR.cc
 
 bin_PROGRAMS=test
 

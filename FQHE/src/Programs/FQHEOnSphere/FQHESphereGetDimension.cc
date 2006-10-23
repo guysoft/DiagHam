@@ -49,12 +49,22 @@ long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalL
 // return value = Hilbert space dimension
 long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
+// evaluate Hilbert space dimension for fermions with SU(2) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value (with shift nbrFermions * lzMax)
+// totalSpin = number of particles with spin up
+// return value = Hilbert space dimension
+long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
+
 // evaluate Hilbert space dimension for fermions with SU(4) spin
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// totalSpin = twce the total spin value
+// totalLz = momentum total value (with shift nbrFermions * lzMax)
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
 // return value = Hilbert space dimension
 long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
 
@@ -71,6 +81,39 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // totalDimension = total Hilbert space dimension
 bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
 			  long* lzDimensions, long* lDimensions, int lzMin, int lzMax, long totalDimension);
+
+
+// save dimensions in a given file (for particles with SU(2) spin)
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array that contains dimension of each Lz sector per Sz
+// lDimensions = array that contains dimension of each L sector per Sz (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value for each value of Sz
+// lzMax = twice the maximum Lz value for each value of Sz
+// sz = minal number of particles with spin up
+// totalDimension = total Hilbert space dimension
+bool SU2WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			     long** lzDimensions, long** lDimensions, int* lzMin, int* lzMax, long totalDimension, int sz);
+
+// save dimensions in a given file (for particles with SU(4) spin)
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array that contains dimension of each Lz sector per Sz and per Iz
+// lDimensions = array that contains dimension of each L sector per Sz and per Iz (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value for each value of Sz and Iz
+// lzMax = twice the maximum Lz value for each value of Sz and Iz
+// sz = minal number of particles with spin up
+// iz = minal number of particles with spin plus
+// totalDimension = total Hilbert space dimension
+bool SU4WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			     long*** lzDimensions, long*** lDimensions, int** lzMin, int** lzMax, long totalDimension, int sz, int iz);
+
 
 
 int main(int argc, char** argv)
@@ -179,6 +222,7 @@ int main(int argc, char** argv)
       int Sz = 0;
       if (NbrParticles & 1)
 	Sz = 1;
+      int NbrSz = (NbrParticles + 2 - Sz) >> 1;
       if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false)
 	{
 	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
@@ -186,12 +230,102 @@ int main(int argc, char** argv)
 	      cout << "SU(4) mode for bosons not yet available" << endl;	
 	      return -1;
 	    }
-	  int Iz = 0;
-	  if (NbrParticles & 1)
-	    Iz = 1;
 	  if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
 	    cout << FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
-								   (Sz + NbrParticles) >> 1, (Iz + NbrParticles) >> 1)<< endl;
+								   (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1)<< endl;
+	  else
+	    {
+	      	      
+	      int** FullLzMax = new int* [NbrSz];
+	      int** FullLzMin = new int* [NbrSz];
+	      long*** LzDimensions = new long**[NbrSz];
+	      long*** LDimensions = new long**[NbrSz];
+	      for (int i = 0; i < NbrSz; ++i)
+		{
+		  FullLzMax[i] = new int[NbrSz];
+		  FullLzMin[i] = new int[NbrSz];
+		  LzDimensions[i] = new long*[NbrSz];
+		  LDimensions[i] = new long*[NbrSz];
+		  for (int j = 0; j < NbrSz; ++j)
+		    {
+		      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+			FullLzMax[i][j] = (NbrParticles * NbrFluxQuanta);
+		      else
+			FullLzMax[i][j] = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
+		      LzDimensions[i][j] = new long [1 + ((FullLzMax[i][j] - FullLzMin[i][j]) >> 1)];
+		      LDimensions[i][j] = new long [1 + ((FullLzMax[i][j] - FullLzMin[i][j]) >> 1)];
+		    }
+		}
+	      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+		for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
+		  for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
+		    for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
+		      LzDimensions[MinSz][MinIz][(x - LzMin) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+	      else
+		for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
+		  for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
+		    for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
+		      LzDimensions[MinSz][MinIz][(x - LzMin) >> 1] =  FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x, MinSz, MinIz);
+	      long TotalDimension = 0l;
+	      for (int MinSz = 0; MinSz <= NbrParticles; ++MinSz)
+		for (int MinIz = 0; MinIz <= NbrParticles; ++MinIz)
+		  {
+		    LDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1] = LzDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1];
+		    TotalDimension += LzDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1];
+		  }
+	      for (int MinSz = 0; MinSz <= NbrParticles; ++MinSz)
+		for (int MinIz = 0; MinIz <= NbrParticles; ++MinIz)
+		  for (int x = FullLzMax[MinSz][MinIz] - 2; x >= FullLzMin[MinSz][MinIz]; x -= 2)
+		    {
+		      LDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] =  (LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] 
+											- LzDimensions[MinSz][MinIz][((x - FullLzMin[MinSz][MinIz]) >> 1) + 1]);
+		      TotalDimension += LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1];
+		    }	      
+	      if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		{
+		  char* OutputFileName = 0;
+		  if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+		    {
+		      OutputFileName = new char[256];
+		      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+			sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		      else
+			sprintf (OutputFileName, "fermions_sphere_su4_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		    }
+		  else
+		    {
+		      OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+		      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+		    }
+		  SU4WriteDimensionToDisk (OutputFileName, NbrParticles, NbrParticles, ((BooleanOption*) Manager["boson"])->GetBoolean(),
+					   LzDimensions, LDimensions, FullLzMin, FullLzMax, TotalDimension, Sz, Sz);
+		  delete[] OutputFileName;
+		}
+	      else
+		{
+		  for (int MinSz = Sz; MinSz <= NbrParticles; ++MinSz)
+		    for (int MinIz = Sz; MinIz <= NbrParticles; ++MinIz)
+		      for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
+			cout << x << " " << ((2 * MinSz) - NbrParticles)<< " " << ((2 * MinIz) - NbrParticles) << " " 
+			     << LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] << " " << LDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] << endl;
+		}
+	      for (int i = 0; i < NbrSz; ++i)
+		{		 
+		  for (int j = 0; j < NbrSz; ++j)
+		    {
+		      delete[] LzDimensions[i][j];
+		      delete[] LDimensions[i][j];
+		    }
+		  delete[] FullLzMin[i];
+		  delete[] FullLzMin[i];
+		  delete[] LzDimensions[i];
+		  delete[] LDimensions[i];
+		}
+	      delete[] FullLzMin;
+	      delete[] FullLzMax;
+	      delete[] LzDimensions;
+	      delete[] LDimensions;	      
+	    }
 	}
       else
 	{
@@ -273,12 +407,49 @@ long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int
 	   +  FermionShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
 
+// evaluate Hilbert space dimension for fermions with SU(2) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value (with shift nbrFermions * lzMax)
+// totalSpin = number of particles with spin up
+// return value = Hilbert space dimension
+
+long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
+{
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalSpin > nbrFermions))
+    return 0l;
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz))
+    return 0l;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+
+  if ((lzMax == 0)  && (totalLz != 0))
+    return 0l;
+
+  if ((nbrFermions == 2) && (totalLz == (2 * lzMax)))
+    if (totalSpin == 1)
+      return 1l;
+    else
+      return 0l;
+  else
+    return  (FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1)
+	     + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin)
+	     + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin));
+}
+
 // evaluate Hilbert space dimension for fermions with SU(4) spin
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
-// totalLz = momentum total value
-// totalSpin = twce the total spin value
+// totalLz = momentum total value (with shift nbrFermions * lzMax)
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
 // return value = Hilbert space dimension
 
 long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
@@ -420,4 +591,84 @@ bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQua
     File << " " << lDimensions[(x - lzMin) >> 1];
   File << endl;
   File.close();
+  return true;
 }
+
+// save dimensions in a given file (for particles with SU(2) spin)
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array that contains dimension of each Lz sector per Sz
+// lDimensions = array that contains dimension of each L sector per Sz (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value for each value of Sz
+// lzMax = twice the maximum Lz value for each value of Sz
+// sz = minal number of particles with spin up
+// totalDimension = total Hilbert space dimension
+
+bool SU2WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			     long** lzDimensions, long** lDimensions, int* lzMin, int* lzMax, long totalDimension, int sz)
+{
+  ofstream File;
+  File.open(outputFileName, ios::binary | ios::out);
+  File << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " ";
+  if (statistics == true)
+    File << "bosons";
+  else
+    File << "femions";
+  File << " with SU(2) spin on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  File << "# total Hilbert space dimension = " << totalDimension << endl << endl 
+       << "N = " << nbrParticles << endl
+       << "2S = " << nbrFluxQuanta << endl << endl
+       << "#  dimensions for each subspaces with the following convention " << endl 
+       << "(twice the total Lz value) (twice the total Sz value) (dimension of the subspace with fixed Lz and Sz) (dimension of the subspace with fixed L, Lz=L and Sz)" << endl;
+  for (int MinSz = sz; MinSz <= nbrParticles; ++MinSz)
+    for (int x = lzMin[MinSz]; x <= lzMax[MinSz]; x += 2)
+      File << x << " " << ((2 * MinSz) - nbrParticles) << " " << lzDimensions[MinSz][(x - lzMin[MinSz]) >> 1] 
+	   << " " << lDimensions[MinSz][(x - lzMin[MinSz]) >> 1] << endl;
+  File << endl;
+  File.close();
+  return true;
+}
+
+// save dimensions in a given file (for particles with SU(4) spin)
+//
+// outputFileName = output file name
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true for bosons, false for fermions
+// lzDimensions = array that contains dimension of each Lz sector per Sz and per Iz
+// lDimensions = array that contains dimension of each L sector per Sz and per Iz (without taking into account the Lz degeneracy)
+// lzMin = twice the minimum Lz value for each value of Sz and Iz
+// lzMax = twice the maximum Lz value for each value of Sz and Iz
+// sz = minal number of particles with spin up
+// iz = minal number of particles with spin plus
+// totalDimension = total Hilbert space dimension
+
+bool SU4WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
+			  long*** lzDimensions, long*** lDimensions, int** lzMin, int** lzMax, long totalDimension, int sz, int iz)
+{
+  ofstream File;
+  File.open(outputFileName, ios::binary | ios::out);
+  File << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " ";
+  if (statistics == true)
+    File << "bosons";
+  else
+    File << "femions";
+  File << " with SU(4) spin on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  File << "# total Hilbert space dimension = " << totalDimension << endl << endl 
+       << "N = " << nbrParticles << endl
+       << "2S = " << nbrFluxQuanta << endl << endl
+       << "#  dimensions for each subspaces with the following convention " << endl 
+       << "(twice the total Lz value) (twice the total Sz value) (twice the total Iz value) (dimension of the subspace with fixed Lz, Sz and Iz) (dimension of the subspace with fixed L, Lz=L, Sz and Iz)" << endl;
+  for (int MinSz = sz; MinSz <= nbrParticles; ++MinSz)
+    for (int MinIz = iz; MinIz <= nbrParticles; ++MinIz)
+      for (int x = lzMin[MinSz][MinIz]; x <= lzMax[MinSz][MinIz]; x += 2)
+	File << x << " " << ((2 * MinSz) - nbrParticles)<< " " << ((2 * MinIz) - nbrParticles) << " " 
+	     << lzDimensions[MinSz][MinIz][(x - lzMin[MinSz][MinIz]) >> 1] << " " << lDimensions[MinSz][MinIz][(x - lzMin[MinSz][MinIz]) >> 1] << endl;
+  File << endl;
+  File.close();
+  return true;
+}
+

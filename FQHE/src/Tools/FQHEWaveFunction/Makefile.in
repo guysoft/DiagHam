@@ -67,7 +67,10 @@ am_libQHEWaveFunction_a_OBJECTS =  \
 	UnprojectedJainCFOnSphereWaveFunction.$(OBJEXT) \
 	QHEWaveFunctionManager.$(OBJEXT) ExactWaveFunction.$(OBJEXT) \
 	DerivativeProduct.$(OBJEXT) DerivativeProductFactor.$(OBJEXT) \
-	SumDerivativeProduct.$(OBJEXT)
+	SumDerivativeProduct.$(OBJEXT) \
+	AbstractFQHEWaveFunctionOneOverR.$(OBJEXT) \
+	LaughlinOnDiskWaveFunctionOneOverR.$(OBJEXT) \
+	HalperinOnDiskWaveFunctionOneOverR.$(OBJEXT)
 libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -77,14 +80,18 @@ test_OBJECTS = $(am_test_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/DerivativeProduct.Po \
+@AMDEP_TRUE@DEP_FILES =  \
+@AMDEP_TRUE@	./$(DEPDIR)/AbstractFQHEWaveFunctionOneOverR.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/DerivativeProduct.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/DerivativeProductFactor.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ExactWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/HalperinOnDiskWaveFunctionOneOverR.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/JainCFOnSphereOrbitals.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/JainCFOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LandauSpectrumOnSphere.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LaughlinOnDiskWaveFunction.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/LaughlinOnDiskWaveFunctionOneOverR.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnDiskWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po \
@@ -223,7 +230,10 @@ QHEWaveFunctionManager.cc \
 ExactWaveFunction.cc \
 DerivativeProduct.cc \
 DerivativeProductFactor.cc \
-SumDerivativeProduct.cc
+SumDerivativeProduct.cc \
+AbstractFQHEWaveFunctionOneOverR.cc \
+LaughlinOnDiskWaveFunctionOneOverR.cc \
+HalperinOnDiskWaveFunctionOneOverR.cc
 
 test_SOURCES = test.cc
 test_DEPENDENCIES = libQHEWaveFunction.a
@@ -301,14 +311,17 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractFQHEWaveFunctionOneOverR.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DerivativeProduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DerivativeProductFactor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ExactWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HalperinOnDiskWaveFunctionOneOverR.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFFilledLevelOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFOnSphereOrbitals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JainCFOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LandauSpectrumOnSphere.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinOnDiskWaveFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinOnDiskWaveFunctionOneOverR.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnDiskWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MooreReadOnSphereWaveFunction.Po@am__quote@
