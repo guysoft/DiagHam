@@ -1,11 +1,6 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/ParticleOnDisk.h"
-#include "HilbertSpace/FermionOnDisk.h"
-#include "HilbertSpace/FermionOnDiskUnlimited.h"
-#include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
-
-#include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunctionOneOverR.h"
+#include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -53,7 +48,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "momentum", "maximum single particle momentum to study", 10, true, 1);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
 
@@ -64,7 +59,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEDiskFermionMonteCarloEnergy -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereFermionMonteCarloEnergy -h" << endl;
       return -1;
     }
   
@@ -80,11 +75,11 @@ int main(int argc, char** argv)
     }
 
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MMax = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
+  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
 
 
-  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunctionOneOverR(NbrFermions, 3);
+  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrFermions, 3);
   RealVector Location(2 * NbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
@@ -94,42 +89,45 @@ int main(int argc, char** argv)
   double Normalization = 0.0;
   double NormalizationError = 0.0;
   double Tmp = 0.0;
+  double Dist;
 
   Complex Tmp3;
   double Tmp2;
   double Tmp2bis;
   int NextCoordinates = 0;
   double Radius;
-  double Theta;
   for (int j = 0; j < NbrFermions; ++j)
     {
-      Radius = RandomNumber->GetRealRandomNumber();      
-      Radius = sqrt (- 2.0 * log(1.0 - Radius));
-      Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-      Location[j << 1] = Radius * cos (Theta);
-      Location[1 + (j << 1)] = Radius * sin (Theta);
+      Location[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
+      Location[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
     }
   double PreviousProbabilities = SqrNorm((*WaveFunction)(Location));
   double CurrentProbabilities = PreviousProbabilities;
   double PreviousCoordinates1;
   double PreviousCoordinates2;
+  double Theta;
+  double Phi;
+  long New = 0l;
+  long Kept = 0l;
   for (int i = 1; i < NbrIter; ++i)
-    {
+    {      
       PreviousCoordinates1 = Location[NextCoordinates << 1];
       PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
-      Radius = RandomNumber->GetRealRandomNumber();      
-      Radius = sqrt (- 2.0 * log(1.0 - Radius));
-      Theta = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-      Location[NextCoordinates << 1] = Radius * cos (Theta);
-      Location[1 + (NextCoordinates << 1)] = Radius * sin (Theta);
+      Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
+      Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       CurrentProbabilities = SqrNorm((*WaveFunction)(Location));
+      cout << CurrentProbabilities << " " << PreviousProbabilities << endl;
       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
-	PreviousProbabilities = CurrentProbabilities;
+	{
+	  PreviousProbabilities = CurrentProbabilities;
+	  ++New;
+	}
       else
  	{
  	  Location[NextCoordinates << 1] = PreviousCoordinates1;
  	  Location[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
  	  CurrentProbabilities = PreviousProbabilities;
+	  ++Kept;
  	}
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
       if (NextCoordinates == NbrFermions)
@@ -137,17 +135,40 @@ int main(int argc, char** argv)
       
       Tmp = 0.0;
       for (int j = 0; j < NbrFermions; ++j)
-	for (int k = j + 1; k < NbrFermions; ++k)
-	  Tmp += 1.0 / sqrt (((Location[k << 1] - Location[j << 1]) * (Location[k << 1] - Location[j << 1])) + 
-			      ((Location[1 + (k << 1)] - Location[1 + (j << 1)]) * (Location[1 + (k << 1)] - Location[1 + (j << 1)])));
+	{
+	  Theta = Location[j << 1];
+	  Phi = Location[1 + (j << 1)];
+	  for (int k = j + 1; k < NbrFermions; ++k)
+	    {
+	      Dist = sqrt ((sin (0.5 * (Theta - Location[k << 1])) * sin (0.5 * (Theta - Location[k << 1])))
+			   + (sin (Theta) * sin (Location[k << 1]) * sin (0.5 * (Phi - Location[1 + (k << 1)])) * sin (0.5 * (Phi - Location[1 + (k << 1)]))));	      
+	      if (Dist > 1e-5)
+		{
+		  Dist = 0.5 / (Dist * sqrt(0.5 * ((double) LzMax)));
+		  Tmp += Dist;
+		}
+//		  Tmp += 0.5 / (Dist * sqrt(0.5 * ((double) LzMax)));
+	    }
+	}
+      if ((Energy != 0.0) && ((Energy + Tmp) == Energy))
+	{
+	  cout << "error " << Energy << " " << Tmp  << endl;
+	}
       Energy += Tmp;
+      if ((EnergyError != 0.0) && ((EnergyError + (Tmp * Tmp)) == EnergyError))
+	{
+	  cout << "error " << EnergyError << " " << (Tmp * Tmp) << endl;
+	}
       EnergyError += Tmp * Tmp;
       if ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0)
  	{
 	  cout << " i = " << i << endl;
 	  double TmpEnergy = Energy / ((double) i);
 	  double TmpEnergyError = sqrt (((EnergyError  / ((double) i)) - (TmpEnergy * TmpEnergy)) / ((double) i));
- 	  cout << TmpEnergy << " +/- " << TmpEnergyError << endl;
+ 	  cout << Energy << " " << TmpEnergy << " +/- " << TmpEnergyError << endl;
+	  cout << New << " " << Kept << endl;
+	  New = 0l;
+	  Kept = 0l;
  	  cout << "-----------------------------------------------" << endl;
  	}
     } 
@@ -155,7 +176,7 @@ int main(int argc, char** argv)
   double TmpEnergy = Energy / ((double) NbrIter);
   double TmpEnergyError = sqrt (((EnergyError  / ((double) NbrIter)) - (TmpEnergy * TmpEnergy)) / ((double) NbrIter));
   cout << TmpEnergy << " +/- " << TmpEnergyError << endl;
-  cout << ((TmpEnergy - ((double) (NbrFermions * NbrFermions))) / ((double) NbrFermions)) << " +/- " << (TmpEnergyError / ((double) NbrFermions)) << endl;
+  cout << ((TmpEnergy - ((0.5 * ((double) (NbrFermions * (NbrFermions + 1)))) / sqrt(0.5 * ((double) LzMax)))) / ((double) NbrFermions)) << " +/- " << (TmpEnergyError / ((double) NbrFermions)) << endl;
   cout << "-----------------------------------------------" << endl;
  return 0;
 }
