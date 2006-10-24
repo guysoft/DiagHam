@@ -81,14 +81,15 @@ Complex LaughlinOnSphereWaveFunction::operator ()(RealVector& x)
   Complex WaveFunction(1.0);
   double Theta;
   double Phi;
+  double Factor = M_PI * 0.5;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       Theta = x[i << 1];
       Phi = x[1 + (i << 1)];
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
-	  Tmp.Re = sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	  Tmp.Im = sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
+	  Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
+	  Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
 	  WaveFunction *= Tmp;
 	}
     }
