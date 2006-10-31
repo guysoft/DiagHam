@@ -104,12 +104,17 @@ int main(int argc, char** argv)
     }
   double PreviousProbabilities = SqrNorm((*WaveFunction)(Location));
   double CurrentProbabilities = PreviousProbabilities;
+  double MonteCarloDistance;
+  double MinGaussianVariance = 0.0;
+  double MaxGaussianVariance = 2.0;
+  double GaussianVariance = 1.0;
+  double GaussianFactor =  pow(2.0 * M_PI * GaussianVariance * (1.0 - exp (-2.0 / GaussianVariance)), -0.5 * ((double) NbrFermions)); 
+    
   double PreviousCoordinates1;
   double PreviousCoordinates2;
   double Theta;
   double Phi;
-  long New = 0l;
-  long Kept = 0l;
+  int Acceptance = 0;
   if (NbrWarmUpIter > 0)
     cout << "starting warm-up sequence" << endl;
   for (int i = 1; i < NbrWarmUpIter; ++i)
@@ -119,24 +124,38 @@ int main(int argc, char** argv)
       Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
       Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       CurrentProbabilities = SqrNorm((*WaveFunction)(Location));
+      MonteCarloDistance = 1.0 * exp (- ((sin (0.5 * (PreviousCoordinates1 - Location[NextCoordinates << 1])) * 
+						     sin (0.5 * (PreviousCoordinates2 - Location[NextCoordinates << 1])))
+						    + (sin (PreviousCoordinates1) * sin (Location[NextCoordinates << 1]) * 
+						       sin (0.5 * (PreviousCoordinates2 - Location[1 + (NextCoordinates << 1)])) 
+						       * sin (0.5 * (PreviousCoordinates2 - Location[1 + ( NextCoordinates<< 1)]))))/ MonteCarloDistance);
 //      cout << CurrentProbabilities << " " << PreviousProbabilities << endl;
-      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < (CurrentProbabilities * MonteCarloDistance)))
 	{
 	  PreviousProbabilities = CurrentProbabilities;
-	  ++New;
+	  ++Acceptance;
 	}
       else
  	{
  	  Location[NextCoordinates << 1] = PreviousCoordinates1;
  	  Location[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
  	  CurrentProbabilities = PreviousProbabilities;
-	  ++Kept;
  	}
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
+      if ((i % 100) == 0)
+	{
+	  cout << Acceptance << " / " << i << " = " << ((100.0 * ((double) Acceptance)) / ((double) i)) << "%" << " (" << GaussianVariance << ")" << endl;
+	  if (((double) Acceptance) > (0.6 * ((double) i)))
+	    MaxGaussianVariance = GaussianVariance;	      
+	  else
+	    MinGaussianVariance = GaussianVariance;
+	  GaussianVariance = 0.5 * (MaxGaussianVariance + MinGaussianVariance);
+//	  GaussianFactor =  pow(2.0 * M_PI * GaussianVariance * (1.0 - exp (-2.0 / GaussianVariance)), -0.5 * ((double) NbrFermions)); 	  
+	}
     }
   if (NbrWarmUpIter > 0)
     cout << "warm-up sequence is over" << endl;
-  double MeanRejectRate = 0.7;
+  Acceptance = 0;
   for (int i = 1; i < NbrIter; ++i)
     {      
       PreviousCoordinates1 = Location[NextCoordinates << 1];
@@ -145,19 +164,21 @@ int main(int argc, char** argv)
       Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
       CurrentProbabilities = SqrNorm((*WaveFunction)(Location));
 //      cout << CurrentProbabilities << " " << PreviousProbabilities << endl;
-      double AcceptanceRate = RandomNumber->GetRealRandomNumber();
-//      RejectRate = ((6.0 * MeanRejectRate - 3.0) * RejectRate + (4.0 - 6.0 * MeanRejectRate)) * RejectRate;
-      if ((CurrentProbabilities > PreviousProbabilities) || ((AcceptanceRate * PreviousProbabilities) < CurrentProbabilities))
+      MonteCarloDistance = 1.0 * exp (- ((sin (0.5 * (PreviousCoordinates1 - Location[NextCoordinates << 1])) * 
+						     sin (0.5 * (PreviousCoordinates2 - Location[NextCoordinates << 1])))
+						    + (sin (PreviousCoordinates1) * sin (Location[NextCoordinates << 1]) * 
+						       sin (0.5 * (PreviousCoordinates2 - Location[1 + (NextCoordinates << 1)])) 
+						       * sin (0.5 * (PreviousCoordinates2 - Location[1 + ( NextCoordinates<< 1)]))))/ MonteCarloDistance);
+      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < (CurrentProbabilities * MonteCarloDistance)))
 	{
 	  PreviousProbabilities = CurrentProbabilities;
-	  ++New;
+	  ++Acceptance;
 	}
       else
  	{
  	  Location[NextCoordinates << 1] = PreviousCoordinates1;
  	  Location[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
  	  CurrentProbabilities = PreviousProbabilities;
-	  ++Kept;
  	}
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
       if (NextCoordinates == NbrFermions)
@@ -188,9 +209,7 @@ int main(int argc, char** argv)
 	  double TmpEnergyError = sqrt (((EnergyError  / ((double) i)) - (TmpEnergy * TmpEnergy)) / ((double) i));
 	  cout << ((TmpEnergy - ((0.5 * ((double) (NbrFermions * NbrFermions))) / sqrt(0.5 * ((double) LzMax)))) / ((double) NbrFermions)) << " +/- " << (TmpEnergyError / ((double) NbrFermions)) << endl;
  	  cout << "raw : " << Energy << " " << (TmpEnergy * TmpEnergy) << " " << (EnergyError  / ((double) i)) << " " << TmpEnergy << " +/- " << TmpEnergyError << endl;
-	  cout << New << " " << Kept << endl;
-	  New = 0l;
-	  Kept = 0l;
+	  cout << Acceptance << " " << i << endl;
  	  cout << "-----------------------------------------------" << endl;
  	}
     } 
