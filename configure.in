@@ -62,11 +62,12 @@ AC_MSG_RESULT([${HAVE_PKG_LAPACK}])
 if test X${HAVE_PKG_LAPACK} = Xyes; then
   AC_DEFINE(HAVE_LAPACK,,[define if we are using LAPACK])
   AC_LANG_PUSH(Fortran 77)
-  AC_CHECK_LIB(blas, dgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lgfortran"],AC_MSG_ERROR(BLAS lib not found))
-  AC_CHECK_LIB(lapack, dsyev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgfortran"], AC_MSG_ERROR(LAPACK lib not found), "-lblas")
+  AC_CHECK_LIB(blas, dgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas"],AC_MSG_ERROR(BLAS lib not found))
+  AC_CHECK_LIB(lapack, dsyev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack"], AC_MSG_ERROR(LAPACK lib not found), "-lblas")
   AC_LANG_POP(Fortran 77)
-dnl   AC_CHECK_LIB(blas, $sgemm, [HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas"], AC_MSG_ERROR(blas lib not found))
-dnl   AC_CHECK_LIB(lapack, $cheev, [HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgc2f"], AC_MSG_ERROR(lapack lib not found))
+  AC_CHECK_LIB(f2c, main,FORTRAN2C_LIBS="-lf2c",
+	AC_CHECK_LIB(g2c, main,FORTRAN2C_LIBS="-lg2c",
+	AC_CHECK_LIB(gfortran, main,FORTRAN2C_LIBS="-lgfortran",AC_MSG_ERROR(can't link fortran to c++: no f2c, g2c or gfortran lib found))))
 fi
 
 AM_CONDITIONAL(BUILD_LAPACK, test X${HAVE_PKG_LAPACK} = Xyes)
@@ -241,6 +242,7 @@ AC_SUBST(MATH_LIBS)
 AC_SUBST(THREAD_LIBS)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
 AC_SUBST(MAYBE_SPIN)
 AC_SUBST(MAYBE_FQHE)

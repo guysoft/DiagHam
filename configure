@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP F77 FFLAGS ac_ct_F77 BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS BLAS_LIBS LAPACK_LIBS MAYBE_QUANTUMDOTS MAYBE_SPIN MAYBE_FQHE LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE RANLIB ac_ct_RANLIB CPP EGREP F77 FFLAGS ac_ct_F77 BUILD_LAPACK_TRUE BUILD_LAPACK_FALSE BUILD_MPI_TRUE BUILD_MPI_FALSE MPI_CXX_EXISTS INCLUDES MATH_LIBS THREAD_LIBS BLAS_LIBS LAPACK_LIBS FORTRAN2C_LIBS MAYBE_QUANTUMDOTS MAYBE_SPIN MAYBE_FQHE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -4747,7 +4747,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_blas_dgemm" >&5
 echo "${ECHO_T}$ac_cv_lib_blas_dgemm" >&6
 if test $ac_cv_lib_blas_dgemm = yes; then
-  HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas -lgfortran"
+  HAVE_PKG_BLAS=$enableval; BLAS_LIBS="-lblas"
 else
   { { echo "$as_me:$LINENO: error: BLAS lib not found" >&5
 echo "$as_me: error: BLAS lib not found" >&2;}
@@ -4802,7 +4802,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_dsyev" >&5
 echo "${ECHO_T}$ac_cv_lib_lapack_dsyev" >&6
 if test $ac_cv_lib_lapack_dsyev = yes; then
-  HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack -lgfortran"
+  HAVE_PKG_LAPACK=$enableval; LAPACK_LIBS="-llapack"
 else
   { { echo "$as_me:$LINENO: error: LAPACK lib not found" >&5
 echo "$as_me: error: LAPACK lib not found" >&2;}
@@ -4814,6 +4814,198 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+  echo "$as_me:$LINENO: checking for main in -lf2c" >&5
+echo $ECHO_N "checking for main in -lf2c... $ECHO_C" >&6
+if test "${ac_cv_lib_f2c_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lf2c  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_f2c_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_f2c_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_f2c_main" >&5
+echo "${ECHO_T}$ac_cv_lib_f2c_main" >&6
+if test $ac_cv_lib_f2c_main = yes; then
+  FORTRAN2C_LIBS="-lf2c"
+else
+  echo "$as_me:$LINENO: checking for main in -lg2c" >&5
+echo $ECHO_N "checking for main in -lg2c... $ECHO_C" >&6
+if test "${ac_cv_lib_g2c_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lg2c  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_g2c_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_g2c_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_g2c_main" >&5
+echo "${ECHO_T}$ac_cv_lib_g2c_main" >&6
+if test $ac_cv_lib_g2c_main = yes; then
+  FORTRAN2C_LIBS="-lg2c"
+else
+  echo "$as_me:$LINENO: checking for main in -lgfortran" >&5
+echo $ECHO_N "checking for main in -lgfortran... $ECHO_C" >&6
+if test "${ac_cv_lib_gfortran_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgfortran  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gfortran_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_gfortran_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gfortran_main" >&5
+echo "${ECHO_T}$ac_cv_lib_gfortran_main" >&6
+if test $ac_cv_lib_gfortran_main = yes; then
+  FORTRAN2C_LIBS="-lgfortran"
+else
+  { { echo "$as_me:$LINENO: error: can't link fortran to c++: no f2c" >&5
+echo "$as_me: error: can't link fortran to c++: no f2c" >&2;}
+   { (exit g2c or gfortran lib found); exit g2c or gfortran lib found; }; }
+fi
+
+fi
+
+fi
 
 fi
 
@@ -5160,6 +5352,7 @@ if test "$HAVE_FQHE" = yes; then
      else
        MAYBE_FQHE=""
 fi
+
 
 
 
@@ -5960,6 +6153,7 @@ s,@MATH_LIBS@,$MATH_LIBS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@BLAS_LIBS@,$BLAS_LIBS,;t t
 s,@LAPACK_LIBS@,$LAPACK_LIBS,;t t
+s,@FORTRAN2C_LIBS@,$FORTRAN2C_LIBS,;t t
 s,@MAYBE_QUANTUMDOTS@,$MAYBE_QUANTUMDOTS,;t t
 s,@MAYBE_SPIN@,$MAYBE_SPIN,;t t
 s,@MAYBE_FQHE@,$MAYBE_FQHE,;t t
