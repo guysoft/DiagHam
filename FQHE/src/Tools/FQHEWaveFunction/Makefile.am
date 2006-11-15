@@ -22,7 +22,8 @@ SumDerivativeProduct.cc \
 AbstractFQHEWaveFunctionOneOverR.cc \
 LaughlinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnDiskWaveFunctionOneOverR.cc \
-HalperinOnSphereWaveFunction.cc
+HalperinOnSphereWaveFunction.cc \
+SU4HalperinOnSphereWaveFunction.cc
 
 bin_PROGRAMS=test
 

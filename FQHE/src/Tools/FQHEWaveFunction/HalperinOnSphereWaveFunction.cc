@@ -49,6 +49,8 @@ HalperinOnSphereWaveFunction::HalperinOnSphereWaveFunction(int nbrSpinUpParticle
   this->NbrSpinUpParticles = nbrSpinUpParticles;
   this->NbrSpinDownParticles = nbrSpinDownParticles;
   this->TotalNbrParticles = this->NbrSpinUpParticles + this->NbrSpinDownParticles;
+  this->UCoordinates = new Complex[this->TotalNbrParticles];
+  this->VCoordinates = new Complex[this->TotalNbrParticles];
 }
 
 // copy constructor
@@ -63,6 +65,8 @@ HalperinOnSphereWaveFunction::HalperinOnSphereWaveFunction(const HalperinOnSpher
   this->NbrSpinUpParticles = function.NbrSpinUpParticles;
   this->NbrSpinDownParticles = function.NbrSpinDownParticles;
   this->TotalNbrParticles = function.TotalNbrParticles;
+  this->UCoordinates = new Complex[this->TotalNbrParticles];
+  this->VCoordinates = new Complex[this->TotalNbrParticles];
 }
 
 // destructor
@@ -70,6 +74,8 @@ HalperinOnSphereWaveFunction::HalperinOnSphereWaveFunction(const HalperinOnSpher
 
 HalperinOnSphereWaveFunction::~HalperinOnSphereWaveFunction()
 {
+  delete[] this->UCoordinates;
+  delete[] this->VCoordinates;
 }
 
 // clone function 
@@ -90,23 +96,28 @@ Abstract1DComplexFunction* HalperinOnSphereWaveFunction::Clone ()
 Complex HalperinOnSphereWaveFunction::operator ()(RealVector& x)
 {
   Complex Tmp;
-  double Theta;
-  double Phi;
   double Factor = M_PI * 0.5;
+  for (int i = 0; i < this->TotalNbrParticles; ++i)
+    {
+      this->UCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->UCoordinates[i].Im = this->UCoordinates[i].Re * sin(0.5 * x[1 + (i << 1)]);
+      this->UCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+      this->VCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->VCoordinates[i].Im = - this->VCoordinates[i].Re * sin(0.5 * x[1 + (i << 1)]);
+      this->VCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+    }
   Complex TotalWaveFunction(1.0);
+  Complex TmpU;
+  Complex TmpV;
   if (this->M1Index > 0)
     {
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrSpinUpParticles; ++i)
 	{
-	  Theta = x[i << 1];
-	  Phi = x[1 + (i << 1)];
+	  TmpU = this->UCoordinates[i];
+	  TmpV = this->VCoordinates[i];
 	  for (int j = i + 1; j < this->NbrSpinUpParticles; ++j)
-	    {
-	      Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	      Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
-	      WaveFunction *= Tmp;
-	    }
+	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
 	}
       for (int i = 0; i < this->M1Index; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -116,14 +127,10 @@ Complex HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = this->NbrSpinUpParticles; i < this->TotalNbrParticles; ++i)
 	{
-	  Theta = x[i << 1];
-	  Phi = x[1 + (i << 1)];
+	  TmpU = this->UCoordinates[i];
+	  TmpV = this->VCoordinates[i];
 	  for (int j = i + 1; j < this->TotalNbrParticles; ++j)
-	    {
-	      Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	      Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
-	      WaveFunction *= Tmp;
-	    }
+	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
 	}
       for (int i = 0; i < this->M1Index; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -133,14 +140,10 @@ Complex HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrSpinUpParticles; ++i)
 	{
-	  Theta = x[i << 1];
-	  Phi = x[1 + (i << 1)];
+	  TmpU = this->UCoordinates[i];
+	  TmpV = this->VCoordinates[i];
 	  for (int j = this->NbrSpinUpParticles; j < this->TotalNbrParticles; ++j)
-	    {
-	      Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	      Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
-	      WaveFunction *= Tmp;
-	    }
+	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
 	}
       for (int i = 0; i < this->NIndex; ++i)
 	TotalWaveFunction *= WaveFunction;

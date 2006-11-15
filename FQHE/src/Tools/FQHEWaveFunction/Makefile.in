@@ -71,7 +71,8 @@ am_libQHEWaveFunction_a_OBJECTS =  \
 	AbstractFQHEWaveFunctionOneOverR.$(OBJEXT) \
 	LaughlinOnDiskWaveFunctionOneOverR.$(OBJEXT) \
 	HalperinOnDiskWaveFunctionOneOverR.$(OBJEXT) \
-	HalperinOnSphereWaveFunction.$(OBJEXT)
+	HalperinOnSphereWaveFunction.$(OBJEXT) \
+	SU4HalperinOnSphereWaveFunction.$(OBJEXT)
 libQHEWaveFunction_a_OBJECTS = $(am_libQHEWaveFunction_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -101,6 +102,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereTwoQuasiholeWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/QHEWaveFunctionManager.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/SU4HalperinOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/SumDerivativeProduct.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/UnprojectedJainCFOnSphereWaveFunction.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/test.Po
@@ -243,7 +245,8 @@ SumDerivativeProduct.cc \
 AbstractFQHEWaveFunctionOneOverR.cc \
 LaughlinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnDiskWaveFunctionOneOverR.cc \
-HalperinOnSphereWaveFunction.cc
+HalperinOnSphereWaveFunction.cc \
+SU4HalperinOnSphereWaveFunction.cc
 
 test_SOURCES = test.cc
 test_DEPENDENCIES = libQHEWaveFunction.a
@@ -340,6 +343,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereTwoQuasiholeWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PfaffianOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHEWaveFunctionManager.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SU4HalperinOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SumDerivativeProduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UnprojectedJainCFOnSphereWaveFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@

@@ -2,6 +2,7 @@
 
 #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/HalperinOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -85,7 +86,11 @@ int main(int argc, char** argv)
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrFermions, 3);
-  Abstract1DComplexFunction* WaveFunction = new HalperinOnSphereWaveFunction(NbrFermions - 3, 3, 3, 3, 3);
+//  Abstract1DComplexFunction* WaveFunction = new HalperinOnSphereWaveFunction(NbrFermions - 8, 8, 3, 3, 2);
+//  Abstract1DComplexFunction* WaveFunction = new SU4HalperinOnSphereWaveFunction(NbrFermions / 4, NbrFermions / 4, NbrFermions / 4, NbrFermions / 4, 
+//										3, 3, 3, 3, 3, 3, 3);
+  Abstract1DComplexFunction* WaveFunction = new SU4HalperinOnSphereWaveFunction(8, 5, 4, 3, 
+										3, 3, 3, 3, 3, 2, 2);
   RealVector Location(TwiceNbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);

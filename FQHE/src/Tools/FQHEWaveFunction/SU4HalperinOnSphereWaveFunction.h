@@ -53,6 +53,11 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   // number of particles with spin down and isopsin minus
   int NbrSpinDownIsospinMinusParticles;
 
+  // number of particles with spin up
+  int NbrSpinUpParticles;
+  // total number of particles minus the number of particles with spin down and isopsin minus
+  int PartialNbrParticles;
+
   // power of the laughlin-like part for spin up - isopsin plus
   int MupIndex;
   // power of the laughlin-like part for spin up - isopsin minus
@@ -62,12 +67,15 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   // power of the laughlin-like part for spin down - isopsin minus
   int MdmIndex;
   // power of the intra-isospin part (i.e (z_u{pm} -z_d{pm}))
-  int NIntraIsopinIndex;
+  int NIntraIsospinIndex;
   // power of the intra-spin part (i.e (z_{ud}p -z_{ud}m))
-  int NIntraIsopinIndex;
+  int NIntraSpinIndex;
   // power of the cross spin-isospin part (i.e (z_up -z_dm) and (z_um -z_dp))
-  int NCrossSpinIsopinIndex;
+  int NCrossSpinIsospinIndex;
   
+  // temporary arrays used during wave function evaluation
+  Complex* UCoordinates;
+  Complex* VCoordinates;
 
  public:
 
@@ -83,11 +91,11 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   // mdmIndex = power of the laughlin-like part for spin down - isopsin minus
   // nIntraIsospinIndex = power of the intra-isospin part (i.e (z_u{pm} -z_d{pm}))
   // nIntraSpinIndex = power of the intra-spin part (i.e (z_{ud}p -z_{ud}m))
-  // nCrossSpinIsopinIndex = power of the cross spin-isospin part (i.e (z_up -z_dm) and (z_um -z_dp))
+  // nCrossSpinIsospinIndex = power of the cross spin-isospin part (i.e (z_up -z_dm) and (z_um -z_dp))
   SU4HalperinOnSphereWaveFunction(int nbrSpinUpIsospinPlusParticles, int nbrSpinUpIsospinMinusParticles, 
 				  int nbrSpinDownIsospinPlusParticles, int nbrSpinDownIsospinMinusParticles,
-				  int mupIndex, int mumIndex, int mdpIndex, int mdmIndex
-				  int nIntraIsopinIndex, int nIntraSpinIndex, int nCrossSpinIsopinIndex);
+				  int mupIndex, int mumIndex, int mdpIndex, int mdmIndex,
+				  int nIntraIsospinIndex, int nIntraSpinIndex, int nCrossSpinIsospinIndex);
 
   // copy constructor
   //
@@ -96,16 +104,16 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // destructor
   //
-   ~HalperinOnSphereWaveFunction();
+   ~SU4HalperinOnSphereWaveFunction();
 
   // clone function 
   //
   // return value = clone of the function 
   Abstract1DComplexFunction* Clone ();
 
-  // evaluate function at a given point (the first 2*nbrSpinUpIsopinPlusParticles coordinates correspond to the position of the spin up - isposin plus particles, 
-  //                                     the following 2*nbrSpinDownIsopinPlusParticles coordinates correspond to the position of spin down - isposin plus particles,
-  //                                     the other coordinates obey to the same scheme for isopin minus)
+  // evaluate function at a given point (the first 2*nbrSpinUpIsospinPlusParticles coordinates correspond to the position of the spin up - isposin plus particles, 
+  //                                     the following 2*nbrSpinDownIsospinPlusParticles coordinates correspond to the position of spin down - isposin plus particles,
+  //                                     the other coordinates obey to the same scheme for isospin minus)
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  

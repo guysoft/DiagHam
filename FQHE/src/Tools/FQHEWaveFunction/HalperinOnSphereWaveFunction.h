@@ -55,6 +55,10 @@ class HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   // n index ( (m1, m2, n) Halperin wave function)
   int NIndex;
 
+  // temporary arrays used during wave function evaluation
+  Complex* UCoordinates;
+  Complex* VCoordinates;
+
  public:
 
   // constructor
