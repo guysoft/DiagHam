@@ -36,6 +36,9 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 
 
+class ConfigurationParser;
+
+
 class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
 {
 
@@ -101,6 +104,14 @@ class SU4HalperinOnSphereWaveFunction: public Abstract1DComplexFunction
   //
   // function = reference on the wave function to copy
   SU4HalperinOnSphereWaveFunction(const SU4HalperinOnSphereWaveFunction& function);
+
+  // constructor from configuration file
+  //
+  // configuration = reference on the configuration file parser
+  // errorFlag = reference on the error flag that is set to false if an error occured while retriving the configuration
+  // nbrParticles = reference on the total number of particles (computed from the configuration file datas)
+  // lzMax = twice the maximum angular momentum for a particle (computed from the configuration file datas)
+  SU4HalperinOnSphereWaveFunction(ConfigurationParser& configuration, bool& errorFlag, int& nbrParticles, int& lzMax);
 
   // destructor
   //

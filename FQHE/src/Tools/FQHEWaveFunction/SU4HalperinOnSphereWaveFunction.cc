@@ -30,7 +30,13 @@
 
 #include "config.h"
 #include "Tools/FQHEWaveFunction/SU4HalperinOnSphereWaveFunction.h"
+#include "GeneralTools/ConfigurationParser.h"
 #include "Vector/RealVector.h"
+
+#include <iostream>
+
+using std::cout;
+using std::endl;
 
 
 // constructor
@@ -69,6 +75,10 @@ SU4HalperinOnSphereWaveFunction::SU4HalperinOnSphereWaveFunction(int nbrSpinUpIs
   this->PartialNbrParticles = this->TotalNbrParticles - this->NbrSpinDownIsospinMinusParticles;
   this->UCoordinates = new Complex[this->TotalNbrParticles];
   this->VCoordinates = new Complex[this->TotalNbrParticles];
+  cout << this->NbrSpinUpIsospinPlusParticles << " "  << this->NbrSpinUpIsospinMinusParticles << " "
+       <<  this->NbrSpinDownIsospinPlusParticles << " " << this->NbrSpinDownIsospinMinusParticles << endl;
+  cout <<  this->MupIndex << " " << this->MumIndex << " " << this->MdpIndex << " " << this->MdmIndex << " " << this->NIntraIsospinIndex 
+       << " " <<  this->NIntraSpinIndex<< " " << this->NCrossSpinIsospinIndex << endl;
 }
 
 // copy constructor
@@ -95,13 +105,93 @@ SU4HalperinOnSphereWaveFunction::SU4HalperinOnSphereWaveFunction(const SU4Halper
   this->VCoordinates = new Complex[this->TotalNbrParticles];
 }
 
+// constructor from configuration file
+//
+// configuration = reference on the configuration file parser
+// errorFlag = reference on the error flag that is set to false if an error occured while retriving the configuration
+// nbrParticles = reference on the total number of particles (computed from the configuration file datas)
+// lzMax = twice the maximum angular momentum for a particle (computed from the configuration file datas)
+
+SU4HalperinOnSphereWaveFunction::SU4HalperinOnSphereWaveFunction(ConfigurationParser& configuration, bool& errorFlag, int& nbrParticles, int& lzMax)
+{
+  errorFlag = true;
+  this->UCoordinates = 0;
+  this->VCoordinates = 0;
+  if ((configuration["WaveFunction"] == 0) || (strcmp ("SU4Halperin", configuration["WaveFunction"]) != 0))
+    {
+      errorFlag = false;
+      return;
+    }
+  if ((configuration.GetAsSingleInteger("NbrSpinUpIsospinPlusParticles", this->NbrSpinUpIsospinPlusParticles) == false) ||
+      (configuration.GetAsSingleInteger("NbrSpinUpIsospinMinusParticles", this->NbrSpinUpIsospinMinusParticles) == false) || 
+      (configuration.GetAsSingleInteger("NbrSpinDownIsospinPlusParticles", this->NbrSpinDownIsospinPlusParticles) == false) ||
+      (configuration.GetAsSingleInteger("NbrSpinDownIsospinMinusParticles", this->NbrSpinDownIsospinMinusParticles) == false))
+    {
+      errorFlag = false;
+      return;
+    }
+  cout << this->NbrSpinUpIsospinPlusParticles << " "  << this->NbrSpinUpIsospinMinusParticles << " "
+       <<  this->NbrSpinDownIsospinPlusParticles << " " << this->NbrSpinDownIsospinMinusParticles << endl;
+  this->TotalNbrParticles = (this->NbrSpinUpIsospinPlusParticles + this->NbrSpinUpIsospinMinusParticles + 
+			     this->NbrSpinDownIsospinPlusParticles + this->NbrSpinDownIsospinMinusParticles);
+  this->NbrSpinUpParticles = this->NbrSpinUpIsospinPlusParticles +  this->NbrSpinUpIsospinMinusParticles;
+  this->PartialNbrParticles = this->TotalNbrParticles - this->NbrSpinDownIsospinMinusParticles;
+  nbrParticles = this->TotalNbrParticles;
+  if ((this->TotalNbrParticles <= 0) || (this->NbrSpinUpIsospinPlusParticles < 0) || (this->NbrSpinUpIsospinMinusParticles < 0) ||
+      (this->NbrSpinDownIsospinPlusParticles < 0) || (this->NbrSpinDownIsospinMinusParticles < 0))
+    {
+      errorFlag = false;
+      return;
+    }
+  if ((configuration.GetAsSingleInteger("MUpPlus", this->MupIndex) == false) ||
+      (configuration.GetAsSingleInteger("MUpMinus", this->MumIndex) == false) ||
+      (configuration.GetAsSingleInteger("MDownPlus", this->MdpIndex) == false) ||
+      (configuration.GetAsSingleInteger("MDownMinus", this->MdmIndex) == false) ||
+      (configuration.GetAsSingleInteger("NIntraIsospin", this->NIntraIsospinIndex) == false) ||
+      (configuration.GetAsSingleInteger("NIntraSpin", this->NIntraSpinIndex) == false) ||
+      (configuration.GetAsSingleInteger("NCrossSpinIsospin", this->NCrossSpinIsospinIndex) == false) ||
+      (this->MupIndex < 0) || (this->MdpIndex < 0) || (this->MdmIndex < 0) || (this->MumIndex < 0) || 
+      (this->NIntraIsospinIndex < 0) || (this->NIntraSpinIndex < 0) || (this->NCrossSpinIsospinIndex < 0))
+    {
+      errorFlag = false;
+      return;
+    }
+  cout <<  this->MupIndex << " " << this->MumIndex << " " << this->MdpIndex << " " << this->MdmIndex << " " << this->NIntraIsospinIndex 
+       << " " <<  this->NIntraSpinIndex<< " " << this->NCrossSpinIsospinIndex << endl;
+  lzMax = ((this->MupIndex * this->NbrSpinUpIsospinPlusParticles) + (this->NIntraIsospinIndex * this->NbrSpinDownIsospinPlusParticles) 
+	   + (this->NIntraSpinIndex * this->NbrSpinUpIsospinMinusParticles) + (this->NCrossSpinIsospinIndex * this->NbrSpinDownIsospinMinusParticles));
+
+
+  cout <<lzMax  << " " << ((this->NIntraIsospinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->MumIndex * this->NbrSpinDownIsospinPlusParticles) 
+			   + (this->NCrossSpinIsospinIndex * this->NbrSpinUpIsospinMinusParticles) + (this->NIntraSpinIndex * this->NbrSpinDownIsospinMinusParticles))
+       << " " << ((this->NIntraSpinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->NCrossSpinIsospinIndex * this->NbrSpinDownIsospinPlusParticles) 
+		 + (this->MumIndex * this->NbrSpinUpIsospinMinusParticles) + (this->NIntraIsospinIndex * this->NbrSpinDownIsospinMinusParticles))
+       << " " << ((this->NCrossSpinIsospinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->NIntraSpinIndex * this->NbrSpinDownIsospinPlusParticles) 
+		 + (this->NIntraIsospinIndex * this->NbrSpinUpIsospinMinusParticles) + (this->MdmIndex * this->NbrSpinDownIsospinMinusParticles)) << " " << endl;
+
+  if ((lzMax != ((this->NIntraIsospinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->MumIndex * this->NbrSpinDownIsospinPlusParticles) 
+		 + (this->NCrossSpinIsospinIndex * this->NbrSpinUpIsospinMinusParticles) + (this->NIntraSpinIndex * this->NbrSpinDownIsospinMinusParticles))) ||
+      (lzMax != ((this->NIntraSpinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->NCrossSpinIsospinIndex * this->NbrSpinDownIsospinPlusParticles) 
+		 + (this->MumIndex * this->NbrSpinUpIsospinMinusParticles) + (this->NIntraIsospinIndex * this->NbrSpinDownIsospinMinusParticles))) ||
+      (lzMax != ((this->NCrossSpinIsospinIndex * this->NbrSpinUpIsospinPlusParticles) + (this->NIntraSpinIndex * this->NbrSpinDownIsospinPlusParticles) 
+		 + (this->NIntraIsospinIndex * this->NbrSpinUpIsospinMinusParticles) + (this->MdmIndex * this->NbrSpinDownIsospinMinusParticles))))
+    {
+      errorFlag = false;
+      return;
+    }
+  this->UCoordinates = new Complex[this->TotalNbrParticles];
+  this->VCoordinates = new Complex[this->TotalNbrParticles];
+}
+
 // destructor
 //
 
 SU4HalperinOnSphereWaveFunction::~SU4HalperinOnSphereWaveFunction()
 {
-  delete[] this->UCoordinates;
-  delete[] this->VCoordinates;
+  if (this->UCoordinates != 0)
+    delete[] this->UCoordinates;
+  if (this->VCoordinates != 0)
+    delete[] this->VCoordinates;
 }
 
 // clone function 

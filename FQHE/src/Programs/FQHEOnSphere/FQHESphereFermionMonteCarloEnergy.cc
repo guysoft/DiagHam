@@ -11,6 +11,8 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
 
+#include "GeneralTools/ConfigurationParser.h"
+
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
@@ -52,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction", "laughlin");
+  (*SystemGroup) += new SingleStringOption  ('\n', "config-file", "name of the file that describes the wave function");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
@@ -80,17 +83,38 @@ int main(int argc, char** argv)
     }
 
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int TwiceNbrFermions = NbrFermions << 1;
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
-  
+
+  Abstract1DComplexFunction* WaveFunction = 0;
+
 //  Abstract1DComplexFunction* WaveFunction = new LaughlinOnSphereWaveFunction(NbrFermions, 3);
 //  Abstract1DComplexFunction* WaveFunction = new HalperinOnSphereWaveFunction(NbrFermions - 8, 8, 3, 3, 2);
 //  Abstract1DComplexFunction* WaveFunction = new SU4HalperinOnSphereWaveFunction(NbrFermions / 4, NbrFermions / 4, NbrFermions / 4, NbrFermions / 4, 
 //										3, 3, 3, 3, 3, 3, 3);
-  Abstract1DComplexFunction* WaveFunction = new SU4HalperinOnSphereWaveFunction(8, 5, 4, 3, 
-										3, 3, 3, 3, 3, 2, 2);
+  if (((SingleStringOption*) Manager["config-file"])->GetString() == 0)
+    {
+      WaveFunction = new SU4HalperinOnSphereWaveFunction(8, 5, 4, 3, 3, 3, 3, 3, 3, 2, 2);
+    }
+  else
+    {
+      ConfigurationParser WaveFunctionDefinition ;
+      if (WaveFunctionDefinition.Parse(((SingleStringOption*) Manager["config-file"])->GetString()) == false)
+	{
+	  WaveFunctionDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      bool ErrorFlag;
+      WaveFunction = new SU4HalperinOnSphereWaveFunction(WaveFunctionDefinition, ErrorFlag, NbrFermions, LzMax);
+      if (ErrorFlag == false)
+	{
+	  cout << "error while parsing " << ((SingleStringOption*) Manager["config-file"])->GetString() << endl;
+	  return -1;
+	}
+    }
+  int TwiceNbrFermions = NbrFermions << 1;
+
   RealVector Location(TwiceNbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
@@ -239,7 +263,7 @@ int main(int argc, char** argv)
 	  double TmpEnergyError = sqrt (((EnergyError  / ((double) i)) - (TmpEnergy * TmpEnergy)) / ((double) i));
 	  cout << ((TmpEnergy - ((0.5 * ((double) (NbrFermions * NbrFermions))) / sqrt(0.5 * ((double) LzMax)))) / ((double) NbrFermions)) << " +/- " << (TmpEnergyError / ((double) NbrFermions)) << endl;
  	  cout << "raw : " << Energy << " " << (TmpEnergy * TmpEnergy) << " " << (EnergyError  / ((double) i)) << " " << TmpEnergy << " +/- " << TmpEnergyError << endl;
-	  cout << "accpetance rate = " << (((double) Acceptance) / (((double) i))) << endl;
+	  cout << "acceptance rate = " << (((double) Acceptance) / (((double) i))) << endl;
  	  cout << "-----------------------------------------------" << endl;
  	}
     }
