@@ -453,13 +453,13 @@ int FermionOnSphereWithSU4Spin::AddAduAdAu (int index, int m1, int m2, int n1, i
 }
 
 
-// apply a^+_m_u a_m_u operator to a given state  (only spin up)
+// apply a^+_m_dp a_m_dp operator to a given state (only spin down isospin plus)
 //
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_m a_m
+// return value = coefficient obtained when applying a^+_m_dm a_m_dm
 
-double FermionOnSphereWithSU4Spin::AduAu (int index, int m)
+double  FermionOnSphereWithSU4Spin::AddpAdp (int index, int m)
 {
   if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
     return 1.0;
@@ -467,15 +467,43 @@ double FermionOnSphereWithSU4Spin::AduAu (int index, int m)
     return 0.0;
 }
 
-// apply a^+_d_m a_d_m operator to a given state 
+// apply a^+_m_up a_m_up operator to a given state  (only spin up isospin plus)
 //
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_d_m a_d_m
+// return value = coefficient obtained when applying a^+_m_um a_m_um
 
-double FermionOnSphereWithSU4Spin::AddAd (int index, int m)
+double FermionOnSphereWithSU4Spin::AdupAup (int index, int m)
 {
-  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
+  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
+    return 1.0;
+  else
+    return 0.0;
+}
+ 
+// apply a^+_m_dm a_m_dm operator to a given state (only spin down isospin minus)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_dm a_m_dm
+
+double FermionOnSphereWithSU4Spin::AddmAdm (int index, int m)
+{
+  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
+    return 1.0;
+  else
+    return 0.0;
+}
+
+// apply a^+_m_um a_m_um operator to a given state  (only spin up isospin minus)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_um a_m_um
+
+double FermionOnSphereWithSU4Spin::AdumAum (int index, int m)
+{
+  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
     return 1.0;
   else
     return 0.0;

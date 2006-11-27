@@ -33,11 +33,11 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/AbstractQHEParticle.h"
 
 #include <iostream>
 
-class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSpin
+class FermionOnSphereWithSU4Spin :  public AbstractQHEParticle
 {
 
   // number of fermions
@@ -160,19 +160,113 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSpin
 
   int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  // apply a^+_m_dp a_m_dp operator to a given state (only spin down isospin plus)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  double AddAd (int index, int m);
+  // return value = coefficient obtained when applying a^+_m_dm a_m_dm
+  double AddpAdp (int index, int m);
 
-  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
+  // apply a^+_m_up a_m_up operator to a given state  (only spin up isospin plus)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  double AduAu (int index, int m);
+  // return value = coefficient obtained when applying a^+_m_um a_m_um
+  double AdupAup (int index, int m);
+
+  // apply a^+_m_dm a_m_dm operator to a given state (only spin down isospin minus)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m_dm a_m_dm
+  double AddmAdm (int index, int m);
+
+  // apply a^+_m_um a_m_um operator to a given state  (only spin up isospin minus)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m_um a_m_um
+  double AdumAum (int index, int m);
+
+/*   // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AupAup (int index, int n1, int n2); */
+
+/*   // apply a_n1_up a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AupAum (int index, int n1, int n2); */
+
+/*   // apply a_n1_um a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AumAum (int index, int n1, int n2); */
+
+/*   // apply a_n1_up a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AupAdp (int index, int n1, int n2); */
+
+/*   // apply a_n1_up a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AupAdm (int index, int n1, int n2); */
+
+/*   // apply a_n1_um a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AumAdp (int index, int n1, int n2); */
+
+/*   // apply a_n1_um a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AumAdm (int index, int n1, int n2); */
+
+/*   // apply a_n1_dp a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AdpAdp (int index, int n1, int n2); */
+
+/*   // apply a_n1_dp a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AdpAdm (int index, int n1, int n2); */
+
+/*   // apply a_n1_dm a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
+/*   // */
+/*   // index = index of the state on which the operator has to be applied */
+/*   // n1 = first index for annihilation operator */
+/*   // n2 = second index for annihilation operator */
+/*   // return value =  multiplicative factor  */
+/*   double AdmAdm (int index, int n1, int n2); */
 
   // print a given State
   //
@@ -250,7 +344,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSpin
 
 inline int FermionOnSphereWithSU4Spin::GetParticleStatistic()
 {
-  return ParticleOnSphereWithSpin::FermionicStatistic;
+  return AbstractQHEParticle::FermionicStatistic;
 }
 
 #endif

@@ -1,4 +1,4 @@
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       double Shift = -10.0;
-      ParticleOnSphereWithSpin* Space;
+      AbstractQHEParticle* Space;
 #ifdef __64_BITS__
       if (LzMax <= 31)
 #else

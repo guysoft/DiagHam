@@ -222,8 +222,8 @@ int main(int argc, char** argv)
       int Sz = 0;
       if (NbrParticles & 1)
 	Sz = 1;
-      int NbrSz = (NbrParticles + 2 - Sz) >> 1;
-      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false)
+      int NbrSz = NbrParticles;//(NbrParticles + 2 - Sz) >> 1;
+      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == true)
 	{
 	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
 	    {
@@ -249,9 +249,15 @@ int main(int argc, char** argv)
 		  for (int j = 0; j < NbrSz; ++j)
 		    {
 		      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-			FullLzMax[i][j] = (NbrParticles * NbrFluxQuanta);
+			{
+			  FullLzMin[i][j] = 0;
+			  FullLzMax[i][j] = (NbrParticles * NbrFluxQuanta);
+			}
 		      else
-			FullLzMax[i][j] = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
+			{
+			  FullLzMin[i][j] = ((NbrParticles - 1) * NbrParticles);
+			  FullLzMax[i][j] = ((NbrFluxQuanta - NbrParticles + 1) * NbrParticles);
+			}
 		      LzDimensions[i][j] = new long [1 + ((FullLzMax[i][j] - FullLzMin[i][j]) >> 1)];
 		      LDimensions[i][j] = new long [1 + ((FullLzMax[i][j] - FullLzMin[i][j]) >> 1)];
 		    }
@@ -260,21 +266,24 @@ int main(int argc, char** argv)
 		for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
 		  for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
 		    for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
-		      LzDimensions[MinSz][MinIz][(x - LzMin) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
+		      LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] = BosonEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x);
 	      else
 		for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
 		  for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
-		    for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
-		      LzDimensions[MinSz][MinIz][(x - LzMin) >> 1] =  FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x, MinSz, MinIz);
+		    {
+		      cout << MinSz << " " << MinIz << " " << NbrSz << endl;
+		      for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
+			LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] =  FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x, MinSz, MinIz);
+		    }
 	      long TotalDimension = 0l;
-	      for (int MinSz = 0; MinSz <= NbrParticles; ++MinSz)
-		for (int MinIz = 0; MinIz <= NbrParticles; ++MinIz)
+	      for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
+		for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
 		  {
 		    LDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1] = LzDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1];
 		    TotalDimension += LzDimensions[MinSz][MinIz][(FullLzMax[MinSz][MinIz] - FullLzMin[MinSz][MinIz]) >> 1];
 		  }
-	      for (int MinSz = 0; MinSz <= NbrParticles; ++MinSz)
-		for (int MinIz = 0; MinIz <= NbrParticles; ++MinIz)
+	      for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
+		for (int MinIz = 0; MinIz < NbrSz; ++MinIz)
 		  for (int x = FullLzMax[MinSz][MinIz] - 2; x >= FullLzMin[MinSz][MinIz]; x -= 2)
 		    {
 		      LDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] =  (LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] 
@@ -297,7 +306,7 @@ int main(int argc, char** argv)
 		      OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
 		      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
 		    }
-		  SU4WriteDimensionToDisk (OutputFileName, NbrParticles, NbrParticles, ((BooleanOption*) Manager["boson"])->GetBoolean(),
+		  SU4WriteDimensionToDisk (OutputFileName, NbrParticles, NbrFluxQuanta, ((BooleanOption*) Manager["boson"])->GetBoolean(),
 					   LzDimensions, LDimensions, FullLzMin, FullLzMax, TotalDimension, Sz, Sz);
 		  delete[] OutputFileName;
 		}
@@ -317,7 +326,7 @@ int main(int argc, char** argv)
 		      delete[] LDimensions[i][j];
 		    }
 		  delete[] FullLzMin[i];
-		  delete[] FullLzMin[i];
+		  delete[] FullLzMax[i];
 		  delete[] LzDimensions[i];
 		  delete[] LDimensions[i];
 		}
@@ -649,6 +658,8 @@ bool SU2WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFlux
 bool SU4WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
 			  long*** lzDimensions, long*** lDimensions, int** lzMin, int** lzMax, long totalDimension, int sz, int iz)
 {
+  sz = 0;
+  iz = 0;
   ofstream File;
   File.open(outputFileName, ios::binary | ios::out);
   File << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " ";
@@ -662,8 +673,8 @@ bool SU4WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFlux
        << "2S = " << nbrFluxQuanta << endl << endl
        << "#  dimensions for each subspaces with the following convention " << endl 
        << "(twice the total Lz value) (twice the total Sz value) (twice the total Iz value) (dimension of the subspace with fixed Lz, Sz and Iz) (dimension of the subspace with fixed L, Lz=L, Sz and Iz)" << endl;
-  for (int MinSz = sz; MinSz <= nbrParticles; ++MinSz)
-    for (int MinIz = iz; MinIz <= nbrParticles; ++MinIz)
+  for (int MinSz = sz; MinSz < nbrParticles; ++MinSz)
+    for (int MinIz = iz; MinIz < nbrParticles; ++MinIz)
       for (int x = lzMin[MinSz][MinIz]; x <= lzMax[MinSz][MinIz]; x += 2)
 	File << x << " " << ((2 * MinSz) - nbrParticles)<< " " << ((2 * MinIz) - nbrParticles) << " " 
 	     << lzDimensions[MinSz][MinIz][(x - lzMin[MinSz][MinIz]) >> 1] << " " << lDimensions[MinSz][MinIz][(x - lzMin[MinSz][MinIz]) >> 1] << endl;
