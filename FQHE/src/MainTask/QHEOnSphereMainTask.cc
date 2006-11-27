@@ -198,6 +198,12 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ComputeEnergyFlag = false;
     }
+  if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
+    {
+      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+      this->Hamiltonian->GetHamiltonian(HRep);
+      cout << HRep << endl;
+    }
 
   this->FirstRun = firstRun;
 }  

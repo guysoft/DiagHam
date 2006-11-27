@@ -91,8 +91,9 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
+  
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type QHEFermionsNBodyHardCore -h" << endl;
