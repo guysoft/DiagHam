@@ -58,7 +58,7 @@ class FermionOnSphereWithSU4Spin :  public AbstractQHEParticle
   // array describing each state
   unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLargestBit;
+  int* StateHighestBit;
 
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
@@ -69,6 +69,17 @@ class FermionOnSphereWithSU4Spin :  public AbstractQHEParticle
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
 
+  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
+  double* SignLookUpTable;
+  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
+  unsigned long* SignLookUpTableMask;
+  // number to evalute size of SignLookUpTable
+  int MaximumSignLookUp;
+
+  // temporary state used when applying ProdA operator
+  unsigned long ProdATemporaryState;
+  // Lz maximum value associated to temporary state used when applying ProdA operator
+  int ProdALzMax;
 
  public:
 
@@ -188,85 +199,165 @@ class FermionOnSphereWithSU4Spin :  public AbstractQHEParticle
   // return value = coefficient obtained when applying a^+_m_um a_m_um
   double AdumAum (int index, int m);
 
-/*   // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AupAup (int index, int n1, int n2); */
+  // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AupAup (int index, int n1, int n2);
 
-/*   // apply a_n1_up a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AupAum (int index, int n1, int n2); */
+  // apply a_n1_up a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AupAum (int index, int n1, int n2);
 
-/*   // apply a_n1_um a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AumAum (int index, int n1, int n2); */
+  // apply a_n1_up a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AupAdp (int index, int n1, int n2);
 
-/*   // apply a_n1_up a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AupAdp (int index, int n1, int n2); */
+  // apply a_n1_up a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AupAdm (int index, int n1, int n2);
 
-/*   // apply a_n1_up a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AupAdm (int index, int n1, int n2); */
+  // apply a_n1_um a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AumAum (int index, int n1, int n2);
 
-/*   // apply a_n1_um a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AumAdp (int index, int n1, int n2); */
+  // apply a_n1_um a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AumAdp (int index, int n1, int n2);
 
-/*   // apply a_n1_um a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AumAdm (int index, int n1, int n2); */
+  // apply a_n1_um a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AumAdm (int index, int n1, int n2);
 
-/*   // apply a_n1_dp a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AdpAdp (int index, int n1, int n2); */
+  // apply a_n1_dp a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AdpAdp (int index, int n1, int n2);
 
-/*   // apply a_n1_dp a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AdpAdm (int index, int n1, int n2); */
+  // apply a_n1_dp a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AdpAdm (int index, int n1, int n2);
 
-/*   // apply a_n1_dm a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call */
-/*   // */
-/*   // index = index of the state on which the operator has to be applied */
-/*   // n1 = first index for annihilation operator */
-/*   // n2 = second index for annihilation operator */
-/*   // return value =  multiplicative factor  */
-/*   double AdmAdm (int index, int n1, int n2); */
+  // apply a_n1_dm a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  double AdmAdm (int index, int n1, int n2);
+
+  // apply a^+_m1_up a^+_m2_up operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdupAdup (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_up a^+_m2_um operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdupAdum (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_up a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdupAddp (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_up a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdupAddm (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_um a^+_m2_um operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdumAdum (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_um a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdumAddp (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_um a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdumAddm (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_dp a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddpAddp (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_dp a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddpAddm (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_dm a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddmAddm (int m1, int m2, double& coefficient);
 
   // print a given State
   //
