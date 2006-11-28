@@ -7,7 +7,8 @@ use strict 'vars';
 
 sub GenerateHamiltonian()
   {
-    my @ListPairs = ("up|up", "up|um", "up|dp", "up|dm", "um|um", "um|dp", "um|dm", "dp|dp", "dp|dm", "dm|dm");
+    my @ListIntraPairs = ("up|up", "um|um", "dp|dp", "dm|dm");
+    my @ListInterPairs = ("up|um", "up|dp", "up|dm", "um|dp", "um|dm", "dp|dm");
     
     my $TmpPair;
     my $SpinIsospin1;
@@ -15,7 +16,14 @@ sub GenerateHamiltonian()
 
     my $Source = "";
 
-    foreach $TmpPair (@ListPairs)
+    $Source = "	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListIntraPairs)
       {
 	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
 	$Source .= "  	          Coefficient3 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
@@ -33,6 +41,35 @@ sub GenerateHamiltonian()
 		    }\n";
 
       }
+    $Source . "		}
+	      }
+	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices = this->InterSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListIntraPairs)
+      {
+	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
+	$Source .= "  	          Coefficient3 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient3 != 0.0)
+		    {
+		      TmpInteractionFactor = this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2];
+		      Coefficient3 *= vSource[i];
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			  ++TmpInteractionFactor;
+			}
+		    }\n";
+      }
+    $Source . "		}
+	      }
+";
 
     print $Source;
 
