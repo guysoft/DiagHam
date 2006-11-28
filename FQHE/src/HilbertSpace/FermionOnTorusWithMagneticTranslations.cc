@@ -652,12 +652,12 @@ ostream& FermionOnTorusWithMagneticTranslations::PrintState (ostream& Str, int s
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->MaxMomentum; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-  Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
-  Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]);
-  if (this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]) != state)
-    {
-      Str << "  error";
-    }
+//   Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
+//   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]);
+//   if (this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]) != state)
+//     {
+//       Str << "  error";
+//     }
   return Str;
 }
 
