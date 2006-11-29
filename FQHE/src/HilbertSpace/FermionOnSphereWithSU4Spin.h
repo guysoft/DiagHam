@@ -33,11 +33,11 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractQHEParticle.h"
+#include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 
 #include <iostream>
 
-class FermionOnSphereWithSU4Spin :  public AbstractQHEParticle
+class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 {
 
   // number of fermions

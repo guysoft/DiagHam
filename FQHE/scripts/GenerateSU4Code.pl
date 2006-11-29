@@ -2,8 +2,9 @@
 
 use strict 'vars';
 
-&GenerateHamiltonian();
-
+#&GenerateHamiltonian();
+#&GenerateHamiltonianPartialFast();
+&GenerateHamiltonianEnableFast();
 
 sub GenerateHamiltonian()
   {
@@ -29,7 +30,7 @@ sub GenerateHamiltonian()
 	$Source .= "  	          Coefficient3 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2];
+		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
 		      Coefficient3 *= vSource[i];
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
@@ -41,7 +42,7 @@ sub GenerateHamiltonian()
 		    }\n";
 
       }
-    $Source . "		}
+    $Source .= "		}
 	      }
 	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
 	    {
@@ -50,13 +51,13 @@ sub GenerateHamiltonian()
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
 ";
-    foreach $TmpPair (@ListIntraPairs)
+    foreach $TmpPair (@ListInterPairs)
       {
 	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
 	$Source .= "  	          Coefficient3 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2];
+		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
 		      Coefficient3 *= vSource[i];
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
@@ -67,7 +68,153 @@ sub GenerateHamiltonian()
 			}
 		    }\n";
       }
-    $Source . "		}
+    $Source .= "		}
+	      }
+";
+
+    print $Source;
+
+  }
+
+sub GenerateHamiltonianPartialFast()
+  {
+    my @ListIntraPairs = ("up|up", "um|um", "dp|dp", "dm|dm");
+    my @ListInterPairs = ("up|um", "up|dp", "up|dm", "um|dp", "um|dm", "dp|dm");
+    
+    my $TmpPair;
+    my $SpinIsospin1;
+    my $SpinIsospin2;
+
+    my $Source = "";
+
+    $Source = "	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListIntraPairs)
+      {
+	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
+	$Source .= "  	          Coefficient2 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+			}
+		    }\n";
+
+      }
+    $Source .= "		}
+	      }
+	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices = this->InterSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListInterPairs)
+      {
+	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
+	$Source .= "  	          Coefficient2 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			{
+			  ++Memory;
+			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			}
+			}
+		    }\n";
+      }
+    $Source .= "		}
+	      }
+";
+
+    print $Source;
+
+  }
+
+sub GenerateHamiltonianEnableFast()
+  {
+    my @ListIntraPairs = ("up|up", "um|um", "dp|dp", "dm|dm");
+    my @ListInterPairs = ("up|um", "up|dp", "up|dm", "um|dp", "um|dm", "dp|dm");
+    
+    my $TmpPair;
+    my $SpinIsospin1;
+    my $SpinIsospin2;
+
+    my $Source = "";
+
+    $Source = "	  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListIntraPairs)
+      {
+	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
+	$Source .= "  	          Coefficient2 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			{
+			        TmpIndexArray[Pos] = Index;
+ 				TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+ 				++Pos;
+			}
+			  ++TmpInteractionFactor;
+		}
+		    }\n";
+
+      }
+    $Source .= "		}
+	      }
+	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices = this->InterSectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+";
+    foreach $TmpPair (@ListInterPairs)
+      {
+	($SpinIsospin1,  $SpinIsospin2) = split (/\|/, $TmpPair);
+	$Source .= "  	          Coefficient2 = TmpParticles->A".$SpinIsospin1."A".$SpinIsospin2."(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			  if (Index < Dim)
+			{
+			        TmpIndexArray[Pos] = Index;
+ 				TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+ 				++Pos;
+			}
+			  ++TmpInteractionFactor;
+			}
+		    }\n";
+      }
+    $Source .= "		}
 	      }
 ";
 

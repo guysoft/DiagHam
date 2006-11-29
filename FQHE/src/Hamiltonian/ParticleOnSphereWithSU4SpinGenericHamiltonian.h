@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSU4SpinHamiltonian.h"
 
 #include <iostream>
@@ -71,7 +71,7 @@ class ParticleOnSphereWithSU4SpinGenericHamiltonian : public AbstractQHEOnSphere
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSU4SpinGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, double** pseudoPotential,
+  ParticleOnSphereWithSU4SpinGenericHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
 						AbstractArchitecture* architecture, long memory = -1, 
 						bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

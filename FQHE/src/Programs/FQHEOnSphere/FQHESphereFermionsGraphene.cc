@@ -1,6 +1,8 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 
+#include "Hamiltonian/ParticleOnSphereWithSU4SpinGenericHamiltonian.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -14,6 +16,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -77,6 +81,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
@@ -112,7 +118,7 @@ int main(int argc, char** argv)
   char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
   bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
   bool FirstRun = true;
-  
+  double** PseudoPotentials = 0;
 
   int NbrUp = (NbrFermions + SzTotal) >> 1;
   int NbrDown = (NbrFermions - SzTotal) >> 1;
@@ -128,6 +134,44 @@ int main(int argc, char** argv)
       cout << "This value of the isospin z projection cannot be achieved with this particle number!" << endl;
       return -1;
     }
+  if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
+    {
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
+    }
+  else
+    {
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(((SingleStringOption*) Manager["interaction-file"])->GetString()) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      int TmpNbrPseudoPotentials;
+      double* TmpPseudoPotentials;
+      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == false)
+	{
+	  cout << "Weights is not defined or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	  return -1;
+	}
+      if (TmpNbrPseudoPotentials != (LzMax +1))
+	{
+	  cout << "Invalid number of pseudo-potentials" << endl;
+	  return -1;	  
+	}
+      PseudoPotentials = new double*[10];
+      for (int i = 0; i < 10; ++i)
+	{
+	  PseudoPotentials[i] = new double[TmpNbrPseudoPotentials];
+	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	    PseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	}
+      delete[] TmpPseudoPotentials;
+    }
+
+  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+	   NbrFermions, LzMax, SzTotal, IsoSzTotal);
   int Max = ((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown);
 
   int  L = 0;
@@ -149,11 +193,11 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       double Shift = -10.0;
-      AbstractQHEParticle* Space;
+      ParticleOnSphereWithSU4Spin* Space;
 #ifdef __64_BITS__
-      if (LzMax <= 31)
-#else
       if (LzMax <= 15)
+#else
+      if (LzMax <= 7)
 #endif
         {
           Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, MemorySpace);
@@ -163,38 +207,38 @@ int main(int argc, char** argv)
 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 	  return -1;
 	}	
-    }
-      
-//       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-//       AbstractQHEHamiltonian* Hamiltonian;
 
-//       Hamiltonian = new ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian(Space, NbrFermions, LzMax, V0, V1, 
-// 									       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
-//       Hamiltonian->ShiftHamiltonian(Shift);
-//       if (SavePrecalculationFileName != 0)
-// 	{
-// 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
-// 	}
-//       char* EigenvectorName = 0;
-//       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
-// 	{
-// 	  EigenvectorName = new char [120];
-// 	  sprintf (EigenvectorName, "fermions_sphere_spin_n_%d_2S_%d_Sz_%d_lz_%d_V_%g_W_%g.ev",
-// 		   NbrFermions, LzMax, SzTotal, L, V0, V1);
-// 	}
-//       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
-//       MainTaskOperation TaskOperation (&Task);
-//       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-//       delete Hamiltonian;
-//       delete Space;
-//       if (EigenvectorName != 0)
-// 	{
-// 	  delete[] EigenvectorName;
-// 	  EigenvectorName = 0;
-// 	}
-//       if (FirstRun == true)
-// 	FirstRun = false; 
-//     }
-//   delete [] OutputNameLz;
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      AbstractQHEHamiltonian* Hamiltonian;
+      
+      Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, 
+								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+      Hamiltonian->ShiftHamiltonian(Shift);
+      if (SavePrecalculationFileName != 0)
+	{
+	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
+	}
+      char* EigenvectorName = 0;
+      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+	{
+	  EigenvectorName = new char [120];
+	  sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz_%d",
+		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+		   NbrFermions, LzMax, SzTotal, IsoSzTotal, L);
+	}
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      delete Hamiltonian;
+      delete Space;
+      if (EigenvectorName != 0)
+	{
+	  delete[] EigenvectorName;
+	  EigenvectorName = 0;
+	}
+      if (FirstRun == true)
+	FirstRun = false; 
+    }
+  delete [] OutputNameLz;
   return 0;
 }

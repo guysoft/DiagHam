@@ -76,17 +76,19 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];
-//   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin, this->TotalIsospin) != this->HilbertSpaceDimension)
-//      {
-//        cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
-//        exit(1);
-//      }
+//   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+// 									   (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1);
+   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin, this->TotalIsospin) != this->HilbertSpaceDimension)
+      {
+        cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
+        exit(1);
+      }
 //   for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
 //     {
 //       cout << i << " = ";
 //       this->PrintState(cout, i)  << endl;
 //     }
-//   this->GenerateLookUpTable(memory);
+   this->GenerateLookUpTable(memory);
   
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
@@ -758,22 +760,24 @@ int FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int t
 void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
-  memory /= (sizeof(int*) * 2*this->NbrLzValue);
+  int QuadNbrLzValue = 4 * this->NbrLzValue;
+  memory /= (sizeof(int*) * QuadNbrLzValue);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > 2*this->NbrLzValue)
-    this->MaximumLookUpShift = 2*this->NbrLzValue;
+  if (this->MaximumLookUpShift > (QuadNbrLzValue))
+    this->MaximumLookUpShift = QuadNbrLzValue;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [2*this->NbrLzValue];
-  this->LookUpTableShift = new int [2*this->NbrLzValue];
-  for (int i = 0; i < 2*this->NbrLzValue; ++i)
+  this->LookUpTable = new int* [QuadNbrLzValue];
+  this->LookUpTableShift = new int [QuadNbrLzValue];
+  for (int i = 0; i < QuadNbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+
   int CurrentLargestBit = this->StateHighestBit[0];
   cout << this->NbrLzValue << " " << CurrentLargestBit << endl;
   int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
@@ -836,26 +840,45 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
       --CurrentLookUpTableValue;
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
-  /*  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
-    cout << TmpLookUpTable[j] << " ";
-    cout << endl << "-------------------------------------------" << endl;*/
+
+  // look-up tables for evaluating sign when applying creation/annihilation operators
+  int Size = 1 << this->MaximumSignLookUp;
+  this->SignLookUpTable = new double [Size];
+  int Count;
+  int TmpNbr;
+  for (int j = 0; j < Size; ++j)
+    {
+      Count = 0;
+      TmpNbr = j;
+      while (TmpNbr != 0)
+	{
+	  if (TmpNbr & 0x1)
+	    ++Count;
+	  TmpNbr >>= 1;
+	}
+      if (Count & 1)
+	this->SignLookUpTable[j] = -1.0;
+      else
+	this->SignLookUpTable[j] = 1.0;
+    }
+#ifdef __64_BITS__
+  this->SignLookUpTableMask = new unsigned long [128];
+  for (int i = 0; i < 48; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 48; i < 64; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+  for (int i = 64; i < 128; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#else
+  this->SignLookUpTableMask = new unsigned long [64];
+  for (int i = 0; i < 16; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+  for (int i = 16; i < 32; ++i)
+    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+  for (int i = 32; i < 64; ++i)
+    this->SignLookUpTableMask[i] = (unsigned long) 0;
+#endif
 }
-
-// compute sign
-//
-// signs = 
-// return value = sign value (+1.0 or -1.0)
-
-// double FermionOnSphereWithSU4Spin::ComputeSign(unsigned long signs)
-// {
-//   unsigned result=0;
-//   while(signs) {
-//     result++;
-//     signs &= signs-1;
-//   }
-//   if (result & 1u) return -1.0;
-//   else return 1.0;
-// }
 
 // evaluate Hilbert space dimension
 //

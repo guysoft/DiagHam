@@ -30,4 +30,5 @@ UnsignedIntegerTools.cc \
 FullBosonOnSphere.cc \
 FermionOnSphereHaldaneBasis.cc \
 FermionOnSphereHaldaneHugeBasis.cc \
+ParticleOnSphereWithSU4Spin.cc \
 FermionOnSphereWithSU4Spin.cc

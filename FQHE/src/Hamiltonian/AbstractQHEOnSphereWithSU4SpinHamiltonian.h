@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
 #include "Hamiltonian/AbstractQHEOnSphereHamiltonian.h"
 
 #include <iostream>
@@ -49,14 +49,14 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
  protected:
   
   // number of index sum for the creation (or annhilation) operators for the intra spin/isopin sector
-  int NbrIntraSectorSum;
+  int NbrIntraSectorSums;
   // array containing the number of index group per index sum for the creation (or annhilation) operators for the intra spin/isopin sector
   int* NbrIntraSectorIndicesPerSum;
   // array containing the (m1,m2) indices per index sum for the creation (or annhilation) operators for the intra spin/isopin sector
   int** IntraSectorIndicesPerSum;
 
   // number of index sum for the creation (or annhilation) operators for the inter spin/isopin sector
-  int NbrInterSectorSum;
+  int NbrInterSectorSums;
   // array containing the number of index group per index sum for the creation (or annhilation) operators for the inter spin/isopin sector
   int* NbrInterSectorIndicesPerSum;
   // array containing the (m1,m2) indices per index sum for the creation (or annhilation) operators for the inter spin/isopin sector
