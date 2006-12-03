@@ -407,6 +407,8 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // nbrFermions = number of fermions
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+  // totalSpin = number of particles with spin up
+  // totalIsospin = number of particles with isospin plus
   // return value = Hilbert space dimension  
   long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
 
@@ -419,13 +421,12 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // 
   // nbrFermions = number of fermions
   // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
   // totalLz = momentum total value
-  // totalSpin = twice the total spin value
-  // totalIsospin = twice the total isospin value
+  // totalSpin = number of particles with spin up
+  // totalIsospin = number of particles with isospin plus
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos);
 
 };
 

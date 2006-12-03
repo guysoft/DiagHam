@@ -58,6 +58,38 @@ using std::ios;
 
 AbstractQHEOnSphereWithSU4SpinHamiltonian::~AbstractQHEOnSphereWithSU4SpinHamiltonian()
 {
+  delete[] this->NbrIntraSectorIndicesPerSum;
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+    {
+      delete[] this->IntraSectorIndicesPerSum[i];
+      delete[] this->InteractionFactorsupup[i];
+      delete[] this->InteractionFactorsumum[i];
+      delete[] this->InteractionFactorsdpdp[i];
+      delete[] this->InteractionFactorsdmdm[i];
+    }
+  delete[] this->IntraSectorIndicesPerSum;
+  delete[] this->NbrInterSectorIndicesPerSum;
+  delete[] this->InteractionFactorsupup;
+  delete[] this->InteractionFactorsumum;
+  delete[] this->InteractionFactorsdpdp;
+  delete[] this->InteractionFactorsdmdm;
+  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+    {
+      delete[] this->InterSectorIndicesPerSum[i];
+      delete[] this->InteractionFactorsupum[i];
+      delete[] this->InteractionFactorsupdp[i];
+      delete[] this->InteractionFactorsupdm[i];
+      delete[] this->InteractionFactorsumdp[i];
+      delete[] this->InteractionFactorsumdm[i];
+      delete[] this->InteractionFactorsdpdm[i];
+    }
+  delete[] this->InteractionFactorsupum;
+  delete[] this->InteractionFactorsupdp;
+  delete[] this->InteractionFactorsupdm;
+  delete[] this->InteractionFactorsumdp;
+  delete[] this->InteractionFactorsumdm;
+  delete[] this->InteractionFactorsdpdm;
+  delete[] this->InterSectorIndicesPerSum;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -583,163 +615,206 @@ RealVector* AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelMultipleAddMultip
 long AbstractQHEOnSphereWithSU4SpinHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
-  double Coefficient;
-  double Coefficient2;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
   long Memory = 0;
   int* TmpIndices;
   ParticleOnSphereWithSU4Spin* TmpParticles = (ParticleOnSphereWithSU4Spin*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
+//   for (int i = firstComponent; i < LastComponent; ++i)
+//     {
+//       for (int m1 = 0; m1 < this->LzMax; ++m1)
+// 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+// 	  {
+// 	    Coefficient2 = TmpParticles->AupAup(i, m1, m2);
+// 	    cout << i << " " << m1 << " " << m2 << " " <<Coefficient2 << endl;
+// 	  }
+//     }
+  for (int i = firstComponent; i < LastComponent; ++i)
+    for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+      {
+	int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	TmpIndices = this->IntraSectorIndicesPerSum[j];
+//	cout << j << " " << Lim << endl;
+	for (int i1 = 0; i1 < Lim; i1 += 2)
+	  {
+	    Coefficient2 = TmpParticles->AupAup(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+	    if (Coefficient2 != 0.0)
+	      {
+		for (int i2 = 0; i2 < Lim; i2 += 2)
+		  {
+		    Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		    if (Index < Dim)
+		      {
+			++Memory;
+			++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		      }
+		  }
+//		cout << "truc " << j << " " << TmpIndices[i1]<< " " << TmpIndices[i1 + 1] << " " << Coefficient2 << " " << this->PrecalculationShift << endl;
+	      }
+	  }
+      }
+  delete TmpParticles;
+
+  return Memory;
 
   for (int i = firstComponent; i < LastComponent; ++i)
     {
-          for (int j = 0; j < this->NbrIntraSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-              TmpIndices = this->IntraSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient2 = TmpParticles->AupAup(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AumAum(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
+      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+	  cout << i << " " << j << " " << Lim << endl;
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+//	      cout << "truc " << i << " " << TmpIndices[i1]<< " " << TmpIndices[i1 + 1] << endl;
+	      Coefficient2 = TmpParticles->AupAup(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+//	      cout << Coefficient2 << endl;
+	      if (Coefficient2 != 0.0)
+		{
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
                         {
                           ++Memory;
                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
                         }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AdpAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AdmAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                }
-              }
-          for (int j = 0; j < this->NbrInterSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
-              TmpIndices = this->InterSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient2 = TmpParticles->AupAum(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AupAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AupAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AumAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AumAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AdpAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                          ++Memory;
-                          ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-                        }
-                        }
-                    }
-                }
-              }
+		    }
+		}
+	    }
+	}
     }
+// 	      Coefficient2 = TmpParticles->AumAum(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AdpAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AdmAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 	    }
+// 	}
+    
+
+//       for (int j = 0; j < this->NbrInterSectorSums; ++j)
+// 	{
+// 	  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+// 	  TmpIndices = this->InterSectorIndicesPerSum[j];
+// 	  for (int i1 = 0; i1 < Lim; i1 += 2)
+// 	    {
+// 	      Coefficient2 = TmpParticles->AupAum(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AupAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AupAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AumAdp(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AumAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	      Coefficient2 = TmpParticles->AdpAdm(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+//                         {
+//                           ++Memory;
+//                           ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+//                         }
+// 		    }
+// 		}
+// 	    }
+//	}
+//    }
   delete TmpParticles;
 
   return Memory;
@@ -755,8 +830,8 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplication()
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int Index;
-  double Coefficient;
-  double Coefficient2;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int Pos;
@@ -776,191 +851,228 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplication()
   ParticleOnSphereWithSU4Spin* TmpParticles = (ParticleOnSphereWithSU4Spin*) this->Particles;
 
   int TotalPos = 0;
+
+
+
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
+      TmpIndexArray = this->InteractionPerComponentIndex[i];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
       Pos = 0;
-          for (int j = 0; j < this->NbrIntraSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-              TmpIndices = this->IntraSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient2 = TmpParticles->AupAup(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
+      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      Coefficient2 = TmpParticles->AupAup(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      if (Index < Dim)
+			{
+			  TmpIndexArray[Pos] = Index;
+			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			  ++Pos;
                         }
-                          ++TmpInteractionFactor;
-                }
-                    }
-                  Coefficient2 = TmpParticles->AumAum(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsumum[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                }
-                    }
-                  Coefficient2 = TmpParticles->AdpAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsdpdp[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                }
-                    }
-                  Coefficient2 = TmpParticles->AdmAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsdmdm[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                }
-                    }
-                }
-              }
-          for (int j = 0; j < this->NbrInterSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
-              TmpIndices = this->InterSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient2 = TmpParticles->AupAum(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupum[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AupAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupdp[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AupAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupdm[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AumAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsumdp[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AumAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsumdm[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient2 = TmpParticles->AdpAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient2 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsdpdm[j][(i1 * Lim) >> 2]);
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                        {
-                                TmpIndexArray[Pos] = Index;
-                                TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-                                ++Pos;
-                        }
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                }
-              }
-      ++TotalPos;
+		      ++TmpInteractionFactor;
+		    }
+		}
+	    }
+	}
     }
+
+
+//   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+//     {
+//       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
+//       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
+//       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+//       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
+//       Pos = 0;
+//       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+// 	{
+// 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+// 	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+// 	  for (int i1 = 0; i1 < Lim; i1 += 2)
+// 	    {
+// 	      Coefficient2 = TmpParticles->AupAup(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      if (Coefficient2 != 0.0)
+// 		{
+// 		  TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+// 		  for (int i2 = 0; i2 < Lim; i2 += 2)
+// 		    {
+// 		      Index = TmpParticles->AdupAdup(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      if (Index < Dim)
+// 			{
+// 			  TmpIndexArray[Pos] = Index;
+// 			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+// 			  ++Pos;
+//                         }
+// 		      ++TmpInteractionFactor;
+// 		    }
+// 		}
+// 	    }
+// 	}
+//                   Coefficient2 = TmpParticles->AumAum(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsumum[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdumAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                 }
+//                     }
+//                   Coefficient2 = TmpParticles->AdpAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsdpdp[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AddpAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                 }
+//                     }
+//                   Coefficient2 = TmpParticles->AdmAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsdmdm[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AddmAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                 }
+//                     }
+//                 }
+//               }
+//           for (int j = 0; j < this->NbrInterSectorSums; ++j)
+//             {
+//               int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+//               TmpIndices = this->InterSectorIndicesPerSum[j];
+//               for (int i1 = 0; i1 < Lim; i1 += 2)
+//                 {
+//                   Coefficient2 = TmpParticles->AupAum(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsupum[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdupAdum(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//                   Coefficient2 = TmpParticles->AupAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsupdp[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdupAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//                   Coefficient2 = TmpParticles->AupAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsupdm[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdupAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//                   Coefficient2 = TmpParticles->AumAdp(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsumdp[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdumAddp(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//                   Coefficient2 = TmpParticles->AumAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsumdm[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AdumAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//                   Coefficient2 = TmpParticles->AdpAdm(i + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+//                   if (Coefficient2 != 0.0)
+//                     {
+//                       TmpInteractionFactor = &(this->InteractionFactorsdpdm[j][(i1 * Lim) >> 2]);
+//                       for (int i2 = 0; i2 < Lim; i2 += 2)
+//                         {
+//                           Index = TmpParticles->AddpAddm(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+//                           if (Index < Dim)
+//                         {
+//                                 TmpIndexArray[Pos] = Index;
+//                                 TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+//                                 ++Pos;
+//                         }
+//                           ++TmpInteractionFactor;
+//                         }
+//                     }
+//      ++TotalPos;
+//    }
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
@@ -976,20 +1088,6 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplication()
 
 void AbstractQHEOnSphereWithSU4SpinHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
 {
-  int Index;
-  double Coefficient;
-  double Coefficient2;
-  int* TmpIndexArray;
-  double* TmpCoefficientArray;
-  int Pos;
-  int Min = firstComponent / this->FastMultiplicationStep;
-  int Max = lastComponent / this->FastMultiplicationStep;
-  ParticleOnSphereWithSU4Spin* TmpParticles = (ParticleOnSphereWithSU4Spin*) this->Particles->Clone();
- 
-  for (int i = Min; i < Max; ++i)
-    {
-    }
-  delete TmpParticles;
 }
 
 // enable fast multiplication algorithm using on disk cache 

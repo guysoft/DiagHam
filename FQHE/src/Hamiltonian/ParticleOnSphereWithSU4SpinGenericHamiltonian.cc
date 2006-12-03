@@ -137,16 +137,12 @@ ParticleOnSphereWithSU4SpinGenericHamiltonian::ParticleOnSphereWithSU4SpinGeneri
 
 ParticleOnSphereWithSU4SpinGenericHamiltonian::~ParticleOnSphereWithSU4SpinGenericHamiltonian() 
 {
-  delete[] this->InteractionFactors;
-  delete[] this->M1Value;
-  delete[] this->M2Value;
-  delete[] this->M3Value;
   for (int j = 0; j < 10; ++j)
     delete[] this->PseudoPotentials[j];
   delete[] this->PseudoPotentials;
   if (this->FastMultiplicationFlag == true)
     {
-       if (this->DiskStorageFlag == false)
+      if (this->DiskStorageFlag == false)
 	{
 	  long MinIndex;
 	  long MaxIndex;

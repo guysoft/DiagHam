@@ -67,28 +67,30 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   this->TotalIsospin = totalIsospin;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
 //   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, 
 //  								    this->TotalSpin, this->TotalIsospin);
-//   this->Flag.Initialize();
+   this->Flag.Initialize();
 //   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 									   (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1);
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];
-//   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-// 									   (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1);
-   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin, this->TotalIsospin) != this->HilbertSpaceDimension)
-      {
-        cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
-        exit(1);
-      }
-//   for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
-//     {
-//       cout << i << " = ";
-//       this->PrintState(cout, i)  << endl;
-//     }
+  long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+						       (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1, 0l);
+  cout << "Hilbert space dimension = " << TmpHilbertSpaceDimension << endl;  
+  if (TmpHilbertSpaceDimension != this->HilbertSpaceDimension)
+    {
+      cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
+      exit(1);
+    }
    this->GenerateLookUpTable(memory);
+   for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
+     {
+       cout << i << " = ";
+       this->PrintState(cout, i)  << endl;
+     }
   
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
@@ -135,7 +137,9 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin(const FermionOnSphereWith
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
-
+  this->SignLookUpTable = fermions.SignLookUpTable;
+  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
+  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
 }
 
 // destructor
@@ -519,11 +523,13 @@ double FermionOnSphereWithSU4Spin::AdumAum (int index, int m)
 
 int FermionOnSphereWithSU4Spin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  long PosMin = this->LookUpTable[lzmax][PosMax];
-  PosMax = this->LookUpTable[lzmax][PosMax + 1];
-  long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
+  unsigned long CurrentState = stateDescription >> this->LookUpTableShift[lzmax];
+//  cout << hex << stateDescription << dec << " " << lzmax << " " << endl;
+//  cout << this->LookUpTableShift[lzmax] << endl;
+  int PosMin = this->LookUpTable[lzmax][CurrentState];
+  int PosMax = this->LookUpTable[lzmax][CurrentState+ 1];
+  int PosMid = (PosMin + PosMax) >> 1;
+  CurrentState = this->StateDescription[PosMid];
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
@@ -577,9 +583,9 @@ ostream& FermionOnSphereWithSU4Spin::PrintState (ostream& Str, int state)
 	Str << "0 ";
       Str << "| ";
     }
-//   Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
-//   if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
-//         Str << " error! ";
+  Str << this->StateHighestBit[state] << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
+  if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
+    Str << " error! ";
   return Str;
 }
 
@@ -587,171 +593,104 @@ ostream& FermionOnSphereWithSU4Spin::PrintState (ostream& Str, int state)
 // 
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion in the state
-// currentLzMax = momentum maximum value for fermions that are still to be placed
 // totalLz = momentum total value
-// totalSpin = twice the total spin value
-// totalIsospin = twice the total isospin value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-int FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+long FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos)
 {
-  //  codage des etats sur deux bits, -lzMax up down on the lsb's
-  
-  /*----------------DECLARES---------------*/
-  int Is_Lz, Is_Spin, Is_Isospin;
-  unsigned long i, coeff, testLzMax;
-  int k, position; 
-  int CheckLz;
-  int counter;
-  int DimOrbit = lzMax+1;
-  int currentLargestBit= 4 * lzMax + 1;
-  /*-------------INITS---------------------*/
-  
-  CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) ||  
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
+    return pos;
+  if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0))
+      {
+	this->StateDescription[pos] = 0x0ul;
+	return (pos + 1l);
+      }
+    
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz))
+    return pos;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      {
+	this->StateDescription[pos] = 0x1ul << ((totalLz << 2) + (totalSpin << 1) + totalIsospin);
+	return (pos + 1l);
+      }
+    else
+      return pos;
 
-  i = biggestOne(nbrFermions,4 * DimOrbit);
+  if ((lzMax == 0)  && (totalLz != 0))
+    return pos;
 
+  long TmpPos = this->GenerateStates(nbrFermions - 4, lzMax - 1, totalLz - (lzMax << 2), totalSpin - 2, totalIsospin - 2, pos);
+  unsigned long Mask = 0xful << ( lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2,  pos);
+  Mask = 0xeul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1,  pos);
+  Mask = 0xdul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 2, totalIsospin - 1,  pos);
+  Mask = 0xcul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2,  pos);
+  Mask = 0xbul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 2,  pos);
+  Mask = 0xaul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 1,  pos);
+  Mask = 0x9ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1,  pos);
+  Mask = 0x8ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1,  pos);
+  Mask = 0x7ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 1,  pos);
+  Mask = 0x6ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin,  pos);
+  Mask = 0x5ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin,  pos);
+  Mask = 0x4ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin, totalIsospin - 1,  pos);
+  Mask = 0x3ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1,  pos);
+  Mask = 0x2ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin,  pos);
+  Mask = 0x1ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
 
-  testLzMax=0x1ul << currentLargestBit;
-  counter = 0;        // on exit: dim of subspace
-  
-  while (i)
-    {
-      Is_Lz=0;
-      Is_Spin=0;
-      Is_Isospin = 0;
-      
-      for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
-	{  
-          coeff = (i >> (k << 2)) & 0xful;
-          
-          switch(coeff)
-	    {
-	    case 15:
-	      {      
-		Is_Lz += (k << 2);
-	      }
-	      break;	      
-	    case 14:
-	      {    
-		++Is_Spin;
-		++Is_Isospin;
-		Is_Lz += (k * 3);
-	      }
-	      break;	      
-	    case 13:
-	      {    
-		++Is_Spin;
-		--Is_Isospin;
-		Is_Lz += (k * 3);
-	      }
-	      break;	      
-	    case 12:
-	      {    
-		Is_Spin += 2;
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-	    case 11:
-	      {    
-		--Is_Spin;
-		++Is_Isospin;
-		Is_Lz += (k * 3);
-	      }
-	      break;	      
-	    case 10:
-	      {    
-		Is_Isospin += 2;
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-	    case 9:
-	      {    
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-	    case 8:
-	      {    
-		++Is_Spin;
-		++Is_Isospin;
-		Is_Lz += k;
-	      }
-	      break;	      
-	    case 7:
-	      {    
-		--Is_Spin;
-		--Is_Isospin;
-		Is_Lz += (k * 3);
-	      }
-	      break;	      
-	    case 6:
-	      {    
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-	    case 5:
-	      {    
-		Is_Isospin -= 2;
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-	    case 4:
-	      {    
-		++Is_Spin;
-		--Is_Isospin;
-		Is_Lz += k;
-	      }	      
-	      break;	      
-            case 3:
-	      {      
-		Is_Spin -= 2;		
-		Is_Lz += (k << 1);
-	      }
-	      break;	      
-            case 2:
-	      { 
-		--Is_Spin;
-		++Is_Isospin;
-		Is_Lz += k;
-	      }
-	      break;	     
-            case 1:
-	      { 
-		--Is_Spin;
-		--Is_Isospin;
-		Is_Lz +=k;
-	      }
-	      break;
-            case 0:
-	      break;	      
-            default:
-	      cout << "severe error in fermion states" << endl;
-	      break;
-	      
-	    }
-          
-          
-	}
-      
-      
-      if((Is_Lz == CheckLz) && (Is_Spin == totalSpin) && (Is_Isospin == totalIsospin)) // project onto fixed spin and Lz
-	{
-	  this->StateDescription[counter]=i;
-	  this->StateHighestBit[counter]=currentLargestBit;
-	  counter++;
-	}	
-      
-      i=lastone(i);
-      // test if lzMax lowered in next word:
-      if (!(i&testLzMax)) 
-	{
-	  --currentLargestBit;
-	  testLzMax=1ul << currentLargestBit;
-	}
-    }
-  return counter;
-}
+  return this->GenerateStates(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin, pos);
+};
+
 
 // generate look-up table associated to current Hilbert space
 // 
@@ -759,33 +698,50 @@ int FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int t
 
 void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 {
+  // get every highest bit poisition
+  unsigned long TmpPosition = this->StateDescription[0];
+#ifdef __64_BITS__
+  int CurrentHighestBit = 63;
+#else
+  int CurrentHighestBit = 31;
+#endif
+  while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+    --CurrentHighestBit;  
+  int MaxHighestBit = CurrentHighestBit;
+  this->StateHighestBit[0] = CurrentHighestBit;
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+    {
+      TmpPosition = this->StateDescription[i];
+      while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+	--CurrentHighestBit;  
+      this->StateHighestBit[i] = CurrentHighestBit;
+   }
+
   // evaluate look-up table size
-  int QuadNbrLzValue = 4 * this->NbrLzValue;
-  memory /= (sizeof(int*) * QuadNbrLzValue);
+  memory /= (sizeof(int*) * MaxHighestBit);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > (QuadNbrLzValue))
-    this->MaximumLookUpShift = QuadNbrLzValue;
+  if (this->MaximumLookUpShift > MaxHighestBit)
+    this->MaximumLookUpShift = MaxHighestBit;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [QuadNbrLzValue];
-  this->LookUpTableShift = new int [QuadNbrLzValue];
-  for (int i = 0; i < QuadNbrLzValue; ++i)
+  this->LookUpTable = new int* [MaxHighestBit + 1];
+  this->LookUpTableShift = new int [MaxHighestBit + 1];
+  for (int i = 0; i <= MaxHighestBit; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
 
-  int CurrentLargestBit = this->StateHighestBit[0];
-  cout << this->NbrLzValue << " " << CurrentLargestBit << endl;
-  int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
-  if (CurrentLargestBit < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentLargestBit] = 0;
+  CurrentHighestBit = this->StateHighestBit[0];
+  int* TmpLookUpTable = this->LookUpTable[CurrentHighestBit];
+  if (CurrentHighestBit < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentHighestBit] = 0;
   else
-    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentLargestBit];
+    this->LookUpTableShift[CurrentHighestBit] = CurrentHighestBit + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentHighestBit];
   unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
   unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
   while (CurrentLookUpTableValue > TmpLookUpTableValue)
@@ -796,7 +752,7 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
   TmpLookUpTable[CurrentLookUpTableValue] = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
-      if (CurrentLargestBit != this->StateHighestBit[i])
+      if (CurrentHighestBit != this->StateHighestBit[i])
 	{
 	  while (CurrentLookUpTableValue > 0)
 	    {
@@ -804,13 +760,13 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
- 	  CurrentLargestBit = this->StateHighestBit[i];
-	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
-	  if (CurrentLargestBit < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentLargestBit] = 0;
+ 	  CurrentHighestBit = this->StateHighestBit[i];
+	  TmpLookUpTable = this->LookUpTable[CurrentHighestBit];
+	  if (CurrentHighestBit < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentHighestBit] = 0;
 	  else
-	    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentLargestBit];
+	    this->LookUpTableShift[CurrentHighestBit] = CurrentHighestBit + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentHighestBit];
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
 	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
@@ -864,19 +820,19 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 #ifdef __64_BITS__
   this->SignLookUpTableMask = new unsigned long [128];
   for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 48);
   for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #else
   this->SignLookUpTableMask = new unsigned long [64];
   for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful
   for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 16);
   for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #endif
 }
 
@@ -885,7 +841,8 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
 // totalLz = momentum total value
-// totalSpin = twce the total spin value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
 // return value = Hilbert space dimension
 
 long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
@@ -1205,7 +1162,7 @@ void FermionOnSphereWithSU4Spin::InitializeWaveFunctionEvaluation (bool timeCohe
 {
 }
 
-  // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+// apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
 //
 // index = index of the state on which the operator has to be applied
 // n1 = first index for annihilation operator
@@ -1222,6 +1179,7 @@ double FermionOnSphereWithSU4Spin::AupAup (int index, int n1, int n2)
  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
+//  cout << n2 << " " << index << " " << hex << this->ProdATemporaryState << " " << this->SignLookUpTableMask[n2] << dec << endl;
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -1291,7 +1249,7 @@ double FermionOnSphereWithSU4Spin::AupAdp (int index, int n1, int n2)
   n1 += 3;
   n2 <<= 2;
   ++n2;
- if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -1357,13 +1315,16 @@ double FermionOnSphereWithSU4Spin::AupAdm (int index, int n1, int n2)
 
 double FermionOnSphereWithSU4Spin::AumAum (int index, int n1, int n2)
 {
+  return 0.0;
   this->ProdATemporaryState = this->StateDescription[index];
   n1 <<= 2;
   n1 += 2;
   n2 <<= 2;
   n2 += 2;
- if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  cout << "toto "  << index << " " << n1 << " "  << n2 <<  " "  << (this->ProdATemporaryState & (0x1ul << n1)) <<  " "  << ((this->ProdATemporaryState & (0x1ul << n2)))<< endl;
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
     return 0.0;
+  cout << " toto2" << endl;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
