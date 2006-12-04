@@ -828,7 +828,7 @@ void FermionOnSphereWithSU4Spin::GenerateLookUpTable(unsigned long memory)
 #else
   this->SignLookUpTableMask = new unsigned long [64];
   for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = 0xfffful
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 16; i < 32; ++i)
     this->SignLookUpTableMask[i] = 0xfffful >> (i - 16);
   for (int i = 32; i < 64; ++i)
@@ -1538,6 +1538,7 @@ int FermionOnSphereWithSU4Spin::AdupAdup (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1582,6 +1583,7 @@ int FermionOnSphereWithSU4Spin::AdupAdum (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1626,6 +1628,7 @@ int FermionOnSphereWithSU4Spin::AdupAddp (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1669,6 +1672,7 @@ int FermionOnSphereWithSU4Spin::AdupAddm (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1713,6 +1717,7 @@ int FermionOnSphereWithSU4Spin::AdumAdum (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1757,6 +1762,7 @@ int FermionOnSphereWithSU4Spin::AdumAddp (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1800,6 +1806,7 @@ int FermionOnSphereWithSU4Spin::AdumAddm (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1844,6 +1851,7 @@ int FermionOnSphereWithSU4Spin::AddpAddp (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1887,6 +1895,7 @@ int FermionOnSphereWithSU4Spin::AddpAddm (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
@@ -1929,6 +1938,7 @@ int FermionOnSphereWithSU4Spin::AddmAddm (int m1, int m2, double& coefficient)
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
+  coefficient = 1.0;
   if (m2 > NewLzMax)
     NewLzMax = m2;
   else
