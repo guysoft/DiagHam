@@ -1315,16 +1315,13 @@ double FermionOnSphereWithSU4Spin::AupAdm (int index, int n1, int n2)
 
 double FermionOnSphereWithSU4Spin::AumAum (int index, int n1, int n2)
 {
-  return 0.0;
   this->ProdATemporaryState = this->StateDescription[index];
   n1 <<= 2;
   n1 += 2;
   n2 <<= 2;
   n2 += 2;
-  cout << "toto "  << index << " " << n1 << " "  << n2 <<  " "  << (this->ProdATemporaryState & (0x1ul << n1)) <<  " "  << ((this->ProdATemporaryState & (0x1ul << n2)))<< endl;
   if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
     return 0.0;
-  cout << " toto2" << endl;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];

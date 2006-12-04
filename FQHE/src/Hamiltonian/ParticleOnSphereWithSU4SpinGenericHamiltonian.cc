@@ -401,15 +401,26 @@ void ParticleOnSphereWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupum[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
 		      this->InteractionFactorsupdp[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
-		      this->InteractionFactorsupdm[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
-		      this->InteractionFactorsumdp[i][Index] += this->PseudoPotentials[5][J >> 1] * TmpCoefficient;
+		      if (((J >> 1) & 1) == Sign)
+			{
+			  this->InteractionFactorsupdm[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+			  this->InteractionFactorsumdp[i][Index] += this->PseudoPotentials[5][J >> 1] * TmpCoefficient;
+			}
 		      this->InteractionFactorsumdm[i][Index] += this->PseudoPotentials[6][J >> 1] * TmpCoefficient;
 		      this->InteractionFactorsdpdm[i][Index] += this->PseudoPotentials[8][J >> 1] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupum[i][Index] *= -Factor;
 		  this->InteractionFactorsupdp[i][Index] *= -Factor;
-		  this->InteractionFactorsupdm[i][Index] *= -Factor;
-		  this->InteractionFactorsumdp[i][Index] *= -Factor;
+		  if ((m1 == m2) || (m3 == m4))
+		    {
+		      this->InteractionFactorsupdm[i][Index] = 0.0;
+		      this->InteractionFactorsumdp[i][Index] = 0.0;
+		    }
+		  else
+		    {
+		      this->InteractionFactorsupdm[i][Index] *= -Factor;
+		      this->InteractionFactorsumdp[i][Index] *= -Factor;
+		    }
 		  this->InteractionFactorsumdm[i][Index] *= -Factor;
 		  this->InteractionFactorsdpdm[i][Index] *= -Factor;
 		  TotalNbrInteractionFactors += 6;
