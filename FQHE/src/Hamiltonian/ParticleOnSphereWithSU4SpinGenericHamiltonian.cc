@@ -277,7 +277,7 @@ void ParticleOnSphereWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     this->NbrInterSectorIndicesPerSum[i] = 0;
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
-    for (int m2 = m1; m2 <= this->LzMax; ++m2)
+    for (int m2 = 0; m2 <= this->LzMax; ++m2)
       ++this->NbrInterSectorIndicesPerSum[m1 + m2];      
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -286,7 +286,7 @@ void ParticleOnSphereWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
       this->NbrInterSectorIndicesPerSum[i] = 0;
     }
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
-    for (int m2 = m1; m2 <= this->LzMax; ++m2)
+    for (int m2 = 0; m2 <= this->LzMax; ++m2)
       {
 	this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
 	this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
@@ -381,14 +381,10 @@ void ParticleOnSphereWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 	      double Factor = 1.0;
 	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
 	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
-	      if (m1 != m2)
-		Factor = 2.0;
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
 		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
 		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  if (m3 != m4)
-		    Factor *= 2.0;
 		  Clebsch.InitializeCoefficientIterator(m1, m2);
 		  this->InteractionFactorsupum[i][Index] = 0.0;
 		  this->InteractionFactorsupdp[i][Index] = 0.0;
@@ -401,26 +397,15 @@ void ParticleOnSphereWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
 		      this->InteractionFactorsupum[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
 		      this->InteractionFactorsupdp[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
-		      if (((J >> 1) & 1) == Sign)
-			{
-			  this->InteractionFactorsupdm[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
-			  this->InteractionFactorsumdp[i][Index] += this->PseudoPotentials[5][J >> 1] * TmpCoefficient;
-			}
+		      this->InteractionFactorsupdm[i][Index] += this->PseudoPotentials[3][J >> 1] * TmpCoefficient;
+		      this->InteractionFactorsumdp[i][Index] += this->PseudoPotentials[5][J >> 1] * TmpCoefficient;
 		      this->InteractionFactorsumdm[i][Index] += this->PseudoPotentials[6][J >> 1] * TmpCoefficient;
 		      this->InteractionFactorsdpdm[i][Index] += this->PseudoPotentials[8][J >> 1] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupum[i][Index] *= -Factor;
 		  this->InteractionFactorsupdp[i][Index] *= -Factor;
-		  if ((m1 == m2) || (m3 == m4))
-		    {
-		      this->InteractionFactorsupdm[i][Index] = 0.0;
-		      this->InteractionFactorsumdp[i][Index] = 0.0;
-		    }
-		  else
-		    {
-		      this->InteractionFactorsupdm[i][Index] *= -Factor;
-		      this->InteractionFactorsumdp[i][Index] *= -Factor;
-		    }
+		  this->InteractionFactorsupdm[i][Index] *= -Factor;
+		  this->InteractionFactorsumdp[i][Index] *= -Factor;
 		  this->InteractionFactorsumdm[i][Index] *= -Factor;
 		  this->InteractionFactorsdpdm[i][Index] *= -Factor;
 		  TotalNbrInteractionFactors += 6;

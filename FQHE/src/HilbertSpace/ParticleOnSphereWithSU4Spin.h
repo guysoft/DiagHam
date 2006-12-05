@@ -51,39 +51,6 @@ class ParticleOnSphereWithSU4Spin :  public ParticleOnSphere
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
 
-  // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin down)
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
-
-  // apply a^+_m1_u a^+_m2_u a_n1_u a_n2_u operator to a given state (with m1+m2=n1+n2, only spin up)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin up)
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin up)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
-
-  // apply a^+_m1_d a^+_m2_u a_n1_d a_n2_u operator to a given state (with m1+m2=n1+n2, one spin up an one spin own)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin up)
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin up)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient) = 0;
-
   // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
   //
   // index = index of the state on which the operator has to be applied
