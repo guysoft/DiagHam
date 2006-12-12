@@ -539,7 +539,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		}
 	      for (int i = 0; i < this->NbrEigenvalue; ++i)
 		{
-		  File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+		  if ((this->ComputeEnergyFlag == true) || (this->ComputeLValueFlag == true))
+		    File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
 		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
 		  Operation1.ApplyOperation(this->Architecture);
 		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
@@ -563,7 +564,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    {
 		      File << " " << (0.5 * (sqrt ((4.0 * OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0)) << endl;
 		    }
-		  File << endl;
+		  if ((this->ComputeEnergyFlag == true) || (this->ComputeLValueFlag == true))
+		    File << endl;
 		}
 	      cout << endl;
 	      delete[] TmpVectorName;
