@@ -54,6 +54,8 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int TotalSpin;
   // twice the total isospin value
   int TotalIsospin;
+  // twice the total entanglement value (greater than NbrFermions if there is no constraint on total lEntanglement value)
+  int TotalEntanglement;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -92,6 +94,18 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalIsospin = twice the total isospin value
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, unsigned long memory = 10000000);
+
+  // basic constructor
+  // 
+  // nbrFermions = number of fermions
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a fermion
+  // totalSpin = twice the total spin value
+  // totalIsospin = twice the total isospin value
+  // totalEntanglement = twice the total entanglement value
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, 
+			      int totzlEntanglement, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -378,6 +392,17 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // return value = Hilbert space dimension  
   long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
 
+  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+  //
+  // nbrFermions = number of fermions
+  // lzMax = two times momentum maximum value for a fermion plus one 
+  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+  // totalSpin = number of particles with spin up
+  // totalIsospin = number of particles with isospin plus
+  // entanglement = number of particles with entanglement plus
+  // return value = Hilbert space dimension  
+  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int entanglement);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
@@ -393,6 +418,18 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
+  // totalSpin = number of particles with spin up
+  // totalIsospin = number of particles with isospin plus
+  // totalEntanglement = number of particles with entanglement plus
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos);
 
 };
 

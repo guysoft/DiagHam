@@ -63,6 +63,7 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
   this->TotalLz = totalLz;
   this->TotalSpin = totalSpin;
   this->TotalIsospin = totalIsospin;
+  this->TotalEntanglement = this->IncNbrFermions;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -85,6 +86,69 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int tot
 //        cout << i << " = ";
 //        this->PrintState(cout, i)  << endl;
 //      }
+  
+// #ifdef __DEBUG__
+//   int UsedMemory = 0;
+//   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+//   cout << "memory requested for Hilbert space = ";
+//   if (UsedMemory >= 1024)
+//     if (UsedMemory >= 1048576)
+//       cout << (UsedMemory >> 20) << "Mo" << endl;
+//     else
+//       cout << (UsedMemory >> 10) << "ko" <<  endl;
+//   else
+//     cout << UsedMemory << endl;
+//   UsedMemory = this->NbrLzValue * sizeof(int);
+//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+//   cout << "memory requested for lookup table = ";
+//   if (UsedMemory >= 1024)
+//     if (UsedMemory >= 1048576)
+//       cout << (UsedMemory >> 20) << "Mo" << endl;
+//     else
+//       cout << (UsedMemory >> 10) << "ko" <<  endl;
+//   else
+//     cout << UsedMemory << endl;
+
+// #endif
+}
+
+// basic constructor
+// 
+// nbrFermions = number of fermions
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a fermion
+// totalSpin = twice the total spin value
+// totalIsospin = twice the total isospin value
+// totalEntanglement = twice the total entanglement value
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, int totalEntanglement,
+							unsigned long memory)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->TotalLz = totalLz;
+  this->TotalSpin = totalSpin;
+  this->TotalIsospin = totalIsospin;
+  this->TotalEntanglement = totalEntanglement;
+  this->LzMax = lzMax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->Flag.Initialize();
+  this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+									   (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1,
+									   (this->TotalEntanglement + this->NbrFermions) >> 1);
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];
+  long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+						       (this->TotalSpin + this->NbrFermions) >> 1, (this->TotalIsospin + this->NbrFermions) >> 1, 0l);
+  if (TmpHilbertSpaceDimension != this->HilbertSpaceDimension)
+    {
+      cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSU4Spin!" << endl;
+      exit(1);
+    }
+   this->GenerateLookUpTable(memory);
   
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
@@ -471,6 +535,129 @@ long FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int 
 };
 
 
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion in the state
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totalEntanglement = number of particles with entanglement plus
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnSphereWithSU4Spin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos)
+{
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) ||  (totalEntanglement < 0) ||  
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions) || (totalEntanglement > nbrFermions))
+    return pos;
+  if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0) && (totalEntanglement == 0))
+      {
+	this->StateDescription[pos] = 0x0ul;
+	return (pos + 1l);
+      }
+    
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < totalEntanglement) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions -totalEntanglement )) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz)
+      || ((((2 * lzMax + nbrFermions + 1 - totalEntanglement) * nbrFermions) >> 1) < totalLz))
+    return pos;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      {
+	this->StateDescription[pos] = 0x1ul << ((totalLz << 2) + (totalSpin << 1) + totalIsospin);
+	return (pos + 1l);
+      }
+    else
+      return pos;
+
+  if ((lzMax == 0)  && (totalLz != 0))
+    return pos;
+
+
+  long TmpPos;
+  unsigned long Mask;
+  if (nbrFermions >= 4)
+    {
+      TmpPos = this->GenerateStates(nbrFermions - 4, lzMax - 1, totalLz - (lzMax << 2), totalSpin - 2, totalIsospin - 2, pos, totalEntanglement - 2);
+      Mask = 0xful << ( lzMax << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+    }
+  if (nbrFermions >= 3)
+    {
+      TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2,  pos, totalEntanglement);
+      Mask = 0xeul << (lzMax << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+      TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1,  pos, totalEntanglement);
+      Mask = 0xdul << (lzMax << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+    }
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 2, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0xcul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  if (nbrFermions >= 3)
+    {
+      TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2,  pos, totalEntanglement);
+      Mask = 0xbul << (lzMax << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+    }
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 2,  pos, totalEntanglement);
+  Mask = 0xaul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0x9ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0x8ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  if (nbrFermions >= 3)
+    {
+      TmpPos = this->GenerateStates(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1,  pos, totalEntanglement);
+      Mask = 0x7ul << (lzMax << 2);
+      for (; pos < TmpPos; ++pos)
+	this->StateDescription[pos] |= Mask;
+    }
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0x6ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin - 1, totalIsospin,  pos, totalEntanglement);
+  Mask = 0x5ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin,  pos, totalEntanglement);
+  Mask = 0x4ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), totalSpin, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0x3ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1,  pos, totalEntanglement);
+  Mask = 0x2ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin,  pos, totalEntanglement - 1);
+  Mask = 0x1ul << (lzMax << 2);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+
+  return this->GenerateStates(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin, pos, totalEntanglement);
+};
+
+
 // generate look-up table associated to current Hilbert space
 // 
 // memory = memory size that can be allocated for the look-up table
@@ -705,6 +892,104 @@ long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFer
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
+
+}
+
+// evaluate Hilbert space dimension
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totzlEntanglement = number of particles with entanglement plus
+// return value = Hilbert space dimension
+
+long FermionOnSphereWithSU4Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int entanglement)
+{
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) || (entanglement < 0) ||
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions) || (entanglement > nbrFermions))
+    return 0l;
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < entanglement) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - entanglement)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz)
+      || ((((2 * lzMax + nbrFermions + 1 - entanglement) * nbrFermions) >> 1) < totalLz))
+    return 0l;
+    
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+
+  if ((lzMax == 0)  && (totalLz != 0))
+    return 0l;
+
+  unsigned long Tmp = 0l;
+  if (nbrFermions >= 3)    
+    {
+      Tmp += (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1, entanglement )
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2, entanglement)
+	      + (2l * this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1, entanglement))
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin, entanglement)
+	      + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1, entanglement));
+
+      if (nbrFermions > 3)
+	{
+	  Tmp += (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2, entanglement)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1, entanglement)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2, entanglement)
+		  + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1, entanglement));
+	  if (nbrFermions == 4)
+	    {
+	      if ((totalLz == (4 * lzMax)) && (totalSpin == 2) && (totalIsospin == 2))
+		++Tmp;      
+	    }
+	  else
+	    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2, entanglement);
+	}
+      else
+	if ((totalLz == (3 * lzMax)) && (((totalSpin == 2) || (totalSpin == 1)) && ((totalIsospin == 2) || (totalIsospin == 1))))
+	  ++Tmp;
+    }
+  else
+    if (totalLz == (2 * lzMax))
+      {
+ 	switch (totalSpin)
+ 	  {
+ 	  case 2:
+	    if (totalIsospin == 1)
+	      ++Tmp;
+ 	    break;
+ 	  case 1:
+	    switch (totalIsospin)
+	      {
+	      case 2:
+		++Tmp;
+		break;
+	      case 1:
+		Tmp += 2l;
+		break;
+	      case 0:
+		++Tmp;
+		break;
+	      }
+	    break;
+ 	  case 0:
+	    if (totalIsospin == 1) 
+	      ++Tmp;
+	    break; 
+ 	  }
+      }
+
+  return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin, entanglement)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1, entanglement)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1, entanglement - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin, entanglement - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin, entanglement));
 
 }
 
