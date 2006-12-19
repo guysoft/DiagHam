@@ -562,7 +562,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    }
 		  if (this->ComputeLValueFlag == true)
 		    {
-		      File << " " << (0.5 * (sqrt ((4.0 * OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0)) << endl;
+		      File << " " << (0.5 * (sqrt ((4.0 * OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0));
 		    }
 		  if ((this->ComputeEnergyFlag == true) || (this->ComputeLValueFlag == true))
 		    File << endl;

@@ -522,6 +522,88 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
 	delete[] ClebshArray;
       }
       break;
+    case 4:
+      {
+	int TotalMaxJ = 3 * this->LzMax - 6;
+	int MaxJ = 2 * this->LzMax - 2;
+	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
+	ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[TotalMaxJ + 1];
+	int MinJ = JValue - this->LzMax;
+	if (MinJ < 0)
+	  MinJ = 0;
+	for (int j = MaxJ; j >= MinJ; j -= 4)
+	  ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
+	for (int i = 0; i < nbrIndexSets; ++i)
+	  {
+	    double Tmp = 0.0;
+	    double Tmp2 = 0.0;
+	    int TmpMinJ2;
+	    int Sum1 = ((indices[0] + indices[1]) << 1)  - (2 * this->LzMax);
+	    int Sum2 = Sum + (indices[2] << 1)  - this->LzMax;
+	    int TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum1))
+	      TmpMinJ = abs(Sum1);
+	    for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+	      {
+		Tmp2 = Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j1);
+		TmpMinJ2 = abs(j1 - this->LzMax);
+		if (TmpMinJ2 < abs(Sum2))
+		  TmpMinJ2 = abs(Sum2);
+		for (int j2 = TotalMaxJ; j2 >= TmpMinJ2; j2 -= 4)
+		  Tmp += Tmp2 * (ClebshArray[j1].GetCoefficient(Sum1, ((indices[2] << 1) - this->LzMax), j2) * 
+				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[3] << 1) - this->LzMax), JValue)); 
+	      }
+	    Sum1 = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
+	    Sum2 = Sum + (indices[3] << 1)  - this->LzMax;
+	    TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum1))
+	      TmpMinJ = abs(Sum1);
+	    for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+	      {
+		Tmp2 = Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j1);
+		TmpMinJ2 = abs(j1 - this->LzMax);
+		if (TmpMinJ2 < abs(Sum2))
+		  TmpMinJ2 = abs(Sum2);
+		for (int j2 = TotalMaxJ; j2 >= TmpMinJ2; j2 -= 4)
+		  Tmp -= Tmp2 * (ClebshArray[j1].GetCoefficient(Sum1, ((indices[3] << 1) - this->LzMax), j2) * 
+				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[0] << 1) - this->LzMax), JValue)); 
+	      }
+	    Sum1 = ((indices[2] + indices[3]) << 1)  - (2 * this->LzMax);
+	    Sum2 = Sum + (indices[0] << 1)  - this->LzMax;
+	    TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum1))
+	      TmpMinJ = abs(Sum1);
+	    for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+	      {
+		Tmp2 = Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[3] << 1)- this->LzMax), j1);
+		TmpMinJ2 = abs(j1 - this->LzMax);
+		if (TmpMinJ2 < abs(Sum2))
+		  TmpMinJ2 = abs(Sum2);
+		for (int j2 = TotalMaxJ; j2 >= TmpMinJ2; j2 -= 4)
+		  Tmp += Tmp2 * (ClebshArray[j1].GetCoefficient(Sum1, ((indices[0] << 1) - this->LzMax), j2) * 
+				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[1] << 1) - this->LzMax), JValue)); 
+	      }
+	    Sum1 = ((indices[3] + indices[0]) << 1)  - (2 * this->LzMax);
+	    Sum2 = Sum + (indices[1] << 1)  - this->LzMax;
+	    TmpMinJ = MinJ;
+	    if (TmpMinJ < abs(Sum1))
+	      TmpMinJ = abs(Sum1);
+	    for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
+	      {
+		Tmp2 = Clebsh.GetCoefficient(((indices[3] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j1);
+		TmpMinJ2 = abs(j1 - this->LzMax);
+		if (TmpMinJ2 < abs(Sum2))
+		  TmpMinJ2 = abs(Sum2);
+		for (int j2 = TotalMaxJ; j2 >= TmpMinJ2; j2 -= 4)
+		  Tmp -= Tmp2 * (ClebshArray[j1].GetCoefficient(Sum1, ((indices[1] << 1) - this->LzMax), j2) * 
+				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[2] << 1) - this->LzMax), JValue)); 
+	      }
+	    TmpCoefficients[i] = Tmp;
+	    indices += 4;
+	  }
+	delete[] ClebshArray;
+      }
+      break;
     default:
       {
       }

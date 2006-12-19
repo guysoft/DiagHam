@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "add-impurities", "add two impurities (one at each pole)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential assosciated to the impurity at the north pole", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
+  (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
 
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -74,11 +75,15 @@ int main(int argc, char** argv)
 
   int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+  int MaxMomentum = NbrFlux + (LandauLevel << 1);
   
   char* OutputFile;
   if (((SingleStringOption*) Manager["output"])->GetString() == 0l)
     {
-      OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
+      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
+      else
+	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
     }
   else
     {
@@ -87,6 +92,13 @@ int main(int argc, char** argv)
     }
 
   double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel);
+  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+    {
+      double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1);
+      for (int i = 0; i <= MaxMomentum; ++i)
+	Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
+      delete[] PseudopotentialsNMinus1;
+    }
   double* OneBodyPotentials = 0;
   if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == true)
     OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
@@ -95,7 +107,10 @@ int main(int argc, char** argv)
   ofstream File;
   File.open(OutputFile, ios::binary | ios::out);
   File.precision(14);
-  File << "# pseudopotentials on the sphere for coulomb interaction " << endl
+  File << "# pseudopotentials on the sphere for coulomb interaction ";
+  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+    File << " for relativistic fermions";
+  File << endl
        << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
   if (OneBodyPotentials != 0)
     {
@@ -105,7 +120,6 @@ int main(int argc, char** argv)
   File << "#" << endl
        << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
        << "Pseudopotentials =";
-  int MaxMomentum = NbrFlux + (LandauLevel << 1);
   for (int i = 0; i <= MaxMomentum; ++i)
     File << " " << Pseudopotentials[i];
   File << endl;

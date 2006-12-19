@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [256];
 	  sprintf (EigenvectorName, "fermions_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrFermions, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
