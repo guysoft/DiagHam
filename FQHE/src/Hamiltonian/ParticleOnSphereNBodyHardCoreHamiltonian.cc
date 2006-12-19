@@ -539,7 +539,7 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
 	    double Tmp2 = 0.0;
 	    int TmpMinJ2;
 	    int Sum1 = ((indices[0] + indices[1]) << 1)  - (2 * this->LzMax);
-	    int Sum2 = Sum + (indices[2] << 1)  - this->LzMax;
+	    int Sum2 = Sum1 + (indices[2] << 1)  - this->LzMax;
 	    int TmpMinJ = MinJ;
 	    if (TmpMinJ < abs(Sum1))
 	      TmpMinJ = abs(Sum1);
@@ -554,7 +554,7 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
 				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[3] << 1) - this->LzMax), JValue)); 
 	      }
 	    Sum1 = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
-	    Sum2 = Sum + (indices[3] << 1)  - this->LzMax;
+	    Sum2 = Sum1 + (indices[3] << 1)  - this->LzMax;
 	    TmpMinJ = MinJ;
 	    if (TmpMinJ < abs(Sum1))
 	      TmpMinJ = abs(Sum1);
@@ -569,7 +569,7 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
 				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[0] << 1) - this->LzMax), JValue)); 
 	      }
 	    Sum1 = ((indices[2] + indices[3]) << 1)  - (2 * this->LzMax);
-	    Sum2 = Sum + (indices[0] << 1)  - this->LzMax;
+	    Sum2 = Sum1 + (indices[0] << 1)  - this->LzMax;
 	    TmpMinJ = MinJ;
 	    if (TmpMinJ < abs(Sum1))
 	      TmpMinJ = abs(Sum1);
@@ -584,7 +584,7 @@ double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(i
 				 ClebshArray[j2].GetCoefficient(Sum2, ((indices[1] << 1) - this->LzMax), JValue)); 
 	      }
 	    Sum1 = ((indices[3] + indices[0]) << 1)  - (2 * this->LzMax);
-	    Sum2 = Sum + (indices[1] << 1)  - this->LzMax;
+	    Sum2 = Sum1 + (indices[1] << 1)  - this->LzMax;
 	    TmpMinJ = MinJ;
 	    if (TmpMinJ < abs(Sum1))
 	      TmpMinJ = abs(Sum1);
