@@ -43,6 +43,9 @@
 using std::ostream;
 
 
+class ClebschGordanCoefficients;
+
+
 class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
 {
 
@@ -110,6 +113,20 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // indices = array that contains all possible sets of indices (size of the array is nbrIndices * nbrIndexSets)
   // nbrIndexSets = number of sets
   double* ComputeProjectorCoefficients(int nbrIndices, int* indices, int nbrIndexSets);
+
+  // compute a given projector coefficient for the 4-body interaction 
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third inde
+  // m4 = fourth index
+  // totalMaxJ = maximum angular momentum that can be reach by three particles
+  // jValue = total angular momentum
+  // minJ = minimum angular momentum that can be reach by three particles
+  // clebshArray = array that conatins Clebsch Gordan coefficients for each angular momentum value
+  // return value = corresponding projector coefficient
+  double ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int totalMaxJ, int jValue, 
+					   int minJ, ClebschGordanCoefficients* clebshArray);
 
   // evaluate all interaction factors
   //   
