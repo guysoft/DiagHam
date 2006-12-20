@@ -120,13 +120,11 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // m2 = second index
   // m3 = third inde
   // m4 = fourth index
-  // totalMaxJ = maximum angular momentum that can be reach by three particles
   // jValue = total angular momentum
-  // minJ = minimum angular momentum that can be reach by three particles
   // clebshArray = array that conatins Clebsch Gordan coefficients for each angular momentum value
   // return value = corresponding projector coefficient
-  double ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int totalMaxJ, int jValue, 
-					   int minJ, ClebschGordanCoefficients* clebshArray);
+  double ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int jValue, 
+					   ClebschGordanCoefficients* clebshArray);
 
   // evaluate all interaction factors
   //   
