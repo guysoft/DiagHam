@@ -79,6 +79,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 15);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-entanglement", "use a define value for the spin-isopsin entanglement of the system");
+  (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
@@ -109,6 +111,7 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int IsoSzTotal = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
+  int TotalEntanglement = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
@@ -128,16 +131,25 @@ int main(int argc, char** argv)
 
   int NbrUp = (NbrFermions + SzTotal) >> 1;
   int NbrDown = (NbrFermions - SzTotal) >> 1;
-  if ((NbrUp+NbrDown != NbrFermions) || ( NbrUp < 0 ) || (NbrDown < 0 ))
+  if ((NbrUp < 0 ) || (NbrDown < 0 ))
     {
       cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
       return -1;
     }
   int NbrPlus = (NbrFermions + IsoSzTotal) >> 1;
   int NbrMinus = (NbrFermions - IsoSzTotal) >> 1;
-  if ((NbrPlus + NbrMinus != NbrFermions) || (NbrPlus < 0) || (NbrMinus < 0))
+  if ((NbrPlus < 0) || (NbrMinus < 0))
     {
       cout << "This value of the isospin z projection cannot be achieved with this particle number!" << endl;
+      return -1;
+    }
+
+  int NbrEntanglementPlus = (NbrFermions + TotalEntanglement) >> 1;
+  int NbrEntanglementMinus = (NbrFermions - TotalEntanglement) >> 1;
+  if ((((BooleanOption*) Manager["use-entanglement"])->GetBoolean()) && 
+      ((NbrEntanglementPlus < 0) || (NbrEntanglementMinus < 0)))
+    {
+      cout << "This value of the entanglement projection cannot be achieved with this particle number!" << endl;
       return -1;
     }
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
@@ -442,7 +454,10 @@ int main(int argc, char** argv)
       if (LzMax <= 7)
 #endif
         {
-          Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, MemorySpace);
+	  if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
+	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, TotalEntanglement, MemorySpace);
+	  else
+	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, MemorySpace);
         }
       else
 	{
