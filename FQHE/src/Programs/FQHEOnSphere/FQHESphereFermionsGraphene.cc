@@ -455,7 +455,7 @@ int main(int argc, char** argv)
 #endif
         {
 	  if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
-	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, TotalEntanglement, MemorySpace);
+	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, MemorySpace);
 	  else
 	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, L, LzMax, SzTotal, IsoSzTotal, MemorySpace);
         }
