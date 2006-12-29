@@ -716,9 +716,9 @@ RealVector* AbstractQHEOnSphereHamiltonian::LowLevelMultipleAddMultiply(RealVect
   return vDestinations;
 }
 
-// multiply a et of vectors by the current hamiltonian for a given range of indices 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another et of vectors, low level function (no architecture optimization)
-// using disk storage option
+// using partial fast multiply option
 //
 // vSources = array of vectors to be multiplied
 // vDestinations = array of vectors at which result has to be added

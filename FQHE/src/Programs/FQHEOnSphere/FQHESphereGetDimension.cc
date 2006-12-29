@@ -58,7 +58,7 @@ long FermionShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int
 // return value = Hilbert space dimension
 long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
 
-// evaluate Hilbert space dimension for fermions with SU(4) spin
+// evaluate Hilbert space dimension for fermions with SU(2)xSU(2) spin
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
@@ -66,7 +66,18 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // totalSpin = number of particles with spin up
 // totalIsospin = number of particles with isospin plus
 // return value = Hilbert space dimension
-long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+long FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+
+// evaluate Hilbert space dimension for fermions with SU(4) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totalEntanglement = number of particles with entanglement plus
+// return value = Hilbert space dimension
+long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement);
 
 // save dimensions in a given file
 //
@@ -130,6 +141,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "su2su2-spin", "consider particles with SU(2)xSU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
   (*SystemGroup) += new BooleanOption ('\n', "use-files", "use dimension files that have been previously generated to increase speed. Files must be in current directory and obey the statistics_sphere_n_nbrparticles_q_nbrfluxquanta.dim naming convention");
@@ -153,7 +165,7 @@ int main(int argc, char** argv)
   int  LzMin = 0;
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
     LzMin = 1;
-  if ((((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == false))
+  if ((((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2su2-spin"])->GetBoolean() == false))
     if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
       {
 	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
@@ -231,7 +243,7 @@ int main(int argc, char** argv)
 	      return -1;
 	    }
 	  if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
-	    cout << FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+	    cout << FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
 								   (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1)<< endl;
 	  else
 	    {
@@ -273,7 +285,7 @@ int main(int argc, char** argv)
 		    {
 		      cout << MinSz << " " << MinIz << " " << NbrSz << endl;
 		      for (int x = FullLzMin[MinSz][MinIz]; x <= FullLzMax[MinSz][MinIz]; x += 2)
-			LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] =  FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x, MinSz, MinIz);
+			LzDimensions[MinSz][MinIz][(x - FullLzMin[MinSz][MinIz]) >> 1] =  FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, x, MinSz, MinIz);
 		    }
 	      long TotalDimension = 0l;
 	      for (int MinSz = 0; MinSz < NbrSz; ++MinSz)
@@ -452,7 +464,7 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 	     + FermionSU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin));
 }
 
-// evaluate Hilbert space dimension for fermions with SU(4) spin
+// evaluate Hilbert space dimension for fermions with SU(2)xSU(2) spin
 //
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
@@ -461,7 +473,7 @@ long FermionSU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // totalIsospin = number of particles with isospin plus
 // return value = Hilbert space dimension
 
-long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+long FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
 {
   if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) ||  
       (totalSpin > nbrFermions) || (totalIsospin > nbrFermions))
@@ -483,25 +495,25 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
   unsigned long Tmp = 0l;
   if (nbrFermions >= 3)    
     {
-      Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
-	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
-	      + (2l * FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
-	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
-	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1));
+      Tmp += (FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1)
+	      + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2)
+	      + (2l * FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1))
+	      + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin)
+	      + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1));
 
       if (nbrFermions > 3)
 	{
-	  Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
-		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
-		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
-		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1));
+	  Tmp += (FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2)
+		  + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1)
+		  + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2)
+		  + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1));
 	  if (nbrFermions == 4)
 	    {
 	      if ((totalLz == (4 * lzMax)) && (totalSpin == 2) && (totalIsospin == 2))
 		++Tmp;      
 	    }
 	  else
-	    Tmp += FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2);
+	    Tmp += FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2);
 	}
       else
 	if ((totalLz == (3 * lzMax)) && (((totalSpin == 2) || (totalSpin == 1)) && ((totalIsospin == 2) || (totalIsospin == 1))))
@@ -537,11 +549,115 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
  	  }
       }
 
-  return  (Tmp + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
-	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1)
-	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
-	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
-	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
+  return  (Tmp + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin)
+	   + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1)
+	   + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1)
+	   + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin)
+	   + FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin));
+}
+
+// evaluate Hilbert space dimension for fermions with SU(4) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totalEntanglement = number of particles with entanglement plus
+// return value = Hilbert space dimension
+
+long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement)
+{
+  if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalIsospin < 0) || (totalEntanglement < 0) ||
+      (totalSpin > nbrFermions) || (totalIsospin > nbrFermions) || (totalEntanglement > nbrFermions))
+    return 0l;
+  if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpin) || ((2 * (lzMax + 1)) < totalIsospin) || ((2 * (lzMax + 1)) < totalEntanglement) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalSpin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalIsospin)) 
+      || ((2 * (lzMax + 1)) < (nbrFermions - totalEntanglement)) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalSpin) * nbrFermions) >> 1) < totalLz) 
+      || ((((2 * lzMax + nbrFermions + 1 - totalIsospin) * nbrFermions) >> 1) < totalLz)
+      || ((((2 * lzMax + nbrFermions + 1 - totalEntanglement) * nbrFermions) >> 1) < totalLz))
+    return 0l;
+    
+  if ((nbrFermions == 0) && (totalLz == 0) && (totalSpin == 0) && (totalIsospin == 0) && (totalEntanglement == 0))
+    return 1l;
+  if (nbrFermions == 1) 
+    if ((lzMax >= totalLz) && (totalEntanglement != (totalSpin ^ totalIsospin)))
+      return 1l;
+    else
+      return 0l;
+
+  if ((lzMax == 0)  && (totalLz != 0))
+    return 0l;
+
+  unsigned long Tmp = 0l;
+  if (nbrFermions >= 3)    
+    {
+      Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 2, totalIsospin - 1, totalEntanglement - 1)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 2, totalEntanglement - 1)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1, totalEntanglement - 2)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin - 1, totalEntanglement)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin - 1, totalIsospin, totalEntanglement - 1)
+	      + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), totalSpin, totalIsospin - 1, totalEntanglement - 1));
+      
+      if (nbrFermions > 3)
+	{
+ 	  Tmp += (FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 2, totalEntanglement - 1)
+ 		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 1, totalEntanglement - 1)
+ 		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 1, totalIsospin - 2, totalEntanglement - 2)
+ 		  + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (3 * lzMax), totalSpin - 2, totalIsospin - 1, totalEntanglement - 2));
+ 	  if (nbrFermions == 4)
+ 	    {
+ 	      if ((totalLz == (4 * lzMax)) && (totalSpin == 2) && (totalIsospin == 2) && (totalEntanglement == 2))
+ 		++Tmp;      
+ 	    }
+ 	  else
+ 	    Tmp += FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 4, lzMax - 1, totalLz - (4 * lzMax), totalSpin - 2, totalIsospin - 2, totalEntanglement - 2);
+ 	}
+      else
+	if ((totalLz == (3 * lzMax)) && (((totalSpin * totalIsospin * totalEntanglement) == 4) || ((totalSpin * totalIsospin * totalEntanglement) == 1)))
+ 	  ++Tmp;
+    }
+  else
+    if (totalLz == (2 * lzMax))
+      {
+ 	switch (totalSpin)
+ 	  {
+ 	  case 2:
+	    if ((totalIsospin == 1) && (totalEntanglement == 1))
+	      ++Tmp;
+ 	    break;
+ 	  case 1:
+	    switch (totalIsospin)
+	      {
+	      case 2:
+		if (totalEntanglement == 1)
+		  ++Tmp;
+		break;
+	      case 1:
+		if (totalEntanglement != 1)
+		  ++Tmp;
+		break;
+	      case 0:
+		if (totalEntanglement == 1)
+		  ++Tmp;
+		break;
+	      }
+	    break;
+ 	  case 0:
+	    if ((totalIsospin == 1)  && (totalEntanglement == 1))
+	      ++Tmp;
+	    break; 
+ 	  }
+      }
+
+  return  (Tmp + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin, totalEntanglement)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin - 1, totalEntanglement)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin - 1, totalIsospin - 1, totalEntanglement - 1)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin, totalEntanglement - 1)
+	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin, totalEntanglement));
+
 }
 
 // evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)

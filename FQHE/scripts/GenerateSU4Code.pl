@@ -2,9 +2,9 @@
 
 use strict 'vars';
 
-#&GenerateHamiltonian();
+&GenerateHamiltonian();
 #&GenerateHamiltonianPartialFast();
-&GenerateHamiltonianEnableFast();
+#&GenerateHamiltonianEnableFast();
 
 sub GenerateHamiltonian()
   {
@@ -31,12 +31,14 @@ sub GenerateHamiltonian()
 		  if (Coefficient3 != 0.0)
 		    {
 		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
-		      Coefficient3 *= vSource[i];
+		      for (int p = 0; p < nbrVectors; ++p)
+			Coefficient2[p] = Coefficient3 * vSources[p][i];
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
-			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			    for (int p = 0; p < nbrVectors; ++p)
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * Coefficient2[p];
 			  ++TmpInteractionFactor;
 			}
 		    }\n";
@@ -58,12 +60,14 @@ sub GenerateHamiltonian()
 		  if (Coefficient3 != 0.0)
 		    {
 		      TmpInteractionFactor = &(this->InteractionFactors".$SpinIsospin1.$SpinIsospin2."[j][(i1 * Lim) >> 2]);
-		      Coefficient3 *= vSource[i];
+		      for (int p = 0; p < nbrVectors; ++p)
+			Coefficient2[p] = Coefficient3 * vSources[p][i];
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = TmpParticles->Ad".$SpinIsospin1."Ad".$SpinIsospin2."(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
-			    vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			    for (int p = 0; p < nbrVectors; ++p)
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * Coefficient2[p];
 			  ++TmpInteractionFactor;
 			}
 		    }\n";

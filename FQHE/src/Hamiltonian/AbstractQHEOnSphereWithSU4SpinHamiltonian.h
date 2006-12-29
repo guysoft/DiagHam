@@ -116,6 +116,19 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
 
  protected:
  
+  // multiply a et of vectors by the current hamiltonian for a given range of indices 
+  // and add result to another et of vectors, low level function (no architecture optimization)
+  // using partial fast multiply option
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  RealVector* LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent);
+
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors() = 0;

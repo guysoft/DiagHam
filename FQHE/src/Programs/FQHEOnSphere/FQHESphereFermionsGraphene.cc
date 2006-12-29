@@ -35,6 +35,19 @@ using std::endl;
 
 using std::ofstream;
 
+// find populations knowing total spin, isospin and entanglement projection
+//
+// nbrParticles = number of particles
+// szTotal = spin total projection
+// isoSzTotal = isospin total projection
+// pzTotal = entanglement total projection
+// nUpPlus = reference on the number of particles with spin up and isospin plus
+// nUpMinus = reference on the number of particles with spin up and isospin minus
+// nDownPlus = reference on the number of particles with spin down and isospin plus
+// nDownPMinus = reference on the number of particles with spin down and isospin minus
+// return value = true if values of spin, isospin and entanglement lead to valid populations
+bool GetPopulations(int nbrParticles, int szTotal, int isoSzTotal, int pzTotal, int& nUpPlus, int& nUpMinus, int& nDownPlus, int& nDownMinus);
+
 
 int main(int argc, char** argv)
 {
@@ -423,10 +436,44 @@ int main(int argc, char** argv)
      delete[] TmpPseudoPotentials;
     }
 
-  char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
-	   NbrFermions, LzMax, SzTotal, IsoSzTotal);
-  int Max = ((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown);
+  char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
+    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+	     NbrFermions, LzMax, SzTotal, IsoSzTotal, TotalEntanglement);
+  else
+    sprintf (OutputNameLz, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+	     NbrFermions, LzMax, SzTotal, IsoSzTotal);
+  int Max = 0;
+
+  int NbrUpPlus;
+  int NbrDownPlus;
+  int NbrUpMinus;
+  int NbrDownMinus;
+  if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
+    {
+      if (GetPopulations(NbrFermions, SzTotal, IsoSzTotal, TotalEntanglement, NbrUpPlus, NbrUpMinus, NbrDownPlus, NbrDownMinus) == false)
+	{
+	  cout << "incompatible values of spin, isospin and entanglement" << endl;
+	  return -1;
+	}    
+      Max  = (((LzMax - NbrUpPlus + 1) * NbrUpPlus) + ((LzMax - NbrUpMinus + 1) * NbrUpMinus) + 
+	      ((LzMax - NbrDownPlus+ 1) * NbrDownPlus) + ((LzMax - NbrDownMinus + 1) * NbrDownMinus));
+      cout << "populations : NUpPlus = " << NbrUpPlus << " NUpMinus  = " << NbrUpMinus << "  NDownPlus = " << NbrDownPlus << "  NDownMinus = " << NbrDownMinus << endl;
+    }
+  else
+    {
+      for (int i = -NbrFermions; i <= NbrFermions; i += 2)
+	{
+	  if (GetPopulations(NbrFermions, SzTotal, IsoSzTotal, i, NbrUpPlus, NbrUpMinus, NbrDownPlus, NbrDownMinus) == true)
+	    {
+	      int TmpMax = (((LzMax - NbrUpPlus + 1) * NbrUpPlus) + ((LzMax - NbrUpMinus + 1) * NbrUpMinus) + 
+			    ((LzMax - NbrDownPlus+ 1) * NbrDownPlus) + ((LzMax - NbrDownMinus + 1) * NbrDownMinus));
+	      if (TmpMax > Max)
+		Max = TmpMax;
+	    }
+	}
+    }
+  cout << "maximum Lz value = " << Max << endl;
 
   int  L = 0;
   if ((abs(Max) & 1) != 0)
@@ -464,7 +511,11 @@ int main(int argc, char** argv)
 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 	  return -1;
 	}	
-
+      if ((((BooleanOption*) Manager["use-entanglement"])->GetBoolean()) && (Space->GetHilbertSpaceDimension() == 0))
+	{
+	  cout << "zero dimension Hilbert space" << endl;
+	  return -1;	  
+	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian;
       
@@ -479,9 +530,14 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz_%d",
-		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
-		   NbrFermions, LzMax, SzTotal, IsoSzTotal, L);
+	  if (((BooleanOption*) Manager["use-entanglement"])->GetBoolean())
+	    sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d",
+		     ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+		     NbrFermions, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, L);
+	  else
+	    sprintf (EigenvectorName, "fermions_sphere_su4_%s_n_%d_2s_%d_sz_%d_iz_%d_lz_%d",
+		     ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+		     NbrFermions, LzMax, SzTotal, IsoSzTotal, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
@@ -498,4 +554,33 @@ int main(int argc, char** argv)
     }
   delete[] OutputNameLz;
   return 0;
+}
+
+
+// find populations knowing total spin, isospin and entanglement projection
+//
+// nbrParticles = number of particles
+// szTotal = spin total projection
+// isoSzTotal = isospin total projection
+// pzTotal = entanglement total projection
+// nUpPlus = reference on the number of particles with spin up and isospin plus
+// nUpMinus = reference on the number of particles with spin up and isospin minus
+// nDownPlus = reference on the number of particles with spin down and isospin plus
+// nDownPMinus = reference on the number of particles with spin down and isospin minus
+// return value = true if values of spin, isospin and entanglement lead to valid populations
+
+bool GetPopulations(int nbrParticles, int szTotal, int isoSzTotal, int pzTotal, int& nUpPlus, int& nUpMinus, int& nDownPlus, int& nDownMinus)
+{
+  nUpPlus = nbrParticles + szTotal + isoSzTotal + pzTotal;
+  nUpMinus = nbrParticles + szTotal - isoSzTotal - pzTotal;
+  nDownPlus = nbrParticles - szTotal + isoSzTotal - pzTotal;
+  nDownMinus = nbrParticles - szTotal - isoSzTotal + pzTotal;
+  if ((nUpPlus < 0) || ((nUpPlus & 0x3) != 0) || (nUpMinus < 0) || ((nUpMinus & 0x3) != 0) ||
+      (nDownPlus < 0) || ((nDownPlus & 0x3) != 0) || (nDownMinus < 0) || ((nDownMinus & 0x3) != 0))
+    return false;
+  nUpPlus >>= 2;
+  nUpMinus >>= 2;
+  nDownPlus >>= 2;
+  nDownMinus >>= 2;
+  return true;
 }
