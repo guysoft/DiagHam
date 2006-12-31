@@ -5,8 +5,8 @@ use strict 'vars';
 use Getopt::Long;
 
 
-my $PathToDiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEOnSphere/QHEFermionsTwoBodyGeneric";
-my $PathToOverlapProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/QHE/QHEBosonsDeltaOverlap";
+my $PathToDiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/QHEFermionsTwoBodyGeneric";
+my $PathToOverlapProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/QHEBosonsDeltaOverlap";
 my $Step = 0;
 my $MinValue = 0.0;
 my $NbrValues = 0;
