@@ -23,22 +23,22 @@ if (!(defined($NbrParticles)))
   {
     die ("can't find number of particles in file pattern ".$FilePattern."\n");
   }
-$FilePattern =~ /^(.+)\_sz\_\d+\_iz\_\d+\_lz\.dat$/;
+$FilePattern =~ /^(.+)\_sz\_\d+\_iz\_\d+\_pz\_\d+\_lz\.dat$/;
 my $Prefix = $1;
 
 my $TmpFile;
 my @Sprectra;
 foreach $TmpFile (<*>)
   {
-    if ($TmpFile =~ /^$Prefix\_sz\_(\d+)\_iz\_(\d+)\_lz\.dat$/)
+    if ($TmpFile =~ /^$Prefix\_sz\_(\d+)\_iz\_(\d+)\_pz\_(\d+)\_lz\.dat$/)
       {
-	if (!(-f $Prefix."_sz_".$1."_iz_".$2."_l.dat"))
-	  {
-	    my $Command = $PathToLzToLProgram." ".$TmpFile." > ".$Prefix."_sz_".$1."_iz_".$2."_l.dat";
-	    `$Command`;
-	    print "converting Lz->L ".$TmpFile."\n";
-	  }
-	push (@Sprectra, $Prefix."_sz_".$1."_iz_".$2."_l.dat");
+#	if (!(-f $Prefix."_sz_".$1."_iz_".$2."_l.dat"))
+#	  {
+#	    my $Command = $PathToLzToLProgram." ".$TmpFile." > ".$Prefix."_sz_".$1."_iz_".$2."_l.dat";
+#	    `$Command`;
+#	    print "converting Lz->L ".$TmpFile."\n";
+#	  }
+	push (@Sprectra, $Prefix."_sz_".$1."_iz_".$2."_pz_".$3."_lz.dat");
       }
   }
 

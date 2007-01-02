@@ -3,6 +3,7 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 #include "Options/SingleIntegerOption.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <fstream>
@@ -49,85 +50,100 @@ int main(int argc, char** argv)
 
   char* InputName = InputFileOption.GetString();
   double Precision = PrecisionOption.GetDouble();
-  ifstream InputFile;
-  InputFile.open(InputName, ios::binary | ios::in);
-  InputFile.seekg(0, ios::end);
-  int FileSize = InputFile.tellg();
-  --FileSize;
-  InputFile.seekg(0, ios::beg);
+
+  MultiColumnASCIIFile Spectrum;
+  if (Spectrum.Parse(InputName) == false)
+    {
+      Spectrum.DumpErrors(cout) << endl;
+      return -1;
+    }
+  if (Spectrum.GetNbrColumns() < 2)
+    {
+      cout << "file should contain at least two columns" << endl;
+      return -1;
+    }
+  if (Spectrum.GetNbrLines() < 1)
+    {
+      cout << "file should contain at least one line" << endl;
+      return -1;
+    }
+  int TotalSize = Spectrum.GetNbrLines();
+  int* FullLzValues = Spectrum.GetAsIntegerArray(0);
+  if (FullLzValues == 0)
+    {
+      cout << "error while retrieving Lz values" << endl;
+      Spectrum.DumpErrors(cout) << endl;
+      return -1;
+    }
+  double* FullEigenvalues = Spectrum.GetAsDoubleArray(1);
+  if (FullEigenvalues == 0)
+    {
+      cout << "error while retrieving energy values" << endl;
+      Spectrum.DumpErrors(cout) << endl;
+      return -1;
+    }
+
   int NbrValue = 1;
-  int TotalSize = 0;
-  int CurrentLzValue;
-  int TmpLzValue;
-  double Dummy;
   int LColumn = LColumnOption.GetInteger();
   bool LCheck = LValidityOption.GetBoolean();
   double LError = LErrorOption.GetDouble();
   int MaxNbrLzValues = 1;
   int CurrentNbLzValues = 1;
-  double LValue;
-  InputFile >> CurrentLzValue >> Dummy >> LValue;
-  while ((InputFile.tellg() < FileSize) && (InputFile.tellg() >= 0))
+  int CurrentLzValue = FullLzValues[0];
+  int TotalPos = 1;
+  while (TotalPos < TotalSize)
     {
-      InputFile >> TmpLzValue >> Dummy >> LValue;
-      if (TmpLzValue != CurrentLzValue)
+      if (FullLzValues[TotalPos] != CurrentLzValue)
 	{
-	  CurrentLzValue = TmpLzValue;
+	  CurrentLzValue = FullLzValues[TotalPos];
 	  ++NbrValue;
 	  if (CurrentNbLzValues > MaxNbrLzValues)
 	    MaxNbrLzValues = CurrentNbLzValues;
 	  CurrentNbLzValues = 0;
 	}
-      ++TotalSize;
+      ++TotalPos;
       ++CurrentNbLzValues;
     }
-  InputFile.close();
 
   int* Dimensions = new int [NbrValue];
   double** Eigenvalues = new double* [NbrValue];
   int Pos = 0;
-  ifstream InputFile2;
-  InputFile2.open(InputName, ios::binary | ios::in);
   if (LColumn < 0)
     {
-      InputFile2 >> CurrentLzValue >> Dummy >> LValue;
+      TotalPos = 1;
+      CurrentLzValue = FullLzValues[0];
       Dimensions[Pos] = 1;  
-      while ((InputFile2.tellg() < FileSize) && (InputFile2.tellg() >= 0))
+      while (TotalPos < TotalSize)
 	{
-	  InputFile2 >> TmpLzValue >> Dummy >> LValue;
-	  if (TmpLzValue != CurrentLzValue)
+	  if (FullLzValues[TotalPos] != CurrentLzValue)
 	    {
-	      CurrentLzValue = TmpLzValue;
+	      CurrentLzValue = FullLzValues[TotalPos];
 	      Eigenvalues[Pos] = new double [Dimensions[Pos]];
 	      ++Pos;
 	      Dimensions[Pos] = 0;
 	    }
 	  ++Dimensions[Pos];
+	  ++TotalPos;
 	}
-      InputFile2.close();
-      Eigenvalues[Pos] = new double [Dimensions[Pos]];
-      
+      Eigenvalues[Pos] = new double [Dimensions[Pos]];      
       Pos = 0;
+      TotalPos = 1;
       int Pos2 = 0;
-      ifstream InputFile3;
-      InputFile3.open(InputName, ios::binary | ios::in);
-      InputFile3 >> CurrentLzValue >> Dummy >> LValue;
-      Eigenvalues[Pos][Pos2] = Dummy;
+      Eigenvalues[Pos][Pos2] = FullEigenvalues[0];
       ++Pos2;
-      while ((InputFile3.tellg() < FileSize) && (InputFile3.tellg() >= 0))
+      CurrentLzValue = FullLzValues[0];
+      while (TotalPos < TotalSize)
 	{
-	  InputFile3 >> TmpLzValue >> Dummy >> LValue;
-	  if (TmpLzValue != CurrentLzValue)
+	  if (FullLzValues[TotalPos] != CurrentLzValue)
 	    {
 	      ++Pos;
-	      CurrentLzValue = TmpLzValue;
+	      CurrentLzValue = FullLzValues[TotalPos];
 	      Pos2 = 0;
 	    }
-	  Eigenvalues[Pos][Pos2] = Dummy;
+	  Eigenvalues[Pos][Pos2] = FullEigenvalues[TotalPos];
 	  ++Pos2;
+	  ++TotalPos;
 	}
-      InputFile3.close();
-      
       
       int SpectrumSize = 0;
       double* Spectrum = new double [TotalSize];
@@ -178,7 +194,18 @@ int main(int argc, char** argv)
     }
   else
     {
-      double LValue;
+      if (Spectrum.GetNbrColumns() < LColumn)
+	{
+	  cout << "file should contain at least " << LColumn << " columns" << endl;
+	  return -1;
+	}
+      double* FullLValues = Spectrum.GetAsDoubleArray(LColumn - 1);
+      if (FullLValues == 0)
+	{
+	  cout << "error while retrieving mean L values" << endl;
+	  Spectrum.DumpErrors(cout) << endl;
+	  return -1;
+	}
       for (int i = 0; i < NbrValue; ++i)
 	{
 	  Dimensions[i] = 0;
@@ -186,48 +213,51 @@ int main(int argc, char** argv)
 	}
       int LineIndex = 1;
       int RoundedLValue;
+      TotalPos = 0;
       if (LCheck == true)
 	{
-	  while ((InputFile2.tellg() < FileSize) && (InputFile2.tellg() >= 0))
+	  while (TotalPos < TotalSize)
 	    {
-	      InputFile2 >> CurrentLzValue >> Dummy >> LValue;      
- 	      RoundedLValue = (int) round(LValue);
-	      if ((fabs(LValue - ((double) RoundedLValue)) > (LError * fabs((double) RoundedLValue))) || (RoundedLValue < CurrentLzValue))
+ 	      RoundedLValue = (int) round(FullLValues[TotalPos]);
+	      if ((fabs(FullLValues[TotalPos] - ((double) RoundedLValue)) > (LError * fabs((double) RoundedLValue))) || (RoundedLValue < FullLzValues[TotalPos]))
 		{
 		  cout << "invalid mean L value at line " << LineIndex << endl;
-		  cout << "found " << LValue << ", should be " << RoundedLValue << endl;
+		  cout << "found " << FullLValues[TotalPos] << ", should be " << RoundedLValue << endl;
 		  exit(1);
 		}
-	      if (RoundedLValue == CurrentLzValue)
+	      if (RoundedLValue == FullLzValues[TotalPos])
 		{
-		  Eigenvalues[RoundedLValue][Dimensions[RoundedLValue]] = Dummy;
+		  Eigenvalues[RoundedLValue][Dimensions[RoundedLValue]] = FullEigenvalues[TotalPos];
 		  ++Dimensions[RoundedLValue];  
 		}
 	      ++LineIndex;
 	    }
+	  ++TotalPos;
 	}
       else
 	{
-	  while ((InputFile2.tellg() < FileSize) && (InputFile2.tellg() >= 0))
+	  while (TotalPos < TotalSize)
 	    {
-	      InputFile2 >> CurrentLzValue >> Dummy >> LValue;      
-	      RoundedLValue = (int) round(LValue);
-	      if (RoundedLValue == CurrentLzValue)
+	      RoundedLValue = (int) round(FullLValues[TotalPos]);
+	      if (RoundedLValue == FullLzValues[TotalPos])
 		{
-		  Eigenvalues[RoundedLValue][Dimensions[RoundedLValue]] = Dummy;
+		  Eigenvalues[RoundedLValue][Dimensions[RoundedLValue]] = FullEigenvalues[TotalPos];
 		  ++Dimensions[RoundedLValue];  
 		}
+	      ++TotalPos;
 	    }
 	}      
-      InputFile2.close();
-       for (int i = NbrValue - 1; i >= 0; --i)
+      for (int i = NbrValue - 1; i >= 0; --i)
 	{
 	  if (Dimensions[i] > 0)
 	    for (int j = 0; j < Dimensions[i]; ++j)
 	      cout << i << " " << Eigenvalues[i][j] << endl;
 	  delete[] Eigenvalues[i];
 	}     
+      delete[] FullLValues;
     }
+  delete[] FullEigenvalues;
+  delete[] FullLzValues;
   delete[] Eigenvalues;
   delete[] Dimensions;
 

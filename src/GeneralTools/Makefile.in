@@ -51,14 +51,16 @@ ARFLAGS = cru
 libGeneralTools_a_AR = $(AR) $(ARFLAGS)
 libGeneralTools_a_LIBADD =
 am_libGeneralTools_a_OBJECTS = GarbageFlag.$(OBJEXT) \
-	ConfigurationParser.$(OBJEXT) FilenameTools.$(OBJEXT)
+	ConfigurationParser.$(OBJEXT) MultiColumnASCIIFile.$(OBJEXT) \
+	FilenameTools.$(OBJEXT)
 libGeneralTools_a_OBJECTS = $(am_libGeneralTools_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ConfigurationParser.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/FilenameTools.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/GarbageFlag.Po
+@AMDEP_TRUE@	./$(DEPDIR)/GarbageFlag.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/MultiColumnASCIIFile.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -108,6 +110,7 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 FORTRAN2C_LIBS = @FORTRAN2C_LIBS@
+GREP = @GREP@
 INCLUDES = @INCLUDES@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -141,8 +144,6 @@ VERSION = @VERSION@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -153,19 +154,26 @@ am__quote = @am__quote@
 bindir = @bindir@
 build_alias = @build_alias@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = @docdir@
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host_alias = @host_alias@
+htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -174,6 +182,7 @@ SUBDIRS =
 noinst_LIBRARIES = libGeneralTools.a
 libGeneralTools_a_SOURCES = GarbageFlag.cc \
 ConfigurationParser.cc \
+MultiColumnASCIIFile.cc \
 FilenameTools.cc
 
 all: all-recursive
@@ -226,6 +235,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConfigurationParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FilenameTools.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GarbageFlag.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MultiColumnASCIIFile.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
