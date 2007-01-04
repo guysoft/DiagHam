@@ -47,28 +47,25 @@ class ParticleOnSphereSquareTotalSpinOperator : public AbstractOperator
   // hilbert space associated to the particles
   ParticleOnSphereWithSU4Spin* Particle;
 
-  // spin total value
+  //  twice the total spin projection (i.e Sz) value
   int TotalSz;
   // maximum Lz value reached by a particle
   int LzMax;
+  //  number of particles
+  int NbrParticles;
 
-  // shift due to the Sz^2 term
+  // shift due to the Sz^2 and anticommutator terms
   double Shift;
 
-  // array where all coefficents that come from the S+S- terms and that are of two-body form are stored
-  double* TwoBodyCoefficients;
-  // array where all coefficents that come from the S+S- terms and that are of one-body form are stored
-  double* OneBodyCoefficients;
-  
  public:
   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
   // lzMax = maximum Lz value reached by a fermion
-  // factor = multiplicative factor in front of the L^2 operator
-  // memory = amount of memory (in bytes) that can be used for precalculations (none if memory < 0)
-  ParticleOnSphereSquareTotalSpinOperator(ParticleOnSphereWithSU4Spin* particle, int lzMax, double factor = 1.0, long memory = -1);
+  // nbrParticles = number of particles
+  // totalSz = twice the total spin projection (i.e Sz) value
+  ParticleOnSphereSquareTotalSpinOperator(ParticleOnSphereWithSU4Spin* particle, int lzMax, int nbrParticles, int totalSz);
 
   // copy constructor
   //

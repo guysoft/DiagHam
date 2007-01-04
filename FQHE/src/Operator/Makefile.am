@@ -8,4 +8,5 @@ ParticleOnSphereDensityOperator.cc \
 ParticleOnDiskDensityOperator.cc \
 ParticleOnSphereNBodyOperator.cc \
 ParticleOnSphereSquareTotalMomentumOperator.cc \
-ParticleOnSphereLMinusOperator.cc
+ParticleOnSphereLMinusOperator.cc \
+ParticleOnSphereSquareTotalSpinOperator.cc 

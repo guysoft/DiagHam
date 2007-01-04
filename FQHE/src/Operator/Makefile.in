@@ -57,7 +57,8 @@ am_libQHEOperator_a_OBJECTS =  \
 	ParticleOnDiskDensityOperator.$(OBJEXT) \
 	ParticleOnSphereNBodyOperator.$(OBJEXT) \
 	ParticleOnSphereSquareTotalMomentumOperator.$(OBJEXT) \
-	ParticleOnSphereLMinusOperator.$(OBJEXT)
+	ParticleOnSphereLMinusOperator.$(OBJEXT) \
+	ParticleOnSphereSquareTotalSpinOperator.$(OBJEXT)
 libQHEOperator_a_OBJECTS = $(am_libQHEOperator_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -68,6 +69,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereLMinusOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereSquareTotalMomentumOperator.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereSquareTotalSpinOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpinDensityDensityOperator.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -118,6 +120,7 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 FORTRAN2C_LIBS = @FORTRAN2C_LIBS@
+GREP = @GREP@
 INCLUDES = @INCLUDES@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -151,8 +154,6 @@ VERSION = @VERSION@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -163,19 +164,26 @@ am__quote = @am__quote@
 bindir = @bindir@
 build_alias = @build_alias@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = @docdir@
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host_alias = @host_alias@
+htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -188,7 +196,8 @@ ParticleOnSphereDensityOperator.cc \
 ParticleOnDiskDensityOperator.cc \
 ParticleOnSphereNBodyOperator.cc \
 ParticleOnSphereSquareTotalMomentumOperator.cc \
-ParticleOnSphereLMinusOperator.cc
+ParticleOnSphereLMinusOperator.cc \
+ParticleOnSphereSquareTotalSpinOperator.cc 
 
 all: all-recursive
 
@@ -243,6 +252,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereLMinusOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereSquareTotalMomentumOperator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereSquareTotalSpinOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpinDensityDensityOperator.Po@am__quote@
 
 .cc.o:

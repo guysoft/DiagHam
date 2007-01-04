@@ -9,10 +9,11 @@ my $PathToDimensionProgram = "/home/regnault/development/Physics/DiagHam/build/F
 my $MinN = 0;
 my $MaxN = 0;
 my $MaximumDimension = 0;
+my $MaxNbrFlux = 50;
 
 my $Result = GetOptions ("progdim:s" => \$PathToDimensionProgram, 
 			 "minnbrfermions=i" => \$MinN, "maxnbrfermions=i" => \$MaxN,
-			 "maxdim=i" => \$MaximumDimension);
+			 "maxdim=i" => \$MaximumDimension, "maxnbrflux:i");
 
 while ($MinN <= $MaxN)
   {
@@ -22,13 +23,16 @@ while ($MinN <= $MaxN)
 	$NbrFluxQuanta++;
       }
     my $TmpMaxDim = 0;    
-    while ($TmpMaxDim < $MaximumDimension)
+    while (($TmpMaxDim < $MaximumDimension) && ($NbrFluxQuanta <= $MaxNbrFlux))
       {
-	my $Command = $PathToDimensionProgram." -n ".$MinN." -s " .$NbrFluxQuanta." --su4-spin --save-disk";
-	print ("processing N=".$MinN." 2S=" .$NbrFluxQuanta."\n");
-	system($Command);
-	my $FileName = "fermions_sphere_su4_n_".$MinN."_2s_".$NbrFluxQuanta.".dim";
-	$TmpMaxDim = GetMaximumDimension($FileName);
+        my $FileName = "fermions_sphere_su4_n_".$MinN."_2s_".$NbrFluxQuanta.".dim";
+	if (!(-e $FileName))
+	  {
+	    my $Command = $PathToDimensionProgram." -n ".$MinN." -s " .$NbrFluxQuanta." --su4-spin --save-disk";
+	    print ("processing N=".$MinN." 2S=" .$NbrFluxQuanta."\n");
+	    system($Command);
+	  }
+	$TmpMaxDim = &GetMaximumDimension($FileName);
 	print "  maximum dimension = ".$TmpMaxDim."\n";
 	$NbrFluxQuanta++;
       }
