@@ -104,7 +104,6 @@ int main(int argc, char** argv)
       ++TotalPos;
       ++CurrentNbLzValues;
     }
-
   int* Dimensions = new int [NbrValue];
   double** Eigenvalues = new double* [NbrValue];
   int Pos = 0;
@@ -147,15 +146,20 @@ int main(int argc, char** argv)
       
       int SpectrumSize = 0;
       double* Spectrum = new double [TotalSize];
+      double* TmpSpectrum = new double [TotalSize];
       bool* Degeneracy = new bool [TotalSize];
       bool Flag;
       double TmpEigenvalue;
+      int L = NbrValue;
       if (FullOption.GetBoolean() == false)
-	for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
-	  {
-	    Spectrum[i] = Eigenvalues[NbrValue - 1][i];
-	    ++SpectrumSize;
-	  }
+	{
+	  for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
+	    {
+	      Spectrum[i] = Eigenvalues[NbrValue - 1][i];
+	      ++SpectrumSize;
+	    }
+	  --L;
+	}
       else
 	{
 	  for (int i = 0; i < Dimensions[NbrValue - 1]; ++i)
@@ -165,10 +169,11 @@ int main(int argc, char** argv)
 	      ++SpectrumSize;
 	    }
 	}
-      for (int  L = NbrValue - 2; L >= 0; --L)
+      for (int L = NbrValue - 2; L >= 0; --L)
 	{
 	  for (int j = 0; (j < SpectrumSize); ++j)
 	    Degeneracy[j] = false;
+	  int KeptValues = 0;
 	  for (int i = 0; i < Dimensions[L]; ++i)
 	    {
 	      Flag = false;
@@ -181,11 +186,16 @@ int main(int argc, char** argv)
 		  }
 	      if (Flag == false)
 		{
-		  Spectrum[SpectrumSize] = TmpEigenvalue;
+		  TmpSpectrum[KeptValues] = TmpEigenvalue;
+		  ++KeptValues;
 		  cout << L << " " << TmpEigenvalue << endl;
-		  Degeneracy[SpectrumSize] = false;
-		  ++SpectrumSize;
 		}
+	    }
+	  for (int i = 0; i < KeptValues; ++i)
+	    {
+	      Spectrum[SpectrumSize] = TmpSpectrum[i];
+	      Degeneracy[SpectrumSize]  = false;
+	      ++SpectrumSize;
 	    }
 	  delete[] Eigenvalues[L];
 	}
