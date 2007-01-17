@@ -253,7 +253,7 @@ class PeriodicQuantumDots3DHamiltonianInMagneticField : public AbstractHamiltoni
   // realSquared = reference to the array of X²'s real component
   // imaginarySquared = reference to the array of X²'s imaginary component
   // return = true if successful, otherwise false  
-  bool PeriodicQuantumDots3DHamiltonianInMagneticField::EvaluateMeanPositionOperator(double size, int nbrState, double* &real, double* &imaginary, double* &realSquared, double* &imaginarySquared);
+  bool EvaluateMeanPositionOperator(double size, int nbrState, double* &real, double* &imaginary, double* &realSquared, double* &imaginarySquared);
 
 };
 

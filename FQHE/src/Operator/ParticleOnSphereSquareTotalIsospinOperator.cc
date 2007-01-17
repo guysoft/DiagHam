@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//         class of particle on sphere square of total spin operator          //
+//       class of particle on sphere square of total isospin operator         //
 //                                                                            //
 //                        last modification : 01/01/2007                      //
 //                                                                            //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Operator/ParticleOnSphereSquareTotalSpinOperator.h"
+#include "Operator/ParticleOnSphereSquareTotalIsospinOperator.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
@@ -47,34 +47,34 @@ using std::endl;
 // particle = hilbert space associated to the particles
 // lzMax = maximum Lz value reached by a fermion
 // nbrParticles = number of particles
-// totalSz = twice the total spin projection (i.e Sz) value
+// totalIz = twice the total isospin projection (i.e Iz) value
 
-ParticleOnSphereSquareTotalSpinOperator::ParticleOnSphereSquareTotalSpinOperator(ParticleOnSphereWithSU4Spin* particle, int lzMax, int nbrParticles, int totalSz)
+ParticleOnSphereSquareTotalIsospinOperator::ParticleOnSphereSquareTotalIsospinOperator(ParticleOnSphereWithSU4Spin* particle, int lzMax, int nbrParticles, int totalIz)
 {
   this->Particle = (ParticleOnSphereWithSU4Spin*) (particle->Clone());
   this->LzMax = lzMax;
-  this->TotalSz = totalSz;
+  this->TotalIz = totalIz;
   this->NbrParticles = nbrParticles;
-  this->Shift = (0.5 * ((double) this->NbrParticles)) + (0.25 * ((double) (this->TotalSz * this->TotalSz)));
+  this->Shift = (0.5 * ((double) this->NbrParticles)) + (0.25 * ((double) (this->TotalIz * this->TotalIz)));
 }
 
 // copy constructor
 //
 // oper = reference on the operator to copy
  
-ParticleOnSphereSquareTotalSpinOperator::ParticleOnSphereSquareTotalSpinOperator(const ParticleOnSphereSquareTotalSpinOperator& oper)
+ParticleOnSphereSquareTotalIsospinOperator::ParticleOnSphereSquareTotalIsospinOperator(const ParticleOnSphereSquareTotalIsospinOperator& oper)
 {
   this->Particle = (ParticleOnSphereWithSU4Spin*) (oper.Particle->Clone());
   this->LzMax = oper.LzMax;
   this->Shift = oper.Shift;
   this->NbrParticles = oper.NbrParticles;
-  this->TotalSz = oper.TotalSz;
+  this->TotalIz = oper.TotalIz;
 }
 
 // destructor
 //
 
-ParticleOnSphereSquareTotalSpinOperator::~ParticleOnSphereSquareTotalSpinOperator()
+ParticleOnSphereSquareTotalIsospinOperator::~ParticleOnSphereSquareTotalIsospinOperator()
 {
   delete this->Particle;
 }
@@ -84,16 +84,16 @@ ParticleOnSphereSquareTotalSpinOperator::~ParticleOnSphereSquareTotalSpinOperato
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractOperator* ParticleOnSphereSquareTotalSpinOperator::Clone ()
+AbstractOperator* ParticleOnSphereSquareTotalIsospinOperator::Clone ()
 {
-  return new ParticleOnSphereSquareTotalSpinOperator(*this);
+  return new ParticleOnSphereSquareTotalIsospinOperator(*this);
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnSphereSquareTotalSpinOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereSquareTotalIsospinOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particle = (ParticleOnSphereWithSU4Spin*) hilbertSpace;
 }
@@ -102,7 +102,7 @@ void ParticleOnSphereSquareTotalSpinOperator::SetHilbertSpace (AbstractHilbertSp
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnSphereSquareTotalSpinOperator::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereSquareTotalIsospinOperator::GetHilbertSpace ()
 {
   return this->Particle;
 }
@@ -111,7 +111,7 @@ AbstractHilbertSpace* ParticleOnSphereSquareTotalSpinOperator::GetHilbertSpace (
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnSphereSquareTotalSpinOperator::GetHilbertSpaceDimension ()
+int ParticleOnSphereSquareTotalIsospinOperator::GetHilbertSpaceDimension ()
 {
   return this->Particle->GetHilbertSpaceDimension();
 }
@@ -122,7 +122,7 @@ int ParticleOnSphereSquareTotalSpinOperator::GetHilbertSpaceDimension ()
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   double Element = 0.0;
@@ -134,33 +134,33 @@ Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (RealVector& V1, 
       for (int j = 0; j <= this->LzMax; ++j)
 	for (int  k = 0; k <= this->LzMax; ++k)
 	  {
-	    Coefficient = this->Particle->AupAdp(i, k, j);
+	    Coefficient = this->Particle->AupAum(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
-		Index = this->Particle->AdupAddp(j, k, Coefficient2);
+		Index = this->Particle->AdupAdum(j, k, Coefficient2);
 		if (Index != Dim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
-	    Coefficient = this->Particle->AumAdm(i, k, j);
+	    Coefficient = this->Particle->AdpAdm(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
-		Index = this->Particle->AdumAddm(j, k, Coefficient2);
+		Index = this->Particle->AddpAddm(j, k, Coefficient2);
 		if (Index != Dim)
 		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
 	    Coefficient = this->Particle->AumAdp(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
-		Index = this->Particle->AdupAddm(j, k, Coefficient2);
+		Index = this->Particle->AdupAddm(k, j, Coefficient2);
 		if (Index != Dim)
-		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		  
+		  Element -= V1[Index] * V2[i] * Coefficient * Coefficient2;		  
 	      }
 	    Coefficient = this->Particle->AupAdm(i, k, j);
 	    if (Coefficient != 0.0)
 	      {
-		Index = this->Particle->AdumAddp(j, k, Coefficient2);
+		Index = this->Particle->AdumAddp(k, j, Coefficient2);
 		if (Index != Dim)
-		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;		
+		  Element -= V1[Index] * V2[i] * Coefficient * Coefficient2;		
 	      }
 	  }
     }
@@ -174,7 +174,7 @@ Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (RealVector& V1, 
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+Complex ParticleOnSphereSquareTotalIsospinOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
   return Complex();
 }
@@ -188,8 +188,8 @@ Complex ParticleOnSphereSquareTotalSpinOperator::MatrixElement (ComplexVector& V
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& ParticleOnSphereSquareTotalSpinOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-									 int firstComponent, int nbrComponent)
+RealVector& ParticleOnSphereSquareTotalIsospinOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									    int firstComponent, int nbrComponent)
 {
   return vDestination;
 }

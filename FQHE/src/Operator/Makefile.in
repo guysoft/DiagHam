@@ -58,7 +58,8 @@ am_libQHEOperator_a_OBJECTS =  \
 	ParticleOnSphereNBodyOperator.$(OBJEXT) \
 	ParticleOnSphereSquareTotalMomentumOperator.$(OBJEXT) \
 	ParticleOnSphereLMinusOperator.$(OBJEXT) \
-	ParticleOnSphereSquareTotalSpinOperator.$(OBJEXT)
+	ParticleOnSphereSquareTotalSpinOperator.$(OBJEXT) \
+	ParticleOnSphereSquareTotalIsospinOperator.$(OBJEXT)
 libQHEOperator_a_OBJECTS = $(am_libQHEOperator_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -68,6 +69,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDensityOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereLMinusOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereSquareTotalIsospinOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereSquareTotalMomentumOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereSquareTotalSpinOperator.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpinDensityDensityOperator.Po
@@ -197,7 +199,8 @@ ParticleOnDiskDensityOperator.cc \
 ParticleOnSphereNBodyOperator.cc \
 ParticleOnSphereSquareTotalMomentumOperator.cc \
 ParticleOnSphereLMinusOperator.cc \
-ParticleOnSphereSquareTotalSpinOperator.cc 
+ParticleOnSphereSquareTotalSpinOperator.cc \
+ParticleOnSphereSquareTotalIsospinOperator.cc
 
 all: all-recursive
 
@@ -251,6 +254,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDensityOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereLMinusOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyOperator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereSquareTotalIsospinOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereSquareTotalMomentumOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereSquareTotalSpinOperator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpinDensityDensityOperator.Po@am__quote@

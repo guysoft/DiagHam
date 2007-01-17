@@ -9,11 +9,13 @@ my $PathToLzToLProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/
 my $CheckValidity = 0;
 my $ValidtyError = 1e-12;
 my $FilePattern;
+my $FullFlag = 0;
 
 my $Result = GetOptions ("progdiag:s" => \$PathToLzToLProgram, 
 			 "file-pattern=s" => \$FilePattern,
 			 "check-validity" => \$CheckValidity,
-			 "validity-error:s" => \$ValidtyError);
+			 "validity-error:s" => \$ValidtyError,
+			 "full" => \$FullFlag);
 
 
 
@@ -68,8 +70,7 @@ my $SzIz;
 my @PointSytles = (70, 11, 31, 63, 2);
 while (($SzIz, $TmpArray) = each (%Sprectra))
   {
-    my %LocalSpectrum;
-    &FindGroundState($TmpArray, \%LocalSpectrum, $GroundStateEnergy);
+    &FindGroundState($TmpArray, $GroundStateEnergy, $FullFlag);
     my @SortedFiles = sort {$a =~ /\_pz\_(\d+)\_/; my $Pz1 = $1; $b =~ /\_pz\_(\d+)\_/; my $Pz2 = $1; return ($Pz1 <=> $Pz2);} (@$TmpArray);
     my @GnuplotPlot;
     my $PointStyleIndex = 0;
@@ -77,13 +78,28 @@ while (($SzIz, $TmpArray) = each (%Sprectra))
       {
 	$TmpFile =~ /\_pz\_(\d+)\_/;
 	my $Pz = $1;
-	$TmpFile =~ s/l\.dat$/l\.ground.dat/;	
+	if ($FullFlag == 0)
+	  {
+	    $TmpFile =~ s/l\.dat$/l\.ground.dat/;	
+	  }
+	else
+	  {
+	    $TmpFile =~ s/l\.dat$/l\.full.dat/;	
+	  }
 	push (@GnuplotPlot,  "\"".$TmpFile."\" using 1:2 title \"2P_z=".$Pz."\" with points ".$PointSytles[$PointStyleIndex]);
 	$PointStyleIndex++;
       }    
     my $OutputPSFile = shift (@SortedFiles);
     $OutputPSFile =~ s/\_pz\_(\d+)\_/\_/;
-    $OutputPSFile =~ s/\_l\.ground\.dat$/.ground.eps/;	
+    if ($FullFlag == 0)
+      {
+	$OutputPSFile =~ s/\_l\.ground\.dat$/.ground.eps/;
+      }
+    else
+      {
+	$OutputPSFile =~ s/\_l\.full\.dat$/.full.eps/;
+      }
+	
     $SzIz =~ /^sz\_(\d+)\_iz\_(\d+)$/;
     my $Sz = $1;
     my $Iz = $2;
@@ -110,8 +126,8 @@ plot ".join (", ", @GnuplotPlot)."\n";
 sub FindGroundState()
   {
     my $Files = $_[0];
-    my $LocalSpectrum = $_[1];
-    my $GroundStateEnergy = $_[2];
+    my $GroundStateEnergy = $_[1];
+    my $FullFlag = $_[2];
     my @SortedFiles = sort {$a =~ /\_pz\_(\d+)\_/; my $Pz1 = $1; $b =~ /\_pz\_(\d+)\_/; my $Pz2 = $1; return ($Pz1 <=> $Pz2);} (@$Files);
     my $TmpFile;
     my $MaxL = 0;
@@ -131,14 +147,28 @@ sub FindGroundState()
 	  {
 	    chomp ($TmpLine);
 	    my @TmpArray = split (/ /, $TmpLine);
-	    if ($TmpArray[0] < $CurrentMaxL)
+	    if ($FullFlag == 0)
 	      {
-		$CurrentMaxL = $TmpArray[0];		
+		if ($TmpArray[0] < $CurrentMaxL)
+		  {
+		    $CurrentMaxL = $TmpArray[0];		
+		    $TmpSpectrum .= $TmpArray[0]." ".($TmpArray[1] - $GroundStateEnergy)."\n";
+		  }
+	      }
+	    else
+	      {
 		$TmpSpectrum .= $TmpArray[0]." ".($TmpArray[1] - $GroundStateEnergy)."\n";
 	      }
 	  }
 	close (INFILE);
-	$TmpFile =~ s/l\.dat$/l\.ground.dat/;
+	if ($FullFlag == 0)
+	  {
+	    $TmpFile =~ s/l\.dat$/l\.ground.dat/;
+	  }
+	else
+	  {
+	    $TmpFile =~ s/l\.dat$/l\.full.dat/;
+	  }
 	unless (open(OUTFILE, ">".$TmpFile))
 	  {
 	    die ("can't open ".$TmpFile."\n");

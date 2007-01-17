@@ -71,7 +71,7 @@ class XYReflexionSymmetricPeriodicSpectra
   // x, y = coordinates of the point
   // sizeX, sizeY = dimensions of the system in x and y directions
   // return = value of the probability density  
-  double XYReflexionSymmetricPeriodicSpectra::PlanarProbabilityDensity(double x, double sizeX, double y, double sizeY);
+  double PlanarProbabilityDensity(double x, double sizeX, double y, double sizeY);
 
   // get the value of impulsion operators with another wave function <this|p|another>
   //
