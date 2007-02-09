@@ -58,7 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldabe algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -78,52 +78,6 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
-
-  if (((SingleStringOption*) Manager["state"])->GetString() == 0)
-    {
-      cout << "QHEHaldaneSphere requires a state" << endl;
-      return -1;
-    }
-//   RealVector State;
-//   if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
-//     {
-//       cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-//       return -1;      
-//     }
-
-
-//   ParticleOnSphere* Space;
-// #ifdef __64_BITS__
-//   if (LzMax <= 63)
-//     {
-//       Space = new FermionOnSphere(NbrParticles, Lz, LzMax);
-//     }
-//   else
-//     {
-//       Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax);
-//     }
-// #else
-//   if (LzMax <= 31)
-//     {
-//       Space = new FermionOnSphere(NbrParticles, Lz, LzMax);
-//     }
-//   else
-//     {
-//       Space = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax);
-//     }
-// #endif
-
-
-//   int NbrNonZeroComponents = 0;
-//   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-//     {
-//       if (fabs(State[i]) > 1e-12)
-// 	{
-// // 	  Space->PrintState(cout, i) << " : " << (State[i]) << endl;
-// 	  ++NbrNonZeroComponents;
-// 	}
-//     }
-//   cout << NbrNonZeroComponents << " / " << Space->GetHilbertSpaceDimension() << endl;
 
   int* ReferenceState = 0;
   if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
@@ -193,7 +147,9 @@ int main(int argc, char** argv)
     }
   else
     {
+      cout << "check " << endl;
       FermionOnSphereHaldaneBasis ReducedSpace(NbrParticles, Lz, LzMax, ReferenceState);
+      cout << "check " << endl;
       //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
       //    ReducedSpace.PrintState(cout, i) << endl;
       cout << ReducedSpace.GetHilbertSpaceDimension() << endl;

@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -49,29 +50,36 @@ using std::dec;
 // basic constructor
 // 
 // nbrFermions = number of fermions
-// totalLz = twice the momentum total value
+// totalLz = reference on twice the momentum total value, totalLz will be recomputed from referenceState and stored in totalLz
 // lzMax = twice the maximum Lz value reached by a fermion
 // memory = amount of memory granted for precalculations
 // referenceState = array that describes the reference state to start from
 
-FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, int* referenceState,
+FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState,
 							  unsigned long memory)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
-  this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  this->ReferenceState = 0x0l;
+  this->MaximumSignLookUp = 16;
+  this->ReferenceState = 0x0ul;
   int ReferenceStateLzMax = 0;
+  this->TotalLz = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
       this->ReferenceState |= ((unsigned long) (referenceState[i] & 1)) << i;
       if (referenceState[i] == 1)
-	ReferenceStateLzMax = i;
+	{
+	  ReferenceStateLzMax = i;
+	  this->TotalLz += i;
+	}
     }
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
+  totalLz = this->TotalLz;
+
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
 
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
@@ -85,7 +93,9 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
     this->KeepStateFlag[i] = 0x0l;
   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
   this->GenerateLookUpTable(memory);
+  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
 
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
@@ -99,6 +109,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
 #endif
   this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1, Memory);  
+  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
 
   int NewHilbertSpaceDimension = 0;
   unsigned long TmpKeepStateFlag;
@@ -196,7 +207,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int t
   delete[] this->TmpGeneratedStates;
   delete[] this->TmpGeneratedStatesLzMax;
 
-  this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -357,6 +367,20 @@ void FermionOnSphereHaldaneBasis::SetTargetSpace(ParticleOnSphere* targetSpace)
 int FermionOnSphereHaldaneBasis::GetTargetHilbertSpaceDimension()
 {
   return this->TargetSpace->HilbertSpaceDimension;
+}
+
+// convert a gien state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneBasis::ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
 }
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)

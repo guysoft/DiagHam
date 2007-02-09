@@ -38,6 +38,9 @@
 #include <iostream>
 
 
+class FermionOnSphere;
+
+
 class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 {
 
@@ -96,11 +99,11 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // basic constructor
   // 
   // nbrFermions = number of fermions
-  // totalLz = momentum total value
+  // totalLz = reference on twice the momentum total value, totalLz will be recomputed from referenceState and stored in totalLz
   // lzMax = maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
   // referenceState = array that describes the reference state to start from
-  FermionOnSphereHaldaneBasis (int nbrFermions, int totalLz, int lzMax, int* referenceState,
+  FermionOnSphereHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState,
 			       unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
@@ -156,6 +159,14 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   //
   // return value = Hilbert space dimension
   virtual int GetTargetHilbertSpaceDimension();
+
+  // convert a gien state from Haldane basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //

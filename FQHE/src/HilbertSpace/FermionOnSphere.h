@@ -41,6 +41,8 @@
 class FermionOnSphere :  public ParticleOnSphere
 {
 
+  friend class FermionOnSphereHaldaneBasis;
+
  protected:
 
   // number of fermions
