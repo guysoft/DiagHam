@@ -93,9 +93,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
     this->KeepStateFlag[i] = 0x0l;
   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
-  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
   this->GenerateLookUpTable(memory);
-  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
 
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
@@ -109,7 +107,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
 #endif
   this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1, Memory);  
-  cout << "toto " << this->HilbertSpaceDimension << " " << this->NbrFermions << " " <<  this->LzMax << " " <<  this->TotalLz<< endl;
 
   int NewHilbertSpaceDimension = 0;
   unsigned long TmpKeepStateFlag;
@@ -712,7 +709,15 @@ int FermionOnSphereHaldaneBasis::FindStateIndex(unsigned long stateDescription, 
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    {
+      if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+	{
+	  cout << "error" << endl;
+	  return this->HilbertSpaceDimension;
+	}
+      else
+	return PosMin;
+    }
 }
 
 // print a given State
