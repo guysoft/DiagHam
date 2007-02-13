@@ -120,7 +120,7 @@ ostream& FermionSU4WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("GetBosonsDimension" , "0.01");
+  OptionManager Manager ("FQHESphereGetDimension" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");

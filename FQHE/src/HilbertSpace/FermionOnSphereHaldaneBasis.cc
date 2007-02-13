@@ -709,15 +709,10 @@ int FermionOnSphereHaldaneBasis::FindStateIndex(unsigned long stateDescription, 
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    {
-      if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
-	{
-	  cout << "error" << endl;
-	  return this->HilbertSpaceDimension;
-	}
-      else
-	return PosMin;
-    }
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }
 
 // print a given State

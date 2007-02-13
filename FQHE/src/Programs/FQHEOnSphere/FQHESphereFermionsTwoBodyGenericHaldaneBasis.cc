@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -229,7 +230,9 @@ int main(int argc, char** argv)
 							 Architecture.GetArchitecture(), 
 							 Memory, DiskCacheFlag,
 							 LoadPrecalculationFileName);
-  double Shift = 0.0; //- 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+  double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+  if (((SingleDoubleOption*) Manager["energy-shift"])->GetDouble() != 0.0)
+    Shift = ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();
   Hamiltonian->ShiftHamiltonian(Shift);
   char* EigenvectorName = 0;
   if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
