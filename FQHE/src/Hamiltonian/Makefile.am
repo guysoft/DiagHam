@@ -34,4 +34,5 @@ ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.cc \
 AbstractQHEOnSphereWithSU4SpinHamiltonian.cc \
-ParticleOnSphereWithSU4SpinGenericHamiltonian.cc
+ParticleOnSphereWithSU4SpinGenericHamiltonian.cc \
+ParticleOnSphereL2Hamiltonian.cc

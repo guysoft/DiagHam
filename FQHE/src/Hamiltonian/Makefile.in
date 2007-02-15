@@ -83,7 +83,8 @@ am_libQHEHamiltonian_a_OBJECTS =  \
 	ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.$(OBJEXT) \
 	ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.$(OBJEXT) \
 	AbstractQHEOnSphereWithSU4SpinHamiltonian.$(OBJEXT) \
-	ParticleOnSphereWithSU4SpinGenericHamiltonian.$(OBJEXT)
+	ParticleOnSphereWithSU4SpinGenericHamiltonian.$(OBJEXT) \
+	ParticleOnSphereL2Hamiltonian.$(OBJEXT)
 libQHEHamiltonian_a_OBJECTS = $(am_libQHEHamiltonian_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -108,6 +109,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDeltaModifiedHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereDipolarHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereGenericHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereL2Hamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereLaplacianDeltaHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.Po \
@@ -170,6 +172,7 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 FORTRAN2C_LIBS = @FORTRAN2C_LIBS@
+GREP = @GREP@
 INCLUDES = @INCLUDES@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -203,8 +206,6 @@ VERSION = @VERSION@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -215,19 +216,26 @@ am__quote = @am__quote@
 bindir = @bindir@
 build_alias = @build_alias@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = @docdir@
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host_alias = @host_alias@
+htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -266,7 +274,8 @@ ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.cc \
 ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.cc \
 AbstractQHEOnSphereWithSU4SpinHamiltonian.cc \
-ParticleOnSphereWithSU4SpinGenericHamiltonian.cc
+ParticleOnSphereWithSU4SpinGenericHamiltonian.cc \
+ParticleOnSphereL2Hamiltonian.cc
 
 all: all-recursive
 
@@ -335,6 +344,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDeltaModifiedHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereDipolarHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereGenericHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereL2Hamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereLaplacianDeltaHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian.Po@am__quote@
