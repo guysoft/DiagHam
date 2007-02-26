@@ -88,6 +88,8 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -214,7 +216,16 @@ int main(int argc, char** argv)
 	}
     }
 
-  ParticleOnSphere* Space = new FermionOnSphereHaldaneBasis(NbrParticles, InitialLz, LzMax, ReferenceState, MemorySpace);
+  FermionOnSphereHaldaneBasis* Space = 0;
+  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+    Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+  else
+    Space = new FermionOnSphereHaldaneBasis(NbrParticles, InitialLz, LzMax, ReferenceState, MemorySpace);
+  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+    {
+      Space->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+      return 0;
+    }
   cout << "InitialLz = " << InitialLz << " " << Space->GetHilbertSpaceDimension() <<endl;
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;

@@ -106,6 +106,12 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   FermionOnSphereHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState,
 			       unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereHaldaneBasis (char* fileName, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -120,6 +126,12 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
   FermionOnSphereHaldaneBasis& operator = (const FermionOnSphereHaldaneBasis& fermions);
+
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  bool WriteHilbertSpace (char* fileName);
 
   // clone Hilbert space (without duplicating datas)
   //
