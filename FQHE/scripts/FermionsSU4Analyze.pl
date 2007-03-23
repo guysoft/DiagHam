@@ -8,12 +8,14 @@ use Getopt::Long;
 my $PathToLzToLProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/LzToL";
 my $CheckValidity = 0;
 my $ValidtyError = 1e-12;
+my $DegeneracyError = 1e-12;
 my $FilePattern;
 
 my $Result = GetOptions ("progdiag:s" => \$PathToLzToLProgram, 
 			 "file-pattern=s" => \$FilePattern,
 			 "check-validity" => \$CheckValidity,
-			 "validity-error:s" => \$ValidtyError);
+			 "validity-error:s" => \$ValidtyError,
+			 "degeneracy-error:s" => \$DegeneracyError);
 
 
 
@@ -46,14 +48,16 @@ my $MinFile = shift(@Sprectra);
 my $MinEnergy;
 my $MinL;
 &FindMinEnergy ($MinFile, \$MinEnergy, \$MinL);
-print "local minimum energy in file ".$MinFile." at L=".$MinL." (".$MinEnergy.")\n";
+my $Degeneracy = &FindGroundStateDegeneracy($MinFile, $MinEnergy, $MinL, $DegeneracyError);
+print "local minimum energy in file ".$MinFile." at L=".$MinL." (".$MinEnergy.") with degeneracy ".$Degeneracy."\n";
 
 foreach $TmpFile (@Sprectra)
   {
     my $CurrentMinEnergy ;
     my $CurrentMinL;    
     &FindMinEnergy($TmpFile, \$CurrentMinEnergy, \$CurrentMinL);
-    print "local minimum energy in file ".$TmpFile." at L=".$CurrentMinL." (".$CurrentMinEnergy.")\n";
+    $Degeneracy = &FindGroundStateDegeneracy($TmpFile, $CurrentMinEnergy, $CurrentMinL, $DegeneracyError);
+    print "local minimum energy in file ".$TmpFile." at L=".$CurrentMinL." (".$CurrentMinEnergy.") with degeneracy ".$Degeneracy."\n";
     if ($CurrentMinEnergy < $MinEnergy)
       {
 	$MinEnergy = $CurrentMinEnergy;
@@ -91,4 +95,33 @@ sub FindMinEnergy ()
 	  }
       }
     close (INFILE);
+  }
+
+sub FindGroundStateDegeneracy ()
+  {
+    my $FileName = $_[0];
+    my $GroundStateEnergy = $_[1];
+    my $GroundStateL = $_[2];
+    my $DegeneracyError = $_[3];
+    my $Degeneracy = 0;
+    unless (open(INFILE ,$FileName))
+      {
+	die ("can't open ".$FileName."\n");	
+      }
+    my $TmpLine;
+    while (defined($TmpLine = <INFILE>))
+      {
+	chomp($TmpLine);    
+	my @TmpArray = split (/ /, $TmpLine);
+	if ($TmpArray[0] == $GroundStateL)
+	  {
+	    if (((abs($TmpArray[1]) < $DegeneracyError) && (abs($GroundStateEnergy) < $DegeneracyError)) ||
+		(abs($TmpArray[1] - $GroundStateEnergy) < ($DegeneracyError * abs($GroundStateEnergy))))
+	      {
+		$Degeneracy++;
+	      }
+	  }
+      }
+    close (INFILE);
+    return $Degeneracy;
   }

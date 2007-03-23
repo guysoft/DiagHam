@@ -88,6 +88,10 @@ class FermionOnSphere :  public ParticleOnSphere
 
  public:
 
+  // default constuctor
+  //
+  FermionOnSphere();
+
   // basic constructor
   // 
   // nbrFermions = number of fermions
@@ -233,7 +237,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate Hilbert space dimension
   //

@@ -1,4 +1,5 @@
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/BosonOnSphere.h"
@@ -60,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
@@ -118,7 +120,7 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-
+  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
@@ -129,12 +131,18 @@ int main(int argc, char** argv)
 	{
 #ifdef __64_BITS__
 	  if (LzMax <= 63)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	      Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    else
+	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
 	  else
 	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
 #else
 	  if (LzMax <= 31)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	      Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    else
+	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
 	  else
 	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
 #endif
