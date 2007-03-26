@@ -40,6 +40,10 @@
 #include <math.h>
 
 
+#define SYMMETRY_BIT 0x40000000
+#define SYMMETRY_BIT_MASK 0x40000000
+
+
 using std::cout;
 using std::endl;
 using std::hex;
@@ -65,21 +69,28 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
 #else
   this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
 #endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->NbrFermions * this->LzMax) >> 1, 0);
   int TmpHilbertSpaceDimension = 0;
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     {
-//       for (int j = 0; j <= this->LzMax; ++j)
-// 	cout << ((this->GetCanonicalState(this->StateDescription[i]) >> j) & 1) << " ";
-//       cout << "| ";
-//       for (int j = 0; j <= this->LzMax; ++j)
-// 	cout << ((this->StateDescription[i] >> j) & 1) << " ";
-//       cout << endl;
-//     }
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long Tmp = this->GetCanonicalState(this->StateDescription[i]);
+      for (int j = 0; j <= this->LzMax; ++j)
+	cout << ((Tmp >> j) & 1) << " ";
+      cout << "| ";
+      for (int j = 0; j <= this->LzMax; ++j)
+	cout << ((this->StateDescription[i] >> j) & 1) << " ";
+      if (this->GetCanonicalState(this->GetCanonicalState(this->StateDescription[i])) != this->GetCanonicalState(this->StateDescription[i]))
+	cout << " error";
+      cout << endl;
+    }
    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
       this->StateDescription[i] = 0x0ul;
@@ -103,8 +114,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
-      this->StateLzMax[i] |= 0x80000000;
+    this->GetStateSymmetry(this->StateDescription[i]);
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -139,6 +149,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis(const FermionOnSphe
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
@@ -198,6 +209,7 @@ FermionOnSphereSymmetricBasis& FermionOnSphereSymmetricBasis::operator = (const 
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
@@ -261,9 +273,9 @@ int FermionOnSphereSymmetricBasis::GetTargetHilbertSpaceDimension()
 int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int TmpStateLzMax = this->StateLzMax[index];
-  int Signature = TmpStateLzMax & 0x80000000;
-  TmpStateLzMax &= 0x7fffffff;
   unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
   if ((n1 > TmpStateLzMax) || (n2 > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
       || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
@@ -330,8 +342,9 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
+  this->GetStateSymmetry(TmpState);
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((this->StateLzMax[TmpIndex] & 0x80000000) != Signature)
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
     if (Signature != 0)
       coefficient *= M_SQRT1_2;
     else
@@ -351,9 +364,9 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
 int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
   int TmpStateLzMax = this->StateLzMax[index];
-  int Signature = TmpStateLzMax & 0x80000000;
-  TmpStateLzMax &= 0x7fffffff;
   unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
   --nbrIndices;
   for (int i = 0; i < nbrIndices; ++i)
     {
@@ -417,8 +430,9 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
 	}
       TmpState |= (((unsigned long) (0x1)) << Index);
     }
+  this->GetStateSymmetry(TmpState);
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((this->StateLzMax[TmpIndex] & 0x80000000) != Signature)
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
     if (Signature != 0)
       coefficient *= M_SQRT1_2;
     else
@@ -436,9 +450,9 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
 double FermionOnSphereSymmetricBasis::ProdA (int index, int* n, int nbrIndices)
 {
   this->ProdALzMax = this->StateLzMax[index];
-  this->ProdASignature = this->ProdALzMax & 0x80000000;
-  this->ProdALzMax &= 0x7fffffff;
   this->ProdATemporaryState = this->StateDescription[index];
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
   int Index;
   double Coefficient = 1.0;
   for (int i = nbrIndices - 1; i >= 0; --i)
@@ -498,12 +512,14 @@ int FermionOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeff
 	}
       TmpState |= (0x1l << Index);
     }
+
+  this->GetStateSymmetry(TmpState);
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((this->StateLzMax[TmpIndex] & 0x80000000) != this->ProdASignature)
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
     if (this->ProdASignature != 0)
-      coefficient *= M_SQRT1_2;
-    else
       coefficient *= M_SQRT2;
+    else
+      coefficient *= M_SQRT1_2;
   return TmpIndex;
 }
 
@@ -521,55 +537,36 @@ double FermionOnSphereSymmetricBasis::AdA (int index, int m)
     return 0.0;
 }
 
-// apply a^+_m a_n operator to a given state 
+// find state index
 //
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-  
-int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coefficient)
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+int FermionOnSphereSymmetricBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  int TmpStateLzMax = this->StateLzMax[index];
-  unsigned long State = this->StateDescription[index];
-  if ((n > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+  long PosMax = (stateDescription & FERMION_SPHERE_SYMMETRIC_MASK) >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
     }
-  int NewLzMax = TmpStateLzMax;
-  unsigned long TmpState = State;
-  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
-#endif
-  TmpState &= ~(((unsigned long) (0x1)) << n);
-  if (NewLzMax == n)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
-  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m > NewLzMax)
-    {
-      NewLzMax = m;
-    }
+  if (CurrentState == stateDescription)
+    return PosMid;
   else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
-#endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m);
-  return this->FindStateIndex(TmpState, NewLzMax);
+    return PosMin;
 }
 
 // print a given State

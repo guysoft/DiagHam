@@ -38,6 +38,17 @@
 
 #include <iostream>
 
+
+#ifdef __64_BITS__
+#define FERMION_SPHERE_SYMMETRIC_BIT 0x8000000000000000ul
+#define FERMION_SPHERE_SYMMETRIC_MASK 0x7ffffffffffffffful
+#else
+#define FERMION_SPHERE_SYMMETRIC_BIT 0x80000000ul
+#define FERMION_SPHERE_SYMMETRIC_MASK 0x7ffffffful
+#endif
+
+
+
 // precalculation table used to invert a state
 //
 
@@ -76,10 +87,12 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
 
   // shift to apply to a state before inverting its expression
   int InvertShift;
+  // shift to apply to a state after inverting its expression
+  int InvertUnshift;
 
 
   // signature associated to temporary state used when applying ProdA operator
-  int ProdASignature;
+  unsigned long ProdASignature;
 
  public:
 
@@ -173,15 +186,6 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
-  // apply a^+_m a_n operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AdA (int index, int m, int n, double& coefficient);
-
   // print a given State
   //
   // Str = reference on current output stream 
@@ -207,11 +211,23 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   
  protected:
 
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
+
   // get canonical expression of a given state
   //
   // initialState = state that has to be converted to its canonical expression
   // return value = corresponding canonical state
   unsigned long GetCanonicalState (unsigned long initialState);
+
+  // get symmetry of a given state 
+  //
+  // initialState = referennce state whose symmetry has to be computed
+  void GetStateSymmetry (unsigned long& initialState);
 
 };
 
@@ -238,10 +254,40 @@ inline unsigned long FermionOnSphereSymmetricBasis::GetCanonicalState (unsigned 
   TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
   TmpState |= InvertTable[initialState >> 24];
 #endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
   if (TmpState < initialState)
-    return (TmpState >> this->InvertShift);
+    return TmpState;
   else
-    return (initialState >> this->InvertShift);
+    return initialState;
+}
+
+// get symmetry of a given state 
+//
+// initialState = reference on the state whose symmetry has to be computed
+
+inline void FermionOnSphereSymmetricBasis::GetStateSymmetry (unsigned long& initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56];  
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState != initialState)    
+    initialState |= FERMION_SPHERE_SYMMETRIC_BIT;
 }
 
 #endif
