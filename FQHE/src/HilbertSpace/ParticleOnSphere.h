@@ -42,6 +42,13 @@ class ParticleOnSphere :  public AbstractQHEParticle
 
  public:
 
+  enum 
+    {
+      NoSymmetry = 0x0,
+      LzMinusLzSymmetry = 0x1
+    };
+
+
   // virtual destructor
   //
   virtual ~ParticleOnSphere ();
@@ -50,6 +57,11 @@ class ParticleOnSphere :  public AbstractQHEParticle
   //
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
+
+  // get information about any additional symmetry of the Hilbert space
+  //
+  // return value = symmetry id
+  virtual int GetHilbertSpaceAdditionalSymmetry();
 
   // set a different target space (for all basic operations)
   //

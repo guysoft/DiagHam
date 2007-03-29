@@ -40,10 +40,6 @@
 #include <math.h>
 
 
-#define SYMMETRY_BIT 0x40000000
-#define SYMMETRY_BIT_MASK 0x40000000
-
-
 using std::cout;
 using std::endl;
 using std::hex;
@@ -79,18 +75,22 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->NbrFermions * this->LzMax) >> 1, 0);
   int TmpHilbertSpaceDimension = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      unsigned long Tmp = this->GetCanonicalState(this->StateDescription[i]);
-      for (int j = 0; j <= this->LzMax; ++j)
-	cout << ((Tmp >> j) & 1) << " ";
-      cout << "| ";
-      for (int j = 0; j <= this->LzMax; ++j)
-	cout << ((this->StateDescription[i] >> j) & 1) << " ";
-      if (this->GetCanonicalState(this->GetCanonicalState(this->StateDescription[i])) != this->GetCanonicalState(this->StateDescription[i]))
-	cout << " error";
-      cout << endl;
-    }
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//     {
+//       unsigned long Tmp = this->GetCanonicalState(this->StateDescription[i]);
+//       for (int j = 0; j <= this->LzMax; ++j)
+// 	cout << ((Tmp >> j) & 1) << " ";
+//       cout << "| ";
+//       for (int j = 0; j <= this->LzMax; ++j)
+// 	cout << ((this->StateDescription[i] >> j) & 1) << " ";      
+//       cout << " | ";
+//       double Coefficient = 1.0;
+//       unsigned long Tmp2 = this->GetSignedCanonicalState(this->StateDescription[i], Coefficient);
+//       cout << Coefficient << " " << ((Tmp2 & FERMION_SPHERE_SYMMETRIC_BIT) >> 63);
+//       if (this->GetCanonicalState(this->GetCanonicalState(this->StateDescription[i])) != this->GetCanonicalState(this->StateDescription[i]))
+// 	cout << " error";
+//       cout << endl;
+//     }
    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
       this->StateDescription[i] = 0x0ul;
@@ -115,7 +115,17 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   this->GenerateLookUpTable(memory);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i]);
-
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//     this->PrintState(cout, i) << " | " << hex << (this->StateDescription[i]  & FERMION_SPHERE_SYMMETRIC_MASK) << dec << " | " << this->FindStateIndex(this->StateDescription[i], this->StateLzMax[i]) << endl;
+//  double TmpTruc = 0.0;
+//   this->AdAdAA(2, 6, 7, 5, 8, TmpTruc);
+//   cout << TmpTruc << endl;
+//   this->AdAdAA(2, 1, 2, 0, 3, TmpTruc);
+//   cout << TmpTruc << endl;
+//   this->AdAdAA(3, 5, 8, 6, 7, TmpTruc);
+//   cout << TmpTruc << endl;
+//   this->AdAdAA(3, 0, 3, 1, 2, TmpTruc);
+//  cout << TmpTruc << endl;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -260,6 +270,15 @@ int FermionOnSphereSymmetricBasis::GetTargetHilbertSpaceDimension()
   return this->HilbertSpaceDimension;
 }
 
+// get information about any additional symmetry of the Hilbert space
+//
+// return value = symmetry id
+
+int FermionOnSphereSymmetricBasis::GetHilbertSpaceAdditionalSymmetry()
+{
+  return ParticleOnSphere::LzMinusLzSymmetry;
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -342,13 +361,28 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
-  this->GetStateSymmetry(TmpState);
+  unsigned long TmpStore = TmpState;
+  TmpState = this->GetSignedCanonicalState(TmpState, coefficient);
+  NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+//   if (((TmpIndex == 0) && (index == 1)) || ((TmpIndex == 1) && (index == 0)))
+//     {
+//       cout << TmpIndex << " "  << index << " " << m1 << " " << m2 << " " << n1 << " " << n2 << " | " << NewLzMax << "|";
+//       for (int j = 0; j <= this->LzMax; ++j)
+// 	cout << ((TmpStore >> j) & 1) << " "; 
+//       cout << "|";     
+//       for (int j = 0; j <= this->LzMax; ++j)
+// 	cout << ((TmpState >> j) & 1) << " "; 
+//       cout << " | " << hex << (TmpState  & FERMION_SPHERE_SYMMETRIC_MASK) << " "  << TmpStore << dec;
+//       cout << endl;
+//     }
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
-    if (Signature != 0)
-      coefficient *= M_SQRT1_2;
-    else
-      coefficient *= M_SQRT2;
+     if (Signature != 0)
+       coefficient *= M_SQRT2;
+     else
+       coefficient *= M_SQRT1_2;
   return TmpIndex;
 }
 
@@ -516,10 +550,12 @@ int FermionOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeff
   this->GetStateSymmetry(TmpState);
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-    if (this->ProdASignature != 0)
-      coefficient *= M_SQRT2;
-    else
-      coefficient *= M_SQRT1_2;
+    coefficient *= M_SQRT2;
+
+//     if (this->ProdASignature != 0)
+//       coefficient *= M_SQRT2;
+//     else
+//       coefficient *= M_SQRT1_2;
   return TmpIndex;
 }
 
@@ -537,6 +573,63 @@ double FermionOnSphereSymmetricBasis::AdA (int index, int m)
     return 0.0;
 }
 
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coefficient)
+{
+  int TmpStateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
+  if ((n > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLzMax = TmpStateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(((unsigned long) (0x1)) << n);
+  if (NewLzMax == n)
+    while ((TmpState >> NewLzMax) == 0)
+      --NewLzMax;
+  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (((unsigned long) (0x1)) << m);
+  this->GetStateSymmetry(TmpState);
+  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
+    coefficient *= M_SQRT2;
+  return TmpIndex;
+}
+
 // find state index
 //
 // stateDescription = unsigned integer describing the state
@@ -545,11 +638,12 @@ double FermionOnSphereSymmetricBasis::AdA (int index, int m)
 
 int FermionOnSphereSymmetricBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  long PosMax = (stateDescription & FERMION_SPHERE_SYMMETRIC_MASK) >> this->LookUpTableShift[lzmax];
+  stateDescription &= FERMION_SPHERE_SYMMETRIC_MASK;
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
+  unsigned long CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
@@ -561,7 +655,7 @@ int FermionOnSphereSymmetricBasis::FindStateIndex(unsigned long stateDescription
 	  PosMin = PosMid;
 	} 
       PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = this->StateDescription[PosMid];
+      CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
     }
   if (CurrentState == stateDescription)
     return PosMid;

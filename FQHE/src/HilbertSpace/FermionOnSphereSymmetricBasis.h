@@ -40,10 +40,10 @@
 
 
 #ifdef __64_BITS__
-#define FERMION_SPHERE_SYMMETRIC_BIT 0x8000000000000000ul
+#define FERMION_SPHERE_SYMMETRIC_BIT  0x8000000000000000ul
 #define FERMION_SPHERE_SYMMETRIC_MASK 0x7ffffffffffffffful
 #else
-#define FERMION_SPHERE_SYMMETRIC_BIT 0x80000000ul
+#define FERMION_SPHERE_SYMMETRIC_BIT  0x80000000ul
 #define FERMION_SPHERE_SYMMETRIC_MASK 0x7ffffffful
 #endif
 
@@ -142,6 +142,11 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // return value = Hilbert space dimension
   virtual int GetTargetHilbertSpaceDimension();
 
+  // get information about any additional symmetry of the Hilbert space
+  //
+  // return value = symmetry id
+  virtual int GetHilbertSpaceAdditionalSymmetry();
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied
@@ -186,6 +191,15 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AdA (int index, int m, int n, double& coefficient);
+
   // print a given State
   //
   // Str = reference on current output stream 
@@ -229,6 +243,12 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // initialState = referennce state whose symmetry has to be computed
   void GetStateSymmetry (unsigned long& initialState);
 
+  // get canonical expression of a given state and its symmetry
+  //
+  // initialState = state that has to be converted to its canonical expression
+  // return value = corresponding canonical state (with symmetry bit)
+  unsigned long GetSignedCanonicalState (unsigned long initialState, double& coefficient);
+
 };
 
 // get canonical expression of a given state
@@ -247,13 +267,13 @@ inline unsigned long FermionOnSphereSymmetricBasis::GetCanonicalState (unsigned 
   TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
   TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
   TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 56];  
+  TmpState |= InvertTable[initialState >> 56]; 
 #else
   unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
   TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
   TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
   TmpState |= InvertTable[initialState >> 24];
-#endif
+#endif	
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
   if (TmpState < initialState)
@@ -288,6 +308,56 @@ inline void FermionOnSphereSymmetricBasis::GetStateSymmetry (unsigned long& init
   TmpState >>= this->InvertUnshift;
   if (TmpState != initialState)    
     initialState |= FERMION_SPHERE_SYMMETRIC_BIT;
+}
+
+// get canonical expression of a given state and its symmetry
+//
+// initialState = state that has to be converted to its canonical expression
+// return value = corresponding canonical state (with symmetry bit)
+
+inline unsigned long FermionOnSphereSymmetricBasis::GetSignedCanonicalState (unsigned long initialState, double& coefficient)
+{
+  initialState <<= this->InvertShift;
+  int TmpNbrFermions = 0;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56];  
+  for (int i = 0; i < 32; ++i)
+    if ((TmpState & (0x1ul << i)) != 0)
+      ++TmpNbrFermions;
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+  for (int i = 0; i < 16; ++i)
+    if ((TmpState & (0x1ul << i)) != 0)
+      ++TmpNbrFermions;
+#endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+/*   if (TmpState != initialState) */
+/*     if (((TmpNbrFermions & 1) != 0) && ((this->NbrFermions & 1) == 0)) */
+/*       coefficient *= -1.0; */
+/*     else */
+/*       coefficient *= 1.0;     */
+  if (TmpState < initialState)
+    {
+/*       if (((TmpNbrFermions & 1) != 0) && ((this->NbrFermions & 1) == 0)) */
+/* 	coefficient *= -1.0; */
+      return (TmpState | FERMION_SPHERE_SYMMETRIC_BIT);
+    }
+  else
+    if (TmpState != initialState)
+      return (initialState | FERMION_SPHERE_SYMMETRIC_BIT);
+    else
+      return initialState;
 }
 
 #endif
