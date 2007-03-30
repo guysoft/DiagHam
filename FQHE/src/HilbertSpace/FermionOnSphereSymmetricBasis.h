@@ -247,7 +247,7 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   //
   // initialState = state that has to be converted to its canonical expression
   // return value = corresponding canonical state (with symmetry bit)
-  unsigned long GetSignedCanonicalState (unsigned long initialState, double& coefficient);
+  unsigned long GetSignedCanonicalState (unsigned long initialState);
 
 };
 
@@ -315,10 +315,9 @@ inline void FermionOnSphereSymmetricBasis::GetStateSymmetry (unsigned long& init
 // initialState = state that has to be converted to its canonical expression
 // return value = corresponding canonical state (with symmetry bit)
 
-inline unsigned long FermionOnSphereSymmetricBasis::GetSignedCanonicalState (unsigned long initialState, double& coefficient)
+inline unsigned long FermionOnSphereSymmetricBasis::GetSignedCanonicalState (unsigned long initialState)
 {
   initialState <<= this->InvertShift;
-  int TmpNbrFermions = 0;
 #ifdef __64_BITS__
   unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
   TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
@@ -328,29 +327,16 @@ inline unsigned long FermionOnSphereSymmetricBasis::GetSignedCanonicalState (uns
   TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
   TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
   TmpState |= InvertTable[initialState >> 56];  
-  for (int i = 0; i < 32; ++i)
-    if ((TmpState & (0x1ul << i)) != 0)
-      ++TmpNbrFermions;
 #else
   unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
   TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
   TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
   TmpState |= InvertTable[initialState >> 24];
-  for (int i = 0; i < 16; ++i)
-    if ((TmpState & (0x1ul << i)) != 0)
-      ++TmpNbrFermions;
 #endif
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
-/*   if (TmpState != initialState) */
-/*     if (((TmpNbrFermions & 1) != 0) && ((this->NbrFermions & 1) == 0)) */
-/*       coefficient *= -1.0; */
-/*     else */
-/*       coefficient *= 1.0;     */
   if (TmpState < initialState)
     {
-/*       if (((TmpNbrFermions & 1) != 0) && ((this->NbrFermions & 1) == 0)) */
-/* 	coefficient *= -1.0; */
       return (TmpState | FERMION_SPHERE_SYMMETRIC_BIT);
     }
   else
