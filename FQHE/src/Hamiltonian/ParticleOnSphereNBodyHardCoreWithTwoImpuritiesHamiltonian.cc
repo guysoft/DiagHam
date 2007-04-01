@@ -87,6 +87,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->NBodySign = new double[this->MaxNBody + 1];
 
   this->OneBodyTermFlag = true;
+  this->FullTwoBodyFlag = false;
   this->NorthPoleImpurityPotential = northPoleImpurityPotential;
   this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;
@@ -203,6 +204,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->NBodySign = new double[this->MaxNBody + 1];
 
   this->OneBodyTermFlag = true;
+  this->FullTwoBodyFlag = false;
   this->NorthPoleImpurityPotential = northPoleImpurityPotential;
   this->SouthPoleImpurityPotential = southPoleImpurityPotential;
   this->LandauLevel = landauLevel;

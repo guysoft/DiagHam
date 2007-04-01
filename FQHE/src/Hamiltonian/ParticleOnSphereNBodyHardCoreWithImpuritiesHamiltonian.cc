@@ -68,6 +68,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
 
+  this->FullTwoBodyFlag = false;
   this->NbrNbody = nbrBody;
   this->MaxNBody = this->NbrNbody;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
@@ -174,6 +175,7 @@ ParticleOnSphereNBodyHardCoreWithImpuritiesHamiltonian::ParticleOnSphereNBodyHar
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
 
+  this->FullTwoBodyFlag = false;
   this->NbrNbody = maxNbrBody;
   this->MaxNBody = maxNbrBody;
   this->NBodyFlags = new bool [this->MaxNBody + 1];

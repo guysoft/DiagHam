@@ -129,10 +129,32 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		}
 	    }
 	}
-      for (int k = 2; k <= this->MaxNBody; ++k)
-	if (this->NBodyFlags[k] == true)
-	  {
-	    double Sign = this->NBodySign[k];
+     if (this->FullTwoBodyFlag == true)
+       {
+	 double TmpTwoBodyInteraction;
+	 int m1;
+	 int m2;
+	 int m3;
+	 int m4;
+	 for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	   {
+	     m1 = this->M1Value[j];
+	     m2 = this->M2Value[j];
+	     m3 = this->M3Value[j];
+	     m4 = m1 + m2 - m3;
+	     TmpTwoBodyInteraction = this->InteractionFactors[j];
+	     for (int i = firstComponent; i < LastComponent; ++i)
+	       {
+		 Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		 if (Index < Dim)
+		   vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
+	       }
+	   }
+       }
+     for (int k = 2; k <= this->MaxNBody; ++k)
+       if (this->NBodyFlags[k] == true)
+	 {
+	   double Sign = this->NBodySign[k];
 	    int TmpMinSumIndices = this->MinSumIndices[k];
 	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
 	    for (int i = firstComponent; i < LastComponent; ++i)
@@ -272,6 +294,28 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 				      }
 				  }
 				++NIndices;
+			      }
+			  }
+		      }
+		    if (this->FullTwoBodyFlag == true)
+		      {
+			double TmpTwoBodyInteraction;
+			int m1;
+			int m2;
+			int m3;
+			int m4;
+			for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+			  {
+			    m1 = this->M1Value[j];
+			    m2 = this->M2Value[j];
+			    m3 = this->M3Value[j];
+			    TmpTwoBodyInteraction = this->InteractionFactors[j];
+			    m4 = m1 + m2 - m3;
+			    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			      {
+				Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+				if (Index < Dim)
+				  vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
 			      }
 			  }
 		      }
@@ -497,6 +541,32 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		}
 	    }
 	}
+     if (this->FullTwoBodyFlag == true)
+       {
+	 double TmpTwoBodyInteraction;
+	 int m1;
+	 int m2;
+	 int m3;
+	 int m4;
+	 for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	   {
+	     m1 = this->M1Value[j];
+	     m2 = this->M2Value[j];
+	     m3 = this->M3Value[j];
+	     m4 = m1 + m2 - m3;
+	     TmpTwoBodyInteraction = this->InteractionFactors[j];
+	     for (int i = firstComponent; i < LastComponent; ++i)
+	       {
+		 Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		 if (Index < Dim)
+		   {
+		     Coefficient *= TmpTwoBodyInteraction;
+		     for (int l = 0; l < nbrVectors; ++l)
+		       vDestinations[l][Index] += Coefficient * vSources[l][i];
+		   }
+	       }
+	   }
+       }
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
@@ -680,6 +750,32 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 				      }
 				  }
 				++NIndices;
+			      }
+			  }
+		      }
+		    if (this->FullTwoBodyFlag == true)
+		      {
+			double TmpTwoBodyInteraction;
+			int m1;
+			int m2;
+			int m3;
+			int m4;
+			for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+			  {
+			    m1 = this->M1Value[j];
+			    m2 = this->M2Value[j];
+			    m3 = this->M3Value[j];
+			    TmpTwoBodyInteraction = this->InteractionFactors[j];
+			    m4 = m1 + m2 - m3;
+			    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			      {
+				Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+				if (Index < Dim)
+				  {
+				    Coefficient *= TmpTwoBodyInteraction;
+				    for (int p = 0; p < nbrVectors; ++p)
+				      vDestinations[p][Index] += Coefficient * vSources[p][i];
+				  }
 			      }
 			  }
 		      }
@@ -926,6 +1022,30 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
 	}
     }
 
+  if (this->FullTwoBodyFlag == true)
+    {
+      int m1;
+      int m2;
+      int m3;
+      int m4;      
+      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	{
+	  m1 = this->M1Value[j];
+	  m2 = this->M2Value[j];
+	  m3 = this->M3Value[j];
+	  m4 = m1 + m2 - m3;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}    
+    }
+
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
@@ -971,6 +1091,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 {
   long MinIndex;
   long MaxIndex;
+  int m1;
+  int m2;
+  int m3;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int Index;
@@ -1042,6 +1165,22 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 		    }
 		}
 	      ++NIndices;
+	    }
+	}
+      if (this->FullTwoBodyFlag == true)
+	{
+	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m1 + m2 - m3, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  TmpIndexArray[Pos] = Index;
+		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		  ++Pos;
+		}
 	    }
 	}
       for (int k = 2; k <= this->MaxNBody; ++k)
@@ -1141,6 +1280,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 		}
 	      ++NIndices;
 	    }
+	}
+      if (this->FullTwoBodyFlag == true)
+	{
 	}
      for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
@@ -1289,6 +1431,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 		    }
 		  ++NIndices;
 		}
+	    }
+	  if (this->FullTwoBodyFlag == true)
+	    {
 	    }
 	  for (int k = 2; k <= this->MaxNBody; ++k)
 	    if (this->NBodyFlags[k] == true)

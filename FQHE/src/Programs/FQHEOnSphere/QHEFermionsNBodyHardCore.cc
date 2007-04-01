@@ -127,6 +127,7 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   double* NBodyWeightFactors = 0;
+  double* PseudoPotentials = 0;
   if (((SingleStringOption*) Manager["nbody-file"])->GetString() != 0)
     {
       ConfigurationParser NBodyDefinition;
@@ -145,6 +146,15 @@ int main(int argc, char** argv)
 	{
 	  cout << "Weights is not defined or as a wrong value in " << ((SingleStringOption*) Manager["nbody-file"])->GetString() << endl;
 	  return -1;
+	}
+      int TmpNbrPseudoPotentials;
+      if (NBodyDefinition.GetAsDoubleArray("Pseudopotentials", ' ', PseudoPotentials, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (LzMax +1))
+	    {
+	      cout << "Invalid number of pseudo-potentials" << endl;
+	      return -1;	  
+	    }
 	}
     }
 
@@ -198,22 +208,30 @@ int main(int argc, char** argv)
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (((BooleanOption*) Manager["add-impurities"])->GetBoolean() == false)
 	{
-	  if (NBodyWeightFactors == 0)
-	    {
-	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
-									 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
-									 Architecture.GetArchitecture(), 
-									 Memory, DiskCacheFlag,
-									 LoadPrecalculationFileName);
-	    }
+	  if (PseudoPotentials == 0)
+	    if (NBodyWeightFactors == 0)
+	      {
+		Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, 
+									   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
+									   Architecture.GetArchitecture(), 
+									   Memory, DiskCacheFlag,
+									   LoadPrecalculationFileName);
+	      }
+	    else
+	      {
+		Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
+									   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
+									   Architecture.GetArchitecture(), 
+									   Memory, DiskCacheFlag,
+									   LoadPrecalculationFileName);
+	      }
 	  else
-	    {
-	      Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
-									 ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
-									 Architecture.GetArchitecture(), 
-									 Memory, DiskCacheFlag,
-									 LoadPrecalculationFileName);
-	    }
+	    Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrFermions, LzMax, NbrNBody, NBodyWeightFactors,
+								       ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
+								       PseudoPotentials,
+								       Architecture.GetArchitecture(), 
+								       Memory, DiskCacheFlag,
+								       LoadPrecalculationFileName);
 	}
       else
 	{

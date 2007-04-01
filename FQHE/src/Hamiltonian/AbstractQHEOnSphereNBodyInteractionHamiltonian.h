@@ -66,6 +66,9 @@ class AbstractQHEOnSphereNBodyInteractionHamiltonian : public AbstractQHEOnSpher
   // sign in front of each n-body interaction term (including the one coming from the statistics)
   double* NBodySign;
 
+  // flag to indicate a fully defined (i.e with pseudo-potentials) two body interaction
+  bool FullTwoBodyFlag;
+
  public:
 
   // destructor

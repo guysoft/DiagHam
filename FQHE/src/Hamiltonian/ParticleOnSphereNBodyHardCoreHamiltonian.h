@@ -57,6 +57,9 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // weight of the different n-body interaction terms with respect to each other
   double* NBodyInteractionWeightFactors;
 
+  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
+  double* PseudoPotential;
+
  public:
 
   // default constructor
@@ -92,6 +95,24 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
 					   int maxNbrBody, double* nBodyFactors, double l2Factor,
+					   AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+					   char* precalculationFileName = 0);
+
+  // constructor from datas with a fully-defined two body interaction
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
+  // nBodyFactors = weight of the different n-body interaction terms with respect to each other
+  // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+					   int maxNbrBody, double* nBodyFactors, double l2Factor, double* pseudoPotential, 
 					   AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 					   char* precalculationFileName = 0);
 
