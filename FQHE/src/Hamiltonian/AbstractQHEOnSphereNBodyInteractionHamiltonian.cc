@@ -1091,9 +1091,6 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 {
   long MinIndex;
   long MaxIndex;
-  int m1;
-  int m2;
-  int m3;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   int Index;
@@ -1115,6 +1112,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
   double* TmpInteraction;
   int* MIndices;
   int* NIndices;
+  int m1;
+  int m2;
+  int m3;
 
   int TotalPos = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
@@ -1245,6 +1245,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
   double* TmpInteraction;
   int* MIndices;
   int* NIndices;
+  int m1;
+  int m2;
+  int m3;
  
   for (int i = Min; i < Max; ++i)
     {
@@ -1283,6 +1286,19 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialEnableFastMultiplica
 	}
       if (this->FullTwoBodyFlag == true)
 	{
+	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  TmpIndexArray[Pos] = Index;
+		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		  ++Pos;
+		}
+	    }
 	}
      for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
@@ -1362,6 +1378,9 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
   double* TmpInteraction;
   int* MIndices;
   int* NIndices;
+  int m1;
+  int m2;
+  int m3;
   this->MaxNbrInteractionPerComponent = 0;
 
   int TotalPos = 0;
@@ -1434,6 +1453,19 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 	    }
 	  if (this->FullTwoBodyFlag == true)
 	    {
+	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+		{
+		  m1 = this->M1Value[j];
+		  m2 = this->M2Value[j];
+		  m3 = this->M3Value[j];
+		  Index = this->Particles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		      ++Pos;
+		    }
+		}
 	    }
 	  for (int k = 2; k <= this->MaxNBody; ++k)
 	    if (this->NBodyFlags[k] == true)

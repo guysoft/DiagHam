@@ -518,7 +518,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		      {
 			Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
 		      }
-		    TmpNBodyInteractionFactors[i] = TmpProjectorCoefficients[i] * this->NBodyInteractionWeightFactors[k];
+		    TmpNBodyInteractionFactors[i] = TmpProjectorCoefficients[i] * sqrt(this->NBodyInteractionWeightFactors[k]);
 		    TmpMIndices += k;
 		  }
 		delete[] TmpProjectorCoefficients;
@@ -575,7 +575,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    Coefficient = TmpSymmetryFactors[i] * TmpInteractionCoeffients[MinSum];
 		    for (int l = 0; l < k; ++l)
 		      Coefficient *= TmpNormalizationCoeffients[TmpMIndices[l]];		    
-		    TmpNBodyInteractionFactors[i] = Coefficient * this->NBodyInteractionWeightFactors[k];
+		    TmpNBodyInteractionFactors[i] = Coefficient * sqrt(this->NBodyInteractionWeightFactors[k]);
 		    TmpMIndices += k;
 		  }
 	      }
