@@ -1174,7 +1174,7 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 	      m1 = this->M1Value[j];
 	      m2 = this->M2Value[j];
 	      m3 = this->M3Value[j];
-	      Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m1 + m2 - m3, Coefficient);
+	      Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m1 + m2 - m3, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  TmpIndexArray[Pos] = Index;
