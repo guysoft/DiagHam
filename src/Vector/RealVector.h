@@ -42,6 +42,7 @@ using std::ofstream;
 
 class Complex;
 class ComplexVector;
+class RealPtrVector;
 class MathematicaOutput;
 class BlockDiagonalMatrix;
 class Matrix;
@@ -58,6 +59,7 @@ class RealVector : public Vector
 
   friend class DelocalizedRealVector;
   friend class ComplexVector;
+  friend class RealPtrVector;
   friend class AbstractHamiltonian;
   friend class RealMatrix;
   friend class HermitianMatrix;
@@ -69,6 +71,8 @@ class RealVector : public Vector
   friend class RealTriDiagonalSymmetricMatrix;
   friend Complex operator * (const ComplexVector& V1, const RealVector& V2);
   friend Complex operator * (const RealVector& V1, const ComplexVector& V2);
+  friend double operator * (RealPtrVector& V1, RealVector& V2);
+  friend double operator * (RealVector& V1, RealPtrVector& V2);
   friend ComplexVector operator + (const RealVector& V1, const ComplexVector& V2);
   friend ComplexVector operator + (const ComplexVector& V1, const RealVector& V2);
   friend ComplexVector operator - (const RealVector& V1, const ComplexVector& V2);

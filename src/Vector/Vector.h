@@ -41,7 +41,7 @@ using std::ostream;
 
 class RealVector;
 class ComplexVector;
-
+class RealPtrVector;
 
 class Vector
 {
@@ -49,6 +49,7 @@ class Vector
  private:
 
   friend class RealVector;
+  friend class RealPtrVector;
   friend class ComplexVector;
   friend class DelocalizedRealVector;
 
@@ -72,6 +73,7 @@ class Vector
     {
       RealDatas = 0x01,
       ComplexDatas = 0x02,
+	  RealPtrDatas = 0x04,
       NonLocalDatas = 0x10,
       DistributedDatas = 0x20
     };
@@ -183,7 +185,7 @@ class Vector
   //
   // str = reference on output stream
   // v = vector to print
-  // return value = reference on output stream
+  // return value = referenceint GetNumSites(){return this->NSites;} on output stream
   friend ostream& operator << (ostream& str, Vector& v);
 
   // localize the current vector to the current process
@@ -307,4 +309,3 @@ inline void Vector::Delocalize(bool transfertFlag)
 
 
 #endif
-
