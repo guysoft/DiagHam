@@ -1,3 +1,34 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                                                                            //
+//                            DiagHam  version 0.01                           //
+//                                                                            //
+//                  Copyright (C) 2001-2007 Nicolas Regnault                  //
+//                                                                            //
+//                                                                            //
+//     class implementing the linear superposition of several Hamiltonians    //
+//                           class author: Gunnar Möller                      //
+//                                                                            //
+//                        last modification : 02/03/2007                      //
+//                                                                            //
+//                                                                            //
+//    This program is free software; you can redistribute it and/or modify    //
+//    it under the terms of the GNU General Public License as published by    //
+//    the Free Software Foundation; either version 2 of the License, or       //
+//    (at your option) any later version.                                     //
+//                                                                            //
+//    This program is distributed in the hope that it will be useful,         //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//    GNU General Public License for more details.                            //
+//                                                                            //
+//    You should have received a copy of the GNU General Public License       //
+//    along with this program; if not, write to the Free Software             //
+//    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+
 #include "LinearlySuperposedQHEOnSphereHamiltonian.h"
 #include <iostream>
 
@@ -6,6 +37,11 @@ using std::endl;
 
 // creates a Hamiltonian that consists of a superposition of Number Hamiltonians with an array of coefficients and
 // Hamiltonians given as a list
+//
+// number = number of Hamiltonians
+// coefficients = array that contains the cofficient in front of each Hamiltonian
+// hamiltonians = array of hamiltonians
+
 LinearlySuperposedQHEOnSphereHamiltonian::LinearlySuperposedQHEOnSphereHamiltonian( int number, double *coefficients, AbstractQHEOnSphereHamiltonian **hamiltonians)
 {
   this->NumHamiltonians=number;
@@ -60,6 +96,7 @@ void LinearlySuperposedQHEOnSphereHamiltonian::ShiftHamiltonian (double shift)
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
+
 RealVector& LinearlySuperposedQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)
 {
   for (int n=0; n<NumHamiltonians;++n)

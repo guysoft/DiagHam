@@ -2,10 +2,10 @@
 //                                                                            //
 //                            DiagHam version  0.05                           //
 //                                                                            //
-//                  Copyright (C) 1998-2006 Gunnar Moller                  //
+//                    Copyright (C) 1998-2007 Gunnar Moller                   //
 //                                                                            //
 //                                                                            //
-//                         class of multiple double option                      //
+//                         class of multiple double option                    //
 //                                                                            //
 //                        last modification : 06/12/2006                      //
 //                                                                            //
@@ -52,8 +52,8 @@ using std::endl;
 
 MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, char* optionDescription,
 					   char separator, char altSeparator, char* defaultValues,
-				       bool minValueFlag, double minValue, 
-				       bool maxValueFlag, double maxValue)
+					   bool minValueFlag, double minValue, 
+					   bool maxValueFlag, double maxValue)
 {
   this->OptionCode = optionCode;
   this->OptionName = new char [strlen(optionName) + 2];
@@ -61,10 +61,12 @@ MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, ch
   strcpy (&(this->OptionName[1]), optionName);
   this->OptionDescription = new char [strlen(optionDescription) + 1];
   strcpy (this->OptionDescription, optionDescription);
-  this->separator=separator;
-  if (altSeparator!=0) this->altSeparator=altSeparator;
-  else this->altSeparator=separator;  
-  this->length=0;
+  this->Separator=separator;
+  if (altSeparator != 0) 
+    this->AltSeparator = altSeparator;
+  else 
+    this->AltSeparator = separator;  
+  this->Length = 0;
   this->MinValueFlag = minValueFlag;
   this->MaxValueFlag = maxValueFlag;
   this->MaxValue = maxValue;
@@ -80,7 +82,8 @@ MultipleDoubleOption::~MultipleDoubleOption()
 {
   delete[] this->OptionName;
   delete[] this->OptionDescription;
-  if (Doubles!=NULL) delete[] Doubles;
+  if (Doubles!=NULL) 
+    delete[] Doubles;
 }
  
 // Test if an argument corresponds to the current option and read its content
@@ -156,7 +159,7 @@ ostream& MultipleDoubleOption::PrintError (ostream& output)
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs a list of doubles separated by '" <<separator<<"' as argument" << endl;
+	output << " needs a list of doubles separated by '" <<this->Separator<<"' as argument" << endl;
       }
       break;
     case MultipleDoubleOption::NoDouble:
@@ -204,6 +207,7 @@ double* MultipleDoubleOption::GetDoubles()
 // get option value as a string
 // 
 // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+
 char* MultipleDoubleOption::GetAsAString()
 {
   char* TmpString;
@@ -211,7 +215,8 @@ char* MultipleDoubleOption::GetAsAString()
     {
       TmpString = new char [32*length];
       sprintf (TmpString, "%.14g", this->Doubles[0]);
-      for (int i=1;i<length;++i) sprintf (TmpString, "%s%c%.14g", TmpString, altSeparator, this->Doubles[i]);
+      for (int i=1;i<length;++i) 
+	sprintf (TmpString, "%s%c%.14g", TmpString, this->AltSeparator, this->Doubles[i]);
     }
   else
     {
@@ -276,14 +281,14 @@ int MultipleDoubleOption::AnalyzeString(char *String)
 {
   char *tmpC, *tmpC2, *token;
   char sep[1];
-  sep[0]=separator;
+  sep[0] = this->Separator;
   double tmp;
   tmpC = new char [strlen(String)+2];
   tmpC2 = new char [strlen(String)+2];
   strcpy (tmpC, String);
   
   //got string value of parameter: now count the number of tokens:
-  if (strchr(tmpC,separator)==NULL)
+  if (strchr(tmpC,this->Separator)==NULL)
     length=1;
   else
     {
@@ -302,7 +307,7 @@ int MultipleDoubleOption::AnalyzeString(char *String)
   int n=0;
   while (n<length)
     {
-      if (tmpC[0]==separator)
+      if (tmpC[0]==this->Separator)
 	{
 	  for (unsigned i=0;i<strlen(tmpC);++i) tmpC[i]=tmpC[i+1];
 	}

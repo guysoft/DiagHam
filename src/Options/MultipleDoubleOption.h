@@ -1,13 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
-//                            DarkRay version  0.05                           //
+//                            DiagHam version  0.05                           //
 //                                                                            //
-//                  Copyright (C) 1998-2002 Nicolas Regnault                  //
+//                    Copyright (C) 1998-2007 Gunnar Moller                   //
 //                                                                            //
 //                                                                            //
-//                         class of multiple double option                      //
+//                         class of multiple double option                    //
 //                                                                            //
-//                        last modification : 16/09/2001                      //
+//                        last modification : 06/12/2006                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -42,9 +42,15 @@ class MultipleDoubleOption : public AbstractOption
   
   // value assigned to the option
   double *Doubles;
-  int length;
-  char separator;
-  char altSeparator;
+
+  // number of read doubles
+  int Length;
+
+  // character used to separate single entries on the command line
+  char Separator;
+
+  // character used to separate entries in output
+  char AltSeparator;
   
   // maximum value allowed
   double MaxValue;
@@ -77,8 +83,8 @@ class MultipleDoubleOption : public AbstractOption
   // minValue = double minimum value 
   // maxValueFlag = flag to indicates an double maximum value
   // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-  MultipleDoubleOption(char optionCode, char* optionName, char* optionDescription, char separator, char altSeparator=0,
-		       char* defaultValues=NULL, bool minValueFlag = false, double minValue = 0.0, 
+  MultipleDoubleOption(char optionCode, char* optionName, char* optionDescription, char separator, char altSeparator = 0,
+		       char* defaultValues = NULL, bool minValueFlag = false, double minValue = 0.0, 
 		       bool maxValueFlag = false, double maxValue = 0.0);
 
   // destructor

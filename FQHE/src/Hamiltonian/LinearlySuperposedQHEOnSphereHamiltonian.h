@@ -6,8 +6,9 @@
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                      class implementing the linear superposition of several Hamiltonians   //
-//                           class author: Gunnar Möller                                        //
+//     class implementing the linear superposition of several Hamiltonians    //
+//                           class author: Gunnar Möller                      //
+//                                                                            //
 //                        last modification : 02/03/2007                      //
 //                                                                            //
 //                                                                            //
@@ -27,26 +28,40 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+
 #ifndef LINEARLYSUPERPOSEDQHEONSPHEREHAMILTONIAN_H
 #define LINEARLYSUPERPOSEDQHEONSPHEREHAMILTONIAN_H
+
 
 #include "AbstractQHEHamiltonian.h"
 #include "AbstractQHEOnSphereHamiltonian.h"
 #include "Vector/RealVector.h"
 
+
 class LinearlySuperposedQHEOnSphereHamiltonian: public AbstractQHEOnSphereHamiltonian
 {
+
  protected:
  
+  // number of Hamiltonians
   int NumHamiltonians;
+  // array that contains the cofficient in front of each Hamiltonian
   double *LinearCoefficients;
+  //  array of hamiltonians
   AbstractQHEOnSphereHamiltonian **ListHamiltonians;
+
+  // temporary vectors
   RealVector VectorSum;
   RealVector VectorSummand;
+
  public:
 
   // creates a Hamiltonian that consists of a superposition of Number Hamiltonians with an array of coefficients and
   // an array of Hamiltonians
+  //
+  // number = number of Hamiltonians
+  // coefficients = array that contains the cofficient in front of each Hamiltonian
+  // hamiltonians = array of hamiltonians
   LinearlySuperposedQHEOnSphereHamiltonian(int number, double *coefficients, AbstractQHEOnSphereHamiltonian **hamiltonians);
   
   virtual ~LinearlySuperposedQHEOnSphereHamiltonian();

@@ -4,7 +4,7 @@
 //                                                                            //
 //                  Copyright (C) 1998-2006 Nicolas Regnault                  //
 //                                                                            //
-//   grouped all options header                                   //
+//                         grouped all options header                         //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
