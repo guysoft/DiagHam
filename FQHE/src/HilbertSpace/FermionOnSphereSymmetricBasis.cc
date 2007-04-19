@@ -150,14 +150,14 @@ FermionOnSphereSymmetricBasis::~FermionOnSphereSymmetricBasis ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescription;
-      delete[] this->StateLzMax;
-      delete[] this->SignLookUpTable;
-      delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+//       delete[] this->StateDescription;
+//       delete[] this->StateLzMax;
+//       delete[] this->SignLookUpTable;
+//       delete[] this->SignLookUpTableMask;
+//       delete[] this->LookUpTableShift;
+//       for (int i = 0; i < this->NbrLzValue; ++i)
+// 	delete[] this->LookUpTable[i];
+//       delete[] this->LookUpTable;
     }
 }
 
@@ -250,6 +250,35 @@ int FermionOnSphereSymmetricBasis::GetTargetHilbertSpaceDimension()
 int FermionOnSphereSymmetricBasis::GetHilbertSpaceAdditionalSymmetry()
 {
   return ParticleOnSphere::LzMinusLzSymmetry;
+}
+
+// convert a given state from Lz-symmetric basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereSymmetricBasis::ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->GetSignedCanonicalState(nbodyBasis.StateDescription[i]);
+      NewLzMax = this->LzMax;
+      Signature = TmpState & FERMION_SPHERE_SYMMETRIC_BIT;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      if (Signature != 0x0ul)	
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+      else
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+    }
+  return TmpVector;
+  
 }
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
