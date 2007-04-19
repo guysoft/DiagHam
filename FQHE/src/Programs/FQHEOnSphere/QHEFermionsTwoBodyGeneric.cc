@@ -1,4 +1,5 @@
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
@@ -59,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
@@ -112,6 +114,7 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
+  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
@@ -180,7 +183,10 @@ int main(int argc, char** argv)
 #ifdef __64_BITS__
       if (LzMax <= 63)
         {
-          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+	  if ((SymmetrizedBasis == false) || (L != 0))
+	    Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+	  else
+	    Space = new FermionOnSphereSymmetricBasis(NbrFermions, LzMax, MemorySpace);	  
         }
       else
         {
@@ -189,7 +195,10 @@ int main(int argc, char** argv)
 #else
       if (LzMax <= 31)
         {
-          Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+	  if ((SymmetrizedBasis == false) || (L != 0))
+	    Space = new FermionOnSphere(NbrFermions, L, LzMax, MemorySpace);
+	  else
+	    Space = new FermionOnSphereSymmetricBasis(NbrFermions, LzMax, MemorySpace);	  
         }
       else
         {
