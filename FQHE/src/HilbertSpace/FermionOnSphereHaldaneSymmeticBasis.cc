@@ -7,8 +7,9 @@
 //                                                                            //
 //                                                                            //
 //             class of fermions on sphere using the Haldane basis            //
+//                           with Lz <-> -Lz symmetry                         //
 //                                                                            //
-//                        last modification : 06/07/2006                      //
+//                        last modification : 08/03/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -55,13 +56,12 @@ using std::ios;
 // basic constructor
 // 
 // nbrFermions = number of fermions
-// totalLz = reference on twice the momentum total value, totalLz will be recomputed from referenceState and stored in totalLz
 // lzMax = twice the maximum Lz value reached by a fermion
 // memory = amount of memory granted for precalculations
 // referenceState = array that describes the reference state to start from
 
-FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState,
-							  unsigned long memory)
+FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int nbrFermions, int lzMax, int* referenceState,
+									    unsigned long memory)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -70,6 +70,15 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   this->ParityBit = (0x1ul << (this->LzMax + 2);
   this->StateMask = this->ParityBit - 1;
   this->NbrLzValue = this->LzMax + 1;
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
   this->MaximumSignLookUp = 16;
   this->ReferenceState = 0x0ul;
   int ReferenceStateLzMax = 0;
@@ -302,6 +311,8 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis(const
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
   this->ReferenceState = fermions.ReferenceState;
   this->Flag = fermions.Flag;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -405,6 +416,34 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector&
   return TmpVector;
 }
 
+// convert a gien state from Lz-symmetric Haldane basis to the usual Haldane n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector  FermionOnSphereHaldaneSymmetricBasis::ConvertToHaldaneNbodyBasis(RealVector& state, FermionOnSphereHaldaneBasis& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->GetSignedCanonicalState(nbodyBasis.StateDescription[i]);
+      NewLzMax = this->LzMax;
+      Signature = TmpState & FERMION_SPHERE_SYMMETRIC_BIT;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      if (Signature != 0x0ul)	
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+      else
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+    }
+  return TmpVector;
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -419,6 +458,8 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
   if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
       || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
@@ -485,7 +526,17 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m1);
-  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+  TmpState = this->GetSignedCanonicalState(TmpState);
+  NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
+  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
+     if (Signature != 0)
+       coefficient *= M_SQRT2;
+     else
+       coefficient *= M_SQRT1_2;
+  return TmpIndex;
 }
 
 // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
@@ -501,6 +552,8 @@ int FermionOnSphereHaldaneSymmetricBasis::ProdAdProdA (int index, int* m, int* n
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
   --nbrIndices;
   for (int i = 0; i < nbrIndices; ++i)
     {
@@ -564,7 +617,17 @@ int FermionOnSphereHaldaneSymmetricBasis::ProdAdProdA (int index, int* m, int* n
 	}
       TmpState |= (((unsigned long) (0x1)) << Index);
     }
-  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+  TmpState = this->GetSignedCanonicalState(TmpState);
+  NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
+  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
+     if (Signature != 0)
+       coefficient *= M_SQRT2;
+     else
+       coefficient *= M_SQRT1_2;
+  return TmpIndex;
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -578,6 +641,8 @@ double FermionOnSphereHaldaneSymmetricBasis::ProdA (int index, int* n, int nbrIn
 {
   this->ProdALzMax = this->StateLzMax[index];
   this->ProdATemporaryState = this->StateDescription[index];
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
   int Index;
   double Coefficient = 1.0;
   for (int i = nbrIndices - 1; i >= 0; --i)
@@ -637,7 +702,17 @@ int FermionOnSphereHaldaneSymmetricBasis::ProdAd (int* m, int nbrIndices, double
 	}
       TmpState |= (0x1l << Index);
     }
-  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+  TmpState = this->GetSignedCanonicalState(TmpState);
+  NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
+  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
+     if (this->ProdASignature != 0)
+       coefficient *= M_SQRT2;
+     else
+       coefficient *= M_SQRT1_2;
+  return TmpIndex;
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -666,6 +741,8 @@ int FermionOnSphereHaldaneSymmetricBasis::AdA (int index, int m, int n, double& 
 {
   int StateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
+  unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SYMMETRIC_MASK;
   if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
     {
       coefficient = 0.0;
@@ -702,7 +779,14 @@ int FermionOnSphereHaldaneSymmetricBasis::AdA (int index, int m, int n, double& 
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
-  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+  TmpState = this->GetSignedCanonicalState(TmpState);
+  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != Signature)
+     if (Signature != 0)
+       coefficient *= M_SQRT2;
+     else
+       coefficient *= M_SQRT1_2;
+  return TmpIndex;
 }
 
 // find state index
@@ -713,11 +797,12 @@ int FermionOnSphereHaldaneSymmetricBasis::AdA (int index, int m, int n, double& 
 
 int FermionOnSphereHaldaneSymmetricBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
+  stateDescription &= FERMION_SPHERE_SYMMETRIC_MASK;
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
+  unsigned long CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
@@ -729,12 +814,12 @@ int FermionOnSphereHaldaneSymmetricBasis::FindStateIndex(unsigned long stateDesc
 	  PosMin = PosMid;
 	} 
       PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = this->StateDescription[PosMid];
+      CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
     }
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+    if (((this->StateDescription[PosMin] & FERMION_SPHERE_SYMMETRIC_MASK) != stateDescription) && ((this->StateDescription[PosMax] & FERMION_SPHERE_SYMMETRIC_MASK) != stateDescription))
       return this->HilbertSpaceDimension;
     else
       return PosMin;

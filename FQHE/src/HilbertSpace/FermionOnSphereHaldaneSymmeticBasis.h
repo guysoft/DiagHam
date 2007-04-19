@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 
 #include <iostream>
 
@@ -47,10 +48,14 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
 
  protected:
 
-  // bit to set to one if the state if Lz <->-Lz symmetric (can be added with OR operator)
-  unsigned long ParityBit;
-  // mask cooresponding to the ParityBit
-  unsigned long StateMask;
+  // shift to apply to a state before inverting its expression
+  int InvertShift;
+  // shift to apply to a state after inverting its expression
+  int InvertUnshift;
+
+
+  // signature associated to temporary state used when applying ProdA operator
+  unsigned long ProdASignature;
 
  public:
 
@@ -106,6 +111,13 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // nbodyBasis = reference on the nbody-basis to use
   // return value = converted vector
   RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
+  // convert a gien state from Lz-symmetric Haldane basis to the usual Haldane n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToHaldaneNbodyBasis(RealVector& state, FermionOnSphereHaldaneBasis& nbodyBasis);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -237,6 +249,17 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value = corresponding canonical state
   unsigned long GetCanonicalState (unsigned long initialState);
 
+  // get symmetry of a given state 
+  //
+  // initialState = referennce state whose symmetry has to be computed
+  void GetStateSymmetry (unsigned long& initialState);
+
+  // get canonical expression of a given state and its symmetry
+  //
+  // initialState = state that has to be converted to its canonical expression
+  // return value = corresponding canonical state (with symmetry bit)
+  unsigned long GetSignedCanonicalState (unsigned long initialState);
+
 };
 
 // get canonical expression of a given state
@@ -244,8 +267,94 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
 // initialState = state that has to be converted to its canonical expression
 // return value = corresponding canonical state
 
-inline unsigned long GetCanonicalState (unsigned long initialState)
+inline unsigned long FermionOnSphereHaldaneSymmetricBasis::GetCanonicalState (unsigned long initialState)
 {
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56]; 
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif	
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState < initialState)
+    return TmpState;
+  else
+    return initialState;
+}
+
+// get symmetry of a given state 
+//
+// initialState = reference on the state whose symmetry has to be computed
+
+inline void FermionOnSphereHaldaneSymmetricBasis::GetStateSymmetry (unsigned long& initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56];  
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState != initialState)    
+    initialState |= FERMION_SPHERE_SYMMETRIC_BIT;
+}
+
+// get canonical expression of a given state and its symmetry
+//
+// initialState = state that has to be converted to its canonical expression
+// return value = corresponding canonical state (with symmetry bit)
+
+inline unsigned long FermionOnSphereHaldaneSymmetricBasis::GetSignedCanonicalState (unsigned long initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56];  
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState < initialState)
+    {
+      return (TmpState | FERMION_SPHERE_SYMMETRIC_BIT);
+    }
+  else
+    if (TmpState != initialState)
+      return (initialState | FERMION_SPHERE_SYMMETRIC_BIT);
+    else
+      return initialState;
 }
 
 #endif

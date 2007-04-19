@@ -277,8 +277,7 @@ RealVector FermionOnSphereSymmetricBasis::ConvertToNbodyBasis(RealVector& state,
       else
 	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
     }
-  return TmpVector;
-  
+  return TmpVector;  
 }
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
