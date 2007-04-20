@@ -288,7 +288,11 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (char
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();
 
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->StateDescription[i] &= FERMION_SPHERE_SYMMETRIC_MASK;
   this->GenerateLookUpTable(memory);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
