@@ -3,6 +3,7 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -173,18 +174,18 @@ int main(int argc, char** argv)
 		  return -1;     
 		}
 	    }
-	  FermionOnSphereHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
 	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
 	  FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-// 	  RealVector OutputState(InitialSpace.ConvertToNbodyBasis(State, TargetSpace));
-// 	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
-// 	    {
-// 	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
-// 	      return -1;
-// 	    }
+ 	  RealVector OutputState(InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace));
+ 	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+ 	    {
+ 	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+ 	      return -1;
+ 	    }
 	}
     }
 }

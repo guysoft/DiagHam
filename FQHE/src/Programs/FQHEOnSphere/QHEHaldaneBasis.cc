@@ -3,6 +3,7 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
@@ -41,31 +42,36 @@ int main(int argc, char** argv)
   cout.precision(14);
   
   // some running options and help
-  OptionManager Manager ("QHEHaldaneSphere" , "0.01");
+  OptionManager Manager ("QHEHaldaneBasis" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   
   ArchitectureManager Architecture;
   
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be taken from reference state file definition)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be taken from reference state file definition)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the lz value corresponding to the eigenvector", 0);
-  (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "huge", "use huge Hilbert space support");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-basis", "show basis states");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEHaldaneSphere -h" << endl;
+      cout << "see man page for option syntax or type QHEHaldaneBasis -h" << endl;
       return -1;
     }
   
@@ -78,6 +84,8 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
+  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool ShowBasis = ((BooleanOption*) Manager["show-basis"])->GetBoolean();
 
   int* ReferenceState = 0;
   if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
@@ -147,12 +155,26 @@ int main(int argc, char** argv)
     }
   else
     {
-      cout << "check " << endl;
-      FermionOnSphereHaldaneBasis ReducedSpace(NbrParticles, Lz, LzMax, ReferenceState);
-      cout << "check " << endl;
-      //  for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
-      //    ReducedSpace.PrintState(cout, i) << endl;
-      cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+      if (SymmetrizedBasis == false)
+	{
+	  FermionOnSphereHaldaneBasis ReducedSpace(NbrParticles, Lz, LzMax, ReferenceState);
+	  cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+	  if (ShowBasis == true)
+	    for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
+	      ReducedSpace.PrintState(cout, i) << endl;
+	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	    ReducedSpace.WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	}
+      else
+	{
+	  FermionOnSphereHaldaneSymmetricBasis ReducedSpace(NbrParticles, LzMax, ReferenceState);
+	  cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
+	  if (ShowBasis == true)
+	    for (int i = 0; i < ReducedSpace.GetHilbertSpaceDimension(); ++i)
+	      ReducedSpace.PrintState(cout, i) << endl;
+	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	    ReducedSpace.WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	}
     }
   return 0;
 }

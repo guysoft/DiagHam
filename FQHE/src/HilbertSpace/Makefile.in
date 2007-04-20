@@ -260,7 +260,7 @@ FermionOnSphereHaldaneHugeBasis.cc \
 ParticleOnSphereWithSU4Spin.cc \
 FermionOnSphereWithSU4Spin.cc \
 FermionOnSphereSymmetricBasis.cc \
-FermionOnSphereHaldaneSymmetricBasis.cc
+FermionOnSphereHaldaneSymmetricBasis.cc 
 
 all: all-recursive
 

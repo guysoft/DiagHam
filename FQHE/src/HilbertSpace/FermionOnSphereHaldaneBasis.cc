@@ -52,6 +52,14 @@ using std::ifstream;
 using std::ios;
 
 
+// default constructor
+//
+
+FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis()
+{
+  this->HilbertSpaceDimension = 0;
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions

@@ -2,6 +2,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphere.h"
 
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
@@ -209,14 +210,29 @@ int main(int argc, char** argv)
 		  return -1;     
 		}
 	    }
-	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  else
-	    Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	  if (SymmetrizedBasis == false)
 	    {
-	      ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	      return 0;
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      else
+		Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		{
+		  ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		  return 0;
+		}
+	    }
+	  else
+	    {
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      else
+		Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
+	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		{
+		  ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		  return 0;
+		}
 	    }
 	}
     }

@@ -89,12 +89,6 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value = reference on current hilbert space
   FermionOnSphereHaldaneSymmetricBasis& operator = (const FermionOnSphereHaldaneSymmetricBasis& fermions);
 
-  // save Hilbert space description to disk
-  //
-  // fileName = name of the file where the Hilbert space description has to be saved
-  // return value = true if no error occured
-  bool WriteHilbertSpace (char* fileName);
-
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
@@ -172,13 +166,6 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  virtual ostream& PrintState (ostream& Str, int state);
-
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -188,7 +175,7 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
+					int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
@@ -203,45 +190,6 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
   int FindStateIndex(unsigned long stateDescription, int lzmax);
-
-  // evaluate upper bound for the Haldane basis
-  //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
-
-  // evaluate upper bound for the Haldane basis with shifted values for lzMax and totalLz
-  //
-  // nbrFermions = number of fermions
-  // lzMax = two times momentum maximum value for a fermion plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-  // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
-
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memeory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-
-  // generate all states corresponding to the constraints
-  // 
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
-
-  // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
-  // totalLz = momentum total value
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
 
   // get canonical expression of a given state
   //

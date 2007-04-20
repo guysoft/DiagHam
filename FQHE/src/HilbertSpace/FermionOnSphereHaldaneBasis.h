@@ -44,6 +44,8 @@ class FermionOnSphere;
 class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 {
 
+  friend class FermionOnSphereHaldaneSymmetricBasis;
+
  protected:
 
   // number of fermions
@@ -96,6 +98,10 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 
  public:
 
+  // default constructor
+  //
+  FermionOnSphereHaldaneBasis();
+
   // basic constructor
   // 
   // nbrFermions = number of fermions
@@ -131,7 +137,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   //
   // fileName = name of the file where the Hilbert space description has to be saved
   // return value = true if no error occured
-  bool WriteHilbertSpace (char* fileName);
+  virtual bool WriteHilbertSpace (char* fileName);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -263,7 +269,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // evaluate upper bound for the Haldane basis
   //
@@ -279,7 +285,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -292,7 +298,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
+  virtual int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
 
   // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
   // 
@@ -302,7 +308,7 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  virtual int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
 
 
 };

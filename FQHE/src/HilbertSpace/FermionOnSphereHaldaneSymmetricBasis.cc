@@ -67,8 +67,6 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->LzMax = lzMax;
-  this->ParityBit = (0x1ul << (this->LzMax + 2);
-  this->StateMask = this->ParityBit - 1;
   this->NbrLzValue = this->LzMax + 1;
 #ifdef __64_BITS__
   this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
@@ -94,7 +92,6 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
     }
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
   this->TotalLz = 0;
-  totalLz = this->TotalLz;
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
@@ -186,9 +183,12 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
 	{
 	  if ((TmpKeepStateFlag >> j) & 0x1l)
 	    {
-	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
-	      ++NewHilbertSpaceDimension;
+	      if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
+		{
+		  TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+		  TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
+		  ++NewHilbertSpaceDimension;
+		}
 	    }
 	  ++TotalIndex;
 	}
@@ -203,9 +203,12 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
     {
       if ((TmpKeepStateFlag >> j) & 0x1l)
 	{
-	  TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	  TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
-	  ++NewHilbertSpaceDimension;
+	  if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
+	      ++NewHilbertSpaceDimension;	  
+	    }
 	}
       ++TotalIndex;
     }
@@ -222,6 +225,8 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   delete[] this->TmpGeneratedStatesLzMax;
 
   this->GenerateLookUpTable(memory);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -268,13 +273,20 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (char
 
   File.close();
 
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();
-  this->ParityBit = (0x1ul << (this->LzMax + 2);
-  this->StateMask = this->ParityBit - 1;
 
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
@@ -304,8 +316,6 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis(const
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
-  this->ParityBit = fermions.ParityBit;
-  this->StateMask = fermions.StateMask;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -331,14 +341,6 @@ FermionOnSphereHaldaneSymmetricBasis::~FermionOnSphereHaldaneSymmetricBasis ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescription;
-      delete[] this->StateLzMax;
-      delete[] this->SignLookUpTable;
-      delete[] this->SignLookUpTableMask;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
     }
 }
 
@@ -411,8 +413,22 @@ void FermionOnSphereHaldaneSymmetricBasis::SetTargetSpace(ParticleOnSphere* targ
 RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    TmpVector[nbodyBasis.FindStateIndex((this->StateDescription[i] & this->StateMask), this->StateLzMax[i])] = state[i];
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->GetSignedCanonicalState(nbodyBasis.StateDescription[i]);
+      NewLzMax = this->LzMax;
+      Signature = TmpState & FERMION_SPHERE_SYMMETRIC_BIT;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      if (Signature != 0x0ul)	
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+      else
+	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+    }
   return TmpVector;
 }
 
@@ -422,7 +438,7 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector&
 // nbodyBasis = reference on the nbody-basis to use
 // return value = converted vector
 
-RealVector  FermionOnSphereHaldaneSymmetricBasis::ConvertToHaldaneNbodyBasis(RealVector& state, FermionOnSphereHaldaneBasis& nbodyBasis)
+RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToHaldaneNbodyBasis(RealVector& state, FermionOnSphereHaldaneBasis& nbodyBasis)
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
   unsigned long TmpState;
@@ -825,295 +841,6 @@ int FermionOnSphereHaldaneSymmetricBasis::FindStateIndex(unsigned long stateDesc
       return PosMin;
 }
 
-// print a given State
-//
-// Str = reference on current output stream 
-// state = ID of the state to print
-// return value = reference on current output stream 
-
-ostream& FermionOnSphereHaldaneSymmetricBasis::PrintState (ostream& Str, int state)
-{
-  unsigned long TmpState = this->StateDescription[state];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-//  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-//  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
-//  if (state !=  this->FindStateIndex(TmpState, this->StateLzMax[state]))
-//    Str << " error! ";
-  return Str;
-}
-
-// generate all states corresponding to the constraints
-// 
-// lzMax = momentum maximum value for a fermion in the state
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-int FermionOnSphereHaldaneSymmetricBasis::GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory)
-{
-  int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
-  unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
-  int* TmpLzMax = this->TmpGeneratedStatesLzMax  + (MaxSweeps  * memory);  
-  memory += 1;
-  int TmpCurrentLzMax = 2;
-  int TmpCurrentLzMax2;
-  int TmpMax = lzMax - 1;
-  int NbrEntries = 0;
-  unsigned long TmpReferenceState;
-  
-  while (TmpCurrentLzMax < TmpMax)
-    {
-      while ((TmpCurrentLzMax < TmpMax) && (((referenceState >> TmpCurrentLzMax) & 0x3l) != 0x2l))
-	++TmpCurrentLzMax;
-      if (TmpCurrentLzMax < TmpMax)
-	{
-	  TmpReferenceState = (referenceState & ~(0x3l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
-	  TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
-	  while (TmpCurrentLzMax2 >= 0)
-	    {
-	      while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
-		--TmpCurrentLzMax2;
-	      if (TmpCurrentLzMax2 >= 0)
-		{
-		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
-		  TmpLzMax[NbrEntries] = lzMax;
-		  ++NbrEntries;
-		  --TmpCurrentLzMax2;
-		}	      
-	    }
-	  ++TmpCurrentLzMax;
-	}
-    }
-  if (((referenceState >> TmpCurrentLzMax) & 0x3l) == 0x2l)
-    {
-      TmpReferenceState = (referenceState & ~(0x3l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
-      TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
-      while (TmpCurrentLzMax2 >= 0)
-	{
-	  while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x3l) != 0x1l))
-	    --TmpCurrentLzMax2;
-	  if (TmpCurrentLzMax2 >= 0)
-	    {
-	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x3l << TmpCurrentLzMax2)) | (0x2l << TmpCurrentLzMax2);
-	      TmpLzMax[NbrEntries] = lzMax - 1;
-	      ++NbrEntries;
-	      --TmpCurrentLzMax2;
-	    }
-	}      
-    }
-
-  int TmpIndex;
-  int NbrNewEntries = 0;
-  for (int i = 0; i < NbrEntries; ++i)
-    {
-      TmpIndex = this->FindStateIndex(TmpGeneratedStates2[i], TmpLzMax[i]);
-#ifdef __64_BITS__
-      if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l)
-	{
-	  TmpGeneratedStates2[i] = 0x0l;
-	}
-      else
-	{
-	  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
-	  ++NbrNewEntries;
-	}
-#else
-      if ((this->KeepStateFlag[TmpIndex >> 5] >> (TmpIndex & 0x1f)) & 0x1l)
-	{
-	  TmpGeneratedStates2[i] = 0x0l;
-	}
-      else
-	{
-	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
-	  ++NbrNewEntries;
-	}      
-#endif
-    }
-
-  if (NbrNewEntries > 0)
-    for (int i = 0; i < NbrEntries; ++i)
-      if (TmpGeneratedStates2[i] != 0x0l)
-	pos = this->GenerateStates(TmpLzMax[i], TmpGeneratedStates2[i], pos, memory);
-
-  memory -= 1;
-  return pos;
-}
-
-
-// generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
-// 
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion
-// currentLzMax = momentum maximum value for fermions that are still to be placed
-// totalLz = momentum total value
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-int FermionOnSphereHaldaneSymmetricBasis::RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos)
-{
-  if ((nbrFermions == 0) || (totalLz < 0) || (currentLzMax < (nbrFermions - 1)))
-    return pos;
-  int LzTotalMax = ((2 * currentLzMax - nbrFermions + 1) * nbrFermions) >> 1;
-  if (totalLz > LzTotalMax)
-    return pos;
-  if ((nbrFermions == 1) && (currentLzMax >= totalLz))
-    {
-      this->StateDescription[pos] = ((unsigned long) 0x1) << totalLz;
-      this->StateLzMax[pos] = lzMax;
-      return pos + 1;
-    }
-  if (LzTotalMax == totalLz)
-    {
-      unsigned long Mask = 0;
-      for (int i = currentLzMax - nbrFermions + 1; i <= currentLzMax; ++i)
-	Mask |= (((unsigned long) 1) << i);
-      this->StateDescription[pos] = Mask;
-      this->StateLzMax[pos] = lzMax;
-      return pos + 1;
-    }
-
-  int ReducedCurrentLzMax = currentLzMax - 1;
-  int TmpPos = this->RawGenerateStates(nbrFermions - 1, lzMax, ReducedCurrentLzMax, totalLz - currentLzMax, pos);
-  unsigned long Mask = ((unsigned long) 1) << currentLzMax;
-  for (int i = pos; i < TmpPos; i++)
-    this->StateDescription[i] |= Mask;
-  if (lzMax == currentLzMax)
-    return this->RawGenerateStates(nbrFermions, ReducedCurrentLzMax, ReducedCurrentLzMax, totalLz, TmpPos);
-  else
-    return this->RawGenerateStates(nbrFermions, lzMax, ReducedCurrentLzMax, totalLz, TmpPos);
-}
-
-// generate look-up table associated to current Hilbert space
-// 
-// memory = memory size that can be allocated for the look-up table
-
-void FermionOnSphereHaldaneSymmetricBasis::GenerateLookUpTable(unsigned long memory)
-{
-  // evaluate look-up table size
-  memory /= (sizeof(int*) * this->NbrLzValue);
-  this->MaximumLookUpShift = 1;
-  while (memory > 0)
-    {
-      memory >>= 1;
-      ++this->MaximumLookUpShift;
-    }
-  if (this->MaximumLookUpShift > this->NbrLzValue)
-    this->MaximumLookUpShift = this->NbrLzValue;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-
-  // construct  look-up tables for searching states
-  this->LookUpTable = new int* [this->NbrLzValue];
-  this->LookUpTableShift = new int [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
-  int CurrentLzMax = this->StateLzMax[0];
-  int* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-  if (CurrentLzMax < this->MaximumLookUpShift)
-    this->LookUpTableShift[CurrentLzMax] = 0;
-  else
-    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-  int CurrentShift = this->LookUpTableShift[CurrentLzMax];
-  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
-  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
-  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = 0;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[CurrentLookUpTableValue] = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      if (CurrentLzMax != this->StateLzMax[i])
-	{
-	  while (CurrentLookUpTableValue > 0)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[0] = i;
-	  /*	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
-	    cout << TmpLookUpTable[j] << " ";
-	    cout << endl << "-------------------------------------------" << endl;*/
- 	  CurrentLzMax = this->StateLzMax[i];
-	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
-	  if (CurrentLzMax < this->MaximumLookUpShift)
-	    this->LookUpTableShift[CurrentLzMax] = 0;
-	  else
-	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
-	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
-	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
-	    {
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	      --CurrentLookUpTableValue;
-	    }
-	  TmpLookUpTable[CurrentLookUpTableValue] = i;
-	}
-      else
-	{
-	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
-	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
-	    {
-	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
-		{
-		  TmpLookUpTable[CurrentLookUpTableValue] = i;
-		  --CurrentLookUpTableValue;
-		}
-//	      CurrentLookUpTableValue = TmpLookUpTableValue;
-	      TmpLookUpTable[CurrentLookUpTableValue] = i;
-	    }
-	}
-    }
-  while (CurrentLookUpTableValue > 0)
-    {
-      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
-      --CurrentLookUpTableValue;
-    }
-  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
-  /*  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
-    cout << TmpLookUpTable[j] << " ";
-    cout << endl << "-------------------------------------------" << endl;*/
-  
-  // look-up tables for evaluating sign when applying creation/annihilation operators
-  int Size = 1 << this->MaximumSignLookUp;
-  this->SignLookUpTable = new double [Size];
-  int Count;
-  int TmpNbr;
-  for (int j = 0; j < Size; ++j)
-    {
-      Count = 0;
-      TmpNbr = j;
-      while (TmpNbr != 0)
-	{
-	  if (TmpNbr & 0x1)
-	    ++Count;
-	  TmpNbr >>= 1;
-	}
-      if (Count & 1)
-	this->SignLookUpTable[j] = -1.0;
-      else
-	this->SignLookUpTable[j] = 1.0;
-    }
-#ifdef __64_BITS__
-  this->SignLookUpTableMask = new unsigned long [128];
-  for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
-  for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
-  for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
-#else
-  this->SignLookUpTableMask = new unsigned long [64];
-  for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
-  for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
-  for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
-#endif
-}
 
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
