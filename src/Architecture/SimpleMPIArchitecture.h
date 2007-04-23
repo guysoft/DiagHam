@@ -47,7 +47,7 @@ class AbstractArchitectureOperation;
 class SimpleMPIArchitecture : public AbstractArchitecture
 {
 
- private:
+ protected:
 
   // total number of MPI nodes
   int NbrMPINodes;
@@ -91,98 +91,103 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // minIndex = reference on the minimum index on which the local architecture can act
   // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
   //            architecture doesn't support this feature)
-  void GetTypicalRange (long& minIndex, long& maxIndex);
+  virtual void GetTypicalRange (long& minIndex, long& maxIndex);
   
   // set dimension of the Hilbert space on which the architecture has to work
   // 
   // dimension = dimension of the Hilbert space
-  void SetDimension (long dimension);
+  virtual void SetDimension (long dimension);
 
   // indicate if the local node is the master node
   // 
   // return value = true if the local node is the master node
-  bool IsMasterNode();
+  virtual bool IsMasterNode();
   
+  // get the architecture used on the local MPI node
+  //
+  // return value = pointer to the local architecture
+  virtual AbstractArchitecture* GetLocalArchitecture();
+
   // request an operation to the slave nodes 
   //
   // operationType = operation ID
   // return value = true if no error occured
-  bool RequestOperation (int operationType);
+  virtual bool RequestOperation (int operationType);
 
   // wait an operation request from the master node (without sending acknowledge)
   //
   // operationType = reference on the integer where the operation ID will be stored
   // return value = true until the free slave signal is sent or an error occurs
-  bool WaitOperation (int& operationType);
+  virtual bool WaitOperation (int& operationType);
 
   // send acknowledge to the master node 
   //
   // acknowledge = true to send a positive answer
   // return value = true if no error occured
-  bool SendAcknowledge (bool acknowledge = true);
+  virtual bool SendAcknowledge (bool acknowledge = true);
 
   // broadcast an integer from master node to slave nodes
   // 
   // value = integer to broadcast
   // return value = true if no error occured
-  bool BroadcastToSlaves(int& value);
+  virtual bool BroadcastToSlaves(int& value);
 
   // broadcast an integer array from master node to slave nodes
   // 
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
-  bool BroadcastToSlaves(int* values, int nbrValues);
+  virtual bool BroadcastToSlaves(int* values, int nbrValues);
 
   // broadcast a double from master node to slave nodes
   // 
   // value = integer to broadcast
   // return value = true if no error occured
-  bool BroadcastToSlaves(double& value);
+  virtual bool BroadcastToSlaves(double& value);
 
   // broadcast a double array from master node to slave nodes
   // 
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
-  bool BroadcastToSlaves(double* values, int nbrValues);
+  virtual bool BroadcastToSlaves(double* values, int nbrValues);
 
   // broadcast a vector on each slave node
   //
   // vector = pointer to the vector tobroadcast  (only usefull for the master node)
   // return value = pointer to the broadcasted vector or null pointer if an error occured
-  Vector* BroadcastVector(Vector* vector = 0);
+  virtual Vector* BroadcastVector(Vector* vector = 0);
 
   // broadcast a vector type and allocate a vector based on it on each slave node
   //
   // vector = pointer to the vector to be used as reference (only usefull for the master node)
   // return value = pointer to the cloned vector or null pointer if an error occured
-  Vector* BroadcastVectorType(Vector* vector = 0);
+  virtual Vector* BroadcastVectorType(Vector* vector = 0);
 
   // broadcast an array of vectors on each slave node
   //
   // nbrVectors = reference on the number of vectors to broadcast or get
   // vector = pointer to the vector tobroadcast  (only usefull for the master node)
   // return value =  pointer to the array of broadcasted vectors or null pointer if an error occured null pointer if an error occured
-  Vector** BroadcastVectorArray(int& nbrVectors, Vector* vector = 0);
+  virtual Vector** BroadcastVectorArray(int& nbrVectors, Vector* vector = 0);
 
   // broadcast vector type and allocate an array of vectors based on it on each slave node
   //
   // nbrVectors = reference on the number of vectors to broadcast or get
   // vector = pointer to the vector to be used as reference (only usefull for the master node)
   // return value =  pointer to the array of cloned vector or null pointer if an error occurednull pointer if an error occured
-  Vector** BroadcastVectorTypeArray(int& nbrVectors, Vector* vector = 0);
+  virtual Vector** BroadcastVectorTypeArray(int& nbrVectors, Vector* vector = 0);
 
   // add current vector to the one of the master nide
   // 
   // vector = reference on the vector to add (or the destination vector of the master node)
   // return value = reference on the vector
-  Vector& SumVector(Vector& vector);
+  virtual Vector& SumVector(Vector& vector);
 
   // get a temporary file name
   //
   // return value = string corresponding to a temporary file name
-  char* GetTemporaryFileName();
+  virtual char* GetTemporaryFileName();
 
 };
 
@@ -193,6 +198,15 @@ class SimpleMPIArchitecture : public AbstractArchitecture
 inline bool SimpleMPIArchitecture::IsMasterNode()
 {
   return this->MasterNodeFlag;
+}
+
+// get the architecture used on the local MPI node
+//
+// return value = pointer to the local architecture
+
+inline AbstractArchitecture* SimpleMPIArchitecture::GetLocalArchitecture()
+{
+  return this->LocalArchitecture;
 }
 
 // add current vector to the one of the master nide

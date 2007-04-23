@@ -145,8 +145,8 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 
 bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->DestinationVector->GetVectorDimension() / architecture->GetNbrThreads();
-  int FirstComponent = 0;
+  int Step = this->NbrComponent / architecture->GetNbrThreads();
+  int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
   VectorHamiltonianMultiplyOperation** TmpOperations = new VectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   this->DestinationVector->ClearVector();
@@ -154,13 +154,13 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
     {
       TmpOperations[i] = (VectorHamiltonianMultiplyOperation*) this->Clone();
       architecture->SetThreadOperation(TmpOperations[i], i);
-      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
-      FirstComponent += Step;
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+      TmpFirstComponent += Step;
     }
   TmpOperations[ReducedNbrThreads] = (VectorHamiltonianMultiplyOperation*) this->Clone();
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, 
-						    this->DestinationVector->GetVectorDimension() - FirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, 
+						    this->FirstComponent + this->NbrComponent - TmpFirstComponent);  
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
       TmpOperations[i]->SetDestinationVector(this->DestinationVector->EmptyClone(true));
@@ -199,7 +199,10 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
    architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
    this->FirstComponent = (int) TmpMinimumIndex;  
    this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-   this->RawApplyOperation();
+   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+   else
+     this->RawApplyOperation();
    architecture->SumVector(*(this->DestinationVector));
    if (architecture->IsMasterNode() == false)
      {

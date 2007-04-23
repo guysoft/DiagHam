@@ -36,9 +36,11 @@
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
+#include "Options/SingleStringOption.h"
 #include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
+#include "Architecture/MixedMPISMPArchitecture.h"
 
 
 // default constructor
@@ -76,6 +78,9 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
 #endif
 #ifdef __MPI__
   (*ParallelizationGroup) += new BooleanOption  ('\n', "mpi", "enable MPI mode");  
+#ifdef __SMP__
+  (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
+#endif
 #endif
   
 }
@@ -88,10 +93,24 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 {
   if ((this->Options != 0) && (this->Architecture == 0))
     {
+#ifdef __SMP__
       bool SMPFlag = ((BooleanOption*) (*(this->Options))["SMP"])->GetBoolean();
+#else 
+      bool SMPFlag = false;
+#endif
 #ifdef __MPI__
       bool MPIFlag = ((BooleanOption*) (*(this->Options))["mpi"])->GetBoolean();
-#else
+#ifdef __SMP__
+      if (((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString() != 0)
+	{
+	  SMPFlag = true;
+	  MPIFlag = true;
+	}
+      else
+	if (MPIFlag == true)
+	  SMPFlag = false;
+#endif      
+#else      
       bool MPIFlag = false;
 #endif
       int NbrProcessor = ((SingleIntegerOption*) (*(this->Options))["processors"])->GetInteger();
@@ -101,7 +120,11 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 	else
 	  this->Architecture = new SimpleMPIArchitecture;
       else
-	this->Architecture = new SMPArchitecture(NbrProcessor);
+	if (MPIFlag == false)
+	  this->Architecture = new SMPArchitecture(NbrProcessor);
+	else
+	  this->Architecture = new MixedMPISMPArchitecture(((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString());
+	  
     }
   return this->Architecture;
 }

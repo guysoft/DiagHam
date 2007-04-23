@@ -6,5 +6,6 @@ libArchitecture_a_SOURCES=AbstractArchitecture.cc \
 MonoProcessorArchitecture.cc \
 SimpleMPIArchitecture.cc \
 SMPArchitecture.cc \
+MixedMPISMPArchitecture.cc \
 ArchitectureManager.cc
 

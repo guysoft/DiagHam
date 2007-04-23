@@ -57,7 +57,8 @@ class AbstractArchitecture
       MonoProcessor = 0x01,
       SMP = 0x02,
       SimpleMPI = 0x30,
-      WithCommunicator = 0x10
+      WithCommunicator = 0x10,
+      MixedMPISMP = 0x32
     };
 
   

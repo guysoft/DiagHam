@@ -364,7 +364,7 @@ int* MultiColumnASCIIFile::GetAsIntegerArray (int column)
   char* TmpError;
   for (int i = 0; i < this->NbrLines; ++i)
     {
-      TmpColumn[i] = strtol(TmpASCIIColumn[i], &TmpError, 0);
+      long Tmp = strtol(TmpASCIIColumn[i], &TmpError, 0);
       if ((TmpError == TmpASCIIColumn[i]) || ((*TmpError) != '\0'))
 	{
 	  char* TmpString = new char [256 + strlen(TmpASCIIColumn[i])]; 
@@ -373,6 +373,8 @@ int* MultiColumnASCIIFile::GetAsIntegerArray (int column)
 	  delete[] TmpColumn;
 	  return 0;
 	}
+      else 
+	TmpColumn[i] = (int) Tmp;
     } 
   return TmpColumn;
 }

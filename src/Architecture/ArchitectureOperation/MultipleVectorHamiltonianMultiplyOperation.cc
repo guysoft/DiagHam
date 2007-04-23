@@ -211,18 +211,10 @@ bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
 bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
   bool RealFlag = false;
-  int Dimension = 0;
   if (this->ComplexDestinationVectors == 0)
-    {
-      RealFlag = true;
-      Dimension = this->RealDestinationVectors[0].GetVectorDimension();
-    }
-  else
-    {
-      Dimension = this->ComplexDestinationVectors[0].GetVectorDimension();
-    }
-  int Step = Dimension / architecture->GetNbrThreads();
-  int FirstComponent = 0;
+    RealFlag = true;
+  int Step = this->NbrComponent / architecture->GetNbrThreads();
+  int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   if (RealFlag == true)
@@ -238,12 +230,12 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
    for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       TmpOperations[i] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
-      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
       architecture->SetThreadOperation(TmpOperations[i], i);
-      FirstComponent += Step;
+      TmpFirstComponent += Step;
     }
   TmpOperations[ReducedNbrThreads] = (MultipleVectorHamiltonianMultiplyOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, Dimension - FirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->NbrComponent + this->FirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   for (int i = 1; i < architecture->GetNbrThreads(); ++i)
     {
@@ -305,7 +297,10 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  this->RawApplyOperation();
+  if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+  else
+    this->RawApplyOperation();
   if (this->RealDestinationVectors != 0)
     {
       for (int i = 0; i < this->NbrVectors; ++i)
