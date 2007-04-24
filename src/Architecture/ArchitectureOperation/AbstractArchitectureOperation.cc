@@ -60,6 +60,8 @@ bool AbstractArchitectureOperation::ApplyOperation(AbstractArchitecture* archite
       return this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture);
     case AbstractArchitecture::SimpleMPI:
       return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);
+    case AbstractArchitecture::MixedMPISMP:
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);  
     default:
       return this->RawApplyOperation();
     }

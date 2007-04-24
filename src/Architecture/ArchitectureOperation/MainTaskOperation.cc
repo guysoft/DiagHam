@@ -84,6 +84,8 @@ bool MainTaskOperation::ApplyOperation(AbstractArchitecture* architecture)
     {
     case AbstractArchitecture::SimpleMPI:
       return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);
+    case AbstractArchitecture::MixedMPISMP:
+      return this->ArchitectureDependentApplyOperation((SimpleMPIArchitecture*) architecture);  
     default:
       this->Task->SetArchitecture(architecture);
       return this->RawApplyOperation();

@@ -107,16 +107,17 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 			  this->NbrCPUPerNode[i] = 1;
 			  for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
 			    {
-			      cout << this->NodeHostnames[i] << " " << ClusterFile(0,j) << endl;
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
-				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && (this->NodeHostnames[i][strlen(ClusterFile(0,j))] = '.')))
+				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && (this->NodeHostnames[i][strlen(ClusterFile(0,j))] == '.')))
 				{
+//				  cout << "TmpNbrCPUNode " << TmpNbrCPUNode[j] << " " << j << endl;
 				  this->NbrCPUPerNode[i] = TmpNbrCPUNode[j];
 				  j = ClusterFile.GetNbrLines();
 				}
 			    }
-			  delete[] TmpNbrCPUNode;
+//			  cout << "truc " << i << " " <<  this->NbrCPUPerNode[i] << endl;
 			}
+		      delete[] TmpNbrCPUNode;
 		    }
 		  else
 		    ErrorFlag = true;
@@ -135,6 +136,8 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 	  this->NbrCPUPerNode[i] = 1;
     }
   MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
+//  for (int i = 0; i < this->NbrMPINodes; ++i)
+//    cout << "node " << i << " : " << this->NbrCPUPerNode[i]  << endl;
   this->PerformanceIndex *= (double) this->NbrCPUPerNode[this->MPIRank];
 
   if (this->MPIRank != 0)
@@ -175,6 +178,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
   if (this->NbrCPUPerNode[this->MPIRank] > 1)
     {
       delete this->LocalArchitecture;
+//      cout << "this->NbrCPUPerNode[this->MPIRank]" << this->NbrCPUPerNode[this->MPIRank] << endl;
       this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank]);
     }
 }
@@ -193,119 +197,3 @@ MixedMPISMPArchitecture::~MixedMPISMPArchitecture()
     }
 }
   
-// get typical range of indices on which the local architecture acts
-//
-// minIndex = reference on the minimum index on which the local architecture can act
-// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
-//            architecture doesn't support this feature)
-
-void MixedMPISMPArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
-{
-  minIndex = this->MinimumIndex;
-  maxIndex = this->MaximumIndex;
-}
-  
-// set dimension of the Hilbert space on which the architecture has to work
-// 
-// dimension = dimension of the Hilbert space
-
-void MixedMPISMPArchitecture::SetDimension (long dimension)
-{
-  this->HilbertSpaceDimension = dimension;
-  double Tmp = 0.0;
-  for (int i = 0; i < this->MPIRank; ++i)
-    Tmp += this->ClusterPerformanceArray[i];
-  if (this->MPIRank == 0)
-    {
-      this->MinimumIndex = (long) 0;
-    }
-  else
-    {
-      cout << Tmp << endl;
-      this->MinimumIndex = (long) (Tmp * ((double) dimension));
-    }
-  if (this->MPIRank == (this->NbrMPINodes - 1))
-    {
-      this->MaximumIndex = dimension - 1;
-    }
-  else
-    {
-      Tmp += this->ClusterPerformanceArray[this->MPIRank];      
-      this->MaximumIndex = (long) (Tmp * ((double) dimension)) - (long) 1;
-    }
-//   this->MinimumIndex = (long) 0;
-//   this->MaximumIndex = dimension - 1;
-  cout << this->MPIRank << " " << this->MinimumIndex << " " << this->MaximumIndex << endl;
-}
-
-// request an operation to the slave nodes and wait till they are ready to get operation parameters
-//
-// operationType = operation ID
-// return value = true if no error occured
-
-bool MixedMPISMPArchitecture::RequestOperation (int operationType)
-{
-#ifdef __MPI__
-  if (this->MasterNodeFlag)
-    {
-      MPI::COMM_WORLD.Bcast(&operationType, 1, MPI::INT, 0);
-      int NbrMPINodes = MPI::COMM_WORLD.Get_size();
-      bool Flag = true;
-      int Acknowledge = 0;
-      for (int i = 1; i < NbrMPINodes; ++i)
-	{
-	  MPI::COMM_WORLD.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
-	  if ((Flag == true) && (Acknowledge == 0))
-	    Flag = false;
-	}
-      return Flag;
-    }
-#endif
-  return false;
-}
-
-// wait an operation request from the master node  (without sending acknowledge)
-//
-// operationType = reference on the integer where the operation ID will be stored
-// return value = true until the free slave signal is sent or an error occurs
-
-bool MixedMPISMPArchitecture::WaitOperation (int& operationType)
-{
-#ifdef __MPI__
-  if (this->MasterNodeFlag == false)
-    {
-      MPI::COMM_WORLD.Bcast(&operationType, 1, MPI::INT, 0);
-      if (operationType == MixedMPISMPArchitecture::FreeSlaveSignal)
-	{
-	  return false;
-	}
-      else
-	{
-	  return true;
-	}
-    }
-#endif
-  return false;
-}
-
-
-// send acknowledge to the master node 
-//
-// acknowledge = true to send a positive answer
-// return value = true if no error occured
-
-bool MixedMPISMPArchitecture::SendAcknowledge (bool acknowledge)
-{
-#ifdef __MPI__
-  if (!this->MasterNodeFlag)
-    {
-      int Acknowledge = 0;
-      if (acknowledge == true)
-	 Acknowledge = 1;
-      MPI::COMM_WORLD.Send(&Acknowledge, 1, MPI::INT, 0, 1); 
-      return true;
-    }
-#endif
-  return false;
-}
-

@@ -63,36 +63,6 @@ class MixedMPISMPArchitecture : public SimpleMPIArchitecture
   // destructor
   //
   ~MixedMPISMPArchitecture();
-  
-  // get typical range of indices on which the local architecture acts
-  //
-  // minIndex = reference on the minimum index on which the local architecture can act
-  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
-  //            architecture doesn't support this feature)
-  void GetTypicalRange (long& minIndex, long& maxIndex);
-  
-  // set dimension of the Hilbert space on which the architecture has to work
-  // 
-  // dimension = dimension of the Hilbert space
-  void SetDimension (long dimension);
-
-  // request an operation to the slave nodes 
-  //
-  // operationType = operation ID
-  // return value = true if no error occured
-  bool RequestOperation (int operationType);
-
-  // wait an operation request from the master node (without sending acknowledge)
-  //
-  // operationType = reference on the integer where the operation ID will be stored
-  // return value = true until the free slave signal is sent or an error occurs
-  bool WaitOperation (int& operationType);
-
-  // send acknowledge to the master node 
-  //
-  // acknowledge = true to send a positive answer
-  // return value = true if no error occured
-  bool SendAcknowledge (bool acknowledge = true);
 
 };
 

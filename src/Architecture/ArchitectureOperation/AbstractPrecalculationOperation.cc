@@ -58,19 +58,19 @@ void AbstractPrecalculationOperation::SetIndicesRange (const int& firstComponent
 
 bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->GetHilbertSpaceDimension() / architecture->GetNbrThreads();
-  int FirstComponent = 0;
+  int Step = this->NbrComponent / architecture->GetNbrThreads();
+  int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
   AbstractPrecalculationOperation** TmpOperations = new AbstractPrecalculationOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       TmpOperations[i] = (AbstractPrecalculationOperation*) this->Clone();
-      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
       architecture->SetThreadOperation(TmpOperations[i], i);
-      FirstComponent += Step;
+      TmpFirstComponent += Step;
     }
   TmpOperations[ReducedNbrThreads] = (AbstractPrecalculationOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->GetHilbertSpaceDimension() - FirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->NbrComponent + this->FirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
@@ -92,6 +92,10 @@ bool AbstractPrecalculationOperation::ArchitectureDependentApplyOperation(Simple
   long TmpMaximumIndex = 0;
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->SetIndicesRange((int) TmpMinimumIndex, (int) (TmpMaximumIndex - TmpMinimumIndex + 1));
-  return this->RawApplyOperation();
+  if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+  else
+    this->RawApplyOperation();
+  return true;
 }
   
