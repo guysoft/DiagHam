@@ -62,6 +62,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
   this->TotalSpin = totalSpin;
+  this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
+  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin);
@@ -114,6 +116,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin(const FermionOnSphereWithSpin& 
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->NbrFermionsUp = fermions.NbrFermionsUp;
+  this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->StateDescription = fermions.StateDescription;
   this->StateLargestBit = fermions.StateLargestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -159,6 +163,8 @@ FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSph
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->NbrFermionsUp = fermions.NbrFermionsUp;
+  this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->StateDescription = fermions.StateDescription;
   this->StateLargestBit = fermions.StateLargestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -821,12 +827,16 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 {
   Complex Value;
   Complex Tmp;
-  ComplexMatrix Slatter(this->NbrFermions, this->NbrFermions);
+  ComplexMatrix SlaterUp(this->NbrFermionsUp, this->NbrFermionsUp);
+  ComplexMatrix SlaterDown(this->NbrFermionsDown, this->NbrFermionsDown);
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
-  int* Indices = new int [this->NbrFermions];
-  int Pos;
+  int* IndicesUp = new int [this->NbrFermionsUp];
+  int* IndicesDown = new int [this->NbrFermionsDown];
+  int PosUp, PosDown;
   int Lz;
+  
+  // calculate Basis functions for the given set of coordinates:
   for (int j = 0; j < this->NbrFermions; ++j)
     {
       TmpCoordinates[0] = position[j << 1];
@@ -838,41 +848,91 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 	  Functions[j].Im(i) = Tmp.Im;
 	}
     }
+  // calculate prefactor 1/sqrt(N!);
   double Factor = 1.0;
   for (int i = 2; i <= this->NbrFermions; ++i)
     Factor *= (double) i;
   Factor = 1.0 / sqrt(Factor);
+  // get down to the business: adding up terms \sum c_\alpha <r|\alpha>
   unsigned long TmpStateDescription;
   int LastComponent = firstComponent + nbrComponent;
   for (int k = firstComponent; k < LastComponent; ++k)
     {
-      Pos = 0;
+      PosUp = 0;
+      PosDown = 0;
       Lz = 0;
       TmpStateDescription = this->StateDescription[k];
-      while (Pos < this->NbrFermions)
+      while ((PosUp < this->NbrFermionsUp)||(PosDown < this->NbrFermionsDown))
 	{
-	  if ((TmpStateDescription & 0x3l) != 0x0l)
+	  if ((TmpStateDescription & 0x1l) != 0x0l)
 	    {
-	      Indices[Pos] = Lz;
-	      ++Pos;
+	      IndicesDown[PosDown] = Lz;
+	      ++PosDown;
+	    }
+	  if ((TmpStateDescription & 0x2l) != 0x0l)
+	    {
+	      IndicesUp[PosUp] = Lz;
+	      ++PosUp;
 	    }
 	  ++Lz;
 	  TmpStateDescription >>= 2;
 	}
-      for (int i = 0; i < this->NbrFermions; ++i)
+      for (int i = 0; i < this->NbrFermionsUp; ++i)
 	{
 	  ComplexVector& TmpColum2 = Functions[i];	  
-	  for (int j = 0; j < this->NbrFermions; ++j)
+	  for (int j = 0; j < this->NbrFermionsUp; ++j)
 	    {
-	      Slatter[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      SlaterUp[i].Re(j) = TmpColum2.Re(IndicesUp[j]);
+	      SlaterUp[i].Im(j) = TmpColum2.Im(IndicesUp[j]);
 	    }
 	}
-      Complex SlatterDet = Slatter.Determinant();
-      Value += SlatterDet * (state[k] * Factor);
+      for (int i = 0; i < this->NbrFermionsDown; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i+this->NbrFermionsUp];	  
+	  for (int j = 0; j < this->NbrFermionsDown; ++j)
+	    {
+	      SlaterDown[i].Re(j) = TmpColum2.Re(IndicesDown[j]);
+	      SlaterDown[i].Im(j) = TmpColum2.Im(IndicesDown[j]);
+	    }
+	}
+      Complex SlaterDetUp = SlaterUp.Determinant();
+      Complex SlaterDetDown = SlaterDown.Determinant();
+      Value += SlaterDetUp * SlaterDetDown * (state[k] * Factor) * this->GetStateSign(k, IndicesDown);
     }
-  delete[] Indices;
+  delete[] IndicesUp;
+  delete[] IndicesDown;
   return Value;
+}
+
+// compute the sign for permuting all electrons with spin down to the right of those with spin up
+// index = index of the state
+// return value = sign value (+1.0 or -1.0)
+// strategy: match up spin down particles in pairs, then move them out "for free"
+// make use of me knowing the location of spin up particles already
+double FermionOnSphereWithSpin::GetStateSign(int index, int* IndicesDown)
+{ 
+  unsigned long State = this->StateDescription[index];
+  unsigned long mask, signs;
+  int pos1, pos2;
+  double result = 1.0;  
+  for (int pair=0; pair<NbrFermionsDown/2; ++pair)
+    {
+      // create mask that highlights fermions between IndicesDown[2*pair] and IndicesDown[2*pair+1]
+      pos2 = 2*IndicesDown[2*pair+1];
+      pos1 = 2*IndicesDown[2*pair];
+      mask = ((0x1l<<pos2) -1); // mask with all bits set at positions right of pos2
+      mask ^=  ((0x1l<<(pos1+1)) -1); // ^ mask with all bits set at positions right of pos1+1
+      signs = mask & State;
+      result *= ComputeSign(signs);
+    }
+  if (NbrFermionsDown&1) // odd number of fermions...
+    {
+      pos1 = 2*IndicesDown[NbrFermionsDown-1];
+      mask = ((0x1l<<pos1) -1);
+      signs = mask & State;
+      result *= ComputeSign(signs);
+    }
+  return result;
 }
 
 // initialize evaluation of wave function in real space using a given basis and only for a given range of components and

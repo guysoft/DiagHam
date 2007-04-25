@@ -49,7 +49,10 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   int TotalLz;
   // maximum Lz value reached by a fermion
   int LzMax;
-  // number of Lz values in a state
+  // number of fermions with spin up / down
+  int NbrFermionsUp;
+  int NbrFermionsDown;
+  // number of Lz values in a stat
   int NbrLzValue;
   // twice the total spin value
   int TotalSpin;
@@ -224,7 +227,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 
   // generate look-up table associated to current Hilbert space
   // 
-  // memeory = memory size that can be allocated for the look-up table
+  // memory = memory size that can be allocated for the look-up table
   void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
@@ -243,6 +246,13 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // signs = 
   // return value = sign value (+1.0 or -1.0)
   double ComputeSign(unsigned long signs);
+
+
+  // compute the sign for permuting all electrons with spin up to the left of those with spin down
+  // index = index of the state
+  // indicesUp = location of the Fermions with spin up, counting as zero to LzMax
+  // return value = sign value (+1.0 or -1.0)
+  double GetStateSign(int index, int *IndicesDown);
 
 };
 

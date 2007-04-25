@@ -807,7 +807,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 {
   Complex Value;
   Complex Tmp;
-  ComplexMatrix Slatter(this->NbrFermions, this->NbrFermions);
+  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrFermions];
@@ -850,12 +850,12 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  ComplexVector& TmpColum2 = Functions[i];	  
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
-	      Slatter[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
-      Complex SlatterDet = Slatter.Determinant();
-      Value += SlatterDet * (state[k] * Factor);
+      Complex SlaterDet = Slater.Determinant();
+      Value += SlaterDet * (state[k] * Factor);
     }
   delete[] Indices;
   return Value;
