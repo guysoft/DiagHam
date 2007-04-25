@@ -89,6 +89,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 
   if (this->MPIRank == 0)
     {
+      this->MasterNodeFlag = true;
       if (clusterFileName != 0)
 	{
 	  MultiColumnASCIIFile ClusterFile;
@@ -99,6 +100,9 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 		ErrorFlag = true;
 	      else
 		{
+		  double* TmpClusterPerformanceArray = 0;
+		  if (ClusterFile.GetNbrColumns() > 2)
+		    TmpClusterPerformanceArray = ClusterFile.GetAsDoubleArray(2);
 		  int* TmpNbrCPUNode = ClusterFile.GetAsIntegerArray(1);
 		  if (TmpNbrCPUNode != 0)
 		    {
@@ -110,12 +114,13 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
 				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && (this->NodeHostnames[i][strlen(ClusterFile(0,j))] == '.')))
 				{
-//				  cout << "TmpNbrCPUNode " << TmpNbrCPUNode[j] << " " << j << endl;
 				  this->NbrCPUPerNode[i] = TmpNbrCPUNode[j];
+				  this->ClusterPerformanceArray[i] = (double) this->NbrCPUPerNode[i];
+				  if (TmpClusterPerformanceArray !=0)
+				    this->ClusterPerformanceArray[i] *= TmpClusterPerformanceArray[j];
 				  j = ClusterFile.GetNbrLines();
-				}
+				}			     
 			    }
-//			  cout << "truc " << i << " " <<  this->NbrCPUPerNode[i] << endl;
 			}
 		      delete[] TmpNbrCPUNode;
 		    }
@@ -130,36 +135,24 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 	      cout << "switching to one cpu per node mode" << endl;
 	      clusterFileName = 0;
 	    }
+	  
 	}
       if (clusterFileName == 0)
 	for (int i = 0; i < this->NbrMPINodes; ++i)
-	  this->NbrCPUPerNode[i] = 1;
-    }
-  MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
-//  for (int i = 0; i < this->NbrMPINodes; ++i)
-//    cout << "node " << i << " : " << this->NbrCPUPerNode[i]  << endl;
-  this->PerformanceIndex *= (double) this->NbrCPUPerNode[this->MPIRank];
-
-  if (this->MPIRank != 0)
-    {
-      this->MasterNodeFlag = false;
-      MPI::COMM_WORLD.Send(&this->PerformanceIndex, 1, MPI::DOUBLE, 0, 1);      
+	  {
+	    this->NbrCPUPerNode[i] = 1;
+	    this->ClusterPerformanceArray[i] = 1.0;
+	  }
+      this->PerformanceIndex = this->ClusterPerformanceArray[this->MPIRank];
+      this->TotalPerformanceIndex = this->PerformanceIndex;
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	this->TotalPerformanceIndex += this->ClusterPerformanceArray[i];
+      for (int i = 0; i < this->NbrMPINodes; ++i)
+	this->ClusterPerformanceArray[i] /= this->TotalPerformanceIndex;      
     }
   else
-    {
-      this->MasterNodeFlag = true;
-      this->TotalPerformanceIndex = this->PerformanceIndex;
-      this->ClusterPerformanceArray[0] = this->PerformanceIndex;
-      for (int i = 1; i < this->NbrMPINodes; ++i)
-	{
-	  MPI::COMM_WORLD.Recv(&this->ClusterPerformanceArray[i], 1, MPI::DOUBLE, i, 1);	  
-	  this->TotalPerformanceIndex += this->PerformanceIndex;
-	}
-      for (int i = 0; i < this->NbrMPINodes; ++i)
-	{
-	  this->ClusterPerformanceArray[i] /= this->TotalPerformanceIndex;
-	}
-    }
+    this->MasterNodeFlag = false;
+  MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
   MPI::COMM_WORLD.Bcast(&this->TotalPerformanceIndex, 1, MPI::DOUBLE, 0);
 #else
@@ -173,12 +166,13 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 #endif
   if (this->MasterNodeFlag == true)
     {
-      cout << this->NbrMPINodes << " " << this->TotalPerformanceIndex << endl;
+      cout << "number of nodes = " << this->NbrMPINodes << endl << "total performance index = " << this->TotalPerformanceIndex << endl;
+      for (int i = 0; i < this->NbrMPINodes; ++i)
+	cout << "node " << i << " performance index = " << this->ClusterPerformanceArray[i] << endl;
     }
   if (this->NbrCPUPerNode[this->MPIRank] > 1)
     {
       delete this->LocalArchitecture;
-//      cout << "this->NbrCPUPerNode[this->MPIRank]" << this->NbrCPUPerNode[this->MPIRank] << endl;
       this->LocalArchitecture = new SMPArchitecture(this->NbrCPUPerNode[this->MPIRank]);
     }
 }

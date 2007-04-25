@@ -45,6 +45,15 @@ AbstractArchitecture::~AbstractArchitecture()
 {
 }
 
+// get the amount of memory available for the local architecture
+//
+// return value = amount of memory in byte (negative if the information is not available)
+
+long AbstractArchitecture::GetLocalMemory()
+{
+  return -1l;
+}
+  
 // get typical range of indices on which the local architecture acts
 //
 // minIndex = reference on the minimum index on which the local architecture can act

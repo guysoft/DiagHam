@@ -74,7 +74,7 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
       for (int i = 1; i < this->NbrMPINodes; ++i)
 	{
 	  MPI::COMM_WORLD.Recv(&this->ClusterPerformanceArray[i], 1, MPI::DOUBLE, i, 1);	  
-	  this->TotalPerformanceIndex += this->PerformanceIndex;
+	  this->TotalPerformanceIndex += this->ClusterPerformanceArray[i];
 	}
       for (int i = 0; i < this->NbrMPINodes; ++i)
 	{
