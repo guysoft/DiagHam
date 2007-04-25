@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
       //  Location[4] = Location[0];
       //  Location[5] = Location[1];
       ParticleOnSphereFunctionBasis Basis(LzMax);
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis);
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis);
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
       //      Complex ValueExact = Space.EvaluateWaveFunction(State, Location, Basis);
@@ -149,18 +149,26 @@ int main(int argc, char** argv)
     }
   // test symmetry for spin reversal:
   if ((SzTotal==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
-  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
-  Operation.ApplyOperation(Architecture.GetArchitecture());      
-  Complex ValueExact (Operation.GetScalar());
-  int NUp = NbrFermions/2;
-  for (int j = 0; j < NUp; ++j)
     {
-      tmp2 = Location[j << 1];
-      Location[j << 1] = Location[(j+NUp) << 1];
-      Location[(j+NUp) << 1] = tmp2;
-      tmp2 = Location[1 + (j << 1)];
-      Location[1+(j <<1)] = Location[1+ ((j+NUp) << 1)];
-      Location[1+ ((j+NUp) << 1)] = tmp2;
+      cout << "Initial locations: "<< Location << endl;
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis);
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      Complex ValueExact (Operation.GetScalar());
+      int NUp = NbrFermions/2;
+      for (int j = 0; j < NUp; ++j)
+	{
+	  Tmp2 = Location[j << 1];
+	  Location[j << 1] = Location[(j+NUp) << 1];
+	  Location[(j+NUp) << 1] = Tmp2;
+	  Tmp2 = Location[1 + (j << 1)];
+	  Location[1+(j <<1)] = Location[1+ ((j+NUp) << 1)];
+	  Location[1+ ((j+NUp) << 1)] = Tmp2;
+	}
+      cout << "exchanged locations: "<< Location << endl;
+      QHEParticleWaveFunctionOperation Operation2(Space, &State, &Location, &Basis,-1);
+      Operation2.ApplyOperation(Architecture.GetArchitecture());      
+      Complex ValueExact2 (Operation2.GetScalar());
+      cout << "Before exchange: "<< ValueExact << " after exchage: " << ValueExact2 << endl;
     }
   
   return 0;
@@ -181,7 +189,7 @@ int main(int argc, char** argv)
       int TimeCoherence = -1;
       if (((BooleanOption*) Manager["with-timecoherence"])->GetBoolean() == true)
 	TimeCoherence = NextCoordinates;
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis, TimeCoherence);
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
 /*      if ((i == 168131))
@@ -227,7 +235,8 @@ int main(int argc, char** argv)
 	  cout << Tmp4 << " " << Tmp5 << endl;
 	  cout << "-----------------------------------------------" << endl;
 	}
-    } 
+    }
+  delete Space;
  return 0;
 }
 
