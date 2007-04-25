@@ -126,7 +126,7 @@ class MultipleDoubleOption : public AbstractOption
   // Get number of doubles
   //
   // return value = number of doubles read
-  int GetLength(){return length;}
+  int GetLength(){return Length;}
 
   // get option value as a string
   // 

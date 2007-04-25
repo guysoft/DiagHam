@@ -84,7 +84,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libOptions.a
 
-libOptions_a_SOURCES = AbstractOption.cc BooleanOption.cc SingleDoubleOption.cc SingleIntegerOption.cc SingleStringOption.cc OptionGroup.cc OptionManager.cc
+libOptions_a_SOURCES = Options.h AbstractOption.cc AbstractOption.h BooleanOption.cc BooleanOption.h SingleDoubleOption.cc SingleDoubleOption.h SingleDoubleInternalOption.cc SingleDoubleInternalOption.h MultipleDoubleOption.cc MultipleDoubleOption.h SingleIntegerOption.cc SingleIntegerOption.h SingleIntegerInternalOption.cc SingleIntegerInternalOption.h SingleStringOption.cc SingleStringOption.h SingleStringInternalOption.cc SingleStringInternalOption.h OptionGroup.cc OptionGroup.h OptionManager.cc OptionManager.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../src/config_ac.h
@@ -98,12 +98,18 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libOptions_a_LIBADD = 
 libOptions_a_OBJECTS =  AbstractOption.o BooleanOption.o \
-SingleDoubleOption.o SingleIntegerOption.o SingleStringOption.o \
-OptionGroup.o OptionManager.o
+SingleDoubleOption.o SingleDoubleInternalOption.o \
+MultipleDoubleOption.o SingleIntegerOption.o \
+SingleIntegerInternalOption.o SingleStringOption.o \
+SingleStringInternalOption.o OptionGroup.o OptionManager.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
+CFLAGS = @CFLAGS@
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 DIST_COMMON =  Makefile.am Makefile.in
 
 
@@ -112,8 +118,10 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AbstractOption.P .deps/BooleanOption.P \
-.deps/OptionGroup.P .deps/OptionManager.P .deps/SingleDoubleOption.P \
-.deps/SingleIntegerOption.P .deps/SingleStringOption.P
+.deps/MultipleDoubleOption.P .deps/OptionGroup.P .deps/OptionManager.P \
+.deps/SingleDoubleInternalOption.P .deps/SingleDoubleOption.P \
+.deps/SingleIntegerInternalOption.P .deps/SingleIntegerOption.P \
+.deps/SingleStringInternalOption.P .deps/SingleStringOption.P
 SOURCES = $(libOptions_a_SOURCES)
 OBJECTS = $(libOptions_a_OBJECTS)
 

@@ -196,10 +196,10 @@ ostream& MultipleDoubleOption::PrintError (ostream& output)
 double* MultipleDoubleOption::GetDoubles()
 {
   double *tmp=0;
-  if (length>0)
+  if (Length>0)
     {
-      tmp= new double[length];
-      for (int i=0;i<length;++i) tmp[i]=Doubles[i];
+      tmp= new double[Length];
+      for (int i=0;i<Length;++i) tmp[i]=Doubles[i];
     }
   return tmp;
 }
@@ -211,11 +211,11 @@ double* MultipleDoubleOption::GetDoubles()
 char* MultipleDoubleOption::GetAsAString()
 {
   char* TmpString;
-  if (length>0)
+  if (Length>0)
     {
-      TmpString = new char [32*length];
+      TmpString = new char [32*Length];
       sprintf (TmpString, "%.14g", this->Doubles[0]);
-      for (int i=1;i<length;++i) 
+      for (int i=1;i<Length;++i) 
 	sprintf (TmpString, "%s%c%.14g", TmpString, this->AltSeparator, this->Doubles[i]);
     }
   else
@@ -289,23 +289,23 @@ int MultipleDoubleOption::AnalyzeString(char *String)
   
   //got string value of parameter: now count the number of tokens:
   if (strchr(tmpC,this->Separator)==NULL)
-    length=1;
+    Length=1;
   else
     {
       token=strtok(tmpC,"+");
-      length=0;
+      Length=0;
       while (token!=NULL)
 	{
-	  length++;
+	  Length++;
 	  token=strtok(NULL,"+");
 	}
     }
   // know the count now, but tmpC garbled -> get new copy of string
   if (this->Doubles!=NULL) delete [] this->Doubles;
-  this->Doubles=new double[length];
+  this->Doubles=new double[Length];
   strcpy (tmpC, String);
   int n=0;
-  while (n<length)
+  while (n<Length)
     {
       if (tmpC[0]==this->Separator)
 	{
