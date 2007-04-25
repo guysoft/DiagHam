@@ -71,8 +71,8 @@ MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, ch
   this->MaxValueFlag = maxValueFlag;
   this->MaxValue = maxValue;
   this->MinValue = minValue;
+  this->Doubles = NULL;
   if (defaultValues!=NULL) this->AnalyzeString(defaultValues);
-  else this->Doubles = NULL;
 }
 
 // destructor
