@@ -150,11 +150,12 @@ int main(int argc, char** argv)
   // test symmetry for spin reversal:
   if ((SzTotal==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
     {
-      cout << "Initial locations: "<< Location << endl;
+      // calculate value:
       QHEParticleWaveFunctionOperation Operation(Space, &State, &Location, &Basis);
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
       int NUp = NbrFermions/2;
+      // exchange spin up and spin down
       for (int j = 0; j < NUp; ++j)
 	{
 	  Tmp2 = Location[j << 1];
@@ -164,11 +165,12 @@ int main(int argc, char** argv)
 	  Location[1+(j <<1)] = Location[1+ ((j+NUp) << 1)];
 	  Location[1+ ((j+NUp) << 1)] = Tmp2;
 	}
-      cout << "exchanged locations: "<< Location << endl;
+      // recalculate:
       QHEParticleWaveFunctionOperation Operation2(Space, &State, &Location, &Basis,-1);
       Operation2.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact2 (Operation2.GetScalar());
-      cout << "Before exchange: "<< ValueExact << " after exchage: " << ValueExact2 << endl;
+      cout << "Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
+      cout << "Parity: " << ValueExact/ValueExact2 << endl;
     }
   
   return 0;
