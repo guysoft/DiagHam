@@ -81,6 +81,7 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
 #ifdef __SMP__
   (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
 #endif
+  (*ParallelizationGroup) += new SingleStringOption  ('\n', "cluster-profil", "enable cluster profiling, the name of the log file  has to be passed as argument");  
 #endif
   
 }
@@ -100,6 +101,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 #endif
 #ifdef __MPI__
       bool MPIFlag = ((BooleanOption*) (*(this->Options))["mpi"])->GetBoolean();
+      char* MPILogFile = ((SingleStringOption*) (*(this->Options))["cluster-profil"])->GetString();
 #ifdef __SMP__
       if (((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString() != 0)
 	{
@@ -118,12 +120,12 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 	if (MPIFlag == false)
 	  this->Architecture = new MonoProcessorArchitecture;
 	else
-	  this->Architecture = new SimpleMPIArchitecture;
+	  this->Architecture = new SimpleMPIArchitecture(MPILogFile);
       else
 	if (MPIFlag == false)
 	  this->Architecture = new SMPArchitecture(NbrProcessor);
 	else
-	  this->Architecture = new MixedMPISMPArchitecture(((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString());
+	  this->Architecture = new MixedMPISMPArchitecture(((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString(), MPILogFile);
 	  
     }
   return this->Architecture;

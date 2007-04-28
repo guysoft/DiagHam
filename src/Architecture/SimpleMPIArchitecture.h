@@ -71,6 +71,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // maximum index on which the current MPI node can act
   long MaximumIndex;
 
+  // name of the optional log file to allow code profiling on MPI architecture
+  char* LogFile;
+  // flag to indicate if the log file option is activated
+  bool VerboseModeFlag;
+
  public:
   
   enum SimpleMPISignals{
@@ -80,7 +85,8 @@ class SimpleMPIArchitecture : public AbstractArchitecture
 
   // constructor
   //
-  SimpleMPIArchitecture();
+  // logFile = name of the optional log file to allow code profiling on MPI architecture
+  SimpleMPIArchitecture(char* logFile = 0);
   
   // destructor
   //
@@ -189,6 +195,17 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = string corresponding to a temporary file name
   virtual char* GetTemporaryFileName();
 
+  // indicate if the log file option is activated
+  //
+  // return value = true if the option is activated
+  virtual bool VerboseMode();
+
+  // add an entry to the log file 
+  //
+  // message = string corresponding to entry to add to the log file
+  // return value = true if no error occured
+  virtual bool AddToLog(char * message);
+
 };
 
 // indicate if the local node is the master node
@@ -207,6 +224,15 @@ inline bool SimpleMPIArchitecture::IsMasterNode()
 inline AbstractArchitecture* SimpleMPIArchitecture::GetLocalArchitecture()
 {
   return this->LocalArchitecture;
+}
+
+// indicate if the log file option is activated
+//
+// return value = true if the option is activated
+
+inline bool SimpleMPIArchitecture::VerboseMode()
+{
+  return this->VerboseModeFlag;
 }
 
 // add current vector to the one of the master nide

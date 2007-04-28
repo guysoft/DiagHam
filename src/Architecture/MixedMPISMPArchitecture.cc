@@ -38,6 +38,7 @@
 #include "Architecture/SMPArchitecture.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include <fstream>
 #include <sys/time.h>
 #include <string.h>
 #include <iostream>
@@ -47,6 +48,8 @@
 #endif
 
 
+using std::ofstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
@@ -54,13 +57,14 @@ using std::endl;
 // constructor
 //
 // clusterFileName = name of the file that describes the cluster, if none assume one cpu per MPI node. The file should be at least accessible by the master mode
+// logFile = name of the optional log file to allow code profiling on MPI architecture
 
-MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
+MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* logFile)
 {
   this->PerformanceIndex = 1.0;
   this->ArchitectureID = AbstractArchitecture::MixedMPISMP;
 #ifdef __MPI__
-   this->NbrCPUPerNode = new int [this->NbrMPINodes];
+  this->NbrCPUPerNode = new int [this->NbrMPINodes];
 
   char* TmpLocalHostname = new char [512];
   gethostname(TmpLocalHostname, 511);
@@ -149,9 +153,46 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName)
 	this->TotalPerformanceIndex += this->ClusterPerformanceArray[i];
       for (int i = 0; i < this->NbrMPINodes; ++i)
 	this->ClusterPerformanceArray[i] /= this->TotalPerformanceIndex;      
+      if (logFile != 0)
+	{
+	  this->LogFile = new char [strlen(logFile) + 1];
+	  strcpy (this->LogFile, logFile);
+	  ofstream File;
+	  File.open(this->LogFile, ios::out);
+	  if (!File.is_open())
+	    {
+	      cout << "ERROR : cannot write log file " << this->LogFile << endl;
+	      this->VerboseModeFlag = false;
+	    }
+	  else
+	    {
+	      File << "number of nodes = " << this->TotalPerformanceIndex << endl;
+	      File << "cluster description : " << endl;
+	      for (int i = 0; i < this->NbrMPINodes; ++i)
+		File << "    node " << i << " :  hostname=" << this->NodeHostnames[i] << "  cpu=" << this->NbrCPUPerNode[i] << "  perf. index=" << this->ClusterPerformanceArray[i]<< endl;
+	      File << " ---------------------------------------------" << endl
+		   << "                    profiling                 " << endl
+		   << " ---------------------------------------------" << endl;
+	      
+	      this->VerboseModeFlag = true;
+	    }
+	  File.close();
+	}
+      else
+	{
+	  this->VerboseModeFlag = false;
+	  this->LogFile = 0;
+	}
     }
   else
-    this->MasterNodeFlag = false;
+    {
+      this->MasterNodeFlag = false;
+      if (logFile != 0)
+	this->VerboseModeFlag = true;
+      else
+	this->VerboseModeFlag = false;
+      this->LogFile = 0;
+    }
   MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
   MPI::COMM_WORLD.Bcast(&this->TotalPerformanceIndex, 1, MPI::DOUBLE, 0);

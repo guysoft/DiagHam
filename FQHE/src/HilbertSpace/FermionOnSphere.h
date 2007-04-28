@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
@@ -225,13 +226,22 @@ class FermionOnSphere :  public ParticleOnSphere
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
+					int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-  
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
+
  protected:
 
   // find state index

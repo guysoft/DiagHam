@@ -868,4 +868,100 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 void FermionOnSphere::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
+
   
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+// 
+// subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+// nbrFermionSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// return value = density matrix of the subsytem
+
+RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState)
+{  
+  if (subsytemSize <= 0)
+    {
+      if ((lzSector == 0) && (nbrFermionSector == 0))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(1, 1, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  if (subsytemSize > this->LzMax)
+    {
+      if ((lzSector == this->TotalLz) && (nbrFermionSector == this->NbrFermions))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    for (int j = i; j < this->HilbertSpaceDimension; ++j)
+	      TmpDensityMatrix.SetMatrixElement(i, j, groundState[i] * groundState[j]);
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+  unsigned long TmpMask = (((0x1ul << (this->LzMax + 2)) - 1) >> subsytemSize) << subsytemSize;
+  unsigned long TmpSubsystemMask = ((0x1ul << (this->LzMax + 2)) - 1) & (~TmpMask);
+  FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1);
+  int TmpStateMaxLz = (this->NbrFermions - nbrFermionSector) + subsytemSize - 1;  
+  int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
+  int MinIndex = MaxIndex;
+  int TmpIndex;
+  unsigned long TmpComplemtarySubsystem;
+  int TmpNbrFermions;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension);
+  int TmpNbrOne[] = {  
+  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+  while (MinIndex < MaxIndex)
+    {
+      TmpIndex = MinIndex;
+      TmpComplemtarySubsystem = this->StateDescription[TmpIndex] & TmpMask;
+      ++TmpIndex;
+      while ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplemtarySubsystem)
+	++TmpIndex;
+      TmpNbrFermions = 0;
+      TmpNbrFermions += TmpNbrOne[TmpComplemtarySubsystem & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 8) & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 16) & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 24) & 0xffl];
+#ifdef  __64_BITS__
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 32) & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 40) & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 48) & 0xffl];
+      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 56) & 0xffl];      
+#endif
+      if ((this->NbrFermions - TmpNbrFermions) == nbrFermionSector)
+	{
+	}
+      for (; MinIndex < TmpIndex; ++MinIndex)
+	{
+	}
+      MinIndex = TmpIndex;
+    }
+  return TmpDensityMatrix;
+}
+

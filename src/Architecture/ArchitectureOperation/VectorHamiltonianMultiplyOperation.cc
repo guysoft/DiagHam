@@ -37,6 +37,8 @@
 #include "Architecture/SimpleMPIArchitecture.h"
 
 #include <iostream>
+#include <sys/time.h>
+#include <stdlib.h>
 
 
 using std::cout;
@@ -199,10 +201,23 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
    architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
    this->FirstComponent = (int) TmpMinimumIndex;  
    this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+   timeval TotalStartingTime;
+   if (architecture->VerboseMode())
+     gettimeofday (&TotalStartingTime, 0);
    if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
      this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
    else
      this->RawApplyOperation();
+   if (architecture->VerboseMode())
+     {
+       timeval TotalEndingTime;
+       gettimeofday (&TotalEndingTime, 0);
+       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+       char TmpString[256];
+       sprintf (TmpString, "VectorHamiltonianMultiply core operation done in %.3f seconds", Dt);
+       architecture->AddToLog(TmpString);
+     }
    architecture->SumVector(*(this->DestinationVector));
    if (architecture->IsMasterNode() == false)
      {

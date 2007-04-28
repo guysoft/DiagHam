@@ -39,19 +39,23 @@
 #include <sys/time.h>
 #include <string.h>
 #include <iostream>
+#include <fstream>
 #ifdef __MPI__
 #include <mpi.h>
 #endif
 
 
+using std::ofstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
 
 // constructor
 //
+// logFile = name of the optional log file to allow code profiling on MPI architecture
 
-SimpleMPIArchitecture::SimpleMPIArchitecture()
+SimpleMPIArchitecture::SimpleMPIArchitecture(char* logFile)
 {
   this->PerformanceIndex = 1.0;
   this->ArchitectureID = AbstractArchitecture::SimpleMPI;
@@ -64,6 +68,11 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
   if (this->MPIRank != 0)
     {
       this->MasterNodeFlag = false;
+      if (logFile != 0)
+	this->VerboseModeFlag = true;
+      else
+	this->VerboseModeFlag = false;
+      this->LogFile = 0;
       MPI::COMM_WORLD.Send(&this->PerformanceIndex, 1, MPI::DOUBLE, 0, 1);
     }
   else
@@ -79,6 +88,26 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
       for (int i = 0; i < this->NbrMPINodes; ++i)
 	{
 	  this->ClusterPerformanceArray[i] /= this->TotalPerformanceIndex;
+	}
+      if (logFile != 0)
+	{
+	  this->LogFile = new char [strlen(logFile) + 1];
+	  strcpy (this->LogFile, logFile);
+	  ofstream File;
+	  File.open(this->LogFile, ios::out);
+	  if (!File.is_open())
+	    {
+	      cout << "ERROR : cannot write log file " << this->LogFile << endl;
+	      this->VerboseModeFlag = false;
+	    }
+	  else
+	    this->VerboseModeFlag = true;
+	  File.close();
+	}
+      else
+	{
+	  this->VerboseModeFlag = false;
+	  this->LogFile = 0;
 	}
     }
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
@@ -108,6 +137,8 @@ SimpleMPIArchitecture::~SimpleMPIArchitecture()
   delete this->LocalArchitecture;
   if (this->ClusterPerformanceArray != 0)
     delete[] this->ClusterPerformanceArray;
+  if (this->LogFile != 0)
+    delete[] this->LogFile;
 }
   
 // get typical range of indices on which the local architecture acts
@@ -415,225 +446,46 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
   return TmpString;
 }
   
-
-
-
-/*
-// execute an architecture-dependent vector hamiltonian multiplication operation
+// add an entry to the log file 
 //
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
+// message = string corresponding to entry to add to the log file
+// return value = true if no error occured
 
-bool SimpleMPIArchitecture::ExecuteOperation (VectorHamiltonianMultiplyOperation* operation)
+bool SimpleMPIArchitecture::AddToLog(char * message)
 {
-#ifdef __MPI__
-  operation->GetDestinationVector()->ClearVector();
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  operation->GetDestinationVector()->SumVector(MPI::COMM_WORLD, 0);
-  operation->GetDestinationVector()->BroadcastVector(MPI::COMM_WORLD, 0);
-  return true;
-#else
-  return false;
-#endif
-}
-  
-
-// execute an architecture-dependent multiple vector hamiltonian multiplication operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (MultipleVectorHamiltonianMultiplyOperation* operation)
-{
-#ifdef __MPI__
-  bool RealFlag = true;
-  int NbrVectors = operation->GetNbrVectors();
-   if (operation->GetDestinationComplexVectors() == 0)
+  if (this->MasterNodeFlag == false)
     {
-      RealFlag = true;
-      for (int i = 0; i < NbrVectors; ++i)
-	operation->GetDestinationRealVectors()[i].ClearVector();
+      int TmpMessageLength = strlen(message);
+      MPI::COMM_WORLD.Send(&TmpMessageLength, 1, MPI::INT, 0, 1);
+      MPI::COMM_WORLD.Send(message, TmpMessageLength, MPI::CHAR, 0, 1);
+      return true;
     }
-   else
-     {
-      for (int i = 0; i < NbrVectors; ++i)
-	operation->GetDestinationComplexVectors()[i].ClearVector();
-     }
-   operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-   operation->ApplyOperation();
-   if (RealFlag == true)
-     {
-      for (int i = 0; i < NbrVectors; ++i)
+  else
+    {
+      ofstream File;
+      File.open(this->LogFile, ios::out | ios::app);
+      if (!File.is_open())
+	cout << "ERROR : cannot write log file " << this->LogFile << endl;
+      int TmpMessageLength = strlen(message);
+      int TmpInc;
+      char* TmpMessage = new char[TmpMessageLength + 256];
+      sprintf (TmpMessage, "node 0: %s", message);
+      File << TmpMessage << endl;
+      for (int i = 1; i < NbrMPINodes; ++i)
 	{
-	  operation->GetDestinationRealVectors()[i].SumVector(MPI::COMM_WORLD, 0);
-	  operation->GetDestinationRealVectors()[i].BroadcastVector(MPI::COMM_WORLD, 0);
+	  MPI::COMM_WORLD.Recv(&TmpMessageLength, 1, MPI::INT, i, 1);      
+	  TmpMessage = new char[TmpMessageLength + 256];
+	  sprintf (TmpMessage, "node %d: ", i);
+	  TmpInc = strlen(TmpMessage);
+	  TmpMessage[TmpInc + TmpMessageLength] = '\0';
+	  MPI::COMM_WORLD.Recv(TmpMessage + strlen(TmpMessage), TmpMessageLength, MPI::CHAR, i, 1);  
+	  File << TmpMessage << endl;
 	}
-     }
-   else
-     {
-       for (int i = 0; i < NbrVectors; ++i)
-	 {
-	   operation->GetDestinationComplexVectors()[i].SumVector(MPI::COMM_WORLD, 0);
-	   operation->GetDestinationComplexVectors()[i].BroadcastVector(MPI::COMM_WORLD, 0);
-	 }
-     }
-   return true;
-#else
-  return false;
-#endif
-}
-  
-
-// execute an architecture-dependent vector abstract scalar sum operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-  
-bool SimpleMPIArchitecture::ExecuteOperation (AbstractScalarSumOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  Complex TmpResult;
-  MPI::COMM_WORLD.Reduce(&(operation->GetScalar().Re), &(TmpResult.Re), 1, MPI::DOUBLE, MPI::SUM, 0);
-  MPI::COMM_WORLD.Reduce(&(operation->GetScalar().Im), &(TmpResult.Im), 1, MPI::DOUBLE, MPI::SUM, 0);
-  operation->GetScalar() = TmpResult;
-  MPI::COMM_WORLD.Bcast(&(operation->GetScalar().Re), 1, MPI::DOUBLE, 0);  
-  MPI::COMM_WORLD.Bcast(&(operation->GetScalar().Im), 1, MPI::DOUBLE, 0);  
-  return true;
-#else
-  return false;
-#endif
-}
-
-// execute an architecture-dependent add real linear combination operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (AddRealLinearCombinationOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  for (int i = 0; i < this->NbrMPINodes; ++i)
-    if (i == this->MPIRank)
-      {
-	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-      }
-    else
-      {
-	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
-      }
-  return true;
-#else
-  return false;
-#endif
-}  
-
-// execute an architecture-dependent add complex linear combination operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (AddComplexLinearCombinationOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  for (int i = 0; i < this->NbrMPINodes; ++i)
-    if (i == this->MPIRank)
-      {
-	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-      }
-    else
-      {
-	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
-      }
-  return true;
-#else
-  return false;
-#endif
-}  
-
-// execute an architecture-dependent multiple real scalar product operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (MultipleRealScalarProductOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  double* TmpScalarProducts = 0;
-  if (this->MPIRank == 0)
-    TmpScalarProducts = new double [operation->GetNbrScalarProduct()];
-  MPI::COMM_WORLD.Reduce(operation->GetScalarProducts(), TmpScalarProducts, operation->GetNbrScalarProduct(), MPI::DOUBLE, MPI::SUM, 0);
-  if (this->MPIRank == 0)
-    {
-      for (int i = 0; i < operation->GetNbrScalarProduct(); ++i)
-	operation->GetScalarProducts()[i] = TmpScalarProducts[i];
-      delete[] TmpScalarProducts;
+      File.close();
     }
-  MPI::COMM_WORLD.Bcast(operation->GetScalarProducts(), operation->GetNbrScalarProduct(), MPI::DOUBLE, 0);  
   return true;
-#else
-  return false;
-#endif
-}  
-
-// execute an architecture-dependent multiple complex scalar product operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (MultipleComplexScalarProductOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  Complex* TmpScalarProducts = 0;
-  if (this->MPIRank == 0)
-    TmpScalarProducts = new Complex [operation->GetNbrScalarProduct()];
-  MPI::COMM_WORLD.Reduce(operation->GetScalarProducts(), TmpScalarProducts, operation->GetNbrScalarProduct(), MPI::COMPLEX, MPI::SUM, 0);
-  if (this->MPIRank == 0)
-    {
-      for (int i = 0; i < operation->GetNbrScalarProduct(); ++i)
-	operation->GetScalarProducts()[i] = TmpScalarProducts[i];
-      delete[] TmpScalarProducts;
-    }
-  MPI::COMM_WORLD.Bcast(operation->GetScalarProducts(), operation->GetNbrScalarProduct(), MPI::COMPLEX, 0);  
-  return true;
-#else
-  return false;
-#endif
-}  
-
-// execute an architecture-dependent matrix matrix multiplication operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
-
-bool SimpleMPIArchitecture::ExecuteOperation (MatrixMatrixMultiplyOperation* operation)
-{
-  return operation->ApplyOperation(this->LocalArchitecture);
 }
- 
-// execute an architecture-dependent abstract hamiltonian precalculation operation
-//
-// operation = pointer to the operation to execute
-// return value = true if operation has been completed successfully
 
-bool SimpleMPIArchitecture::ExecuteOperation (AbstractPrecalculationOperation* operation)
-{
-#ifdef __MPI__
-  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-  operation->ApplyOperation();
-  return true;
-#else
-  return false;
-#endif
-}
-*/
+
+
+
