@@ -203,8 +203,9 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // add an entry to the log file 
   //
   // message = string corresponding to entry to add to the log file
+  // masterFlag = true if only the master node should add the entry
   // return value = true if no error occured
-  virtual bool AddToLog(char * message);
+  virtual bool AddToLog(char * message, bool masterFlag = false);
 
 };
 

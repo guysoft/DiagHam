@@ -167,6 +167,12 @@ class MultipleRealScalarProductOperation: public AbstractArchitectureOperation
   // return value = true if no error occurs
   bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
+  
 };
 
 // get the number of scalar products that have to be evaluated

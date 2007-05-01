@@ -178,7 +178,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	      File << "cluster description : " << endl;
 	      for (int i = 0; i < this->NbrMPINodes; ++i)
 		File << "    node " << i << " :  hostname=" << this->NodeHostnames[i] << "  cpu=" << this->NbrCPUPerNode[i] << "  perf. index=" << this->ClusterPerformanceArray[i] 
-		     <<  " mem=" << this->ClusterMemoryArray[i] << "Mb" << endl;
+		     <<  " mem=" << (this->ClusterMemoryArray[i] >> 20) << "Mb" << endl;
 	      File << " ---------------------------------------------" << endl
 		   << "                    profiling                 " << endl
 		   << " ---------------------------------------------" << endl;

@@ -449,16 +449,22 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
 // add an entry to the log file 
 //
 // message = string corresponding to entry to add to the log file
+// masterFlag = true if only the master node should add the entry
 // return value = true if no error occured
 
-bool SimpleMPIArchitecture::AddToLog(char * message)
+bool SimpleMPIArchitecture::AddToLog(char * message, bool masterFlag)
 {
   if (this->MasterNodeFlag == false)
     {
-      int TmpMessageLength = strlen(message);
-      MPI::COMM_WORLD.Send(&TmpMessageLength, 1, MPI::INT, 0, 1);
-      MPI::COMM_WORLD.Send(message, TmpMessageLength, MPI::CHAR, 0, 1);
-      return true;
+      if (masterFlag == false)
+	{
+	  int TmpMessageLength = strlen(message);
+	  MPI::COMM_WORLD.Send(&TmpMessageLength, 1, MPI::INT, 0, 1);
+	  MPI::COMM_WORLD.Send(message, TmpMessageLength, MPI::CHAR, 0, 1);
+	  return true;
+	}
+      else
+	return false;
     }
   else
     {
@@ -471,16 +477,17 @@ bool SimpleMPIArchitecture::AddToLog(char * message)
       char* TmpMessage = new char[TmpMessageLength + 256];
       sprintf (TmpMessage, "node 0: %s", message);
       File << TmpMessage << endl;
-      for (int i = 1; i < NbrMPINodes; ++i)
-	{
-	  MPI::COMM_WORLD.Recv(&TmpMessageLength, 1, MPI::INT, i, 1);      
-	  TmpMessage = new char[TmpMessageLength + 256];
-	  sprintf (TmpMessage, "node %d: ", i);
-	  TmpInc = strlen(TmpMessage);
-	  TmpMessage[TmpInc + TmpMessageLength] = '\0';
-	  MPI::COMM_WORLD.Recv(TmpMessage + strlen(TmpMessage), TmpMessageLength, MPI::CHAR, i, 1);  
-	  File << TmpMessage << endl;
-	}
+      if (masterFlag == false)
+	for (int i = 1; i < NbrMPINodes; ++i)
+	  {
+	    MPI::COMM_WORLD.Recv(&TmpMessageLength, 1, MPI::INT, i, 1);      
+	    TmpMessage = new char[TmpMessageLength + 256];
+	    sprintf (TmpMessage, "node %d: ", i);
+	    TmpInc = strlen(TmpMessage);
+	    TmpMessage[TmpInc + TmpMessageLength] = '\0';
+	    MPI::COMM_WORLD.Recv(TmpMessage + strlen(TmpMessage), TmpMessageLength, MPI::CHAR, i, 1);  
+	    File << TmpMessage << endl;
+	  }
       File.close();
     }
   return true;

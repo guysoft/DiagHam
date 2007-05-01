@@ -34,6 +34,10 @@
 #include "Architecture/SMPArchitecture.h"
 
 
+#include <sys/time.h>
+#include <stdlib.h>
+
+
 // constructor 
 //
 // destinationVector = vector to which the linear combination has to be added
@@ -203,36 +207,35 @@ bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SMPA
   return true;
 }
 
-// // apply operation for SimpleMPI architecture
-// //
-// // architecture = pointer to the architecture
-// // return value = true if no error occurs
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
 
-// bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
-// {
-// #ifdef __MPI__
-//   if (architecture->IsMasterNode())
-//     {
-//       if (architecture->RequestOperation(this->OperationType) == false)
-// 	{
-// 	  return false;
-// 	}
-//     }
-// /*  operation->SetIndicesRange(this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-//   operation->ApplyOperation();
-//   for (int i = 0; i < this->NbrMPINodes; ++i)
-//     if (i == this->MPIRank)
-//       {
-// 	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i, this->MinimumIndex, this->MaximumIndex - this->MinimumIndex + 1);
-//       }
-//     else
-//       {
-// 	operation->GetDestinationVector()->BroadcastPartialVector(MPI::COMM_WORLD, i);
-//       }*/
-//   return true;
-// #else
-//   return false;
-// #endif
-// }
+bool AddRealLinearCombinationOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+   timeval TotalStartingTime;
+   if (architecture->VerboseMode())
+     gettimeofday (&TotalStartingTime, 0);
+   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+   else
+     this->RawApplyOperation();
+   if (architecture->VerboseMode())
+     {
+       timeval TotalEndingTime;
+       gettimeofday (&TotalEndingTime, 0);
+       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+       char TmpString[256];
+       sprintf (TmpString, "AddRealLinearCombinationOperation core operation done in %.3f seconds", Dt);
+       architecture->AddToLog(TmpString, true);
+     }
+   return true;
+#else
+   return false;
+#endif
+}
   
 

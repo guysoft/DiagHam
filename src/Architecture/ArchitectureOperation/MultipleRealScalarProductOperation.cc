@@ -33,6 +33,10 @@
 #include "Architecture/SMPArchitecture.h"
 
 
+#include <sys/time.h>
+#include <stdlib.h>
+
+
 // constructor 
 //
 // leftVector = pointer to the vector to use for the left hand side of the scalar product
@@ -255,4 +259,36 @@ bool MultipleRealScalarProductOperation::ArchitectureDependentApplyOperation(SMP
     }
   delete[] TmpOperations;
   return true;  
+}
+
+
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool MultipleRealScalarProductOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__
+   timeval TotalStartingTime;
+   if (architecture->VerboseMode())
+     gettimeofday (&TotalStartingTime, 0);
+   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
+     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+   else
+     this->RawApplyOperation();
+   if (architecture->VerboseMode())
+     {
+       timeval TotalEndingTime;
+       gettimeofday (&TotalEndingTime, 0);
+       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+       char TmpString[256];
+       sprintf (TmpString, "MultipleRealScalarProductOperation core operation done in %.3f seconds", Dt);
+       architecture->AddToLog(TmpString, true);
+     }
+   return true;
+#else
+   return false;
+#endif
 }
