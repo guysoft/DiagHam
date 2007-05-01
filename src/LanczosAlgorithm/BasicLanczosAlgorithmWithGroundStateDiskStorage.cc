@@ -35,6 +35,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
 
@@ -309,6 +310,8 @@ void BasicLanczosAlgorithmWithGroundStateDiskStorage::RunLanczosAlgorithm (int n
     }
   RealVector* TmpVector = new RealVector[2];
   double* TmpCoefficient = new double[2];
+  RealVector* TmpVectorScalarProduct[2];
+  double TmpScalarProduct[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
       TmpVector[0] = this->V1;
@@ -325,8 +328,12 @@ void BasicLanczosAlgorithmWithGroundStateDiskStorage::RunLanczosAlgorithm (int n
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
-      this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
-      this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
+      TmpVectorScalarProduct[0] = &(this->V1);
+      TmpVectorScalarProduct[1] = &(this->V2);
+      MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
+      Operation2.ApplyOperation(this->Architecture);
+      this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = TmpScalarProduct[0];
+      this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = TmpScalarProduct[1];
       this->V1.WriteVector("vector.1");
       this->V2.WriteVector("vector.2");
       this->V3.WriteVector("vector.3");

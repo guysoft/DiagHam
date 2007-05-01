@@ -205,7 +205,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
   MPI::COMM_WORLD.Bcast(&this->TotalPerformanceIndex, 1, MPI::DOUBLE, 0);
-  MPI::COMM_WORLD.Bcast((char*) &ClusterMemoryArray, this->NbrMPINodes * sizeof(long), MPI::CHAR, 0);
+  MPI::COMM_WORLD.Bcast(this->ClusterMemoryArray, this->NbrMPINodes, MPI::LONG, 0);
 #else
   this->MasterNodeFlag = true;
   this->NbrMPINodes = 1;
