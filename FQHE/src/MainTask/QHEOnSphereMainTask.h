@@ -112,7 +112,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool ComputeLValueFlag;
   // compute hamiltonian mean value for each eigenvalue
   bool ComputeEnergyFlag;
-
+  // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
+  double LanczosPrecision;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
 

@@ -65,6 +65,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   this->ArchitectureID = AbstractArchitecture::MixedMPISMP;
 #ifdef __MPI__
   this->NbrCPUPerNode = new int [this->NbrMPINodes];
+  this->ClusterMemoryArray = new long [this->NbrMPINodes];
 
   char* TmpLocalHostname = new char [512];
   gethostname(TmpLocalHostname, 511);
@@ -105,8 +106,11 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	      else
 		{
 		  double* TmpClusterPerformanceArray = 0;
+		  long* TmpClusterMemoryArray = 0;
 		  if (ClusterFile.GetNbrColumns() > 2)
 		    TmpClusterPerformanceArray = ClusterFile.GetAsDoubleArray(2);
+		  if (ClusterFile.GetNbrColumns() > 3)
+		    TmpClusterMemoryArray = ClusterFile.GetAsLongArray(3);
 		  int* TmpNbrCPUNode = ClusterFile.GetAsIntegerArray(1);
 		  if (TmpNbrCPUNode != 0)
 		    {
@@ -122,6 +126,10 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				  this->ClusterPerformanceArray[i] = (double) this->NbrCPUPerNode[i];
 				  if (TmpClusterPerformanceArray !=0)
 				    this->ClusterPerformanceArray[i] *= TmpClusterPerformanceArray[j];
+				  if (TmpClusterMemoryArray != 0)
+				    this->ClusterMemoryArray[i] = TmpClusterMemoryArray[j];
+				  else
+				    this->ClusterMemoryArray[i] = -1l;
 				  j = ClusterFile.GetNbrLines();
 				}			     
 			    }
@@ -169,7 +177,8 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 	      File << "number of nodes = " << this->TotalPerformanceIndex << endl;
 	      File << "cluster description : " << endl;
 	      for (int i = 0; i < this->NbrMPINodes; ++i)
-		File << "    node " << i << " :  hostname=" << this->NodeHostnames[i] << "  cpu=" << this->NbrCPUPerNode[i] << "  perf. index=" << this->ClusterPerformanceArray[i]<< endl;
+		File << "    node " << i << " :  hostname=" << this->NodeHostnames[i] << "  cpu=" << this->NbrCPUPerNode[i] << "  perf. index=" << this->ClusterPerformanceArray[i] 
+		     <<  " mem=" << this->ClusterMemoryArray[i] << "Mb" << endl;
 	      File << " ---------------------------------------------" << endl
 		   << "                    profiling                 " << endl
 		   << " ---------------------------------------------" << endl;
@@ -196,6 +205,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   MPI::COMM_WORLD.Bcast(this->NbrCPUPerNode, this->NbrMPINodes, MPI::INT, 0);
   MPI::COMM_WORLD.Bcast(this->ClusterPerformanceArray, this->NbrMPINodes, MPI::DOUBLE, 0);
   MPI::COMM_WORLD.Bcast(&this->TotalPerformanceIndex, 1, MPI::DOUBLE, 0);
+  MPI::COMM_WORLD.Bcast((char*) &ClusterMemoryArray, this->NbrMPINodes * sizeof(long), MPI::CHAR, 0);
 #else
   this->MasterNodeFlag = true;
   this->NbrMPINodes = 1;
@@ -204,6 +214,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
   this->TotalPerformanceIndex = this->PerformanceIndex;
   this->NbrCPUPerNode = new int[1];
   this->NbrCPUPerNode[0] = 1;
+  this->ClusterMemoryArray = 0;
 #endif
   if (this->MasterNodeFlag == true)
     {
@@ -224,6 +235,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 MixedMPISMPArchitecture::~MixedMPISMPArchitecture()
 {
   delete[] this->NbrCPUPerNode;
+  delete[] this->ClusterMemoryArray;
   if (this->NodeHostnames != 0)
     {
       for (int i = 0; i < this->NbrMPINodes; ++i)

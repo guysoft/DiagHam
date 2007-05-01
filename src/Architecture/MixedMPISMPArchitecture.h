@@ -53,6 +53,9 @@ class MixedMPISMPArchitecture : public SimpleMPIArchitecture
   // array that conatins hostname of each MPI node (only relevant for the master node)
   char** NodeHostnames;
 
+  // amount of memory avalaible per node *(in bytes, -1 if information is not available)
+  long* ClusterMemoryArray;
+
  public:
   
   // constructor
@@ -65,7 +68,20 @@ class MixedMPISMPArchitecture : public SimpleMPIArchitecture
   //
   ~MixedMPISMPArchitecture();
 
+  // get the amount of memory available for the local architecture
+  //
+  // return value = amount of memory in byte (negative if the information is not available)
+  virtual long GetLocalMemory();
+  
 };
 
+// get the amount of memory available for the local architecture
+//
+// return value = amount of memory in byte (negative if the information is not available)
+
+inline long MixedMPISMPArchitecture::GetLocalMemory()
+{
+  return this->ClusterMemoryArray[this->MPIRank];
+}
 
 #endif

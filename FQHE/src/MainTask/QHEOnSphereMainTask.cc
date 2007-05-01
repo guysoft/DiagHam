@@ -204,7 +204,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->Hamiltonian->GetHamiltonian(HRep);
       cout << HRep << endl;
     }
-
+  if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
+    {
+      this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();
+    }
+  else
+    {
+      this->LanczosPrecision = 0.0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -400,6 +407,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  else
 	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
 	}
+      if (this->LanczosPrecision != 0.0)
+	Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
       double GroundStateEnergy;
       double Precision = 1.0;
       double PreviousLowest = 1e50;
