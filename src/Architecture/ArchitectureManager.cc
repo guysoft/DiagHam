@@ -114,6 +114,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 #endif      
 #else      
       bool MPIFlag = false;
+      char* MPILogFile = 0;
 #endif
       int NbrProcessor = ((SingleIntegerOption*) (*(this->Options))["processors"])->GetInteger();
       if (SMPFlag == false)

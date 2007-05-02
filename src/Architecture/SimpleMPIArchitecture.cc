@@ -454,6 +454,7 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
 
 bool SimpleMPIArchitecture::AddToLog(char * message, bool masterFlag)
 {
+#ifdef __MPI__
   if (this->MasterNodeFlag == false)
     {
       if (masterFlag == false)
@@ -491,6 +492,9 @@ bool SimpleMPIArchitecture::AddToLog(char * message, bool masterFlag)
       File.close();
     }
   return true;
+#else
+  return false;
+#endif  
 }
 
 
