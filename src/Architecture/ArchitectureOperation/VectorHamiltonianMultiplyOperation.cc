@@ -218,7 +218,19 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
        sprintf (TmpString, "VectorHamiltonianMultiply core operation done in %.3f seconds", Dt);
        architecture->AddToLog(TmpString);
      }
+   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+     gettimeofday (&TotalStartingTime, 0);
    architecture->SumVector(*(this->DestinationVector));
+   if ((architecture->IsMasterNode()) && (architecture->VerboseMode()))
+     {
+       timeval TotalEndingTime;
+       gettimeofday (&TotalEndingTime, 0);
+       double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 
+		     (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));		      
+       char TmpString[256];
+       sprintf (TmpString, "VectorHamiltonianMultiply sum operation done in %.3f seconds", Dt);
+       architecture->AddToLog(TmpString, true);
+     }
    if (architecture->IsMasterNode() == false)
      {
        delete this->DestinationVector;
