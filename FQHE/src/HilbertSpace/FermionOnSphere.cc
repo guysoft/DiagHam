@@ -909,59 +909,140 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 	  return TmpDensityMatrix;	  
 	}
     }
+
+  cout << subsytemSize << " " << nbrFermionSector << " " << lzSector << endl;
+
   unsigned long TmpMask = (((0x1ul << (this->LzMax + 2)) - 1) >> subsytemSize) << subsytemSize;
-  unsigned long TmpSubsystemMask = ((0x1ul << (this->LzMax + 2)) - 1) & (~TmpMask);
+  unsigned long TmpSubsystemMask = (0x1ul << subsytemSize) - 1;
   FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1);
-  int TmpStateMaxLz = (this->NbrFermions - nbrFermionSector) + subsytemSize - 1;  
-  int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
-  int MinIndex = MaxIndex;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   int TmpIndex;
-  unsigned long TmpComplemtarySubsystem;
+  int ShiftedTotalLz = (this->TotalLz + this->NbrFermions * this->LzMax) >> 1;
+  int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize - 1)) >> 1;
+  int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
+  int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
+//  int TmpStateMaxLz = (this->NbrFermions - nbrFermionSector) + subsytemSize - 1;  
+//   int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
+//   int MinIndex = MaxIndex;
+  int MaxIndex = this->HilbertSpaceDimension;
+  int MinIndex = 0;
+
+  cout << hex << TmpMask << " " << TmpSubsystemMask << dec << endl;
+
+  unsigned long TmpComplementarySubsystem;
   int TmpNbrFermions;
-  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension);
+  int TmpTotalLz;
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
   int TmpNbrOne[] = {  
-  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-  4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+    0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+  int TmpSumOccupation[] = {
+    0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6,
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 8, 8, 9, 9, 10, 10,
+    5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 9, 9, 10, 10, 11, 11,
+    9, 9, 10, 10, 11, 11, 12, 12, 12, 12, 13, 13, 14, 14, 15, 15,
+    6, 6, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 11, 11, 12, 12,
+    10, 10, 11, 11, 12, 12, 13, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+    11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+    15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19, 20, 20, 21, 21,
+    7, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 12, 12, 13, 13,
+    11, 11, 12, 12, 13, 13, 14, 14, 14, 14, 15, 15, 16, 16, 17, 17,
+    12, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 17, 17, 18, 18,
+    16, 16, 17, 17, 18, 18, 19, 19, 19, 19, 20, 20, 21, 21, 22, 22,
+    13, 13, 14, 14, 15, 15, 16, 16, 16, 16, 17, 17, 18, 18, 19, 19,
+    17, 17, 18, 18, 19, 19, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23,
+    18, 18, 19, 19, 20, 20, 21, 21, 21, 21, 22, 22, 23, 23, 24, 24,
+    22, 22, 23, 23, 24, 24, 25, 25, 25, 25, 26, 26, 27, 27, 28, 28};
+  int TmpPartialNbrOne;
   while (MinIndex < MaxIndex)
     {
       TmpIndex = MinIndex;
-      TmpComplemtarySubsystem = this->StateDescription[TmpIndex] & TmpMask;
+      TmpComplementarySubsystem = this->StateDescription[TmpIndex] & TmpMask;
       ++TmpIndex;
-      while ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplemtarySubsystem)
+      while ((TmpIndex < MaxIndex) && ((this->StateDescription[TmpIndex] & TmpMask) == TmpComplementarySubsystem))
 	++TmpIndex;
-      TmpNbrFermions = 0;
-      TmpNbrFermions += TmpNbrOne[TmpComplemtarySubsystem & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 8) & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 16) & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 24) & 0xffl];
+      TmpPartialNbrOne = TmpNbrOne[TmpComplementarySubsystem & 0xffl];
+      TmpNbrFermions = TmpPartialNbrOne;
+      TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz = TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 3;
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz = TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 4;
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 24) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 24;
 #ifdef  __64_BITS__
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 32) & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 40) & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 48) & 0xffl];
-      TmpNbrFermions += TmpNbrOne[(TmpComplemtarySubsystem >> 56) & 0xffl];      
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 32) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 32) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne << 5;
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 40) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 40) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 40;
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 48) & 0xffl];
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 48) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 48;
+      TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 56) & 0xffl];      
+      TmpNbrFermions += TmpPartialNbrOne;
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 56) & 0xffl];
+      TmpTotalLz += TmpPartialNbrOne * 56;
 #endif
-      if ((this->NbrFermions - TmpNbrFermions) == nbrFermionSector)
+      if ((TmpNbrFermions == NbrFermionsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
 	{
+	  int Pos = 0;
+	  for (int i = MinIndex; i < TmpIndex; ++i)
+	    {
+	      unsigned long TmpState = this->StateDescription[i] & TmpSubsystemMask;
+	      int TmpLzMax = subsytemSize - 1;
+	      while ((TmpState & (0x1ul << TmpLzMax)) == 0x0ul)
+		--TmpLzMax;
+	      cout << hex << this->StateDescription[i] << " " << TmpState << dec << " " << TmpLzMax << " " << TmpNbrFermions << " " << TmpTotalLz << endl;
+	      TmpStatePosition[Pos] = TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
+	      ++Pos;
+	    }
+	  int Pos2;
+	  Pos = 0;
+	  int Pos3;
+	  double TmpValue;
+	  for (; MinIndex < TmpIndex; ++MinIndex)
+	    {
+	      Pos2 = 0;
+	      Pos3 = TmpStatePosition[Pos];
+	      TmpValue = groundState[MinIndex];
+	      for (int i = MinIndex; i < TmpIndex; ++i)
+		{
+		  TmpDensityMatrix.AddToMatrixElement(Pos3, TmpStatePosition[Pos2], TmpValue * groundState[i]);
+		  ++Pos2;
+		}
+	      ++Pos;
+	    }
+	  
 	}
-      for (; MinIndex < TmpIndex; ++MinIndex)
-	{
-	}
-      MinIndex = TmpIndex;
+      else
+	MinIndex = TmpIndex;
     }
+  delete[] TmpStatePosition;
   return TmpDensityMatrix;
 }
 
