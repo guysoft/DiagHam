@@ -980,11 +980,11 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       TmpTotalLz = TmpSumOccupation[TmpComplementarySubsystem & 0xffl];
       TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 8) & 0xffl];
       TmpNbrFermions += TmpPartialNbrOne;
-      TmpTotalLz = TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 8) & 0xffl];
       TmpTotalLz += TmpPartialNbrOne << 3;
       TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 16) & 0xffl];
       TmpNbrFermions += TmpPartialNbrOne;
-      TmpTotalLz = TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
+      TmpTotalLz += TmpSumOccupation[(TmpComplementarySubsystem >> 16) & 0xffl];
       TmpTotalLz += TmpPartialNbrOne << 4;
       TmpPartialNbrOne = TmpNbrOne[(TmpComplementarySubsystem >> 24) & 0xffl];
       TmpNbrFermions += TmpPartialNbrOne;
