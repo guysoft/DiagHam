@@ -236,23 +236,31 @@ int main(int argc, char** argv)
       return 0;
     }
 
+
+  ofstream File;
+  File.open("entanglement.dat", ios::binary | ios::out);
+  File.precision(14);
+  cout.precision(14);
   int MeanSubsystemSize = LzMax >> 1;
   if ((LzMax & 1) != 0)
     ++MeanSubsystemSize;
+  MeanSubsystemSize = 14;
   for (int SubsystemSize = 1; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
+      double DensitySum = 0.0;
       int MaxSubsystemNbrParticles = NbrParticles;
       if (MaxSubsystemNbrParticles > SubsystemSize)
 	MaxSubsystemNbrParticles = SubsystemSize;
-      for (int SubsystemNbrParticles = 1; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemTotalLz = 0;
 	  int SubsystemLzMax = SubsystemSize - 1;
-	  if (((SubsystemLzMax & 1) ==  1) && ((SubsystemNbrParticles & 1) == 1))
-	    SubsystemTotalLz = 1;
-	  int SubsystemMaxTotalLz(SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
-	  for (; SubsystemTotalLz < SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+//  	  if (((SubsystemLzMax & 1) ==  1) && ((SubsystemNbrParticles & 1) == 1))
+//  	    SubsystemTotalLz = 1;
+	  int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
+	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
+	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	    {
 	      RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
@@ -270,16 +278,39 @@ int main(int argc, char** argv)
 		    {
 		      double TmpEntanglementEntropy = 0.0;
 		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			TmpEntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-		      EntanglementEntropy += 2.0 * TmpEntanglementEntropy;
+			{
+			  if (TmpDiag[i] > 1e-14)
+			    {
+			      TmpEntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			      DensitySum += TmpDiag[i];
+			    }
+			}
+		      EntanglementEntropy += TmpEntanglementEntropy;
 		    }
 		  else
 		    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+		      {
+			if (TmpDiag[i] > 1e-14)
+			  {
+			    EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+			    DensitySum += TmpDiag[i];
+			  }
+		      }
+		}
+	      else
+		{
+		  double TmpValue = PartialDensityMatrix(0,0);
+		  if (TmpValue > 1e-14)
+		    {
+		      EntanglementEntropy += TmpValue * log(TmpValue);
+		      DensitySum += TmpValue;
+		    }
+		  
 		}
 	    }
 	}
-      cout << SubsystemSize << " " << EntanglementEntropy << endl;
+      File << SubsystemSize << " " << EntanglementEntropy << " " << DensitySum << endl;
     }
+  File.close();
 }
 
