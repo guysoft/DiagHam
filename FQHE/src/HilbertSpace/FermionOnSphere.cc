@@ -920,18 +920,26 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
   int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
   int TmpStateMaxLz = ShiftedLzComplementarySector + ((NbrFermionsComplementarySector * (NbrFermionsComplementarySector - 1)) >> 1);
-  if ((TmpStateMaxLz % ShiftedLzComplementarySector) != 0)
-    TmpStateMaxLz /= ShiftedLzComplementarySector;
+  if ((TmpStateMaxLz % NbrFermionsComplementarySector) != 0)
+    TmpStateMaxLz /= NbrFermionsComplementarySector;
   else
     {
-      TmpStateMaxLz /= ShiftedLzComplementarySector;
+      TmpStateMaxLz /= NbrFermionsComplementarySector;
       ++TmpStateMaxLz;
     }
-//  int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
-  int MinIndex = this->LookUpTable[TmpStateMaxLz][0];
+  int MaxIndex;
+  if (((NbrFermionsComplementarySector + subsytemSize) >= 2) && ((NbrFermionsComplementarySector + subsytemSize - 2) > this->StateLzMax[this->HilbertSpaceDimension - 1]))
+    MaxIndex = this->LookUpTable[NbrFermionsComplementarySector + subsytemSize - 2][0];
+  else
+    MaxIndex = this->HilbertSpaceDimension - 1;
+  int MinIndex = 0;
+//   if (TmpStateMaxLz < this->StateLzMax[0])
+//     MinIndex = this->LookUpTable[TmpStateMaxLz][0];
+//   else
+//     MinIndex = 0;
   
-   int MaxIndex = this->HilbertSpaceDimension;
-//   int MinIndex = 0;
+//    int MaxIndex = this->HilbertSpaceDimension;
+//    int MinIndex = 0;
 
   unsigned long TmpComplementarySubsystem;
   int TmpNbrFermions;
@@ -977,7 +985,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       if (nbrFermionSector == 1)
 	Key = 0x1ul << ShiftedLzSector;
       double TmpValue = 0.0;
-      while (MinIndex < MaxIndex)
+      while (MinIndex <= MaxIndex)
 	{
 	  if ((this->StateDescription[MinIndex] & TmpSubsystemMask) == Key)
 	    TmpValue += groundState[MinIndex] * groundState[MinIndex];	    
@@ -992,7 +1000,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       FermionOnSphere TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1);
       int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
       RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
-      while (MinIndex < MaxIndex)
+      while (MinIndex <= MaxIndex)
 	{
 	  TmpIndex = MinIndex;
 	  TmpComplementarySubsystem = this->StateDescription[TmpIndex] & TmpMask;
