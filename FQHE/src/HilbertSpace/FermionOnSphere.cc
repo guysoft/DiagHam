@@ -919,13 +919,19 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
   int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize - 1)) >> 1;
   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
   int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
-//  int TmpStateMaxLz = (this->NbrFermions - nbrFermionSector) + subsytemSize - 1;  
-//   int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
-//   int MinIndex = MaxIndex;
-  int MaxIndex = this->HilbertSpaceDimension;
-  int MinIndex = 0;
-
-//  cout << hex << TmpMask << " " << TmpSubsystemMask << dec << endl;
+  int TmpStateMaxLz = ShiftedLzComplementarySector + ((NbrFermionsComplementarySector * (NbrFermionsComplementarySector - 1)) >> 1);
+  if ((TmpStateMaxLz % ShiftedLzComplementarySector) != 0)
+    TmpStateMaxLz /= ShiftedLzComplementarySector;
+  else
+    {
+      TmpStateMaxLz /= ShiftedLzComplementarySector;
+      ++TmpStateMaxLz;
+    }
+//  int MaxIndex = this->LookUpTable[TmpStateMaxLz - 1][0];
+  int MinIndex = this->LookUpTable[TmpStateMaxLz][0];
+  
+   int MaxIndex = this->HilbertSpaceDimension;
+//   int MinIndex = 0;
 
   unsigned long TmpComplementarySubsystem;
   int TmpNbrFermions;
@@ -1035,7 +1041,6 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 		  int TmpLzMax = subsytemSize - 1;
 		  while ((TmpState & (0x1ul << TmpLzMax)) == 0x0ul)
 		    --TmpLzMax;
-		  //		cout << hex << this->StateDescription[i] << " " << TmpState << dec << " " << TmpLzMax << " " << TmpNbrFermions << " " << TmpTotalLz << endl;
 		  TmpStatePosition[Pos] = TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
 		  ++Pos;
 		}
