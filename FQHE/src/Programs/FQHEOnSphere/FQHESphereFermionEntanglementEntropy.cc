@@ -51,7 +51,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -238,13 +238,25 @@ int main(int argc, char** argv)
 
 
   ofstream File;
-  File.open("entanglement.dat", ios::binary | ios::out);
+  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+    File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+  else
+    {
+      char* TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "ent");
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << ((SingleStringOption*) Manager["ground-file"])->GetString() << " file name" << endl;
+	  return 0;
+	}
+      File.open(TmpFileName, ios::binary | ios::out);
+      delete[] TmpFileName;
+    }
   File.precision(14);
   cout.precision(14);
   int MeanSubsystemSize = LzMax >> 1;
   if ((LzMax & 1) != 0)
     ++MeanSubsystemSize;
-  MeanSubsystemSize = 14;
+//  MeanSubsystemSize = 2;
   for (int SubsystemSize = 1; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
@@ -262,6 +274,7 @@ int main(int argc, char** argv)
 	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	    {
+	      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 	      RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
@@ -309,7 +322,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      File << SubsystemSize << " " << EntanglementEntropy << " " << DensitySum << endl;
+      File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
     }
   File.close();
 }

@@ -910,8 +910,6 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 	}
     }
 
-//  cout << subsytemSize << " " << nbrFermionSector << " " << lzSector << endl;
-
   unsigned long TmpMask = (((0x1ul << (this->LzMax + 2)) - 1) >> subsytemSize) << subsytemSize;
   unsigned long TmpSubsystemMask = (0x1ul << subsytemSize) - 1;
   int TmpIndex;
@@ -919,28 +917,14 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
   int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize - 1)) >> 1;
   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
   int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
-  int TmpStateMaxLz = ShiftedLzComplementarySector + ((NbrFermionsComplementarySector * (NbrFermionsComplementarySector - 1)) >> 1);
-  if ((TmpStateMaxLz % NbrFermionsComplementarySector) != 0)
-    TmpStateMaxLz /= NbrFermionsComplementarySector;
-  else
-    {
-      TmpStateMaxLz /= NbrFermionsComplementarySector;
-      ++TmpStateMaxLz;
-    }
-  int MaxIndex;
-  if (((NbrFermionsComplementarySector + subsytemSize) >= 2) && ((NbrFermionsComplementarySector + subsytemSize - 2) > this->StateLzMax[this->HilbertSpaceDimension - 1]))
-    MaxIndex = this->LookUpTable[NbrFermionsComplementarySector + subsytemSize - 2][0];
-  else
-    MaxIndex = this->HilbertSpaceDimension - 1;
+  int TmpStateMaxLz = ShiftedLzComplementarySector - (((NbrFermionsComplementarySector - 2 + (subsytemSize << 1)) * (NbrFermionsComplementarySector - 1)) >> 1);
   int MinIndex = 0;
-//   if (TmpStateMaxLz < this->StateLzMax[0])
-//     MinIndex = this->LookUpTable[TmpStateMaxLz][0];
-//   else
-//     MinIndex = 0;
+  int MaxIndex = this->HilbertSpaceDimension - 1;
+  if ((NbrFermionsComplementarySector + subsytemSize - 2) > this->StateLzMax[MaxIndex])
+    MaxIndex = this->LookUpTable[NbrFermionsComplementarySector + subsytemSize - 2][0];
+  if ((TmpStateMaxLz < this->StateLzMax[0]) && (TmpStateMaxLz >= subsytemSize))
+    MinIndex = this->LookUpTable[TmpStateMaxLz + 1][0];
   
-//    int MaxIndex = this->HilbertSpaceDimension;
-//    int MinIndex = 0;
-
   unsigned long TmpComplementarySubsystem;
   int TmpNbrFermions;
   int TmpTotalLz;

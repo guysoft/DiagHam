@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/FermionOnSphere.h"
 
 #include <iostream>
 
@@ -41,52 +41,12 @@
 class FermionOnSphere;
 
 
-class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
+class FermionOnSphereHaldaneBasis :  public FermionOnSphere
 {
 
   friend class FermionOnSphereHaldaneSymmetricBasis;
 
  protected:
-
-  // number of fermions
-  int NbrFermions;
-  // number of fermions plus 1
-  int IncNbrFermions;
-  // momentum total value
-  int TotalLz;
-  // maximum Lz value reached by a fermion
-  int LzMax;
-  // number of Lz values in a state
-  int NbrLzValue;
-
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLzMax;
-
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
-  // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
-
-  // pointer to the target space when an index is require after applying basic operation
-  FermionOnSphereHaldaneBasis* TargetSpace;
 
   // topmost state 
   unsigned long ReferenceState;
@@ -143,11 +103,6 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
-
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  virtual int GetParticleStatistic();
 
   // return a list of all possible quantum numbers 
   //
@@ -246,22 +201,6 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
-  // evaluate wave function in real space using a given basis and only for agiven range of components
-  //
-  // state = vector corresponding to the state in the Fock basis
-  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
-  // basis = one body real space basis to use
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = wave function evaluated at the given location
-  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
-  
-  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
-  //
-  // timeCoherence = true if time coherence has to be used
-  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-  
  protected:
 
   // find state index
@@ -312,15 +251,6 @@ class FermionOnSphereHaldaneBasis :  public ParticleOnSphere
 
 
 };
-
-// get the particle statistic 
-//
-// return value = particle statistic
-
-inline int FermionOnSphereHaldaneBasis::GetParticleStatistic()
-{
-  return ParticleOnSphere::FermionicStatistic;
-}
 
 #endif
 

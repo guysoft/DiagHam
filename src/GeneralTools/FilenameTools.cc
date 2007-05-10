@@ -209,3 +209,24 @@ char*  AddExtensionToFileName(char* fileName, char* extension)
   strcpy(TmpFileName + TmpLength, extension);
   return TmpFileName;
 }
+
+// replace extension to a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// oldExtension = extension to replace (without initial dot)
+// newExtension = new extension (without initial dot)
+// return value = corresponding string (0 if the old extension was not found)
+
+char* ReplaceExtensionToFileName(char* fileName, char* oldExtension, char* newExtension)
+{
+  char* ExtensionPosition = strstr(fileName, oldExtension);
+  if (ExtensionPosition == 0)
+    return 0;
+  long TmpLength = strlen(fileName);
+  long TmpLength2 = TmpLength - strlen(oldExtension);
+  char* TmpFileName = new char[TmpLength2 + strlen(newExtension) + 1];
+  strncpy (TmpFileName, fileName, TmpLength2);
+  strcpy (TmpFileName + TmpLength2, newExtension);
+  return TmpFileName;
+}
+

@@ -70,4 +70,12 @@ char* ConcatenatePathAndFileName (char* path, char* fileName);
 // return value = corresponding string
 char*  AddExtensionToFileName(char* fileName, char* extension);
 
+// replace extension to a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// oldExtension = extension to replace (without initial dot)
+// newExtension = new extension (without initial dot)
+// return value = corresponding string (0 if the old extension was not found)
+char* ReplaceExtensionToFileName(char* fileName, char* oldExtension, char* newExtension);
+
 #endif
