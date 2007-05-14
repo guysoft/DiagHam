@@ -150,7 +150,7 @@ int main(int argc, char** argv)
   if (((BooleanOption*) Manager["huge"])->GetBoolean() == true)
     {
       FermionOnSphereHaldaneHugeBasis ReducedSpace(NbrParticles, Lz, LzMax, ((SingleIntegerOption*) Manager["file-size"])->GetInteger(),
-						   ReferenceState, ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20);
+						   ReferenceState, ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20, SymmetrizedBasis);
       cout << ReducedSpace.GetHilbertSpaceDimension() << endl;
     }
   else

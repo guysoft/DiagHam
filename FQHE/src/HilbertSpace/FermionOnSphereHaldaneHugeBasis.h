@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "GeneralTools/List.h"
 
 #include <iostream>
@@ -123,6 +124,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // maximum size for a file
   unsigned long SizeLimit;
 
+  // shift to apply to a state before inverting its expression (useful only for symmetric case calculation)
+  int InvertShift;
+  // shift to apply to a state after inverting its expression (useful only for symmetric case calculation)
+  int InvertUnshift;
+
  public:
 
   // basic constructor
@@ -133,8 +139,9 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // maxFileSize = maximum file size (in MBytes)
   // memory = amount of memory granted for precalculations
   // referenceState = array that describes the reference state to start from
+  // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
   FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState,
-				   unsigned long memory = 10000000);
+				   unsigned long memory = 10000000, bool symmetricFlag = true);
 
   // copy constructor (without duplicating datas)
   //
@@ -335,6 +342,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // lzMax = maximum momentum value for a fermion
   void FindLzMaxSectors(unsigned long* stateDescription, unsigned long dimension, unsigned long* lzSectors, int lzMax);
 
+  // test if a given state corresponds to its canonical expression
+  //
+  // initialState = state that has to be tested as a canonical state
+  // return value = true if it is a canonical state
+  bool IsCanonicalState (unsigned long initialState);
+
 };
 
 // get the particle statistic 
@@ -344,6 +357,37 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 inline int FermionOnSphereHaldaneHugeBasis::GetParticleStatistic()
 {
   return ParticleOnSphere::FermionicStatistic;
+}
+
+// test if a given state corresponds to its canonical expression
+//
+// initialState = state that has to be tested as a canonical state
+// return value = true if it is a canonical state
+
+inline bool FermionOnSphereHaldaneHugeBasis::IsCanonicalState (unsigned long initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56]; 
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif	
+  initialState >>= this->InvertShift;
+  TmpState >>= this->InvertUnshift;
+  if (TmpState < initialState)
+    return false;
+  else
+    return true;
 }
 
 #endif

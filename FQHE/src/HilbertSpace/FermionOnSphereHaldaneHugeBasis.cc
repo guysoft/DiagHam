@@ -61,8 +61,10 @@ using std::ios;
 // maxFileSize = maximum file size (in MBytes)
 // memory = amount of memory granted for precalculations
 // referenceState = array that describes the reference state to start from
+// symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
 
-FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory)
+FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory,
+								  bool symmetricFlag)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -260,40 +262,107 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 #endif
    this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1l, Memory);
 
-   unsigned long NewHilbertSpaceDimension = 0;
-   unsigned long TmpKeepStateFlag;
-   int TmpNbrOne[] = {  
-   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
-   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-   1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
-   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
-   4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
-   for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
+   if ((symmetricFlag == false) || (this->TotalLz != 0))
      {
-      TmpKeepStateFlag = this->KeepStateFlag[i];
-      NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
+       unsigned long NewHilbertSpaceDimension = 0;
+       unsigned long TmpKeepStateFlag;
+       int TmpNbrOne[] = {  
+	 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+	 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+	 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+	 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+       for (unsigned long i = 0; i < ReducedHilbertSpaceDimension; ++i)
+	 {
+	   TmpKeepStateFlag = this->KeepStateFlag[i];
+	   NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
 #ifdef  __64_BITS__
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
-      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
+	   NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
 #endif
-    }
-   cout << "Haldane space dimension = " << NewHilbertSpaceDimension << endl;
+	 }
+       cout << "Haldane space dimension = " << NewHilbertSpaceDimension << endl;
+     }
+   else
+     {
+#ifdef __64_BITS__
+       this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+       this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+       if ((this->LzMax & 1) == 0)
+	 this->InvertUnshift = this->InvertShift - 1;
+       else
+	 this->InvertUnshift = this->InvertShift;
+       unsigned long NewHilbertSpaceDimension = 0;
+       unsigned long NewTotalHilbertSpaceDimension = 0;
+       unsigned long TotalIndex = 0;
+       unsigned long LocalIndex = 0;
+       unsigned long TmpStateHighestLz = this->StateDescription[0] << this->StateHighestLzShift;
+       int TmpFileIndex = this->StateDescriptionFileIndex[this->StateHighestLzToIndex[this->StateDescription[0]]];
+       unsigned long TmpLimit = this->StateDescriptionFileSizes[TmpFileIndex];
+       int TmpBufferIndex = this->FileToBuffer[TmpFileIndex];
+       if (TmpBufferIndex < 0)
+	 TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
+       unsigned long* TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
+       for (unsigned long i = 0; i < this->HugeHilbertSpaceDimension; ++i)
+	 {
+#ifdef  __64_BITS__
+	   unsigned long& TmpKeepStateFlag = this->KeepStateFlag[i >> 6];	   
+#else
+	   unsigned long& TmpKeepStateFlag = this->KeepStateFlag[i >> 5];	   
+#endif	   
+	   if (this->IsCanonicalState(TmpStateHighestLz | TmpStateDescriptionBuffers[LocalIndex]))
+	     {
+	       ++NewTotalHilbertSpaceDimension;
+#ifdef  __64_BITS__
+	       if (((TmpKeepStateFlag >> (i & 0x3ful)) & 0x1ul) != 0ul)
+		 ++NewHilbertSpaceDimension;
+	       else
+		 TmpKeepStateFlag &= ~(0x1ul << (i & 0x3ful));
+#else
+	       if (((TmpKeepStateFlag >> (i & 0x1ful)) & 0x1ul) != 0ul)
+		 ++NewHilbertSpaceDimension;
+	       else
+		 TmpKeepStateFlag &= ~(0x1ul << (i & 0x1ful));
+#endif
+	     }
+	   ++LocalIndex;
+	   if (LocalIndex == TmpLimit)
+	     {
+	       ++TotalIndex;
+	       if (TotalIndex < this->PartialHilbertSpaceDimension)
+		 {
+		   TmpStateHighestLz = this->StateDescription[TotalIndex] << this->StateHighestLzShift;
+		   TmpFileIndex = this->StateDescriptionFileIndex[this->StateHighestLzToIndex[this->StateDescription[TotalIndex]]];
+		   TmpLimit = this->StateDescriptionFileSizes[TmpFileIndex];
+		   TmpBufferIndex = this->FileToBuffer[TmpFileIndex];
+		   if (TmpBufferIndex < 0)
+		     TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
+		   TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
+		   LocalIndex = 0ul;
+		 }
+	     }
+	 }
+       cout << "total symmetric space dimension = " << NewTotalHilbertSpaceDimension << endl;
+       cout << "Haldane symmetric space dimension = " << NewHilbertSpaceDimension << endl;
+     }
 
    delete[] this->KeepStateFlag;
    this->GenerateLookUpTable(memory);
