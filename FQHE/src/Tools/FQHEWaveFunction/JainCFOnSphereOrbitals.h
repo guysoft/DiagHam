@@ -38,6 +38,10 @@
 #include "Matrix/ComplexMatrix.h"
 #include "MathTools/Complex.h"
 
+#include "Double3DArray.h"
+#include "Complex3DArray.h"
+#include "Complex4DArray.h"
+
 class DerivativeProductFactor;
 class DerivativeProduct;
 class SumDerivativeProduct;
@@ -93,7 +97,7 @@ class JainCFOnSphereOrbitals
   // array containing constant factors that appears in the sum of projected monopole harmonic (except LLL)
   // indices: [LL-index n][s from Jains notation(summation index)][momentum m (0=-S-n)]
   // factor nonzero for n-s<= m <= MaxMomentum - s
-  double*** SumPrefactors;
+  Double3DArray SumPrefactors;
 
   // garbage flag to avoid duplication of precalculation array
   GarbageFlag Flag;
@@ -102,11 +106,11 @@ class JainCFOnSphereOrbitals
   Complex** JastrowFactorElements;
   // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic
   // indices are: [#u][#v][Power][particle#]
-  Complex**** DerivativeFactors;
+  Complex4DArray DerivativeFactors;
   
   // a duplicate array of DerivativeFactors used for precalculations with different organisation:
   // indices are: [particle#][#u][#v]
-  Complex*** DerivativeFactors2;
+  Complex3DArray DerivativeFactors2;
 
   // temporary array used to store u spinor coordinates
   Complex* SpinorUCoordinates;
@@ -123,7 +127,11 @@ class JainCFOnSphereOrbitals
 
   // Matrix to store return values:  
   ComplexMatrix *Orbitals;
-    
+
+  // vectors used in Evaluate Orbitals for calculation of columns in Orbitals
+  Complex *OrbitalVector;
+  Complex *OrbitalVector2;
+  
  public:
 
   // default constructor
@@ -149,7 +157,7 @@ class JainCFOnSphereOrbitals
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
-  // return value = Slater-Determinant with CF Orbitals
+  // return value = Matrix with CF Orbitals, 
   ComplexMatrix& operator ()(RealVector& x);
 
 

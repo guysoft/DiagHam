@@ -38,33 +38,49 @@ using std::endl;
 SumDerivativeProduct::SumDerivativeProduct()
 {
   this->CFOrbitals=NULL;
+  this->TmpSum=NULL;
+  this->Flag.Initialize();
 }
 
 SumDerivativeProduct::SumDerivativeProduct(JainCFOnSphereOrbitals *CFOrbitals)
 {
   this->CFOrbitals=CFOrbitals;
+  this->Flag.Initialize();
+  this->TmpSum=NULL;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const DerivativeProductFactor &toWrap)
 {
   this->CFOrbitals=toWrap.CFOrbitals;
   this->Summands+=DerivativeProduct(toWrap);
+  this->Flag.Initialize();
+  if (this->CFOrbitals!=NULL) this->TmpSum = new Complex[this->CFOrbitals->GetNbrParticles()];
+  else this->TmpSum = NULL;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const DerivativeProduct &toWrap)
 {
   this->CFOrbitals=toWrap.CFOrbitals;
   this->Summands+=toWrap;
+  this->Flag.Initialize();
+  if (this->CFOrbitals!=NULL) this->TmpSum = new Complex[this->CFOrbitals->GetNbrParticles()];
+  else this->TmpSum = NULL;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const SumDerivativeProduct &toCopy)
 {
   this->CFOrbitals=toCopy.CFOrbitals;
   this->Summands=toCopy.Summands;
+  this->TmpSum=toCopy.TmpSum;
+  this->Flag = toCopy.Flag;
 }
 
 SumDerivativeProduct::~SumDerivativeProduct()
 {
+  if ((this->TmpSum != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->TmpSum;
+    }
 }
 
 Complex SumDerivativeProduct::getValue(int particle)
@@ -76,21 +92,33 @@ Complex SumDerivativeProduct::getValue(int particle)
   return Sum;
 }
 
-Complex* SumDerivativeProduct::getValues()
+void SumDerivativeProduct::getValues(Complex *result)
 {
-  Complex *result, *CPtr, *TmpSummand;
+  Complex *CPtr, *CPtr2;
   DerivativeProduct *Product;
   ListIterator<DerivativeProduct> LI(this->Summands);
   Product=LI();
-  result = Product->getValues();
+  Product->getValues(result);  
   while((Product=LI())!=NULL)
     {
-      TmpSummand=Product->getValues();
+      Product->getValues(TmpSum);
       CPtr=result;
+      CPtr2=TmpSum;
       for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-	*(CPtr++) *= *(TmpSummand++);
+	result[i] += TmpSum[i];
+	//*(CPtr++) += *(CPtr2++);
     }
-  return result;
+}
+
+void SumDerivativeProduct::CommentValues(int particle)
+{
+  DerivativeProduct *Product;
+  ListIterator<DerivativeProduct> LI(this->Summands);
+  while((Product=LI())!=NULL)
+    {
+      Product->getValues(TmpSum);
+      cout << "P="<<*Product<<"= " <<TmpSum[particle]<<endl;
+    }
 }
 
 
@@ -115,8 +143,8 @@ SumDerivativeProduct& SumDerivativeProduct::operator = (const SumDerivativeProdu
 {
   this->CFOrbitals=Assign.CFOrbitals;
   this->Summands=Assign.Summands;
-  //this->Flag=Assign.Flag;
-  //this->TmpSum=Assign.TmpSum;
+  this->Flag=Assign.Flag;
+  this->TmpSum=Assign.TmpSum;
   return *this;
 }
 

@@ -56,8 +56,9 @@ class SumDerivativeProduct
   void TestHighestPowers();
 
   Complex getValue(int particle);
-  Complex* getValues();
-  
+  void getValues(Complex *result);
+  void CommentValues(int particle);
+
   SumDerivativeProduct Derivative( int DeriveU, int DeriveV=0);
 
   SumDerivativeProduct& operator = (const SumDerivativeProduct& Assign);
@@ -73,9 +74,9 @@ class SumDerivativeProduct
   
  protected:
   JainCFOnSphereOrbitals *CFOrbitals;
-  List<DerivativeProduct> Summands;
-  //GarbageFlag Flag;
-  //Complex* TmpSum;
+  List<DerivativeProduct> Summands;  
+  GarbageFlag Flag;
+  Complex* TmpSum;
 };
 
 

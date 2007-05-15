@@ -101,20 +101,21 @@ Complex DerivativeProduct::getValue(int particle)
   return result;
 }
 
-Complex* DerivativeProduct::getValues()
+void DerivativeProduct::getValues(Complex *result)
 {
-  Complex *MyTmpProduct, *CPtr;
+  Complex *TmpProductFactors;
   for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-    TmpProduct[i] = this->PreFactor;
+    result[i] = this->PreFactor;
   DerivativeProductFactor *Factor;
   for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
-    {
-      MyTmpProduct=Factor->getValues();
-      CPtr=TmpProduct;
+    {      
+      TmpProductFactors = Factor->getValues();
       for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-	*(CPtr++) *= *(MyTmpProduct++);
+	{
+	  result[i] *= TmpProductFactors[i];
+	  //	  cout << TmpProductFactors[i] << " =?= "<<  Factor->getValue(i)<<endl;
+	}
     }
-  return TmpProduct;
 }
 
 void DerivativeProduct::TestHighestPowers()

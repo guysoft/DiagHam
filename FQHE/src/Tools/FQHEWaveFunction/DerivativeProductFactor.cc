@@ -30,6 +30,10 @@
 #include "DerivativeProductFactor.h"
 #include "DerivativeProduct.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 DerivativeProductFactor::DerivativeProductFactor(JainCFOnSphereOrbitals *CFOs,
 						 int UDerivatives, int VDerivatives,
 						 int Power, double preFactor)
@@ -70,13 +74,18 @@ DerivativeProductFactor::DerivativeProductFactor()
 }
 
 Complex* DerivativeProductFactor::getValues()
-{
-  return this->CFOrbitals->DerivativeFactors[this->UDerivatives][this->VDerivatives][this->Power-1];
+{  
+  return (this->CFOrbitals->DerivativeFactors.GetVector(this->UDerivatives, this->VDerivatives, this->Power-1));
 }
 
 Complex DerivativeProductFactor::getValue(int particle)
 {
-  return this->CFOrbitals->DerivativeFactors[this->UDerivatives][this->VDerivatives][this->Power-1][particle];
+//   cout << "Value: UD=" <<this->UDerivatives<<" VD="<<this->VDerivatives << " Power: "<< this->Power<<
+//     " particle " << particle << " result: "<<
+//     this->CFOrbitals->DerivativeFactors.Get(this->UDerivatives, this->VDerivatives, this->Power-1, particle) ;
+//   if (this->Power>1) cout << "Power 1 was: "<< this->CFOrbitals->DerivativeFactors.Get(this->UDerivatives, this->VDerivatives, 0, particle) << endl;
+//   else cout << endl;
+  return this->CFOrbitals->DerivativeFactors.Get(this->UDerivatives, this->VDerivatives, this->Power-1, particle);
 }
 
 void DerivativeProductFactor::TestHighestPowers()

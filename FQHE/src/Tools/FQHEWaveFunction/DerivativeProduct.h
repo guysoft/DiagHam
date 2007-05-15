@@ -58,7 +58,7 @@ class DerivativeProduct
 
   bool isNonZero();
 
-  Complex* getValues();
+  void getValues(Complex* result);
   Complex getValue(int particle);
 
   void TestHighestPowers();
