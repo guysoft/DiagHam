@@ -1,6 +1,6 @@
 SUBDIRS=
 
-noinst_LIBRARIES=libMatrix.a
+noinst_LIBRARIES=libMatrix.a libArray.a
 
 libMatrix_a_SOURCES=BlockDiagonalMatrix.cc \
 BlockMatrix.cc \
@@ -18,3 +18,8 @@ RealUpperTriangularMatrix.cc \
 RealLowerTriangularMatrix.cc \
 ComplexUpperTriangularMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc
+
+libArray_a_SOURCES = \
+Double3DArray.cc \
+Complex3DArray.cc \
+Complex4DArray.cc
