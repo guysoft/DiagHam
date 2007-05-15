@@ -1,6 +1,6 @@
 SUBDIRS=
 
-noinst_LIBRARIES=libQHEWaveFunction.a libMC.a libArray.a
+noinst_LIBRARIES=libQHEWaveFunction.a libMC.a
 
 libQHEWaveFunction_a_SOURCES=LaughlinOnSphereWaveFunction.cc \
 PfaffianOnSphereWaveFunction.cc \
@@ -33,15 +33,10 @@ my_recipes.cc \
 nrutil.cc \
 particle.cc
 
-libArray_a_SOURCES = \
-Double3DArray.cc \
-Complex3DArray.cc \
-Complex4DArray.cc
-
 bin_PROGRAMS=test
 
 test_SOURCES=test.cc
 
-test_DEPENDENCIES=libQHEWaveFunction.a libMC.a libArray.a
+test_DEPENDENCIES=libQHEWaveFunction.a libMC.a $(top_builddir)/src/Matrix/libArray.a
 
-test_LDADD=$(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a libQHEWaveFunction.a libArray.a $(top_builddir)/src/MathTools/libMathTools.a  libMC.a @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@
+test_LDADD=$(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a libQHEWaveFunction.a $(top_builddir)/src/Matrix/libArray.a $(top_builddir)/src/MathTools/libMathTools.a  libMC.a @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@

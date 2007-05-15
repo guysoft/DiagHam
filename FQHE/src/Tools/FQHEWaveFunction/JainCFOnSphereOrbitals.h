@@ -38,9 +38,9 @@
 #include "Matrix/ComplexMatrix.h"
 #include "MathTools/Complex.h"
 
-#include "Double3DArray.h"
-#include "Complex3DArray.h"
-#include "Complex4DArray.h"
+#include "Matrix/Double3DArray.h"
+#include "Matrix/Complex3DArray.h"
+#include "Matrix/Complex4DArray.h"
 
 class DerivativeProductFactor;
 class DerivativeProduct;

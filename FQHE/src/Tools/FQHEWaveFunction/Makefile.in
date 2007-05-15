@@ -82,7 +82,7 @@ VERSION = @VERSION@
 
 SUBDIRS = 
 
-noinst_LIBRARIES = libQHEWaveFunction.a libMC.a libArray.a
+noinst_LIBRARIES = libQHEWaveFunction.a libMC.a
 
 libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc PfaffianOnSphereWaveFunction.cc PfaffianOnSphereTwoQuasiholeWaveFunction.cc JainCFFilledLevelOnSphereWaveFunction.cc JainCFOnSphereOrbitals.cc MooreReadOnSphereWaveFunction.cc LaughlinOnDiskWaveFunction.cc PfaffianOnDiskWaveFunction.cc MooreReadOnDiskWaveFunction.cc JainCFOnSphereWaveFunction.cc LandauSpectrumOnSphere.cc UnprojectedJainCFOnSphereWaveFunction.cc QHEWaveFunctionManager.cc ExactWaveFunction.cc DerivativeProduct.cc DerivativeProductFactor.cc SumDerivativeProduct.cc AbstractFQHEWaveFunctionOneOverR.cc LaughlinOnDiskWaveFunctionOneOverR.cc HalperinOnDiskWaveFunctionOneOverR.cc HalperinOnSphereWaveFunction.cc SU4HalperinOnSphereWaveFunction.cc 
 
@@ -90,16 +90,13 @@ libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc PfaffianOnSphereW
 libMC_a_SOURCES =  CFOrbitals.cc formula_h6.cc  my_ran.cc my_recipes.cc nrutil.cc particle.cc
 
 
-libArray_a_SOURCES =  Double3DArray.cc Complex3DArray.cc Complex4DArray.cc
-
-
 bin_PROGRAMS = test
 
 test_SOURCES = test.cc
 
-test_DEPENDENCIES = libQHEWaveFunction.a libMC.a libArray.a
+test_DEPENDENCIES = libQHEWaveFunction.a libMC.a $(top_builddir)/src/Matrix/libArray.a
 
-test_LDADD = $(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a libQHEWaveFunction.a libArray.a $(top_builddir)/src/MathTools/libMathTools.a  libMC.a @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@
+test_LDADD = $(top_builddir)/src/GeneralTools/libGeneralTools.a  $(top_builddir)/src/MathTools/NumericalAnalysis/libNumericalAnalysis.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/GeneralTools/libGeneralTools.a libQHEWaveFunction.a $(top_builddir)/src/Matrix/libArray.a $(top_builddir)/src/MathTools/libMathTools.a  libMC.a @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @FORTRAN2C_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../../../src/config_ac.h
 CONFIG_CLEAN_FILES = 
@@ -127,8 +124,6 @@ SU4HalperinOnSphereWaveFunction.o
 libMC_a_LIBADD = 
 libMC_a_OBJECTS =  CFOrbitals.o formula_h6.o my_ran.o my_recipes.o \
 nrutil.o particle.o
-libArray_a_LIBADD = 
-libArray_a_OBJECTS =  Double3DArray.o Complex3DArray.o Complex4DArray.o
 AR = ar
 PROGRAMS =  $(bin_PROGRAMS)
 
@@ -145,8 +140,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AbstractFQHEWaveFunctionOneOverR.P .deps/CFOrbitals.P \
-.deps/Complex3DArray.P .deps/Complex4DArray.P .deps/DerivativeProduct.P \
-.deps/DerivativeProductFactor.P .deps/Double3DArray.P \
+.deps/DerivativeProduct.P .deps/DerivativeProductFactor.P \
 .deps/ExactWaveFunction.P .deps/HalperinOnDiskWaveFunctionOneOverR.P \
 .deps/HalperinOnSphereWaveFunction.P \
 .deps/JainCFFilledLevelOnSphereWaveFunction.P \
@@ -163,8 +157,8 @@ DEP_FILES =  .deps/AbstractFQHEWaveFunctionOneOverR.P .deps/CFOrbitals.P \
 .deps/UnprojectedJainCFOnSphereWaveFunction.P .deps/formula_h6.P \
 .deps/my_ran.P .deps/my_recipes.P .deps/nrutil.P .deps/particle.P \
 .deps/test.P
-SOURCES = $(libQHEWaveFunction_a_SOURCES) $(libMC_a_SOURCES) $(libArray_a_SOURCES) $(test_SOURCES)
-OBJECTS = $(libQHEWaveFunction_a_OBJECTS) $(libMC_a_OBJECTS) $(libArray_a_OBJECTS) $(test_OBJECTS)
+SOURCES = $(libQHEWaveFunction_a_SOURCES) $(libMC_a_SOURCES) $(test_SOURCES)
+OBJECTS = $(libQHEWaveFunction_a_OBJECTS) $(libMC_a_OBJECTS) $(test_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -211,11 +205,6 @@ libMC.a: $(libMC_a_OBJECTS) $(libMC_a_DEPENDENCIES)
 	-rm -f libMC.a
 	$(AR) cru libMC.a $(libMC_a_OBJECTS) $(libMC_a_LIBADD)
 	$(RANLIB) libMC.a
-
-libArray.a: $(libArray_a_OBJECTS) $(libArray_a_DEPENDENCIES)
-	-rm -f libArray.a
-	$(AR) cru libArray.a $(libArray_a_OBJECTS) $(libArray_a_LIBADD)
-	$(RANLIB) libArray.a
 
 mostlyclean-binPROGRAMS:
 
