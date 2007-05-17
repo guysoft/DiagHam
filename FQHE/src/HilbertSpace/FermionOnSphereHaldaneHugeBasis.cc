@@ -301,6 +301,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
      }
    else
      {
+       cout << "symmetrizing..." << endl;
 #ifdef __64_BITS__
        this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
 #else
