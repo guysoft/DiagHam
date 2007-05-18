@@ -149,6 +149,14 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value =  multiplicative factor 
   virtual double ProdA (int index, int* n, int nbrIndices);
 
+  // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AA (int index, int n1, int n2);
+
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   //
   // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
@@ -156,6 +164,14 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
+
+  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdAd (int m1, int m2, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //
@@ -188,7 +204,9 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-  
+
+  void Benchmark(int nbrTimes);
+
  protected:
 
   // find state index

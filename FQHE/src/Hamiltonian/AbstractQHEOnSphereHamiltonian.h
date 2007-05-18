@@ -73,6 +73,10 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   int* M1Value;
   int* M2Value;
   int* M3Value;
+  // alternative method used to store indices attached to each interaction factor
+  int NbrM12Indices;
+  int* NbrM3Values;
+  int** M3Values;
 
   // flag to indicate if there is any one body terms in the Hamiltonian
   bool OneBodyTermFlag;
@@ -124,6 +128,10 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
 
 
  public:
+
+  // default constructor
+  //
+  AbstractQHEOnSphereHamiltonian();
 
   // destructor
   //

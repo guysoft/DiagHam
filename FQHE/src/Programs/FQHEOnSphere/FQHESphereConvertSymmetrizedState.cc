@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "bench", "benchmark", 1);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -195,7 +196,9 @@ int main(int argc, char** argv)
 		}
 	    }
 	  RealVector OutputState;
-	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
+	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);	  
+	  InitialSpace.Benchmark(((SingleIntegerOption*) Manager["bench"])->GetInteger());
+	  return 0;
 	  FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
 	  if (SymmetrizeFlag)
 	    {

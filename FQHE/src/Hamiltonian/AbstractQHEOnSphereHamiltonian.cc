@@ -52,11 +52,25 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+AbstractQHEOnSphereHamiltonian::AbstractQHEOnSphereHamiltonian()
+{
+  this->NbrM12Indices = 0;
+}
+
 // destructor
 //
 
 AbstractQHEOnSphereHamiltonian::~AbstractQHEOnSphereHamiltonian()
 {
+  if (this->NbrM12Indices != 0)
+    {
+      for (int i = 0; i < this->NbrM12Indices; ++i)
+	delete[] this->M3Values[i];
+      delete[] this->M3Values;
+      delete[] this->NbrM3Values;
+    }
 }
 
 // set Hilbert space
@@ -207,32 +221,69 @@ RealVector& AbstractQHEOnSphereHamiltonian::LowLevelAddMultiply(RealVector& vSou
       double TmpInteraction;
       int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
-      for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+      if (this->NbrM12Indices == 0)
 	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  TmpInteraction = this->InteractionFactors[j];
+	  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      TmpInteraction = this->InteractionFactors[j];
+	      m4 = m1 + m2 - m3;
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		  if (Index < Dim)
+		    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+		}
+	    }
+	  m1 = this->M1Value[ReducedNbrInteractionFactors];
+	  m2 = this->M2Value[ReducedNbrInteractionFactors];
+	  m3 = this->M3Value[ReducedNbrInteractionFactors];
+	  TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
 	  m4 = m1 + m2 - m3;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
 	      if (Index < Dim)
 		vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
+	      vDestination[i] += this->HamiltonianShift * vSource[i];
 	    }
 	}
-      m1 = this->M1Value[ReducedNbrInteractionFactors];
-      m2 = this->M2Value[ReducedNbrInteractionFactors];
-      m3 = this->M3Value[ReducedNbrInteractionFactors];
-      TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-      m4 = m1 + m2 - m3;
-      for (int i = firstComponent; i < LastComponent; ++i)
+      else
 	{
-	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	  if (Index < Dim)
-	    vDestination[Index] += Coefficient * TmpInteraction * vSource[i];
-	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	  double Coefficient2;
+	  int SumIndices;
+	  int TmpNbrM3Values;
+	  int* TmpM3Values;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      ReducedNbrInteractionFactors = 0;
+	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		{
+		  Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		  if (Coefficient != 0.0)
+		    {
+		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
+		      Coefficient *= vSource[i];
+		      TmpNbrM3Values = this->NbrM3Values[m1];
+		      TmpM3Values = this->M3Values[m1];
+		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			{
+			  Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			  if (Index < Dim)			
+			    vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			  ++ReducedNbrInteractionFactors;
+			}
+		    }
+		  else
+		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+		}
+	    }
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    vDestination[i] += this->HamiltonianShift * vSource[i];
 	}
+
       if (this->OneBodyTermFlag == true)
 	{
 	  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
