@@ -113,6 +113,13 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value = converted vector
   RealVector ConvertToHaldaneNbodyBasis(RealVector& state, FermionOnSphereHaldaneBasis& nbodyBasis);
 
+  // convert a given state from the usual n-body Haldane basis to the Lz-symmetric Haldane basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToSymmetricHaldaneNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied

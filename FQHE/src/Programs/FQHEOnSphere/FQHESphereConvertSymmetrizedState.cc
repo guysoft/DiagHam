@@ -44,7 +44,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_");
+  (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
+  bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
   bool Statistics = true;
   int TotalLz = 0;
   if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
@@ -103,9 +105,27 @@ int main(int argc, char** argv)
     {
       if (((BooleanOption*) Manager["haldane"])->GetBoolean() == false)
 	{
+	  RealVector OutputState;
 	  FermionOnSphereSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta);
 	  FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
-	  RealVector OutputState(InitialSpace.ConvertToNbodyBasis(State, TargetSpace));
+	  if (SymmetrizeFlag)
+	    {
+	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;
+ 		}
+	      OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	    }
+	  else
+	    {
+	      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;
+ 		}
+	      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	    }
 	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
 	    {
 	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
@@ -174,13 +194,27 @@ int main(int argc, char** argv)
 		  return -1;     
 		}
 	    }
+	  RealVector OutputState;
 	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
-	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	    }
 	  FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
- 	  RealVector OutputState(InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace));
+	  if (SymmetrizeFlag)
+	    {
+	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;
+ 		}
+	      OutputState = InitialSpace.ConvertToSymmetricHaldaneNbodyBasis(State, TargetSpace);
+	    }
+	  else
+	    {
+	      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between Hilbert space and input state" << endl;
+		  return -1;
+ 		}
+	      OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
+	    }
  	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
  	    {
  	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;

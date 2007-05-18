@@ -464,6 +464,34 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToHaldaneNbodyBasis(Real
   return TmpVector;
 }
 
+// convert a given state from the usual n-body Haldane basis to the Lz-symmetric Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToSymmetricHaldaneNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (this->GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->GetSignedCanonicalState(nbodyBasis.StateDescription[i]);
+      NewLzMax = this->LzMax;
+      Signature = TmpState & FERMION_SPHERE_SYMMETRIC_BIT;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      if (Signature != 0x0ul)	
+	TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += state[i] * M_SQRT1_2;
+      else
+	TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+    }
+  return TmpVector;  
+}
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied

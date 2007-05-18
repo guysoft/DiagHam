@@ -154,6 +154,13 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // return value = converted vector
   RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
 
+  // convert a given state from the usual n-body basis to the Lz-symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied
