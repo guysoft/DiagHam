@@ -60,7 +60,7 @@ class Vector
   // dimension of the allocated array
   int TrueDimension;
 
-  // falg indacting vector type
+  // flag indacting vector type
   int VectorType;
 
   // vector id
@@ -73,7 +73,7 @@ class Vector
     {
       RealDatas = 0x01,
       ComplexDatas = 0x02,
-	  RealPtrDatas = 0x04,
+      RealPtrDatas = 0x04,
       NonLocalDatas = 0x10,
       DistributedDatas = 0x20
     };
