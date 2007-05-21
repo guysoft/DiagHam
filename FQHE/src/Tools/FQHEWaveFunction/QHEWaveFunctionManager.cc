@@ -29,11 +29,7 @@
 
 
 #include "config.h"
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereWaveFunction.h"
@@ -43,6 +39,7 @@
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereTwoQuasiholeWaveFunction.h"
 #include "Tools/FQHEWaveFunction/UnprojectedJainCFOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
@@ -85,6 +82,10 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "cluster-size", "number of particles per cluster (read only)", 3, true, 2);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-level", "number of pseudo Landau levels (filledcf only)", 1, true, 1);
   (*WaveFunctionGroup) += new SingleStringOption  ('\n', "cf-file", "name of the file describing the composite fermion state (genericcf only)");
+  // PairedCFOptions:
+  (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
+  (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
+  (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
   
 }
 
@@ -103,7 +104,8 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * read : Read-Rezayi state wave function" << endl;
       str << "  * filledcf : composite fermions wave function (only with filled pseudo Landau levels)" << endl;
       str << "  * genericcf : generic composite fermions wave function" << endl;            
-      str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;            
+      str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
+      str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
     }
   else
     if (this->GeometryID == QHEWaveFunctionManager::DiskGeometry)
@@ -158,6 +160,15 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
 	{	  
 	  return new UnprojectedJainCFOnSphereWaveFunction(((SingleStringOption*) (*(this->Options))["cf-file"])->GetString());
+	}
+      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+	{
+	  int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	  double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+	  int LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
+	  double MR =((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
+	  bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	  return new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
 	}
       return 0;
     }

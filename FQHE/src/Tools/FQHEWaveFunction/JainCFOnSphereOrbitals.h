@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef JAINCFFILLEDLEVELONSPHEREWAVEFUNCTION_H
-#define JAINCFFILLEDLEVELONSPHEREWAVEFUNCTION_H
+#ifndef JAINCFONSPHEREORBITALS_H
+#define JAINCFONSPHEREORBITALS_H
 
 
 #include "config.h"
@@ -218,4 +218,4 @@ inline Complex JainCFOnSphereOrbitals::JastrowFactorElement(int i, int j)
   else return Complex();
 }
 
-#endif
+#endif //JAINCFONSPHEREORBITALS

@@ -37,8 +37,8 @@
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "JainCFOnSphereOrbitals.h"
-
+#include "Matrix/ComplexSkewSymmetricMatrix.h"
+#include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
 class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
 {
