@@ -553,12 +553,9 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
   for (int i=0; i<this->NbrLandauLevels; ++i)
     {
       DerivativeStructure[i] = new SumDerivativeProduct[MaxDerivative+1];
-      cout << "For Landau Level " << i << endl;
       for (int j=0; j <= MaxDerivative; ++j)
 	{
 	  DerivativeStructure[i][j] = URecursion(j, MaxDerivative-j);
-	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] <<
-	    " (" << DerivativeStructure[i][j].NumberOfDerivativeProductFactors() << " factors)"<<endl;
 	  DerivativeStructure[i][j].hardwire(); // enable fast calculations!	  
 	}
       ++MaxDerivative;
