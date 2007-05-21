@@ -23,5 +23,6 @@ AbstractFQHEWaveFunctionOneOverR.cc \
 LaughlinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnSphereWaveFunction.cc \
-SU4HalperinOnSphereWaveFunction.cc 
+SU4HalperinOnSphereWaveFunction.cc \
+PairedCFOnSphereWaveFunction.cc 
 
