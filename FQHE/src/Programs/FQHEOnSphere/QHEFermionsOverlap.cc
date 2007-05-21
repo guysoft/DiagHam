@@ -1,17 +1,15 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/BosonOnSphere.h"
-#include "Hamiltonian/ParticleOnSphereDeltaHamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereDeltaModifiedHamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereCoulombDeltaHamiltonian.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
-#include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/JainCFOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+// #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
+// #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+// #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
+// #include "Tools/FQHEWaveFunction/JainCFOnSphereWaveFunction.h"
+// #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -23,13 +21,7 @@
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -51,7 +43,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsOverlap" , "0.01");
+  OptionManager Manager ("QHEFermionsOverlap" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
@@ -86,24 +78,24 @@ int main(int argc, char** argv)
       return -1;
     }
   
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  if (((BooleanOption*) Manager["list-wavefunctions"])->GetBoolean() == true)
+  if (Manager.GetBoolean("list-wavefunctions") == true)
     {
       WaveFunctionManager.ShowAvalaibleWaveFunctions(cout);
       return 0;
     }
 
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  int Lz = ((SingleIntegerOption*) Manager["lz"])->GetInteger();
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int NbrIter = Manager.GetInteger("nbr-iter");
+  int Lz = Manager.GetInteger("lz");
 
-  if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
+  if (Manager.GetString("exact-state") == 0)
     {
       cout << "QHEBosonsDeltaOverlap requires an exact state" << endl;
       return -1;
@@ -111,15 +103,15 @@ int main(int argc, char** argv)
   RealVector State;
   if (State.ReadVector (((SingleStringOption*) Manager["exact-state"])->GetString()) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["exact-state"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
       return -1;      
     }
-  if (((SingleStringOption*) Manager["use-exact"])->GetString() != 0)
+  if (Manager.GetString("use-exact") != 0)
     {
       RealVector TestState;
-      if (TestState.ReadVector (((SingleStringOption*) Manager["use-exact"])->GetString()) == false)
+      if (TestState.ReadVector (Manager.GetString("use-exact")) == false)
 	{
-	  cout << "can't open vector file " << ((SingleStringOption*) Manager["use-exact"])->GetString() << endl;
+	  cout << "can't open vector file " << Manager.GetString("use-exact") << endl;
 	  return -1;      
 	}
       if (State.GetVectorDimension() != TestState.GetVectorDimension())
@@ -137,10 +129,10 @@ int main(int argc, char** argv)
       cout << "no or unknown analytical wave function" << endl;
       return -1;
     }
-  BosonOnSphere Space (NbrBosons, Lz, LzMax);
+  FermionOnSphere Space (NbrFermions, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax);
   
-  RealVector Location(2 * NbrBosons, true);
+  RealVector Location(2 * NbrFermions, true);
 
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
@@ -156,7 +148,7 @@ int main(int argc, char** argv)
     }
   int RecordIndex = 0;
   double Factor = 1.0;
-  for (int j = 0; j < NbrBosons; ++j)
+  for (int j = 0; j < NbrFermions; ++j)
     {
       Factor *= 4.0 * M_PI;
     }
@@ -171,7 +163,7 @@ int main(int argc, char** argv)
   double Tmp2;
   double Tmp2bis;
   int NextCoordinates = 0;
-  for (int j = 0; j < NbrBosons; ++j)
+  for (int j = 0; j < NbrFermions; ++j)
     {
       Location[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
       Location[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
@@ -202,8 +194,8 @@ int main(int argc, char** argv)
 	  CurrentProbabilities = PreviousProbabilities;
 	}
       TotalProbability += CurrentProbabilities;
-      NextCoordinates = (int) (((double) NbrBosons) * RandomNumber->GetRealRandomNumber());
-      if (NextCoordinates == NbrBosons)
+      NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
+      if (NextCoordinates == NbrFermions)
 	--NextCoordinates;
 
       int TimeCoherence = NextCoordinates;
@@ -249,7 +241,7 @@ int main(int argc, char** argv)
 	  RecordedOverlapError[RecordIndex] = Tmp5;
 	  ++RecordIndex;
 	}
-      if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
+      if ((i > 0) && ((i % (Manager.GetInteger("display-step"))) == 0))
 	{
 	  cout << " i = " << i << endl;
 	  Complex Tmp4 = Overlap / ((double) i);
@@ -260,7 +252,7 @@ int main(int argc, char** argv)
 	  double Tmp8 = NormalizationExact  / ((double) i);
 	  double Tmp9 = sqrt( ((ErrorNormalizationExact / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
 
-	  if (((BooleanOption*) Manager["show-details"])->GetBoolean() == true)
+	  if (Manager.GetBoolean("show-details") == true)
 	    {
 	      cout << Tmp4;
 	      cout << " +/- " << Tmp5 << endl;
