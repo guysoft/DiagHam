@@ -207,6 +207,8 @@ int main(int argc, char** argv)
 #endif
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       if (OneBodyPotentials == 0)
 	Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials,
 							     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),

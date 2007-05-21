@@ -160,6 +160,8 @@ int main(int argc, char** argv)
     {
       BosonOnSphere Space (NbrBosons, L, LzMax);
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (NBodyWeightFactors == 0)
 	{
