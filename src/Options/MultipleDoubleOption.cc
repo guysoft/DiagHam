@@ -56,6 +56,7 @@ MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, ch
 					   bool maxValueFlag, double maxValue)
 {
   this->OptionCode = optionCode;
+  this->OptionType = AbstractOption::OTDoubles;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);

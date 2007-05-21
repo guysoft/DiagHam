@@ -48,6 +48,7 @@ using std::endl;
 BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDescription, bool defaultValue)
 {
   this->OptionCode = optionCode;
+  this->OptionType = AbstractOption::OTBoolean;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);
@@ -70,6 +71,7 @@ BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDesc
 			     char* trueString, char* falseString, bool defaultValue)
 {
   this->OptionCode = optionCode;
+  this->OptionType = AbstractOption::OTBoolean;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);

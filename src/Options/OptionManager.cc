@@ -32,6 +32,7 @@
 #include "Options/OptionGroup.h"
 #include "Options/AbstractOption.h"
 #include "Options/OptionManager.h"
+#include "Options/Options.h"
 
 #include <iostream>
 #include <string.h>
@@ -326,3 +327,132 @@ char* OptionManager::GetFormattedString (char* format)
   return TmpFormattedString;
 }
 
+
+//accessor routine for Boolean value
+bool OptionManager::GetBoolean(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTBoolean)
+	return ((BooleanOption*)OptionPointer)->GetBoolean();
+      else
+	{
+	  cout << "Boolean value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//accessor routine for Double value
+double OptionManager::GetDouble(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTDouble)
+	return ((SingleDoubleOption*)OptionPointer)->GetDouble();
+      else
+	{
+	  cout << "Double value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//accessor routine for Multiple Double value
+double* OptionManager::GetDoubles(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTDoubles)
+	return ((MultipleDoubleOption*)OptionPointer)->GetDoubles();
+      else
+	{
+	  cout << "MultipleDouble value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+// alternative accessor routine for Multiple Double value
+double* OptionManager::GetDoubles(char *optionName, int & length)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTDoubles)
+	{
+	  length = ((MultipleDoubleOption*)OptionPointer)->GetLength();
+	  return ((MultipleDoubleOption*)OptionPointer)->GetDoubles();
+	}
+      else
+	{
+	  cout << "MultipleDouble value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//accessor routine for Integer value
+int OptionManager::GetInteger(char *optionName)
+  {
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTInteger)
+	return ((SingleIntegerOption*)OptionPointer)->GetInteger();
+      else
+	{
+	  cout << "Integer value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+//accessor routine for String value
+char* OptionManager::GetString(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTString)
+	return ((SingleStringOption*)OptionPointer)->GetString();
+      else
+	{
+	  cout << "Boolean value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}

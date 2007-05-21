@@ -54,6 +54,7 @@ SingleDoubleOption::SingleDoubleOption(char optionCode, char* optionName, char* 
 				       bool maxValueFlag, double maxValue)
 {
   this->OptionCode = optionCode;
+  this->OptionType = AbstractOption::OTDouble;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);

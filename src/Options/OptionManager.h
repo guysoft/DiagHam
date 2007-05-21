@@ -110,6 +110,18 @@ class OptionManager
   // return value = formatted string (deallocation has to be done manually)
   char* GetFormattedString (char* format);
 
+  // accessor routines for managed options:
+  // these are wrappers of the operator[] routine
+  // returning the value of the option, if found
+  // or exiting with a warning message, otherwise  
+  bool GetBoolean(char *optionName);
+  double GetDouble(char *optionName);
+  // from MultipleDoubleOption: possibility to request the length of the vector, if wanted
+  double* GetDoubles(char *optionName);
+  double* GetDoubles(char *optionName, int &length);
+  int GetInteger(char *optionName);
+  char* GetString(char *optionName);
+  
 };
 
 #endif

@@ -57,8 +57,19 @@ class AbstractOption
   // error code used dor print error method
   int ErrorCode;
 
+  // flag indicating option Type
+  int OptionType;
+  
  public:
 
+  enum Type
+    {
+      OTBoolean = 0x01,
+      OTInteger = 0x02,
+      OTDouble = 0x04,
+      OTDoubles = 0x08,
+      OTString = 0x10
+    };
 
   // virtual destructor
   //
@@ -101,6 +112,10 @@ class AbstractOption
   // shortVersion = true if return only option code and the option value, false if return option description in addition
   // return value = reference on current output stream
   virtual ostream& DisplayOption (ostream& output, bool shortVersion = false) = 0;
+
+  // get the Option type
+
+  virtual int GetOptionType(){return this->OptionType;}
 
   // display help
   //
