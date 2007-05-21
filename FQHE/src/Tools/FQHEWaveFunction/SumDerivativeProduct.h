@@ -55,10 +55,15 @@ class SumDerivativeProduct
 
   void TestHighestPowers();
 
+  int NumberOfDerivativeProductFactors();
+
   Complex getValue(int particle);
   void getValues(Complex *result);
   void CommentValues(int particle);
 
+  void fastGetValues(Complex *result);
+  void hardwire();
+  
   SumDerivativeProduct Derivative( int DeriveU, int DeriveV=0);
 
   SumDerivativeProduct& operator = (const SumDerivativeProduct& Assign);
@@ -77,6 +82,8 @@ class SumDerivativeProduct
   List<DerivativeProduct> Summands;  
   GarbageFlag Flag;
   Complex* TmpSum;
+  DerivativeProduct **FastSummands;
+  int NSummands;
 };
 
 

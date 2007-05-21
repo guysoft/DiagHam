@@ -81,9 +81,13 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   this->Flag.Initialize();
   this->EvaluateNormalizationPrefactors();
   this->EvaluateSumPrefactors();
+  this->InverseJastrowFactorElements = new Complex*[this->NbrParticles];
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i = 1; i < this->NbrParticles; ++i)
-    this->JastrowFactorElements[i] = new Complex[i];
+    {
+      this->InverseJastrowFactorElements[i] = new Complex[i];
+      this->JastrowFactorElements[i] = new Complex[i];
+    }
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
   this->SpinorUCoordinatePower = new Complex*[NbrParticles];
@@ -139,10 +143,14 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
   this->NormalizationPrefactors = function.NormalizationPrefactors;
   this->SumPrefactors = function.SumPrefactors;
   this->FactorialSignFactors = function.FactorialSignFactors;
-  this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);
+  this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);  
+  this->InverseJastrowFactorElements = new Complex*[this->NbrParticles];
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i = 1; i < this->NbrParticles; ++i)
-    this->JastrowFactorElements[i] = new Complex[i];
+    {
+      this->InverseJastrowFactorElements[i] = new Complex[i];
+      this->JastrowFactorElements[i] = new Complex[i];
+    }
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
   this->SpinorUCoordinatePower = new Complex*[NbrParticles];
@@ -175,7 +183,11 @@ JainCFOnSphereOrbitals::~JainCFOnSphereOrbitals()
       delete[] this->FactorialSignFactors;
     }
   for (int i = 1; i < this->NbrParticles; ++i)
-    delete[] this->JastrowFactorElements[i];
+    {
+      delete[] this->InverseJastrowFactorElements[i];
+      delete[] this->JastrowFactorElements[i];
+    }
+  delete[] this->InverseJastrowFactorElements;
   delete[] this->JastrowFactorElements;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
@@ -276,7 +288,8 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
       for (int j = 0; j < i; ++j)
 	{
 	  Tmp = ((this->SpinorUCoordinates[i] * this->SpinorVCoordinates[j]) - (this->SpinorUCoordinates[j] * this->SpinorVCoordinates[i]));
-	  this->JastrowFactorElements[i][j] = 1.0 / Tmp;
+	  JastrowFactorElements[i][j] = Tmp;
+	  this->InverseJastrowFactorElements[i][j] = 1.0 / Tmp;
 // 	  cout << "|"<<i<<"-"<<j<<"|="<<Tmp<<endl;
 	  JastrowFactor *= Tmp;
 	}
@@ -303,9 +316,9 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 	      if (Index == i)
 		++Index;
 	      if (Index > i)
-		Tmp2 = this->SpinorVCoordinates[Index] * this->JastrowFactorElements[Index][i];
+		Tmp2 = this->SpinorVCoordinates[Index] * this->InverseJastrowFactorElements[Index][i];
 	      else
-		Tmp2 = -this->SpinorVCoordinates[Index] * this->JastrowFactorElements[i][Index];
+		Tmp2 = -this->SpinorVCoordinates[Index] * this->InverseJastrowFactorElements[i][Index];
 	      Tmp = 1.0;
 	      for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
 		{
@@ -314,9 +327,9 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 		  Tmp *= Tmp2;
 		}
 	      if (Index > i)
-		Tmp2 = - this->SpinorUCoordinates[Index] * this->JastrowFactorElements[Index][i];
+		Tmp2 = - this->SpinorUCoordinates[Index] * this->InverseJastrowFactorElements[Index][i];
 	      else
-		Tmp2 = this->SpinorUCoordinates[Index] * this->JastrowFactorElements[i][Index];
+		Tmp2 = this->SpinorUCoordinates[Index] * this->InverseJastrowFactorElements[i][Index];
 	      Tmp = 1.0;
 	      for (int k1 = 0; k1 < this->MaxDerivativeNum; ++k1)
 		{
@@ -364,18 +377,19 @@ void JainCFOnSphereOrbitals::EvaluateNormalizationPrefactors()
     {  // normalization factors if q<0
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
+	  double Sign = -1.0;
 	  Coef.SetToOne();
 	  Coef.PartialFactorialDivide(this->TwiceS - j + 1, this->TwiceS);
 	  Coef.FactorialMultiply(j);
-	  this->NormalizationPrefactors[0][j] = sqrt(Factor * Coef.GetNumericalValue());
+	  this->NormalizationPrefactors[0][j] = Sign*sqrt(Factor * Coef.GetNumericalValue());
 	}
       MaxMomentum += 2;
       for (int i = 1; i < this->NbrLandauLevels; ++i)  
 	{
-	  double Factor = ((double) (this->TwiceS + (2 * i) + 1)) / (4.0  * M_PI);
+	  Factor = ((double) (this->TwiceS + (2 * i) + 1)) / (4.0  * M_PI);
 	  this->NormalizationPrefactors[i] = new double[MaxMomentum + 1];
-	  double Sign = 1.0;
-	  if (i & 1) Sign = -1.0; // sign (-1) ^ i
+	  // don't quite understand why, but this gives the previous conventions in monteCarlo code
+	  double Sign = -1.0;
 	  for (int j = 0; j <= MaxMomentum; ++j)
 	    {	  
 	      Coef.SetToOne();
@@ -392,10 +406,12 @@ void JainCFOnSphereOrbitals::EvaluateNormalizationPrefactors()
     { // normalization factors if q>=0
       for (int j = 0; j <= MaxMomentum; ++j)
 	{
+	  double Sign = 1.0;
+	  if ((this->TwiceS & 1)) Sign = -1.0;	  
 	  Coef.SetToOne();
 	  Coef.PartialFactorialDivide(this->TwiceS - j + 1, this->TwiceS);
 	  Coef.FactorialMultiply(j);
-	  this->NormalizationPrefactors[0][j] = sqrt(Factor * Coef.GetNumericalValue());
+	  this->NormalizationPrefactors[0][j] = Sign*sqrt(Factor * Coef.GetNumericalValue());
 	  if ((j & 1) != 0)
 	    {
 	      this->NormalizationPrefactors[0][j] *= -1.0;
@@ -404,11 +420,10 @@ void JainCFOnSphereOrbitals::EvaluateNormalizationPrefactors()
       MaxMomentum += 2;
       for (int i = 1; i < this->NbrLandauLevels; ++i)  
 	{
-	  double Factor = ((double) (this->TwiceS + (2 * i) + 1)) / (4.0  * M_PI);
+	 Factor = ((double) (this->TwiceS + (2 * i) + 1)) / (4.0  * M_PI);
 	  this->NormalizationPrefactors[i] = new double[MaxMomentum + 1];
 	  double Sign = 1.0;
-	  if ((this->TwiceS & 1) != 0)
-	    Sign = -1.0;
+	  if (((this->TwiceS+i) & 1)) Sign = -1.0; // sign (-1)^(q-m_min+n)
 	  for (int j = 0; j <= MaxMomentum; ++j)
 	    {	  
 	      Coef.SetToOne();
@@ -418,6 +433,7 @@ void JainCFOnSphereOrbitals::EvaluateNormalizationPrefactors()
 	      Coef.FactorialDivide(this->TwiceS + i);
 	      this->NormalizationPrefactors[i][j] = sqrt(Factor * Coef.GetNumericalValue());
 	      this->NormalizationPrefactors[i][j] *= Sign;
+	      //cout << "N["<<i<<","<<j<<"]="<<this->NormalizationPrefactors[i][j]<<endl;
 	      Sign *= -1.0;
 	    }
 	  MaxMomentum += 2;
@@ -435,7 +451,7 @@ void JainCFOnSphereOrbitals::EvaluateSumPrefactors()
   FactorialCoefficient Coef;
   double Factor = 1.0;
   int TwiceBigQ;
-  int TwiceQPrime=0;
+  int TwiceQPrime;
   
   if (ReverseFluxFlag)
     {
@@ -443,7 +459,10 @@ void JainCFOnSphereOrbitals::EvaluateSumPrefactors()
       TwiceQPrime = 2*this->JastrowPower*( this->NbrParticles - 1 );
     }
   else
-    TwiceBigQ = 2*this->JastrowPower*( this->NbrParticles - 1 ) + TwiceS;
+    {
+      TwiceBigQ = 2*this->JastrowPower*( this->NbrParticles - 1 ) + TwiceS;
+      TwiceQPrime = TwiceBigQ;
+    }
 
   // initialize array SumPrefactors: this storage is quite wasteful! Previously was
   // this->SumPrefactors[i] = new double* [i + 1];
@@ -462,20 +481,14 @@ void JainCFOnSphereOrbitals::EvaluateSumPrefactors()
 	    this->SumPrefactors.Set(i, k, j, 0.0);
 	  for (int j = i - k; j <= (MaxMomentum - k); ++j)
 	    {
-	      Coef.SetToOne();
-	      if (ReverseFluxFlag)
-		{ // q<0
-		  if (TwiceQPrime + i + 1 <= TwiceBigQ +1)
-		    // = (TwiceBigQ + 1)! / (TwiceQPrime + i + 1)!
-		    Coef.PartialFactorialMultiply( TwiceQPrime + i + 2 , TwiceBigQ +1 );  
-		  else
-		    // = (TwiceBigQ + 1)! / (TwiceQPrime + i + 1)!
-		    Coef.PartialFactorialDivide( TwiceBigQ + 2, TwiceQPrime + i + 1);  
-		}
-	      else  // q>=0
-		// this is (2Q+1)!/(2Q+n+1)!
-		Coef.PartialFactorialDivide(this->TwiceS + 2 * (1 + this->JastrowPower * (this->NbrParticles - 1)), 
-					    this->TwiceS + 2 * (this->JastrowPower * (this->NbrParticles - 1)) + i + 1);
+	      Coef.SetToOne();	      
+	      if (TwiceQPrime + i + 1 <= TwiceBigQ +1)
+		// = (TwiceBigQ + 1)! / (TwiceQPrime + i + 1)!
+		Coef.PartialFactorialMultiply( TwiceQPrime + i + 2 , TwiceBigQ +1 );  
+	      else
+		// = (TwiceBigQ + 1)! / (TwiceQPrime + i + 1)!
+		Coef.PartialFactorialDivide( TwiceBigQ + 2, TwiceQPrime + i + 1);
+	      //cout << "Q["<<i<<"]="<<Coef.GetNumericalValue()<<endl;
 	      Coef.PartialFactorialMultiply(k + 1, i);
 	      Coef.FactorialDivide(i - k);
 	      Coef.PartialFactorialMultiply(j + k - i + 1, this->TwiceS + i);	  
@@ -544,7 +557,9 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
       for (int j=0; j <= MaxDerivative; ++j)
 	{
 	  DerivativeStructure[i][j] = URecursion(j, MaxDerivative-j);
-	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] << endl;	  
+	  cout <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] <<
+	    " (" << DerivativeStructure[i][j].NumberOfDerivativeProductFactors() << " factors)"<<endl;
+	  DerivativeStructure[i][j].hardwire(); // enable fast calculations!	  
 	}
       ++MaxDerivative;
     }
@@ -577,7 +592,21 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
 //     }
 }
 
+void JainCFOnSphereOrbitals::PrintDerivatives(ostream out)
+{
+  int MaxDerivative=LLLDerivativeNum;
+  for (int i=0; i<this->NbrLandauLevels; ++i)
+    {
+      out << "For Landau Level " << i << endl;
+      for (int j=0; j <= MaxDerivative; ++j)
+	{
+	  out <<  "J^-p (d/du)^"<<j<<" (d/dv)^"<<MaxDerivative-j<<" J^p =" << DerivativeStructure[i][j] <<
+	    " (" << DerivativeStructure[i][j].NumberOfDerivativeProductFactors() << " factors)"<<endl;
+	}
+      ++MaxDerivative;
+    }
 
+}
 
 // evaluate composite fermion monopole spherical harmonic 
 // Index = number of the orbital to be evaluated
@@ -607,8 +636,8 @@ void JainCFOnSphereOrbitals::EvaluateOrbitals (int Index, int momentum, int land
   if (Max > landauLevel)
     Max = landauLevel;
   // get first term in the sum:
-  this->DerivativeStructure[landauLevel][UDerivatives].getValues(this->OrbitalVector);
-
+  this->DerivativeStructure[landauLevel][UDerivatives].fastGetValues(this->OrbitalVector);  
+  
   double TmpPrefactor = this->SumPrefactors.Get(landauLevel, s, momentum);
   
   for (int i=0; i<NbrParticles; ++i) OrbitalVector[i] *=
@@ -617,7 +646,7 @@ void JainCFOnSphereOrbitals::EvaluateOrbitals (int Index, int momentum, int land
   ++s; ++UDerivatives; ++UPower; --VPower;
   for (; s <= Max; ++s)
     {
-      this->DerivativeStructure[landauLevel][UDerivatives].getValues(this->OrbitalVector2);
+      this->DerivativeStructure[landauLevel][UDerivatives].fastGetValues(this->OrbitalVector2);
 
       TmpPrefactor = this->SumPrefactors.Get(landauLevel, s, momentum);
       for (int i=0; i<NbrParticles; ++i)

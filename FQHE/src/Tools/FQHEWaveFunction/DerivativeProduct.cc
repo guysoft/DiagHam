@@ -43,6 +43,8 @@ DerivativeProduct::DerivativeProduct()
   this->PreFactor=1.0;
   this->Flag.Initialize();
   this->TmpProduct = NULL;
+  FastProductFactors=NULL;
+  NFactors=0;
 }
 
 DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
@@ -53,6 +55,8 @@ DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
   this->Flag.Initialize();
   if (this->CFOrbitals!=NULL) this->TmpProduct = new Complex[this->CFOrbitals->GetNbrParticles()];
   else this->TmpProduct = NULL;
+  FastProductFactors=NULL;
+  NFactors=0;
 }
 
 DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
@@ -62,6 +66,8 @@ DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
   this->ProductFactors=toCopy.ProductFactors;
   this->Flag = toCopy.Flag;
   this->TmpProduct=toCopy.TmpProduct;
+  this->FastProductFactors=toCopy.FastProductFactors;
+  this->NFactors=toCopy.NFactors;
 }
 
 DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<DerivativeProductFactor> PriorFactors,
@@ -73,6 +79,8 @@ DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<Derivati
   this->ProductFactors.Link(LaterFactors);
   this->Flag = Reference.Flag;
   this->TmpProduct=Reference.TmpProduct;
+  this->FastProductFactors=Reference.FastProductFactors;
+  this->NFactors=Reference.NFactors;
   //cout << "Nbr Elements after Link: " << this->ProductFactors.GetNbrElement();
 }
 
@@ -81,6 +89,10 @@ DerivativeProduct::~DerivativeProduct()
   if ((this->TmpProduct != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->TmpProduct;
+    }
+  if ((this->FastProductFactors != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->FastProductFactors;
     }
 }
 
@@ -118,12 +130,45 @@ void DerivativeProduct::getValues(Complex *result)
     }
 }
 
+void DerivativeProduct::fastGetValues(Complex *result)
+{
+  Complex *CPtr=result, *CPtr2;
+  for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+    *(CPtr++) = this->PreFactor;
+  for (int f=0;f<NFactors; ++f)
+    {      
+      CPtr=result;
+      CPtr2=FastProductFactors[f];
+      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+	*(CPtr++) *= *(CPtr2++);
+    }
+}
+
+void DerivativeProduct::hardwire()
+{
+  if (this->NFactors==0)
+    {
+      this->Simplify(); // get a single prefactor in this DerivativeProduct
+      this->NFactors = this->ProductFactors.GetNbrElement();
+      this->FastProductFactors = new Complex*[NFactors];
+      DerivativeProductFactor *ProductFactor;
+      int i=0;
+      for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (ProductFactor=LI())!=NULL; )
+	FastProductFactors[i++]=ProductFactor->getValues();
+    }
+}
+
 void DerivativeProduct::TestHighestPowers()
 {
   DerivativeProductFactor *Factor;
   for (ListIterator<DerivativeProductFactor> LI(this->ProductFactors); (Factor=LI())!=NULL;)
     Factor->TestHighestPowers();
 }
+
+int DerivativeProduct::NumberOfDerivativeProductFactors()
+{
+  return this->ProductFactors.GetNbrElement();
+} 
 
 void DerivativeProduct::Simplify()
 {

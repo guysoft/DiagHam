@@ -102,8 +102,9 @@ class JainCFOnSphereOrbitals
   // garbage flag to avoid duplication of precalculation array
   GarbageFlag Flag;
 
-  // temporary array used to store (u_i v_j - u_j v_i)^-1 factors
+  // temporary arrays used to store (u_i v_j - u_j v_i)^-1 factors and their inverse
   Complex** JastrowFactorElements;
+  Complex** InverseJastrowFactorElements;
   // temporary array  used to store f(a,b) = S_k' (u_i v_k - u_k v_i)^-(a+b) * (u_i v_k)^a (u_k v_i)^b factors that appear in the CF monopole spherical harmonic
   // indices are: [#u][#v][Power][particle#]
   Complex4DArray DerivativeFactors;
@@ -142,6 +143,7 @@ class JainCFOnSphereOrbitals
   //
   // nbrParticles = number of particles
   // nbrLandauLevel = number of Landau levels filled with composite fermions
+  // nbrEffectiveFlux = number of flux quanta of the magnetic monopole field experienced by CF's
   // jastrowPower = power to which the Jastrow factor has to be raised
   JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels, int nbrEffectiveFlux, int jastrowPower);
   
@@ -158,14 +160,21 @@ class JainCFOnSphereOrbitals
   //
   // x = point where the function has to be evaluated
   // return value = Matrix with CF Orbitals, 
-  ComplexMatrix& operator ()(RealVector& x);
-
+  ComplexMatrix& operator ()(RealVector& x);  
 
   // access for data members:
   int GetNbrParticles(){return NbrParticles;}
 
   int GetNbrOrbitals(){return NbrOrbitals;}
 
+  int GetActualJastrowPower(){return ActualJastrowPower;}
+
+  int GetJastrowPower(){return JastrowPower;}
+
+  void PrintDerivatives(ostream out=std::cout);
+
+  Complex JastrowFactorElement(int i, int j);
+  
  protected:
 
   // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
@@ -199,5 +208,14 @@ class JainCFOnSphereOrbitals
   void EvaluateOrbitals (int Index, int momentum, int landauLevel, int maximumMomentum);
 
 };
+
+inline Complex JainCFOnSphereOrbitals::JastrowFactorElement(int i, int j)
+{
+  if ( i > j )
+    return this->JastrowFactorElements[i][j];
+  else if ( j > i )
+    return (-this->JastrowFactorElements[j][i]);
+  else return Complex();
+}
 
 #endif

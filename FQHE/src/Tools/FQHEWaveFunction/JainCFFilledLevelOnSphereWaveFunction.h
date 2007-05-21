@@ -52,7 +52,7 @@ class JainCFFilledLevelOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // twice the value of the momentum in the lowest pseudo-Landau level
   int TwiceS;
-  // falg to indicate if flux  is reversed
+  // flag to indicate if flux is reversed
   bool ReverseFluxFlag;
 
   // power to which the Jastrow factor has to be raised

@@ -40,6 +40,8 @@ SumDerivativeProduct::SumDerivativeProduct()
   this->CFOrbitals=NULL;
   this->TmpSum=NULL;
   this->Flag.Initialize();
+  this->FastSummands=NULL;
+  this->NSummands=0;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(JainCFOnSphereOrbitals *CFOrbitals)
@@ -47,6 +49,9 @@ SumDerivativeProduct::SumDerivativeProduct(JainCFOnSphereOrbitals *CFOrbitals)
   this->CFOrbitals=CFOrbitals;
   this->Flag.Initialize();
   this->TmpSum=NULL;
+  this->FastSummands=NULL;
+  this->NSummands=0;
+
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const DerivativeProductFactor &toWrap)
@@ -56,6 +61,8 @@ SumDerivativeProduct::SumDerivativeProduct(const DerivativeProductFactor &toWrap
   this->Flag.Initialize();
   if (this->CFOrbitals!=NULL) this->TmpSum = new Complex[this->CFOrbitals->GetNbrParticles()];
   else this->TmpSum = NULL;
+  this->FastSummands=NULL;
+  this->NSummands=0;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const DerivativeProduct &toWrap)
@@ -65,6 +72,8 @@ SumDerivativeProduct::SumDerivativeProduct(const DerivativeProduct &toWrap)
   this->Flag.Initialize();
   if (this->CFOrbitals!=NULL) this->TmpSum = new Complex[this->CFOrbitals->GetNbrParticles()];
   else this->TmpSum = NULL;
+  this->FastSummands=NULL;
+  this->NSummands=0;
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const SumDerivativeProduct &toCopy)
@@ -73,13 +82,19 @@ SumDerivativeProduct::SumDerivativeProduct(const SumDerivativeProduct &toCopy)
   this->Summands=toCopy.Summands;
   this->TmpSum=toCopy.TmpSum;
   this->Flag = toCopy.Flag;
+  this->FastSummands=toCopy.FastSummands;
+  this->NSummands=toCopy.NSummands;
 }
 
 SumDerivativeProduct::~SumDerivativeProduct()
 {
   if ((this->TmpSum != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->TmpSum;
+      delete[] this->TmpSum;     
+    }
+  if ((this->FastSummands != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->FastSummands;     
     }
 }
 
@@ -105,8 +120,8 @@ void SumDerivativeProduct::getValues(Complex *result)
       CPtr=result;
       CPtr2=TmpSum;
       for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-	result[i] += TmpSum[i];
-	//*(CPtr++) += *(CPtr2++);
+	//result[i] += TmpSum[i];
+	*(CPtr++) += *(CPtr2++);
     }
 }
 
@@ -122,12 +137,54 @@ void SumDerivativeProduct::CommentValues(int particle)
 }
 
 
+// use this routine for a faster calculation,
+// calling this before hardwire will cause a segfault!
+//
+void SumDerivativeProduct::fastGetValues(Complex *result)
+{
+  Complex *CPtr, *CPtr2;
+  FastSummands[0]->getValues(result);  
+  for (int s=1;s<NSummands; ++s)
+    {
+      FastSummands[s]->getValues(TmpSum);
+      CPtr=result;
+      CPtr2=TmpSum;
+      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+	*(CPtr++) += *(CPtr2++);
+    }
+}
+
+void SumDerivativeProduct::hardwire()
+{
+  if (this->NSummands==0)
+    {
+      this->NSummands = this->Summands.GetNbrElement();
+      this->FastSummands = new DerivativeProduct*[NSummands];
+      DerivativeProduct *Product;
+      int i=0;
+      for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
+	{
+	  FastSummands[i++]=Product;
+	  Product->hardwire();
+	}
+    }
+}
+
 void SumDerivativeProduct::TestHighestPowers()
 {
   DerivativeProduct *Product;
   for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
     Product->TestHighestPowers();
 }
+
+int SumDerivativeProduct::NumberOfDerivativeProductFactors()
+{
+  int sum=0;
+  DerivativeProduct *Product;
+  for (ListIterator<DerivativeProduct> LI(this->Summands); (Product=LI())!=NULL; )
+    sum+=Product->NumberOfDerivativeProductFactors();
+  return sum;
+} 
 
 SumDerivativeProduct SumDerivativeProduct::Derivative(int DeriveU, int DeriveV)
 {

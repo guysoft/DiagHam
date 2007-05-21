@@ -21,8 +21,8 @@ int main()
 {
   unsigned int seed=3;
   AbstractRandomNumberGenerator *R= new RanluxRandomNumberGenerator(seed);
-  JainCFOnSphereOrbitals test(/* nbrParticles */ 8, /* nbrLandauLevels */ 5, /*nbrEffectiveFlux*/ 5, /* jastrowPower */ 2);
-  CFOrbitals oldOrbitals(/* N1 */ 8, /* N_eff */ 5, /* p */ 1, /* highestLL */ 5 , CFOrbitals::increasing, /* theta_c */ 0.5);
+  JainCFOnSphereOrbitals test(/* nbrParticles */ 7, /* nbrLandauLevels */ 5, /*nbrEffectiveFlux*/ 5, /* jastrowPower */ 2);
+  CFOrbitals oldOrbitals(/* N1 */ 7, /* N_eff */ 5, /* p */ 1, /* highestLL */ 5 , CFOrbitals::increasing, /* theta_c */ 0.5);
   RealVector x(2*test.GetNbrParticles());
   for (int i=0; i<test.GetNbrParticles(); i++)
     {

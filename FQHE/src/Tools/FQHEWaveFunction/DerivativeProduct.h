@@ -44,6 +44,10 @@ class DerivativeProduct
  private:  
   friend class JainCFOnSphereOrbitals;
   friend class SumDerivativeProduct;
+
+ protected:
+  void fastGetValues(Complex *result);
+  void hardwire();
   
  public:
   DerivativeProduct();
@@ -62,6 +66,8 @@ class DerivativeProduct
   Complex getValue(int particle);
 
   void TestHighestPowers();
+  
+  int NumberOfDerivativeProductFactors();
   
   SumDerivativeProduct Derivative( int DeriveU, int DeriveV=0);
 
@@ -89,6 +95,8 @@ class DerivativeProduct
   double PreFactor;
   GarbageFlag Flag;
   Complex* TmpProduct;
+  Complex **FastProductFactors;
+  int NFactors;
 };
 
 
