@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 
 
@@ -96,3 +97,35 @@ Complex PfaffianOnSphereWaveFunction::operator ()(RealVector& x)
   WaveFunction *= TmpPfaffian.Pfaffian();
   return WaveFunction;
 }
+
+// Complex PfaffianOnSphereWaveFunction::operator ()(RealVector& x)
+// {
+//   Complex Tmp;
+//   ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
+//   Complex WaveFunction(1.0);
+//   ComplexVector U(this->NbrParticles);
+//   ComplexVector V(this->NbrParticles);
+//   double c,s;
+//   for (int i = 0; i < this->NbrParticles; ++i)
+//     {
+//       U[i].Re = cos(0.5 * x[i << 1]);
+//       U[i].Im = U[i].Re;
+//       U[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+//       U[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+//       V[i].Re = sin(0.5 * x[i << 1]);
+//       V[i].Im = V[i].Re;
+//       V[i].Re *= c;
+//       V[i].Im *= s;
+//     }
+//   for (int i = 0; i < this->NbrParticles; ++i)
+//     {
+//       for (int j = i + 1; j < this->NbrParticles; ++j)
+// 	{
+// 	  Tmp = U[i]*V[j]-U[j]*V[i];
+// 	  WaveFunction *= Tmp*Tmp;
+// 	  TmpPfaffian.SetMatrixElement (i , j, 1.0/Tmp);
+// 	}
+//     }
+//   WaveFunction *= TmpPfaffian.Pfaffian();
+//   return WaveFunction;
+// }
