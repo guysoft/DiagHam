@@ -94,10 +94,27 @@ class DerivativeProduct
   List<DerivativeProductFactor> ProductFactors;
   double PreFactor;
   GarbageFlag Flag;
-  Complex* TmpProduct;
   Complex **FastProductFactors;
   int NFactors;
+  int NbrParticles;
 };
 
+// fast evaluation routine:
+// same as getValues, but uses faster access
+// the return value is stored in the array "result" that has to be already reserved
+
+inline void DerivativeProduct::fastGetValues(Complex *result)
+{
+  Complex *CPtr=result, *CPtr2;
+  for (int i=0; i<this->NbrParticles; ++i)
+    *(CPtr++) = this->PreFactor;
+  for (int f=0;f<NFactors; ++f)
+    {      
+      CPtr=result;
+      CPtr2=FastProductFactors[f];
+      for (int i=0; i<this->NbrParticles; ++i)
+	*(CPtr++) *= *(CPtr2++);
+    }
+}
 
 #endif //DERIVATIVE_PRODUCT

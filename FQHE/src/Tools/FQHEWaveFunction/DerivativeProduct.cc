@@ -42,9 +42,9 @@ DerivativeProduct::DerivativeProduct()
   this->CFOrbitals=NULL;
   this->PreFactor=1.0;
   this->Flag.Initialize();
-  this->TmpProduct = NULL;
-  FastProductFactors=NULL;
-  NFactors=0;
+  this->FastProductFactors=NULL;
+  this->NFactors=0;
+  this->NbrParticles=0;
 }
 
 DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
@@ -53,10 +53,9 @@ DerivativeProduct::DerivativeProduct( const DerivativeProductFactor &toWrap)
   this->PreFactor=1.0;
   this->ProductFactors+=toWrap;
   this->Flag.Initialize();
-  if (this->CFOrbitals!=NULL) this->TmpProduct = new Complex[this->CFOrbitals->GetNbrParticles()];
-  else this->TmpProduct = NULL;
-  FastProductFactors=NULL;
-  NFactors=0;
+  this->FastProductFactors=NULL;
+  this->NFactors=0;
+  this->NbrParticles=this->CFOrbitals->GetNbrParticles();
 }
 
 DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
@@ -65,9 +64,9 @@ DerivativeProduct::DerivativeProduct(const DerivativeProduct &toCopy)
   this->PreFactor=toCopy.PreFactor;
   this->ProductFactors=toCopy.ProductFactors;
   this->Flag = toCopy.Flag;
-  this->TmpProduct=toCopy.TmpProduct;
   this->FastProductFactors=toCopy.FastProductFactors;
   this->NFactors=toCopy.NFactors;
+  this->NbrParticles=toCopy.NbrParticles;
 }
 
 DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<DerivativeProductFactor> PriorFactors,
@@ -78,18 +77,14 @@ DerivativeProduct::DerivativeProduct(DerivativeProduct &Reference, List<Derivati
   this->ProductFactors=PriorFactors;
   this->ProductFactors.Link(LaterFactors);
   this->Flag = Reference.Flag;
-  this->TmpProduct=Reference.TmpProduct;
   this->FastProductFactors=Reference.FastProductFactors;
   this->NFactors=Reference.NFactors;
+  this->NbrParticles=this->CFOrbitals->GetNbrParticles();
   //cout << "Nbr Elements after Link: " << this->ProductFactors.GetNbrElement();
 }
 
 DerivativeProduct::~DerivativeProduct()
 {
-  if ((this->TmpProduct != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->TmpProduct;
-    }
   if ((this->FastProductFactors != NULL) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->FastProductFactors;
@@ -127,20 +122,6 @@ void DerivativeProduct::getValues(Complex *result)
 	  result[i] *= TmpProductFactors[i];
 	  //	  cout << TmpProductFactors[i] << " =?= "<<  Factor->getValue(i)<<endl;
 	}
-    }
-}
-
-void DerivativeProduct::fastGetValues(Complex *result)
-{
-  Complex *CPtr=result, *CPtr2;
-  for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-    *(CPtr++) = this->PreFactor;
-  for (int f=0;f<NFactors; ++f)
-    {      
-      CPtr=result;
-      CPtr2=FastProductFactors[f];
-      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-	*(CPtr++) *= *(CPtr2++);
     }
 }
 
@@ -224,7 +205,9 @@ DerivativeProduct& DerivativeProduct::operator = (const DerivativeProduct& Assig
   this->PreFactor=Assign.PreFactor;
   this->ProductFactors=Assign.ProductFactors;
   this->Flag = Assign.Flag;
-  this->TmpProduct = Assign.TmpProduct;
+  this->FastProductFactors=Assign.FastProductFactors;
+  this->NFactors=Assign.NFactors;
+  this->NbrParticles=Assign.NbrParticles;  
   return *this;
 }
 

@@ -86,5 +86,22 @@ class SumDerivativeProduct
   int NSummands;
 };
 
+// use this routine for a faster calculation,
+// calling fastGetValues before hardwire() will cause a segfault!
+//
+inline void SumDerivativeProduct::fastGetValues(Complex *result)
+{
+  Complex *CPtr, *CPtr2;
+  FastSummands[0]->fastGetValues(result);  
+  for (int s=1;s<NSummands; ++s)
+    {
+      FastSummands[s]->fastGetValues(TmpSum);
+      CPtr=result;
+      CPtr2=TmpSum;
+      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
+	*(CPtr++) += *(CPtr2++);
+    }
+}
+
 
 #endif //SUM_DERIVATIVE_PRODUCT

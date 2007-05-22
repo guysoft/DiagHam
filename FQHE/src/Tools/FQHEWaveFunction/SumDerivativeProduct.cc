@@ -51,7 +51,6 @@ SumDerivativeProduct::SumDerivativeProduct(JainCFOnSphereOrbitals *CFOrbitals)
   this->TmpSum=NULL;
   this->FastSummands=NULL;
   this->NSummands=0;
-
 }
 
 SumDerivativeProduct::SumDerivativeProduct(const DerivativeProductFactor &toWrap)
@@ -133,24 +132,6 @@ void SumDerivativeProduct::CommentValues(int particle)
     {
       Product->getValues(TmpSum);
       cout << "P="<<*Product<<"= " <<TmpSum[particle]<<endl;
-    }
-}
-
-
-// use this routine for a faster calculation,
-// calling this before hardwire will cause a segfault!
-//
-void SumDerivativeProduct::fastGetValues(Complex *result)
-{
-  Complex *CPtr, *CPtr2;
-  FastSummands[0]->getValues(result);  
-  for (int s=1;s<NSummands; ++s)
-    {
-      FastSummands[s]->getValues(TmpSum);
-      CPtr=result;
-      CPtr2=TmpSum;
-      for (int i=0; i<CFOrbitals->GetNbrParticles(); ++i)
-	*(CPtr++) += *(CPtr2++);
     }
 }
 
@@ -262,7 +243,7 @@ SumDerivativeProduct& SumDerivativeProduct::operator+= (const DerivativeProductF
 ostream& operator << (ostream& str, SumDerivativeProduct& S)
 {
   DerivativeProduct *Summand;
-  if (S.Summands.GetNbrElement()>=1)
+  if (S.Summands.GetNbrElement()>0)
     {
       ListIterator<DerivativeProduct> LI(S.Summands);
       Summand=LI();

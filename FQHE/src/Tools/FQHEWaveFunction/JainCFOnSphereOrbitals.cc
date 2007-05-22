@@ -356,7 +356,6 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 		for (int pwr = 1; pwr < this->MaxDerivativePower[k1][k2]; ++pwr)
 		  DerivativeFactors.Set(k1, k2, pwr, i, DerivativeFactors.Get(k1, k2, 0,i)*DerivativeFactors.Get(k1, k2, pwr-1,i));
 	      }
-	  
 	}
     }
   return JastrowFactor;
@@ -554,10 +553,7 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
     {
       DerivativeStructure[i] = new SumDerivativeProduct[MaxDerivative+1];
       for (int j=0; j <= MaxDerivative; ++j)
-	{
-	  DerivativeStructure[i][j] = URecursion(j, MaxDerivative-j);
-	  DerivativeStructure[i][j].hardwire(); // enable fast calculations!	  
-	}
+	DerivativeStructure[i][j] = URecursion(j, MaxDerivative-j);      
       ++MaxDerivative;
     }
   // find the highest Powers of Derivatives occurring in the sums:
@@ -574,19 +570,15 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
       if (MaxDerivativePower[k1][k2]>totalMaxDerivativePower)
 	totalMaxDerivativePower=MaxDerivativePower[k1][k2];
   DerivativeFactors.Redefine(MaxDerivativeNum,MaxDerivativeNum,totalMaxDerivativePower,NbrParticles);
-  
-//   // Reserve DerivativeFactors as needed!
-//   DerivativeFactors = new Complex***[MaxDerivativeNum];
-//   for (int k1=0; k1<MaxDerivativeNum;++k1)
-//     {
-//       DerivativeFactors[k1] = new Complex**[MaxDerivativeNum-k1];
-//       for (int k2=0; k2<MaxDerivativeNum-k1;++k2)
-// 	{
-// 	  DerivativeFactors[k1][k2] = new Complex*[MaxDerivativePower[k1][k2]];
-// 	  for (int pwr=0; pwr<MaxDerivativePower[k1][k2];++pwr)
-// 	    DerivativeFactors[k1][k2][pwr] = new Complex[NbrParticles];
-// 	}
-//     }
+
+  // enable fast calculations:
+  MaxDerivative=LLLDerivativeNum;
+  for (int i=0; i<this->NbrLandauLevels; ++i)
+    {
+      for (int j=0; j <= MaxDerivative; ++j)
+	DerivativeStructure[i][j].hardwire(); 
+      ++MaxDerivative;
+    }
 }
 
 void JainCFOnSphereOrbitals::PrintDerivatives(ostream out)
