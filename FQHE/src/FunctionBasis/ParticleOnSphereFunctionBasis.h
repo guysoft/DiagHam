@@ -43,16 +43,26 @@ class ParticleOnSphereFunctionBasis: public AbstractFunctionBasis
 
   // twice the maximum Lz value reached by a particle
   int LzMax;
-
+  
   // array containing numerical prefactor of each function
   double* Prefactor;
 
+  // Chirality of the phase
+  int Chirality;
  public:
+
+  enum
+    {
+      RightHanded = +1,
+      LeftHanded = -1
+    };
 
   // constructor
   //
   // lzMax = twice the maximum Lz value reached by a particle
-  ParticleOnSphereFunctionBasis(int lzMax);
+  // chirality = flag that allows to choose between either one of two conventions for
+  // the phase of the orbitals
+  ParticleOnSphereFunctionBasis(int lzMax, int chirality=ParticleOnSphereFunctionBasis::RightHanded);
 
   // destructor
   //

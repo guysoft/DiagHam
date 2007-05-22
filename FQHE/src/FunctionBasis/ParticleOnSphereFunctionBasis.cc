@@ -38,8 +38,9 @@
 // constructor
 //
 // lzMax = twice the maximum Lz value reached by a particle
-
-ParticleOnSphereFunctionBasis::ParticleOnSphereFunctionBasis(int lzMax)
+// chirality = flag that allows to choose between either one of two conventions for
+// the phase of the orbitals
+ParticleOnSphereFunctionBasis::ParticleOnSphereFunctionBasis(int lzMax, int chirality)
 {
   this->LzMax = lzMax;
   this->HilbertSpaceDimension = this->LzMax + 1;
@@ -53,6 +54,7 @@ ParticleOnSphereFunctionBasis::ParticleOnSphereFunctionBasis(int lzMax)
       TmpBinomial /= ((double) i);
       this->Prefactor[i] = sqrt (TmpBinomial * TmpFactor);
     }
+  this->Chirality = chirality;
 }
 
 // destructor
@@ -71,7 +73,7 @@ ParticleOnSphereFunctionBasis::~ParticleOnSphereFunctionBasis ()
 
 void ParticleOnSphereFunctionBasis::GetFunctionValue(RealVector& value, Complex& result, int index)
 {
-  double Arg = value[1] * (((double) index) - 0.5 * ((double) (this->LzMax)));
+  double Arg = value[1] * (((double) (this->Chirality*index)) - 0.5 * ((double) (this->Chirality*this->LzMax)));
   result.Re = cos(Arg);
   result.Im = sin(Arg);
   result *= this->Prefactor[index] * pow(cos (0.5 * value[0]), (double) (index)) * pow(sin (0.5 * value[0]), (double) (this->LzMax - index));
