@@ -134,7 +134,7 @@ int main(int argc, char** argv)
       return -1;
     }
   FermionOnSphere Space (NbrFermions, Lz, LzMax);
-  ParticleOnSphereFunctionBasis Basis(LzMax);
+  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);
   
   RealVector Location(2 * NbrFermions, true);
 
@@ -226,7 +226,10 @@ int main(int argc, char** argv)
 	}
     } 
   cout << " final results :" << endl;
-  cout << OverlapValue(ScalarProduct, NormExact) << " +/- " << OverlapError(ScalarProduct, NormExact) << endl;
+  cout << "overlap:   " << OverlapValue(ScalarProduct, NormExact) << " +/- "
+       << OverlapError(ScalarProduct, NormExact) << endl;
+  cout << "overlap^2: " << SqrNorm(OverlapValue(ScalarProduct, NormExact)) << " +/- " <<
+    2.0*Norm(OverlapValue(ScalarProduct, NormExact))*OverlapError(ScalarProduct, NormExact) << endl;
   cout << "-----------------------------------------------" << endl;
 
   if (RecordStep != 0)
