@@ -69,6 +69,7 @@ foreach $TmpFile (<*>)
 
 my $TmpLa = 1;
 my $SLaResults = "";
+my $LatexFile = "";
 while ($TmpLa <= $TmpMaxBlockSize)
   {
     my $TmpValue = $Entropies[$TmpLa];
@@ -93,7 +94,7 @@ while ($TmpLa <= $TmpMaxBlockSize)
 	  {
 	    die ("can't create ".$OutputFile.".p\n");
 	  }
-	print OUTFILE "set xrange [0:0.3]
+	print OUTFILE "set xrange [0:0.15]
 set terminal postscript landscape enhanced eps \"Helvetica\" 22
 set output \"".$OutputFile.".eps\"
 set xlabel \"1/N\" font \"Helvetica,26\"
@@ -111,14 +112,24 @@ plot \"".$OutputFile."\" using 2:3 notitle with points 31, f1(x) notitle with li
 	  {
 	    die ("can't open fit.log\n");
 	  }
+	$LatexFile .= "\\begin{figure}
+\\includegraphics[width=8cm,angle=0]{".$OutputFile.".eps}
+\\caption{\$l_a=".$TmpLa."\$. fit : ";
 	foreach $TmpLine (<INFILE>)
 	  {
 	    chomp ($TmpLine);
 	    if ($TmpLine =~ /^a0\s+\=\s+(\-?\d+\.?\d*e?\-?\d*)\s+\+\/\-\s+(\-?\d+\.?\d*e?\-?\d*)/)
 	      {
 		 $SLaResults .= $TmpLa." ".(sqrt($TmpLa))." ".$1." ".$2."\n";
+		 $LatexFile .= "\$a_0=".$1."\\pm".$2."\$ and ";
+	      }
+	    if ($TmpLine =~ /^a1\s+\=\s+(\-?\d+\.?\d*e?\-?\d*)\s+\+\/\-\s+(\-?\d+\.?\d*e?\-?\d*)/)
+	      {
+		 $LatexFile .= "\$a_1=".$1."\\pm".$2."\$";
 	      }
 	  }
+	$LatexFile .= "}\n\\end{figure}\n";
+	
 	close (INFILE);
 	unlink("fit.log");
       }
@@ -144,8 +155,59 @@ set ylabel \"S_{l_a}\" font \"Helvetica,26\"
 set size 1.0, 1.0
 f1(x)= a0 +  a1 * x
 fit f1(x) \"fermions_".$InteractionName.".ent\" using 2:3 via a0,a1
-plot \"fermions_".$InteractionName.".ent\" using 2:3 notitle with points 31, f1(x) notitle with lines lt 1 lw 2
+plot \"fermions_".$InteractionName.".ent\" using 2:3 notitle with points 31, \"fermions_".$InteractionName.".ent\" using 2:3:4 notitle with errorbars, f1(x) notitle with lines lt 1 lw 2
 ";
 close (OUTFILE);
 `gnuplot fermions_$InteractionName.ent.p`;
 
+
+unless (open(INFILE, "fit.log"))
+  {
+    die ("can't open fit.log\n");
+  }
+$LatexFile .= "\\begin{figure}
+\\includegraphics[width=8cm,angle=0]{fermions_".$InteractionName.".ent.eps}
+\\caption{fit : ";
+
+my $TmpLine;
+foreach $TmpLine (<INFILE>)
+  {
+    chomp ($TmpLine);
+    if ($TmpLine =~ /^a0\s+\=\s+(\-?\d+\.?\d*e?\-?\d*)\s+\+\/\-\s+(\-?\d+\.?\d*e?\-?\d*)/)
+      {
+	$LatexFile .= "\$a_0=".$1."\\pm".$2."\$ and ";
+      }
+    if ($TmpLine =~ /^a1\s+\=\s+(\-?\d+\.?\d*e?\-?\d*)\s+\+\/\-\s+(\-?\d+\.?\d*e?\-?\d*)/)
+      {
+	$LatexFile .= "\$a_1=".$1."\\pm".$2."\$";
+      }
+  }
+$LatexFile .= "}\n\\end{figure}\n";
+
+my $LatexFileName = "fermions_".$InteractionName.".ent.tex";
+unless (open (OUTFILE, ">".$LatexFileName))
+  {
+    die ("can't create ".$LatexFileName."\n");
+  }
+
+print OUTFILE "\\documentclass[prb,aps,epsfig,showpacs]{revtex4}
+
+\\usepackage{graphicx,epsf}
+\\usepackage{amsmath}
+\\usepackage{bm}
+\\usepackage{pstricks}
+\\usepackage{psfrag}
+
+\\begin{document}\n\n";
+
+print OUTFILE $LatexFile;
+print OUTFILE "
+\\end{document}\n";
+
+close (OUTFILE);
+
+`latex $LatexFileName`;
+`latex $LatexFileName`;
+$LatexFileName =~ s/\.tex/.dvi/;
+`dvipdf $LatexFileName`;
+unlink ($LatexFileName);
