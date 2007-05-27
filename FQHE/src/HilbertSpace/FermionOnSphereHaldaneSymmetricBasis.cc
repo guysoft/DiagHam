@@ -343,9 +343,6 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis(const
 
 FermionOnSphereHaldaneSymmetricBasis::~FermionOnSphereHaldaneSymmetricBasis ()
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-    }
 }
 
 // assignement (without duplicating datas)
@@ -496,7 +493,10 @@ void FermionOnSphereHaldaneSymmetricBasis::Benchmark(int nbrTimes)
 {
   unsigned long TmpState;
   int NewLzMax;
+  int NewLzMax2;
   double TmpCoef;
+  double TmpCoef2;
+  double TmpCoef3;
   int m[2];
   int n[2];
   for (int j = 0; j < nbrTimes; ++j)
@@ -504,9 +504,6 @@ void FermionOnSphereHaldaneSymmetricBasis::Benchmark(int nbrTimes)
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  {
-// 	    m[0] = m1;
-// 	    m[1] = m2;
-//	    TmpCoef = this->ProdA(i, m, 2);
 	    TmpCoef = this->AA(i, m1, m2);
 	    if (TmpCoef != 0.0)
 	      {
@@ -515,10 +512,12 @@ void FermionOnSphereHaldaneSymmetricBasis::Benchmark(int nbrTimes)
 		    int m4 = m1 + m2 - m3;
 		    if ((m4 >= 0) && (m4 <= this->LzMax))
 		      {
-// 			n[0] = m3;
-// 			n[1] = m4;
-//			NewLzMax = this->ProdAd(n, 2, TmpCoef);
-			NewLzMax = this->AdAd(m3, m4, TmpCoef);
+			NewLzMax = this->AdAd(m3, m4, TmpCoef3);
+			NewLzMax2 = this->AdAdAA(i, m3, m4, m1, m2, TmpCoef2);
+			if ((NewLzMax != NewLzMax2) || ((TmpCoef * TmpCoef3) != TmpCoef2))
+			  {
+			    cout << i << " : " << m1 << " " << m4 << " " << m3 << " " << NewLzMax << " " << NewLzMax2 <<  " " << (TmpCoef * TmpCoef3) <<  " " << TmpCoef2 <<  endl;
+			  }
 		      }
 		  }
 	      }
@@ -541,7 +540,7 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
   unsigned long State = this->StateDescription[index];
   unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
   State &= FERMION_SPHERE_SYMMETRIC_MASK;
-  if ((n1 > StateLzMax) || (n2 > StateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
+  if (((State & (((unsigned long) (0x1)) << n1)) == 0) 
       || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
@@ -575,10 +574,10 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
       return this->HilbertSpaceDimension;
     }
   if (m2 > NewLzMax)
-    {
-      NewLzMax = m2;
-    }
-  else
+     {
+       NewLzMax = m2;
+     }
+   else
     {
       coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
@@ -593,11 +592,11 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAdAA (int index, int m1, int m2, int
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  if (m1 > NewLzMax)
-    {
-      NewLzMax = m1;
-    }
-  else
+  if (m1 <= NewLzMax)
+//     {
+//       NewLzMax = m1;
+//     }
+//   else
     {      
       coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
@@ -758,8 +757,8 @@ double FermionOnSphereHaldaneSymmetricBasis::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
 
-  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
+      || ((this->ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
     return 0.0;
 
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
@@ -853,7 +852,9 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAd (int m1, int m2, double& coeffici
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;
   if (m2 > NewLzMax)
-    NewLzMax = m2;
+    {
+      NewLzMax = m2;
+    }
   else
     {
       coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
@@ -869,9 +870,11 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAd (int m1, int m2, double& coeffici
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
+   if (m1 <= NewLzMax)
+//     {
+//       NewLzMax = m1;
+//     }
+//   else
     {      
       coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
@@ -883,6 +886,8 @@ int FermionOnSphereHaldaneSymmetricBasis::AdAd (int m1, int m2, double& coeffici
   TmpState |= (((unsigned long) (0x1)) << m1);
   TmpState = this->GetSignedCanonicalState(TmpState);
   NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
      if (this->ProdASignature != 0)

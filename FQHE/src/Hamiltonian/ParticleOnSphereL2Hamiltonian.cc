@@ -266,30 +266,44 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
   double Factor = 2.0 * this->L2Factor;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     Factor *= -1.0;
-  this->NbrInteractionFactors = this->LzMax * this->LzMax;
-//   this->NbrM12Indices = this->NbrInteractionFactors;
-//   this->NbrM3Values = new int[this->NbrInteractionFactors];
-//   this->M3Values = new int* [this->NbrInteractionFactors];
+  this->NbrInteractionFactors = this->LzMax * (this->LzMax - 1) + 1;
   this->M1Value = new int [this->NbrInteractionFactors];
   this->M2Value = new int [this->NbrInteractionFactors];
   this->M3Value = new int [this->NbrInteractionFactors];
   this->InteractionFactors = new double [this->NbrInteractionFactors];
   this->NbrInteractionFactors = 0;
-  for (int m4 = 0; m4 < this->LzMax; ++m4)
-    for (int m3 = 1; m3 <= this->LzMax; ++m3)
-      {
-	this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-	this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-	this->M2Value[this->NbrInteractionFactors] = m4 + 1;
-	this->M3Value[this->NbrInteractionFactors] = m3;
 
-// 	this->NbrM3Values[this->NbrInteractionFactors] = 1;
-// 	this->M3Values[this->NbrInteractionFactors] = new int [1];
-// 	this->M1Value[this->NbrInteractionFactors] = m3;
-// 	this->M2Value[this->NbrInteractionFactors] = m4;
-// 	this->M3Values[this->NbrInteractionFactors][0] = m3 - 1;
-	++this->NbrInteractionFactors;
-      }
+
+  for (int m3 = 1; m3 <= this->LzMax; ++m3)
+    {
+      this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(0, m3);
+      this->M1Value[this->NbrInteractionFactors] = m3 - 1;
+      this->M2Value[this->NbrInteractionFactors] = 1;
+      this->M3Value[this->NbrInteractionFactors] = m3;
+      ++this->NbrInteractionFactors;
+    }
+  for (int m4 = 1; m4 < this->LzMax; ++m4)
+    {
+      int m3= 1;
+      for (; m3 < m4; ++m3)
+	{
+	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
+	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
+	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
+	  this->M3Value[this->NbrInteractionFactors] = m3;
+	  ++this->NbrInteractionFactors;
+	}
+      ++m3;
+      for (; m3 <= this->LzMax; ++m3)
+	{
+	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
+	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
+	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
+	  this->M3Value[this->NbrInteractionFactors] = m3;
+	  ++this->NbrInteractionFactors;
+	}
+    }
+
   this->NbrOneBodyInteractionFactors = this->LzMax + 1;
   this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
   this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
