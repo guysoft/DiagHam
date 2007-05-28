@@ -33,7 +33,7 @@ my $GapFileName = "fermions_".$InteractionName."_n_".$NbrParticles."_2s_".$SValu
 
 my $DiagonalizationProgram = "mpirun -C ".$ProgramPath."/QHEFermionsNBodyHardCore --mpi";
 my $OverlapProgram = $ProgramPath."/QHEBosonsDeltaOverlap";
-my $LProgram = $ProgramPath."/GetLValue";
+my $LProgram = $ProgramPath."/FQHESphereLValue";
 
 my @Pseudopotentials;
 
