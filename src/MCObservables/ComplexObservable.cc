@@ -64,7 +64,7 @@ void ComplexObservable::operator<<(const Complex& x)
     { 
     // start first bin
     Values.push_back(x);
-    Values2.push_back(Norm(x*x));
+    Values2.push_back(SqrNorm(x));
     BinEntries= 1;
   }
   else if (BinEntries==BinSize) // have a full bin
@@ -73,7 +73,7 @@ void ComplexObservable::operator<<(const Complex& x)
     {
       // start a new bin
       Values.push_back(x);
-      Values2.push_back(Norm(x*x));
+      Values2.push_back(SqrNorm(x));
       BinEntries = 1;
     }
     else
@@ -89,7 +89,7 @@ void ComplexObservable::operator<<(const Complex& x)
   else
   {
     Values[Values.size()-1] += x;
-    Values2[Values.size()-1] += Norm(x*x);
+    Values2[Values.size()-1] += SqrNorm(x);
     ++BinEntries;
   }
 }
@@ -165,7 +165,7 @@ double ComplexObservable::Variance()
   Complex Average=this->Average();
   for (int i=0;i<BinNum;i++)
     sum2+=Values2[i];
-  return ((sum2-samples*Norm(Average*Average))/(samples-1));
+  return ((sum2-samples*SqrNorm(Average))/(samples-1));
 }
 
 
@@ -181,12 +181,12 @@ double ComplexObservable::VarianceOfBins()
   Complex Average=this->Average();
   double invbin=(double)1.0/BinSize;
   for (int i=0;i<BinNum-1;i++)
-    sum2+=Norm(invbin*Values[i]-Average)*Norm(invbin*Values[i]-Average);
+    sum2+=SqrNorm(invbin*Values[i]-Average);
   if (BinEntries==BinSize)
-    return ((sum2+Norm(invbin*Values[BinNum-1]-Average)*Norm(invbin*Values[BinNum-1]-Average))/(BinNum-1.0));
+    return ((sum2+SqrNorm(invbin*Values[BinNum-1]-Average))/(BinNum-1.0));
   else if (BinEntries > LARGE_N) // take partly filled bin into account
     return ((sum2+  (double)BinEntries/BinSize*
-	     Norm(1.0/BinEntries*Values[BinNum-1]-Average)*Norm(1.0/BinEntries*Values[BinNum-1]-Average) )
+	     SqrNorm(1.0/BinEntries*Values[BinNum-1]-Average))
 	    /(BinNum-1.0));
   else return (sum2/(BinNum-2.0)); // else ignore it
 }
