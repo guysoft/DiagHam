@@ -1429,7 +1429,7 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 	  ReducedNbrInteractionFactors = 0;
 	  for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 	    {
-	      Coefficient = this->Particles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+	      Coefficient = this->Particles->AA(i + this->PrecalculationShift, this->M1Value[m1], this->M2Value[m1]);	  
 	      if (Coefficient != 0.0)
 		{
 		  SumIndices = this->M1Value[m1] + this->M2Value[m1];
