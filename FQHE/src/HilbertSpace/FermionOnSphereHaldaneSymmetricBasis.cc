@@ -433,6 +433,22 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector&
   return TmpVector;
 }
 
+// convert a gien state from Haldane basis to the usual symmetric n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the  symmetric nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereSymmetricBasis& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[this->FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
+}
+
+
+
 // convert a gien state from Lz-symmetric Haldane basis to the usual Haldane n-body basis
 //
 // state = reference on the vector to convert
@@ -489,40 +505,6 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToSymmetricHaldaneNbodyB
   return TmpVector;  
 }
 
-void FermionOnSphereHaldaneSymmetricBasis::Benchmark(int nbrTimes)
-{
-  unsigned long TmpState;
-  int NewLzMax;
-  int NewLzMax2;
-  double TmpCoef;
-  double TmpCoef2;
-  double TmpCoef3;
-  int m[2];
-  int n[2];
-  for (int j = 0; j < nbrTimes; ++j)
-    for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
-      for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  {
-	    TmpCoef = this->AA(i, m1, m2);
-	    if (TmpCoef != 0.0)
-	      {
-		for (int m3 = 0; m3 <= this->LzMax; ++m3)
-		  {
-		    int m4 = m1 + m2 - m3;
-		    if ((m4 >= 0) && (m4 <= this->LzMax))
-		      {
-			NewLzMax = this->AdAd(m3, m4, TmpCoef3);
-			NewLzMax2 = this->AdAdAA(i, m3, m4, m1, m2, TmpCoef2);
-			if ((NewLzMax != NewLzMax2) || ((TmpCoef * TmpCoef3) != TmpCoef2))
-			  {
-			    cout << i << " : " << m1 << " " << m4 << " " << m3 << " " << NewLzMax << " " << NewLzMax2 <<  " " << (TmpCoef * TmpCoef3) <<  " " << TmpCoef2 <<  endl;
-			  }
-		      }
-		  }
-	      }
-	  }
-}
 
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //

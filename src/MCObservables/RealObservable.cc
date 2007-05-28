@@ -3,10 +3,10 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2007 Gunnar Möller                  //
+//                      Copyright (C) 2007 Gunnar Möller                      //
 //                                                                            //
 //                                                                            //
-//           class implementing a paired CF wave function on the sphere          //
+//           class implementing a paired CF wave function on the sphere       //
 //                                                                            //
 //                        last modification : 18/05/2007                      //
 //                                                                            //
@@ -64,7 +64,7 @@ void RealObservable::operator<<(const double& x)
     { 
     // start first bin
     Values.push_back(x);
-    Values2.push_back(abs(x*x));
+    Values2.push_back(fabs(x*x));
     BinEntries= 1;
   }
   else if (BinEntries==BinSize) // have a full bin
@@ -73,7 +73,7 @@ void RealObservable::operator<<(const double& x)
     {
       // start a new bin
       Values.push_back(x);
-      Values2.push_back(abs(x*x));
+      Values2.push_back(fabs(x*x));
       BinEntries = 1;
     }
     else
@@ -89,7 +89,7 @@ void RealObservable::operator<<(const double& x)
   else
   {
     Values[Values.size()-1] += x;
-    Values2[Values.size()-1] += abs(x*x);
+    Values2[Values.size()-1] += fabs(x*x);
     ++BinEntries;
   }
 }
@@ -165,7 +165,7 @@ double RealObservable::Variance()
   double Average=this->Average();
   for (int i=0;i<BinNum;i++)
     sum2+=Values2[i];
-  return ((sum2-samples*abs(Average*Average))/(samples-1));
+  return ((sum2-samples*fabs(Average*Average))/(samples-1));
 }
 
 
@@ -181,12 +181,12 @@ double RealObservable::VarianceOfBins()
   double Average=this->Average();
   double invbin=(double)1.0/BinSize;
   for (int i=0;i<BinNum-1;i++)
-    sum2+=abs(invbin*Values[i]-Average)*abs(invbin*Values[i]-Average);
+    sum2+=fabs(invbin*Values[i]-Average)*fabs(invbin*Values[i]-Average);
   if (BinEntries==BinSize)
-    return ((sum2+abs(invbin*Values[BinNum-1]-Average)*abs(invbin*Values[BinNum-1]-Average))/(BinNum-1.0));
+    return ((sum2+fabs(invbin*Values[BinNum-1]-Average)*fabs(invbin*Values[BinNum-1]-Average))/(BinNum-1.0));
   else if (BinEntries > LARGE_N) // take partly filled bin into account
     return ((sum2+  (double)BinEntries/BinSize*
-	     abs(1.0/BinEntries*Values[BinNum-1]-Average)*abs(1.0/BinEntries*Values[BinNum-1]-Average) )/(BinNum-1.0));
+	     fabs(1.0/BinEntries*Values[BinNum-1]-Average)*fabs(1.0/BinEntries*Values[BinNum-1]-Average) )/(BinNum-1.0));
   else return (sum2/(BinNum-2.0)); // else ignore it
 }
 

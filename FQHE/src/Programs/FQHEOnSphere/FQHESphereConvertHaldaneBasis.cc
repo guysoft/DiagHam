@@ -1,7 +1,9 @@
 #include "Vector/RealVector.h"
 
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -37,12 +39,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -68,6 +71,7 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
+  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   int TotalLz = 0;
   bool Statistics = true;
   if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
@@ -90,6 +94,27 @@ int main(int argc, char** argv)
       cout << "incompatible values for nbr-particles, nbr-flux and total-lz" << endl;
       return -1;
     }
+
+  char* OutputFileName = 0;
+  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+    {
+      OutputFileName = new char [strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+      strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+    }
+  else
+    {
+      char* InputFileName = ((SingleStringOption*) Manager["input-file"])->GetString(); 
+      char* TagPosition = strcasestr(InputFileName, "haldane_");
+      if (TagPosition == 0)
+	{
+	  cout << "no default output name can be built from " << InputFileName << endl;
+	  return -1;
+	}
+      OutputFileName = new char [strlen(InputFileName) - 7];
+      strncpy (OutputFileName, InputFileName, TagPosition - InputFileName);
+      strcpy (OutputFileName + (TagPosition - InputFileName), TagPosition + 8);
+    }
+
 
   RealVector State;
   if (State.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
@@ -161,33 +186,31 @@ int main(int argc, char** argv)
 	      return -1;     
 	    }
 	}
-      FermionOnSphereHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+
+      if (SymmetrizedBasis == false)
 	{
-	  cout << "dimension mismatch between Hilbert space and input state" << endl;
-	}
-      FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
-      RealVector OutputState(InitialSpace.ConvertToNbodyBasis(State, TargetSpace));
-      if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
-	{
-	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+	  FermionOnSphereHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
 	    {
-	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
-	      return -1;
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
+	  FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+	  RealVector OutputState(InitialSpace.ConvertToNbodyBasis(State, TargetSpace));
+	  if (OutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
 	}
       else
 	{
-	  char* InputFileName = ((SingleStringOption*) Manager["input-file"])->GetString(); 
-	  char* TagPosition = strcasestr(InputFileName, "haldane_");
-	  if (TagPosition == 0)
+	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
+	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
 	    {
-	      cout << "no default output name can be built from " << InputFileName << endl;
-	      return -1;
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
-	  char* OutputFileName = new char [strlen(InputFileName) - 7];
-	  strncpy (OutputFileName, InputFileName, TagPosition - InputFileName);
-	  strcpy (OutputFileName + (TagPosition - InputFileName), TagPosition + 8);
+	  FermionOnSphereSymmetricBasis TargetSpace(NbrParticles, NbrFluxQuanta);
+	  RealVector OutputState(InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace));
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
 	      cout << "error while writing output state " << OutputFileName << endl;

@@ -106,6 +106,13 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   // return value = converted vector
   RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
 
+  // convert a gien state from Haldane basis to the usual symmetric n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the  symmetric nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereSymmetricBasis& nbodyBasis);
+
   // convert a gien state from Lz-symmetric Haldane basis to the usual Haldane n-body basis
   //
   // state = reference on the vector to convert
@@ -204,8 +211,6 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-
-  void Benchmark(int nbrTimes);
 
  protected:
 
