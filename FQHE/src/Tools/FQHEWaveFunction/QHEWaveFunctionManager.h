@@ -87,6 +87,10 @@ class QHEWaveFunctionManager
   //
   // return value = pointer to the wave function (null if an error occurs)
   Abstract1DComplexFunction* GetWaveFunction();
+
+  // get a description of the returned wave function
+  //
+  char* GetDescription();
   
 };
 

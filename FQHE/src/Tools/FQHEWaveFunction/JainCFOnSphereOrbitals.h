@@ -171,7 +171,7 @@ class JainCFOnSphereOrbitals
 
   int GetJastrowPower(){return JastrowPower;}
 
-  void PrintDerivatives(ostream out=std::cout);
+  void PrintDerivatives(ostream &out=std::cout);
 
   Complex JastrowFactorElement(int i, int j);
   

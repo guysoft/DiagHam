@@ -581,7 +581,7 @@ void JainCFOnSphereOrbitals::EvaluateDerivativeStructure()
     }
 }
 
-void JainCFOnSphereOrbitals::PrintDerivatives(ostream out)
+void JainCFOnSphereOrbitals::PrintDerivatives(ostream &out)
 {
   int MaxDerivative=LLLDerivativeNum;
   for (int i=0; i<this->NbrLandauLevels; ++i)
@@ -594,7 +594,6 @@ void JainCFOnSphereOrbitals::PrintDerivatives(ostream out)
 	}
       ++MaxDerivative;
     }
-
 }
 
 // evaluate composite fermion monopole spherical harmonic 

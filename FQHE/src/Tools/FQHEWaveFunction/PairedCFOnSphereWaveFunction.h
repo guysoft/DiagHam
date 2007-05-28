@@ -60,6 +60,9 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
   
   ComplexSkewSymmetricMatrix *Slater;
 
+  // matrix to store values of orbitals
+  ComplexMatrix OrbitalValues;
+
   // single-particle Jastrow factors
   Complex *Ji;
 

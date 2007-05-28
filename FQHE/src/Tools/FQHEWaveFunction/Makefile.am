@@ -24,5 +24,5 @@ LaughlinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnSphereWaveFunction.cc \
 SU4HalperinOnSphereWaveFunction.cc \
-PairedCFOnSphereWaveFunction.cc 
-
+PairedCFOnSphereWaveFunction.cc \
+ParticleOnSphereCollection.cc

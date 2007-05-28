@@ -60,7 +60,7 @@ PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction()
 
 
 PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction(int nbrParticles, int nbrLandauLevels, int nbrEffectiveFlux,
-							   double MooreReadCoefficient, double * CFCoefficients,
+							   double MooreReadCoefficient, double * givenCFCoefficients,
 							   bool correctPrefactors, int jastrowPower)
 {
   this->NbrParticles = nbrParticles;
@@ -69,7 +69,7 @@ PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction(int nbrParticles, int
   this->Orbitals = new JainCFOnSphereOrbitals(nbrParticles, nbrLandauLevels, nbrEffectiveFlux,jastrowPower);
   this->MooreReadCoefficient=MooreReadCoefficient;
   this->CFCoefficients= new double [NbrLandauLevels];
-  for (int i=0; i<NbrLandauLevels; ++i) this->CFCoefficients[i] = CFCoefficients[i];
+  for (int i=0; i<NbrLandauLevels; ++i) this->CFCoefficients[i] = givenCFCoefficients[i];
   this->ElementNorm=1.0;
   this->Slater = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->Flag.Initialize();
@@ -158,8 +158,7 @@ double fsgn(int x) // for calculating (-1)^x
 Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 {
   int i, j, offset, alpha;
-  ComplexMatrix OrbitalValues = (*Orbitals)(x);
-  ComplexMatrix Slater2(NbrParticles,NbrParticles);
+  this->OrbitalValues = (*Orbitals)(x);
   Complex tmp;
   // evaluate single particle Jastrow factors
   for (i=0;i<this->NbrParticles;i++)
@@ -181,7 +180,7 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 	      {
 		//offset-alpha gives Phi[] with -m 
 		tmp+=fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues[alpha][i]*OrbitalValues[offset-alpha][j];
-		// cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<fsgn((m2+AbsEffectiveFlux)/2)<<endl;
+		//cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<fsgn((m2+AbsEffectiveFlux)/2)<<endl;
 		alpha++;
 	      }
 	    this->gAlpha[n][i*this->NbrParticles+j] = tmp;
@@ -198,12 +197,7 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 	  
 	  Slater->SetMatrixElement(i,j, this->ElementNorm*this->Ji[i]*this->Ji[j]
 				   *(MooreReadCoefficient/Orbitals->JastrowFactorElement(i,j) + tmp));
-	  Slater2.SetMatrixElement(i,j, this->ElementNorm*this->Ji[i]*this->Ji[j]
-				   *(MooreReadCoefficient/Orbitals->JastrowFactorElement(i,j) + tmp));
-	  Slater2.SetMatrixElement(j,i, - this->ElementNorm*this->Ji[i]*this->Ji[j]
-				   *(MooreReadCoefficient/Orbitals->JastrowFactorElement(i,j) + tmp));
 	}
-      Slater2.SetMatrixElement(i,i, 0.0);
     }  
   //cout << *Slater << endl;
   return Slater->Pfaffian();
@@ -216,7 +210,7 @@ void PairedCFOnSphereWaveFunction::AdaptNorm(RealVector& x)
   double det=Norm((*this)(x));
   while ((det<.1)||(det>50.0))
     {
-      cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
+      //cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
       if (det>1e300) 
 	this->ElementNorm*= pow((double)1.0e-300,(double)2.0/this->NbrParticles);
       else if (det==0.0) 
@@ -224,7 +218,7 @@ void PairedCFOnSphereWaveFunction::AdaptNorm(RealVector& x)
       else 
 	this->ElementNorm*=pow(det,(double)-2.0/this->NbrParticles);
       det=Norm((*this)(x));
-      cout <<"N'="<< this->ElementNorm << endl;
+      //cout <<"N'="<< this->ElementNorm << endl;
     }
 }
   

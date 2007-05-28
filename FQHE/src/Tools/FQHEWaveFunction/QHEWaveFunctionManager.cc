@@ -216,3 +216,32 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
       }
   return 0;
 }
+
+char* QHEWaveFunctionManager::GetDescription()
+{
+  if ((*(this->Options))["test-wavefunction"] == 0)
+    {
+      return 0;
+    }
+  char * buffer = new char[1000];
+  sprintf(buffer,"%s N=%d",this->Options->GetString("test-wavefunction"), this->Options->GetInteger("nbr-particles"));
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+    {
+      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+      if (Coefficients==NULL)
+	sprintf(buffer,"%s, MR: %g, c: 0",buffer, this->Options->GetDouble("MR-coeff"));
+      else
+	{
+	  sprintf(buffer,"%s, MR: %g, c: %g",buffer, this->Options->GetDouble("MR-coeff"), Coefficients[0]);
+	  int LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
+	  for (int i=1; i<LL; ++i)
+	    sprintf(buffer,"%s+%g",buffer, Coefficients[i]);
+	  if(this->Options->GetBoolean("pair-compatibility"))
+	    sprintf(buffer,"%s (c)",buffer);
+	}
+    }
+  char *rst = new char[strlen(buffer)+1];
+  strcpy(rst,buffer);
+  delete [] buffer;
+  return rst;
+}
