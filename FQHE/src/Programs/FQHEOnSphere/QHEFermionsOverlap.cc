@@ -6,12 +6,16 @@
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include "MCObservables/RealObservable.h"
 #include "MCObservables/ComplexObservable.h"
+#include "MCObservables/WeightedRealObservable.h"
+#include "MCObservables/WeightedComplexObservable.h"
+#include "MCObservables/MCHistoryRecord.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -41,6 +45,9 @@ using std::ofstream;
 Complex OverlapValue(ComplexObservable &ScalarProduct, RealObservable &Norm);
 double OverlapError(ComplexObservable &ScalarProduct, RealObservable &Norm);
 
+Complex OverlapValue(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
+double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -69,8 +76,12 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
-  (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
+
+  (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history)", 1);
+  (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
+  
+    (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
+  (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -97,35 +108,40 @@ int main(int argc, char** argv)
   int LzMax = Manager.GetInteger("lzmax");
   int NbrIter = Manager.GetInteger("nbr-iter");
   int Lz = Manager.GetInteger("lz");
-
-  if (Manager.GetString("exact-state") == 0)
-    {
-      cout << "QHEFermionOverlap requires an exact state" << endl;
-      return -1;
-    }
   RealVector State;
-  if (State.ReadVector (Manager.GetString("exact-state")) == false)
-    {
-      cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
-      return -1;      
-    }
-  if (Manager.GetString("use-exact") != 0)
-    {
-      RealVector TestState;
-      if (TestState.ReadVector (Manager.GetString("use-exact")) == false)
-	{
-	  cout << "can't open vector file " << Manager.GetString("use-exact") << endl;
-	  return -1;      
-	}
-      if (State.GetVectorDimension() != TestState.GetVectorDimension())
-	{
-	  cout << "dimension mismatch" << endl;
-	  return -1;      
-	}
-      cout << "overlap = " << (TestState * State) << endl;
-      return 0;
-    }
 
+  if (Manager.GetInteger("history-mode")<2)
+    {
+      if (Manager.GetString("exact-state") == 0)
+	{
+	  cout << "QHEFermionOverlap requires an exact state" << endl;
+	  return -1;
+	}  
+      if (State.ReadVector (Manager.GetString("exact-state")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
+	  return -1;      
+	}
+      if (Manager.GetString("use-exact") != 0)
+	{
+	  RealVector TestState;
+	  if (TestState.ReadVector (Manager.GetString("use-exact")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("use-exact") << endl;
+	      return -1;      
+	    }
+	  if (State.GetVectorDimension() != TestState.GetVectorDimension())
+	    {
+	      cout << "dimension mismatch" << endl;
+	      return -1;      
+	    }
+	  Complex ov = (TestState * State);
+	  cout << "overlap = " << ov << endl;
+	  cout << "Sqrovrl = " << SqrNorm(ov) << endl;
+	  return 0;
+	}
+    }
+  
   Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
   
   if (TestWaveFunction == 0)
@@ -133,11 +149,69 @@ int main(int argc, char** argv)
       cout << "no or unknown analytical wave function" << endl;
       return -1;
     }
-  FermionOnSphere Space (NbrFermions, Lz, LzMax);
-  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);
-  
-  RealVector Location(2 * NbrFermions, true);
 
+  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions);
+  Complex ValueExact;
+  Complex TrialValue;
+  double CurrentSamplingAmplitude;
+  
+  int HistoryMode = Manager.GetInteger("history-mode");
+  MCHistoryRecord *History=NULL;
+  char *HistoryFileName=NULL;
+  if (HistoryMode>0)
+    {
+      HistoryFileName=Manager.GetString("history-file");      
+      if (HistoryMode==1)
+	{
+	  if (HistoryFileName==NULL)
+	    {
+	      // default filename: add extension to exact vector
+	      HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
+	      sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+	    }
+	  char *tmpC = WaveFunctionManager.GetDescription();
+	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName
+				      /* could add additional observables here */);
+	  delete [] tmpC;
+	}
+      else if ((HistoryFileName==NULL)&&(HistoryMode==2))
+	{
+	  cout << "History mode 2 requires a history file!" << endl;
+	  return -1;
+	}
+    }
+  
+  if (HistoryMode ==2)
+    {
+      // insert here: code to process available samples
+      int sampleCount;
+      int totalSampleCount=0;
+      RealVector Positions(2*NbrFermions);
+      WeightedRealObservable NormTrialObs(100);
+      WeightedRealObservable NormExactObs(100);
+      WeightedComplexObservable OverlapObs(100);
+      History = new MCHistoryRecord(HistoryFileName, 2*NbrFermions /* could add additional observables here */);
+      while (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact))
+	{
+	  totalSampleCount+=sampleCount;
+	  TrialValue = (*TestWaveFunction)(Positions);
+	  NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
+	  NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
+	  OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
+	}
+      cout << " final results :" << endl;
+      cout << "overlap:   " << OverlapValue(OverlapObs, NormTrialObs, NormExactObs) << " +/- "
+	   << OverlapError(OverlapObs, NormTrialObs, NormExactObs) << endl;
+      cout << "overlap^2: " << SqrNorm(OverlapValue(OverlapObs, NormTrialObs, NormExactObs)) << " +/- " <<
+	2.0*Norm(OverlapValue(OverlapObs, NormTrialObs, NormExactObs))*OverlapError(OverlapObs, NormTrialObs, NormExactObs) << endl;
+      cout << "Processed a total of "<<totalSampleCount<<" MC samples" << endl;
+      delete History;
+      return 0;
+    }
+      
+  
+  FermionOnSphere Space (NbrFermions, Lz, LzMax);
+  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
 
   
@@ -156,34 +230,33 @@ int main(int argc, char** argv)
     {
       Factor *= 4.0 * M_PI;
     }
+
+  // MC observables:
   Complex Overlap(0.0);
   ComplexObservable ScalarProduct(100);    
   RealObservable NormExact(100);
-  Complex TrialValue;
-  Complex ValueExact;
+  // stuff
   Complex TmpMetropolis;
   int NextCoordinates = 0;
-  // initialize with random coordinate positions:
-  for (int j = 0; j < NbrFermions; ++j)
-    {
-      Location[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
-      Location[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-    }
-  TrialValue = (*TestWaveFunction)(Location);
+  int Accepted = 0;
+  bool NoTimeCoherence=!(Manager.GetBoolean("with-timecoherence"));
+  // initialize function values at initial positions: - trial function
+  TrialValue = (*TestWaveFunction)(Particles->GetPositions());
+  // - exact function
+  int TimeCoherence = -1;
+  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+  Operation.ApplyOperation(Architecture.GetArchitecture());      
+  ValueExact = Operation.GetScalar();
+  
   double PreviousSamplingAmplitude = SqrNorm(TrialValue);
-  double CurrentSamplingAmplitude = PreviousSamplingAmplitude;
-
+  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+  
   for (int i = 0; i < NbrIter; ++i)
     {
-      // store old position
-      double PreviousCoordinates1 = Location[NextCoordinates << 1];
-      double PreviousCoordinates2 = Location[1 + (NextCoordinates << 1)];
-      // make a random move
-      Location[NextCoordinates << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));	  
-      Location[1 + (NextCoordinates << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-      TmpMetropolis = (*TestWaveFunction)(Location);      
-      // Complex TmpMetropolis2 = (*TestWaveFunction2)(Location);
-      //       cout << TmpMetropolis << " " << (TmpMetropolis2) << endl;
+      // make a random move of particle NextCoordinates
+      Particles->Move(NextCoordinates);
+      // evaluate new trial wavefunction value
+      TmpMetropolis = (*TestWaveFunction)(Particles->GetPositions());
       // accept or reject move according to probability |Psi_new|^2  / |Psi_old|^2
       CurrentSamplingAmplitude = SqrNorm(TmpMetropolis);
       if ((CurrentSamplingAmplitude > PreviousSamplingAmplitude) ||
@@ -191,22 +264,25 @@ int main(int argc, char** argv)
 	{
 	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
 	  TrialValue = TmpMetropolis;
+	  ++Accepted;
+	  // recalculate exact function value:
+	  TimeCoherence = NextCoordinates;
+	  if (NoTimeCoherence) TimeCoherence = -1;      
+	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  ValueExact = Operation.GetScalar();
+	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       else
 	{
-	  Location[NextCoordinates << 1] = PreviousCoordinates1;
-	  Location[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
+	  Particles->RestoreMove();
 	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	  if (History) History->RecordRejectedStep();
 	}
       // determine next particle to move
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
       if (NextCoordinates == NbrFermions) --NextCoordinates;
-      // calculate value of the exact wavefunction
-      int TimeCoherence = NextCoordinates;
-      if (Manager.GetBoolean("with-timecoherence") == false) TimeCoherence = -1;
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Location, &Basis, TimeCoherence);
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      ValueExact = Operation.GetScalar() ;
+      
       // note observations:
       double norm = SqrNorm(ValueExact)/CurrentSamplingAmplitude;
       NormExact << norm;
@@ -224,14 +300,15 @@ int main(int argc, char** argv)
 	  cout << OverlapValue(ScalarProduct, NormExact) << " +/- " << OverlapError(ScalarProduct, NormExact) << endl;
 	  cout << "-----------------------------------------------" << endl;
 	}
-    } 
+    }
+  delete History;
   cout << " final results :" << endl;
   cout << "overlap:   " << OverlapValue(ScalarProduct, NormExact) << " +/- "
        << OverlapError(ScalarProduct, NormExact) << endl;
   cout << "overlap^2: " << SqrNorm(OverlapValue(ScalarProduct, NormExact)) << " +/- " <<
     2.0*Norm(OverlapValue(ScalarProduct, NormExact))*OverlapError(ScalarProduct, NormExact) << endl;
-  cout << "-----------------------------------------------" << endl;
-
+  cout << "Fraction of moves accepted: " << (double) Accepted / NbrIter *100.0<< " %"<< endl;
+  cout << "-----------------------------------------------" << endl;  
   if (RecordStep != 0)
     {
       RecordedOverlap[RecordIndex] = OverlapValue(ScalarProduct, NormExact);
@@ -247,7 +324,7 @@ int main(int argc, char** argv)
 			  << " " << RecordedOverlapError[i] << " " <<  DSQR(RecordedOverlapError[i]) << endl;
       OverlapRecordFile.close();
     }
-
+  delete Particles;
   return 0;
 }
 
@@ -263,3 +340,20 @@ double OverlapError(ComplexObservable &ScalarProduct, RealObservable &NormObs)
   double prod = Norm(ScalarProduct.Average());
   return sqrt( DSQR(ScalarProduct.ErrorEstimate())/norm + DSQR(prod*NormObs.ErrorEstimate()/2.0/norm)/norm);
 }
+
+Complex OverlapValue(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &NormObs1, WeightedRealObservable &NormObs2)
+//Complex OverlapValue(ComplexObservable &ScalarProduct, RealObservable &NormObs1, RealObservable &NormObs2)
+{
+  return Complex(ScalarProduct.Average()/sqrt(NormObs1.Average()*NormObs2.Average()));
+}
+
+double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &NormObs1, WeightedRealObservable &NormObs2)
+//double OverlapError(ComplexObservable &ScalarProduct, RealObservable &NormObs1, RealObservable &NormObs2)
+{
+  double norm1 = NormObs1.Average();
+  double norm2 = NormObs2.Average();
+  double norm = sqrt(norm1*norm2);
+  double prod = Norm(ScalarProduct.Average());
+  return sqrt( DSQR(ScalarProduct.ErrorEstimate()/norm) + DSQR(prod*NormObs1.ErrorEstimate()*NormObs2.Average()/2.0/norm/norm/norm) + DSQR(prod*NormObs2.ErrorEstimate()*NormObs1.Average()/2.0/norm/norm/norm));
+}
+  
