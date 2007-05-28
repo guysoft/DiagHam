@@ -7,4 +7,4 @@ RealObservable.cc \
 ComplexObservable.cc \
 MCHistoryRecord.cc \
 WeightedRealObservable.cc \
-WeightedComplexObservable.cc \
+WeightedComplexObservable.cc
