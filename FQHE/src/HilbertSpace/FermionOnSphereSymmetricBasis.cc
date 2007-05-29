@@ -540,13 +540,13 @@ double FermionOnSphereSymmetricBasis::ProdA (int index, int* n, int nbrIndices)
 double FermionOnSphereSymmetricBasis::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
-  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
-  this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
 
   if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
       || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
     return 0.0;
 
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
   this->ProdALzMax = this->StateLzMax[index];
 
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -667,6 +667,8 @@ int FermionOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
   TmpState |= (((unsigned long) (0x1)) << m1);
   TmpState = this->GetSignedCanonicalState(TmpState);
   NewLzMax = this->LzMax;
+  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
      if (this->ProdASignature != 0)

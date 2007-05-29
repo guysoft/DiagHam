@@ -166,9 +166,9 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   NewHilbertSpaceDimension = 0;
   int TotalIndex = 0;
 #ifdef  __64_BITS__
-  if ((this->HilbertSpaceDimension & 0x3f) != 0)
+  if ((this->HilbertSpaceDimension & 0x3f) == 0)
 #else
-  if ((this->HilbertSpaceDimension & 0x1f) != 0)
+  if ((this->HilbertSpaceDimension & 0x1f) == 0)
 #endif
     --ReducedHilbertSpaceDimension;
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)

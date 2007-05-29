@@ -425,12 +425,15 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 // 		++Pos;
 // 	      }
 // 	  }
+//       this->NbrInteractionFactors = 0;
+
       this->NbrM12Indices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
       this->M1Value = new int [this->NbrM12Indices];
       this->M2Value = new int [this->NbrM12Indices];
       this->NbrM3Values = new int [this->NbrM12Indices];
       this->M3Values = new int* [this->NbrM12Indices];
       int TotalIndex = 0;
+      Pos = 0;
       for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  {
@@ -444,7 +447,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 	    this->M2Value[TotalIndex] = m2;	    
 	    this->NbrM3Values[TotalIndex] = 0;
  	    for (int m3 = Min; m3 <= Lim; ++m3)
-	      if (((2 * m3) > (m1 + m2)))
+	      if ((2 * m3) > (m1 + m2))
 		++this->NbrM3Values[TotalIndex];
 	    if (this->NbrM3Values[TotalIndex] > 0)
 	      {
@@ -452,7 +455,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 		int TmpIndex = 0;
 		for (int m3 = Min; m3 <= Lim; ++m3)
 		  {
-		    if (((2 * m3) > (m1 + m2)))
+		    if ((2 * m3) > (m1 + m2))
 		      {
 			this->M3Values[TotalIndex][TmpIndex] = m3;
 			this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
@@ -463,7 +466,7 @@ void ParticleOnSphereGenericHamiltonian::EvaluateInteractionFactors()
 		  }
 	      }
 	    ++TotalIndex;
-	  }	    
+	  }
     }
   else
     {
