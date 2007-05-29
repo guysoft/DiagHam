@@ -443,7 +443,7 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToSymmetricNbodyBasis(Re
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    TmpVector[this->FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
   return TmpVector;
 }
 

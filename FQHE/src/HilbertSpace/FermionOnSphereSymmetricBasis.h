@@ -81,7 +81,7 @@ static  unsigned long InvertTable[] = {0x0ul, 0x80ul, 0x40ul, 0xc0ul, 0x20ul, 0x
 class FermionOnSphereSymmetricBasis :  public FermionOnSphere
 {
 
-  friend class FermionOnSphereSymmetricBasisHaldaneBasis;
+  friend class FermionOnSphereHaldaneSymmetricBasis;
 
  protected:
 
