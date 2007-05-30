@@ -79,6 +79,7 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
+  (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
   
     (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
   double CurrentSamplingAmplitude;
   
   int HistoryMode = Manager.GetInteger("history-mode");
+  int SampleDensity = Manager.GetInteger("sample-density");
   MCHistoryRecord *History=NULL;
   char *HistoryFileName=NULL;
   if (HistoryMode>0)
@@ -198,6 +200,12 @@ int main(int argc, char** argv)
 	  NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
 	  NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	  OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
+	  if (sampleCount>10)
+	    {
+	      cout << "Total "<<sampleCount<<" samples in these coordinates: " << endl;
+	      cout << "Psi^2=" << SqrNorm(ValueExact) <<" trial^2="<<CurrentSamplingAmplitude<<endl;
+	      cout << Positions<< endl;
+	    }		
 	}
       cout << " final results :" << endl;
       cout << "overlap:   " << OverlapValue(OverlapObs, NormTrialObs, NormExactObs) << " +/- "
@@ -264,30 +272,47 @@ int main(int argc, char** argv)
 	{
 	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
 	  TrialValue = TmpMetropolis;
-	  ++Accepted;
+	  ++Accepted;	  
+	  if ((History)&&(SampleDensity==1)) // do not recalculate Exact or count steps here if using spread out samples
+	    {
+	      // recalculate exact function value:
+	      TimeCoherence = NextCoordinates;
+	      if (NoTimeCoherence) TimeCoherence = -1;      
+	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());      
+	      ValueExact = Operation.GetScalar();
+	      History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
+	    }
+	}
+      else
+	{
+	  Particles->RestoreMove();
+	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	  if ((History)&&(SampleDensity==1)) // do not count steps here if using spread out samples
+	    History->RecordRejectedStep();
+	}
+      if ((SampleDensity>1)&&( (i % SampleDensity)==0 )) // recalculate and record spread out samples here if SampleDensity>1
+	{
 	  // recalculate exact function value:
 	  TimeCoherence = NextCoordinates;
 	  if (NoTimeCoherence) TimeCoherence = -1;      
 	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
 	  ValueExact = Operation.GetScalar();
-	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
-	}
-      else
-	{
-	  Particles->RestoreMove();
-	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
-	  if (History) History->RecordRejectedStep();
+	  History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       // determine next particle to move
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
       if (NextCoordinates == NbrFermions) --NextCoordinates;
       
       // note observations:
-      double norm = SqrNorm(ValueExact)/CurrentSamplingAmplitude;
-      NormExact << norm;
-      Overlap = Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude;
-      ScalarProduct << Overlap;
+      if ( (i % SampleDensity)==0 )
+	{
+	  double norm = SqrNorm(ValueExact)/CurrentSamplingAmplitude;
+	  NormExact << norm;
+	  Overlap = Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude;
+	  ScalarProduct << Overlap;
+	}
       if ((i > 0) && ((RecordStep != 0) && ((i % RecordStep) == 0)))
 	{
 	  RecordedOverlap[RecordIndex] = OverlapValue(ScalarProduct, NormExact);
