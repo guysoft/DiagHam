@@ -161,12 +161,26 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
   this->OrbitalValues = (*Orbitals)(x);
   Complex tmp;
   // evaluate single particle Jastrow factors
-  for (i=0;i<this->NbrParticles;i++)
+  double Interpolation=1.0;
+  if (Orbitals->TestCriticality(Interpolation) == 0)
     {
-      Ji[i]=1.0;
-      for(j=0;j<i;j++) Ji[i] *= Orbitals->JastrowFactorElement(i,j);
-      for(j=i+1;j<NbrParticles;j++) Ji[i] *= Orbitals->JastrowFactorElement(i,j);
-    }  
+      for (i=0;i<this->NbrParticles;i++)
+	{
+	  Ji[i]=1.0;
+	  for(j=0;j<i;j++) Ji[i] *= Orbitals->JastrowFactorElement(i,j);
+	  for(j=i+1;j<NbrParticles;j++) Ji[i] *= Orbitals->JastrowFactorElement(i,j);
+	}
+    }
+  else // if some interpolation occurred, the true values of the Ji's have to be recalculated:
+    {
+      for (i=0;i<this->NbrParticles;i++)
+	{
+	  Ji[i]=1.0;
+	  for(j=0;j<i;j++) Ji[i] *= ((Orbitals->SpinorU(i) * Orbitals->SpinorV(j)) - (Orbitals->SpinorU(j) * Orbitals->SpinorV(i)));
+	  for(j=i+1;j<NbrParticles;j++) Ji[i] *= ((Orbitals->SpinorU(i) * Orbitals->SpinorV(j)) - (Orbitals->SpinorU(j) * Orbitals->SpinorV(i)));
+	}
+    }
+
   // evaluate sums over orbitals m for each LL:
   for (i=0;i<this->NbrParticles;i++)
     for(j=0;j<i;j++)
@@ -200,7 +214,7 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 	}
     }  
   //cout << *Slater << endl;
-  return Slater->Pfaffian();
+  return Slater->Pfaffian()*Interpolation;
 }
 
 // normalize the wave-function to one for the given particle positions

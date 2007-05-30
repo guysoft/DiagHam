@@ -58,9 +58,10 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals()
 // nbrParticles = number of particles
 // nbrLandauLevel = number of Landau levels filled with composite fermions
 // jastrowPower = power to which the Jastrow factor has to be raised
+// criticalDistance = minimal distance allowed for particles
 
 JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels,
-					       int nbrEffectiveFlux, int jastrowPower)
+					       int nbrEffectiveFlux, int jastrowPower, double criticalDistance)
 {
   this->NbrParticles = nbrParticles;
   this->NbrLandauLevels = nbrLandauLevels;
@@ -69,7 +70,7 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   else this->ReverseFluxFlag=false;
   this->NbrOrbitals = NbrLandauLevels*(NbrLandauLevels+TwiceS);
   this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);
-  this->ActualJastrowPower = jastrowPower;
+  this->ActualJastrowPower = jastrowPower;  
   if ((this->ActualJastrowPower & 1) == 1)
     {
       this->JastrowPower = (jastrowPower + 1) >> 1;
@@ -79,6 +80,8 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
       this->JastrowPower = jastrowPower >> 1;
     }
   this->Flag.Initialize();
+  this->CriticalDistance = criticalDistance;
+  this->SqrCriticalDistance = criticalDistance*criticalDistance;
   this->EvaluateNormalizationPrefactors();
   this->EvaluateSumPrefactors();
   this->InverseJastrowFactorElements = new Complex*[this->NbrParticles];
@@ -137,6 +140,8 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(const JainCFOnSphereOrbitals& fun
   this->TwiceS = function.TwiceS;
   this->JastrowPower = function.JastrowPower;
   this->Flag = function.Flag;
+  this->CriticalDistance = function.CriticalDistance;
+  this->SqrCriticalDistance = function.SqrCriticalDistance;
   this->ReverseFluxFlag=function.ReverseFluxFlag;
   this->MaxSpinorPower = function.MaxSpinorPower;
   this->MaxDerivativeNum = function.MaxDerivativeNum;
@@ -243,7 +248,6 @@ ComplexMatrix& JainCFOnSphereOrbitals::operator ()(RealVector& x)
 }
 
 
-
 // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
 //
 // x = point where the function has to be evaluated
@@ -281,6 +285,10 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
 	}
     }
 
+  // Reset accounting for possible critical events:
+  this->Criticality=0;
+  this->InterpolationFactor=1.0;
+  double TmpD;
   Complex JastrowFactor(1.0);
   Complex Tmp;
   for (int i = 0; i < this->NbrParticles; ++i)
@@ -288,12 +296,21 @@ Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFla
       for (int j = 0; j < i; ++j)
 	{
 	  Tmp = ((this->SpinorUCoordinates[i] * this->SpinorVCoordinates[j]) - (this->SpinorUCoordinates[j] * this->SpinorVCoordinates[i]));
+	  //check if critical value was encountered
+	  if (SqrNorm(Tmp)<this->SqrCriticalDistance) 
+	    {
+	      this->Criticality++;
+	      TmpD=Norm(Tmp);
+	      Tmp*=this->CriticalDistance/TmpD;
+	      this->InterpolationFactor *= pow(this->CriticalDistance/TmpD,(double)2.0*this->JastrowPower-1.0);      
+	    }
 	  JastrowFactorElements[i][j] = Tmp;
 	  this->InverseJastrowFactorElements[i][j] = 1.0 / Tmp;
 // 	  cout << "|"<<i<<"-"<<j<<"|="<<Tmp<<endl;
 	  JastrowFactor *= Tmp;
 	}
     }
+  
   Tmp = JastrowFactor;
   for (int i = 1; i < this->ActualJastrowPower; ++i)
     {
@@ -648,3 +665,11 @@ void JainCFOnSphereOrbitals::EvaluateOrbitals (int Index, int momentum, int land
 }
 
 
+// test if any particles were critically close in the last move
+// interpolationFactor returns resulting interpolation
+// returns the number of particle pairs involved in this process
+int JainCFOnSphereOrbitals::TestCriticality ( double &interpolationFactor)
+{
+  interpolationFactor=this->InterpolationFactor;
+  return this->Criticality;
+}

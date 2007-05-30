@@ -132,6 +132,14 @@ class JainCFOnSphereOrbitals
   // vectors used in Evaluate Orbitals for calculation of columns in Orbitals
   Complex *OrbitalVector;
   Complex *OrbitalVector2;
+
+  // Number used to request information about any extrapolation occurred in the last evaluation
+  double InterpolationFactor;
+  int Criticality;
+
+  // Distance of particles (squared) that should be considered critical:
+  double CriticalDistance;
+  double SqrCriticalDistance;
   
  public:
 
@@ -145,7 +153,8 @@ class JainCFOnSphereOrbitals
   // nbrLandauLevel = number of Landau levels filled with composite fermions
   // nbrEffectiveFlux = number of flux quanta of the magnetic monopole field experienced by CF's
   // jastrowPower = power to which the Jastrow factor has to be raised
-  JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels, int nbrEffectiveFlux, int jastrowPower);
+  // criticalDistance = minimal distance allowed for particles
+  JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLevels, int nbrEffectiveFlux, int jastrowPower, double criticalDistance=1e-4);
   
   // copy constructor
   //
@@ -173,7 +182,15 @@ class JainCFOnSphereOrbitals
 
   void PrintDerivatives(ostream &out=std::cout);
 
+  // test if any particles were critically close in the last move
+  // interpolationFactor returns resulting interpolation
+  // returns the number of particle pairs involved in this process
+  int TestCriticality (double &interpolationFactor);
+
+  // accessor routines that give reasonable results only after calls of operator(x)
   Complex JastrowFactorElement(int i, int j);
+  Complex& SpinorU(int i);
+  Complex& SpinorV(int i);
   
  protected:
 
@@ -216,6 +233,16 @@ inline Complex JainCFOnSphereOrbitals::JastrowFactorElement(int i, int j)
   else if ( j > i )
     return (-this->JastrowFactorElements[j][i]);
   else return Complex();
+}
+
+inline Complex& JainCFOnSphereOrbitals::SpinorU(int i)
+{
+  return this->SpinorUCoordinates[i];
+}
+
+inline Complex& JainCFOnSphereOrbitals::SpinorV(int i)
+{
+  return this->SpinorVCoordinates[i];
 }
 
 #endif //JAINCFONSPHEREORBITALS
