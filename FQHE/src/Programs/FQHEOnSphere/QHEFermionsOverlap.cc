@@ -193,10 +193,30 @@ int main(int argc, char** argv)
       WeightedRealObservable NormExactObs(100);
       WeightedComplexObservable OverlapObs(100);
       History = new MCHistoryRecord(HistoryFileName, 2*NbrFermions /* could add additional observables here */);
-      while (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact))
+      double typicalSA=0.0, typicalWF=0.0, typicalTV=0.0;
+      int averageTypical=50;
+      int initialSkip=10;
+      for (int i=0; i<initialSkip; ++i)
+	History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
+      for (int i=0; i<averageTypical; ++i)
+	{
+	  History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact);
+	  typicalSA+=CurrentSamplingAmplitude;
+	  typicalWF+=Norm(ValueExact);
+	  typicalTV+=Norm((*TestWaveFunction)(Positions));
+	}
+      typicalSA/=averageTypical;
+      typicalWF/=averageTypical;
+      typicalTV/=averageTypical;
+      History->RewindHistory();
+      int i=0;
+      while ( (i<NbrIter++) && (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact)))
 	{
 	  totalSampleCount+=sampleCount;
-	  TrialValue = (*TestWaveFunction)(Positions);
+	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;
+	  CurrentSamplingAmplitude /= typicalSA;
+	  ValueExact /= typicalWF; 
+	  cout << "renormalized: "<< sampleCount << " " <<CurrentSamplingAmplitude << " " <<ValueExact << endl;
 	  NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
 	  NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	  OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
