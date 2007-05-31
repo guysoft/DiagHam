@@ -57,7 +57,7 @@ class MCHistoryRecord
   ifstream HistoryFile;
 
   int RecordMode;
-  
+  std::streampos StartPos;
  public:
 
   enum
@@ -87,6 +87,9 @@ class MCHistoryRecord
   // read one MC sample back from file, gives back the parameters in call of RecordAcceptedStep
   // sampleCount additionally gives the multiplicity of each record
   bool GetMonteCarloStep( int &sampleCount, double & samplingAmplitude, double *positions, Complex &valueExact);
+
+  // rewind in reading mode:
+  void RewindHistory();
 };
 
 #endif // MCHISTORYRECORD_H

@@ -117,6 +117,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCH
       cout << "Problem with header of History record " <<Input << endl;
       exit(2);
     }
+  this->StartPos=HistoryFile.tellg();
 }
 
 
@@ -191,16 +192,30 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 	    {	      
 	      HistoryFile.seekg(SkipAdditional,ios::cur);
 	    }
+	  ReadLittleEndian(HistoryFile,this->LastSampleCount);
+	  this->TotalSampleCount+=this->LastSampleCount;
+	  sampleCount=this->LastSampleCount;
+	  return true;
 	}
       else if (signature == 'e')
 	{
 	  // cout << "End of file detected!" << endl;
 	  return false;
-	}
-      ReadLittleEndian(HistoryFile,this->LastSampleCount);
-      this->TotalSampleCount+=this->LastSampleCount;
-      sampleCount=this->LastSampleCount;
-      return true;
+	}      
     }
   return false;
+}
+
+void MCHistoryRecord::RewindHistory()
+{
+  if (this->RecordMode & MCHistoryRecord::Reading)
+    {
+      HistoryFile.seekg(StartPos);
+      char c = HistoryFile.peek();
+      if (c != 'b')
+	{
+	  cout << "Rewind failed." << endl;
+	  exit(-2);
+	}
+    }
 }
