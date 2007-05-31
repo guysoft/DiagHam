@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "PairedCFOnSphereWaveFunction.h"
+#include "ParticleOnSphereCollection.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Vector/RealVector.h"
 #include "MathTools/FactorialCoefficient.h"
@@ -230,9 +231,64 @@ void PairedCFOnSphereWaveFunction::AdaptNorm(RealVector& x)
       else if (det==0.0) 
 	this->ElementNorm*= pow((double)1.0e300,(double)2.0/this->NbrParticles);
       else 
-	this->ElementNorm*=pow(det,(double)-2.0/this->NbrParticles);
+	this->ElementNorm*= pow(det,(double)-2.0/this->NbrParticles);
       det=Norm((*this)(x));
       //cout <<"N'="<< this->ElementNorm << endl;
     }
 }
-  
+
+
+// normalize the wave-function over an average number of MC positions
+
+void PairedCFOnSphereWaveFunction::AdaptAverageMCNorm(int thermalize, int average)
+{
+  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(this->NbrParticles);
+  this->AdaptNorm(Particles->GetPositions());
+  Complex TmpMetropolis, TrialValue = (*this)(Particles->GetPositions());  
+  double PreviousSamplingAmplitude = SqrNorm(TrialValue);
+  double CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+  int NextCoordinates=0;
+  // do some MC moves: accept or reject move according to probability |Psi_new|^2  / |Psi_old|^2
+  for (int i = 0; i < thermalize; ++i)
+    {
+      Particles->Move(NextCoordinates);
+      TmpMetropolis = (*this)(Particles->GetPositions());
+      CurrentSamplingAmplitude = SqrNorm(TmpMetropolis);
+      if ((CurrentSamplingAmplitude > PreviousSamplingAmplitude) ||
+	  ((Particles->GetRandomNumber() * PreviousSamplingAmplitude) < CurrentSamplingAmplitude))
+	{
+	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
+	  TrialValue = TmpMetropolis;
+	}
+      else
+	{
+	  Particles->RestoreMove();
+	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	}
+      NextCoordinates = (int) (((double) NbrParticles) * Particles->GetRandomNumber());
+      if (NextCoordinates == NbrParticles) --NextCoordinates;      
+    }
+  this->AdaptNorm(Particles->GetPositions());
+  double SumTrialValues=0.0;
+  for (int i = 0; i < average; ++i)
+    {
+      Particles->Move(NextCoordinates);
+      TmpMetropolis = (*this)(Particles->GetPositions());
+      CurrentSamplingAmplitude = SqrNorm(TmpMetropolis);
+      if ((CurrentSamplingAmplitude > PreviousSamplingAmplitude) ||
+	  ((Particles->GetRandomNumber() * PreviousSamplingAmplitude) < CurrentSamplingAmplitude))
+	{
+	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
+	  TrialValue = TmpMetropolis;
+	}
+      else
+	{
+	  Particles->RestoreMove();
+	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	}
+      NextCoordinates = (int) (((double) NbrParticles) * Particles->GetRandomNumber());
+      if (NextCoordinates == NbrParticles) --NextCoordinates;            
+      SumTrialValues+=Norm(TmpMetropolis);
+    }  
+  this->ElementNorm*= pow(SumTrialValues/average,(double)-2.0/this->NbrParticles);  
+}

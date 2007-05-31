@@ -119,6 +119,8 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
   // x = point where the function has to be evaluated
   void AdaptNorm(RealVector& x);
 
+  // normalize the wave-function over an average number of MC positions
+  void AdaptAverageMCNorm(int thermalize=100, int average=250);
 
 
 };

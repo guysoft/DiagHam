@@ -82,6 +82,9 @@ class ParticleOnSphereCollection {
   // get all particle positions
   RealVector& GetPositions();
 
+  // allow access to internal Random number generator:
+  double GetRandomNumber();
+
   
 };
 

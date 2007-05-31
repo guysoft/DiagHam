@@ -180,16 +180,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  double MR =((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
 	  bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
 	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
-	  AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (4561367);
-	  RealVector Locations(2*N);
-	  // initialize with random coordinate positions:
-	  for (int j = 0; j < N; ++j)
-	    {
-	      Locations[j << 1] = acos (1.0- (2.0 * RandomNumber->GetRealRandomNumber()));
-	      Locations[1 + (j << 1)] = 2.0 * M_PI * RandomNumber->GetRealRandomNumber();
-	    }
-	  rst->AdaptNorm(Locations);
-	  delete RandomNumber;
+	  rst->AdaptAverageMCNorm();
 	  if (cleanup) delete [] Coefficients;
 	  return rst;
 	}

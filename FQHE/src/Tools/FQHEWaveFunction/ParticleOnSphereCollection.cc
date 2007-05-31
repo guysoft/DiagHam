@@ -130,3 +130,7 @@ RealVector& ParticleOnSphereCollection::GetPositions()
   return this->ThetaPhi;
 }
 
+double ParticleOnSphereCollection::GetRandomNumber()
+{
+  return Generator->GetRealRandomNumber();
+}
