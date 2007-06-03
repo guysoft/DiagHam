@@ -84,7 +84,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libQHEWaveFunction.a
 
-libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc PfaffianOnSphereWaveFunction.cc PfaffianOnSphereTwoQuasiholeWaveFunction.cc JainCFFilledLevelOnSphereWaveFunction.cc JainCFOnSphereOrbitals.cc MooreReadOnSphereWaveFunction.cc LaughlinOnDiskWaveFunction.cc PfaffianOnDiskWaveFunction.cc MooreReadOnDiskWaveFunction.cc JainCFOnSphereWaveFunction.cc LandauSpectrumOnSphere.cc UnprojectedJainCFOnSphereWaveFunction.cc QHEWaveFunctionManager.cc ExactWaveFunction.cc DerivativeProduct.cc DerivativeProductFactor.cc SumDerivativeProduct.cc AbstractFQHEWaveFunctionOneOverR.cc LaughlinOnDiskWaveFunctionOneOverR.cc HalperinOnDiskWaveFunctionOneOverR.cc HalperinOnSphereWaveFunction.cc SU4HalperinOnSphereWaveFunction.cc PairedCFOnSphereWaveFunction.cc ParticleOnSphereCollection.cc
+libQHEWaveFunction_a_SOURCES = LaughlinOnSphereWaveFunction.cc PfaffianOnSphereWaveFunction.cc PfaffianOnSphereTwoQuasiholeWaveFunction.cc JainCFFilledLevelOnSphereWaveFunction.cc JainCFOnSphereOrbitals.cc MooreReadOnSphereWaveFunction.cc LaughlinOnDiskWaveFunction.cc PfaffianOnDiskWaveFunction.cc MooreReadOnDiskWaveFunction.cc JainCFOnSphereWaveFunction.cc LandauSpectrumOnSphere.cc UnprojectedJainCFOnSphereWaveFunction.cc QHEWaveFunctionManager.cc ExactWaveFunction.cc DerivativeProduct.cc DerivativeProductFactor.cc SumDerivativeProduct.cc AbstractFQHEWaveFunctionOneOverR.cc LaughlinOnDiskWaveFunctionOneOverR.cc HalperinOnDiskWaveFunctionOneOverR.cc HalperinOnSphereWaveFunction.cc SU4HalperinOnSphereWaveFunction.cc PairedCFOnSphereWaveFunction.cc ParticleOnSphereCollection.cc WaveFunctionOverlapOptimizer.cc
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../../../src/config_ac.h
@@ -110,7 +110,7 @@ SumDerivativeProduct.o AbstractFQHEWaveFunctionOneOverR.o \
 LaughlinOnDiskWaveFunctionOneOverR.o \
 HalperinOnDiskWaveFunctionOneOverR.o HalperinOnSphereWaveFunction.o \
 SU4HalperinOnSphereWaveFunction.o PairedCFOnSphereWaveFunction.o \
-ParticleOnSphereCollection.o
+ParticleOnSphereCollection.o WaveFunctionOverlapOptimizer.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -138,7 +138,8 @@ DEP_FILES =  .deps/AbstractFQHEWaveFunctionOneOverR.P \
 .deps/PfaffianOnSphereTwoQuasiholeWaveFunction.P \
 .deps/PfaffianOnSphereWaveFunction.P .deps/QHEWaveFunctionManager.P \
 .deps/SU4HalperinOnSphereWaveFunction.P .deps/SumDerivativeProduct.P \
-.deps/UnprojectedJainCFOnSphereWaveFunction.P
+.deps/UnprojectedJainCFOnSphereWaveFunction.P \
+.deps/WaveFunctionOverlapOptimizer.P
 SOURCES = $(libQHEWaveFunction_a_SOURCES)
 OBJECTS = $(libQHEWaveFunction_a_OBJECTS)
 

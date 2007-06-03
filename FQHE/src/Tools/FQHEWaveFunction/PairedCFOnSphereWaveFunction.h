@@ -36,11 +36,11 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
-class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
+class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunction
 {
 
  protected:
@@ -48,7 +48,6 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
   JainCFOnSphereOrbitals *Orbitals;
 
   double MooreReadCoefficient;
-  double* CFCoefficients;
   int NbrLandauLevels;
   int NbrParticles;
   int AbsEffectiveFlux;
@@ -68,6 +67,10 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // precalculated sums over Orbitals
   Complex **gAlpha;
+
+  // if particles are very close to each other, interpolation occurs in JainCFOrbitals
+  // this variable is used to pass on this value between the different subroutines
+  double Interpolation;
   
  public:
 
@@ -115,12 +118,30 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x);
 
+  // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
+ Complex GetForOtherParameters( double *coefficients);
+
+  // do many evaluations, storing the result in the vector results given in the call
+  // x: positions to evaluate the wavefuntion in
+  // format for passing parameters in the matrix coefficients coefficients[nbrSet][LandauLevel],
+  // the entry [][NbrLandauLevels] corresponds to the MooreRead Term.
+  virtual void GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients);
+  
+  // set new values of the trial coefficients (keeping the number of LL's)
+  virtual void SetTrialParameters(double * coefficients);
+
   // normalize the wave-function to one for the given particle positions
   // x = point where the function has to be evaluated
   void AdaptNorm(RealVector& x);
 
   // normalize the wave-function over an average number of MC positions
   void AdaptAverageMCNorm(int thermalize=100, int average=250);
+
+ private:
+
+  // do all precalculation operations required for a new set of positions
+
+  void EvaluateTables(RealVector& x);
 
 
 };

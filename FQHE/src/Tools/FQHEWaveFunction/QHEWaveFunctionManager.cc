@@ -236,3 +236,27 @@ char* QHEWaveFunctionManager::GetDescription()
   delete [] buffer;
   return rst;
 }
+
+
+int QHEWaveFunctionManager::GetWaveFunctionType()
+{
+  if ((*(this->Options))["test-wavefunction"] == 0)
+    return QHEWaveFunctionManager::InvalidWaveFunction;
+  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "laughlin") == 0)
+    return QHEWaveFunctionManager::Laughlin;
+  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian") == 0)
+    return QHEWaveFunctionManager::Pfaffian;
+  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian2qh") == 0)
+    return QHEWaveFunctionManager::Pfaffian2QH;
+  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "read") == 0)
+    return QHEWaveFunctionManager::ReadRezayi;
+  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "filledcf") == 0)
+    return QHEWaveFunctionManager::FilledCF;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+    return QHEWaveFunctionManager::GenericCF;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+    return QHEWaveFunctionManager::UnprojectedCF;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+    return QHEWaveFunctionManager::PairedCF;      
+  return QHEWaveFunctionManager::InvalidWaveFunction;
+}

@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2007 Gunnar Möller                  //
 //                                                                            //
 //                                                                            //
-//                     class of FQHE wave function manager                    //
+//           class of Jain composite fermion wave function on sphere          //
+//                      with filled (pseudo) Landau levels                    //
 //                                                                            //
-//                        last modification : 18/01/2005                      //
+//                        last modification : 18/05/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,91 +29,63 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef QHEWAVEFUNCTIONMANAGER_H
-#define QHEWAVEFUNCTIONMANAGER_H
+#ifndef WAVEFUNCTIONOVERLAPOPTIMIZER_H
+#define WAVEFUNCTIONOVERLAPOPTIMIZER_H
 
 
 #include "config.h"
+#include "MathTools/Complex.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
+#include "MCObservables/WeightedRealObservable.h"
+#include "MCObservables/WeightedRealVectorObservable.h"
+#include "MCObservables/WeightedComplexVectorObservable.h"
+#include "MCObservables/MCHistoryRecord.h"
 
-#include <iostream>
-
-
-using std::ostream;
-
-
-class OptionManager;
-class Abstract1DComplexFunction;
-
-
-class QHEWaveFunctionManager
+class WaveFunctionOverlapOptimizer
 {
-
  protected:
-
-  // pointer to the option manager
-  OptionManager* Options;
-
-  // id of the geometry to use
-  int GeometryID;
-
-  int WavefunctionID;
-
+  int NbrParticles;
+  int NbrParameters;
+  int EffectiveNbrParameters;
+  Abstract1DComplexTrialFunction *TrialState;
+  RealVector Positions;
+  RealVector Gradient;
+  RealVector StepDirection;  
+  ComplexVector ManyValues;
+  double *InitialParameters;
+  double InitialSqrOverlap;
+  double **NewParameters;
+  double *NormObservation;
+  double *Differentials;
+  double MinDifferential;
+  double StepLength;
+  Complex *OverlapObservation;
+  int MaxPoints;
+  int MaxParameters;  
+  double NormExactWF;
+  double ErrorNormExactWF;
+  WeightedRealVectorObservable *NormTrialObs;
+  WeightedComplexVectorObservable *OverlapObs;
+  MCHistoryRecord *History;
+  bool LastParameterExcluded;
+  double typicalSA;
+  double typicalTV;
+  double typicalWF;
+  
  public:
 
-  // list of avalaible geometries
-  enum Geometries
-    {
-      SphereGeometry = 0x01,
-      DiskGeometry = 0x02
-    };
-
-  // list of available wavefunctions:
-  enum WaveFunctions
-    {
-      InvalidWaveFunction = 0x00000,
-      Laughlin = 0x00103,
-      Pfaffian = 0x00203,
-      Pfaffian2QH = 0x00401,
-      ReadRezayi = 0x00803,
-      FilledCF = 0x00F01,
-      GenericCF =0x01001,
-      UnprojectedCF = 0x02001,
-      PairedCF = 0x14001,
-      TrialWaveFunction = 0x10000
-    };
+  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 25);
+  ~WaveFunctionOverlapOptimizer();
   
-  // constructor
-  //
-  // geometry = id of the geometry to use
-  QHEWaveFunctionManager(int geometry = QHEWaveFunctionManager::SphereGeometry);
+  double GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap,
+			      double toleranceFinal=1e-6, double toleranceIteration =0.01);
 
-  // destructor
-  //
-  ~QHEWaveFunctionManager();
+ private:
 
-  // add an option group containing all options related to the wave functions
-  //
-  // manager = pointer to the option manager
-  void AddOptionGroup(OptionManager* manager);
-
-  // get list of all available wave functions
-  // 
-  // str = reference on the output stream
-  ostream& ShowAvalaibleWaveFunctions (ostream& str);
-  
-  // get the wave function corresponding to the option constraints
-  //
-  // return value = pointer to the wave function (null if an error occurs)
-  Abstract1DComplexFunction* GetWaveFunction();
-
-  // get a description of the returned wave function
-  //
-  char* GetDescription();
-
-  // get type of WaveFunction
-
-  int GetWaveFunctionType();
+  void EvaluateTrialOverlaps();
+  void DetermineGradientAndDifferentials(double *parameters);
+  void CalculateLinearSeries(RealVector &startParameters, RealVector &overlaps, RealMatrix &gradients);
   
 };
 
-#endif
+#endif // WAVEFUNCTIONOVERLAPOPTIMIZER_H

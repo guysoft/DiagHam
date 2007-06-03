@@ -25,4 +25,5 @@ HalperinOnDiskWaveFunctionOneOverR.cc \
 HalperinOnSphereWaveFunction.cc \
 SU4HalperinOnSphereWaveFunction.cc \
 PairedCFOnSphereWaveFunction.cc \
-ParticleOnSphereCollection.cc
+ParticleOnSphereCollection.cc \
+WaveFunctionOverlapOptimizer.cc
