@@ -90,6 +90,9 @@ class MCHistoryRecord
 
   // rewind in reading mode:
   void RewindHistory();
+
+  // get projected Samples
+  int GetProjectedSamples() {return ProjectedStepNum;}
 };
 
 #endif // MCHISTORYRECORD_H

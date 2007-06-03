@@ -84,7 +84,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libMCObservables.a
 
-libMCObservables_a_SOURCES =  RealObservable.cc ComplexObservable.cc MCHistoryRecord.cc WeightedRealObservable.cc WeightedComplexObservable.cc
+libMCObservables_a_SOURCES =  RealObservable.cc ComplexObservable.cc MCHistoryRecord.cc WeightedRealObservable.cc WeightedRealVectorObservable.cc WeightedComplexObservable.cc WeightedComplexVectorObservable.cc 
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../src/config_ac.h
@@ -98,7 +98,9 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libMCObservables_a_LIBADD = 
 libMCObservables_a_OBJECTS =  RealObservable.o ComplexObservable.o \
-MCHistoryRecord.o WeightedRealObservable.o WeightedComplexObservable.o
+MCHistoryRecord.o WeightedRealObservable.o \
+WeightedRealVectorObservable.o WeightedComplexObservable.o \
+WeightedComplexVectorObservable.o
 AR = ar
 CXXCOMPILE = $(CXX) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 CXXLD = $(CXX)
@@ -112,7 +114,8 @@ TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/ComplexObservable.P .deps/MCHistoryRecord.P \
 .deps/RealObservable.P .deps/WeightedComplexObservable.P \
-.deps/WeightedRealObservable.P
+.deps/WeightedComplexVectorObservable.P .deps/WeightedRealObservable.P \
+.deps/WeightedRealVectorObservable.P
 SOURCES = $(libMCObservables_a_SOURCES)
 OBJECTS = $(libMCObservables_a_OBJECTS)
 

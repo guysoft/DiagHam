@@ -118,6 +118,7 @@ MCHistoryRecord::MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCH
       exit(2);
     }
   this->StartPos=HistoryFile.tellg();
+  //cout << "Constructor: StartPos is: " << StartPos << " peeking: " <<HistoryFile.peek() << endl;
 }
 
 
@@ -173,7 +174,7 @@ bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &
 
 bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmplitude, double *positions, Complex &valueExact)
 {
-  if ( ! HistoryFile.eof())
+  if ( ! (HistoryFile.eof()))
     {
       char signature; 
       ReadLittleEndian(HistoryFile,signature);
@@ -203,6 +204,7 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 	  return false;
 	}      
     }
+  // cout << "Reached end of History file!"<<endl;
   return false;
 }
 
@@ -212,10 +214,21 @@ void MCHistoryRecord::RewindHistory()
     {
       HistoryFile.seekg(StartPos);
       char c = HistoryFile.peek();
-      if (c != 'b')
+      if (c == 'b') return;
+      else
 	{
-	  cout << "Rewind failed." << endl;
-	  exit(-2);
+	  if (HistoryFile.eof())
+	    {
+	      cout << "need to clear eof-bit, here!!!" << endl;
+	    }
+	  HistoryFile.seekg(StartPos);
+	  c = HistoryFile.peek();
+	  if (c == 'b') return;
+	  else
+	    {
+	      cout << "Rewind failed, character was " <<c << endl;
+	      exit(-2);
+	    }
 	}
     }
 }
