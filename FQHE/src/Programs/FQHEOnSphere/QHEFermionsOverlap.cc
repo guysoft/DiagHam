@@ -5,9 +5,11 @@
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+//#include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
-
+#include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -77,7 +79,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
 
-  (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history)", 1);
+  (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
   
@@ -176,16 +178,16 @@ int main(int argc, char** argv)
 				      /* could add additional observables here */);
 	  delete [] tmpC;
 	}
-      else if ((HistoryFileName==NULL)&&(HistoryMode==2))
+      else if ((HistoryFileName==NULL)&&(HistoryMode>1))
 	{
-	  cout << "History mode 2 requires a history file!" << endl;
+	  cout << "History mode "<<HistoryMode<<" requires a history file!" << endl;
 	  return -1;
 	}
     }
   
   if (HistoryMode ==2)
     {
-      // insert here: code to process available samples
+      // code to process available samples
       int sampleCount;
       int totalSampleCount=0;
       RealVector Positions(2*NbrFermions);
@@ -209,14 +211,14 @@ int main(int argc, char** argv)
       typicalWF/=averageTypical;
       typicalTV/=averageTypical;
       History->RewindHistory();
+      
       int i=0;
-      while ( (i<NbrIter++) && (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact)))
+      while ( (i++<NbrIter) && (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact)))
 	{
 	  totalSampleCount+=sampleCount;
 	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;
 	  CurrentSamplingAmplitude /= typicalSA;
 	  ValueExact /= typicalWF; 
-	  cout << "renormalized: "<< sampleCount << " " <<CurrentSamplingAmplitude << " " <<ValueExact << endl;
 	  NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
 	  NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	  OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
@@ -227,6 +229,10 @@ int main(int argc, char** argv)
 	      cout << Positions<< endl;
 	    }		
 	}
+      History->RewindHistory();
+      // testing
+      cout << "SqrNorm exact: " << NormExactObs.Average() << endl;
+      
       cout << " final results :" << endl;
       cout << "overlap:   " << OverlapValue(OverlapObs, NormTrialObs, NormExactObs) << " +/- "
 	   << OverlapError(OverlapObs, NormTrialObs, NormExactObs) << endl;
@@ -234,6 +240,24 @@ int main(int argc, char** argv)
 	2.0*Norm(OverlapValue(OverlapObs, NormTrialObs, NormExactObs))*OverlapError(OverlapObs, NormTrialObs, NormExactObs) << endl;
       cout << "Processed a total of "<<totalSampleCount<<" MC samples" << endl;
       delete History;
+      return 0;
+    }
+
+
+  if (HistoryMode ==3)
+    {
+      if (!(WaveFunctionManager.GetWaveFunctionType() & QHEWaveFunctionManager::TrialWaveFunction))
+	{
+	  cout << "This type of wavefunction cannot be optimized." << endl;
+	  return -1;
+	}
+      // code to optimize paired state with available samples:
+      WaveFunctionOverlapOptimizer *Optimizer =
+	new WaveFunctionOverlapOptimizer( (Abstract1DComplexTrialFunction*) TestWaveFunction,
+					  HistoryFileName, NbrFermions, /* excludeLastParameter */ true);
+      RealVector optimalParameters( ((Abstract1DComplexTrialFunction*) TestWaveFunction)->GetNbrParameters());
+      Complex optimalOverlap;
+      Optimizer->GetMaximumSqrOverlap(optimalParameters, optimalOverlap);
       return 0;
     }
       
