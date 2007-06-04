@@ -40,6 +40,8 @@
 #include "MCObservables/WeightedRealVectorObservable.h"
 #include "MCObservables/WeightedComplexVectorObservable.h"
 #include "MCObservables/MCHistoryRecord.h"
+#include <fstream>
+using std::ofstream;
 
 class WaveFunctionOverlapOptimizer
 {
@@ -50,7 +52,6 @@ class WaveFunctionOverlapOptimizer
   Abstract1DComplexTrialFunction *TrialState;
   RealVector Positions;
   RealVector Gradient;
-  RealVector StepDirection;  
   ComplexVector ManyValues;
   double *InitialParameters;
   double InitialSqrOverlap;
@@ -71,10 +72,11 @@ class WaveFunctionOverlapOptimizer
   double typicalSA;
   double typicalTV;
   double typicalWF;
+  ofstream LogFile;
   
  public:
 
-  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 25);
+  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 50, char* logFileName = NULL);
   ~WaveFunctionOverlapOptimizer();
   
   double GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap,
@@ -84,7 +86,7 @@ class WaveFunctionOverlapOptimizer
 
   void EvaluateTrialOverlaps();
   void DetermineGradientAndDifferentials(double *parameters);
-  void CalculateLinearSeries(RealVector &startParameters, RealVector &overlaps, RealMatrix &gradients);
+  void CalculateLinearSeries(RealVector &startParameters, RealVector &stepDirection, RealVector &overlaps, RealMatrix &gradients);
   
 };
 

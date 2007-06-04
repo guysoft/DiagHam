@@ -2,6 +2,8 @@
 #include "Matrix/RealMatrix.h"
 #include <iostream>
 
+#define TAB "\t"
+
 using std::cout;
 using std::endl;
 
@@ -9,7 +11,7 @@ using std::endl;
 #define START_DIFFERENTIAL 0.0001
 #define DIFFERENTIAL_SPREAD  7
 
-WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints)
+WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, char *logFileName)
 {
   this->NbrParticles = nbrParticles;  
   this->History = new MCHistoryRecord(historyFileName, 2*nbrParticles /* could add additional observables here */);
@@ -22,7 +24,6 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
   else
     this->EffectiveNbrParameters = this->NbrParameters;
   this->Gradient.Resize(this->NbrParameters);
-  this->StepDirection.Resize(this->NbrParameters);
   this->MaxPoints = maxPoints;
   this->MaxParameters = maxPoints*(1+2*this->EffectiveNbrParameters);
   if (this->MaxParameters<1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters)
@@ -84,6 +85,32 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
 	}
   this->NormExactWF = NormExactObs.Average();
   this->ErrorNormExactWF = NormExactObs.ErrorEstimate();
+
+  if (logFileName!=NULL)
+    {
+      this->LogFile.open(logFileName,std::ios::out);
+      if (!(LogFile.is_open()))
+	{
+	  cout << "Failed to open logfile "<<logFileName<<" in WaveFunctionOverlapOptimizer."<< endl;
+	  exit(1);
+	}
+    }
+  else
+    {
+      char * tmpC = new char[strlen(historyFileName)+10];
+      sprintf(tmpC,"%s.opt",historyFileName);
+      std::ifstream testExistant(tmpC,std::ios::in);
+      int count=1;
+      while (testExistant.is_open())
+	{
+	  testExistant.close();
+	  sprintf(tmpC,"%s.opt%d",historyFileName,count++);
+	  testExistant.open(tmpC,std::ios::in);
+	}
+      LogFile.open(tmpC,std::ios::out);
+      cout << "Writing to logfile " << tmpC << endl;
+      delete [] tmpC;
+    }
 }
 
 WaveFunctionOverlapOptimizer::~WaveFunctionOverlapOptimizer()
@@ -95,6 +122,7 @@ WaveFunctionOverlapOptimizer::~WaveFunctionOverlapOptimizer()
   delete [] this->OverlapObservation;
   delete [] this->InitialParameters;
   delete [] this->Differentials;
+  LogFile.close();
 }
 
 
@@ -208,13 +236,14 @@ void WaveFunctionOverlapOptimizer::DetermineGradientAndDifferentials(double *par
   delete [] ProposedStepLength;
 }
 
-void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParameters, RealVector &overlaps, RealMatrix &gradients)
+void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParameters, RealVector &stepDirection, RealVector &overlaps, RealMatrix &gradients)
 {
   this->ManyValues.Resize(this->MaxParameters);
   // set parameters for which the overlap shall be calculated:
   int StatesPerPoint = 1+2*this->EffectiveNbrParameters;
-  RealVector TmpParameters=startParameters;
-  RealVector TmpStep= this->StepLength*this->StepDirection;
+  RealVector TmpParameters(startParameters,true);
+  RealVector TmpStep;
+  TmpStep.Copy(stepDirection, this->StepLength);
   for (int p=0; p<MaxPoints; ++p)
     {
       for (int i=0; i<NbrParameters; ++i)
@@ -252,63 +281,71 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
   RealVector overlaps(this->MaxPoints);
   RealMatrix gradients(this->NbrParameters, this->MaxPoints);
   int StatesPerPoint = 1+2*this->EffectiveNbrParameters;
+  RealVector stepDirection(this->NbrParameters);  
  
   // initial overlap and gradient of overlap, here:
   this->DetermineGradientAndDifferentials(InitialParameters);
   InitialSqrOverlap = NormObservation[0];
   cout << "Initial overlap = " << InitialSqrOverlap << endl;
   cout << "Initial parameters: " << presentParameters<<endl;
-  cout << "Gradient is: " << Gradient.Norm() << endl;
-  cout << "chose stepLength: "<<StepLength<<endl;
-  this->StepDirection = this->Gradient;
-  this->StepDirection.Normalize();
-  cout << "StepDirection is: " << StepDirection;
+  cout << "Gradient is: " << this->Gradient << endl;
+  cout << "stepLength: "<<StepLength<<endl;
+  stepDirection.Copy(this->Gradient);
+  stepDirection.Normalize();
   // ultimately, start a loop here:
   while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-10))
     {
-      // calculate a series of points (and gradients) along StepDirection, and spaced with StepLength
-    
-      this->CalculateLinearSeries(presentParameters, overlaps, gradients);
+      // calculate a series of points (and gradients) along stepDirection, and spaced with StepLength
+      this->CalculateLinearSeries(presentParameters, stepDirection, overlaps, gradients);
       double lastOverlap=overlaps[0];
-      double scalarProduct=StepDirection*gradients[0]/gradients[0].Norm();
+      double scalarProduct=stepDirection*gradients[0]/gradients[0].Norm();
       int point=1;
       while ((point < MaxPoints) && (overlaps[point]>lastOverlap) && (scalarProduct>toleranceIteration))
 	{	
-	  scalarProduct = StepDirection*gradients[point]/gradients[point].Norm();
+	  scalarProduct = stepDirection*gradients[point]/gradients[point].Norm();
 	  lastOverlap = overlaps[point];
 	  point ++;
 	}
       point--;
-      cout << "Overlap "<<overlaps[point] <<" at point " <<point+1 <<"/"<<MaxPoints<<", Gradient: " << gradients[point].Norm() << endl;
+      
+      cout << "Overlap "<<overlaps[point] <<" (" <<point+1 <<"/"<<MaxPoints<<"), Grad: " << gradients[point].Norm() <<" "<< this->NewParameters[point*StatesPerPoint][0];
+      LogFile << overlaps[point]<< TAB << StepLength << TAB << point << TAB << gradients[point].Norm() << TAB
+	      << this->NewParameters[point*StatesPerPoint][0];
+      for (int i=1; i<this->EffectiveNbrParameters; ++i)
+	{
+	  cout <<" "<< NewParameters[point*StatesPerPoint][i];
+	  LogFile << TAB << NewParameters[point*StatesPerPoint][i];
+	}
+      cout << endl;
+      LogFile << endl;
       // update the new search direction and StepLength:
       if (point==0)
 	{
 	  // same direction, but smaller StepLength;
-	  StepLength/=MaxPoints;
-	  this->Gradient = gradients[0];
-	  this->StepDirection = this->Gradient;
-	  this->StepDirection.Normalize();
-	  for (int i=0; i<this->EffectiveNbrParameters; ++i) Differentials[i]/=MaxPoints;
-	  // cout << "New direction was not promising." << endl;
-// 	  cout << "New direction:" << StepDirection << endl;
-// 	  cout << "New StepLength:" << StepLength << endl;
+	  StepLength/=MaxPoints/2.5;
+	  this->Gradient.Copy(gradients[0]);
+	  stepDirection.Copy(this->Gradient);
+	  stepDirection.Normalize();
+	  for (int i=0; i<this->EffectiveNbrParameters; ++i)
+	    if (Differentials[i]>StepLength) Differentials[i]=StepLength/2;
 	}
       else 
 	{
 	  // maybe separate case if continued until the last point?
-	  this->StepDirection = (this->Gradient*((double)(gradients[point].SqrNorm()/this->Gradient.SqrNorm())));
-	  this->StepDirection += gradients[point];
-	  this->StepDirection.Normalize();
 	  if (point<MaxPoints-1) // if we found a minimum before the end of our series -> reduce StepLength
-	    this->StepLength*=0.5;
-	  else // otherwise, increase StepLength slightly...
-	    this->StepLength*=1.5;
-	  this->Gradient = gradients[point];
+	    { 
+	      this->StepLength*=0.5;
+	      stepDirection.Copy(this->Gradient,gradients[point].SqrNorm()/this->Gradient.SqrNorm() );
+	      stepDirection += gradients[point];
+	      stepDirection.Normalize();
+	      this->Gradient.Copy(gradients[point]);      
+	    }
+	  else // otherwise, increase StepLength...
+	    this->StepLength*=3.0;
+	  // update parameters to wherever we got to thus far:      
 	  for (int i=0; i<this->NbrParameters; ++i) presentParameters[i]=this->NewParameters[point*StatesPerPoint][i];
-	  cout << "New parameters: " << presentParameters<<endl;
-// 	  cout << "New direction:" << StepDirection << endl;
-// 	  cout << "New StepLength:" << StepLength << endl;
-	}      
+	  //	  cout << "New parameters: " << presentParameters<<endl;
+	}
     }
   return 0.0;
 }
