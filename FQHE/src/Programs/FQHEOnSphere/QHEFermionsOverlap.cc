@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "number of iteration between two consecutive result displays", -1);
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions);
+  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
   Complex ValueExact;
   Complex TrialValue;
   double CurrentSamplingAmplitude;
@@ -211,17 +211,22 @@ int main(int argc, char** argv)
       typicalWF/=averageTypical;
       typicalTV/=averageTypical;
       History->RewindHistory();
-      
+      cout << "typicalSA= " << typicalSA << ", typicalWF="<<typicalWF<<", typicalTV="<<typicalTV<<endl;
       int i=0;
       while ( (i++<NbrIter) && (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact)))
 	{
 	  totalSampleCount+=sampleCount;
-	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;
+	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;	  
 	  CurrentSamplingAmplitude /= typicalSA;
-	  ValueExact /= typicalWF; 
-	  NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
-	  NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
-	  OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
+	  ValueExact /= typicalWF;
+	  if (Norm(ValueExact)>100)
+	    cout << i << ": excluding large Psi: " << ValueExact << endl;
+	  else
+	    {
+	      NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
+	      NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
+	      OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
+	    }
 	  if (sampleCount>10)
 	    {
 	      cout << "Total "<<sampleCount<<" samples in these coordinates: " << endl;
@@ -229,6 +234,7 @@ int main(int argc, char** argv)
 	      cout << Positions<< endl;
 	    }		
 	}
+      if (i>=NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
       History->RewindHistory();
       // testing
       cout << "SqrNorm exact: " << NormExactObs.Average() << endl;
@@ -344,7 +350,7 @@ int main(int argc, char** argv)
 	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
 	  ValueExact = Operation.GetScalar();
-	  History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
+	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       // determine next particle to move
       NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());

@@ -11,6 +11,9 @@ using std::endl;
 #define START_DIFFERENTIAL 0.0001
 #define DIFFERENTIAL_SPREAD  7
 
+// maximum allowed factor of Norm of wavefunction over typical value 
+#define OUTLIER_LIMIT 5.0
+
 WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, char *logFileName)
 {
   this->NbrParticles = nbrParticles;  
@@ -73,19 +76,44 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
       this->typicalWF=1.0;
       this->typicalTV=1.0;
     }
-  
-  History->RewindHistory();
-  WeightedRealObservable NormExactObs(256);
-  // calculate norm of exact wavefunction, once and for all:
-  while (History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue))
-	{
-	  ExactValue /= typicalWF;
-	  SamplingAmplitude /= typicalSA;
-	  NormExactObs.Observe(SqrNorm(ExactValue)/SamplingAmplitude,(double)sampleCount);
-	}
-  this->NormExactWF = NormExactObs.Average();
-  this->ErrorNormExactWF = NormExactObs.ErrorEstimate();
 
+  cout << "typicalSA= " << typicalSA << ", typicalWF="<<typicalWF<<", typicalTV="<<typicalTV<<endl;
+
+  this->OutlierLimit=OUTLIER_LIMIT;
+  int OutlierCount;
+  double Variance=0.0;
+ evaluate_norm:
+  {  
+    History->RewindHistory();
+    WeightedRealObservable NormExactObs(256);
+    // calculate norm of exact wavefunction, once and for all:
+    int count =0;
+    OutlierCount=0;
+    while (History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue))
+      {
+	ExactValue /= typicalWF;
+	SamplingAmplitude /= typicalSA;
+	if (Norm(ExactValue)>this->OutlierLimit)
+	  {
+	    //cout << count << ": excluding large Psi  " << ExactValue << endl;
+	    OutlierCount++;
+	  }
+	else
+	  NormExactObs.Observe(SqrNorm(ExactValue)/SamplingAmplitude,(double)sampleCount);
+	count++;
+      }
+    this->NormExactWF = NormExactObs.Average();
+    this->ErrorNormExactWF = NormExactObs.ErrorEstimate();
+    Variance= NormExactObs.Variance();
+  }
+  cout << "OutlierCount: "<<OutlierCount<<", OutlierLimit: " <<OutlierLimit<< ", Variance: " <<Variance<<endl;
+  if ((OutlierCount>10) && (OutlierLimit<12.0*Variance))
+    {
+      cout << "Repeating search for Outliers"<<endl;
+      this->OutlierLimit*=sqrt(2.0);
+      goto evaluate_norm;
+    }
+  
   if (logFileName!=NULL)
     {
       this->LogFile.open(logFileName,std::ios::out);
@@ -139,6 +167,7 @@ void WaveFunctionOverlapOptimizer::EvaluateTrialOverlaps()
   this->NormTrialObs = new WeightedRealVectorObservable(nbrParametersInEvaluation,256);
   if (this->OverlapObs != NULL) delete this->OverlapObs;
   this->OverlapObs = new WeightedComplexVectorObservable(nbrParametersInEvaluation,256);
+  
   History->RewindHistory();
   int count =0;
   while ( History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(this->Positions[0]), ExactValue))
@@ -146,14 +175,18 @@ void WaveFunctionOverlapOptimizer::EvaluateTrialOverlaps()
       TrialState->GetForManyParameters(this->ManyValues, this->Positions, this->NewParameters);
       SamplingAmplitude /= typicalSA;
       ExactValue /= typicalWF;
-      for (int i=0; i<nbrParametersInEvaluation; ++i)
+      if (Norm(ExactValue)<this->OutlierLimit)	
 	{
-	  Tmp=ManyValues[i]/typicalTV;
-	  NormObservation[i] = SqrNorm(Tmp)/SamplingAmplitude;
-	  OverlapObservation[i] = Conj(Tmp)*ExactValue/SamplingAmplitude;
+	  for (int i=0; i<nbrParametersInEvaluation; ++i)
+	    {
+	      Tmp=ManyValues[i]/typicalTV;
+	      NormObservation[i] = SqrNorm(Tmp)/SamplingAmplitude;
+	      OverlapObservation[i] = Conj(Tmp)*ExactValue/SamplingAmplitude;
+	    }
+	  NormTrialObs->Observe(NormObservation,(double)sampleCount);
+	  OverlapObs->Observe(OverlapObservation,(double)sampleCount);	  
 	}
-      NormTrialObs->Observe(NormObservation,(double)sampleCount);
-      OverlapObs->Observe(OverlapObservation,(double)sampleCount);
+      // else cout << count << ": excluding large Psi: " << ExactValue << endl;
       count++;
     }
   for (int i=0; i<nbrParametersInEvaluation; ++i)
@@ -318,6 +351,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
 	}
       cout << endl;
       LogFile << endl;
+      LogFile.flush();
       // update the new search direction and StepLength:
       if (point==0)
 	{
@@ -334,14 +368,14 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
 	  // maybe separate case if continued until the last point?
 	  if (point<MaxPoints-1) // if we found a minimum before the end of our series -> reduce StepLength
 	    { 
-	      this->StepLength*=0.5;
+	      this->StepLength*=0.5+1.5*(double)(point-1)/(double)(MaxPoints-2);
 	      stepDirection.Copy(this->Gradient,gradients[point].SqrNorm()/this->Gradient.SqrNorm() );
 	      stepDirection += gradients[point];
 	      stepDirection.Normalize();
 	      this->Gradient.Copy(gradients[point]);      
 	    }
-	  else // otherwise, increase StepLength...
-	    this->StepLength*=3.0;
+	  else // otherwise, increase StepLength more:
+	    this->StepLength*=4.0;
 	  // update parameters to wherever we got to thus far:      
 	  for (int i=0; i<this->NbrParameters; ++i) presentParameters[i]=this->NewParameters[point*StatesPerPoint][i];
 	  //	  cout << "New parameters: " << presentParameters<<endl;
@@ -349,8 +383,6 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
     }
   return 0.0;
 }
-
-
 
 // double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &NormObs1, WeightedRealObservable &NormObs2)
 // //double OverlapError(ComplexObservable &ScalarProduct, RealObservable &NormObs1, RealObservable &NormObs2)

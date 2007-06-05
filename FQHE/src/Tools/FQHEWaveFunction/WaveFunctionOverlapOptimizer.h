@@ -65,6 +65,7 @@ class WaveFunctionOverlapOptimizer
   int MaxParameters;  
   double NormExactWF;
   double ErrorNormExactWF;
+  double OutlierLimit;
   WeightedRealVectorObservable *NormTrialObs;
   WeightedComplexVectorObservable *OverlapObs;
   MCHistoryRecord *History;
