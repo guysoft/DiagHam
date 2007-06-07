@@ -71,6 +71,11 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // look-up table with two entries : the first one used lzmax value of the state an the second 
   int** LookUpTable;
 
+  // temporary state used when applying ProdA operator
+  unsigned long ProdATemporaryState;
+  // Lz maximum value associated to temporary state used when applying ProdA operator
+  int ProdALzMax;
+
 
  public:
 

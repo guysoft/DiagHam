@@ -131,25 +131,60 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 	}
      if (this->FullTwoBodyFlag == true)
        {
-	 double TmpTwoBodyInteraction;
 	 int m1;
-	 int m2;
 	 int m3;
-	 int m4;
-	 for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	 if (this->NbrM12Indices == 0)
 	   {
-	     m1 = this->M1Value[j];
-	     m2 = this->M2Value[j];
-	     m3 = this->M3Value[j];
-	     m4 = m1 + m2 - m3;
-	     TmpTwoBodyInteraction = this->InteractionFactors[j];
-	     for (int i = firstComponent; i < LastComponent; ++i)
+	     double TmpTwoBodyInteraction;
+	     int m2;
+	     int m4;	     
+	     for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	       {
-		 Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-		 if (Index < Dim)
-		   vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
+		 m1 = this->M1Value[j];
+		 m2 = this->M2Value[j];
+		 m3 = this->M3Value[j];
+		 m4 = m1 + m2 - m3;
+		 TmpTwoBodyInteraction = this->InteractionFactors[j];
+		 for (int i = firstComponent; i < LastComponent; ++i)
+		   {
+		     Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		     if (Index < Dim)
+		       vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
+		   }
 	       }
 	   }
+	 else
+	   {
+	     double Coefficient2;
+	     int SumIndices;
+	     int TmpNbrM3Values;
+	     int* TmpM3Values;
+	     int ReducedNbrInteractionFactors;
+	     for (int i = firstComponent; i < LastComponent; ++i)
+	       {
+		 ReducedNbrInteractionFactors = 0;
+		 for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		   {
+		     Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		     if (Coefficient != 0.0)
+		       {
+			 SumIndices = this->M1Value[m1] + this->M2Value[m1];
+			 Coefficient *= vSource[i];
+			 TmpNbrM3Values = this->NbrM3Values[m1];
+			 TmpM3Values = this->M3Values[m1];
+			 for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			   {
+			     Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			     if (Index < Dim)			
+			       vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			     ++ReducedNbrInteractionFactors;
+			   }
+		       }
+		     else
+		       ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+		   }
+	       }
+	    }	   
        }
      for (int k = 2; k <= this->MaxNBody; ++k)
        if (this->NBodyFlags[k] == true)
@@ -299,24 +334,59 @@ RealVector& AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelAddMultiply(
 		      }
 		    if (this->FullTwoBodyFlag == true)
 		      {
-			double TmpTwoBodyInteraction;
 			int m1;
-			int m2;
 			int m3;
-			int m4;
-			for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+			if (this->NbrM12Indices == 0)
 			  {
-			    m1 = this->M1Value[j];
-			    m2 = this->M2Value[j];
-			    m3 = this->M3Value[j];
-			    TmpTwoBodyInteraction = this->InteractionFactors[j];
-			    m4 = m1 + m2 - m3;
+			    double TmpTwoBodyInteraction;
+			    int m2;
+			    int m4;
+			    for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+			      {
+				m1 = this->M1Value[j];
+				m2 = this->M2Value[j];
+				m3 = this->M3Value[j];
+				TmpTwoBodyInteraction = this->InteractionFactors[j];
+				m4 = m1 + m2 - m3;
+				for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+				  {
+				    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+				    if (Index < Dim)
+				      vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
+				  }
+			      }
+			  }
+			else
+			  {
+			    double Coefficient2;
+			    int SumIndices;
+			    int TmpNbrM3Values;
+			    int* TmpM3Values;
+			    int ReducedNbrInteractionFactors;
 			    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 			      {
-				Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-				if (Index < Dim)
-				  vDestination[Index] += Coefficient * TmpTwoBodyInteraction * vSource[i];
-			      }
+				ReducedNbrInteractionFactors = 0;
+				for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+				  {
+				    Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+				    if (Coefficient != 0.0)
+				      {
+					SumIndices = this->M1Value[m1] + this->M2Value[m1];
+					Coefficient *= vSource[i];
+					TmpNbrM3Values = this->NbrM3Values[m1];
+					TmpM3Values = this->M3Values[m1];
+					for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+					  {
+					    Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+					    if (Index < Dim)			
+					      vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+					    ++ReducedNbrInteractionFactors;
+					  }
+				      }
+				    else
+				      ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+				  }
+			      }			    
 			  }
 		      }
 		    for (int k = 2; k <= this->MaxNBody; ++k)
@@ -543,37 +613,76 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 	}
      if (this->FullTwoBodyFlag == true)
        {
-	 double TmpTwoBodyInteraction;
 	 int m1;
-	 int m2;
 	 int m3;
-	 int m4;
-	 for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	   {
-	     m1 = this->M1Value[j];
-	     m2 = this->M2Value[j];
-	     m3 = this->M3Value[j];
-	     m4 = m1 + m2 - m3;
-	     TmpTwoBodyInteraction = this->InteractionFactors[j];
-	     for (int i = firstComponent; i < LastComponent; ++i)
+	 if (this->NbrM12Indices == 0)
+	   {	     
+	     double TmpTwoBodyInteraction;
+	     int m2;
+	     int m4;
+	     for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 	       {
-		 Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-		 if (Index < Dim)
+		 m1 = this->M1Value[j];
+		 m2 = this->M2Value[j];
+		 m3 = this->M3Value[j];
+		 m4 = m1 + m2 - m3;
+		 TmpTwoBodyInteraction = this->InteractionFactors[j];
+		 for (int i = firstComponent; i < LastComponent; ++i)
 		   {
-		     Coefficient *= TmpTwoBodyInteraction;
-		     for (int l = 0; l < nbrVectors; ++l)
-		       vDestinations[l][Index] += Coefficient * vSources[l][i];
+		     Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		     if (Index < Dim)
+		       {
+			 Coefficient *= TmpTwoBodyInteraction;
+			 for (int l = 0; l < nbrVectors; ++l)
+			   vDestinations[l][Index] += Coefficient * vSources[l][i];
+		       }
 		   }
 	       }
 	   }
+	 else
+	   {
+	     double Coefficient2;
+	     int SumIndices;
+	     int TmpNbrM3Values;
+	     int* TmpM3Values;
+	     double* TmpCoefficients = new double[nbrVectors];
+	     int ReducedNbrInteractionFactors;
+	     for (int i = firstComponent; i < LastComponent; ++i)
+	       {
+		 ReducedNbrInteractionFactors = 0;
+		 for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		   {
+		     Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		     if (Coefficient != 0.0)
+		       {
+			 SumIndices = this->M1Value[m1] + this->M2Value[m1];
+			 TmpNbrM3Values = this->NbrM3Values[m1];
+			 TmpM3Values = this->M3Values[m1];
+			 for (int l = 0; l < nbrVectors; ++l)
+			   TmpCoefficients[l] = Coefficient * vSources[l][i];
+			 for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			   {
+			     Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			     if (Index < Dim)
+			       for (int l = 0; l < nbrVectors; ++l)
+				 vDestinations[l][Index] += TmpCoefficients[l] * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			     ++ReducedNbrInteractionFactors;
+			   }
+		       }
+		     else
+		       ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+		   }	     
+	       }
+	     delete[] TmpCoefficients;
+	   }
        }
-      for (int k = 2; k <= this->MaxNBody; ++k)
-	if (this->NBodyFlags[k] == true)
-	  {
-	    double Sign = this->NBodySign[k];
-	    int TmpMinSumIndices = this->MinSumIndices[k];
-	    int TmpMaxSumIndices = this->MaxSumIndices[k];	      
-	    for (int i = firstComponent; i < LastComponent; ++i)
+     for (int k = 2; k <= this->MaxNBody; ++k)
+       if (this->NBodyFlags[k] == true)
+	 {
+	   double Sign = this->NBodySign[k];
+	   int TmpMinSumIndices = this->MinSumIndices[k];
+	   int TmpMaxSumIndices = this->MaxSumIndices[k];	      
+	   for (int i = firstComponent; i < LastComponent; ++i)
 	      {
 		for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
 		  {
@@ -755,28 +864,67 @@ RealVector* AbstractQHEOnSphereNBodyInteractionHamiltonian::LowLevelMultipleAddM
 		      }
 		    if (this->FullTwoBodyFlag == true)
 		      {
-			double TmpTwoBodyInteraction;
 			int m1;
-			int m2;
 			int m3;
-			int m4;
-			for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+			if (this->NbrM12Indices == 0)
 			  {
-			    m1 = this->M1Value[j];
-			    m2 = this->M2Value[j];
-			    m3 = this->M3Value[j];
-			    TmpTwoBodyInteraction = this->InteractionFactors[j];
-			    m4 = m1 + m2 - m3;
-			    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			    double TmpTwoBodyInteraction;
+			    int m2;
+			    int m4;
+			    for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 			      {
-				Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-				if (Index < Dim)
+				m1 = this->M1Value[j];
+				m2 = this->M2Value[j];
+				m3 = this->M3Value[j];
+				TmpTwoBodyInteraction = this->InteractionFactors[j];
+				m4 = m1 + m2 - m3;
+				for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
 				  {
-				    Coefficient *= TmpTwoBodyInteraction;
-				    for (int p = 0; p < nbrVectors; ++p)
-				      vDestinations[p][Index] += Coefficient * vSources[p][i];
+				    Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+				    if (Index < Dim)
+				      {
+					Coefficient *= TmpTwoBodyInteraction;
+					for (int p = 0; p < nbrVectors; ++p)
+					  vDestinations[p][Index] += Coefficient * vSources[p][i];
+				      }
 				  }
 			      }
+			  }
+			else
+			  {
+			    double Coefficient2;
+			    int SumIndices;
+			    int TmpNbrM3Values;
+			    int* TmpM3Values;
+			    double* TmpCoefficients = new double[nbrVectors];
+			    int ReducedNbrInteractionFactors;
+			    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			      {
+				ReducedNbrInteractionFactors = 0;
+				for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+				  {
+				    Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+				    if (Coefficient != 0.0)
+				      {
+					SumIndices = this->M1Value[m1] + this->M2Value[m1];
+					TmpNbrM3Values = this->NbrM3Values[m1];
+					TmpM3Values = this->M3Values[m1];
+					for (int l = 0; l < nbrVectors; ++l)
+					  TmpCoefficients[l] = Coefficient * vSources[l][i];
+					for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+					  {
+					    Index = TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+					    if (Index < Dim)
+					      for (int p = 0; p < nbrVectors; ++p)
+						vDestinations[p][Index] += TmpCoefficients[p] * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+					    ++ReducedNbrInteractionFactors;
+					  }
+				      }
+				    else
+				      ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+				  }
+			      }
+			    delete[] TmpCoefficients;
 			  }
 		      }
 		    for (int k = 2; k <= this->MaxNBody; ++k)
@@ -1025,25 +1173,55 @@ long AbstractQHEOnSphereNBodyInteractionHamiltonian::PartialFastMultiplicationMe
   if (this->FullTwoBodyFlag == true)
     {
       int m1;
-      int m2;
       int m3;
-      int m4;      
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+      if (this->NbrM12Indices == 0)
 	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = m1 + m2 - m3;
+	  int m2;
+	  int m4;      
+	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	    {
+	      m1 = this->M1Value[j];
+	      m2 = this->M2Value[j];
+	      m3 = this->M3Value[j];
+	      m4 = m1 + m2 - m3;
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		}
+	    }    
+	}
+      else
+	{
+	  int SumIndices;
+	  int TmpNbrM3Values;
+	  int* TmpM3Values;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
+	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
 		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Coefficient = TmpParticles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		  if (Coefficient != 0.0)
+		    {
+		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
+		      TmpM3Values = this->M3Values[m1];
+		      TmpNbrM3Values = this->NbrM3Values[m1];
+		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			{
+			  if (TmpParticles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient) < this->Particles->GetHilbertSpaceDimension())
+			    {
+			      ++Memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			}    
+		    }
 		}
 	    }
-	}    
+	}
     }
 
   for (int k = 2; k <= this->MaxNBody; ++k)
@@ -1169,17 +1347,52 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplication()
 	}
       if (this->FullTwoBodyFlag == true)
 	{
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	  if (this->NbrM12Indices == 0)
 	    {
-	      m1 = this->M1Value[j];
-	      m2 = this->M2Value[j];
-	      m3 = this->M3Value[j];
-	      Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m1 + m2 - m3, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
+	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-		  ++Pos;
+		  m1 = this->M1Value[j];
+		  m2 = this->M2Value[j];
+		  m3 = this->M3Value[j];
+		  Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m1 + m2 - m3, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		      ++Pos;
+		    }
+		}
+	    }
+	  else
+	    {
+	      double Coefficient2;
+	      int SumIndices;
+	      int TmpNbrM3Values;
+	      int* TmpM3Values;
+	      int ReducedNbrInteractionFactors = 0;
+	      Pos = 0;
+	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		{
+		  Coefficient = this->Particles->AA(i + this->PrecalculationShift, this->M1Value[m1], this->M2Value[m1]);	  
+		  if (Coefficient != 0.0)
+		    {
+		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
+		      TmpM3Values = this->M3Values[m1];
+		      TmpNbrM3Values = this->NbrM3Values[m1];
+		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			{
+			  Index = this->Particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			  if (Index < this->Particles->GetHilbertSpaceDimension())
+			    {
+			      TmpIndexArray[Pos] = Index;
+			      TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactors[ReducedNbrInteractionFactors];
+			      ++Pos;
+			    }		      
+			  ++ReducedNbrInteractionFactors;
+			}    
+		    }
+		  else
+		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		}
 	    }
 	}
@@ -1453,17 +1666,51 @@ void AbstractQHEOnSphereNBodyInteractionHamiltonian::EnableFastMultiplicationWit
 	    }
 	  if (this->FullTwoBodyFlag == true)
 	    {
-	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	      if (this->NbrM12Indices == 0)
 		{
-		  m1 = this->M1Value[j];
-		  m2 = this->M2Value[j];
-		  m3 = this->M3Value[j];
-		  Index = this->Particles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
-		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 		    {
-		      TmpIndexArray[Pos] = Index;
-		      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-		      ++Pos;
+		      m1 = this->M1Value[j];
+		      m2 = this->M2Value[j];
+		      m3 = this->M3Value[j];
+		      Index = this->Particles->AdAdAA(i, m1, m2, m3, m1 + m2 - m3, Coefficient);
+		      if (Index < this->Particles->GetHilbertSpaceDimension())
+			{
+			  TmpIndexArray[Pos] = Index;
+			  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+			  ++Pos;
+			}
+		    }
+		}
+	      else
+		{
+		  double Coefficient2;
+		  int SumIndices;
+		  int TmpNbrM3Values;
+		  int* TmpM3Values;
+		  int ReducedNbrInteractionFactors = 0;
+		  for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		    {
+		      Coefficient = this->Particles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		      if (Coefficient != 0.0)
+			{
+			  SumIndices = this->M1Value[m1] + this->M2Value[m1];
+			  TmpM3Values = this->M3Values[m1];
+			  TmpNbrM3Values = this->NbrM3Values[m1];
+			  for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			    {
+			      Index = this->Particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			      if (Index < this->Particles->GetHilbertSpaceDimension())
+				{
+				  TmpIndexArray[Pos] = Index;
+				  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+				  ++Pos;
+				}
+			      ++ReducedNbrInteractionFactors;
+			    }    
+			}
+		      else
+			ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		    }
 		}
 	    }

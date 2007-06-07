@@ -85,7 +85,9 @@ am_libQHEHamiltonian_a_OBJECTS =  \
 	AbstractQHEOnSphereWithSU4SpinHamiltonian.$(OBJEXT) \
 	ParticleOnSphereWithSU4SpinGenericHamiltonian.$(OBJEXT) \
 	ParticleOnSphereL2Hamiltonian.$(OBJEXT) \
-	LinearlySuperposedQHEOnSphereHamiltonian.$(OBJEXT)
+	LinearlySuperposedQHEOnSphereHamiltonian.$(OBJEXT) \
+	AbstractQHEOnSphereWithSpinHamiltonian.$(OBJEXT) \
+	ParticleOnSphereWithSpinGenericHamiltonian.$(OBJEXT)
 libQHEHamiltonian_a_OBJECTS = $(am_libQHEHamiltonian_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -96,6 +98,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnSphereHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnSphereNBodyInteractionHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnSphereWithSU4SpinHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnSphereWithSpinHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnTorusHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ApproximateFermionOnTorusCoulombHamiltonian.Po \
@@ -118,6 +121,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSU4SpinGenericHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ParticleOnSphereWithSpinGenericHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.Po \
@@ -278,7 +282,9 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.cc \
 AbstractQHEOnSphereWithSU4SpinHamiltonian.cc \
 ParticleOnSphereWithSU4SpinGenericHamiltonian.cc \
 ParticleOnSphereL2Hamiltonian.cc \
-LinearlySuperposedQHEOnSphereHamiltonian.cc
+LinearlySuperposedQHEOnSphereHamiltonian.cc \
+AbstractQHEOnSphereWithSpinHamiltonian.cc \
+ParticleOnSphereWithSpinGenericHamiltonian.cc
 
 all: all-recursive
 
@@ -333,6 +339,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnSphereHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnSphereNBodyInteractionHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnSphereWithSU4SpinHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnSphereWithSpinHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnTorusHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ApproximateFermionOnTorusCoulombHamiltonian.Po@am__quote@
@@ -355,6 +362,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSU4SpinGenericHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpinDeltaLaplacianDeltaHamiltonian.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereWithSpinGenericHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombDMRGReadyHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombHamiltonian.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.Po@am__quote@

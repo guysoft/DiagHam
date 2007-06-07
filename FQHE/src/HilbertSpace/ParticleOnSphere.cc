@@ -111,6 +111,20 @@ int ParticleOnSphere::AdAdAdAAA (int index, int m1, int m2, int m3, int n1, int 
   return ProdAdProdA(index, TmpM, TmpN, 3, coefficient);
 }
 
+// apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
+//
+// index = index of the state on which the operator has to be applied
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m1 a^+_m2 a^+_m3 a^+_m4 a_n1 a_n2 a_n3 a_n4 operator to a given state (with m1+m2+m3+m4=n1+n2+n3+n4)
 //
 // index = index of the state on which the operator has to be applied

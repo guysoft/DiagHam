@@ -1547,8 +1547,8 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplication()
 			  ++ReducedNbrInteractionFactors;
 			}    
 		    }
-	      else
-		ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+		  else
+		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
 		}
 	      if (this->OneBodyTermFlag == true)
 		{
@@ -1702,25 +1702,60 @@ void AbstractQHEOnSphereHamiltonian::EnableFastMultiplicationWithDiskStorage(cha
 
   TmpIndexArray = new int [this->MaxNbrInteractionPerComponent];
   TmpCoefficientArray = new double [this->MaxNbrInteractionPerComponent];      
+  double Coefficient2;
+  int SumIndices;
+  int TmpNbrM3Values;
+  int* TmpM3Values;
+  int ReducedNbrInteractionFactors;
 
   for (int i = this->DiskStorageStart; i < DiskStorageEnd; ++i)
     {
       if (this->NbrInteractionPerComponent[TotalPos] > 0)
 	{
 	  Pos = 0;
-	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+	  if (this->NbrM12Indices == 0)
 	    {
-	      m1 = this->M1Value[j];
-	      m2 = this->M2Value[j];
-	      m3 = this->M3Value[j];
-	      m4 = m1 + m2 - m3;
-	      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
+	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
 		{
-		  TmpIndexArray[Pos] = Index;
-		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-		  ++Pos;
+		  m1 = this->M1Value[j];
+		  m2 = this->M2Value[j];
+		  m3 = this->M3Value[j];
+		  m4 = m1 + m2 - m3;
+		  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
+		      ++Pos;
+		    }
 		}
+	    }
+	  else
+	    {
+	      ReducedNbrInteractionFactors = 0;
+	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
+		{
+		  Coefficient = this->Particles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
+		  if (Coefficient != 0.0)
+		    {
+		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
+		      TmpM3Values = this->M3Values[m1];
+		      TmpNbrM3Values = this->NbrM3Values[m1];
+		      for (m3 = 0; m3 < TmpNbrM3Values; ++m3)
+			{
+			  Index = this->Particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+			  if (Index < this->Particles->GetHilbertSpaceDimension())
+			    {
+			      TmpIndexArray[Pos] = Index;
+			      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+			      ++Pos;
+			    }
+			  ++ReducedNbrInteractionFactors;
+			}    
+		    }
+		  else
+		    ReducedNbrInteractionFactors += this->NbrM3Values[m1];
+		}	      
 	    }
 	  if (this->OneBodyTermFlag == true)
 	    {

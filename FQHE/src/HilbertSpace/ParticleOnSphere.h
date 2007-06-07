@@ -121,9 +121,9 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient) = 0;
+  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
 
-  // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
+  // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
@@ -131,7 +131,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value =  multiplicative factor 
   virtual double AA (int index, int n1, int n2);
 
-  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next ProdA call
   //
   // index = index of the state on which the operator has to be applied
   // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
