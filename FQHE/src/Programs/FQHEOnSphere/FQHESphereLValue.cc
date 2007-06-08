@@ -101,10 +101,11 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
-    {
-      return -1;
-    }
+  if (NbrParticles==0)
+    if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, FermionFlag) == false)
+      {
+	return -1;
+      }
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
     if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
       {

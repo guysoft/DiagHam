@@ -234,7 +234,7 @@ int main(int argc, char** argv)
 	      cout << Positions<< endl;
 	    }		
 	}
-      if (i>=NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
+      if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
       History->RewindHistory();
       // testing
       cout << "SqrNorm exact: " << NormExactObs.Average() << endl;
@@ -324,7 +324,7 @@ int main(int argc, char** argv)
 	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
 	  TrialValue = TmpMetropolis;
 	  ++Accepted;	  
-	  if ((History)&&(SampleDensity==1)) // do not recalculate Exact or count steps here if using spread out samples
+	  if (SampleDensity==1) // do not recalculate Exact or count steps here if using spread out samples
 	    {
 	      // recalculate exact function value:
 	      TimeCoherence = NextCoordinates;
@@ -332,7 +332,8 @@ int main(int argc, char** argv)
 	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());      
 	      ValueExact = Operation.GetScalar();
-	      History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
+	      if (History)
+		History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	    }
 	}
       else
