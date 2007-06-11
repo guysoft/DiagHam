@@ -124,21 +124,20 @@ int main(int argc, char** argv)
     {
 #ifdef __64_BITS__
       if (LzMax <= 63)
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	  Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	else
-	  Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
-      else
-	Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
 #else
       if (LzMax <= 31)
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
+#endif
+	{
 	  Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	else
-	  Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
+	  if ((SymmetrizedBasis == true) || (TotalLz == 0))
+	    {
+	      FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
+	      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((FermionOnSphere*) Space));
+	      OutputState = GroundState;	      
+	    }
+	}
       else
 	Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
-#endif
     }
   else
     {
@@ -202,30 +201,18 @@ int main(int argc, char** argv)
 	      return -1;     
 	    }
 	}
-      if (SymmetrizedBasis == false)
-	{
-	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  else
-	    Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	    {
-	      ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	      return 0;
-	    }
-	}
+      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+	Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
       else
+	Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 	{
-	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  else
-	    Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	    {
-	      ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	      return 0;
-	    }
+	  ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	  return 0;
 	}
+      FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
+      RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
+      OutputState = GroundState;	      
     }
 
 
