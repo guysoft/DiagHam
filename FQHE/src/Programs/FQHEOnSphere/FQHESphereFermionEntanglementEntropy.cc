@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 #endif
 	{
 	  Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	  if ((SymmetrizedBasis == true) || (TotalLz == 0))
+	  if ((SymmetrizedBasis == true) && (TotalLz == 0))
 	    {
 	      FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
 	      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((FermionOnSphere*) Space));
@@ -210,9 +210,12 @@ int main(int argc, char** argv)
 	  ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 	  return 0;
 	}
-      FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-      RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
-      OutputState = GroundState;	      
+      if ((SymmetrizedBasis == true) && (TotalLz == 0))
+	{
+	  FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
+	  RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
+	  OutputState = GroundState;	      
+	}
     }
 
 
