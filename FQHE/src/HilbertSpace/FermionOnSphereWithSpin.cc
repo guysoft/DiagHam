@@ -66,10 +66,11 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
   this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateHighestBit = new int [this->HilbertSpaceDimension];
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin) != this->HilbertSpaceDimension)
     {
       cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSpin!" << endl;
@@ -139,7 +140,7 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
       delete[] this->StateDescription;
       delete[] this->StateHighestBit;
       delete[] this->LookUpTableShift;
-      for (int i = 0; i < 2*this->NbrLzValue; ++i)
+      for (int i = 0; i < (2 * this->NbrLzValue); ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }

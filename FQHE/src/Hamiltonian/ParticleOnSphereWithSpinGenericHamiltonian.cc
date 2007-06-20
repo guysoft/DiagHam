@@ -78,7 +78,7 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
   this->PseudoPotentials = new double* [3];
-  for (int j = 0; j < 10; ++j)
+  for (int j = 0; j < 3; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
@@ -137,7 +137,7 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
 
 ParticleOnSphereWithSpinGenericHamiltonian::~ParticleOnSphereWithSpinGenericHamiltonian() 
 {
-  for (int j = 0; j < 10; ++j)
+  for (int j = 0; j < 3; ++j)
     delete[] this->PseudoPotentials[j];
   delete[] this->PseudoPotentials;
   if (this->FastMultiplicationFlag == true)

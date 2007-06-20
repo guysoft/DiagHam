@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 	    {
 	      FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
 	      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((FermionOnSphere*) Space));
-	      OutputState = GroundState;	      
+	      GroundState = OutputState;
 	    }
 	}
       else
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 	{
 	  FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
 	  RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
-	  OutputState = GroundState;	      
+	  GroundState = OutputState;
 	}
     }
 
