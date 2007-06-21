@@ -212,6 +212,15 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->LanczosPrecision = 0.0;
     }
+
+  if (((*options)["fast-disk"] != 0) && (this->NbrEigenvalue == 1) && (this->EvaluateEigenvectors == true))
+    {
+      this->FastDiskFlag = ((BooleanOption*) (*options)["fast-disk"])->GetBoolean();
+    }
+  else
+    {
+      this->FastDiskFlag = false;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -386,7 +395,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	{
 	  if (this->DiskFlag == false)
 	    if ((this->EvaluateEigenvectors == true) || (this->ComputeLValueFlag == true))
-	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);
+	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag);
 	    else
 	      Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	  else

@@ -126,7 +126,10 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
       this->V1[i] = Scale * ((double) (rand() - Shift));
     }
   this->V1 /= this->V1.Norm();
-  this->InitialState = RealVector (this->V1, true);
+  if (this->DiskFlag == false)
+    this->InitialState = RealVector (this->V1, true);
+  else
+    this->V1.WriteVector("vector.0");
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
@@ -192,29 +195,46 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  TmpComponents[j] = TmpEigenvector(j, 0);
 	}
 
-      this->GroundState.Copy(this->InitialState, TmpComponents[0]);
-      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
-      Operation1.ApplyOperation(this->Architecture);
-      this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
-      this->V3 /= this->V3.Norm();
-      this->V2.Copy(this->InitialState);
-      this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
-      for (int i = 2; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
+      if (this->DiskFlag == false)
 	{
-	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
+	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
+	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
 	  Operation1.ApplyOperation(this->Architecture);
-	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i - 1), this->V3, 
-					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2), this->V2);
-	  this->V1 /= this->V1.Norm();
-	  this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
-	  RealVector TmpV (this->V2);
-	  this->V2 = this->V3;
-	  this->V3 = this->V1;
-	  this->V1 = TmpV;
-	  cout << ".";
-	  cout.flush();
+	  this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
+	  this->V3 /= this->V3.Norm();
+	  this->V2.Copy(this->InitialState);
+	  this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
+	  for (int i = 2; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
+	    {
+	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
+	      Operation1.ApplyOperation(this->Architecture);
+	      this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i - 1), this->V3, 
+					    -this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2), this->V2);
+	      this->V1 /= this->V1.Norm();
+	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
+	      RealVector TmpV (this->V2);
+	      this->V2 = this->V3;
+	      this->V3 = this->V1;
+	      this->V1 = TmpV;
+	      cout << ".";
+	      cout.flush();
+	    }
 	}
-
+      else
+	{ 
+	  this->V1.ReadVector("vector.0");	      
+	  this->GroundState.Copy(this->V1, TmpComponents[0]);
+	  char* TmpVectorName = new char [256];
+	  for (int i = 1; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", i);
+	      this->V1.ReadVector(TmpVectorName);	      
+	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);	      
+	      cout << ".";
+	      cout.flush();
+	    }	  
+	  delete[] TmpVectorName;
+	}
       cout << endl;
       this->GroundState /= this->GroundState.Norm();
       this->GroundStateFlag = true;
@@ -249,8 +269,6 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
-      if (this->DiskFlag == true)
-	this->V3.WriteVector("vector.2");
     }
   else
     {
@@ -270,6 +288,13 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
       Operation4.ApplyOperation(this->Architecture);
       this->V3 /= this->V3.Norm();
+      if (this->DiskFlag == true)
+	{
+	  char* TmpVectorName = new char [256];
+	  sprintf(TmpVectorName, "vector.%d", i);
+	  this->V3.WriteVector(TmpVectorName);
+	  delete[] TmpVectorName;
+	}
       RealVector TmpV (this->V1);
       this->V1 = this->V2;
       this->V2 = this->V3;
@@ -283,12 +308,6 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = TmpScalarProduct[0];
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = TmpScalarProduct[1];
-      if (this->DiskFlag == true)
-	{
-	  char* TmpVectorName = new char [256];
-	  sprintf(TmpVectorName, "vector.%d", (i + 1));
-	  this->V3.WriteVector(TmpVectorName);
-	}
     }
   delete[] TmpVector;
   delete[] TmpCoefficient;

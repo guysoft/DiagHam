@@ -114,6 +114,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool ComputeEnergyFlag;
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
   double LanczosPrecision;
+  // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state
+  bool FastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
 
