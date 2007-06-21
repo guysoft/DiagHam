@@ -59,6 +59,9 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // flag to indicate if ground state has already been compute
   bool GroundStateFlag;
 
+  // flag to indicate the use of disk storage to increase speed of ground state calculation
+  bool DiskFlag;
+
   int Index;
 
   // number of wanted eigenvalues
@@ -72,7 +75,8 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   //
   // architecture = architecture to use for matrix operations
   // maxIter = an approximation of maximal number of iteration
-  BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter = 0);
+  // diskFlag = use disk storage to increase speed of ground state calculation
+  BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false);
 
   // copy constructor
   //

@@ -52,8 +52,9 @@ using std::endl;
 //
 // architecture = architecture to use for matrix operations
 // maxIter = an approximation of maximal number of iteration
+// diskFlag = use disk storage to increase speed of ground state calculation
 
-BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter) 
+BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter, bool diskFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -63,6 +64,7 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(Abstr
   this->InitialState = RealVector();
   this->GroundState = RealVector();
   this->GroundStateFlag = false;
+  this->DiskFlag = diskFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -90,6 +92,7 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(const
   this->V1 = algorithm.V1;
   this->V2 = algorithm.V2;
   this->V3 = algorithm.V3;
+  this->DiskFlag = algorithm.DiskFlag;
   this->InitialState = algorithm.InitialState;
   this->GroundState = algorithm.GroundState;
   this->GroundStateFlag = algorithm.GroundStateFlag;
@@ -138,7 +141,10 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vect
   this->V1 = vector;
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
-  this->InitialState = RealVector (vector, true);
+  if (this->DiskFlag == false)
+    this->InitialState = RealVector (vector, true);
+  else
+    this->InitialState.WriteVector("vector.0");
   this->Index = 0;
   this->GroundStateFlag = false;
   this->TridiagonalizedMatrix.Resize(0, 0);
@@ -237,10 +243,14 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
       this->V2 /= this->V2.Norm(); 
+      if (this->DiskFlag == true)
+	this->V2.WriteVector("vector.1");
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3);
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3);
+      if (this->DiskFlag == true)
+	this->V3.WriteVector("vector.2");
     }
   else
     {
@@ -273,6 +283,12 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       Operation2.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = TmpScalarProduct[0];
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = TmpScalarProduct[1];
+      if (this->DiskFlag == true)
+	{
+	  char* TmpVectorName = new char [256];
+	  sprintf(TmpVectorName, "vector.%d", (i + 1));
+	  this->V3.WriteVector(TmpVectorName);
+	}
     }
   delete[] TmpVector;
   delete[] TmpCoefficient;
