@@ -147,7 +147,7 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vect
   if (this->DiskFlag == false)
     this->InitialState = RealVector (vector, true);
   else
-    this->InitialState.WriteVector("vector.0");
+    this->V1.WriteVector("vector.0");
   this->Index = 0;
   this->GroundStateFlag = false;
   this->TridiagonalizedMatrix.Resize(0, 0);
