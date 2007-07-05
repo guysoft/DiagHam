@@ -50,6 +50,20 @@ double OverlapError(ComplexObservable &ScalarProduct, RealObservable &Norm);
 Complex OverlapValue(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
 double OverlapError(WeightedComplexObservable &ScalarProduct, WeightedRealObservable &Norm1, WeightedRealObservable &Norm2);
 
+double MinDist (RealVector &Positions)
+{
+  int NbrFermions = Positions.GetVectorDimension()/2;
+  double sp, spmax=-1.0;
+  for ( int i=0; i<NbrFermions; ++i)
+    for ( int j=i+1; j<NbrFermions; ++j)
+      {
+	sp=sin(Positions[2*i])*sin(Positions[2*j])*cos(Positions[2*i+1]-Positions[2*j+1]) +
+	  cos(Positions[2*i])*cos(Positions[2*j]);
+	if (sp>spmax) spmax=sp;
+      }
+  return acos(spmax);
+}
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -144,6 +158,21 @@ int main(int argc, char** argv)
 	  return 0;
 	}
     }
+
+  if (Manager.GetInteger("history-mode")==2)
+    {
+      if (Manager.GetString("exact-state") != 0)
+	if (State.ReadVector (Manager.GetString("exact-state")))
+	  {
+	    cout << "Using exact state to check eventual outliers" << endl;
+	  }
+	else
+	  {
+	    cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
+	    return -1;      
+	  }
+      
+    }
   
   Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
   
@@ -213,14 +242,29 @@ int main(int argc, char** argv)
       History->RewindHistory();
       cout << "typicalSA= " << typicalSA << ", typicalWF="<<typicalWF<<", typicalTV="<<typicalTV<<endl;
       int i=0;
+      Complex rawExact;
       while ( (i++<NbrIter) && (History->GetMonteCarloStep(sampleCount, CurrentSamplingAmplitude, &(Positions[0]), ValueExact)))
 	{
+	  rawExact=ValueExact;
 	  totalSampleCount+=sampleCount;
 	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;	  
 	  CurrentSamplingAmplitude /= typicalSA;
 	  ValueExact /= typicalWF;
-	  if (Norm(ValueExact)>100)
-	    cout << i << ": excluding large Psi: " << ValueExact << endl;
+	  if (Norm(ValueExact)>1000.0)
+	    {
+	      cout << i << ": excluding large Psi: " << ValueExact << endl;
+	      if (State.GetVectorDimension()>0) // have exact state!
+		{
+		  cout << "Checking if abnormal result is reproduced!" << endl;
+		  FermionOnSphere Space (NbrFermions, Lz, LzMax);
+		  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
+		  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());      
+		  ValueExact = Operation.GetScalar();
+		  cout << "Comparing: " << ValueExact << " to "<< rawExact << "(ratio " << ValueExact/rawExact << ")" <<endl;
+		  cout << "Minimal distance: " << MinDist(Positions);
+		}
+	    }
 	  else
 	    {
 	      NormTrialObs.Observe(SqrNorm(TrialValue)/CurrentSamplingAmplitude,(double)sampleCount);
@@ -231,7 +275,8 @@ int main(int argc, char** argv)
 	    {
 	      cout << "Total "<<sampleCount<<" samples in these coordinates: " << endl;
 	      cout << "Psi^2=" << SqrNorm(ValueExact) <<" trial^2="<<CurrentSamplingAmplitude<<endl;
-	      cout << Positions<< endl;
+	      cout << "Minimal distance: " << MinDist(Positions);
+	      //cout << Positions<< endl;
 	    }		
 	}
       if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
