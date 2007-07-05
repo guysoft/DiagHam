@@ -12,7 +12,7 @@ using std::endl;
 #define DIFFERENTIAL_SPREAD  7
 
 // maximum allowed factor of Norm of wavefunction over typical value 
-#define OUTLIER_LIMIT 5.0
+#define OUTLIER_LIMIT 3.0
 
 WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, char *logFileName)
 {
@@ -82,10 +82,15 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
   this->OutlierLimit=OUTLIER_LIMIT;
   int OutlierCount;
   double Variance=0.0;
+  double Variance2=0.0;
+  double NO=0.0;
+  bool haveBeenIncreasing=false;
  evaluate_norm:
   {  
     History->RewindHistory();
     WeightedRealObservable NormExactObs(256);
+    WeightedRealObservable NormExactObs2(256);
+    WeightedRealObservable NormOutliers(256);
     // calculate norm of exact wavefunction, once and for all:
     int count =0;
     OutlierCount=0;
@@ -96,23 +101,32 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
 	if (Norm(ExactValue)>this->OutlierLimit)
 	  {
 	    //cout << count << ": excluding large Psi  " << ExactValue << endl;
+	    NormOutliers<<SqrNorm(ExactValue)/SamplingAmplitude;	    
 	    OutlierCount++;
 	  }
 	else
-	  NormExactObs.Observe(SqrNorm(ExactValue)/SamplingAmplitude,(double)sampleCount);
+	  {
+	    if (Norm(ExactValue)<this->OutlierLimit/2.0)
+	      NormExactObs2.Observe(SqrNorm(ExactValue)/SamplingAmplitude,(double)sampleCount);
+	    NormExactObs.Observe(SqrNorm(ExactValue)/SamplingAmplitude,(double)sampleCount);
+	  }
 	count++;
       }
     this->NormExactWF = NormExactObs.Average();
     this->ErrorNormExactWF = NormExactObs.ErrorEstimate();
     Variance= NormExactObs.Variance();
+    Variance2= NormExactObs2.Variance();
+    NO = NormOutliers.Average();
   }
-  cout << "OutlierCount: "<<OutlierCount<<", OutlierLimit: " <<OutlierLimit<< ", Variance: " <<Variance<<endl;
-  if ((OutlierCount>10) && (OutlierLimit<12.0*Variance))
+  cout << "OutlierCount: "<<OutlierCount<<", OutlierLimit: " <<OutlierLimit<< ", Norm: " << NormExactWF
+       << ", NO: " << NO<<", Variance: " <<Variance<< ", Variance2: " << Variance2 << endl;
+  if (Variance2>0.7*Variance)
     {
-      cout << "Repeating search for Outliers"<<endl;
-      this->OutlierLimit*=sqrt(2.0);
+      this->OutlierLimit*=1.2;
+      haveBeenIncreasing=true;
       goto evaluate_norm;
     }
+  //else if (haveBeenIncreasing) this->OutlierLimit*=5.0;
   
   if (logFileName!=NULL)
     {
