@@ -348,6 +348,14 @@ class ComplexMatrix : public Matrix
 
 #endif
 
+#ifdef __LAPACK__
+
+  // calculate a determinant using the LAPACK library (conserving current matrix)
+  //
+  Complex LapackDeterminant ();
+
+#endif
+
 };
 
 // get reference to a given column

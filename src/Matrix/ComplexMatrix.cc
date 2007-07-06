@@ -36,6 +36,20 @@ using std::endl;
 using std::cout;
 
 
+#ifdef HAVE_LAPACK
+
+typedef double doublereal;
+typedef struct { doublereal r, i; } doublecomplex;
+
+// binding to the LAPACK zgetrf routine for LU decomposition
+//
+extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimensionN, const doublecomplex* matrixA,
+				     const int* leadingDimensionA, const int *ipiv, const int *info);
+
+#endif
+
+
+
 // default constructor
 //
 
@@ -795,12 +809,17 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
   delete[] tmp;
   return *this;
 }
-// evaluate matrix determinant (skrewing up matrix elements)
+
+
+// evaluate matrix determinant (screwing up matrix elements)
 //
 // return value = matrix determinant 
 
 Complex ComplexMatrix::Determinant () 
 {
+#ifdef __LAPACKONLY__
+  return this->LapackDeterminant();
+#endif
   if (this->NbrColumn != this->NbrRow)
     return 0.0;
   Complex TmpDet (1.0);
@@ -1254,6 +1273,60 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P)
       Str << "+" << P.Columns[P.NbrColumn - 1].ImaginaryComponents[P.NbrRow - 1] << "I";
   Str << "}}";
   return Str;
+}
+
+#endif
+
+
+
+#ifdef __LAPACK__
+
+// calculate a determinant using the LAPACK library (conserving current matrix)
+//
+Complex ComplexMatrix::LapackDeterminant ()
+{
+  if (this->NbrColumn != this->NbrRow)
+    return 0.0;
+  doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
+  double *TmpColumnReal;
+  double *TmpColumnImag;
+  for (int j=0;j<NbrRow;++j)
+    {
+      TmpColumnReal=this->Columns[j].RealComponents;
+      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      for (int i=0; i<NbrRow;++i)
+	{
+	  TmpMatrix[i+j*NbrRow].r=TmpColumnReal[i];
+	  TmpMatrix[i+j*NbrRow].i=TmpColumnImag[i];
+	}
+    }
+  int Information = 0;
+  int DimensionM=NbrRow;
+  int *Permutation = new int[NbrRow];
+  FORTRAN_NAME(zgetrf)(&DimensionM, &DimensionM, TmpMatrix, &DimensionM , Permutation, &Information);
+
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call in ComplexMatrix.cc, line "<< __LINE__<<endl;
+      exit(1);
+    }
+
+  int sign=0;
+  Complex Result(1.0,0.0);
+  
+  for (int i=0; i<DimensionM; ++i)
+    {
+      if (Permutation[i]!=i+1) sign ^= 1;
+      cout << Permutation[i] << " ";
+      Result *= Complex(TmpMatrix[i+DimensionM*i].r,TmpMatrix[i+DimensionM*i].i);
+    }
+  if (sign & 1)
+    { cout << " -1" << endl;
+      Result*=-1.0;
+    }
+  else cout << " +1" << endl;
+  
+  return Result;
 }
 
 #endif
