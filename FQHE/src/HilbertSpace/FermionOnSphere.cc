@@ -940,6 +940,13 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
+#ifdef __LAPACK__
+      Complex SlaterDet = Slater.LapackDeterminant();
+#else
+      Complex SlaterDet = Slater.Determinant();
+#endif
+      Value += SlaterDet * (state[k] * Factor);
+    }
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
