@@ -1008,7 +1008,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
   int MaxIndex = this->HilbertSpaceDimension - 1;
   if ((NbrFermionsComplementarySector + subsytemSize - 2) > this->StateLzMax[MaxIndex])
     MaxIndex = this->LookUpTable[NbrFermionsComplementarySector + subsytemSize - 2][0];
-  if ((TmpStateMaxLz < this->StateLzMax[0]) && (TmpStateMaxLz >= subsytemSize))
+  if ((TmpStateMaxLz < this->StateLzMax[0]) && ((TmpStateMaxLz + 1) >  this->StateLzMax[MaxIndex]) && (TmpStateMaxLz >= subsytemSize))
     MinIndex = this->LookUpTable[TmpStateMaxLz + 1][0];
   
   unsigned long TmpComplementarySubsystem;

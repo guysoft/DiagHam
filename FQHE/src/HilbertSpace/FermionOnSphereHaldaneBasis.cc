@@ -166,9 +166,9 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   NewHilbertSpaceDimension = 0;
   int TotalIndex = 0;
 #ifdef  __64_BITS__
-  if ((this->HilbertSpaceDimension & 0x3f) == 0)
+  if ((this->HilbertSpaceDimension & 0x3f) != 0)
 #else
-  if ((this->HilbertSpaceDimension & 0x1f) == 0)
+  if ((this->HilbertSpaceDimension & 0x1f) != 0)
 #endif
     --ReducedHilbertSpaceDimension;
   for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
@@ -191,21 +191,23 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
     }
 #ifdef  __64_BITS__
   this->HilbertSpaceDimension &= 0x3f;
-#else
+ #else
   this->HilbertSpaceDimension &= 0x1f;
-#endif
-  TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-  for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+ #endif
+  if (this->HilbertSpaceDimension != 0)
     {
-      if ((TmpKeepStateFlag >> j) & 0x1l)
+      TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
+      for (int j = 0; j < this->HilbertSpaceDimension; ++j)
 	{
-	  TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	  TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
-	  ++NewHilbertSpaceDimension;
+	  if ((TmpKeepStateFlag >> j) & 0x1l)
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
+	      ++NewHilbertSpaceDimension;
+	    }
+	  ++TotalIndex;
 	}
-      ++TotalIndex;
     }
-
   
   delete[] this->StateDescription;
   delete[] this->StateLzMax;

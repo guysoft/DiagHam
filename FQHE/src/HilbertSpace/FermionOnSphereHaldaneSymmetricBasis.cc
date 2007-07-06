@@ -193,25 +193,25 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
 	  ++TotalIndex;
 	}
     }
-#ifdef  __64_BITS__
-  this->HilbertSpaceDimension &= 0x3f;
-#else
-  this->HilbertSpaceDimension &= 0x1f;
-#endif
-  TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-  for (int j = 0; j < this->HilbertSpaceDimension; ++j)
-    {
-      if ((TmpKeepStateFlag >> j) & 0x1l)
-	{
-	  if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
-	    {
-	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
-	      ++NewHilbertSpaceDimension;	  
-	    }
-	}
-      ++TotalIndex;
-    }
+// #ifdef  __64_BITS__
+//   this->HilbertSpaceDimension &= 0x3f;
+// #else
+//   this->HilbertSpaceDimension &= 0x1f;
+// #endif
+//   TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
+//   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+//     {
+//       if ((TmpKeepStateFlag >> j) & 0x1l)
+// 	{
+// 	  if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
+// 	    {
+// 	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+// 	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
+// 	      ++NewHilbertSpaceDimension;	  
+// 	    }
+// 	}
+//       ++TotalIndex;
+//     }
 
   
   delete[] this->StateDescription;

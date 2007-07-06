@@ -254,7 +254,10 @@ int main(int argc, char** argv)
       int MaxSubsystemNbrParticles = NbrParticles;
       if (MaxSubsystemNbrParticles > SubsystemSize)
 	MaxSubsystemNbrParticles = SubsystemSize;
-      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+      int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
+      if (SubsystemNbrParticles < 0)
+	SubsystemNbrParticles = 0;
+      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemTotalLz = 0;
 	  int SubsystemLzMax = SubsystemSize - 1;
