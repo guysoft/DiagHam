@@ -1317,14 +1317,10 @@ Complex ComplexMatrix::LapackDeterminant ()
   for (int i=0; i<DimensionM; ++i)
     {
       if (Permutation[i]!=i+1) sign ^= 1;
-      cout << Permutation[i] << " ";
       Result *= Complex(TmpMatrix[i+DimensionM*i].r,TmpMatrix[i+DimensionM*i].i);
     }
   if (sign & 1)
-    { cout << " -1" << endl;
       Result*=-1.0;
-    }
-  else cout << " +1" << endl;
   
   return Result;
 }
