@@ -51,6 +51,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
@@ -246,8 +248,16 @@ int main(int argc, char** argv)
   int MeanSubsystemSize = LzMax >> 1;
   if ((LzMax & 1) != 0)
     ++MeanSubsystemSize;
-//  MeanSubsystemSize = 2;
-  for (int SubsystemSize = 1; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
+  if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+    {
+      MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
+      if (MeanSubsystemSize > LzMax)
+	MeanSubsystemSize = LzMax;
+    }
+  int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
+  if (SubsystemSize < 1)
+    SubsystemSize = 1;
+  for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
@@ -261,8 +271,6 @@ int main(int argc, char** argv)
 	{
 	  int SubsystemTotalLz = 0;
 	  int SubsystemLzMax = SubsystemSize - 1;
-//  	  if (((SubsystemLzMax & 1) ==  1) && ((SubsystemNbrParticles & 1) == 1))
-//  	    SubsystemTotalLz = 1;
 	  int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
 	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
