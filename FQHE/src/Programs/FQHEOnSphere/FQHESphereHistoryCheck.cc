@@ -54,7 +54,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('c', "history-to-check", "name of the file where MC samples were recorded", NULL);
   (*SystemGroup) += new SingleStringOption ('o', "history-output", "name of the fixed output file", NULL);
   (*SystemGroup) += new SingleDoubleOption  ('t', "threshold", "threshold for testing exact values (0.0=test all)", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('l', "limit", "deviation before discarding a sample", 1e-10);
+  (*SystemGroup) += new SingleDoubleOption  ('d', "discard-limit", "deviation before discarding a sample", 1e-10);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "step-limit", "maximum number of samples to be checked", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -137,7 +138,9 @@ int main(int argc, char** argv)
   char *HistoryOutputName;
 
   double threshold = Manager.GetDouble("threshold");
-  double limit = Manager.GetDouble("limit");
+  double limit = Manager.GetDouble("discard-limit");
+  int StepLimit  = Manager.GetInteger("step-limit");
+  if (StepLimit==0) StepLimit=History->GetProjectedSamples();
   
   if (Manager.GetString("history-output") == 0)
     {
@@ -154,18 +157,19 @@ int main(int argc, char** argv)
   int keptFromChecked=0;
   double maxKeep=0.0;
   double minDiscard=1e300;
+  double norm;
   
   Complex rawExact, ratio;
   
-  while (History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue))
+  while ((totalSampleCount<StepLimit)&&(History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue)))
     {
       rawExact=ExactValue;
       SamplingAmplitude /= typicalSA;
       ExactValue /= typicalWF;
       totalSampleCount+=sampleCount;
-      if (Norm(ExactValue)>threshold)
+      if ((norm=Norm(ExactValue))>threshold)
 	{
-	  cout << "testing " << totalSampleCount << ": " << Norm(ExactValue)<<" ";
+	  cout << "testing " << totalSampleCount << ": " << norm<<" ";
 	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
 	  ExactValue = Operation.GetScalar();
@@ -179,12 +183,12 @@ int main(int argc, char** argv)
 	      conservedSampleCount+=sampleCount;	      
 	      HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, ExactValue);
 	      for (int i=1; i<sampleCount; ++i) HistoryOutput->RecordRejectedStep();
-	      if (Norm(ExactValue)>maxKeep) maxKeep = Norm(ExactValue);
+	      if (norm>maxKeep) maxKeep = norm;
 	    }
 	  else
 	    {	      
 	      cout << " -> discard" << endl;
-	      if (Norm(ExactValue)<minDiscard) minDiscard = Norm(ExactValue);
+	      if (norm<minDiscard) minDiscard = norm;
 	    }
 	}
       else

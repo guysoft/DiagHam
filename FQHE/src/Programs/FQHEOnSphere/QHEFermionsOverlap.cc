@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 	  TrialValue = (*TestWaveFunction)(Positions)/typicalTV;	  
 	  CurrentSamplingAmplitude /= typicalSA;
 	  ValueExact /= typicalWF;
-	  if (Norm(ValueExact)>1000.0)
+	  if (Norm(ValueExact)>100.0)
 	    {
 	      cout << i << ": excluding large Psi: " << ValueExact << endl;
 	      if (State.GetVectorDimension()>0) // have exact state!
