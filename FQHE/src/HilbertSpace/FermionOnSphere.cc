@@ -33,6 +33,7 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 
@@ -893,7 +894,11 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 {
   Complex Value;
   Complex Tmp;
+#ifdef __LAPACK__
+  ComplexLapackDeterminant Slater(this->NbrFermions);
+#else
   ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
+#endif
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrFermions];
@@ -936,17 +941,18 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  ComplexVector& TmpColum2 = Functions[i];	  
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
+#ifdef __LAPACK__
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
+#else
 	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
 	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
+#endif
 	    }
 	}
-#ifdef __LAPACK__
-      Complex SlaterDet = Slater.LapackDeterminant();
-#else
-      Complex SlaterDet = Slater.Determinant();
-#endif
-      Value += SlaterDet * (state[k] * Factor);
-    }
+      //cout << Slater << endl;
+
+      // can calculate with lapack for a regular ComplexMatrix by Complex SlaterDet = Slater.LapackDeterminant();
+
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
