@@ -118,9 +118,9 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
     Variance2= NormExactObs2.Variance();
     NO = NormOutliers.Average();
   }
-  cout << "OutlierCount: "<<OutlierCount<<", OutlierLimit: " <<OutlierLimit<< ", Norm: " << NormExactWF
-       << ", NO: " << NO<<", Variance: " <<Variance<< ", Variance2: " << Variance2 << endl;
-  if (Variance2>0.7*Variance)
+  //cout << "OutlierCount: "<<OutlierCount<<", OutlierLimit: " <<OutlierLimit<< ", Norm: " << NormExactWF
+  //   << ", NO: " << NO<<", Variance: " <<Variance<< ", Variance2: " << Variance2 << endl;
+  if ((OutlierCount>0)&&(Variance2>0.7*Variance))
     {
       this->OutlierLimit*=1.2;
       haveBeenIncreasing=true;

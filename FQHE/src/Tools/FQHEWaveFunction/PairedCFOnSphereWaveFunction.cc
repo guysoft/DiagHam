@@ -316,7 +316,8 @@ void PairedCFOnSphereWaveFunction::AdaptAverageMCNorm(int thermalize, int averag
       if (NextCoordinates == NbrParticles) --NextCoordinates;            
       SumTrialValues+=Norm(TmpMetropolis);
     }  
-  this->ElementNorm*= pow(SumTrialValues/average,(double)-2.0/this->NbrParticles);  
+  this->ElementNorm*= pow(SumTrialValues/average,(double)-2.0/this->NbrParticles);
+  delete Particles;
 }
 
 

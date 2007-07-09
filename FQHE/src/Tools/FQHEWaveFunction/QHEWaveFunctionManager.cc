@@ -167,10 +167,8 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	  double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
 	  int LL;
-	  bool cleanup=false;
 	  if (Coefficients==NULL)
 	    {
-	      cleanup=true;
 	      Coefficients = new double[1];
 	      Coefficients[0]=0.0;
 	      LL=1;
@@ -181,7 +179,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
 	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
 	  rst->AdaptAverageMCNorm();
-	  if (cleanup) delete [] Coefficients;
+	  delete [] Coefficients;
 	  return rst;
 	}
       return 0;
