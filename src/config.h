@@ -66,6 +66,9 @@
 // LAPACK flag
 #ifdef HAVE_LAPACK
 #define __LAPACK__
+// some LAPACK type definitions
+typedef double doublereal;
+typedef struct { doublereal r, i; } doublecomplex;
 #ifdef __STDC__
 #define FORTRAN_NAME(n_)	n_ ## _
 #else
