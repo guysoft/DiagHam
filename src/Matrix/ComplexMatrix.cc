@@ -38,9 +38,6 @@ using std::cout;
 
 #ifdef HAVE_LAPACK
 
-typedef double doublereal;
-typedef struct { doublereal r, i; } doublecomplex;
-
 // binding to the LAPACK zgetrf routine for LU decomposition
 //
 extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimensionN, const doublecomplex* matrixA,
@@ -1321,6 +1318,9 @@ Complex ComplexMatrix::LapackDeterminant ()
     }
   if (sign & 1)
       Result*=-1.0;
+
+  delete [] TmpMatrix;
+  delete [] Permutation;
   
   return Result;
 }

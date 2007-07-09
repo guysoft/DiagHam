@@ -17,7 +17,8 @@ RealTriDiagonalSymmetricMatrix.cc \
 RealUpperTriangularMatrix.cc \
 RealLowerTriangularMatrix.cc \
 ComplexUpperTriangularMatrix.cc \
-RealBandDiagonalSymmetricMatrix.cc
+RealBandDiagonalSymmetricMatrix.cc \
+ComplexLapackDeterminant.cc
 
 libArray_a_SOURCES = \
 Double3DArray.cc \

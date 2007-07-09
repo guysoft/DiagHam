@@ -84,7 +84,7 @@ SUBDIRS =
 
 noinst_LIBRARIES = libMatrix.a libArray.a
 
-libMatrix_a_SOURCES = BlockDiagonalMatrix.cc BlockMatrix.cc ComplexMatrix.cc ComplexTriDiagonalHermitianMatrix.cc ComplexSkewSymmetricMatrix.cc HermitianMatrix.cc Matrix.cc RealAntisymmetricMatrix.cc RealDiagonalMatrix.cc RealMatrix.cc RealSymmetricMatrix.cc RealTriDiagonalSymmetricMatrix.cc RealUpperTriangularMatrix.cc RealLowerTriangularMatrix.cc ComplexUpperTriangularMatrix.cc RealBandDiagonalSymmetricMatrix.cc
+libMatrix_a_SOURCES = BlockDiagonalMatrix.cc BlockMatrix.cc ComplexMatrix.cc ComplexTriDiagonalHermitianMatrix.cc ComplexSkewSymmetricMatrix.cc HermitianMatrix.cc Matrix.cc RealAntisymmetricMatrix.cc RealDiagonalMatrix.cc RealMatrix.cc RealSymmetricMatrix.cc RealTriDiagonalSymmetricMatrix.cc RealUpperTriangularMatrix.cc RealLowerTriangularMatrix.cc ComplexUpperTriangularMatrix.cc RealBandDiagonalSymmetricMatrix.cc ComplexLapackDeterminant.cc
 
 
 libArray_a_SOURCES =  Double3DArray.cc Complex3DArray.cc Complex4DArray.cc
@@ -106,7 +106,8 @@ ComplexSkewSymmetricMatrix.o HermitianMatrix.o Matrix.o \
 RealAntisymmetricMatrix.o RealDiagonalMatrix.o RealMatrix.o \
 RealSymmetricMatrix.o RealTriDiagonalSymmetricMatrix.o \
 RealUpperTriangularMatrix.o RealLowerTriangularMatrix.o \
-ComplexUpperTriangularMatrix.o RealBandDiagonalSymmetricMatrix.o
+ComplexUpperTriangularMatrix.o RealBandDiagonalSymmetricMatrix.o \
+ComplexLapackDeterminant.o
 libArray_a_LIBADD = 
 libArray_a_OBJECTS =  Double3DArray.o Complex3DArray.o Complex4DArray.o
 AR = ar
@@ -121,7 +122,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/BlockDiagonalMatrix.P .deps/BlockMatrix.P \
-.deps/Complex3DArray.P .deps/Complex4DArray.P .deps/ComplexMatrix.P \
+.deps/Complex3DArray.P .deps/Complex4DArray.P \
+.deps/ComplexLapackDeterminant.P .deps/ComplexMatrix.P \
 .deps/ComplexSkewSymmetricMatrix.P \
 .deps/ComplexTriDiagonalHermitianMatrix.P \
 .deps/ComplexUpperTriangularMatrix.P .deps/Double3DArray.P \
