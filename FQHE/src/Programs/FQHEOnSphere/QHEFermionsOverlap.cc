@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "number of iteration between two consecutive result displays", -1);
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
+  (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
   (*MonteCarloGroup) += new SingleIntegerOption ('\n', "maxPoints", "number of simultaneous function evaltuation in optimising History mode ", 50);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
@@ -271,13 +272,13 @@ int main(int argc, char** argv)
 	      NormExactObs.Observe(SqrNorm(ValueExact)/CurrentSamplingAmplitude,(double)sampleCount);
 	      OverlapObs.Observe(Conj(TrialValue)*ValueExact/CurrentSamplingAmplitude,(double)sampleCount);
 	    }
-	  if (sampleCount>10)
-	    {
-	      cout << "Total "<<sampleCount<<" samples in these coordinates: " << endl;
-	      cout << "Psi^2=" << SqrNorm(ValueExact) <<" trial^2="<<CurrentSamplingAmplitude<<endl;
-	      cout << "Minimal distance: " << MinDist(Positions);
-	      //cout << Positions<< endl;
-	    }		
+//              if (sampleCount>10)
+// 	    {
+// 	      cout << "Total "<<sampleCount<<" samples in these coordinates: " << endl;
+// 	      cout << "Psi^2=" << SqrNorm(ValueExact) <<" trial^2="<<CurrentSamplingAmplitude<<endl;
+// 	      cout << "Minimal distance: " << MinDist(Positions);
+// 	      //cout << Positions<< endl;
+// 	    }		
 	}
       if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
       History->RewindHistory();
@@ -303,9 +304,10 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       // code to optimize paired state with available samples:
+      bool varyMR = Manager.GetBoolean("varyMR");
       WaveFunctionOverlapOptimizer *Optimizer =
 	new WaveFunctionOverlapOptimizer( (Abstract1DComplexTrialFunction*) TestWaveFunction,
-					  HistoryFileName, NbrFermions, /* excludeLastParameter */ true,
+					  HistoryFileName, NbrFermions, /* excludeLastParameter */ !varyMR,
 					  Manager.GetInteger("maxPoints"));
       RealVector optimalParameters( ((Abstract1DComplexTrialFunction*) TestWaveFunction)->GetNbrParameters());
       Complex optimalOverlap;

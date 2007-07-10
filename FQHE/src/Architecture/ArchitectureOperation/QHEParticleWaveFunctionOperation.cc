@@ -40,7 +40,7 @@
 // state = vector corresponding to the state in the Fock basis
 // position = vector whose components give coordinates of the point where the wave function has to be evaluated
 // basis = one body real space basis to use
-// nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+// nextCoordinates = indicate which coordinates will be changed during next time step (-1 if no time coherence has to be used)
 
 QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEParticle* space, RealVector* state, RealVector* position, 
 								    AbstractFunctionBasis* basis, int nextCoordinates)
