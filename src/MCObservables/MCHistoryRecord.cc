@@ -172,8 +172,9 @@ MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samp
   else this->LastSampleCount=1;
   sampleCount=this->LastSampleCount;
   HistoryFile.close();
-  LogFile.open(fileName, ios::binary | ios::out);
-  LogFile.seekp(WritePos);
+  LogFile.open(fileName, ios::binary | ios::in | ios::out );
+  LogFile.seekp(WritePos, ios::beg);
+
 }
 
 

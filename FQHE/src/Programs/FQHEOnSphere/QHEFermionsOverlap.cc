@@ -29,6 +29,7 @@
 #include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
 		  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 		  Operation.ApplyOperation(Architecture.GetArchitecture());      
 		  ValueExact = Operation.GetScalar();
-		  cout << "Comparing: " << ValueExact << " to "<< rawExact << "(ratio " << ValueExact/rawExact << ")" <<endl;
+		  cout << "Comparing: " << ValueExact << " (new) to "<< rawExact << " (old) (ratio " << ValueExact/rawExact << ")" <<endl;
 		  cout << "Minimal distance: " << MinDist(Positions);
 		}
 	    }
@@ -281,9 +282,7 @@ int main(int argc, char** argv)
 // 	    }		
 	}
       if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
-      History->RewindHistory();
-      // testing
-      cout << "SqrNorm exact: " << NormExactObs.Average() << endl;
+      History->RewindHistory();      
       
       cout << " final results :" << endl;
       cout << "overlap:   " << OverlapValue(OverlapObs, NormTrialObs, NormExactObs) << " +/- "
@@ -347,7 +346,20 @@ int main(int argc, char** argv)
   int Accepted = 0;
   bool NoTimeCoherence=!(Manager.GetBoolean("with-timecoherence"));
   int TimeCoherence;
-  
+
+  // testing
+  ofstream Output("test",ios::out | ios::binary);
+  char CC='c';
+  for(int i=0; i<10; ++i)
+    WriteLittleEndian(Output, CC);
+  Output.close();
+
+  Output.open("test", ios::in | ios::out | ios::binary );
+  Output.seekp(6);
+  CC='d';
+  WriteLittleEndian(Output, CC);
+  Output.close();
+
   if (HistoryMode == 4) // continuing to work on old History
     {
       if (Manager.GetString("exact-state") == 0)
@@ -363,11 +375,26 @@ int main(int argc, char** argv)
       History = new MCHistoryRecord (HistoryFileName, 2*NbrFermions, PreviousSamplingAmplitude, &(Particles->GetPositions()[0]), ValueExact, NULL);
       // initialize function values at initial positions: - trial function
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
+
+      // - exact function
+      TimeCoherence = -1;
+      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      if (SqrNorm(ValueExact - Operation.GetScalar()) > 1e-10)
+	{
+	  cout << "Exact wavefunction from record not exactly reproduced: "
+	       << ValueExact << " vs " <<Operation.GetScalar()<<endl;
+	  
+	  cout << "Exact state may have changed!" << endl;
+	}
       
       CurrentSamplingAmplitude = SqrNorm(TrialValue);;
-      if (PreviousSamplingAmplitude !=  CurrentSamplingAmplitude)
-	cout << "SamplingAmplitude from record not reproduced: "
-	     << PreviousSamplingAmplitude << " vs " <<CurrentSamplingAmplitude<<endl;
+      if ( fabs(PreviousSamplingAmplitude -  CurrentSamplingAmplitude) > 1e-10)
+	{
+	  cout << "SamplingAmplitude from record not exactly reproduced: "
+	       << PreviousSamplingAmplitude << " vs " <<CurrentSamplingAmplitude<<endl;
+	  cout << "Sampling function may have changed" << endl;
+	}
     }
   else
     {
