@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('c', "history-to-check", "name of the file where MC samples were recorded", NULL);
   (*SystemGroup) += new SingleStringOption ('o', "history-output", "name of the fixed output file", NULL);
   (*SystemGroup) += new SingleDoubleOption  ('t', "threshold", "threshold for testing exact values (0.0=test all)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('f', "force-discard", "dump all samples above this threshold", 1e4);
   (*SystemGroup) += new SingleDoubleOption  ('d', "discard-limit", "deviation before discarding a sample", 1e-10);
   (*SystemGroup) += new SingleIntegerOption  ('s', "step-limit", "maximum number of samples to be checked", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -138,6 +139,7 @@ int main(int argc, char** argv)
   char *HistoryOutputName;
 
   double threshold = Manager.GetDouble("threshold");
+  double forceDiscard = Manager.GetDouble("force-discard");
   double limit = Manager.GetDouble("discard-limit");
   int StepLimit  = Manager.GetInteger("step-limit");
   if (StepLimit==0) StepLimit=History->GetProjectedSamples();
@@ -176,8 +178,8 @@ int main(int argc, char** argv)
 	  ratio = ExactValue/rawExact;
 	  cout  << ExactValue << "\t"<< rawExact << "\t" << ratio;
 	  checkedConfigurations++;
-	  if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit))
-	    {
+	  if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit) && (norm < forceDiscard))
+	    {	      
 	      cout << " -> keep" << endl;
 	      keptFromChecked++;
 	      conservedSampleCount+=sampleCount;	      
@@ -187,7 +189,9 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {	      
-	      cout << " -> discard" << endl;
+	      cout << " -> discard";
+	      if (norm > forceDiscard) cout << " forced" << endl;
+	      else cout  << endl;
 	      if (norm<minDiscard) minDiscard = norm;
 	    }
 	}
