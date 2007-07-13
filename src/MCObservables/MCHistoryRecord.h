@@ -71,9 +71,14 @@ class MCHistoryRecord
   // projectedSamplex: expected number of MC steps
   // nbrPositions: Number of coordinates for each call of wavefunction (2*N for a two-D system)
   MCHistoryRecord(int projectedSamples, int nbrPositions, char* exactFile, char* samplingDescriptor, char* fileName, List<AbstractMCHistoryData> *additionalData=NULL);
-    
+
+  // to continue aborted calculation
+  // fileName: file to continue
+  // double & samplingAmplitude, double *positions, Complex &valueExact: describing last recorded positions
+  MCHistoryRecord(char* fileName, int nbrPositions, double & samplingAmplitude, double *positions, Complex &valueExact, List<AbstractMCHistoryData> *additionalData=NULL); 
+  
   // for reading mode
-  MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL);
+  MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL);  
 
   // destructor -> automatically closes LogFile
   ~MCHistoryRecord();

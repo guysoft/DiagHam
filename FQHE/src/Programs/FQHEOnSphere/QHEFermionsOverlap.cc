@@ -93,7 +93,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "number of iteration between two consecutive result displays", -1);
-  (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history)", 1);
+  (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history, 4=continue to generate given history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
@@ -319,7 +319,7 @@ int main(int argc, char** argv)
   FermionOnSphere Space (NbrFermions, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
-
+  double PreviousSamplingAmplitude;
   
   int RecordStep = Manager.GetInteger("record-step");
 
@@ -346,16 +346,43 @@ int main(int argc, char** argv)
   int NextCoordinates = 0;
   int Accepted = 0;
   bool NoTimeCoherence=!(Manager.GetBoolean("with-timecoherence"));
-  // initialize function values at initial positions: - trial function
-  TrialValue = (*TestWaveFunction)(Particles->GetPositions());
-  // - exact function
-  int TimeCoherence = -1;
-  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-  Operation.ApplyOperation(Architecture.GetArchitecture());      
-  ValueExact = Operation.GetScalar();
+  int TimeCoherence;
   
-  double PreviousSamplingAmplitude = SqrNorm(TrialValue);
-  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+  if (HistoryMode == 4) // continuing to work on old History
+    {
+      if (Manager.GetString("exact-state") == 0)
+	{
+	  cout << "QHEFermionOverlap requires an exact state" << endl;
+	  return -1;
+	}  
+      if (State.ReadVector (Manager.GetString("exact-state")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("exact-state") << endl;
+	  return -1;      
+	}
+      History = new MCHistoryRecord (HistoryFileName, 2*NbrFermions, PreviousSamplingAmplitude, &(Particles->GetPositions()[0]), ValueExact, NULL);
+      // initialize function values at initial positions: - trial function
+      TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
+      
+      CurrentSamplingAmplitude = SqrNorm(TrialValue);;
+      if (PreviousSamplingAmplitude !=  CurrentSamplingAmplitude)
+	cout << "SamplingAmplitude from record not reproduced: "
+	     << PreviousSamplingAmplitude << " vs " <<CurrentSamplingAmplitude<<endl;
+    }
+  else
+    {
+      // - exact function
+      TimeCoherence = -1;
+      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      ValueExact = Operation.GetScalar();
+      // initialize function values at initial positions: - trial function
+      TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
+      PreviousSamplingAmplitude = SqrNorm(TrialValue);
+      CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+    } 
+  
+  
   
   for (int i = 0; i < NbrIter; ++i)
     {

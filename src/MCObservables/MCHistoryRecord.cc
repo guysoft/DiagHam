@@ -46,6 +46,137 @@ MCHistoryRecord::MCHistoryRecord(int projectedSamples, int nbrPositions, char* e
 }
 
 
+// to continue aborted calculation
+// fileName: file to continue
+// double & samplingAmplitude, double *positions, Complex &valueExact: describing last recorded positions
+MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samplingAmplitude, double *positions, Complex &valueExact, List<AbstractMCHistoryData> *additionalData)
+{
+  this->RecordMode = MCHistoryRecord::Recording;
+  HistoryFile.open(fileName, ios::binary | ios::in);
+  this->TotalSampleCount=0;
+  ReadLittleEndian(HistoryFile, this->ProjectedStepNum);
+  ReadLittleEndian(HistoryFile, this->NbrPositions);
+  if (this->NbrPositions != nbrPositions)
+    {
+      cout << "Mismatch of nbrPositions in reading MCHistoryRecord" << endl;
+      exit (-1);
+    }
+  int sampleCount=0;
+  int numAdditional;
+  ReadLittleEndian(HistoryFile,numAdditional);
+  this->AdditionalData=NULL;
+  if (numAdditional > 0)
+    {
+      cout << "Additional data present in MCHistoryRecord "<< fileName << endl;
+      if (additionalData != NULL)
+	{
+	  if (numAdditional != additionalData->GetNbrElement())
+	    {
+	      cout << "Mismatch of the number of additional MCHistoryRecord's you wish to read" << endl;
+	      exit (1);
+	    }	  
+	  this->NumAdditionalData=numAdditional;
+	  this->AdditionalData=new AbstractMCHistoryData*[NumAdditionalData];
+	  this->SkipAdditional=0;
+	  AbstractMCHistoryData *Data;
+	  int i=0;
+	  for (ListIterator<AbstractMCHistoryData> LI(*additionalData); (Data=LI())!=NULL;++i)
+	    {
+	      unsigned check, size;
+	      ReadLittleEndian(HistoryFile,check);
+	      ReadLittleEndian(HistoryFile,size);
+	      if (check != Data->GetHistoryDataType())
+		{
+		  cout << "Mismatch of field number "<<i+1<<" for the additional MCHistoryRecord's you wish to read" << endl;
+		  exit (1);
+		}
+	      this->AdditionalData[i]=Data;
+	    }
+	}
+      else  // data present, but not requested.
+	{
+	  cout << "Additional data present in file is being discarded." << endl;
+	  this->NumAdditionalData=0;
+	  this->SkipAdditional=0;
+	  unsigned check,skip;
+	  AbstractMCHistoryData *Data;
+	  for (ListIterator<AbstractMCHistoryData> LI(*additionalData); (Data=LI())!=NULL;)
+	    {
+	      ReadLittleEndian(HistoryFile,check);
+	      ReadLittleEndian(HistoryFile,skip);
+	      this->SkipAdditional+=skip;
+	    }
+	}
+    }
+  else
+    { // no additional data:
+      this->NumAdditionalData=0;
+      this->SkipAdditional=0;
+    }
+  // first entry from writing is lastSampleCount that was zero...
+  ReadLittleEndian(HistoryFile, this->LastSampleCount);
+  if (this->LastSampleCount!=0)
+    {
+      cout << "Problem with header of History record " <<fileName << endl;
+      exit(2);
+    }
+
+  // find last block:
+  int skip = (NumAdditionalData>SkipAdditional ? NumAdditionalData : SkipAdditional);
+  std::streampos secondLastBlock, lastBlock=0;
+  char signature; 
+  while ( ! (HistoryFile.eof()))
+    {
+      ReadLittleEndian(HistoryFile,signature);
+      if (signature == 'b') // recognized a new block
+	{
+	  secondLastBlock=lastBlock;
+	  lastBlock=HistoryFile.tellg();
+	  ReadLittleEndian(HistoryFile,samplingAmplitude);
+	  for (int i = 0; i < this->NbrPositions; ++i)
+	    ReadLittleEndian(HistoryFile, positions[i]);
+	  ReadLittleEndian(HistoryFile,valueExact);
+	  if (skip>0)
+	    HistoryFile.seekg(skip,ios::cur);
+	  ReadLittleEndian(HistoryFile,this->LastSampleCount);
+	  if ( ! (HistoryFile.eof()))
+	    {
+	      this->TotalSampleCount+=this->LastSampleCount;
+	      sampleCount=this->LastSampleCount;
+	    }
+	}      
+    }
+  if (HistoryFile.eof()) HistoryFile.clear();
+  if (signature == 'e')
+    {
+      cout << "Regular end of file detected." << endl;	        
+      HistoryFile.seekg(lastBlock);
+    }
+  else if (signature == 'b')
+    {
+      cout << "File ends with half finished block..." << endl;
+      HistoryFile.seekg(secondLastBlock);
+    }     
+  ReadLittleEndian(HistoryFile,samplingAmplitude);
+  for (int i = 0; i < this->NbrPositions; ++i)
+    ReadLittleEndian(HistoryFile, positions[i]);
+  ReadLittleEndian(HistoryFile,valueExact);
+  if (skip>0)
+    HistoryFile.seekg(skip,ios::cur);
+  std::streampos WritePos = HistoryFile.tellg();
+  if (signature == 'e')
+    {
+      ReadLittleEndian(HistoryFile,this->LastSampleCount);
+      if (sampleCount!=this->LastSampleCount) cout << "problem with reading last block at second time" << endl;
+    }
+  else this->LastSampleCount=1;
+  sampleCount=this->LastSampleCount;
+  HistoryFile.close();
+  LogFile.open(fileName, ios::binary | ios::out);
+  LogFile.seekp(WritePos);
+}
+
+
 // for reading mode
 MCHistoryRecord::MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCHistoryData> *additionalData)
 {
@@ -220,6 +351,7 @@ void MCHistoryRecord::RewindHistory()
 	  if (HistoryFile.eof())
 	    {
 	      cout << "need to clear eof-bit, here!!!" << endl;
+	      HistoryFile.clear();
 	    }
 	  HistoryFile.seekg(StartPos);
 	  c = HistoryFile.peek();
