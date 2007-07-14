@@ -30,8 +30,9 @@ using std::endl;
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
 // landauLevel = index of the Landau level (0 for the lowest Landau level)
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // return value = array that conatins the pseudopotentials
-double* EvaluatePseudopotentials(int nbrFlux, int landauLevel);
+double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSeparation);
 
 // evalute one body potentials for two impurities located at the poles in a given Landau level
 //
@@ -59,6 +60,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
   (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
 
+  (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation / thickness",0.0);
+
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -75,6 +78,7 @@ int main(int argc, char** argv)
 
   int LandauLevel = ((SingleIntegerOption*) Manager["landau-level"])->GetInteger();
   int NbrFlux = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger();
+  double layerSeparation = Manager.GetDouble("layer-separation");
   int MaxMomentum = NbrFlux + (LandauLevel << 1);
   
   char* OutputFile;
@@ -83,7 +87,12 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
 	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_relativistic_l_%landau-level%_2s_%nbr-flux%.dat");
       else
-	OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
+	{
+	  if (layerSeparation==0.0)
+	    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%.dat");
+	  else
+	    OutputFile = Manager.GetFormattedString("pseudopotential_coulomb_l_%landau-level%_2s_%nbr-flux%_d_%layer-separation%.dat");
+	}
     }
   else
     {
@@ -91,10 +100,10 @@ int main(int argc, char** argv)
       strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
     }
 
-  double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel);
+  double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation);
   if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
     {
-      double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1);
+      double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation);
       for (int i = 0; i <= MaxMomentum; ++i)
 	Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
       delete[] PseudopotentialsNMinus1;
@@ -112,6 +121,8 @@ int main(int argc, char** argv)
     File << " for relativistic fermions";
   File << endl
        << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
+  if (layerSeparation != 0.0)
+    File << "# with finite layer separation / thickness d=" << layerSeparation << endl;
   if (OneBodyPotentials != 0)
     {
       File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
@@ -143,15 +154,23 @@ int main(int argc, char** argv)
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
 // landauLevel = index of the Landau level (0 for the lowest Landau level)
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
 // return value = array that conatins the pseudopotentials
 
-double* EvaluatePseudopotentials(int nbrFlux, int landauLevel)
+double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSeparation)
 {
   cout.precision(14);
   int MaxMomentum = nbrFlux + (landauLevel << 1);
   double* Pseudopotentials = new double [MaxMomentum + 1];
   ClebschGordanCoefficients MainCoefficients(MaxMomentum, MaxMomentum);
   ClebschGordanCoefficients* Coefficients = new ClebschGordanCoefficients[MaxMomentum + 1];
+  // new formfactors for finite thickness/separation:
+  double *FormFactors = new double[MaxMomentum + 1];
+  double dd = layerSeparation*layerSeparation;
+  double base = ( sqrt(2.0*nbrFlux + dd) - layerSeparation ) / ( sqrt(2.0*nbrFlux + dd) + layerSeparation );
+  FormFactors[0]=sqrt(base);
+  for (int l = 1; l <= MaxMomentum; ++l)
+    FormFactors[l] = FormFactors[l-1]*base;
   for (int l = 0; l <= MaxMomentum; ++l)
     Coefficients[l] = ClebschGordanCoefficients(MaxMomentum, l << 1);  
   for (int l = 0; l <= MaxMomentum; ++l)
@@ -167,7 +186,7 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel)
 	    for (int j = Min; j <= MaxMomentum; ++j)
 	      {
 		TmpCoef2 = Coefficients[j].GetCoefficient(m1, m2 - m1, MaxMomentum) * Coefficients[j].GetCoefficient(nbrFlux, 0, MaxMomentum);
-		TmpCoef += Sign * TmpCoef2 * TmpCoef2;
+		TmpCoef += FormFactors[j] * Sign * TmpCoef2 * TmpCoef2;
 		Sign *= -1.0;
 	      }
 	    TmpPseudopotentials += (MainCoefficients.GetCoefficient(m1, -m1, l << 1) * 
@@ -177,6 +196,7 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel)
       cout << "V[" << (MaxMomentum - l) << "] = " << Pseudopotentials[MaxMomentum - l] << endl;
     }
   delete[] Coefficients;
+  delete[] FormFactors;
   return Pseudopotentials;
 }
 
