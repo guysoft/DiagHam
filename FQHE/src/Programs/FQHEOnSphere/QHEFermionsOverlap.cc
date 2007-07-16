@@ -99,6 +99,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
   (*MonteCarloGroup) += new SingleIntegerOption ('\n', "maxPoints", "number of simultaneous function evaltuation in optimising History mode ", 50);
+  (*MonteCarloGroup) += new SingleIntegerOption ('\n', "limitSamples", "maximal number of samples to be used from history-file", 10000000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
@@ -307,7 +308,7 @@ int main(int argc, char** argv)
       WaveFunctionOverlapOptimizer *Optimizer =
 	new WaveFunctionOverlapOptimizer( (Abstract1DComplexTrialFunction*) TestWaveFunction,
 					  HistoryFileName, NbrFermions, /* excludeLastParameter */ !varyMR,
-					  Manager.GetInteger("maxPoints"));
+					  Manager.GetInteger("maxPoints"), Manager.GetInteger("limitSamples");
       RealVector optimalParameters( ((Abstract1DComplexTrialFunction*) TestWaveFunction)->GetNbrParameters());
       Complex optimalOverlap;
       Optimizer->GetMaximumSqrOverlap(optimalParameters, optimalOverlap);

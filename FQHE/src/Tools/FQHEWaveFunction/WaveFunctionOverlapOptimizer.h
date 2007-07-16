@@ -45,10 +45,11 @@ using std::ofstream;
 
 class WaveFunctionOverlapOptimizer
 {
- protected:
+ protected:  
   int NbrParticles;
   int NbrParameters;
   int EffectiveNbrParameters;
+  int LimitSamples;
   Abstract1DComplexTrialFunction *TrialState;
   RealVector Positions;
   RealVector Gradient;
@@ -77,7 +78,7 @@ class WaveFunctionOverlapOptimizer
   
  public:
 
-  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 50, char* logFileName = NULL);
+  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 50, int limitSamples = 10000000, char* logFileName = NULL);
   ~WaveFunctionOverlapOptimizer();
   
   double GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap,

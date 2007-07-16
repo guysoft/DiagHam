@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
+  (*SystemGroup) += new BooleanOption  ('b', "bilayer", "adjust normalization as a bilayer correlation function");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
 
@@ -146,7 +147,11 @@ int main(int argc, char** argv)
   ofstream File;
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);
-  double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
+  double Factor1;
+  if (Manager.GetBoolean("bilayer"))
+    Factor1 = (64.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
+  else
+    Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrFermions * NbrFermions));
   double Factor2 = sqrt (0.5 * LzMax );
   if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) Factor2 = 1.0;
   for (int x = 0; x < NbrPoints; ++x)

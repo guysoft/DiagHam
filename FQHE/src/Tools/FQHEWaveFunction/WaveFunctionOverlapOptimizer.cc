@@ -14,7 +14,7 @@ using std::endl;
 // maximum allowed factor of Norm of wavefunction over typical value 
 #define OUTLIER_LIMIT 3.0
 
-WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, char *logFileName)
+WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, int limitSamples, char *logFileName)
 {
   this->NbrParticles = nbrParticles;  
   this->History = new MCHistoryRecord(historyFileName, 2*nbrParticles /* could add additional observables here */);
@@ -26,6 +26,7 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
     this->EffectiveNbrParameters = this->NbrParameters-1;
   else
     this->EffectiveNbrParameters = this->NbrParameters;
+  this->LimitSamples=limitSamples;
   this->Gradient.Resize(this->NbrParameters);
   this->MaxPoints = maxPoints;
   this->MaxParameters = maxPoints*(1+2*this->EffectiveNbrParameters);
@@ -184,7 +185,7 @@ void WaveFunctionOverlapOptimizer::EvaluateTrialOverlaps()
   
   History->RewindHistory();
   int count =0;
-  while ( History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(this->Positions[0]), ExactValue))
+  while ((count < LimitSamples) && ( History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(this->Positions[0]), ExactValue)))
     {
       TrialState->GetForManyParameters(this->ManyValues, this->Positions, this->NewParameters);
       SamplingAmplitude /= typicalSA;
