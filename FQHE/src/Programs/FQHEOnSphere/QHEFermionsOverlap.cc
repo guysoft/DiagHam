@@ -308,7 +308,7 @@ int main(int argc, char** argv)
       WaveFunctionOverlapOptimizer *Optimizer =
 	new WaveFunctionOverlapOptimizer( (Abstract1DComplexTrialFunction*) TestWaveFunction,
 					  HistoryFileName, NbrFermions, /* excludeLastParameter */ !varyMR,
-					  Manager.GetInteger("maxPoints"), Manager.GetInteger("limitSamples");
+					  Manager.GetInteger("maxPoints"), Manager.GetInteger("limitSamples"));
       RealVector optimalParameters( ((Abstract1DComplexTrialFunction*) TestWaveFunction)->GetNbrParameters());
       Complex optimalOverlap;
       Optimizer->GetMaximumSqrOverlap(optimalParameters, optimalOverlap);
