@@ -34,6 +34,7 @@
 #include "Options/SingleIntegerInternalOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/MultipleDoubleOption.h"
+#include "Options/MultipleDoubleInternalOption.h"
 #include "Options/SingleDoubleInternalOption.h"
 #include "Options/SingleStringOption.h"
 #include "Options/SingleStringInternalOption.h"

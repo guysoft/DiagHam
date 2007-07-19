@@ -13,6 +13,8 @@ SingleDoubleInternalOption.cc \
 SingleDoubleInternalOption.h \
 MultipleDoubleOption.cc \
 MultipleDoubleOption.h \
+MultipleDoubleInternalOption.cc \
+MultipleDoubleInternalOption.h \
 SingleIntegerOption.cc \
 SingleIntegerOption.h \
 SingleIntegerInternalOption.cc \

@@ -34,6 +34,7 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
@@ -46,6 +47,14 @@ using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+
+#define WANT_LAPACK
+
+#ifdef __LAPACK__
+#ifdef WANT_LAPACK
+#define  __USE_LAPACK_HERE__
+#endif
+#endif
 
 
 // basic constructor
@@ -1102,8 +1111,13 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 {
   Complex Value;
   Complex Tmp;
+#ifdef __USE_LAPACK_HERE__
+  ComplexLapackDeterminant SlaterUp(this->NbrFermionsUp);
+  ComplexLapackDeterminant SlaterDown(this->NbrFermionsDown);
+#else
   ComplexMatrix SlaterUp(this->NbrFermionsUp, this->NbrFermionsUp);
   ComplexMatrix SlaterDown(this->NbrFermionsDown, this->NbrFermionsDown);
+#endif
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* IndicesUp = new int [this->NbrFermionsUp];
@@ -1157,8 +1171,12 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 	  ComplexVector& TmpColum2 = Functions[i];	  
 	  for (int j = 0; j < this->NbrFermionsUp; ++j)
 	    {
+#ifdef __USE_LAPACK_HERE__
+	      SlaterUp.SetMatrixElement(i,j,TmpColum2.Re(IndicesUp[j]), TmpColum2.Im(IndicesUp[j]));
+#else
 	      SlaterUp[i].Re(j) = TmpColum2.Re(IndicesUp[j]);
 	      SlaterUp[i].Im(j) = TmpColum2.Im(IndicesUp[j]);
+#endif
 	    }
 	}
       for (int i = 0; i < this->NbrFermionsDown; ++i)
@@ -1166,8 +1184,12 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 	  ComplexVector& TmpColum2 = Functions[i+this->NbrFermionsUp];	  
 	  for (int j = 0; j < this->NbrFermionsDown; ++j)
 	    {
+#ifdef __USE_LAPACK_HERE__	      
+	      SlaterDown.SetMatrixElement(i,j,TmpColum2.Re(IndicesDown[j]), TmpColum2.Im(IndicesDown[j]));
+#else
 	      SlaterDown[i].Re(j) = TmpColum2.Re(IndicesDown[j]);
 	      SlaterDown[i].Im(j) = TmpColum2.Im(IndicesDown[j]);
+#endif
 	    }
 	}
       Complex SlaterDetUp = SlaterUp.Determinant();

@@ -69,6 +69,9 @@ int main(int argc, char** argv)
   int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+
+  int NbrFermionsUp = (NbrFermions+SzTotal)/2;
+  int NbrFermionsDown = (NbrFermions-SzTotal)/2;
   
   if (((SingleStringOption*) Manager["exact-state"])->GetString() == 0)
     {
@@ -79,7 +82,7 @@ int main(int argc, char** argv)
   if (State.ReadVector (((SingleStringOption*) Manager["exact-state"])->GetString()) == false)
     {
       cout << "can't open vector file " << ((SingleStringOption*) Manager["exact-state"])->GetString() << endl;
-      return -1;      
+      return -1;
     }
   
   FermionOnSphereWithSpin *Space;

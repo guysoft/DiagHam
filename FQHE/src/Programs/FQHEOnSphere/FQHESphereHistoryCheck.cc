@@ -172,28 +172,33 @@ int main(int argc, char** argv)
       if ((norm=Norm(ExactValue))>threshold)
 	{
 	  cout << "testing " << totalSampleCount << ": " << norm<<" ";
-	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  ExactValue = Operation.GetScalar();
-	  ratio = ExactValue/rawExact;
-	  cout  << ExactValue << "\t"<< rawExact << "\t" << ratio;
-	  checkedConfigurations++;
-	  if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit) && (norm < forceDiscard))
-	    {	      
-	      cout << " -> keep" << endl;
-	      keptFromChecked++;
-	      conservedSampleCount+=sampleCount;	      
-	      HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, ExactValue);
-	      for (int i=1; i<sampleCount; ++i) HistoryOutput->RecordRejectedStep();
-	      if (norm>maxKeep) maxKeep = norm;
+	  if (norm < forceDiscard)
+	    {
+	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());      
+	      ExactValue = Operation.GetScalar();
+	      ratio = ExactValue/rawExact;
+	      cout  << ExactValue << "\t"<< rawExact << "\t" << ratio;
+	      checkedConfigurations++;
+	      if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit) && (norm < forceDiscard))
+		{	      
+		  cout << " -> keep" << endl;
+		  keptFromChecked++;
+		  conservedSampleCount+=sampleCount;	      
+		  HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, ExactValue);
+		  for (int i=1; i<sampleCount; ++i) HistoryOutput->RecordRejectedStep();
+		  if (norm>maxKeep) maxKeep = norm;
+		}
+	      else
+		{	      
+		  cout << " -> discard";
+		  if (norm > forceDiscard) cout << " forced" << endl;
+		  else cout  << endl;
+		  if (norm<minDiscard) minDiscard = norm;
+		}
 	    }
 	  else
-	    {	      
-	      cout << " -> discard";
-	      if (norm > forceDiscard) cout << " forced" << endl;
-	      else cout  << endl;
-	      if (norm<minDiscard) minDiscard = norm;
-	    }
+	    cout << " -> discard forced" << endl;	      
 	}
       else
 	{
