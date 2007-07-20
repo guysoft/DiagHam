@@ -111,6 +111,58 @@ int ParticleOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
   return this->HilbertSpaceDimension;
 }
 
+// apply a^+_m_u a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_d a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+  
+int ParticleOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin up)

@@ -76,6 +76,11 @@ AbstractQHEOnSphereWithSpinHamiltonian::~AbstractQHEOnSphereWithSpinHamiltonian(
     }
   delete[] this->InteractionFactorsupdown;
   delete[] this->InterSectorIndicesPerSum;
+  if (this->OneBodyInteractionFactorsupup != 0)
+    delete[] this->OneBodyInteractionFactorsupup;
+  if (this->OneBodyInteractionFactorsdowndown != 0)
+    delete[] this->OneBodyInteractionFactorsdowndown;
+  
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -100,67 +105,182 @@ RealVector& AbstractQHEOnSphereWithSpinHamiltonian::LowLevelAddMultiply(RealVect
       double* TmpInteractionFactor;
       double Coefficient3;
       ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
-      for (int i = firstComponent; i < LastComponent; ++i)
+      if ((this->NbrIntraSectorSums != 0) || (this->NbrInterSectorSums != 0))
 	{
-          for (int j = 0; j < this->NbrIntraSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
-              TmpIndices = this->IntraSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient3 = TmpParticles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient3 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
-                      Coefficient3 *= vSource[i];
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                            vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                  Coefficient3 = TmpParticles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient3 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
-                      Coefficient3 *= vSource[i];
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                            vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                }
-	    }
-          for (int j = 0; j < this->NbrInterSectorSums; ++j)
-            {
-              int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
-              TmpIndices = this->InterSectorIndicesPerSum[j];
-              for (int i1 = 0; i1 < Lim; i1 += 2)
-                {
-                  Coefficient3 = TmpParticles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
-                  if (Coefficient3 != 0.0)
-                    {
-                      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim) >> 2]);
-                      Coefficient3 *= vSource[i];
-                      for (int i2 = 0; i2 < Lim; i2 += 2)
-                        {
-                          Index = TmpParticles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-                          if (Index < Dim)
-                            vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
-                          ++TmpInteractionFactor;
-                        }
-                    }
-                }
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		{
+		  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		  TmpIndices = this->IntraSectorIndicesPerSum[j];
+		  for (int i1 = 0; i1 < Lim; i1 += 2)
+		    {
+		      Coefficient3 = TmpParticles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		      if (Coefficient3 != 0.0)
+			{
+			  TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+			  Coefficient3 *= vSource[i];
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			    {
+			      Index = TmpParticles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			      if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			      ++TmpInteractionFactor;
+			    }
+			}
+		      Coefficient3 = TmpParticles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		      if (Coefficient3 != 0.0)
+			{
+			  TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+			  Coefficient3 *= vSource[i];
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			    {
+			      Index = TmpParticles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			      if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	      for (int j = 0; j < this->NbrInterSectorSums; ++j)
+		{
+		  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
+		  TmpIndices = this->InterSectorIndicesPerSum[j];
+		  for (int i1 = 0; i1 < Lim; i1 += 2)
+		    {
+		      Coefficient3 = TmpParticles->AuAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		      if (Coefficient3 != 0.0)
+			{
+			  TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim) >> 2]);
+			  Coefficient3 *= vSource[i];
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			    {
+			      Index = TmpParticles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+			      if (Index < Dim)
+				vDestination[Index] += Coefficient * (*TmpInteractionFactor) * Coefficient3;
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
 	    }
 	}
+      else
+	{
+// 	  double Coefficient2;
+// 	  int SumIndices;
+// 	  int TmpNbrM3Values;
+// 	  int* TmpM3Values;
+// 	  for (int i = firstComponent; i < LastComponent; ++i)
+// 	    {
+// 	      ReducedNbrInteractionFactors = 0;
+// 	      for (m1 = 0; m1 < this->NbrIntraM12Indices; ++m1)
+// 		{
+// 		  Coefficient = TmpParticles->AuAu(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
+// 		  if (Coefficient != 0.0)
+// 		    {
+// 		      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
+// 		      Coefficient *= vSource[i];
+// 		      TmpNbrM3Values = this->NbrM3IntraValues[m1];
+// 		      TmpM3Values = this->M3IntraValues[m1];
+// 		      for (m3 = 0; m3 < TmpNbrM3IntraValues; ++m3)
+// 			{
+// 			  Index = TmpParticles->AduAdu(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+// 			  if (Index < Dim)			
+// 			    vDestination[Index] += Coefficient * this->InteractionFactorsupup[ReducedNbrInteractionFactorsupup] * Coefficient2;
+// 			  ++ReducedNbrInteractionFactors;
+// 			}
+// 		    }
+// 		  else
+// 		    ReducedNbrInteractionFactors += this->NbrM3IntraValues[m1];
+// 		}
+// 	      ReducedNbrInteractionFactors = 0;
+// 	      for (m1 = 0; m1 < this->NbrIntraM12Indices; ++m1)
+// 		{
+// 		  Coefficient = TmpParticles->AdAd(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
+// 		  if (Coefficient != 0.0)
+// 		    {
+// 		      SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
+// 		      Coefficient *= vSource[i];
+// 		      TmpNbrM3Values = this->NbrM3IntraValues[m1];
+// 		      TmpM3Values = this->M3IntraValues[m1];
+// 		      for (m3 = 0; m3 < TmpNbrM3IntraValues; ++m3)
+// 			{
+// 			  Index = TmpParticles->AddAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+// 			  if (Index < Dim)			
+// 			    vDestination[Index] += Coefficient * this->InteractionFactorsdowndown[ReducedNbrInteractionFactorsupup] * Coefficient2;
+// 			  ++ReducedNbrInteractionFactors;
+// 			}
+// 		    }
+// 		  else
+// 		    ReducedNbrInteractionFactors += this->NbrM3IntraValues[m1];
+// 		}
+// 	      ReducedNbrInteractionFactors = 0;
+// 	      for (m1 = 0; m1 < this->NbrInterM12Indices; ++m1)
+// 		{
+// 		  Coefficient = TmpParticles->AuAd(i, this->M1InterValue[m1], this->M2InterValue[m1]);	  
+// 		  if (Coefficient != 0.0)
+// 		    {
+// 		      SumIndices = this->M1InterValue[m1] + this->M2InterValue[m1];
+// 		      Coefficient *= vSource[i];
+// 		      TmpNbrM3Values = this->NbrM3InterValues[m1];
+// 		      TmpM3Values = this->M3InterValues[m1];
+// 		      for (m3 = 0; m3 < TmpNbrM3InterValues; ++m3)
+// 			{
+// 			  Index = TmpParticles->AduAdd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
+// 			  if (Index < Dim)			
+// 			    vDestination[Index] += Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
+// 			  ++ReducedNbrInteractionFactors;
+// 			}
+// 		    }
+// 		  else
+// 		    ReducedNbrInteractionFactors += this->NbrM3InterValues[m1];
+// 		}
+// 	    }	  
+	}
 
-      for (int i = firstComponent; i < LastComponent; ++i)
-	vDestination[i] += this->HamiltonianShift * vSource[i];
+      if (this->OneBodyInteractionFactorsupup != 0) 
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->LzMax; ++j) 
+		  {
+		    TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+		    TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		  }
+		vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	      }
+	  }
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->LzMax; ++j) 
+		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+		vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	      }
+	  }
+      else
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->LzMax; ++j) 
+		  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	      }
+	  }	
+	else
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    vDestination[i] += this->HamiltonianShift * vSource[i];
       delete TmpParticles;
     }
   else
@@ -283,8 +403,47 @@ RealVector& AbstractQHEOnSphereWithSpinHamiltonian::LowLevelAddMultiply(RealVect
 			      } 
 			  }
 		      }
-		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-		      vDestination[i] += this->HamiltonianShift * vSource[i];					
+		    if (this->OneBodyInteractionFactorsupup != 0) 
+		      if (this->OneBodyInteractionFactorsdowndown != 0)
+			{
+			  double TmpDiagonal = 0.0;
+			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			    { 
+			      TmpDiagonal = 0.0;
+			      for (int j = 0; j <= this->LzMax; ++j) 
+				{
+				  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+				  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+				}
+			      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+			    }
+			}
+		      else
+			{
+			  double TmpDiagonal = 0.0;
+			  for (int i = firstComponent; i < LastComponent; ++i)
+			    { 
+			      TmpDiagonal = 0.0;
+			      for (int j = 0; j <= this->LzMax; ++j) 
+				TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+			      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+			    }
+			}
+		    else
+		      if (this->OneBodyInteractionFactorsdowndown != 0)
+			{
+			  double TmpDiagonal = 0.0;
+			  for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			    { 
+			      TmpDiagonal = 0.0;
+			      for (int j = 0; j <= this->LzMax; ++j) 
+				TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+			      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+			    }
+			}	
+		      else
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  vDestination[i] += this->HamiltonianShift * vSource[i];
 		  }
 	      delete TmpParticles;
 	    }
@@ -483,13 +642,67 @@ RealVector* AbstractQHEOnSphereWithSpinHamiltonian::LowLevelMultipleAddMultiply(
                 }
 	    }
 	}
-      for (int l = 0; l < nbrVectors; ++l)
-	{
-	  RealVector& TmpSourceVector = vSources[l];
-	  RealVector& TmpDestinationVector = vDestinations[l];
-	  for (int i = firstComponent; i < LastComponent; ++i)
-	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-	}
+      if (this->OneBodyInteractionFactorsupup != 0) 
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int l = 0; l < nbrVectors; ++l)
+	      {
+		RealVector& TmpSourceVector = vSources[l];
+		RealVector& TmpDestinationVector = vDestinations[l];
+		for (int i = firstComponent; i < LastComponent; ++i)
+		  { 
+		    TmpDiagonal = 0.0;
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      {
+			TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+			TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		      }
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int l = 0; l < nbrVectors; ++l)
+		  {
+		    RealVector& TmpSourceVector = vSources[l];
+		    RealVector& TmpDestinationVector = vDestinations[l];
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }
+      else
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int l = 0; l < nbrVectors; ++l)
+	      {
+		RealVector& TmpSourceVector = vSources[l];
+		RealVector& TmpDestinationVector = vDestinations[l];
+		for (int i = firstComponent; i < LastComponent; ++i)
+		  { 
+		    TmpDiagonal = 0.0;
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }	
+	else
+	  for (int l = 0; l < nbrVectors; ++l)
+	    {
+	      RealVector& TmpSourceVector = vSources[l];
+	      RealVector& TmpDestinationVector = vDestinations[l];
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	    }
       delete[] Coefficient2;
       delete TmpParticles;
     }
@@ -665,6 +878,67 @@ RealVector* AbstractQHEOnSphereWithSpinHamiltonian::LowLevelMultipleAddMultiplyP
 		  }
 	      }
 	  }
+      if (this->OneBodyInteractionFactorsupup != 0) 
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int p = 0; p < nbrVectors; ++p)
+	      {
+		RealVector& TmpSourceVector = vSources[p];
+		RealVector& TmpDestinationVector = vDestinations[p];
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  { 
+		    TmpDiagonal = 0.0;
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      {
+			TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+			TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		      }
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int p = 0; p < nbrVectors; ++p)
+	      {
+		RealVector& TmpSourceVector = vSources[p];
+		RealVector& TmpDestinationVector = vDestinations[p];
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  { 
+		    TmpDiagonal = 0.0;
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i, j);
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }
+      else
+	if (this->OneBodyInteractionFactorsdowndown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int p = 0; p < nbrVectors; ++p)
+	      {
+		RealVector& TmpSourceVector = vSources[p];
+		RealVector& TmpDestinationVector = vDestinations[p];
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  { 
+		    TmpDiagonal = 0.0;
+		    for (int j = 0; j <= this->LzMax; ++j) 
+		      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i, j);
+		    TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+		  }
+	      }
+	  }	
+	else
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      RealVector& TmpSourceVector = vSources[p];
+	      RealVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	    }
 	for (int p = 0; p < nbrVectors; ++p)
 	  {
 	    RealVector& TmpSourceVector = vSources[p];
@@ -753,6 +1027,12 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 		}
 	    }
 	}
+      if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
+	{
+	  ++Memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+	}
+
     }
 
   delete TmpParticles;
@@ -862,6 +1142,19 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 		    }
 		}
 	    }
+	}
+      if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
+	{
+	  double TmpDiagonal = 0.0;
+	  if (this->OneBodyInteractionFactorsupup != 0)
+	    for (int j = 0; j <= this->LzMax; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i + this->PrecalculationShift, j);
+	  if (this->OneBodyInteractionFactorsdowndown != 0)
+	    for (int j = 0; j <= this->LzMax; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);
+	  TmpIndexArray[Pos] = i + this->PrecalculationShift;
+	  TmpCoefficientArray[Pos] = TmpDiagonal;
+	  ++Pos;	  
 	}
       ++TotalPos;
     }

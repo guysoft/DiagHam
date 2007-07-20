@@ -61,14 +61,16 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
+// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-											     double** pseudoPotential, 
-											     AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-											     char* precalculationFileName)
+										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+										       char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -92,6 +94,20 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  if (onebodyPotentialUpUp != 0)
+    {
+      this->OneBodyInteractionFactorsupup = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsupup[i] = onebodyPotentialUpUp[i];
+    }
+  if (onebodyPotentialDownDown != 0)
+    {
+      this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsdowndown[i] = onebodyPotentialDownDown[i];
+    }
+  this->OneBodyInteractionFactorsdowndown = 0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)

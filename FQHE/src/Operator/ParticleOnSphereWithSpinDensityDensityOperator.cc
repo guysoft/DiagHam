@@ -47,7 +47,7 @@ using std::endl;
 // annihilationIndex2 = index of the rightmost annihilation operator
 // spinEncoding = sC1sC2sA1sA2u, with sC/Ai the spin index 1=up or 0=down of the respective C-reation or A-nnihilation operator
 ParticleOnSphereWithSpinDensityDensityOperator::ParticleOnSphereWithSpinDensityDensityOperator(ParticleOnSphereWithSpin* particle, int creationIndex1, int creationIndex2,
-						 int annihilationIndex1, int annihilationIndex2, unsigned spinEncoding)
+											       int annihilationIndex1, int annihilationIndex2, unsigned spinEncoding)
 {
   this->Particle= particle;
   this->CreationIndex1 = creationIndex1;

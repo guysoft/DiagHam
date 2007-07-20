@@ -71,6 +71,12 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // array containing all interaction factors for spin up and spin down
   double** InteractionFactorsupdown;
 
+  // array that contains all one-body interaction factors for particles with spin up
+  double* OneBodyInteractionFactorsupup;
+  // array that contains all one-body interaction factors for particles with spin down
+  double* OneBodyInteractionFactorsdowndown;
+  
+
  public:
 
   // destructor

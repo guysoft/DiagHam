@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a sphere with        //
-//     SU(2) spin and a generic interaction defined by its pseudopotential    //
+//       class of hamiltonian associated to particles on a sphere with spin   //
+// where the hamiltonian is reduced to a simple total square angular momentum //
 //                                                                            //
-//                        last modification : 07/06/2007                      //
+//                        last modification : 06/07/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
-#define PARTICLEONSPHEREWITHSPINGENERICHAMILTONIAN_H
+#ifndef PARTICLEONSPHEREWITHSPINL2HAMILTONIAN_H
+#define PARTICLEONSPHEREWITHSPINL2HAMILTONIAN_H
 
 
 #include "config.h"
@@ -47,16 +47,18 @@ class MathematicaOutput;
 class AbstractArchitecture;
 
 
-class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
+class ParticleOnSphereWithSpinL2Hamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
 
  protected:
 
-  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
-  // first index refered to the spin sector (sorted as up-up, down-down, up-down)
-  double** PseudoPotentials;
+  // twice the projected momentum total value
+  int TotalLz;
+
+  // multiplicative factor in front of the L^2 operator in the Hamiltonian
+  double L2Factor;
 
  public:
 
@@ -65,22 +67,19 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
+  // totalLz = twice the projected momentum total value
   // architecture = architecture to use for precalculation
-  // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
-  //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
-  // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
-  // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+  // l2Factor = multiplicative factor in front of the L^2 operator in the Hamiltonian
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
-					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
-					     AbstractArchitecture* architecture, long memory = -1, 
-					     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+  ParticleOnSphereWithSpinL2Hamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, int totalLz,
+				AbstractArchitecture* architecture, double l2Factor = 1.0, long memory = -1, 
+				bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnSphereWithSpinGenericHamiltonian();
+  ~ParticleOnSphereWithSpinL2Hamiltonian();
 
   // clone hamiltonian without duplicating datas
   //

@@ -124,6 +124,8 @@ int main(int argc, char** argv)
       for (int j = 0; j <= LzMax; ++j)
 	PseudoPotentials[i][j] = 0.0;
     };
+  double* OneBodyPotentialUpUp = 0;
+  double* OneBodyPotentialDownDown = 0;
 
   int NbrUp = (NbrFermions + SzTotal) >> 1;
   int NbrDown = (NbrFermions - SzTotal) >> 1;
@@ -218,6 +220,22 @@ int main(int argc, char** argv)
 	    cout << "PseudopotentialsUpDown has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
 	    return -1;
 	  }
+      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', OneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (LzMax + 1))
+	    {
+	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      return -1;
+	    }
+	}
+      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', OneBodyPotentialDownDown, TmpNbrPseudoPotentials) == true)
+	{
+	  if (TmpNbrPseudoPotentials != (LzMax + 1))
+	    {
+	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+	      return -1;
+	    }
+	}
     }
 
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
@@ -263,7 +281,7 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian;
       
-      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, 
+      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
