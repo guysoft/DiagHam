@@ -160,8 +160,44 @@ int main(int argc, char** argv)
   double maxKeep=0.0;
   double minDiscard=1e300;
   double norm;
-  
+  double factor=1.0;
   Complex rawExact, ratio;
+
+  // accomodate possibility that some arbitrary norm has been introduced
+ nextSample:
+  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), rawExact);
+  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+  Operation.ApplyOperation(Architecture.GetArchitecture());      
+  ExactValue = Operation.GetScalar();
+  ratio = ExactValue/rawExact;
+  if (fabs(Real(ratio)-1.0) > limit)
+    {
+      if (fabs(Imag(ratio)/Real(ratio) < limit))
+	{
+	nextSample2:
+	  factor = Real(ratio);
+	  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), rawExact);
+	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  ExactValue = Operation.GetScalar();
+	  ratio = ExactValue/rawExact;
+	  if (fabs(Imag(ratio)/Real(ratio) < limit))
+	    {
+	      if( fabs(Real(ratio)/factor-1.0) < limit)
+		{
+		  factor = 0.5*(factor+Real(ratio));
+		  cout << "Found a change of normalization by a factor of " << factor << endl;
+		}
+	      else
+		{
+		  cout << "No consistent change in normalization apparent" << endl;
+		  exit(1);
+		}
+	    }
+	  else goto nextSample2;
+	}
+      else goto nextSample;
+    }
   
   while ((totalSampleCount<StepLimit)&&(History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue)))
     {
@@ -177,7 +213,7 @@ int main(int argc, char** argv)
 	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());      
 	      ExactValue = Operation.GetScalar();
-	      ratio = ExactValue/rawExact;
+	      ratio = ExactValue/rawExact/factor;
 	      cout  << ExactValue << "\t"<< rawExact << "\t" << ratio;
 	      checkedConfigurations++;
 	      if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit) && (norm < forceDiscard))
