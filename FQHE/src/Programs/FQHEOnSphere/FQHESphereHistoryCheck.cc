@@ -161,32 +161,32 @@ int main(int argc, char** argv)
   double minDiscard=1e300;
   double norm;
   double factor=1.0;
-  Complex rawExact, ratio;
+  Complex ratio, readValue, recalculatedValue;
 
   // accomodate possibility that some arbitrary norm has been introduced
  nextSample:
-  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), rawExact);
+  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), readValue);
   QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
   Operation.ApplyOperation(Architecture.GetArchitecture());      
-  ExactValue = Operation.GetScalar();
-  ratio = ExactValue/rawExact;
+  recalculatedValue = Operation.GetScalar();
+  ratio = recalculatedValue/readValue;
   if (fabs(Real(ratio)-1.0) > limit)
     {
       if (fabs(Imag(ratio)/Real(ratio) < limit))
 	{
 	nextSample2:
 	  factor = Real(ratio);
-	  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), rawExact);
+	  History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), readValue);
 	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  ExactValue = Operation.GetScalar();
-	  ratio = ExactValue/rawExact;
+	  recalculatedValue = Operation.GetScalar();
+	  ratio = recalculatedValue/readValue;
 	  if (fabs(Imag(ratio)/Real(ratio) < limit))
 	    {
 	      if( fabs(Real(ratio)/factor-1.0) < limit)
 		{
 		  factor = 0.5*(factor+Real(ratio));
-		  cout << "Found a change of normalization by a factor of " << factor << endl;
+		  cout << "Attention: Found a change of normalization by a factor of " << factor << endl;
 		}
 	      else
 		{
@@ -199,11 +199,10 @@ int main(int argc, char** argv)
       else goto nextSample;
     }
   
-  while ((totalSampleCount<StepLimit)&&(History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), ExactValue)))
+  while ((totalSampleCount<StepLimit)&&(History->GetMonteCarloStep(sampleCount, SamplingAmplitude, &(Positions[0]), readValue)))
     {
-      rawExact=ExactValue;
       SamplingAmplitude /= typicalSA;
-      ExactValue /= typicalWF;
+      ExactValue = readValue/typicalWF;
       totalSampleCount+=sampleCount;
       if ((norm=Norm(ExactValue))>threshold)
 	{
@@ -212,16 +211,16 @@ int main(int argc, char** argv)
 	    {
 	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());      
-	      ExactValue = Operation.GetScalar();
-	      ratio = ExactValue/rawExact/factor;
-	      cout  << ExactValue << "\t"<< rawExact << "\t" << ratio;
+	      recalculatedValue = Operation.GetScalar();
+	      ratio = recalculatedValue/readValue/factor;
+	      cout  << recalculatedValue << "\t"<< readValue << "\t" << ratio;
 	      checkedConfigurations++;
 	      if ((fabs(Real(ratio)-1.0) < limit) && (fabs(Imag(ratio)) < limit) && (norm < forceDiscard))
 		{	      
 		  cout << " -> keep" << endl;
 		  keptFromChecked++;
 		  conservedSampleCount+=sampleCount;	      
-		  HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, ExactValue);
+		  HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, readValue);
 		  for (int i=1; i<sampleCount; ++i) HistoryOutput->RecordRejectedStep();
 		  if (norm>maxKeep) maxKeep = norm;
 		}
@@ -239,7 +238,7 @@ int main(int argc, char** argv)
       else
 	{
 	  conservedSampleCount+=sampleCount;	  
-	  HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, ExactValue);
+	  HistoryOutput->RecordAcceptedStep( SamplingAmplitude, Positions, readValue);
 	  for (int i=1; i<sampleCount; ++i) HistoryOutput->RecordRejectedStep();
 	}	
     }
