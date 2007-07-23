@@ -285,6 +285,15 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = Hilbert space dimension  
   int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
+  // evaluate Hilbert space dimension
+  //
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
+  // totalSpin = number of particles with spin up
+  // return value = Hilbert space dimension      
+  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memory = memory size that can be allocated for the look-up table
@@ -299,7 +308,17 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // totalSz = spin total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz);
+  int OldGenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // lzMax = momentum maximum value for a fermion in the state
+  // totalLz = momentum total value
+  // totalSpin = number of particles with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, long pos);
 
   // compute sign
   //

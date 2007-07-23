@@ -1,11 +1,6 @@
-#include "HilbertSpace/FermionOnSphere.h"
-#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
-#include "HilbertSpace/FermionOnSphereUnlimited.h"
-#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
-#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
-#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 
-#include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -114,15 +109,34 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz  = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
+  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
-  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+//  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
+//  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+
+
+  for (int TmpSz = -NbrParticles; TmpSz <= NbrParticles; TmpSz += 2)
+    {
+      int NbrUp = (NbrParticles + TmpSz) >> 1;
+      int NbrDown = (NbrParticles -TmpSz ) >> 1;
+      int Max = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
+      int  L = 0;
+      if ((abs(Max) & 1) != 0)
+	L = 1;
+      for (; L <= Max; L += 2)
+	{
+	  cout << "Lz = " << L << "  Sz = " << TmpSz << endl;
+	  ParticleOnSphereWithSpin* Space2 = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TmpSz, MemorySpace);
+	  delete Space2;
+	}
+    }
+  return 0;
 
   ParticleOnSphereWithSpin* Space;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
@@ -133,7 +147,7 @@ int main(int argc, char** argv)
       if (LzMax <= 15)
 #endif
         {
-	    Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
+	    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
         }
       else
 	{
@@ -148,7 +162,7 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
-  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz, SzTotal,
+  AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
 											  Architecture.GetArchitecture(), 
 											  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 											  Memory, DiskCacheFlag,
@@ -160,7 +174,7 @@ int main(int argc, char** argv)
   if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
     {
       EigenvectorName = new char [64];
-      sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, SzTotal,, TotalLz);
+      sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz, TotalLz);
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
   MainTaskOperation TaskOperation (&Task);

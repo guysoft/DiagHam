@@ -192,14 +192,14 @@ bool QHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
 	  int SizeString = 0;
 	  if (StrNbrParticles[SizeString] == '-')
 	    ++SizeString;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 		 && (StrNbrParticles[SizeString] <= '9'))
 	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	    {
 	      StrNbrParticles[SizeString] = '\0';
 	      lz = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles[SizeString] = '_';
 	      StrNbrParticles += SizeString;
 	    }
 	  else
