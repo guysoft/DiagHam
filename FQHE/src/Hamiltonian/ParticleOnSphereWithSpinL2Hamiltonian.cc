@@ -83,6 +83,8 @@ ParticleOnSphereWithSpinL2Hamiltonian::ParticleOnSphereWithSpinL2Hamiltonian(Par
   this->PrecalculationShift = (int) MinIndex;  
   this->DiskStorageFlag = onDiskCacheFlag;
   this->Memory = memory;
+  this->NbrIntraSectorSums = 0;
+  this->NbrInterSectorSums = 0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -237,80 +239,89 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
     Factor *= -1.0;
 
 
-//   this->NbrInteractionFactors = this->LzMax * (this->LzMax - 1) + 1;
-//   this->M1Value = new int [this->NbrInteractionFactors];
-//   this->M2Value = new int [this->NbrInteractionFactors];
-//   this->M3Value = new int [this->NbrInteractionFactors];
+   this->NbrM12IntraIndices = this->LzMax * (this->LzMax - 1) + 1;
+   this->M1IntraValue = new int [this->NbrM12IntraIndices];
+   this->M2IntraValue = new int [this->NbrM12IntraIndices];
+   this->M3IntraValues = new int* [this->NbrM12IntraIndices];
+   this->M12InteractionFactorsupup = new double [this->NbrM12IntraIndices];
+   this->M12InteractionFactorsupdown = new double [this->NbrM12IntraIndices];
+   this->NbrM12IntraIndices = 0;
 
-//   this->NbrInterSectorSums = 
-//   this->InteractionFactorsupup = new double [this->NbrInteractionFactors];
-//   this->InteractionFactorsdowndown = new double [this->NbrInteractionFactors];
-//   this->InteractionFactorsupdown = new double [this->NbrInteractionFactors];
-//   this->NbrInteractionFactors = 0;
+   for (int m3 = 1; m3 <= this->LzMax; ++m3)
+     {
+       this->M12InteractionFactorsupup[this->NbrM12IntraIndices] = Factor * Coefficients(0, m3);
+       this->M12InteractionFactorsdowndown[this->NbrM12IntraIndices] = Factor * Coefficients(0, m3);
+       this->M1IntraValue[this->NbrM12IntraIndices] = m3 - 1;
+       this->M2IntraValue[this->NbrM12IntraIndices] = 1;
+       this->M3IntraValues[this->NbrM12IntraIndices] = new int [1];
+       this->M3IntraValues[this->NbrM12IntraIndices][0] =  m3;
+       ++this->NbrM12IntraIndices;
+     }
+  for (int m4 = 1; m4 < this->LzMax; ++m4)
+    {
+      int m3= 1;
+      for (; m3 < m4; ++m3)
+	{
+	  this->M12InteractionFactorsupup[this->NbrM12IntraIndices] = Factor * Coefficients(m4, m3);
+	  this->M12InteractionFactorsdowndown[this->NbrM12IntraIndices] = Factor * Coefficients(m4, m3);
+	  this->M1IntraValue[this->NbrM12IntraIndices] = m3 - 1;
+	  this->M2IntraValue[this->NbrM12IntraIndices] = m4 + 1;
+	  this->M3IntraValues[this->NbrM12IntraIndices] = new int [1];
+	  this->M3IntraValues[this->NbrM12IntraIndices][0] =  m3;
+	  ++this->NbrM12IntraIndices;
+	}
+      ++m3;
+      for (; m3 <= this->LzMax; ++m3)
+	{
+	  this->M12InteractionFactorsupup[this->NbrM12IntraIndices] = Factor * Coefficients(m4, m3);
+	  this->M12InteractionFactorsdowndown[this->NbrM12IntraIndices] = Factor * Coefficients(m4, m3);
+	  this->M1IntraValue[this->NbrM12IntraIndices] = m3 - 1;
+	  this->M2IntraValue[this->NbrM12IntraIndices] = m4 + 1;
+	  this->M3IntraValues[this->NbrM12IntraIndices] = new int [1];
+	  this->M3IntraValues[this->NbrM12IntraIndices][0] =  m3;
+	  ++this->NbrM12IntraIndices;
+	}
+    }
 
+   this->NbrM12InterIndices = this->LzMax * (this->LzMax - 1) + 1;
+   this->M1InterValue = new int [this->NbrM12InterIndices];
+   this->M2InterValue = new int [this->NbrM12InterIndices];
+   this->M3InterValues = new int* [this->NbrM12InterIndices];
+   this->M12InteractionFactorsupdown = new double [this->NbrM12InterIndices];
+   this->NbrM12InterIndices = 0;
 
-//   for (int m3 = 1; m3 <= this->LzMax; ++m3)
-//     {
-//       this->InteractionFactorsupup[this->NbrInteractionFactors] = Factor * Coefficients(0, m3);
-//       this->InteractionFactorsdowndown[this->NbrInteractionFactors] = Factor * Coefficients(0, m3);
-//       this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-//       this->M2Value[this->NbrInteractionFactors] = 1;
-//       this->M3Value[this->NbrInteractionFactors] = m3;
-//       ++this->NbrInteractionFactors;
-//     }
-//   for (int m4 = 1; m4 < this->LzMax; ++m4)
-//     {
-//       int m3= 1;
-//       for (; m3 < m4; ++m3)
-// 	{
-// 	  this->InteractionFactorsupup[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->InteractionFactorsdowndown[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-// 	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
-// 	  this->M3Value[this->NbrInteractionFactors] = m3;
-// 	  ++this->NbrInteractionFactors;
-// 	}
-//       ++m3;
-//       for (; m3 <= this->LzMax; ++m3)
-// 	{
-// 	  this->InteractionFactorsupup[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->InteractionFactorsdowndown[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-// 	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
-// 	  this->M3Value[this->NbrInteractionFactors] = m3;
-// 	  ++this->NbrInteractionFactors;
-// 	}
-//     }
-
-//   for (int m3 = 1; m3 <= this->LzMax; ++m3)
-//     {
-//       this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(0, m3);
-//       this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-//       this->M2Value[this->NbrInteractionFactors] = 1;
-//       this->M3Value[this->NbrInteractionFactors] = m3;
-//       ++this->NbrInteractionFactors;
-//     }
-//   for (int m4 = 1; m4 < this->LzMax; ++m4)
-//     {
-//       int m3= 1;
-//       for (; m3 < m4; ++m3)
-// 	{
-// 	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-// 	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
-// 	  this->M3Value[this->NbrInteractionFactors] = m3;
-// 	  ++this->NbrInteractionFactors;
-// 	}
-//       ++m3;
-//       for (; m3 <= this->LzMax; ++m3)
-// 	{
-// 	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
-// 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
-// 	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
-// 	  this->M3Value[this->NbrInteractionFactors] = m3;
-// 	  ++this->NbrInteractionFactors;
-// 	}
-//     }
+   for (int m3 = 1; m3 <= this->LzMax; ++m3)
+     {
+       this->M12InteractionFactorsupdown[this->NbrM12InterIndices] = Factor * Coefficients(0, m3);
+       this->M1InterValue[this->NbrM12InterIndices] = m3 - 1;
+       this->M2InterValue[this->NbrM12InterIndices] = 1;
+       this->M3InterValues[this->NbrM12IntraIndices] = new int [1];
+       this->M3InterValues[this->NbrM12IntraIndices][0] =  m3;
+       ++this->NbrM12InterIndices;
+     }
+  for (int m4 = 1; m4 < this->LzMax; ++m4)
+    {
+      int m3= 1;
+      for (; m3 < m4; ++m3)
+	{
+	  this->M12InteractionFactorsupdown[this->NbrM12InterIndices] = Factor * Coefficients(m4, m3);
+	  this->M1InterValue[this->NbrM12InterIndices] = m3 - 1;
+	  this->M2InterValue[this->NbrM12InterIndices] = m4 + 1;
+	  this->M3InterValues[this->NbrM12IntraIndices] = new int [1];
+	  this->M3InterValues[this->NbrM12IntraIndices][0] =  m3;
+	  ++this->NbrM12InterIndices;
+	}
+      ++m3;
+      for (; m3 <= this->LzMax; ++m3)
+	{
+	  this->M12InteractionFactorsupdown[this->NbrM12InterIndices] = Factor * Coefficients(m4, m3);
+	  this->M1InterValue[this->NbrM12InterIndices] = m3 - 1;
+	  this->M2InterValue[this->NbrM12InterIndices] = m4 + 1;
+	  this->M3InterValues[this->NbrM12IntraIndices] = new int [1];
+	  this->M3InterValues[this->NbrM12IntraIndices][0] =  m3;
+	  ++this->NbrM12InterIndices;
+	}
+    }
 
   this->OneBodyInteractionFactorsupup = new double[this->LzMax + 1];
   this->OneBodyInteractionFactorsdowndown = new double[this->LzMax + 1];
