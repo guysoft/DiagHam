@@ -1168,7 +1168,7 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 			}
 		    }    
 		}
-	      Coefficient = TmpParticles->AdAd(i, this->M1Value[m1], this->M2Value[m1]);	  
+	      Coefficient = TmpParticles->AdAd(i, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
 	      if (Coefficient != 0.0)
 		{
 		  SumIndices = this->M1IntraValue[m1] + this->M2IntraValue[m1];
@@ -1342,7 +1342,9 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
       int SumIndices;
       int TmpNbrM3Values;
       int* TmpM3Values;
-      int ReducedNbrInteractionFactors;
+      int ReducedNbrInteractionFactorsupup;
+      int ReducedNbrInteractionFactorsupdown;
+      int ReducedNbrInteractionFactorsdowndown;      
       for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
 	{
 	  this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
@@ -1350,7 +1352,8 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 	  TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
 	  TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
 	  Pos = 0;
-	  ReducedNbrInteractionFactors = 0;
+	  ReducedNbrInteractionFactorsupup = 0;
+	  ReducedNbrInteractionFactorsdowndown = 0;
 	  for (int m1 = 0; m1 < this->NbrM12IntraIndices; ++m1)
 	    {
 	      Coefficient = TmpParticles->AuAu(i + this->PrecalculationShift, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
@@ -1365,14 +1368,14 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
-			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsupup[ReducedNbrInteractionFactors];
+			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsupup[ReducedNbrInteractionFactorsupup];
 			  ++Pos;
 			}		      
-		      ++ReducedNbrInteractionFactors;
+		      ++ReducedNbrInteractionFactorsupup;
 		    }    
 		}
 	      else
-		ReducedNbrInteractionFactors += this->NbrM3IntraValues[m1];
+		ReducedNbrInteractionFactorsupup += this->NbrM3IntraValues[m1];
 	      Coefficient = TmpParticles->AdAd(i + this->PrecalculationShift, this->M1IntraValue[m1], this->M2IntraValue[m1]);	  
 	      if (Coefficient != 0.0)
 		{
@@ -1385,15 +1388,16 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
-			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsdowndown[ReducedNbrInteractionFactors];
+			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsdowndown[ReducedNbrInteractionFactorsdowndown];
 			  ++Pos;
 			}		      
-		      ++ReducedNbrInteractionFactors;
+		      ++ReducedNbrInteractionFactorsdowndown;
 		    }    
 		}
 	      else
-		ReducedNbrInteractionFactors += this->NbrM3IntraValues[m1];
+		ReducedNbrInteractionFactorsdowndown += this->NbrM3IntraValues[m1];
 	    }
+	  ReducedNbrInteractionFactorsupdown = 0;
 	  for (int m1 = 0; m1 < this->NbrM12InterIndices; ++m1)
 	    {
 	      Coefficient = TmpParticles->AuAd(i + this->PrecalculationShift, this->M1InterValue[m1], this->M2InterValue[m1]);	  
@@ -1408,14 +1412,14 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  TmpIndexArray[Pos] = Index;
-			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsupdown[ReducedNbrInteractionFactors];
+			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->M12InteractionFactorsupdown[ReducedNbrInteractionFactorsupdown];
 			  ++Pos;
 			}		      
-		      ++ReducedNbrInteractionFactors;
+		      ++ReducedNbrInteractionFactorsupdown;
 		    }    
 		}
 	      else
-		ReducedNbrInteractionFactors += this->NbrM3InterValues[m1];
+		ReducedNbrInteractionFactorsupdown += this->NbrM3InterValues[m1];
 	    }
 	  if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
 	    {

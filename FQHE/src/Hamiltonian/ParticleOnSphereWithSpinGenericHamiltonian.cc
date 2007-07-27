@@ -274,6 +274,162 @@ List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::RightInteractionOperat
 
 void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 {
+//   this->NbrIntraSectorSums = 0;
+//   this->NbrInterSectorSums = 0;
+//   int Lim;
+//   int Min;
+//   int Pos = 0;
+//   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
+//   int J = 2 * this->LzMax - 2;
+//   int m4;
+//   double ClebschCoef;
+//   double* TmpCoefficientupup = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
+//   double* TmpCoefficientdowndown = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
+//   double* TmpCoefficientupdown = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
+
+//   int Sign = 1;
+//   if (this->LzMax & 1)
+//     Sign = 0;
+//   double MaxCoefficient = 0.0;
+
+//   for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
+//     for (int m2 =  -this->LzMax; m2 < m1; m2 += 2)
+//       {
+// 	Lim = m1 + m2 + this->LzMax;
+// 	if (Lim > this->LzMax)
+// 	  Lim = this->LzMax;
+// 	Min = m1 + m2 - this->LzMax;
+// 	if (Min < -this->LzMax)
+// 	  Min = -this->LzMax;
+// 	for (int m3 = Min; m3 <= Lim; m3 += 2)
+// 	  {
+// 	    Clebsch.InitializeCoefficientIterator(m1, m2);
+// 	    m4 = m1 + m2 - m3;
+// 	    TmpCoefficientupup[Pos] = 0.0;
+// 	    TmpCoefficientdowndown[Pos] = 0.0;
+// 	    while (Clebsch.Iterate(J, ClebschCoef))
+// 	      {
+// 		if (((J >> 1) & 1) == Sign)
+// 		  {
+// 		    TmpCoefficientupup[Pos] += this->PseudoPotentials[0][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+// 		    TmpCoefficientdowndown[Pos] += this->PseudoPotentials[1][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+// 		  }
+// 	      }
+// 	    ++Pos;
+// 	  }
+//       }
+
+//   this->M12InteractionFactorsupup = new double [Pos];
+//   this->M12InteractionFactorsdowndown = new double [Pos];
+
+//   Pos = 0;
+//   for (int m1 = -this->LzMax; m1 <= this->LzMax; m1 += 2)
+//     for (int m2 =  -this->LzMax; m2 <= this->LzMax; m2 += 2)
+//       {
+// 	Lim = m1 + m2 + this->LzMax;
+// 	if (Lim > this->LzMax)
+// 	  Lim = this->LzMax;
+// 	Min = m1 + m2 - this->LzMax;
+// 	if (Min < -this->LzMax)
+// 	  Min = -this->LzMax;
+// 	for (int m3 = Min; m3 <= Lim; m3 += 2)
+// 	  {
+// 	    Clebsch.InitializeCoefficientIterator(m1, m2);
+// 	    m4 = m1 + m2 - m3;
+// 	    TmpCoefficientupdown[Pos] = 0.0;
+// 	    while (Clebsch.Iterate(J, ClebschCoef))
+// 	      {
+// 		TmpCoefficientupdown[Pos] += this->PseudoPotentials[2][J >> 1] * ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
+// 	      }
+// 	    ++Pos;
+// 	  }
+//       }
+//   this->M12InteractionFactorsupdown = new double [Pos];
+  
+//   this->NbrM12IntraIndices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
+//   this->M1IntraValue = new int [this->NbrM12IntraIndices];
+//   this->M2IntraValue = new int [this->NbrM12IntraIndices];
+//   this->NbrM3IntraValues = new int [this->NbrM12IntraIndices];
+//   this->M3IntraValues = new int* [this->NbrM12IntraIndices];
+//   int TotalIndex = 0;
+//   Pos = 0;
+//   int TmpNbrInteractionFactors = 0;
+//   double Factor = - 4.0;
+//   for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+//     for (int m2 = 0; m2 < m1; ++m2)
+//       {
+// 	Lim = m1 + m2;
+// 	if (Lim > this->LzMax)
+// 	  Lim = this->LzMax;
+// 	Min = m1 + m2 - this->LzMax;
+// 	if (Min < 0)
+// 	  Min = 0;
+// 	this->M1IntraValue[TotalIndex] = m1;
+// 	this->M2IntraValue[TotalIndex] = m2;	    
+// 	this->NbrM3IntraValues[TotalIndex] = 0;
+// 	for (int m3 = Min; m3 <= Lim; ++m3)
+// 	  if ((2 * m3) > (m1 + m2))
+// 	    ++this->NbrM3IntraValues[TotalIndex];
+// 	if (this->NbrM3IntraValues[TotalIndex] > 0)
+// 	  {
+// 	    this->M3IntraValues[TotalIndex] = new int [this->NbrM3IntraValues[TotalIndex]];
+// 	    int TmpIndex = 0;
+// 	    for (int m3 = Min; m3 <= Lim; ++m3)
+// 	      {
+// 		if ((2 * m3) > (m1 + m2))
+// 		  {
+// 		    this->M3IntraValues[TotalIndex][TmpIndex] = m3;
+// 		    this->M12InteractionFactorsupup[TmpNbrInteractionFactors] = Factor * TmpCoefficientupup[Pos];
+// 		    this->M12InteractionFactorsdowndown[TmpNbrInteractionFactors] = Factor * TmpCoefficientdowndown[Pos];
+// 		    ++TmpIndex;
+// 		    ++TmpNbrInteractionFactors;
+// 		  }
+// 		++Pos;
+// 	      }
+// 	  }
+// 	++TotalIndex;
+//       }
+
+//   this->NbrM12InterIndices = (this->NbrLzValue * this->NbrLzValue);
+//   this->M1InterValue = new int [this->NbrM12InterIndices];
+//   this->M2InterValue = new int [this->NbrM12InterIndices];
+//   this->NbrM3InterValues = new int [this->NbrM12InterIndices];
+//   this->M3InterValues = new int* [this->NbrM12InterIndices];
+//   Factor = -2.0;
+//   Pos = 0;
+//   TotalIndex = 0;
+//   TmpNbrInteractionFactors = 0;
+//   for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+//     for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+//       {
+// 	Lim = m1 + m2;
+// 	if (Lim > this->LzMax)
+// 	  Lim = this->LzMax;
+// 	Min = m1 + m2 - this->LzMax;
+// 	if (Min < 0)
+// 	  Min = 0;
+// 	this->M1InterValue[TotalIndex] = m1;
+// 	this->M2InterValue[TotalIndex] = m2;	    
+// 	this->NbrM3InterValues[TotalIndex] = 0;
+// 	for (int m3 = Min; m3 <= Lim; ++m3)
+// 	  ++this->NbrM3InterValues[TotalIndex];
+// 	if (this->NbrM3InterValues[TotalIndex] > 0)
+// 	  {
+// 	    this->M3InterValues[TotalIndex] = new int [this->NbrM3InterValues[TotalIndex]];
+// 	    int TmpIndex = 0;
+// 	    for (int m3 = Min; m3 <= Lim; ++m3)
+// 	      {
+// 		this->M3InterValues[TotalIndex][TmpIndex] = m3;
+// 		this->M12InteractionFactorsupdown[TmpNbrInteractionFactors] = Factor * TmpCoefficientupdown[Pos];
+// 		++TmpNbrInteractionFactors;
+// 		++TmpIndex;
+// 		++Pos;
+// 	      }
+// 	  }
+// 	++TotalIndex;
+//       }
+
+
   int Lim;
   int Min;
   int Pos = 0;
@@ -398,7 +554,9 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
   else
     {
     }
-  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
-  cout << "====================================" << endl;
+
+
+ cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
+ cout << "====================================" << endl;
 }
 

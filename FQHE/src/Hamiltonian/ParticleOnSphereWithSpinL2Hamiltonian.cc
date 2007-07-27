@@ -287,30 +287,42 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
 	}
     }
 
-  this->NbrM12InterIndices = (this->LzMax + 1) * (this->LzMax - 1) + 1;
-   this->M1InterValue = new int [this->NbrM12InterIndices];
-   this->M2InterValue = new int [this->NbrM12InterIndices];
-   this->M3InterValues = new int* [this->NbrM12InterIndices];
-   this->NbrM3InterValues  = new int [this->NbrM12InterIndices];
-   this->M12InteractionFactorsupdown = new double [4 * this->NbrM12InterIndices];
-   this->NbrM12InterIndices = 0;
-   int TmpNbrM12InterIndices = 0;
-
-   for (int m3 = 1; m3 <= this->LzMax; ++m3)
-     {
-       this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = Factor * Coefficients(0, m3);
-       this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = -Factor * Coefficients(0, m3);
-       this->M1InterValue[this->NbrM12InterIndices] = 0;
-       this->M2InterValue[this->NbrM12InterIndices] = m3;
-       this->M3InterValues[this->NbrM12InterIndices] = new int [2];
-       this->NbrM3InterValues[this->NbrM12InterIndices] = 2;
-       this->M3InterValues[this->NbrM12InterIndices][0] =  1;
-       this->M3InterValues[this->NbrM12InterIndices][1] =  m3 - 1;
-       ++this->NbrM12InterIndices;
-     }
+  this->NbrM12InterIndices = (this->LzMax + 3) * this->LzMax;
+  this->M1InterValue = new int [this->NbrM12InterIndices];
+  this->M2InterValue = new int [this->NbrM12InterIndices];
+  this->M3InterValues = new int* [this->NbrM12InterIndices];
+  this->NbrM3InterValues  = new int [this->NbrM12InterIndices];
+  this->M12InteractionFactorsupdown = new double [4 * this->NbrM12InterIndices];
+  this->NbrM12InterIndices = 0;
+  int TmpNbrM12InterIndices = 0;
+  
+  
+  Factor *= 0.5;
+  for (int m3 = 1; m3 <= this->LzMax; ++m3)
+    {
+      this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = -Factor * Coefficients(0, m3);
+      this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = Factor * Coefficients(0, m3);
+      this->M1InterValue[this->NbrM12InterIndices] = m3;
+      this->M2InterValue[this->NbrM12InterIndices] = 0;
+      this->M3InterValues[this->NbrM12InterIndices] = new int [2];
+      this->NbrM3InterValues[this->NbrM12InterIndices] = 2;
+      this->M3InterValues[this->NbrM12InterIndices][0] =  1;
+      this->M3InterValues[this->NbrM12InterIndices][1] =  m3 - 1;
+      ++this->NbrM12InterIndices;
+    }
   for (int m4 = 1; m4 < this->LzMax; ++m4)
     {
-      int m3= 1;
+      int m3= 0;
+      this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = Factor * Coefficients(m3, m4);
+      this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = -Factor * Coefficients(m3, m4);
+      this->M1InterValue[this->NbrM12InterIndices] = m3;
+      this->M2InterValue[this->NbrM12InterIndices] = m4;
+      this->M3InterValues[this->NbrM12InterIndices] = new int [2];
+      this->NbrM3InterValues[this->NbrM12InterIndices] = 2;
+      this->M3InterValues[this->NbrM12InterIndices][0] =  m3 + 1;
+      this->M3InterValues[this->NbrM12InterIndices][1] =  m4 - 1;
+      ++this->NbrM12InterIndices;
+      ++m3;
       for (; m3 < this->LzMax; ++m3)
 	{
 	  this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = Factor * Coefficients(m3, m4);
@@ -337,6 +349,18 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
       this->M3InterValues[this->NbrM12InterIndices][1] =  m3 - 1;
       ++this->NbrM12InterIndices;
     }
+   for (int m3 = 0; m3 < this->LzMax; ++m3)
+     {
+       this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = Factor * Coefficients(m3, this->LzMax);
+       this->M12InteractionFactorsupdown[TmpNbrM12InterIndices++] = -Factor * Coefficients(m3, this->LzMax);
+       this->M1InterValue[this->NbrM12InterIndices] = m3;
+       this->M2InterValue[this->NbrM12InterIndices] = this->LzMax;
+       this->M3InterValues[this->NbrM12InterIndices] = new int [2];
+       this->NbrM3InterValues[this->NbrM12InterIndices] = 2;
+       this->M3InterValues[this->NbrM12InterIndices][0] =  m3 + 1;
+       this->M3InterValues[this->NbrM12InterIndices][1] =  this->LzMax - 1;
+       ++this->NbrM12InterIndices;
+     }
 
   this->OneBodyInteractionFactorsupup = new double[this->LzMax + 1];
   this->OneBodyInteractionFactorsdowndown = new double[this->LzMax + 1];
