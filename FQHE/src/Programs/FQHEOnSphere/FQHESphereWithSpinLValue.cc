@@ -27,6 +27,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -174,6 +175,13 @@ int main(int argc, char** argv)
   double RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
   cout << "<L^2> = " << L2Value << endl
        << "<L> = " << RawTmpAngularMomentum << endl;
+  ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalSz, Architecture.GetArchitecture(), 1.0, 0);
+  VectorHamiltonianMultiplyOperation Operation2 (&Hamiltonian2, &State, &TmpState);
+  Operation2.ApplyOperation(Architecture.GetArchitecture());
+  L2Value = TmpState * State;
+  RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
+  cout << "<S^2> = " << L2Value << endl
+       << "<S> = " << RawTmpAngularMomentum << endl;
   delete Space;
   return 0;
 }

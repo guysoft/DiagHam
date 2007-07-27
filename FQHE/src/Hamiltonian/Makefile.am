@@ -39,4 +39,5 @@ ParticleOnSphereL2Hamiltonian.cc \
 LinearlySuperposedQHEOnSphereHamiltonian.cc \
 AbstractQHEOnSphereWithSpinHamiltonian.cc \
 ParticleOnSphereWithSpinGenericHamiltonian.cc \
-ParticleOnSphereWithSpinL2Hamiltonian.cc
+ParticleOnSphereWithSpinL2Hamiltonian.cc \
+ParticleOnSphereWithSpinS2Hamiltonian.cc
