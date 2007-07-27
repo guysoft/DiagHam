@@ -13,6 +13,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -44,6 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_sphere_suN_n_nbrparticles_q_nbrfluxquanta_z_totallz.basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -134,8 +136,10 @@ int main(int argc, char** argv)
 	  cout << "Cannot create file " << OutputFileName << endl;
 	  return -1;
 	}
+      File.precision(14);
     }
-
+  else
+    cout.precision(14);
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
@@ -157,12 +161,29 @@ int main(int argc, char** argv)
 	   cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
 	   return -1;
 	 }
-       if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
-	 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	   Space->PrintState(File, i) << " : " << State[i] << endl;	   
+       if (((SingleDoubleOption*) Manager["hide-component"])->GetDouble() > 0.0)
+	 {
+	   double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
+	   if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	     {
+	       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		 if (fabs(State[i]) > Error)
+		   Space->PrintState(File, i) << " : " << State[i] << endl;	   
+	     }
+	   else
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       if (fabs(State[i]) > Error)
+		 Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	 }
        else
-	 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	   Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	 {
+	   if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       Space->PrintState(File, i) << " : " << State[i] << endl;	   
+	   else
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	 }
      }
 
   if (OutputFileName != 0)

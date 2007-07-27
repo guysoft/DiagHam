@@ -790,9 +790,9 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 	Str << "X ";
       else Str << "0 ";
     }
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
-  if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
-        Str << " error! ";
+//   Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
+//   if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
+//         Str << " error! ";
   return Str;
 }
 

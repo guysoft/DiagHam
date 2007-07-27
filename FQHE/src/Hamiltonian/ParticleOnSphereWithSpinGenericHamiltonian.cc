@@ -274,6 +274,8 @@ List<Matrix*> ParticleOnSphereWithSpinGenericHamiltonian::RightInteractionOperat
 
 void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 {
+// this part of the code has been tested and is working (27/07/2007) but seems slower than the other method. This part is kept for testing purpose only
+
 //   this->NbrIntraSectorSums = 0;
 //   this->NbrInterSectorSums = 0;
 //   int Lim;
