@@ -7,7 +7,7 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
-//#include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "lz", "twice the momentum projection", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
+  (*SystemGroup) += new BooleanOption  ('\n', "pfaffian-as-exact", "use Moore-Read Pfaffian instead of exact state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
 
@@ -124,13 +125,14 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  bool UsePfaffian = Manager.GetBoolean("pfaffian-as-exact");
   int NbrFermions = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int NbrIter = Manager.GetInteger("nbr-iter");
   int Lz = Manager.GetInteger("lz");
   RealVector State;
 
-  if (Manager.GetInteger("history-mode")<2)
+  if ((Manager.GetInteger("history-mode")<2) && (! UsePfaffian))
     {
       if (Manager.GetString("exact-state") == 0)
 	{
@@ -185,6 +187,19 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  Abstract1DComplexFunction* PfaffianWaveFunction = NULL;
+  if (UsePfaffian)
+    {
+      double *Coefficients = new double[1];
+      Coefficients[0]=0.0;
+      int LL=1;
+      PfaffianWaveFunction = new PairedCFOnSphereWaveFunction(NbrFermions, LL, -1, 1.0, Coefficients, false, 2);
+      ((PairedCFOnSphereWaveFunction*) PfaffianWaveFunction)->AdaptAverageMCNorm();
+      delete [] Coefficients;
+      LzMax = 2*NbrFermions-3;
+      Lz = 0;
+    }
+
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
   Complex ValueExact;
   Complex TrialValue;
@@ -201,9 +216,17 @@ int main(int argc, char** argv)
 	{
 	  if (HistoryFileName==NULL)
 	    {
-	      // default filename: add extension to exact vector
-	      HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
-	      sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+	      if (UsePfaffian)
+		{
+		  HistoryFileName = new char[30];
+		  sprintf(HistoryFileName,"pfaffian_n%d.samp",NbrFermions);
+		}
+	      else
+		{
+		  // default filename: add extension to exact vector
+		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
+		  sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
 	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName
@@ -400,10 +423,15 @@ int main(int argc, char** argv)
   else
     {
       // - exact function
-      TimeCoherence = -1;
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      ValueExact = Operation.GetScalar();
+      if (UsePfaffian)
+	ValueExact = (*PfaffianWaveFunction)(Particles->GetPositions());
+      else
+	{
+	  TimeCoherence = -1;
+	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  ValueExact = Operation.GetScalar();
+	}
       // initialize function values at initial positions: - trial function
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
       PreviousSamplingAmplitude = SqrNorm(TrialValue);
@@ -430,10 +458,15 @@ int main(int argc, char** argv)
 	    {
 	      // recalculate exact function value:
 	      TimeCoherence = NextCoordinates;
-	      if (NoTimeCoherence) TimeCoherence = -1;      
-	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-	      Operation.ApplyOperation(Architecture.GetArchitecture());      
-	      ValueExact = Operation.GetScalar();
+	      if (UsePfaffian)
+		ValueExact = (*PfaffianWaveFunction)(Particles->GetPositions());
+	      else
+		{
+		  if (NoTimeCoherence) TimeCoherence = -1;      
+		  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());      
+		  ValueExact = Operation.GetScalar();
+		}
 	      if (History)
 		History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	    }
@@ -449,10 +482,15 @@ int main(int argc, char** argv)
 	{
 	  // recalculate exact function value:
 	  TimeCoherence = NextCoordinates;
-	  if (NoTimeCoherence) TimeCoherence = -1;      
-	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  ValueExact = Operation.GetScalar();
+	  if (UsePfaffian)
+	    ValueExact = (*PfaffianWaveFunction)(Particles->GetPositions());
+	  else
+	    {
+	      if (NoTimeCoherence) TimeCoherence = -1;      
+	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());      
+	      ValueExact = Operation.GetScalar();
+	    }
 	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       // determine next particle to move

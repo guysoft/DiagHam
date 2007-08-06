@@ -63,7 +63,8 @@ class QHEWaveFunctionManager
   enum Geometries
     {
       SphereGeometry = 0x01,
-      DiskGeometry = 0x02
+      DiskGeometry = 0x02,
+      SphereWithSpinGeometry = 0x04
     };
 
   // list of available wavefunctions:
@@ -74,10 +75,12 @@ class QHEWaveFunctionManager
       Pfaffian = 0x00203,
       Pfaffian2QH = 0x00401,
       ReadRezayi = 0x00803,
-      FilledCF = 0x00F01,
+      FilledCF = 0x01101,
       GenericCF =0x01001,
       UnprojectedCF = 0x02001,
-      PairedCF = 0x14001,
+      PairedCF =  0x04005,
+      PairedCFCB = 0x08004,
+      OneOneOne = 0x10004,
       TrialWaveFunction = 0x10000
     };
   

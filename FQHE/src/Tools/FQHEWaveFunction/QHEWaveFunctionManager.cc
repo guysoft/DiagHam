@@ -43,6 +43,7 @@
 #include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -115,6 +116,13 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	str << "  * pfaffian : pfaffian state wave function" << endl;
 	str << "  * read : Read-Rezayi state wave function" << endl;	
       }
+    else
+      if (this->GeometryID == QHEWaveFunctionManager::SphereGeometry)
+	{
+	  str << "  * 111 : 111-state" << endl;
+	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;
+	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;	  
+	}
   return str;
 }
   
@@ -203,6 +211,29 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  }
 	return 0;
       }
+    else
+      if (this->GeometryID == QHEWaveFunctionManager::SphereWithSpinGeometry)
+	{
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+	      int LL;
+	      if (Coefficients==NULL)
+		{
+		  Coefficients = new double[1];
+		  Coefficients[0]=0.0;
+		  LL=1;
+		}
+	      else
+		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
+	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, 1, false, 0.0, Coefficients, conventions, 2);
+	      rst->AdaptAverageMCNorm();
+	      delete [] Coefficients;
+	      return rst;
+	    }
+	}
   return 0;
 }
 
@@ -255,6 +286,10 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
     return QHEWaveFunctionManager::UnprojectedCF;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
-    return QHEWaveFunctionManager::PairedCF;      
+    return QHEWaveFunctionManager::PairedCF;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
+    return QHEWaveFunctionManager::PairedCFCB;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+    return QHEWaveFunctionManager::OneOneOne;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

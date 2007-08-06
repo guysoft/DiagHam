@@ -161,13 +161,13 @@ int main(int argc, char** argv)
     {
       Space = 0;
     }
-
+  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+  
   if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
     {
       cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
-
   ParticleOnSphereWithSpinL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0);
   RealVector TmpState(Space->GetHilbertSpaceDimension());
   VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &State, &TmpState);
