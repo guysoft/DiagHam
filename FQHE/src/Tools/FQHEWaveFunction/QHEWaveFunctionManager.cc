@@ -233,6 +233,38 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      delete [] Coefficients;
 	      return rst;
 	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+	      int LL;
+	      if (Coefficients==NULL)
+		{
+		  Coefficients = new double[1];
+		  Coefficients[0]=0.0;
+		  LL=1;
+		}
+	      else
+		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
+	      double BC = ((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
+	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, 1, true, BC, Coefficients, conventions, 2);
+	      rst->AdaptAverageMCNorm();
+	      delete [] Coefficients;
+	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      Coefficients = new double[1];
+	      Coefficients[0]=0.0;
+	      double BC = ((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
+	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, BC, Coefficients, conventions, 2);
+	      rst->AdaptAverageMCNorm();
+	      delete [] Coefficients;
+	      return rst;
+	    }
 	}
   return 0;
 }
