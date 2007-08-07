@@ -51,7 +51,7 @@
 
 
 using std::endl;
-
+using std::cout;
 
 // constructor
 //
@@ -84,11 +84,20 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "cluster-size", "number of particles per cluster (read only)", 3, true, 2);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-level", "number of pseudo Landau levels (filledcf only)", 1, true, 1);
   (*WaveFunctionGroup) += new SingleStringOption  ('\n', "cf-file", "name of the file describing the composite fermion state (genericcf only)");
-  // PairedCFOptions:
-  (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
-  (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
-  (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
-  
+  if (this->GeometryID & QHEWaveFunctionManager::SphereGeometry)
+    {
+      // PairedCFOptions:
+      (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
+      (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
+    }
+  else if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
+    {
+      // PairedCF(CB)Options:
+      (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "bosons", "coefficient for boson contribution (pairedcfcb only)",1.0);
+      (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf* only)",'+');
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
+    }
 }
 
 // get list of all available wave functions
@@ -117,7 +126,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	str << "  * read : Read-Rezayi state wave function" << endl;	
       }
     else
-      if (this->GeometryID == QHEWaveFunctionManager::SphereGeometry)
+      if (this->GeometryID == QHEWaveFunctionManager::SphereWithSpinGeometry)
 	{
 	  str << "  * 111 : 111-state" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;
@@ -217,6 +226,12 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int Sz= Options->GetInteger("SzTotal");
+	      if ((N&1)||(Sz!=0))
+		{
+		  cout << "Paired CF bilayer states require equal population of both (pseudo-)spin species and even N!" << endl;
+		  exit(1);
+		}
 	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
 	      int LL;
 	      if (Coefficients==NULL)
@@ -236,6 +251,12 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int Sz= Options->GetInteger("SzTotal");
+	      if ((N&1)||(Sz!=0))
+		{
+		  cout << "Paired CF-CB bilayer states require equal population of both (pseudo-)spin species and even N!" << endl;
+		  exit(1);
+		}
 	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
 	      int LL;
 	      if (Coefficients==NULL)
@@ -246,7 +267,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 		}
 	      else
 		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
-	      double BC = ((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
+	      double BC = ((SingleDoubleOption*) (*(this->Options))["bosons"])->GetDouble();
 	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
 	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, 1, true, BC, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
@@ -256,11 +277,16 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int Sz= Options->GetInteger("SzTotal");
+	      if ((N&1)||(Sz!=0))
+		{
+		  cout << "For now, the implementation of the 111 state requires Sz=0 and even N!" << endl;
+		  exit(1);
+		}
 	      double* Coefficients = new double[1];
 	      Coefficients[0]=0.0;
-	      double BC = ((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
 	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
-	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, BC, Coefficients, conventions, 2);
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, 1.0, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
 	      delete[] Coefficients;
 	      return rst;

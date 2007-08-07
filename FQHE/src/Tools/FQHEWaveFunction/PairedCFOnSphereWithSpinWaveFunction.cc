@@ -97,12 +97,12 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(int n
   this->J21 = new Complex[this->NbrParticlesPerLayer];
   this->J22 = new Complex[this->NbrParticlesPerLayer];
   this->gAlpha = new Complex*[this->NbrLandauLevels];
-  this->InterLayerDistances = new Complex*[this->NbrLandauLevels];
   for (int i=0; i< this->NbrLandauLevels; ++i)
-    {
-      gAlpha[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];
-      InterLayerDistances[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];
-    }
+    gAlpha[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];      
+  
+  this->InterLayerDistances = new Complex*[this->NbrParticlesPerLayer];
+  for (int i=0; i< this->NbrParticlesPerLayer; ++i)
+    InterLayerDistances[i]= new Complex[NbrParticlesPerLayer];
   
   if (correctPrefactors) 
     {
@@ -148,13 +148,14 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(const
   this->J12 = new Complex[this->NbrParticlesPerLayer];
   this->J21 = new Complex[this->NbrParticlesPerLayer];
   this->J22 = new Complex[this->NbrParticlesPerLayer];
+  
   this->gAlpha = new Complex*[this->NbrLandauLevels];
-  this->InterLayerDistances = new Complex*[this->NbrLandauLevels];
   for (int i=0; i< this->NbrLandauLevels; ++i)
-    {
-      gAlpha[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];
-      InterLayerDistances[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];
-    }
+    gAlpha[i]= new Complex[NbrParticlesPerLayer*NbrParticlesPerLayer];
+  
+  this->InterLayerDistances = new Complex*[this->NbrParticlesPerLayer];
+  for (int i=0; i< this->NbrParticlesPerLayer; ++i)
+    InterLayerDistances[i]= new Complex[NbrParticlesPerLayer];
   
 }
 
@@ -170,11 +171,10 @@ PairedCFOnSphereWithSpinWaveFunction::~PairedCFOnSphereWithSpinWaveFunction()
       delete [] TrialParameters;
     }
   for (int i=0; i< this->NbrLandauLevels; ++i)
-    {
-      delete [] gAlpha[i];
-      delete [] InterLayerDistances[i];
-    }
+    delete [] gAlpha[i];
   delete [] gAlpha;
+  for (int i=0; i< this->NbrParticlesPerLayer; ++i)
+    delete [] InterLayerDistances[i];
   delete [] InterLayerDistances;
   delete [] J11;
   delete [] J12;
@@ -212,7 +212,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::operator ()(RealVector& x)
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp = J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j];
+	      tmp = this->ElementNorm*( J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j, Real(tmp), Imag(tmp));
 #else
@@ -234,7 +234,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::operator ()(RealVector& x)
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp *=  - J11[i]*J22[j];
+	      tmp *=  - this->ElementNorm * J11[i]*J22[j];
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
 #else
@@ -267,7 +267,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::GetForOtherParameters( double *coe
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=coefficients[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp = J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j];
+	      tmp = this->ElementNorm *(J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
 #else
@@ -289,7 +289,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::GetForOtherParameters( double *coe
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=coefficients[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp *=  - J11[i]*J22[j];
+	      tmp *=  - this->ElementNorm * J11[i]*J22[j];
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
 #else
@@ -328,7 +328,7 @@ void PairedCFOnSphereWithSpinWaveFunction::GetForManyParameters(ComplexVector &r
 		  tmp=0.0;
 		  for (int n=0; n<this->NbrLandauLevels; ++n)
 		    tmp+= tmpCoefficients[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-		  tmp = J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j];
+		  tmp = this->ElementNorm *(J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
 #ifdef USE_LAPACK_CFCB
 		  Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
 #else
@@ -350,7 +350,7 @@ void PairedCFOnSphereWithSpinWaveFunction::GetForManyParameters(ComplexVector &r
 		  tmp=0.0;
 		  for (int n=0; n<this->NbrLandauLevels; ++n)
 		    tmp+=tmpCoefficients[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-		  tmp *=  - J11[i]*J22[j];
+		  tmp *=  - this->ElementNorm * J11[i]*J22[j];
 #ifdef USE_LAPACK_CFCB
 		  Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
 #else
@@ -382,7 +382,7 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptNorm(RealVector& x)
   double det=Norm((*this)(x));
   while ((det<.1)||(det>50.0))
     {
-      //cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
+      cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
       if (det>1e300) 
 	this->ElementNorm*= pow((double)1.0e-300,(double)1.0/this->NbrParticlesPerLayer);
       else if (det==0.0) 
@@ -390,7 +390,7 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptNorm(RealVector& x)
       else 
 	this->ElementNorm*= pow(det,(double)-1.0/this->NbrParticlesPerLayer);
       det=Norm((*this)(x));
-      //cout <<"N'="<< this->ElementNorm << endl;
+      cout <<"N'="<< this->ElementNorm << endl;
     }
 }
 
@@ -455,63 +455,63 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptAverageMCNorm(int thermalize, in
 // this is the main part of the calculation of the paired wavefunction:
 void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables(RealVector& x)
 {
-  int i, j, offset, alpha;
-  RealVector part=x.Extract(1,this->NbrParticlesPerLayer);
+  int offset, alpha;
+  RealVector part=x.Extract(0, 2*this->NbrParticlesPerLayer-1);
   this->OrbitalValues1 = (*Orbitals1)(part);
-  part = x.Extract(this->NbrParticlesPerLayer+1, 2*this->NbrParticlesPerLayer);
+  part = x.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
   this->OrbitalValues2 = (*Orbitals2)(part);
   Complex tmp;
   // evaluate single particle Jastrow factors
   this->Interpolation=1.0;
   if (Orbitals1->TestCriticality(Interpolation) == 0)
     {
-      for (i=0;i<this->NbrParticlesPerLayer;i++)
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
 	{
 	  J11[i]=1.0;
-	  for(j=0;j<i;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
-	  for(j=i+1;j<NbrParticlesPerLayer;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
+	  for(int j=0;j<i;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
+	  for(int j=i+1;j<NbrParticlesPerLayer;j++) J11[i] *= Orbitals1->JastrowFactorElement(i,j);
 	}
     }
   else // if some interpolation occurred, the true values of the J11's have to be recalculated:
     {
-      for (i=0;i<this->NbrParticlesPerLayer;i++)
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
 	{
 	  J11[i]=1.0;
-	  for(j=0;j<i;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
-	  for(j=i+1;j<NbrParticlesPerLayer;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
+	  for(int j=0;j<i;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
+	  for(int j=i+1;j<NbrParticlesPerLayer;j++) J11[i] *= ((Orbitals1->SpinorU(i) * Orbitals1->SpinorV(j)) - (Orbitals1->SpinorU(j) * Orbitals1->SpinorV(i)));
 	}
     }
 
   if (Orbitals2->TestCriticality(Interpolation) == 0)
     {
-      for (i=0;i<this->NbrParticlesPerLayer;i++)
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
 	{
 	  J22[i]=1.0;
-	  for(j=0;j<i;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
-	  for(j=i+1;j<NbrParticlesPerLayer;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
+	  for(int j=0;j<i;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
+	  for(int j=i+1;j<NbrParticlesPerLayer;j++) J22[i] *= Orbitals2->JastrowFactorElement(i,j);
 	}
     }
   else // if some interpolation occurred, the true values of the J22's have to be recalculated:
     {
-      for (i=0;i<this->NbrParticlesPerLayer;i++)
+      for (int i=0;i<this->NbrParticlesPerLayer;i++)
 	{
 	  J22[i]=1.0;
-	  for(j=0;j<i;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
-	  for(j=i+1;j<NbrParticlesPerLayer;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
+	  for(int j=0;j<i;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
+	  for(int j=i+1;j<NbrParticlesPerLayer;j++) J22[i] *= ((Orbitals2->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals2->SpinorV(i)));
 	}
     }
 
-
   if (this->HaveBosons) // need to calculate additional terms, then:
     {
-      for (i=0;i<this->NbrParticlesPerLayer;++i)
-	for(j=0;j<NbrParticlesPerLayer;++j)
-	  InterLayerDistances[i][j]= ((Orbitals1->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals1->SpinorV(i)));
-      for (i=0;i<this->NbrParticlesPerLayer;++i)
+      for (int i=0; i<this->NbrParticlesPerLayer; ++i)
+	for (int j=0; j<this->NbrParticlesPerLayer; ++j)
+	  InterLayerDistances[i][j] = ((Orbitals1->SpinorU(i) * Orbitals2->SpinorV(j)) - (Orbitals2->SpinorU(j) * Orbitals1->SpinorV(i)));
+
+      for (int i=0;i<this->NbrParticlesPerLayer;++i)
 	{
 	  J12[i]=1.0;
 	  J21[i]=1.0;
-	  for(j=0;j<NbrParticlesPerLayer;++j)
+	  for(int j=0;j<this->NbrParticlesPerLayer;++j)
 	    {
 	      J12[i] *= InterLayerDistances[i][j];
 	      J21[i] *= -InterLayerDistances[j][i];
@@ -521,8 +521,8 @@ void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables(RealVector& x)
 
 
   // evaluate sums over orbitals m for each LL:
-  for (i=0;i<this->NbrParticlesPerLayer;i++)
-    for(j=0;j<this->NbrParticlesPerLayer;j++)
+  for (int i=0;i<this->NbrParticlesPerLayer;i++)
+    for(int j=0;j<this->NbrParticlesPerLayer;j++)
       {
 	alpha=0;
 	for (int n=0;n<this->NbrLandauLevels;n++)

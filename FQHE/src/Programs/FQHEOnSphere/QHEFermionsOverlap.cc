@@ -371,19 +371,6 @@ int main(int argc, char** argv)
   bool NoTimeCoherence=!(Manager.GetBoolean("with-timecoherence"));
   int TimeCoherence;
 
-  // testing
-  ofstream Output("test",ios::out | ios::binary);
-  char CC='c';
-  for(int i=0; i<10; ++i)
-    WriteLittleEndian(Output, CC);
-  Output.close();
-
-  Output.open("test", ios::in | ios::out | ios::binary );
-  Output.seekp(6);
-  CC='d';
-  WriteLittleEndian(Output, CC);
-  Output.close();
-
   if (HistoryMode == 4) // continuing to work on old History
     {
       if (Manager.GetString("exact-state") == 0)
