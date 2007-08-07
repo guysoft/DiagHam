@@ -256,13 +256,13 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-	      Coefficients = new double[1];
+	      double* Coefficients = new double[1];
 	      Coefficients[0]=0.0;
 	      double BC = ((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
 	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
 	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, BC, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
-	      delete [] Coefficients;
+	      delete[] Coefficients;
 	      return rst;
 	    }
 	}

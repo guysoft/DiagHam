@@ -143,7 +143,27 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunction
 
   void EvaluateTables(RealVector& x);
 
+  // for calculating (-1)^x
+  //
+  // x = x value 
+  // return value = (-1)^x
+  double fsgn(int x);
 
 };
+
+
+// for calculating (-1)^x
+//
+// x = x value 
+// return value = (-1)^x
+
+inline double PairedCFOnSphereWaveFunction::fsgn(int x)
+{
+  if (x & 1) 
+    return -1.0;
+  else 
+    return 1.0;
+}
+
 
 #endif //PAIREDCFONSPHEREWAVEFUNCTION

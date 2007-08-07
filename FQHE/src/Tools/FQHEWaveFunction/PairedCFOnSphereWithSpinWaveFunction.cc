@@ -192,14 +192,6 @@ Abstract1DComplexFunction* PairedCFOnSphereWithSpinWaveFunction::Clone ()
   return new PairedCFOnSphereWithSpinWaveFunction(*this);
 }
 
-
-double fsgn(int x) // for calculating (-1)^x
-{
-  if (x&1) return -1.0;
-  else return 1.0;
-}
-
-
 // evaluate function at a given point
 //
 // x = point where the function has to be evaluated
@@ -540,8 +532,8 @@ void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables(RealVector& x)
 	    for (int m2=-AbsEffectiveFlux-2*n; m2<=AbsEffectiveFlux+2*n;m2+=2)
 	      {
 		//offset-alpha gives Phi[] with -m 
-		tmp+=fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues1[alpha][i]*OrbitalValues2[offset-alpha][j];
-		//cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<fsgn((m2+AbsEffectiveFlux)/2)<<endl;
+		tmp+=this->fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues1[alpha][i]*OrbitalValues2[offset-alpha][j];
+		//cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<this->fsgn((m2+AbsEffectiveFlux)/2)<<endl;
 		alpha++;
 	      }
 	    this->gAlpha[n][i*this->NbrParticlesPerLayer+j] = tmp;
