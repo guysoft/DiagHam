@@ -192,8 +192,7 @@ int main(int argc, char** argv)
     {
       double *Coefficients = new double[1];
       Coefficients[0]=0.0;
-      int LL=1;
-      PfaffianWaveFunction = new PairedCFOnSphereWaveFunction(NbrFermions, LL, -1, 1.0, Coefficients, false, 2);
+      PfaffianWaveFunction = new PairedCFOnSphereWaveFunction(NbrFermions, 1, -1, 1.0, Coefficients, false, 2);
       ((PairedCFOnSphereWaveFunction*) PfaffianWaveFunction)->AdaptAverageMCNorm();
       delete [] Coefficients;
       LzMax = 2*NbrFermions-3;
@@ -201,6 +200,7 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
+  FermionOnSphere *Space=NULL;
   Complex ValueExact;
   Complex TrialValue;
   double CurrentSamplingAmplitude;
@@ -282,9 +282,9 @@ int main(int argc, char** argv)
 	      if (State.GetVectorDimension()>0) // have exact state!
 		{
 		  cout << "Checking if abnormal result is reproduced!" << endl;
-		  FermionOnSphere Space (NbrFermions, Lz, LzMax);
+		  if (Space==NULL) Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
 		  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
-		  QHEParticleWaveFunctionOperation Operation(&Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+		  QHEParticleWaveFunctionOperation Operation(Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
 		  Operation.ApplyOperation(Architecture.GetArchitecture());      
 		  ValueExact = Operation.GetScalar();
 		  cout << "Comparing: " << ValueExact << " (new) to "<< rawExact << " (old) (ratio " << ValueExact/rawExact << ")" <<endl;
@@ -338,8 +338,9 @@ int main(int argc, char** argv)
       return 0;
     }
       
-  
-  FermionOnSphere Space (NbrFermions, Lz, LzMax);
+    
+  if (!UsePfaffian)
+    Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
   AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
   double PreviousSamplingAmplitude;
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
 
       // - exact function
       TimeCoherence = -1;
-      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       if (SqrNorm(ValueExact - Operation.GetScalar()) > 1e-10)
 	{
@@ -415,7 +416,7 @@ int main(int argc, char** argv)
       else
 	{
 	  TimeCoherence = -1;
-	  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
 	  ValueExact = Operation.GetScalar();
 	}
@@ -450,7 +451,7 @@ int main(int argc, char** argv)
 	      else
 		{
 		  if (NoTimeCoherence) TimeCoherence = -1;      
-		  QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+		  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 		  Operation.ApplyOperation(Architecture.GetArchitecture());      
 		  ValueExact = Operation.GetScalar();
 		}
@@ -474,7 +475,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      if (NoTimeCoherence) TimeCoherence = -1;      
-	      QHEParticleWaveFunctionOperation Operation(&Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());      
 	      ValueExact = Operation.GetScalar();
 	    }
