@@ -382,7 +382,7 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptNorm(RealVector& x)
   double det=Norm((*this)(x));
   while ((det<.1)||(det>50.0))
     {
-      cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
+      //cout <<"N'="<< this->ElementNorm << " det="<<det<<endl;
       if (det>1e300) 
 	this->ElementNorm*= pow((double)1.0e-300,(double)1.0/this->NbrParticlesPerLayer);
       else if (det==0.0) 
@@ -390,7 +390,7 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptNorm(RealVector& x)
       else 
 	this->ElementNorm*= pow(det,(double)-1.0/this->NbrParticlesPerLayer);
       det=Norm((*this)(x));
-      cout <<"N'="<< this->ElementNorm << endl;
+      //cout <<"N'="<< this->ElementNorm << endl;
     }
 }
 

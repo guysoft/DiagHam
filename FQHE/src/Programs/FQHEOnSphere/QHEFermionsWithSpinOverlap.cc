@@ -185,6 +185,7 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
+  Particles->MultiplyStepLength(sqrt(2.0));
   Complex ValueExact;
   Complex TrialValue;
   double CurrentSamplingAmplitude;

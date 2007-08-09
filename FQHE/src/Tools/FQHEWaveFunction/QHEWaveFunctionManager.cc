@@ -307,10 +307,18 @@ char* QHEWaveFunctionManager::GetDescription()
     {
       double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
       if (Coefficients==NULL)
-	sprintf(buffer,"%s, MR: %g, c: 0",buffer, this->Options->GetDouble("MR-coeff"));
+	{
+	  if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
+	    sprintf(buffer,"%s, B: %g, c: 0",buffer, this->Options->GetDouble("bosons"));
+	  else
+	    sprintf(buffer,"%s, MR: %g, c: 0",buffer, this->Options->GetDouble("MR-coeff"));
+	}
       else
 	{
-	  sprintf(buffer,"%s, MR: %g, c: %g",buffer, this->Options->GetDouble("MR-coeff"), Coefficients[0]);
+	  if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
+	    sprintf(buffer,"%s, B: %g, c: %g",buffer, this->Options->GetDouble("bosons"), Coefficients[0]);
+	  else
+	    sprintf(buffer,"%s, MR: %g, c: %g",buffer, this->Options->GetDouble("MR-coeff"), Coefficients[0]);
 	  int LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
 	  for (int i=1; i<LL; ++i)
 	    sprintf(buffer,"%s+%g",buffer, Coefficients[i]);

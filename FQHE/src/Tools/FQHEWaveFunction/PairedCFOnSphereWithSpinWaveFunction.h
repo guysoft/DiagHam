@@ -33,9 +33,8 @@
 #define PAIREDCFONSPHEREWITHSPINWAVEFUNCTION_H
 
 
-#define USE_LAPACK_CFCB
-
 #ifdef HAVE_LAPACK
+// you may opt out of using the LAPACK determinant routines by quoting the definition below
 #define USE_LAPACK_CFCB
 #endif
 

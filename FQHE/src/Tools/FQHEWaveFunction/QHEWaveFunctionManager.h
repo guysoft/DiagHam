@@ -78,9 +78,9 @@ class QHEWaveFunctionManager
       FilledCF = 0x01101,
       GenericCF =0x01001,
       UnprojectedCF = 0x02001,
-      PairedCF =  0x04005,
-      PairedCFCB = 0x08004,
-      OneOneOne = 0x10004,
+      PairedCF =  0x14005,
+      PairedCFCB = 0x18004,
+      OneOneOne = 0x04004,
       TrialWaveFunction = 0x10000
     };
   
