@@ -70,6 +70,8 @@ foreach $TmpFile (<*>)
 my $TmpLa = 1;
 my $SLaResults = "";
 my $LatexFile = "";
+my $LatexParity = 1;
+my $NbrLatexFile = 1;
 while ($TmpLa <= $TmpMaxBlockSize)
   {
     my $TmpValue = $Entropies[$TmpLa];
@@ -113,7 +115,7 @@ plot \"".$OutputFile."\" using 2:3 notitle with points 31, f1(x) notitle with li
 	    die ("can't open fit.log\n");
 	  }
 	$LatexFile .= "\\begin{figure}
-\\includegraphics[width=8cm,angle=0]{".$OutputFile.".eps}
+\\includegraphics[width=12cm,angle=0]{".$OutputFile.".eps}
 \\caption{\$l_a=".$TmpLa."\$. fit : ";
 	foreach $TmpLine (<INFILE>)
 	  {
@@ -129,7 +131,17 @@ plot \"".$OutputFile."\" using 2:3 notitle with points 31, f1(x) notitle with li
 	      }
 	  }
 	$LatexFile .= "}\n\\end{figure}\n";
-	
+	if ($LatexParity == 2)
+	  {
+	    &WriteLatexFile($LatexFile, $NbrLatexFile);
+	    $LatexFile = "";
+	    ++$NbrLatexFile;
+	    $LatexParity = 1;
+	  }
+	else
+	  {
+	    $LatexParity = 2;
+	  }
 	close (INFILE);
 	unlink("fit.log");
       }
@@ -165,8 +177,15 @@ unless (open(INFILE, "fit.log"))
   {
     die ("can't open fit.log\n");
   }
-$LatexFile .= "\\begin{figure}
-\\includegraphics[width=8cm,angle=0]{fermions_".$InteractionName.".ent.eps}
+
+if ($LatexParity == 2)
+  {
+    &WriteLatexFile($LatexFile, $NbrLatexFile);
+    $NbrLatexFile++;
+  }
+
+$LatexFile = "\\begin{figure}
+\\includegraphics[width=12cm,angle=0]{fermions_".$InteractionName.".ent.eps}
 \\caption{fit : ";
 
 my $TmpLine;
@@ -184,13 +203,20 @@ foreach $TmpLine (<INFILE>)
   }
 $LatexFile .= "}\n\\end{figure}\n";
 
-my $LatexFileName = "fermions_".$InteractionName.".ent.tex";
-unless (open (OUTFILE, ">".$LatexFileName))
-  {
-    die ("can't create ".$LatexFileName."\n");
-  }
+&WriteLatexFile($LatexFile, 0);
 
-print OUTFILE "\\documentclass[prb,aps,epsfig,showpacs]{revtex4}
+
+sub WriteLatexFile()
+  {
+    my $LatexFile = $_[0];
+    my $FileIndex = $_[1];
+    my $LatexFileName = "tmp".$FileIndex.".tex";
+    unless (open (OUTFILE, ">".$LatexFileName))
+      {
+	die ("can't create ".$LatexFileName."\n");
+      }
+    
+    print OUTFILE "\\documentclass[prb,aps,epsfig]{revtex4}
 
 \\usepackage{graphicx,epsf}
 \\usepackage{amsmath}
@@ -200,14 +226,16 @@ print OUTFILE "\\documentclass[prb,aps,epsfig,showpacs]{revtex4}
 
 \\begin{document}\n\n";
 
-print OUTFILE $LatexFile;
-print OUTFILE "
+    print OUTFILE $LatexFile;
+    print OUTFILE "
 \\end{document}\n";
 
-close (OUTFILE);
+    close (OUTFILE);
 
-`latex $LatexFileName`;
-`latex $LatexFileName`;
-$LatexFileName =~ s/\.tex/.dvi/;
-`dvipdf $LatexFileName`;
-unlink ($LatexFileName);
+    `latex $LatexFileName`;
+    `latex $LatexFileName`;
+    $LatexFileName = "tmp".$FileIndex.".dvi";
+    my $PsFileName = "tmp".$FileIndex.".ps";
+    `dvips $LatexFileName -o $PsFileName`;
+    unlink ($LatexFileName);
+  }

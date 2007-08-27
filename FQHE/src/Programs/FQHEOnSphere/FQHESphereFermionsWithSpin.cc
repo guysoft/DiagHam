@@ -1,5 +1,8 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
 
@@ -85,6 +88,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
@@ -110,6 +115,8 @@ int main(int argc, char** argv)
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
@@ -267,19 +274,41 @@ int main(int argc, char** argv)
     {
       double Shift = -10.0;
       ParticleOnSphereWithSpin* Space;
+      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+	{
 #ifdef __64_BITS__
-      if (LzMax <= 31)
+	  if (LzMax <= 31)
 #else
-      if (LzMax <= 15)
+	    if (LzMax <= 15)
 #endif
-        {
-	    Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
-        }
+	      {
+		Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
+	      }
+	    else
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	}
       else
 	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
+#ifdef __64_BITS__
+	  if (LzMax >= 31)
+#else
+	    if (LzMax >= 15)
+#endif
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  if (SzSymmetrizedBasis == true) 
+	    if (LzSymmetrizedBasis == false)
+	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, MemorySpace);
+	    else
+	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace);
+	  else
+	    Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, MemorySpace);
+	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEHamiltonian* Hamiltonian;
       

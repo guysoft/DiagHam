@@ -33,4 +33,7 @@ FermionOnSphereHaldaneHugeBasis.cc \
 ParticleOnSphereWithSU4Spin.cc \
 FermionOnSphereWithSU4Spin.cc \
 FermionOnSphereSymmetricBasis.cc \
-FermionOnSphereHaldaneSymmetricBasis.cc 
+FermionOnSphereHaldaneSymmetricBasis.cc \
+FermionOnSphereWithSpinLzSzSymmetry.cc \
+FermionOnSphereWithSpinSzSymmetry.cc \
+FermionOnSphereWithSpinLzSymmetry.cc

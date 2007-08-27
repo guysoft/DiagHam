@@ -3,13 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//          Copyright (C) 2001-2005 Gunnar Moller and Nicolas Regnault        //
+//                  Copyright (C) 2001-2005 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on sphere with spin without            //
-//                            sign precalculation table                       //
+//                     class of fermions on sphere with spin with             //
+//                                 Sz<->-Sz symmetry                          //
 //                                                                            //
-//                        last modification : 12/12/2005                      //
+//                        last modification : 13/08/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,121 +29,53 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREWITHSPINNOTAB_H
-#define FERMIONONSPHEREWITHSPINNOTAB_H
+#ifndef FERMIONONSPHEREWITHSPINSZSYMMETRY_H
+#define FERMIONONSPHEREWITHSPINSZSYMMETRY_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 
 #include <iostream>
 
-class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
+
+
+class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSymmetry
 {
-
- protected:
-
-  // number of fermions
-  int NbrFermions;
-  // number of fermions plus 1
-  int IncNbrFermions;
-  // momentum total value
-  int TotalLz;
-  // maximum Lz value reached by a fermion
-  int LzMax;
-  // number of fermions with spin up / down
-  int NbrFermionsUp;
-  int NbrFermionsDown;
-  // number of Lz values in a stat
-  int NbrLzValue;
-  // twice the total spin value
-  int TotalSpin;
-
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateHighestBit;
-
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
-  // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
-
 
  public:
 
-  // default constructor
+  // default constructor 
   //
-  FermionOnSphereWithSpin();
+  FermionOnSphereWithSpinSzSymmetry ();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
-  // totalSpin = twce the total spin value
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpin (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory = 10000000);
+  FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereWithSpin(const FermionOnSphereWithSpin& fermions);
+  FermionOnSphereWithSpinSzSymmetry(const FermionOnSphereWithSpinSzSymmetry& fermions);
 
   // destructor
   //
-  ~FermionOnSphereWithSpin ();
+  ~FermionOnSphereWithSpinSzSymmetry ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereWithSpin& operator = (const FermionOnSphereWithSpin& fermions);
+  FermionOnSphereWithSpinSzSymmetry& operator = (const FermionOnSphereWithSpinSzSymmetry& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
-
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  int GetParticleStatistic();
-
-  // return a list of all possible quantum numbers 
-  //
-  // return value = pointer to corresponding quantum number
-  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
-
-  // return quantum number associated to a given state
-  //
-  // index = index of the state
-  // return value = pointer to corresponding quantum number
-  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
-
-  // extract subspace with a fixed quantum number
-  //
-  // q = quantum number value
-  // converter = reference on subspace-space converter to use
-  // return value = pointer to the new subspace
-  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
-						 SubspaceSpaceConverter& converter);
 
   // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
   //
@@ -240,13 +172,6 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient);
 
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  virtual ostream& PrintState (ostream& Str, int state);
-
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -263,7 +188,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
- protected:
+  protected:
 
   // find state index
   //
@@ -272,73 +197,70 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
-
-  // evaluate Hilbert space dimension
+  // get canonical expression of a given state
   //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // totalSpin = twce the total spin value
-  // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
+  // initialState = state that has to be converted to its canonical expression
+  // return value = corresponding canonical state
+  virtual unsigned long GetCanonicalState (unsigned long initialState);
 
-  // evaluate Hilbert space dimension
+  // get symmetry of a given state 
   //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // totalSpin = number of particles with spin up
-  // return value = Hilbert space dimension      
-  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
+  // initialState = referennce state whose symmetry has to be computed
+  virtual void GetStateSymmetry (unsigned long& initialState);
 
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
-  // totalLz = momentum total value
-  // totalSz = spin total value
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int OldGenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz);
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion in the state
-  // totalLz = momentum total value
-  // totalSpin = number of particles with spin up
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, long pos);
-
-  // compute sign
+  // get canonical expression of a given state and its symmetry
   //
-  // signs = 
-  // return value = sign value (+1.0 or -1.0)
-  double ComputeSign(unsigned long signs);
-
-
-  // compute the sign for permuting all electrons with spin up to the left of those with spin down
-  // index = index of the state
-  // indicesUp = location of the Fermions with spin up, counting as zero to LzMax
-  // return value = sign value (+1.0 or -1.0)
-  double GetStateSign(int index, int *IndicesDown);
+  // initialState = state that has to be converted to its canonical expression
+  // return value = corresponding canonical state (with symmetry bit)
+  virtual unsigned long GetSignedCanonicalState (unsigned long initialState);
 
 };
 
-// get the particle statistic 
+// get canonical expression of a given state
 //
-// return value = particle statistic
+// initialState = state that has to be converted to its canonical expression
+// return value = corresponding canonical state
 
-inline int FermionOnSphereWithSpin::GetParticleStatistic()
+inline unsigned long FermionOnSphereWithSpinSzSymmetry::GetCanonicalState (unsigned long initialState)
 {
-  return ParticleOnSphereWithSpin::FermionicStatistic;
+  unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpMask |= TmpMask << 1;
+  if ((initialState ^ TmpMask) < initialState)
+    return (initialState ^ TmpMask);
+  else
+    return initialState;
+}
+
+// get symmetry of a given state 
+//
+// initialState = reference on the state whose symmetry has to be computed
+
+inline void FermionOnSphereWithSpinSzSymmetry::GetStateSymmetry (unsigned long& initialState)
+{
+  unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpMask |= TmpMask << 1;
+  if ((initialState ^ TmpMask) != initialState)    
+    initialState |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
+}
+
+// get canonical expression of a given state and its symmetry
+//
+// initialState = state that has to be converted to its canonical expression
+// return value = corresponding canonical state (with symmetry bit)
+
+inline unsigned long FermionOnSphereWithSpinSzSymmetry::GetSignedCanonicalState (unsigned long initialState)
+{
+  unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpMask |= TmpMask << 1;
+  if ((initialState ^ TmpMask) < initialState)
+    {
+      return ((initialState ^ TmpMask) | FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT);
+    }
+  else
+    if ((initialState ^ TmpMask) != initialState)
+      return (initialState | FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT);
+    else
+      return initialState;
 }
 
 #endif
