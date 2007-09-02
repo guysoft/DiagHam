@@ -1161,3 +1161,17 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
     }
 }
 
+// compute particule-hole symmetric state from a given state
+//
+// state = vector corresponding to the state to symmetrize
+// holeBasis = n-body basis on which the symmetrized state has to be expressed
+
+RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis)
+{
+  RealVector TmpVector(holeBasis.HilbertSpaceDimension, true);
+  unsigned long TmpMask = (0x1ul << (this->LzMax + 1)) - 1;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[(~this->StateDescription[i]) & TmpMask] = state[i];
+  return TmpVector;
+}
+

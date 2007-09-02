@@ -4,6 +4,7 @@ use strict 'vars';
 
 
 my $InputFile = $ARGV[0];
+my $ClusterDescriptionFile = $ARGV[1];
 my $OptimizerOperation = "VectorHamiltonianMultiply core";
 
 my $NbrMPINodes;
@@ -191,3 +192,36 @@ foreach $TmpNodeName (sort (keys(%ClusterDescription)))
   }
 
 
+if (defined($ClusterDescriptionFile))
+{
+    unless(open (INFILE, $ClusterDescriptionFile))
+    {
+	die "can't open ".$ClusterDescriptionFile."\n";
+    }
+    while (defined($TmpLine = <INFILE>))
+    {
+	my $TmpLine2 = $TmpLine;
+	chomp ($TmpLine);
+	$TmpLine =~ s/^\s+//;
+	$TmpLine =~ s/\s+$//;
+	$TmpLine =~ s/^\#.*//;
+	if ($TmpLine eq "")
+	{
+	    print $TmpLine2;	    
+	}
+	else
+	{
+	    my @TmpArray = split (/\s+/, $TmpLine);
+	    foreach $TmpNodeName (sort (keys(%ClusterDescription)))
+	    {	
+		my $NodeDescription = $ClusterDescription{$TmpNodeName};
+		if ($$NodeDescription{"hostname"} eq $TmpArray[0])
+		{
+		    $TmpArray[2] = $$NodeDescription{"optperf"};
+		}
+	    }
+	    print join(" ", @TmpArray)."\n";
+	}
+    }
+    close (INFILE);
+}

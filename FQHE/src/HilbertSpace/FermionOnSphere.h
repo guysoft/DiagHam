@@ -258,6 +258,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = density matrix of the subsytem
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
 
+  // compute particule-hole symmetric state from a given state
+  //
+  // state = vector corresponding to the state to symmetrize
+  // holeBasis = n-body basis on which the symmetrized state has to be expressed
+  virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
+
  protected:
 
   // find state index

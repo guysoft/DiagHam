@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
+  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -91,6 +92,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
 #endif
+  char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
   int TotalLz = 0;
   bool Statistics = true;
   if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
@@ -229,6 +231,14 @@ int main(int argc, char** argv)
     }
 
 
+  if (DensityMatrixFileName != 0)
+    {
+      ofstream DensityMatrixFile;
+      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
+      DensityMatrixFile << "# l_a    N    Lz    lambda" << endl;
+      DensityMatrixFile.close();
+    }
+
   ofstream File;
   if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
     File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
@@ -310,6 +320,15 @@ int main(int argc, char** argv)
 			    DensitySum += TmpDiag[i];
 			  }
 		      }
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+		      DensityMatrixFile.close();
+		    }
 		}
 	      else
 		{
@@ -319,7 +338,14 @@ int main(int argc, char** argv)
 		      EntanglementEntropy += TmpValue * log(TmpValue);
 		      DensitySum += TmpValue;
 		    }
-		  
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+		      DensityMatrixFile.close();
+		    }		  
 		}
 	    }
 	}
