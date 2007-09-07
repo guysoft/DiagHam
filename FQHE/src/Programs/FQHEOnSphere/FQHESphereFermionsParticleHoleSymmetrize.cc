@@ -75,7 +75,6 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int LzMax = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
-  int NbrHoles = LzMax + 1 - NbrParticles;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool Statistics = true;
@@ -87,6 +86,7 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;
     }
+  int NbrHoles = LzMax + 1 - NbrParticles;
 
   RealVector State;
   if (State.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
@@ -218,15 +218,14 @@ int main(int argc, char** argv)
 	}
       char* OutputFileName = new char [strlen(InputFileName) + 8];
       strcpy (OutputFileName, "fermions_holes_");
-      strncpy (OutputFileName, InputFileName, TagPosition - InputFileName);
       TagPosition = strcasestr(InputFileName, "_n_");
       if (TagPosition == 0)
 	{
 	  cout << "no default output name can be built from " << InputFileName << endl;
 	  return -1;
 	} 
-      strncpy (OutputFileName + 14, InputFileName + 9, (TagPosition - InputFileName - 9));
-      sprintf (OutputFileName + 14, "_n_%d", NbrHoles);
+      strncpy (OutputFileName + 15, InputFileName + 9, (TagPosition - InputFileName - 9));
+      sprintf (OutputFileName + 6 + (TagPosition - InputFileName), "_n_%d", NbrHoles);
       long TmpPos = strlen (OutputFileName);
       TagPosition = strcasestr(InputFileName, "_2s_");
       if (TagPosition == 0)
@@ -235,7 +234,7 @@ int main(int argc, char** argv)
 	  return -1;
 	}      
       strcpy (OutputFileName + TmpPos, TagPosition);
-      cout << OutputFileName << endl;
+      HoleState.WriteVector(OutputFileName);
     }
   else
     {

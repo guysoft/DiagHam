@@ -1171,7 +1171,13 @@ RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOn
   RealVector TmpVector(holeBasis.HilbertSpaceDimension, true);
   unsigned long TmpMask = (0x1ul << (this->LzMax + 1)) - 1;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    TmpVector[(~this->StateDescription[i]) & TmpMask] = state[i];
+    {
+      unsigned long TmpState = (~this->StateDescription[i]) & TmpMask;
+      int TmpLzMax = this->LzMax;
+      while ((TmpState & (0x1ul << TmpLzMax)) == 0x0l)
+	--TmpLzMax;
+      TmpVector[holeBasis.FindStateIndex(TmpState, TmpLzMax)] = state[i];
+    }
   return TmpVector;
 }
 
