@@ -95,22 +95,26 @@ int main(int argc, char** argv)
       return -1;      
     }
 
-  FermionOnSphere* InputSpace = 0;
+  RealVector HoleState;
   if (((BooleanOption*) Manager["haldane"])->GetBoolean() == false)
     {
 #ifdef __64_BITS__
       if (LzMax <= 63)
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	  InputSpace = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	else
-	  InputSpace = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
 #else
       if (LzMax <= 31)
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	  InputSpace = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	else
-	  InputSpace = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
 #endif
+	if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	  {
+	    FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+	    FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+	    HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	  }
+	else
+	  {
+	    FermionOnSphereSymmetricBasis InputSpace(NbrParticles, LzMax, MemorySpace);
+	    FermionOnSphereSymmetricBasis OutputSpace (NbrHoles, LzMax, MemorySpace);
+	    HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	  }
     }
   else
     {
@@ -177,36 +181,36 @@ int main(int argc, char** argv)
       if (SymmetrizedBasis == false)
 	{
 	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    InputSpace = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	    {
+	      FermionOnSphereHaldaneBasis InputSpace (((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	    }
 	  else
-	    InputSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+	    {
+	      FermionOnSphereHaldaneBasis InputSpace (NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+	      FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	    }
 	}
       else
 	{
 	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	    InputSpace = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	    {
+	      FermionOnSphereHaldaneSymmetricBasis InputSpace(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      FermionOnSphereSymmetricBasis OutputSpace (NbrHoles, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	    }
 	  else
-	    InputSpace = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
+	    {
+	      FermionOnSphereHaldaneSymmetricBasis InputSpace (NbrParticles, LzMax, ReferenceState, MemorySpace);
+	      FermionOnSphereSymmetricBasis OutputSpace (NbrHoles, LzMax, MemorySpace);
+	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	    }
 	}
     }
 
-  FermionOnSphere* OutputSpace = 0;
-#ifdef __64_BITS__
-  if (LzMax <= 63)
-    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-     OutputSpace = new FermionOnSphere(NbrHoles, TotalLz, LzMax, MemorySpace);
-    else
-      OutputSpace = new FermionOnSphereSymmetricBasis(NbrHoles, LzMax, MemorySpace);
-#else
-  if (LzMax <= 31)
-    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-      OutputSpace = new FermionOnSphere(NbrHoles, TotalLz, LzMax, MemorySpace);
-    else
-     OutputSpace  = new FermionOnSphereSymmetricBasis(NbrHoles, LzMax, MemorySpace);
-#endif
-  
 
-  RealVector HoleState = InputSpace->ParticleHoleSymmetrize(State, *OutputSpace);
   if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
     {
       char* InputFileName = ((SingleStringOption*) Manager["input-file"])->GetString(); 
@@ -240,7 +244,5 @@ int main(int argc, char** argv)
     {
       HoleState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString());
     }
-  delete OutputSpace;
-  delete InputSpace;
   return 0;
 }

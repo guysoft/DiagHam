@@ -883,3 +883,25 @@ void FermionOnSphereSymmetricBasis::InitializeWaveFunctionEvaluation (bool timeC
 {
 }
   
+// compute particule-hole symmetric state from a given state
+//
+// state = vector corresponding to the state to symmetrize
+// holeBasis = n-body basis on which the symmetrized state has to be expressed
+
+RealVector  FermionOnSphereSymmetricBasis::ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis)
+{
+  RealVector TmpVector(holeBasis.HilbertSpaceDimension, true);
+  unsigned long TmpMask = (0x1ul << (this->LzMax + 1)) - 1;
+  FermionOnSphereSymmetricBasis& TmpHoleBasis = (FermionOnSphereSymmetricBasis&) holeBasis;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpHoleBasis.GetSignedCanonicalState((~this->StateDescription[i]) & TmpMask);
+      int TmpLzMax = this->LzMax;
+      while ((TmpState & (0x1ul << TmpLzMax)) == 0x0l)
+	--TmpLzMax;
+      TmpHoleBasis.GetSignedCanonicalState(TmpState);
+      TmpVector[TmpHoleBasis.FindStateIndex(TmpState, TmpLzMax)] = state[i];
+    }
+  return TmpVector;
+}
+

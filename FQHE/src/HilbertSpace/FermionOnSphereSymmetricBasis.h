@@ -253,6 +253,12 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
+  // compute particule-hole symmetric state from a given state
+  //
+  // state = vector corresponding to the state to symmetrize
+  // holeBasis = n-body basis on which the symmetrized state has to be expressed
+  virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
+
  protected:
 
   // find state index
