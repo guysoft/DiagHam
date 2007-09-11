@@ -975,7 +975,7 @@ void FermionOnSphere::InitializeWaveFunctionEvaluation (bool timeCoherence)
 // nbrFermionSector = number of particles that belong to the subsytem 
 // groundState = reference on the total system ground state
 // lzSector = Lz sector in which the density matrix has to be evaluated 
-// return value = density matrix of the subsytem
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
 RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState)
 {  
@@ -1084,6 +1084,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
       int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
       RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+      long TmpNbrNonZeroElements = 0;
       while (MinIndex <= MaxIndex)
 	{
 	  TmpIndex = MinIndex;
@@ -1148,7 +1149,10 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 		  for (int j = MinIndex; j < TmpIndex; ++j)
 		    {
 		      if (Pos3 <=  TmpStatePosition[Pos2])
-			TmpDensityMatrix.AddToMatrixElement(Pos3, TmpStatePosition[Pos2], TmpValue * groundState[j]);
+			{
+			  TmpDensityMatrix.AddToMatrixElement(Pos3, TmpStatePosition[Pos2], TmpValue * groundState[j]);
+			  ++TmpNbrNonZeroElements;
+			}
 		      ++Pos2;
 		    }
 		  ++Pos;
@@ -1157,7 +1161,13 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 	  MinIndex = TmpIndex;
 	}
       delete[] TmpStatePosition;
-      return TmpDensityMatrix;
+      if (TmpNbrNonZeroElements > 0)	
+	return TmpDensityMatrix;
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrixZero;
+	  return TmpDensityMatrixZero;
+	}
     }
 }
 

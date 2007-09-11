@@ -15,6 +15,7 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -277,6 +278,8 @@ int main(int argc, char** argv)
       int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
       if (SubsystemNbrParticles < 0)
 	SubsystemNbrParticles = 0;
+      double* TmpDensityMatrixEigenvalues = new double [1ul << SubsystemSize];
+      long TmpDensityMatrixEigenvaluePosition = 0;
       for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemTotalLz = 0;
@@ -298,28 +301,9 @@ int main(int argc, char** argv)
 #else
 		  PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
-		  if (SubsystemTotalLz != 0)
-		    {
-		      double TmpEntanglementEntropy = 0.0;
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			{
-			  if (TmpDiag[i] > 1e-14)
-			    {
-			      TmpEntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-			      DensitySum += TmpDiag[i];
-			    }
-			}
-		      EntanglementEntropy += TmpEntanglementEntropy;
-		    }
-		  else
-		    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		      {
-			if (TmpDiag[i] > 1e-14)
-			  {
-			    EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-			    DensitySum += TmpDiag[i];
-			  }
-		      }
+		  TmpDiag.SortMatrixDownOrder();
+		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
 		  if (DensityMatrixFileName != 0)
 		    {
 		      ofstream DensityMatrixFile;
@@ -331,24 +315,34 @@ int main(int argc, char** argv)
 		    }
 		}
 	      else
-		{
-		  double TmpValue = PartialDensityMatrix(0,0);
-		  if (TmpValue > 1e-14)
-		    {
-		      EntanglementEntropy += TmpValue * log(TmpValue);
-		      DensitySum += TmpValue;
-		    }
-		  if (DensityMatrixFileName != 0)
-		    {
-		      ofstream DensityMatrixFile;
-		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-		      DensityMatrixFile.close();
-		    }		  
-		}
+		if (PartialDensityMatrix.GetNbrRow() == 1)
+		  {
+		    double TmpValue = PartialDensityMatrix(0,0);
+		    TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
+		    if (DensityMatrixFileName != 0)
+		      {
+			ofstream DensityMatrixFile;
+			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			DensityMatrixFile.precision(14);
+			DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			DensityMatrixFile.close();
+		      }		  
+		  }
 	    }
 	}
+      EntanglementEntropy = 0.0;
+      DensitySum = 0.0;
+      cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
+      SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
+      for (unsigned i = 0; (i < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++i)
+	{
+	  if (TmpDensityMatrixEigenvalues[i] > 1e-14)
+	    {
+	      EntanglementEntropy += TmpDensityMatrixEigenvalues[i] * log(TmpDensityMatrixEigenvalues[i]);
+	      DensitySum += TmpDensityMatrixEigenvalues[i];
+	    }
+	}
+      delete[] TmpDensityMatrixEigenvalues;
       File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
     }
   File.close();

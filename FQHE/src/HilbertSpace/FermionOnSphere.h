@@ -255,7 +255,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // nbrFermionSector = number of particles that belong to the subsytem 
   // groundState = reference on the total system ground state
   // lzSector = Lz sector in which the density matrix has to be evaluated 
-  // return value = density matrix of the subsytem
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
 
   // compute particule-hole symmetric state from a given state
