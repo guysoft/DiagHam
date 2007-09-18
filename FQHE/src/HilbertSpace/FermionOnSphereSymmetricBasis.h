@@ -382,6 +382,40 @@ inline unsigned long FermionOnSphereSymmetricBasis::GetSignedCanonicalState (uns
       return initialState;
 }
 
+// find state index
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+inline int FermionOnSphereSymmetricBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  stateDescription &= FERMION_SPHERE_SYMMETRIC_MASK;
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    return PosMin;
+}
+
+
 #endif
 
 

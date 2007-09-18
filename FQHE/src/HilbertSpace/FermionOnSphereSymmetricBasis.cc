@@ -540,33 +540,25 @@ double FermionOnSphereSymmetricBasis::ProdA (int index, int* n, int nbrIndices)
 double FermionOnSphereSymmetricBasis::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
-
-  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
+  unsigned long TmpMask = (0x1l << n1) | (0x1l << n2);
+  if ((this->ProdATemporaryState & TmpMask) ^ TmpMask)
     return 0.0;
-
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
-  this->ProdALzMax = this->StateLzMax[index];
-
-  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
+  this->ProdATemporaryState &= ~TmpMask;
+  TmpMask = this->ProdATemporaryState;
+  TmpMask &= ((0x1l << n1) - 1ul);
+  TmpMask &= ~((0x1l << n2) - 1ul);
 #ifdef  __64_BITS__
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+  TmpMask ^= TmpMask >> 32;
 #endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
-
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
-  return Coefficient;
+  TmpMask ^= TmpMask >> 16;
+  TmpMask ^= TmpMask >> 8;
+  TmpMask ^= TmpMask >> 4;
+  TmpMask ^= TmpMask >> 2;
+  TmpMask ^= TmpMask << 1;
+  TmpMask &= 0x2ul;
+  return (1.0 - ((double) TmpMask));
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -629,53 +621,35 @@ int FermionOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeff
 int FermionOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  int NewLzMax = this->ProdALzMax;
-  coefficient = 1.0;
-  if (m2 > NewLzMax)
-    NewLzMax = m2;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+  unsigned long TmpMask = (0x1l << m1) | (0x1l << m2);
+  if (TmpState & TmpMask)
+    return  this->HilbertSpaceDimension;
+  TmpState |= TmpMask;
+  TmpMask = TmpState;
+  TmpMask &= ((0x1l << m1) - 1ul);
+  TmpMask &= ~((0x1l << m2) - 1ul);
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+  TmpMask ^= TmpMask >> 32;
 #endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
-    {      
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m1);
+  TmpMask ^= TmpMask >> 16;
+  TmpMask ^= TmpMask >> 8;
+  TmpMask ^= TmpMask >> 4;
+  TmpMask ^= TmpMask >> 2;
+  TmpMask ^= TmpMask << 1;
+  TmpMask &= 0x2ul;
+  coefficient = (1.0 - ((double) TmpMask));
   TmpState = this->GetSignedCanonicalState(TmpState);
-  NewLzMax = this->LzMax;
-  while (((TmpState & FERMION_SPHERE_SYMMETRIC_MASK) >> NewLzMax) == 0)
+  int NewLzMax = this->LzMax;
+  TmpMask = TmpState & FERMION_SPHERE_SYMMETRIC_MASK;
+  while ((TmpMask >> NewLzMax) == 0)
     --NewLzMax;
-  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+  NewLzMax = this->FindStateIndex(TmpState, NewLzMax);
   if ((TmpState & FERMION_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
-     if (this->ProdASignature != 0)
+    if (this->ProdASignature != 0)
        coefficient *= M_SQRT2;
      else
        coefficient *= M_SQRT1_2;
-  return TmpIndex;
+   return NewLzMax;
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -753,39 +727,6 @@ int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coeffic
      else
        coefficient *= M_SQRT1_2;
   return TmpIndex;
-}
-
-// find state index
-//
-// stateDescription = unsigned integer describing the state
-// lzmax = maximum Lz value reached by a fermion in the state
-// return value = corresponding index
-
-int FermionOnSphereSymmetricBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
-{
-  stateDescription &= FERMION_SPHERE_SYMMETRIC_MASK;
-  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  long PosMin = this->LookUpTable[lzmax][PosMax];
-  PosMax = this->LookUpTable[lzmax][PosMax + 1];
-  long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
-  while ((PosMax != PosMid) && (CurrentState != stateDescription))
-    {
-      if (CurrentState > stateDescription)
-	{
-	  PosMax = PosMid;
-	}
-      else
-	{
-	  PosMin = PosMid;
-	} 
-      PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = (this->StateDescription[PosMid] & FERMION_SPHERE_SYMMETRIC_MASK);
-    }
-  if (CurrentState == stateDescription)
-    return PosMid;
-  else
-    return PosMin;
 }
 
 // print a given State

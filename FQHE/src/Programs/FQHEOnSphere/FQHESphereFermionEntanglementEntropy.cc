@@ -287,48 +287,50 @@ int main(int argc, char** argv)
 	  int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
 	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
-	    {
-	      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
-	      RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
-	      if (PartialDensityMatrix.GetNbrRow() > 1)
-		{
-		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		  if (LapackFlag == true)
-		    PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		  else
-		    PartialDensityMatrix.Diagonalize(TmpDiag);
-#else
-		  PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-		  TmpDiag.SortMatrixDownOrder();
-		  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		    TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
-		  if (DensityMatrixFileName != 0)
-		    {
-		      ofstream DensityMatrixFile;
-		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
-		      DensityMatrixFile.close();
-		    }
-		}
-	      else
-		if (PartialDensityMatrix.GetNbrRow() == 1)
+	    if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
+						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+	      {
+		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
+		RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
+		if (PartialDensityMatrix.GetNbrRow() > 1)
 		  {
-		    double TmpValue = PartialDensityMatrix(0,0);
-		    TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
+		    RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+		    if (LapackFlag == true)
+		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		    else
+		      PartialDensityMatrix.Diagonalize(TmpDiag);
+#else
+		    PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+		    TmpDiag.SortMatrixDownOrder();
+		    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		      TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
 		    if (DensityMatrixFileName != 0)
 		      {
 			ofstream DensityMatrixFile;
 			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			DensityMatrixFile.precision(14);
-			DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			  DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
 			DensityMatrixFile.close();
-		      }		  
+		      }
 		  }
-	    }
+		else
+		  if (PartialDensityMatrix.GetNbrRow() == 1)
+		    {
+		      double TmpValue = PartialDensityMatrix(0,0);
+		      TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			  DensityMatrixFile.close();
+			}		  
+		    }
+	      }
 	}
       EntanglementEntropy = 0.0;
       DensitySum = 0.0;
