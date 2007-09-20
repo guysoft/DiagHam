@@ -36,14 +36,19 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
+#include <fstream>
 
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 
 // basic constructor
@@ -97,11 +102,13 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
+  delete[] this->StateLzMax;
+  this->StateLzMax = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
-  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * sizeof(unsigned long);
   UsedMemory += this->NbrLzValue * sizeof(int);
   UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
@@ -114,6 +121,78 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
   else
     cout << UsedMemory << endl;
 #endif
+}
+
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, unsigned long memory)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrFermions);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateDescription[i]);
+  File.close();
+
+  this->TargetSpace = this;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->Flag.Initialize();
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+
+  this->StateLzMax = new int [this->HilbertSpaceDimension];
+  int TmpLzMax = this->LzMax;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->StateDescription[i] &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((this->StateDescription[i] >> TmpLzMax) == 0)
+	--TmpLzMax;
+      this->StateLzMax[i] = TmpLzMax;
+    }
+  this->GenerateLookUpTable(memory);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->GetStateSymmetry(this->StateDescription[i]);
+  delete[] this->StateLzMax;
+  this->StateLzMax = 0;
+
+#ifdef __DEBUG__
+  unsigned long UsedMemory = 0l;
+  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * sizeof(unsigned long);
+  UsedMemory += this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+
 }
 
 // copy constructor (without duplicating datas)
@@ -171,7 +250,8 @@ FermionOnSphereSymmetricBasis& FermionOnSphereSymmetricBasis::operator = (const 
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateLzMax;
+      if (this->StateLzMax != 0)
+	delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
       delete[] this->LookUpTableShift;
@@ -211,6 +291,30 @@ FermionOnSphereSymmetricBasis& FermionOnSphereSymmetricBasis::operator = (const 
 AbstractHilbertSpace* FermionOnSphereSymmetricBasis::Clone()
 {
   return new FermionOnSphereSymmetricBasis(*this);
+}
+
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool FermionOnSphereSymmetricBasis::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateDescription[i]);
+  File.close();
+  return true;
 }
 
 // extract subspace with a fixed quantum number
@@ -320,17 +424,15 @@ RealVector FermionOnSphereSymmetricBasis::ConvertToSymmetricNbodyBasis(RealVecto
 
 int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int TmpStateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
   unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
   State &= FERMION_SPHERE_SYMMETRIC_MASK;
-  if ((n1 > TmpStateLzMax) || (n2 > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 
+  if (((State & (((unsigned long) (0x1)) << n1)) == 0) 
       || ((State & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int NewLzMax = TmpStateLzMax;
   unsigned long TmpState = State;
   coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
@@ -339,9 +441,6 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n2);
-  if (NewLzMax == n2)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
   coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
@@ -349,9 +448,9 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n1);
-  if (NewLzMax == n1)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
+  int NewLzMax = this->LzMax;
+  while ((TmpState >> NewLzMax) == 0)
+    --NewLzMax;
   if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
     {
       coefficient = 0.0;
@@ -414,14 +513,13 @@ int FermionOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, in
 
 int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
-  int TmpStateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
   unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
   State &= FERMION_SPHERE_SYMMETRIC_MASK;
   --nbrIndices;
   for (int i = 0; i < nbrIndices; ++i)
     {
-      if ((n[i] > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n[i])) == 0))
+      if ((State & (((unsigned long) (0x1)) << n[i])) == 0)
 	{
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
@@ -433,13 +531,12 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
 	    return this->HilbertSpaceDimension; 	    
 	  }
     }
-  if (n[nbrIndices] > TmpStateLzMax)
+  if ((State & (((unsigned long) (0x1)) << n[nbrIndices])) == 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
 
-  int NewLzMax = TmpStateLzMax;
   unsigned long TmpState = State;
 
   int Index;
@@ -454,10 +551,10 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
       coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
       TmpState &= ~(((unsigned long) (0x1)) << Index);
-      if (NewLzMax == Index)
-	while ((TmpState >> NewLzMax) == 0)
-	  --NewLzMax;
     }
+  int NewLzMax = this->LzMax;
+  while ((TmpState >> NewLzMax) == 0)
+    --NewLzMax;  
   for (int i = nbrIndices; i >= 0; --i)
     {
       Index = m[i];
@@ -503,7 +600,6 @@ int FermionOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int n
 
 double FermionOnSphereSymmetricBasis::ProdA (int index, int* n, int nbrIndices)
 {
-  this->ProdALzMax = this->StateLzMax[index];
   this->ProdATemporaryState = this->StateDescription[index];
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SYMMETRIC_MASK;
@@ -676,16 +772,14 @@ double FermionOnSphereSymmetricBasis::AdA (int index, int m)
   
 int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coefficient)
 {
-  int TmpStateLzMax = this->StateLzMax[index];
   unsigned long State = this->StateDescription[index];
   unsigned long Signature = State & FERMION_SPHERE_SYMMETRIC_BIT;
   State &= FERMION_SPHERE_SYMMETRIC_MASK;
-  if ((n > TmpStateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+  if ((State & (((unsigned long) (0x1)) << n)) == 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int NewLzMax = TmpStateLzMax;
   unsigned long TmpState = State;
   coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
@@ -694,9 +788,9 @@ int FermionOnSphereSymmetricBasis::AdA (int index, int m, int n, double& coeffic
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
   TmpState &= ~(((unsigned long) (0x1)) << n);
-  if (NewLzMax == n)
-    while ((TmpState >> NewLzMax) == 0)
-      --NewLzMax;
+  int NewLzMax = this->LzMax;
+  while ((TmpState >> NewLzMax) == 0)
+    --NewLzMax;
   if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
     {
       coefficient = 0.0;
@@ -740,10 +834,6 @@ ostream& FermionOnSphereSymmetricBasis::PrintState (ostream& Str, int state)
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-//  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrFermions + 1) + TmpState[Max]]
-//  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]);
-//  if (state !=  this->FindStateIndex(TmpState, this->StateLzMax[state]))
-//    Str << " error! ";
   return Str;
 }
 

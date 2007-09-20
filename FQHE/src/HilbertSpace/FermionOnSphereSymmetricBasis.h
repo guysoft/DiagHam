@@ -103,6 +103,12 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // memory = amount of memory granted for precalculations
   FermionOnSphereSymmetricBasis (int nbrFermions, int lzMax, unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereSymmetricBasis (char* fileName, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -123,6 +129,11 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   // extract subspace with a fixed quantum number
   //

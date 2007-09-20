@@ -36,14 +36,19 @@
 #include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
+#include <fstream>
 
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 
 // default constuctor
@@ -125,7 +130,8 @@ FermionOnSphere::~FermionOnSphere ()
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateLzMax;
+      if (this->StateLzMax != 0)
+	delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
       delete[] this->LookUpTableShift;
@@ -183,6 +189,32 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
 AbstractHilbertSpace* FermionOnSphere::Clone()
 {
   return new FermionOnSphere(*this);
+}
+
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool FermionOnSphere::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateDescription[i]);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateLzMax[i]);
+  File.close();
+  return true;
 }
 
 // return a list of all possible quantum numbers 

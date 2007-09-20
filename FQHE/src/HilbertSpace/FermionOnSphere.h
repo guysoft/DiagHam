@@ -226,6 +226,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
+
   // print a given State
   //
   // Str = reference on current output stream 

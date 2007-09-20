@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsTwoBodyGeneric" , "0.01");
+  OptionManager Manager ("FQHEFermionsTwoBodyGeneric" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsNBodyHardCore -h" << endl;
+      cout << "see man page for option syntax or type FQHEFermionsTwoBodyGeneric -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -194,21 +194,25 @@ int main(int argc, char** argv)
 	{
 #ifdef __64_BITS__
 	  if (LzMax <= 63)
-	    if ((SymmetrizedBasis == false) || (L != 0))
-	      Space = new FermionOnSphere(NbrParticles, L, LzMax, MemorySpace);
-	    else
-	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, L, LzMax, MemorySpace);
 #else
 	  if (LzMax <= 31)
+#endif
 	    if ((SymmetrizedBasis == false) || (L != 0))
 	      Space = new FermionOnSphere(NbrParticles, L, LzMax, MemorySpace);
 	    else
-	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
+	      {
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		else
+		  Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
+		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  {
+		    ((FermionOnSphereSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		    return 0;
+		  }
+	      }
 	  else
 	    Space = new FermionOnSphereUnlimited(NbrParticles, L, LzMax, MemorySpace);
-#endif
 	}
       else
 	{
