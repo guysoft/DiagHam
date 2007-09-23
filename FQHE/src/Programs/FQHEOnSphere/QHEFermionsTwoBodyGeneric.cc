@@ -4,6 +4,10 @@
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -189,13 +193,13 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      ParticleOnSphere* Space;
+      ParticleOnSphere* Space = 0;
       if (HaldaneBasisFlag == false)
 	{
 #ifdef __64_BITS__
-	  if (LzMax <= 63)
+	  if (LzMax <= 62)
 #else
-	  if (LzMax <= 31)
+	  if (LzMax <= 30)
 #endif
 	    if ((SymmetrizedBasis == false) || (L != 0))
 	      Space = new FermionOnSphere(NbrParticles, L, LzMax, MemorySpace);
@@ -212,7 +216,29 @@ int main(int argc, char** argv)
 		  }
 	      }
 	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, L, LzMax, MemorySpace);
+#ifdef __128_BIT_LONGLONG__
+	    if (LzMax <= 126)
+#else
+	      if (LzMax <= 62)
+#endif
+		{
+		  if ((SymmetrizedBasis == false) || (L != 0))
+		    Space = new FermionOnSphereLong(NbrParticles, L, LzMax, MemorySpace);
+		  else
+		    {
+		      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+			Space = new FermionOnSphereSymmetricBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		      else
+			Space = new FermionOnSphereSymmetricBasisLong(NbrParticles, LzMax, MemorySpace);
+		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			{
+			  ((FermionOnSphereSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  return 0;
+			}
+		    }
+		}
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, L, LzMax, MemorySpace);
 	}
       else
 	{
@@ -278,27 +304,75 @@ int main(int argc, char** argv)
 	    }
 	  if (SymmetrizedBasis == false)
 	     {
-	       if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		 Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+#ifdef __64_BITS__
+	       if (LzMax <= 62)
+#else
+		 if (LzMax <= 30)
+#endif
+		   {
+		     if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		       Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		     else
+		       Space = new FermionOnSphereHaldaneBasis(NbrParticles, L, LzMax, ReferenceState, MemorySpace);
+		     if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		       {
+			 ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			 return 0;
+		       }
+		   }
 	       else
-		 Space = new FermionOnSphereHaldaneBasis(NbrParticles, L, LzMax, ReferenceState, MemorySpace);
-	       if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-		 {
-		   ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		   return 0;
-		 }
+#ifdef __128_BIT_LONGLONG__
+		 if (LzMax <= 126)
+#else
+		   if (LzMax <= 62)
+#endif
+		     {
+		       if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+			 Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		       else
+			 Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, L, LzMax, ReferenceState, MemorySpace);
+		       if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			 {
+			   ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			   return 0;
+			 }
+		     }	       
 	     }
 	  else
 	    {
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	      else
-		Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
-	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-		{
-		  ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		  return 0;
-		}
+#ifdef __64_BITS__
+	       if (LzMax <= 62)
+#else
+		 if (LzMax <= 30)
+#endif
+		   {
+		     if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		       Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		     else
+		       Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
+		     if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		       {
+			 ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			 return 0;
+		       }
+		   }
+		 else
+#ifdef __128_BIT_LONGLONG__
+		   if (LzMax <= 126)
+#else
+		     if (LzMax <= 62)
+#endif
+		       {
+			 if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+			   Space = new FermionOnSphereHaldaneSymmetricBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			 else
+			   Space = new FermionOnSphereHaldaneSymmetricBasisLong(NbrParticles, LzMax, ReferenceState, MemorySpace);
+			 if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			   {
+			     ((FermionOnSphereHaldaneSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			     return 0;
+			   }
+		       }
 	    }
 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

@@ -36,4 +36,8 @@ FermionOnSphereSymmetricBasis.cc \
 FermionOnSphereHaldaneSymmetricBasis.cc \
 FermionOnSphereWithSpinLzSzSymmetry.cc \
 FermionOnSphereWithSpinSzSymmetry.cc \
-FermionOnSphereWithSpinLzSymmetry.cc
+FermionOnSphereWithSpinLzSymmetry.cc \
+FermionOnSphereLong.cc \
+FermionOnSphereHaldaneBasisLong.cc \
+FermionOnSphereSymmetricBasisLong.cc \
+FermionOnSphereHaldaneSymmetricBasisLong.cc

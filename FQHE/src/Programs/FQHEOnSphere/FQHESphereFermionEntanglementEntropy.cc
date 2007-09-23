@@ -7,6 +7,8 @@
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -18,6 +20,8 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
+
+#include "MathTools/BinomialCoefficients.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -142,7 +146,16 @@ int main(int argc, char** argv)
 	    }
 	}
       else
-	Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
+#ifdef __128_BIT_LONGLONG__
+	    if (LzMax <= 126)
+#else
+	      if (LzMax <= 62)
+#endif
+		{
+		  Space = new FermionOnSphereLong(NbrParticles, TotalLz, LzMax, MemorySpace);
+		}
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
     }
   else
     {
@@ -206,21 +219,45 @@ int main(int argc, char** argv)
 	      return -1;     
 	    }
 	}
-      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-      else
-	Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	{
-	  ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	  return 0;
-	}
-      if ((SymmetrizedBasis == true) && (TotalLz == 0))
-	{
-	  FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-	  RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
-	  GroundState = OutputState;
-	}
+#ifdef __64_BITS__
+      if (LzMax <= 62)
+#else
+	if (LzMax <= 30)
+#endif
+	  {
+	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+	      Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	    else
+	      Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+	    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	      {
+		((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		return 0;
+	      }
+	    if ((SymmetrizedBasis == true) && (TotalLz == 0))
+	      {
+		FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
+		RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
+		GroundState = OutputState;
+	      }
+	  }
+	else
+#ifdef __128_BIT_LONGLONG__
+	  if (LzMax <= 126)
+#else
+	    if (LzMax <= 62)
+#endif
+	      {
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		else
+		  Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
+		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  {
+		    ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		    return 0;
+		  }
+	      } 
     }
 
 
@@ -268,6 +305,7 @@ int main(int argc, char** argv)
   int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
   if (SubsystemSize < 1)
     SubsystemSize = 1;
+  BinomialCoefficients Coefs(MeanSubsystemSize);
   for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
@@ -278,7 +316,10 @@ int main(int argc, char** argv)
       int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
       if (SubsystemNbrParticles < 0)
 	SubsystemNbrParticles = 0;
-      double* TmpDensityMatrixEigenvalues = new double [1ul << SubsystemSize];
+      long MaximumSize = 0;
+      for (int i = SubsystemNbrParticles; i <= MaxSubsystemNbrParticles; ++i)
+	MaximumSize += Coefs(SubsystemSize, i);
+      double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
       long TmpDensityMatrixEigenvaluePosition = 0;
       for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	{
@@ -336,16 +377,20 @@ int main(int argc, char** argv)
       DensitySum = 0.0;
       cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
       SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
-      for (unsigned i = 0; (i < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++i)
+      unsigned TmpPos = 0;
+      for (; (TmpPos < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++TmpPos)
 	{
-	  if (TmpDensityMatrixEigenvalues[i] > 1e-14)
+	  if (TmpDensityMatrixEigenvalues[TmpPos] > 1e-14)
 	    {
-	      EntanglementEntropy += TmpDensityMatrixEigenvalues[i] * log(TmpDensityMatrixEigenvalues[i]);
-	      DensitySum += TmpDensityMatrixEigenvalues[i];
+	      EntanglementEntropy += TmpDensityMatrixEigenvalues[TmpPos] * log(TmpDensityMatrixEigenvalues[TmpPos]);
+	      DensitySum += TmpDensityMatrixEigenvalues[TmpPos];
 	    }
 	}
       delete[] TmpDensityMatrixEigenvalues;
-      File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
+      double DensitySumError = 0.0;
+      for (; TmpPos < TmpDensityMatrixEigenvaluePosition; ++TmpPos)
+	DensitySumError += TmpDensityMatrixEigenvalues[TmpPos];
+      File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << " " << DensitySumError << endl;
     }
   File.close();
 }

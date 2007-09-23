@@ -30,6 +30,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
 
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
@@ -148,22 +149,25 @@ int main(int argc, char** argv)
       if (HaldaneBasisFlag == false)
 	{
 #ifdef __64_BITS__
-	  if (LzMax <= 63)
-	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	      Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	    else
-	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
+	  if (LzMax <= 62)
 #else
-	  if (LzMax <= 31)
+	  if (LzMax <= 30)
+#endif
 	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
 	      Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
 	    else
 	      Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
 	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
+#ifdef __128_BIT_LONGLONG__
+	    if (LzMax <= 126)
+#else
+	      if (LzMax <= 62)
 #endif
+		{
+		  Space = new FermionOnSphereLong(NbrParticles, TotalLz, LzMax, MemorySpace);
+		}
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
 	}
       else
 	{
