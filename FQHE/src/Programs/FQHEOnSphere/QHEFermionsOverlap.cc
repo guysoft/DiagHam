@@ -183,7 +183,7 @@ int main(int argc, char** argv)
   
   if (TestWaveFunction == 0)
     {
-      cout << "no or unknown analytical wave function" << endl;
+      cout << "no or unknown analytical wave function: try to add option --test-wavefunction" << endl;
       return -1;
     }
 
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
 // 	      //cout << Positions<< endl;
 // 	    }		
 	}
-      if (i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
+      if (--i>NbrIter) cout << "Attention, step number limited by NbrIter!" << endl;
       History->RewindHistory();      
       
       cout << " final results :" << endl;

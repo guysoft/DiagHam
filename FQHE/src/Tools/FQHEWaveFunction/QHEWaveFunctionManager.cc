@@ -79,7 +79,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
   this->Options = manager;
   OptionGroup* WaveFunctionGroup  = new OptionGroup ("analytical wave function options");
   (*(this->Options)) += WaveFunctionGroup;
-  (*WaveFunctionGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction");
+  (*WaveFunctionGroup) += new SingleStringOption  ('\n', "test-wavefunction", "name of the test wave fuction",0);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-flux", "number of quantum flux attached to each particle (laughlin and *cf only)", 1, true, 1);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "cluster-size", "number of particles per cluster (read only)", 3, true, 2);
   (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "nbr-level", "number of pseudo Landau levels (filledcf only)", 1, true, 1);
@@ -142,6 +142,10 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 {
   if ((*(this->Options))["test-wavefunction"] == 0)
+    {
+      return 0;
+    }
+  if (this->Options->GetString("test-wavefunction") == 0)
     {
       return 0;
     }

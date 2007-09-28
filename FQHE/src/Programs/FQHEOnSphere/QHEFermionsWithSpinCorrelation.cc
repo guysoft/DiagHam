@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new BooleanOption  ('b', "bilayer", "adjust normalization as a bilayer correlation function");
+  (*SystemGroup) += new BooleanOption  ('\n', "shift", "calculate 'shift' as defined for bilayer states");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
 
@@ -169,9 +170,71 @@ int main(int argc, char** argv)
       X += XInc;
     }
   File.close();
-
-  delete[] OutputNameCorr;	  
   delete[] PrecalculatedValues;
+   
+  // CALCULATION OF "SHIFT OPERATOR":
+  if (Manager.GetBoolean("shift"))
+    {
+
+      if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+	{
+	  sprintf(OutputNameCorr,"%s",((SingleStringOption*) Manager["eigenstate"])->GetString());
+	  OutputNameCorr[strlen(OutputNameCorr)-4]='\0';
+	  sprintf(OutputNameCorr,"%s.shift.dat",OutputNameCorr);
+	}
+      else
+	{
+	  sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_Sz_%d_lz_%d_%s.shift.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrFermions, LzMax, Sz, Lz, 
+		   ((SingleStringOption*) Manager["add-filename"])->GetString());
+	}
+
+      PrecalculatedValues = new Complex [2*(LzMax + 1)];
+      Complex TmpValue2;      
+      int Pos=0;      
+      for (int m = 0; m <= LzMax; ++m)
+	{	    
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, m, LzMax, m, LzMax, 9u /*(code uddu)*/ );
+	  PrecalculatedValues[Pos] = Operator.MatrixElement(State, State);
+	  ++Pos;
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator2 (Space, LzMax, m, m, LzMax, 9u /*(code uddu)*/ );
+	  PrecalculatedValues[Pos] = Operator2.MatrixElement(State, State);
+	  ++Pos;
+	}
+
+      ofstream File;
+      File.precision(14);
+      File.open(OutputNameCorr, ios::out);
+      X=0.0;
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  Value[1] = 0.0;
+	  Pos = 0;
+	  Sum = 0.0;
+	  Sum2 = 0.0;	  
+	  for (int m = 0; m <= LzMax; ++m)
+	    {
+	      Basis.GetFunctionValue(Value, TmpValue, m);
+	      double CommonFactor=SqrNorm(TmpValue);      
+	      Sum += CommonFactor*PrecalculatedValues[Pos];
+	      ++Pos;
+	      Sum2 += CommonFactor*PrecalculatedValues[Pos];
+	      ++Pos;
+	    }
+	  if (Sum2!=0.0)
+	    File << (X * Factor2) << " " << Real(Sum/Sum2) << " " << Imag(Sum/Sum2) << endl;
+	  else
+	    File << (X * Factor2) << " nan" << endl;
+	  if (x==NbrPoints-1)
+	    cout << "Shift = " << Real(Sum/Sum2) << endl; 
+	  X += XInc;
+	}
+      File.close();
+      delete[] PrecalculatedValues;
+    }
+  
+  
+  delete [] OutputNameCorr;
 
   return 0;
 }
