@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
@@ -256,6 +257,15 @@ class BosonOnSphere :  public ParticleOnSphere
   // timeCoherence = true if time coherence has to be used
   void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+
  protected:
 
   // find state index
@@ -269,7 +279,7 @@ class BosonOnSphere :  public ParticleOnSphere
   //
   // nbrBosons = number of bosons
   // lzMax = two times momentum maximum value for a boson plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
+  // totalLz = momentum total value plus nbrBosons * (momentum maximum value for a boson + 1)
   // return value = Hilbert space dimension
   int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 

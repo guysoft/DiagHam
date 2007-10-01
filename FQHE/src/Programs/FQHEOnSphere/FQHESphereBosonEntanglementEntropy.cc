@@ -2,15 +2,15 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
-#include "HilbertSpace/FermionOnSphere.h"
-#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
-#include "HilbertSpace/FermionOnSphereUnlimited.h"
-#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
-#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
-#include "HilbertSpace/FermionOnSphereLong.h"
-#include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
-#include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
-#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+#include "HilbertSpace/BosonOnSphere.h"
+// #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
+// #include "HilbertSpace/FermionOnSphereUnlimited.h"
+// #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+// #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+// #include "HilbertSpace/FermionOnSphereLong.h"
+// #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
+// #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
+// #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -62,7 +62,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
-  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -72,7 +71,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereBosonEntanglementEntropy -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -95,7 +94,6 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
 #ifdef __LAPACK__
   bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
 #endif
@@ -108,9 +106,9 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
       return -1;
     }
-  if (Statistics == false)
+  if (Statistics == true)
     {
-      cout << ((SingleStringOption*) Manager["ground-file"])->GetString() << " is not a fermionic state" << endl;
+      cout << ((SingleStringOption*) Manager["ground-file"])->GetString() << " is not a bosonic state" << endl;
       return -1;
     }
   if (((SingleIntegerOption*) Manager["total-lz"])->GetInteger() >= 0)
@@ -131,149 +129,7 @@ int main(int argc, char** argv)
 
 
   ParticleOnSphere* Space = 0;
-  if (HaldaneBasisFlag == false)
-    {
-#ifdef __64_BITS__
-      if (LzMax <= 63)
-#else
-      if (LzMax <= 31)
-#endif
-	{
-	  Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
-	  if ((SymmetrizedBasis == true) && (TotalLz == 0))
-	    {
-	      FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
-	      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((FermionOnSphere*) Space));
-	      GroundState = OutputState;
-	    }
-	}
-      else
-#ifdef __128_BIT_LONGLONG__
-	    if (LzMax <= 126)
-#else
-	      if (LzMax <= 62)
-#endif
-		{
-		  Space = new FermionOnSphereLong(NbrParticles, TotalLz, LzMax, MemorySpace);
-		  if ((SymmetrizedBasis == true) && (TotalLz == 0))
-		    {
-		      FermionOnSphereSymmetricBasisLong TmpSpace(NbrParticles, LzMax, MemorySpace);
-		      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((FermionOnSphereLong*) Space));
-		      GroundState = OutputState;
-		    }
-		}
-	      else
-		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, LzMax, MemorySpace);
-    }
-  else
-    {
-      int* ReferenceState = 0;
-      if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
-	{
-	  ReferenceState = new int[LzMax + 1];
-	  for (int i = 0; i <= LzMax; ++i)
-	    ReferenceState[i] = 0;
-	  if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "laughlin") == 0)
-	    for (int i = 0; i <= LzMax; i += 3)
-	      ReferenceState[i] = 1;
-	  else
-	    if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "pfaffian") == 0)
-	      for (int i = 0; i <= LzMax; i += 4)
-		{
-		  ReferenceState[i] = 1;
-		  ReferenceState[i + 1] = 1;
-		}
-	    else
-	      if (strcasecmp(((SingleStringOption*) Manager["reference-state"])->GetString(), "readrezayi3") == 0)
-		for (int i = 0; i <= LzMax; i += 5)
-		  {
-		    ReferenceState[i] = 1;
-		    ReferenceState[i + 1] = 1;
-		    ReferenceState[i + 2] = 1;
-		  }
-	      else
-		{
-		  cout << "unknown reference state " << ((SingleStringOption*) Manager["reference-state"])->GetString() << endl;
-		  return -1;
-		}
-	}
-      else
-	{
-	  ConfigurationParser ReferenceStateDefinition;
-	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
-	    {
-	      ReferenceStateDefinition.DumpErrors(cout) << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
-	    {
-	      cout << "NbrParticles is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
-	    {
-	      cout << "LzMax is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  int MaxNbrLz;
-	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-	    {
-	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-	      return -1;     
-	    }
-	  if (MaxNbrLz != (LzMax + 1))
-	    {
-	      cout << "wrong LzMax value in ReferenceState" << endl;
-	      return -1;     
-	    }
-	}
-#ifdef __64_BITS__
-      if (LzMax <= 62)
-#else
-	if (LzMax <= 30)
-#endif
-	  {
-	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-	      Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	    else
-	      Space = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-	    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	      {
-		((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		return 0;
-	      }
-	    if ((SymmetrizedBasis == true) && (TotalLz == 0))
-	      {
-		FermionOnSphereHaldaneSymmetricBasis TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasis*) Space));
-		GroundState = OutputState;
-	      }
-	  }
-	else
-#ifdef __128_BIT_LONGLONG__
-	  if (LzMax <= 126)
-#else
-	    if (LzMax <= 62)
-#endif
-	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-		else
-		  Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, TotalLz, LzMax, ReferenceState, MemorySpace);
-		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-		  {
-		    ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		    return 0;
-		  }
-		if ((SymmetrizedBasis == true) && (TotalLz == 0))
-		  {
-		    FermionOnSphereHaldaneSymmetricBasisLong TmpSpace(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		    RealVector OutputState = TmpSpace.ConvertToHaldaneNbodyBasis(GroundState, * ((FermionOnSphereHaldaneBasisLong*) Space));
-		    GroundState = OutputState;
-		  }
-	      } 
-    }
-
+  Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
 
 
   if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
@@ -319,7 +175,7 @@ int main(int argc, char** argv)
   int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
   if (SubsystemSize < 1)
     SubsystemSize = 1;
-  BinomialCoefficients Coefs(MeanSubsystemSize);
+  BinomialCoefficients Coefs(MeanSubsystemSize + NbrParticles - 1);
   for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
     {
       double EntanglementEntropy = 0.0;
@@ -327,23 +183,20 @@ int main(int argc, char** argv)
       int MaxSubsystemNbrParticles = NbrParticles;
       if (MaxSubsystemNbrParticles > SubsystemSize)
 	MaxSubsystemNbrParticles = SubsystemSize;
-      int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
-      if (SubsystemNbrParticles < 0)
-	SubsystemNbrParticles = 0;
       long MaximumSize = 0;
-      for (int i = SubsystemNbrParticles; i <= MaxSubsystemNbrParticles; ++i)
-	MaximumSize += Coefs(SubsystemSize, i);
+      for (int i = 0; i <= NbrParticles; ++i)
+	MaximumSize += Coefs(SubsystemSize + i - 1, i);
       double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
       long TmpDensityMatrixEigenvaluePosition = 0;
-      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+      for (int SubsystemNbrParticles = 0; SubsystemNbrParticles <= NbrParticles; ++SubsystemNbrParticles)
 	{
 	  int SubsystemTotalLz = 0;
 	  int SubsystemLzMax = SubsystemSize - 1;
-	  int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
+	  int SubsystemMaxTotalLz = SubsystemNbrParticles * SubsystemLzMax;
 	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
-	    if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
-						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+// 	    if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
+// 						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
 	      {
 		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 		RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
