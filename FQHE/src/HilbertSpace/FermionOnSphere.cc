@@ -1016,7 +1016,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       if ((lzSector == 0) && (nbrFermionSector == 0))
 	{
 	  RealSymmetricMatrix TmpDensityMatrix(1);
-	  TmpDensityMatrix.SetMatrixElement(1, 1, 1.0);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
 	  return TmpDensityMatrix;
 	}
       else
