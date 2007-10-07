@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of bosons on sphere                        //
+//                        class of bosons on sphere using                     //
+//                            the Lz <-> -Lz symmetry                         //
 //                                                                            //
-//                        last modification : 05/07/2002                      //
+//                        last modification : 07/10/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,113 +29,66 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONSPHERE_H
-#define BOSONONSPHERE_H
+#ifndef BOSONONSPHERESYMMETRICBASIS_H
+#define BOSONONSPHERESYMMETRICBASIS_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/BosonOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
 
-class BosonOnSphere :  public ParticleOnSphere
+#define BOSON_SPHERE_SYMMETRIC_BIT  0x80000000ul
+#define BOSON_SPHERE_SYMMETRIC_MASK 0x7ffffffful
+
+
+class BosonOnSphereSymmetricBasis :  public BosonOnSphere
 {
 
  protected:
 
-  // number of bosons
-  int NbrBosons;
-  // number of bosons plus 1
-  int IncNbrBosons;
-  // twice the momentum total value
-  int TotalLz;
-  // momentum total value shifted by LzMax / 2 * NbrBosons
-  int ShiftedTotalLz;
-  // twice the maximum Lz value reached by a boson
-  int LzMax;
-  // number of Lz values in a state
-  int NbrLzValue;
+  // shift to apply to a state before inverting its expression
+  int InvertShift;
+  // shift to apply to a state after inverting its expression
+  int InvertUnshift;
 
-  // array describing each state
-  int** StateDescription;
-  // array giving maximum Lz value reached for a boson in a given state
-  int* StateLzMax;
-
-  // multiplicative factors used during key construction
-  int* KeyMultiplicationTable;
-  // keys associated to each state
-  int* Keys;
-  // indicate position of the first state with a given number of boson having a given maximum Lz value
-  int* LzMaxPosition;
-  // array that indicates how many different states are store for each sector (a sector is given by its lzmax and the number of bosons that are at lzmax)
-  int* KeyInvertSectorSize;
-  // array that contains sorted possible key for each sector
-  int** KeyInvertTable;
-  // array that contains number of indices that have the same key per sector 
-  int** KeyInvertTableNbrIndices;
-  // array that contains state index per sector and per key
-  int*** KeyInvertIndices;
-
-  // pointer to an integer which indicate which coordinates are kept for the next time step iteration
-  int* KeptCoordinates;
-  // minors of permanents used for the time coherent wave function evaluation
-  Complex** Minors;
-
-  // temporary state used when applying operators
-  int* TemporaryState;
-  // temporary state used when applying ProdA operator
-  int* ProdATemporaryState;
-
+  // temporary state and its LzMax value used during symmetrization operations
+  int* TemporarySymmetrizedState;
+  int TemporarySymmetrizedStateLzMax;
+ 
  public:
 
   // default constructor
   //
-  BosonOnSphere ();
+  BosonOnSphereSymmetricBasis ();
 
   // basic constructor
   // 
   // nbrBosons = number of bosons
-  // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a boson
-  BosonOnSphere (int nbrBosons, int totalLz, int lzMax);
+  BosonOnSphereSymmetricBasis (int nbrBosons, int lzMax);
 
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
-  BosonOnSphere(const BosonOnSphere& bosons);
+  BosonOnSphereSymmetricBasis(const BosonOnSphereSymmetricBasis& bosons);
 
   // destructor
   //
-  virtual ~BosonOnSphere ();
+  virtual ~BosonOnSphereSymmetricBasis ();
 
   // assignement (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnSphere& operator = (const BosonOnSphere& bosons);
+  BosonOnSphereSymmetricBasis& operator = (const BosonOnSphereSymmetricBasis& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
-
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  virtual int GetParticleStatistic();
-
-  // return a list of all possible quantum numbers 
-  //
-  // return value = pointer to corresponding quantum number
-  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
-
-  // return quantum number associated to a given state
-  //
-  // index = index of the state
-  // return value = pointer to corresponding quantum number
-  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // extract subspace with a fixed quantum number
   //
@@ -143,6 +97,13 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
+
+  // convert a given state from Lz-symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToNbodyBasis(RealVector& state, BsosnOnSphere& nbodyBasis);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -211,24 +172,6 @@ class BosonOnSphere :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
-  // evaluate wave function in real space using a given basis
-  //
-  // state = vector corresponding to the state in the Fock basis
-  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
-  // basis = one body real space basis to use
-  // return value = wave function evaluated at the given location
-  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
-
-  // evaluate wave function in real space using a given basis, using time coherence
-  //
-  // state = vector corresponding to the state in the Fock basis
-  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
-  // basis = one body real space basis to use
-  // nextCoordinates = index of the coordinate that will be changed during the next time iteration
-  // return value = wave function evaluated at the given location
-  virtual Complex EvaluateWaveFunctionWithTimeCoherence (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
-							 int nextCoordinates);
-
   // evaluate wave function in real space using a given basis and only for a given range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -255,16 +198,7 @@ class BosonOnSphere :  public ParticleOnSphere
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
   // timeCoherence = true if time coherence has to be used
-  virtual  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-
-  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
-  // 
-  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-  // nbrBosonSector = number of particles that belong to the subsytem 
-  // groundState = reference on the total system ground state
-  // lzSector = Lz sector in which the density matrix has to be evaluated 
-  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
+  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
 
  protected:
 
@@ -273,71 +207,47 @@ class BosonOnSphere :  public ParticleOnSphere
   // stateDescription = array describing the state
   // lzmax = maximum Lz value reached by a boson in the state
   // return value = corresponding index
-  int FindStateIndex(int* stateDescription, int lzmax);
+   virtual int FindStateIndex(int* stateDescription, int lzmax);
 
-  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+  // get canonical expression of a given state
   //
-  // nbrBosons = number of bosons
-  // lzMax = two times momentum maximum value for a boson plus one 
-  // totalLz = momentum total value plus nbrBosons * (momentum maximum value for a boson + 1)
-  // return value = Hilbert space dimension
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+  // initialState = state that has to be converted to its canonical expression
+  // return value = corresponding canonical state
+  unsigned long GetCanonicalState (unsigned long initialState);
 
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memeory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(int memory);
-
-  // generate look-up table associated to current Hilbert space (core part of the look-up table generation)
-  // 
-  // dimension = Hilbert space dimension
-  // lzMax = maximum Lz value that can be reached by a particle
-  // stateDescription = array that contains state description
-  // stateLzMax = array giving maximum Lz value reached for a boson in a given state
-  // keys = keys associated to each state
-  // lzMaxPosition = indicate position of the first state with a given number of boson having a given maximum Lz value
-  // keyInvertSectorSize = array that indicates how many different states are store for each sector
-  // keyInvertTable = array that contains sorted possible key for each sector
-  // keyInvertTableNbrIndices = array that contains number of indices that have the same key per sector 
-  // keyInvertIndices = array that contains state index per sector and per key
-  // indexShift = optional shift to apply before storing any index
-  void CoreGenerateLookUpTable(int dimension, int lzMax, int** stateDescription, int* stateLzMax, int* keys, int* lzMaxPosition, int* keyInvertSectorSize, 
-			       int** keyInvertTable, int** keyInvertTableNbrIndices, int*** keyInvertIndices, int indexShift = 0);
-
-  // generate look-up table associated to current Hilbert space
-  // 
-  // stateDescription = array describing the state
-  // lzmax = maximum Lz value reached by a boson in the state
-  // return value = key associated to the state
-  int GenerateKey(int* stateDescription, int lzmax);
-    
-  // evaluate Hilbert space dimension
+  // get symmetry of a given state 
   //
-  // nbrBosons = number of bosons
-  // lzMax = momentum maximum value for a boson
-  // totalLz = momentum total value
-  // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+  // initialState = referennce state whose symmetry has to be computed
+  void GetStateSymmetry (unsigned long& initialState);
 
-  // generate all states corresponding to the constraints
-  // 
-  // nbrBosons = number of bosons
-  // lzMax = momentum maximum value for a boson
-  // currentLzMax = momentum maximum value for bosons that are still to be placed
-  // totalLz = momentum total value
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
+  // get canonical expression of a given state and its symmetry
+  //
+  // initialState = array describing the state that has to be converted to its canonical expression
+  // lzmax = maximum Lz value reached by a boson in initialState
+  void GetSignedCanonicalState (int* initialState, int initialStateLzMax);
 
 };
 
-// get the particle statistic 
+// get canonical expression of a given state and its symmetry
 //
-// return value = particle statistic
+// initialState = array describing the state that has to be converted to its canonical expression
+// lzmax = maximum Lz value reached by a boson in initialState
 
-inline int BosonOnSphere::GetParticleStatistic()
+inline void BosonOnSphereSymmetricBasis::GetSignedCanonicalState (int* initialState, int initialStateLzMax)
 {
-  return ParticleOnSphere::BosonicStatistic;
+  this->TemporarySymmetrizedStateLzMax = 0;
+  while (initialState[this->TemporarySymmetrizedStateLzMax] == 0)
+    ++this->TemporarySymmetrizedStateLzMax;
+  for (int i = this->TemporarySymmetrizedStateLzMax; i <= initialStateLzMax; ++i)
+    this->TemporarySymmetrizedState[this->LzMax - i] = initialState[i];
+  for (int i = ; i >= 0; ++i)
+    this->TemporarySymmetrizedState[this->LzMax - i] =0;
+  this->TemporarySymmetrizedStateLzMax = this->LzMax - this->TemporarySymmetrizedStateLzMax;
+  if (this->TemporarySymmetrizedStateLzMa != initialStateLzMax)
+    this->TemporarySymmetrizedStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
+  else
+    {
+    }
 }
 
 #endif

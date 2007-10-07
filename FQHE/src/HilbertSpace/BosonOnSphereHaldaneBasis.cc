@@ -72,6 +72,132 @@ BosonOnSphereHaldaneBasis::BosonOnSphereHaldaneBasis (int nbrBosons, int totalLz
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
 
+  this->StateLzMax = new int [this->HilbertSpaceDimension];
+#ifdef  __64_BITS__
+  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 6) + 1;
+#else
+  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 5) + 1;
+#endif
+  this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    this->KeepStateFlag[i] = 0x0l;
+  int TmpIndex = this->FindStateIndex(this->ReferenceState, ReferenceStateLzMax);
+#ifdef  __64_BITS__
+  this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
+#else
+  this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
+#endif
+  int NewHilbertSpaceDimension = 0;
+  unsigned long TmpKeepStateFlag;
+  int TmpNbrOne[] = {  
+  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[i];
+      NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
+#ifdef  __64_BITS__
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
+#endif
+    }
+
+  int** TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
+  int* TmpStateLzMax = new int [NewHilbertSpaceDimension];
+  NewHilbertSpaceDimension = 0;
+  int TotalIndex = 0;
+#ifdef  __64_BITS__
+  if ((this->HilbertSpaceDimension & 0x3f) != 0)
+#else
+  if ((this->HilbertSpaceDimension & 0x1f) != 0)
+#endif
+    --ReducedHilbertSpaceDimension;
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[i];
+#ifdef  __64_BITS__
+      for (int j = 0; j < 64; ++j)
+#else
+      for (int j = 0; j < 32; ++j)
+#endif
+	{
+	  if ((TmpKeepStateFlag >> j) & 0x1l)
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];	      
+	      ++NewHilbertSpaceDimension;
+	    }
+	  ++TotalIndex;
+	}
+    }
+#ifdef  __64_BITS__
+  this->HilbertSpaceDimension &= 0x3f;
+ #else
+  this->HilbertSpaceDimension &= 0x1f;
+ #endif
+  if (this->HilbertSpaceDimension != 0)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
+      for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+	{
+	  if ((TmpKeepStateFlag >> j) & 0x1l)
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
+	      ++NewHilbertSpaceDimension;
+	    }
+	  ++TotalIndex;
+	}
+    }
+
+  delete[] this->StateDescription;
+  delete[] this->StateLzMax;
+  delete[] this->KeepStateFlag;
+  this->StateDescription = TmpStateDescription;
+  this->StateLzMax = TmpStateLzMax;
+  this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+
+  delete[] this->TmpGeneratedStates;
+  delete[] this->TmpGeneratedStatesLzMax;
+
+  delete[] this->Keys;
+  int Size = (this->LzMax + 2) * this->IncNbrBosons;
+  for (int i = 0; i < Size; ++i)
+    {
+      if (this->KeyInvertSectorSize[i] > 0)
+	{
+	  for (int j= 0; j < this->KeyInvertSectorSize[i]; ++j)
+	    delete[] this->KeyInvertIndices[i][j];
+	  delete[] this->KeyInvertTable[i];
+	  delete[] this->KeyInvertTableNbrIndices[i];
+	  delete[] this->KeyInvertIndices[i];
+	}
+    }      
+  delete[] this->KeyInvertSectorSize;
+  delete[] this->KeyInvertTable;
+  delete[] this->KeyInvertTableNbrIndices;
+  delete[] this->KeyInvertIndices;
+  this->GenerateLookUpTable(0);
+
 #ifdef __DEBUG__
   int UsedMemory = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -125,8 +251,6 @@ BosonOnSphereHaldaneBasis::BosonOnSphereHaldaneBasis(const BosonOnSphereHaldaneB
 
 BosonOnSphereHaldaneBasis::~BosonOnSphereHaldaneBasis ()
 {
-  delete[] this->TemporaryState;
-  delete[] this->ProdATemporaryState;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Keys;

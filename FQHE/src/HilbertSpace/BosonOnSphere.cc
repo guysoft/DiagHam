@@ -1271,7 +1271,6 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
     {
       if (lzSector == 0)
 	{
-//	  cout << "nbrBosonSector = " << nbrBosonSector << endl;
 	  double TmpValue = 0;
 	  for (int MinIndex = 0; MinIndex < this->HilbertSpaceDimension; ++MinIndex)
 	    if (this->StateDescription[MinIndex][0] == nbrBosonSector)
@@ -1298,11 +1297,9 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
 	      int* TmpState = this->StateDescription[MinIndex];
 	      while ((TmpPos < subsytemSize) && (TmpState[TmpPos] == 0))
 		++TmpPos;
-//	      cout << "toto " << MinIndex << " " << TmpPos << endl;
 	      if (TmpPos == subsytemSize)
 		{
 		  TmpValue += groundState[MinIndex] * groundState[MinIndex];
-//		  cout << "truc = " << MinIndex << endl;
 		}
 	      ++MinIndex;
 	    }
@@ -1359,7 +1356,6 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
 	  RealSymmetricMatrix TmpDensityMatrix;
 	  return TmpDensityMatrix;	  
 	}
-//      cout << "toto" << endl;
       BosonOnSphere TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
       cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
       RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
@@ -1380,11 +1376,6 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
   int TmpIndex;
   BosonOnSphere TmpDestinationHilbertSpace(nbrBosonSector, lzSector, subsytemSize - 1);
   
-//   for (int i = 0; i < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++i)
-//     TmpDestinationHilbertSpace.PrintState(cout, i) << endl;
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     this->PrintState(cout, i) << endl;
-
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
@@ -1410,13 +1401,11 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
 		}
 	      else
 		{
-//		  cout << "out 1 " << TmpPos << endl;
 		  TmpPos = -1;
 		}
 	    }
 	  else
 	    {
-//	      cout << "out 2 " << this->StateLzMax[TmpIndex] << " " << TmpLzMax << " " << TmpIndex << endl;
 	      TmpPos = -1;
 	    }
 	}
@@ -1431,17 +1420,14 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
 	}
       if ((TmpNbrBosons == NbrBosonsComplementarySector) && (ShiftedLzComplementarySector == TmpTotalLz))
 	{
-//	  cout << "TmpNbrBosons = " << TmpNbrBosons << " ShiftedLzComplementarySector = " << ShiftedLzComplementarySector << endl;
 	  int Pos = 0;
 	  for (int i = MinIndex; i < TmpIndex; ++i)
 	    {
-//	      this->PrintState(cout, i);
 	      int* TmpState = this->StateDescription[i];
 	      int TmpLzMax = subsytemSize - 1;
 	      while (TmpState[TmpLzMax] == 0) 
 		--TmpLzMax;
 	      TmpStatePosition[Pos] = TmpDestinationHilbertSpace.FindStateIndex(TmpState, TmpLzMax);
-//	      cout << "   pos = " << TmpStatePosition[Pos] << endl;
 	      ++Pos;
 	    }
 	  int Pos2;
@@ -1470,7 +1456,6 @@ RealSymmetricMatrix  BosonOnSphere::EvaluatePartialDensityMatrix (int subsytemSi
 	TmpComplementarySubsystemLzMax = StateLzMax[MinIndex];
     }
   delete[] TmpStatePosition;
-//  cout << "TmpNbrNonZeroElements = " << TmpNbrNonZeroElements << endl;
   if (TmpNbrNonZeroElements > 0)	
     return TmpDensityMatrix;
   else

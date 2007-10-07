@@ -127,7 +127,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				  if (TmpClusterPerformanceArray !=0)
 				    this->ClusterPerformanceArray[i] *= TmpClusterPerformanceArray[j];
 				  if (TmpClusterMemoryArray != 0)
-				    this->ClusterMemoryArray[i] = TmpClusterMemoryArray[j];
+				    this->ClusterMemoryArray[i] = (TmpClusterMemoryArray[j]) << 20;
 				  else
 				    this->ClusterMemoryArray[i] = -1l;
 				  j = ClusterFile.GetNbrLines();
