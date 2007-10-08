@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
@@ -110,6 +112,7 @@ int main(int argc, char** argv)
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
+  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
@@ -161,12 +164,16 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      BosonOnSphere Space (NbrBosons, L, LzMax);
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+      ParticleOnSphere* Space = 0;
+      if ((SymmetrizedBasis == false) || (L != 0))
+	Space = new BosonOnSphere (NbrBosons, L, LzMax);
+      else
+	Space = new BosonOnSphereSymmetricBasis(NbrBosons, LzMax);
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnSphereGenericHamiltonian(&Space, NbrBosons, LzMax, PseudoPotentials,
+      Hamiltonian = new ParticleOnSphereGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials,
 							   ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
 							   Architecture.GetArchitecture(), 
 							   Memory, DiskCacheFlag,
@@ -179,7 +186,7 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax, L);
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;

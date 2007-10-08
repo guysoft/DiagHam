@@ -40,4 +40,5 @@ FermionOnSphereWithSpinLzSymmetry.cc \
 FermionOnSphereLong.cc \
 FermionOnSphereHaldaneBasisLong.cc \
 FermionOnSphereSymmetricBasisLong.cc \
-FermionOnSphereHaldaneSymmetricBasisLong.cc
+FermionOnSphereHaldaneSymmetricBasisLong.cc \
+BosonOnSphereSymmetricBasis.cc

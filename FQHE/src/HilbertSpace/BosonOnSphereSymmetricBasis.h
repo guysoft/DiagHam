@@ -40,8 +40,12 @@
 #include <iostream>
 
 
-#define BOSON_SPHERE_SYMMETRIC_BIT  0x80000000ul
-#define BOSON_SPHERE_SYMMETRIC_MASK 0x7ffffffful
+using std::cout;
+using std::endl;
+
+
+#define BOSON_SPHERE_SYMMETRIC_BIT  0x40000000
+#define BOSON_SPHERE_SYMMETRIC_MASK 0x3fffffff
 
 
 class BosonOnSphereSymmetricBasis :  public BosonOnSphere
@@ -49,15 +53,9 @@ class BosonOnSphereSymmetricBasis :  public BosonOnSphere
 
  protected:
 
-  // shift to apply to a state before inverting its expression
-  int InvertShift;
-  // shift to apply to a state after inverting its expression
-  int InvertUnshift;
+  // signature associated to temporary state used when applying ProdA operator
+  int ProdASignature;
 
-  // temporary state and its LzMax value used during symmetrization operations
-  int* TemporarySymmetrizedState;
-  int TemporarySymmetrizedStateLzMax;
- 
  public:
 
   // default constructor
@@ -103,7 +101,7 @@ class BosonOnSphereSymmetricBasis :  public BosonOnSphere
   // state = reference on the vector to convert
   // nbodyBasis = reference on the nbody-basis to use
   // return value = converted vector
-  RealVector ConvertToNbodyBasis(RealVector& state, BsosnOnSphere& nbodyBasis);
+  RealVector ConvertToNbodyBasis(RealVector& state, BosonOnSphere& nbodyBasis);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -209,44 +207,131 @@ class BosonOnSphereSymmetricBasis :  public BosonOnSphere
   // return value = corresponding index
    virtual int FindStateIndex(int* stateDescription, int lzmax);
 
-  // get canonical expression of a given state
+  // test if a state is in its canonical form
   //
-  // initialState = state that has to be converted to its canonical expression
-  // return value = corresponding canonical state
-  unsigned long GetCanonicalState (unsigned long initialState);
+  // initialState = array describing the state that has to be converted to its canonical expression
+  // initialStateLzmax = maximum Lz value reached by a boson in initialState
+   // return value = true if the state is in its canonical form
+  bool IsCanonicalState (int* initialState, int initialStateLzMax);
 
   // get symmetry of a given state 
   //
-  // initialState = referennce state whose symmetry has to be computed
-  void GetStateSymmetry (unsigned long& initialState);
+  // initialState = array describing the state that has to be converted to its canonical expression
+  // initialStateLzmax = reference on the maximum Lz value reached by a boson in initialState
+  void GetStateSymmetry (int* initialState, int& initialStateLzMax);
 
   // get canonical expression of a given state and its symmetry
   //
   // initialState = array describing the state that has to be converted to its canonical expression
-  // lzmax = maximum Lz value reached by a boson in initialState
-  void GetSignedCanonicalState (int* initialState, int initialStateLzMax);
+  // initialStateLzmax = reference on the maximum Lz value reached by a boson in initialState
+  void GetSignedCanonicalState (int* initialState, int& initialStateLzMax);
 
 };
+
+
+// test if a state is in its canonical form
+//
+// initialState = array describing the state that has to be converted to its canonical expression
+// initialStateLzmax = maximum Lz value reached by a boson in initialState
+// return value = true if the state is in its canonical form
+
+inline bool BosonOnSphereSymmetricBasis::IsCanonicalState (int* initialState, int initialStateLzMax)
+{
+  int TemporarySymmetrizedStateLzMax = 0;
+  while (initialState[TemporarySymmetrizedStateLzMax] == 0)
+    ++TemporarySymmetrizedStateLzMax;
+  TemporarySymmetrizedStateLzMax += initialStateLzMax;
+  if (this->LzMax > TemporarySymmetrizedStateLzMax)
+    return true;
+  if (this->LzMax < TemporarySymmetrizedStateLzMax)
+    return false;
+  TemporarySymmetrizedStateLzMax = initialStateLzMax;
+  int MidValue = (this->LzMax >> 1);
+  while ((TemporarySymmetrizedStateLzMax >= MidValue) && (initialState[TemporarySymmetrizedStateLzMax] == initialState[this->LzMax - TemporarySymmetrizedStateLzMax]))
+    --TemporarySymmetrizedStateLzMax;
+  if (TemporarySymmetrizedStateLzMax >= MidValue)
+    if (initialState[TemporarySymmetrizedStateLzMax] < initialState[this->LzMax - TemporarySymmetrizedStateLzMax])
+      return true;
+    else
+      return false;
+  else
+    return true;
+}
+
+// get symmetry of a given state 
+//
+// initialState = array describing the state that has to be converted to its canonical expression
+// initialStateLzmax = reference on the maximum Lz value reached by a boson in initialState
+
+inline void BosonOnSphereSymmetricBasis::GetStateSymmetry (int* initialState, int& initialStateLzMax)
+{
+  int TemporarySymmetrizedStateLzMax = 0;
+  while (initialState[TemporarySymmetrizedStateLzMax] == 0)
+    ++TemporarySymmetrizedStateLzMax;
+  TemporarySymmetrizedStateLzMax += initialStateLzMax;
+  if (this->LzMax != TemporarySymmetrizedStateLzMax)
+    {
+      initialStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
+      return;
+    }
+  int MidValue = (this->LzMax >> 1);
+  TemporarySymmetrizedStateLzMax = initialStateLzMax;
+  while ((TemporarySymmetrizedStateLzMax >= MidValue) && (initialState[TemporarySymmetrizedStateLzMax] == initialState[this->LzMax - TemporarySymmetrizedStateLzMax]))
+    --TemporarySymmetrizedStateLzMax;
+  if (TemporarySymmetrizedStateLzMax >= MidValue)
+    initialStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
+}
 
 // get canonical expression of a given state and its symmetry
 //
 // initialState = array describing the state that has to be converted to its canonical expression
-// lzmax = maximum Lz value reached by a boson in initialState
+// initialStateLzmax = reference on the maximum Lz value reached by a boson in initialState
 
-inline void BosonOnSphereSymmetricBasis::GetSignedCanonicalState (int* initialState, int initialStateLzMax)
+inline void BosonOnSphereSymmetricBasis::GetSignedCanonicalState (int* initialState, int& initialStateLzMax)
 {
-  this->TemporarySymmetrizedStateLzMax = 0;
-  while (initialState[this->TemporarySymmetrizedStateLzMax] == 0)
-    ++this->TemporarySymmetrizedStateLzMax;
-  for (int i = this->TemporarySymmetrizedStateLzMax; i <= initialStateLzMax; ++i)
-    this->TemporarySymmetrizedState[this->LzMax - i] = initialState[i];
-  for (int i = ; i >= 0; ++i)
-    this->TemporarySymmetrizedState[this->LzMax - i] =0;
-  this->TemporarySymmetrizedStateLzMax = this->LzMax - this->TemporarySymmetrizedStateLzMax;
-  if (this->TemporarySymmetrizedStateLzMa != initialStateLzMax)
-    this->TemporarySymmetrizedStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
-  else
+  int TemporarySymmetrizedStateLzMax = 0;
+  while (initialState[TemporarySymmetrizedStateLzMax] == 0)
+    ++TemporarySymmetrizedStateLzMax;
+  TemporarySymmetrizedStateLzMax += initialStateLzMax;
+  if (this->LzMax != TemporarySymmetrizedStateLzMax)
     {
+      if (this->LzMax < TemporarySymmetrizedStateLzMax)
+	{
+	  TemporarySymmetrizedStateLzMax -= initialStateLzMax;
+	  int MidValue = (this->LzMax >> 1);
+	  int TmpValue;
+	  while (initialStateLzMax >= MidValue)
+	    {
+	      TmpValue = initialState[initialStateLzMax];
+	      initialState[initialStateLzMax] = initialState[this->LzMax - initialStateLzMax];
+	      initialState[this->LzMax - initialStateLzMax] = TmpValue;
+	      --initialStateLzMax;
+	    }
+	  initialStateLzMax = this->LzMax - TemporarySymmetrizedStateLzMax;
+	}
+      
+      initialStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
+      return;
+    }
+  int MidValue = (this->LzMax >> 1);
+  TemporarySymmetrizedStateLzMax = initialStateLzMax;
+  while ((TemporarySymmetrizedStateLzMax >= MidValue) && (initialState[TemporarySymmetrizedStateLzMax] == initialState[this->LzMax - TemporarySymmetrizedStateLzMax]))
+    --TemporarySymmetrizedStateLzMax;
+  if (TemporarySymmetrizedStateLzMax >= MidValue)
+    {
+      if (initialState[TemporarySymmetrizedStateLzMax] > initialState[this->LzMax - TemporarySymmetrizedStateLzMax])
+	{
+	  int TmpValue;
+	  TemporarySymmetrizedStateLzMax = initialStateLzMax;
+	  while (TemporarySymmetrizedStateLzMax >= MidValue)
+	    {
+	      TmpValue = initialState[TemporarySymmetrizedStateLzMax];
+	      initialState[TemporarySymmetrizedStateLzMax] = initialState[this->LzMax - TemporarySymmetrizedStateLzMax];
+	      initialState[this->LzMax - TemporarySymmetrizedStateLzMax] = TmpValue;
+	      --TemporarySymmetrizedStateLzMax;
+	    }
+	}
+      initialStateLzMax |= BOSON_SPHERE_SYMMETRIC_BIT;
     }
 }
 

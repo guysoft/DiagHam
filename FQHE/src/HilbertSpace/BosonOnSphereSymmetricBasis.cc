@@ -68,7 +68,6 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis (int nbrBosons, int lzM
 //  cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
-  this->TemporarySymmetrizedState = new int [this->NbrLzValue];
   this->Flag.Initialize();
   this->StateDescription = new int* [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
@@ -81,15 +80,15 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis (int nbrBosons, int lzM
 
   int TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
-      this->LzMax[i] = -1;
-    else
+    if (this->IsCanonicalState(this->StateDescription[i], this->StateLzMax[i]))
       ++TmpHilbertSpaceDimension;
-  unsigned long* TmpStateDescription = new int* [TmpHilbertSpaceDimension];
+    else
+      this->StateLzMax[i] = -1;
+  int** TmpStateDescription = new int* [TmpHilbertSpaceDimension];
   int* TmpStateLzMax = new int [TmpHilbertSpaceDimension];
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    if (this->LzMax[i] >= 0)
+    if (this->StateLzMax[i] >= 0)
       {
 	TmpStateDescription[TmpHilbertSpaceDimension] = this->StateDescription[i];
 	TmpStateLzMax[TmpHilbertSpaceDimension] = this->StateLzMax[i];
@@ -107,6 +106,8 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis (int nbrBosons, int lzM
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->GetStateSymmetry(this->StateDescription[i], this->StateLzMax[i]);
 
 #ifdef __DEBUG__
   int UsedMemory = 0;
@@ -154,7 +155,6 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis(const BosonOnSphereSymm
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
-  this->TemporarySymmetrizedState = new int [this->NbrLzValue];
 }
 
 // destructor
@@ -162,7 +162,6 @@ BosonOnSphereSymmetricBasis::BosonOnSphereSymmetricBasis(const BosonOnSphereSymm
 
 BosonOnSphereSymmetricBasis::~BosonOnSphereSymmetricBasis ()
 {  
-  delete[] this->TemporarySymmetrizedState;
 }
 
 // assignement (without duplicating datas)
@@ -227,7 +226,6 @@ BosonOnSphereSymmetricBasis& BosonOnSphereSymmetricBasis::operator = (const Boso
   this->Minors = bosons.Minors;
   this->TemporaryState = new int [this->NbrLzValue];
   this->ProdATemporaryState = new int [this->NbrLzValue];
-  this->TemporarySymmetrizedState = new int [this->NbrLzValue];
 
   return *this;
 }
@@ -265,11 +263,15 @@ RealVector BosonOnSphereSymmetricBasis::ConvertToNbodyBasis(RealVector& state, B
   int NewLzMax;
   for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
     {
-      this->GetSignedCanonicalState(nbodyBasis.StateDescription[i], nbodyBasis.StateLzMax[i]);
-      if ((this->TemporarySymmetrizedStateLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != 0x0ul)	
-	TmpVector[i] = state[this->FindStateIndex(this->TemporarySymmetrizedState, this->TemporarySymmetrizedStateLzMax)] * M_SQRT1_2;
+      NewLzMax = nbodyBasis.StateLzMax[i];
+      int* TmpState = nbodyBasis.StateDescription[i];
+      for (int j = 0; j <= NewLzMax; ++j)
+	this->TemporaryState[j] = TmpState[j];
+      this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
+      if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != 0x0ul)	
+	TmpVector[i] = state[this->FindStateIndex(this->TemporaryState, NewLzMax)] * M_SQRT1_2;
       else
-	TmpVector[i] = state[this->FindStateIndex(this->TemporarySymmetrizedState, this->TemporarySymmetrizedStateLzMax)];
+	TmpVector[i] = state[this->FindStateIndex(this->TemporaryState, NewLzMax)];
     }
   return TmpVector;  
 }
@@ -287,6 +289,8 @@ RealVector BosonOnSphereSymmetricBasis::ConvertToNbodyBasis(RealVector& state, B
 int BosonOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int CurrentLzMax = this->StateLzMax[index];
+  int TmpSignature = CurrentLzMax & BOSON_SPHERE_SYMMETRIC_BIT;
+  CurrentLzMax &= BOSON_SPHERE_SYMMETRIC_MASK;
   int* State = this->StateDescription[index];
   if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || (State[n1] == 0) || (State[n2] == 0) || ((n1 == n2) && (State[n1] == 1)))
     {
@@ -314,8 +318,13 @@ int BosonOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int 
   coefficient = sqrt(coefficient);
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
-  return DestIndex;
+  this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
+  if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != TmpSignature)
+    if (TmpSignature != 0)
+      coefficient *= M_SQRT2;
+    else
+      coefficient *= M_SQRT1_2;
+  return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
 // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
@@ -330,6 +339,8 @@ int BosonOnSphereSymmetricBasis::AdAdAA (int index, int m1, int m2, int n1, int 
 int BosonOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
   int CurrentLzMax = this->StateLzMax[index];
+  int TmpSignature = CurrentLzMax & BOSON_SPHERE_SYMMETRIC_BIT;
+  CurrentLzMax &= BOSON_SPHERE_SYMMETRIC_MASK;
   int* State = this->StateDescription[index];
   --nbrIndices;
   for (int i = 0; i <= nbrIndices; ++i)
@@ -366,8 +377,13 @@ int BosonOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbr
   int NewLzMax = this->LzMax;
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
-  int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
-  return DestIndex;
+  this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
+  if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != TmpSignature)
+    if (TmpSignature != 0)
+      coefficient *= M_SQRT2;
+    else
+      coefficient *= M_SQRT1_2;
+  return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
 // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
@@ -380,6 +396,8 @@ int BosonOnSphereSymmetricBasis::ProdAdProdA (int index, int* m, int* n, int nbr
 double BosonOnSphereSymmetricBasis::AA (int index, int n1, int n2)
 {
   int CurrentLzMax = this->StateLzMax[index];
+  this->ProdASignature = CurrentLzMax & BOSON_SPHERE_SYMMETRIC_BIT;
+  CurrentLzMax &= BOSON_SPHERE_SYMMETRIC_MASK;
   int* State = this->StateDescription[index];
   if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || (State[n1] == 0) || (State[n2] == 0) || ((n1 == n2) && (State[n1] == 1)))
     {
@@ -407,6 +425,8 @@ double BosonOnSphereSymmetricBasis::AA (int index, int n1, int n2)
 double BosonOnSphereSymmetricBasis::ProdA (int index, int* n, int nbrIndices)
 {
   int CurrentLzMax = this->StateLzMax[index];
+  this->ProdASignature = CurrentLzMax & BOSON_SPHERE_SYMMETRIC_BIT;
+  CurrentLzMax &= BOSON_SPHERE_SYMMETRIC_MASK;
   int* State = this->StateDescription[index];
   int i = 0;
   for (; i <= CurrentLzMax; ++i)
@@ -453,6 +473,12 @@ int BosonOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
   int NewLzMax = this->LzMax;
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
+  this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
+  if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
+    if (this->ProdASignature != 0)
+      coefficient *= M_SQRT2;
+    else
+      coefficient *= M_SQRT1_2;
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
@@ -477,6 +503,12 @@ int BosonOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeffic
   int NewLzMax = this->LzMax;
   while (this->TemporaryState[NewLzMax] == 0)
     --NewLzMax;
+  this->GetSignedCanonicalState(this->TemporaryState, NewLzMax);
+  if ((NewLzMax & BOSON_SPHERE_SYMMETRIC_BIT) != this->ProdASignature)
+    if (this->ProdASignature != 0)
+      coefficient *= M_SQRT2;
+    else
+      coefficient *= M_SQRT1_2;
   return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
@@ -501,6 +533,7 @@ double BosonOnSphereSymmetricBasis::AdA (int index, int m)
 
 int BosonOnSphereSymmetricBasis::FindStateIndex(int* stateDescription, int lzmax)
 {
+  lzmax &= BOSON_SPHERE_SYMMETRIC_MASK;
   int TmpKey = this->GenerateKey(stateDescription, lzmax);
   int Sector = lzmax * this->IncNbrBosons + stateDescription[lzmax];
   int TmpPos = 0;
@@ -565,13 +598,14 @@ int BosonOnSphereSymmetricBasis::FindStateIndex(int* stateDescription, int lzmax
 ostream& BosonOnSphereSymmetricBasis::PrintState (ostream& Str, int state)
 {
   int* TmpState = this->StateDescription[state];
-  int Max = this->StateLzMax[state];
+  int Max = (this->StateLzMax[state] & BOSON_SPHERE_SYMMETRIC_MASK);
   int i = 0;
   for (; i <= Max; ++i)
     Str << TmpState[i] << " ";
   for (; i <= this->LzMax; ++i)
     Str << "0 ";
-  Str << " key = " << this->Keys[state] << " lzmax  = " << this->StateLzMax[state]<< " position = " << FindStateIndex(TmpState, Max);
+  Str << " lzmax  = " << this->StateLzMax[state];
+//  Str << " key = " << this->Keys[state] << " lzmax  = " << (this->StateLzMax[state] & BOSON_SPHERE_SYMMETRIC_MASK) << " position = " << FindStateIndex(TmpState, Max);
   return Str;
 }
 
@@ -585,7 +619,7 @@ ostream& BosonOnSphereSymmetricBasis::PrintState (ostream& Str, int state)
 // return value = wave function evaluated at the given location
 
 Complex BosonOnSphereSymmetricBasis::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
-					     int firstComponent, int nbrComponent)
+							   int firstComponent, int nbrComponent)
 {
   Complex Value;
   Complex Tmp;
