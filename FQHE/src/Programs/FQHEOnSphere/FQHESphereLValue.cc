@@ -25,6 +25,7 @@
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
@@ -259,7 +260,10 @@ int main(int argc, char** argv)
     }
   else
     {
-      Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
+      if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
+      else
+	Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
     }
 
   if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())

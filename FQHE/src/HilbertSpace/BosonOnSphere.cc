@@ -402,7 +402,7 @@ double BosonOnSphere::AA (int index, int n1, int n2)
   --this->ProdATemporaryState[n1];
   for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
     this->ProdATemporaryState[i] = 0;
-  return Coefficient;
+  return sqrt(Coefficient);
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -450,11 +450,9 @@ int BosonOnSphere::AdAd (int m1, int m2, double& coefficient)
 {
   int i = 0;
   for (; i < this->NbrLzValue; ++i)
-    {
-      this->TemporaryState[i] = this->ProdATemporaryState[i];
-    }
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
   ++this->TemporaryState[m2];
-  coefficient *= this->TemporaryState[m2];
+  coefficient = this->TemporaryState[m2];
   ++this->TemporaryState[m1];
   coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);

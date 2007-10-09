@@ -412,7 +412,7 @@ double BosonOnSphereSymmetricBasis::AA (int index, int n1, int n2)
   --this->ProdATemporaryState[n1];
   for (i = CurrentLzMax + 1; i < this->NbrLzValue; ++i)
     this->ProdATemporaryState[i] = 0;
-  return Coefficient;
+  return sqrt(Coefficient);
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
@@ -466,7 +466,7 @@ int BosonOnSphereSymmetricBasis::AdAd (int m1, int m2, double& coefficient)
       this->TemporaryState[i] = this->ProdATemporaryState[i];
     }
   ++this->TemporaryState[m2];
-  coefficient *= this->TemporaryState[m2];
+  coefficient = this->TemporaryState[m2];
   ++this->TemporaryState[m1];
   coefficient *= this->TemporaryState[m1];
   coefficient = sqrt(coefficient);
@@ -520,7 +520,7 @@ int BosonOnSphereSymmetricBasis::ProdAd (int* m, int nbrIndices, double& coeffic
 
 double BosonOnSphereSymmetricBasis::AdA (int index, int m)
 {
-  if (this->StateLzMax[index] < m)  
+  if ((this->StateLzMax[index] & BOSON_SPHERE_SYMMETRIC_MASK) < m)  
     return 0.0;
   return (double) (this->StateDescription[index][m]);  
 }
