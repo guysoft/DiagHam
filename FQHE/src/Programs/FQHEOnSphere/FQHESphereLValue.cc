@@ -26,6 +26,8 @@
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
@@ -260,12 +262,26 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
+#ifdef  __64_BITS__
+      if ((LzMax + NbrParticles - 1) < 63)
+#else
+      if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+	{
+	  if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	    Space = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+	  else
+	    Space = new BosonOnSphereSymmetricBasisShort(NbrParticles, LzMax);
+	}
       else
-	Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
+	{
+	  if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	    Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+	  else
+	    Space = new BosonOnSphereSymmetricBasis(NbrParticles, LzMax);
+	}
     }
-
+  
   if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
     {
       cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;

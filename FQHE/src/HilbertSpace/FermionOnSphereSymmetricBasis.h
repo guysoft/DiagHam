@@ -83,6 +83,8 @@ class FermionOnSphereSymmetricBasis :  public FermionOnSphere
 
   friend class FermionOnSphereHaldaneSymmetricBasis;
 
+  friend class BosonOnSphereSymmetricBasisShort;
+
  protected:
 
   // shift to apply to a state before inverting its expression

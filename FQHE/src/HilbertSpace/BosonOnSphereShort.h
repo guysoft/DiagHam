@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                          class of fermions on sphere                       //
+//             class of bosons on sphere for system size such that            //
+//         LzMax + NbrBosons - 1 < 63 or 31 (64 bits or 32bits systems)       //
 //                                                                            //
-//                        last modification : 24/06/2002                      //
+//                        last modification : 10/10/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,97 +29,90 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHERE_H
-#define FERMIONONSPHERE_H
+#ifndef BOSONONSPHERESHORT_H
+#define BOSONONSPHERESHORT_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
 
 
-class FermionOnSphere :  public ParticleOnSphere
+using std::cout;
+using std::endl;
+using std::dec;
+using std::hex;
+
+
+class BosonOnSphereShort :  public ParticleOnSphere
 {
 
-  friend class FermionOnSphereHaldaneBasis;
-  friend class FermionOnSphereSymmetricBasis;
-  friend class FermionOnSphereHaldaneSymmetricBasis;
+  friend class BosonOnSphereShortHaldaneBasis;
+  friend class BosonOnSphereShortSymmetricBasis;
+  friend class BosonOnSphereShortHaldaneSymmetricBasis;
 
-  friend class BosonOnSphereShort;
+  friend class BosonOnSphereSymmetricBasisShort;
 
  protected:
 
-  // number of fermions
-  int NbrFermions;
-  // number of fermions plus 1
-  int IncNbrFermions;
-  // momentum total value
+  // the fermionic Hilbert space associated to the bosonic one
+  FermionOnSphere* FermionBasis;
+
+  // number of bosons
+  int NbrBosons;
+  // number of bosons plus 1
+  int IncNbrBosons;
+  // twice the momentum total value
   int TotalLz;
-  // maximum Lz value reached by a fermion
+  // momentum total value shifted by LzMax / 2 * NbrBosons
+  int ShiftedTotalLz;
+  // twice the maximum Lz value reached by a boson
   int LzMax;
   // number of Lz values in a state
   int NbrLzValue;
 
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLzMax;
+  // pointer to an integer which indicate which coordinates are kept for the next time step iteration
+  int* KeptCoordinates;
+  // minors of permanents used for the time coherent wave function evaluation
+  Complex** Minors;
 
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
+  // temporary state used when applying operators
+  unsigned long* TemporaryState;
+  int TemporaryStateLzMax;
   // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
-
-  // pointer to the target space when an index is require after applying basic operation
-  FermionOnSphere* TargetSpace;
-
+  unsigned long* ProdATemporaryState;
+  int ProdATemporaryStateLzMax;
 
  public:
 
-  // default constuctor
+  // default constructor
   //
-  FermionOnSphere();
+  BosonOnSphereShort ();
 
   // basic constructor
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of bosons
   // totalLz = momentum total value
-  // lzMax = maximum Lz value reached by a fermion
-  // memory = amount of memory granted for precalculations
-  FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  // lzMax = maximum Lz value reached by a boson
+  BosonOnSphereShort (int nbrBosons, int totalLz, int lzMax);
 
   // copy constructor (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphere(const FermionOnSphere& fermions);
+  // bosons = reference on the hilbert space to copy to copy
+  BosonOnSphereShort(const BosonOnSphereShort& bosons);
 
   // destructor
   //
-  virtual ~FermionOnSphere ();
+  virtual ~BosonOnSphereShort ();
 
   // assignement (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
+  // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphere& operator = (const FermionOnSphere& fermions);
+  BosonOnSphereShort& operator = (const BosonOnSphereShort& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -148,16 +142,6 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
-
-  // set a different target space (for all basic operations)
-  //
-  // targetSpace = pointer to the target space
-  virtual void SetTargetSpace(ParticleOnSphere* targetSpace);
-
-  // return Hilbert space dimension of the target space
-  //
-  // return value = Hilbert space dimension
-  virtual int GetTargetHilbertSpaceDimension();
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -219,21 +203,6 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AdA (int index, int m);
 
-  // apply a^+_m a_n operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AdA (int index, int m, int n, double& coefficient);
-
-  // save Hilbert space description to disk
-  //
-  // fileName = name of the file where the Hilbert space description has to be saved
-  // return value = true if no error occured
-  virtual bool WriteHilbertSpace (char* fileName);
-
   // print a given State
   //
   // Str = reference on current output stream 
@@ -241,76 +210,31 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
-  // evaluate wave function in real space using a given basis and only for agiven range of components
-  //
-  // state = vector corresponding to the state in the Fock basis
-  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
-  // basis = one body real space basis to use
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = wave function evaluated at the given location
-  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-					int firstComponent, int nbrComponent);                                
-  
-  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
-  //
-  // timeCoherence = true if time coherence has to be used
-  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
   // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-  // nbrFermionSector = number of particles that belong to the subsytem 
+  // nbrBosonSector = number of particles that belong to the subsytem 
   // groundState = reference on the total system ground state
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
-
-  // compute particule-hole symmetric state from a given state
-  //
-  // state = vector corresponding to the state to symmetrize
-  // holeBasis = n-body basis on which the symmetrized state has to be expressed
-  virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
 
  protected:
 
-  // find state index
+  // convert a bosonic state into its fermionic counterpart
   //
-  // stateDescription = unsigned integer describing the state
-  // lzmax = maximum Lz value reached by a fermion in the state
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
+  // initialState = reference on the array where initialbosonic  state is stored
+  // initialStateLzMax = reference on the initial bosonic state maximum Lz value
+  // return value = corresponding fermionic state
+  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
 
-  // evaluate Hilbert space dimension
+  // convert a fermionic state into its bosonic  counterpart
   //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
-
-  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-  //
-  // nbrFermions = number of fermions
-  // lzMax = two times momentum maximum value for a fermion plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-  // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
-
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memeory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
-  // totalLz = momentum total value
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  // initialState = initial fermionic state
+  // initialStateLzMax = initial fermionic state maximum Lz value
+  // finalState = reference on the array where the bosonic state has to be stored
+  // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
+  void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
 
 };
 
@@ -318,9 +242,67 @@ class FermionOnSphere :  public ParticleOnSphere
 //
 // return value = particle statistic
 
-inline int FermionOnSphere::GetParticleStatistic()
+inline int BosonOnSphereShort::GetParticleStatistic()
 {
-  return ParticleOnSphere::FermionicStatistic;
+  return ParticleOnSphere::BosonicStatistic;
+}
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialState = reference on the array where initialbosonic  state is stored
+// initialStateLzMax = reference on the initial bosonic state maximum Lz value
+// return value = corresponding fermionic state
+
+inline unsigned long BosonOnSphereShort::BosonToFermion(unsigned long*& initialState, int& initialStateLzMax)
+{
+  unsigned long TmpState = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= initialStateLzMax; ++i)
+    {
+      TmpState |= ((1ul << initialState[i]) - 1ul) << Shift;
+      Shift += initialState[i];
+      ++Shift;
+    }
+  return TmpState;
+}
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialState = initial fermionic state
+// initialStateLzMax = initial fermionic state maximum Lz value
+// finalState = reference on the array where the bosonic state has to be stored
+// finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
+
+inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax)
+{
+  finalStateLzMax = 0;
+  while (initialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+//      cout << hex << initialState << "  " << TmpState << dec << endl;
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+//      cout << TmpPower << endl;
+      finalState[finalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState >>= TmpPower;
+      ++finalStateLzMax;
+      initialStateLzMax -= TmpPower;
+    }
+  --finalStateLzMax;
 }
 
 #endif

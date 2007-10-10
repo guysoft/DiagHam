@@ -1,5 +1,8 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+
 #include "Hamiltonian/ParticleOnSphereGenericHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -165,10 +168,24 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       ParticleOnSphere* Space = 0;
-      if ((SymmetrizedBasis == false) || (L != 0))
-	Space = new BosonOnSphere (NbrBosons, L, LzMax);
+#ifdef  __64_BITS__
+      if ((LzMax + NbrBosons - 1) < 63)
+#else
+      if ((LzMax + NbrBosons - 1) < 31)	
+#endif
+	{
+	  if ((SymmetrizedBasis == false) || (L != 0))
+	    Space = new BosonOnSphereShort(NbrBosons, L, LzMax);
+	  else
+	    Space = new BosonOnSphereSymmetricBasisShort(NbrBosons, LzMax);
+	}
       else
-	Space = new BosonOnSphereSymmetricBasis(NbrBosons, LzMax);
+	{
+	  if ((SymmetrizedBasis == false) || (L != 0))
+	    Space = new BosonOnSphere (NbrBosons, L, LzMax);
+	  else
+	    Space = new BosonOnSphereSymmetricBasis(NbrBosons, LzMax);
+	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
