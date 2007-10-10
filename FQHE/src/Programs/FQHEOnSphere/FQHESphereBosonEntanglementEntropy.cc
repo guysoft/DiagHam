@@ -3,6 +3,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 // #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 // #include "HilbertSpace/FermionOnSphereUnlimited.h"
 // #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
@@ -129,8 +130,15 @@ int main(int argc, char** argv)
 
 
   ParticleOnSphere* Space = 0;
-  Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
-
+  if ((SymmetrizedBasis == false) || (TotalLz != 0))
+    Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+  else
+    {
+      Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+      BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
+      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphere*) Space));
+      GroundState = OutputState;
+    }
 
   if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
     {

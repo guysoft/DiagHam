@@ -202,6 +202,8 @@ int BosonOnSphereSymmetricBasisShort::AdAdAA (int index, int m1, int m2, int n1,
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
+  for (int i = this->TemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = 0x0ul;
   coefficient = this->TemporaryState[n2];
   --this->TemporaryState[n2];
   coefficient *= this->TemporaryState[n1];
@@ -216,7 +218,8 @@ int BosonOnSphereSymmetricBasisShort::AdAdAA (int index, int m1, int m2, int n1,
     --this->TemporaryStateLzMax;
   State = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
   State = this->FermionSymmetricBasis->GetSignedCanonicalState(State);
-  this->TemporaryStateLzMax += this->NbrBosons - 1;
+  this->TemporaryStateLzMax += this->NbrBosons;
+  --this->TemporaryStateLzMax;
   while (((State & FERMION_SPHERE_SYMMETRIC_MASK) >> this->TemporaryStateLzMax) == 0)
     --this->TemporaryStateLzMax;
   int TmpIndex = this->FermionSymmetricBasis->FindStateIndex(State,  this->TemporaryStateLzMax);
