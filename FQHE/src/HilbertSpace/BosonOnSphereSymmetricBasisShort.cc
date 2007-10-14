@@ -116,8 +116,8 @@ BosonOnSphereSymmetricBasisShort::BosonOnSphereSymmetricBasisShort(const BosonOn
 
 BosonOnSphereSymmetricBasisShort::~BosonOnSphereSymmetricBasisShort ()
 {
-  if (this->FermionSymmetricBasis != 0)
-    delete this->FermionSymmetricBasis;
+//  if (this->FermionSymmetricBasis != 0)
+//    delete this->FermionSymmetricBasis;
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     delete[] this->StateLzMax;
 }

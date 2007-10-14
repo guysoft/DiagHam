@@ -4,6 +4,8 @@
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 // #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 // #include "HilbertSpace/FermionOnSphereUnlimited.h"
 // #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
@@ -130,14 +132,33 @@ int main(int argc, char** argv)
 
 
   ParticleOnSphere* Space = 0;
-  if ((SymmetrizedBasis == false) || (TotalLz != 0))
-    Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+#ifdef  __64_BITS__
+  if ((LzMax + NbrParticles - 1) < 63)
+#else
+    if ((LzMax + NbrBosons - 1) < 31)	
+#endif
+      {
+	if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	  Space = new BosonOnSphereShort (NbrParticles, TotalLz, LzMax);
+	else
+	  {
+	    Space = new BosonOnSphereShort (NbrParticles, TotalLz, LzMax);
+	    BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
+	    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphereShort*) Space));
+	    GroundState = OutputState;
+	  }
+      }
   else
     {
-      Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
-      BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
-      RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphere*) Space));
-      GroundState = OutputState;
+      if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+      else
+	{
+	  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+	  BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
+	  RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphere*) Space));
+	  GroundState = OutputState;
+	}
     }
 
   if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
