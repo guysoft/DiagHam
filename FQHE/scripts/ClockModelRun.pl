@@ -27,6 +27,7 @@ if (!defined($ARGV[3]))
   }
 else
   {
+    print ("Rescaling pseudopotentials with finite size scaling");
     if ( $NbrFlux == 2*$NbrFermions-4 )
       {
 	# shift of the Haldane-Rezayi state -> filling factor 1/2
