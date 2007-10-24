@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type FQHESphereFermionsSU4Correlation -h" << endl;
@@ -148,7 +149,7 @@ int main(int argc, char** argv)
 
   Complex* Sum = new Complex [10];
   Complex Sum2 (0.0, 0.0);
-  Complex TmpValue;
+  Complex TmpValue = 0.0;
   RealVector Value(2, true);
   double X = 0.0;
   double XInc = M_PI / ((double) NbrPoints);
@@ -160,7 +161,7 @@ int main(int argc, char** argv)
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator (Space, i, 0, LzMax, 0, i, 0, LzMax, 0);
-      PrecalculatedValues[0][i] =  Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+      PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {

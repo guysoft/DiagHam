@@ -150,7 +150,7 @@ Complex ParticleOnSphereWithSU4DensityDensityOperator::MatrixElement (RealVector
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   double Element = 0.0;
-  int SymmetryIndex = (this->CreationMomentumIndex1 << 12) | (this->CreationMomentumIndex2 << 8) | (this->AnnihilationMomentumIndex1 << 4) | this->AnnihilationSymmetryIndex2;
+  int SymmetryIndex = (this->CreationSymmetryIndex1 << 12) | (this->CreationSymmetryIndex2 << 8) | (this->AnnihilationSymmetryIndex1 << 4) | this->AnnihilationSymmetryIndex2;
   switch (SymmetryIndex)
     {
     case 0x0000 :
@@ -324,7 +324,7 @@ RealVector& ParticleOnSphereWithSU4DensityDensityOperator::LowLevelMultiply(Real
   int Dim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
-  int SymmetryIndex = (this->CreationMomentumIndex1 << 12) | (this->CreationMomentumIndex2 << 8) | (this->AnnihilationMomentumIndex1 << 4) | this->AnnihilationSymmetryIndex2;
+  int SymmetryIndex = (this->CreationSymmetryIndex1 << 12) | (this->CreationSymmetryIndex2 << 8) | (this->AnnihilationSymmetryIndex1 << 4) | this->AnnihilationSymmetryIndex2;
   switch (SymmetryIndex)
     {
     case 0x0000 :
