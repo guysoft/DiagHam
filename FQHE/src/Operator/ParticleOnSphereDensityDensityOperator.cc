@@ -35,6 +35,12 @@
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // constructor from default datas
 //
@@ -112,8 +118,9 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, R
   for (int i = 0; i < Dim; ++i)
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+      Element += V1[Index] * V2[i] * Coefficient;      
     }
+  cout << Element << endl;
   return Complex(Element);
 }
   
