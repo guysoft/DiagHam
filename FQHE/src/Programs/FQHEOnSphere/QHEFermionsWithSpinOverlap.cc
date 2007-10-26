@@ -366,6 +366,7 @@ int main(int argc, char** argv)
       QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis);
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());
+      Complex ValueTrial = (*TestWaveFunction)(Particles->GetPositions());
       double Tmp2;
       int NUp = NbrFermions/2;
       // exchange spin up and spin down
@@ -379,11 +380,14 @@ int main(int argc, char** argv)
 	  Particles->GetPositions()[1+ ((j+NUp) << 1)] = Tmp2;
 	}
       // recalculate:
+      Complex ValueTrial2 = (*TestWaveFunction)(Particles->GetPositions());
       QHEParticleWaveFunctionOperation Operation2(Space, &State, &(Particles->GetPositions()), &Basis,-1);
       Operation2.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact2 (Operation2.GetScalar());
       cout << "Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
       cout << "Parity: " << ValueExact/ValueExact2 << endl;
+      cout << "Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
+      cout << "Parity: " << ValueTrial/ValueTrial2 << endl;
     }
 
 

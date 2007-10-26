@@ -125,6 +125,17 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 #endif
 
+// pathscale 64 bit options - test for 64 bit compilation with pathscale suite
+
+#ifdef __LP64__
+
+// 64 bits architecture
+#ifndef __64_BITS__
+#define __64_BITS__
+#endif
+
+#endif
+
 // define long long types (128 bits on x86_64 architecture, 64 bits elsewhere)
 
 #ifdef __x86_64__

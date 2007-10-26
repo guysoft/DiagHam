@@ -96,6 +96,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       // PairedCF(CB)Options:
       (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "bosons", "coefficient for boson contribution (pairedcfcb only)",1.0);
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf* only)",'+');
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
     }
 }
@@ -129,7 +130,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSpinGeometry)
 	{
 	  str << "  * 111 : 111-state" << endl;
-	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;
+	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;	  
 	}
   return str;
@@ -247,7 +248,8 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      else
 		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
 	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
-	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, 1, false, 0.0, Coefficients, conventions, 2);
+	      int pairWave = this->Options->GetInteger("pair-wave");
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, pairWave, false, 0.0, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
 	      delete [] Coefficients;
 	      return rst;
@@ -356,7 +358,7 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
     return QHEWaveFunctionManager::UnprojectedCF;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
-    return QHEWaveFunctionManager::PairedCF;
+    return QHEWaveFunctionManager::PairedCF;  
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
     return QHEWaveFunctionManager::PairedCFCB;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
