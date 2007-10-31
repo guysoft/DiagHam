@@ -74,8 +74,8 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   int TotalLz = 0;
   bool Statistics = true;
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
-						  NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
+						   NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;

@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin (i.e valley SU(2) degeneracy) of the system", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "use-entanglement", "use a define value for the spin-isopsin entanglement of the system");
@@ -98,6 +98,7 @@ int main(int argc, char** argv)
 	cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
 	return -1;
       }
+  cout << NbrParticles << " " << TotalLz << " " << SzTotal << " " << IsoSzTotal << " " << TotalEntanglement << endl;
 
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
@@ -181,38 +182,44 @@ int main(int argc, char** argv)
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 0, LzMax, 1, i, 0, LzMax, 1);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 1, LzMax, 0, i, 1, LzMax, 0);
-      PrecalculatedValues[1][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[1][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 1, LzMax, 0, i, 1, LzMax, 0);
+//       PrecalculatedValues[1][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 0, LzMax, 2, i, 0, LzMax, 2);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 2, LzMax, 0, i, 2, LzMax, 0);
-      PrecalculatedValues[2][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[2][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 2, LzMax, 0, i, 2, LzMax, 0);
+//       PrecalculatedValues[2][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 0, LzMax, 3, i, 0, LzMax, 3);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 0, i, 3, LzMax, 0);
-      PrecalculatedValues[3][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[3][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 0, i, 3, LzMax, 0);
+//       PrecalculatedValues[3][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 1, LzMax, 2, i, 1, LzMax, 2);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 2, LzMax, 1, i, 2, LzMax, 1);
-      PrecalculatedValues[5][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[5][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 2, LzMax, 1, i, 2, LzMax, 1);
+//       PrecalculatedValues[5][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 1, LzMax, 3, i, 1, LzMax, 3);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 1, i, 3, LzMax, 1);
-      PrecalculatedValues[6][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[6][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 1, i, 3, LzMax, 1);
+//       PrecalculatedValues[6][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   for (int i = 0; i <= LzMax; ++i)
     {
       ParticleOnSphereWithSU4DensityDensityOperator Operator1 (Space, i, 2, LzMax, 3, i, 2, LzMax, 3);
-      ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 2, i, 3, LzMax, 2);
-      PrecalculatedValues[8][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
+      PrecalculatedValues[8][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+//       ParticleOnSphereWithSU4DensityDensityOperator Operator2 (Space, i, 3, LzMax, 2, i, 3, LzMax, 2);
+//       PrecalculatedValues[8][i] =  (Operator1.MatrixElement(State, State) + Operator2.MatrixElement(State, State))* TmpValue * Conj(TmpValue);
     }
   double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
   double Factor2;
@@ -244,7 +251,8 @@ int main(int argc, char** argv)
       else
 	File << "# dist (chord)";
     }
-  File << " rho_{up,up} rho_{up,um}+rho_{um,up} rho_{up,dp}+rho_{dp,up} rho_{up,dm}+rho_{dm,up} rho_{um,um} rho_{um,dp}+rho_{dp,um} rho_{um,dm}+rho_{dm,um} rho_{dp,dp} rho_{dp,dm}+rho_{dm,dp} rho_{dm,dm}" << endl;
+//  File << " rho_{up,up} rho_{up,um}+rho_{um,up} rho_{up,dp}+rho_{dp,up} rho_{up,dm}+rho_{dm,up} rho_{um,um} rho_{um,dp}+rho_{dp,um} rho_{um,dm}+rho_{dm,um} rho_{dp,dp} rho_{dp,dm}+rho_{dm,dp} rho_{dm,dm}" << endl;
+  File << " rho_{up,up} rho_{up,um} rho_{up,dp} rho_{up,dm} rho_{um,um} rho_{um,dp} rho_{um,dm} rho_{dp,dp} rho_{dp,dm} rho_{dm,dm}" << endl;
   for (int x = 0; x < NbrPoints; ++x)
     {
       Value[0] = X;

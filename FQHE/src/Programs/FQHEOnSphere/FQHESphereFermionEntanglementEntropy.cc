@@ -102,7 +102,7 @@ int main(int argc, char** argv)
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
   int TotalLz = 0;
   bool Statistics = true;
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;

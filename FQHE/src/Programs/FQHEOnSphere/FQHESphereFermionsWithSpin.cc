@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
+ OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
@@ -310,8 +310,10 @@ int main(int argc, char** argv)
 	    Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, MemorySpace);
 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      AbstractQHEHamiltonian* Hamiltonian;
-      
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+        Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
+      AbstractQHEHamiltonian* Hamiltonian;      
       Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
       Hamiltonian->ShiftHamiltonian(Shift);

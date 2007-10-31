@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
-  if (QHEOnSphereFindSystemInfoFromFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
+  if (FQHEOnSphereFindSystemInfoFromFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, FermionFlag) == false)
     {
       return -1;
     }

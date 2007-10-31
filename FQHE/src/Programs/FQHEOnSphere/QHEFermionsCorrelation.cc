@@ -104,7 +104,7 @@ int main(int argc, char** argv)
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool Statistics = true;
- if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(),
+ if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
@@ -346,13 +346,7 @@ int main(int argc, char** argv)
       {
 	Basis->GetFunctionValue(Value, TmpValue, LzMax);
 	ParticleOnSphereDensityDensityOperator Operator (Space, i, LzMax, i, LzMax);
-	PrecalculatedValues[i] = TmpValue * Conj(TmpValue);
-	Complex TmpTruc (Operator.MatrixElement(State, State));
-//	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-//	PrecalculatedValues[i] = TmpTruc * TmpValue * Conj(TmpValue);
-	PrecalculatedValues[i] *= PrecalculatedValues[i];
-	cout << TmpTruc.Re << endl;
-	cout << TmpTruc.Im << endl;
+	PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
       }
   else
     for (int i = 0; i <= LzMax; ++i)
@@ -379,7 +373,6 @@ int main(int argc, char** argv)
  	{
  	  Basis->GetFunctionValue(Value, TmpValue, i);
  	  Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
-//	  Sum +=  (Conj(TmpValue) * TmpValue);
  	}
       if (ChordFlag == false)
 	File << (X * Factor2) << " " << (Norm(Sum)  * Factor1) << endl;

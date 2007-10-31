@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of particle on sphere density-density operator           //
+//             class density-density operator for particle with spin          //
 //                                                                            //
 //                        last modification : 10/12/2002                      //
 //                                                                            //
@@ -41,62 +41,53 @@ using std::endl;
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// creationIndex1 = index of the leftmost creation operator
-// creationIndex2 = index of the rightmost creation operator
-// annihilationIndex1 = index of the leftmost annihilation operator
-// annihilationIndex2 = index of the rightmost annihilation operator
-// spinEncoding = sC1sC2sA1sA2u, with sC/Ai the spin index 1=up or 0=down of the respective C-reation or A-nnihilation operator
-ParticleOnSphereWithSpinDensityDensityOperator::ParticleOnSphereWithSpinDensityDensityOperator(ParticleOnSphereWithSpin* particle, int creationIndex1, int creationIndex2,
-											       int annihilationIndex1, int annihilationIndex2, unsigned spinEncoding)
+// creationMomentumIndex1 = momentum index of the leftmost creation operator (from 0 to 2S)
+// creationSymmetryIndex1 = symmetry index of the leftmost creation operator (0 for up, 1 for plus)
+// creationMomentumIndex2 = momentum index of the leftmost creation operator (from 0 to 2S)
+// creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for up, 1 for plus)
+// annihilationMomentumIndex1 = momentum index of the leftmost annihilation operator (from 0 to 2S)
+// annihilationSymmetryIndex1 = symmetry index of the leftmost annihilation operator (0 for up, 1 for plus)
+// annihilationMomentumIndex2 = momentum index of the rightmost annihilation operator(from 0 to 2S)
+// annihilationSymmetryIndex2 = symmetry index of the rightmost annihilation operator (0 for up, 1 for plus)
+
+ParticleOnSphereWithSpinDensityDensityOperator::ParticleOnSphereWithSpinDensityDensityOperator(ParticleOnSphereWithSpin* particle, 
+											       int creationMomentumIndex1, int creationSymmetryIndex1,
+											       int creationMomentumIndex2, int creationSymmetryIndex2,
+											       int annihilationMomentumIndex1, int annihilationSymmetryIndex1,
+											       int annihilationMomentumIndex2, int annihilationSymmetryIndex2)
 {
   this->Particle= particle;
-  this->CreationIndex1 = creationIndex1;
-  this->CreationIndex2 = creationIndex2;
-  this->AnnihilationIndex1 = annihilationIndex1;
-  this->AnnihilationIndex2 = annihilationIndex2;
-  this->sign = 1.0;
-  unsigned SpinEncoding=spinEncoding & 15u;
-  if (Particle->GetParticleStatistic() == ParticleOnSphereWithSpin::FermionicStatistic)
+  this->SignFactor = 1.0;
+  this->CreationMomentumIndex1 = creationMomentumIndex1;
+  this->CreationSymmetryIndex1 = creationSymmetryIndex1;
+  this->CreationMomentumIndex2 = creationMomentumIndex2;
+  this->CreationSymmetryIndex2 = creationSymmetryIndex2;
+  if (this->CreationSymmetryIndex1 > this->CreationSymmetryIndex2)
     {
-      // assign pointer
-      switch (SpinEncoding)
-	{
-	case 15u: ptToAdAdAA = &ParticleOnSphereWithSpin::AduAduAuAu;
-	  break;
-	case 10u: ptToAdAdAA = &ParticleOnSphereWithSpin::AddAduAdAu;
-	  this->CreationIndex1  = creationIndex2;
-	  this->CreationIndex2  = creationIndex1;
-	  this->AnnihilationIndex1  = annihilationIndex2;
-	  this->AnnihilationIndex2  = annihilationIndex1;
-	  break;
-	case 9u:
-	  ptToAdAdAA = &ParticleOnSphereWithSpin::AddAduAdAu;
-	  this->CreationIndex1  = creationIndex2;
-	  this->CreationIndex2  = creationIndex1;
-	  sign=-1.0;
-	  break;
-	case 6u:
-	  ptToAdAdAA = &ParticleOnSphereWithSpin::AddAduAdAu;
-	  this->AnnihilationIndex1  = annihilationIndex2;
-	  this->AnnihilationIndex2  = annihilationIndex1;
-	  sign=-1.0;
-	  break;
-	case 5u:
-	  ptToAdAdAA = &ParticleOnSphereWithSpin::AddAduAdAu;
-	  break;
-	case 0u:
-	  ptToAdAdAA = &ParticleOnSphereWithSpin::AddAddAdAd;
-	  break;
-	default:
-	  cout << "The total spin has to be conserved on DensityDensity Operator!" << endl;
-	  exit(-27);
-	  break;
-	}
+      int Tmp = this->CreationSymmetryIndex1;
+      this->CreationSymmetryIndex1 = this->CreationSymmetryIndex2;
+      this->CreationSymmetryIndex2 = Tmp;
+      Tmp = this->CreationMomentumIndex1;
+      this->CreationMomentumIndex1 = this->CreationMomentumIndex2;
+      this->CreationMomentumIndex2 = Tmp;   
+      if (this->Particle->GetParticleStatistic() == AbstractQHEParticle::FermionicStatistic)
+	this->SignFactor *= 1.0;
     }
-  else {
-    cout << "Bosonic Statistics not implemented, yet, in ParticleOnSphereWithSpinDensityDensityOperator" << endl;
-    exit(-27);
-  }
+  this->AnnihilationMomentumIndex1 = annihilationMomentumIndex1;
+  this->AnnihilationSymmetryIndex1 = annihilationSymmetryIndex1;
+  this->AnnihilationMomentumIndex2 = annihilationMomentumIndex2;
+  this->AnnihilationSymmetryIndex2 = annihilationSymmetryIndex2;
+  if (this->AnnihilationSymmetryIndex1 > this->AnnihilationSymmetryIndex2)
+    {
+      int Tmp = this->AnnihilationSymmetryIndex1;
+      this->AnnihilationSymmetryIndex1 = this->AnnihilationSymmetryIndex2;
+      this->AnnihilationSymmetryIndex2 = Tmp;
+      Tmp = this->AnnihilationMomentumIndex1;
+      this->AnnihilationMomentumIndex1 = this->AnnihilationMomentumIndex2;
+      this->AnnihilationMomentumIndex2 = Tmp;   
+      if (this->Particle->GetParticleStatistic() == AbstractQHEParticle::FermionicStatistic)
+	this->SignFactor *= 1.0;
+    }
 }
 
 // destructor
@@ -152,14 +143,55 @@ Complex ParticleOnSphereWithSpinDensityDensityOperator::MatrixElement (RealVecto
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
   double Element = 0.0;
-  int Index;
-  for (int i = 0; i < Dim; ++i)
+  int SymmetryIndex = (this->CreationSymmetryIndex1 << 12) | (this->CreationSymmetryIndex2 << 8) | (this->AnnihilationSymmetryIndex1 << 4) | this->AnnihilationSymmetryIndex2;
+  switch (SymmetryIndex)
     {
-      Index = (Particle->*ptToAdAdAA)(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+    case 0x0000 :
+      {
+	for (int i = 0; i < Dim; ++i)
+	  {
+	    Coefficient = this->Particle->AuAu(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AduAdu(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
+	      }
+	  }
+	break;
+      }
+    case 0x0101 :
+      {
+	for (int i = 0; i < Dim; ++i)
+	  {
+	    Coefficient = this->Particle->AuAd(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AduAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
+	      }
+	  }
+	break;
+      }
+    case 0x1111 :
+      {
+	for (int i = 0; i < Dim; ++i)
+	  {
+	    Coefficient = this->Particle->AdAd(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AddAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  Element += V1[Index] * V2[i] * Coefficient * Coefficient2;      
+	      }
+	  }
+	break;
+      }
     }
-  return Complex(sign*Element);
+  return Complex(this->SignFactor * Element);
 }
   
 // evaluate matrix element
@@ -186,12 +218,54 @@ RealVector& ParticleOnSphereWithSpinDensityDensityOperator::LowLevelMultiply(Rea
 									     int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;;
-  int Index;
+  int Dim = this->Particle->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
-  for (int i = firstComponent; i < Last; ++i)
+  double Coefficient2 = 0.0;
+  int SymmetryIndex = (this->CreationSymmetryIndex1 << 12) | (this->CreationSymmetryIndex2 << 8) | (this->AnnihilationSymmetryIndex1 << 4) | this->AnnihilationSymmetryIndex2;
+  switch (SymmetryIndex)
     {
-      Index = (Particle->*ptToAdAdAA)(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      vDestination[Index] = sign * vSource[i] * Coefficient;
+    case 0x0000 :
+      {
+	for (int i = firstComponent; i < Last; ++i)
+	  {
+	    Coefficient = this->Particle->AuAu(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AduAdu(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+	      }
+	  }
+	break;
+      }
+    case 0x0101 :
+      {
+	for (int i = firstComponent; i < Last; ++i)
+	  {
+	    Coefficient = this->Particle->AuAd(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AduAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+	      }
+	  }
+	break;
+      }
+    case 0x1111 :
+      {
+	for (int i = firstComponent; i < Last; ++i)
+	  {
+	    Coefficient = this->Particle->AdAd(i, this->AnnihilationMomentumIndex1, this->AnnihilationMomentumIndex2);
+	    if (Coefficient != 0.0)
+	      {
+		int Index = this->Particle->AddAdd(this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient2);
+		if (Index != Dim)
+		  vDestination[Index] = this->SignFactor * vSource[i] * Coefficient * Coefficient2;
+	      }
+	  }
+	break;
+      }
     }
   return vDestination;
 }

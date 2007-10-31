@@ -45,7 +45,7 @@ using std::endl;
 // statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
 // return value = true if no error occured
 
-bool QHEOnSphereFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, bool& statistics)
+bool FQHEOnSphereFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lzMax, bool& statistics)
 {
   char* StrNbrParticles;
   if (nbrParticles == 0)
@@ -132,9 +132,9 @@ bool QHEOnSphereFindSystemInfoFromFileName(char* filename, int& nbrParticles, in
 // statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
 // return value = true if no error occured
 
-bool QHEOnSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, bool& statistics)
+bool FQHEOnSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, bool& statistics)
 {
-  if (QHEOnSphereFindSystemInfoFromFileName(filename, nbrParticles, lzMax, statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromFileName(filename, nbrParticles, lzMax, statistics) == false)
     return false;
   char* StrNbrParticles;
   if (lz == 0)
@@ -178,9 +178,9 @@ bool QHEOnSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticl
 // statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
 // return value = true if no error occured
 
-bool QHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, bool& statistics)
+bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, bool& statistics)
 {
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, statistics) == false)
     return false;
   char* StrNbrParticles;
   if (sz == 0)
@@ -229,7 +229,7 @@ bool QHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
 
 bool FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, int& iz, int& pz, bool& statistics)
 {
-  if (QHEOnSphereWithSpinFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, sz, statistics) == false)
+  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, sz, statistics) == false)
     return false;
   char* StrNbrParticles;
   if (iz == 0)

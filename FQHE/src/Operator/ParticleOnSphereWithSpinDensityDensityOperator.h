@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of particle on sphere density-density operator           //
+//             class density-density operator for particle with spin          //
 //                                                                            //
 //                        last modification : 10/12/2002                      //
 //                                                                            //
@@ -46,32 +46,43 @@ class ParticleOnSphereWithSpinDensityDensityOperator : public AbstractOperator
   // hilbert space associated to the particles
   ParticleOnSphereWithSpin* Particle;
   
-  // indices attached to the a+_i a+_j a_k a_l
-  // index of the leftmost creation operator
-  int CreationIndex1;
-  // index of the rightmost creation operator
-  int CreationIndex2;
-  // index of the leftmost annihilation operator
-  int AnnihilationIndex1;
-  // index of the rightmost annihilation operator
-  int AnnihilationIndex2;
-  // eventually a sign is required to take into account permutations
-  double sign;
-  // pointer to operator function:
-  int (ParticleOnSphereWithSpin::*ptToAdAdAA) (int,  int,  int, int, int, double&);
+  // indices attached to the a+_{sigma_1,i_1} a+_{sigma_2,i_2} a_{sigma_3,i_3} a_{sigma_4,i_4}
+  // momentum index of the leftmost creation operator
+  int CreationMomentumIndex1;
+  // symmetry index of the leftmost annihilation operator
+  int CreationSymmetryIndex1;
+  // momentum index of the rightmost creation operator
+  int CreationMomentumIndex2;
+  // symmetry index of the rightmost annihilation operator
+  int CreationSymmetryIndex2;
+  // momentum index of the leftmost annihilation operator
+  int AnnihilationMomentumIndex1;
+  // symmetry index of the leftmost annihilation operator
+  int AnnihilationSymmetryIndex1;
+  // momentum index of the rightmost annihilation operator
+  int AnnihilationMomentumIndex2;
+  // symmetry index of the rightmost annihilation operator
+  int AnnihilationSymmetryIndex2;
+
+  // additional sign that can arise due to operator reordering
+  double SignFactor;
   
  public:
   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
-  // creationIndex1 = index of the leftmost creation operator
-  // creationIndex2 = index of the rightmost creation operator
-  // annihilationIndex1 = index of the leftmost annihilation operator
-  // annihilationIndex2 = index of the rightmost annihilation operator
-  // spinEncoding = sC1sC2sA1sA2u, with sC/Ai the spin index 1=up or 0=down of the respective C-reation or A-nnihilation operator
-  ParticleOnSphereWithSpinDensityDensityOperator(ParticleOnSphereWithSpin* particle, int creationIndex1, int creationIndex2,
-						 int annihilationIndex1, int annihilationIndex2, unsigned spinEncoding);
+  // creationMomentumIndex1 = momentum index of the leftmost creation operator (from 0 to 2S)
+  // creationSymmetryIndex1 = symmetry index of the leftmost creation operator (0 for (up,plus), 1 for (up,minus), 2 for (down,plus), 3 for (down,minus))
+  // creationMomentumIndex2 = momentum index of the leftmost creation operator (from 0 to 2S)
+  // creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for (up,plus), 1 for (up,minus), 2 for (down,plus), 3 for (down,minus))
+  // annihilationMomentumIndex1 = momentum index of the leftmost annihilation operator (from 0 to 2S)
+  // annihilationSymmetryIndex1 = symmetry index of the leftmost annihilation operator (0 for (up,plus), 1 for (up,minus), 2 for (down,plus), 3 for (down,minus))
+  // annihilationMomentumIndex2 = momentum index of the rightmost annihilation operator(from 0 to 2S)
+  // annihilationSymmetryIndex2 = symmetry index of the rightmost annihilation operator (0 for (up,plus), 1 for (up,minus), 2 for (down,plus), 3 for (down,minus))
+  ParticleOnSphereWithSpinDensityDensityOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
+						int creationMomentumIndex2, int creationSymmetryIndex2, int annihilationMomentumIndex1, int annihilationSymmetryIndex1,
+						int annihilationMomentumIndex2, int annihilationSymmetryIndex2);
 
   // destructor
   //

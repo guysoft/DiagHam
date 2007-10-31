@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   bool Statistics = true;
   int TotalLz = 0;
 
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;

@@ -118,9 +118,9 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (RealVector& V1, R
   for (int i = 0; i < Dim; ++i)
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;      
+      if (Index != Dim)
+	Element += V1[Index] * V2[i] * Coefficient;      
     }
-  cout << Element << endl;
   return Complex(Element);
 }
   
@@ -147,13 +147,15 @@ Complex ParticleOnSphereDensityDensityOperator::MatrixElement (ComplexVector& V1
 RealVector& ParticleOnSphereDensityDensityOperator::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 								     int firstComponent, int nbrComponent)
 {
+  int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
   int Index;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
       Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
-      vDestination[Index] = vSource[i] * Coefficient;
+      if (Index != Dim)
+	vDestination[Index] = vSource[i] * Coefficient;
     }
   return vDestination;
 }

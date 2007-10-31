@@ -100,7 +100,7 @@ int main(int argc, char** argv)
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (QHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, FermionFlag) == false)
+    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, FermionFlag) == false)
       {
 	return -1;
       }

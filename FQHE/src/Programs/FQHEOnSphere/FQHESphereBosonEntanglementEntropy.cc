@@ -6,14 +6,6 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
-// #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
-// #include "HilbertSpace/FermionOnSphereUnlimited.h"
-// #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
-// #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
-// #include "HilbertSpace/FermionOnSphereLong.h"
-// #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
-// #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
-// #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -103,8 +95,8 @@ int main(int argc, char** argv)
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
   int TotalLz = 0;
   bool Statistics = true;
-  if (QHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
-						  NbrParticles, LzMax, TotalLz, Statistics) == false)
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
+						   NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
       return -1;
