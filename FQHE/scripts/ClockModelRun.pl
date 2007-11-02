@@ -10,18 +10,19 @@ my $memory = 0;
 if (!(defined($ARGV[2])))
   {
     print ("Run FQHESphereFermionsWithSpin with pseudopotentials V0=cos(phi), V1=sin(phi)\n");
-    die "usage: ClockModelRun.pl nbr_fermions nbr_flux nbr_points [RescaleFirst] [print-command]\n";
+    die "usage: ClockModelRun.pl nbr_fermions nbr_flux nbr_points filling [GS] [print-command]\n";
   }
 
 my $NbrFermions = $ARGV[0];
 my $NbrFlux = $ARGV[1];
 my $NbrPoints = $ARGV[2];
+my $Filling = $ARGV[3];
 
 my $R0=($NbrFlux+1)*($NbrFlux+1)/(4*pi*(2*$NbrFlux+1));
 my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1)/2.0);
 
 my $RawRescale;
-if (!defined($ARGV[3]))
+if (1==2) # always use scaling factor now...
   {
    $RawRescale=1.0;
   }
@@ -32,23 +33,69 @@ else
       {
 	# shift of the Haldane-Rezayi state -> filling factor 1/2
 	$RawRescale=sqrt(0.5*$NbrFlux/$NbrFermions);
-	print ("1/2 state\n");
-      }
-    else
-      {
-	if ( $NbrFlux == 3*$NbrFermions/2-3 )
+	if ($Filling =~ "1/2" )
 	  {
-	    # shift of the 2/3 state -> filling factor 2/3
-	    $RawRescale=sqrt(2.0*$NbrFlux/$NbrFermions/3.0);
-	    print ("2/3 state\n");
+	    print ("1/2 state\n");
 	  }
 	else
 	  {
-	    $RawRescale=1.0;
-	    print("Attention: No state is known at this shift! Scaling factor set to one!");
+	    die ("wrong flux for nu=1/2.\n");
 	  }
       }
-    }
+    else
+      {
+	if ($Filling =~ "2/3" )
+	  {
+	    $RawRescale=sqrt(2.0*$NbrFlux/$NbrFermions/3.0);
+	    if ( $NbrFlux == 3*$NbrFermions/2-3 )
+	      {
+		# shift of the 2/3 state -> filling factor 2/3
+		print ("2/3 state at 3/2 N - 3.\n");
+	      }
+	    else
+	      {
+		if ( $NbrFlux == 3*$NbrFermions/2-1 )
+		  {
+		    # shift of the 2/3 state -> filling factor 2/3
+		    print ("2/3 state at 3/2 N - 1.\n");
+		  }
+		else
+		  {
+		    die ("wrong flux for nu=2/3.\n");
+		  }
+	      }
+	  }
+	else
+	  {
+	    if ($Filling =~ "1" )
+	      {
+		$RawRescale=sqrt($NbrFlux/$NbrFermions);
+		if ( $NbrFlux == $NbrFermions-1 )
+		  {
+		    # shift of the p-wave paired state
+		    print ("nu=1 p-wave paired state at N - 1.\n");
+		  }
+		else
+		  {
+		    if ( $NbrFlux == $NbrFermions-2 )
+		      {
+			# shift of the s-wave paired state
+			print ("nu=1 s-wave paired state at N - 2.\n");
+		      }
+		    else
+		      {
+			die ("wrong flux for nu=1.\n");
+		      }
+		  }
+	      }
+	    else
+	      {
+		$RawRescale=1.0;
+		print("Attention: Unknown state! Scaling factor set to one!");
+	      }
+	  }
+      }
+  }
 
 my $R20=$RawRescale*$RawRescale;
 my $R21=$RawRescale*$RawRescale*$RawRescale*$RawRescale;
@@ -79,7 +126,11 @@ for ( my $point=0; $point<$NbrPoints; $point++)
     # run calculation
     my $Command = $DiagonalizationProgram." -p ".$NbrFermions." -l ".$NbrFlux." -s 0 --show-itertime --memory ".$memory." --interaction-file ".$PseudopotentialFile." --interaction-name clock_phi_".$Phi/pi;
     #$Command = $Command." --szsymmetrized-basis";
-    if (!defined($ARGV[4]))
+    if (defined($ARGV[4]))
+      {
+	$Command = $Command." --nbr-lz 1 --eigenstate -n2 --force-reorthogonalize";
+      }
+    if (!defined($ARGV[5]))
       {
 	system ($Command);
       }

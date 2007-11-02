@@ -81,6 +81,8 @@ class QHEWaveFunctionManager
       PairedCF =  0x14005,
       PairedCFCB = 0x18004,
       OneOneOne = 0x04004,
+      OneS = 0x100000,
+      HaldaneRezayi = 0x200000,
       TrialWaveFunction = 0x10000
     };
   

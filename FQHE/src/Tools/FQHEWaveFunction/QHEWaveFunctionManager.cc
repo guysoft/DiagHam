@@ -33,6 +33,7 @@
 
 #include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
@@ -128,8 +129,10 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       }
     else
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSpinGeometry)
-	{
+	{	  
 	  str << "  * 111 : 111-state" << endl;
+	  str << "  * HR : Haldane-Rezayi state" << endl;
+	  str << "  * s1 : Spin-singlet state at filling one" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;	  
 	}
@@ -280,7 +283,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      delete [] Coefficients;
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111-old") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	      int Sz= Options->GetInteger("SzTotal");
@@ -295,6 +298,27 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, 1.0, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
 	      delete[] Coefficients;
+	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 1, 1, 0);
+	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 2, 2, -2);
+	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2);
+	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
 	}
@@ -363,5 +387,9 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::PairedCFCB;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
     return QHEWaveFunctionManager::OneOneOne;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR ") == 0))
+    return QHEWaveFunctionManager::HaldaneRezayi;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s ") == 0))
+    return QHEWaveFunctionManager::OneS;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

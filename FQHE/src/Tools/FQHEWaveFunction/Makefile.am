@@ -27,4 +27,5 @@ SU4HalperinOnSphereWaveFunction.cc \
 PairedCFOnSphereWaveFunction.cc \
 PairedCFOnSphereWithSpinWaveFunction.cc \
 ParticleOnSphereCollection.cc \
-WaveFunctionOverlapOptimizer.cc
+WaveFunctionOverlapOptimizer.cc \
+ExtendedHalperinWavefunction.cc

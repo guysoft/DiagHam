@@ -6,9 +6,9 @@
 //                  Copyright (C) 2007 Gunnar Möller                  //
 //                                                                            //
 //                                                                            //
-//           class implementing a paired CF wave function on the sphere          //
+//           class implementing generalized Halperin states on the sphere          //
 //                                                                            //
-//                        last modification : 18/05/2007                      //
+//                        last modification : 02/11/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
