@@ -259,6 +259,13 @@ int QHEOnSphereMainTask::ExecuteMainTask()
     {
       File.open(this->OutputFileName, ios::binary | ios::out);
       this->FirstRun = false;
+      File << "# Lz E";
+      if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
+	File << " <H>";
+      if (this->ComputeLValueFlag == true)
+	File << " <L^2> <L>";
+      File << endl;
+
     }
   else
     {
@@ -317,14 +324,30 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    }
 		  if (this->ComputeLValueFlag == false)
 		    for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		      File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+		      {
+			File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift);
+			if (this->ComputeEnergyFlag == true)
+			  {
+			    RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			    this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			    File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			  }
+			File << endl;
+		      }
 		  else
 		    {
 		      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift) << " " 
-			       << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Q[j], Q[j]).Re) + 1.0) - 1.0)) << endl;
+			  File << (this->LValue/ 2) << " " << (TmpDiag[j] - this->EnergyShift);
+			  if (this->ComputeEnergyFlag == true)
+			    {
+			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			    }
+			  double TmpMomentum = Oper.MatrixElement(Q[j], Q[j]).Re;
+			  File << " "  << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0)) << endl;
 			}
 		    }
 		}
@@ -363,14 +386,30 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    }
 		  if (this->ComputeLValueFlag == false)
 		    for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		      File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+		      {
+			File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+			if (this->ComputeEnergyFlag == true)
+			  {
+			    RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			    this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			    File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			  }
+			File << endl;
+		      }
 		  else
 		    {
 		      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 			{
-			  File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << " " 
-			       << (0.5 * (sqrt ((4.0 * Oper.MatrixElement(Q[j], Q[j]).Re) + 1.0) - 1.0)) << endl;
+			  File << (this->LValue/ 2) << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+			  if (this->ComputeEnergyFlag == true)
+			    {
+			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			      File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			    }
+			  double TmpMomentum = Oper.MatrixElement(Q[j], Q[j]).Re;
+			  File << " "  << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0)) << endl;
 			}
 		    }
 		}
@@ -381,7 +420,12 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       else
 	{
 	  if (this->ComputeLValueFlag == false)
-	    File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
+	    {
+	      File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift);
+	      if (this->ComputeEnergyFlag == true)
+		File << " " << (HRep(0, 0)  - this->EnergyShift) ;
+	      File << endl;
+	    }
 	  else
 	    {
 	      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
@@ -501,7 +545,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-	  if  (this->ComputeLValueFlag == false)
+	  if  ((this->ComputeEnergyFlag == false) && (this->ComputeLValueFlag == false))
 	    File << (this->LValue/ 2) << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
 	}
       cout << endl;
@@ -580,7 +624,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    }
 		  if (this->ComputeLValueFlag == true)
 		    {
-		      File << " " << (0.5 * (sqrt ((4.0 * OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re) + 1.0) - 1.0));
+		      double TmpMomentum = OperMomentum->MatrixElement(Eigenvectors[i], Eigenvectors[i]).Re;
+		      File << " " << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0));
 		    }
 		  if ((this->ComputeEnergyFlag == true) || (this->ComputeLValueFlag == true))
 		    File << endl;

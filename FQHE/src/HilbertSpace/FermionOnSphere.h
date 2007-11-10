@@ -266,6 +266,16 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
 
+  // evaluate a density matrix of a shited subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // subsystemShift = shift (in number of states) of the subsytem with repect to the leftmost state (i.e -LzMax)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluateShiftedPartialDensityMatrix (int subsytemSize, int subsystemShift, int nbrFermionSector, int lzSector, RealVector& groundState);
+
   // compute particule-hole symmetric state from a given state
   //
   // state = vector corresponding to the state to symmetrize

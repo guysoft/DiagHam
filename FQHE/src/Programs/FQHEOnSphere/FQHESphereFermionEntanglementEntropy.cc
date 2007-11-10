@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "equatorial-stripe", "compute the entanglement entropy for an equatorial stripe of width 2*la", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -100,6 +101,7 @@ int main(int argc, char** argv)
   bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
 #endif
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
+  bool EquatorialStripeFlag = ((BooleanOption*) Manager["equatorial-stripe"])->GetBoolean();
   int TotalLz = 0;
   bool Statistics = true;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
@@ -296,7 +298,11 @@ int main(int argc, char** argv)
     File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "ent");
+      char* TmpFileName;
+      if (EquatorialStripeFlag == false)
+	TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "ent");
+      else
+	TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "eq.ent");
       if (TmpFileName == 0)
 	{
 	  cout << "no vec extension was find in " << ((SingleStringOption*) Manager["ground-file"])->GetString() << " file name" << endl;
@@ -308,103 +314,208 @@ int main(int argc, char** argv)
   File.precision(14);
   cout.precision(14);
   int MeanSubsystemSize = LzMax >> 1;
-  if ((LzMax & 1) != 0)
-    ++MeanSubsystemSize;
-  if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+  if (EquatorialStripeFlag == false)
     {
-      MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
-      if (MeanSubsystemSize > LzMax)
-	MeanSubsystemSize = LzMax;
+      if ((LzMax & 1) != 0)
+	++MeanSubsystemSize;
+      if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+	{
+	  MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
+	  if (MeanSubsystemSize > LzMax)
+	    MeanSubsystemSize = LzMax;
+	}
+    }
+  else
+    {
+      if (((SingleIntegerOption*) Manager["max-la"])->GetInteger() > 0)
+	{
+	  MeanSubsystemSize = ((SingleIntegerOption*) Manager["max-la"])->GetInteger();
+	  if (MeanSubsystemSize > LzMax)
+	    MeanSubsystemSize = LzMax;
+	}
     }
   int SubsystemSize = ((SingleIntegerOption*) Manager["min-la"])->GetInteger();
   if (SubsystemSize < 1)
     SubsystemSize = 1;
-  BinomialCoefficients Coefs(MeanSubsystemSize);
-  for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
+  if (EquatorialStripeFlag == false)
     {
-      double EntanglementEntropy = 0.0;
-      double DensitySum = 0.0;
-      int MaxSubsystemNbrParticles = NbrParticles;
-      if (MaxSubsystemNbrParticles > SubsystemSize)
-	MaxSubsystemNbrParticles = SubsystemSize;
-      int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
-      if (SubsystemNbrParticles < 0)
-	SubsystemNbrParticles = 0;
-      long MaximumSize = 0;
-      for (int i = SubsystemNbrParticles; i <= MaxSubsystemNbrParticles; ++i)
-	MaximumSize += Coefs(SubsystemSize, i);
-      double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
-      long TmpDensityMatrixEigenvaluePosition = 0;
-      for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+      BinomialCoefficients Coefs(MeanSubsystemSize);
+      for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
 	{
-	  int SubsystemTotalLz = 0;
-	  int SubsystemLzMax = SubsystemSize - 1;
-	  int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
-	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
-	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
-	    if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
-						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
-	      {
-		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
-		RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
-		if (PartialDensityMatrix.GetNbrRow() > 1)
-		  {
-		    RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		    if (LapackFlag == true)
-		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		    else
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
-#else
-		    PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-		    TmpDiag.SortMatrixDownOrder();
-		    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		      TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
-		    if (DensityMatrixFileName != 0)
-		      {
-			ofstream DensityMatrixFile;
-			DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			DensityMatrixFile.precision(14);
-			for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			  DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
-			DensityMatrixFile.close();
-		      }
-		  }
-		else
-		  if (PartialDensityMatrix.GetNbrRow() == 1)
-		    {
-		      double TmpValue = PartialDensityMatrix(0,0);
-		      TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
-		      if (DensityMatrixFileName != 0)
-			{
-			  ofstream DensityMatrixFile;
-			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			  DensityMatrixFile.precision(14);
-			  DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-			  DensityMatrixFile.close();
-			}		  
-		    }
-	      }
-	}
-      EntanglementEntropy = 0.0;
-      DensitySum = 0.0;
-      cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
-      SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
-      unsigned TmpPos = 0;
-      for (; (TmpPos < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++TmpPos)
-	{
-	  if (TmpDensityMatrixEigenvalues[TmpPos] > 1e-14)
+	  double EntanglementEntropy = 0.0;
+	  double DensitySum = 0.0;
+	  int MaxSubsystemNbrParticles = NbrParticles;
+	  if (MaxSubsystemNbrParticles > SubsystemSize)
+	    MaxSubsystemNbrParticles = SubsystemSize;
+	  int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
+	  if (SubsystemNbrParticles < 0)
+	    SubsystemNbrParticles = 0;
+	  long MaximumSize = 0;
+	  for (int i = SubsystemNbrParticles; i <= MaxSubsystemNbrParticles; ++i)
+	    MaximumSize += Coefs(SubsystemSize, i);
+	  double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
+	  long TmpDensityMatrixEigenvaluePosition = 0;
+	  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	    {
-	      EntanglementEntropy += TmpDensityMatrixEigenvalues[TmpPos] * log(TmpDensityMatrixEigenvalues[TmpPos]);
-	      DensitySum += TmpDensityMatrixEigenvalues[TmpPos];
+	      int SubsystemTotalLz = 0;
+	      int SubsystemLzMax = SubsystemSize - 1;
+	      int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
+	      SubsystemTotalLz = -SubsystemMaxTotalLz; 
+	      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+		if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
+						     ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+		  {
+		    cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
+		    RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
+		    if (PartialDensityMatrix.GetNbrRow() > 1)
+		      {
+			RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+			if (LapackFlag == true)
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			else
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
+#else
+			PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+			TmpDiag.SortMatrixDownOrder();
+			for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			  TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
+			if (DensityMatrixFileName != 0)
+			  {
+			    ofstream DensityMatrixFile;
+			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			    DensityMatrixFile.precision(14);
+			    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+			    DensityMatrixFile.close();
+			  }
+		      }
+		    else
+		      if (PartialDensityMatrix.GetNbrRow() == 1)
+			{
+			  double TmpValue = PartialDensityMatrix(0,0);
+			  TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
+			  if (DensityMatrixFileName != 0)
+			    {
+			      ofstream DensityMatrixFile;
+			      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			      DensityMatrixFile.precision(14);
+			      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			      DensityMatrixFile.close();
+			    }		  
+			}
+		  }
 	    }
+	  EntanglementEntropy = 0.0;
+	  DensitySum = 0.0;
+	  cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
+	  SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
+	  unsigned TmpPos = 0;
+	  for (; (TmpPos < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++TmpPos)
+	    {
+	      if (TmpDensityMatrixEigenvalues[TmpPos] > 1e-14)
+		{
+		  EntanglementEntropy += TmpDensityMatrixEigenvalues[TmpPos] * log(TmpDensityMatrixEigenvalues[TmpPos]);
+		  DensitySum += TmpDensityMatrixEigenvalues[TmpPos];
+		}
+	    }
+	  double DensitySumError = 0.0;
+	  for (; TmpPos < TmpDensityMatrixEigenvaluePosition; ++TmpPos)
+	    DensitySumError += TmpDensityMatrixEigenvalues[TmpPos];
+	  delete[] TmpDensityMatrixEigenvalues;
+	  File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << " " << DensitySumError << endl;
 	}
-      double DensitySumError = 0.0;
-      for (; TmpPos < TmpDensityMatrixEigenvaluePosition; ++TmpPos)
-	DensitySumError += TmpDensityMatrixEigenvalues[TmpPos];
-      delete[] TmpDensityMatrixEigenvalues;
-      File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << " " << DensitySumError << endl;
+    }
+  else
+    {
+      BinomialCoefficients Coefs(MeanSubsystemSize);
+      for (; SubsystemSize <= MeanSubsystemSize; ++SubsystemSize)
+	{
+	  double EntanglementEntropy = 0.0;
+	  double DensitySum = 0.0;
+	  int MaxSubsystemNbrParticles = NbrParticles;
+	  if (MaxSubsystemNbrParticles > SubsystemSize)
+	    MaxSubsystemNbrParticles = SubsystemSize;
+	  int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
+	  if (SubsystemNbrParticles < 0)
+	    SubsystemNbrParticles = 0;
+	  long MaximumSize = 0;
+	  for (int i = SubsystemNbrParticles; i <= MaxSubsystemNbrParticles; ++i)
+	    MaximumSize += Coefs(SubsystemSize, i);
+	  double* TmpDensityMatrixEigenvalues = new double [MaximumSize];
+	  long TmpDensityMatrixEigenvaluePosition = 0;
+	  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
+	    {
+	      int SubsystemTotalLz = 0;
+	      int SubsystemLzMax = SubsystemSize - 1;
+	      int SubsystemMaxTotalLz = (SubsystemNbrParticles * (SubsystemLzMax - SubsystemNbrParticles + 1));
+	      SubsystemTotalLz = -SubsystemMaxTotalLz; 
+	      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
+		if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
+						     ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+		  {
+		    cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
+		    RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
+		    if (PartialDensityMatrix.GetNbrRow() > 1)
+		      {
+			RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+			if (LapackFlag == true)
+			  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			else
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
+#else
+			PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+			TmpDiag.SortMatrixDownOrder();
+			for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			  TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpDiag[i];
+			if (DensityMatrixFileName != 0)
+			  {
+			    ofstream DensityMatrixFile;
+			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			    DensityMatrixFile.precision(14);
+			    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+			      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+			    DensityMatrixFile.close();
+			  }
+		      }
+		    else
+		      if (PartialDensityMatrix.GetNbrRow() == 1)
+			{
+			  double TmpValue = PartialDensityMatrix(0,0);
+			  TmpDensityMatrixEigenvalues[TmpDensityMatrixEigenvaluePosition++] = TmpValue;
+			  if (DensityMatrixFileName != 0)
+			    {
+			      ofstream DensityMatrixFile;
+			      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			      DensityMatrixFile.precision(14);
+			      DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			      DensityMatrixFile.close();
+			    }		  
+			}
+		  }
+	    }
+	  EntanglementEntropy = 0.0;
+	  DensitySum = 0.0;
+	  cout << "sorting density matrix eigenvalues and computing entanglement entropy" << endl;
+	  SortArrayDownOrdering(TmpDensityMatrixEigenvalues, TmpDensityMatrixEigenvaluePosition);
+	  unsigned TmpPos = 0;
+	  for (; (TmpPos < TmpDensityMatrixEigenvaluePosition) && (DensitySum < 1.0); ++TmpPos)
+	    {
+	      if (TmpDensityMatrixEigenvalues[TmpPos] > 1e-14)
+		{
+		  EntanglementEntropy += TmpDensityMatrixEigenvalues[TmpPos] * log(TmpDensityMatrixEigenvalues[TmpPos]);
+		  DensitySum += TmpDensityMatrixEigenvalues[TmpPos];
+		}
+	    }
+	  double DensitySumError = 0.0;
+	  for (; TmpPos < TmpDensityMatrixEigenvaluePosition; ++TmpPos)
+	    DensitySumError += TmpDensityMatrixEigenvalues[TmpPos];
+	  delete[] TmpDensityMatrixEigenvalues;
+	  File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << " " << DensitySumError << endl;
+	}
     }
   File.close();
 }
