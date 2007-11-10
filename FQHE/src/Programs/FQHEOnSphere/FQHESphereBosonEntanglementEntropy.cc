@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
   if ((LzMax + NbrParticles - 1) < 63)
 #else
-    if ((LzMax + NbrBosons - 1) < 31)	
+    if ((LzMax + NbrParticles - 1) < 31)	
 #endif
       {
 	if ((SymmetrizedBasis == false) || (TotalLz != 0))

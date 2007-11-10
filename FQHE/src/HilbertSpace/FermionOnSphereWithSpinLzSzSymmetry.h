@@ -43,14 +43,18 @@
 #define FERMION_SPHERE_SU2_SYMMETRIC_BIT  0xc000000000000000ul
 #define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT 0x8000000000000000ul
 #define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT 0x4000000000000000ul
-#define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x3ffffffffffffffful
-#define FERMION_SPHERE_SU2_SZ_MASK 0x1555555555555555ul
+#define FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT 0x2000000000000000ul
+#define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x0ffffffffffffffful
+#define FERMION_SPHERE_SU2_SZ_MASK 0x0555555555555555ul
+#define FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT 61
 #else
 #define FERMION_SPHERE_SU2_SYMMETRIC_BIT  0xc0000000ul
 #define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT 0x80000000ul
 #define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT 0x40000000ul
-#define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x3ffffffful
-#define FERMION_SPHERE_SU2_SZ_MASK 0x15555555ul
+#define FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT 0x20000000ul
+#define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x0ffffffful
+#define FERMION_SPHERE_SU2_SZ_MASK 0x05555555ul
+#define FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT 29
 #endif
 
 static  unsigned long FermionOnSphereWithSpinLzInvertTable[] = {0x0ul, 0x40ul, 0x80ul, 0xc0ul, 0x10ul, 0x50ul, 0x90ul, 0xd0ul, 0x20ul, 0x60ul, 0xa0ul, 0xe0ul, 0x30ul, 0x70ul, 0xb0ul, 0xf0ul,
@@ -255,6 +259,11 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // return value = corresponding canonical state (with symmetry bit)
   virtual unsigned long GetSignedCanonicalState (unsigned long initialState);
 
+  // compute the parity of the number of spin singlet 
+  //
+  // initialState = reference on the state whose parity has to be evaluated
+  void GetStateSingletParity(unsigned long initialState);
+
 };
 
 // get canonical expression of a given state
@@ -370,6 +379,23 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetSignedCanonicalStat
     else
       return initialState;
 }
+
+// compute the parity of the number of spin singlet 
+//
+// initialState = reference on the state whose parity has to be evaluated
+
+inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSingletParity(unsigned long initialState)
+{
+  unsigned long TmpState = initialState;
+  TmpState ^= (TmpState >> 1) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState ^= (TmpState >> 32);
+  TmpState ^= (TmpState >> 16);
+  TmpState ^= (TmpState >> 8);
+  TmpState ^= (TmpState >> 4);
+  TmpState ^= (TmpState >> 2);
+  initialState |= (TmpState & 1) << FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT;
+}
+
 
 #endif
 
