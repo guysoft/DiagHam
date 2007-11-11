@@ -98,23 +98,23 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry (int nbrFer
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      this->PrintState(cout, i)  << endl;
-      unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
-      for (int j = this->NbrLzValue - 1; j >=0 ; --j)
-	{
-	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
-	  if (Tmp == 0x1l)
-	    cout << "d ";
-	  else if (Tmp == 0x2l)
-	    cout << "u ";
-	  else if (Tmp == 0x3l)
-	    cout << "X ";
-	  else cout << "0 ";
-	}
-      cout << endl << "--------------" << endl;
-    }
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//     {
+//       this->PrintState(cout, i)  << endl;
+//       unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
+//       for (int j = this->NbrLzValue - 1; j >=0 ; --j)
+// 	{
+// 	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
+// 	  if (Tmp == 0x1l)
+// 	    cout << "d ";
+// 	  else if (Tmp == 0x2l)
+// 	    cout << "u ";
+// 	  else if (Tmp == 0x3l)
+// 	    cout << "X ";
+// 	  else cout << "0 ";
+// 	}
+//       cout << endl << "--------------" << endl;
+//     }
   int TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
@@ -515,7 +515,6 @@ double FermionOnSphereWithSpinLzSymmetry::AuAu (int index, int n1, int n2)
     return 0.0;
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-  this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -530,8 +529,6 @@ double FermionOnSphereWithSpinLzSymmetry::AuAu (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
   return Coefficient;
 }
 
@@ -551,7 +548,6 @@ double FermionOnSphereWithSpinLzSymmetry::AdAd (int index, int n1, int n2)
     return 0.0;
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-  this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -566,8 +562,6 @@ double FermionOnSphereWithSpinLzSymmetry::AdAd (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
   return Coefficient;
 }
 
@@ -584,11 +578,10 @@ double FermionOnSphereWithSpinLzSymmetry::AuAd (int index, int n1, int n2)
   n1 <<= 1;
   ++n1;
   n2 <<= 1;
-  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0))
     return 0.0;
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-  this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -603,8 +596,6 @@ double FermionOnSphereWithSpinLzSymmetry::AuAd (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
   return Coefficient;
 }
 
@@ -624,38 +615,26 @@ int FermionOnSphereWithSpinLzSymmetry::AduAdu (int m1, int m2, double& coefficie
   ++m2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
-  int NewLzMax = this->ProdALzMax;
-  coefficient = 1.0;
-  if (m2 > NewLzMax)
-    NewLzMax = m2;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+  coefficient = this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m2);
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m1);
   TmpState = this->GetSignedCanonicalState(TmpState);
-  NewLzMax = this->LzMax << 1;
+  int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != this->ProdASignature)
+  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SYMMETRIC_BIT))
     {
       if (this->ProdASignature != 0)
 	coefficient *= M_SQRT2;
@@ -679,38 +658,26 @@ int FermionOnSphereWithSpinLzSymmetry::AddAdd (int m1, int m2, double& coefficie
   m2 <<= 1;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
-  int NewLzMax = this->ProdALzMax;
-  coefficient = 1.0;
-  if (m2 > NewLzMax)
-    NewLzMax = m2;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+  coefficient = this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m2);
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m1);
   TmpState = this->GetSignedCanonicalState(TmpState);
-  NewLzMax = this->LzMax << 1;
+  int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != this->ProdASignature)
+  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SYMMETRIC_BIT))
     {
       if (this->ProdASignature != 0)
 	coefficient *= M_SQRT2;
@@ -733,40 +700,28 @@ int FermionOnSphereWithSpinLzSymmetry::AduAdd (int m1, int m2, double& coefficie
   m1 <<= 1;
   ++m1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0))
     return this->HilbertSpaceDimension;
-  int NewLzMax = this->ProdALzMax;
-  coefficient = 1.0;
-  if (m2 > NewLzMax)
-    NewLzMax = m2;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+  coefficient = this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m2);
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
-    }
   TmpState |= (0x1ul << m1);
   TmpState = this->GetSignedCanonicalState(TmpState);
-  NewLzMax = this->LzMax << 1;
+  int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != this->ProdASignature)
+  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SYMMETRIC_BIT))
     {
       if (this->ProdASignature != 0)
 	coefficient *= M_SQRT2;

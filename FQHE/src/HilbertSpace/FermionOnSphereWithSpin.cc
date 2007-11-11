@@ -166,7 +166,8 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateHighestBit;
+      if (this->StateHighestBit != 0)
+	delete[] this->StateHighestBit;
       delete[] this->LookUpTableShift;
       for (int i = 0; i < (2 * this->NbrLzValue); ++i)
 	delete[] this->LookUpTable[i];
@@ -588,7 +589,7 @@ double FermionOnSphereWithSpin::AuAd (int index, int n1, int n2)
   n1 <<= 1;
   ++n1;
   n2 <<= 1;
-  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || ((this->ProdATemporaryState & (0x1ul << n2)) == 0))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -711,7 +712,7 @@ int FermionOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
   m1 <<= 1;
   ++m1;
   m2 <<= 1;
-  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;

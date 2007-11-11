@@ -262,7 +262,7 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // compute the parity of the number of spin singlet 
   //
   // initialState = reference on the state whose parity has to be evaluated
-  void GetStateSingletParity(unsigned long initialState);
+  void GetStateSingletParity(unsigned long& initialState);
 
 };
 
@@ -384,11 +384,14 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetSignedCanonicalStat
 //
 // initialState = reference on the state whose parity has to be evaluated
 
-inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSingletParity(unsigned long initialState)
+inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSingletParity(unsigned long& initialState)
 {
   unsigned long TmpState = initialState;
-  TmpState ^= (TmpState >> 1) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState &= (TmpState >> 1);
+  TmpState &= FERMION_SPHERE_SU2_SZ_MASK;
+#ifdef __64_BITS__
   TmpState ^= (TmpState >> 32);
+#endif
   TmpState ^= (TmpState >> 16);
   TmpState ^= (TmpState >> 8);
   TmpState ^= (TmpState >> 4);
