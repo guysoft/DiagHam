@@ -56,8 +56,9 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction()
   // nbrParticles= number of particles per layer
   // k = Jastrow factors between same species
   // m = Jastrow factors between different species
-  // q = power inside Cauchy-determinant  
-ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q )
+  // q = power inside Cauchy-determinant
+// moveJastrowInside = flag to indicate whether Jastrow factors should be moved inside Cauchy determinant
+ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, bool moveJastrowInside )
 {  
   if (nbrParticles&1)
     {
@@ -70,10 +71,25 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
       exit(1);
     }
   this->NbrParticles = nbrParticles;
-  this->NbrParticlesPerLayer = nbrParticles/2;
-  this->K=k;
-  this->M=m;
+  this->NbrParticlesPerLayer = nbrParticles/2;  
   this->Q=q;
+
+  if ( (moveJastrowInside) && (Q!=0))
+    {
+      this->K_outside=(k%2);
+      this->K_inside=(k/2)*2;
+      this->M_outside=m%2;
+      this->M_inside=(m/2)*2;
+      this->JastrowInside=true;
+    }
+  else
+    {
+      this->K_outside=k;
+      this->K_inside=0;
+      this->M_outside=m;
+      this->M_inside=0;
+      this->JastrowInside=false;
+    }
 
   if (Q!=0) HaveDeterminant=true;
   else  HaveDeterminant=false;
@@ -87,6 +103,11 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->Matrix = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
 #endif
 
+  this->J11 = new Complex[this->NbrParticlesPerLayer];
+  this->J12 = new Complex[this->NbrParticlesPerLayer];
+  this->J21 = new Complex[this->NbrParticlesPerLayer];
+  this->J22 = new Complex[this->NbrParticlesPerLayer];
+  
   this->SpinorUCoordinates = new Complex[NbrParticles];
   this->SpinorVCoordinates = new Complex[NbrParticles];
   
@@ -104,25 +125,33 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
 {
   this->NbrParticles = function.NbrParticles;
   this->NbrParticlesPerLayer = function.NbrParticlesPerLayer;
-  this->K=function.K;
-  this->M=function.M;
+  this->K_outside=function.K_outside;
+  this->K_inside=function.K_inside;
+  this->M_outside=function.M_outside;
+  this->M_inside=function.M_inside;  
   this->Q=function.Q;
   this->HaveDeterminant=function.HaveDeterminant;
   this->DeterminantNorm=function.DeterminantNorm;
   this->JastrowNorm=function.JastrowNorm;
+  this->JastrowInside=function.JastrowInside;
 
 #ifdef USE_LAPACK_CFCB
   this->Matrix = new ComplexLapackDeterminant(this->NbrParticlesPerLayer);
 #else
   this->Matrix = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
 #endif
+
+  this->J11 = new Complex[this->NbrParticlesPerLayer];
+  this->J12 = new Complex[this->NbrParticlesPerLayer];
+  this->J21 = new Complex[this->NbrParticlesPerLayer];
+  this->J22 = new Complex[this->NbrParticlesPerLayer];
   
+  this->SpinorUCoordinates = new Complex[NbrParticles];
+  this->SpinorVCoordinates = new Complex[NbrParticles];
+
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i=0; i< this->NbrParticles; ++i)
     JastrowFactorElements[i]= new Complex[NbrParticles];
-
-  this->SpinorUCoordinates = new Complex[NbrParticles];
-  this->SpinorVCoordinates = new Complex[NbrParticles];
 
 }
 
@@ -138,6 +167,10 @@ ExtendedHalperinWavefunction::~ExtendedHalperinWavefunction()
       delete [] JastrowFactorElements;
       delete [] SpinorUCoordinates;
       delete [] SpinorVCoordinates;
+      delete [] J11;
+      delete [] J12;
+      delete [] J21;
+      delete [] J22;
       delete Matrix;
     }
 }
@@ -162,7 +195,7 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
   Complex result=1.0, tmp;
   // calculate Jastrow part:
 
-  if (K != 0)
+  if (K_outside != 0)
     {
         tmp=1.0;
 	for (int i=1; i<NbrParticlesPerLayer; ++i)
@@ -171,16 +204,16 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
 	      tmp *= JastrowNorm*JastrowFactorElements[i][j];
 	      tmp *= JastrowNorm*JastrowFactorElements[i+NbrParticlesPerLayer][j+NbrParticlesPerLayer];
 	    }
-	result *= pow (tmp,K);
+	result *= pow (tmp,K_outside);
     }
   
-  if (M != 0)
+  if (M_outside != 0)
     {
       tmp=1.0;
       for (int i=0; i<NbrParticlesPerLayer; ++i)
 	for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
 	  tmp *= JastrowNorm*JastrowFactorElements[i][j];
-      result *= pow (tmp,M);
+      result *= pow (tmp,M_outside);
     }
   // calculate Cauchy determinant
   if (HaveDeterminant)
@@ -192,6 +225,16 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
 	      tmp=DeterminantNorm;
 	      for (int q=Q; q>0; --q) tmp*=JastrowFactorElements[i][j];
 	      for (int q=Q; q<0; ++q) tmp/=JastrowFactorElements[i][j];
+	      for (int k=0;k<K_inside; k+=2)
+		{
+		  tmp*= J11[i];
+		  tmp*= J22[j-NbrParticlesPerLayer];
+		}
+	      for (int m=0;m<M_inside; m+=2)
+		{
+		  tmp*= J12[i];
+		  tmp*= J21[j-NbrParticlesPerLayer];
+		}
 	      // initialize Cauchy determinant 
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j-NbrParticlesPerLayer,Real(tmp), Imag(tmp));
@@ -213,7 +256,7 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
 void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
 {
   double det;
-  int TotalJastrowTerms = NbrParticlesPerLayer*((K+M)*NbrParticlesPerLayer - K);
+  int TotalJastrowTerms = NbrParticlesPerLayer*((K_outside+M_outside)*NbrParticlesPerLayer - K_outside);
   bool actualHaveDeterminant = HaveDeterminant;
   // switch off Cauchy-determinant part
   this->HaveDeterminant=false; 
@@ -255,7 +298,7 @@ void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
 
 void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int average)
 {
-  int TotalJastrowTerms = NbrParticlesPerLayer*((K+M)*NbrParticlesPerLayer-K);
+  int TotalJastrowTerms = NbrParticlesPerLayer*((K_outside+M_outside)*NbrParticlesPerLayer-K_outside);
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(2*this->NbrParticlesPerLayer);
   this->AdaptNorm(Particles->GetPositions());
   Complex TmpMetropolis, TrialValue = (*this)(Particles->GetPositions());  
@@ -304,7 +347,12 @@ void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int averag
       if (NextCoordinates == NbrParticlesPerLayer) --NextCoordinates;            
       SumTrialValues+=Norm(TmpMetropolis);
     }  
-  this->JastrowNorm*= pow(SumTrialValues/average,(double)-1.0/TotalJastrowTerms);
+  if (TotalJastrowTerms!=0)
+    this->JastrowNorm*= pow(SumTrialValues/average,(double)-1.0/TotalJastrowTerms);
+  else
+    {
+      this->DeterminantNorm*= pow(SumTrialValues/average,(double)-1.0/this->NbrParticlesPerLayer);
+    }
   delete Particles;
 }
 
@@ -337,6 +385,32 @@ void ExtendedHalperinWavefunction::EvaluateTables(RealVector& x)
 	  JastrowFactorElements[j][i] = -Tmp;
 	}
       JastrowFactorElements[i][i] = 0.0;
-    }  
+    }
+
+  if (JastrowInside)
+    {
+      for (int i=0;i<this->NbrParticlesPerLayer;++i)
+	{
+	  J12[i]=1.0;
+	  J21[i]=1.0;
+	  for(int j=0;j<this->NbrParticlesPerLayer;++j)
+	    {
+	      J12[i] *= JastrowFactorElements[i][j+this->NbrParticlesPerLayer];
+	      J21[i] *= -JastrowFactorElements[j+this->NbrParticlesPerLayer][i];
+	    }
+	  J11[i]=1.0;
+	  J22[i]=1.0;
+	  for(int j=0;j<i;j++)
+	    {
+	      J11[i] *= JastrowFactorElements[i][j];
+	      J22[i] *= JastrowFactorElements[i+this->NbrParticlesPerLayer][j+this->NbrParticlesPerLayer];
+	    }
+	  for(int j=i+1;j<NbrParticlesPerLayer;j++)
+	    {
+	      J11[i] *= JastrowFactorElements[i][j];
+	      J22[i] *= JastrowFactorElements[i+this->NbrParticlesPerLayer][j+this->NbrParticlesPerLayer];
+	    }
+	}
+    }
 
 }

@@ -99,6 +99,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf* only)",'+');
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
     }
 }
 
@@ -317,7 +318,8 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2);
+	      bool inside = Options->GetBoolean("jastrow-inside");
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, inside);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }

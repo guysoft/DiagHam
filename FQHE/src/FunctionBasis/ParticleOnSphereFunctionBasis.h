@@ -75,6 +75,17 @@ class ParticleOnSphereFunctionBasis: public AbstractFunctionBasis
   // index = function index 
   void GetFunctionValue(RealVector& value, Complex& result, int index);
 
+  // get value of the i-th function at a given point (theta, phi=0), which happens to be real
+  //
+  // theta = reference on the value where the function has to be evaluated
+  // index = function index 
+
+  double GetRealFunctionValue(double theta, int index);
+
+  // calculate them all:
+  void GetRealFunctionValues(double theta, double *result);
+
+
 };
 
 #endif

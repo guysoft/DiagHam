@@ -80,4 +80,21 @@ void ParticleOnSphereFunctionBasis::GetFunctionValue(RealVector& value, Complex&
 }
 
 
+// get value of the i-th function at a given point (theta, phi=0), which happens to be real
+//
+// theta = reference on the value where the function has to be evaluated
+// index = function index 
 
+double ParticleOnSphereFunctionBasis::GetRealFunctionValue(double theta, int index)
+{
+  return this->Prefactor[index] * pow(cos (0.5 * theta), (double) (index)) * pow(sin (0.5 * theta), (double) (this->LzMax - index));
+}
+
+
+void ParticleOnSphereFunctionBasis::GetRealFunctionValues(double theta, double *result)
+{
+  double st=sin (0.5 * theta);
+  double ct=cos (0.5 * theta);
+  for (int index=0; index<=LzMax; ++index)
+    result[index]=this->Prefactor[index] * pow(ct, (double) (index)) * pow(st, (double) (this->LzMax - index));
+}

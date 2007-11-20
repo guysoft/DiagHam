@@ -37,6 +37,10 @@
 #define USE_LAPACK_CFCB
 #endif
 
+
+// use the following flag to move jastrow factors inside the Cauchy determinant if possible
+#define JASTROW_INSIDE
+
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
@@ -52,9 +56,21 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
 
   int NbrParticles;
   int NbrParticlesPerLayer;
-  int K;
-  int M;
+  int K_outside;
+  int K_inside;
+  int M_outside;
+  int M_inside;
   int Q;
+
+  // flag to indicate whether Jastrow factors should be moved inside Cauchy determinant.
+  bool JastrowInside;
+
+  // single-particle Jastrow factors
+  Complex *J11;
+  Complex *J12;
+  Complex *J21;
+  Complex *J22;
+
 
   bool HaveDeterminant;
 
@@ -90,7 +106,7 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   // k = Jastrow factors between same species
   // m = Jastrow factors between different species
   // q = power inside Cauchy-determinant  
-  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q );
+  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, bool moveJastrowInside = false );
 
   // copy constructor
   //
