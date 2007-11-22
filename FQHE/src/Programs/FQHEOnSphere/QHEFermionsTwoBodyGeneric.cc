@@ -12,6 +12,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
@@ -24,6 +25,7 @@
 #include "Options/SingleStringOption.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -96,6 +98,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
   (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
+  (*LanczosGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -392,20 +395,45 @@ int main(int argc, char** argv)
 							     Architecture.GetArchitecture(), 
 							     Memory, DiskCacheFlag,
 							     LoadPrecalculationFileName);
-      double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
-      Hamiltonian->ShiftHamiltonian(Shift);
-      char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetString("energy-expectation") != 0 )
 	{
-	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  RealVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension()) break;
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  double EnergyValue = TmpState * State;
+	  cout << "< Energy > = "<<EnergyValue<<endl;
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      if (EigenvectorName != 0)
+      else // normal procedure: diagonalize Hamiltonian
 	{
-	  delete[] EigenvectorName;
+	  double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+	  Hamiltonian->ShiftHamiltonian(Shift);
+	  char* EigenvectorName = 0;
+	  if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+	    {
+	      EigenvectorName = new char [64];
+	      sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, L);
+	    }
+	  
+	  QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	    }
 	}
       delete Hamiltonian;
       if (FirstRun == true)
