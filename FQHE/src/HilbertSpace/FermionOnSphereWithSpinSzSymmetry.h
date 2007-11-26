@@ -43,6 +43,9 @@
 class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSymmetry
 {
 
+  // additional sign due to the parity sector
+  double ParitySign;
+
  public:
 
   // default constructor 
@@ -54,8 +57,9 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // nbrFermions = number of fermions
   // totalLz = twice the momentum total value
   // lzMax = twice the maximum Lz value reached by a fermion
+  // minusParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+  FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, bool minusParity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

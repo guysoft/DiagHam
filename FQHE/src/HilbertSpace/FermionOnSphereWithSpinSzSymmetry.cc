@@ -69,9 +69,10 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry ()
 // nbrFermions = number of fermions
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
+// minusParity = select the  Sz <-> -Sz symmetric sector with negative parity
 // memory = amount of memory granted for precalculations
 
-FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
+FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, bool minusParity, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -89,26 +90,29 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
+  this->ParitySign = 1.0;
+  if (minusParity == true)
+    this->ParitySign = -1.0;
    int TmpHilbertSpaceDimension = 0;
-   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-     {
-       this->PrintState(cout, i)  << endl;
-      unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
-      for (int j = this->NbrLzValue - 1; j >=0 ; --j)
-	{
-	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
-	  if (Tmp == 0x1l)
-	    cout << "d ";
-	  else if (Tmp == 0x2l)
-	    cout << "u ";
-	  else if (Tmp == 0x3l)
-	    cout << "X ";
-	  else cout << "0 ";	  	  
-	}
-      this->GetStateSymmetry(TmpState);
-      this->GetStateSingletParity(TmpState);
-      cout <<  endl << hex << TmpState  << dec << endl;
-    }
+//    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//      {
+//        this->PrintState(cout, i)  << endl;
+//       unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
+//       for (int j = this->NbrLzValue - 1; j >=0 ; --j)
+// 	{
+// 	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
+// 	  if (Tmp == 0x1l)
+// 	    cout << "d ";
+// 	  else if (Tmp == 0x2l)
+// 	    cout << "u ";
+// 	  else if (Tmp == 0x3l)
+// 	    cout << "X ";
+// 	  else cout << "0 ";	  	  
+// 	}
+//       this->GetStateSymmetry(TmpState);
+//       this->GetStateSingletParity(TmpState);
+//       cout <<  endl << hex << TmpState  << dec << endl;
+//     }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
       this->StateDescription[i] = 0x0ul;
@@ -120,7 +124,8 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
 	  {
 	    unsigned long TmpTruc = this->StateDescription[i];
 	    this->GetStateSingletParity(TmpTruc);
-	    if ((TmpTruc & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) == 0)
+	    if ((((TmpTruc & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) == 0) && (minusParity == false))
+		|| (((TmpTruc & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0) && (minusParity == true)))
 	      ++TmpHilbertSpaceDimension;
 	    else
 	      this->StateDescription[i] = 0x0ul;
@@ -269,7 +274,7 @@ AbstractHilbertSpace* FermionOnSphereWithSpinSzSymmetry::Clone()
 
 int FermionOnSphereWithSpinSzSymmetry::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  cout << "WARNING: uing deprecated method AduAduAuAu" << endl;
+  cout << "WARNING: using deprecated method AduAduAuAu" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -359,7 +364,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAduAuAu (int index, int m1, int m2, in
 
 int FermionOnSphereWithSpinSzSymmetry::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  cout << "WARNING: uing deprecated method AddAddAdAd" << endl;
+  cout << "WARNING: using deprecated method AddAddAdAd" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -430,7 +435,7 @@ int FermionOnSphereWithSpinSzSymmetry::AddAddAdAd (int index, int m1, int m2, in
 
 int FermionOnSphereWithSpinSzSymmetry::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  cout << "WARNING: uing deprecated method AddAduAdAu" << endl;
+  cout << "WARNING: using deprecated method AddAduAdAu" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -685,10 +690,13 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
       this->GetStateSingletParity(TmpState2);
       if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
 	{
-	  cout << "toto " << hex << TmpState2 << dec << endl;
+//	  cout << "toto " << hex << TmpState2 << dec << endl;
 	  return this->HilbertSpaceDimension;    
 	}
     }
+  else
+    if ((TmpState2 & TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != 0x0ul)
+      coefficient *= this->ParitySign;
   int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
