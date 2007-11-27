@@ -60,7 +60,7 @@ using std::hex;
 // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)
 
 FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagneticTranslations (int nbrFermions, int totalSpin, int maxMomentum, 
-										int xMomentum, int yMomentum)
+											      int xMomentum, int yMomentum)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -89,10 +89,10 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
   // testing the count of states:
   int tmpYMomentum=YMomentum;
   long sum=0;
-  for ( int i=0; i<MaxMomentum; ++i)
+  for ( int i=0; i<=this->MomentumModulo; ++i)
     {
       this->YMomentum=i;
-      this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum, 0, this->NbrFermionsUp);
+      this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
       sum += this->HilbertSpaceDimension;
       cout << "YMomentum="<<YMomentum << "\tD="<<this->HilbertSpaceDimension<<endl;
     }
@@ -102,7 +102,7 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
   exit(1);
   // end test section
   
-  this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum, 0, TotalSpin);  
+  this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, TotalSpin);  
   cout << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
   cout << this->HilbertSpaceDimension << endl;
@@ -1259,33 +1259,33 @@ int FermionOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension
 // totalSpinUp = number of particles with spin up
 // return value = Hilbert space dimension
 
-long FermionOnTorusWithSpinAndMagneticTranslations::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp, int niveau)
+long FermionOnTorusWithSpinAndMagneticTranslations::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp)
 {  
   if ((nbrFermions < 0) || (totalSpinUp < 0) || (totalSpinUp > nbrFermions))
     return 0l;
   if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpinUp) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpinUp)) )
     return 0l;
 
-  for (int i=0; i<niveau; ++i) cout << " ";
-  cout << "Appel: " << nbrFermions<< " " <<lzMax << " " <<totalMomentum << " " <<totalSpinUp<<endl;
-  
   if (nbrFermions == 1)
-    if ((lzMax+totalMomentum) % MomentumModulo == YMomentum)
-      return 1l;
-    else
-      return 0l;
+    {
+      long Tmp = 0;
+      for (int k = 0; k <= lzMax; ++k)
+	if (((k+totalMomentum) % MomentumModulo) == YMomentum)
+	  ++Tmp;
+      return Tmp;
+    }
+  
 
   if ((lzMax == 0)  && ( (totalMomentum % MomentumModulo) != YMomentum))
     return 0l;
 
   unsigned long Tmp = 0l;  
   if (nbrFermions > 2)
-    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalMomentum + (2 * lzMax), totalSpinUp - 1, niveau+1);
+    Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalMomentum + (2 * lzMax), totalSpinUp - 1);
   else
     if ((totalSpinUp == 1) && (((totalMomentum + 2*lzMax) % MomentumModulo) == YMomentum) )
       ++Tmp;
-  return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp - 1, niveau+1)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp, niveau+1)
-	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalMomentum, totalSpinUp, niveau+1));
-
+  return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp - 1)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp)
+	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalMomentum, totalSpinUp));
 }

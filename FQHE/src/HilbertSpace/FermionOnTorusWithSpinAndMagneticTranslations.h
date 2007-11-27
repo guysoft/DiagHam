@@ -286,7 +286,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // totalSpin = number of particles with spin up
   // return value = Hilbert space dimension
   
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalMomentum, int totalSpin, int niveau=0);
+  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalMomentum, int totalSpin);
 
   // generate look-up table associated to current Hilbert space
   // 
