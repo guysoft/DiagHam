@@ -13,8 +13,10 @@ FermionOnTorus.cc \
 FullFermionOnTorus.cc \
 BosonOnTorus.cc \
 ParticleOnTorusWithSpin.cc \
+ParticleOnTorusWithSpinAndMagneticTranslations.cc \
 FermionOnTorusWithSpin.cc \
 FermionOnTorusWithMagneticTranslations.cc \
+FermionOnTorusWithSpinAndMagneticTranslations.cc \
 BosonOnTorusWithMagneticTranslations.cc \
 BosonOnTorusState.cc \
 ParticleOnDisk.cc \
