@@ -63,6 +63,8 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   int MaxMomentum;
   // number of momentum values in a state (= MaxMomentum +1)
   int NbrMomentum;
+  // number of different electron orbitals in a state (= 2*(MaxMomentum +1))
+  int NbrFermionStates;
   // GCD of MaxMomentum and NbrFermions (momemta are defined modulo MomentumModulo)
   int MomentumModulo;
   // momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
@@ -234,11 +236,11 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // find canonical form of a state description
   //
   // stateDescription = unsigned integer describing the state
-  // maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+  // stateHighestBit = reference on the highest non-zero bit in the canonical representation
   // nbrTranslation = number of translation needed to obtain the canonical form
   // yMomentum = state momentum value in the y direction
   // return value = canonical form of a state description
-  unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
+  unsigned long FindCanonicalForm(unsigned long stateDescription, int& stateHighestBit, int& nbrTranslation);
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
@@ -301,17 +303,17 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // 
   // return value = hilbert space dimension
   int GenerateStates();
-
-  // generate all states corresponding to the constraints (without taking into the canonical form) 
-  // 
+ 
+  // evaluate Hilbert space dimension
+  //
   // nbrFermions = number of fermions
-  // maxMomentum = momentum maximum value for a fermion in the state
-  // currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+  // lzMax = momentum maximum value for a fermion
+  // totalMomentum = momentum total value
+  // totalSpinUp = number of particles with spin up
   // pos = position in StateDescription array where to store states
-  // currentYMomentum = current value of the momentum in the y direction
-  // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentUMomentum);
-
+  // return value = Hilbert space dimension
+  
+  long RawGenerateStates(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp, long pos);
 };
 
 // get the particle statistic 
