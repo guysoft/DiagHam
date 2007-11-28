@@ -41,7 +41,6 @@
 #include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
-#include <bitset>
 
 using std::cout;
 using std::endl;

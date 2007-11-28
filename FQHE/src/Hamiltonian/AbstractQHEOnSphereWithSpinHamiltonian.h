@@ -65,7 +65,7 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // alternative method used to store indices attached to each interaction factor
   //  arrays of m1 and m2 intra-sector indices (i.e. indices for the a_m1_s a_m2_s factors)
   int* M1IntraValue;
-  int* M2IntraValue;  
+  int* M2IntraValue;
   //  number of element in each m1 or m2 intra-sector index array
   int NbrM12IntraIndices;
   //  the m3 intra-sector index array (i.e. index for the ad_m3_s a_(m1+m3-m3)_s factors) for each set of (m1,m2)
