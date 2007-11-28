@@ -140,12 +140,23 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 #ifdef __x86_64__
 
+
+#ifdef __INTEL_COMPILER
+
+#define __128_BIT_LONGLONG__
+#define LONGLONG __m128i
+#define ULONGLONG __m128i
+
+#else
+
 typedef int int128_t __attribute__((__mode__(TI)));
 typedef unsigned int uint128_t __attribute__((__mode__(TI)));
 
 #define __128_BIT_LONGLONG__
 #define LONGLONG int128_t
 #define ULONGLONG uint128_t
+
+#endif
 
 #else
 

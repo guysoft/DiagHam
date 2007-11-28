@@ -213,6 +213,7 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry(const Fermi
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->ParitySign = fermions.ParitySign;
 }
 
 // destructor
@@ -250,6 +251,7 @@ FermionOnSphereWithSpinSzSymmetry& FermionOnSphereWithSpinSzSymmetry::operator =
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
+  this->ParitySign = fermions.ParitySign;
   return *this;
 }
 
@@ -683,31 +685,46 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
   coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
   TmpState |= (0x1ul << m1);
+
   unsigned long TmpState2 = TmpState;
   TmpState = this->GetSignedCanonicalState(TmpState);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
-    {
-      this->GetStateSingletParity(TmpState2);
-      if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
-	{
-//	  cout << "toto " << hex << TmpState2 << dec << endl;
-	  return this->HilbertSpaceDimension;    
-	}
-    }
-  else
-    if ((TmpState2 & TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != 0x0ul)
-      coefficient *= this->ParitySign;
   int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
+  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     {
-      if (this->ProdASignature != 0)
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
 	coefficient *= M_SQRT2;
-      else
-	coefficient *= M_SQRT1_2;
+      return TmpIndex;
     }
+  else
+    {
+      cout << hex << TmpState2 << " " << TmpState << endl;
+      if (((TmpState2 & TmpState)  & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != 0)
+	{
+	  this->GetStateSingletParity(TmpState2);
+	  coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
+	  coefficient *= this->ParitySign;
+	}
+      else
+	cout << "toto" << endl;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+	coefficient *= M_SQRT1_2;
+      return TmpIndex;
+    }
+
+//   int NewLzMax = 1 + (this->LzMax << 1);
+//   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+//     --NewLzMax;
+//   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+//   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
+//     {
+//       if (this->ProdASignature != 0)
+// 	coefficient *= M_SQRT2;
+//       else
+// 	coefficient *= M_SQRT1_2;
+//     }
    
 //   if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != TmpState2)
 //     {
@@ -745,29 +762,57 @@ int FermionOnSphereWithSpinSzSymmetry::AddAdd (int m1, int m2, double& coefficie
   coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
-  TmpState |= (0x1ul << m1);
-  unsigned long TmpState2 = TmpState;
-  TmpState = this->GetSignedCanonicalState(TmpState);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
-    {
-      this->GetStateSingletParity(TmpState2);
-      if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
-	{
-	  cout << "toto " << hex << TmpState2 << dec << endl;
-	  return this->HilbertSpaceDimension;    
-	}
-    }
+   TmpState |= (0x1ul << m1);
+
+   unsigned long TmpState2 = TmpState;
+   TmpState = this->GetSignedCanonicalState(TmpState);
   int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
+  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     {
-      if (this->ProdASignature != 0)
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
 	coefficient *= M_SQRT2;
-      else
-	coefficient *= M_SQRT1_2;
+      return TmpIndex;
     }
+  else
+    {
+      cout << hex << TmpState2 << " " << TmpState << endl;
+      if (((TmpState2 & TmpState)  & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != 0)
+	{
+	  this->GetStateSingletParity(TmpState2);
+	  coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
+	  coefficient *= this->ParitySign;
+	}
+      else
+	cout << "toto" << endl;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+	coefficient *= M_SQRT1_2;
+      return TmpIndex;
+    }
+
+
+//   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+//     {
+//       this->GetStateSingletParity(TmpState2);
+//       if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
+// 	{
+// 	  cout << "toto " << hex << TmpState2 << dec << endl;
+// 	  return this->HilbertSpaceDimension;    
+// 	}
+//     }
+//   int NewLzMax = 1 + (this->LzMax << 1);
+//   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+//     --NewLzMax;
+//   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+//   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
+//     {
+//       if (this->ProdASignature != 0)
+// 	coefficient *= M_SQRT2;
+//       else
+// 	coefficient *= M_SQRT1_2;
+//     }
 //   if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != TmpState2)
 //     {
 //       this->GetStateSingletParity(TmpState);
@@ -806,28 +851,57 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdd (int m1, int m2, double& coefficie
   coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
   TmpState |= (0x1ul << m1);
+
   unsigned long TmpState2 = TmpState;
   TmpState = this->GetSignedCanonicalState(TmpState);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
-    {
-      this->GetStateSingletParity(TmpState2);
-      if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
-	{
-	  cout << "toto " << hex << TmpState2 << dec << endl;
-	  return this->HilbertSpaceDimension;    
-	}
-    }
   int NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
-     {
-       if (this->ProdASignature != 0)
- 	coefficient *= M_SQRT2;
-       else
- 	coefficient *= M_SQRT1_2;
-     }
+  if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+    {
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= M_SQRT2;
+//      cout << TmpIndex << " " << coefficient << endl;
+      return TmpIndex;
+    }
+  else
+    {
+      cout << hex << TmpState2 << " " << TmpState << endl;
+      if (((TmpState2 & TmpState)  & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != 0x0ul)
+	{
+	  this->GetStateSingletParity(TmpState2);
+	  coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
+	  coefficient *= this->ParitySign;
+	}
+      else
+	cout << "toto" << endl;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+	coefficient *= M_SQRT1_2;
+//      cout << TmpIndex << " " << coefficient << endl;
+      return TmpIndex;
+    }
+
+//   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+//     {
+//       this->GetStateSingletParity(TmpState2);
+//       if ((TmpState2 & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0)
+// 	{
+// 	  cout << "toto " << hex << TmpState2 << dec << endl;
+// 	  return this->HilbertSpaceDimension;    
+// 	}
+//     }
+//   int NewLzMax = 1 + (this->LzMax << 1);
+//   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+//     --NewLzMax;
+//   int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
+//   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != (this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT))
+//      {
+//        if (this->ProdASignature != 0)
+//  	coefficient *= M_SQRT2;
+//        else
+//  	coefficient *= M_SQRT1_2;
+//      }
 
 //   if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != TmpState2)
 //     {
