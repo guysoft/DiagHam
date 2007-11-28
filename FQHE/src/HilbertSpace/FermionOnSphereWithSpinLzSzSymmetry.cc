@@ -38,7 +38,7 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
-#include "UnsignedIntegerTools.h"
+#include "GeneralTools/UnsignedIntegerTools.h"
 #include <math.h>
 #include <bitset>
 
