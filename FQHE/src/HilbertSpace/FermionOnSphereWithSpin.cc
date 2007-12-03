@@ -30,6 +30,7 @@
 
 
 #include "config.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
@@ -1370,3 +1371,81 @@ void FermionOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCoheren
 {
 }
   
+// create an SU(2) state from two U(1) state
+//
+// upState = vector describing the up spin part of the output state
+// upStateSpace = reference on the Hilbert space associated to the up spin part
+// downState = vector describing the down spin part of the output state
+// downStateSpace = reference on the Hilbert space associated to the down spin part  
+// return value = resluting SU(2) state
+
+RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionOnSphere& upStateSpace, RealVector& downState, FermionOnSphere& downStateSpace)
+{
+  RealVector FinalState(this->HilbertSpaceDimension, true);
+  for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
+    {
+      unsigned long TmpUpState = upStateSpace.StateDescription[j];
+// #ifdef  __64_BITS__
+//       TmpUpState |= TmpUpState << 32;
+//       TmpUpState &= 0xffff0000fffful;
+//       TmpUpState |= TmpUpState << 16;
+//       TmpUpState &= 0xff00ff00ff00fful;
+// #endif
+//       TmpUpState |= TmpUpState << 16;
+//       TmpUpState &= 0xffff0000fffful;
+      
+      int TmpPos = upStateSpace.LzMax;
+      while (TmpPos > 0)
+	{
+	  unsigned long Tmp = TmpUpState & (0x1ul << TmpPos);
+	  TmpUpState |= Tmp << TmpPos;
+	  TmpUpState ^= Tmp;
+	  --TmpPos;
+	}
+      TmpUpState <<= 1;
+      double TmpComponent = upState[j];
+      int Max = 63;
+      while ((TmpUpState & (0x1ul << Max)) == 0x0ul)
+	--Max;
+      int Min = 0;
+      while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
+	++Min;
+      unsigned long TmpUpStateMask = TmpUpState & (((0x1ul << Max) - 1) & ~((0x1ul << (Min + 1)) - 1)) & 0x5555555555555555ul;      
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
+	  {
+	    unsigned long TmpUpState2 = this->StateDescription[i] & TmpUpStateMask;
+	    TmpUpState2 ^= TmpUpState2 >> 32;
+	    TmpUpState2 ^= TmpUpState2 >> 16;
+	    TmpUpState2 ^= TmpUpState2 >> 8;
+	    TmpUpState2 ^= TmpUpState2 >> 4;
+	    TmpUpState2 ^= TmpUpState2 >> 2;
+	    TmpUpState2 ^= TmpUpState2 >> 1;
+	    if ((TmpUpState2 & 0x1ul) == 0x0ul)
+	      FinalState[i] = TmpComponent;
+	    else
+	      FinalState[i] = -TmpComponent;
+	  }
+    }
+
+  for (int j = 0; j < downStateSpace.HilbertSpaceDimension; ++j)
+    {
+      unsigned long TmpDownState = downStateSpace.StateDescription[j];
+      int TmpPos = downStateSpace.LzMax;
+      while (TmpPos > 0)
+	{
+	  unsigned long Tmp = TmpDownState & (0x1ul << TmpPos);
+	  TmpDownState |= Tmp << TmpPos;
+	  TmpDownState ^= Tmp;
+	  --TmpPos;
+	}
+      double TmpComponent = downState[j];
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	if ((this->StateDescription[i] & TmpDownState) == TmpDownState)
+	  {
+	    FinalState[i] *= TmpComponent;
+	  }
+    }
+
+  return FinalState;
+}
