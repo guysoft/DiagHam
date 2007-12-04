@@ -1410,18 +1410,38 @@ RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionO
       int Min = 0;
       while ((TmpUpState & (0x1ul << Min)) == 0x0ul)
 	++Min;
-      unsigned long TmpUpStateMask = TmpUpState & (((0x1ul << Max) - 1) & ~((0x1ul << (Min + 1)) - 1)) & 0x5555555555555555ul;      
+      unsigned long TmpUpStateMask = (0x1ul << Max) - 1;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	if ((this->StateDescription[i] & TmpUpState) == TmpUpState)
-	  {
-	    unsigned long TmpUpState2 = this->StateDescription[i] & TmpUpStateMask;
-	    TmpUpState2 ^= TmpUpState2 >> 32;
-	    TmpUpState2 ^= TmpUpState2 >> 16;
-	    TmpUpState2 ^= TmpUpState2 >> 8;
-	    TmpUpState2 ^= TmpUpState2 >> 4;
-	    TmpUpState2 ^= TmpUpState2 >> 2;
-	    TmpUpState2 ^= TmpUpState2 >> 1;
-	    if ((TmpUpState2 & 0x1ul) == 0x0ul)
+	  {	    
+	    unsigned long TmpUpState3 = this->StateDescription[i] & TmpUpStateMask;
+	    unsigned long TmpUpState2 = TmpUpState3;
+#ifdef  __64_BITS__
+	    TmpUpState3 &= 0x5555555555555555ul;
+	    TmpUpState2 &= 0xaaaaaaaaaaaaaaaaul;
+#else
+	    TmpUpState3 &= 0x55555555ul;
+	    TmpUpState2 &= 0xaaaaaaaaul;
+#endif	    
+	    unsigned long Sign = 0x0;
+	    int Pos = this->LzMax << 1;
+	    while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+	      Pos -= 2;
+	    while (Pos > 0)
+	      {
+		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
+		TmpUpState4 ^= TmpUpState4 >> 32;
+		TmpUpState4 ^= TmpUpState4 >> 16;
+		TmpUpState4 ^= TmpUpState4 >> 8;
+		TmpUpState4 ^= TmpUpState4 >> 4;
+		TmpUpState4 ^= TmpUpState4 >> 2;
+		TmpUpState4 ^= TmpUpState4 >> 1;
+		Sign ^= TmpUpState4;
+		Pos -= 2;
+		while ((Pos > 0) && ((TmpUpState3 & (0x1ul << Pos)) == 0x0ul))
+		  Pos -= 2;
+	      }
+	    if ((Sign & 0x1ul) == 0x0ul)
 	      FinalState[i] = TmpComponent;
 	    else
 	      FinalState[i] = -TmpComponent;
