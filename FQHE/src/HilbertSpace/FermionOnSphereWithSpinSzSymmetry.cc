@@ -161,8 +161,8 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
        this->GetStateSymmetry(this->StateDescription[i]);
 //       this->GetStateSingletParity(this->StateDescription[i]);
      }
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    this->PrintState(cout, i) << endl;
+//  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//    this->PrintState(cout, i) << endl;
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
