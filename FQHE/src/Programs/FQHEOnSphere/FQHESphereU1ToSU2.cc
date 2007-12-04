@@ -203,7 +203,7 @@ int main(int argc, char** argv)
     }
   RealVector OutputState = ((FermionOnSphereWithSpin*) SU2Space)->ForgeSU2FromU1(UpState, *(FermionOnSphere*)UpSpace, DownState, *(FermionOnSphere*)DownSpace);
   char* OutputName = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.vec", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+  sprintf (OutputName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d.0.vec", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
 	   (UpNbrParticles + DownNbrParticles), LzMax, SzTotal, (UpTotalLz + DownTotalLz));
 
   OutputState.WriteVector(OutputName);
