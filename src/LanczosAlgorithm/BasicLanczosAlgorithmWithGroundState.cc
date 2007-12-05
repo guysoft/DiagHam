@@ -197,6 +197,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 
       if (this->DiskFlag == false)
 	{
+	  double* TmpCoefficient = new double[2];
 	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
 	  Operation1.ApplyOperation(this->Architecture);
@@ -208,16 +209,22 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
 	      Operation1.ApplyOperation(this->Architecture);
-	      this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i - 1), this->V3, 
-					    -this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2), this->V2);
+  	      RealVector* TmpVector = new RealVector[2];
+	      TmpVector[0] = this->V2;
+	      TmpVector[1] = this->V3;
+	      TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(i - 2);
+	      TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(i - 1);
+	      AddRealLinearCombinationOperation Operation4 (&(this->V1),  TmpVector, 2, TmpCoefficient);
+	      Operation4.ApplyOperation(this->Architecture);
+	      delete[] TmpVector;
 	      this->V1 /= this->V1.Norm();
 	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
 	      RealVector TmpV (this->V2);
 	      this->V2 = this->V3;
 	      this->V3 = this->V1;
 	      this->V1 = TmpV;
-	      cout << ".";
-	      cout.flush();
+ 	      cout << ".";
+ 	      cout.flush();
 	    }
 	}
       else
@@ -275,18 +282,18 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
     }
-  RealVector* TmpVector = new RealVector[2];
   double* TmpCoefficient = new double[2];
-  RealVector* TmpVectorScalarProduct[2];
   double TmpScalarProduct[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
+      RealVector* TmpVector = new RealVector[2];
       TmpVector[0] = this->V1;
       TmpVector[1] = this->V2;
       TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
       TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
       AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
       Operation4.ApplyOperation(this->Architecture);
+      delete[] TmpVector;
       this->V3 /= this->V3.Norm();
       if (this->DiskFlag == true)
 	{
@@ -295,13 +302,31 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	  this->V3.WriteVector(TmpVectorName);
 	  delete[] TmpVectorName;
 	}
-      RealVector TmpV (this->V1);
-      this->V1 = this->V2;
-      this->V2 = this->V3;
-      this->V3 = TmpV;
+      if (this->DiskFlag == true)
+	{
+	  RealVector TmpV (this->V2);
+	  this->V2 = this->V3;
+	  this->V3 = TmpV;	  
+	  this->V1 = RealVector();
+	}
+      else
+	{
+	  RealVector TmpV (this->V1);
+	  this->V1 = this->V2;
+	  this->V2 = this->V3;
+	  this->V3 = TmpV;
+	}
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
+      if (this->DiskFlag == true)
+	{
+	  char* TmpVectorName = new char [256];
+	  sprintf(TmpVectorName, "vector.%d", (i - 1));
+	  this->V1.ReadVector(TmpVectorName);
+	  delete[] TmpVectorName;
+	}      
+      RealVector* TmpVectorScalarProduct[2];
       TmpVectorScalarProduct[0] = &(this->V1);
       TmpVectorScalarProduct[1] = &(this->V2);
       MultipleRealScalarProductOperation Operation2 (&(this->V3), TmpVectorScalarProduct, 2, TmpScalarProduct);
@@ -309,7 +334,6 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = TmpScalarProduct[0];
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = TmpScalarProduct[1];
     }
-  delete[] TmpVector;
   delete[] TmpCoefficient;
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
