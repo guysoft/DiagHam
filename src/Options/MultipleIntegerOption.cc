@@ -1,13 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
-//                            DiagHam version  0.05                           //
+//                            DarkRay version  0.05                           //
 //                                                                            //
-//                    Copyright (C) 1998-2007 Gunnar Moller                   //
+//                  Copyright (C) 1998-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                         class of multiple double option                    //
+//                        class of single integer option                      //
 //                                                                            //
-//                        last modification : 06/12/2006                      //
+//                        last modification : 19/08/2001                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Options/MultipleDoubleOption.h"
+#include "Options/MultipleIntegerOption.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -37,7 +37,6 @@
 using std::cout;
 using std::endl;
 
-
 // constructor from default datas
 //
 // optionCode = character associated to the option
@@ -45,18 +44,18 @@ using std::endl;
 // optionDescription = string describing option (used for -h option)
 // separator = character used to separate single entries on the command line
 // altSeparator = character used to separate entries in output
-// minValueFlag = flag to indicates an double minimum value
-// minValue = double minimum value (no minimum value if greater or equal to maxValue) 
-// maxValueFlag = flag to indicates an double maximum value
-// maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-
-MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, char* optionDescription,
-					   char separator, char altSeparator, char* defaultValues,
-					   bool minValueFlag, double minValue, 
-					   bool maxValueFlag, double maxValue)
+// defaultValue = string containing default values
+// minValueFlag = flag to indicates an integer minimum value
+// minValue = integer minimum value 
+// maxValueFlag = flag to indicates an integer maximum value
+// maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
+MultipleIntegerOption::MultipleIntegerOption(char optionCode, char* optionName, char* optionDescription,
+					 char separator, char altSeparator,
+					 char *defaultValues, bool minValueFlag, int minValue, 
+					 bool maxValueFlag, int maxValue)
 {
   this->OptionCode = optionCode;
-  this->OptionType = AbstractOption::OTDoubles;
+  this->OptionType = AbstractOption::OTInteger;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);
@@ -72,19 +71,19 @@ MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, ch
   this->MaxValueFlag = maxValueFlag;
   this->MaxValue = maxValue;
   this->MinValue = minValue;
-  this->Doubles = NULL;
+  this->Integers = NULL;
   if (defaultValues!=NULL) this->AnalyzeString(defaultValues);
 }
 
 // destructor
 //
 
-MultipleDoubleOption::~MultipleDoubleOption()
+MultipleIntegerOption::~MultipleIntegerOption()
 {
   delete[] this->OptionName;
   delete[] this->OptionDescription;
-  if (Doubles!=NULL) 
-    delete[] Doubles;
+  if (this->Integers!=NULL) 
+    delete[] Integers;
 }
  
 // Test if an argument corresponds to the current option and read its content
@@ -94,7 +93,7 @@ MultipleDoubleOption::~MultipleDoubleOption()
 // argumentPosition = position of the first argument to read
 // return value = number of arguments that have been read (-1 if an error occured)
 
-int MultipleDoubleOption::ReadOption(char** argumentValues, int nbrArgument, int argumentPosition)
+int MultipleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int argumentPosition)
 {
   char* Argument = argumentValues[argumentPosition];
   int val;
@@ -132,7 +131,7 @@ int MultipleDoubleOption::ReadOption(char** argumentValues, int nbrArgument, int
     }
   if ((argumentPosition + 1) == nbrArgument)
     {
-      this->ErrorCode = MultipleDoubleOption::NoDouble;
+      this->ErrorCode = MultipleIntegerOption::NoInteger;
       return -1;
     }
   Argument = argumentValues[argumentPosition + 1];
@@ -149,58 +148,59 @@ int MultipleDoubleOption::ReadOption(char** argumentValues, int nbrArgument, int
 // output = reference on output stream;
 // return value = reference on current output stream
 
-ostream& MultipleDoubleOption::PrintError (ostream& output)
+ostream& MultipleIntegerOption::PrintError (ostream& output)
 {
-  if ((this->ErrorCode == MultipleDoubleOption::NoError) || (this->OptionCode == 0))
+  if ((this->ErrorCode == MultipleIntegerOption::NoError) || (this->OptionCode == 0))
     return output;
   switch (this->ErrorCode)
     {
-    case MultipleDoubleOption::NotAnDouble:
+    case MultipleIntegerOption::NotAnInteger:
       {
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs a list of doubles separated by '" <<this->Separator<<"' as argument" << endl;
+	output << " needs an integer as argument" << endl;
       }
       break;
-    case MultipleDoubleOption::NoDouble:
+    case MultipleIntegerOption::NoInteger:
       {
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output <<" needs at least one double as argument" << endl;
+	output <<" needs one integer as argument" << endl;
       }
       break;
-    case MultipleDoubleOption::Greater:
+    case MultipleIntegerOption::Greater:
       {
 	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs doubles lower than " << this->MaxValue << " as argument" << endl;
+	output << " needs an integer lower than " << this->MaxValue << " as argument" << endl;
       }
       break;
-    case MultipleDoubleOption::Lower:
+    case MultipleIntegerOption::Lower:
       {
+	output << "option -" << this->OptionName;
 	if ((this->OptionCode != '\n') && (this->OptionCode != '\0'))
 	  output << " (-" << this->OptionCode <<")";
-	output << " needs doubles greater than " << this->MinValue << " as argument" << endl;
+	output << " needs an integer greater than " << this->MinValue << " as argument" << endl;
       }
       break;
     }
   return output;
 }
 
-// Get read double
+// Get read integer
 //
-// return value = double value
+// return value = integer value
 
-double* MultipleDoubleOption::GetDoubles()
+int* MultipleIntegerOption::GetIntegers()
 {
-  double *tmp=0;
+  int *tmp=0;
   if (Length>0)
     {
-      tmp= new double[Length];
-      for (int i=0;i<Length;++i) tmp[i]=Doubles[i];
+      tmp= new int[Length];
+      for (int i=0;i<Length;++i) tmp[i]=Integers[i];
     }
   return tmp;
 }
@@ -209,15 +209,15 @@ double* MultipleDoubleOption::GetDoubles()
 // 
 // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
 
-char* MultipleDoubleOption::GetAsAString()
+char* MultipleIntegerOption::GetAsAString()
 {
   char* TmpString;
   if (Length>0)
     {
-      TmpString = new char [32*Length];
-      sprintf (TmpString, "%.14g", this->Doubles[0]);
+      TmpString = new char [20*Length];
+      sprintf (TmpString, "%d", this->Integers[0]);
       for (int i=1;i<Length;++i) 
-	sprintf (TmpString, "%s%c%.14g", TmpString, this->AltSeparator, this->Doubles[i]);
+	sprintf (TmpString, "%s%c%d", TmpString, this->AltSeparator, this->Integers[i]);
     }
   else
     {
@@ -233,7 +233,7 @@ char* MultipleDoubleOption::GetAsAString()
 // shortVersion = true if return only option code and the option value, false if return option description in addition
 // return value = reference on current output stream
 
-ostream& MultipleDoubleOption::DisplayOption (ostream& output, bool shortVersion)
+ostream& MultipleIntegerOption::DisplayOption (ostream& output, bool shortVersion)
 {
   if (shortVersion)
     {
@@ -252,7 +252,7 @@ ostream& MultipleDoubleOption::DisplayOption (ostream& output, bool shortVersion
 // output = reference on output stream;
 // return value = reference on current output stream
 
-ostream& MultipleDoubleOption::DisplayHelp (ostream& output)
+ostream& MultipleIntegerOption::DisplayHelp (ostream& output)
 {
   if ((this->OptionCode != '\0') && (this->OptionCode != '\n'))
     {
@@ -276,14 +276,12 @@ ostream& MultipleDoubleOption::DisplayHelp (ostream& output)
   return output;
 }
 
-
-
-int MultipleDoubleOption::AnalyzeString(char *String)
+int MultipleIntegerOption::AnalyzeString(char *String)
 {
   char *tmpC, *tmpC2, *token;
   char sep[2];
   sprintf(sep,"%c",this->Separator);
-  double tmp;
+  int tmp;
   tmpC = new char [strlen(String)+2];
   tmpC2 = new char [strlen(String)+2];
   strcpy (tmpC, String);
@@ -302,8 +300,8 @@ int MultipleDoubleOption::AnalyzeString(char *String)
 	}
     }
   // know the count now, but tmpC garbled -> get new copy of string
-  if (this->Doubles!=NULL) delete [] this->Doubles;
-  this->Doubles=new double[Length];
+  if (this->Integers!=NULL) delete [] this->Integers;
+  this->Integers=new int[Length];
   strcpy (tmpC, String);
   int n=0;
   while (n<Length)
@@ -314,23 +312,23 @@ int MultipleDoubleOption::AnalyzeString(char *String)
 	}
       else //this should now be a number
 	{
-	  if( sscanf(tmpC,"%lf%s",&tmp,tmpC2) >0)
+	  if( sscanf(tmpC,"%d%s",&tmp,tmpC2) >0)
 	    {
 	      strcpy(tmpC,tmpC2);
-	      this->Doubles[n++]=tmp;
+	      this->Integers[n++]=tmp;
 	    }
 	  else  {	    
-	    this->ErrorCode = MultipleDoubleOption::NotAnDouble;
+	    this->ErrorCode = MultipleIntegerOption::NotAnInteger;
 	    return -1;
 	  }
 	  if ((this->MinValueFlag == true) && (this->MinValue > tmp))
 	    {
-	      this->ErrorCode = MultipleDoubleOption::Lower;
+	      this->ErrorCode = MultipleIntegerOption::Lower;
 	      return -1;
 	    }
 	  if ((this->MaxValueFlag == true) && (this->MaxValue < tmp))
 	    {
-	      this->ErrorCode = MultipleDoubleOption::Greater;
+	      this->ErrorCode = MultipleIntegerOption::Greater;
 	      return -1;
 	    }	  
 	}

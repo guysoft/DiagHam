@@ -31,6 +31,7 @@
 #include "Options/AbstractOption.h"
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
+#include "Options/MultipleIntegerOption.h"
 #include "Options/SingleIntegerInternalOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/MultipleDoubleOption.h"
