@@ -56,10 +56,12 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction()
 // nbrParticles= number of particles per layer
 // k = Jastrow factors between same species
 // m = Jastrow factors between different species
-// q = power inside Cauchy-determinant
-// r = power inside Cauchy-permanent
+// p = power inside Cauchy-determinant
+// q = power inside Cauchy-permanent
+// r = power of Cauchy-determinant
+// s = power of Cauchy-permanent
 // moveJastrowInside = flag to indicate whether Jastrow factors should be moved inside Cauchy determinant
-ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, int r, bool moveJastrowInside )
+ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q, int r, int s, bool moveJastrowInside )
 {  
   if (nbrParticles&1)
     {
@@ -72,11 +74,13 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
       exit(1);
     }
   this->NbrParticles = nbrParticles;
-  this->NbrParticlesPerLayer = nbrParticles/2;  
+  this->NbrParticlesPerLayer = nbrParticles/2;
+  this->P=p;
   this->Q=q;
   this->R=r;
-
-  if ( (moveJastrowInside) && (Q!=0))
+  this->S=s;
+  // cout << "P="<<P<<" Q="<<Q<<" R="<<R<<" S="<<S<<endl;
+  if ( (moveJastrowInside) && (P!=0) && (R==1))
     {
       this->K_outside=(k%2);
       this->K_inside=(k/2)*2;
@@ -93,7 +97,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
       this->JastrowInside=false;
     }
 
-  if ((Q!=0)||(JastrowInside)) HaveDeterminant=true;
+  if (((P!=0)||(JastrowInside))&&(R!=0)) HaveDeterminant=true;
   else  HaveDeterminant=false;
   
   this->DeterminantNorm=1.0;
@@ -118,7 +122,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
   for (int i=0; i< this->NbrParticles; ++i)
     JastrowFactorElements[i]= new Complex[NbrParticles];
-  
+
 }
 
 // copy constructor
@@ -132,9 +136,11 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
   this->K_outside=function.K_outside;
   this->K_inside=function.K_inside;
   this->M_outside=function.M_outside;
-  this->M_inside=function.M_inside;  
+  this->M_inside=function.M_inside;
+  this->P=function.P;
   this->Q=function.Q;
   this->R=function.R;
+  this->S=function.S;
   this->HaveDeterminant=function.HaveDeterminant;
   this->DeterminantNorm=function.DeterminantNorm;
   this->PermanentNorm=function.PermanentNorm;
@@ -179,7 +185,7 @@ ExtendedHalperinWavefunction::~ExtendedHalperinWavefunction()
       delete [] J21;
       delete [] J22;
       delete Matrix;
-      delete Matrix2;
+      delete Matrix2;      
     }
 }
 
@@ -197,7 +203,7 @@ Abstract1DComplexFunction* ExtendedHalperinWavefunction::Clone ()
 // x = point where the function has to be evaluated
 // return value = function value at x  
 
-Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
+Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 {
   this->EvaluateTables(x);
   Complex result=1.0, tmp;
@@ -231,8 +237,8 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
 	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
 	    {
 	      tmp=DeterminantNorm;
-	      for (int q=Q; q>0; --q) tmp*=JastrowFactorElements[i][j];
-	      for (int q=Q; q<0; ++q) tmp/=JastrowFactorElements[i][j];
+	      for (int p=P; p>0; --p) tmp*=JastrowFactorElements[i][j];
+	      for (int p=P; p<0; ++p) tmp/=JastrowFactorElements[i][j];
 	      for (int k=0;k<K_inside; k+=2)
 		{
 		  tmp*= J11[i];
@@ -252,26 +258,28 @@ Complex ExtendedHalperinWavefunction::operator ()(RealVector& x)
 #endif
 	    }
 	}
-      tmp = Matrix->Determinant(); 
-      result *= tmp;
+      tmp = Matrix->Determinant();
+      for (int r=this->R; r>0; --r) result*=tmp;
+      for (int r=this->R; r<0; ++r) result/=tmp;
     }
     // calculate Cauchy Permanent
-  if (R)
+  if ((Q!=0)&&(S!=0))
     {
       for (int i=0; i<NbrParticlesPerLayer; ++i)
 	{
 	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
 	    {
 	      tmp=PermanentNorm;
-	      for (int r=R; r>0; --r) tmp*=JastrowFactorElements[i][j];
-	      for (int r=R; r<0; ++r) tmp/=JastrowFactorElements[i][j];
+	      for (int q=Q; q>0; --q) tmp*=JastrowFactorElements[i][j];
+	      for (int q=Q; q<0; ++q) tmp/=JastrowFactorElements[i][j];
 	      // initialize Cauchy determinant 
 	      (*Matrix2)[i].Re(j-NbrParticlesPerLayer) = Real(tmp);
 	      (*Matrix2)[i].Im(j-NbrParticlesPerLayer) = Imag(tmp);
 	    }
 	}
-      tmp = Matrix2->Permanent(); 
-      result *= tmp;
+      tmp = Matrix2->Permanent();
+      for (int s=this->S; s>0; --s) result*=tmp;
+      for (int s=this->S; s<0; ++s) result/=tmp;
     }
   return result;      
 }
@@ -284,10 +292,10 @@ void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
   double det;
   int TotalJastrowTerms = NbrParticlesPerLayer*((K_outside+M_outside)*NbrParticlesPerLayer - K_outside);
   bool actualHaveDeterminant = HaveDeterminant;
-  int actualR = R;
+  int actualS = this->S;
   // switch off Cauchy-determinant and -permanent part
   this->HaveDeterminant=false;
-  this->R=0; 
+  this->S=0; 
   det=Norm((*this)(x));
   while ((det<.1)||(det>50.0))
     {
@@ -310,29 +318,29 @@ void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
 	{
 	  cout <<"Nd'="<< this->DeterminantNorm << " det="<<det<<endl;
 	  if (det>1e300) 
-	    this->DeterminantNorm*= pow((double)1.0e-300,(double)1.0/this->NbrParticlesPerLayer);
+	    this->DeterminantNorm*= pow((double)1.0e-300,1.0/((double)this->R*this->NbrParticlesPerLayer));
 	  else if (det==0.0) 
-	    this->DeterminantNorm*= pow((double)1.0e300,(double)1.0/this->NbrParticlesPerLayer);
+	    this->DeterminantNorm*= pow((double)1.0e300,1.0/((double)this->R*this->NbrParticlesPerLayer));
 	  else 
-	    this->DeterminantNorm*= pow(det,(double)-1.0/this->NbrParticlesPerLayer);
+	    this->DeterminantNorm*= pow(det,-1.0/((double)this->R*this->NbrParticlesPerLayer));
 	  det=Norm((*this)(x));
 	  cout <<"Nd'="<< this->DeterminantNorm << " det="<<det<<endl;
 	}
     }
   // switch determinant back on, and renormalize again:
-  this->R=actualR;
-  if (this->R)
+  this->S=actualS;
+  if ((this->Q)&&(this->S))
     {
       det=Norm((*this)(x));
       while ((det<.1)||(det>50.0))
 	{
 	  cout <<"Np'="<< this->PermanentNorm << " per="<<det<<endl;
 	  if (det>1e300) 
-	    this->PermanentNorm*= pow((double)1.0e-300,(double)1.0/this->NbrParticlesPerLayer);
+	    this->PermanentNorm*= pow((double)1.0e-300,1.0/((double)this->S*this->NbrParticlesPerLayer));
 	  else if (det==0.0) 
-	    this->PermanentNorm*= pow((double)1.0e300,(double)1.0/this->NbrParticlesPerLayer);
+	    this->PermanentNorm*= pow((double)1.0e300,1.0/((double)this->S*this->NbrParticlesPerLayer));
 	  else 
-	    this->PermanentNorm*= pow(det,(double)-1.0/this->NbrParticlesPerLayer);
+	    this->PermanentNorm*= pow(det,-1.0/((double)this->S*this->NbrParticlesPerLayer));
 	  det=Norm((*this)(x));
 	  cout <<"Np'="<< this->PermanentNorm << " per="<<det<<endl;
 	}

@@ -48,6 +48,7 @@
 #include "Tools/FQHEWaveFunction/TwoThirdSingletState.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
 
 #include <iostream>
 
@@ -101,7 +102,8 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
-      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,q,r) of extended Halperin wavefunction  (XH* only)",',' ,',', "2,2,-2,0");
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,q,r) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "antisymmetrize", "antisymmetrize wavefunction (XH only)");
     }
 }
 
@@ -324,20 +326,28 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	      int length;
 	      int *Params = Options->GetIntegers("XHC",length);
-	      int K=0, L=0, Q=0, R=0;
+	      int K=1, M=1, P=0, Q=0, R=1, S=1;
 	      if (length>0) K = Params[0];
-	      if (length>1) L = Params[1];
-	      if (length>2) Q = Params[2];
-	      if (length>3) R = Params[3];
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, Q, R);
+	      if (length>1) M = Params[1];
+	      if (length>2) P = Params[2];
+	      if (length>3) Q = Params[3];
+	      if (length>4) R = Params[4];
+	      if (length>5) S = Params[5];
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, M, P, Q, R, S);
 	      rst->AdaptAverageMCNorm();
-	      return rst;
+	      if (Options->GetBoolean("antisymmetrize"))
+		{
+		  AntisymmetrizedComplexFunction* rst2 = new AntisymmetrizedComplexFunction(rst,N,2);		  
+		  return rst2;
+		}
+	      else
+		return rst;
 	    }
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	      bool inside = Options->GetBoolean("jastrow-inside");
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, inside);
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, 0, 1, 1, inside);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
@@ -416,6 +426,8 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::OneOneOne;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR") == 0))
     return QHEWaveFunctionManager::HaldaneRezayi;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "XH") == 0))
+    return QHEWaveFunctionManager::ExtendedHalperin;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
     return QHEWaveFunctionManager::OneS;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))

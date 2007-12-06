@@ -60,8 +60,10 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   int K_inside;
   int M_outside;
   int M_inside;
+  int P;
   int Q;
   int R;
+  int S;
   
   // flag to indicate whether Jastrow factors should be moved inside Cauchy determinant.
   bool JastrowInside;
@@ -98,6 +100,7 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
 
   // matrix for calculation of cauchy permanent
   ComplexMatrix *Matrix2;
+
   
  public:
 
@@ -110,10 +113,12 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   // nbrParticles = number of particles per layer
   // k = Jastrow factors between same species
   // m = Jastrow factors between different species
-  // q = power inside Cauchy-determinant
-  // r = power inside Cauchy-permanent
+  // p = power inside Cauchy-determinant
+  // q = power inside Cauchy-permanent
+  // r = power of Cauchy-determinant
+  // s = power of Cauchy-permanent
   // moveJastrowInside = move jastrow-factors inside cauchy determinant
-  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, int r=0, bool moveJastrowInside = false );
+  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q=0, int r=1, int s=1, bool moveJastrowInside = false );
 
   // copy constructor
   //
@@ -133,7 +138,10 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x);
+  Complex operator ()(RealVector& x);
+
+  // antisymmetrize function
+  Complex GetSpinAntiSymmetrized(RealVector& x);
 
   // normalize the wave-function to one for the given particle positions
   // x = point where the function has to be evaluated
@@ -143,12 +151,14 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   void AdaptAverageMCNorm(int thermalize=100, int average=250);
 
  private:
-
+  
   // do all precalculation operations required for a new set of positions
 
   void EvaluateTables(RealVector& x);
+  
 
 };
 
 
 #endif  //  EXTENDEDHALPERINWAVEFUNCTION_H
+

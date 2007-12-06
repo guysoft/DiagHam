@@ -9,6 +9,7 @@
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 #include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
+#include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
       
     }
   
-  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
+  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();    
   
   if (TestWaveFunction == 0)
     {
@@ -367,7 +368,7 @@ int main(int argc, char** argv)
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex ValueExact (Operation.GetScalar());      
       Complex ValueTrial, ValueTrial2;
-      ValueTrial = (*TestWaveFunction)(Particles->GetPositions());
+      ValueTrial = (*TestWaveFunction)(Particles->GetPositions());      
       double Tmp2;
       int NUp = NbrFermions/2;
       // exchange spin up and spin down

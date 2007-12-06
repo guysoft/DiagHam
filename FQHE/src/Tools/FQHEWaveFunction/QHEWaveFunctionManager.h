@@ -84,6 +84,7 @@ class QHEWaveFunctionManager
       OneS = 0x100000,
       TwoThirdsS = 0x200000,
       HaldaneRezayi = 0x400000,
+      ExtendedHalperin = 0x800000,
       TrialWaveFunction = 0x10000
     };
   
