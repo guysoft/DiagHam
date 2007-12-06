@@ -85,7 +85,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   unsigned long* StateDescription;
   // array giving maximum momentum value reached for a fermion in a given state
   int* StateHighestBit;
-
+  
   // maximum shift used for searching a position in the look-up table
   int MaximumLookUpShift;
   // memory used for the look-up table in a given maxMomentum sector
@@ -108,6 +108,13 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   double** RescalingFactors;
   // number of state in each orbit
   int* NbrStateInOrbit;
+
+  // temporary state used when applying ProdA operator
+  unsigned long ProdATemporaryState;
+  // Highest Bit value associated to temporary state used when applying ProdA operator
+  int ProdAHighestBit;
+  // Index of the initial state when applying ProdA operator
+  int ProdAIndex;
 
   // sign due to state reordering when applying translation operator 
   unsigned long* ReorderingSign;
@@ -217,12 +224,67 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
 
   
-  // apply a^+_m a_m operator to a given state
+  // apply a^+_m_d a_m_d operator to a given state (only spin down)
   //
   // index = index of the state on which the operator has to be applied
-  // m = index for creation operator
-  // return value =  resulting multiplicative factor 
-  double AdA (int index, int m);
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  double AddAd (int index, int m);
+
+  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  double AduAu (int index, int m);
+
+    // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  double AuAu (int index, int n1, int n2);
+
+  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin down)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  double AdAd (int index, int n1, int n2);
+
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  double AuAd (int index, int n1, int n2);
+
+  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);  
 
   // print a given State
   //

@@ -45,6 +45,7 @@
 #include "Tools/FQHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
+#include "Tools/FQHEWaveFunction/TwoThirdSingletState.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -100,6 +101,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,q,r) of extended Halperin wavefunction  (XH* only)",',' ,',', "2,2,-2,0");
     }
 }
 
@@ -133,7 +135,9 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	{	  
 	  str << "  * 111 : 111-state" << endl;
 	  str << "  * HR : Haldane-Rezayi state" << endl;
-	  str << "  * s1 : Spin-singlet state at filling one" << endl;
+	  str << "  * XH : Extended Halperin wavefunctions (z-z)^k (w-w)^k (z-w)^l det((z-w)^q) per((z-w)^r)" << endl;
+	  str << "  * 1s : Spin-singlet state at filling one" << endl;
+	  str << "  * 2-3s : Spin-singlet state at filling two-thirds" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;	  
 	}
@@ -315,11 +319,32 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "XH") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int length;
+	      int *Params = Options->GetIntegers("XHC",length);
+	      int K=0, L=0, Q=0, R=0;
+	      if (length>0) K = Params[0];
+	      if (length>1) L = Params[1];
+	      if (length>2) Q = Params[2];
+	      if (length>3) R = Params[3];
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, Q, R);
+	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
 	    {
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	      bool inside = Options->GetBoolean("jastrow-inside");
 	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, inside);
+	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))
+	    {
+	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();	      
+	      TwoThirdSingletState* rst = new TwoThirdSingletState(N);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
@@ -389,9 +414,11 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::PairedCFCB;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
     return QHEWaveFunctionManager::OneOneOne;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR ") == 0))
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR") == 0))
     return QHEWaveFunctionManager::HaldaneRezayi;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s ") == 0))
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
     return QHEWaveFunctionManager::OneS;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))
+    return QHEWaveFunctionManager::TwoThirdsS;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

@@ -64,11 +64,12 @@ class AbstractOption
 
   enum Type
     {
-      OTBoolean = 0x01,
+      OTBoolean = 0x001,
       OTInteger = 0x02,
-      OTDouble = 0x04,
-      OTDoubles = 0x08,
-      OTString = 0x10
+      OTIntegers = 0x102,
+      OTDouble = 0x004,
+      OTDoubles = 0x104,
+      OTString = 0x008
     };
 
   // virtual destructor

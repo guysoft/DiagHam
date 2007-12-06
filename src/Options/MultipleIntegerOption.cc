@@ -55,7 +55,7 @@ MultipleIntegerOption::MultipleIntegerOption(char optionCode, char* optionName, 
 					 bool maxValueFlag, int maxValue)
 {
   this->OptionCode = optionCode;
-  this->OptionType = AbstractOption::OTInteger;
+  this->OptionType = AbstractOption::OTIntegers;
   this->OptionName = new char [strlen(optionName) + 2];
   this->OptionName[0] = '-';
   strcpy (&(this->OptionName[1]), optionName);

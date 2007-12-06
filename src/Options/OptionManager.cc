@@ -436,6 +436,52 @@ int OptionManager::GetInteger(char *optionName)
     }
 }
 
+//accessor routine for Multiple Integer value
+int* OptionManager::GetIntegers(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTIntegers)
+	return ((MultipleIntegerOption*)OptionPointer)->GetIntegers();
+      else
+	{
+	  cout << "MultipleInteger value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+// alternative accessor routine for Multiple Integer value
+int* OptionManager::GetIntegers(char *optionName, int & length)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTIntegers)
+	{
+	  length = ((MultipleIntegerOption*)OptionPointer)->GetLength();
+	  return ((MultipleIntegerOption*)OptionPointer)->GetIntegers();
+	}
+      else
+	{
+	  cout << "MultipleInteger value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+
 //accessor routine for String value
 char* OptionManager::GetString(char *optionName)
 {

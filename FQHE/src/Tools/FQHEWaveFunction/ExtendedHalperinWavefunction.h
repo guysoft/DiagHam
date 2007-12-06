@@ -8,7 +8,7 @@
 //                                                                            //
 //       class implementing generalized Halperin states on the sphere //
 //                                                                            //
-//                        last modification : 02/11/2007                      //
+//                        last modification : 06/12/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -61,7 +61,8 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   int M_outside;
   int M_inside;
   int Q;
-
+  int R;
+  
   // flag to indicate whether Jastrow factors should be moved inside Cauchy determinant.
   bool JastrowInside;
 
@@ -74,8 +75,10 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
 
   bool HaveDeterminant;
 
-  // factor used to multiply each element of the Slater matrix
+  // factor used to multiply each element of the Cauchy matrix
   double DeterminantNorm;
+  // factor used to multiply each element of the Cauchy determinant
+  double PermanentNorm;
   // factor used to multiply each term within Jastrow-factors
   double JastrowNorm;
 
@@ -86,13 +89,15 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   // temporary array used to store v spinor coordinates
   Complex* SpinorVCoordinates;
 
-  
+  // matrix for calculation of cauchy determinant
 #ifdef USE_LAPACK_CFCB
   ComplexLapackDeterminant *Matrix;
 #else
   ComplexMatrix *Matrix;
 #endif  
-  
+
+  // matrix for calculation of cauchy permanent
+  ComplexMatrix *Matrix2;
   
  public:
 
@@ -105,8 +110,10 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   // nbrParticles = number of particles per layer
   // k = Jastrow factors between same species
   // m = Jastrow factors between different species
-  // q = power inside Cauchy-determinant  
-  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, bool moveJastrowInside = false );
+  // q = power inside Cauchy-determinant
+  // r = power inside Cauchy-permanent
+  // moveJastrowInside = move jastrow-factors inside cauchy determinant
+  ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int q, int r=0, bool moveJastrowInside = false );
 
   // copy constructor
   //

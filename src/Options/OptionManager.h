@@ -120,6 +120,9 @@ class OptionManager
   double* GetDoubles(char *optionName);
   double* GetDoubles(char *optionName, int &length);
   int GetInteger(char *optionName);
+  // from MultipleIntegerOption: possibility to request the length of the vector, if wanted
+  int* GetIntegers(char *optionName);
+  int* GetIntegers(char *optionName, int &length);
   char* GetString(char *optionName);
   
 };
