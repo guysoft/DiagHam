@@ -287,7 +287,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
     {
       this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
     }
-  
+  if (this->Hamiltonian->GetHilbertSpaceDimension()==0) return 0;
   if (this->Hamiltonian->GetHilbertSpaceDimension() < this->FullDiagonalizationLimit)
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());

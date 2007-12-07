@@ -93,7 +93,7 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
   this->ParitySign = 1.0;
   if (minusParity == true)
     this->ParitySign = -1.0;
-   int TmpHilbertSpaceDimension = 0;
+  int TmpHilbertSpaceDimension = 0;
 //    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 //      {
 //        this->PrintState(cout, i)  << endl;
@@ -152,40 +152,42 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
   this->StateDescription = TmpStateDescription;
   this->StateHighestBit = TmpStateHighestBit;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
-
-  this->GenerateLookUpTable(memory);
-  delete[] this->StateHighestBit;
-  this->StateHighestBit = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-     {
-       this->GetStateSymmetry(this->StateDescription[i]);
-//       this->GetStateSingletParity(this->StateDescription[i]);
-     }
-//  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//    this->PrintState(cout, i) << endl;
+  if (this->HilbertSpaceDimension>0)
+    {
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      this->StateHighestBit = 0;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  this->GetStateSymmetry(this->StateDescription[i]);
+	  //       this->GetStateSingletParity(this->StateDescription[i]);
+	}
+      //  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+      //    this->PrintState(cout, i) << endl;
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-  UsedMemory = this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-  cout << "memory requested for lookup table = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-
+      int UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;      
 #endif
+    }
+  else cout << "Hilbert space empty" << endl;
 }
 
 // copy constructor (without duplicating datas)

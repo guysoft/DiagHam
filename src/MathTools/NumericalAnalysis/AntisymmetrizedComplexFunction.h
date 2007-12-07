@@ -80,8 +80,6 @@ class AntisymmetrizedComplexFunction : public Abstract1DComplexFunction
   
   // Complex to store sum of antisymmetrizer
   Complex ASSum;
-  // counter for terms in Antisymmetrizer
-  int PCount;
   
   RealVector InternalCoordinates;
   RealVector *GivenCoordinates;

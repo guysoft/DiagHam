@@ -96,7 +96,6 @@ void AntisymmetrizedComplexFunction::AddASTerm(int sign)
       this->InternalCoordinates[this->CoordinateDimension*i+j]
 	=(*(this->GivenCoordinates))[this->CoordinateDimension*Permutations[i]+j];
   ASSum+=(-1.0+2.0*sign)*(*OriginalFunction)(InternalCoordinates);
-  ++PCount;
 } // AddASTerm
 
 
@@ -148,7 +147,6 @@ void AntisymmetrizedComplexFunction::Permute(const int start, const int n, int s
 Complex AntisymmetrizedComplexFunction::operator ()(RealVector& x)
 {
   int sign=1;
-  this->PCount=0;
   this->ASSum=0.0;
   this->GivenCoordinates=&x;
   for (int i = 0; i < this->NbrCoordinates; i++) this->Permutations[i] = i;

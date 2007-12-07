@@ -18,8 +18,13 @@ my $NbrFlux = $ARGV[1];
 my $NbrPoints = $ARGV[2];
 my $Filling = $ARGV[3];
 
-my $R0=($NbrFlux+1)*($NbrFlux+1)/(4*pi*(2*$NbrFlux+1));
-my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1)/2.0);
+# previously utilized version:
+#my $R0=($NbrFlux+1)*($NbrFlux+1)/(4*pi*(2*$NbrFlux+1));
+#my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1)/2.0);
+
+# version provided by Thierry
+my $R0=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1));
+my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux-1)/2.0);
 
 my $RawRescale;
 if (1==2) # always use scaling factor now...
@@ -73,7 +78,7 @@ else
 		if ( $NbrFlux == $NbrFermions-1 )
 		  {
 		    # shift of the p-wave paired state
-		    print ("nu=1 p-wave paired state at N - 1.\n");
+		    print ("nu=1 ferromagnetic state at N - 1.\n");
 		  }
 		else
 		  {
@@ -106,11 +111,13 @@ my $Phi;
 
 for ( my $point=0; $point<$NbrPoints; $point++)
   {
-    $Phi=$point*2*pi/($NbrPoints-1);
+    $Phi=$point*2*pi/($NbrPoints);
     $V0eff=$R0*$R20*cos($Phi);
     $V1eff=$R1*$R21*sin($Phi);
     # write pseudopotentials to file
-    my $PseudopotentialFile = "pseudopotentials_2s_".$NbrFlux."_phi_".$Phi/pi."pi.dat";
+    $Filling =~ s/\//\_/g;
+    print("Filling:".$Filling);
+    my $PseudopotentialFile = "pseudopotentials_2s_".$NbrFlux."_phi_".$Phi/pi."pi_nu_".$Filling.".dat";
     unless (open (OUTFILE, ">".$PseudopotentialFile))
       {
 	die ("can't create pseudopotential file\n");
