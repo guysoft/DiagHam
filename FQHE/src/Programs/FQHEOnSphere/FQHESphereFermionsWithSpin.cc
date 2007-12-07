@@ -250,6 +250,11 @@ int main(int argc, char** argv)
 	}
     }
 
+#ifdef __64_BITS__
+  cout << "Using 64 bit processing" << endl;
+#endif
+
+
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
 	   NbrFermions, LzMax, SzTotal);
@@ -282,28 +287,28 @@ int main(int argc, char** argv)
 #ifdef __64_BITS__
 	  if (LzMax <= 31)
 #else
-	    if (LzMax <= 15)
+	  if (LzMax <= 15)
 #endif
-	      {
-		Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
-	      }
-	    else
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
+	    {
+	      Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
+	    }
+	  else
+	    {
+	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+	      return -1;
+	    }	
 	}
       else
 	{
 #ifdef __64_BITS__
 	  if (LzMax >= 31)
 #else
-	    if (LzMax >= 15)
+	  if (LzMax >= 15)
 #endif
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
+	    {
+	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+	      return -1;
+	    }	
 	  if (SzSymmetrizedBasis == true) 
 	    if (LzSymmetrizedBasis == false)
 	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
