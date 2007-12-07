@@ -91,6 +91,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
@@ -313,9 +314,10 @@ int main(int argc, char** argv)
 	    if (LzSymmetrizedBasis == false)
 	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
 	    else
-	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace);
+	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+							      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean());
 	  else
-	    Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, MemorySpace);
+	    Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

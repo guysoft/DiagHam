@@ -43,8 +43,6 @@
 class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSymmetry
 {
 
-  // additional sign due to the parity sector
-  double ParitySign;
 
  public:
 

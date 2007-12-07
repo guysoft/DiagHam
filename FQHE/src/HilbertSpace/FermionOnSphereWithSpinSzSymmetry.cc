@@ -90,42 +90,22 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
-  this->ParitySign = 1.0;
+  this->SzParitySign = 1.0;
   if (minusParity == true)
-    this->ParitySign = -1.0;
+    this->SzParitySign = -1.0;
   int TmpHilbertSpaceDimension = 0;
-//    for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//      {
-//        this->PrintState(cout, i)  << endl;
-//       unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
-//       for (int j = this->NbrLzValue - 1; j >=0 ; --j)
-// 	{
-// 	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
-// 	  if (Tmp == 0x1l)
-// 	    cout << "d ";
-// 	  else if (Tmp == 0x2l)
-// 	    cout << "u ";
-// 	  else if (Tmp == 0x3l)
-// 	    cout << "X ";
-// 	  else cout << "0 ";	  	  
-// 	}
-//       this->GetStateSymmetry(TmpState);
-//       this->GetStateSingletParity(TmpState);
-//       cout <<  endl << hex << TmpState  << dec << endl;
-//     }
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
       this->StateDescription[i] = 0x0ul;
     else
       {
-//	++TmpHilbertSpaceDimension;
 	this->GetStateSymmetry(this->StateDescription[i]);
 	if ((this->StateDescription[i] & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
 	  {
-	    unsigned long TmpTruc = this->StateDescription[i];
-	    this->GetStateSingletParity(TmpTruc);
-	    if ((((TmpTruc & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) == 0) && (minusParity == false))
-		|| (((TmpTruc & FERMION_SPHERE_SU2_SZ_SINGLETPARITY_BIT) != 0) && (minusParity == true)))
+	    unsigned long TmpStateParity = this->StateDescription[i];
+	    this->GetStateSingletParity(TmpStateParity);
+	    if ((((TmpStateParity & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) == 0) && (minusParity == false))
+		|| (((TmpStateParity & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) != 0) && (minusParity == true)))
 	      ++TmpHilbertSpaceDimension;
 	    else
 	      this->StateDescription[i] = 0x0ul;
@@ -158,12 +138,7 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-	{
-	  this->GetStateSymmetry(this->StateDescription[i]);
-	  //       this->GetStateSingletParity(this->StateDescription[i]);
-	}
-      //  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-      //    this->PrintState(cout, i) << endl;
+	this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
       int UsedMemory = 0;
       UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -215,7 +190,7 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry(const Fermi
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->ParitySign = fermions.ParitySign;
+  this->SzParitySign = fermions.SzParitySign;
 }
 
 // destructor
@@ -235,7 +210,8 @@ FermionOnSphereWithSpinSzSymmetry& FermionOnSphereWithSpinSzSymmetry::operator =
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-      delete[] this->StateHighestBit;
+      if (this->StateHighestBit != 0)
+	delete[] this->StateHighestBit;
     }
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->Flag = fermions.Flag;
@@ -253,7 +229,7 @@ FermionOnSphereWithSpinSzSymmetry& FermionOnSphereWithSpinSzSymmetry::operator =
   this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
-  this->ParitySign = fermions.ParitySign;
+  this->SzParitySign = fermions.SzParitySign;
   return *this;
 }
 
@@ -710,7 +686,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     {
       this->GetStateSingletParity(TmpState2);
-      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul))) * this->ParitySign) < 0.0)
+      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
 	return this->HilbertSpaceDimension;
       int NewLzMax = 1 + (this->LzMax << 1);
       while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
@@ -725,8 +701,8 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
   if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState  & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
     {
       this->GetStateSingletParity(TmpState2);
-      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
-      coefficient *= this->ParitySign;
+      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->SzParitySign;
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     coefficient *= M_SQRT1_2;
@@ -737,7 +713,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
 //   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
 //     {
 //       this->GetStateSingletParity(TmpState2);
-//       if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul))) * this->ParitySign) < 0.0)
+//       if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
 // 	return this->HilbertSpaceDimension;
 //     }
 //   int NewLzMax = 1 + (this->LzMax << 1);
@@ -755,8 +731,8 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
 //       if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState  & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
 // 	{
 // 	  this->GetStateSingletParity(TmpState2);
-// 	  coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
-// 	  coefficient *= this->ParitySign;
+// 	  coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+// 	  coefficient *= this->SzParitySign;
 // 	}
 //       if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
 // 	coefficient *= M_SQRT1_2;
@@ -799,7 +775,7 @@ int FermionOnSphereWithSpinSzSymmetry::AddAdd (int m1, int m2, double& coefficie
    if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
      {
        this->GetStateSingletParity(TmpState2);
-       if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul))) * this->ParitySign) < 0.0)
+       if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
 	 return this->HilbertSpaceDimension;
       if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
 	coefficient *= M_SQRT2;
@@ -814,8 +790,8 @@ int FermionOnSphereWithSpinSzSymmetry::AddAdd (int m1, int m2, double& coefficie
   if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState  & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
     {
       this->GetStateSingletParity(TmpState2);
-      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
-      coefficient *= this->ParitySign;
+      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->SzParitySign;
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     coefficient *= M_SQRT1_2;
@@ -857,7 +833,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdd (int m1, int m2, double& coefficie
   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     {
       this->GetStateSingletParity(TmpState2);
-      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul))) * this->ParitySign) < 0.0)
+      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
 	return this->HilbertSpaceDimension;
       int NewLzMax = 1 + (this->LzMax << 1);
       while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
@@ -872,8 +848,8 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdd (int m1, int m2, double& coefficie
   if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState  & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
     {
       this->GetStateSingletParity(TmpState2);
-      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SZ_SINGLETPARITY_SHIFT) & 0x1ul)));
-      coefficient *= this->ParitySign;
+      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->SzParitySign;
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     coefficient *= M_SQRT1_2;

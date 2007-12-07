@@ -39,9 +39,18 @@
 #include <iostream>
 
 
+using std::cout;
+using std::endl;
+using std::hex;
+using std::dec;
+
+
 
 class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSymmetry
 {
+
+ protected:
+
 
  public:
 
@@ -54,8 +63,9 @@ class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // nbrFermions = number of fermions
   // lzMax = twice the maximum Lz value reached by a fermion
   // totalSz = twce the total spin value
+  // minusParity = select the  Lz <-> -Lz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSpinLzSymmetry (int nbrFermions, int lzMax, int totalSz, unsigned long memory = 10000000);
+  FermionOnSphereWithSpinLzSymmetry (int nbrFermions, int lzMax, int totalSz, bool minusParity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -123,30 +133,6 @@ class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AduAu (int index, int m);
-
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin up)
-  // return value =  multiplicative factor 
-  virtual double AuAu (int index, int n1, int n2);
-
-  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AdAd (int index, int n1, int n2);
-
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AuAd (int index, int n1, int n2);
 
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
@@ -217,6 +203,7 @@ class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSym
 inline unsigned long FermionOnSphereWithSpinLzSymmetry::GetCanonicalState (unsigned long initialState)
 {
   initialState <<= this->InvertShift;
+//  cout << hex << initialState << dec << endl;
 #ifdef __64_BITS__
   unsigned long TmpState = FermionOnSphereWithSpinLzInvertTable[initialState & 0xff] << 56;
   TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 8) & 0xff] << 48;
@@ -232,8 +219,10 @@ inline unsigned long FermionOnSphereWithSpinLzSymmetry::GetCanonicalState (unsig
   TmpState |= FermionOnSphereWithSpinLzInvertTable[(initialState >> 16) & 0xff] << 8;
   TmpState |= FermionOnSphereWithSpinLzInvertTable[initialState >> 24];
 #endif	
+//  cout << hex << TmpState << dec << endl;
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
+//  cout << hex << TmpState << dec << endl;
   if (TmpState < initialState)
     return TmpState;
   else
