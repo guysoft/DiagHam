@@ -25,6 +25,9 @@
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
@@ -68,6 +71,10 @@ int main(int argc, char** argv)
 //  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
 //  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
 //  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
  
@@ -95,15 +102,29 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-
+  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, FermionFlag) == false)
+    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
+							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
       {
 	return -1;
       }
+  if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
+    {
+      LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+      LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+    }
+  if (((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean() == true)
+    {
+      SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+      SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+    }
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
     if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
       {
@@ -149,7 +170,18 @@ int main(int argc, char** argv)
       if (LzMax <= 15)
 #endif
         {
+	  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
 	    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
+	  else
+	    {
+	      if (SzSymmetrizedBasis == true) 
+		if (LzSymmetrizedBasis == false)
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, MemorySpace, SzMinusParity, LzMinusParity);
+	      else
+		Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
+	    }
         }
       else
 	{

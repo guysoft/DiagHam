@@ -45,6 +45,10 @@ class FermionOnSphere;
 class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 {
 
+  friend class FermionOnSphereWithSpinLzSzSymmetry;
+  friend class FermionOnSphereWithSpinSzSymmetry;
+  friend class FermionOnSphereWithSpinLzSymmetry;
+
  protected:
 
   // number of fermions

@@ -129,6 +129,20 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis);
+
   // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
   //
   // index = index of the state on which the operator has to be applied

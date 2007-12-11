@@ -215,6 +215,83 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
 }
 
 
+// try to guess system information from file name for system with an SU(2) degree of freedom and discrete symmetries
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// lz = reference to twice the z projection of the angular momentum (grab it only if initial value is 0)
+// sz = reference to twice the z projection of the total spin (grab it only if initial value is 0)
+// szSymmetry = reference on the flag for the Sz<->-Sz symmetry
+// szSymmetryMinusParity = reference on the flag for the minus parity sector of the Sz<->-Sz symmetry
+// lzSymmetry = reference on the flag for the Lz<->-Lz symmetry
+// lzSymmetryMinusParity = reference on the flag for the minus parity sector of the Lz<->-Lz symmetry
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& sz, 
+							  bool& szSymmetry, bool& szSymmetryMinusParity, bool& lzSymmetry, bool& lzSymmetryMinusParity, bool& statistics)
+{
+  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, sz, statistics) == false)
+    return false;
+  szSymmetry = false;
+  szSymmetryMinusParity = false;
+  lzSymmetry = false;
+  lzSymmetryMinusParity = false;
+  if (strstr(filename, "_szpsym_") != 0)
+    {
+      szSymmetry = true;
+      return true;
+    }
+  if (strstr(filename, "_szmsym_") != 0)
+    {
+      szSymmetry = true;
+      szSymmetryMinusParity = true;
+      return true;
+    }
+  if (strstr(filename, "_lzpsym_") != 0)
+    {
+      lzSymmetry = true;
+      return true;
+    }
+  if (strstr(filename, "_lzmsym_") != 0)
+    {
+      lzSymmetry = true;
+      lzSymmetryMinusParity = true;
+      return true;
+    }
+  if (strstr(filename, "_lzpszpsym_") != 0)
+    {
+      szSymmetry = true;
+      lzSymmetry = true;
+      return true;
+    }
+  if (strstr(filename, "_lzmszpsym_") != 0)
+    {
+      szSymmetry = true;
+      lzSymmetry = true;
+      lzSymmetryMinusParity = true;
+      return true;
+    }
+  if (strstr(filename, "_lzpszmsym_") != 0)
+    {
+      szSymmetry = true;
+      szSymmetryMinusParity = true;
+      lzSymmetry = true;
+      return true;
+    }
+  if (strstr(filename, "_lzmszmsym_") != 0)
+    {
+      szSymmetry = true;
+      szSymmetryMinusParity = true;
+      lzSymmetry = true;
+      lzSymmetryMinusParity = true;
+      return true;
+    }
+  return true;
+}
+
+
 // try to guess system information from file name for system suth an SU(4) degree of freedom
 //
 // filename = vector file name

@@ -242,6 +242,84 @@ AbstractHilbertSpace* FermionOnSphereWithSpinSzSymmetry::Clone()
   return new FermionOnSphereWithSpinSzSymmetry(*this);
 }
 
+// convert a given state from symmetric basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector  
+
+RealVector FermionOnSphereWithSpinSzSymmetry::ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      Signature = nbodyBasis.StateDescription[i];
+      TmpState = this->GetSignedCanonicalState(Signature);
+      NewLzMax = 1 + (this->LzMax << 1);
+      if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) == Signature)
+	{
+	  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  while ((TmpState >> NewLzMax) == 0x0ul)
+	    --NewLzMax;
+	  if (Signature != 0x0ul)	
+	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+	  else
+	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	}
+      else
+	{
+	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  while ((TmpState >> NewLzMax) == 0x0ul)
+	    --NewLzMax;
+	  TmpVector[i] = this->SzParitySign * state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+	}
+    }
+  return TmpVector;  
+}
+
+// convert a given state from the usual n-body basis to the symmetric basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereWithSpinSzSymmetry::ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis)
+{
+  RealVector TmpVector (this->GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      Signature = nbodyBasis.StateDescription[i];
+      TmpState = this->GetSignedCanonicalState(Signature);
+      NewLzMax = 1 + (this->LzMax << 1);
+      if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) == Signature)
+	{
+	  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  while ((TmpState >> NewLzMax) == 0x0ul)
+	    --NewLzMax;
+	  if (Signature != 0x0ul)	
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += state[i] * M_SQRT1_2;
+	  else
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	}
+      else
+	{
+	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  while ((TmpState >> NewLzMax) == 0x0ul)
+	    --NewLzMax;
+	  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += this->SzParitySign * state[i] * M_SQRT1_2;
+	}
+    }
+  return TmpVector;  
+}
+
 // apply a^+_u_m1 a^+_u_m2 a_u_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -647,7 +725,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
   m2 <<= 1;
   ++m2;
   unsigned long TmpMask = (0x1ul << m1) ^ (0x1ul << m2);
-  if (TmpState & TmpMask)
+  if ((TmpState & TmpMask) || (TmpMask == 0x0ul))
     return  this->HilbertSpaceDimension;
 //   TmpState |= TmpMask;
 //   TmpMask = ((((0x1ul << m2) - 1ul) & ~((0x1ul << m1) - 1ul)) |
@@ -683,6 +761,7 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdu (int m1, int m2, double& coefficie
 
   unsigned long TmpState2 = TmpState;
   TmpState = this->GetSignedCanonicalState(TmpState);
+  //  cout << hex << this->ProdATemporaryState << "  " << (TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) << "  " << dec << m1 << " " << m2 << endl;
   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
     {
       this->GetStateSingletParity(TmpState2);
@@ -827,7 +906,6 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdd (int m1, int m2, double& coefficie
   coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
   TmpState |= (0x1ul << m1);
-
   unsigned long TmpState2 = TmpState;
   TmpState = this->GetSignedCanonicalState(TmpState);
   if ((TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
@@ -864,7 +942,11 @@ int FermionOnSphereWithSpinSzSymmetry::AduAdd (int m1, int m2, double& coefficie
 
 int FermionOnSphereWithSpinSzSymmetry::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  stateDescription &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  //  if ((stateDescription & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x1dffc0)
+  //    cout << hex << stateDescription << dec << "   " <<  lzmax << endl;
+  
+  stateDescription &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;  
+  //  cout << hex << stateDescription << dec << "   " <<  lzmax << endl;
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
