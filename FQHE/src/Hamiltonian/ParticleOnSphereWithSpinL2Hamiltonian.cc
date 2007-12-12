@@ -235,7 +235,7 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
 	Coefficients(j, i) *= 0.5 * TmpCoefficient;
     }
 
-  //  this->L2Factor  = -1.0;
+//  this->L2Factor  = 1.0;
 
   double Factor = 2.0 * this->L2Factor;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphereWithSpin::FermionicStatistic)
@@ -322,10 +322,10 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
   this->NbrM12InterIndices = 0;
   int TmpNbrM12InterIndices = 0;
   
-  //  this->L2Factor  = 1.0;
-  //  Factor = 2.0 * this->L2Factor;
-  //  if (this->Particles->GetParticleStatistic() == ParticleOnSphereWithSpin::FermionicStatistic)
-  //    Factor *= -1.0;
+//   this->L2Factor  = 0.0;
+//   Factor = 2.0 * this->L2Factor;
+//   if (this->Particles->GetParticleStatistic() == ParticleOnSphereWithSpin::FermionicStatistic)
+//     Factor *= -1.0;
   
   for (int m3 = 1; m3 <= this->LzMax; ++m3)
     {
@@ -379,7 +379,7 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
        ++this->NbrM12InterIndices;
      }
 
-   //  this->L2Factor  = 1.0;
+//   this->L2Factor  = 0.0;
 
   this->OneBodyInteractionFactorsupup = new double[this->LzMax + 1];
   this->OneBodyInteractionFactorsdowndown = new double[this->LzMax + 1];

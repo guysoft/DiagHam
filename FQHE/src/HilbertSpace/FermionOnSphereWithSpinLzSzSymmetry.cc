@@ -341,6 +341,7 @@ RealVector FermionOnSphereWithSpinLzSzSymmetry::ConvertToSymmetricNbodyBasis(Rea
 
 int FermionOnSphereWithSpinLzSzSymmetry::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
+  cout << "WARNING: using deprecated method AduAduAuAu" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -430,6 +431,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAduAuAu (int index, int m1, int m2, 
 
 int FermionOnSphereWithSpinLzSzSymmetry::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
+  cout << "WARNING: using deprecated method AddAddAdAd" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -500,6 +502,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AddAddAdAd (int index, int m1, int m2, 
 
 int FermionOnSphereWithSpinLzSzSymmetry::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
+  cout << "WARNING: using deprecated method AddAduAdAu" << endl;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   unsigned long signs = 0x0l;
@@ -606,22 +609,37 @@ double FermionOnSphereWithSpinLzSzSymmetry::AuAu (int index, int n1, int n2)
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
 
-  this->ProdATemporaryState &= ~TmpMask;
-
-  TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
-	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
-  TmpMask &= this->ProdATemporaryState;
-
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
-  TmpMask ^= TmpMask >> 32;
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpMask ^= TmpMask >> 16;
-  TmpMask ^= TmpMask >> 8;
-  TmpMask ^= TmpMask >> 4;
-  TmpMask ^= TmpMask >> 2;
-  TmpMask ^= TmpMask << 1;
-  TmpMask &= 0x2ul;
-  return (1.0 - ((double) TmpMask));
+  this->ProdATemporaryState &= ~(0x1ul << n2);
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n1);
+  return Coefficient;
+//   this->ProdATemporaryState &= ~TmpMask;
+
+//   TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
+// 	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
+//   TmpMask &= this->ProdATemporaryState;
+
+// #ifdef  __64_BITS__
+//   TmpMask ^= TmpMask >> 32;
+// #endif
+//   TmpMask ^= TmpMask >> 16;
+//   TmpMask ^= TmpMask >> 8;
+//   TmpMask ^= TmpMask >> 4;
+//   TmpMask ^= TmpMask >> 2;
+//   TmpMask ^= TmpMask << 1;
+//   TmpMask &= 0x2ul;
+//   return (1.0 - ((double) TmpMask));
 }
 
 // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
@@ -642,21 +660,36 @@ double FermionOnSphereWithSpinLzSzSymmetry::AdAd (int index, int n1, int n2)
     return 0.0;
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-  this->ProdATemporaryState &= ~TmpMask;
-
-  TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
-	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
-  TmpMask &= this->ProdATemporaryState;
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
-  TmpMask ^= TmpMask >> 32;
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpMask ^= TmpMask >> 16;
-  TmpMask ^= TmpMask >> 8;
-  TmpMask ^= TmpMask >> 4;
-  TmpMask ^= TmpMask >> 2;
-  TmpMask ^= TmpMask << 1;
-  TmpMask &= 0x2ul;
-  return (1.0 - ((double) TmpMask));
+  this->ProdATemporaryState &= ~(0x1ul << n2);
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n1);
+  return Coefficient;
+//   this->ProdATemporaryState &= ~TmpMask;
+
+//   TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
+// 	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
+//   TmpMask &= this->ProdATemporaryState;
+// #ifdef  __64_BITS__
+//   TmpMask ^= TmpMask >> 32;
+// #endif
+//   TmpMask ^= TmpMask >> 16;
+//   TmpMask ^= TmpMask >> 8;
+//   TmpMask ^= TmpMask >> 4;
+//   TmpMask ^= TmpMask >> 2;
+//   TmpMask ^= TmpMask << 1;
+//   TmpMask &= 0x2ul;
+//   return (1.0 - ((double) TmpMask));
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
@@ -711,9 +744,10 @@ double FermionOnSphereWithSpinLzSzSymmetry::AuAd (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
+  return Coefficient;
 //  if (Coefficient != -(1.0 - ((double) TmpMask)))
 //   cout << Coefficient << "  " <<  (1.0 - ((double) TmpMask)) << " " << n1 << " " << n2 << " " << hex << (this->StateDescription[index] & FERMION_SPHERE_SU2_SYMMETRIC_MASK) << dec << endl;
-  return Coefficient;
+//  return Coefficient;
 }
 
 

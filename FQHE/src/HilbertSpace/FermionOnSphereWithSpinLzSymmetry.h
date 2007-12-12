@@ -134,20 +134,6 @@ class FermionOnSphereWithSpinLzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // return value = index of the destination state 
   virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m_d a_m_d operator to a given state (only spin down)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AddAd (int index, int m);
-
-  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AduAu (int index, int m);
-
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)

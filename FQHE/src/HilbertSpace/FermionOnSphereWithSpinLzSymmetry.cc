@@ -594,35 +594,6 @@ int FermionOnSphereWithSpinLzSymmetry::AddAduAdAu (int index, int m1, int m2, in
 
 }
 
-
-// apply a^+_m_u a_m_u operator to a given state  (only spin up)
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_m a_m
-
-double FermionOnSphereWithSpinLzSymmetry::AduAu (int index, int m)
-{
-  if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
-    return 1.0;
-  else
-    return 0.0;
-}
-
-// apply a^+_d_m a_d_m operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_d_m a_d_m
-
-double FermionOnSphereWithSpinLzSymmetry::AddAd (int index, int m)
-{
-  if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
-    return 1.0;
-  else
-    return 0.0;
-}
-
 // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin up)

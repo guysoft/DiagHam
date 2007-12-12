@@ -126,44 +126,6 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // return value = index of the destination state 
   virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m_d a_m_d operator to a given state (only spin down)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AddAd (int index, int m);
-
-  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AduAu (int index, int m);
-
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin up)
-  // return value =  multiplicative factor 
-  virtual double AuAu (int index, int n1, int n2);
-
-  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AdAd (int index, int n1, int n2);
-
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AuAd (int index, int n1, int n2);
-
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
