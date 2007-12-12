@@ -19,6 +19,7 @@ ParticleOnSphereCoulombDeltaHamiltonian.cc \
 ParticleOnSphereLaplacianDeltaHamiltonian.cc \
 ParticleOnSphereCoulombLaplacianDeltaHamiltonian.cc \
 AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.cc \
+AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.cc \
 AbstractQHEOnDiskHamiltonian.cc \
 ParticleOnDiskLaplacianDeltaHamiltonian.cc \
@@ -41,4 +42,4 @@ AbstractQHEOnSphereWithSpinHamiltonian.cc \
 ParticleOnSphereWithSpinGenericHamiltonian.cc \
 ParticleOnSphereWithSpinL2Hamiltonian.cc \
 ParticleOnSphereWithSpinS2Hamiltonian.cc \
-ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
+ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.cc
