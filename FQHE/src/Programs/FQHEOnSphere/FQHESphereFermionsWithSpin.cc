@@ -99,6 +99,8 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the symmetrized basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the symmetrized basis)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -312,12 +314,28 @@ int main(int argc, char** argv)
 	    }	
 	  if (SzSymmetrizedBasis == true) 
 	    if (LzSymmetrizedBasis == false)
-	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+	      {
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      }
 	    else
-	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-							      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean());
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								((BooleanOption*) Manager["minus-lzparity"])->GetBoolean());
+	      else
+		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 	  else
-	    Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	    else
+	      Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	    {
+	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      return 0;
+	    }
 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

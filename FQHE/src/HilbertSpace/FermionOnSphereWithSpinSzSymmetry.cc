@@ -165,6 +165,53 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
   else cout << "Hilbert space empty" << endl;
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (char* fileName, unsigned long memory)
+{
+  this->ReadHilbertSpace(fileName);
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrFermionsUp = (this->NbrFermions + this->TotalSpin) / 2;
+  this->NbrFermionsDown = (this->NbrFermions - this->TotalSpin) / 2;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->Flag.Initialize();
+  if (this->HilbertSpaceDimension > 0)
+    {
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	this->GetStateSymmetry(this->StateDescription[i]);
+      this->StateHighestBit = 0;
+    }
+#ifdef __DEBUG__
+  int UsedMemory = 0;
+  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+
+#endif
+}
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy

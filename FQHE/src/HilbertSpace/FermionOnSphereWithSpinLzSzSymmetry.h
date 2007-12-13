@@ -109,6 +109,12 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSpinLzSzSymmetry (int nbrFermions, int lzMax, bool minusSzParity, bool minusLzParity, unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSpinLzSzSymmetry (char* fileName, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -128,6 +134,12 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   // convert a given state from symmetric basis to the usual n-body basis
   //
@@ -285,6 +297,12 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // initialState = reference on the state whose parity has to be evaluated
   void GetStateSingletParity(unsigned long& initialState);
 
+  // read Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description is stored
+  // return value = true if no error occured
+  virtual bool ReadHilbertSpace (char* fileName);
+
 };
 
 // get canonical expression of a given state
@@ -312,18 +330,13 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetCanonicalState (uns
 #endif	
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
-  unsigned long TmpMask =  ((TmpState >> 1) ^ TmpState) & FERMION_SPHERE_SU2_SZ_MASK;
-  TmpMask |= TmpMask << 1;
-  if ((TmpState ^ TmpMask) < TmpState)
-    TmpState ^= TmpMask;
-  TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
-  TmpMask |= TmpMask << 1;
-  if ((initialState ^ TmpMask) < initialState)
-    initialState ^= TmpMask;
   if (TmpState < initialState)
-    return TmpState;
-  else
-    return initialState;
+    initialState = TmpState;
+  TmpState = ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState |= TmpState << 1;
+  if ((initialState ^ TmpState) < initialState)
+    initialState ^= TmpState;
+  return initialState;
 }
 
 // get symmetry of a given state 
@@ -385,20 +398,26 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetSignedCanonicalStat
 #endif
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
-  unsigned long TmpMask =  ((TmpState >> 1) ^ TmpState) & FERMION_SPHERE_SU2_SZ_MASK;
-  TmpMask |= TmpMask << 1;
-  if ((TmpState ^ TmpMask) < TmpState)
-    TmpState ^= TmpMask;
-
-  if (TmpState < initialState)
+  unsigned long TmpMask = 0x0ul;
+  if (TmpState != initialState)
     {
-      return (TmpState | FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT);
+      TmpMask = FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT;
+      if (TmpState < initialState)
+	initialState = TmpState;
     }
-  else
-    if (TmpState != initialState)
-      return (initialState | FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT);
-    else
-      return initialState;
+  TmpState =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState |= TmpState << 1;
+  TmpState ^= initialState;  
+  if (TmpState != initialState)
+    {
+      TmpMask |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
+      if (TmpState < initialState)
+	return (TmpState | TmpMask);
+      else
+	return (initialState | TmpMask);
+    }
+  else 
+    return (initialState | TmpMask);
 }
 
 // compute the parity of the number of spin singlet 

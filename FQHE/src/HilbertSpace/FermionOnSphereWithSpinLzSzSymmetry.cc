@@ -39,14 +39,20 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/Endian.h"
+
 #include <math.h>
 #include <bitset>
+#include <fstream>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
 using std::bitset;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 #define WANT_LAPACK
 
@@ -125,6 +131,7 @@ FermionOnSphereWithSpinLzSzSymmetry::FermionOnSphereWithSpinLzSzSymmetry (int nb
       this->StateDescription[i] = 0x0ul;
     else
       ++TmpHilbertSpaceDimension;
+  cout << "dim = " << TmpHilbertSpaceDimension << endl;
   unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
   int* TmpStateHighestBit = new int [TmpHilbertSpaceDimension];
   TmpHilbertSpaceDimension = 0;
@@ -141,8 +148,14 @@ FermionOnSphereWithSpinLzSzSymmetry::FermionOnSphereWithSpinLzSzSymmetry (int nb
   this->StateHighestBit = TmpStateHighestBit;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
 
-  this->GenerateLookUpTable(memory);
-  
+  if (this->HilbertSpaceDimension > 0)
+    {
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	this->GetStateSymmetry(this->StateDescription[i]);
+      this->StateHighestBit = 0;
+    }
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -199,6 +212,76 @@ FermionOnSphereWithSpinLzSzSymmetry::FermionOnSphereWithSpinLzSzSymmetry(const F
   this->SzParitySign = fermions.SzParitySign;
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereWithSpinLzSzSymmetry::FermionOnSphereWithSpinLzSzSymmetry (char* fileName, unsigned long memory)
+{
+  this->ReadHilbertSpace(fileName);
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrFermionsUp = (this->NbrFermions + this->TotalSpin) / 2;
+  this->NbrFermionsDown = (this->NbrFermions - this->TotalSpin) / 2;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->Flag.Initialize();
+#ifdef __64_BITS__
+  if ((this->LzMax & 1) == 0)
+    {
+      this->InvertShift = 32 - this->LzMax;
+      this->InvertUnshift = this->InvertShift - 2;
+    }
+  else
+    {
+      this->InvertShift = 32 - (this->LzMax + 1);
+      this->InvertUnshift = this->InvertShift;
+    }
+#else
+  if ((this->LzMax & 1) != 0)
+    {
+      this->InvertShift = 16 - (this->LzMax + 1);
+      this->InvertUnshift = this->InvertShift;
+    }
+  else
+    {
+      this->InvertShift = 16 - this->LzMax;
+      this->InvertUnshift = this->InvertShift - 1;
+    }
+#endif
+  if (this->HilbertSpaceDimension > 0)
+    {
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	this->GetStateSymmetry(this->StateDescription[i]);
+      this->StateHighestBit = 0;
+    }
+#ifdef __DEBUG__
+  int UsedMemory = 0;
+  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+
+#endif
+}
+
 // destructor
 //
 
@@ -251,6 +334,72 @@ AbstractHilbertSpace* FermionOnSphereWithSpinLzSzSymmetry::Clone()
   return new FermionOnSphereWithSpinLzSzSymmetry(*this);
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool FermionOnSphereWithSpinLzSzSymmetry::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalSpin);
+  WriteLittleEndian(File, this->SzParitySign);
+  WriteLittleEndian(File, this->LzParitySign);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateDescription[i]);
+  File.close();
+  return true;
+}
+
+// read Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description is stored
+// return value = true if no error occured
+
+bool FermionOnSphereWithSpinLzSzSymmetry::ReadHilbertSpace (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return false;
+    }
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrFermions);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->TotalSpin);
+  ReadLittleEndian(File, this->SzParitySign);
+  ReadLittleEndian(File, this->LzParitySign);
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateDescription[i]);
+  File.close();
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+  int NewLzMax = 1 + (2 * this->LzMax);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->StateDescription[i] &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+      unsigned long TmpState = this->StateDescription[i];
+      while (((TmpState >> NewLzMax) & 0x1ul) == 0x0ul)
+	--NewLzMax;
+      this->StateHighestBit[i] = NewLzMax;
+    }
+  return true;
+}
+  
 // convert a given state from symmetric basis to the usual n-body basis
 //
 // state = reference on the vector to convert

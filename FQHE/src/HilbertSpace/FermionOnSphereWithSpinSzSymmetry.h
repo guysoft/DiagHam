@@ -59,6 +59,12 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // memory = amount of memory granted for precalculations
   FermionOnSphereWithSpinSzSymmetry (int nbrFermions, int totalLz, int lzMax, bool minusParity, unsigned long memory = 10000000);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSpinSzSymmetry (char* fileName, unsigned long memory = 10000000);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
