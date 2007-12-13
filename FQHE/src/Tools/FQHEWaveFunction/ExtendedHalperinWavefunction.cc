@@ -231,7 +231,7 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
     }
   // calculate Cauchy determinant
   if (HaveDeterminant)
-    {
+    {      
       for (int i=0; i<NbrParticlesPerLayer; ++i)
 	{
 	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
@@ -249,6 +249,7 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 		  tmp*= J12[i];
 		  tmp*= J21[j-NbrParticlesPerLayer];
 		}
+	      //cout << " " <<tmp;
 	      // initialize Cauchy determinant 
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j-NbrParticlesPerLayer,Real(tmp), Imag(tmp));
@@ -257,8 +258,10 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 	      (*Matrix)[i].Im(j-NbrParticlesPerLayer) = Imag(tmp);
 #endif
 	    }
-	}
+	  //cout << endl;
+	}            
       tmp = Matrix->Determinant();
+      //cout << "Calculated Determinant " << tmp << endl;      
       for (int r=this->R; r>0; --r) result*=tmp;
       for (int r=this->R; r<0; ++r) result/=tmp;
     }

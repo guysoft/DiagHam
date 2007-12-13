@@ -23,7 +23,7 @@ my $Filling = $ARGV[3];
 #my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1)/2.0);
 
 # version provided by Thierry
-my $R0=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1));
+my $R0=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux+1)/2.0);
 my $R1=($NbrFlux+1)*($NbrFlux+1)/($NbrFlux*(2*$NbrFlux-1)/2.0);
 
 my $RawRescale;

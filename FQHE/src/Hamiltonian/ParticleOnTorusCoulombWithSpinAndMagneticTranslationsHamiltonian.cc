@@ -64,13 +64,14 @@ using std::ostream;
 // maxMomentum = maximum Lz value reached by a particle in the state
 // xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
+// layerSeparation = layer separation in units of magnetic length
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
 (ParticleOnTorusWithSpinAndMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio,
- AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+ double layerSeparation, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -79,8 +80,9 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
   this->NbrParticles = nbrParticles;
   this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
-  this->Ratio = ratio;
+  this->Ratio = ratio;  
   this->InvRatio = 1.0 / ratio;
+  this->LayerSeparation=layerSeparation;
 //  double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   double WignerEnergy = 0.0;
   this->Architecture = architecture;
@@ -231,10 +233,10 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		    m4 -= this->MaxMomentum;
 		if (m3 > m4)
 		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					   - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					   - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
+					   + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->LayerSeparation)
+					   - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation)
+					   - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->LayerSeparation));
 		    if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -298,10 +300,10 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		else
 		  if (m4 >= this->MaxMomentum)
 		    m4 -= this->MaxMomentum;		
-		TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-				       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-				       - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-				       - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+		TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
+				       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->LayerSeparation)
+				       - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation)
+				       - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->LayerSeparation));
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;

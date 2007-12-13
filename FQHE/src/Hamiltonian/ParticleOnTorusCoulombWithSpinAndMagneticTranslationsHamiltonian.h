@@ -49,6 +49,9 @@ class MathematicaOutput;
 
 class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian
 {
+ protected:
+  // parameter of layer separation if non-SU(2) invariant interaction
+  double LayerSeparation;
 
  public:
 
@@ -59,11 +62,12 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // maxMomentum = maximum Lz value reached by a particle in the state
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
+  // layerSeparation = layer separation in units of magnetic length
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian(ParticleOnTorusWithSpinAndMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
-							    double ratio, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+							    double ratio, double layerSeparation, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
