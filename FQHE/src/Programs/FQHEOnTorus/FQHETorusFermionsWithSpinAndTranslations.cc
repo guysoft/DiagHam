@@ -136,10 +136,10 @@ int main(int argc, char** argv)
 
   char* OutputNameLz = new char [512];
   if (LayerSeparation==0.0)
-    sprintf (OutputNameLz, "fermions_torus_su2_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+    sprintf (OutputNameLz, "fermions_torus_su2_coulomb_n_%d_2s_%d_Sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
   else
-    sprintf (OutputNameLz, "fermions_torus_d_%f_coulomb_n_%d_2s_%d_ratio_%f.dat", LayerSeparation, NbrFermions,
-	     MaxMomentum, XRatio);
+    sprintf (OutputNameLz, "fermions_torus_d_%f_coulomb_n_%d_2s_%d_Sz_%d_ratio_%f.dat", LayerSeparation, 
+NbrFermions,MaxMomentum, TotalSpin, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -231,7 +231,8 @@ int main(int argc, char** argv)
 	      }
 	    else
 	      {
-		File << XMomentum << " " << YMomentum2 << " " << HRep(0, 0) << endl;
+		if (Hamiltonian->GetHilbertSpaceDimension() > 0)
+		  File << XMomentum << " " << YMomentum2 << " " << HRep(0, 0) << endl;
 	      }
 	  }
 	else
@@ -314,6 +315,7 @@ int main(int argc, char** argv)
 	cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
 	delete Hamiltonian;
       }
-  File.close();  
+  File.close();
+  delete[] OutputNameLz;
   return 0;
 }

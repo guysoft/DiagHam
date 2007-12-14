@@ -64,6 +64,7 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
 
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MomentumModulo = FindGCD(this->NbrFermions, this->MaxMomentum);
+  cout << "MomentumModulo=" << MomentumModulo<<endl;
   this->XMomentum = xMomentum % this->MomentumModulo;
   this->YMomentum = yMomentum % this->MaxMomentum;
 
@@ -79,10 +80,14 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
 
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);
-  cout << this->HilbertSpaceDimension << endl;
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum);  
+  cout << "Max dimension: " << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
-  cout << this->HilbertSpaceDimension << endl;
+  cout << "Actual dimension: " << this->HilbertSpaceDimension << endl;
+  for (int i=0; i<HilbertSpaceDimension; ++i) {
+    PrintState (cout, i);
+    cout << endl;
+  }
 
   this->Flag.Initialize();
   this->GenerateLookUpTable(1000000);

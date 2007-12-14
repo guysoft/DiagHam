@@ -210,6 +210,8 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
+  // verbose version
+  int AduAduAuAuV (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
 
   // apply a^+_(u,m1) a^+_(d,m2) a_(d,n1) a_(u,n2) operator to a given state (with m1+m2=n1+n2)
   //
@@ -245,6 +247,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // n2 = second index for annihilation operator (spin up)
   // return value =  multiplicative factor 
   double AuAu (int index, int n1, int n2);
+  double AuAuV (int index, int n1, int n2);
 
   // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
   //
@@ -269,6 +272,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation);
+  int AduAduV (int m1, int m2, double& coefficient, int& nbrTranslation);
 
   // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
   //

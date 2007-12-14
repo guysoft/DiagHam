@@ -211,11 +211,10 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
   int M12Index = 0;
   int m4;
   double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-  double MaxCoefficient = 0.0;
-
+  double MaxCoefficient = 0.0;  
   if (this->Particles->GetParticleStatistic() == ParticleOnTorusWithSpinAndMagneticTranslations::FermionicStatistic)
     {
-      this->NbrM12IntraIndices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
+      this->NbrM12IntraIndices = ((this->NbrLzValue-1) * (this->NbrLzValue - 2)) / 2;
       this->M12IntraValue = new unsigned [this->NbrM12IntraIndices];
       this->NbrM34IntraValues = new int [this->NbrM12IntraIndices];
       this->M34IntraValues = new unsigned* [this->NbrM12IntraIndices];
@@ -286,7 +285,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
       this->M12InterValue = new unsigned [this->NbrM12InterIndices];
       this->NbrM34InterValues = new int [this->NbrM12InterIndices];
       this->M34InterValues = new unsigned*[this->NbrM12InterIndices];      
-      for (int i=0; i<this->NbrM12IntraIndices; ++i) this->M34InterValues[i] = new unsigned[this->NbrLzValue];
+      for (int i=0; i<this->NbrM12InterIndices; ++i) this->M34InterValues[i] = new unsigned[this->NbrLzValue];
       Pos = 0;
       M12Index = 0;
       for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
@@ -311,8 +310,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 	  }
       cout << "Max Nbr InteractionUpDown = " << Pos << endl;            
       MaxCoefficient *= MACHINE_PRECISION;
-      InteractionFactorsUpUp = new double[Pos];
-      InteractionFactorsDownDown = new double[Pos];
+      InteractionFactorsUpDown = new double[Pos];
       M12Index = 0;
       Pos = 0;
       TmpNbrInteractionFactors = 0;
@@ -343,6 +341,9 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 	    ++M12Index;
 	  }
       cout << "Actual Nbr InteractionUpDown = " << TmpNbrInteractionFactors << endl;
+      // no one-body interactions:
+      this->OneBodyInteractionFactorsUpUp = 0;
+      this->OneBodyInteractionFactorsDownDown = 0;
     }
   else
     {

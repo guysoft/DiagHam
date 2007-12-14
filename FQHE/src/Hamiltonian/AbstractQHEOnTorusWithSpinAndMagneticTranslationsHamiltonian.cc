@@ -43,6 +43,8 @@
 #include <sys/time.h>
 #include <fstream>
 
+// testing only:
+// #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 
 using std::ofstream;
 using std::ifstream;
@@ -313,11 +315,11 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  ReducedNbrInteractionFactors = 0;
-	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m1)
+	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
 	    {
 	      m1 = this->M12IntraValue[m12] & L16Mask;
 	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
-	      Coefficient = Particles->AuAu(i, m1, m2);	  
+	      Coefficient = Particles->AuAu(i, m1, m2);
 	      if (Coefficient != 0.0)
 		{
 		  SumIndices = m1 + m2;
@@ -331,7 +333,25 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      if (Index < Dim)
 			{
 			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
-			  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
+			  int Index2, NbrTranslation2;
+			  double Coefficientprime;
+			  Index2 = Particles->AduAduAuAu (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
+			  if (Index != Index2)
+			    cout << "Problem with Index in HilbertSpace from AbstractHamiltonian" << endl;
+			  if (Coefficient*Coefficient2 != Coefficientprime)
+			    {
+			      cout << "Problem with Coefficient in HilbertSpace from AbstractHamiltonian: "<<
+				Coefficient*Coefficient2 << " vs " << Coefficientprime << " for i=" << i
+				   << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< endl;
+// 			      cout << "Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
+// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduAuAuV (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
+// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AuAuV(i, m1, m2);
+// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduV(m3, m4, Coefficient2, NbrTranslation);
+// 			      cout << "Again, Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
+			    }
+			  if (NbrTranslation != NbrTranslation2)
+			    cout << "Problem with NbrTranslation in HilbertSpace from AbstractHamiltonian" << endl;
+	       		  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];			  
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
 			  vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
@@ -343,7 +363,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
 	    }
 	  ReducedNbrInteractionFactors = 0;
-	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m1)
+	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
 	    {
 	      m1 = this->M12IntraValue[m12] & L16Mask;
 	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
@@ -374,7 +394,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	    }
 	  
 	  ReducedNbrInteractionFactors = 0;
-	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m1)
+	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
 	    {
 	      m1 = this->M12IntraValue[m12] & L16Mask;
 	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
