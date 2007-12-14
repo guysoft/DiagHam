@@ -315,19 +315,19 @@ int main(int argc, char** argv)
 	  if (SzSymmetrizedBasis == true) 
 	    if (LzSymmetrizedBasis == false)
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
 		else
 		  Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 	      }
 	    else
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 		Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
 								((BooleanOption*) Manager["minus-lzparity"])->GetBoolean());
 	      else
 		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 	  else
-	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
 	    else
 	      Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
@@ -337,6 +337,8 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	}
+      if ((SzSymmetrizedBasis == true)  && (LzSymmetrizedBasis == true))
+	return 0;
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
