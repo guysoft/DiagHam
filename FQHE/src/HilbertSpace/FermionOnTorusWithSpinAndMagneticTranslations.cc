@@ -86,11 +86,11 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
   // testing the count of states:
-  if (true)
+  if (false)
     {
       int tmpYMomentum=YMomentum;
       long sum=0;
-      for ( int i=0; i<=this->MomentumModulo; ++i)
+      for ( int i=0; i<this->MaxMomentum; ++i)
 	{
 	  this->YMomentum=i;
 	  this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
@@ -106,6 +106,7 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
 	  cout << "comparing:" << endl;
 	  FermionOnTorusWithMagneticTranslations *test=new FermionOnTorusWithMagneticTranslations
 	    (NbrFermions, MaxMomentum, xMomentum, yMomentum);
+	  test->GetHilbertSpaceDimension();
 	  cout << "done comparing:" << endl;
 	}
     }
@@ -1599,7 +1600,7 @@ long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFer
     return pos;
   if ((lzMax < 0) || ((2 * (lzMax + 1)) < totalSpinUp) || ((2 * (lzMax + 1)) < (nbrFermions - totalSpinUp)) )
     return pos;
-  if ((nbrFermions == 0) && (lzMax == 0) && (totalSpinUp == 0) && ((totalMomentum % MomentumModulo)== YMomentum))
+  if ((nbrFermions == 0) && (lzMax == 0) && (totalSpinUp == 0) && ((totalMomentum % MaxMomentum)== YMomentum))
     {
       this->StateDescription[pos] = 0x0ul;
       return (pos + 1l);
@@ -1608,14 +1609,14 @@ long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFer
   if (nbrFermions == 1)
     {
       for (int k = 0; k <= lzMax; ++k)
-	if (((k+totalMomentum) % MomentumModulo) == YMomentum)
+	if (((k+totalMomentum) % MaxMomentum) == YMomentum)
 	  {	    
 	    this->StateDescription[pos++] = 0x1ul << ((k << 1) + totalSpinUp);
 	  }
       return (pos);
     }
   
-  if ((lzMax == 0)  && ( (totalMomentum % MomentumModulo) != YMomentum))
+  if ((lzMax == 0)  && ( (totalMomentum % MaxMomentum) != YMomentum))
     return pos;
 
   // put last two particles:
@@ -1832,20 +1833,20 @@ long FermionOnTorusWithSpinAndMagneticTranslations::ShiftedEvaluateHilbertSpaceD
     {
       long Tmp = 0;
       for (int k = 0; k <= lzMax; ++k)
-	if (((k+totalMomentum) % MomentumModulo) == YMomentum)
+	if (((k+totalMomentum) % MaxMomentum) == YMomentum)
 	  ++Tmp;
       return Tmp;
     }
   
 
-  if ((lzMax == 0)  && ( (totalMomentum % MomentumModulo) != YMomentum))
+  if ((lzMax == 0)  && ( (totalMomentum % MaxMomentum) != YMomentum))
     return 0l;
 
   unsigned long Tmp = 0l;  
   if (nbrFermions > 2)
     Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalMomentum + (2 * lzMax), totalSpinUp - 1);
   else
-    if ((totalSpinUp == 1) && (((totalMomentum + 2*lzMax) % MomentumModulo) == YMomentum) )
+    if ((totalSpinUp == 1) && (((totalMomentum + 2*lzMax) % MaxMomentum) == YMomentum) )
       ++Tmp;
   return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp - 1)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp)

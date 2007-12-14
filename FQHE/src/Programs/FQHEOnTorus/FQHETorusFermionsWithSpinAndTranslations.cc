@@ -75,6 +75,7 @@ int main(int argc, char** argv)
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1.0);
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundantYMomenta", "Calculate all subspaces up to YMomentum = MaxMomentum-1", false);
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "full-diag", 
@@ -151,7 +152,11 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
     XMomentum = 0;
   else
     XMaxMomentum = XMomentum;
-  int YMaxMomentum = (MaxMomentum - 1);
+  int YMaxMomentum;
+  if (Manager.GetBoolean("redundantYMomenta"))
+    YMaxMomentum = (MaxMomentum - 1);
+  else
+    YMaxMomentum = (MomentumModulo - 1);
   if (YMomentum < 0)
     YMomentum = 0;
   else
