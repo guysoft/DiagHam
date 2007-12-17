@@ -994,19 +994,57 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdu (int m1, int m2, double& coeffic
 #endif
     }
   TmpState |= (0x1ul << m1);
+  
+  unsigned long TmpState2 = TmpState;
   TmpState = this->GetSignedCanonicalState(TmpState);
-  NewLzMax = this->LzMax;
+  
+  if ((TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) <= FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT)
+    {
+      if (this->SzParitySign != this->LzParitySign)
+	return this->HilbertSpaceDimension;
+      this->GetStateSingletParity(TmpState2);
+      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
+	return this->HilbertSpaceDimension;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= M_SQRT2;
+      int NewLzMax = 1 + (this->LzMax << 1);
+      while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+	--NewLzMax;
+      return this->FindStateIndex(TmpState, NewLzMax);
+    }
+  
+  if ((TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
+    {
+      this->GetStateSingletParity(TmpState2);
+      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
+	return this->HilbertSpaceDimension;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= M_SQRT2;
+      int NewLzMax = 1 + (this->LzMax << 1);
+      while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+	--NewLzMax;
+      return this->FindStateIndex(TmpState, NewLzMax);
+    }
+  
+  
+  NewLzMax = 1 + (this->LzMax << 1);
   while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
     --NewLzMax;
-  int TmpIndex = this->FindStateIndex(TmpState, NewLzMax);
-  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT) != this->ProdASignature)
+  if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
     {
-      if (this->ProdASignature != 0)
-	coefficient *= M_SQRT2;
+      this->GetStateSingletParity(TmpState2);
+      double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= (1.0 + (this->SzParitySign * TmpSign - 1.0)) * ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul));
+      coefficient *= (1.0 + (this->LzParitySign * TmpSign - 1.0)) * ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul));
+    }
+  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
+    {
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
+	coefficient *= 0.5;
       else
 	coefficient *= M_SQRT1_2;
     }
-  return TmpIndex;
+  return this->FindStateIndex(TmpState, NewLzMax);
 }
 
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
