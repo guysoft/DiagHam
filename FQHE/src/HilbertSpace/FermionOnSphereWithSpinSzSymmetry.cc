@@ -87,7 +87,6 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
 										 (this->TotalSpin + this->NbrFermions) >> 1);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
   this->SzParitySign = 1.0;
@@ -118,22 +117,19 @@ FermionOnSphereWithSpinSzSymmetry::FermionOnSphereWithSpinSzSymmetry (int nbrFer
       }
   cout << "dim = " << TmpHilbertSpaceDimension << endl;
   unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
-  int* TmpStateHighestBit = new int [TmpHilbertSpaceDimension];
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->StateDescription[i] != 0x0ul)
       {
 	TmpStateDescription[TmpHilbertSpaceDimension] = this->StateDescription[i];
-	TmpStateHighestBit[TmpHilbertSpaceDimension] = this->StateHighestBit[i];
 	++TmpHilbertSpaceDimension;
       }
   delete[] this->StateDescription;
-  delete[] this->StateHighestBit;
   this->StateDescription = TmpStateDescription;
-  this->StateHighestBit = TmpStateHighestBit;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   if (this->HilbertSpaceDimension>0)
     {
+      this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
       this->GenerateLookUpTable(memory);
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;

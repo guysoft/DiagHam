@@ -43,20 +43,24 @@
 #define FERMION_SPHERE_SU2_SYMMETRIC_BIT  0xf000000000000000ul
 #define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT 0x8000000000000000ul
 #define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT 0x4000000000000000ul
-#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT 0xc000000000000000ul
-#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT 0x2000000000000000ul
+#define FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT 0xc000000000000000ul
+#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT 0x2000000000000000ul
+#define FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT 0xe000000000000000ul
+#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT 0x1000000000000000ul
 #define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x0ffffffffffffffful
 #define FERMION_SPHERE_SU2_SZ_MASK 0x0555555555555555ul
-#define FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT 61
+#define FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT 60
 #else
 #define FERMION_SPHERE_SU2_SYMMETRIC_BIT  0xf0000000ul
 #define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT 0x80000000ul
 #define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT 0x40000000ul
-#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT 0xc0000000ul
-#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT 0x20000000ul
+#define FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT 0xc0000000ul
+#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT 0x20000000ul
+#define FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT 0xe0000000ul
+#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT 0x10000000ul
 #define FERMION_SPHERE_SU2_SYMMETRIC_MASK 0x0ffffffful
 #define FERMION_SPHERE_SU2_SZ_MASK 0x05555555ul
-#define FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT 29
+#define FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT 28
 #endif
 
 static  unsigned long FermionOnSphereWithSpinLzInvertTable[] = {0x0ul, 0x40ul, 0x80ul, 0xc0ul, 0x10ul, 0x50ul, 0x90ul, 0xd0ul, 0x20ul, 0x60ul, 0xa0ul, 0xe0ul, 0x30ul, 0x70ul, 0xb0ul, 0xf0ul,
@@ -332,13 +336,18 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetCanonicalState (uns
 #endif	
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
-  if (TmpState < initialState)
-    initialState = TmpState;
-  TmpState = ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
-  TmpState |= TmpState << 1;
-  if ((initialState ^ TmpState) < initialState)
-    initialState ^= TmpState;
-  return initialState;
+  unsigned long TmpState2 = ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState2 |= TmpState2 << 1;
+  unsigned long TmpState3 = ((TmpState >> 1) ^ TmpState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpState3 |= TmpState3 << 1;
+  if ((initialState ^ TmpState2) < initialState)
+    initialState ^= TmpState2;
+  if ((TmpState ^ TmpState3) < TmpState)
+    TmpState ^= TmpState3;
+  if (initialState < TmpState)
+    return initialState;
+  else
+    return TmpState;
 }
 
 // get symmetry of a given state 
@@ -347,6 +356,7 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetCanonicalState (uns
 
 inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSymmetry (unsigned long& initialState)
 {
+  unsigned long TmpSymmetryMask = 0x0ul;
   initialState <<= this->InvertShift;
 #ifdef __64_BITS__
   unsigned long TmpState = FermionOnSphereWithSpinLzInvertTable[initialState & 0xff] << 56;
@@ -366,13 +376,18 @@ inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSymmetry (unsigned long
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
   if (TmpState != initialState)    
-    initialState |= FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT;
-  TmpState = initialState;
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT;
   unsigned long TmpMask =  ((TmpState >> 1) ^ TmpState) & FERMION_SPHERE_SU2_SZ_MASK;
+  TmpMask |= TmpMask << 1;
+  if ((TmpState ^ TmpMask) != initialState)
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT;
+  TmpState = initialState;
+  TmpMask =  ((TmpState >> 1) ^ TmpState) & FERMION_SPHERE_SU2_SZ_MASK;
   TmpMask |= TmpMask << 1;
   TmpState ^= TmpMask; 
   if (TmpState != initialState)    
-    initialState |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
+  initialState |= TmpSymmetryMask;
 }
 
 // get canonical expression of a given state and its symmetry

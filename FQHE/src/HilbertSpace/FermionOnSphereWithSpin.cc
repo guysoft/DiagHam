@@ -98,13 +98,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
 //       exit(1);
 //     }
 
-  long TmpBidule = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-					(this->TotalSpin + this->NbrFermions) >> 1, 0l);
-  cout << "dim : " << TmpBidule << " " << this->HilbertSpaceDimension;
-  if (((long) this->HilbertSpaceDimension) != TmpBidule)
-    cout << " error";
-  cout << endl;
-
+  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
   this->GenerateLookUpTable(memory);
   
 #ifdef __DEBUG__

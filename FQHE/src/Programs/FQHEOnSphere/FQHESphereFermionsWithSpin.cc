@@ -322,8 +322,8 @@ int main(int argc, char** argv)
 	      }
 	    else
 	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, MemorySpace, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								((BooleanOption*) Manager["minus-lzparity"])->GetBoolean());
+		Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
 	      else
 		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 	  else

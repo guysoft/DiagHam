@@ -113,27 +113,8 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry (int nbrFer
     this->LzParitySign = -1.0;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-//     {
-//       this->PrintState(cout, i)  << endl;
-//       unsigned long TmpState = this->GetCanonicalState(this->StateDescription[i]);
-// //      cout << hex << TmpState << dec << endl;
-//       for (int j = this->NbrLzValue - 1; j >=0 ; --j)
-// 	{
-// 	  unsigned long Tmp = ((TmpState >> (j << 1)) & ((unsigned long) 0x3));
-// 	  if (Tmp == 0x1l)
-// 	    cout << "d ";
-// 	  else if (Tmp == 0x2l)
-// 	    cout << "u ";
-// 	  else if (Tmp == 0x3l)
-// 	    cout << "X ";
-// 	  else cout << "0 ";
-// 	}
-//       cout << endl << "--------------" << endl;
-//     }
   int TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
@@ -158,28 +139,24 @@ FermionOnSphereWithSpinLzSymmetry::FermionOnSphereWithSpinLzSymmetry (int nbrFer
 	  }	
       }
   unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
-  int* TmpStateHighestBit = new int [TmpHilbertSpaceDimension];
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     if (this->StateDescription[i] != 0x0ul)
       {
 	TmpStateDescription[TmpHilbertSpaceDimension] = this->StateDescription[i];
-	TmpStateHighestBit[TmpHilbertSpaceDimension] = this->StateHighestBit[i];
 	++TmpHilbertSpaceDimension;
       }
   delete[] this->StateDescription;
-  delete[] this->StateHighestBit;
   this->StateDescription = TmpStateDescription;
-  this->StateHighestBit = TmpStateHighestBit;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   if (this->HilbertSpaceDimension > 0)
     {
+      this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
       this->GenerateLookUpTable(memory);
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	this->GetStateSymmetry(this->StateDescription[i]);
-      
 #ifdef __DEBUG__
       int UsedMemory = 0;
       UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));

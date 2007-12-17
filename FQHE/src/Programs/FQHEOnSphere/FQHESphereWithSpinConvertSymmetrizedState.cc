@@ -90,6 +90,7 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;
     }
+      
   if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
     {
       LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
