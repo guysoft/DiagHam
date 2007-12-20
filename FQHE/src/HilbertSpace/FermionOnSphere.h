@@ -47,6 +47,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class FermionOnSphereHaldaneSymmetricBasis;
 
   friend class FermionOnSphereWithSpin;
+  friend class FermionOnSphereWithSpinSqueezedBasis;
 
   friend class BosonOnSphereShort;
 

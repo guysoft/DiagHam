@@ -133,7 +133,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // return value = Hilbert space dimension
   virtual int GetTargetHilbertSpaceDimension();
 
-  // convert a gien state from Haldane basis to the usual n-body basis
+  // convert a given state from Haldane basis to the usual n-body basis
   //
   // state = reference on the vector to convert
   // nbodyBasis = reference on the nbody-basis to use

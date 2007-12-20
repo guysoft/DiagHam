@@ -1,5 +1,6 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSqueezedBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
@@ -94,13 +95,17 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "start the Haldane algorithm from Laughlin state with exponent m)", -1);
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the symmetrized basis)",0);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the symmetrized basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the haldane or symmetrized bases)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -121,6 +126,7 @@ int main(int argc, char** argv)
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
   bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
 
@@ -284,61 +290,134 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       double Shift = -10.0;
-      ParticleOnSphereWithSpin* Space;
-      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+      ParticleOnSphereWithSpin* Space = 0;
+      if (HaldaneBasisFlag == false)
 	{
+	  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+	    {
+#ifdef __64_BITS__
+	      if (LzMax <= 31)
+#else
+		if (LzMax <= 15)
+#endif
+		  {
+		    Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
+		  }
+		else
+		  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return -1;
+		  }	
+	    }
+	  else
+	    {
+#ifdef __64_BITS__
+	      if (LzMax >= 31)
+#else
+		if (LzMax >= 15)
+#endif
+		  {
+		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		    return -1;
+		  }	
+	      if (SzSymmetrizedBasis == true) 
+		if (LzSymmetrizedBasis == false)
+		  {
+		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		    else
+		      Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  }
+		else
+		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								    ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		  else
+		    Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      else
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		{
+		  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		  return 0;
+		}
+	    }
+	  if ((SzSymmetrizedBasis == true)  && (LzSymmetrizedBasis == true))
+	    return 0;
+	}
+      else // using Squeezed Haldane Basis!
+	{
+	  int* ReferenceState = 0;
+	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	    {
+	      ReferenceState = new int[LzMax + 1];
+	      for (int i = 0; i <= LzMax; ++i)
+		ReferenceState[i] = 0;
+	      int tmpNbrParticles=0;
+	      if (Manager.GetInteger("laughlin-exponent")>0)		
+		for (int i = 0; i <= LzMax; i += Manager.GetInteger("laughlin-exponent"))
+		  {
+		    ReferenceState[i] = 3;
+		    tmpNbrParticles+=2;
+		  }
+	      if (tmpNbrParticles != NbrFermions)
+		{
+		  cout << "Wrong shift for this laughlin seed state"<< endl;
+		  exit(1);
+		}
+	    }
+	  else
+	    {
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrFermions) == false) || (NbrFermions <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		  return -1;     
+		}
+	      if (MaxNbrLz != (LzMax + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return -1;     
+		}
+	    }
+	  // assign Hilbert space here - no further symmetries implemented, yet...
 #ifdef __64_BITS__
 	  if (LzMax <= 31)
 #else
-	  if (LzMax <= 15)
+	    if (LzMax <= 15)
 #endif
-	    {
-	      Space = new FermionOnSphereWithSpin(NbrFermions, L, LzMax, SzTotal, MemorySpace);
-	    }
-	  else
-	    {
-	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	      return -1;
-	    }	
-	}
-      else
-	{
-#ifdef __64_BITS__
-	  if (LzMax >= 31)
-#else
-	  if (LzMax >= 15)
-#endif
-	    {
-	      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	      return -1;
-	    }	
-	  if (SzSymmetrizedBasis == true) 
-	    if (LzSymmetrizedBasis == false)
 	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSpinSqueezedBasis(Manager.GetString("load-hilbert"), MemorySpace);
 		else
-		  Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSpinSqueezedBasis(NbrFermions, L, LzMax, SzTotal, ReferenceState, MemorySpace);
+		if (Manager.GetString("save-hilbert") != 0)
+		  {
+		    ((FermionOnSphereWithSpinSqueezedBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+			 return 0;
+		  }
 	      }
-	    else
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	      else
-		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  else
-	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	    else
-	      Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	    {
-	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	      return 0;
-	    }
+	  
 	}
-      if ((SzSymmetrizedBasis == true)  && (LzSymmetrizedBasis == true))
-	return 0;
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -365,14 +444,15 @@ int main(int argc, char** argv)
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
-      delete Space;
+      delete Space;      
       if (EigenvectorName != 0)
 	{
 	  delete[] EigenvectorName;
 	  EigenvectorName = 0;
 	}
       if (FirstRun == true)
-	FirstRun = false; 
+	FirstRun = false;
+      if (HaldaneBasisFlag) return 0; // only one subspace defined...
     }
   delete[] OutputNameLz;
   return 0;

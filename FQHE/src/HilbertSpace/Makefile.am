@@ -28,6 +28,7 @@ BosonOnSphereState.cc \
 AbstractQHEParticle.cc \
 ParticleOnSphereWithSpin.cc \
 FermionOnSphereWithSpin.cc \
+FermionOnSphereWithSpinSqueezedBasis.cc \
 FullBosonOnSphere.cc \
 FermionOnSphereHaldaneBasis.cc \
 FermionOnSphereHaldaneHugeBasis.cc \

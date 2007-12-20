@@ -9,7 +9,8 @@
 //                   class of fermions on sphere with spin without            //
 //                            sign precalculation table                       //
 //                                                                            //
-//                        last modification : 12/12/2005                      //
+//                        class author: Gunnar Möller                         //
+//                        last modification : 20/12/2007                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -32,6 +33,7 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSqueezedBasis.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -40,11 +42,13 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/Endian.h"
 #include <math.h>
 #include <bitset>
 
 using std::cout;
 using std::endl;
+using std::ios;
 using std::hex;
 using std::dec;
 using std::bitset;
@@ -61,7 +65,7 @@ using std::bitset;
 // default constructor
 //
 
-FermionOnSphereWithSpin::FermionOnSphereWithSpin()
+FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis()
 {
 }
 
@@ -71,37 +75,212 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin()
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // totalSpin = twce the total spin value
+// referenceState = array that describes the reference state to start from (each entry has two bits corresponding to up 2l / down 1l)
 // memory = amount of memory granted for precalculations
-
-FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory)
+FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis (int nbrFermions, int &totalLz, int lzMax, int totalSpin,  int* referenceState, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
-  this->TotalLz = totalLz;
   this->TotalSpin = totalSpin;
+  if ((NbrFermions&1) !=  (TotalSpin&1))
+    {
+      cout << "NbrFermions and TotalSpin need to have the same parity"<<endl;
+      exit(1);
+    }
   this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
-  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
+  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;  
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-//   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin);
-//   long TmpBidule = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-// 							      (this->TotalSpin + this->NbrFermions) >> 1);
+  // generate binary representation of reference state:
+  this->ReferenceState = 0x0ul;
+  int ReferenceStateHighestBit = 0;
+  this->TotalLz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      this->ReferenceState |= ((unsigned long) (referenceState[i] & 3)) << 2*i;
+      switch(referenceState[i]&3)
+	{
+	case 1:
+	  ReferenceStateHighestBit = 2*i;
+	  this->TotalLz += i;
+	case 2:
+	  ReferenceStateHighestBit = 2*i+1;
+	  this->TotalLz += i;
+	case 3:
+	  ReferenceStateHighestBit = 2*i+1;
+	  this->TotalLz += 2*i;
+	}
+    }
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
+  totalLz = this->TotalLz;
+  // calculate full HilbertSpace dimension
   this->HilbertSpaceDimension = (int) this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 										 (this->TotalSpin + this->NbrFermions) >> 1);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-//   if (this->GenerateStates(this->NbrFermions, this->LzMax, this->TotalLz, this->TotalSpin) != this->HilbertSpaceDimension)
-//     {
-//       cout << "Mismatch in State-count and State Generation in FermionOnSphereWithSpin!" << endl;
-//       exit(1);
-//     }
-
-  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];
+  // assign bit-valued Flags of whether to keep states:
+#ifdef  __64_BITS__
+  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 6) + 1;
+#else
+  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 5) + 1;
+#endif
+  this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    this->KeepStateFlag[i] = 0x0l;
+  // generate full Hilbert-space
+  this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->LzMax,
+							(this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
+							(this->TotalSpin + this->NbrFermions) >> 1, 0l);
+  cout << "Full Hilbert-space dimension: " <<HilbertSpaceDimension<<endl;
   this->GenerateLookUpTable(memory);
   
+  int MaxSweeps = (this->NbrFermionsUp * (this->NbrFermionsUp - 1))/2 // max number of squeezes within up-spins
+    + (this->NbrFermionsDown * (this->NbrFermionsDown - 1))/2 // max number of squeezes within up-spins
+    + (this->NbrFermionsUp * this->NbrFermionsDown)*2; // max number of generalized squeezes between different spins
+  
+  this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
+  this->TmpGeneratedStatesHighestBit = new int [MaxSweeps * 1000];
+  long Memory = 0l;
+
+  // mark reference state to be kept:
+  int TmpIndex = this->FindStateIndex(this->ReferenceState, ReferenceStateHighestBit);
+#ifdef  __64_BITS__
+  this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
+#else
+  this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
+#endif
+  // recursively, determine descendents:
+  this->GenerateDescendingStates(ReferenceStateHighestBit, this->ReferenceState, Memory);
+
+  for (int i=0; i<HilbertSpaceDimension; ++i)
+    {
+      this->PrintState(cout, i);
+      cout << " " << StateHighestBit[i];
+      cout << endl;
+    }
+
+  int NewHilbertSpaceDimension = 0;
+  unsigned long TmpKeepStateFlag;
+  int TmpNbrOne[] = {  
+  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 
+  4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[i];
+      NewHilbertSpaceDimension += TmpNbrOne[TmpKeepStateFlag & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 8) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 16) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 24) & 0xffl];
+#ifdef  __64_BITS__
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 32) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 40) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 48) & 0xffl];
+      NewHilbertSpaceDimension += TmpNbrOne[(TmpKeepStateFlag >> 56) & 0xffl];      
+#endif
+    }
+
+  delete[] this->SignLookUpTable;
+  delete[] this->SignLookUpTableMask;
+  delete[] this->LookUpTableShift;
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    delete[] this->LookUpTable[i];
+  delete[] this->LookUpTable;
+  unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
+  int* TmpStateHighestBit = new int [NewHilbertSpaceDimension];
+  NewHilbertSpaceDimension = 0;
+  int TotalIndex = 0;
+#ifdef  __64_BITS__
+  if ((this->HilbertSpaceDimension & 0x3f) != 0)
+#else
+  if ((this->HilbertSpaceDimension & 0x1f) != 0)
+#endif
+    --ReducedHilbertSpaceDimension;
+  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[i];
+#ifdef  __64_BITS__
+      for (int j = 0; j < 64; ++j)
+#else
+      for (int j = 0; j < 32; ++j)
+#endif
+	{
+	  if ((TmpKeepStateFlag >> j) & 0x1l)
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateHighestBit[NewHilbertSpaceDimension] = this->StateHighestBit[TotalIndex];
+	      ++NewHilbertSpaceDimension;
+	    }
+	  else
+	    {	      
+	      cout << "discarding ";
+	      this->PrintState(cout, TotalIndex);
+	      cout << endl;
+	    }
+	  ++TotalIndex;
+	}
+    }
+#ifdef  __64_BITS__
+  this->HilbertSpaceDimension &= 0x3f;
+ #else
+  this->HilbertSpaceDimension &= 0x1f;
+ #endif
+  if (this->HilbertSpaceDimension != 0)
+    {
+      TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
+      for (int j = 0; j < this->HilbertSpaceDimension; ++j)
+	{
+	  if ((TmpKeepStateFlag >> j) & 0x1l)
+	    {
+	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
+	      TmpStateHighestBit[NewHilbertSpaceDimension] = this->StateHighestBit[TotalIndex];
+	      ++NewHilbertSpaceDimension;
+	    }
+	  else
+	    {	      
+	      cout << "discarding ";
+	      this->PrintState(cout, TotalIndex);
+	      cout << endl;
+	    }
+	  ++TotalIndex;
+	}
+    }
+  
+  delete[] this->StateDescription;
+  delete[] this->StateHighestBit;
+  delete[] this->KeepStateFlag;
+  this->StateDescription = TmpStateDescription;
+  this->StateHighestBit = TmpStateHighestBit;
+  this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+  cout << "Reduced Hilbert-space dimension: " <<HilbertSpaceDimension<<endl;
+  delete[] this->TmpGeneratedStates;
+  delete[] this->TmpGeneratedStatesHighestBit;
+
+  for (int i=0; i<HilbertSpaceDimension; ++i)
+    {
+      this->PrintState(cout, i);
+      cout << " " << StateHighestBit[i];
+      cout << endl;
+    }
+
+  this->GenerateLookUpTable(memory);
+  
+
 #ifdef __DEBUG__
   int UsedMemory = 0;
   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -127,11 +306,67 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
 #endif
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis (char* fileName, unsigned long memory)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrFermions);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->TotalSpin);
+  ReadLittleEndian(File, this->ReferenceState);
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateDescription[i]);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateHighestBit[i]);
+
+  File.close();
+
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
+  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;  
+  this->Flag.Initialize();
+
+  this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+  unsigned long UsedMemory = 0l;
+  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+}
+
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnSphereWithSpin::FermionOnSphereWithSpin(const FermionOnSphereWithSpin& fermions)
+FermionOnSphereWithSpinSqueezedBasis::FermionOnSphereWithSpinSqueezedBasis(const FermionOnSphereWithSpinSqueezedBasis& fermions)
 {
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->Flag = fermions.Flag;
@@ -141,6 +376,7 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin(const FermionOnSphereWithSpin& 
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->ReferenceState = fermions.ReferenceState;
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->StateDescription = fermions.StateDescription;
@@ -157,18 +393,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin(const FermionOnSphereWithSpin& 
 // destructor
 //
 
-FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
+FermionOnSphereWithSpinSqueezedBasis::~FermionOnSphereWithSpinSqueezedBasis ()
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-      if (this->StateHighestBit != 0)
-	delete[] this->StateHighestBit;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < (2 * this->NbrLzValue); ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
-    }
 }
 
 // assignement (without duplicating datas)
@@ -176,7 +402,7 @@ FermionOnSphereWithSpin::~FermionOnSphereWithSpin ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSphereWithSpin& fermions)
+FermionOnSphereWithSpinSqueezedBasis& FermionOnSphereWithSpinSqueezedBasis::operator = (const FermionOnSphereWithSpinSqueezedBasis& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -191,6 +417,7 @@ FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSph
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->ReferenceState = fermions.ReferenceState;
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->StateDescription = fermions.StateDescription;
@@ -206,16 +433,46 @@ FermionOnSphereWithSpin& FermionOnSphereWithSpin::operator = (const FermionOnSph
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnSphereWithSpin::Clone()
+AbstractHilbertSpace* FermionOnSphereWithSpinSqueezedBasis::Clone()
 {
-  return new FermionOnSphereWithSpin(*this);
+  return new FermionOnSphereWithSpinSqueezedBasis(*this);
 }
+
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool FermionOnSphereWithSpinSqueezedBasis::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalSpin);
+  WriteLittleEndian(File, this->ReferenceState);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateDescription[i]);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateHighestBit[i]);
+  
+  File.close();
+  return true;
+}
+
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> FermionOnSphereWithSpin::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> FermionOnSphereWithSpinSqueezedBasis::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   TmpList += new SzQuantumNumber (this->TotalLz);
@@ -227,7 +484,7 @@ List<AbstractQuantumNumber*> FermionOnSphereWithSpin::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* FermionOnSphereWithSpin::GetQuantumNumber (int index)
+AbstractQuantumNumber* FermionOnSphereWithSpinSqueezedBasis::GetQuantumNumber (int index)
 {
   return new SzQuantumNumber (this->TotalLz);
 }
@@ -238,7 +495,7 @@ AbstractQuantumNumber* FermionOnSphereWithSpin::GetQuantumNumber (int index)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* FermionOnSphereWithSpin::ExtractSubspace (AbstractQuantumNumber& q, 
+AbstractHilbertSpace* FermionOnSphereWithSpinSqueezedBasis::ExtractSubspace (AbstractQuantumNumber& q, 
 							SubspaceSpaceConverter& converter)
 {
   return 0;
@@ -255,7 +512,7 @@ AbstractHilbertSpace* FermionOnSphereWithSpin::ExtractSubspace (AbstractQuantumN
 // return value = index of the destination state 
 
 //#include <bitset>
-int FermionOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
@@ -344,7 +601,7 @@ int FermionOnSphereWithSpin::AduAduAuAu (int index, int m1, int m2, int n1, int 
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
@@ -414,7 +671,7 @@ int FermionOnSphereWithSpin::AddAddAdAd (int index, int m1, int m2, int n1, int 
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
@@ -480,7 +737,7 @@ int FermionOnSphereWithSpin::AddAduAdAu (int index, int m1, int m2, int n1, int 
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
 
-double FermionOnSphereWithSpin::AduAu (int index, int m)
+double FermionOnSphereWithSpinSqueezedBasis::AduAu (int index, int m)
 {
   if ((this->StateDescription[index] & (0x2l << (m << 1))) != 0)
     return 1.0;
@@ -494,7 +751,7 @@ double FermionOnSphereWithSpin::AduAu (int index, int m)
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_d_m a_d_m
 
-double FermionOnSphereWithSpin::AddAd (int index, int m)
+double FermionOnSphereWithSpinSqueezedBasis::AddAd (int index, int m)
 {
   if ((this->StateDescription[index] & (0x1l << (m << 1))) != 0)
     return 1.0;
@@ -509,7 +766,7 @@ double FermionOnSphereWithSpin::AddAd (int index, int m)
 // n2 = second index for annihilation operator (spin up)
 // return value =  multiplicative factor 
 
-double FermionOnSphereWithSpin::AuAu (int index, int n1, int n2)
+double FermionOnSphereWithSpinSqueezedBasis::AuAu (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
   n1 <<= 1;
@@ -545,7 +802,7 @@ double FermionOnSphereWithSpin::AuAu (int index, int n1, int n2)
 // n2 = second index for annihilation operator (spin down)
 // return value =  multiplicative factor 
 
-double FermionOnSphereWithSpin::AdAd (int index, int n1, int n2)
+double FermionOnSphereWithSpinSqueezedBasis::AdAd (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
   n1 <<= 1;
@@ -579,7 +836,7 @@ double FermionOnSphereWithSpin::AdAd (int index, int n1, int n2)
 // n2 = second index for annihilation operator (spin down)
 // return value =  multiplicative factor 
 
-double FermionOnSphereWithSpin::AuAd (int index, int n1, int n2)
+double FermionOnSphereWithSpinSqueezedBasis::AuAd (int index, int n1, int n2)
 {
   this->ProdATemporaryState = this->StateDescription[index];
   n1 <<= 1;
@@ -614,7 +871,7 @@ double FermionOnSphereWithSpin::AuAd (int index, int n1, int n2)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AduAdu (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
   m1 <<= 1;
@@ -659,7 +916,7 @@ int FermionOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AddAdd (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
   m1 <<= 1;
@@ -702,7 +959,7 @@ int FermionOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int FermionOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
+int FermionOnSphereWithSpinSqueezedBasis::AduAdd (int m1, int m2, double& coefficient)
 {
   unsigned long TmpState = this->ProdATemporaryState;
   m1 <<= 1;
@@ -745,7 +1002,7 @@ int FermionOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
+int FermionOnSphereWithSpinSqueezedBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
@@ -779,7 +1036,7 @@ int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int 
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
+ostream& FermionOnSphereWithSpinSqueezedBasis::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
@@ -800,96 +1057,339 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
   return Str;
 }
 
-// generate all states corresponding to the constraints
+
+// generate all descendents of the given referenceState by squeezing operations
 // 
-// nbrFermions = number of fermions
-// lzMax = momentum maximum value for a fermion in the state
-// currentLzMax = momentum maximum value for fermions that are still to be placed
-// totalLz = momentum total value
-// totalSz = spin total value
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-int FermionOnSphereWithSpin::OldGenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSz)
+// highestBit = highest non-zero bit in reference state
+// referenceState = state whose direct descendents should be calculated
+// memory = index of memory slot to be used
+void FermionOnSphereWithSpinSqueezedBasis::GenerateDescendingStates(int highestBit, unsigned long referenceState, long& memory)
 {
-  //  codage des etats sur deux bits, -lzMax up down on the lsb's
-  
-  /*----------------DECLARES---------------*/
-  int Is_Lz, Is_Spin;
-  unsigned long i, coeff, testLzMax;
-  int k, position; 
-  int CheckLz;
-  int counter;
-  int DimOrbit = lzMax+1;
-  int currentLargestBit=2*lzMax+1;
-  /*-------------INITS---------------------*/
-  
-  CheckLz = ((totalLz+nbrFermions*lzMax)/2);  //  CheckLz =totalLz+N*S
+  int MaxSweepsUpUp = (this->NbrFermionsUp * (this->NbrFermionsUp - 1)) >> 1;
+  int MaxSweepsDownDown = (this->NbrFermionsDown * (this->NbrFermionsDown - 1)) >> 1;
+  int MaxSweepsUpDown = this->NbrFermionsUp * this->NbrFermionsDown;
+  int MaxSweeps = MaxSweepsUpUp + MaxSweepsDownDown + MaxSweepsUpDown << 1;
+  // assign temporary memory avoiding overwriting in recursion
+  unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
+  int* TmpHighestBit = this->TmpGeneratedStatesHighestBit  + (MaxSweeps  * memory);
+  memory += 1;
 
-  i = biggestOne(nbrFermions,2*DimOrbit);
-
-
-  testLzMax=0x1ul << currentLargestBit;
-  counter = 0;        // on exit: dim of subspace
-  
-  while (i)
+  // up-up squeezing operations
+  int TmpCurrentLzMax = 2;
+  int TmpCurrentLzMax2;
+  int TmpMaxLz, TmpMaxLzUp;
+  // calculate highest Lz of spin up fermion less 1:
+  if (highestBit&1)
+    TmpMaxLz = (highestBit>>1) - 1;
+  else
     {
-      Is_Lz=0;
-      Is_Spin=0;
-      
-      for(k=0;k<DimOrbit;k++)  // k indice va de 0 a 2S
-	{  
-          position = 2*k;                         // meaning 2*k
-          coeff = ((i&(3ul<<position))>>position);
-          
-          switch(coeff)
+      TmpMaxLz = highestBit-1;
+      while ((TmpMaxLz>0) && (referenceState & (1l<<TmpMaxLz) == 0)) TmpMaxLz-=2;
+      TmpMaxLz = (highestBit>>1) - 1;
+    }
+  TmpMaxLzUp = TmpMaxLz;
+  bitset<32> test;
+  test = referenceState;
+  // cout << "Reference-state =    " << test << " TmpMaxLz=" <<TmpMaxLz<<", TmpCurrentLzMax="<<TmpCurrentLzMax<<" highestBit="<<highestBit << endl;
+  // cout << "up-up descendents"<<endl;
+  int NbrEntries = 0;
+  unsigned long TmpReferenceState;  
+  while (TmpCurrentLzMax < TmpMaxLz)
+    {
+      while ((TmpCurrentLzMax < TmpMaxLz) && (((referenceState >> (TmpCurrentLzMax<<1)) & 0xal) != 0x8l))
+	++TmpCurrentLzMax;      
+      if (TmpCurrentLzMax < TmpMaxLz)
+	{
+	  TmpReferenceState = (referenceState & ~(0xal << (TmpCurrentLzMax<<1))) | (0x2l << (TmpCurrentLzMax<<1));
+	  TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+	  while (TmpCurrentLzMax2 >= 0)
 	    {
-            case 3:
-	      {      // neutral to spin!
-		Is_Lz += position;
-	      }
-	      break;
-	      
-            case 2:
-	      { Is_Spin +=1;
-	         Is_Lz +=k;}
-	      break;
-	      
-            case 1:
-	      { Is_Spin -=1;
-	         Is_Lz +=k;}
-	      break;
-	      
-            case 0:
-	      // neutral to Spin and Lz
-	      break;
-	      
-            default:
-	      printf("severe error in fermion states");
-	      break;
-	      
+	      while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0xal) != 0x2l))
+		--TmpCurrentLzMax2;
+	      if (TmpCurrentLzMax2 >= 0)
+		{
+		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0xal << (TmpCurrentLzMax2<<1))) | (0x8l << (TmpCurrentLzMax2<<1));
+		  
+		  test = TmpGeneratedStates2[NbrEntries];
+		  // cout << "Descending state " <<NbrEntries << " = " << test << endl;		  
+		  TmpHighestBit[NbrEntries] = highestBit;
+		  ++NbrEntries;
+		  --TmpCurrentLzMax2;
+		}	      
 	    }
-          
-          
-	}
-      
-      
-      if((Is_Lz == CheckLz) && (Is_Spin == totalSz) ) // project onto fixed spin and Lz
-	{
-	  this->StateDescription[counter]=i;
-	  this->StateHighestBit[counter]=currentLargestBit;
-	  counter++;
-	}	
-      
-      i=lastone(i);
-      // test if lzMax lowered in next word:
-      if (!(i&testLzMax)) 
-	{
-	  --currentLargestBit;
-	  testLzMax=1ul << currentLargestBit;
+	  ++TmpCurrentLzMax;
 	}
     }
-  return counter;
+  if (((referenceState >> (TmpCurrentLzMax<<1)) & 0xal) == 0x8l)
+    {
+      TmpReferenceState = (referenceState & ~(0xal << (TmpCurrentLzMax<<1))) | (0x2l << (TmpCurrentLzMax<<1));
+      TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+      int NewHighestBit;      
+      if ( (TmpReferenceState & (1l << (highestBit-1))) != 0l )
+	NewHighestBit = highestBit - 1;
+      else NewHighestBit = highestBit - 2;      
+      while (TmpCurrentLzMax2 >= 0)
+	{
+	  while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0xal) != 0x2l))
+	    --TmpCurrentLzMax2;
+	  if (TmpCurrentLzMax2 >= 0)
+	    {
+	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0xal << (TmpCurrentLzMax2<<1))) | (0x8l << (TmpCurrentLzMax2<<1));	      
+	      TmpHighestBit[NbrEntries] = NewHighestBit;
+	      test = TmpGeneratedStates2[NbrEntries];
+	      // cout << "Descending state " <<NbrEntries << " = " << test << " (highest bit " << TmpHighestBit[NbrEntries] << ")" << endl;		  
+	      ++NbrEntries;
+	      --TmpCurrentLzMax2;
+	    }
+	}      
+    }
+
+  // down-down squeezing operations
+  TmpCurrentLzMax = 2;
+  // calculate highest Lz of spin down fermion less 1:
+  if (highestBit&1)
+    {
+      TmpMaxLz = highestBit-1;
+      while ((TmpMaxLz>0) && ((referenceState & (1l<<TmpMaxLz)) == 0)) TmpMaxLz-=2;
+      TmpMaxLz = (highestBit>>1) - 1;
+    }
+  else
+    TmpMaxLz = (highestBit>>1) - 1;
+  int TmpMaxLzDown = TmpMaxLz;
+  // cout << "down down descendents" << endl;
+  while (TmpCurrentLzMax < TmpMaxLz)
+    {
+      while ((TmpCurrentLzMax < TmpMaxLz) && (((referenceState >> (TmpCurrentLzMax<<1)) & 0x5l) != 0x4l))
+	++TmpCurrentLzMax;
+      if (TmpCurrentLzMax < TmpMaxLz)
+	{
+	  TmpReferenceState = (referenceState & ~(0x5l << (TmpCurrentLzMax<<1))) | (0x1l << (TmpCurrentLzMax<<1));
+	  TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+	  while (TmpCurrentLzMax2 >= 0)
+	    {
+	      while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0x5l) != 0x1l))
+		--TmpCurrentLzMax2;
+	      if (TmpCurrentLzMax2 >= 0)
+		{
+		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x5l << (TmpCurrentLzMax2<<1))) | (0x4l << (TmpCurrentLzMax2<<1));
+		  
+		  test = TmpGeneratedStates2[NbrEntries];
+		  // cout << "Descending state " <<NbrEntries << " = " << test << endl;		  
+		  TmpHighestBit[NbrEntries] = highestBit;
+		  ++NbrEntries;
+		  --TmpCurrentLzMax2;
+		}	      
+	    }
+	  ++TmpCurrentLzMax;
+	}
+    }
+  if (((referenceState >> (TmpCurrentLzMax<<1)) & 0x5l) == 0x4l)
+    {
+      TmpReferenceState = (referenceState & ~(0x5l << (TmpCurrentLzMax<<1))) | (0x1l << (TmpCurrentLzMax<<1));
+      TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+      int NewHighestBit;
+      // cout << "final dd highestBit=" << highestBit << endl;
+      if (highestBit&1)
+	NewHighestBit = highestBit;
+      else
+	{
+	  NewHighestBit = highestBit-1;
+	  if ((TmpReferenceState & (1l << NewHighestBit)) == 0l ) --NewHighestBit;
+	}
+      while (TmpCurrentLzMax2 >= 0)
+	{
+	  while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0x5l) != 0x1l))
+	    --TmpCurrentLzMax2;
+	  if (TmpCurrentLzMax2 >= 0)
+	    {
+	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x5l << (TmpCurrentLzMax2<<1))) | (0x4l << (TmpCurrentLzMax2<<1));	      
+	      TmpHighestBit[NbrEntries] = NewHighestBit;
+	      test = TmpGeneratedStates2[NbrEntries];
+	      // cout << "Descending state " <<NbrEntries << " = " << test << " (highest bit " << TmpHighestBit[NbrEntries] << ")" << endl;		  
+	      ++NbrEntries;
+	      --TmpCurrentLzMax2;
+	    }
+	}      
+    }
+
+
+  // up-down squeezing operations
+  TmpCurrentLzMax = 2;
+  TmpMaxLz = TmpMaxLzUp;
+  int TmpMaxLz2 = TmpMaxLzDown+1;
+  if (TmpMaxLz2>=this->LzMax)
+    {
+      TmpMaxLz2 = this->LzMax-1;
+      while ((referenceState & (1l << (TmpMaxLz2<<1))) == 0)
+	--TmpMaxLz2;
+    }
+  test = referenceState;
+  // cout << "Reference-state =    " << test << " TmpMaxLz=" <<TmpMaxLz<<", TmpCurrentLzMax="<<TmpCurrentLzMax<<" highestBit="<<highestBit <<", TmpMaxLz2="<<TmpMaxLz2<< endl;
+  // cout << "up-down descendents"<<endl;
+  while (TmpCurrentLzMax < TmpMaxLz)
+    {
+      while ((TmpCurrentLzMax < TmpMaxLz) && (((referenceState >> (TmpCurrentLzMax<<1)) & 0xal) != 0x8l))
+	++TmpCurrentLzMax;
+      if (TmpCurrentLzMax < TmpMaxLz)
+	{
+	  TmpReferenceState = (referenceState & ~(0xal << (TmpCurrentLzMax<<1))) | (0x2l << (TmpCurrentLzMax<<1));
+	  TmpCurrentLzMax2 = 0;
+	  while (TmpCurrentLzMax2 <= TmpMaxLz2)
+	    {
+	      while ((TmpCurrentLzMax2 <= TmpMaxLz2) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0x5l) != 0x1l))
+		++TmpCurrentLzMax2;
+	      if (TmpCurrentLzMax2 <= TmpMaxLz2)
+		{
+		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x5l << (TmpCurrentLzMax2<<1))) | (0x4l << (TmpCurrentLzMax2<<1));
+		  
+		  test = TmpGeneratedStates2[NbrEntries];
+		  // cout << "Descending state " <<NbrEntries << " = " << test;
+		  if (TmpCurrentLzMax2<(highestBit>>1))
+		    TmpHighestBit[NbrEntries] = highestBit;
+		  else
+		    TmpHighestBit[NbrEntries] = ((TmpCurrentLzMax2+1)<<1);
+		  // cout << ", highestBit = " << TmpHighestBit[NbrEntries] << " at TmpCurrentLzMax2="<<TmpCurrentLzMax2<< endl;
+		  ++NbrEntries;
+		  ++TmpCurrentLzMax2;
+		}
+	    }
+	  ++TmpCurrentLzMax;
+	}
+    }
+  if (((referenceState >> (TmpCurrentLzMax<<1)) & 0xal) == 0x8l)
+    {
+      TmpReferenceState = (referenceState & ~(0xal << (TmpCurrentLzMax<<1))) | (0x2l << (TmpCurrentLzMax<<1));
+      TmpCurrentLzMax2 = 0;
+      int NewHighestBit;      
+      if ( (TmpReferenceState & (1l << (highestBit-1))) != 0l )
+	NewHighestBit = highestBit - 1;
+      else NewHighestBit = highestBit - 2;
+      while (TmpCurrentLzMax2 <= TmpMaxLz2)
+	{
+	  while ((TmpCurrentLzMax2 <= TmpMaxLz2) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0xal) != 0x2l))
+	    ++TmpCurrentLzMax2;
+	  if (TmpCurrentLzMax2 <= TmpMaxLz2)
+	    {
+	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x5l << (TmpCurrentLzMax2<<1))) | (0x4l << (TmpCurrentLzMax2<<1));
+	      if ((TmpCurrentLzMax2<<1)<highestBit-2)
+		TmpHighestBit[NbrEntries] = NewHighestBit;
+	      else TmpHighestBit[NbrEntries] = ((TmpCurrentLzMax2+1)<<1);
+	      test = TmpGeneratedStates2[NbrEntries];
+	      // cout << "Descending state " <<NbrEntries << " = " << test << " (highest bit " << TmpHighestBit[NbrEntries] << " at TmpCurrentLzMax="<<TmpCurrentLzMax<< " at TmpCurrentLzMax2="<<TmpCurrentLzMax2<<")" << endl;		  
+	      ++NbrEntries;
+	      ++TmpCurrentLzMax2;
+	    }
+	}      
+    }
+
+  // down-up squeezing operations
+  TmpCurrentLzMax = 2;
+  TmpMaxLz = TmpMaxLzDown;
+  TmpMaxLz2 = TmpMaxLzUp+1;
+  if (TmpMaxLz2>=this->LzMax)
+    {
+      TmpMaxLz2 = this->LzMax-1;
+      while ((referenceState & (2l << (TmpMaxLz2<<1))) == 0)
+	--TmpMaxLz2;
+    }
+  test = referenceState;
+  // cout << "Reference-state =    " << test << " TmpMaxLz=" <<TmpMaxLz<<", TmpCurrentLzMax="<<TmpCurrentLzMax<<" highestBit="<<highestBit <<", TmpMaxLz2="<<TmpMaxLz2<< endl;
+  // cout << "down-up descendents"<<endl;
+  while (TmpCurrentLzMax < TmpMaxLz)
+    {
+      while ((TmpCurrentLzMax < TmpMaxLz) && (((referenceState >> (TmpCurrentLzMax<<1)) & 0x5l) != 0x4l))
+	++TmpCurrentLzMax;
+      if (TmpCurrentLzMax < TmpMaxLz)
+	{
+	  TmpReferenceState = (referenceState & ~(0x5l << (TmpCurrentLzMax<<1))) | (0x1l << (TmpCurrentLzMax<<1));
+	  TmpCurrentLzMax2 = 0;
+	  while (TmpCurrentLzMax2 <= TmpMaxLz2)
+	    {
+	      while ((TmpCurrentLzMax2 <= TmpMaxLz2) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0xal) != 0x2l))
+		++TmpCurrentLzMax2;
+	      if (TmpCurrentLzMax2 <= TmpMaxLz2)
+		{
+		  TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0xal << (TmpCurrentLzMax2<<1))) | (0x8l << (TmpCurrentLzMax2<<1));
+		  
+		  test = TmpGeneratedStates2[NbrEntries];
+		  // cout << "Descending state " <<NbrEntries << " = " << test;
+		  if ((TmpCurrentLzMax2<<1)+3 < highestBit)
+		    TmpHighestBit[NbrEntries] = highestBit;
+		  else
+		    TmpHighestBit[NbrEntries] = ((TmpCurrentLzMax2<<1) + 3);
+		  // cout << ", highestBit = " << TmpHighestBit[NbrEntries] << " at TmpCurrentLzMax2="<<TmpCurrentLzMax2<< endl;
+		  ++NbrEntries;
+		  ++TmpCurrentLzMax2;
+		}
+	    }
+	  ++TmpCurrentLzMax;
+	}
+    }
+  if (((referenceState >> (TmpCurrentLzMax<<1)) & 0x5l) == 0x4l)
+    {
+      TmpReferenceState = (referenceState & ~(0x5l << (TmpCurrentLzMax<<1))) | (0x1l << (TmpCurrentLzMax<<1));
+      TmpCurrentLzMax2 = 0;
+      int NewHighestBit;
+      if (highestBit&1)
+	NewHighestBit = highestBit;
+      else
+	{
+	  NewHighestBit = highestBit-1;
+	  if ((TmpReferenceState & (1l << NewHighestBit)) == 0l ) --NewHighestBit;
+	}      
+      while (TmpCurrentLzMax2 <= TmpMaxLz2)
+	{
+	  while ((TmpCurrentLzMax2 <= TmpMaxLz2) && (((referenceState >> (TmpCurrentLzMax2<<1)) & 0x5l) != 0x1l))
+	    ++TmpCurrentLzMax2;
+	  if (TmpCurrentLzMax2 <= TmpMaxLz2)
+	    {
+	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0xal << (TmpCurrentLzMax2<<1))) | (0x8l << (TmpCurrentLzMax2<<1));
+	      if ((TmpCurrentLzMax2<<1)+3 < NewHighestBit)
+		TmpHighestBit[NbrEntries] = NewHighestBit;
+	      else
+		TmpHighestBit[NbrEntries] = ((TmpCurrentLzMax2<<1) + 3);
+	      test = TmpGeneratedStates2[NbrEntries];
+	      // cout << "Descending state " <<NbrEntries << " = " << test << " (highest bit " << TmpHighestBit[NbrEntries] << " at TmpCurrentLzMax="<<TmpCurrentLzMax<< " at TmpCurrentLzMax2="<<TmpCurrentLzMax2<<")" << endl;		  
+	      ++NbrEntries;
+	      ++TmpCurrentLzMax2;
+	    }
+	}      
+    }
+  
+  int TmpIndex;
+  int NbrNewEntries = 0;
+  for (int i = 0; i < NbrEntries; ++i)
+    {
+      TmpIndex = this->FindStateIndex(TmpGeneratedStates2[i], TmpHighestBit[i]);
+#ifdef __64_BITS__
+      if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l)
+	{
+	  TmpGeneratedStates2[i] = 0x0l;
+	}
+      else
+	{
+	  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
+	  ++NbrNewEntries;
+	}
+#else
+      if ((this->KeepStateFlag[TmpIndex >> 5] >> (TmpIndex & 0x1f)) & 0x1l)
+	{
+	  TmpGeneratedStates2[i] = 0x0l;
+	}
+      else
+	{
+	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
+	  ++NbrNewEntries;
+	}      
+#endif
+    }
+
+  if (NbrNewEntries > 0)
+    for (int i = 0; i < NbrEntries; ++i)
+      if (TmpGeneratedStates2[i] != 0x0l)
+	this->GenerateDescendingStates(TmpHighestBit[i], TmpGeneratedStates2[i], memory);
+  
+  memory -= 1;  
 }
 
 // generate all states corresponding to the constraints
@@ -901,7 +1401,7 @@ int FermionOnSphereWithSpin::OldGenerateStates(int nbrFermions, int lzMax, int t
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, long pos)
+long FermionOnSphereWithSpinSqueezedBasis::RawGenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, long pos)
 {
   if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalSpin > nbrFermions) )
     return pos;
@@ -949,7 +1449,7 @@ long FermionOnSphereWithSpin::GenerateStates(int nbrFermions, int lzMax, int tot
 // 
 // memory = memory size that can be allocated for the look-up table
 
-void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
+void FermionOnSphereWithSpinSqueezedBasis::GenerateLookUpTable(unsigned long memory)
 {
   // get every highest bit poisition
   unsigned long TmpPosition = this->StateDescription[0];
@@ -1094,7 +1594,7 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
 // signs = 
 // return value = sign value (+1.0 or -1.0)
 
-double FermionOnSphereWithSpin::ComputeSign(unsigned long signs)
+double FermionOnSphereWithSpinSqueezedBasis::ComputeSign(unsigned long signs)
 {
   unsigned result=0;
   while(signs) {
@@ -1113,7 +1613,7 @@ double FermionOnSphereWithSpin::ComputeSign(unsigned long signs)
 // totalSpin = twce the total spin value
 // return value = Hilbert space dimension
 
-int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
+int FermionOnSphereWithSpinSqueezedBasis::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
 {
   //  codage des etats sur deux bits, -lzMax up down on the lsb's
   
@@ -1193,7 +1693,7 @@ int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int 
 // totalSpin = number of particles with spin up
 // return value = Hilbert space dimension
 
-long FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
+long FermionOnSphereWithSpinSqueezedBasis::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
 {
   if ((nbrFermions < 0) || (totalLz < 0)  || (totalSpin < 0) || (totalSpin > nbrFermions))
     return 0l;
@@ -1232,7 +1732,7 @@ long FermionOnSphereWithSpin::ShiftedEvaluateHilbertSpaceDimension(int nbrFermio
 // nbrComponent = number of components to evaluate
 // return value = wave function evaluated at the given location
 
-Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+Complex FermionOnSphereWithSpinSqueezedBasis::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 							    int firstComponent, int nbrComponent)
 {
   Complex Value;
@@ -1332,7 +1832,7 @@ Complex FermionOnSphereWithSpin::EvaluateWaveFunction (RealVector& state, RealVe
 // return value = sign value (+1.0 or -1.0)
 // strategy: match up spin down particles in pairs, then move them out "for free"
 // make use of me knowing the location of spin up particles already
-double FermionOnSphereWithSpin::GetStateSign(int index, int* IndicesDown)
+double FermionOnSphereWithSpinSqueezedBasis::GetStateSign(int index, int* IndicesDown)
 { 
   unsigned long State = this->StateDescription[index];
   unsigned long mask, signs;
@@ -1362,7 +1862,7 @@ double FermionOnSphereWithSpin::GetStateSign(int index, int* IndicesDown)
 //
 // timeCoherence = true if time coherence has to be used
 
-void FermionOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCoherence)
+void FermionOnSphereWithSpinSqueezedBasis::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
   
@@ -1374,7 +1874,7 @@ void FermionOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCoheren
 // downStateSpace = reference on the Hilbert space associated to the down spin part  
 // return value = resluting SU(2) state
 
-RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionOnSphere& upStateSpace, RealVector& downState, FermionOnSphere& downStateSpace)
+RealVector FermionOnSphereWithSpinSqueezedBasis::ForgeSU2FromU1(RealVector& upState, FermionOnSphere& upStateSpace, RealVector& downState, FermionOnSphere& downStateSpace)
 {
   RealVector FinalState(this->HilbertSpaceDimension, true);
   for (int j = 0; j < upStateSpace.HilbertSpaceDimension; ++j)
@@ -1427,7 +1927,7 @@ RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionO
 		unsigned long TmpUpState4 = TmpUpState2 & ((0x1ul << Pos) - 1ul);
 #ifdef  __64_BITS__
 		TmpUpState4 ^= TmpUpState4 >> 32;
-#endif	
+#endif
 		TmpUpState4 ^= TmpUpState4 >> 16;
 		TmpUpState4 ^= TmpUpState4 >> 8;
 		TmpUpState4 ^= TmpUpState4 >> 4;
