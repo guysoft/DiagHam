@@ -85,6 +85,15 @@ class AbstractQHEOnSphereWithSU4SpinHamiltonian : public AbstractQHEOnSphereHami
   // array containing all interaction factors for spin down,isospin minus and spin down,isospin minus
   double** InteractionFactorsdmdm;
 
+  // array that contains all one-body interaction factors for particles with spin up/isospin plus
+  double* OneBodyInteractionFactorsupup;
+  // array that contains all one-body interaction factors for particles with spin up/isospin minus
+  double* OneBodyInteractionFactorsumum;
+  // array that contains all one-body interaction factors for particles with spin down/isospin plus
+  double* OneBodyInteractionFactorsdpdp;
+  // array that contains all one-body interaction factors for particles with spin down/isospin minus
+  double* OneBodyInteractionFactorsdmdm;
+
  public:
 
   // destructor

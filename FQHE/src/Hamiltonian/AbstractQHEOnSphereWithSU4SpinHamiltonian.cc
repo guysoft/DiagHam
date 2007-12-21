@@ -90,6 +90,13 @@ AbstractQHEOnSphereWithSU4SpinHamiltonian::~AbstractQHEOnSphereWithSU4SpinHamilt
   delete[] this->InteractionFactorsumdm;
   delete[] this->InteractionFactorsdpdm;
   delete[] this->InterSectorIndicesPerSum;
+  if (this->OneBodyInteractionFactorsupup != 0)
+    {
+      delete[] this->OneBodyInteractionFactorsupup;
+      delete[] this->OneBodyInteractionFactorsumum;
+      delete[] this->OneBodyInteractionFactorsdpdp;
+      delete[] this->OneBodyInteractionFactorsdmdm;
+    }
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -264,8 +271,25 @@ RealVector& AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelAddMultiply(RealV
 	    }
 	}
 
-      for (int i = firstComponent; i < LastComponent; ++i)
-	vDestination[i] += this->HamiltonianShift * vSource[i];
+      if (this->OneBodyInteractionFactorsupup != 0) 
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    { 
+	      TmpDiagonal = 0.0;
+	      for (int j = 0; j <= this->LzMax; ++j) 
+		{
+		  TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AdupAup(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * TmpParticles->AdumAum(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * TmpParticles->AddpAdp(i, j);
+		  TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * TmpParticles->AddmAdm(i, j);
+		}
+	      vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+	    }
+	}
+      else
+	for (int i = firstComponent; i < LastComponent; ++i)
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
       delete TmpParticles;
     }
   else
@@ -479,8 +503,25 @@ RealVector& AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelAddMultiply(RealV
 			      }
 			  } 
 		      }
-		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-		      vDestination[i] += this->HamiltonianShift * vSource[i];					
+		    if (this->OneBodyInteractionFactorsupup != 0) 
+		      {
+			double TmpDiagonal = 0.0;
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  { 
+			    TmpDiagonal = 0.0;
+			    for (int j = 0; j <= this->LzMax; ++j) 
+			      {
+				TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AdupAup(i, j);
+				TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * TmpParticles->AdumAum(i, j);
+				TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * TmpParticles->AddpAdp(i, j);
+				TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * TmpParticles->AddmAdm(i, j);
+			      }
+			    vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
+			  }
+		      }
+		    else
+		      for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			vDestination[i] += this->HamiltonianShift * vSource[i];					
 		  }
 	      delete TmpParticles;
 	    }
@@ -784,15 +825,37 @@ RealVector* AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelMultipleAddMultip
                 }
 	    }
 	}
-      for (int l = 0; l < nbrVectors; ++l)
-	{
-	  RealVector& TmpSourceVector = vSources[l];
-	  RealVector& TmpDestinationVector = vDestinations[l];
-	  for (int i = firstComponent; i < LastComponent; ++i)
-	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-	}
-      delete[] Coefficient2;
-      delete TmpParticles;
+       if (this->OneBodyInteractionFactorsupup != 0) 
+	 {
+	   double TmpDiagonal = 0.0;
+	   for (int l = 0; l < nbrVectors; ++l)
+	     {
+	       RealVector& TmpSourceVector = vSources[l];
+	       RealVector& TmpDestinationVector = vDestinations[l];
+	       for (int i = firstComponent; i < LastComponent; ++i)
+		 { 
+		   TmpDiagonal = 0.0;
+		   for (int j = 0; j <= this->LzMax; ++j) 
+		     {
+		       TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AdupAup(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * TmpParticles->AdumAum(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * TmpParticles->AddpAdp(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * TmpParticles->AddmAdm(i, j);
+		     }
+		   TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		 }
+	     }
+	 }
+       else
+	 for (int l = 0; l < nbrVectors; ++l)
+	   {
+	     RealVector& TmpSourceVector = vSources[l];
+	     RealVector& TmpDestinationVector = vDestinations[l];
+	     for (int i = firstComponent; i < LastComponent; ++i)
+	       TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	   }
+       delete[] Coefficient2;
+       delete TmpParticles;
     }
   else
     {
@@ -1071,13 +1134,35 @@ RealVector* AbstractQHEOnSphereWithSU4SpinHamiltonian::LowLevelMultipleAddMultip
                 }
 	      }
 	  }
-	for (int p = 0; p < nbrVectors; ++p)
-	  {
-	    RealVector& TmpSourceVector = vSources[p];
-	    RealVector& TmpDestinationVector = vDestinations[p];
-	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
-	      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-	  }
+       if (this->OneBodyInteractionFactorsupup != 0) 
+	 {
+	   double TmpDiagonal = 0.0;
+	   for (int p = 0; p < nbrVectors; ++p)
+	     {
+	       RealVector& TmpSourceVector = vSources[p];
+	       RealVector& TmpDestinationVector = vDestinations[p];
+	       for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		 { 
+		   TmpDiagonal = 0.0;
+		   for (int j = 0; j <= this->LzMax; ++j) 
+		     {
+		       TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AdupAup(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * TmpParticles->AdumAum(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * TmpParticles->AddpAdp(i, j);
+		       TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * TmpParticles->AddmAdm(i, j);
+		     }
+		   TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		 }
+	     }
+	 }
+       else
+	 for (int p = 0; p < nbrVectors; ++p)
+	   {
+	     RealVector& TmpSourceVector = vSources[p];
+	     RealVector& TmpDestinationVector = vDestinations[p];
+	     for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	       TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	   }
       }
   delete[] Coefficient2;
   delete TmpParticles;
@@ -1249,6 +1334,11 @@ long AbstractQHEOnSphereWithSU4SpinHamiltonian::PartialFastMultiplicationMemory(
 		    }
 		}
 	    }
+	}
+      if (this->OneBodyInteractionFactorsupup != 0)
+	{
+	  ++Memory;
+	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 	}
     }
 
@@ -1471,6 +1561,20 @@ void AbstractQHEOnSphereWithSU4SpinHamiltonian::EnableFastMultiplication()
 		    }
 		}
 	    }
+	}
+      if (this->OneBodyInteractionFactorsupup != 0)
+	{
+	  double TmpDiagonal = 0.0;
+	  for (int j = 0; j <= this->LzMax; ++j) 
+	    {
+	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AdupAup(i + this->PrecalculationShift, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsumum[j] * TmpParticles->AdumAum(i + this->PrecalculationShift, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsdpdp[j] * TmpParticles->AddpAdp(i + this->PrecalculationShift, j);
+	      TmpDiagonal += this->OneBodyInteractionFactorsdmdm[j] * TmpParticles->AddmAdm(i + this->PrecalculationShift, j);
+	    }
+	  TmpIndexArray[Pos] = i + this->PrecalculationShift;
+	  TmpCoefficientArray[Pos] = TmpDiagonal;
+	  ++Pos;	  
 	}
       ++TotalPos;
     }

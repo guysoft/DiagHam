@@ -84,6 +84,10 @@ ParticleOnSphereWithSU4SpinGenericHamiltonian::ParticleOnSphereWithSU4SpinGeneri
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
     }
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsumum = 0;
+  this->OneBodyInteractionFactorsdpdp = 0;
+  this->OneBodyInteractionFactorsdmdm = 0;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
