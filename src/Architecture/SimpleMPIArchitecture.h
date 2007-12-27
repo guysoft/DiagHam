@@ -164,6 +164,12 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = pointer to the broadcasted vector or null pointer if an error occured
   virtual Vector* BroadcastVector(Vector* vector = 0);
 
+  // scatter a vector upon each slave node
+  //
+  // vector = pointer to the vector to scatter  (only usefull for the master node)
+  // return value = pointer to the broadcasted vector or null pointer if an error occured
+  virtual Vector* ScatterVector(Vector* vector = 0);
+
   // broadcast a vector type and allocate a vector based on it on each slave node
   //
   // vector = pointer to the vector to be used as reference (only usefull for the master node)
@@ -183,6 +189,13 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // vector = pointer to the vector to be used as reference (only usefull for the master node)
   // return value =  pointer to the array of cloned vector or null pointer if an error occurednull pointer if an error occured
   virtual Vector** BroadcastVectorTypeArray(int& nbrVectors, Vector* vector = 0);
+
+  // scatter an array of vectors upon each slave node
+  //
+  // nbrVectors = reference on the number of vectors to broadcast or get
+  // vector = pointer to the vector to be used as reference (only usefull for the master node)
+  // return value = pointer to the broadcasted vector or null pointer if an error occured
+  virtual Vector** ScatterVectorArray(int& nbrVectors, Vector* vector = 0);
 
   // add current vector to the one of the master nide
   // 

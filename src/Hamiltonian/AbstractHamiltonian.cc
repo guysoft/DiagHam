@@ -683,12 +683,11 @@ List<Matrix*> AbstractHamiltonian::RightInteractionOperators()
 
 Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
 {
-  if (vSource.GetVectorType() != vDestination.GetVectorType())
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
-      cout << "error" << endl;
       return vDestination;
     }
-  if (vSource.GetVectorType() == Vector::RealDatas)
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination);
     }
@@ -711,9 +710,9 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination)
 Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination, 
 				      int firstComponent, int nbrComponent)
 {
-  if (vSource.GetVectorType() != vDestination.GetVectorType())
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
-  if (vSource.GetVectorType() == Vector::RealDatas)
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
     }
@@ -733,9 +732,8 @@ Vector& AbstractHamiltonian::Multiply(Vector& vSource, Vector& vDestination,
 
 Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)
 {
-  if (vSource.GetVectorType() != vDestination.GetVectorType())
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     {
-      cout << "error" << endl;
       return vDestination;
     }
   if (vSource.GetVectorType() == Vector::RealDatas)
@@ -761,9 +759,9 @@ Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination)
 Vector& AbstractHamiltonian::AddMultiply(Vector& vSource, Vector& vDestination, 
 					 int firstComponent, int nbrComponent)
 {
-  if (vSource.GetVectorType() != vDestination.GetVectorType())
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
     return vDestination;
-  if (vSource.GetVectorType() == Vector::RealDatas)
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelAddMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
     }
@@ -787,7 +785,7 @@ Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestina
   for (int i = 1; i < nbrVectors; ++i)
     if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
       return vDestinations;
-  if (vSources[0].GetVectorType() == Vector::RealDatas)
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
     }
@@ -809,19 +807,15 @@ Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestina
 Vector* AbstractHamiltonian::MultipleMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors, 
 					      int firstComponent, int nbrComponent)
 {
-  cout << "check " << endl;
   if (vSources[0].GetVectorType() != vDestinations[0].GetVectorType())
     return vDestinations;
   cout << "check 0" << endl;
   for (int i = 1; i < nbrVectors; ++i)
     {
-      cout << "check " << i << " " << vSources[0].GetVectorType()<< " " << vSources[i].GetVectorType()<< " " 
-	   << vDestinations[0].GetVectorType()<< " " << vDestinations[i].GetVectorType() << endl;      
       if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
 	return vDestinations;
     }
-  cout << "check " << endl;
-  if (vSources[0].GetVectorType() == Vector::RealDatas)
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       cout << "check real " << endl;
       return this->LowLevelMultipleMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
@@ -847,7 +841,7 @@ Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDest
   for (int i = 1; i < nbrVectors; ++i)
     if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
       return vDestinations;
-  if (vSources[0].GetVectorType() == Vector::RealDatas)
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors);
     }
@@ -875,7 +869,7 @@ Vector* AbstractHamiltonian::MultipleAddMultiply(Vector* vSources, Vector* vDest
   for (int i = 1; i < nbrVectors; ++i)
     if ((vSources[0].GetVectorType() != vSources[i].GetVectorType()) || (vDestinations[0].GetVectorType() != vDestinations[i].GetVectorType()))
       return vDestinations;
-  if (vSources[0].GetVectorType() == Vector::RealDatas)
+  if ((vSources[0].GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
     {
       return this->LowLevelMultipleAddMultiply((RealVector*) vSources, (RealVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
     }

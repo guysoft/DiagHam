@@ -142,7 +142,7 @@ class RealVector : public Vector
 
   // destructor
   //
-  ~RealVector ();
+  virtual ~RealVector ();
 
   // assignement
   //
@@ -165,12 +165,12 @@ class RealVector : public Vector
   // Resize vector
   //
   // dimension = new dimension
-  void Resize (int dimension);
+  virtual void Resize (int dimension);
 
   // Resize vector and set to zero all components that have been added
   //
   // dimension = new dimension
-  void ResizeAndClean (int dimension);
+  virtual void ResizeAndClean (int dimension);
 
   // copy a vector into another
   //
@@ -183,19 +183,19 @@ class RealVector : public Vector
   //
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
-  Vector* EmptyClone(bool zeroFlag = false);
+  virtual Vector* EmptyClone(bool zeroFlag = false);
 
   // create an array of new vectors with same size and same type but non-initialized components
   //
   // nbrVectors = number of vectors to sreate
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to the array of new vectors
-  Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
+  virtual Vector* EmptyCloneArray(int nbrVectors, bool zeroFlag = false);
 
   // put all vector components to zero
   //
   // return value = reference on current vector
-  Vector& ClearVector ();
+  virtual Vector& ClearVector ();
 
   // change sign of a vector
   //
@@ -808,7 +808,7 @@ class RealVector : public Vector
   // return vector i-th coordinate (without testing if position is valid)
   //
   // i = coordinate position
-  double& operator [] (int i);
+  virtual double& operator [] (int i);
 
   // get vector norm
   //
@@ -899,14 +899,14 @@ class RealVector : public Vector
   // communicator = reference on the communicator to use
   // id = id of the destination MPI process
   // return value = reference on the current vector
-  Vector& SendVector(MPI::Intracomm& communicator, int id);
+  virtual Vector& SendVector(MPI::Intracomm& communicator, int id);
 
   // broadcast a vector to all MPI processes associated to the same communicator
   // 
   // communicator = reference on the communicator to use 
   // id = id of the MPI process which broadcasts the vector
   // return value = reference on the current vector
-  Vector& BroadcastVector(MPI::Intracomm& communicator,  int id);
+  virtual Vector& BroadcastVector(MPI::Intracomm& communicator,  int id);
 
   // broadcast part of vector to all MPI processes associated to the same communicator
   // 
@@ -915,21 +915,21 @@ class RealVector : public Vector
   // firstComponent = index of the first component (useless if the method is not called by the MPI process which broadcasts the vector)
   // nbrComponent = number of component (useless if the method is not called by the MPI process which broadcasts the vector)
   // return value = reference on the current vector
-  Vector& BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent = 0, int nbrComponent = 0);
+  virtual Vector& BroadcastPartialVector(MPI::Intracomm& communicator, int id, int firstComponent = 0, int nbrComponent = 0);
 
   // receive a vector from a MPI process
   // 
   // communicator = reference on the communicator to use 
   // id = id of the source MPI process
   // return value = reference on the current vector
-  Vector& ReceiveVector(MPI::Intracomm& communicator, int id);
+  virtual Vector& ReceiveVector(MPI::Intracomm& communicator, int id);
 
   // add current vector to the current vector of a given MPI process
   // 
   // communicator = reference on the communicator to use 
   // id = id of the destination MPI process
   // return value = reference on the current vector
-  Vector& SumVector(MPI::Intracomm& communicator, int id);
+  virtual Vector& SumVector(MPI::Intracomm& communicator, int id);
 
   // create a new vector on each MPI node which is an exact clone of the broadcasted one
   //
@@ -937,7 +937,16 @@ class RealVector : public Vector
   // id = id of the MPI process which broadcasts the vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
-  Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+  virtual Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // firstComponent = index of the first component 
+  // nbrComponent = number of component to send
+  // return value = reference on the current vector
+  virtual Vector& SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent);
 
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //
@@ -945,7 +954,7 @@ class RealVector : public Vector
   // id = id of the MPI process which broadcasts the vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
-  Vector* BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
+  virtual Vector* BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
 
 #endif
 

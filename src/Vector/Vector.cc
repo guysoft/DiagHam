@@ -25,6 +25,8 @@
 
 #include "Vector/Vector.h"
 #include "Vector/RealVector.h"
+#include "Vector/PartialRealVector.h"
+#include "Vector/PartialComplexVector.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -125,7 +127,7 @@ Vector& Vector::operator += (Vector& vector)
 
 Vector& Vector::AddLinearCombination (double x, Vector& V)
 {
-  switch ((V.VectorType & this->VectorType))
+  switch ((V.VectorType & this->VectorType) & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
       return ((RealVector&) (*this)).AddLinearCombination (x, (RealVector&) V);
@@ -147,7 +149,7 @@ Vector& Vector::AddLinearCombination (double x, Vector& V)
 
 Vector& Vector::AddLinearCombination (double x, Vector& V, int firstComponent, int nbrComponent)
 {
-  switch ((V.VectorType & this->VectorType))
+  switch ((V.VectorType & this->VectorType)  & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
       return ((RealVector&) (*this)).AddLinearCombination (x, (RealVector&) V, firstComponent, nbrComponent);
@@ -171,7 +173,7 @@ Vector& Vector::AddLinearCombination (double x, Vector& V, int firstComponent, i
 
 Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, Vector& v2)
 {
-  switch (((v1.VectorType & this->VectorType) & v2.VectorType))
+  switch (((v1.VectorType & this->VectorType) & v2.VectorType)  & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
       return ((RealVector&) (*this)).AddLinearCombination (x1, (RealVector&) v1, x1, (RealVector&) v2);
@@ -198,7 +200,7 @@ Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, Vector& 
 Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, 
 				      Vector& v2, int firstComponent, int nbrComponent)
 {
-  switch (((v1.VectorType & this->VectorType) & v2.VectorType))
+  switch (((v1.VectorType & this->VectorType) & v2.VectorType)  & Vector::DataTypeMask)
     {
     case (Vector::RealDatas):
       return ((RealVector&) (*this)).AddLinearCombination (x1, (RealVector&) v1, x1, (RealVector&) v2, firstComponent, nbrComponent);
@@ -220,7 +222,7 @@ Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2,
 
 ostream& operator << (ostream& str, Vector& v)
 {
-  switch (v.VectorType)
+  switch (v.VectorType & Vector::DataTypeMask)
     {
       case (Vector::RealDatas):
 	str << (RealVector&) v;
@@ -306,13 +308,65 @@ Vector* Vector::BroadcastClone(MPI::Intracomm& communicator, int id)
   if (id != communicator.Get_rank())
     {
       communicator.Bcast(&Type, 1, MPI::INT, id);  
-      switch (Type)
+      switch (Type & Vector::DataTypeMask)
 	{
 	case (Vector::RealDatas):
 	  return new RealVector(communicator, id);
 	  break;
 	case (Vector::ComplexDatas):
 	  return new ComplexVector(communicator, id);
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  return 0;
+}
+
+// create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// firstComponent = index of the first component 
+// nbrComponent = number of component to send
+// return value = reference on the current vector
+
+Vector& Vector::SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+{
+  switch (this->VectorType & Vector::DataTypeMask)
+    {
+    case (Vector::RealDatas):
+      return ((RealVector*) this)->SendPartialClone(communicator, id, firstComponent, nbrComponent);
+      break;
+    case (Vector::ComplexDatas):
+      return ((ComplexVector*) this)->SendPartialClone(communicator, id, firstComponent, nbrComponent);
+      break;
+    default:
+      return *this;
+    }
+  return *this;
+}
+
+// create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the vector
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new vector 
+
+Vector* Vector::ReceivePartialClone(MPI::Intracomm& communicator, int id)
+{
+  int Type = this->VectorType;
+  if (id != communicator.Get_rank())
+    {
+      communicator.Recv(&Type, 1, MPI::INT, id, 1);  
+      switch (Type & Vector::DataTypeMask)
+	{
+	case (Vector::RealDatas):
+	  return new PartialRealVector(communicator, id, false);
+	  break;
+	case (Vector::ComplexDatas):
+	  return new PartialComplexVector(communicator, id, false);
 	  break;
 	default:
 	  return 0;
@@ -334,7 +388,7 @@ Vector* Vector::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool z
   communicator.Bcast(&Type, 1, MPI::INT, id);  
   if (id != communicator.Get_rank())
     {
-      switch (Type)
+      switch (Type & Vector::DataTypeMask)
 	{
 	case (Vector::RealDatas):
 	  return new RealVector(communicator, id);

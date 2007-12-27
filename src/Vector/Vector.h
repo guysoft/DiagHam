@@ -72,10 +72,12 @@ class Vector
   enum Type
     {
       RealDatas = 0x01,
-      ComplexDatas = 0x02,
+      ComplexDatas = 0x02,      
       RealPtrDatas = 0x04,
+      DataTypeMask = 0x0f,
       NonLocalDatas = 0x10,
-      DistributedDatas = 0x20
+      DistributedDatas = 0x20,
+      PartialData = 0x100
     };
 
   // virtual destructor
@@ -243,6 +245,23 @@ class Vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
   virtual Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // firstComponent = index of the first component 
+  // nbrComponent = number of component to send
+  // return value = reference on the current vector
+  virtual Vector& SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent);
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the vector
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new vector 
+  virtual Vector* ReceivePartialClone(MPI::Intracomm& communicator, int id);
 
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //

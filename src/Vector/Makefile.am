@@ -6,5 +6,6 @@ libVector_a_SOURCES=ComplexVector.cc \
 RealVector.cc \
 Vector.cc \
 DelocalizedRealVector.cc \
-RealPtrVector.cc
-
+RealPtrVector.cc \
+PartialRealVector.cc \
+PartialComplexVector.cc

@@ -342,6 +342,37 @@ Vector* SimpleMPIArchitecture::BroadcastVector(Vector* vector)
   return 0;
 }
 
+// scatter a vector upon each slave node
+//
+// vector = pointer to the vector to scatter  (only usefull for the master node)
+// return value = pointer to the broadcasted vector or null pointer if an error occured
+
+Vector* SimpleMPIArchitecture::ScatterVector(Vector* vector)
+{
+#ifdef __MPI__
+  int TmpIndices[2];
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  MPI::COMM_WORLD.Recv(TmpIndices, 2, MPI::INT, i, 1); 	      
+	  vector->SendPartialClone(MPI::COMM_WORLD, i, TmpIndices[0], TmpIndices[1]);
+	}
+      return vector;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	TmpIndices[0] = (int) this->MinimumIndex;
+	TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
+	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
+	Vector TmpVector;
+	return TmpVector.ReceivePartialClone(MPI::COMM_WORLD, 0);
+      }
+#endif  
+  return 0;
+}
+
 // broadcast a vector type and allocate a vector based on it on each slave node
 //
 // vector = pointer to the vector to be used as reference (only usefull for the master node)
@@ -427,6 +458,62 @@ Vector** SimpleMPIArchitecture::BroadcastVectorTypeArray(int& nbrVectors, Vector
 	TmpVectorArray[0] = TmpVector.BroadcastEmptyClone(MPI::COMM_WORLD, 0);
 	for (int i = 1; i < nbrVectors; ++i)
 	  TmpVectorArray[i] = TmpVectorArray[0]->EmptyClone();
+	return TmpVectorArray;
+      }
+#endif  
+  return 0;
+}
+
+// scatter an array of vectors upon each slave node
+//
+// nbrVectors = reference on the number of vectors to broadcast or get
+// vector = pointer to the vector to be used as reference (only usefull for the master node)
+// return value = pointer to the broadcasted vector or null pointer if an error occured
+
+Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vector)
+{
+#ifdef __MPI__
+  int TmpIndices[2];
+  MPI::COMM_WORLD.Bcast(&nbrVectors, 1, MPI::INT, 0); 
+  if ((this->MasterNodeFlag) && (vector != 0))
+    {
+      switch (vector->GetVectorType() & Vector::DataTypeMask)
+	{
+	case Vector::RealDatas:
+	  {
+	    for (int i = 1; i < this->NbrMPINodes; ++i)
+	      {
+		MPI::COMM_WORLD.Recv(TmpIndices, 2, MPI::INT, i, 1); 	      
+		for (int j = 0; j < nbrVectors; ++j)		 
+		  ((RealVector*) vector)[j].SendPartialClone(MPI::COMM_WORLD, i, TmpIndices[0], TmpIndices[1]);
+	      }
+	  }
+	  break;
+	case Vector::ComplexDatas:
+	  {
+	    for (int i = 1; i < this->NbrMPINodes; ++i)
+	      {
+		MPI::COMM_WORLD.Recv(TmpIndices, 2, MPI::INT, i, 1); 	      
+		for (int j = 0; j < nbrVectors; ++j)		 
+		  ((ComplexVector*) vector)[j].SendPartialClone(MPI::COMM_WORLD, i, TmpIndices[0], TmpIndices[1]);
+	      }
+	  }
+	  break;
+	}
+      return 0;
+    }
+  else
+    if (this->MasterNodeFlag == false)
+      {
+	TmpIndices[0] = (int) this->MinimumIndex;
+	TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
+	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
+	Vector** TmpVectorArray = new Vector*[nbrVectors];
+	Vector TmpVector;
+	for (int j = 0; j < nbrVectors; ++j)		 
+	  {	    
+	    TmpVectorArray[j] = TmpVector.ReceivePartialClone(MPI::COMM_WORLD, 0);
+	  }
 	return TmpVectorArray;
       }
 #endif  

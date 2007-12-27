@@ -89,7 +89,7 @@ VectorHamiltonianMultiplyOperation::VectorHamiltonianMultiplyOperation(AbstractH
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  this->SourceVector = architecture->BroadcastVector();
+  this->SourceVector = architecture->ScatterVector();
   this->DestinationVector = architecture->BroadcastVectorType();  
 }
   
@@ -193,7 +193,7 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
  	{
  	  return false;
  	}
-       architecture->BroadcastVector(this->SourceVector);
+       architecture->ScatterVector(this->SourceVector);
        architecture->BroadcastVectorType(this->DestinationVector);  
      }
    long TmpMinimumIndex = 0;

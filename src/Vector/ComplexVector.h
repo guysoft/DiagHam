@@ -592,17 +592,17 @@ class ComplexVector : public Vector
   // return reference on vector i-th coordinate
   //
   // i = coordinate position
-  Complex operator [] (int i);
+  virtual Complex operator [] (int i);
   
   // return reference on real part of vector i-th coordinate
   //
   // i = coordinate position
-  double& Re (int i);
+  virtual double& Re (int i);
   
   // return reference on imaginary part of vector i-th coordinate
   //
   // i = coordinate position
-  double& Im (int i);
+  virtual double& Im (int i);
   
   // get vector norm
   //
@@ -720,6 +720,15 @@ class ComplexVector : public Vector
   // zeroFlag = true if all coordinates have to be set to zero
   // return value = pointer to new vector 
   Vector* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // firstComponent = index of the first component 
+  // nbrComponent = number of component to send
+  // return value = reference on the current vector
+  Vector& SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent);
 
   // create a new vector on each MPI node with same size and same type but non-initialized components
   //

@@ -3081,6 +3081,28 @@ Vector* RealVector::BroadcastClone(MPI::Intracomm& communicator, int id)
   return 0;
 }
 
+// create a new vector on given MPI node which is an exact clone of the sent one but with only part of the data
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// firstComponent = index of the first component 
+// nbrComponent = number of component to send
+// return value = reference on the current vector
+
+Vector& RealVector::SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+{
+  communicator.Send(&this->VectorType, 1, MPI::INT, id, 1);
+  int TmpArray[5];
+  TmpArray[0] = nbrComponent;
+  TmpArray[1] = this->VectorId;
+  TmpArray[2] = 2;
+  TmpArray[3] = firstComponent;
+  TmpArray[4] = this->Dimension;
+  communicator.Send(TmpArray, 5, MPI::INT, id, 1); 
+  communicator.Send(this->Components + firstComponent, nbrComponent, MPI::DOUBLE, id, 1); 
+  return *this;
+}
+
 // create a new vector on each MPI node with same size and same type but non-initialized components
 //
 // communicator = reference on the communicator to use 
