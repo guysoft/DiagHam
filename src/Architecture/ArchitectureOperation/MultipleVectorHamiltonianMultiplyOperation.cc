@@ -114,7 +114,7 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
   this->FirstComponent = (int) TmpMinimumIndex;  
   this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  Vector** TmpSourceVectors = architecture->ScatterVectorArray(this->NbrVectors);
+  Vector** TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
   Vector** TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
   if (TmpSourceVectors[0]->GetVectorType() == Vector::RealDatas)
     {
@@ -287,12 +287,12 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 	}
       if (this->RealDestinationVectors != 0)
 	{
-	  architecture->ScatterVectorArray(this->NbrVectors, this->RealSourceVectors);
+	  architecture->BroadcastVectorArray(this->NbrVectors, this->RealSourceVectors);
 	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->RealDestinationVectors);  
 	}
       else
 	{
-	  architecture->ScatterVectorArray(this->NbrVectors, this->ComplexSourceVectors);
+	  architecture->BroadcastVectorArray(this->NbrVectors, this->ComplexSourceVectors);
 	  architecture->BroadcastVectorTypeArray(this->NbrVectors, this->ComplexDestinationVectors);  
 	}
     }
@@ -347,3 +347,4 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 #endif
 }
   
+

@@ -169,7 +169,6 @@ void SimpleMPIArchitecture::SetDimension (long dimension)
     }
   else
     {
-      cout << Tmp << endl;
       this->MinimumIndex = (long) (Tmp * ((double) dimension));
     }
   if (this->MPIRank == (this->NbrMPINodes - 1))
@@ -509,9 +508,9 @@ Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vect
 	TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
 	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
 	Vector** TmpVectorArray = new Vector*[nbrVectors];
-	Vector TmpVector;
 	for (int j = 0; j < nbrVectors; ++j)		 
 	  {	    
+	    Vector TmpVector;
 	    TmpVectorArray[j] = TmpVector.ReceivePartialClone(MPI::COMM_WORLD, 0);
 	  }
 	return TmpVectorArray;

@@ -198,9 +198,13 @@ PartialRealVector::~PartialRealVector ()
 
 PartialRealVector& PartialRealVector::operator = (const PartialRealVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  //  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if (this->Dimension != 0)
     {
-      delete[] this->Components;
+      if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+	{
+	  delete[] this->Components;
+	}
     }
   this->Flag = vector.Flag;
   this->VectorId = vector.VectorId;
