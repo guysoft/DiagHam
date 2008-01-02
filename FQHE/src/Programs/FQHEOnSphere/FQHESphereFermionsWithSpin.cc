@@ -330,8 +330,10 @@ int main(int argc, char** argv)
 		  }
 		else
 		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								    ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		    {
+		      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		    }
 		  else
 		    Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 	      else
@@ -345,8 +347,6 @@ int main(int argc, char** argv)
 		  return 0;
 		}
 	    }
-	  if ((SzSymmetrizedBasis == true)  && (LzSymmetrizedBasis == true))
-	    return 0;
 	}
       else // using Squeezed Haldane Basis!
 	{

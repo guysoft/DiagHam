@@ -40,13 +40,13 @@
 
 
 #ifdef __64_BITS__
-#define FERMION_SPHERE_SU2_SYMMETRIC_BIT  0xf000000000000000ul
-#define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT 0x8000000000000000ul
-#define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT 0x4000000000000000ul
+#define FERMION_SPHERE_SU2_SYMMETRIC_BIT       0xf000000000000000ul
+#define FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT    0x8000000000000000ul
+#define FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT    0x4000000000000000ul
 #define FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT 0xc000000000000000ul
-#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT 0x2000000000000000ul
+#define FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT  0x2000000000000000ul
 #define FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT 0xe000000000000000ul
-#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT 0x1000000000000000ul
+#define FERMION_SPHERE_SU2_SINGLETPARITY_BIT   0x1000000000000000ul
 #define FERMION_SPHERE_SU2_SZ_TRANSFORMATION_BIT 0x0800000000000000ul
 #define FERMION_SPHERE_SU2_LZ_TRANSFORMATION_BIT 0x0400000000000000ul
 #define FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT 59
@@ -91,6 +91,11 @@ static  unsigned long FermionOnSphereWithSpinLzInvertTable[] = {0x0ul, 0x40ul, 0
 
 class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
 {
+
+ private:
+
+  // indicate that both the Lz and Sz symmetry have the same parity
+  bool LzSzSameParityFlag;
 
  protected:
 
@@ -432,22 +437,18 @@ inline unsigned long FermionOnSphereWithSpinLzSzSymmetry::GetSignedCanonicalStat
   TmpState3 |= TmpState3 << 1;
   TmpState3 ^= TmpState;
   unsigned long TmpSymmetryMask = 0x0ul;
+  if (initialState != TmpState)
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT;
   if (TmpState2 != initialState)
-    {
-      TmpSymmetryMask |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
-      if (TmpState3 != initialState)
-	 TmpSymmetryMask |= FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT;
-      if (TmpState2 < initialState)
-	initialState = TmpState2 | FERMION_SPHERE_SU2_SZ_TRANSFORMATION_BIT;
-      if (TmpState3 < TmpState)
-	TmpState = TmpState3 | FERMION_SPHERE_SU2_SZ_TRANSFORMATION_BIT;
-    }
-  if ((initialState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
-    {
-      TmpSymmetryMask |= FERMION_SPHERE_SU2_LZ_SYMMETRIC_BIT;
-      if ((TmpState  & FERMION_SPHERE_SU2_SYMMETRIC_MASK) < (initialState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
-	initialState = TmpState | FERMION_SPHERE_SU2_LZ_TRANSFORMATION_BIT;
-    }
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT;
+  if (TmpState3 != initialState)
+    TmpSymmetryMask |= FERMION_SPHERE_SU2_LZSZ_SYMMETRIC_BIT;
+  if (TmpState2 < initialState)
+    initialState = TmpState2 | FERMION_SPHERE_SU2_SZ_TRANSFORMATION_BIT;
+  if (TmpState3 < TmpState)
+    TmpState = TmpState3 | FERMION_SPHERE_SU2_SZ_TRANSFORMATION_BIT;
+  if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) <  (initialState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
+    initialState = TmpState | FERMION_SPHERE_SU2_LZ_TRANSFORMATION_BIT;
   return (initialState | TmpSymmetryMask);
 }
 
