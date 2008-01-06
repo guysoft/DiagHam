@@ -37,12 +37,16 @@
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Matrix/RealMatrix.h"
+#include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
 
 
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
@@ -53,8 +57,9 @@ using std::endl;
 // architecture = architecture to use for matrix operations
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
+// resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
 
-BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter, bool diskFlag) 
+BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter, bool diskFlag, bool resumeDiskFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -65,6 +70,7 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(Abstr
   this->GroundState = RealVector();
   this->GroundStateFlag = false;
   this->DiskFlag = diskFlag;
+  this->ResumeDiskFlag = resumeDiskFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -93,6 +99,7 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(const
   this->V2 = algorithm.V2;
   this->V3 = algorithm.V3;
   this->DiskFlag = algorithm.DiskFlag;
+  this->ResumeDiskFlag = algorithm.ResumeDiskFlag;
   this->InitialState = algorithm.InitialState;
   this->GroundState = algorithm.GroundState;
   this->GroundStateFlag = algorithm.GroundStateFlag;
@@ -119,19 +126,26 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
   this->V1 = RealVector (Dimension);
   this->V2 = RealVector (Dimension);
   this->V3 = RealVector (Dimension);
-  int Shift = RAND_MAX / 2;
-  double Scale = 1.0 / ((double) Shift);
-  for (int i = 0; i < Dimension; i++)
+  if (this->ResumeDiskFlag == false)
     {
-      this->V1[i] = Scale * ((double) (rand() - Shift));
+      int Shift = RAND_MAX / 2;
+      double Scale = 1.0 / ((double) Shift);
+      for (int i = 0; i < Dimension; i++)
+	{
+	  this->V1[i] = Scale * ((double) (rand() - Shift));
+	}
+      this->V1 /= this->V1.Norm();
+      if (this->DiskFlag == false)
+	this->InitialState = RealVector (this->V1, true);
+      else
+	this->V1.WriteVector("vector.0");
+      this->Index = 0;
+      this->TridiagonalizedMatrix.Resize(0, 0);
     }
-  this->V1 /= this->V1.Norm();
-  if (this->DiskFlag == false)
-    this->InitialState = RealVector (this->V1, true);
   else
-    this->V1.WriteVector("vector.0");
-  this->Index = 0;
-  this->TridiagonalizedMatrix.Resize(0, 0);
+    {
+      this->ReadState();
+    }
 }
   
 // initialize Lanczos algorithm with a given vector
@@ -141,16 +155,26 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
 void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->V1 = vector;
-  this->V2 = RealVector (Dimension);
-  this->V3 = RealVector (Dimension);
-  if (this->DiskFlag == false)
-    this->InitialState = RealVector (vector, true);
+  if (this->ResumeDiskFlag == false)
+    {
+      this->V1 = vector;
+      this->V2 = RealVector (Dimension);
+      this->V3 = RealVector (Dimension);
+      if (this->DiskFlag == false)
+	this->InitialState = RealVector (vector, true);
+      else
+	this->V1.WriteVector("vector.0");
+      this->Index = 0;
+      this->GroundStateFlag = false;
+      this->TridiagonalizedMatrix.Resize(0, 0);
+    }
   else
-    this->V1.WriteVector("vector.0");
-  this->Index = 0;
-  this->GroundStateFlag = false;
-  this->TridiagonalizedMatrix.Resize(0, 0);
+    {
+      this->V1 = RealVector (Dimension);
+      this->V2 = RealVector (Dimension);
+      this->V3 = RealVector (Dimension);
+      this->ReadState();
+    }
 }
 
 // get the n first eigenstates (limited to the ground state fro this class, return NULL if nbrEigenstates > 1)
@@ -287,20 +311,28 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
   for (int i = this->Index + 2; i < Dimension; i++)
     {
       RealVector* TmpVector = new RealVector[2];
-      TmpVector[0] = this->V1;
-      TmpVector[1] = this->V2;
-      TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
-      TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
-      AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
-      Operation4.ApplyOperation(this->Architecture);
-      delete[] TmpVector;
-      this->V3 /= this->V3.Norm();
-      if (this->DiskFlag == true)
+      if (this->ResumeDiskFlag == false)
 	{
-	  char* TmpVectorName = new char [256];
-	  sprintf(TmpVectorName, "vector.%d", i);
-	  this->V3.WriteVector(TmpVectorName);
-	  delete[] TmpVectorName;
+	  TmpVector[0] = this->V1;
+	  TmpVector[1] = this->V2;
+	  TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
+	  TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
+	  AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+	  Operation4.ApplyOperation(this->Architecture);
+	  delete[] TmpVector;
+	  this->V3 /= this->V3.Norm();
+	  if (this->DiskFlag == true)
+	    {
+	      char* TmpVectorName = new char [256];
+	      sprintf(TmpVectorName, "vector.%d", i);
+	      this->V3.WriteVector(TmpVectorName);
+	      delete[] TmpVectorName;
+	      this->WriteState();
+	    }
+	}
+      else
+	{
+	  this->ResumeDiskFlag = false;
 	}
       if (this->DiskFlag == true)
 	{
@@ -362,3 +394,61 @@ bool BasicLanczosAlgorithmWithGroundState::TestConvergence ()
     return false;
 }
 
+// write current Lanczos state on disk
+//
+// return value = true if no error occurs
+
+bool BasicLanczosAlgorithmWithGroundState::WriteState()
+{
+  ofstream File;
+  File.open("lanczos.dat", ios::binary | ios::out);
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
+  WriteLittleEndian(File, TmpDimension);
+  --TmpDimension;
+  for (int i = 0; i <= TmpDimension; ++i)    
+    {    
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
+    }
+  for (int i = 0; i < TmpDimension; ++i)
+    {
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
+    }
+  File.close();  
+  return true;
+}
+
+// read current Lanczos state from disk
+//
+// return value = true if no error occurs
+
+bool BasicLanczosAlgorithmWithGroundState::ReadState()
+{
+  ifstream File;
+  File.open("lanczos.dat", ios::binary | ios::in);
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+  this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
+  --TmpDimension;
+  for (int i = 0; i <= TmpDimension; ++i)
+    {
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
+    }
+  for (int i = 0; i < TmpDimension; ++i)
+    {
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
+    }
+  File.close();  
+  char* TmpVectorName = new char [256];
+  sprintf(TmpVectorName, "vector.%d", this->Index);
+  this->V1.ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 1));
+  this->V2.ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 2));
+  this->V3.ReadVector(TmpVectorName);
+  delete[] TmpVectorName;
+  return true;
+}

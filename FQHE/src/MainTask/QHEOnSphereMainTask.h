@@ -116,6 +116,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   double LanczosPrecision;
   // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state
   bool FastDiskFlag;
+  // indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
 

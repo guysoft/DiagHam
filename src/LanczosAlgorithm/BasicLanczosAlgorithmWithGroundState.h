@@ -61,6 +61,8 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
 
   // flag to indicate the use of disk storage to increase speed of ground state calculation
   bool DiskFlag;
+  // flag to indicate that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  bool ResumeDiskFlag;
 
   int Index;
 
@@ -76,7 +78,8 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // architecture = architecture to use for matrix operations
   // maxIter = an approximation of maximal number of iteration
   // diskFlag = use disk storage to increase speed of ground state calculation
-  BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false);
+  // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  BasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
 
   // copy constructor
   //
@@ -117,6 +120,18 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // return value = true if convergence has been reached
   bool TestConvergence ();
   
+ protected:
+  
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  bool ReadState();
+
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  bool WriteState();
+
 };
 
 #endif
