@@ -1039,7 +1039,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdu (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
         }
       break;
-    case  0x6000000000000000ul :
+    case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
@@ -1057,7 +1057,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdu (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
       }
       break;
-    case 0xa000000000000000ul :
+    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
@@ -1174,7 +1174,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AddAdd (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
         }
       break;
-    case  0x6000000000000000ul :
+    case  FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
@@ -1192,7 +1192,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AddAdd (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
       }
       break;
-    case 0xa000000000000000ul :
+    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
@@ -1310,7 +1310,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdd (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
         }
       break;
-    case  0x6000000000000000ul :
+    case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
@@ -1328,7 +1328,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdd (int m1, int m2, double& coeffic
 	return this->FindStateIndex(TmpState, NewLzMax);
       }
       break;
-    case 0xa000000000000000ul :
+    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
       {
 	this->GetStateSingletParity(TmpState2);
 	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
