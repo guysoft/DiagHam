@@ -32,10 +32,10 @@
 #ifndef WAVEFUNCTIONOVERLAPOPTIMIZER_H
 #define WAVEFUNCTIONOVERLAPOPTIMIZER_H
 
-
 #include "config.h"
 #include "MathTools/Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "MCObservables/WeightedRealObservable.h"
 #include "MCObservables/WeightedRealVectorObservable.h"
 #include "MCObservables/WeightedComplexVectorObservable.h"
@@ -63,7 +63,10 @@ class WaveFunctionOverlapOptimizer
   double StepLength;
   Complex *OverlapObservation;
   int MaxPoints;
-  int MaxParameters;  
+  int LinearPoints;
+  int CloudyPoints;
+  int MaxParameters;
+  double Precision;
   double NormExactWF;
   double ErrorNormExactWF;
   double OutlierLimit;
@@ -75,10 +78,12 @@ class WaveFunctionOverlapOptimizer
   double typicalTV;
   double typicalWF;
   ofstream LogFile;
+
+  NumRecRandomGenerator *Generator;
   
  public:
 
-  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int maxPoints = 50, int limitSamples = 10000000, char* logFileName = NULL);
+  WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int linearPoints = 20, int cloudyPoints = 30, int limitSamples = 10000000, char* logFileName = NULL);
   ~WaveFunctionOverlapOptimizer();
   
   double GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap,
@@ -89,6 +94,7 @@ class WaveFunctionOverlapOptimizer
   void EvaluateTrialOverlaps();
   void DetermineGradientAndDifferentials(double *parameters);
   void CalculateLinearSeries(RealVector &startParameters, RealVector &stepDirection, RealVector &overlaps, RealMatrix &gradients);
+  double GetRandomOffset(int parameter);
   
 };
 

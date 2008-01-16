@@ -63,7 +63,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int totalLz,
-								       AbstractArchitecture* architecture, double l2Factor, long memory, bool onDiskCacheFlag,
+							     AbstractArchitecture* architecture, double l2Factor,  long memory, bool fixedLz, bool onDiskCacheFlag,
 								       char* precalculationFileName)
 {
   this->Particles = particles;
@@ -75,8 +75,12 @@ ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* p
   this->OneBodyTermFlag = true;
   this->L2Factor = l2Factor;
   this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->HamiltonianShift = 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
+  this->FixedLz = fixedLz;
+  if (FixedLz)
+    this->HamiltonianShift = 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
+  else
+    this->HamiltonianShift = 0;
+  this->EvaluateInteractionFactors();  
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
@@ -195,7 +199,10 @@ int ParticleOnSphereL2Hamiltonian::GetHilbertSpaceDimension ()
 
 void ParticleOnSphereL2Hamiltonian::ShiftHamiltonian (double shift)
 {
-  this->HamiltonianShift = shift + 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
+  if (FixedLz)
+    this->HamiltonianShift = shift + 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
+  else
+    this->HamiltonianShift = shift;
 }
   
 // evaluate matrix element
@@ -271,7 +278,9 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
     }
   else
     this->NbrInteractionFactors = this->LzMax * (this->LzMax + 1) + 1;
-    
+  if (!FixedLz) // need to calculate Lz^2, also
+    this->NbrInteractionFactors += this->LzMax * (this->LzMax + 1)/2;
+  
   this->M1Value = new int [this->NbrInteractionFactors];
   this->M2Value = new int [this->NbrInteractionFactors];
   this->M3Value = new int [this->NbrInteractionFactors];
@@ -327,11 +336,28 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
 	      ++this->NbrInteractionFactors;
 	    }
 	}
+    }  
+  if (!FixedLz) // need to calculate Lz^2, also: add mixed terms
+    {
+      for (int m1=1; m1<=this->LzMax; ++m1)
+	for (int m3=0; m3<m1; ++m3)
+	  {
+	    this->InteractionFactors[this->NbrInteractionFactors] = Factor *
+	      0.25*((2 * m1) - this->LzMax)*((2 * m3) - this->LzMax);
+	    this->M1Value[this->NbrInteractionFactors] = m1;
+	    this->M2Value[this->NbrInteractionFactors] = m3;
+	    this->M3Value[this->NbrInteractionFactors] = m1;
+	    ++this->NbrInteractionFactors;
+	  }
     }
+  
   Factor = this->L2Factor;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-      Factor *= -1.0;
-
+    Factor *= -1.0;
+  // in the case of SzProjection (which coincides with non FixedLz)
+  // an additional sign appears here...
+  if (!FixedLz)
+    Factor *= -1.0;
   this->NbrOneBodyInteractionFactors = this->LzMax + 1;
   this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
   this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
@@ -343,11 +369,17 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
     {
       this->OneBodyMValues[i] = i;
       this->OneBodyNValues[i] = i;
-      this->OneBodyInteractionFactors[i] = Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
-    }	  
+      this->OneBodyInteractionFactors[i] = Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));      
+    }
   this->OneBodyMValues[this->LzMax] = this->LzMax;
   this->OneBodyNValues[this->LzMax] = this->LzMax;
   this->OneBodyInteractionFactors[this->LzMax] = Factor * Coefficients(this->LzMax - 1, this->LzMax);
+  // calculate Lz^2 also if not constant Lz
+  if (!FixedLz)
+    {
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactors[i] += this->L2Factor * 0.25*((2 * i) - this->LzMax)*((2 * i) - this->LzMax);
+    }
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

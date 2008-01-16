@@ -60,6 +60,9 @@ class ParticleOnSphereL2Hamiltonian : public AbstractQHEOnSphereHamiltonian
   // multiplicative factor in front of the L^2 operator in the Hamiltonian
   double L2Factor;
 
+  // flag indicating whether the state concerned is an Lz subspace
+  bool FixedLz;
+
  public:
 
   // constructor from default datas
@@ -74,7 +77,8 @@ class ParticleOnSphereL2Hamiltonian : public AbstractQHEOnSphereHamiltonian
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int totalLz,
-				AbstractArchitecture* architecture, double l2Factor = 1.0, long memory = -1, 
+				AbstractArchitecture* architecture, double l2Factor = 1.0, 
+				long memory = -1, bool fixedLz = true,
 				bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
   // destructor

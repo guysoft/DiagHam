@@ -1,6 +1,8 @@
 #include "WaveFunctionOverlapOptimizer.h"
 #include "Matrix/RealMatrix.h"
 #include <iostream>
+#include <ctime>
+#include <cmath>
 
 #define TAB "\t"
 
@@ -14,7 +16,7 @@ using std::endl;
 // maximum allowed factor of Norm of wavefunction over typical value 
 #define OUTLIER_LIMIT 3.0
 
-WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int maxPoints, int limitSamples, char *logFileName)
+WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int linearPoints, int cloudyPoints, int limitSamples, char *logFileName)
 {
   this->NbrParticles = nbrParticles;  
   this->History = new MCHistoryRecord(historyFileName, 2*nbrParticles /* could add additional observables here */);
@@ -28,10 +30,14 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
     this->EffectiveNbrParameters = this->NbrParameters;
   this->LimitSamples=limitSamples;
   this->Gradient.Resize(this->NbrParameters);
-  this->MaxPoints = maxPoints;
-  this->MaxParameters = maxPoints*(1+2*this->EffectiveNbrParameters);
+  this->LinearPoints = std::max(0,linearPoints);
+  this->CloudyPoints = std::max(0,cloudyPoints);
+  this->MaxPoints = LinearPoints + CloudyPoints;
+  this->MaxParameters = MaxPoints*(1+2*this->EffectiveNbrParameters);
   if (this->MaxParameters<1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters)
     this->MaxParameters = 1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters;
+  if (CloudyPoints!=0)
+    this->Generator = new NumRecRandomGenerator(std::time(0));
   this->Differentials = new double[this->NbrParameters];
   this->NormObservation = new double[MaxParameters];
   this->OverlapObservation = new Complex[MaxParameters];
@@ -159,7 +165,8 @@ WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTri
 WaveFunctionOverlapOptimizer::~WaveFunctionOverlapOptimizer()
 {
   delete History;
-  for (int i=0; i<MaxParameters; ++i) delete [] this->NewParameters[i];  
+  for (int i=0; i<MaxParameters; ++i) delete [] this->NewParameters[i];
+  if (CloudyPoints!=0) delete this->Generator;
   delete [] this->NewParameters;
   delete [] this->NormObservation;
   delete [] this->OverlapObservation;
@@ -279,7 +286,7 @@ void WaveFunctionOverlapOptimizer::DetermineGradientAndDifferentials(double *par
   int iMax=0;
   for (int i=0; i<EffectiveNbrParameters; ++i)
     if (fabs(Gradient[i])>maxGradient) { maxGradient = fabs(Gradient[i]); iMax=i; }
-  this->StepLength = ProposedStepLength[iMax]*3.0/(double)this->MaxPoints;
+  this->StepLength = ProposedStepLength[iMax]*3.0/(double)this->LinearPoints;
   //if(this->StepLength > 100.0 * Differentials[iMax]) this->StepLength = 100.0 * Differentials[iMax];
   delete [] ProposedStepLength;
 }
@@ -291,8 +298,8 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
   int StatesPerPoint = 1+2*this->EffectiveNbrParameters;
   RealVector TmpParameters(startParameters,true);
   RealVector TmpStep;
-  TmpStep.Copy(stepDirection, this->StepLength);
-  for (int p=0; p<MaxPoints; ++p)
+  TmpStep.Copy(stepDirection, this->StepLength); // initialize TmpStep with StepLength * stepDirection
+  for (int p=0; p<LinearPoints; ++p)
     {
       for (int i=0; i<NbrParameters; ++i)
 	{
@@ -301,6 +308,26 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
 	    {
 	      this->NewParameters[p*StatesPerPoint+2*j+1][i]=TmpParameters[i];
 	      this->NewParameters[p*StatesPerPoint+2*j+2][i]=TmpParameters[i];
+	    }
+	}
+      for (int j=0; j<EffectiveNbrParameters; ++j)
+	{
+	  this->NewParameters[p*StatesPerPoint+2*j+1][j]+=Differentials[j];
+	  this->NewParameters[p*StatesPerPoint+2*j+2][j]-=Differentials[j];
+	}
+      TmpParameters+=TmpStep;
+    }
+  // initialize random points
+  for (int p=LinearPoints; p<MaxPoints; ++p)
+    {
+      for (int i=0; i<NbrParameters; ++i)
+	{
+	  this->NewParameters[p*StatesPerPoint][i]=startParameters[i];
+	  for (int j=0; j<EffectiveNbrParameters; ++j)
+	    {
+	      this->NewParameters[p*StatesPerPoint][i] += this->GetRandomOffset(j);
+	      this->NewParameters[p*StatesPerPoint+2*j+1][i]=this->NewParameters[p*StatesPerPoint][i];
+	      this->NewParameters[p*StatesPerPoint+2*j+2][i]=this->NewParameters[p*StatesPerPoint][i];
 	    }
 	}
       for (int j=0; j<EffectiveNbrParameters; ++j)
@@ -321,9 +348,24 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
       for (int j=EffectiveNbrParameters; j<NbrParameters; ++j) gradients[p][j]=0.0;
     }
 }
+
+double WaveFunctionOverlapOptimizer::GetRandomOffset(int parameter)
+{
+  double ran = this->Generator->GetRealRandomNumber();
+  double sign=-1.0;
+  if (ran>0.5) sign = 1.0;
+  ran = fabs(4.0*(ran-0.5));
+  double prefactor = this->Gradient[parameter];
+  if (prefactor>1e-4)
+    prefactor = 0.01/prefactor;
+  else
+    prefactor = 100.0;
+  return (sign * prefactor * std::exp(-ran));
+}
   
 double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap, double toleranceFinal, double toleranceIteration)
 {
+  this->Precision = toleranceFinal;
   // variables that are updated in the loop below:
   RealVector presentParameters(this->InitialParameters, this->NbrParameters);
   RealVector overlaps(this->MaxPoints);
@@ -335,27 +377,47 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
   this->DetermineGradientAndDifferentials(InitialParameters);
   InitialSqrOverlap = NormObservation[0];
   cout << "Initial overlap = " << InitialSqrOverlap << endl;
-  cout << "Initial parameters: " << presentParameters<<endl;
+  cout << "Initial parameters: " << presentParameters << endl;
   cout << "Gradient is: " << this->Gradient << endl;
   cout << "stepLength: "<<StepLength<<endl;
   stepDirection.Copy(this->Gradient);
   stepDirection.Normalize();
   // ultimately, start a loop here:
-  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-10))
+  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-7))
     {
       // calculate a series of points (and gradients) along stepDirection, and spaced with StepLength
       this->CalculateLinearSeries(presentParameters, stepDirection, overlaps, gradients);
       double lastOverlap=overlaps[0];
       double scalarProduct=stepDirection*gradients[0]/gradients[0].Norm();
       int point=1;
-      while ((point < MaxPoints) && (overlaps[point]>lastOverlap) && (scalarProduct>toleranceIteration))
+      // find largest overlap within linear series
+      while ((point < LinearPoints) && (overlaps[point]>lastOverlap) && (scalarProduct>toleranceIteration))
 	{	
 	  scalarProduct = stepDirection*gradients[point]/gradients[point].Norm();
 	  lastOverlap = overlaps[point];
 	  point ++;
+	}      
+      point--;      
+      // find largest overlap among random points
+      int point2=LinearPoints-1;
+      double randomOverlap=0.0;
+      for (int p=LinearPoints; p < MaxPoints; ++p)
+	{
+	  if (overlaps[p]>randomOverlap)
+	    {
+	      randomOverlap = overlaps[p];
+	      point2=p;
+	    }
 	}
-      point--;
-      
+      // choose actual next step:
+      if (randomOverlap > overlaps[point])
+	point = point2; // use random point
+      else
+	{  // random Overlap lower, but give it a chance here, anyways
+	  double reference = (point==0 ? Precision : overlaps[point]-overlaps[0]);
+	  if ( std::exp(- ( overlaps[point]-randomOverlap) / reference ) > Generator->GetRealRandomNumber() )
+	    point = point2; // use random point
+	}
       cout << "Overlap "<<overlaps[point] <<" (" <<point+1 <<"/"<<MaxPoints<<"), Grad: " << gradients[point].Norm() <<" "<< this->NewParameters[point*StatesPerPoint][0];
       LogFile << overlaps[point]<< TAB << StepLength << TAB << point << TAB << gradients[point].Norm() << TAB
 	      << this->NewParameters[point*StatesPerPoint][0];
@@ -364,6 +426,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
 	  cout <<" "<< NewParameters[point*StatesPerPoint][i];
 	  LogFile << TAB << NewParameters[point*StatesPerPoint][i];
 	}
+      if (point >=LinearPoints) cout << " rnd";
       cout << endl;
       LogFile << endl;
       LogFile.flush();
@@ -371,7 +434,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
       if (point==0)
 	{
 	  // same direction, but smaller StepLength;
-	  StepLength/=MaxPoints/2.5;
+	  StepLength/=LinearPoints/2.5;
 	  this->Gradient.Copy(gradients[0]);
 	  stepDirection.Copy(this->Gradient);
 	  stepDirection.Normalize();
@@ -381,9 +444,9 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
       else 
 	{
 	  // maybe separate case if continued until the last point?
-	  if (point<MaxPoints-1) // if we found a minimum before the end of our series -> reduce StepLength
+	  if (point<LinearPoints-1) // if we found a minimum before the end of our series -> reduce StepLength
 	    { 
-	      this->StepLength*=0.5+1.5*(double)(point-1)/(double)(MaxPoints-2);
+	      this->StepLength*=0.5+1.5*(double)(point-1)/(double)(LinearPoints-2);
 	      stepDirection.Copy(this->Gradient,gradients[point].SqrNorm()/this->Gradient.SqrNorm() );
 	      stepDirection += gradients[point];
 	      stepDirection.Normalize();

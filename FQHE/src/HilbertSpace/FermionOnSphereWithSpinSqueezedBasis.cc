@@ -1380,7 +1380,7 @@ void FermionOnSphereWithSpinSqueezedBasis::GenerateDescendingStates(int highestB
 	{
 	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 	  ++NbrNewEntries;
-	}      
+	}
 #endif
     }
 

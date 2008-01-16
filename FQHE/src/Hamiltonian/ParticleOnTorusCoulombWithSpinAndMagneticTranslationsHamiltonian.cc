@@ -369,7 +369,7 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
   double Sum = 0.0;
   double N2 = (double) (m1 - m4);
   double N1;
-  double Q2;
+  double Q,Q2;
   double D2 = layerSeparation * layerSeparation;
   double Precision;
 //  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
@@ -379,7 +379,7 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  Coefficient = exp(- PIOnM * Q2) / sqrt(Q2 + D2);
+	  Coefficient = exp(- PIOnM * Q2 ) / sqrt(Q2+D2);
 	  Precision = Coefficient;
 	}
       else
@@ -398,6 +398,7 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Q=sqrt(Q2);
 	  Precision = 2.0 * exp(- PIOnM * Q2) / sqrt(Q2 + D2);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
