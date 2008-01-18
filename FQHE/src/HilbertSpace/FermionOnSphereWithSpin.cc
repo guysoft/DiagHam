@@ -1466,3 +1466,44 @@ RealVector FermionOnSphereWithSpin::ForgeSU2FromU1(RealVector& upState, FermionO
 
   return FinalState;
 }
+
+// create a U(1) state from an SU(2) state
+//
+// state = vector describing the SU(2) state
+// u1Space = reference on the Hilbert space associated to the U(1) state
+// return value = resulting U(1) state
+
+RealVector FermionOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, FermionOnSphere& u1Space)
+{
+  RealVector FinalState(u1Space.GetHilbertSpaceDimension(), true);
+  for (int j = 0; j < this->HilbertSpaceDimension; ++j)    
+    {
+      unsigned long TmpState = this->StateDescription[j];
+      int TmpPos = this->LzMax << 1;
+      cout << hex << TmpState << dec << endl;
+      while (TmpPos > 0)
+	{
+	  if ((((TmpState >> TmpPos) & (TmpState >> (TmpPos + 1))) & 0x1ul) != 0x0ul)
+	    TmpPos = 1;
+	  TmpPos -= 2;
+	}
+      if (TmpPos != -1)
+	{ 
+	  TmpPos = 0;
+	  unsigned long TmpState2 = 0x0ul; 
+	  while (TmpPos <= this->LzMax)
+	    {
+	      TmpState2 |= ((TmpState & 0x1ul) | ((TmpState & 0x2ul) >> 1)) << TmpPos;
+	      TmpState >>= 2;
+	      ++TmpPos;
+	    }
+	  while ((TmpState2 >> TmpPos) == 0x0ul)
+	    --TmpPos;
+	  cout << hex << TmpState2 << dec << " : " << TmpPos << endl;
+	  FinalState[u1Space.FindStateIndex(TmpState2, TmpPos)] += state[j];
+	}
+    }
+  FinalState /= FinalState.Norm();
+  return FinalState;  
+}
+
