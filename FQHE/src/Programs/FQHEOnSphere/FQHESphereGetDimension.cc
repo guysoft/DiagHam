@@ -79,6 +79,17 @@ long FermionSU2SU2ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMa
 // return value = Hilbert space dimension
 long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement);
 
+// evaluate Hilbert space dimension for fermions with SU(3) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totalEntanglement = number of particles with entanglement plus
+// return value = Hilbert space dimension
+long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+
 // save dimensions in a given file
 //
 // outputFileName = output file name
@@ -125,6 +136,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su2su2-spin", "consider particles with SU(2)xSU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "ground-only", "get the dimension only for the largest subspace");
@@ -149,7 +161,8 @@ int main(int argc, char** argv)
   int  LzMin = 0;
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0)
     LzMin = 1;
-  if ((((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2su2-spin"])->GetBoolean() == false))
+  if ((((BooleanOption*) Manager["su4-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == false) && 
+      (((BooleanOption*) Manager["su3-spin"])->GetBoolean() == false) && (((BooleanOption*) Manager["su2su2-spin"])->GetBoolean() == false))
     if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
       {
 	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
@@ -214,97 +227,98 @@ int main(int argc, char** argv)
 	delete[] LDimensions;
       }
   else
-    {
-      int Sz = 0;
-      if (NbrParticles & 1)
-	Sz = 1;
-      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == true)
-	{
-	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	    {
-	      cout << "SU(4) mode for bosons not yet available" << endl;	
-	      return -1;
-	    }
-	  else
-	    {
-	      if (NbrParticles > (((NbrFluxQuanta + 1) << 2)))
-		{
-		  cout << "error : number of flux quanta is too low" << endl;
-		  return -1;
-		}
-	      if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
-		cout << FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
-								       (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1) << endl;
-	      else
-		{
-		  if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
-		    {
-		      char* OutputFileName = 0;
-		      if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
-			{
-			  OutputFileName = new char[256];
-			  sprintf (OutputFileName, "fermions_sphere_su4_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
-			}
-		      else
-			{
-			  OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
-			  strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
-			}		  
-		      ofstream File;
-		      File.open(OutputFileName, ios::binary | ios::out);
-		      FermionSU4WriteDimension(File, NbrParticles, NbrFluxQuanta);
-		      File.close();
-		      delete[] OutputFileName;
-		    }
-		  else
-		    FermionSU4WriteDimension (cout, NbrParticles, NbrFluxQuanta);
-		}
-	    }
-	}
-      else
-	{
-	  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
-	    {
-	      cout << "SU(2) mode not yet available" << endl;	
-	      return -1;
-	    }
-	  else
-	    {
-	      if (NbrParticles > (((NbrFluxQuanta + 1) << 1)))
-		{
-		  cout << "error : number of flux quanta is too low" << endl;
-		  return -1;
-		}
-	      if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
-		cout << FermionSU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
-								       (Sz + NbrParticles) >> 1) << endl;
-	      else
-		{
-		  if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
-		    {
-		      char* OutputFileName = 0;
-		      if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
-			{
-			  OutputFileName = new char[256];
-			  sprintf (OutputFileName, "fermions_sphere_su2_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
-			}
-		      else
-			{
-			  OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
-			  strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
-			}		  
-		      ofstream File;
-		      File.open(OutputFileName, ios::binary | ios::out);
-		      FermionSU2WriteDimension(File, NbrParticles, NbrFluxQuanta);
-		      File.close();
-		      delete[] OutputFileName;
-		    }
-		  else
-		    FermionSU4WriteDimension (cout, NbrParticles, NbrFluxQuanta);
-		}	      
-	    }
-	}
-    }
+    if (((BooleanOption*) Manager["su3-spin"])->GetBoolean() == false)
+      {
+	int Sz = 0;
+	if (NbrParticles & 1)
+	  Sz = 1;
+	if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == true)
+	  {
+	    if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	      {
+		cout << "SU(4) mode for bosons not yet available" << endl;	
+		return -1;
+	      }
+	    else
+	      {
+		if (NbrParticles > (((NbrFluxQuanta + 1) << 2)))
+		  {
+		    cout << "error : number of flux quanta is too low" << endl;
+		    return -1;
+		  }
+		if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
+		  cout << FermionSU4ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+									 (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1, (Sz + NbrParticles) >> 1) << endl;
+		else
+		  {
+		    if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		      {
+			char* OutputFileName = 0;
+			if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+			  {
+			    OutputFileName = new char[256];
+			    sprintf (OutputFileName, "fermions_sphere_su4_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+			  }
+			else
+			  {
+			    OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+			    strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+			  }		  
+			ofstream File;
+			File.open(OutputFileName, ios::binary | ios::out);
+			FermionSU4WriteDimension(File, NbrParticles, NbrFluxQuanta);
+			File.close();
+			delete[] OutputFileName;
+		      }
+		    else
+		      FermionSU4WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+		  }
+	      }
+	  }
+	else
+	  {
+	    if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	      {
+		cout << "SU(2) mode not yet available" << endl;	
+		return -1;
+	      }
+	    else
+	      {
+		if (NbrParticles > (((NbrFluxQuanta + 1) << 1)))
+		  {
+		    cout << "error : number of flux quanta is too low" << endl;
+		    return -1;
+		  }
+		if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
+		  cout << FermionSU2ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+									 (Sz + NbrParticles) >> 1) << endl;
+		else
+		  {
+		    if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		      {
+			char* OutputFileName = 0;
+			if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+			  {
+			    OutputFileName = new char[256];
+			    sprintf (OutputFileName, "fermions_sphere_su2_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+			  }
+			else
+			  {
+			    OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+			    strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+			  }		  
+			ofstream File;
+			File.open(OutputFileName, ios::binary | ios::out);
+			FermionSU2WriteDimension(File, NbrParticles, NbrFluxQuanta);
+			File.close();
+			delete[] OutputFileName;
+		      }
+		    else
+		      FermionSU4WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+		  }	      
+	      }
+	  }
+      }
 }
 
 // evaluate Hilbert space dimension for bosons
@@ -608,6 +622,21 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, totalSpin, totalIsospin, totalEntanglement - 1)
 	   + FermionSU4ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, totalSpin, totalIsospin, totalEntanglement));
 
+}
+
+// evaluate Hilbert space dimension for fermions with SU(3) spin
+//
+// nbrFermions = number of fermions
+// lzMax = momentum maximum value for a fermion
+// totalLz = momentum total value
+// totalSpin = number of particles with spin up
+// totalIsospin = number of particles with isospin plus
+// totalEntanglement = number of particles with entanglement plus
+// return value = Hilbert space dimension
+
+long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+{
+  return 0l;
 }
 
 // evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)
