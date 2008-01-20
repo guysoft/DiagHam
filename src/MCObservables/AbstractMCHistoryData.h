@@ -41,6 +41,8 @@ class AbstractMCHistoryData
       SomeMCHistoryDataType = 0x01u
     };
 
+  virtual ~AbstractMCHistoryData(){};
+  
   // Accessor routine to test for Type of additional data:
   unsigned GetHistoryDataType() {return this->MCHistoryDataType;}
 

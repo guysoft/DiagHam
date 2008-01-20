@@ -46,6 +46,8 @@
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 #include "Tools/FQHEWaveFunction/TwoThirdSingletState.h"
+#include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
+#include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/NumericalAnalysis/AntisymmetrizedComplexFunction.h"
@@ -93,6 +95,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
     }
   else if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
     {
@@ -124,6 +127,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * genericcf : generic composite fermions wave function" << endl;            
       str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
       str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
+      str << "  * hund : composite fermion state, if half filled highest shell using Hund's rule" << endl;
     }
   else
     if (this->GeometryID == QHEWaveFunctionManager::DiskGeometry)
@@ -141,7 +145,8 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * 1s : Spin-singlet state at filling one" << endl;
 	  str << "  * 2-3s : Spin-singlet state at filling two-thirds" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
-	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;	  
+	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
+	  str << "  * hund : singlet state with each layer formed according to Hund's rule" << endl;
 	}
   return str;
 }
@@ -212,6 +217,21 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
 	  rst->AdaptAverageMCNorm();
 	  delete [] Coefficients;
+	  return rst;
+	}
+      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+	{
+	  int N = this->Options->GetInteger("nbr-particles");
+	  int JastrowP = this->Options->GetInteger("nbr-flux")/2;
+	  int effectiveFlux = this->Options->GetInteger("lzmax")-2*JastrowP*(N-1);
+	  if (JastrowP==0)
+	    {
+	      cout << "To obtain CF's, at least two flux need to be attached. Try:  --nbr-flux 2"<<endl;
+	      exit(1);
+	    }
+	  HundRuleCFStates* rst = new HundRuleCFStates(N, effectiveFlux, JastrowP);
+	  rst->SelectMValue(this->Options->GetInteger("Jz-Value"));
+	  rst->AdaptAverageMCNorm();
 	  return rst;
 	}
       return 0;
@@ -289,6 +309,14 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      rst->AdaptAverageMCNorm();
 	      delete [] Coefficients;
 	      return rst;
+	    }
+	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+	    {
+	      int N= Options->GetInteger("nbr-particles");
+	      int n=N/2;
+	      HundRuleBilayerSinglet* rst = new HundRuleBilayerSinglet(n);
+	      rst->AdaptAverageMCNorm();
+	      return rst;	      
 	    }
 	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111-old") == 0))
 	    {
@@ -432,5 +460,7 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::OneS;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))
     return QHEWaveFunctionManager::TwoThirdsS;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+    return QHEWaveFunctionManager::HundRuleSinglet;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

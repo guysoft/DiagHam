@@ -85,6 +85,7 @@ class QHEWaveFunctionManager
       TwoThirdsS = 0x200000,
       HaldaneRezayi = 0x400000,
       ExtendedHalperin = 0x800000,
+      HundRuleSinglet = 0xf00000,
       TrialWaveFunction = 0x10000
     };
   

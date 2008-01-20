@@ -13,9 +13,6 @@ extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimension
 
 
 
-int dimension;
-  doublereal *Components;
-  
 // default constructor
 //
 ComplexLapackDeterminant::ComplexLapackDeterminant()
@@ -41,7 +38,7 @@ ComplexLapackDeterminant::ComplexLapackDeterminant(int dimension, bool zero)
 // destructor
 ComplexLapackDeterminant::~ComplexLapackDeterminant()
 {
-  if (dimension>0)
+  if (this->Dimension>0)
     {
       delete [] this->Components;
       delete [] this->Permutation;
@@ -75,7 +72,7 @@ void ComplexLapackDeterminant::SetMatrixElement(int i, int j, const double re, c
 // calculate the determinant, loosing information about the matrix elements
 Complex ComplexLapackDeterminant::Determinant()
 {
-  int Information = 0;  
+  int Information = 0;
   FORTRAN_NAME(zgetrf)(&Dimension, &Dimension, Components, &Dimension , Permutation, &Information);
   if (Information < 0)
     {
@@ -94,6 +91,31 @@ Complex ComplexLapackDeterminant::Determinant()
   if (sign & 1) Result*=-1.0;
 
   return Result;
+}
+
+// resize determinant dimensions
+void ComplexLapackDeterminant::Resize(int newDimension)
+{
+  if ((newDimension > 0) && (newDimension <= this->Dimension))
+    {
+      this->Dimension=newDimension;
+    }
+  else
+    {
+      if (Dimension > 0)
+	{
+	  delete [] this->Components;
+	  delete [] this->Permutation;
+	}
+      if (newDimension>0)
+	{
+	  this->Dimension=newDimension;
+	  this->Components=new doublecomplex[Dimension*Dimension];
+	  this->Permutation = new int[Dimension];
+	}
+      else
+	this->Dimension=0;	
+    }
 }
 
 #endif

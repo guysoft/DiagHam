@@ -29,4 +29,8 @@ PairedCFOnSphereWithSpinWaveFunction.cc \
 ParticleOnSphereCollection.cc \
 WaveFunctionOverlapOptimizer.cc \
 ExtendedHalperinWavefunction.cc \
-TwoThirdSingletState.cc
+TwoThirdSingletState.cc \
+HundRuleCFStates.cc \
+HundRuleBilayerSinglet.cc \
+SlaterSuperposition.cc \
+SlaterComponent.cc 

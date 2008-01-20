@@ -79,6 +79,9 @@ class ComplexLapackDeterminant
   // calculate the determinant, loosing information about the matrix elements
   Complex Determinant();
 
+  // resize determinant dimensions
+  void Resize(int newDimension);
+
   
 };
 
