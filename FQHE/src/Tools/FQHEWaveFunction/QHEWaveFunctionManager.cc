@@ -229,6 +229,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      cout << "To obtain CF's, at least two flux need to be attached. Try:  --nbr-flux 2"<<endl;
 	      exit(1);
 	    }
+	  cout << "Effective flux for CF's: "<<effectiveFlux<<endl;
 	  HundRuleCFStates* rst = new HundRuleCFStates(N, effectiveFlux, JastrowP);
 	  rst->SelectMValue(this->Options->GetInteger("Jz-Value"));
 	  rst->AdaptAverageMCNorm();

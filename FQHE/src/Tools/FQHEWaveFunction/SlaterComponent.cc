@@ -240,12 +240,14 @@ ostream& operator << (ostream & str, const SlaterComponent & s)
       int *lzValues = s.GetLzValues();
       if (s.Prefactor!=1.0)
 	str << s.Prefactor<<"*";
-      str << "Slater[ "<<lzValues[0];
-      if (lzValues[0]&1) str<< "/2";
+      str << "Slater[ ";
+      if (lzValues[0]&1) str<<lzValues[0]<< "/2";
+      else cout <<lzValues[0]/2.0;
       for (int i=1; i<s.NbrParticles; ++i)
 	{
-	  str << ", "<<lzValues[i];
-	  if (lzValues[0]&1) str<< "/2";
+	  str << ", ";
+	  if (lzValues[i]&1) str<<lzValues[i]<< "/2";
+	  else cout <<lzValues[i]/2.0;
 	}
       str <<"] ";
     }

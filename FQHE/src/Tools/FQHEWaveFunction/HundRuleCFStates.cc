@@ -93,27 +93,26 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
 #endif
   cout << "Configuration of CF's calculated:"<<endl;
   cout << NbrParticles << " electrons filling " << NumShells << " CF shells"<<endl;
-  cout << NbrParticlesInHighestShell << " electrons in highest shell with total L = " << TotalL;
-  if (TotalL&1) cout << "/2";
+  cout << NbrParticlesInHighestShell << " electrons in highest shell with total L = ";  
+  if (TotalL&1) cout << TotalL<<"/2";
+  else cout << TotalL/2.0;
   cout << endl;
 
-  if (NbrParticlesInHighestShell==0) // very trivial case...
+  if (TotalL==0) // very trivial case...
     {
       cout << "This is a filled shell state -> can use more efficient class to generate" << endl;
       // just reserve some space to avoid different case in destructor
-      this->NbrTermsPerLz = new int[HighestShellLzMax+1];
-      this->TermsPerLz = new SlaterComponent*[HighestShellLzMax+1];
-      for (int i=0; i<=HighestShellLzMax; ++i)
-	{
-	  this->NbrTermsPerLz[i]=0;
-	  this->TermsPerLz[i]=new SlaterComponent[1];
-	}
+      this->NbrTermsPerLz = new int[1];
+      this->TermsPerLz = new SlaterComponent*[1];
+      this->NbrTermsPerLz[0]=1;
+      this->TermsPerLz[0]=new SlaterComponent[1];
+      this->TermsPerLz[0][0]=SlaterComponent(NbrParticlesInHighestShell,HighestShellLzMax);
     }  
   else if (NbrParticlesInHighestShell==1) // trivial case...
     {
-      this->NbrTermsPerLz = new int[HighestShellLzMax+1];
-      this->TermsPerLz = new SlaterComponent*[HighestShellLzMax+1];
-      for (int i=0; i<=HighestShellLzMax; ++i)
+      this->NbrTermsPerLz = new int[TotalL+1];
+      this->TermsPerLz = new SlaterComponent*[TotalL+1];
+      for (int i=0; i<=TotalL; ++i)
 	{
 	  this->NbrTermsPerLz[i]=1;
 	  this->TermsPerLz[i]=new SlaterComponent[1];
@@ -287,12 +286,21 @@ Abstract1DComplexFunction* HundRuleCFStates::Clone ()
 // return value=true upon success (M in bounds)
 bool HundRuleCFStates::SelectMValue(int newMValue)
 {
-  if ((newMValue>=-this->TotalL)&&(newMValue<=this->TotalL)&&((newMValue+this->TotalL)&1==0))
+  //cout << "TotalL="<<TotalL<<", newM="<<newMValue<<endl;
+  if ((newMValue>=-this->TotalL)&&(newMValue<=this->TotalL)&&(((newMValue+this->TotalL)&1)==0))
     {
+      cout << "Selected Hund's rule state with M=";
+      if (newMValue&1)
+	cout<<newMValue<<"/2"<<endl;
+      else
+	cout<<newMValue/2<<endl;
       this->SelectMPosition=(newMValue+this->TotalL)/2;
       return true;
     }
-  else return false;
+  else
+    {
+      return false;
+    }
 }
 
 // evaluate function at a given point
@@ -308,7 +316,7 @@ Complex HundRuleCFStates::operator ()(RealVector& x)
 
 void HundRuleCFStates::GetValues(RealVector& x, Complex *result)
 {
-  this->OrbitalValues = (*(this->Orbitals))(x);
+  this->EvaluateTables(x);  
   for (int m=0; m<=this->TotalL; ++m)
     result[m]=EvaluateAState(m);
 }
@@ -320,13 +328,15 @@ Complex HundRuleCFStates::EvaluateAState(int LzPosition)
   Complex Result = 0.0;
   SlaterComponent *TmpTerms;
   TmpTerms = TermsPerLz[LzPosition];
+  //cout << "Calculating M="<<(2*LzPosition-HighestShellLzMax)/2.0<<" (LzPosition="<<LzPosition<<")"<<endl;
   for (int t=0; t<this->NbrTermsPerLz[LzPosition]; ++t)
     {
       for (int alpha=0; alpha<NbrParticles-NbrParticlesInHighestShell; ++alpha)
 	for (int n=0; n<NbrParticles; ++n)
 	  {
+	    //cout << "Setting element of lower shells (" << alpha<<", "<<n<<")"<<endl;
 #ifdef __USE_LAPACK_HERE__
-	    this->SlaterDeterminant.SetMatrixElement(alpha,n,this->ElementNorm*OrbitalValues[alpha][n]);
+	    this->SlaterDeterminant.SetMatrixElement(alpha,n,Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
 #else
 	    this->SlaterDeterminant[alpha].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
 	    this->SlaterDeterminant[alpha].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
@@ -340,8 +350,9 @@ Complex HundRuleCFStates::EvaluateAState(int LzPosition)
 	  alpha1=alpha0 + TmpLzPositions[i];
 	  for (int n=0; n<NbrParticles; ++n)
 	    {
+	      //cout << "Setting element of highest shells (" << alpha2<<", "<<n<<")"<<endl;
 #ifdef __USE_LAPACK_HERE__
-	      this->SlaterDeterminant.SetMatrixElement(alpha2,n,this->ElementNorm*OrbitalValues[alpha1][n]);
+	      this->SlaterDeterminant.SetMatrixElement(alpha2,n,Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
 #else
 	      this->SlaterDeterminant[alpha2].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
 	      this->SlaterDeterminant[alpha2].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
