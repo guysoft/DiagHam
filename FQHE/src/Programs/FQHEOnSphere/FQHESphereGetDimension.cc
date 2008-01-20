@@ -84,11 +84,11 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
 // totalLz = momentum total value
-// totalSpin = number of particles with spin up
-// totalIsospin = number of particles with isospin plus
-// totalEntanglement = number of particles with entanglement plus
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
 // return value = Hilbert space dimension
-long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
 
 // save dimensions in a given file
 //
@@ -104,7 +104,6 @@ long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQuanta, bool statistics,
 			  long* lzDimensions, long* lDimensions, int lzMin, int lzMax, long totalDimension);
 
-
 // save dimensions in a given output stream for fermions with SU(2) spin
 //
 // output = reference on the output stream
@@ -112,6 +111,14 @@ bool WriteDimensionToDisk(char* outputFileName, int nbrParticles, int nbrFluxQua
 // nbrFluxQuanta = number of flux quanta
 // return value = reference on the output stream
 ostream& FermionSU2WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
+// save dimensions in a given output stream for fermions with SU(3) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& FermionSU3WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
 // save dimensions in a given output stream for fermions with SU(4) spin
 //
@@ -314,9 +321,55 @@ int main(int argc, char** argv)
 			delete[] OutputFileName;
 		      }
 		    else
-		      FermionSU4WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+		      FermionSU2WriteDimension (cout, NbrParticles, NbrFluxQuanta);
 		  }	      
 	      }
+	  }
+      }
+    else
+      {
+	if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+	  {
+	    cout << "SU(3) mode not yet available" << endl;	
+	    return -1;
+	  }
+	else
+	  {
+	    if (NbrParticles > (((NbrFluxQuanta + 1) * 3)))
+	      {
+		cout << "error : number of flux quanta is too low" << endl;
+		return -1;
+	      }
+	    if (((BooleanOption*) Manager["ground-only"])->GetBoolean() == true)
+	      {
+		int MeanNbrParticles = NbrParticles / 3;
+		cout << FermionSU3ShiftedEvaluateHilbertSpaceDimension(NbrParticles, NbrFluxQuanta, (LzMin + (NbrFluxQuanta * NbrParticles)) >> 1, 
+								       MeanNbrParticles, MeanNbrParticles, (NbrParticles - (2 * MeanNbrParticles))) << endl;
+	      }
+	    else
+	      {
+		if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		  {
+		    char* OutputFileName = 0;
+		    if (((SingleStringOption*) Manager["output-file"])->GetString() == 0)
+		      {
+			OutputFileName = new char[256];
+			sprintf (OutputFileName, "fermions_sphere_su3_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		      }
+		    else
+		      {
+			OutputFileName = new char[strlen(((SingleStringOption*) Manager["output-file"])->GetString()) + 1];
+			strcpy (OutputFileName, ((SingleStringOption*) Manager["output-file"])->GetString());
+		      }		  
+		    ofstream File;
+		    File.open(OutputFileName, ios::binary | ios::out);
+		    FermionSU3WriteDimension(File, NbrParticles, NbrFluxQuanta);
+		    File.close();
+		    delete[] OutputFileName;
+		  }
+		else
+		  FermionSU3WriteDimension (cout, NbrParticles, NbrFluxQuanta);
+	      }	      
 	  }
       }
 }
@@ -629,14 +682,47 @@ long FermionSU4ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, 
 // nbrFermions = number of fermions
 // lzMax = momentum maximum value for a fermion
 // totalLz = momentum total value
-// totalSpin = number of particles with spin up
-// totalIsospin = number of particles with isospin plus
-// totalEntanglement = number of particles with entanglement plus
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
 // return value = Hilbert space dimension
 
-long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin)
+long FermionSU3ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3)
 {
-  return 0l;
+  if ((nbrFermions < 0) || (totalLz < 0) || (lzMax < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0) || (lzMax < 0) || 
+      ((nbrN1 - 1)> lzMax) || ((nbrN2 - 1)> lzMax) || ((nbrN3 - 1)> lzMax) ||
+      ((nbrFermions * lzMax - (((nbrN1 * nbrN1) + (nbrN2 * nbrN2) + (nbrN3 * nbrN3) - nbrFermions) >> 1)) < totalLz))
+    return 0l;
+  if ((nbrFermions == 0) && (totalLz == 0))
+    return 1l;
+  if (nbrFermions == 1) 
+    if (lzMax >= totalLz)
+      return 1l;
+    else
+      return 0l;
+  unsigned long Tmp = 0l;
+  if (nbrFermions >= 3)
+    {
+      Tmp += (FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), nbrN1 - 1, nbrN2 - 1, nbrN3)
+	      + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), nbrN1 - 1, nbrN2, nbrN3 - 1)
+	      + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 2, lzMax - 1, totalLz - (lzMax << 1), nbrN1, nbrN2 - 1, nbrN3 - 1));
+      if (nbrFermions == 3)
+	{
+	  if ((totalLz == (3 * lzMax)) && (nbrN1 == 1) && (nbrN2 == 1) && (nbrN3 == 1))
+	    ++Tmp;      
+	}
+      else
+	Tmp += FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 3, lzMax - 1, totalLz - (lzMax * 3), nbrN1 - 1, nbrN2 - 1, nbrN3 -1);
+    }
+  else
+    {
+      if ((totalLz == (2 * lzMax)) && (nbrN1 <= 1) && (nbrN2 <= 1) && (nbrN3 <= 1))
+	++Tmp;
+    }
+  return  (Tmp + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1 - 1, nbrN2, nbrN3)
+	   + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1, nbrN2 - 1, nbrN3)
+	   + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1, nbrN2, nbrN3 - 1)
+	   + FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, nbrN1, nbrN2, nbrN3));
 }
 
 // evaluate Hilbert space dimension using previously generated Hilbert space dimension files (or compute them if they don't exist)
@@ -719,7 +805,7 @@ ostream& FermionSU2WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 	{
 	  NUp >>= 1;
 	  NDown >>= 1;
-	  int Min = nbrParticles & 1;
+	  int Min = (nbrParticles * nbrFluxQuanta) & 1;
 	  int Max  = ((((nbrFluxQuanta - NUp + 1) * NUp) + ((nbrFluxQuanta - NDown + 1) * NDown)));
 	  if ((Max >=  Min) && (NUp <= (nbrFluxQuanta + 1)) && (NDown <= (nbrFluxQuanta + 1)))
 	    {
@@ -736,6 +822,50 @@ ostream& FermionSU2WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 	    }
 	}
     }
+  return output;
+}
+
+// save dimensions in a given output stream for fermions with SU(3) spin
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+
+ostream& FermionSU3WriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each L and Lz sector for " << nbrParticles << " fermions" << endl;
+  output << "# with SU(3) spin on the sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Tz value) (three time the total Y value) (twice the total Lz/L value) (dimension of the subspace with fixed Lz, Tz, Y) (dimension of the subspace with fixed L, Lz=L, Tz, Y)" << endl << endl;
+  for (int Tz = 0; Tz <= nbrParticles; ++Tz)
+    for (int Y = - 2 * nbrParticles; Y <= nbrParticles; Y += 3)
+      {
+	int N1 = (2 * nbrParticles) + Y + (3 * Tz);
+	int N2 = (2 * nbrParticles) + Y - (3 * Tz);
+	int N3 = nbrParticles - Y;
+	if ((N1 >= 0) && (N2 >= 0) && (N3 >= 0) && ((N1 % 6) == 0) && ((N2 % 6) == 0) && ((N3 % 3) == 0))
+	  {
+	    N1 /= 6;
+	    N2 /= 6;
+	    N3 /= 3;
+	    int Min = (nbrParticles * nbrFluxQuanta) & 1;
+	    int Max  = ((nbrFluxQuanta - N1 + 1) * N1) + ((nbrFluxQuanta - N2 + 1) * N2) + ((nbrFluxQuanta - N3 + 1) * N3);
+	    if ((Max >=  Min) && (N1 <= (nbrFluxQuanta + 1)) && (N2 <= (nbrFluxQuanta + 1)) && (N3 <= (nbrFluxQuanta + 1)))
+	      {
+		long* LzDimension = new long [((Max - Min) >> 1) + 1];
+		for (int Lz = Min; Lz <= Max; Lz += 2)
+		  LzDimension[(Lz - Min) >> 1] = FermionSU3ShiftedEvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, 
+												(Lz + (nbrParticles * nbrFluxQuanta)) >> 1, N1, N2, N3);
+		for (int Lz = Min; Lz < Max; Lz += 2)
+		  output << Tz << " " << Y << " " << Lz << " " << LzDimension[(Lz - Min) >> 1] << " " 
+			 << (LzDimension[(Lz - Min) >> 1] - LzDimension[((Lz - Min) >> 1) + 1]) << endl;
+		output << Tz << " " << Y << " " << Max << " " << LzDimension[(Max - Min) >> 1] << " " 
+		       << LzDimension[(Max - Min) >> 1] << endl;
+		delete[] LzDimension;	      
+	      }
+	  }
+      }
   return output;
 }
 
@@ -767,7 +897,7 @@ ostream& FermionSU4WriteDimension(ostream& output, int nbrParticles, int nbrFlux
 	      NUpMinus >>= 2;
 	      NDownPlus >>= 2;
 	      NDownMinus >>= 2;
-	      int Min = nbrParticles & 1;
+	      int Min = (nbrParticles * nbrFluxQuanta) & 1;
 	      int Max  = (((nbrFluxQuanta - NUpPlus + 1) * NUpPlus) + ((nbrFluxQuanta - NUpMinus + 1) * NUpMinus) + 
 			  ((nbrFluxQuanta - NDownPlus+ 1) * NDownPlus) + ((nbrFluxQuanta - NDownMinus + 1) * NDownMinus));
 	      if ((Max >=  Min) && (NUpPlus <= (nbrFluxQuanta + 1)) && (NUpMinus <= (nbrFluxQuanta + 1)) && 

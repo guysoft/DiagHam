@@ -46,4 +46,6 @@ FermionOnSphereSymmetricBasisLong.cc \
 FermionOnSphereHaldaneSymmetricBasisLong.cc \
 BosonOnSphereSymmetricBasis.cc \
 BosonOnSphereShort.cc \
-BosonOnSphereSymmetricBasisShort.cc
+BosonOnSphereSymmetricBasisShort.cc \
+ParticleOnSphereWithSU3Spin.cc \
+FermionOnSphereWithSU3Spin.cc

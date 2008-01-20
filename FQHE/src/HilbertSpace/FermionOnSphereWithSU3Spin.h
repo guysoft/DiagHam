@@ -6,9 +6,9 @@
 //                   Copyright (C) 2001-2005 Nicolas Regnault                 //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on sphere with SU(4) spin              //
+//                   class of fermions on sphere with SU(3) spin              //
 //                                                                            //
-//                        last modification : 11/10/2006                      //
+//                        last modification : 20/01/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,12 +28,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREWITHSU4SPIN_H
-#define FERMIONONSPHEREWITHSU4SPIN_H
+#ifndef FERMIONONSPHEREWITHSU3SPIN_H
+#define FERMIONONSPHEREWITHSU3SPIN_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphereWithSU4Spin.h"
+#include "HilbertSpace/ParticleOnSphereWithSU3Spin.h"
 
 #include <iostream>
 
@@ -41,7 +41,7 @@
 class FermionOnSphere;
 
 
-class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
+class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 {
 
   // number of fermions
@@ -54,12 +54,10 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   int LzMax;
   // number of Lz values in a state
   int NbrLzValue;
-  // twice the total spin value
-  int TotalSpin;
-  // twice the total isospin value
-  int TotalIsospin;
-  // twice the total entanglement value (greater than NbrFermions if there is no constraint on total lEntanglement value)
-  int TotalEntanglement;
+  // twice the total Tz value
+  int TotalTz;
+  // three time the total Y value
+  int TotalY;
 
   // array describing each state
   unsigned long* StateDescription;
@@ -97,34 +95,22 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // totalSpin = twice the total spin value
   // totalIsospin = twice the total isospin value
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, unsigned long memory = 10000000);
-
-  // basic constructor
-  // 
-  // nbrFermions = number of fermions
-  // totalLz = twice the momentum total value
-  // lzMax = twice the maximum Lz value reached by a fermion
-  // totalSpin = twice the total spin value
-  // totalIsospin = twice the total isospin value
-  // totalEntanglement = twice the total entanglement value
-  // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSU4Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, 
-			      int totzlEntanglement, unsigned long memory = 10000000);
+  FermionOnSphereWithSU3Spin (int nbrFermions, int totalLz, int lzMax, int totalSpin, int totalIsospin, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereWithSU4Spin(const FermionOnSphereWithSU4Spin& fermions);
+  FermionOnSphereWithSU3Spin(const FermionOnSphereWithSU3Spin& fermions);
 
   // destructor
   //
-  ~FermionOnSphereWithSU4Spin ();
+  ~FermionOnSphereWithSU3Spin ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereWithSU4Spin& operator = (const FermionOnSphereWithSU4Spin& fermions);
+  FermionOnSphereWithSU3Spin& operator = (const FermionOnSphereWithSU3Spin& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -155,193 +141,122 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 					 SubspaceSpaceConverter& converter);
 
-  // apply a^+_m_dp a_m_dp operator to a given state (only spin down isospin plus)
+  // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m_dm a_m_dm
-  double AddpAdp (int index, int m);
+  // return value = coefficient obtained when applying a^+_m_1 a_m_1
+  double Ad1A1 (int index, int m);
 
-  // apply a^+_m_up a_m_up operator to a given state  (only spin up isospin plus)
+  // apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m_um a_m_um
-  double AdupAup (int index, int m);
+  // return value = coefficient obtained when applying a^+_m_2 a_m_2
+  double Ad2A2 (int index, int m);
 
-  // apply a^+_m_dm a_m_dm operator to a given state (only spin down isospin minus)
+  // apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m_dm a_m_dm
-  double AddmAdm (int index, int m);
+  // return value = coefficient obtained when applying a^+_m_3 a_m_3
+  double Ad3A3 (int index, int m);
 
-  // apply a^+_m_um a_m_um operator to a given state  (only spin up isospin minus)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m_um a_m_um
-  double AdumAum (int index, int m);
-
-  // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAup (int index, int n1, int n2);
+  double A1A1 (int index, int n1, int n2);
 
-  // apply a_n1_up a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAum (int index, int n1, int n2);
+  double A1A2 (int index, int n1, int n2);
 
-  // apply a_n1_up a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAdp (int index, int n1, int n2);
+  double A1A3 (int index, int n1, int n2);
 
-  // apply a_n1_up a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AupAdm (int index, int n1, int n2);
+  double A2A2 (int index, int n1, int n2);
 
-  // apply a_n1_um a_n2_um operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AumAum (int index, int n1, int n2);
+  double A2A3 (int index, int n1, int n2);
 
-  // apply a_n1_um a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double AumAdp (int index, int n1, int n2);
+  double A3A3 (int index, int n1, int n2);
 
-  // apply a_n1_um a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // return value =  multiplicative factor 
-  double AumAdm (int index, int n1, int n2);
-
-  // apply a_n1_dp a_n2_dp operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // return value =  multiplicative factor 
-  double AdpAdp (int index, int n1, int n2);
-
-  // apply a_n1_dp a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // return value =  multiplicative factor 
-  double AdpAdm (int index, int n1, int n2);
-
-  // apply a_n1_dm a_n2_dm operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // return value =  multiplicative factor 
-  double AdmAdm (int index, int n1, int n2);
-
-  // apply a^+_m1_up a^+_m2_up operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAdup (int m1, int m2, double& coefficient);
+  int Ad1Ad1 (int m1, int m2, double& coefficient);
 
-  // apply a^+_m1_up a^+_m2_um operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAdum (int m1, int m2, double& coefficient);
+  int Ad1Ad2 (int m1, int m2, double& coefficient);
 
-  // apply a^+_m1_up a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAddp (int m1, int m2, double& coefficient);
+  int Ad1Ad3 (int m1, int m2, double& coefficient);
 
-  // apply a^+_m1_up a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdupAddm (int m1, int m2, double& coefficient);
+  int Ad2Ad2 (int m1, int m2, double& coefficient);
 
-  // apply a^+_m1_um a^+_m2_um operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdumAdum (int m1, int m2, double& coefficient);
+  int Ad2Ad3 (int m1, int m2, double& coefficient);
 
-  // apply a^+_m1_um a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
+  // apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdumAddp (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_um a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
-  //
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  int AdumAddm (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_dp a^+_m2_dp operator to the state produced using A*A* method (without destroying it)
-  //
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  int AddpAddp (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_dp a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
-  //
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  int AddpAddm (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_dm a^+_m2_dm operator to the state produced using A*A* method (without destroying it)
-  //
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  int AddmAddm (int m1, int m2, double& coefficient);
+  int Ad3Ad3 (int m1, int m2, double& coefficient);
 
   // print a given State
   //
@@ -366,12 +281,12 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // timeCoherence = true if time coherence has to be used
   void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
-  // create a U(1) state from an SU(4) state
+  // create a U(1) state from an SU(3) state
   //
-  // state = vector describing the SU(4) state
+  // state = vector describing the SU(3) state
   // u1Space = reference on the Hilbert space associated to the U(1) state
   // return value = resulting U(1) state
-  virtual RealVector ForgeU1FromSU4(RealVector& state, FermionOnSphere& u1Space);
+  virtual RealVector ForgeU1FromSU3(RealVector& state, FermionOnSphere& u1Space);
 
   private:
 
@@ -388,31 +303,21 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // nbrFermions = number of fermions
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
-  // totalSpin = twice the total spin value
-  // totalIsospin = twice the total isospin value
+  // totalTz = twice the total Tz value
+  // totalY = three time the total Y value
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
+  int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY);
 
-  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+  // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions
-  // lzMax = two times momentum maximum value for a fermion plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-  // totalSpin = number of particles with spin up
-  // totalIsospin = number of particles with isospin plus
-  // return value = Hilbert space dimension  
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin);
-
-  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-  //
-  // nbrFermions = number of fermions
-  // lzMax = two times momentum maximum value for a fermion plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-  // totalSpin = number of particles with spin up
-  // totalIsospin = number of particles with isospin plus
-  // entanglement = number of particles with entanglement plus
-  // return value = Hilbert space dimension  
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int entanglement);
+  // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
+  // nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+  // nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+  // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
+  // return value = Hilbert space dimension
+  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -422,25 +327,14 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // generate all states corresponding to the constraints
   // 
   // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
+  // lzMax = momentum maximum value for a fermion in the state
   // totalLz = momentum total value
-  // totalSpin = number of particles with spin up
-  // totalIsospin = number of particles with isospin plus
+  // nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+  // nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+  // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, long pos);
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // totalSpin = number of particles with spin up
-  // totalIsospin = number of particles with isospin plus
-  // totalEntanglement = number of particles with entanglement plus
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, int totalIsospin, int totalEntanglement, long pos);
+  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos);
 
 };
 
@@ -448,7 +342,7 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
 //
 // return value = particle statistic
 
-inline int FermionOnSphereWithSU4Spin::GetParticleStatistic()
+inline int FermionOnSphereWithSU3Spin::GetParticleStatistic()
 {
   return AbstractQHEParticle::FermionicStatistic;
 }

@@ -76,7 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "show-extracted", "show values extracted from file name");
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
+//  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -201,13 +201,26 @@ int main(int argc, char** argv)
 	    {
 	      if (SzSymmetrizedBasis == true) 
 		if (LzSymmetrizedBasis == false)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+		  {
+		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+		    else
+		      Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  }
 		else
 		  {
-		    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
+		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
+		    else
+		      Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 		  }
 	      else
-		Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
+		{
+		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		    Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
+		  else
+		    Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+		}
 	    }
         }
       else

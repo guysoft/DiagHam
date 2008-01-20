@@ -24,6 +24,7 @@
 
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -58,8 +59,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin  of the system (0 if it has to be guessed from file name)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin (override symmetry found from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin (override symmetry found from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin (override symmetry found from file name)");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -85,19 +91,55 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int TotalIsoSz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
+  int TotalEntanglement = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
   bool SzSymmetrizedBasis = false;
   bool SzMinusParity = false;
   bool LzSymmetrizedBasis = false;
   bool LzMinusParity = false;
   bool FermionFlag = false;
+  bool SU2SymmetryFlag = false;
+  bool SU3SymmetryFlag = false;
+  bool SU4SymmetryFlag = false;
+
+  char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
+  if (strstr(StateFileName, "_su2_"))
+    SU2SymmetryFlag = true;
+  else
+    if (strstr(StateFileName, "_su3_"))
+      SU3SymmetryFlag = true;
+    else
+      if (strstr(StateFileName, "_su4_"))
+	SU4SymmetryFlag = true;
+
+  if (((BooleanOption*) Manager["su2-spin"])->GetBoolean() == true)
+    SU2SymmetryFlag = true;
+  else
+    if (((BooleanOption*) Manager["su3-spin"])->GetBoolean() == true)
+      SU3SymmetryFlag = true;
+    else
+      if (((BooleanOption*) Manager["su4-spin"])->GetBoolean() == true)
+	SU4SymmetryFlag = true;
+
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
-							     LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
-      {
-	return -1;
-      }
+    {
+      if (SU2SymmetryFlag == true)
+	if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
+								 LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
+	  {
+	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	    return -1;
+	  }
+      if (SU4SymmetryFlag == true)
+	if (FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, 
+								    TotalLz, TotalIsoSz, TotalEntanglement, FermionFlag) == false)
+	  {
+	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	    return -1;
+	  }
+    }
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
     if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
       {
@@ -119,7 +161,6 @@ int main(int argc, char** argv)
       return -1;           
     }
 
-  char* StateFileName = ((SingleStringOption*) Manager["state"])->GetString();
   if (IsFile(StateFileName) == false)
     {
       cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
@@ -134,37 +175,54 @@ int main(int argc, char** argv)
 
 
   long MemorySpace = 9l << 20;
-  ParticleOnSphereWithSpin* Space;
-  ParticleOnSphere* U1Space = 0;
-  if (FermionFlag == true)
-    {
-#ifdef __64_BITS__
-      if (LzMax <= 31)
-#else
-      if (LzMax <= 15)
-#endif
-        {
-	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
-	  U1Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
-        }
-      else
-	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
-    }
-  else
-    {
-      Space = 0;
-    }
-  RealVector OutputState = ((FermionOnSphereWithSpin*) Space)->ForgeU1FromSU2(State, *((FermionOnSphere*) U1Space));
   char* OutputName = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputName, "fermions_sphere_%s_n_%d_2s_%d_lz_%d.0.vec", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
 	   NbrParticles, LzMax, TotalLz);
-
-  OutputState.WriteVector(OutputName);
-  delete U1Space;
-  delete Space;
+  if (FermionFlag == true)
+    {
+      FermionOnSphere* U1Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+      if (SU2SymmetryFlag == true)
+	{
+	  FermionOnSphereWithSpin* Space;
+#ifdef __64_BITS__
+	  if (LzMax <= 31)
+#else
+	    if (LzMax <= 15)
+#endif
+	      {
+		Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
+	      }
+	    else
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  RealVector OutputState = Space->ForgeU1FromSU2(State, *U1Space);
+	  OutputState.WriteVector(OutputName);
+	  delete Space;
+	}
+      if (SU4SymmetryFlag == true)
+	{
+	  FermionOnSphereWithSU4Spin* Space;
+#ifdef __64_BITS__
+	  if (LzMax <= 15)
+#else
+	    if (LzMax <= 7)
+#endif
+	      {
+		Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, LzMax, TotalSz, TotalIsoSz, TotalEntanglement, MemorySpace);
+	      }
+	    else
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  RealVector OutputState = Space->ForgeU1FromSU4(State, *U1Space);
+	  OutputState.WriteVector(OutputName);
+	  delete Space;
+	}
+      delete U1Space;
+    }
   return 0;
 }
 

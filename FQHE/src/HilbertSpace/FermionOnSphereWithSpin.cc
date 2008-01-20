@@ -1480,8 +1480,7 @@ RealVector FermionOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, FermionOnS
     {
       unsigned long TmpState = this->StateDescription[j];
       int TmpPos = this->LzMax << 1;
-      cout << hex << TmpState << dec << endl;
-      while (TmpPos > 0)
+      while (TmpPos >= 0)
 	{
 	  if ((((TmpState >> TmpPos) & (TmpState >> (TmpPos + 1))) & 0x1ul) != 0x0ul)
 	    TmpPos = 1;
@@ -1499,7 +1498,6 @@ RealVector FermionOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, FermionOnS
 	    }
 	  while ((TmpState2 >> TmpPos) == 0x0ul)
 	    --TmpPos;
-	  cout << hex << TmpState2 << dec << " : " << TmpPos << endl;
 	  FinalState[u1Space.FindStateIndex(TmpState2, TmpPos)] += state[j];
 	}
     }

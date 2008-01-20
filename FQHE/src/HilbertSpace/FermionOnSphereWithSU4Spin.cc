@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
+#include "HilbertSpace/FermionOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -193,6 +194,8 @@ FermionOnSphereWithSU4Spin::FermionOnSphereWithSU4Spin(const FermionOnSphereWith
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->TotalIsospin = fermions.TotalIsospin;
+  this->TotalEntanglement = fermions.TotalEntanglement;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -240,6 +243,8 @@ FermionOnSphereWithSU4Spin& FermionOnSphereWithSU4Spin::operator = (const Fermio
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalSpin = fermions.TotalSpin;
+  this->TotalIsospin = fermions.TotalIsospin;
+  this->TotalEntanglement = fermions.TotalEntanglement;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -1897,4 +1902,51 @@ int FermionOnSphereWithSU4Spin::AddmAddm (int m1, int m2, double& coefficient)
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
+
+// create a U(1) state from an SU(4) state
+//
+// state = vector describing the SU(4) state
+// u1Space = reference on the Hilbert space associated to the U(1) state
+// return value = resulting U(1) state
+
+RealVector FermionOnSphereWithSU4Spin::ForgeU1FromSU4(RealVector& state, FermionOnSphere& u1Space)
+{
+  RealVector FinalState(u1Space.GetHilbertSpaceDimension(), true);
+  for (int j = 0; j < this->HilbertSpaceDimension; ++j)    
+    {
+      unsigned long TmpState = this->StateDescription[j];
+      unsigned long TmpState2 = TmpState; 
+      int TmpPos = this->LzMax << 2;
+      while (TmpPos >=0)
+	{
+	  unsigned long  TmpNbrParticles = TmpState2 & 0x1ul;
+	  TmpState2 >>= 1;
+	  TmpNbrParticles += TmpState2 & 0x1ul;
+	  TmpState2 >>= 1;
+	  TmpNbrParticles += TmpState2 & 0x1ul;
+	  TmpState2 >>= 1;
+	  TmpNbrParticles += TmpState2 & 0x1ul;
+	  TmpState2 >>= 1;
+	  if (TmpNbrParticles > 0x1ul)
+	    TmpPos = 1;
+	  TmpPos -= 4;
+	}
+      if (TmpPos != -3)
+	{ 
+	  TmpPos = 0;
+	  TmpState2 = 0x0ul; 
+	  while (TmpPos <= this->LzMax)
+	    {
+	      TmpState2 |= ((TmpState & 0x1ul) | ((TmpState & 0x2ul) >> 1) | ((TmpState & 0x4ul) >> 2) | ((TmpState & 0x8ul) >> 3)) << TmpPos;
+	      TmpState >>= 4;
+	      ++TmpPos;
+	    }
+	  while ((TmpState2 >> TmpPos) == 0x0ul)
+	    --TmpPos;
+	  FinalState[u1Space.FindStateIndex(TmpState2, TmpPos)] += state[j];
+	}
+    }
+  FinalState /= FinalState.Norm();
+  return FinalState;  
+}
 

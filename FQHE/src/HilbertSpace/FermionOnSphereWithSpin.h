@@ -286,7 +286,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // state = vector describing the SU(2) state
   // u1Space = reference on the Hilbert space associated to the U(1) state
   // return value = resulting U(1) state
-  virtual RealVector ForgeU1FromSU2(RealVector& state, FermionOnSphere& upStateSpace);
+  virtual RealVector ForgeU1FromSU2(RealVector& state, FermionOnSphere& u1Space);
 
  protected:
 
