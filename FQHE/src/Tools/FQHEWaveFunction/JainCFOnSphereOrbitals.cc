@@ -234,7 +234,56 @@ ComplexMatrix& JainCFOnSphereOrbitals::operator ()(RealVector& x)
 {
   int Index = 0;
   int MaxMomentum = this->TwiceS;
-  this->EvaluateTables(x);
+  // CalculateSpinors
+  double s,c;
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= c;
+      this->SpinorVCoordinates[i].Im *= s;
+      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
+    }
+  
+  this->EvaluateTables();
+  for (int j = 0; j < this->NbrLandauLevels; ++j)
+    {
+      for (int k = 0; k <= MaxMomentum; ++k)
+	{
+	  this->EvaluateOrbitals(Index, k, j, MaxMomentum);
+	  ++Index;
+	}
+      MaxMomentum += 2;
+    }
+  return *Orbitals;
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables where orbitals have to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = Matrix with CF Orbitals, 
+ComplexMatrix& JainCFOnSphereOrbitals::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  int Index = 0;
+  int MaxMomentum = this->TwiceS;
+  
+  // Import from spinors
+
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
+      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
+    }
+  
+  this->EvaluateTables();
   for (int j = 0; j < this->NbrLandauLevels; ++j)
     {
       for (int k = 0; k <= MaxMomentum; ++k)
@@ -250,25 +299,11 @@ ComplexMatrix& JainCFOnSphereOrbitals::operator ()(RealVector& x)
 
 // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
 //
-// x = point where the function has to be evaluated
 // derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
 // return value = value of the Jastrow factor
 
-Complex JainCFOnSphereOrbitals::EvaluateTables(RealVector& x, bool derivativeFlag)
+Complex JainCFOnSphereOrbitals::EvaluateTables(bool derivativeFlag)
 {
-  double s,c;
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
-      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
-      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
-      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
-      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
-      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
-      this->SpinorVCoordinates[i].Re *= c;
-      this->SpinorVCoordinates[i].Im *= s;
-      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
-    }
 
   for (int i = 0; i < this->NbrParticles; ++i)
     {

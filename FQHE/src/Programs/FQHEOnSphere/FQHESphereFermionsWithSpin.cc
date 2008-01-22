@@ -260,11 +260,6 @@ int main(int argc, char** argv)
 	}
     }
 
-#ifdef __64_BITS__
-  cout << "Using 64 bit processing" << endl;
-#endif
-
-
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
 	   NbrFermions, LzMax, SzTotal);

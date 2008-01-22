@@ -169,7 +169,14 @@ class JainCFOnSphereOrbitals
   //
   // x = point where the function has to be evaluated
   // return value = Matrix with CF Orbitals, 
-  ComplexMatrix& operator ()(RealVector& x);  
+  ComplexMatrix& operator ()(RealVector& x);
+
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables where orbitals have to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = Matrix with CF Orbitals, 
+  ComplexMatrix& CalculateFromSpinorVariables(ComplexVector& uv);
 
   // access for data members:
   int GetNbrParticles(){return NbrParticles;}
@@ -196,10 +203,9 @@ class JainCFOnSphereOrbitals
 
   // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
   //
-  // x = point where the function has to be evaluated
   // derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
   // return value = value of the Jastrow factor
-  Complex EvaluateTables(RealVector& x, bool derivativeFlag = true);
+  Complex EvaluateTables(bool derivativeFlag = true);
 
   // evaluate normalization factors of projected monopole harmonics
   //

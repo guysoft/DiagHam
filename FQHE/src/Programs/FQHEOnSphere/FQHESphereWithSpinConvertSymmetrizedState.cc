@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
+  int LzMax = ((singleintegeroption*) Manager["lzmax"])->GetInteger(); 
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
 	if (LzSymmetrizedBasis == false)
 	  InitialSpace = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
 	else
-	  InitialSpace = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, MemorySpace, SzMinusParity, LzMinusParity);
+	  InitialSpace = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
       else
 	InitialSpace = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
       FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, LzMax, TotalSz);
