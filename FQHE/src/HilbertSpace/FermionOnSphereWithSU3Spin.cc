@@ -641,11 +641,13 @@ int FermionOnSphereWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrFermions, i
   int N1 = (2 * nbrFermions) + totalY + (3 * totalTz);
   int N2 = (2 * nbrFermions) + totalY - (3 * totalTz);
   int N3 = nbrFermions - totalY;
-  N1 /= 6;
-  N2 /= 6;
-  N3 /= 3;
   if ((N1 >= 0) && (N2 >= 0) && (N3 >= 0) && ((N1 % 6) == 0) && ((N2 % 6) == 0) && ((N3 % 3) == 0))
-    return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + (nbrFermions * lzMax)) >> 1, N1, N2, N3);
+    {
+      N1 /= 6;
+      N2 /= 6;
+      N3 /= 3;
+      return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + (nbrFermions * lzMax)) >> 1, N1, N2, N3);
+    }
   else
     return 0;
 }

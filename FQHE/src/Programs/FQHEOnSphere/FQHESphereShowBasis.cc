@@ -3,6 +3,7 @@
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
+#include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -41,7 +42,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
-  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only usefull in su(2)/su(4) mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
@@ -64,7 +68,10 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
   int TotalLz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
+  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
+  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
   bool SU2SpinFlag = ((BooleanOption*) Manager["su2-spin"])->GetBoolean();
+  bool SU3SpinFlag = ((BooleanOption*) Manager["su3-spin"])->GetBoolean();
   bool SU4SpinFlag = ((BooleanOption*) Manager["su4-spin"])->GetBoolean();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
     
@@ -81,7 +88,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU4SpinFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
 	{
 #ifdef __64_BITS__
 	  if (NbrFluxQuanta <= 63)
@@ -98,6 +105,9 @@ int main(int argc, char** argv)
       else
  	if (SU2SpinFlag == true)
 	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	else
+ 	if (SU3SpinFlag == true)
+	  Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
     }
   
 
@@ -115,7 +125,10 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == true)
 		sprintf (OutputFileName, "bosons_sphere_su2_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	      else
-		sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+		if (SU3SpinFlag == true)
+		  sprintf (OutputFileName, "bosons_sphere_su3_n_%d_2s_%d_lz_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalTz, TotalY);
+		else
+		  sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	  else
 	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false))
 	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
@@ -123,7 +136,10 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == true)
 		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	      else
-		sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+		if (SU3SpinFlag == true)
+		  sprintf (OutputFileName, "fermions_sphere_su3_n_%d_2s_%d_lz_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalTz, TotalY);
+		else
+		  sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 	}
       else
 	{

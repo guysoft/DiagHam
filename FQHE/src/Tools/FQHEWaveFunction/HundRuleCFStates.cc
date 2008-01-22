@@ -338,8 +338,8 @@ Complex HundRuleCFStates::EvaluateAState(int LzPosition)
 #ifdef __USE_LAPACK_HERE__
 	    this->SlaterDeterminant.SetMatrixElement(alpha,n,Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
 #else
-	    this->SlaterDeterminant[alpha].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
-	    this->SlaterDeterminant[alpha].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
+	    //	    this->SlaterDeterminant[alpha].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
+	    //	    this->SlaterDeterminant[alpha].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha][n]);
 #endif
 	  }
       int *TmpLzPositions=TmpTerms[t].GetLzPositionPtr();
@@ -354,8 +354,8 @@ Complex HundRuleCFStates::EvaluateAState(int LzPosition)
 #ifdef __USE_LAPACK_HERE__
 	      this->SlaterDeterminant.SetMatrixElement(alpha2,n,Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
 #else
-	      this->SlaterDeterminant[alpha2].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
-	      this->SlaterDeterminant[alpha2].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
+	      //	      this->SlaterDeterminant[alpha2].Re(n) = Re(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
+	      //	      this->SlaterDeterminant[alpha2].Im(n) = Im(Ji[n]*this->ElementNorm*OrbitalValues[alpha1][n]);
 #endif
 	    }
 	  ++alpha2;

@@ -1,4 +1,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
@@ -56,7 +59,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "l2");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);
@@ -86,8 +94,8 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the haldane or symmetrized bases)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -110,6 +118,10 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz  = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
@@ -121,39 +133,63 @@ int main(int argc, char** argv)
   sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
 
-  for (int TmpSz = -NbrParticles; TmpSz <= NbrParticles; TmpSz += 2)
-    {
-      int NbrUp = (NbrParticles + TmpSz) >> 1;
-      int NbrDown = (NbrParticles -TmpSz ) >> 1;
-      int Max = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
-      int  L = 0;
-      if ((abs(Max) & 1) != 0)
-	L = 1;
-      for (; L <= Max; L += 2)
-	{
-	  cout << "Lz = " << L << "  Sz = " << TmpSz << endl;
-	  ParticleOnSphereWithSpin* Space2 = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TmpSz, MemorySpace);
-	  delete Space2;
-	}
-    }
-  return 0;
-
   ParticleOnSphereWithSpin* Space;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
     {
+      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+	{
 #ifdef __64_BITS__
-      if (LzMax <= 31)
+	  if (LzMax <= 31)
 #else
-      if (LzMax <= 15)
+	    if (LzMax <= 15)
 #endif
-        {
-	    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
-        }
+	      {
+		Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
+	      }
+	    else
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	}
       else
 	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
+#ifdef __64_BITS__
+	  if (LzMax >= 31)
+#else
+	    if (LzMax >= 15)
+#endif
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  if (SzSymmetrizedBasis == true) 
+	    if (LzSymmetrizedBasis == false)
+	      {
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	      }
+	    else
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		{
+		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								  ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		}
+	      else
+		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+	  else
+	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	    else
+	      Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	    {
+	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      return 0;
+	    }
+	}
     }
   else
     {
