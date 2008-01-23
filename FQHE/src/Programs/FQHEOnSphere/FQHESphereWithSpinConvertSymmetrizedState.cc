@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
-  int LzMax = ((singleintegeroption*) Manager["lzmax"])->GetInteger(); 
+  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();

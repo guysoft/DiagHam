@@ -122,6 +122,25 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
 	}
       this->LEigenstates = 0;
     }
+  else if (NbrParticlesInHighestShell==HighestShellLzMax) // still trivial: one hole...
+    {
+      this->NbrTermsPerLz = new int[TotalL+1];
+      this->TermsPerLz = new SlaterComponent*[TotalL+1];
+      for (int i=0; i<=TotalL; ++i)
+	{
+	  this->NbrTermsPerLz[i]=1;
+	  this->TermsPerLz[i]=new SlaterComponent[1];
+	  int *tmpI=new int[NbrParticlesInHighestShell];
+	  int k=0;
+	  for(int l=0; l<NbrParticlesInHighestShell; ++l)
+	    {
+	      if (k==TotalL-i) ++k;
+	      tmpI[l]=k++;
+	    }
+	  this->TermsPerLz[i][0]=SlaterComponent(1.0,NbrParticlesInHighestShell,tmpI,HighestShellLzMax);
+	}
+      this->LEigenstates = 0;
+    }
   else if (NbrParticlesInHighestShell==2) // case entirely given by Clebsch-Gordan coefficients
     {
       ClebschGordanCoefficients VectorCoupling(HighestShellLzMax,HighestShellLzMax);
@@ -162,6 +181,54 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
       delete [] TmpM2;
       this->LEigenstates = 0;
     }
+  else if (NbrParticlesInHighestShell==HighestShellLzMax-1) // case still needs to be checked...
+    // 2 holes in upper shell: case still entirely given by Clebsch-Gordan coefficients
+    {  
+      ClebschGordanCoefficients VectorCoupling(HighestShellLzMax,HighestShellLzMax);
+      this->NbrTermsPerLz = new int[TotalL+1];
+      this->TermsPerLz = new SlaterComponent*[TotalL+1];
+      int *TmpM1=new int[TotalL+1];
+      int *TmpM2=new int[TotalL+1];
+      for (int i=0; i<=TotalL; ++i)
+	{
+	  this->NbrTermsPerLz[i]=0;
+	  int M = 2*i - TotalL;
+	  for (int m1=-HighestShellLzMax+2; m1<=HighestShellLzMax; m1+=2)
+	    {
+	      int m2 = M - m1;
+	      if ((m2 < m1) && (m2>=-HighestShellLzMax) && (m2<=HighestShellLzMax))
+		{
+		  if ((VectorCoupling.GetCoefficient (m1, m2, this->TotalL) != 0.0) &&
+		      (fabs(VectorCoupling.GetCoefficient (m1, m2, this->TotalL) +
+			    VectorCoupling.GetCoefficient (m2, m1, this->TotalL)) < 1e-13))
+		    {
+		      TmpM1[this->NbrTermsPerLz[i]] = m1;
+		      TmpM2[this->NbrTermsPerLz[i]] = m2;		      
+		      ++this->NbrTermsPerLz[i];
+		    }
+		}
+	    }
+	  this->TermsPerLz[i]=new SlaterComponent[this->NbrTermsPerLz[i]];
+	  for (int k=0; k<this->NbrTermsPerLz[i]; ++k)
+	    {
+	      int *tmpI=new int[NbrParticlesInHighestShell];
+	      int avoid1 = (-TmpM1[k]+HighestShellLzMax)/2;
+	      int avoid2 = (-TmpM2[k]+HighestShellLzMax)/2;
+	      int k=0;
+	      for(int l=0; l<NbrParticlesInHighestShell; ++l)
+		{
+		  if ((k==avoid1)||(k==avoid2)) ++k;
+		  tmpI[l]=k++;
+		}
+	      this->TermsPerLz[i][k]=SlaterComponent(VectorCoupling.GetCoefficient (TmpM1[k], TmpM2[k],
+						       this->TotalL), NbrParticlesInHighestShell,
+						     tmpI, HighestShellLzMax);
+	    }
+	}
+      delete [] TmpM1;
+      delete [] TmpM2;
+      this->LEigenstates = 0;
+    }  
   else // NbrParticlesInHighestShell > 2:
     {
       
@@ -177,7 +244,7 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
   for (int i=0; i<=TotalL; ++i)
     {
       cout << "State[M="<<(2*i-TotalL)/2.0<<"]= ";
-      cout << TermsPerLz[i][0];
+       cout << TermsPerLz[i][0];
       for (int k=1; k<this->NbrTermsPerLz[i]; ++k)
 	cout << " + "<<TermsPerLz[i][k];
       cout << endl;
