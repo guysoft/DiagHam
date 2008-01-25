@@ -77,8 +77,12 @@ FermionOnSphereWithSU3Spin::FermionOnSphereWithSU3Spin (int nbrFermions, int tot
   if ((N1 < 0) || (N2 < 0) || (N3 < 0) || ((N1 % 6) != 0) || ((N2 % 6) != 0) || ((N3 % 3) != 0))
     this->HilbertSpaceDimension = 0;
   else
-    this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
-									     N1, N2, N3);
+    {
+      N1 /= 6;
+      N2 /= 6;
+      N3 /= 3;
+      this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, N1, N2, N3);
+    }
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];
   long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
@@ -400,34 +404,28 @@ long FermionOnSphereWithSU3Spin::GenerateStates(int nbrFermions, int lzMax, int 
       for (; pos < TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
     }
-  if (nbrFermions >= 2)
-    {
-      TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1, nbrN2 - 1, nbrN3 - 1, pos);
-      Mask = 0x6ul << (lzMax << 2);
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-      TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1 - 1, nbrN2, nbrN3 - 1, pos);
-      Mask = 0x5ul << (lzMax << 2);
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-   }
-  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1, nbrN2, nbrN3 - 1, pos);
-  Mask = 0x4ul << (lzMax << 2);
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1, nbrN2 - 1, nbrN3 - 1, pos);
+  Mask = 0x6ul << (lzMax * 3);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  if (nbrFermions >= 2)
-    {
-      TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1 - 1, nbrN2 - 1, nbrN3, pos);
-      Mask = 0x3ul << (lzMax << 2);
-      for (; pos < TmpPos; ++pos)
-	this->StateDescription[pos] |= Mask;
-    }
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1 - 1, nbrN2, nbrN3 - 1, pos);
+  Mask = 0x5ul << (lzMax * 3);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1, nbrN2, nbrN3 - 1, pos);
+  Mask = 0x4ul << (lzMax * 3);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 2, lzMax - 1, totalLz - (2 * lzMax), nbrN1 - 1, nbrN2 - 1, nbrN3, pos);
+  Mask = 0x3ul << (lzMax * 3);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1, nbrN2 - 1, nbrN3, pos);
-  Mask = 0x2ul << (lzMax << 2);
+  Mask = 0x2ul << (lzMax * 3);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, lzMax - 1, totalLz - lzMax, nbrN1 - 1, nbrN2, nbrN3, pos);
-  Mask = 0x1ul << (lzMax << 2);
+  Mask = 0x1ul << (lzMax * 3);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
 
