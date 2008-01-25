@@ -89,7 +89,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "ysymmetrized-basis", "use Y <-> -Y symmetrized version of the basis (only valid if total-y=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-yparity", "select the  Y <-> -Y symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -122,7 +124,8 @@ int main(int argc, char** argv)
   int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
   int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
   bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
+  bool YSymmetrizedBasis = ((BooleanOption*) Manager["ysymmetrized-basis"])->GetBoolean();
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;

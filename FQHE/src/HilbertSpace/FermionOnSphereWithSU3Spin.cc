@@ -71,9 +71,6 @@ FermionOnSphereWithSU3Spin::FermionOnSphereWithSU3Spin (int nbrFermions, int tot
   int N1 = (2 * nbrFermions) + totalY + (3 * totalTz);
   int N2 = (2 * nbrFermions) + totalY - (3 * totalTz);
   int N3 = nbrFermions - totalY;
-  N1 /= 6;
-  N2 /= 6;
-  N3 /= 3;
   if ((N1 < 0) || (N2 < 0) || (N3 < 0) || ((N1 % 6) != 0) || ((N2 % 6) != 0) || ((N3 % 3) != 0))
     this->HilbertSpaceDimension = 0;
   else
@@ -96,7 +93,8 @@ FermionOnSphereWithSU3Spin::FermionOnSphereWithSU3Spin (int nbrFermions, int tot
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
   this->GenerateLookUpTable(memory);
-  
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+//     this->PrintState(cout, i) << endl;
 // #ifdef __DEBUG__
 //   int UsedMemory = 0;
 //   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
@@ -355,9 +353,6 @@ ostream& FermionOnSphereWithSU3Spin::PrintState (ostream& Str, int state)
 	}
       Str << "| ";
     }
-  Str << this->StateHighestBit[state] << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
-  if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
-    Str << " error! ";
   return Str;
 }
 
@@ -374,16 +369,21 @@ ostream& FermionOnSphereWithSU3Spin::PrintState (ostream& Str, int state)
 
 long FermionOnSphereWithSU3Spin::GenerateStates(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos)
 {
-  if ((nbrFermions < 0) || (totalLz < 0) || (lzMax < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0) || (lzMax < 0) || 
-      ((nbrN1 - 1)> lzMax) || ((nbrN2 - 1)> lzMax) || ((nbrN3 - 1)> lzMax) ||
-      ((nbrFermions * lzMax - (((nbrN1 * nbrN1) + (nbrN2 * nbrN2) + (nbrN3 * nbrN3) - nbrFermions) >> 1)) < totalLz))
+//   if (pos == 0)
+//     cout << nbrFermions << " " << lzMax << " " << totalLz << " " <<  nbrN1 << " " <<  nbrN2 << " " <<  nbrN3 << endl;
+  if ((nbrFermions < 0) || (totalLz < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0))
     return pos;
+//   if (pos == 0)
+//     cout << "check" << endl;
   if ((nbrFermions == 0) && (totalLz == 0))
     {
       this->StateDescription[pos] = 0x0ul;
       return (pos + 1l);
     }
-    
+  if ((lzMax < 0) || ((nbrN1 - 1)> lzMax) || ((nbrN2 - 1)> lzMax) || ((nbrN3 - 1)> lzMax) ||
+      ((nbrFermions * lzMax - (((nbrN1 * nbrN1) + (nbrN2 * nbrN2) + (nbrN3 * nbrN3) - nbrFermions) >> 1)) < totalLz))
+    return pos;
+
   if (nbrFermions == 1) 
     {
       if (lzMax >= totalLz)
@@ -441,11 +441,7 @@ void FermionOnSphereWithSU3Spin::GenerateLookUpTable(unsigned long memory)
 {
   // get every highest bit poisition
   unsigned long TmpPosition = this->StateDescription[0];
-#ifdef __64_BITS__
-  int CurrentHighestBit = 63;
-#else
-  int CurrentHighestBit = 31;
-#endif
+  int CurrentHighestBit = (this->LzMax + 1) * 3 - 1;
   while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
     --CurrentHighestBit;  
   int MaxHighestBit = CurrentHighestBit;
@@ -946,6 +942,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad1 (int m1, int m2, double& coefficient)
   m2 *= 3;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;
@@ -989,6 +986,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad2 (int m1, int m2, double& coefficient)
   ++m2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;
@@ -1032,6 +1030,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad3 (int m1, int m2, double& coefficient)
   m2 += 2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;
@@ -1076,6 +1075,7 @@ int FermionOnSphereWithSU3Spin::Ad2Ad2 (int m1, int m2, double& coefficient)
   ++m2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;
@@ -1120,6 +1120,7 @@ int FermionOnSphereWithSU3Spin::Ad2Ad3 (int m1, int m2, double& coefficient)
   m2 += 2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;
@@ -1164,6 +1165,7 @@ int FermionOnSphereWithSU3Spin::Ad3Ad3 (int m1, int m2, double& coefficient)
   m2 += 2;
   if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
     return this->HilbertSpaceDimension;
+  coefficient = 1.0;
   int NewLzMax = this->ProdALzMax;
   if (m2 > NewLzMax)
     NewLzMax = m2;

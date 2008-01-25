@@ -289,8 +289,120 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
       return true;
     }
   return true;
+  
 }
 
+
+// try to guess system information from file name for system with an SU(3) degree of freedom and discrete symmetries
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// lz = reference to twice the z projection of the angular momentum (grab it only if initial value is 0)
+// tz = reference to twice the Tz quantum number (grab it only if initial value is 0)
+// y = reference to three time the Y quantum number (grab it only if initial value is 0)
+// tzSymmetry = reference on the flag for the Tz<->-Tz symmetry
+// tzSymmetryMinusParity = reference on the flag for the minus parity sector of the Y<->-Y symmetry
+// ySymmetry = reference on the flag for the Y<->-Y symmetry
+// ySymmetryMinusParity = reference on the flag for the minus parity sector of the Y<->-Y symmetry
+// lzSymmetry = reference on the flag for the Lz<->-Lz symmetry
+// lzSymmetryMinusParity = reference on the flag for the minus parity sector of the Lz<->-Lz symmetry
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+bool FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& tz, int& y,
+							     bool& tzSymmetry, bool& tzSymmetryMinusParity,  bool& ySymmetry, 
+							     bool& ySymmetryMinusParity, bool& lzSymmetry, 
+							     bool& lzSymmetryMinusParity, bool& statistics)
+{
+  if (FQHEOnSphereFindSystemInfoFromVectorFileName(filename, nbrParticles, lzMax, lz, statistics) == false)
+    return false;
+  char* StrNbrParticles;
+  if (tz == 0)
+    {
+      StrNbrParticles = strstr(filename, "_tz_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 4;
+	  int SizeString = 0;
+	  if (StrNbrParticles[SizeString] == '-')
+	    ++SizeString;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      tz = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+    }
+  if (y == 0)
+    {
+      StrNbrParticles = strstr(filename, "_y_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  if (StrNbrParticles[SizeString] == '-')
+	    ++SizeString;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      y = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess z projection of the total spin from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  tzSymmetry = false;
+  tzSymmetryMinusParity = false;
+  ySymmetry = false;
+  ySymmetryMinusParity = false;
+  lzSymmetry = false;
+  lzSymmetryMinusParity = false;
+  if (strstr(filename, "tzp") != 0)
+    {
+      tzSymmetry = true;
+    }
+  if (strstr(filename, "tzm") != 0)
+    {
+      tzSymmetry = true;
+      tzSymmetryMinusParity = true;
+    }
+  if (strstr(filename, "ypsym") != 0)
+    {
+      ySymmetry = true;
+    }
+  if (strstr(filename, "ymsym") != 0)
+    {
+      ySymmetry = true;
+      ySymmetryMinusParity = true;
+    }
+  if (strstr(filename, "lzp") != 0)
+    {
+      lzSymmetry = true;
+    }
+  if (strstr(filename, "lzm") != 0)
+    {
+      lzSymmetry = true;
+      lzSymmetryMinusParity = true;
+    }
+  return true;
+}
 
 // try to guess system information from file name for system suth an SU(4) degree of freedom
 //
