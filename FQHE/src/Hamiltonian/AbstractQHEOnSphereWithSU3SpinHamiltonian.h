@@ -84,6 +84,42 @@ class AbstractQHEOnSphereWithSU3SpinHamiltonian : public AbstractQHEOnSphereHami
   // array that contains all one-body interaction factors for particles with spin 3
   double* OneBodyInteractionFactors33;
 
+  // alternative method used to store indices attached to each interaction factor
+  //  arrays of m1 and m2 intra-sector indices (i.e. indices for the a_m1_s a_m2_s factors)
+  int* M1IntraValue;
+  int* M2IntraValue;
+  //  number of element in each m1 or m2 intra-sector index array
+  int NbrM12IntraIndices;
+  //  the m3 intra-sector index array (i.e. index for the ad_m3_s a_(m1+m3-m3)_s factors) for each set of (m1,m2)
+  int** M3IntraValues;
+  // number of possible m3 intra-sector index for each set of (m1,m2)
+  int* NbrM3IntraValues;
+
+  // alternative method used to store indices attached to each interaction factor
+  //  arrays of m1 and m2 inter-sector indices (i.e. indices for the a_m1_s a_m2_-s factors)
+  int* M1InterValue;
+  int* M2InterValue;  
+  //  number of element in each m1 or m2 inter-sector index array
+  int NbrM12InterIndices;
+  //  the m3 inter-sector index array (i.e. index for the ad_m3_s a_(m1+m3-m3)_-s factors) for each set of (m1,m2)
+  int** M3InterValues;
+  // number of possible m3 inter-sector index for each set of (m1,m2)
+  int* NbrM3InterValues;
+
+  // arrays containing all interaction factors needed for the alternative method
+  // array containing all interaction factors for spin 1 and spin 1
+  double* M12InteractionFactors11;
+  // array containing all interaction factors for spin 2 and spin 2
+  double* M12InteractionFactors22;
+  // array containing all interaction factors for spin 3 and spin 3
+  double* M12InteractionFactors33;
+  // array containing all interaction factors for spin 1 and spin 2
+  double* M12InteractionFactors12;
+  // array containing all interaction factors for spin 1 and spin 3
+  double* M12InteractionFactors13;
+  // array containing all interaction factors for spin 2 and spin 3
+  double* M12InteractionFactors23;
+
  public:
 
   // destructor

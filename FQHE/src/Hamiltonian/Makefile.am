@@ -44,4 +44,5 @@ ParticleOnSphereWithSpinL2Hamiltonian.cc \
 ParticleOnSphereWithSpinS2Hamiltonian.cc \
 ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.cc \
 AbstractQHEOnSphereWithSU3SpinHamiltonian.cc \
-ParticleOnSphereWithSU3SpinGenericHamiltonian.cc
+ParticleOnSphereWithSU3SpinGenericHamiltonian.cc \
+ParticleOnSphereWithSU3SpinL2Hamiltonian.cc
