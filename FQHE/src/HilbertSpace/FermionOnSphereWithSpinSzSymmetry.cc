@@ -340,32 +340,39 @@ RealVector FermionOnSphereWithSpinSzSymmetry::ConvertToSymmetricNbodyBasis(RealV
     {
       Signature = nbodyBasis.StateDescription[i];
       TmpState = this->GetSignedCanonicalState(Signature);
-      NewLzMax = 1 + (this->LzMax << 1);
       if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) == Signature)
-	{
+	{	  
 	  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
 	  NewLzMax = 1 + (this->LzMax << 1);
 	  while ((TmpState >> NewLzMax) == 0x0ul)
 	    --NewLzMax;
-	  if (Signature != 0x0ul)	
-	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i] * M_SQRT2;
+	  if ((Signature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)	
+	    {
+	      Signature = TmpState;
+	      this->GetStateSingletParity(Signature);
+	      if ((((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) == 0) && (this->SzParitySign > 0.0))
+		  || (((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) != 0) && (this->SzParitySign < 0.0)))
+		TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	    }
 	  else
-	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += state[i] * M_SQRT1_2;
 	}
-//       else
-// 	{
-// 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-// 	  NewLzMax = 1 + (this->LzMax << 1);
-// 	  while ((TmpState >> NewLzMax) == 0x0ul)
-// 	    --NewLzMax;
-// 	  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += this->SzParitySign * state[i] * M_SQRT1_2;
-// 	}
+      else
+	{
+	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  NewLzMax = 1 + (this->LzMax << 1);
+	  while ((TmpState >> NewLzMax) == 0x0ul)
+	    --NewLzMax;
+	  Signature = TmpState;
+	  this->GetStateSingletParity(Signature);
+	  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)))* this->SzParitySign * state[i] * M_SQRT1_2;
+	}
     }
-  double Truc = 0.0;
-  for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
-    Truc += TmpVector[i] * TmpVector[i];
-  cout << "truc = " << Truc << endl;
+//   double Truc = 0.0;
+//   for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
+//     Truc += TmpVector[i] * TmpVector[i];
+//   cout << "truc = " << Truc << endl;
   return TmpVector;  
 }
 
