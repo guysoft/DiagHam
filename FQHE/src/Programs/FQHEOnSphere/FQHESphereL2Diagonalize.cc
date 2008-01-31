@@ -249,7 +249,7 @@ int main(int argc, char** argv)
   AbstractQHEOnSphereHamiltonian* Hamiltonian = new ParticleOnSphereL2Hamiltonian(Space, NbrParticles, LzMax, TotalLz,
 										  Architecture.GetArchitecture(), 
 										  ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(),
-										  Memory, DiskCacheFlag,
+										  Memory, true, DiskCacheFlag,
 										  LoadPrecalculationFileName);
 
   double Shift = ((SingleDoubleOption*) Manager["energy-shift"])->GetDouble();

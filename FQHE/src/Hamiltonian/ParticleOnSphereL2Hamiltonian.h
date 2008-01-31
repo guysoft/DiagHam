@@ -74,6 +74,7 @@ class ParticleOnSphereL2Hamiltonian : public AbstractQHEOnSphereHamiltonian
   // architecture = architecture to use for precalculation
   // l2Factor = multiplicative factor in front of the L^2 operator in the Hamiltonian
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // fixedLz = true if the contribution of the of the Lz^2 has to be computed from the total Lz, false if it has to be computed using the two body operators
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int totalLz,

@@ -59,12 +59,13 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // l2Factor = multiplicative factor in front of the L^2 operator in the Hamiltonian
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// fixedLz = true if the contribution of the of the Lz^2 has to be computed from the total Lz, false if it has to be computed using the two body operators
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int totalLz,
 							     AbstractArchitecture* architecture, double l2Factor,  long memory, bool fixedLz, bool onDiskCacheFlag,
-								       char* precalculationFileName)
+							     char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -76,7 +77,7 @@ ParticleOnSphereL2Hamiltonian::ParticleOnSphereL2Hamiltonian(ParticleOnSphere* p
   this->L2Factor = l2Factor;
   this->Architecture = architecture;
   this->FixedLz = fixedLz;
-  if (FixedLz)
+  if (this->FixedLz)
     this->HamiltonianShift = 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
   else
     this->HamiltonianShift = 0;
@@ -199,7 +200,7 @@ int ParticleOnSphereL2Hamiltonian::GetHilbertSpaceDimension ()
 
 void ParticleOnSphereL2Hamiltonian::ShiftHamiltonian (double shift)
 {
-  if (FixedLz)
+  if (this->FixedLz == true)
     this->HamiltonianShift = shift + 0.25 * this->L2Factor * ((double) (this->TotalLz * this->TotalLz));
   else
     this->HamiltonianShift = shift;
@@ -278,7 +279,7 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
     }
   else
     this->NbrInteractionFactors = this->LzMax * (this->LzMax + 1) + 1;
-  if (!FixedLz) // need to calculate Lz^2, also
+  if (this->FixedLz == false) // need to calculate Lz^2, also
     this->NbrInteractionFactors += this->LzMax * (this->LzMax + 1)/2;
   
   this->M1Value = new int [this->NbrInteractionFactors];
@@ -337,7 +338,7 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
 	    }
 	}
     }  
-  if (!FixedLz) // need to calculate Lz^2, also: add mixed terms
+  if (this->FixedLz == false) // need to calculate Lz^2, also: add mixed terms
     {
       for (int m1=1; m1<=this->LzMax; ++m1)
 	for (int m3=0; m3<m1; ++m3)
@@ -356,7 +357,7 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
     Factor *= -1.0;
   // in the case of SzProjection (which coincides with non FixedLz)
   // an additional sign appears here...
-  if (!FixedLz)
+  if (this->FixedLz == false)
     Factor *= -1.0;
   this->NbrOneBodyInteractionFactors = this->LzMax + 1;
   this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
@@ -375,7 +376,7 @@ void ParticleOnSphereL2Hamiltonian::EvaluateInteractionFactors()
   this->OneBodyNValues[this->LzMax] = this->LzMax;
   this->OneBodyInteractionFactors[this->LzMax] = Factor * Coefficients(this->LzMax - 1, this->LzMax);
   // calculate Lz^2 also if not constant Lz
-  if (!FixedLz)
+  if (this->FixedLz == false)
     {
       for (int i = 0; i <= this->LzMax; ++i)
 	this->OneBodyInteractionFactors[i] += this->L2Factor * 0.25*((2 * i) - this->LzMax)*((2 * i) - this->LzMax);
