@@ -44,6 +44,8 @@ class FermionOnSphere;
 class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 {
 
+ protected:
+
   // number of fermions
   int NbrFermions;
   // number of fermions plus 1
@@ -87,6 +89,10 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 
  public:
 
+  // default constructor
+  // 
+  FermionOnSphereWithSU3Spin ();
+
   // basic constructor
   // 
   // nbrFermions = number of fermions
@@ -104,7 +110,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
 
   // destructor
   //
-  ~FermionOnSphereWithSU3Spin ();
+  virtual ~FermionOnSphereWithSU3Spin ();
 
   // assignement (without duplicating datas)
   //
@@ -115,52 +121,52 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
 
   // get the particle statistic 
   //
   // return value = particle statistic
-  int GetParticleStatistic();
+  virtual int GetParticleStatistic();
 
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  List<AbstractQuantumNumber*> GetQuantumNumbers ();
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  AbstractQuantumNumber* GetQuantumNumber (int index);
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
-  AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
-					 SubspaceSpaceConverter& converter);
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
+						 SubspaceSpaceConverter& converter);
 
   // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_1 a_m_1
-  double Ad1A1 (int index, int m);
+  virtual double Ad1A1 (int index, int m);
 
   // apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_2 a_m_2
-  double Ad2A2 (int index, int m);
+  virtual double Ad2A2 (int index, int m);
 
   // apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_3 a_m_3
-  double Ad3A3 (int index, int m);
+  virtual double Ad3A3 (int index, int m);
 
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -168,7 +174,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A1A1 (int index, int n1, int n2);
+  virtual double A1A1 (int index, int n1, int n2);
 
   // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -176,7 +182,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A1A2 (int index, int n1, int n2);
+  virtual double A1A2 (int index, int n1, int n2);
 
   // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -184,7 +190,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A1A3 (int index, int n1, int n2);
+  virtual double A1A3 (int index, int n1, int n2);
 
   // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -192,7 +198,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A2A2 (int index, int n1, int n2);
+  virtual double A2A2 (int index, int n1, int n2);
 
   // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -200,7 +206,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A2A3 (int index, int n1, int n2);
+  virtual double A2A3 (int index, int n1, int n2);
 
   // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -208,7 +214,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  double A3A3 (int index, int n1, int n2);
+  virtual double A3A3 (int index, int n1, int n2);
 
   // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //
@@ -216,7 +222,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad1Ad1 (int m1, int m2, double& coefficient);
+  virtual int Ad1Ad1 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
@@ -224,7 +230,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad1Ad2 (int m1, int m2, double& coefficient);
+  virtual int Ad1Ad2 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -232,7 +238,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad1Ad3 (int m1, int m2, double& coefficient);
+  virtual int Ad1Ad3 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
@@ -240,7 +246,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad2Ad2 (int m1, int m2, double& coefficient);
+  virtual int Ad2Ad2 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -248,7 +254,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad2Ad3 (int m1, int m2, double& coefficient);
+  virtual int Ad2Ad3 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -256,14 +262,14 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int Ad3Ad3 (int m1, int m2, double& coefficient);
+  virtual int Ad3Ad3 (int m1, int m2, double& coefficient);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
@@ -273,13 +279,13 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
-  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
+  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+					int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
   // timeCoherence = true if time coherence has to be used
-  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
   // create a U(1) state from an SU(3) state
   //
@@ -288,14 +294,14 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // return value = resulting U(1) state
   virtual RealVector ForgeU1FromSU3(RealVector& state, FermionOnSphere& u1Space);
 
-  private:
+  protected:
 
   // find state index
   //
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
 
   // evaluate Hilbert space dimension
@@ -306,7 +312,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // totalTz = twice the total Tz value
   // totalY = three time the total Y value
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY);
+  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalTz, int totalY);
 
   // evaluate Hilbert space dimension
   //
@@ -317,12 +323,12 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
   // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // return value = Hilbert space dimension
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3);
 
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(unsigned long memory);
+  virtual void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
   // 
@@ -334,7 +340,7 @@ class FermionOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos);
+  virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, int nbrN1, int nbrN2, int nbrN3, long pos);
 
 };
 

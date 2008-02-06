@@ -47,6 +47,13 @@ using std::hex;
 using std::dec;
 
 
+// default constructor
+// 
+
+FermionOnSphereWithSU3Spin::FermionOnSphereWithSU3Spin ()
+{
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions

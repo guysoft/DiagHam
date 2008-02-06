@@ -29,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREWITHSU3SPIN_H
-#define FERMIONONSPHEREWITHSU3SPIN_H
+#ifndef FERMIONONSPHEREWITHSU3SPINTZSYMMETRY_H
+#define FERMIONONSPHEREWITHSU3SPINTZSYMMETRY_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphereWithSU3Spin.h"
+#include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 
 #include <iostream>
 
@@ -42,53 +42,34 @@
 class FermionOnSphere;
 
 
-class FermionOnSphereWithSU3SpinTzSymmetricBasis :  public ParticleOnSphereWithSU3Spin
+#ifdef __64_BITS__
+#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
+#define FERMION_SPHERE_SU3_TZ_MASK 0x2492492492492492ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
+#else
+#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
+#define FERMION_SPHERE_SU3_TZ_MASK 0x12492492ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
+#endif
+
+
+class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
 {
 
-  // number of fermions
-  int NbrFermions;
-  // number of fermions plus 1
-  int IncNbrFermions;
-  // momentum total value
-  int TotalLz;
-  // maximum Lz value reached by a fermion
-  int LzMax;
-  // number of Lz values in a state
-  int NbrLzValue;
-  // twice the total Tz value
-  int TotalTz;
-  // three time the total Y value
-  int TotalY;
 
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateHighestBit;
+  // additional sign due to the parity sector for the Tz<->-Tz symmetry
+  double TzParitySign;
 
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  unsigned long LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
-  // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
   // symmetry of the temporary state
-  int ProdASymmetry;
+  int ProdASignature;
 
  public:
+
+  // default constructor
+  // 
+  FermionOnSphereWithSU3SpinTzSymmetry();
 
   // basic constructor
   // 
@@ -98,22 +79,22 @@ class FermionOnSphereWithSU3SpinTzSymmetricBasis :  public ParticleOnSphereWithS
   // totalY = three time the total Y value
   // minusTzParity = select the  Tz <-> -Tz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
-  FermionOnSphereWithSU3SpinTzSymmetricBasis (int nbrFermions, int totalLz, int lzMax, int totalY, bool minusTzParity, unsigned long memory = 10000000);
+  FermionOnSphereWithSU3SpinTzSymmetry (int nbrFermions, int totalLz, int lzMax, int totalY, bool minusTzParity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnSphereWithSU3SpinTzSymmetricBasis(const FermionOnSphereWithSU3SpinTzSymmetricBasis& fermions);
+  FermionOnSphereWithSU3SpinTzSymmetry(const FermionOnSphereWithSU3SpinTzSymmetry& fermions);
 
   // destructor
   //
-  ~FermionOnSphereWithSU3SpinTzSymmetricBasis ();
+  ~FermionOnSphereWithSU3SpinTzSymmetry ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSphereWithSU3SpinTzSymmetricBasis& operator = (const FermionOnSphereWithSU3SpinTzSymmetricBasis& fermions);
+  FermionOnSphereWithSU3SpinTzSymmetry& operator = (const FermionOnSphereWithSU3SpinTzSymmetry& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -125,21 +106,69 @@ class FermionOnSphereWithSU3SpinTzSymmetricBasis :  public ParticleOnSphereWithS
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_1 a_m_1
-  double Ad1A1 (int index, int m);
+  virtual double Ad1A1 (int index, int m);
 
   // apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_2 a_m_2
-  double Ad2A2 (int index, int m);
+  virtual double Ad2A2 (int index, int m);
 
   // apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_3 a_m_3
-  double Ad3A3 (int index, int m);
+  virtual double Ad3A3 (int index, int m);
+
+  // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A1 (int index, int n1, int n2);
+
+  // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A2 (int index, int n1, int n2);
+
+  // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A3 (int index, int n1, int n2);
+
+  // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A2A2 (int index, int n1, int n2);
+
+  // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A2A3 (int index, int n1, int n2);
+
+  // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A3A3 (int index, int n1, int n2);
 
   // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //
@@ -200,13 +229,27 @@ class FermionOnSphereWithSU3SpinTzSymmetricBasis :  public ParticleOnSphereWithS
   // get symmetry of a given state 
   //
   // initialState = referennce state whose symmetry has to be computed
-  virtual void GetStateSymmetry (unsigned long& initialState);
+  // return value = corresponding symmetry bit
+  virtual unsigned long GetStateSymmetry (unsigned long& initialState);
 
   // get canonical expression of a given state and its symmetry
   //
-  // initialState = state that has to be converted to its canonical expression
-  // return value = corresponding canonical state (with symmetry bit)
-  virtual unsigned long GetSignedCanonicalState (unsigned long initialState);
+  // initialState = reference on the state that has to be converted to its canonical expression
+  // return value = corresponding symmetry bit
+  virtual unsigned long GetSignedCanonicalState (unsigned long& initialState);
+
+  // compute the parity of the number of spin singlet in the SU(2) sector
+  //
+  // initialState = reference on the state whose parity has to be evaluated
+  // return value = corresponding parity bit
+  virtual unsigned long GetStateSingletTzParity(unsigned long& initialState);
+
+  // factorized code that is used to symmetrize result of the AdxAdy operations
+  //
+  // state = reference on the state that has been produced with the AdxAdy operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state
+  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient);
 
 };
 
@@ -215,7 +258,7 @@ class FermionOnSphereWithSU3SpinTzSymmetricBasis :  public ParticleOnSphereWithS
 // initialState = state that has to be converted to its canonical expression
 // return value = corresponding canonical state
 
-inline unsigned long FermionOnSphereWithSpinSzSymmetry::GetCanonicalState (unsigned long initialState)
+inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetCanonicalState (unsigned long initialState)
 {
   unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU3_TZ_MASK;
   TmpMask |= TmpMask << 1;
@@ -230,7 +273,7 @@ inline unsigned long FermionOnSphereWithSpinSzSymmetry::GetCanonicalState (unsig
 // initialState = reference on the state whose symmetry has to be computed
 // return value = corresponding symmetry bit
 
-unsigned long void FermionOnSphereWithSpinSzSymmetry::GetStateSymmetry (unsigned long& initialState)
+inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSymmetry (unsigned long& initialState)
 {
   unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU3_TZ_MASK;
   TmpMask |= TmpMask << 1;
@@ -245,9 +288,9 @@ unsigned long void FermionOnSphereWithSpinSzSymmetry::GetStateSymmetry (unsigned
 // initialState = reference on the state that has to be converted to its canonical expression
 // return value = corresponding symmetry bit
 
-inline unsigned int FermionOnSphereWithSpinSzSymmetry::GetSignedCanonicalState (unsigned long& initialState)
+inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetSignedCanonicalState (unsigned long& initialState)
 {
-  unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU2_TZ_MASK;
+  unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU3_TZ_MASK;
   TmpMask |= TmpMask << 1;
   if ((initialState ^ TmpMask) < initialState)
     {
@@ -261,6 +304,58 @@ inline unsigned int FermionOnSphereWithSpinSzSymmetry::GetSignedCanonicalState (
       return 0x0u;
 }
 
+// compute the parity of the number of spin singlet in the SU(2) sector
+//
+// initialState = reference on the state whose parity has to be evaluated
+// return value = corresponding parity bit
+
+inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzParity(unsigned long& initialState)
+{
+  unsigned long TmpState = initialState;
+  TmpState &= (TmpState >> 1);
+  TmpState &= FERMION_SPHERE_SU3_TZ_MASK;
+#ifdef __64_BITS__
+  TmpState ^= (TmpState >> 32);
+#endif
+  TmpState ^= (TmpState >> 16);
+  TmpState ^= (TmpState >> 8);
+  TmpState ^= (TmpState >> 4);
+  TmpState ^= (TmpState >> 2);
+  return ((TmpState & 1) << FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT);
+}
+
+// factorized code that is used to symmetrize result of the AdxAdy operations
+//
+// state = reference on the state that has been produced with the AdxAdy operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state
+
+inline int FermionOnSphereWithSU3SpinTzSymmetry::SymmetrizeAdAdResult(unsigned long& state, double& coefficient)
+{
+  unsigned long TmpState2 = state;
+  if ((this->GetSignedCanonicalState(state) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
+    {
+      if (((1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul))) * this->TzParitySign) < 0.0)
+	return this->HilbertSpaceDimension;
+      if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= M_SQRT2;
+      int NewLzMax = 2 + (this->LzMax * 3);
+      while ((state >> NewLzMax) == 0)
+	--NewLzMax;
+      return this->FindStateIndex(state, NewLzMax);
+    }
+  int NewLzMax = 2 + (this->LzMax * 3);
+  while ((state  >> NewLzMax) == 0)
+    --NewLzMax;
+  if (TmpState2 != state)
+    {
+      coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->TzParitySign;
+    }
+  if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
+    coefficient *= M_SQRT1_2;
+  return this->FindStateIndex(state, NewLzMax);
+}
 #endif
 
 
