@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetry.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
