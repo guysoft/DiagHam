@@ -678,7 +678,7 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
       cout << "Vectors are not defined or have a wrong value in " << subspaceDescription << endl;
       return;
     }
-  RealVector* Basis = new RealVector[TmpHilbertSpaceDimension];
+  RealMatrix Basis (this->Space->GetHilbertSpaceDimension(), TmpHilbertSpaceDimension);
   char* DirectoryName = ReducedBasis["Directory"];
   char* TmpName;
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
@@ -692,7 +692,6 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
       if (Basis[i].ReadVector(TmpName) == false)
 	{
 	  cout << "error while reading " << TmpName << endl;
-	  delete[] Basis;
 	  if (DirectoryName != 0)
 	    delete[] TmpName;
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
@@ -704,16 +703,22 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	delete[] TmpName;
     }
   RealSymmetricMatrix HRep (TmpHilbertSpaceDimension);
-  RealVector TmpVector (Basis[0].GetVectorDimension(), true);
+  RealVector* TmpVectors = new RealVector[TmpHilbertSpaceDimension];
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
     {
+      RealVector TmpVector (Basis[0].GetVectorDimension(), true);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Basis[i]), &TmpVector);
       Operation1.ApplyOperation(this->Architecture);      
+      TmpVectors[i] = TmpVector;
+    }
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
       for (int j = i; j < TmpHilbertSpaceDimension; ++j)
 	{
-	  HRep(i ,j) = Basis[j] * TmpVector;
+	  HRep(i ,j) = Basis[j] * TmpVectors[i];
 	}
     }
+  delete[] TmpVectors;
   if (TmpHilbertSpaceDimension > 1)
     {
 #ifdef __LAPACK__
@@ -726,6 +731,11 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	    }
 	  else
 	    {
+	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		TmpEigenvector(l, l) = 1.0;
+	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    {
@@ -744,6 +754,13 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	    }
 	  else
 	    {
+	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		TmpEigenvector(l, l) = 1.0;
+	      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+	      TmpTriDiag.Diagonalize(TmpEigenvector);
+	      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	    {
@@ -752,12 +769,20 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 #ifdef __LAPACK__
 	}
 #endif
+      if (this->EvaluateEigenvectors == true)
+	{
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+	      Basis[j].WriteVector(TmpVectorName);
+	    }
+	}
     }
   else
     {
       file << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
     }
-  delete[] Basis;
   for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
     delete[] VectorFileNames[j];
   delete[] VectorFileNames;
