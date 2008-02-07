@@ -39,13 +39,18 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
+#include "GeneralTools/Endian.h"
 
 #include <math.h>
+#include <fstream>
 
 using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 
 // default constructor
@@ -75,6 +80,8 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry (int 
   this->TzParitySign = 1.0;
   if (minusTzParity == true)
     this->TzParitySign = -1.0;
+  this->LzParitySign = 1.0;
+  this->YParitySign = 1.0;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -124,29 +131,29 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry (int 
   this->GenerateLookUpTable(memory);
 //   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
 //     this->PrintState(cout, i) << endl;
-// #ifdef __DEBUG__
-//   int UsedMemory = 0;
-//   UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-//   cout << "memory requested for Hilbert space = ";
-//   if (UsedMemory >= 1024)
-//     if (UsedMemory >= 1048576)
-//       cout << (UsedMemory >> 20) << "Mo" << endl;
-//     else
-//       cout << (UsedMemory >> 10) << "ko" <<  endl;
-//   else
-//     cout << UsedMemory << endl;
-//   UsedMemory = this->NbrLzValue * sizeof(int);
-//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-//   cout << "memory requested for lookup table = ";
-//   if (UsedMemory >= 1024)
-//     if (UsedMemory >= 1048576)
-//       cout << (UsedMemory >> 20) << "Mo" << endl;
-//     else
-//       cout << (UsedMemory >> 10) << "ko" <<  endl;
-//   else
-//     cout << UsedMemory << endl;
+#ifdef __DEBUG__
+  long UsedMemory = 0;
+  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
 
-// #endif
+#endif
 }
 
 // copy constructor (without duplicating datas)
@@ -164,6 +171,9 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry(const
   this->NbrLzValue = fermions.NbrLzValue;
   this->TotalTz = fermions.TotalTz;
   this->TotalY = fermions.TotalY;
+  this->LzParitySign = fermions.LzParitySign;
+  this->TzParitySign = fermions.TzParitySign;
+  this->YParitySign = fermions.YParitySign;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
   this->MaximumLookUpShift = fermions.MaximumLookUpShift;
@@ -175,10 +185,53 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry(const
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memory = amount of memory granted for precalculations
+
+FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry (char* fileName, unsigned long memory)
+{
+  this->ReadHilbertSpace(fileName);
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->Flag.Initialize();
+  if (this->HilbertSpaceDimension > 0)
+    {
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      this->StateHighestBit = 0;
+    }
+#ifdef __DEBUG__
+  long UsedMemory = 0;
+  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+  UsedMemory = this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  cout << "memory requested for lookup table = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+
+#endif
+}
+
 // destructor
 //
 
-FermionOnSphereWithSU3Spin::~FermionOnSphereWithSU3Spin ()
+FermionOnSphereWithSU3SpinTzSymmetry::~FermionOnSphereWithSU3SpinTzSymmetry ()
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -224,6 +277,75 @@ AbstractHilbertSpace* FermionOnSphereWithSU3SpinTzSymmetry::Clone()
   return new FermionOnSphereWithSU3SpinTzSymmetry(*this);
 }
 
+// save Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description has to be saved
+// return value = true if no error occured
+
+bool FermionOnSphereWithSU3SpinTzSymmetry::WriteHilbertSpace (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->NbrFermions);
+  WriteLittleEndian(File, this->LzMax);
+  WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->TotalTz);
+  WriteLittleEndian(File, this->TotalY);
+  WriteLittleEndian(File, this->LzParitySign);
+  WriteLittleEndian(File, this->TzParitySign);
+  WriteLittleEndian(File, this->YParitySign);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    WriteLittleEndian(File, this->StateDescription[i]);
+  File.close();
+  return true;
+}
+
+// read Hilbert space description to disk
+//
+// fileName = name of the file where the Hilbert space description is stored
+// return value = true if no error occured
+
+bool FermionOnSphereWithSU3SpinTzSymmetry::ReadHilbertSpace (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return false;
+    }
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrFermions);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->TotalTz);
+  ReadLittleEndian(File, this->TotalY);
+  ReadLittleEndian(File, this->LzParitySign);
+  ReadLittleEndian(File, this->TzParitySign);
+  ReadLittleEndian(File, this->YParitySign);
+  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    ReadLittleEndian(File, this->StateDescription[i]);
+  File.close();
+  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+  int NewLzMax = 2 + (3 * this->LzMax);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      while (((TmpState >> NewLzMax) & 0x1ul) == 0x0ul)
+	--NewLzMax;
+      this->StateHighestBit[i] = NewLzMax;
+    }
+  return true;
+}
+  
 // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
 //
 // index = index of the state on which the operator has to be applied

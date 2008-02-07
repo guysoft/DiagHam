@@ -61,6 +61,10 @@ class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
 
   // additional sign due to the parity sector for the Tz<->-Tz symmetry
   double TzParitySign;
+  // additional sign due to the parity sector for the Y<->-Y symmetry
+  double YParitySign;
+  // additional sign due to the parity sector for the Lz<->-Lz symmetry
+  double LzParitySign;
 
   // symmetry of the temporary state
   int ProdASignature;
@@ -86,6 +90,12 @@ class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
   // fermions = reference on the hilbert space to copy to copy
   FermionOnSphereWithSU3SpinTzSymmetry(const FermionOnSphereWithSU3SpinTzSymmetry& fermions);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereWithSU3SpinTzSymmetry (char* fileName, unsigned long memory);
+
   // destructor
   //
   ~FermionOnSphereWithSU3SpinTzSymmetry ();
@@ -100,6 +110,18 @@ class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  bool WriteHilbertSpace (char* fileName);
+
+ // read Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description is stored
+  // return value = true if no error occured
+  virtual bool ReadHilbertSpace (char* fileName);
 
   // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
   //
