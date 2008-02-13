@@ -341,7 +341,7 @@ ostream& FermionOnSphereWithSU3Spin::PrintState (ostream& Str, int state)
 	  Str << " 23 ";
 	  break;
 	case 0x5ul :
-	  Str << "12  ";
+	  Str << "1 3 ";
 	  break;
 	case 0x4ul :
 	  Str << "  3 ";

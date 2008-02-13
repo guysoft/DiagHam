@@ -49,4 +49,5 @@ BosonOnSphereShort.cc \
 BosonOnSphereSymmetricBasisShort.cc \
 ParticleOnSphereWithSU3Spin.cc \
 FermionOnSphereWithSU3Spin.cc \
-FermionOnSphereWithSU3SpinTzSymmetry.cc
+FermionOnSphereWithSU3SpinTzSymmetry.cc \
+FermionOnSphereWithSU3SpinZ3Symmetry.cc

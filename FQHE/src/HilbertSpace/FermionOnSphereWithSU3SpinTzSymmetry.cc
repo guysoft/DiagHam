@@ -110,49 +110,66 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry (int 
     }
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
-      this->StateDescription[i] = 0x0ul;
-    else
+    {
+      if (this->GetCanonicalState(this->StateDescription[i]) != this->StateDescription[i])
+	this->StateDescription[i] = 0x0ul;
+      else
+	{
+	  if ((this->GetStateSymmetry(this->StateDescription[i]) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	    {
+	      unsigned long TmpStateParity = this->GetStateSingletTzParity(this->StateDescription[i]);
+	      if ((((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) == 0) && (minusTzParity == false))
+		  || (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
+		++TmpHilbertSpaceDimension;
+	      else
+		this->StateDescription[i] = 0x0ul;
+	    }
+	  else
+	    ++TmpHilbertSpaceDimension;
+	}
+    }
+  unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
+  TmpHilbertSpaceDimension = 0;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    if (this->StateDescription[i] != 0x0ul)
       {
-	if ((this->GetStateSymmetry(this->StateDescription[i])& FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
-	  {
-	    unsigned long TmpStateParity = this->GetStateSingletTzParity(this->StateDescription[i]);
-	    if ((((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) == 0) && (minusTzParity == false))
-		|| (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
-	      ++TmpHilbertSpaceDimension;
-	    else
-	      this->StateDescription[i] = 0x0ul;
-	  }
-	else
-	  ++TmpHilbertSpaceDimension;
+	TmpStateDescription[TmpHilbertSpaceDimension] = this->StateDescription[i];
+	++TmpHilbertSpaceDimension;
       }
+  delete[] this->StateDescription;
+  this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
-  this->GenerateLookUpTable(memory);
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-//     this->PrintState(cout, i) << endl;
+  if (this->HilbertSpaceDimension>0)
+    {
+      this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
+      this->GenerateLookUpTable(memory);
+      delete[] this->StateHighestBit;
+      this->StateHighestBit = 0;
+      cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+// 	this->PrintState(cout, i) << endl;
 #ifdef __DEBUG__
-  long UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-  UsedMemory = this->NbrLzValue * sizeof(int);
-  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-  cout << "memory requested for lookup table = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
-
+      long UsedMemory = 0;
+      UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+    }
 #endif
 }
 

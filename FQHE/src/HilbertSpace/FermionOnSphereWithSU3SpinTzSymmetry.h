@@ -42,22 +42,27 @@
 class FermionOnSphere;
 
 
+#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
+#define FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT     0x2ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
+#define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
+#define FERMION_SPHERE_SU3_Z3SINGLETPARITY_BIT   0x20000ul
+#define FERMION_SPHERE_SU3_Z3SINGLETPARITY_SHIFT 17
 #ifdef __64_BITS__
-#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
-#define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
-#define FERMION_SPHERE_SU3_TZ_MASK 0x2492492492492492ul
-#define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
+#define FERMION_SPHERE_SU3_TZ_MASK 0x1249249249249249ul
+#define FERMION_SPHERE_SU3_1_MASK  0x1249249249249249ul
+#define FERMION_SPHERE_SU3_23_MASK 0x6db6db6db6db6db6ul
 #else
-#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
-#define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
-#define FERMION_SPHERE_SU3_TZ_MASK 0x12492492ul
-#define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
+#define FERMION_SPHERE_SU3_TZ_MASK 0x09249249ul
+#define FERMION_SPHERE_SU3_1_MASK  0x09249249ul
+#define FERMION_SPHERE_SU3_23_MASK 0x36db6db6ul
 #endif
 
 
 class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
 {
 
+ protected:
 
   // additional sign due to the parity sector for the Tz<->-Tz symmetry
   double TzParitySign;
@@ -300,7 +305,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSymmetry (uns
   unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU3_TZ_MASK;
   TmpMask |= TmpMask << 1;
   if ((initialState ^ TmpMask) != initialState)    
-    return 0ul;
+    return 0x0ul;
   else
     return FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT;
 }
@@ -311,19 +316,19 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSymmetry (uns
 // return value = corresponding symmetry bit
 
 inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetSignedCanonicalState (unsigned long& initialState)
-{
+{  
   unsigned long TmpMask =  ((initialState >> 1) ^ initialState) & FERMION_SPHERE_SU3_TZ_MASK;
   TmpMask |= TmpMask << 1;
   if ((initialState ^ TmpMask) < initialState)
     {
       initialState ^= TmpMask;
-      return 0x0;
+      return 0x0ul;
     }
   else
-    if ((initialState ^ TmpMask) != initialState)
+    if ((initialState ^ TmpMask) == initialState)
       return FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT;
     else
-      return 0x0u;
+      return 0x0ul;
 }
 
 // compute the parity of the number of spin singlet in the SU(2) sector
@@ -343,6 +348,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzPari
   TmpState ^= (TmpState >> 8);
   TmpState ^= (TmpState >> 4);
   TmpState ^= (TmpState >> 2);
+  TmpState ^= (TmpState >> 1);
   return ((TmpState & 1) << FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT);
 }
 
@@ -355,26 +361,26 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzPari
 inline int FermionOnSphereWithSU3SpinTzSymmetry::SymmetrizeAdAdResult(unsigned long& state, double& coefficient)
 {
   unsigned long TmpState2 = state;
-  if ((this->GetSignedCanonicalState(state) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
+  if ((this->GetSignedCanonicalState(state) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
     {
       if (((1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul))) * this->TzParitySign) < 0.0)
 	return this->HilbertSpaceDimension;
-      if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+      if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
 	coefficient *= M_SQRT2;
       int NewLzMax = 2 + (this->LzMax * 3);
-      while ((state >> NewLzMax) == 0)
+      while ((state >> NewLzMax) == 0x0ul)
 	--NewLzMax;
       return this->FindStateIndex(state, NewLzMax);
     }
   int NewLzMax = 2 + (this->LzMax * 3);
-  while ((state  >> NewLzMax) == 0)
+  while ((state >> NewLzMax) == 0x0ul)
     --NewLzMax;
   if (TmpState2 != state)
     {
       coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul)));
       coefficient *= this->TzParitySign;
     }
-  if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
+  if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
     coefficient *= M_SQRT1_2;
   return this->FindStateIndex(state, NewLzMax);
 }
