@@ -665,9 +665,119 @@ int FermionOnSphereWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrFermions, i
 // return value = wave function evaluated at the given location
 
 Complex FermionOnSphereWithSU3Spin::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-							    int firstComponent, int nbrComponent)
+							  int firstComponent, int nbrComponent)
 {
   Complex Value;
+  Complex Tmp;
+  int N1 = (2 * this->NbrFermions) + this->TotalY + (3 * this->TotalTz);
+  int N2 = (2 * this->NbrFermions) + this->TotalY - (3 * this->TotalTz);
+  int N3 = this->NbrFermions - this->TotalY;
+  N1 /= 6;
+  N2 /= 6;
+  N3 /= 3;
+  ComplexMatrix Slater1(N1, N1);
+  ComplexMatrix Slater2(N2, N2);
+  ComplexMatrix Slater3(N3, N3);
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
+  RealVector TmpCoordinates(2);
+  int* Indices1 = new int [N1];
+  int* Indices2 = new int [N2];
+  int* Indices3 = new int [N3];
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
+  double Factor = 1.0;
+  for (int i = 2; i <= this->NbrFermions; ++i)
+    Factor *= (double) i;
+  Factor = 1.0 / sqrt(Factor);
+  int Pos1;
+  int Pos2;
+  int Pos3;
+  int Lz;
+  unsigned long TmpStateDescription;
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
+    {
+      Pos1 = 0;
+      Pos2 = 0;
+      Pos3 = 0;
+      Lz = 0;
+      TmpStateDescription = this->StateDescription[k];
+      while (Lz <= this->LzMax)
+	{
+	  if ((TmpStateDescription & 0x1l) != 0x0l)
+	    {
+	      Indices1[Pos1] = Lz;
+	      ++Pos1;
+	    }
+	  if ((TmpStateDescription & 0x2l) != 0x0l)
+	    {
+	      Indices2[Pos2] = Lz;
+	      ++Pos2;
+	    }
+	  if ((TmpStateDescription & 0x4l) != 0x0l)
+	    {
+	      Indices3[Pos3] = Lz;
+	      ++Pos3;
+	    }
+	  ++Lz;
+	  TmpStateDescription >>= 3;
+	}
+      for (int i = 0; i < N1; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < N1; ++j)
+	    {
+#ifdef __USE_LAPACK_HERE__
+	      Slater1.SetMatrixElement(i,j,TmpColum2.Re(Indices1[j]), TmpColum2.Im(Indices1[j]));
+#else
+	      Slater1[i].Re(j) = TmpColum2.Re(Indices1[j]);
+	      Slater1[i].Im(j) = TmpColum2.Im(Indices1[j]);
+#endif
+	    }
+	}
+      for (int i = 0; i < N2; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < N2; ++j)
+	    {
+#ifdef __USE_LAPACK_HERE__
+	      Slater2.SetMatrixElement(i,j,TmpColum2.Re(Indices2[j]), TmpColum2.Im(Indices2[j]));
+#else
+	      Slater2[i].Re(j) = TmpColum2.Re(Indices2[j]);
+	      Slater2[i].Im(j) = TmpColum2.Im(Indices2[j]);
+#endif
+	    }
+	}
+      for (int i = 0; i < N3; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < N3; ++j)
+	    {
+#ifdef __USE_LAPACK_HERE__
+	      Slater3.SetMatrixElement(i,j,TmpColum2.Re(Indices3[j]), TmpColum2.Im(Indices3[j]));
+#else
+	      Slater3[i].Re(j) = TmpColum2.Re(Indices3[j]);
+	      Slater3[i].Im(j) = TmpColum2.Im(Indices3[j]);
+#endif
+	    }
+	}
+      Complex SlaterDet1 = Slater1.Determinant();
+      Complex SlaterDet2 = Slater2.Determinant();
+      Complex SlaterDet3 = Slater3.Determinant();
+//      Value += SlaterDet1 * SlaterDet2 * SlaterDet3 * (state[k] * Factor) * this->GetStateSign(TmpStateDescription, IndicesDown);
+    }
+  delete[] Indices1;
+  delete[] Indices2;
+  delete[] Indices3;
   return Value;
 }
 

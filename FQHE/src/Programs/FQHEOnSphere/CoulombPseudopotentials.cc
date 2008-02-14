@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation / thickness",0.0);
 
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
+  (*SystemGroup) += new BooleanOption ('\n', "std-output", "use standard output instead of an output file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -81,10 +82,10 @@ int main(int argc, char** argv)
       strcpy (OutputFile, ((SingleStringOption*) Manager["output"])->GetString());
     }
 
-  double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation);
+  double* Pseudopotentials = EvaluatePseudopotentials(NbrFlux, LandauLevel, layerSeparation, true);
   if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
     {
-      double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation);
+      double* PseudopotentialsNMinus1 = EvaluatePseudopotentials(NbrFlux, LandauLevel - 1, layerSeparation, true);
       for (int i = 0; i <= MaxMomentum; ++i)
 	Pseudopotentials[i] = 0.5 * (Pseudopotentials[i] + PseudopotentialsNMinus1[i]);
       delete[] PseudopotentialsNMinus1;
@@ -94,36 +95,68 @@ int main(int argc, char** argv)
     OneBodyPotentials = EvaluateOneBodyPotentials(NbrFlux, LandauLevel, 
 						  ((SingleDoubleOption*) Manager["north-potential"])->GetDouble(),
 						  ((SingleDoubleOption*) Manager["south-potential"])->GetDouble());
-  ofstream File;
-  File.open(OutputFile, ios::binary | ios::out);
-  File.precision(14);
-  File << "# pseudopotentials on the sphere for coulomb interaction ";
-  if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
-    File << " for relativistic fermions";
-  File << endl
-       << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
-  if (layerSeparation != 0.0)
-    File << "# with finite layer separation / thickness d=" << layerSeparation << endl;
-  if (OneBodyPotentials != 0)
+
+  if (((BooleanOption*) Manager["std-output"])->GetBoolean() == false)
     {
-      File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
-	   << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
-    }
-  File << "#" << endl
-       << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
-       << "Pseudopotentials =";
-  for (int i = 0; i <= MaxMomentum; ++i)
-    File << " " << Pseudopotentials[i];
-  File << endl;
-  if (OneBodyPotentials != 0)
-    {
-      File << endl << "Onebodypotentials =";
+      ofstream File;
+      File.open(OutputFile, ios::binary | ios::out);
+      File.precision(14);
+      File << "# pseudopotentials on the sphere for coulomb interaction ";
+      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	File << " for relativistic fermions";
+      File << endl
+	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
+      if (layerSeparation != 0.0)
+	File << "# with finite layer separation / thickness d=" << layerSeparation << endl;
+      if (OneBodyPotentials != 0)
+	{
+	  File << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+	       << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
+	}
+      File << "#" << endl
+	   << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
+	   << "Pseudopotentials =";
       for (int i = 0; i <= MaxMomentum; ++i)
-	File << " " << OneBodyPotentials[i];
-     File << endl;
+	File << " " << Pseudopotentials[i];
+      File << endl;
+      if (OneBodyPotentials != 0)
+	{
+	  File << endl << "Onebodypotentials =";
+	  for (int i = 0; i <= MaxMomentum; ++i)
+	    File << " " << OneBodyPotentials[i];
+	  File << endl;
+	}
+      File.close();
     }
-  File.close();
-  
+  else
+    {
+      cout.precision(14);
+      cout << "# pseudopotentials on the sphere for coulomb interaction ";
+      if (((BooleanOption*) Manager["relativistic-fermions"])->GetBoolean() == true)
+	cout << " for relativistic fermions";
+      cout << endl
+	   << "# in the Landau level N=" << LandauLevel << " for 2S=" << NbrFlux << " flux quanta" << endl;
+      if (layerSeparation != 0.0)
+	cout << "# with finite layer separation / thickness d=" << layerSeparation << endl;
+      if (OneBodyPotentials != 0)
+	{
+	  cout << "# with two impurities (V_north = " << ((SingleDoubleOption*) Manager["north-potential"])->GetDouble() 
+	       << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
+	}
+      cout << "#" << endl
+	   << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
+	   << "Pseudopotentials =";
+      for (int i = 0; i <= MaxMomentum; ++i)
+	cout << " " << Pseudopotentials[i];
+      cout << endl;
+      if (OneBodyPotentials != 0)
+	{
+	  cout << endl << "Onebodypotentials =";
+	  for (int i = 0; i <= MaxMomentum; ++i)
+	    cout << " " << OneBodyPotentials[i];
+	  cout << endl;
+	}
+    }  
 
 
   

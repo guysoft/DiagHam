@@ -59,7 +59,7 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSepar
 				    MainCoefficients.GetCoefficient(m2, -m2, l << 1) * TmpCoef);
 	  }
       Pseudopotentials[MaxMomentum - l] = TmpPseudopotentials / sqrt (0.5 * nbrFlux);
-      if (!quiet)
+      if (quiet == false)
 	cout << "V[" << (MaxMomentum - l) << "] = " << Pseudopotentials[MaxMomentum - l] << endl;
     }
   delete[] Coefficients;

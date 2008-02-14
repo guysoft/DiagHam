@@ -33,4 +33,5 @@ TwoThirdSingletState.cc \
 HundRuleCFStates.cc \
 HundRuleBilayerSinglet.cc \
 SlaterSuperposition.cc \
-SlaterComponent.cc 
+SlaterComponent.cc \
+SU3HalperinOnSphereWaveFunction.cc

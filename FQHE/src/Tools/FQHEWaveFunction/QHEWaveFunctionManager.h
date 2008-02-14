@@ -64,7 +64,8 @@ class QHEWaveFunctionManager
     {
       SphereGeometry = 0x01,
       DiskGeometry = 0x02,
-      SphereWithSpinGeometry = 0x04
+      SphereWithSpinGeometry = 0x04,
+      SphereWithSU3SpinGeometry = 0x08
     };
 
   // list of available wavefunctions:
@@ -86,7 +87,8 @@ class QHEWaveFunctionManager
       HaldaneRezayi = 0x400000,
       ExtendedHalperin = 0x800000,
       HundRuleSinglet = 0xf00000,
-      TrialWaveFunction = 0x10000
+      TrialWaveFunction = 0x10000,
+      Halperin = 0x1000000
     };
   
   // constructor

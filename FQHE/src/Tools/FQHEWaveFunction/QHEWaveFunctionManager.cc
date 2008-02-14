@@ -108,6 +108,10 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,q,r) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "antisymmetrize", "antisymmetrize wavefunction (XH only)");
     }
+  else 
+    if (this->GeometryID & QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
+      {	
+      }
 }
 
 // get list of all available wave functions
@@ -147,6 +151,11 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
 	  str << "  * hund : singlet state with each layer formed according to Hund's rule" << endl;
+	}
+    else
+      if (this->GeometryID == QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
+	{
+	  str << "  * halperin : SU(3)_generalized Halperin state" << endl;	  
 	}
   return str;
 }
@@ -388,6 +397,10 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      return rst;
 	    }
 	}
+    else
+      if (this->GeometryID == QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
+	{
+	}
   return 0;
 }
 
@@ -463,5 +476,7 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::TwoThirdsS;
   if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
     return QHEWaveFunctionManager::HundRuleSinglet;
+  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "halperin") == 0))
+    return QHEWaveFunctionManager::Halperin;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }
