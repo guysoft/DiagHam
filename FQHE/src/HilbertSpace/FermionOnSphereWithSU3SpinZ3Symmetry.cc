@@ -105,8 +105,8 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (int 
       exit(1);
     }
 
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-    this->PrintState(cout, i) << endl;
+//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+//     this->PrintState(cout, i) << endl;
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
@@ -114,17 +114,7 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (int 
 	this->StateDescription[i] = 0x0ul;
       else
 	{
-	  if ((this->GetStateSymmetry(this->StateDescription[i]) & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
-	    {
-	      unsigned long TmpStateParity = this->GetStateSingletYParity(this->StateDescription[i]);
-// 	      if ((((TmpStateParity & FERMION_SPHERE_SU3_Z3SINGLETPARITY_BIT) == 0) && (minusTzParity == false))
-// 		  || (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
-		++TmpHilbertSpaceDimension;
-//	      else
-//		this->StateDescription[i] = 0x0ul;
-	    }
-	  else
-	    ++TmpHilbertSpaceDimension;
+	  ++TmpHilbertSpaceDimension;
 	}
     }
   unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
@@ -145,8 +135,9 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (int 
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;
       cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
-       for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-	 this->PrintState(cout, i) << endl;
+//        for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+// 	 this->PrintState(cout, i) << " r = " << this->GetStateRotationSign(this->StateDescription[i], 0x0ul) 
+// 				   << " l = " << this->GetStateRotationSign(this->StateDescription[i], FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT) << endl;
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));

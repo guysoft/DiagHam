@@ -39,6 +39,12 @@
 #include <iostream>
 
 
+using std::cout;
+using std::endl;
+using std::hex;
+using std::dec;
+
+
 class FermionOnSphereWithSU3SpinZ3Symmetry :  public FermionOnSphereWithSU3SpinTzSymmetry
 {
 
@@ -104,11 +110,12 @@ class FermionOnSphereWithSU3SpinZ3Symmetry :  public FermionOnSphereWithSU3SpinT
   // return value = corresponding parity bit
   virtual unsigned long GetSignedCanonicalState (unsigned long& initialState);
 
-  // compute the parity of the number of spin singlet aka the number of particle pairs (no more than two) per Lz value
+  // compute the sign when applying Z3 rotation due to the fermionic statistics
   //
-  // initialState = reference on the state whose parity has to be evaluated
-  // return value = corresponding parity bit
-  unsigned long GetStateSingletYParity(unsigned long& initialState);
+  // initialState = reference on the state whose sign has to be evaluated
+  // rotationDirection = specify if the rotation has been done in the right or left direction
+  // return value = corresponding sign bit
+  virtual unsigned long GetStateRotationSign(unsigned long& initialState, unsigned long rotationDirection);
 
   // factorized code that is used to symmetrize result of the AdxAdy operations
   //
@@ -164,8 +171,12 @@ inline unsigned long FermionOnSphereWithSU3SpinZ3Symmetry::GetSignedCanonicalSta
 			     ((initialState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState == initialState)
     return FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT;
+  unsigned long TmpSign = 0x0ul;
   if (TmpState < initialState)
-    initialState = TmpState;
+    {
+      initialState = TmpState;
+      TmpSign = FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT;
+    }
   TmpState =  (((TmpState & FERMION_SPHERE_SU3_1_MASK) << 2) |
 	       ((TmpState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState < initialState)
@@ -174,32 +185,42 @@ inline unsigned long FermionOnSphereWithSU3SpinZ3Symmetry::GetSignedCanonicalSta
       return 0x0ul;
     }
   else
-    {
-      return 0x0ul;
-    }
+    return TmpSign;
 }
 
-// compute the parity of the number of spin singlet aka the number of particle pairs (no more than two) per Lz value
+// compute the sign when applying Z3 rotation due to the fermionic statistics
 //
-// initialState = reference on the state whose parity has to be evaluated
-// return value = corresponding parity bit
+// initialState = reference on the state whose sign has to be evaluated
+// rotationDirection = specify if the rotation has been done in the right or left direction
+// return value = corresponding sign bit
 
-inline unsigned long FermionOnSphereWithSU3SpinZ3Symmetry::GetStateSingletYParity(unsigned long& initialState)
+inline unsigned long FermionOnSphereWithSU3SpinZ3Symmetry::GetStateRotationSign(unsigned long& initialState, unsigned long rotationDirection)
 {
   unsigned long TmpState = initialState;
-  TmpState ^= initialState >> 1;
-  TmpState ^= initialState >> 2;
-  TmpState ^= ((initialState >> 2) | (initialState >> 1) | initialState);
-  TmpState &= FERMION_SPHERE_SU3_1_MASK;
+  if ((rotationDirection &  FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT) == 0x0ul)
+    {
+      initialState &= FERMION_SPHERE_SU3_3_MASK;
+      TmpState &= initialState | (initialState  >> 1) | (initialState >> 2);
+    }
+  else
+    {
+      initialState &= FERMION_SPHERE_SU3_1_MASK;
+      TmpState &= initialState | (initialState << 1) | (initialState << 2);   
+    }
+  initialState = TmpState;
+  initialState ^= TmpState >> 1;
+  initialState ^= TmpState >> 2;
+  initialState ^= ((TmpState >> 2) | (TmpState >> 1) | TmpState);
+  initialState &= FERMION_SPHERE_SU3_1_MASK;
 #ifdef __64_BITS__
-  TmpState ^= (TmpState >> 32);
+  initialState ^= (initialState >> 32);
 #endif
-  TmpState ^= (TmpState >> 16);
-  TmpState ^= (TmpState >> 8);
-  TmpState ^= (TmpState >> 4);
-  TmpState ^= (TmpState >> 2);
-  TmpState ^= (TmpState >> 1);
-  return ((TmpState & 1) << FERMION_SPHERE_SU3_Z3SINGLETPARITY_SHIFT);
+  initialState ^= (initialState >> 16);
+  initialState ^= (initialState >> 8);
+  initialState ^= (initialState >> 4);
+  initialState ^= (initialState >> 2);
+  initialState ^= (initialState >> 1);
+  return ((initialState & 1) << FERMION_SPHERE_SU3_Z3ROTATIONSIGN_SHIFT);
 }
 
 // factorized code that is used to symmetrize result of the AdxAdy operations
@@ -211,10 +232,11 @@ inline unsigned long FermionOnSphereWithSU3SpinZ3Symmetry::GetStateSingletYParit
 inline int FermionOnSphereWithSU3SpinZ3Symmetry::SymmetrizeAdAdResult(unsigned long& state, double& coefficient)
 {
   unsigned long TmpState2 = state;
-  if ((this->GetSignedCanonicalState(state) & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
+  unsigned long TmpSign = this->GetSignedCanonicalState(state);
+  if ((TmpSign & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
     {
       if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) == 0x0ul)
-	coefficient *= sqrt(3.0);
+	coefficient *= MSQRT3;
       int NewLzMax = 2 + (this->LzMax * 3);
       while ((state >> NewLzMax) == 0x0ul)
 	--NewLzMax;
@@ -225,10 +247,10 @@ inline int FermionOnSphereWithSU3SpinZ3Symmetry::SymmetrizeAdAdResult(unsigned l
     --NewLzMax;
   if (TmpState2 != state)
     {
-      coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateSingletYParity(TmpState2) >> FERMION_SPHERE_SU3_Z3SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateRotationSign(TmpState2, TmpSign) >> FERMION_SPHERE_SU3_Z3ROTATIONSIGN_SHIFT) & 0x1ul)));
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
-    coefficient *= 1.0 / sqrt(3.0);
+    coefficient *= MSQRT1_3;
   return this->FindStateIndex(state, NewLzMax);
 }
 #endif
