@@ -1145,28 +1145,28 @@ List<Matrix*> AbstractQHEOnLatticeHamiltonian::RightInteractionOperators()
 
 long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+//   long MinIndex;
+//   long MaxIndex;
+//   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+//   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
   
-  this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
-  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-    this->NbrInteractionPerComponent[i] = 0;
-  timeval TotalStartingTime2;
-  timeval TotalEndingTime2;
-  double Dt2;
-  gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
+//   this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
+//   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+//     this->NbrInteractionPerComponent[i] = 0;
+//   timeval TotalStartingTime2;
+//   timeval TotalEndingTime2;
+//   double Dt2;
+//   gettimeofday (&(TotalStartingTime2), 0);
+//   cout << "start" << endl;
 
-  QHEParticlePrecalculationOperation Operation(this);
-  Operation.ApplyOperation(this->Architecture);
+//   QHEParticlePrecalculationOperation Operation(this);
+//   Operation.ApplyOperation(this->Architecture);
 
-  long Memory = 0;
-  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-    Memory += this->NbrInteractionPerComponent[i];
+//   long Memory = 0;
+//   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+//     Memory += this->NbrInteractionPerComponent[i];
 
-   cout << "nbr interaction = " << Memory << endl;
+//    cout << "nbr interaction = " << Memory << endl;
 //   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
 //   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
 //     {
@@ -1263,9 +1263,8 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
-  Complex Coefficient;
+  double Coefficient;
   long Memory = 0;
-  int Index;
   // deal with kinetic energy terms first!      
   int qi;
   int qf;
@@ -1276,7 +1275,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       qi = this->KineticQi[j];
       qf = this->KineticQf[j];
       TmpInteraction = this->HoppingTerms[j];
-      for (int i = firstComponent; i < LastComponent; ++i)
+      for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1297,7 +1296,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	  int q3 = this->Q3Value[j];
 	  int q4 = this->Q4Value[j];
 	  TmpInteraction = this->InteractionFactors[j];
-	  for (int i = firstComponent; i < LastComponent; ++i)
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
 	      Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1315,7 +1314,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       int TmpNbrQ34Values;
       int* TmpQ3Values;
       int* TmpQ4Values;
-      for (int i = firstComponent; i < LastComponent; ++i)
+      for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  ProcessedNbrInteractionFactors = 0;
 	  for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
@@ -1346,7 +1345,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
   // separated diagonal terms as these will be the general rule for contact interactions
   if (NbrDiagonalInteractionFactors>0)
     {	  
-      for (int i = firstComponent; i < LastComponent; ++i)
+      for (int i = firstComponent; i < lastComponent; ++i)
 	{
 	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 						     DiagonalInteractionFactors, DiagonalQValues);
