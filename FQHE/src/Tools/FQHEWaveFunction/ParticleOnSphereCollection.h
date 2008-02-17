@@ -47,7 +47,7 @@ class ParticleOnSphereCollection {
   Complex LastV;
   double LastTheta;
   double LastPhi;
-  Complex  *SpinorUCoordinates;
+  Complex *SpinorUCoordinates;
   Complex *SpinorVCoordinates;      
   NumRecRandomGenerator *Generator;
   GarbageFlag Flag;
@@ -63,8 +63,26 @@ class ParticleOnSphereCollection {
   //destructor
   ~ParticleOnSphereCollection();
   
-   // randomly moves particle number nbrParticle
+  // randomly moves particle number nbrParticle
   void Move(int nbrParticle);
+
+  // randomly select a particle and move it
+  // return value = number of particle that was moved
+  int Move();
+
+  // get number of last particle that was moved
+  int GetMovedNbr() { return LastMoved; }
+
+  // get previous coordinates of last particle that was moved
+  void GetPreviousPos(Complex &lastU, Complex &lastV)
+  { lastU=this->LastU; lastV=this->LastV; }
+
+  // get pointers to spinor coordinates
+  void GetSpinorCoordinates(Complex* &U, Complex* &V)
+  { U=this->SpinorUCoordinates; V=this->SpinorVCoordinates; }
+
+  // get number of particles
+  int GetNbrParticles(){ return NbrParticles; }
 
   // restore last move
   void RestoreMove();

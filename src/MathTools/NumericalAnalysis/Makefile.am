@@ -7,4 +7,5 @@ FiniteRegularSubdivisionNumericalInterval.cc \
 RNumericalInterval.cc \
 Abstract1DRealFunction.cc \
 Abstract1DComplexFunction.cc \
+Abstract1DComplexTrialFunction.cc \
 AntisymmetrizedComplexFunction.cc

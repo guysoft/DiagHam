@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//               classs author: Gunnar Möller                                 //
+//                        class author: Gunnar Möller                         //
 //                                                                            //
 //       class of hamiltonian associated to particles on a torus with         //
 //                  coulomb interaction and magnetic translations             //

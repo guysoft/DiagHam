@@ -69,8 +69,8 @@ ComplexVector::ComplexVector(int size, bool zeroFlag)
   if (zeroFlag == true)
     for (int i = 0; i < this->Dimension; ++i)
       {
-	this->RealComponents[i] = 0;
-	this->ImaginaryComponents[i] = 0;
+	this->RealComponents[i] = 0.0;
+	this->ImaginaryComponents[i] = 0.0;
       }
 }
 

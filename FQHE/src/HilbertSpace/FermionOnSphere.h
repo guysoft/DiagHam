@@ -119,7 +119,7 @@ class FermionOnSphere :  public ParticleOnSphere
   //
   virtual ~FermionOnSphere ();
 
-  // assignement (without duplicating datas)
+  // assignment (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space

@@ -82,6 +82,15 @@ void ParticleOnSphereCollection::Move(int nbrParticle)
   // cout << "new coordinates: ("<<this->ThetaPhi[nbrParticle<<1]<<", " << this->ThetaPhi[(nbrParticle<<1)+1] << ")" <<endl;
 }
 
+// randomly select a particle and move it
+int ParticleOnSphereCollection::Move()
+{
+  this->LastMoved = (int) (((double) NbrParticles) * Generator->GetRealRandomNumber());
+  if (LastMoved == NbrParticles) --LastMoved;
+  this->Move(LastMoved);
+  return LastMoved;
+}
+
 // restore last move
 void ParticleOnSphereCollection::RestoreMove()
 {

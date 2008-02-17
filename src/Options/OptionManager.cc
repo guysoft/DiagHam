@@ -152,6 +152,26 @@ bool OptionManager::ProceedOptions (char** argumentValues, int nbrArgument, ostr
   return true;
 }
 
+// ProceedOptions and test if help should be displayed
+//
+// argumentValues = string array of arguments
+// nbrArgument = number of arguments in argumentValues array
+// output = reference on output stream used to display errors  
+void OptionManager::StandardProceedings(char** argumentValues, int nbrArgument, ostream& output)
+{
+  if (this->ProceedOptions(argumentValues, nbrArgument, output) == false)
+    {
+      cout << "see man page for option syntax or type " << this->ProgramName << " -h" << endl;
+      exit(-1);
+    }
+  
+  if (this->GetBoolean("help") == true)
+    {
+      this->DisplayHelp (output);
+      exit(0);
+    }
+}
+
 // print the options and their values in the current group
 //  
 // output = reference on output stream;

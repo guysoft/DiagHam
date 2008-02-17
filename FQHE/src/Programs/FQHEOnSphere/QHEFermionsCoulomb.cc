@@ -9,13 +9,7 @@
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -34,7 +28,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("QHEFermionsLaplacianDelta" , "0.01");
+  OptionManager Manager ("QHEFermionsCoulomb" , "0.01");
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -84,16 +78,7 @@ int main(int argc, char** argv)
 #endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
-  if (Manager.ProceedOptions(argv, argc, cout) == false)
-    {
-      cout << "see man page for option syntax or type QHEFermionsCoulomb -h" << endl;
-      return -1;
-    }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
-    {
-      Manager.DisplayHelp (cout);
-      return 0;
-    }
+  Manager.StandardProceedings(argv, argc, cout);
 
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();

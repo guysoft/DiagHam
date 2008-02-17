@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                    Copyright (C) 2001-2006 Gunnar Moller                   //
+//                    Copyright (C) 2001-2008 Gunnar Moller                   //
 //                                                                            //
 //                                                                            //
 //          various unsigned long tools related to QHE Hilbert spaces         //
@@ -64,6 +64,25 @@ unsigned long lastone (unsigned long i);
 // i = word to test
 // return value = number of bits
 int bitcount (unsigned long i);
+
+
+// count bits in word
+//
+// i = word to test
+// return value = number of bits
+inline double FastBitCount (unsigned long uLong)
+{
+#ifdef  __64_BITS__
+  uLong ^= uLong >> 32;
+#endif
+  uLong ^= uLong >> 16;
+  uLong ^= uLong >> 8;
+  uLong ^= uLong >> 4;
+  uLong ^= uLong >> 2;
+  uLong ^= uLong << 1;
+  uLong &= 0x2ul;
+  return (1.0 - ((double) uLong));
+}
 
 // generates the smallest word with a given number of bits
 //

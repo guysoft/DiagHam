@@ -52,7 +52,7 @@ class Abstract1DComplexTrialFunction : public Abstract1DComplexFunction
 
   // virtual destructor
   //
-  virtual ~Abstract1DComplexTrialFunction(){};
+  virtual ~Abstract1DComplexTrialFunction();
 
   // clone function 
   //

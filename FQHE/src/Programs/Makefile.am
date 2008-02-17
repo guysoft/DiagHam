@@ -1,4 +1,4 @@
-SUBDIRS=FQHEOnSphere FQHEOnDisk FQHEOnTorus
+SUBDIRS=FQHEOnSphere FQHEOnDisk FQHEOnTorus FQHEOnLattice
 
 bin_PROGRAMS=QHEFermionsCircle
 

@@ -91,6 +91,13 @@ class OptionManager
   // return value = true if proceeding succeded, false if an error occurs
   bool ProceedOptions (char** argumentValues, int nbrArgument, ostream& output);
 
+  // ProceedOptions and test if help should be displayed
+  //
+  // argumentValues = string array of arguments
+  // nbrArgument = number of arguments in argumentValues array
+  // output = reference on output stream used to display errors  
+  void StandardProceedings(char** argumentValues, int nbrArgument, ostream& output);
+
   // print the options and their values in the current group
   //  
   // output = reference on output stream;

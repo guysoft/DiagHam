@@ -238,7 +238,7 @@ void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
     return;
   if (i == j)
     {
-      this->DiagonalElements[i] = x.Re;      
+      this->DiagonalElements[i] = x.Re;
       return;
     }
   else

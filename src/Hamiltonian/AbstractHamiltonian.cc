@@ -74,7 +74,7 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
 	}
       TmpV1.Re(i) = 0.0;
     }
-  return M;
+  return M;  
 }
   
 // store real part of Hamiltonian into a real symmetric matrix

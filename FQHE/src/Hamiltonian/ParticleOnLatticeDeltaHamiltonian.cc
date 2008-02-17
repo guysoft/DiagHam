@@ -1,0 +1,227 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                                                                            //
+//                            DiagHam  version 0.01                           //
+//                                                                            //
+//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//                                                                            //
+//                                                                            //
+//                 class of quatum Hall hamiltonian associated                //
+//   to particles with contact interactions on a lattice in magnetic field    //
+//                                                                            //
+//                      last modification : 13/02/2008                        //
+//                                                                            //
+//                                                                            //
+//    This program is free software; you can redistribute it and/or modify    //
+//    it under the terms of the GNU General Public License as published by    //
+//    the Free Software Foundation; either version 2 of the License, or       //
+//    (at your option) any later version.                                     //
+//                                                                            //
+//    This program is distributed in the hope that it will be useful,         //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//    GNU General Public License for more details.                            //
+//                                                                            //
+//    You should have received a copy of the GNU General Public License       //
+//    along with this program; if not, write to the Free Software             //
+//    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+
+#include "config.h"
+#include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
+#include "Output/MathematicaOutput.h"
+
+#include "Architecture/AbstractArchitecture.h"
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
+using std::ostream;
+
+
+// constructor for contact interactions on a square lattice
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// lx = length of simulation cell in x-direction
+// ly = length of simulation cell in y-direction
+// nbrFluxQuanta = number of flux quanta piercing the simulation cell
+// contactInteractionU = strength of on-site delta interaction
+// reverseHopping = flag to indicate if sign of hopping terms should be reversed
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+{
+  this->Particles=particles;
+  this->NbrParticles=nbrParticles;
+  this->Lx=lx;
+  this->Ly=ly;
+  this->SubLattices=1;
+  this->NbrCells=lx*ly;
+  this->NbrSites=NbrCells*SubLattices;
+  this->NbrFluxQuanta=nbrFluxQuanta;
+  this->HamiltonianShift=0.0;
+  this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;
+  this->ContactInteractionU=contactInteractionU;
+  this->ReverseHopping = reverseHopping;
+  this->Architecture = architecture;
+  this->EvaluateInteractionFactors();
+  this->FastMultiplicationFlag = false;
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  cout << endl;
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
+
+// destructor
+//
+ParticleOnLatticeDeltaHamiltonian::~ParticleOnLatticeDeltaHamiltonian()
+{
+  if (NbrHoppingTerms>0)
+    {
+      delete [] this->HoppingTerms;
+      delete [] this->KineticQi;
+      delete [] this->KineticQf;
+    }
+  if (NbrInteractionFactors>0)
+    {
+      delete [] this->InteractionFactors;
+      delete [] this->Q1Value;
+      delete [] this->Q2Value;
+      delete [] this->Q3Value;
+      delete [] this->Q4Value;
+    }
+  if (NbrQ12Indices>0)
+    {
+      for (int i=0; i<NbrQ12Indices; ++i)
+	{
+	  delete [] this->Q3PerQ12[i];
+	  delete [] this->Q4PerQ12[i];
+	}
+      delete [] this->NbrQ34Values;
+      delete [] this->InteractionFactors;
+      delete [] this->Q1Value;
+      delete [] this->Q2Value;
+      
+    }
+  if (NbrDiagonalInteractionFactors>0)
+    {
+      delete [] this->DiagonalInteractionFactors;
+      delete [] this->DiagonalQValues;
+    }
+}
+
+
+// Output Stream overload
+//
+// Str = reference on output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+ostream& operator << (ostream& Str, ParticleOnLatticeDeltaHamiltonian& H)
+{
+  Str << "Need to implement ostream& operator << for ParticleOnLatticeDeltaHamiltonian!" << endl;
+  return Str;
+}
+
+// Mathematica Output Stream overload
+//
+// Str = reference on Mathematica output stream
+// H = Hamiltonian to print
+// return value = reference on output stream
+MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeDeltaHamiltonian& H)
+{
+  Str << "Need to implement MathematicaOutput& operator << for ParticleOnLatticeDeltaHamiltonian!\n";
+  return Str;
+}
+
+
+// evaluate all interaction factors
+//   
+void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
+{
+
+  // hopping terms are present independent of statistics:
+  this->NbrHoppingTerms=4*this->NbrSites;
+  this->HoppingTerms = new Complex[NbrHoppingTerms];
+  this->KineticQi = new int[NbrHoppingTerms];
+  this->KineticQf = new int[NbrHoppingTerms];
+
+  int TmpNumberTerms=0;
+  double HoppingSign = (this->ReverseHopping ? -1.0 : 1.0);
+  Complex TranslationPhase;
+  for (int i=0; i<Lx; ++i) 
+    {
+      Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
+      for (int j=0; j<Ly; ++j)
+	{
+	  KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
+	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
+	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	  ++TmpNumberTerms;
+	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
+	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	  ++TmpNumberTerms;
+	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
+	  HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
+	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	  ++TmpNumberTerms;
+	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
+	  HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
+	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	  ++TmpNumberTerms;
+	}
+    }
+
+  // we have no general four-particle interactions:
+  this->NbrInteractionFactors=0;
+  this->NbrQ12Indices=0;
+  
+  // contact interactions come to play for bosons, only!
+  if (this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic)
+    {
+      cout << "adding interaction terms"<<endl;
+      this->NbrDiagonalInteractionFactors=this->NbrSites;
+      this->DiagonalInteractionFactors=new double[NbrDiagonalInteractionFactors];
+      this->DiagonalQValues=new int[NbrDiagonalInteractionFactors];
+      for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
+	{
+	  this->DiagonalQValues[i]=i;
+	  this->DiagonalInteractionFactors[i]=this->ContactInteractionU;
+	}
+    }
+  else // no such interactions
+    {
+      NbrDiagonalInteractionFactors=0;
+    }
+    
+  
+}
