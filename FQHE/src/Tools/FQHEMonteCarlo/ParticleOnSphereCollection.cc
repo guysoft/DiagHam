@@ -143,3 +143,21 @@ double ParticleOnSphereCollection::GetRandomNumber()
 {
   return Generator->GetRealRandomNumber();
 }
+
+// randomize particle positions
+void ParticleOnSphereCollection::Randomize()
+{
+  double phi, theta,  c, s;
+  for (int i=0; i<NbrParticles; ++i)
+    {
+      phi=Generator->GetRealRandomNumber()*2.0*M_PI;
+      theta=acos(1.0-2.0*Generator->GetRealRandomNumber());
+      s=sin(theta/2.); c = cos(theta/2.);
+      this->SpinorUCoordinates[i].Re =c*cos(phi/2.0);
+      this->SpinorUCoordinates[i].Im =-c*sin(phi/2.0);      
+      this->SpinorVCoordinates[i].Re = s*cos(phi/2.0);
+      this->SpinorVCoordinates[i].Im = s*sin(phi/2.0);
+      this->ThetaPhi[i<<1] = (2.0*acos(Norm(SpinorUCoordinates[i])));
+      this->ThetaPhi[(i<<1)+1] = (Arg(SpinorVCoordinates[i])-Arg(SpinorUCoordinates[i]));
+    }
+}

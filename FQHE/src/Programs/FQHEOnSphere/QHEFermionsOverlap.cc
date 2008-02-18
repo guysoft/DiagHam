@@ -8,8 +8,8 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
+#include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 

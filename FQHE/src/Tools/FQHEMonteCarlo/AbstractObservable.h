@@ -28,51 +28,45 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef LAUGHLINWITHSPINSAMPLINGFUNCTION_H
-#define LAUGHLINWITHSPINSAMPLINGFUNCTION_H
+#ifndef ABSTRACTOBSERVABLE_H
+#define ABSTRACTOBSERVABLE_H
 
-#include "AbstractMCSamplingFunction.h"
+#include "config.h"
 
-class LaughlinWithSpinSamplingFunction : public AbstractMCSamplingFunction
+#include <iostream>
+
+class AbstractParticleCollection;
+
+class AbstractObservable
 {
  protected:
-  // number of particles in each layer
-  int NbrPerLayer;
-  // exponent of Jastrow Factors
-  int Exponent;
-
-  // pointers to spinor coordinates (external)
-  Complex *SpinorUCoordinates;
-  Complex *SpinorVCoordinates;
-
-  // for access to ParticleCollection
-  Complex LastU;
-  Complex LastV;
-
-  // norm for total function value
-  double ElementNorm;
+  unsigned Type;
   
  public:
-  // constructor
-  LaughlinWithSpinSamplingFunction(int nbrParticles, int exponent);
-    
-  // virtual destructor
-  virtual ~LaughlinWithSpinSamplingFunction();
+  
+  enum Properties{
+    RealObservable = 0x1u,
+    ComplexObservable = 0x2u,
+    VectorValued = 0x4u
+  };
+  
+  // destructor
+  virtual ~AbstractObservable();
 
-  // register basic system of particles
-  virtual void RegisterSystem(AbstractParticleCollection *system);
+  // call to make an observation
+  // weight = relative weight of this sample
+  virtual void RecordValue(double weight) = 0;
 
-  // method for ratio of probabilities with respect to the last configuration
-  // allows for more rapid calculation due to cancellation of factors
-  virtual double GetTransitionRatio();
+  // print legend to the given stream
+  virtual void PrintLegend(std::ostream &output) = 0;
 
-  // get the full function value for a system of particles
-  virtual Complex GetFunctionValue();
+  // print status to the given stream
+  virtual void PrintStatus(std::ostream &output) = 0;
 
-  // call this method to scale the sampling function (needed to normalize the function)
-  // scale = total scaling factor
-  virtual void ScaleByFactor(double scale);
+  // set particle collection that the observable operates on
+  // system = particle collection
+  virtual void SetParticleCollection(AbstractParticleCollection *system) = 0;
   
 };
 
-#endif 
+#endif

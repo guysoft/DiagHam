@@ -26,7 +26,6 @@ HalperinOnSphereWaveFunction.cc \
 SU4HalperinOnSphereWaveFunction.cc \
 PairedCFOnSphereWaveFunction.cc \
 PairedCFOnSphereWithSpinWaveFunction.cc \
-ParticleOnSphereCollection.cc \
 WaveFunctionOverlapOptimizer.cc \
 ExtendedHalperinWavefunction.cc \
 TwoThirdSingletState.cc \

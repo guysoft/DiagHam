@@ -51,7 +51,11 @@ libFQHEMonteCarlo_a_LIBADD =
 am_libFQHEMonteCarlo_a_OBJECTS = AbstractMCSamplingFunction.$(OBJEXT) \
 	LaughlinWithSpinSamplingFunction.$(OBJEXT) \
 	QHESamplingFunctionManager.$(OBJEXT) \
-	SimpleMonteCarloOnSphere.$(OBJEXT)
+	SimpleMonteCarloOnSphereAlgorithm.$(OBJEXT) \
+	AbstractObservable.$(OBJEXT) \
+	ParticleOnSphereCollection.$(OBJEXT) \
+	AbstractParticleCollection.$(OBJEXT) \
+	SphereBilayerCoulombEnergy.$(OBJEXT)
 libFQHEMonteCarlo_a_OBJECTS = $(am_libFQHEMonteCarlo_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -180,7 +184,11 @@ noinst_LIBRARIES = libFQHEMonteCarlo.a
 libFQHEMonteCarlo_a_SOURCES = AbstractMCSamplingFunction.cc \
 LaughlinWithSpinSamplingFunction.cc \
 QHESamplingFunctionManager.cc \
-SimpleMonteCarloOnSphere.cc
+SimpleMonteCarloOnSphereAlgorithm.cc \
+AbstractObservable.cc \
+ParticleOnSphereCollection.cc \
+AbstractParticleCollection.cc \
+SphereBilayerCoulombEnergy.cc
 
 all: all-recursive
 
@@ -230,9 +238,13 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractMCSamplingFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractObservable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractParticleCollection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaughlinWithSpinSamplingFunction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParticleOnSphereCollection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QHESamplingFunctionManager.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SimpleMonteCarloOnSphere.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SimpleMonteCarloOnSphereAlgorithm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SphereBilayerCoulombEnergy.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

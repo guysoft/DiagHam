@@ -41,7 +41,7 @@ AbstractMCSamplingFunction::~AbstractMCSamplingFunction()
 }
 
 // register basic system of particles
-void AbstractMCSamplingFunction::RegisterSystem(ParticleOnSphereCollection *system)
+void AbstractMCSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
 {
   this->System=system;
 }

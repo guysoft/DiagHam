@@ -28,58 +28,78 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SIMPLEMONTECARLOONSPHERE_H
-#define SIMPLEMONTECARLOONSPHERE_H
+#ifndef SPHEREBILAYERCOULOMBENERGY_H
+#define SPHEREBILAYERCOULOMBENERGY_H
 
+#include "config.h"
 
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "AbstractMCSamplingFunction.h"
-#include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
+#include "AbstractObservable.h"
+#include "ParticleOnSphereCollection.h"
+#include "MCObservables/WeightedRealVectorObservable.h"
 
-class OptionManager;
-
-class SimpleMonteCarloOnSphere
+class SphereBilayerCoulombEnergy : public AbstractObservable
 {
  protected:
+  // Radius of the sphere in units of magnetic length
+  double Radius;
 
-  // number of particles
-  int NbrParticles;
+  // Number of Flux quanta piercing the sphere
+  int NbrFlux;
 
-  // wavefunction to simulate
-  Abstract1DComplexFunction *WaveFunction;
+  // Number of layer separations observed
+  int NbrSeparations;
 
-  // sampling function
-  AbstractMCSamplingFunction *SamplingFunction;  
-  
-  // class holding the particle coordinates
+  // squares of layer separations in units of magnetic length
+  double *SqrSeparations;
+
+  // temporary storage for energy values
+  double *Energies;
+
+  // number of observations made
+  int NbrObservations;
+
+  // system that the observable operates on
   ParticleOnSphereCollection *System;
 
-  // pointer to the option manager
-  OptionManager* Options;
-  
+  // number of particles in System:
+  int NbrParticles;
+
+  // pointers to spinor coordinates (external)
+  Complex *SpinorUCoordinates;
+  Complex *SpinorVCoordinates;
+
+  // core observable
+  WeightedRealVectorObservable *Values;
   
  public:
 
   // default constructor
-  SimpleMonteCarloOnSphere();
+  SphereBilayerCoulombEnergy();
 
-  // set up for basic monte-carlo scheme
-  // nbrParticles = number of particles in system
-  // waveFunction = wavefunction to be simulated
-  // samplingFunction = function to be used to generate samples
-  SimpleMonteCarloOnSphere(int nbrParticles, Abstract1DComplexFunction *waveFunction,
-			   AbstractMCSamplingFunction *samplingFunction);
-  
+  // constructor
+// nbrFlux = Number of Flux piercing sphere
+// nbrSeparations = number of layer separations where observations should be made
+// lowestSeparation = value of the lowest layer separations
+// spacing = spacing of further layer separations
+  SphereBilayerCoulombEnergy(int nbrFlux, int nbrSeparations, double lowestSeparation, double spacing);
+
+
   // destructor
-  ~SimpleMonteCarloOnSphere();
+  virtual ~SphereBilayerCoulombEnergy();
 
-  // add an option group containing all options related to the wave functions
-  //
-  // manager = pointer to the option manager
-  void AddOptionGroup(OptionManager* manager);
+  // call to make an observation
+  virtual void RecordValue(double weight);
 
-  
+  // print legend to the given stream
+  virtual void PrintLegend(std::ostream &output);
+
+  // print status to the given stream
+  virtual void PrintStatus(std::ostream &output);
+
+  // set particle collection that the observable operates on
+  // system = particle collection
+  virtual void SetParticleCollection(AbstractParticleCollection *system);
   
 };
 
-#endif // SIMPLEMONTECARLOONSPHERE_H
+#endif

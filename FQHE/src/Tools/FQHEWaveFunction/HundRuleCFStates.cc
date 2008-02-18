@@ -30,7 +30,7 @@
 
 
 #include "HundRuleCFStates.h"
-#include "ParticleOnSphereCollection.h"
+#include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include <iostream>

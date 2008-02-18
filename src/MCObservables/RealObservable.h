@@ -3,10 +3,10 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2007 Gunnar Möller                  //
+//                  Copyright (C) 2007 Gunnar Möller                          //
 //                                                                            //
 //                                                                            //
-//           class implementing a paired CF wave function on the sphere          //
+//           class implementing a paired CF wave function on the sphere       //
 //                                                                            //
 //                        last modification : 18/05/2007                      //
 //                                                                            //

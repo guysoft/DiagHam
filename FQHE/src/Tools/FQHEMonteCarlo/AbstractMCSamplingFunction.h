@@ -32,21 +32,21 @@
 #define ABSTRACTMCSAMPLINGFUNCTION_H
 
 #include "MathTools/Complex.h"
-#include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
+#include "AbstractParticleCollection.h"
 
 
 class AbstractMCSamplingFunction
 {
  protected:
   // pointer to the ensemble of particles that shall be examined in MonteCarlo
-  ParticleOnSphereCollection *System;
+  AbstractParticleCollection *System;
   
  public:
   // virtual destructor
   virtual ~AbstractMCSamplingFunction();
 
   // register basic system of particles
-  virtual void RegisterSystem(ParticleOnSphereCollection *system);
+  virtual void RegisterSystem(AbstractParticleCollection *system);
 
   // method for ratio of probabilities with respect to the last configuration
   // allows for more rapid calculation due to cancellation of factors

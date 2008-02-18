@@ -29,6 +29,7 @@
 
 
 #include "LaughlinWithSpinSamplingFunction.h"
+#include "ParticleOnSphereCollection.h"
 #include <cmath>
 #include <iostream>
 using std::cout;
@@ -58,16 +59,16 @@ LaughlinWithSpinSamplingFunction::~LaughlinWithSpinSamplingFunction()
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void LaughlinWithSpinSamplingFunction::RegisterSystem(ParticleOnSphereCollection *system)
+void LaughlinWithSpinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
 {
   this->System=system;
-  if (System->GetNbrParticles() != 2*this->NbrPerLayer)
+  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != 2*this->NbrPerLayer)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
     }
   // pointers to spinor coordinates (external)
-  System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  ((ParticleOnSphereCollection*)System)->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
 
 

@@ -30,7 +30,7 @@
 
 #include "config.h"
 #include "PairedCFOnSphereWaveFunction.h"
-#include "ParticleOnSphereCollection.h"
+#include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Vector/RealVector.h"
 #include "MathTools/FactorialCoefficient.h"

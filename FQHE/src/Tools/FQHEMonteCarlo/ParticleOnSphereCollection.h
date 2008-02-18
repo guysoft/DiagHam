@@ -36,12 +36,11 @@
 #include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Vector/RealVector.h"
+#include "AbstractParticleCollection.h"
 
-
-class ParticleOnSphereCollection {
+class ParticleOnSphereCollection : public AbstractParticleCollection {
  private:
   int NbrParticles;
-  int LastMoved;
   double Theta0;
   Complex LastU;
   Complex LastV;
@@ -69,9 +68,6 @@ class ParticleOnSphereCollection {
   // randomly select a particle and move it
   // return value = number of particle that was moved
   int Move();
-
-  // get number of last particle that was moved
-  int GetMovedNbr() { return LastMoved; }
 
   // get previous coordinates of last particle that was moved
   void GetPreviousPos(Complex &lastU, Complex &lastV)
@@ -102,6 +98,9 @@ class ParticleOnSphereCollection {
 
   // allow access to internal Random number generator:
   double GetRandomNumber();
+
+  // randomize particle positions
+  void Randomize();
 
   
 };

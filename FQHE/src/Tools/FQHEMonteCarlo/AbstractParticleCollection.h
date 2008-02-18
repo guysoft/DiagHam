@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-//      class for a basic Monte Carlo algorith for particles on a sphere      //
+// abstract class for collection of particles used in a Monte Carlo algorithm // 
 //                                                                            //
-//                        last modification : 23/01/2008                      //
+//                     last modification : 18/02/2008                         //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,54 +28,40 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "SimpleMonteCarloOnSphere.h"
+#ifndef ABSTRACTPARTICLECOLLECTION_H
+#define ABSTRACTPARTICLECOLLECTION_H
 
-#include "Options/Options.h"
+#include "config.h"
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
-// default constructor
-SimpleMonteCarloOnSphere::SimpleMonteCarloOnSphere()
+class AbstractParticleCollection
 {
-  this->NbrParticles=0;
-}
+ protected:
+  // index of last moved particle
+  int LastMoved;
 
-// set up for basic monte-carlo scheme
-// nbrParticles = number of particles in system
-// waveFunction = wavefunction to be simulated
-// samplingFunction = function to be used to generate samples
-SimpleMonteCarloOnSphere::SimpleMonteCarloOnSphere(int nbrParticles, Abstract1DComplexFunction *waveFunction,
-			 AbstractMCSamplingFunction *samplingFunction)
-{
-  this->NbrParticles=nbrParticles;
-  this->WaveFunction=waveFunction; // is returned normalized by wavefunction handler...
-  this->SamplingFunction=samplingFunction;
-  this->System=new ParticleOnSphereCollection(this->NbrParticles);
-  this->SamplingFunction->RegisterSystem(System);
-  this->SamplingFunction->AdaptAverageMCNorm(); // this also relaxes the particle positions in System
-}
+ public:
+  // destructor
+  virtual ~AbstractParticleCollection();
   
-// destructor
-SimpleMonteCarloOnSphere::~SimpleMonteCarloOnSphere()
-{
-  if (this->NbrParticles!=0)
-    delete this->System;  
-}
+  // randomly moves particle number nbrParticle
+  virtual void Move(int nbrParticle) = 0;
 
+  // randomly select a particle and move it
+  // return value = number of particle that was moved
+  virtual int Move() = 0;
 
-// add an option group containing all options related to the wave functions
-//
-// manager = pointer to the option manager
-void SimpleMonteCarloOnSphere::AddOptionGroup(OptionManager* manager)
-{
- this->Options = manager;
- OptionGroup* MCGroup  = new OptionGroup ("Monte-Carlo options");
-  (*(this->Options)) += MCGroup;
+  // get number of last particle that was moved
+  int GetMovedNbr() { return LastMoved; }
+ 
+  // restore last move
+  virtual void RestoreMove() = 0;
+
+  // allow access to internal Random number generator:
+  virtual double GetRandomNumber() = 0;
+
+  // randomize particle positions
+  virtual void Randomize() = 0;
   
-  (*MCGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
-  (*MCGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-  (*MCGroup) += new SingleIntegerOption  ('\n', "randomSeed", "random seed for internal random number generator", -1);
-    
-}
+};
+
+#endif

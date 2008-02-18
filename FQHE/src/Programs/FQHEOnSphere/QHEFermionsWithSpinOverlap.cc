@@ -7,9 +7,9 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
-#include "Tools/FQHEWaveFunction/ParticleOnSphereCollection.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
+#include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
