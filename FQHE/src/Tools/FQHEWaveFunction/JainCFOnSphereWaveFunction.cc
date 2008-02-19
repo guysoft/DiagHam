@@ -217,7 +217,20 @@ Complex JainCFOnSphereWaveFunction::operator ()(RealVector& x)
       return Complex(0.0);
     }
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
-  Complex JastrowFactor = this->EvaluateTables(x);
+
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+      this->SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+      this->SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
+    }
+  
+  Complex JastrowFactor = this->EvaluateTables();
   Complex TmpValue(0.0);
   for (int n = 0; n < this->NbrLinearCombination; ++n)
     {
@@ -243,6 +256,56 @@ Complex JainCFOnSphereWaveFunction::operator ()(RealVector& x)
 
   return JastrowFactor * TmpValue;
 }
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex JainCFOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  if (this->NbrParticles == 0)
+    {
+      return Complex(0.0);
+    }
+  ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
+
+  // Import from spinors
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
+    }
+  
+  Complex JastrowFactor = this->EvaluateTables();
+  Complex TmpValue(0.0);
+  for (int n = 0; n < this->NbrLinearCombination; ++n)
+    {
+      for (int i = 0; i < this->NbrParticles; ++i)
+	{
+	  int Index = 0;
+	  int MaxMomentum = this->TwiceS;
+	  for (int j = 0; j < this->NbrLandauLevels; ++j)
+	    {
+	      for (int k = 0; k <= MaxMomentum; ++k)
+		{
+		  if ((this->LevelOccupation[n])(j, k) == 1)
+		    {
+		      Slater.SetMatrixElement(Index, i, this->EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
+		      ++Index;
+		    }
+		}
+	      MaxMomentum += 2;
+	    }
+	} 
+      TmpValue += this->LinearCombinationCoefficients[n] * Slater.Determinant();
+    }
+
+  return JastrowFactor * TmpValue;
+}  
 
 // parse general informations about the composite fermion state
 // 

@@ -49,7 +49,10 @@ class SphereBilayerCoulombEnergy : public AbstractObservable
   // Number of layer separations observed
   int NbrSeparations;
 
-  // squares of layer separations in units of magnetic length
+  // layer separations in units of magnetic length
+  double *Separations;
+  
+  // squares of layer separations in absolute units
   double *SqrSeparations;
 
   // temporary storage for energy values
@@ -77,10 +80,10 @@ class SphereBilayerCoulombEnergy : public AbstractObservable
   SphereBilayerCoulombEnergy();
 
   // constructor
-// nbrFlux = Number of Flux piercing sphere
-// nbrSeparations = number of layer separations where observations should be made
-// lowestSeparation = value of the lowest layer separations
-// spacing = spacing of further layer separations
+  // nbrFlux = Number of Flux piercing sphere
+  // nbrSeparations = number of layer separations where observations should be made
+  // lowestSeparation = value of the lowest layer separations
+  // spacing = spacing of further layer separations
   SphereBilayerCoulombEnergy(int nbrFlux, int nbrSeparations, double lowestSeparation, double spacing);
 
 
@@ -91,10 +94,12 @@ class SphereBilayerCoulombEnergy : public AbstractObservable
   virtual void RecordValue(double weight);
 
   // print legend to the given stream
-  virtual void PrintLegend(std::ostream &output);
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintLegend(std::ostream &output, bool all = false);
 
   // print status to the given stream
-  virtual void PrintStatus(std::ostream &output);
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintStatus(std::ostream &output, bool all = false);
 
   // set particle collection that the observable operates on
   // system = particle collection

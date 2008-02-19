@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//           class of Jain composite fermion wave function on sphere          //
+//                    class of abstract 1D complex function                   //
 //                                                                            //
-//                        last modification : 10/01/2005                      //
+//                        last modification : 01/09/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,64 +28,37 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef JAINCFONSPHEREWAVEFUNCTION_H
-#define JAINCFONSPHEREWAVEFUNCTION_H
+#ifndef ABSTRACT1DCOMPLEXFUNCTIONONSPHERE_H
+#define ABSTRACT1DCOMPLEXFUNCTIONONSPHERE_H
 
 
 #include "config.h"
-#include "GeneralTools/GarbageFlag.h"
+#include "Abstract1DComplexFunction.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/LandauSpectrumOnSphere.h"
+#include "Vector/ComplexVector.h"
+
+class RealVector;
 
 
-class ConfigurationParser;
-
-
-class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
+class Abstract1DComplexFunctionOnSphere : public Abstract1DComplexFunction
 {
-
- protected:
-
-  // description of the  occupation of the pseudo-Landau levels
-  LandauSpectrumOnSphere* LevelOccupation;
-
-  // number of wave functions that appear in the linear combination
-  int NbrLinearCombination;
-  // coefficients in front of each wave functions that appear in the linear combination  
-  double* LinearCombinationCoefficients;
 
  public:
 
-  // default constructor
+  // virtual destructor
   //
-  JainCFOnSphereWaveFunction();
-
-  // constructor
-  //
-  // filename = name of the file describing the occupation of the pseudo-Landau levels
-  JainCFOnSphereWaveFunction(char* filename);
-
-  // copy constructor
-  //
-  // function = reference on the wave function to copy
-  JainCFOnSphereWaveFunction(const JainCFOnSphereWaveFunction& function);
-
-  // destructor
-  //
-   ~JainCFOnSphereWaveFunction();
+  virtual ~Abstract1DComplexFunctionOnSphere();
 
   // clone function 
   //
   // return value = clone of the function 
-  virtual Abstract1DComplexFunction* Clone ();
+  virtual Abstract1DComplexFunction* Clone () = 0;
 
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x);
+  virtual Complex operator ()(RealVector& x) = 0;
 
   // evaluate function at a given point
   //
@@ -93,22 +66,7 @@ class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
   //      where function has to be evaluated
   //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
   // return value = function value at (uv)
-  Complex CalculateFromSpinorVariables(ComplexVector& uv);
-
- protected:
-
-  // get occupation information from a formatted string
-  //
-  // descriptionString = pointer to the string containing the description
-  // descriptionArray = reference on the array where description has to be stored
-  // return value = number of particles (0 if an error occured)
-  int ParseOccupationDescription (char* descriptionString, int**& descriptionArray);
-
-  // parse general informations about the composite fermion state
-  // 
-  // state = reference on the configuration parser that contains the informations
-  // return value = false if an error occured  
-  bool ParseGeneralInformation(ConfigurationParser& state);
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv) = 0;
 
 };
 

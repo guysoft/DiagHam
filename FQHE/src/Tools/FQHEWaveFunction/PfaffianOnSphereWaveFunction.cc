@@ -129,3 +129,30 @@ Complex PfaffianOnSphereWaveFunction::operator ()(RealVector& x)
 //   WaveFunction *= TmpPfaffian.Pfaffian();
 //   return WaveFunction;
 // }
+
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex PfaffianOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv) // not tested
+{
+  Complex Tmp;
+  ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
+  Complex WaveFunction(1.0);
+  double Factor = M_PI * 0.5;  
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {      
+      for (int j = i + 1; j < this->NbrParticles; ++j)
+	{	  
+	  Tmp = Factor * ( uv[2*i] * uv[2*j+1] - uv[2*i+1] * uv[2*j] );
+	  WaveFunction *= Tmp;
+	  Tmp = 1.0 / Tmp;
+	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
+	}
+    }
+  WaveFunction *= TmpPfaffian.Pfaffian();
+  return WaveFunction;
+}

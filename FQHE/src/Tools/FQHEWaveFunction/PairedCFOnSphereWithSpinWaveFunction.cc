@@ -199,7 +199,11 @@ Abstract1DComplexFunction* PairedCFOnSphereWithSpinWaveFunction::Clone ()
 
 Complex PairedCFOnSphereWithSpinWaveFunction::operator ()(RealVector& x)
 {
-  this->EvaluateTables(x);
+  RealVector part=x.Extract(0, 2*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues1 = (*Orbitals1)(part);
+  part = x.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues2 = (*Orbitals2)(part);
+  this->EvaluateTables();
   Complex tmp;
 
   if (this->HaveBosons)
@@ -246,7 +250,70 @@ Complex PairedCFOnSphereWithSpinWaveFunction::operator ()(RealVector& x)
       //cout << *Matrix << endl;
       tmp= Matrix->Determinant()*Interpolation;
     }
-  return tmp;      
+  return tmp;
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex PairedCFOnSphereWithSpinWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  ComplexVector part=uv.Extract(0, 2*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues1 = Orbitals1->CalculateFromSpinorVariables(part);
+  part = uv.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues2 = Orbitals2->CalculateFromSpinorVariables(part);
+  
+  this->EvaluateTables();
+  Complex tmp;
+
+  if (this->HaveBosons)
+    {
+      // initialize Slater determinant 
+      for (int i=0;i<this->NbrParticlesPerLayer;++i)
+	{
+	  for(int j=0;j<this->NbrParticlesPerLayer;++j)
+	    {
+	      tmp=0.0;
+	      for (int n=0; n<this->NbrLandauLevels; ++n)
+		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
+	      tmp = this->ElementNorm*( J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
+#ifdef USE_LAPACK_CFCB
+	      Matrix->SetMatrixElement(i,j, Real(tmp), Imag(tmp));
+#else
+	      (*Matrix)[i].Re(j) = Real(tmp);
+	      (*Matrix)[i].Im(j) = Imag(tmp);
+#endif
+	    }
+	}
+      //cout << *Matrix << endl;
+      tmp= Matrix->Determinant()*Interpolation;
+    }
+  else // no Bosons:
+    {
+      // initialize Slater determinant 
+      for (int i=0;i<this->NbrParticlesPerLayer;++i)
+	{
+	  for(int j=0;j<this->NbrParticlesPerLayer;++j)
+	    {
+	      tmp=0.0;
+	      for (int n=0; n<this->NbrLandauLevels; ++n)
+		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
+	      tmp *=  - this->ElementNorm * J11[i]*J22[j];
+#ifdef USE_LAPACK_CFCB
+	      Matrix->SetMatrixElement(i,j,Real(tmp), Imag(tmp));
+#else
+	      (*Matrix)[i].Re(j) = Real(tmp);
+	      (*Matrix)[i].Im(j) = Imag(tmp);
+#endif
+	    }
+	}
+      //cout << *Matrix << endl;
+      tmp= Matrix->Determinant()*Interpolation;
+    }
+  return tmp;
 }
 
 // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
@@ -311,7 +378,11 @@ Complex PairedCFOnSphereWithSpinWaveFunction::GetForOtherParameters( double *coe
 // the entry [][NbrLandauLevels] corresponds to the MooreRead Term.
 void PairedCFOnSphereWithSpinWaveFunction::GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients)
 {
-  this->EvaluateTables(x);
+  RealVector part=x.Extract(0, 2*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues1 = (*Orbitals1)(part);
+  part = x.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
+  this->OrbitalValues2 = (*Orbitals2)(part);
+  this->EvaluateTables();
   Complex tmp;
   int numParamSets=results.GetVectorDimension();
   double *tmpCoefficients;
@@ -453,13 +524,10 @@ void PairedCFOnSphereWithSpinWaveFunction::AdaptAverageMCNorm(int thermalize, in
 
 
 // this is the main part of the calculation of the paired wavefunction:
-void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables(RealVector& x)
+// assumes that Orbitals1 and Orbitals2 have already been initialized prior to call
+void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables()
 {
-  int offset, alpha;
-  RealVector part=x.Extract(0, 2*this->NbrParticlesPerLayer-1);
-  this->OrbitalValues1 = (*Orbitals1)(part);
-  part = x.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
-  this->OrbitalValues2 = (*Orbitals2)(part);
+  int offset, alpha;  
   Complex tmp;
   // evaluate single particle Jastrow factors
   this->Interpolation=1.0;

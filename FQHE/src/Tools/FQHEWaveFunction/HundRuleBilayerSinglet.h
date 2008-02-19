@@ -36,14 +36,14 @@
 #include "config.h"
 #include "HundRuleCFStates.h"
 #include "GeneralTools/GarbageFlag.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Matrix/ComplexMatrix.h"
 #include "MathTools/Complex.h"
 
 
 
-class HundRuleBilayerSinglet : public Abstract1DComplexFunction
+class HundRuleBilayerSinglet : public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -64,6 +64,9 @@ class HundRuleBilayerSinglet : public Abstract1DComplexFunction
 
   // vector to take up half of the coordinates:
   RealVector Part;
+
+  // complex vector to take up half of the coordinates (used by CalculateFromSpinorCoordinates)
+  ComplexVector PartC;
 
   // storage space for calculating states
   Complex* ResultsLayer1;
@@ -102,6 +105,14 @@ class HundRuleBilayerSinglet : public Abstract1DComplexFunction
   // x = point where the function has to be evaluated
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x);
+
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
   // set wavefunction to one for a given set of particle coordinates
   void AdaptNorm(RealVector& x);

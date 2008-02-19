@@ -96,7 +96,6 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
       this->M_inside=0;
       this->JastrowInside=false;
     }
-
   if (((P!=0)||(JastrowInside))&&(R!=0)) HaveDeterminant=true;
   else  HaveDeterminant=false;
   
@@ -205,10 +204,23 @@ Abstract1DComplexFunction* ExtendedHalperinWavefunction::Clone ()
 
 Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 {
-  this->EvaluateTables(x);
+  double s,c;
+  // Convert particle positions into spinor form:
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= c;
+      this->SpinorVCoordinates[i].Im *= s;
+      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
+    }
+  this->EvaluateTables();
   Complex result=1.0, tmp;
   // calculate Jastrow part:
-
   if (K_outside != 0)
     {
         tmp=1.0;
@@ -220,7 +232,6 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 	    }
 	result *= pow (tmp,K_outside);
     }
-  
   if (M_outside != 0)
     {
       tmp=1.0;
@@ -229,6 +240,7 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
 	  tmp *= JastrowNorm*JastrowFactorElements[i][j];
       result *= pow (tmp,M_outside);
     }
+
   // calculate Cauchy determinant
   if (HaveDeterminant)
     {      
@@ -284,7 +296,104 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
       for (int s=this->S; s>0; --s) result*=tmp;
       for (int s=this->S; s<0; ++s) result/=tmp;
     }
-  return result;      
+  return result;
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex ExtendedHalperinWavefunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  // Import from spinors
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
+    }
+  this->EvaluateTables();
+  Complex result=1.0, tmp;
+  // calculate Jastrow part:
+  if (K_outside != 0)
+    {
+        tmp=1.0;
+	for (int i=1; i<NbrParticlesPerLayer; ++i)
+	  for (int j=0; j<i; ++j)
+	    {
+	      tmp *= JastrowNorm*JastrowFactorElements[i][j];
+	      tmp *= JastrowNorm*JastrowFactorElements[i+NbrParticlesPerLayer][j+NbrParticlesPerLayer];
+	    }
+	result *= pow (tmp,K_outside);
+    }
+  if (M_outside != 0)
+    {
+      tmp=1.0;
+      for (int i=0; i<NbrParticlesPerLayer; ++i)
+	for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
+	  tmp *= JastrowNorm*JastrowFactorElements[i][j];
+      result *= pow (tmp,M_outside);
+    }
+
+  // calculate Cauchy determinant
+  if (HaveDeterminant)
+    {      
+      for (int i=0; i<NbrParticlesPerLayer; ++i)
+	{
+	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
+	    {
+	      tmp=DeterminantNorm;
+	      for (int p=P; p>0; --p) tmp*=JastrowFactorElements[i][j];
+	      for (int p=P; p<0; ++p) tmp/=JastrowFactorElements[i][j];
+	      for (int k=0;k<K_inside; k+=2)
+		{
+		  tmp*= J11[i];
+		  tmp*= J22[j-NbrParticlesPerLayer];
+		}
+	      for (int m=0;m<M_inside; m+=2)
+		{
+		  tmp*= J12[i];
+		  tmp*= J21[j-NbrParticlesPerLayer];
+		}
+	      //cout << " " <<tmp;
+	      // initialize Cauchy determinant 
+#ifdef USE_LAPACK_CFCB
+	      Matrix->SetMatrixElement(i,j-NbrParticlesPerLayer,Real(tmp), Imag(tmp));
+#else
+	      (*Matrix)[i].Re(j-NbrParticlesPerLayer) = Real(tmp);
+	      (*Matrix)[i].Im(j-NbrParticlesPerLayer) = Imag(tmp);
+#endif
+	    }
+	  //cout << endl;
+	}            
+      tmp = Matrix->Determinant();
+      //cout << "Calculated Determinant " << tmp << endl;      
+      for (int r=this->R; r>0; --r) result*=tmp;
+      for (int r=this->R; r<0; ++r) result/=tmp;
+    }
+    // calculate Cauchy Permanent
+  if ((Q!=0)&&(S!=0))
+    {
+      for (int i=0; i<NbrParticlesPerLayer; ++i)
+	{
+	  for (int j=NbrParticlesPerLayer; j<2*NbrParticlesPerLayer; ++j)
+	    {
+	      tmp=PermanentNorm;
+	      for (int q=Q; q>0; --q) tmp*=JastrowFactorElements[i][j];
+	      for (int q=Q; q<0; ++q) tmp/=JastrowFactorElements[i][j];
+	      // initialize Cauchy determinant 
+	      (*Matrix2)[i].Re(j-NbrParticlesPerLayer) = Real(tmp);
+	      (*Matrix2)[i].Im(j-NbrParticlesPerLayer) = Imag(tmp);
+	    }
+	}
+      tmp = Matrix2->Permanent();
+      for (int s=this->S; s>0; --s) result*=tmp;
+      for (int s=this->S; s<0; ++s) result/=tmp;
+    }
+  return result;
 }
 
 
@@ -415,24 +524,10 @@ void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int averag
 
 
 // this is the main part of the calculation of the paired wavefunction:
-void ExtendedHalperinWavefunction::EvaluateTables(RealVector& x)
+void ExtendedHalperinWavefunction::EvaluateTables()
 {
-  double s,c;
-  Complex Tmp;
-  // Convert particle positions into spinor form:
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
-      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
-      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
-      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
-      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
-      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
-      this->SpinorVCoordinates[i].Re *= c;
-      this->SpinorVCoordinates[i].Im *= s;
-      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
-    }
-    
+  Complex Tmp;  
+
   for (int i=0;i<this->NbrParticles;++i)
     {
       for(int j=0;j<i;++j)

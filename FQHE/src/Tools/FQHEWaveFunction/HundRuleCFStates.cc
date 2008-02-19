@@ -376,18 +376,40 @@ bool HundRuleCFStates::SelectMValue(int newMValue)
 // return value = function value at x  
 Complex HundRuleCFStates::operator ()(RealVector& x)
 {
-  this->EvaluateTables(x);
+  this->OrbitalValues = (*(this->Orbitals))(x);
+  this->EvaluateTables();
+  return EvaluateAState(SelectMPosition);
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex HundRuleCFStates::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  this->OrbitalValues = this->Orbitals->CalculateFromSpinorVariables(uv);
+  this->EvaluateTables();
   return EvaluateAState(SelectMPosition);
 }
 
 
 void HundRuleCFStates::GetValues(RealVector& x, Complex *result)
 {
-  this->EvaluateTables(x);  
+  this->OrbitalValues = (*(this->Orbitals))(x);
+  this->EvaluateTables();  
   for (int m=0; m<=this->TotalL; ++m)
     result[m]=EvaluateAState(m);
 }
 
+void HundRuleCFStates::GetValuesFromSpinorVariables(ComplexVector& uv, Complex *result)
+{
+  this->OrbitalValues = this->Orbitals->CalculateFromSpinorVariables(uv);
+  this->EvaluateTables();  
+  for (int m=0; m<=this->TotalL; ++m)
+    result[m]=EvaluateAState(m);
+}
 
 // add up the Slater determinants for a single state:
 Complex HundRuleCFStates::EvaluateAState(int LzPosition)
@@ -512,12 +534,13 @@ void HundRuleCFStates::AdaptAverageMCNorm(int thermalize, int average)
 
 
 // evaluate all precalculations
-void HundRuleCFStates::EvaluateTables(RealVector& x)
+void HundRuleCFStates::EvaluateTables()
+// assumes OrbitalValues initialized
+//
 {
   Complex tmp;
 
-  this->OrbitalValues = (*(this->Orbitals))(x);
-    // evaluate single particle Jastrow factors
+  // evaluate single particle Jastrow factors
   this->Interpolation=1.0;
   if (Orbitals->TestCriticality(Interpolation) == 0)
     {

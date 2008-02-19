@@ -121,11 +121,11 @@ void QHESamplingFunctionManager::TestForShow(ostream& str)
 // return value = pointer to the wave function (null if an error occurs)
 AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
 {
-  if ((*(this->Options))["test-wavefunction"] == 0)
+  if ((*(this->Options))["sampler"] == 0)
     {
       return 0;
     }
-  if (this->Options->GetString("test-wavefunction") == 0)
+  if (this->Options->GetString("sampler") == 0)
     {
       return 0;
     }
@@ -143,7 +143,7 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
     else
       if (this->GeometryID == QHESamplingFunctionManager::SphereWithSpinGeometry)
 	{
-	  if ((strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0))
+	  if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
 	    {
 	      int N = this->Options->GetInteger("nbr-particles");	      
 	      int m = this->Options->GetInteger("laughlin-exponent");
@@ -157,12 +157,12 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
 
 char* QHESamplingFunctionManager::GetDescription()
 {
-  if ((*(this->Options))["test-wavefunction"] == 0)
+  if ((*(this->Options))["sampler"] == 0)
     {
       return 0;
     }
   char * buffer = new char[1000];
-  sprintf(buffer,"%s N=%d",this->Options->GetString("test-wavefunction"), this->Options->GetInteger("nbr-particles"));
+  sprintf(buffer,"%s N=%d",this->Options->GetString("sampler"), this->Options->GetInteger("nbr-particles"));
   char *rst = new char[strlen(buffer)+1];
   strcpy(rst,buffer);
   delete [] buffer;
@@ -172,9 +172,9 @@ char* QHESamplingFunctionManager::GetDescription()
 
 int QHESamplingFunctionManager::GetWaveFunctionType()
 {
-  if ((*(this->Options))["test-wavefunction"] == 0)
+  if ((*(this->Options))["sampler"] == 0)
     return QHESamplingFunctionManager::InvalidWaveFunction;
-  if (strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0)
+  if (strcmp (this->Options->GetString("sampler"), "laughlin") == 0)
     return QHESamplingFunctionManager::Laughlin;  
   return QHESamplingFunctionManager::InvalidWaveFunction;
 }

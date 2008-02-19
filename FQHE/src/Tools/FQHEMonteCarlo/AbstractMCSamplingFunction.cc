@@ -101,6 +101,7 @@ void AbstractMCSamplingFunction::AdaptAverageMCNorm(int thermalize, int average)
 	  System->RestoreMove();
 	}            
       SumSamplingValues+=Norm(this->GetFunctionValue());
-    }  
-  this->ScaleByFactor((double)average/SumSamplingValues);
+    }
+  SumSamplingValues/=average;
+  this->ScaleByFactor(1.0/SumSamplingValues);
 }

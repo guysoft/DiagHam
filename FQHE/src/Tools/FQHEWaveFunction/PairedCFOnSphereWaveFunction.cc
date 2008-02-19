@@ -154,7 +154,8 @@ Abstract1DComplexFunction* PairedCFOnSphereWaveFunction::Clone ()
 
 Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 {
-  this->EvaluateTables(x);
+  this->OrbitalValues = (*Orbitals)(x);
+  this->EvaluateTables();
   Complex tmp;
 	      
   // initialize Slater determinant (or Pfaffian matrix)
@@ -173,6 +174,37 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
   //cout << *Slater << endl;
   return Slater->Pfaffian()*Interpolation;
 }
+
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex PairedCFOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+ {
+  this->OrbitalValues = Orbitals->CalculateFromSpinorVariables(uv);
+  this->EvaluateTables();
+  Complex tmp;
+	      
+  // initialize Slater determinant (or Pfaffian matrix)
+  for (int i=0;i<this->NbrParticles;++i)
+    {
+      for(int j=0;j<i;++j)
+	{
+	  tmp=0.0;
+	  for (int n=0; n<this->NbrLandauLevels; ++n)
+	    tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticles+j];	    
+	  
+	  Slater->SetMatrixElement(i,j, this->ElementNorm*this->Ji[i]*this->Ji[j]
+				   *(MooreReadCoefficient/Orbitals->JastrowFactorElement(i,j) + tmp));
+	}
+    }  
+  //cout << *Slater << endl;
+  return Slater->Pfaffian()*Interpolation;
+} 
+
 
 // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
 // coefficients: array of variational coefficients f_0, f_1, ...
@@ -203,7 +235,8 @@ Complex PairedCFOnSphereWaveFunction::GetForOtherParameters( double *coefficient
 // the entry [][NbrLandauLevels] corresponds to the MooreRead Term.
 void PairedCFOnSphereWaveFunction::GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients)
 {
-  this->EvaluateTables(x);
+  this->OrbitalValues = (*Orbitals)(x);
+  this->EvaluateTables();
   Complex tmp;
   int numParamSets=results.GetVectorDimension();
   double *tmpCoefficients;
@@ -314,10 +347,9 @@ void PairedCFOnSphereWaveFunction::AdaptAverageMCNorm(int thermalize, int averag
 
 
 // this is the main part of the calculation of the paired wavefunction:
-void PairedCFOnSphereWaveFunction::EvaluateTables(RealVector& x)
+void PairedCFOnSphereWaveFunction::EvaluateTables()
 {
   int i, j, offset, alpha;
-  this->OrbitalValues = (*Orbitals)(x);
   Complex tmp;
   // evaluate single particle Jastrow factors
   this->Interpolation=1.0;

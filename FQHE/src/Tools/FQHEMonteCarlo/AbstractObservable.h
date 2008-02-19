@@ -58,10 +58,12 @@ class AbstractObservable
   virtual void RecordValue(double weight) = 0;
 
   // print legend to the given stream
-  virtual void PrintLegend(std::ostream &output) = 0;
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintLegend(std::ostream &output, bool all = false) = 0;
 
   // print status to the given stream
-  virtual void PrintStatus(std::ostream &output) = 0;
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintStatus(std::ostream &output, bool all = false) = 0;
 
   // set particle collection that the observable operates on
   // system = particle collection

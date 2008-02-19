@@ -52,13 +52,23 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
 		    Abstract1DComplexFunction *waveFunction, AbstractMCSamplingFunction *samplingFunction,
 		    OptionManager *manager, int maxNbrObservables)
 {
+  if (waveFunction==0)
+    {
+      cout << "Invalid sampling function" << endl;
+      exit(1);
+    }
+  if (samplingFunction==0)
+    {
+      cout << "Invalid sampling function" << endl;
+      exit(1);
+    }
   this->NbrParticles=nbrParticles;
   this->WaveFunction=waveFunction; // is returned normalized by wavefunction handler...
   this->SamplingFunction=samplingFunction;
   this->Options=manager;  
   long Seed = Options->GetInteger("randomSeed");
   this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
-  this->SamplingFunction->RegisterSystem(System);
+  this->SamplingFunction->RegisterSystem(this->System);
   this->SamplingFunction->AdaptAverageMCNorm(Options->GetInteger("thermalize")); // this also relaxes the particle positions in System
   this->MaxNbrObservables=maxNbrObservables;
   this->Observables= new AbstractObservable*[MaxNbrObservables];
@@ -121,26 +131,32 @@ void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
 {
   int NbrSteps = this->Options->GetInteger("nbr-iter");
   int DensityOfSamples = this->Options->GetInteger("sample-density");
+  if (DensityOfSamples < 0)
+    DensityOfSamples = this->NbrParticles;
   int NbrDisplay = this->Options->GetInteger("nbr-display");
   if (NbrDisplay==0) NbrDisplay=1;
   int DisplaySteps = NbrSteps / NbrDisplay;
   double SamplingAmplitude, Weight;
-  Complex WaveFctValue;
+  Complex WaveFctValue, SamplingFctValue;
   Output <<"Step";
-      for (int i=0; i<NbrObservables; ++i)
-	{
-	  Output << "\t";
-	  Observables[i]->PrintLegend(Output);
-	}
-      Output << endl;
+  for (int i=0; i<NbrObservables; ++i)
+    {
+      Output << "\t";
+      Observables[i]->PrintLegend(Output);
+    }
+  Output << endl;
   for (int d=0; d<NbrDisplay; ++d)
     {
       for (int s=0; s<DisplaySteps; ++s)
 	{
 	  this->PerformMicroSteps(DensityOfSamples);
-	  SamplingAmplitude = SqrNorm(this->SamplingFunction->GetFunctionValue());
+	  SamplingFctValue = this->SamplingFunction->GetFunctionValue();
+	  SamplingAmplitude = SqrNorm(SamplingFctValue);
+	  //cout << "SamplingFctValue=" <<SamplingFctValue<<endl;
 	  WaveFctValue = (*(this->WaveFunction))(System->GetPositions());
+	  //cout << "WaveFctValue=" <<WaveFctValue<<endl;
 	  Weight = SqrNorm(WaveFctValue)/SamplingAmplitude;
+	  //cout << "w="<<Weight<<" ratio="<<WaveFctValue/SamplingFctValue<<endl;
 	  for (int i=0; i<NbrObservables; ++i)
 	    if (s%Frequencies[i]==0) Observables[i]->RecordValue(Weight);
 	}      

@@ -133,7 +133,39 @@ Abstract1DComplexFunction* TwoThirdSingletState::Clone ()
 
 Complex TwoThirdSingletState::operator ()(RealVector& x)
 {
-  this->EvaluateTables(x);
+  this->Orbitals = (*OrbitalFactory)(x);
+  this->EvaluateTables();
+  Complex Ji;
+  Complex Tmp;
+  // initialize Slater determinant (or Pfaffian matrix)
+  for (int i=0;i<this->NbrParticles;++i)
+    {
+      Ji=1.0;
+      for(int j=0;j<i;++j) Ji*=Jij[i][j];
+      for(int j=i+1;j<NbrParticles;++j) Ji*=Jij[i][j];
+      Ji*=SlaterNorm;
+      for(int j=0;j<NbrParticles;++j)
+	{
+	  Orbitals.GetMatrixElement(i,j,Tmp);
+	  Tmp*=Ji;	  
+	  Slater->SetMatrixElement(i,j, Tmp);
+	}
+    }
+  this->DeterminantValue=Slater->Determinant();
+  this->PermanentValue=CauchyPermanent->Permanent();
+  return DeterminantValue*Interpolation*PermanentValue;
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex TwoThirdSingletState::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  this->Orbitals = OrbitalFactory->CalculateFromSpinorVariables(uv);
+  this->EvaluateTables();
   Complex Ji;
   Complex Tmp;
   // initialize Slater determinant (or Pfaffian matrix)
@@ -157,7 +189,8 @@ Complex TwoThirdSingletState::operator ()(RealVector& x)
 
 Complex TwoThirdSingletState::GetTestValue(RealVector& x)
 {
-  this->EvaluateTables(x);
+  this->Orbitals = (*OrbitalFactory)(x);
+  this->EvaluateTables();
   Complex Ji;
   Complex Tmp;
   // initialize Slater determinant (or Pfaffian matrix)
@@ -284,10 +317,11 @@ void TwoThirdSingletState::AdaptAverageMCNorm(int thermalize, int average)
 
 
 // this is the main part of the calculation of the paired wavefunction:
-void TwoThirdSingletState::EvaluateTables(RealVector& x)
+// assumes Orbitals initialized
+//
+void TwoThirdSingletState::EvaluateTables()
 {
   int i, j;
-  this->Orbitals = (*OrbitalFactory)(x);
   Complex tmp;
   // evaluate single particle Jastrow factors
   this->Interpolation=1.0;

@@ -195,7 +195,20 @@ Abstract1DComplexFunction* JainCFFilledLevelOnSphereWaveFunction::Clone ()
 Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
 {
   ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
-  Complex JastrowFactor = this->EvaluateTables(x);
+
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+      this->SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+      this->SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
+    }
+  
+  Complex JastrowFactor = this->EvaluateTables();
 
   for (int i = 0; i < this->NbrParticles; ++i)
     {
@@ -215,25 +228,54 @@ Complex JainCFFilledLevelOnSphereWaveFunction::operator ()(RealVector& x)
   return JastrowFactor * Slater.Determinant();
 }
 
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex JainCFFilledLevelOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  ComplexMatrix Slater (this->NbrParticles, this->NbrParticles);
+  
+  // Import from spinors
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
+    }
+
+  Complex JastrowFactor = this->EvaluateTables();
+
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      int Index = 0;
+      int MaxMomentum = this->TwiceS;
+      for (int j = 0; j < this->NbrLandauLevels; ++j)
+	{
+	  for (int k = 0; k <= MaxMomentum; ++k)
+	    {
+	      Slater.SetMatrixElement(Index, i, EvaluateCFMonopoleHarmonic(i, k, j, MaxMomentum));
+	      ++Index;
+	    }
+	  MaxMomentum += 2;
+	}
+    }  
+
+  return JastrowFactor * Slater.Determinant();
+  
+}
+
 // evaluate precalculation tables used during wave function evaluation (called at each evaluation)
 //
-// x = point where the function has to be evaluated
+// requires SpinorUCoordinates and SpinorVCoordinates to be initialized prior to call
 // derivativeFlag = indicate if precalculation tables invloved in derivative evaluation have to be calculated
 // return value = value of the Jastrow factor
 
-Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(RealVector& x, bool derivativeFlag)
-{
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
-      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
-      this->SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-      this->SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
-      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
-      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
-      this->SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-      this->SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
-    }
+Complex JainCFFilledLevelOnSphereWaveFunction::EvaluateTables(bool derivativeFlag)
+{  
 
   int MaxPower = this->TwiceS + 2 * (this->NbrLandauLevels - 1);
   for (int i = 0; i < this->NbrParticles; ++i)

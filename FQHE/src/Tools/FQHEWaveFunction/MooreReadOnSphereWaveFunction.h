@@ -33,11 +33,11 @@
 
 
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "GeneralTools/GarbageFlag.h"
 
 
-class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
+class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -50,6 +50,10 @@ class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
 
   // number of clusters
   int NbrClusters;
+
+  // internal storage of spinor coordinates
+  Complex* SpinorUCoordinates;
+  Complex* SpinorVCoordinates;
 
   // array containing description of each permutation that appears in the calculation of the Moore-Read state
   unsigned long** Permutations;
@@ -86,11 +90,24 @@ class MooreReadOnSphereWaveFunction: public Abstract1DComplexFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
  private:
 
   // evaluate all permutations requested for the Moore-Read state evaluation
   //
   void EvaluatePermutations();
+
+  // perform complex part of calculations
+  // uses internal spinor coordinates as input
+  //
+  Complex ComplexEvaluations();
 
 };
 

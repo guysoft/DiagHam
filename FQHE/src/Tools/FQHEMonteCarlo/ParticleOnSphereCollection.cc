@@ -1,9 +1,5 @@
 #include "ParticleOnSphereCollection.h"
 
-// #include <iostream>
-// using std::cout;
-// using std::endl;
-
 ParticleOnSphereCollection::ParticleOnSphereCollection()
 {
   this->NbrParticles = 0;

@@ -36,11 +36,11 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunctionOnSphere.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
-class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunction
+class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunctionOnSphere
 {
 
  protected:
@@ -118,9 +118,18 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunction
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x);
 
-  // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
- Complex GetForOtherParameters( double *coefficients);
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
+  
+  // get a value of the wavefunction for the last set of coordinates, but with different variational coefficients
+  virtual Complex GetForOtherParameters( double *coefficients);
+ 
   // do many evaluations, storing the result in the vector results given in the call
   // x: positions to evaluate the wavefuntion in
   // format for passing parameters in the matrix coefficients coefficients[nbrSet][LandauLevel],
@@ -141,7 +150,7 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunction
 
   // do all precalculation operations required for a new set of positions
 
-  void EvaluateTables(RealVector& x);
+  void EvaluateTables();
 
   // for calculating (-1)^x
   //

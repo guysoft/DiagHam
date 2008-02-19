@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Laughlin wave function on sphere                 //
+//                    class of abstract 1D complex function                   //
 //                                                                            //
 //                        last modification : 01/09/2004                      //
 //                                                                            //
@@ -28,61 +28,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef LAUGHLINONSPHEREWAVEFUNCTION_H
-#define LAUGHLINONSPHEREWAVEFUNCTION_H
-
-
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 
 
-class LaughlinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+// virtual destructor
+//
+
+Abstract1DComplexFunctionOnSphere::~Abstract1DComplexFunctionOnSphere()
 {
+}
 
- protected:
-
-  // number of particles
-  int NbrParticles;
-
-  // inverse value of the filling factor
-  int InvFillingFactor;
-
- public:
-
-  // constructor
-  //
-  // nbrParticles = number of particles
-  // invFillingFactor = inverse value of the filling factor
-  LaughlinOnSphereWaveFunction(int nbrParticles, int invFillingFactor);
-
-  // copy constructor
-  //
-  // function = reference on the wave function to copy
-  LaughlinOnSphereWaveFunction(const LaughlinOnSphereWaveFunction& function);
-
-  // destructor
-  //
-   ~LaughlinOnSphereWaveFunction();
-
-  // clone function 
-  //
-  // return value = clone of the function 
-  Abstract1DComplexFunction* Clone ();
-
-  // evaluate function at a given point
-  //
-  // x = point where the function has to be evaluated
-  // return value = function value at x  
-  Complex operator ()(RealVector& x);
-
-  // evaluate function at a given point
-  //
-  // uv = ensemble of spinor variables on sphere describing point
-  //      where function has to be evaluated
-  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
-  // return value = function value at (uv)
-  Complex CalculateFromSpinorVariables(ComplexVector& uv);
-
-};
-
-#endif

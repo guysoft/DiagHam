@@ -76,6 +76,14 @@ class UnprojectedJainCFOnSphereWaveFunction: public JainCFOnSphereWaveFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
  protected:
 
   // evaluate monopole spherical harmonic 

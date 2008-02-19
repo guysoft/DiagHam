@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "JainCFOnSphereOrbitals.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Matrix/ComplexMatrix.h"
@@ -55,7 +55,7 @@
 
 
 
-class HundRuleCFStates : public Abstract1DComplexFunction
+class HundRuleCFStates : public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -166,11 +166,26 @@ class HundRuleCFStates : public Abstract1DComplexFunction
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x);
 
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
   // evaluate all different M states for the given particle coordinates
   //
   // x = point where the function has to be evaluated
   // value returned in vector result
   void GetValues(RealVector& x, Complex* result);
+
+  // evaluate all different M states for the given particle coordinates
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  // value returned in vector result
+  void GetValuesFromSpinorVariables(ComplexVector& uv, Complex *result);
 
 
   // set wavefunction to one for a given set of particle coordinates
@@ -186,7 +201,7 @@ class HundRuleCFStates : public Abstract1DComplexFunction
   Complex EvaluateAState(int LzPosition);
 
   // evaluate all precalculations
-  void EvaluateTables(RealVector& x);
+  void EvaluateTables();
 
   
 

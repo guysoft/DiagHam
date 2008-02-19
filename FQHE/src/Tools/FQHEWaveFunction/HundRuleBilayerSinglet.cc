@@ -47,7 +47,8 @@ HundRuleBilayerSinglet::HundRuleBilayerSinglet()
 HundRuleBilayerSinglet::HundRuleBilayerSinglet(int nbrParticlesPerLayer, int nbrEffectiveFlux, int jastrowP )
 {
   this->NbrParticlesPerLayer = nbrParticlesPerLayer;
-  this->Part.Resize(2*NbrParticlesPerLayer);  
+  this->Part.Resize(2*NbrParticlesPerLayer);
+  this->PartC.Resize(2*NbrParticlesPerLayer);  
   this->CFStates=new HundRuleCFStates(nbrParticlesPerLayer, nbrEffectiveFlux, jastrowP);
   this->LPerLayer=CFStates->GetTotalL();
   this->ResultsLayer1 = new Complex[LPerLayer+1];
@@ -75,7 +76,8 @@ HundRuleBilayerSinglet::HundRuleBilayerSinglet(int nbrParticlesPerLayer, int nbr
 HundRuleBilayerSinglet::HundRuleBilayerSinglet(HundRuleBilayerSinglet &toCopy)
 {
   this->NbrParticlesPerLayer = toCopy.NbrParticlesPerLayer;
-  this->Part.Resize(2*NbrParticlesPerLayer);  
+  this->Part.Resize(2*NbrParticlesPerLayer);
+  this->PartC.Resize(2*NbrParticlesPerLayer);  
   this->CFStates = toCopy.CFStates;
   this->LPerLayer = toCopy.LPerLayer;
   this->ResultsLayer1 = toCopy.ResultsLayer1;
@@ -112,7 +114,8 @@ HundRuleBilayerSinglet& HundRuleBilayerSinglet::operator = (HundRuleBilayerSingl
       delete [] ResultsLayer2;
     }
   this->NbrParticlesPerLayer = toCopy.NbrParticlesPerLayer;
-  this->Part.Resize(2*NbrParticlesPerLayer);  
+  this->Part.Resize(2*NbrParticlesPerLayer);
+  this->PartC.Resize(2*NbrParticlesPerLayer);  
   this->CFStates = toCopy.CFStates;
   this->LPerLayer = toCopy.LPerLayer;
   this->ResultsLayer1 = toCopy.ResultsLayer1;
@@ -156,6 +159,34 @@ Complex HundRuleBilayerSinglet::operator() (RealVector& x)
   
   return Result;
 }
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex HundRuleBilayerSinglet::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  this->PartC=uv.Extract(0, 2*this->NbrParticlesPerLayer-1);
+  this->CFStates->GetValuesFromSpinorVariables(PartC, ResultsLayer1);
+
+  this->PartC=uv.Extract(2*this->NbrParticlesPerLayer, 4*this->NbrParticlesPerLayer-1);
+  this->CFStates->GetValuesFromSpinorVariables(PartC, ResultsLayer2);
+
+  Complex Result=0.0;
+  Complex Tmp;
+
+  for (int i=0; i<NbrCouplings; ++i)
+    {
+      Tmp = ResultsLayer1[this->MPositions[i]] * ResultsLayer2[this->LPerLayer-this->MPositions[i]];
+      Tmp*=this->Couplings[i];
+      Result += Tmp;
+    }
+  
+  return Result;
+}  
+
 
 
 void HundRuleBilayerSinglet::AdaptNorm(RealVector& x)

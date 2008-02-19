@@ -44,12 +44,12 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
-class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
+class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -140,6 +140,14 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
   // antisymmetrize function
   Complex GetSpinAntiSymmetrized(RealVector& x);
 
@@ -154,7 +162,7 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunction
   
   // do all precalculation operations required for a new set of positions
 
-  void EvaluateTables(RealVector& x);
+  void EvaluateTables();
   
 
 };

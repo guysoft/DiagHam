@@ -30,7 +30,7 @@
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-
+ 
 
 // virtual destructor
 //

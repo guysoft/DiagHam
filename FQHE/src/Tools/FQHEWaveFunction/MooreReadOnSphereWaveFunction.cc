@@ -54,6 +54,8 @@ MooreReadOnSphereWaveFunction::MooreReadOnSphereWaveFunction(int nbrParticles, i
   this->NbrParticles = nbrParticles;
   this->ClusterSize = clusterSize;
   this->NbrClusters = this->NbrParticles / this->ClusterSize;
+  this->SpinorUCoordinates = new Complex[this->NbrParticles];
+  this->SpinorVCoordinates = new Complex[this->NbrParticles];
   this->EvaluatePermutations();
   this->Flag.Initialize();
 }
@@ -82,6 +84,8 @@ MooreReadOnSphereWaveFunction::~MooreReadOnSphereWaveFunction()
       for (unsigned long i = 0; i < this->NbrPermutations; ++i)
 	delete[] this->Permutations[i];
       delete[] this->Permutations;
+      delete[] this->SpinorUCoordinates;
+      delete[] this->SpinorVCoordinates;
     }
 }
 
@@ -100,9 +104,7 @@ Abstract1DComplexFunction* MooreReadOnSphereWaveFunction::Clone ()
 // return value = function value at x  
 
 Complex MooreReadOnSphereWaveFunction::operator ()(RealVector& x)
-{
-  Complex* SpinorUCoordinates = new Complex[this->NbrParticles];
-  Complex* SpinorVCoordinates = new Complex[this->NbrParticles];
+{  
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
@@ -115,41 +117,28 @@ Complex MooreReadOnSphereWaveFunction::operator ()(RealVector& x)
       SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
     }
 
-  Complex Value;
-  Complex Tmp;
-  int ReducedNbrClusters = this->NbrClusters - 1;
-  int ReducedClusterSize = (this->ClusterSize - 1) * GROUP_MAXSIZE;
-  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+  return this->ComplexEvaluations();
+}
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+Complex MooreReadOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{  
+  // Import from spinors
+  for (int i = 0; i < this->NbrParticles; ++i)
     {
-      unsigned long* TmpPerm = this->Permutations[i];
-      Tmp = 1.0;
-      for (int j = 0; j < ReducedNbrClusters; ++j)
-	for (int k = j + 1; k < this->NbrClusters; ++k)
-	  {
-	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
-		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
-	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] - 
-		    SpinorUCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
-	    for (int l = GROUP_MAXSIZE; l < ReducedClusterSize; l += GROUP_MAXSIZE)
-	      {
-		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> l) & 0x3fl] - 
-			SpinorUCoordinates[(TmpPerm[k] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
-		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] - 
-			SpinorUCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
-	      }
-	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] - 
-		    SpinorUCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl]);
-	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
-		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >>  ReducedClusterSize) & 0x3fl]);
-//	    cout << Tmp << endl;
-	  }
-      Value += Tmp;
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
     }
 
-  delete[] SpinorUCoordinates;
-  delete[] SpinorVCoordinates;
-  return Value;
-}
+  return this->ComplexEvaluations();
+}  
 
 
 // evaluate all permutations requested for the Moore-Read state evaluation
@@ -299,4 +288,42 @@ void MooreReadOnSphereWaveFunction::EvaluatePermutations()
     }
   delete[] Perm;
   return;
+}
+
+// perform complex part of calculations
+// uses internal spinor coordinates as input
+//
+Complex MooreReadOnSphereWaveFunction::ComplexEvaluations()
+{
+  Complex Value;
+  Complex Tmp;
+  int ReducedNbrClusters = this->NbrClusters - 1;
+  int ReducedClusterSize = (this->ClusterSize - 1) * GROUP_MAXSIZE;
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    {
+      unsigned long* TmpPerm = this->Permutations[i];
+      Tmp = 1.0;
+      for (int j = 0; j < ReducedNbrClusters; ++j)
+	for (int k = j + 1; k < this->NbrClusters; ++k)
+	  {
+	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
+		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
+	    Tmp *= (SpinorUCoordinates[TmpPerm[j] & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] - 
+		    SpinorUCoordinates[(TmpPerm[k] >> GROUP_MAXSIZE) & 0x3fl] * SpinorVCoordinates[TmpPerm[j] & 0x3fl]);
+	    for (int l = GROUP_MAXSIZE; l < ReducedClusterSize; l += GROUP_MAXSIZE)
+	      {
+		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> l) & 0x3fl] - 
+			SpinorUCoordinates[(TmpPerm[k] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
+		Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> l) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] - 
+			SpinorUCoordinates[(TmpPerm[k] >> (l + GROUP_MAXSIZE)) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> l) & 0x3fl]);
+	      }
+	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] - 
+		    SpinorUCoordinates[(TmpPerm[k] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl]);
+	    Tmp *= (SpinorUCoordinates[(TmpPerm[j] >> ReducedClusterSize) & 0x3fl] * SpinorVCoordinates[TmpPerm[k] & 0x3fl] - 
+		    SpinorUCoordinates[TmpPerm[k] & 0x3fl] * SpinorVCoordinates[(TmpPerm[j] >>  ReducedClusterSize) & 0x3fl]);
+//	    cout << Tmp << endl;
+	  }
+      Value += Tmp;
+    }
+  return Value;
 }

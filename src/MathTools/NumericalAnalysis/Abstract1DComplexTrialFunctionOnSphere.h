@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//           class of Jain composite fermion wave function on sphere          //
+//                    class of abstract 1D complex function                   //
 //                                                                            //
-//                        last modification : 10/01/2005                      //
+//                        last modification : 01/09/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,64 +28,42 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef JAINCFONSPHEREWAVEFUNCTION_H
-#define JAINCFONSPHEREWAVEFUNCTION_H
+#ifndef ABSTRACT1DCOMPLEXTRIALFUNCTIONONSPHERE_H
+#define ABSTRACT1DCOMPLEXTRIALFUNCTIONONSPHERE_H
 
 
 #include "config.h"
-#include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
-#include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/LandauSpectrumOnSphere.h"
+#include "Abstract1DComplexFunctionOnSphere.h"
+#include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 
-class ConfigurationParser;
+class RealVector;
 
 
-class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
+class Abstract1DComplexTrialFunctionOnSphere : public Abstract1DComplexFunctionOnSphere
 {
-
  protected:
-
-  // description of the  occupation of the pseudo-Landau levels
-  LandauSpectrumOnSphere* LevelOccupation;
-
-  // number of wave functions that appear in the linear combination
-  int NbrLinearCombination;
-  // coefficients in front of each wave functions that appear in the linear combination  
-  double* LinearCombinationCoefficients;
-
+  double *TrialParameters;
+  int NbrParameters;
+  
  public:
 
-  // default constructor
+  // virtual destructor
   //
-  JainCFOnSphereWaveFunction();
-
-  // constructor
-  //
-  // filename = name of the file describing the occupation of the pseudo-Landau levels
-  JainCFOnSphereWaveFunction(char* filename);
-
-  // copy constructor
-  //
-  // function = reference on the wave function to copy
-  JainCFOnSphereWaveFunction(const JainCFOnSphereWaveFunction& function);
-
-  // destructor
-  //
-   ~JainCFOnSphereWaveFunction();
+  virtual ~Abstract1DComplexTrialFunctionOnSphere();
 
   // clone function 
   //
   // return value = clone of the function 
-  virtual Abstract1DComplexFunction* Clone ();
+  virtual Abstract1DComplexFunction* Clone () = 0;
 
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x);
+  virtual Complex operator ()(RealVector& x) = 0;
 
   // evaluate function at a given point
   //
@@ -93,23 +71,29 @@ class JainCFOnSphereWaveFunction: public JainCFFilledLevelOnSphereWaveFunction
   //      where function has to be evaluated
   //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
   // return value = function value at (uv)
-  Complex CalculateFromSpinorVariables(ComplexVector& uv);
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv) = 0;
 
- protected:
+  // get a value of the wavefunction for the last set of coordinates, but with different variational parameters
+  // parameters =  alternative set of parameters
+  virtual Complex GetForOtherParameters( double *parameters) = 0;
 
-  // get occupation information from a formatted string
-  //
-  // descriptionString = pointer to the string containing the description
-  // descriptionArray = reference on the array where description has to be stored
-  // return value = number of particles (0 if an error occured)
-  int ParseOccupationDescription (char* descriptionString, int**& descriptionArray);
+  // do many evaluations of the function, storing the result in the vector results given in the call
+  // result = vector of leading dimension of the array coefficients for returning values
+  // x = positions to evaluate the wavefuntion in
+  // format for passing parameters as [nbrSet][nbrParameter],
+  virtual void GetForManyParameters(ComplexVector &results, RealVector& x, double **coefficients) = 0;
 
-  // parse general informations about the composite fermion state
-  // 
-  // state = reference on the configuration parser that contains the informations
-  // return value = false if an error occured  
-  bool ParseGeneralInformation(ConfigurationParser& state);
+  // access internal values of parameters
+  virtual double *GetTrialParameters(){return this->TrialParameters;}
 
+  // get number of parameters
+  virtual int GetNbrParameters() {return this->NbrParameters;}
+  
+  // set new values of the trial coefficients (keeping the initial number of parameters)
+  virtual void SetTrialParameters(double * coefficients) = 0;
+
+
+  
 };
 
 #endif

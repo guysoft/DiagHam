@@ -8,4 +8,6 @@ RNumericalInterval.cc \
 Abstract1DRealFunction.cc \
 Abstract1DComplexFunction.cc \
 Abstract1DComplexTrialFunction.cc \
-AntisymmetrizedComplexFunction.cc
+Abstract1DComplexFunctionOnSphere.cc \
+Abstract1DComplexTrialFunctionOnSphere.cc \
+AntisymmetrizedComplexFunction.cc 

@@ -30,16 +30,19 @@ SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy(int nbrFlux, int nbrSepar
     }
   this->NbrFlux = nbrFlux;
   this->Radius = sqrt(0.5*(double)NbrFlux); // the radius is also the inverse magnetic length
+  cout << "L_0="<<1.0/Radius<<endl;
   this->NbrSeparations = nbrSeparations;
   this->SqrSeparations = new double [nbrSeparations];
+  this->Separations = new double [nbrSeparations];
   this->Energies = new double [nbrSeparations];
-  this->SqrSeparations[0]=lowestSeparation;
+  this->Separations[0]=lowestSeparation;
   for (int i=1; i<NbrSeparations; ++i)
-    this->SqrSeparations[i] = this->SqrSeparations[i-1] + spacing;
+    this->Separations[i] = this->Separations[i-1] + spacing;
   for (int i=0; i<NbrSeparations; ++i) // assign squared distances in magnetic lengths
     {
-      this->SqrSeparations[i] = DSQR(this->SqrSeparations[i]/Radius);
+      this->SqrSeparations[i] = DSQR(this->Separations[i]/Radius);
     }
+  cout << "SqrSeparations@d="<<Separations[NbrSeparations-1] << "="<<SqrSeparations[NbrSeparations-1]<<endl;
   this->Values = new WeightedRealVectorObservable(NbrSeparations);
   this->NbrObservations=0;
 }
@@ -52,6 +55,7 @@ SphereBilayerCoulombEnergy::~SphereBilayerCoulombEnergy()
     {
       delete Values;
       delete [] SqrSeparations;
+      delete [] Separations;
       delete [] Energies;
     }
 }
@@ -61,45 +65,69 @@ void SphereBilayerCoulombEnergy::RecordValue(double weight)
 {
   int N1 = this->NbrParticles>>1;
   ++NbrObservations;
-  double E1=0.0, E2=0.0, dij;
+  double E1=0.0, E2=0.0, dij, dsqr;
   for (int i=1;i<N1;i++)
-      for(int j=0;j<i;j++)
-	{
-	  E1+=0.5*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  E2+=0.5*Norm(SpinorUCoordinates[i+N1]*SpinorVCoordinates[j+N1]-SpinorUCoordinates[j+N1]*SpinorVCoordinates[i+N1]);
-	}
-  for (int s=0; s<NbrSeparations; ++s) Energies[s]=0.0;
-  for (int i=0; i<N1; ++i)
-    for (int j=0; j<N1; ++j)
+    for(int j=0;j<i;j++)
       {
-	dij=Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j+N1]-SpinorUCoordinates[j+N1]*SpinorVCoordinates[i]);
-	
+	E1+=0.5/Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+	E2+=0.5/Norm(SpinorUCoordinates[i+N1]*SpinorVCoordinates[j+N1]-SpinorUCoordinates[j+N1]*SpinorVCoordinates[i+N1]);
+      }
+  for (int s=0; s<NbrSeparations; ++s) Energies[s]=E1+E2;
+  for (int i=0; i<N1; ++i)
+    for (int j=N1; j<this->NbrParticles; ++j)
+      {
+	dij=Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+	dsqr = 4.0*dij*dij;
 	for (int s=0; s<NbrSeparations; ++s)
 	  {
-	    Energies[s]+=1.0/sqrt( 4.0*dij*dij + SqrSeparations[s] );
+	    Energies[s]+=1.0/sqrt( dsqr  + SqrSeparations[s] );
 	  }
       }
+  for (int s=0; s<NbrSeparations; ++s) Energies[s]/=Radius;
   this->Values->Observe(Energies, weight);
 }
 
 // print legend to the given stream
-void SphereBilayerCoulombEnergy::PrintLegend(std::ostream &output)
+void SphereBilayerCoulombEnergy::PrintLegend(std::ostream &output, bool all)
 {
-  if (this->NbrSeparations>0)
-    output << "d="<<this->SqrSeparations[0]<<"\t+/-";
-  for (int i=1; i<this->NbrSeparations; ++i)
-    output << "\t" << this->SqrSeparations[i]<<"\t+/-";  
+  if ((all)||(NbrSeparations<3))
+    {
+      if (this->NbrSeparations>0)
+	output << "d="<<this->Separations[0]<<"\t+/-";
+      for (int i=1; i<this->NbrSeparations; ++i)
+	output << "\t" << this->Separations[i]<<"\t+/-";  
+    }
+  else
+    {      
+      output << "d=" << this->Separations[0]<<"\t+/-";
+      output << "\t" << this->Separations[NbrSeparations/2]<<"\t+/-";
+      output << "\t" << this->Separations[NbrSeparations-1]<<"\t+/-";
+    }
 }
 
 // print status to the given stream
-void SphereBilayerCoulombEnergy::PrintStatus(std::ostream &output)
+void SphereBilayerCoulombEnergy::PrintStatus(std::ostream &output, bool all)
 {
   if (NbrObservations>0)
     {
-      if (this->NbrSeparations>0)
-	output << this->Values->Average(0)<<"\t"<<this->Values->ErrorEstimate(0);
-      for (int i=1; i<this->NbrSeparations; ++i)
-	output << "\t" << this->Values->Average(i)<<"\t"<<this->Values->ErrorEstimate(i);
+      if ((all)||(NbrSeparations<3))
+	{
+	  if (this->NbrSeparations>0)
+	    output << this->Values->Average(0)<<"\t"<<this->Values->ErrorEstimate(0);
+	  for (int i=1; i<this->NbrSeparations; ++i)
+	    output << "\t" << this->Values->Average(i)<<"\t"<<this->Values->ErrorEstimate(i);
+	}
+      else
+	{
+	  int tmp=output.precision();
+	  output.precision(6);
+	  output << this->Values->Average(0)<<"\t"<<this->Values->ErrorEstimate(0);
+	  output << "\t" << this->Values->Average(NbrSeparations/2)<<"\t"
+		 <<this->Values->ErrorEstimate(NbrSeparations/2);
+	  output << "\t" << this->Values->Average(NbrSeparations-1)<<"\t"
+		 <<this->Values->ErrorEstimate(NbrSeparations-1);
+	  output.precision(tmp);
+	}
     }
 }
 

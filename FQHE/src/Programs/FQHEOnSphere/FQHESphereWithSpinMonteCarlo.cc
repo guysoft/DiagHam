@@ -44,7 +44,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-d", "number of layer separation d where the energy is evaluated", 13);
   
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
-  (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");  
+  (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
+  (*SystemGroup) += new SingleIntegerInternalOption  ('n', "SzTotal", "number of layer separation d where the energy is evaluated", 0);
+  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout); // new feature to process options and display help in 1 line!
@@ -64,21 +66,26 @@ int main(int argc, char** argv)
   int NbrSeparations = Manager.GetInteger("nbr-d");
   
   Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
-
+  
   AbstractMCSamplingFunction* SamplingFunction = SamplingFunctionManager.GetSamplingFunction();
 
   SimpleMonteCarloOnSphereAlgorithm MonteCarloRoutine(NbrParticles, TestWaveFunction, SamplingFunction,
 						      &Manager);
 
-  
   // add observables
-  SphereBilayerCoulombEnergy Energy(/*Flux */ 2*NbrParticles-1, NbrSeparations, LowestD, Spacing);
+  SphereBilayerCoulombEnergy Energy(/*Flux */ NbrParticles-1, NbrSeparations, LowestD, Spacing);
   
-  MonteCarloRoutine.AddObservable(&Energy);
+  MonteCarloRoutine.AddObservable(&Energy);  
 
   // run simulation
   MonteCarloRoutine.Simulate();
 
+  // print final results:
+  cout << "Final results:" << endl;
+  Energy.PrintLegend(cout,true);
+  cout << endl;
+  Energy.PrintStatus(cout,true);
+  cout << endl;
   
 }
 

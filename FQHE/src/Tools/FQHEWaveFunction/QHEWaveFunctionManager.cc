@@ -364,6 +364,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
 	      int length;
 	      int *Params = Options->GetIntegers("XHC",length);
+	      cout <<"Read "<<length<<" coefficients for XHC"<<endl;
 	      int K=1, M=1, P=0, Q=0, R=1, S=1;
 	      if (length>0) K = Params[0];
 	      if (length>1) M = Params[1];

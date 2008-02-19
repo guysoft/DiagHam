@@ -36,11 +36,11 @@
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "MathTools/Complex.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
-class TwoThirdSingletState: public Abstract1DComplexFunction
+class TwoThirdSingletState: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -102,6 +102,15 @@ class TwoThirdSingletState: public Abstract1DComplexFunction
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x);
 
+  // evaluate function at a given point
+  //
+  // uv = ensemble of spinor variables on sphere describing point
+  //      where function has to be evaluated
+  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+  // return value = function value at (uv)
+  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
+
   Complex GetTestValue(RealVector& x);
 
   // normalize the wave-function to one for the given particle positions
@@ -115,7 +124,7 @@ class TwoThirdSingletState: public Abstract1DComplexFunction
 
   // do all precalculation operations required for a new set of positions
 
-  void EvaluateTables(RealVector& x);
+  void EvaluateTables();
 
 };
 

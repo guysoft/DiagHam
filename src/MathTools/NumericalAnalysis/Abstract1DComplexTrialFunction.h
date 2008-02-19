@@ -63,7 +63,7 @@ class Abstract1DComplexTrialFunction : public Abstract1DComplexFunction
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x) = 0;
+  virtual Complex operator ()(RealVector& x) = 0;  
 
   // get a value of the wavefunction for the last set of coordinates, but with different variational parameters
   // parameters =  alternative set of parameters

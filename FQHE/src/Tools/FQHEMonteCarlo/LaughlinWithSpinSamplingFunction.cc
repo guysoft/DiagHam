@@ -79,6 +79,7 @@ double LaughlinWithSpinSamplingFunction::GetTransitionRatio()
 {
   double ratio=1.0;
   int tomove = System->GetMovedNbr();
+  ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
   if (tomove<this->NbrPerLayer)
     {
       for (int i=0;i<tomove;i++)
@@ -117,9 +118,12 @@ Complex LaughlinWithSpinSamplingFunction::GetFunctionValue()
   for (int j=1; j<this->NbrPerLayer; ++j)
     for (int i=0;i<j;i++)
       Result *= this->ElementNorm*(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-  for (int j=1; j<2*this->NbrPerLayer; ++j)
+  for (int j=this->NbrPerLayer+1; j<2*this->NbrPerLayer; ++j)
     for (int i=this->NbrPerLayer;i<j;i++)
       Result *= this->ElementNorm*(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+  Complex Base=Result;
+  for (int i=1; i<this->Exponent; ++i)
+    Result *= Base;
   return Result;
 }
 
@@ -128,6 +132,6 @@ Complex LaughlinWithSpinSamplingFunction::GetFunctionValue()
 // scale = total scaling factor
 void LaughlinWithSpinSamplingFunction::ScaleByFactor(double scale)
 {
-  double factors = NbrPerLayer*(NbrPerLayer-1);
+  double factors = NbrPerLayer*(NbrPerLayer-1)*this->Exponent;
   this->ElementNorm *= std::pow(scale,1.0/factors);
 }
