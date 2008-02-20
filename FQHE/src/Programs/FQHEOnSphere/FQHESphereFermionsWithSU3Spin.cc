@@ -2,6 +2,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSU3SpinZ3Symmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzZ3Symmetry.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSU3SpinGenericHamiltonian.h"
 
@@ -385,52 +386,51 @@ int main(int argc, char** argv)
 //	    if (LzSymmetrizedBasis == false)
 	    {
 	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, L, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-	      else
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, L, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
 		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 		    {
 		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 		      return 0;
 		    }
 		}
+	      else
+		{
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		}
 	    }
 	  else
 	    if (Z3SymmetrizedBasis == true)
 	      {
-		cout << "toto" << endl;
 		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		  Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrFermions, L, LzMax, TotalTz, MemorySpace);
-		else
 		  {
-		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrFermions, L, LzMax, TotalTz, MemorySpace);
 		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 		      {
 			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 			return 0;
 		      }
 		  }
+		else
+		  {
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  }
 	      }
-	  // 		else
-	  // 		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-	  // 		    {
-	  // 		      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-	  // 								      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	  // 		    }
-	  // 		  else
-	  // 		    Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  // 	      else
-	  // 		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-	  // 		  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, TotalTz, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	  // 		else
-	  // 		  Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
-	  // 	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	  // 		{
-	  // 		  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	  // 		  return 0;
-	  // 		}
-	}    
+	    else
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		{
+		  Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
+		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    {
+		      ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      return 0;
+		    }
+		}
+	      else
+		{
+		  Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		}
+	}
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
