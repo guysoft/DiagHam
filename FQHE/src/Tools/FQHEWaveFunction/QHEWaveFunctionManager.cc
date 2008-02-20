@@ -176,59 +176,57 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
     }
   if (this->GeometryID == QHEWaveFunctionManager::SphereGeometry)
     {
-      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "laughlin") == 0)
+      if (strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0)
 	{
-	  return new LaughlinOnSphereWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 
-						  ((SingleIntegerOption*) (*(this->Options))["nbr-flux"])->GetInteger() + 1);
+	  return new LaughlinOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), 
+						  this->Options->GetInteger("nbr-flux") + 1);
 	}
-      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian") == 0)
+      if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian") == 0)
 	{
-	  return new PfaffianOnSphereWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger());
+	  return new PfaffianOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"));
 	}
-      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian2qh") == 0)
+      if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian2qh") == 0)
 	{
-	  return new PfaffianOnSphereTwoQuasiholeWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 0.0, 0.0, M_PI, 0.0);
+	  return new PfaffianOnSphereTwoQuasiholeWaveFunction(this->Options->GetInteger("nbr-particles"), 0.0, 0.0, M_PI, 0.0);
 	}
-      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "read") == 0)
+      if (strcmp (this->Options->GetString("test-wavefunction"), "read") == 0)
 	{
-	  return new MooreReadOnSphereWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 
-						   ((SingleIntegerOption*) (*(this->Options))["cluster-size"])->GetInteger());
+	  return new MooreReadOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), 
+						   this->Options->GetInteger("cluster-size"));
 	}
-      if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "filledcf") == 0)
+      if (strcmp (this->Options->GetString("test-wavefunction"), "filledcf") == 0)
 	{
-	  return new JainCFFilledLevelOnSphereWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 
-							   ((SingleIntegerOption*) (*(this->Options))["nbr-level"])->GetInteger(),
-							   ((SingleIntegerOption*) (*(this->Options))["nbr-flux"])->GetInteger());
+	  return new JainCFFilledLevelOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), 
+							   this->Options->GetInteger("nbr-level"),
+							   this->Options->GetInteger("nbr-flux"));
 	}
-      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
 	{	  
-	  return new JainCFOnSphereWaveFunction(((SingleStringOption*) (*(this->Options))["cf-file"])->GetString());
+	  return new JainCFOnSphereWaveFunction(this->Options->GetString("cf-file"));
 	}
-      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
 	{	  
-	  return new UnprojectedJainCFOnSphereWaveFunction(((SingleStringOption*) (*(this->Options))["cf-file"])->GetString());
+	  return new UnprojectedJainCFOnSphereWaveFunction(this->Options->GetString("cf-file"));
 	}
-      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcf") == 0))
 	{
-	  int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-	  double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+	  int N= this->Options->GetInteger("nbr-particles");
 	  int LL;
+	  double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
 	  if (Coefficients==NULL)
 	    {
 	      Coefficients = new double[1];
 	      Coefficients[0]=0.0;
 	      LL=1;
 	    }
-	  else
-	    LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
-	  double MR =((SingleDoubleOption*) (*(this->Options))["MR-coeff"])->GetDouble();
-	  bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	  double MR =this->Options->GetDouble("MR-coeff");
+	  bool conventions = this->Options->GetBoolean("pair-compatibility");
 	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
 	  rst->AdaptAverageMCNorm();
 	  delete [] Coefficients;
 	  return rst;
 	}
-      if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "hund") == 0))
 	{
 	  int N = this->Options->GetInteger("nbr-particles");
 	  int JastrowP = this->Options->GetInteger("nbr-flux")/2;
@@ -249,78 +247,74 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
   else
     if (this->GeometryID == QHEWaveFunctionManager::DiskGeometry)
       {
-	if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "laughlin") == 0)
+	if (strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0)
 	  {
-	    return new LaughlinOnDiskWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 
-						  ((SingleIntegerOption*) (*(this->Options))["nbr-flux"])->GetInteger() + 1);
+	    return new LaughlinOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"), 
+						  this->Options->GetInteger("nbr-flux") + 1);
 	  }
-	if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian") == 0)
+	if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian") == 0)
 	  {
-	    return new PfaffianOnDiskWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger());
+	    return new PfaffianOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"));
 	  }
-	if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "read") == 0)
+	if (strcmp (this->Options->GetString("test-wavefunction"), "read") == 0)
 	  {
-	    return new MooreReadOnDiskWaveFunction(((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger(), 
-						   ((SingleIntegerOption*) (*(this->Options))["cluster-size"])->GetInteger());
+	    return new MooreReadOnDiskWaveFunction(this->Options->GetInteger("nbr-particles"), 
+						   this->Options->GetInteger("cluster-size"));
 	  }
 	return 0;
       }
     else
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSpinGeometry)
 	{
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+	  if ((strcmp ( this->Options->GetString("test-wavefunction"), "pairedcf") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      int Sz= Options->GetInteger("SzTotal");
 	      if ((N&1)||(Sz!=0))
 		{
 		  cout << "Paired CF bilayer states require equal population of both (pseudo-)spin species and even N!" << endl;
 		  exit(1);
 		}
-	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
 	      int LL;
+	      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
 	      if (Coefficients==NULL)
 		{
 		  Coefficients = new double[1];
 		  Coefficients[0]=0.0;
 		  LL=1;
 		}
-	      else
-		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
-	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      bool conventions = Options->GetBoolean("pair-compatibility");
 	      int pairWave = this->Options->GetInteger("pair-wave");
-	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, pairWave, false, 0.0, Coefficients, conventions, 2);
+	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, pairWave, false, 0.0, Coefficients, conventions, 2);	      
 	      rst->AdaptAverageMCNorm();
 	      delete [] Coefficients;
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcfcb") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      int Sz= Options->GetInteger("SzTotal");
 	      if ((N&1)||(Sz!=0))
 		{
 		  cout << "Paired CF-CB bilayer states require equal population of both (pseudo-)spin species and even N!" << endl;
 		  exit(1);
 		}
-	      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
 	      int LL;
+	      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
 	      if (Coefficients==NULL)
 		{
 		  Coefficients = new double[1];
 		  Coefficients[0]=0.0;
 		  LL=1;
 		}
-	      else
-		LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
-	      double BC = ((SingleDoubleOption*) (*(this->Options))["bosons"])->GetDouble();
-	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      double BC = this->Options->GetDouble("bosons");
+	      bool conventions = this->Options->GetBoolean("pair-compatibility");
 	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, LL, 1, true, BC, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
 	      delete [] Coefficients;
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "hund") == 0))
 	    {
 	      int N= Options->GetInteger("nbr-particles");
 	      int n=N/2;
@@ -328,9 +322,9 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      rst->AdaptAverageMCNorm();
 	      return rst;	      
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111-old") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "111-old") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      int Sz= Options->GetInteger("SzTotal");
 	      if ((N&1)||(Sz!=0))
 		{
@@ -339,29 +333,29 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 		}
 	      double* Coefficients = new double[1];
 	      Coefficients[0]=0.0;
-	      bool conventions = ((BooleanOption*) (*(this->Options))["pair-compatibility"])->GetBoolean();
+	      bool conventions = this->Options->GetBoolean("pair-compatibility");
 	      PairedCFOnSphereWithSpinWaveFunction* rst = new PairedCFOnSphereWithSpinWaveFunction(N, 1, 1, true, 1.0, Coefficients, conventions, 2);
 	      rst->AdaptAverageMCNorm();
 	      delete[] Coefficients;
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "111") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 1, 1, 0);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "HR") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 2, 2, -2);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "XH") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "XH") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      int length;
 	      int *Params = Options->GetIntegers("XHC",length);
 	      cout <<"Read "<<length<<" coefficients for XHC"<<endl;
@@ -382,17 +376,17 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      else
 		return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "1s") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
+	      int N= this->Options->GetInteger("nbr-particles");
 	      bool inside = Options->GetBoolean("jastrow-inside");
 	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, 0, 1, 1, inside);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
-	  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "2-3s") == 0))
 	    {
-	      int N= ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();	      
+	      int N= this->Options->GetInteger("nbr-particles");
 	      TwoThirdSingletState* rst = new TwoThirdSingletState(N);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
@@ -413,9 +407,10 @@ char* QHEWaveFunctionManager::GetDescription()
     }
   char * buffer = new char[1000];
   sprintf(buffer,"%s N=%d",this->Options->GetString("test-wavefunction"), this->Options->GetInteger("nbr-particles"));
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcf") == 0))
     {
-      double *Coefficients = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetDoubles();
+      int LL;
+      double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
       if (Coefficients==NULL)
 	{
 	  if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
@@ -429,7 +424,6 @@ char* QHEWaveFunctionManager::GetDescription()
 	    sprintf(buffer,"%s, B: %g, c: %g",buffer, this->Options->GetDouble("bosons"), Coefficients[0]);
 	  else
 	    sprintf(buffer,"%s, MR: %g, c: %g",buffer, this->Options->GetDouble("MR-coeff"), Coefficients[0]);
-	  int LL = ((MultipleDoubleOption*) (*(this->Options))["pair-coeff"])->GetLength();
 	  for (int i=1; i<LL; ++i)
 	    sprintf(buffer,"%s+%g",buffer, Coefficients[i]);
 	  if(this->Options->GetBoolean("pair-compatibility"))
@@ -447,37 +441,37 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
 {
   if ((*(this->Options))["test-wavefunction"] == 0)
     return QHEWaveFunctionManager::InvalidWaveFunction;
-  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "laughlin") == 0)
+  if (strcmp (this->Options->GetString("test-wavefunction"), "laughlin") == 0)
     return QHEWaveFunctionManager::Laughlin;
-  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian") == 0)
+  if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian") == 0)
     return QHEWaveFunctionManager::Pfaffian;
-  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pfaffian2qh") == 0)
+  if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian2qh") == 0)
     return QHEWaveFunctionManager::Pfaffian2QH;
-  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "read") == 0)
+  if (strcmp (this->Options->GetString("test-wavefunction"), "read") == 0)
     return QHEWaveFunctionManager::ReadRezayi;
-  if (strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "filledcf") == 0)
+  if (strcmp (this->Options->GetString("test-wavefunction"), "filledcf") == 0)
     return QHEWaveFunctionManager::FilledCF;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "genericcf") == 0) && ((*(this->Options))["cf-file"] != 0))
     return QHEWaveFunctionManager::GenericCF;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "unprojectedcf") == 0) && ((*(this->Options))["cf-file"] != 0))
     return QHEWaveFunctionManager::UnprojectedCF;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcf") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcf") == 0))
     return QHEWaveFunctionManager::PairedCF;  
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "pairedcfcb") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcfcb") == 0))
     return QHEWaveFunctionManager::PairedCFCB;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "111") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "111") == 0))
     return QHEWaveFunctionManager::OneOneOne;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "HR") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "HR") == 0))
     return QHEWaveFunctionManager::HaldaneRezayi;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "XH") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "XH") == 0))
     return QHEWaveFunctionManager::ExtendedHalperin;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "1s") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "1s") == 0))
     return QHEWaveFunctionManager::OneS;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "2-3s") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "2-3s") == 0))
     return QHEWaveFunctionManager::TwoThirdsS;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "hund") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "hund") == 0))
     return QHEWaveFunctionManager::HundRuleSinglet;
-  if ((strcmp (((SingleStringOption*) (*(this->Options))["test-wavefunction"])->GetString(), "halperin") == 0))
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "halperin") == 0))
     return QHEWaveFunctionManager::Halperin;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

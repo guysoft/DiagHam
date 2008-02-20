@@ -65,6 +65,10 @@ class AbstractObservable
   // all = flag indicating whether to print all, or shortened information
   virtual void PrintStatus(std::ostream &output, bool all = false) = 0;
 
+  // print formatted data suitable for plotting
+  // ouput = the target stream
+  virtual void WriteDataFile(std::ostream &output) = 0;
+
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system) = 0;

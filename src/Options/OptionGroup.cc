@@ -44,9 +44,10 @@ using std::endl;
 //
 // groupName = group full name
 
-OptionGroup::OptionGroup(char* groupName)
+OptionGroup::OptionGroup(char* groupName, bool showGroup)
 {
   this->GroupName = new char [strlen(groupName) + 1];
+  this->ShowGroup = showGroup;
   strcpy (this->GroupName, groupName);
 }
 
@@ -166,7 +167,8 @@ ostream& OptionGroup::DisplayOption (ostream& output, bool shortVersion)
 
 ostream& OptionGroup::DisplayHelp (ostream& output)
 {
-  output << this->GroupName << ":" << endl;
+  if (ShowGroup)
+    output << this->GroupName << ":" << endl;
   ListIterator<AbstractOption*> IterOption(this->Options);
   AbstractOption** TmpOption;
   while ((TmpOption = IterOption()))

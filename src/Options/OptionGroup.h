@@ -54,12 +54,16 @@ class OptionGroup
   // group full name
   char* GroupName;
 
+  // Flag indicating if options shown in help
+  bool ShowGroup;
+
  public:
 
   // constructor
   //
   // groupName = group full name
-  OptionGroup(char* groupName);
+  // showGroup = Flag indicating if options shown in help
+  OptionGroup(char* groupName, bool showGroup=true);
 
   // destructor
   //

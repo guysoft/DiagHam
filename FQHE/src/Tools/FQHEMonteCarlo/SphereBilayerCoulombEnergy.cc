@@ -30,7 +30,6 @@ SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy(int nbrFlux, int nbrSepar
     }
   this->NbrFlux = nbrFlux;
   this->Radius = sqrt(0.5*(double)NbrFlux); // the radius is also the inverse magnetic length
-  cout << "L_0="<<1.0/Radius<<endl;
   this->NbrSeparations = nbrSeparations;
   this->SqrSeparations = new double [nbrSeparations];
   this->Separations = new double [nbrSeparations];
@@ -42,7 +41,6 @@ SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy(int nbrFlux, int nbrSepar
     {
       this->SqrSeparations[i] = DSQR(this->Separations[i]/Radius);
     }
-  cout << "SqrSeparations@d="<<Separations[NbrSeparations-1] << "="<<SqrSeparations[NbrSeparations-1]<<endl;
   this->Values = new WeightedRealVectorObservable(NbrSeparations);
   this->NbrObservations=0;
 }
@@ -129,6 +127,15 @@ void SphereBilayerCoulombEnergy::PrintStatus(std::ostream &output, bool all)
 	  output.precision(tmp);
 	}
     }
+}
+
+// print formatted data suitable for plotting
+// ouput = the target stream
+void SphereBilayerCoulombEnergy::WriteDataFile(std::ostream &output)
+{
+  output << "#  d\t  E  \t err  "<<endl;
+  for (int i=0; i<this->NbrSeparations; ++i)
+    output << this->Separations[i] << "\t" << this->Values->Average(i)<<"\t"<<this->Values->ErrorEstimate(i);  
 }
 
 // set particle collection that the observable operates on

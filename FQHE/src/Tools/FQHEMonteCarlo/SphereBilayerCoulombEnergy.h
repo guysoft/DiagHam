@@ -101,6 +101,10 @@ class SphereBilayerCoulombEnergy : public AbstractObservable
   // all = flag indicating whether to print all, or shortened information
   virtual void PrintStatus(std::ostream &output, bool all = false);
 
+  // print formatted data suitable for plotting
+  // ouput = the target stream
+  virtual void WriteDataFile(std::ostream &output);
+
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);

@@ -107,16 +107,16 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(int n
   if (correctPrefactors) 
     {
       cout << "Option correctPrefactors in PairedCFOnSphereWithSpinWaveFunction needs to be checked!" << endl;
-//       int p=Orbitals->GetJastrowPower();
+//       int p=Orbitals1->GetJastrowPower();
 //       FactorialCoefficient Coef;
 //       for (int n=0; n<NbrLandauLevels; ++n)
 // 	{
 // 	  Coef.SetToOne();
-// 	  Coef.PartialFactorialDivide(nbrEffectiveFlux+p*(nbrParticles-1)+2,nbrEffectiveFlux+2*p*(nbrParticles-1)+1);
-// 	  Coef.PartialFactorialMultiply(p*(nbrParticles-1)+n+2,2*p*(nbrParticles-1)+n+1);
+// 	  Coef.PartialFactorialDivide(nbrEffectiveFlux+p*(NbrParticlesPerLayer-1)+2,nbrEffectiveFlux+2*p*(NbrParticlesPerLayer-1)+1);
+// 	  Coef.PartialFactorialMultiply(p*(NbrParticlesPerLayer-1)+n+2,2*p*(NbrParticlesPerLayer-1)+n+1);
 // 	  this->TrialParameters[n]*=Coef.GetNumericalValue()*Coef.GetNumericalValue();
-// 	  //cout << "Correction["<<n<<"]="<<Coef.GetNumericalValue()<<"from: " << nbrEffectiveFlux+p*(nbrParticles-1)+2<<","<<nbrEffectiveFlux+2*p*(nbrParticles-1)+1<<","<< p*(nbrParticles-1)+n+2<<","<<2*p*(nbrParticles-1)+n+1<<endl;
-// 	}
+// 	  cout << "Correction["<<n<<"]="<<Coef.GetNumericalValue()<<"from: " << nbrEffectiveFlux+p*(NbrParticlesPerLayer-1)+2<<","<<nbrEffectiveFlux+2*p*(NbrParticlesPerLayer-1)+1<<","<< p*(NbrParticlesPerLayer-1)+n+2<<","<<2*p*(NbrParticlesPerLayer-1)+n+1<<endl;
+//	}
     }  
 }
 
@@ -216,7 +216,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::operator ()(RealVector& x)
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp = this->ElementNorm*( J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
+	      tmp = this->ElementNorm*( this->BosonCoefficient*J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j, Real(tmp), Imag(tmp));
 #else
@@ -279,7 +279,7 @@ Complex PairedCFOnSphereWithSpinWaveFunction::CalculateFromSpinorVariables(Compl
 	      tmp=0.0;
 	      for (int n=0; n<this->NbrLandauLevels; ++n)
 		tmp+=this->TrialParameters[n]*this->gAlpha[n][i*this->NbrParticlesPerLayer+j];
-	      tmp = this->ElementNorm*( J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
+	      tmp = this->ElementNorm*( this->BosonCoefficient*J12[i]*J21[j]/InterLayerDistances[i][j] - tmp*J11[i]*J22[j]);
 #ifdef USE_LAPACK_CFCB
 	      Matrix->SetMatrixElement(i,j, Real(tmp), Imag(tmp));
 #else
