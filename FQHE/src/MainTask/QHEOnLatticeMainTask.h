@@ -112,6 +112,8 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
+  // use ARPACK libraries instead of native lanczos
+  bool ArpackFlag;
 
  public:
 

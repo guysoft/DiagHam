@@ -3,12 +3,13 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2008 Nicolas Regnault                  //
 //                                                                            //
+//                       class author: Gunnar Moeller                         //
 //                                                                            //
-//                       class of qhe on sphere main task                     //
+//                    class of qhe on a lattice main task                     //
 //                                                                            //
-//                        last modification : 10/06/2004                      //
+//                        last modification : 21/02/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -63,11 +64,64 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef HAVE_ARPACK
+#include "arcomp.h"
+#include "arrscomp.h"
+#include "../examples/matprod/complex/cmatrixa.h"
+#include "../examples/reverse/complex/rcompsol.h"
+#endif
 
 using std::ios;
 using std::cout;
 using std::endl;
 using std::ofstream;
+
+template<class T>
+void Test(T type)
+{
+
+  // Defining a complex matrix.
+
+  CompMatrixA<T> A(10); // n = 10*10.
+
+  // Creating a complex eigenvalue problem and defining what we need:
+  // the four eigenvectors of A with largest magnitude.
+
+  ARrcCompStdEig<T> prob(A.ncols(), 4L);
+  
+  // Finding an Arnoldi basis.
+
+  while (!prob.ArnoldiBasisFound()) {
+
+    // Calling ARPACK FORTRAN code. Almost all work needed to
+    // find an Arnoldi basis is performed by TakeStep.
+
+    prob.TakeStep();
+
+    if ((prob.GetIdo() == 1)||(prob.GetIdo() == -1)) {
+
+      // Performing matrix-vector multiplication.
+      // In regular mode, w = Av must be performed whenever
+      // GetIdo is equal to 1 or -1. GetVector supplies a pointer
+      // to the input vector, v, and PutVector a pointer to the
+      // output vector, w.
+      
+      A.MultMv(prob.GetVector(), prob.PutVector());
+
+    }
+
+  }
+
+  // Finding eigenvalues and eigenvectors.
+
+  prob.FindEigenvectors();
+
+  // Printing solution.
+
+  Solution(prob);
+
+} // Test.
+
 
 
 // constructor
@@ -199,6 +253,9 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
       this->ResumeFastDiskFlag = false;
     }
   this->FirstRun = firstRun;
+#ifdef HAVE_ARPACK
+  ArpackFlag = options->GetBoolean("use-arpack");
+#endif
 }
  
 // destructor
@@ -379,203 +436,276 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
     }
   else
     {
-      AbstractLanczosAlgorithm* Lanczos;
-      if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
+#ifdef HAVE_ARPACK
+      if (ArpackFlag)
 	{
-	  if (this->DiskFlag == false)
-	    if (this->EvaluateEigenvectors == true)
-	      //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);// replaced by more elaborate algorithm with fast-disk option -> still need to check that one
-	      Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(this->Architecture, this->MaxNbrIterLanczos , this->FastDiskFlag, this->ResumeFastDiskFlag);
-	    else
-	      Lanczos = new ComplexBasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	  else
-	    if (this->EvaluateEigenvectors == true)
-	      {
-		cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
-		exit(1);
-	      //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
-	      }
-	    else
-	      Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	}
-      else
-	{
-	  if (this->DiskFlag == false)
-	    {
-	      Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
-	    }
-	  else
-	    Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
-	}
-      if (this->LanczosPrecision != 0.0)
-	Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
-      double GroundStateEnergy;
-      double Precision = 1.0;
-      double PreviousLowest = 1e50;
-      double Lowest = PreviousLowest;
-      int CurrentNbrIterLanczos = 0;
-      Lanczos->SetHamiltonian(this->Hamiltonian);
-      if ((this->DiskFlag == true) && (this->ResumeFlag == true))
-	Lanczos->ResumeLanczosAlgorithm();
-      else
-	{
-	  if (this->InitialVectorFileName == 0)
-	    {
-	      Lanczos->InitializeLanczosAlgorithm();
-	    }
-	  else
-	    {	      
-	      ComplexVector InitialVector;
-	      InitialVector.ReadVector(this->InitialVectorFileName);
-	      Lanczos->InitializeLanczosAlgorithm(InitialVector);
-	    }
-	}
-      cout << "Run Lanczos Algorithm" << endl;
-      timeval TotalStartingTime;
-      timeval TotalEndingTime;
-      timeval TotalCurrentTime;
-      double Dt;
-      gettimeofday (&(TotalStartingTime), 0);
-      int StartTimeSecond = TotalStartingTime.tv_sec;
-      if (this->ResumeFlag == false)
-	{
-	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
-	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	}
-      RealTriDiagonalSymmetricMatrix TmpMatrix;
-      gettimeofday (&(TotalCurrentTime), 0); 
-      int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-      while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
-										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-							((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
-	{
-	  ++CurrentNbrIterLanczos;
-	  Lanczos->RunLanczosAlgorithm(1);
-	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
-	  TmpMatrix.SortMatrixUpOrder();
-	  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
-	  Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-	  PreviousLowest = Lowest; 
-	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " ";
-	  gettimeofday (&(TotalEndingTime), 0);
-	  CurrentTimeSecond = TotalEndingTime.tv_sec;
-	  if (this->ShowIterationTime == true)
-	    {
-	      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
-		((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-	      cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")";
-	      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
-	      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
-	    }
-	  cout << endl;
-	}
-      if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
-	{
-	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
-	  TmpMatrix.SortMatrixUpOrder();
-	}
-      if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
-	{
-	  cout << "too many Lanczos iterations" << endl;
-	  File << "too many Lanczos iterations" << endl;
-	  File.close();
-	  return 1;
-	}
-      GroundStateEnergy = Lowest;
-      cout << endl;
-      cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
-	   << CurrentNbrIterLanczos << endl;
-      for (int i = 0; i < this->NbrEigenvalue; ++i)
-	{
-	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-	  if  (this->ComputeEnergyFlag == false)
-	    File << this->NbrFluxQuanta << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
-	}
-      cout << endl;
-      if ((this->EvaluateEigenvectors == true) && 
-	  (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
-					 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-	   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-	    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
-	{
-	  ComplexVector* Eigenvectors = (ComplexVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
-	  if (Eigenvectors != 0)
-	    {
-	      ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	      if ((this->EigenvectorConvergence == true) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
+	  
+	  // Solving a double precision problem with n = 100.
+	  cout << "First Test" << endl;
+	  cout.flush();
+	  Test((double)0.0);
+
+	  cout << "Second Test" << endl;
+	  cout.flush();
+	  // Creating a complex eigenvalue problem and defining what we need:
+	  // the four eigenvalues of A with smallest real part.
+	  int Dimension=this->Hamiltonian->GetHilbertSpaceDimension();
+	  ComplexVector InputVector(Dimension);
+	  ComplexVector OutputVector(Dimension);
+	  
+	  ARrcCompStdEig<double> prob(Dimension, 4L); //this->NbrEigenvalue, "SR");
+	  // Finding an Arnoldi basis.
+
+	  while (!prob.ArnoldiBasisFound()) {
+	    
+	    // Calling ARPACK FORTRAN code. Almost all work needed to
+	    // find an Arnoldi basis is performed by TakeStep.
+	    
+	    prob.TakeStep();
+	    
+	    if ((prob.GetIdo() == 1)||(prob.GetIdo() == -1)) {
+	      
+	      // Performing matrix-vector multiplication.
+	      // In regular mode, w = Av must be performed whenever
+	      // GetIdo is equal to 1 or -1. GetVector supplies a pointer
+	      // to the input vector, v, and PutVector a pointer to the
+	      // output vector, w.
+
+	      arcomplex<double> *ArpackInputVector = prob.GetVector();
+	      arcomplex<double> *ArpackOutputVector = prob.PutVector();
+	      cout << "ArpackInputVector="<<endl;
+	      
+	      for (int i=0; i<Dimension; ++i)
 		{
-		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
-		  Operation1.ApplyOperation(this->Architecture);
-		  double Scalar = Norm(TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1]);
-		  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
-		  while (Precision > 1e-7)
-		    {
-		      ++CurrentNbrIterLanczos;
-		      Lanczos->RunLanczosAlgorithm(1);
-		      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
-		      TmpMatrix.SortMatrixUpOrder();
-		      Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
-		      delete[] Eigenvectors;
-		      Eigenvectors = (ComplexVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
-		      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
-		      Operation1.ApplyOperation(this->Architecture);
-		      Scalar = Norm(TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1]);
-		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
-		      cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
-			   << Precision << " ";
-		      if (this->ShowIterationTime == true)
-			{
-			  gettimeofday (&(TotalEndingTime), 0);
-			  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
-			    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
-			  cout << "(" << Dt << " s)";
-			  TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
-			  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
-			}
-		      cout << endl;
-		    }
+		  cout << ArpackInputVector[i]<<"\t"<<ArpackOutputVector[i]<<endl;
+		  InputVector.Re(i) = real(ArpackInputVector[i]);
+		  InputVector.Im(i) = imag(ArpackInputVector[i]);
 		}
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
-	      for (int i = 0; i < this->NbrEigenvalue; ++i)
+
+	      cout << "InputVector="<<InputVector<<endl;
+	      
+	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &InputVector, &OutputVector);
+	      Operation1.ApplyOperation(this->Architecture);
+
+	      for (int i=0; i<Dimension; ++i)
 		{
-		  if (this->ComputeEnergyFlag == true)
-		    File << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
-		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
-		  Operation1.ApplyOperation(this->Architecture);
-		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
-		  if (this->EvaluateEigenvectors == true)
-		    {
-		      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
-			{	  
-			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
-			}
-		      else
-			{
-			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
-			}
-		      Eigenvectors[i].WriteVector(TmpVectorName);
-		    }
-		  if (this->ComputeEnergyFlag == true)
-		    {
-		      File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << endl;
-		    }
+		  ArpackOutputVector[i] = arcomplex<double>(OutputVector.Re(i),OutputVector.Im(i));
+		}
+	      
+	      
+	    }
+	    
+	  }
+	  
+	  // Finding eigenvalues and eigenvectors.
+	  
+	  prob.FindEigenvectors();
+	  
+	  // Printing solution.
+	  
+	  Solution(prob);
+	}
+      else
+#endif	
+	{  
+	  AbstractLanczosAlgorithm* Lanczos;
+	  if ((this->NbrEigenvalue == 1) && (this->FullReorthogonalizationFlag == false))
+	    {
+	      if (this->DiskFlag == false)
+		if (this->EvaluateEigenvectors == true)
+		  //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);// replaced by more elaborate algorithm with fast-disk option -> still need to check that one
+		  Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(this->Architecture, this->MaxNbrIterLanczos , this->FastDiskFlag, this->ResumeFastDiskFlag);
+		else
+		  Lanczos = new ComplexBasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	      else
+		if (this->EvaluateEigenvectors == true)
+		  {
+		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!"<<endl;
+		    exit(1);
+		    //Lanczos = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(this->Architecture, this->NbrIterLanczos, this->MaxNbrIterLanczos);
+		  }
+		else
+		  Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+	    }
+	  else
+	    {
+	      if (this->DiskFlag == false)
+		{
+		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		}
+	      else
+		Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+	    }
+	  if (this->LanczosPrecision != 0.0)
+	    Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
+	  double GroundStateEnergy;
+	  double Precision = 1.0;
+	  double PreviousLowest = 1e50;
+	  double Lowest = PreviousLowest;
+	  int CurrentNbrIterLanczos = 0;
+	  Lanczos->SetHamiltonian(this->Hamiltonian);
+	  if ((this->DiskFlag == true) && (this->ResumeFlag == true))
+	    Lanczos->ResumeLanczosAlgorithm();
+	  else
+	    {
+	      if (this->InitialVectorFileName == 0)
+		{
+		  Lanczos->InitializeLanczosAlgorithm();
+		}
+	      else
+		{	      
+		  ComplexVector InitialVector;
+		  InitialVector.ReadVector(this->InitialVectorFileName);
+		  Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		}
+	    }
+	  cout << "Run Lanczos Algorithm" << endl;
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  timeval TotalCurrentTime;
+	  double Dt;
+	  gettimeofday (&(TotalStartingTime), 0);
+	  int StartTimeSecond = TotalStartingTime.tv_sec;
+	  if (this->ResumeFlag == false)
+	    {
+	      Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
+	      CurrentNbrIterLanczos = NbrEigenvalue + 3;
+	    }
+	  RealTriDiagonalSymmetricMatrix TmpMatrix;
+	  gettimeofday (&(TotalCurrentTime), 0); 
+	  int CurrentTimeSecond = TotalCurrentTime.tv_sec;
+	  while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+											 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+							   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+							    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+	    {
+	      ++CurrentNbrIterLanczos;
+	      Lanczos->RunLanczosAlgorithm(1);
+	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+	      TmpMatrix.SortMatrixUpOrder();
+	      Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
+	      Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
+	      PreviousLowest = Lowest; 
+	      cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << " ";
+	      gettimeofday (&(TotalEndingTime), 0);
+	      CurrentTimeSecond = TotalEndingTime.tv_sec;
+	      if (this->ShowIterationTime == true)
+		{
+		  Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+		    ((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+		  cout << "(" << Dt << " s for step " << CurrentNbrIterLanczos << ")";
+		  TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+		  TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
 		}
 	      cout << endl;
-	      delete[] TmpVectorName;
-	      delete[] Eigenvectors;
 	    }
-	  else
+	  if ((Lanczos->TestConvergence() == true) && (CurrentNbrIterLanczos == 0))
 	    {
-	      cout << "eigenvectors can't be computed" << endl;
+	      TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+	      TmpMatrix.SortMatrixUpOrder();
 	    }
+	  if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
+	    {
+	      cout << "too many Lanczos iterations" << endl;
+	      File << "too many Lanczos iterations" << endl;
+	      File.close();
+	      return 1;
+	    }
+	  GroundStateEnergy = Lowest;
+	  cout << endl;
+	  cout << (TmpMatrix.DiagonalElement(0) - this->EnergyShift) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
+	       << CurrentNbrIterLanczos << endl;
+	  for (int i = 0; i < this->NbrEigenvalue; ++i)
+	    {
+	      cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
+	      if  (this->ComputeEnergyFlag == false)
+		File << this->NbrFluxQuanta << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
+	    }
+	  cout << endl;
+	  if ((this->EvaluateEigenvectors == true) && 
+	      (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+					     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+	       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+		((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+	    {
+	      ComplexVector* Eigenvectors = (ComplexVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+	      if (Eigenvectors != 0)
+		{
+		  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		  if ((this->EigenvectorConvergence == true) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
+		    {
+		      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+		      Operation1.ApplyOperation(this->Architecture);
+		      double Scalar = Norm(TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1]);
+		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+		      while (Precision > 1e-7)
+			{
+			  ++CurrentNbrIterLanczos;
+			  Lanczos->RunLanczosAlgorithm(1);
+			  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
+			  TmpMatrix.SortMatrixUpOrder();
+			  Lowest = TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift;
+			  delete[] Eigenvectors;
+			  Eigenvectors = (ComplexVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
+			  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
+			  Operation1.ApplyOperation(this->Architecture);
+			  Scalar = Norm(TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1]);
+			  Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
+			  cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
+			       << Precision << " ";
+			  if (this->ShowIterationTime == true)
+			    {
+			      gettimeofday (&(TotalEndingTime), 0);
+			      Dt = (double) (TotalEndingTime.tv_sec - TotalCurrentTime.tv_sec) + 
+				((TotalEndingTime.tv_usec - TotalCurrentTime.tv_usec) / 1000000.0);		      
+			      cout << "(" << Dt << " s)";
+			      TotalCurrentTime.tv_usec = TotalEndingTime.tv_usec;
+			      TotalCurrentTime.tv_sec = TotalEndingTime.tv_sec;
+			    }
+			  cout << endl;
+			}
+		    }
+		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
+		  for (int i = 0; i < this->NbrEigenvalue; ++i)
+		    {
+		      if (this->ComputeEnergyFlag == true)
+			File << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
+		      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
+		      Operation1.ApplyOperation(this->Architecture);
+		      cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
+		      if (this->EvaluateEigenvectors == true)
+			{
+			  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
+			    {	  
+			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			    }
+			  else
+			    {
+			      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			    }
+			  Eigenvectors[i].WriteVector(TmpVectorName);
+			}
+		      if (this->ComputeEnergyFlag == true)
+			{
+			  File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << endl;
+			}
+		    }
+		  cout << endl;
+		  delete[] TmpVectorName;
+		  delete[] Eigenvectors;
+		}
+	      else
+		{
+		  cout << "eigenvectors can't be computed" << endl;
+		}
+	    }
+	  gettimeofday (&(TotalEndingTime), 0);
+	  cout << "------------------------------------------------------------------" << endl << endl;;
+	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
+	  cout << "time = " << Dt << endl;
+	  delete Lanczos;
 	}
-      gettimeofday (&(TotalEndingTime), 0);
-      cout << "------------------------------------------------------------------" << endl << endl;;
-      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-      cout << "time = " << Dt << endl;
-      delete Lanczos;
     }
   cout << "----------------------------------------------------------------" << endl;
   File.close(); 
@@ -737,4 +867,8 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*LanczosGroup) += new  BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
+  (*LanczosGroup) += new  BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
+#ifdef HAVE_ARPACK
+  (*LanczosGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");
+#endif
 }

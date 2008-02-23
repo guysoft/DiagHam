@@ -69,6 +69,9 @@ int main(int argc, char** argv)
   
   AbstractMCSamplingFunction* SamplingFunction = SamplingFunctionManager.GetSamplingFunction();
 
+  cout << "Function: " << WaveFunctionManager.GetDescription()<<endl;
+  cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;
+
   SimpleMonteCarloOnSphereAlgorithm MonteCarloRoutine(NbrParticles, TestWaveFunction, SamplingFunction,
 						      &Manager);
 
@@ -82,10 +85,7 @@ int main(int argc, char** argv)
 
   // print final results:
   cout << "Final results:" << endl;
-  Energy.PrintLegend(cout,true);
-  cout << endl;
-  Energy.PrintStatus(cout,true);
-  cout << endl;
+  Energy.WriteDataFile(cout);  
   
 }
 

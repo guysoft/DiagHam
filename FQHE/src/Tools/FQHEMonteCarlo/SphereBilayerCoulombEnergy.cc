@@ -135,7 +135,8 @@ void SphereBilayerCoulombEnergy::WriteDataFile(std::ostream &output)
 {
   output << "#  d\t  E  \t err  "<<endl;
   for (int i=0; i<this->NbrSeparations; ++i)
-    output << this->Separations[i] << "\t" << this->Values->Average(i)<<"\t"<<this->Values->ErrorEstimate(i);  
+    output << this->Separations[i] << "\t" << this->Values->Average(i)
+	   <<"\t"<<this->Values->ErrorEstimate(i)<<endl;  
 }
 
 // set particle collection that the observable operates on

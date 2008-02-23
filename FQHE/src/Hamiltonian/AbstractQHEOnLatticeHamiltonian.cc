@@ -442,7 +442,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 		  vDestination.Im(TmpIndexArray[j]) +=  Imag(TmpCoefficientArray[j] * CCoefficient);
 		}
 	      vDestination.Re(k) += this->HamiltonianShift * Real(CCoefficient);
-	      vDestination.Im(k++) += this->HamiltonianShift * Imag(CCoefficient);
+	      vDestination.Im(k) += this->HamiltonianShift * Imag(CCoefficient);
+	      ++k;
 	    }
 	}
       else

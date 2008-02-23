@@ -51,10 +51,11 @@ using std::ostream;
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // contactInteractionU = strength of on-site delta interaction
 // reverseHopping = flag to indicate if sign of hopping terms should be reversed
+// deltaPotential = strength of a delta potential at site (0,0)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
@@ -68,6 +69,7 @@ ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnL
   this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;
   this->ContactInteractionU=contactInteractionU;
   this->ReverseHopping = reverseHopping;
+  this->DeltaPotential = deltaPotential;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->FastMultiplicationFlag = false;
@@ -162,10 +164,10 @@ MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeDeltaHa
 // evaluate all interaction factors
 //   
 void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
-{
-
+{  
   // hopping terms are present independent of statistics:
   this->NbrHoppingTerms=4*this->NbrSites;
+  if (this->DeltaPotential != 0.0) ++this->NbrHoppingTerms;  
   this->HoppingTerms = new Complex[NbrHoppingTerms];
   this->KineticQi = new int[NbrHoppingTerms];
   this->KineticQf = new int[NbrHoppingTerms];
@@ -199,6 +201,15 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
 	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	  ++TmpNumberTerms;
 	}
+    }
+
+  if (this->DeltaPotential != 0.0)
+    {
+      KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(0, 0, 0, TranslationPhase);
+      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(0, 0, 0, TranslationPhase);
+      HoppingTerms[TmpNumberTerms] = this->DeltaPotential;
+      //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+      ++TmpNumberTerms;
     }
 
   // we have no general four-particle interactions:

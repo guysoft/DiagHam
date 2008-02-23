@@ -90,6 +90,56 @@ if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
   AC_DEFINE(HAVE_LAPACK_ONLY,,[define if we are using LAPACK only])
 fi
 
+
+dnl test if using ARPACK
+AC_ARG_ENABLE(arpack, [AC_HELP_STRING([--enable-arpack],[enable ARPACK support])], [HAVE_PKG_ARPACK=$enableval],[HAVE_PKG_ARPACK=no])
+
+ARPACK_LIBS="-larpack"
+USER_DEFINED_ARPACK=no
+AC_ARG_WITH(arpack-libs,[AC_HELP_STRING([--with-arpack-libs="LIBS"],[ARPACK libraries @<:@"-larpack"@:>@])],
+[ARPACK_LIBS=${withval}
+AC_MSG_CHECKING(user-defined ARPACK libraries)
+AC_MSG_RESULT([${ARPACK_LIBS}])
+USER_DEFINED_ARPACK=yes
+]
+)
+ 
+
+ARPACKPP_ROOT="$HOME/ARPACK/arpack++"
+USER_DEFINED_ARPACKPP_INCLUDE=no
+AC_ARG_WITH(arpackpp-dir,[AC_HELP_STRING([--with-arpackpp-dir=DIR],[ARPACK++ root directory @<:@"$HOME/ARPACK/arpack++"@:>@])],
+[ARPACKPP_ROOT=${withval}
+AC_MSG_CHECKING(user-defined ARPACK++ directory)
+AC_MSG_RESULT([${ARPACKPP_ROOT}])
+USER_DEFINED_ARPACKPP_INCLUDE=yes
+]
+)
+
+ARPACKPP_INCLUDE="${ARPACKPP_ROOT}/include"
+
+USER_DEFINED_ARPACK_DIR=no
+AC_ARG_WITH(arpack-libdir,
+[AC_HELP_STRING([--with-arpack-libdir=DIR],[ARPACK library directory @<:@$HOME/ARPACK@:>@])],
+[
+ARPACK_LIBDIR=${withval}
+USER_DEFINED_ARPACK_DIR=yes
+AC_MSG_CHECKING(user-defined ARPACK library directory)
+AC_MSG_RESULT([${ARPACK_LIBDIR}])
+]
+)
+
+AC_MSG_CHECKING(whether we are using ARPACK)
+AC_MSG_RESULT([${HAVE_PKG_ARPACK}])
+
+if test X${HAVE_PKG_ARPACK} = Xyes; then
+  AC_DEFINE(HAVE_ARPACK,,[define if we are using ARPACK])
+  AC_LANG_PUSH(Fortran 77)
+  if test X${USER_DEFINED_ARPACK_DIR} = Xno; then
+     AC_CHECK_LIB(${ARPACK_LIBS}, dseigt, [HAVE_PKG_ARPACK=$enableval], AC_MSG_ERROR(ARPACK lib not found))
+  fi
+  AC_LANG_POP(Fortran 77)
+fi
+
 dnl parse mpi options
 
 AC_ARG_ENABLE(mpi, [AC_HELP_STRING([--enable-mpi],[enable MPI support])], [HAVE_PKG_MPI=$enableval],[HAVE_PKG_MPI=no])
@@ -244,6 +294,17 @@ if test "$HAVE_FQHE" = yes; then
        MAYBE_FQHE=""
 fi
 
+
+dnl add further includes for ARPACK library if needed
+
+if test X${HAVE_PKG_ARPACK} = Xyes; then
+  INCLUDES="${INCLUDES} -I${ARPACKPP_INCLUDE}"
+  if test X${USER_DEFINED_ARPACK_DIR} = Xyes; then
+    ARPACK_LIBS="-L${ARPACK_LIBDIR} ${ARPACK_LIBS}"
+  fi
+fi	
+
+
 dnl end of configure
 
 AC_SUBST(CXXFLAGS)
@@ -252,6 +313,7 @@ AC_SUBST(MATH_LIBS)
 AC_SUBST(THREAD_LIBS)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(ARPACK_LIBS)
 AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
 AC_SUBST(MAYBE_SPIN)

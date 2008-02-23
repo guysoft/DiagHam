@@ -1,5 +1,8 @@
 /* src/config_ac.h.in.  Generated from configure.in by autoheader.  */
 
+/* define if we are using ARPACK */
+#undef HAVE_ARPACK
+
 /* use big endian byte ordering */
 #undef HAVE_BIGENDIAN
 
