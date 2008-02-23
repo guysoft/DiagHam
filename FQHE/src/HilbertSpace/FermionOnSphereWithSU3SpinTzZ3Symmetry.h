@@ -206,6 +206,9 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetSignedCanonicalS
       TmpSign = FERMION_SPHERE_SU3_TZ_FLIP_BIT;
       initialState = TmpState;
     }
+  else
+    if (TmpState == initialState)
+      TmpSign = FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT;
   TmpState = (((initialState & FERMION_SPHERE_SU3_1_MASK) << 2) |
 	      ((initialState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState == initialState)
@@ -223,6 +226,9 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetSignedCanonicalS
       TmpSign &= FERMION_SPHERE_SU3_TZ_UNFLIP_BIT;      
       initialState = TmpState;
     }
+  else
+    if (TmpState == initialState)
+      TmpSign = FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT;
   TmpState =  (((initialState & FERMION_SPHERE_SU3_1_MASK) << 2) |
 	       ((initialState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState < initialState)
@@ -235,8 +241,9 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetSignedCanonicalS
   TmpState ^= initialState;
   if (TmpState < initialState)
     return (TmpSign | FERMION_SPHERE_SU3_TZ_FLIP_BIT);
-  else
-    return TmpSign;
+  if (TmpState == initialState)
+    TmpSign = FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT;  
+  return TmpSign;
 }
 
 // compute the sign when applying Z3 rotation due to the fermionic statistics
@@ -288,6 +295,8 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
     {
       if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) == 0x0ul)
 	coefficient *= MSQRT3;
+      if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
+	coefficient *= MSQRT2;
       int NewLzMax = 2 + (this->LzMax * 3);
       while ((state >> NewLzMax) == 0x0ul)
 	--NewLzMax;
@@ -296,12 +305,27 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
   int NewLzMax = 2 + (this->LzMax * 3);
   while ((state >> NewLzMax) == 0x0ul)
     --NewLzMax;
+  if ((TmpSign  & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+    {
+      if (TmpState2 != state)
+	{
+	  coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateRotationSign(TmpState2, TmpSign) >> FERMION_SPHERE_SU3_Z3ROTATIONSIGN_SHIFT) & 0x1ul)));
+	}
+      if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= MSQRT1_3;
+      else
+	if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	  coefficient *= MSQRT2;
+      return this->FindStateIndex(state, NewLzMax);
+   }
   if (TmpState2 != state)
     {
       coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateRotationSign(TmpState2, TmpSign) >> FERMION_SPHERE_SU3_Z3ROTATIONSIGN_SHIFT) & 0x1ul)));
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
     coefficient *= MSQRT1_3;
+  if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+    coefficient *= MSQRT1_2;
   return this->FindStateIndex(state, NewLzMax);
 }
 #endif
