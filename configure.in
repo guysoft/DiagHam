@@ -94,13 +94,16 @@ fi
 dnl test if using ARPACK
 AC_ARG_ENABLE(arpack, [AC_HELP_STRING([--enable-arpack],[enable ARPACK support])], [HAVE_PKG_ARPACK=$enableval],[HAVE_PKG_ARPACK=no])
 
-ARPACK_LIBS="-larpack"
 USER_DEFINED_ARPACK=no
 AC_ARG_WITH(arpack-libs,[AC_HELP_STRING([--with-arpack-libs="LIBS"],[ARPACK libraries @<:@"-larpack"@:>@])],
-[ARPACK_LIBS=${withval}
-AC_MSG_CHECKING(user-defined ARPACK libraries)
-AC_MSG_RESULT([${ARPACK_LIBS}])
-USER_DEFINED_ARPACK=yes
+[if test "x$withval" != "x"; then
+  USER_DEFINED_ARPACK=no
+else
+  ARPACK_LIBS=${withval}
+  AC_MSG_CHECKING(user-defined ARPACK libraries)
+  AC_MSG_RESULT([${ARPACK_LIBS}])
+  USER_DEFINED_ARPACK=yes
+fi
 ]
 )
  

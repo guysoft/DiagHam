@@ -76,6 +76,8 @@ using std::cout;
 using std::endl;
 using std::ofstream;
 
+#ifdef HAVE_ARPACK
+
 template<class T>
 void Test(T type)
 {
@@ -122,6 +124,7 @@ void Test(T type)
 
 } // Test.
 
+#endif
 
 
 // constructor
