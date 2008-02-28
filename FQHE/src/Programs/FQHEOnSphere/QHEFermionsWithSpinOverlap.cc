@@ -1,17 +1,22 @@
 #include "Vector/RealVector.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 
-#include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexTrialFunction.h"
+#include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/ClebschGordanCoefficients.h"
+
+#include "Tools/FQHEWaveFunction/QHEWaveFunctionManager.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
 #include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
-#include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
-#include "MathTools/ClebschGordanCoefficients.h"
 
 #include "MCObservables/RealObservable.h"
 #include "MCObservables/ComplexObservable.h"
@@ -64,6 +69,7 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("Precalculation options");
 
   ArchitectureManager Architecture;
   QHEWaveFunctionManager WaveFunctionManager(QHEWaveFunctionManager::SphereWithSpinGeometry);
@@ -72,6 +78,7 @@ int main(int argc, char** argv)
   WaveFunctionManager.AddOptionGroup(&Manager);
   Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
 
@@ -81,6 +88,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
+  // (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+//   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
+//   (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+//   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
@@ -96,6 +107,9 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the haldane or symmetrized bases)",0);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -119,10 +133,14 @@ int main(int argc, char** argv)
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
-  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();  
 
   int NbrFermionsUp = (NbrFermions+SzTotal)/2;
   int NbrFermionsDown = (NbrFermions-SzTotal)/2;
+
+  bool LzSymmetrizedBasis = false; // ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+  bool SzSymmetrizedBasis = false; // ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   if (NbrFermionsUp+NbrFermionsDown!=NbrFermions)
     {
@@ -220,27 +238,84 @@ int main(int argc, char** argv)
     }
 
   FermionOnSphereWithSpin *Space;
+
+  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+    {
 #ifdef __64_BITS__
       if (LzMax <= 31)
-        {
-          Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
-        }
-      else
-	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
 #else
       if (LzMax <= 15)
-        {
-          Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
+#endif
+	{
+	  Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
 	}
       else
 	{
 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 	  return -1;
 	}	
-#endif      
+    }
+  else
+    {
+#ifdef __64_BITS__
+      if (LzMax >= 31)
+#else
+      if (LzMax >= 15)
+#endif
+	{
+	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+	  return -1;
+	}	
+      if (SzSymmetrizedBasis == true) 
+	if (LzSymmetrizedBasis == false)
+	  {
+	    if (Manager.GetString("load-hilbert") == 0)
+	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+	    else
+	      Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	  }
+	else
+	  if (Manager.GetString("load-hilbert") == 0)
+	    {
+	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+							      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	    }
+	  else
+	    Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+      else
+	if (Manager.GetString("load-hilbert") == 0)
+	  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	else
+	  Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
+      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	{
+	  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	  return 0;
+	}
+    }
+
+  
+// #ifdef __64_BITS__
+//       if (LzMax <= 31)
+//         {
+//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
+//         }
+//       else
+// 	{
+// 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+// 	  return -1;
+// 	}	
+// #else
+//       if (LzMax <= 15)
+//         {
+//           Space = new FermionOnSphereWithSpin(NbrFermions, 0 /* assume L=0 for GS */, LzMax, SzTotal);
+// 	}
+//       else
+// 	{
+// 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+// 	  return -1;
+// 	}	
+// #endif      
 
   if (HistoryMode ==2)
     {

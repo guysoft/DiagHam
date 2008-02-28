@@ -30,6 +30,15 @@
 
 
 #include "config.h"
+
+#ifdef HAVE_ARPACK
+#include "arcomp.h"
+#include "arrscomp.h"
+#include "../examples/matprod/complex/cmatrixa.h"
+#include "../examples/reverse/complex/rcompsol.h"
+#endif
+
+
 #include "MainTask/QHEOnLatticeMainTask.h"
 
 #include "Architecture/AbstractArchitecture.h"
@@ -64,12 +73,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifdef HAVE_ARPACK
-#include "arcomp.h"
-#include "arrscomp.h"
-#include "../examples/matprod/complex/cmatrixa.h"
-#include "../examples/reverse/complex/rcompsol.h"
-#endif
 
 using std::ios;
 using std::cout;
@@ -77,53 +80,51 @@ using std::endl;
 using std::ofstream;
 
 #ifdef HAVE_ARPACK
-
 template<class T>
-void Test(T type)
-{
-
-  // Defining a complex matrix.
-
-  CompMatrixA<T> A(10); // n = 10*10.
-
-  // Creating a complex eigenvalue problem and defining what we need:
-  // the four eigenvectors of A with largest magnitude.
-
-  ARrcCompStdEig<T> prob(A.ncols(), 4L);
-  
-  // Finding an Arnoldi basis.
-
-  while (!prob.ArnoldiBasisFound()) {
-
-    // Calling ARPACK FORTRAN code. Almost all work needed to
-    // find an Arnoldi basis is performed by TakeStep.
-
-    prob.TakeStep();
-
-    if ((prob.GetIdo() == 1)||(prob.GetIdo() == -1)) {
-
-      // Performing matrix-vector multiplication.
-      // In regular mode, w = Av must be performed whenever
-      // GetIdo is equal to 1 or -1. GetVector supplies a pointer
-      // to the input vector, v, and PutVector a pointer to the
-      // output vector, w.
+  void Test(T type)
+  {
+    
+    // Defining a complex matrix.
+    
+    CompMatrixA<T> A(10); // n = 10*10.
+    
+    // Creating a complex eigenvalue problem and defining what we need:
+    // the four eigenvectors of A with largest magnitude.
+    
+    ARrcCompStdEig<T> prob(A.ncols(), 4L);
+    
+    // Finding an Arnoldi basis.
+    
+    while (!prob.ArnoldiBasisFound()) {
       
-      A.MultMv(prob.GetVector(), prob.PutVector());
-
+      // Calling ARPACK FORTRAN code. Almost all work needed to
+      // find an Arnoldi basis is performed by TakeStep.
+      
+      prob.TakeStep();
+      
+      if ((prob.GetIdo() == 1)||(prob.GetIdo() == -1)) {
+	
+	// Performing matrix-vector multiplication.
+	// In regular mode, w = Av must be performed whenever
+	// GetIdo is equal to 1 or -1. GetVector supplies a pointer
+	// to the input vector, v, and PutVector a pointer to the
+	// output vector, w.
+	
+	A.MultMv(prob.GetVector(), prob.PutVector());
+	
+      }
+      
     }
-
-  }
-
-  // Finding eigenvalues and eigenvectors.
-
-  prob.FindEigenvectors();
-
-  // Printing solution.
-
-  Solution(prob);
-
-} // Test.
-
+    
+    // Finding eigenvalues and eigenvectors.
+    
+    prob.FindEigenvectors();
+    
+    // Printing solution.
+    
+    Solution(prob);
+    
+  } // Test.
 #endif
 
 

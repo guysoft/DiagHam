@@ -39,8 +39,8 @@
 
 #include <math.h>
 
-#include <bitset>
-using std::bitset;
+//#include <bitset>
+//using std::bitset;
 
 
 using std::cout;

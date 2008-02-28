@@ -369,7 +369,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	}
       else // intelligent storage
 	{
-	  double Coefficient2;
+	  double Coefficient2; //, TmpRe, TmpIm;
 	  Complex Coefficient3;
 	  int ProcessedNbrInteractionFactors;
 	  int TmpNbrQ34Values;
@@ -384,6 +384,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 		  if (Coefficient != 0.0)
 		    {
 		      Coefficient3 = vSource[i]*Coefficient;
+		      // TmpRe = Coefficient*vSource.Re(i);
+		      // TmpIm = Coefficient*vSource.Im(i);
 		      TmpNbrQ34Values = this->NbrQ34Values[i12];
 		      TmpQ3Values = this->Q3PerQ12[i12];
 		      TmpQ4Values = this->Q4PerQ12[i12];
@@ -735,6 +737,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(C
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 									int firstComponent, int nbrComponent)
 {
+  cout << "Using non-defined function LowLevelMultipleAddMultiply!"<<endl;
   int LastComponent = firstComponent + nbrComponent - 1; 
   if (true) // test for fast multiplication
     {
