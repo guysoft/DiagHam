@@ -310,14 +310,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
       // deal with kinetic energy terms first!      
       int qi;
       int qf;
-      Complex TmpInteraction;
+      double TmpInteractionRe,TmpInteractionIm;
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
       int ReducedNbrHoppingTerms = NbrHoppingTerms-1;
       for (int j = 0; j < ReducedNbrHoppingTerms; ++j) 
 	{
 	  qi = this->KineticQi[j];
 	  qf = this->KineticQf[j];
-	  TmpInteraction = this->HoppingTerms[j];
+	  TmpInteractionRe = this->HoppingTerms[j].Re;
+	  TmpInteractionIm = this->HoppingTerms[j].Im;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
@@ -325,19 +326,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
-		  //cout << "before: vDestination[Index="<<Index<<"]="<<vDestination[Index]<<endl;
-		  vDestination.Re(Index) += Real( Coefficient * TmpInteraction * vSource[i]);
-		  vDestination.Im(Index) += Imag( Coefficient * TmpInteraction * vSource[i]);
-		  //cout << "added element ("<<i<<","<<Index<<")=" << Coefficient << " * "
-		  //     << TmpInteraction << " * " << vSource[i] << " = " <<
-		  //  Coefficient * TmpInteraction * vSource[i] << endl;
-		  //cout << "after:  vDestination[Index"<<Index<<"]="<<vDestination[Index]<<endl;
+		  vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
+		  vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
 		}
 	    }
 	}
       qi = this->KineticQi[ReducedNbrHoppingTerms];
       qf = this->KineticQf[ReducedNbrHoppingTerms];
-      TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
+      TmpInteractionRe = this->HoppingTerms[ReducedNbrHoppingTerms].Re;
+      TmpInteractionIm = this->HoppingTerms[ReducedNbrHoppingTerms].Im;
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
@@ -345,16 +342,11 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	  //cout << "target: "<<Index<<endl;
 	  if (Index < Dim)
 	    {
-	      //cout << "before: vDestination[Index="<<Index<<"]="<<vDestination[Index]<<endl;
-	      vDestination.Re(Index) += Real( Coefficient * TmpInteraction * vSource[i]);
-	      vDestination.Im(Index) += Imag( Coefficient * TmpInteraction * vSource[i]);
-	      //cout << "added element ("<<i<<","<<Index<<")=" << Coefficient << " * "
-	      //        << TmpInteraction << " * " << vSource[i] << " = " <<
-	      // Coefficient * TmpInteraction * vSource[i] << endl;
-	      //cout << "after:  vDestination[Index"<<Index<<"]="<<vDestination[Index]<<endl;
+	      vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
+	      vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
 	    }
-	  vDestination.Re(i) += Real(this->HamiltonianShift * vSource[i]);
-	  vDestination.Im(i) += Imag(this->HamiltonianShift * vSource[i]);
+	  vDestination.Re(i) += this->HamiltonianShift * vSource[i].Re;
+	  vDestination.Im(i) += this->HamiltonianShift * vSource[i].Im;
 	}         
       
       // four-fermion interactions:
@@ -362,28 +354,26 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	{ 	  
 	  for (int j = 0; j < NbrInteractionFactors; ++j) 
 	    {
-	      //cout << "4-particle interactions"<<endl;
 	      int q1 = this->Q1Value[j];
 	      int q2 = this->Q2Value[j];
 	      int q3 = this->Q3Value[j];
 	      int q4 = this->Q4Value[j];
-	      TmpInteraction = this->InteractionFactors[j];
+	      TmpInteractionRe = this->InteractionFactors[j].Re;
+	      TmpInteractionIm = this->InteractionFactors[j].Im;
 	      for (int i = firstComponent; i < LastComponent; ++i)
 		{
 		  Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 		  if (Index < Dim)
 		    {
-		      vDestination.Re(Index) += Real( Coefficient * TmpInteraction * vSource[i]);
-		      vDestination.Im(Index) += Imag( Coefficient * TmpInteraction * vSource[i]);
+		      vDestination.Re(Index) += Coefficient * (TmpInteractionRe*vSource[i].Re - TmpInteractionIm*vSource[i].Im);
+		      vDestination.Im(Index) += Coefficient * (TmpInteractionRe*vSource[i].Im + TmpInteractionIm*vSource[i].Re);
 		    }
 		}
 	    }
 	}
       else // intelligent storage
 	{
-	  //cout << "4-particle interaction 2"<<endl;
-	  double Coefficient2; //, TmpRe, TmpIm;
-	  Complex Coefficient3;
+	  double Coefficient2, TmpRe, TmpIm;
 	  int ProcessedNbrInteractionFactors;
 	  int TmpNbrQ34Values;
 	  int* TmpQ3Values;
@@ -396,9 +386,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 		  Coefficient = TmpParticles->AA(i, this->Q1Value[i12], this->Q2Value[i12]);
 		  if (Coefficient != 0.0)
 		    {
-		      Coefficient3 = vSource[i]*Coefficient;
-		      // TmpRe = Coefficient*vSource.Re(i);
-		      // TmpIm = Coefficient*vSource.Im(i);
+		      TmpRe = vSource[i].Re*Coefficient;
+		      TmpIm = vSource[i].Im*Coefficient;
 		      TmpNbrQ34Values = this->NbrQ34Values[i12];
 		      TmpQ3Values = this->Q3PerQ12[i12];
 		      TmpQ4Values = this->Q4PerQ12[i12];
@@ -407,8 +396,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 			  Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
 			  if (Index < Dim)
 			    {
-			      vDestination.Re(Index) += Real( Coefficient3 * this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2);
-			      vDestination.Im(Index) += Imag( Coefficient3 * this->InteractionFactors[ProcessedNbrInteractionFactors] * Coefficient2);
+			      TmpInteractionRe = this->InteractionFactors[ProcessedNbrInteractionFactors].Re;
+			      TmpInteractionIm = this->InteractionFactors[ProcessedNbrInteractionFactors].Im;
+			      vDestination.Re(Index) += Coefficient2 * (TmpRe*TmpInteractionRe-TmpIm*TmpInteractionIm);
+			      vDestination.Im(Index) += Coefficient2 * (TmpRe*TmpInteractionIm+TmpIm*TmpInteractionRe);
 			    }
 			  ++ProcessedNbrInteractionFactors;
 			}
@@ -422,13 +413,12 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
       // separated diagonal terms as these will be the general rule for contact interactions
       if (NbrDiagonalInteractionFactors>0)
 	{
-	  //cout << "diagonal 4-particle interactions"<<endl;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 							 DiagonalInteractionFactors, DiagonalQValues);
-	      vDestination.Re(i) +=  Coefficient * Real(vSource[i]);
-	      vDestination.Im(i) +=  Coefficient * Imag(vSource[i]);
+	      vDestination.Re(i) +=  Coefficient * vSource[i].Re;
+	      vDestination.Im(i) +=  Coefficient * vSource[i].Im;
 	    }
 	}
       
@@ -440,7 +430,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	{
 	  int* TmpIndexArray;
 	  Complex* TmpCoefficientArray;
-	  Complex CCoefficient;
+	  double TmpRe, TmpIm;
 	  int j;
 	  int TmpNbrInteraction;
 	  int k = firstComponent;
@@ -451,14 +441,15 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-	      CCoefficient = vSource[k];
+	      TmpRe = vSource[k].Re;
+	      TmpIm = vSource[k].Im;
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		{
-		  vDestination.Re(TmpIndexArray[j]) +=  Real(TmpCoefficientArray[j] * CCoefficient);
-		  vDestination.Im(TmpIndexArray[j]) +=  Imag(TmpCoefficientArray[j] * CCoefficient);
+		  vDestination.Re(TmpIndexArray[j]) +=  TmpCoefficientArray[j].Re*TmpRe - TmpCoefficientArray[j].Im*TmpIm;
+		  vDestination.Im(TmpIndexArray[j]) +=  TmpCoefficientArray[j].Re*TmpIm + TmpCoefficientArray[j].Im*TmpRe;
 		}
-	      vDestination.Re(k) += this->HamiltonianShift * Real(CCoefficient);
-	      vDestination.Im(k) += this->HamiltonianShift * Imag(CCoefficient);
+	      vDestination.Re(k) += this->HamiltonianShift * TmpRe;
+	      vDestination.Im(k) += this->HamiltonianShift * TmpIm;
 	      ++k;
 	    }
 	}
