@@ -36,6 +36,8 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnLattice.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "GeneralTools/RealUniqueArray.h"
+#include "GeneralTools/ComplexUniqueArray.h"
 
 #include <iostream>
 
@@ -127,12 +129,23 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   int FastMultiplicationSubStep;
   // indicate the poistion of the data relative to the sub step precalculations in NbrInteractionPerComponent, InteractionPerComponentIndex, and InteractionPerComponentCoefficient
   int FastMultiplicationSubStepPosition;
-  // number of non-null terms in the hamiltonian for each state
-  int* NbrInteractionPerComponent;
+  // number of non-null real terms in the hamiltonian for each state (typically a small number)
+  unsigned short* NbrRealInteractionPerComponent;
+  // number of non-null complex terms in the hamiltonian for each state
+  unsigned short* NbrComplexInteractionPerComponent;
   // index of the state obtained for each term of the hamiltonian when applying on a given state
+  // holding indices for both real (1st) and complex matrix elements
   int** InteractionPerComponentIndex;
-  // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
-  Complex** InteractionPerComponentCoefficient;
+  // index of real (first in enumeration) and complex (following) multiplicative coefficients obtained for each term of the hamiltonian when applying on a given state and with a given destination state
+  unsigned short** InteractionPerComponentCoefficientIndex;
+  
+
+  // array storing a single copy of each real matrix element value
+  RealUniqueArray RealInteractionCoefficients;
+
+  // array storing a single copy of each real matrix element value
+  ComplexUniqueArray ComplexInteractionCoefficients;
+  
 
   // flag to indicate if a hamiltonian is temporary stored on disk
   bool DiskStorageFlag;

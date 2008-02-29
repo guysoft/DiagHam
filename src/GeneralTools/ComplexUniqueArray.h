@@ -28,8 +28,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef REALUNIQUEARRAY_H
-#define REALUNIQUEARRAY_H
+#ifndef COMPLEXUNIQUEARRAY_H
+#define COMPLEXUNIQUEARRAY_H
 
 #include "config.h"
 
@@ -40,7 +40,7 @@
 
 
 using std::ofstream;
-
+using std::ifstream;
 
 class ComplexUniqueArray
 {
@@ -77,6 +77,14 @@ class ComplexUniqueArray
 
   // Access an element
   Complex& operator [] (int i);
+
+  // Write to file
+  // file = open stream to write to
+  void WriteArray(ofstream &file);
+
+  // Read from file
+  // file = open stream to read from
+  void ReadArray(ifstream &file);
 
 };
 

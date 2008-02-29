@@ -73,6 +73,10 @@ ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnL
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (precalculationFileName == 0)
     {
       if (memory > 0)

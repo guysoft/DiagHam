@@ -429,27 +429,37 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
       if (this->FastMultiplicationStep == 1)
 	{
 	  int* TmpIndexArray;
-	  Complex* TmpCoefficientArray;
+	  unsigned short* TmpCoefficientIndexArray;
 	  double TmpRe, TmpIm;
-	  int j;
-	  int TmpNbrInteraction;
+	  unsigned short TmpNbrRealInteraction;
+	  unsigned short TmpNbrComplexInteraction;
+	  Complex *TmpCPtr;
 	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
 	      TmpRe = vSource[k].Re;
 	      TmpIm = vSource[k].Im;
-	      for (j = 0; j < TmpNbrInteraction; ++j)
+	      int Pos=0;
+	      for (; Pos < TmpNbrRealInteraction; ++Pos)
 		{
-		  vDestination.Re(TmpIndexArray[j]) +=  TmpCoefficientArray[j].Re*TmpRe - TmpCoefficientArray[j].Im*TmpIm;
-		  vDestination.Im(TmpIndexArray[j]) +=  TmpCoefficientArray[j].Re*TmpIm + TmpCoefficientArray[j].Im*TmpRe;
+		  vDestination.Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
+		  vDestination.Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
+		}
+	      for (int j=0; j < TmpNbrComplexInteraction; ++j)
+		{
+		  TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
+		  vDestination.Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+		  vDestination.Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;
+		  ++Pos;
 		}
 	      vDestination.Re(k) += this->HamiltonianShift * TmpRe;
-	      vDestination.Im(k) += this->HamiltonianShift * TmpIm;
+	      vDestination.Im(k) += this->HamiltonianShift * TmpIm;	      
 	      ++k;
 	    }
 	}
@@ -756,38 +766,44 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(Comp
     {
       if (this->FastMultiplicationStep == 1)
 	{
-	  Complex Coefficient;
-	  Complex* Coefficient2 = new Complex [nbrVectors];
 	  int* TmpIndexArray;
-	  Complex* TmpCoefficientArray; 
-	  int j;
-	  int Pos;
-	  int TmpNbrInteraction;
+	  unsigned short* TmpCoefficientIndexArray;
+	  double TmpRe, TmpIm;
+	  unsigned short TmpNbrRealInteraction;
+	  unsigned short TmpNbrComplexInteraction;
+	  Complex *TmpCPtr;
 	  int k = firstComponent;
 	  firstComponent -= this->PrecalculationShift;
 	  LastComponent -= this->PrecalculationShift;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpNbrRealInteraction = this->NbrRealInteractionPerComponent[i];
+	      TmpNbrComplexInteraction = this->NbrComplexInteractionPerComponent[i];
 	      TmpIndexArray = this->InteractionPerComponentIndex[i];
-	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[i];
 	      for (int l = 0; l < nbrVectors; ++l)
-		{
-		  Coefficient2[l] = vSources[l][k];
-		  vDestinations[l][k] += this->HamiltonianShift * Coefficient2[l];
-		}
-	      for (j = 0; j < TmpNbrInteraction; ++j)
-		{
-		  Pos = TmpIndexArray[j];
-		  Coefficient = TmpCoefficientArray[j];
-		  for (int l = 0; l < nbrVectors; ++l)
+		{		  
+		  TmpRe = vSources[l][k].Re;
+		  TmpIm = vSources[l][k].Im;
+		  int Pos=0;
+		  for (; Pos < TmpNbrRealInteraction; ++Pos)
 		    {
-		      vDestinations[l][Pos] +=  Coefficient * Coefficient2[l];
+		      vDestinations[l].Re(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpRe;
+		      vDestinations[l].Im(TmpIndexArray[Pos]) +=  RealInteractionCoefficients[TmpCoefficientIndexArray[Pos]]*TmpIm;
 		    }
+		  for (int j=0; j < TmpNbrComplexInteraction; ++j)
+		    {
+		      TmpCPtr= &(ComplexInteractionCoefficients[TmpCoefficientIndexArray[Pos]]);
+		      vDestinations[l].Re(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpRe-TmpCPtr->Im*TmpIm;
+		      vDestinations[l].Im(TmpIndexArray[Pos]) +=  TmpCPtr->Re*TmpIm+TmpCPtr->Im*TmpRe;
+		      ++Pos;
+		    }
+		  vDestinations[l].Re(k) += this->HamiltonianShift * TmpRe;
+		  vDestinations[l].Im(k) += this->HamiltonianShift * TmpIm;	      
+		  ++k;
+		  
 		}
-	      ++k;
 	    }
-	  delete[] Coefficient2;
 	}
       else
 	{
@@ -800,7 +816,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(Comp
 	      this->LowLevelMultipleAddMultiplyDiskStorage(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	    }
 	}
-   }
+    }
   return vDestinations;
 }
 
@@ -954,6 +970,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyParti
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiplyDiskStorage(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 										   int firstComponent, int nbrComponent)
 {
+  cout << "Using non-defined function LowLevelMultipleAddMultiplyDiskStorage!"<<endl;
   // Complex Coefficient;
 //   int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
 //   Complex* BufferCoefficientArray  = new Complex[this->BufferSize * this->MaxNbrInteractionPerComponent];
@@ -1154,113 +1171,92 @@ List<Matrix*> AbstractQHEOnLatticeHamiltonian::RightInteractionOperators()
 
 long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
-//   long MinIndex;
-//   long MaxIndex;
-//   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-//   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-  
-//   this->NbrInteractionPerComponent = new int [EffectiveHilbertSpaceDimension];
-//   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-//     this->NbrInteractionPerComponent[i] = 0;
-//   timeval TotalStartingTime2;
-//   timeval TotalEndingTime2;
-//   double Dt2;
-//   gettimeofday (&(TotalStartingTime2), 0);
-//   cout << "start" << endl;
+   long MinIndex;
+   long MaxIndex;
+   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+   this->NbrRealInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];
+   this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
+   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+     {
+       this->NbrRealInteractionPerComponent[i] = 0x0;
+       this->NbrComplexInteractionPerComponent[i] = 0x0;
+     }
+   timeval TotalStartingTime2;
+   timeval TotalEndingTime2;
+   double Dt2;
+   gettimeofday (&(TotalStartingTime2), 0);
+   cout << "start memory" << endl;
 
-//   QHEParticlePrecalculationOperation Operation(this);
-//   Operation.ApplyOperation(this->Architecture);
+   QHEParticlePrecalculationOperation Operation(this);
+   Operation.ApplyOperation(this->Architecture);
+   long Memory = 0;
+   
+   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+     {
+       Memory += this->NbrRealInteractionPerComponent[i];
+       Memory += this->NbrComplexInteractionPerComponent[i];
+     }
+       
 
-//   long Memory = 0;
-//   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-//     Memory += this->NbrInteractionPerComponent[i];
+    cout << "nbr interaction = " << Memory << endl;
+    // memory requirement, ignoring the actual storage size of the values of matrix
+    // elements, which is assumed small (maybe need to add an estimate, at least)
+    long TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
+    if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+      {
+	this->FastMultiplicationStep = 1;
+	int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+	  {
+	    ++this->FastMultiplicationStep;
+	    ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	    if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	      ++ReducedSpaceDimension;
+	    // memory requirement, ignoring the actual storage size of the values of matrix
+	    // elements, which is assumed small (maybe need to add an estimate, at least, again!)
+	    TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension;
+	    Memory = 0;
+	    for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+	      {
+		Memory += this->NbrRealInteractionPerComponent[i];
+		Memory += this->NbrComplexInteractionPerComponent[i];
+	      }
+	  }
+	if (this->DiskStorageFlag == false)
+	  {
+	    int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	    unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
+	    unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
+	    int i = 0;
+	    int Pos = 0;
+	    for (; i < ReducedSpaceDimension; ++i)
+	      {
+		TmpNbrRealInteractionPerComponent[i] = this->NbrRealInteractionPerComponent[Pos];
+		TmpNbrComplexInteractionPerComponent[i] = this->NbrComplexInteractionPerComponent[Pos];
+		Pos += this->FastMultiplicationStep;
+	      }
+	    delete[] this->NbrRealInteractionPerComponent;
+	    delete[] this->NbrComplexInteractionPerComponent;
+	    this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
+	    this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
+	  }
+      }
+    else
+      {
+	Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+	this->FastMultiplicationStep = 1;
+      }
 
-//    cout << "nbr interaction = " << Memory << endl;
-//   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension;
-//   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
-//     {
-//       this->FastMultiplicationStep = 1;
-//       this->FastMultiplicationSubStep = 0;
-//       int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-//       while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
-// 	{
-// 	  ++this->FastMultiplicationStep;
-// 	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-// 	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
-// 	    ++ReducedSpaceDimension;
-// 	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
-// 	  Memory = 0;
-// 	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-// 	    Memory += this->NbrInteractionPerComponent[i];
-// 	}
-//       long Memory2 = Memory;
-//       Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
-//       long ResidualMemory = allowedMemory - Memory;
-//       if (ResidualMemory > 0)
-// 	{
-// /*	  this->FastMultiplicationSubStep = this->FastMultiplicationStep;
-// 	  int ReducedSpaceDimension2  = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-// 	  TmpMemory = ResidualMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2;
-// 	  while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory2))
-// 	    {
-// 	      this->FastMultiplicationSubStep += this->FastMultiplicationStep;
-// 	      ReducedSpaceDimension2 = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-// 	      if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension2 * this->FastMultiplicationSubStep))
-// 		++ReducedSpaceDimension2;
-// 	      TmpMemory = ResidualMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2;
-// 	      Memory2 = 0;
-// 	      for (int i = 1; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationSubStep)
-// 		Memory2 += this->NbrInteractionPerComponent[i];
-// 	    }
-// 	  Memory += ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension2) + (Memory2 * (sizeof (int) + sizeof(double)));*/
-// 	  if (this->DiskStorageFlag == false)
-// 	    {
-// //	      int TotalReducedSpaceDimension = ReducedSpaceDimension + ReducedSpaceDimension2;
-// 	      int TotalReducedSpaceDimension = ReducedSpaceDimension;
-// 	      int* TmpNbrInteractionPerComponent = new int [TotalReducedSpaceDimension];
-// 	      int i = 0;
-// 	      int Pos = 0;
-// 	      for (; i < ReducedSpaceDimension; ++i)
-// 		{
-// 		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
-// 		  Pos += this->FastMultiplicationStep;
-// 		}
-// 	      Pos = 1;
-// 	      for (; i < TotalReducedSpaceDimension; ++i)
-// 		{
-// 		  TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[Pos];
-// 		  Pos += this->FastMultiplicationSubStep;
-// 		}
-// 	      delete[] this->NbrInteractionPerComponent;
-// 	      this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-// 	    }
-// 	}
-//       else
-// 	if (this->DiskStorageFlag == false)
-// 	  {
-// 	    int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
-// 	    for (int i = 0; i < ReducedSpaceDimension; ++i)
-// 	      TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
-// 	    delete[] this->NbrInteractionPerComponent;
-// 	    this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-// 	  }
-//     }
-//   else
-//     {
-//       Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(double)));
-//       this->FastMultiplicationStep = 1;
-//       this->FastMultiplicationSubStep = 0;
-//     }
-
-//   this->FastMultiplicationSubStep = 0;
-//   cout << "reduction factor=" << this->FastMultiplicationStep << endl;
-//   gettimeofday (&(TotalEndingTime2), 0);
-//   cout << "------------------------------------------------------------------" << endl << endl;
-//   Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-//     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-//   cout << "time = " << Dt2 << endl;
-  return Memory;
+    cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+    gettimeofday (&(TotalEndingTime2), 0);
+    cout << "------------------------------------------------------------------" << endl << endl;
+    Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+      ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+    cout << "time = " << Dt2 << endl;
+    return Memory;    
 }
+
 
 
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
@@ -1284,17 +1280,32 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       qi = this->KineticQi[j];
       qf = this->KineticQf[j];
       TmpInteraction = this->HoppingTerms[j];
-      for (int i = firstComponent; i < lastComponent; ++i)
+      if (fabs(TmpInteraction.Im)<1e-14)
 	{
-	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
-	      ++Memory;
-	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  ++Memory;		
+		  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+		}
 	    }
-	  
 	}
-    }  
+      else
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
+	    {
+	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  ++Memory;
+		  ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}
+    }
+  
   // four-fermion interactions:
   if (this->NbrQ12Indices == 0) // full storage
     {
@@ -1305,15 +1316,30 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	  int q3 = this->Q3Value[j];
 	  int q4 = this->Q4Value[j];
 	  TmpInteraction = this->InteractionFactors[j];
-	  for (int i = firstComponent; i < lastComponent; ++i)
+	  if (fabs(TmpInteraction.Im)<1e-14)
 	    {
-	      Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
-	      if (Index < this->Particles->GetHilbertSpaceDimension())
+	      for (int i = firstComponent; i < lastComponent; ++i)
 		{
-		  ++Memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      ++Memory;
+		      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+		    }
 		}
 	    }
+	  else
+	    {
+	      for (int i = firstComponent; i < lastComponent; ++i)
+		{
+		  Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
+		  if (Index < this->Particles->GetHilbertSpaceDimension())
+		    {
+		      ++Memory;
+		      ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		}
+	    }	 	  
 	}
     }
   else // intelligent storage
@@ -1324,7 +1350,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       int* TmpQ3Values;
       int* TmpQ4Values;
       for (int i = firstComponent; i < lastComponent; ++i)
-	{
+	{	  
 	  ProcessedNbrInteractionFactors = 0;
 	  for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
 	    {
@@ -1340,7 +1366,10 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 		      if (Index < this->Particles->GetHilbertSpaceDimension())
 			{
 			  ++Memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<1e-14)
+			    ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+			  else
+			    ++this->NbrComplexInteractionPerComponent[i - this->PrecalculationShift];
 			}
 		      ++ProcessedNbrInteractionFactors;
 		    }
@@ -1358,10 +1387,10 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	{
 	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 						     DiagonalInteractionFactors, DiagonalQValues);
-	  if (Coefficient!=0.0)
+	  if (fabs(Coefficient)>1e-14)
 	    {
 	      ++Memory;
-	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	      ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
 	    }
 	}
     }
@@ -1376,246 +1405,206 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 
 void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 {
-//   long MinIndex;
-//   long MaxIndex;
-//   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-//   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-//   int Index;
-//   double Coefficient;
-//   int q1;
-//   int q2;
-//   int q3;
-//   int q4;
-//   int* TmpIndexArray;
-//   double* TmpCoefficientArray;
-//   int Pos;
-//   timeval TotalStartingTime2;
-//   timeval TotalEndingTime2;
-//   double Dt2;
-//   gettimeofday (&(TotalStartingTime2), 0);
-//   cout << "start" << endl;
-//   int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-//   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-//     ++ReducedSpaceDimension;
-//   int ReducedSpaceDimension2  = 0;
-//   if (this->FastMultiplicationSubStep > 0)
-//     {
-//       ReducedSpaceDimension2  = EffectiveHilbertSpaceDimension / this->FastMultiplicationSubStep;
-//       if ((ReducedSpaceDimension2 * this->FastMultiplicationSubStep) != EffectiveHilbertSpaceDimension)
-// 	++ReducedSpaceDimension2;
-//     }
-//   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension + ReducedSpaceDimension2];
-//   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension + ReducedSpaceDimension2];
+  long MinIndex;
+  long MaxIndex;
+  int Dim = this->Particles->GetHilbertSpaceDimension();
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  int Index;
+  int qi;
+  int qf;
+  int tmpElementPos;
+  double Coefficient;
+  int* TmpIndexArray;
+  unsigned short* TmpCoefficientIndexArray;
+  int PosR, PosC;
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start" << endl;
+  int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+  if ((ReducedSpaceDimension * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+    ++ReducedSpaceDimension;
+  this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
+  this->InteractionPerComponentCoefficientIndex = new unsigned short* [ReducedSpaceDimension];
 
-//   int TotalPos = 0;
-//   if (this->NbrM12Indices == 0)
-//     {
-//       for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-// 	{
-// 	  this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-// 	  this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-// 	  TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-// 	  TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-// 	  Pos = 0;
-// 	  for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-// 	    {
-// 	      m1 = this->M1Value[j];
-// 	      m2 = this->M2Value[j];
-// 	      m3 = this->M3Value[j];
-// 	      m4 = m1 + m2 - m3;
-// 	      Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
-// 	      if (Index < this->Particles->GetHilbertSpaceDimension())
-// 		{
-// 		  TmpIndexArray[Pos] = Index;
-// 		  TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-// 		  ++Pos;
-// 		}
-// 	    }
-// 	  if (this->OneBodyTermFlag == true)
-// 	    {
-// 	      for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
-// 		{
-// 		  m1 = this->OneBodyMValues[j];
-// 		  m2 = this->OneBodyNValues[j];
-// 		  Index = this->Particles->AdA(i + this->PrecalculationShift, m1, m2, Coefficient);
-// 		  if (Index < this->Particles->GetHilbertSpaceDimension())
-// 		    {
-// 		      TmpIndexArray[Pos] = Index;
-// 		      TmpCoefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
-// 		      ++Pos;
-// 		    }
-// 		}
-// 	    }
-// 	  ++TotalPos;
-// 	}
-//     }
-//   else
-//     {
-//       double Coefficient2;
-//       int SumIndices;
-//       int TmpNbrQ34Values;
-//       int* TmpM3Values;
-//       int ReducedNbrInteractionFactors;
-//       for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-// 	{
-// 	  this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-// 	  this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-// 	  TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-// 	  TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-// 	  Pos = 0;
-// 	  ReducedNbrInteractionFactors = 0;
-// 	  for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
-// 	    {
-// 	      Coefficient = this->Particles->AA(i + this->PrecalculationShift, this->M1Value[m1], this->M2Value[m1]);	  
-// 	      if (Coefficient != 0.0)
-// 		{
-// 		  SumIndices = this->M1Value[m1] + this->M2Value[m1];
-// 		  TmpM3Values = this->M3Values[m1];
-// 		  TmpNbrQ34Values = this->NbrQ34Values[m1];
-// 		  for (m3 = 0; m3 < TmpNbrQ34Values; ++m3)
-// 		    {
-// 		      Index = this->Particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-// 		      if (Index < this->Particles->GetHilbertSpaceDimension())
-// 			{
-// 			  TmpIndexArray[Pos] = Index;
-// 			  TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactors[ReducedNbrInteractionFactors];
-// 			  ++Pos;
-// 			}		      
-// 		      ++ReducedNbrInteractionFactors;
-// 		    }    
-// 		}
-// 	      else
-// 		ReducedNbrInteractionFactors += this->NbrQ34Values[m1];
-// 	    }
-// 	  if (this->OneBodyTermFlag == true)
-// 	    {
-// 	      for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
-// 		{
-// 		  m1 = this->OneBodyMValues[j];
-// 		  m2 = this->OneBodyNValues[j];
-// 		  Index = this->Particles->AdA(i + this->PrecalculationShift, m1, m2, Coefficient);
-// 		  if (Index < this->Particles->GetHilbertSpaceDimension())
-// 		    {
-// 		      TmpIndexArray[Pos] = Index;
-// 		      TmpCoefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
-// 		      ++Pos;
-// 		    }
-// 		}
-// 	    }
-// 	  ++TotalPos;
-// 	}      
-//     }
-//   if (this->FastMultiplicationSubStep > 0)
-//     {
-//       this->FastMultiplicationSubStepPosition = TotalPos;
-//       if (this->NbrM12Indices == 0)
-// 	{
-// 	  for (int i = 1; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationSubStep)
-// 	    {	
-// 	      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-// 	      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-// 	      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-// 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-// 	      Pos = 0;
-// 	      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-// 		{
-// 		  m1 = this->M1Value[j];
-// 		  m2 = this->M2Value[j];
-// 		  m3 = this->M3Value[j];
-// 		  m4 = m1 + m2 - m3;
-// 		  Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient);
-// 		  if (Index < this->Particles->GetHilbertSpaceDimension())
-// 		    {
-// 		      TmpIndexArray[Pos] = Index;
-// 		      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-// 		      ++Pos;
-// 		    }
-// 		}
-// 	      if (this->OneBodyTermFlag == true)
-// 		{
-// 		  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
-// 		    {
-// 		      m1 = this->OneBodyMValues[j];
-// 		      m2 = this->OneBodyNValues[j];
-// 		      Index = this->Particles->AdA(i + this->PrecalculationShift, m1, m2, Coefficient);
-// 		      if (Index < this->Particles->GetHilbertSpaceDimension())
-// 			{
-// 			  TmpIndexArray[Pos] = Index;
-// 			  TmpCoefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
-// 			  ++Pos;
-// 			}
-// 		    }
-// 		}
-// 	      ++TotalPos;
-// 	    }
-// 	}
-//       else
-// 	{
-// 	  double Coefficient2;
-// 	  int SumIndices;
-// 	  int TmpNbrQ34Values;
-// 	  int* TmpM3Values;
-// 	  int ReducedNbrInteractionFactors;
-// 	  for (int i = 1; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationSubStep)
-// 	    {	
-// 	      ReducedNbrInteractionFactors = 0;
-// 	      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-// 	      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-// 	      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-// 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-// 	      Pos = 0;
-// 	      for (m1 = 0; m1 < this->NbrM12Indices; ++m1)
-// 		{
-// 		  Coefficient = this->Particles->AA(i, this->M1Value[m1], this->M2Value[m1]);	  
-// 		  if (Coefficient != 0.0)
-// 		    {
-// 		      SumIndices = this->M1Value[m1] + this->M2Value[m1];
-// 		      TmpM3Values = this->M3Values[m1];
-// 		      TmpNbrQ34Values = this->NbrQ34Values[m1];
-// 		      for (m3 = 0; m3 < TmpNbrQ34Values; ++m3)
-// 			{
-// 			  Index = this->Particles->AdAd(TmpM3Values[m3], SumIndices - TmpM3Values[m3], Coefficient2);
-// 			  if (Index < this->Particles->GetHilbertSpaceDimension())
-// 			    {
-// 			      TmpIndexArray[Pos] = Index;
-// 			      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[ReducedNbrInteractionFactors] * Coefficient2;
-// 			      ++Pos;
-// 			    }
-// 			  ++ReducedNbrInteractionFactors;
-// 			}    
-// 		    }
-// 		  else
-// 		    ReducedNbrInteractionFactors += this->NbrQ34Values[m1];
-// 		}
-// 	      if (this->OneBodyTermFlag == true)
-// 		{
-// 		  for (int j = 0; j < this->NbrOneBodyInteractionFactors; ++j)
-// 		    {
-// 		      m1 = this->OneBodyMValues[j];
-// 		      m2 = this->OneBodyNValues[j];
-// 		      Index = this->Particles->AdA(i + this->PrecalculationShift, m1, m2, Coefficient);
-// 		      if (Index < this->Particles->GetHilbertSpaceDimension())
-// 			{
-// 			  TmpIndexArray[Pos] = Index;
-// 			  TmpCoefficientArray[Pos] = Coefficient * this->OneBodyInteractionFactors[j];
-// 			  ++Pos;
-// 			}
-// 		    }
-// 		}
-// 	      ++TotalPos;
-// 	    }
-// 	}
-//     }
-//   else
-//     {
-//       this->FastMultiplicationSubStepPosition = -1;
-//     }
-//   this->FastMultiplicationFlag = true;
-//   gettimeofday (&(TotalEndingTime2), 0);
-//   cout << "------------------------------------------------------------------" << endl << endl;;
-//   Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-//     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-//   cout << "time = " << Dt2 << endl;
+  int TotalPos = 0;
+  int TmpInteractionPerComponent;
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+    {
+      TmpInteractionPerComponent = this->NbrRealInteractionPerComponent[TotalPos]+this->NbrComplexInteractionPerComponent[TotalPos];
+      this->InteractionPerComponentIndex[TotalPos] = new int [TmpInteractionPerComponent];
+      this->InteractionPerComponentCoefficientIndex[TotalPos] = new unsigned short [TmpInteractionPerComponent];      
+      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
+      TmpCoefficientIndexArray = this->InteractionPerComponentCoefficientIndex[TotalPos];
+      PosR = 0;  // counter for position of real matrix elements
+      PosC = this->NbrRealInteractionPerComponent[TotalPos];  // counter for position of complex matrix elements
+
+      // deal with kinetic energy terms first!             
+      for (int j = 0; j < NbrHoppingTerms; ++j)
+	{
+	  qi = this->KineticQi[j];
+	  qf = this->KineticQf[j];
+	  // considering: this->HoppingTerms[j]
+	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
+	  if (Index < Dim)
+	    {
+	      if (fabs(this->HoppingTerms[j].Im)<1e-14) // real element
+		{
+		  TmpIndexArray[PosR] = Index;
+		  tmpElementPos = RealInteractionCoefficients.InsertElement
+		    (Coefficient*this->HoppingTerms[j].Re);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+ 		  ++PosR;
+		}
+	      else
+		{
+		  TmpIndexArray[PosC] = Index;
+		  tmpElementPos = ComplexInteractionCoefficients.InsertElement
+		    (Coefficient*this->HoppingTerms[j]);
+		  if (tmpElementPos > USHRT_MAX )
+		    {
+		      cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+		      exit(1);
+		    }
+		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+		  ++PosC;
+		}
+	    }
+	}
+
+      // four-fermion interactions:
+      if (this->NbrQ12Indices == 0) // full storage
+	{ 	  
+	  for (int j = 0; j < NbrInteractionFactors; ++j) 
+	    {
+	      int q1 = this->Q1Value[j];
+	      int q2 = this->Q2Value[j];
+	      int q3 = this->Q3Value[j];
+	      int q4 = this->Q4Value[j];	       
+	      Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
+	      if (Index < Dim)
+		{
+		  if (fabs(this->InteractionFactors[j].Im)<1e-14) // real element
+		    {
+		      TmpIndexArray[PosR] = Index;
+		      tmpElementPos = RealInteractionCoefficients.InsertElement
+			(Coefficient*this->InteractionFactors[j].Re);
+		      if (tmpElementPos > USHRT_MAX )
+			{
+			  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+			  exit(1);
+			}
+		      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+		      ++PosR;
+		    }
+		  else
+		    {
+		      TmpIndexArray[PosC] = Index;
+		      tmpElementPos = ComplexInteractionCoefficients.InsertElement
+			(Coefficient*this->InteractionFactors[j]);
+		      if (tmpElementPos > USHRT_MAX )
+			{
+			  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+			  exit(1);
+			}
+		      TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+		      ++PosC;
+		    }
+		}
+	    }
+	}
+      else // intelligent storage
+	{
+	  double Coefficient2;
+	  int ProcessedNbrInteractionFactors = 0;
+	  int TmpNbrQ34Values;
+	  int* TmpQ3Values;
+	  int* TmpQ4Values;
+	  for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
+	    {
+	      Coefficient = TmpParticles->AA(i, this->Q1Value[i12], this->Q2Value[i12]);
+	      if (Coefficient != 0.0)
+		{
+		  TmpNbrQ34Values = this->NbrQ34Values[i12];
+		  TmpQ3Values = this->Q3PerQ12[i12];
+		  TmpQ4Values = this->Q4PerQ12[i12];
+		  for (int i34 = 0; i34 < TmpNbrQ34Values; ++i34)
+		    {
+		      Index = TmpParticles->AdAd(TmpQ3Values[i34], TmpQ4Values[i34], Coefficient2);
+		      if (Index < Dim)
+			{
+			  if (fabs(this->InteractionFactors[ProcessedNbrInteractionFactors].Im)<1e-14) 
+			    {
+			      TmpIndexArray[PosR] = Index;
+			      tmpElementPos = RealInteractionCoefficients.InsertElement
+				(Coefficient*this->InteractionFactors[ProcessedNbrInteractionFactors].Re);
+			      if (tmpElementPos > USHRT_MAX )
+				{
+				  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+				  exit(1);
+				}
+			      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+			      ++PosR;
+			    }
+			  else
+			    {
+			      TmpIndexArray[PosC] = Index;
+			      tmpElementPos = ComplexInteractionCoefficients.InsertElement
+				(Coefficient*this->InteractionFactors[ProcessedNbrInteractionFactors]);
+			      if (tmpElementPos > USHRT_MAX )
+				{
+				  cout << "Error: too many different complex matrix elements for fast storage"<<endl;
+				  exit(1);
+				}
+			      TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
+			      ++PosC;
+			    }
+			  ++ProcessedNbrInteractionFactors;
+			}		     
+		      else
+			ProcessedNbrInteractionFactors += this->NbrQ34Values[i12];
+		    }
+		}
+	    }
+	}
+
+      // separated diagonal terms as these will be the general rule for contact interactions
+      if (NbrDiagonalInteractionFactors>0)
+	{
+	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
+						     DiagonalInteractionFactors, DiagonalQValues);
+	  if (fabs(Coefficient)>1e-14)
+	    {
+	      TmpIndexArray[PosR] = i;
+	      tmpElementPos = RealInteractionCoefficients.InsertElement(Coefficient);
+	      if (tmpElementPos > USHRT_MAX )
+		{
+		  cout << "Error: too many different real matrix elements for fast storage"<<endl;
+		  exit(1);
+		}
+	      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
+	      ++PosR;
+	    }	   
+	}
+      ++TotalPos;
+    }
+      
+  delete TmpParticles;
+   
+  this->FastMultiplicationFlag = true;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
 }
 
 // enable fast multiplication algorithm (partial evaluation)
@@ -1625,6 +1614,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 
 void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
 {
+  cout << "Using non-defined function PartialEnableFastMultiplication!"<<endl;  
 //   int Index;
 //   double Coefficient;
 //   int m1;
@@ -1684,6 +1674,7 @@ void AbstractQHEOnLatticeHamiltonian::PartialEnableFastMultiplication(int firstC
 
 void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplicationWithDiskStorage(char* fileName)
 {
+  cout << "Using non-defined function EnableFastMultiplicationWithDiskStorage!"<<endl;
 //   if (this->FastMultiplicationStep == 1)
 //     {
 //       this->DiskStorageFlag = false;
@@ -1841,24 +1832,27 @@ bool AbstractQHEOnLatticeHamiltonian::SavePrecalculation (char* fileName)
 {
   if (this->FastMultiplicationFlag)
     {
-//       ofstream File;
-//       File.open(fileName, ios::binary | ios::out);
-//       int Tmp = this->Particles->GetHilbertSpaceDimension();
-//       File.write((char*) &(Tmp), sizeof(int));
-//       File.write((char*) &(this->FastMultiplicationStep), sizeof(int));
-//       Tmp /= this->FastMultiplicationStep;
-//       if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-// 	++Tmp;
-//       File.write((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
-//       for (int i = 0; i < Tmp; ++i)
-// 	{
-// 	  File.write((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
-// 	}
-//       for (int i = 0; i < Tmp; ++i)
-// 	{
-// 	  File.write((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
-// 	}
-//       File.close();
+      ofstream File;
+      File.open(fileName, ios::binary | ios::out);
+      int Tmp = this->Particles->GetHilbertSpaceDimension();
+      File.write((char*) &(Tmp), sizeof(int));
+      File.write((char*) &(this->FastMultiplicationStep), sizeof(int));
+      Tmp /= this->FastMultiplicationStep;
+      if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++Tmp;
+      File.write((char*) this->NbrRealInteractionPerComponent, sizeof(unsigned short) * Tmp);
+      File.write((char*) this->NbrComplexInteractionPerComponent, sizeof(unsigned short) * Tmp);
+      for (int i = 0; i < Tmp; ++i)
+	{
+	  File.write((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));
+	}
+      for (int i = 0; i < Tmp; ++i)
+	{
+	  File.write((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(unsigned short) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
+	}
+      RealInteractionCoefficients.WriteArray(File);
+      ComplexInteractionCoefficients.WriteArray(File);
+      File.close();
       return true;
     }
   else
@@ -1874,35 +1868,41 @@ bool AbstractQHEOnLatticeHamiltonian::SavePrecalculation (char* fileName)
 
 bool AbstractQHEOnLatticeHamiltonian::LoadPrecalculation (char* fileName)
 {
-//   ifstream File;
-//   File.open(fileName, ios::binary | ios::in);
-//   int Tmp;
-//   File.read((char*) &(Tmp), sizeof(int));
-//   if (Tmp != this->Particles->GetHilbertSpaceDimension())
-//     {
-//       File.close();
-//       return false;
-//     }
-//   File.read((char*) &(this->FastMultiplicationStep), sizeof(int));
-//   Tmp /= this->FastMultiplicationStep;
-//   if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-//     ++Tmp;
-//   this->NbrInteractionPerComponent = new int [Tmp];
-//   File.read((char*) this->NbrInteractionPerComponent, sizeof(int) * Tmp);
-//   this->InteractionPerComponentIndex = new int* [Tmp];
-//   this->InteractionPerComponentCoefficient = new double* [Tmp];
-//   for (int i = 0; i < Tmp; ++i)
-//     {
-//       this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-//       File.read((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * this->NbrInteractionPerComponent[i]);	  
-//     }
-//   for (int i = 0; i < Tmp; ++i)
-//     {
-//       this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];
-//       File.read((char*) (this->InteractionPerComponentCoefficient[i]), sizeof(double) * this->NbrInteractionPerComponent[i]);	  
-//     }
-//   File.close();
-//   this->FastMultiplicationFlag = true;
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  int Tmp;
+  File.read((char*) &(Tmp), sizeof(int));
+  if (Tmp != this->Particles->GetHilbertSpaceDimension())
+    {
+      File.close();
+      return false;
+    }
+  File.read((char*) &(this->FastMultiplicationStep), sizeof(int));
+  Tmp /= this->FastMultiplicationStep;
+  if ((Tmp * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+    ++Tmp;
+  this->NbrRealInteractionPerComponent = new unsigned short [Tmp];
+  this->NbrComplexInteractionPerComponent = new unsigned short [Tmp];
+  File.read((char*) this->NbrRealInteractionPerComponent, sizeof(unsigned short) * Tmp);
+  File.read((char*) this->NbrComplexInteractionPerComponent, sizeof(unsigned short) * Tmp);
+
+  this->InteractionPerComponentIndex = new int* [Tmp];
+  this->InteractionPerComponentCoefficientIndex = new unsigned short* [Tmp];
+  for (int i = 0; i < Tmp; ++i)
+    {
+      this->InteractionPerComponentIndex[i] = new int [(this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i])];
+      File.read((char*) (this->InteractionPerComponentIndex[i]), sizeof(int) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
+    }
+  for (int i = 0; i < Tmp; ++i)
+    {
+      this->InteractionPerComponentCoefficientIndex[i]=new unsigned short[(this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i])];
+      File.read((char*) (this->InteractionPerComponentCoefficientIndex[i]), sizeof(unsigned short) * (this->NbrRealInteractionPerComponent[i]+this->NbrComplexInteractionPerComponent[i]));	  
+    }
+  RealInteractionCoefficients.ReadArray(File);
+  ComplexInteractionCoefficients.ReadArray(File);
+   
+  File.close();
+  this->FastMultiplicationFlag = true;
   return true;
 }
 

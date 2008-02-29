@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
 
 
-  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
+  //int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
   int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
    
@@ -128,11 +128,11 @@ int main(int argc, char** argv)
   bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
   int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
-  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
+  //char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
 
   int L = 0;
   double GroundStateEnergy = 0.0;
-  bool FirstRun = true;
+  //bool FirstRun = true;
 
   int NbrFluxValues = 1;
   if (NbrFluxQuanta == -1)

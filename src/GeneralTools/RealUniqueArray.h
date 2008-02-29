@@ -40,7 +40,7 @@
 
 
 using std::ofstream;
-
+using std::ifstream;
 
 class RealUniqueArray
 {
@@ -78,6 +78,13 @@ class RealUniqueArray
   // Access an element
   double& operator [] (int i);
 
+  // Write to file
+  // file = open stream to write to
+  void WriteArray(ofstream &file);
+
+  // Read from file
+  // file = open stream to read from
+  void ReadArray(ifstream &file);
 };
 
 

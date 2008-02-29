@@ -31,6 +31,8 @@
 
 #include "ComplexUniqueArray.h"
 
+#include "GeneralTools/Endian.h"
+
 #include <iostream>
 
 using std::cout;
@@ -124,3 +126,30 @@ int ComplexUniqueArray::SearchElement(const Complex &value)
   return -1;
 }
 
+
+
+// write to file
+// file = open stream to write to
+void ComplexUniqueArray::WriteArray(ofstream &file)
+{
+  WriteLittleEndian(file, this->NbrElements);
+  for (int i = 0; i < this->NbrElements; ++i)
+    WriteLittleEndian(file, this->Elements[i]);  
+}
+
+// Read from file
+// file = open stream to read from
+void ComplexUniqueArray::ReadArray(ifstream &file)
+{
+  if ( (this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete [] Elements;
+    }
+  int TmpDimension;
+  ReadLittleEndian(file, TmpDimension);
+  this->InternalSize=TmpDimension;
+  this->NbrElements=TmpDimension;
+  this->Elements=new Complex[TmpDimension];
+  for (int i = 0; i < this->NbrElements; ++i)
+    ReadLittleEndian(file, this->Elements[i]);  
+}
