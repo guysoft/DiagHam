@@ -154,6 +154,8 @@ int main(int argc, char** argv)
   
   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+  GetHamiltonian(Hamiltonian,HRe);
+  GetHamiltonianIm(Hamiltonian,HIm);
   Complex one, two, M_I(0.0,1.0);
   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
     for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
@@ -163,6 +165,14 @@ int main(int argc, char** argv)
 	one= one*M_I;
 	if (Norm(one-two)>1e-10)
 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+      }
+  for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+    for (int j=0; j<i; ++j)
+      {
+	HRe.GetMatrixElement(i,j,one);
+	HRe.GetMatrixElement(j,i,two);
+	if (Norm(one-Conj(two))>1e-10)
+	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
       }
 
   ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);

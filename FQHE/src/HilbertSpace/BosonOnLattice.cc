@@ -461,6 +461,7 @@ double BosonOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *int
 // 
 int BosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Complex &translationPhase)
 {
+  //cout << "Encoding " << posx<<", "<<posy<<": ";
   int numXTranslations=0, numYTranslations=0;  
   while (posx<0)
     {
@@ -495,17 +496,20 @@ int BosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Comp
     tmpPhase2=Conj(LxTranslationPhase);
   for (int i=0; i<abs(numXTranslations); ++i)
     tmpPhase*=tmpPhase2;
+  //cout<<" tmpPhaseX="<<tmpPhase;
   for (int y=1;y<=posy; ++y)
     translationPhase*=tmpPhase;
-  
+  tmpPhase=1.0;
   if (numYTranslations>0)
     tmpPhase2=LyTranslationPhase;
   else
     tmpPhase2=Conj(LyTranslationPhase);
   for (int i=0; i<abs(numYTranslations); ++i)
     tmpPhase*=tmpPhase2;
+  //cout<<" tmpPhaseY="<<tmpPhase;
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
+  //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
   return rst;
 }
 

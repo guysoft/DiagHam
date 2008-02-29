@@ -73,7 +73,12 @@ HardCoreBoson::HardCoreBoson(int nbrBosons, int nbrStates, unsigned long memory)
   this->GenerateLookUpTable(memory);
   this->Flag.Initialize();
 #ifdef __DEBUG__
-  unsigned long UsedMemory = 0;
+  // for (int i=0; i<HilbertSpaceDimension; ++i)
+//     {
+//       this->PrintState(cout,i);
+//       cout << endl;
+//     }
+  unsigned long UsedMemory = 0;  
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
   // review here!
   //  UsedMemory += this->NbrLzValue * sizeof(int);

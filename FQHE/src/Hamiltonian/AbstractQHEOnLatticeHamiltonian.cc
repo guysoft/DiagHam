@@ -325,9 +325,13 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	      //cout << "target: "<<Index<<endl;
 	      if (Index < Dim)
 		{
+		  //cout << "before: vDestination[Index="<<Index<<"]="<<vDestination[Index]<<endl;
 		  vDestination.Re(Index) += Real( Coefficient * TmpInteraction * vSource[i]);
 		  vDestination.Im(Index) += Imag( Coefficient * TmpInteraction * vSource[i]);
-		  //cout << "added element " << Coefficient << " * " << TmpInteraction << endl;
+		  //cout << "added element ("<<i<<","<<Index<<")=" << Coefficient << " * "
+		  //     << TmpInteraction << " * " << vSource[i] << " = " <<
+		  //  Coefficient * TmpInteraction * vSource[i] << endl;
+		  //cout << "after:  vDestination[Index"<<Index<<"]="<<vDestination[Index]<<endl;
 		}
 	    }
 	}
@@ -336,11 +340,18 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
       TmpInteraction = this->HoppingTerms[ReducedNbrHoppingTerms];
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
+	  //cout << "element "<<qi<<"->"<<qf<<" on "<<i<<": "; 
 	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
+	  //cout << "target: "<<Index<<endl;
 	  if (Index < Dim)
 	    {
+	      //cout << "before: vDestination[Index="<<Index<<"]="<<vDestination[Index]<<endl;
 	      vDestination.Re(Index) += Real( Coefficient * TmpInteraction * vSource[i]);
 	      vDestination.Im(Index) += Imag( Coefficient * TmpInteraction * vSource[i]);
+	      //cout << "added element ("<<i<<","<<Index<<")=" << Coefficient << " * "
+	      //        << TmpInteraction << " * " << vSource[i] << " = " <<
+	      // Coefficient * TmpInteraction * vSource[i] << endl;
+	      //cout << "after:  vDestination[Index"<<Index<<"]="<<vDestination[Index]<<endl;
 	    }
 	  vDestination.Re(i) += Real(this->HamiltonianShift * vSource[i]);
 	  vDestination.Im(i) += Imag(this->HamiltonianShift * vSource[i]);
@@ -348,9 +359,10 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
       
       // four-fermion interactions:
       if (this->NbrQ12Indices == 0) // full storage
-	{
+	{ 	  
 	  for (int j = 0; j < NbrInteractionFactors; ++j) 
 	    {
+	      //cout << "4-particle interactions"<<endl;
 	      int q1 = this->Q1Value[j];
 	      int q2 = this->Q2Value[j];
 	      int q3 = this->Q3Value[j];
@@ -369,6 +381,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 	}
       else // intelligent storage
 	{
+	  //cout << "4-particle interaction 2"<<endl;
 	  double Coefficient2; //, TmpRe, TmpIm;
 	  Complex Coefficient3;
 	  int ProcessedNbrInteractionFactors;
@@ -408,7 +421,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiply(ComplexVecto
 
       // separated diagonal terms as these will be the general rule for contact interactions
       if (NbrDiagonalInteractionFactors>0)
-	{	  
+	{
+	  //cout << "diagonal 4-particle interactions"<<endl;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,

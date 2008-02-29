@@ -183,21 +183,33 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
 	  KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
 	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
 	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	  // if (TranslationPhase!=1.0)
+// 	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+// 		 <<TranslationPhase<<endl;
 	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	  ++TmpNumberTerms;
 	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
 	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
 	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	  // if (TranslationPhase!=1.0)
+// 	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+// 		 <<TranslationPhase<<endl;
 	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	  ++TmpNumberTerms;
 	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
 	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
 	  HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
+	  // if (TranslationPhase!=1.0)
+// 	    cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+// 		 <<TranslationPhase<<endl;
 	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	  ++TmpNumberTerms;
 	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
 	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
 	  HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
+	  // if (TranslationPhase!=1.0)
+// 	    cout << "(j="<<j<<"->"<<j-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+// 		 <<TranslationPhase<<endl;
 	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	  ++TmpNumberTerms;
 	}

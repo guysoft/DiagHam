@@ -233,7 +233,6 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
-      cout << HRep << endl;
     }  
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
@@ -410,8 +409,18 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 		      Q[j].WriteVector(TmpVectorName);
 		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
-		    }	      
+		    }
+		  // cout.flush();
+// 		  cout << endl << "eigenvector_0:"<<endl;
+// 		  for (int i=0; i<this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+// 		    cout << Q[0][i].Re<<"+I*"<<Q[0][i].Im<<endl;		  
 		  cout << endl;
+		  // this->Hamiltonian->LowLevelMultiply(Q[0], TmpEigenvector);
+// 		  cout.flush();
+// 		  cout << endl << "H*eigenvector_0:"<<endl;
+// 		  for (int i=0; i<this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
+// 		    cout << TmpEigenvector[i].Re<<"+I*"<<TmpEigenvector[i].Im<<endl;		  
+// 		  cout << endl;
 		  delete[] TmpVectorName;
 
 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
@@ -866,7 +875,8 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
 					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
   (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
+  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false);
+  (*LanczosGroup) += new BooleanOption  ('\n', "get-hvalue", "show energy expectation value for eigenstates", false);
   (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
   (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
   (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
