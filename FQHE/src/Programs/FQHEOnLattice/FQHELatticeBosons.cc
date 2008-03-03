@@ -150,52 +150,52 @@ int main(int argc, char** argv)
   Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU,
 						      ReverseHopping, Delta, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
 
-  // testing Hamiltonian:
+//   // testing Hamiltonian:
   
-  ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-  ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
-  GetHamiltonian(Hamiltonian,HRe);
-  GetHamiltonianIm(Hamiltonian,HIm);
-  Complex one, two, M_I(0.0,1.0);
-  for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-    for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-      {
-	HRe.GetMatrixElement(i,j,one);
-	HIm.GetMatrixElement(i,j,two);
-	one= one*M_I;
-	if (Norm(one-two)>1e-10)
-	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-      }
-  for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
-    for (int j=0; j<i; ++j)
-      {
-	HRe.GetMatrixElement(i,j,one);
-	HRe.GetMatrixElement(j,i,two);
-	if (Norm(one-Conj(two))>1e-10)
-	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
-      }
+//   ComplexMatrix HRe(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+//   ComplexMatrix HIm(Hamiltonian->GetHilbertSpaceDimension(),Hamiltonian->GetHilbertSpaceDimension());
+//   GetHamiltonian(Hamiltonian,HRe);
+//   GetHamiltonianIm(Hamiltonian,HIm);
+//   Complex one, two, M_I(0.0,1.0);
+//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+//     for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+//       {
+// 	HRe.GetMatrixElement(i,j,one);
+// 	HIm.GetMatrixElement(i,j,two);
+// 	one= one*M_I;
+// 	if (Norm(one-two)>1e-10)
+// 	  cout << "Discrepancy in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+//       }
+//   for (int i=0; i<Hamiltonian->GetHilbertSpaceDimension(); ++i)
+//     for (int j=0; j<i; ++j)
+//       {
+// 	HRe.GetMatrixElement(i,j,one);
+// 	HRe.GetMatrixElement(j,i,two);
+// 	if (Norm(one-Conj(two))>1e-10)
+// 	  cout << "Matrix not hermitian in "<<i<<", "<<j<<": "<<one << " vs " << two << endl;
+//       }
 
-  ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
-  ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
-  ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
-  ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
-  for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV1a.Re(i) = (rand() - 32767) * 0.5;
-      TmpV1a.Im(i) = (rand() - 32767) * 0.5;
-    }
-  TmpV1a /= TmpV1a.Norm();
-  TmpV1b = TmpV1a*M_I;
-  Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
-  Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
-  for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
-      {
-	one = TmpV2a[j];
-	two = TmpV2b[j];
-	one = one*M_I;
-	if (Norm(one-two)>1e-10)
-	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
-      }  
+//   ComplexVector TmpV1a (Hamiltonian->GetHilbertSpaceDimension(), true);
+//   ComplexVector TmpV1b (Hamiltonian->GetHilbertSpaceDimension(), true);
+//   ComplexVector TmpV2a (Hamiltonian->GetHilbertSpaceDimension(), true);
+//   ComplexVector TmpV2b (Hamiltonian->GetHilbertSpaceDimension(), true);
+//   for (int i = 0; i < Hamiltonian->GetHilbertSpaceDimension(); i++)
+//     {
+//       TmpV1a.Re(i) = (rand() - 32767) * 0.5;
+//       TmpV1a.Im(i) = (rand() - 32767) * 0.5;
+//     }
+//   TmpV1a /= TmpV1a.Norm();
+//   TmpV1b = TmpV1a*M_I;
+//   Hamiltonian->LowLevelMultiply(TmpV1a, TmpV2a);
+//   Hamiltonian->LowLevelMultiply(TmpV1b, TmpV2b);
+//   for (int j=0; j<Hamiltonian->GetHilbertSpaceDimension(); ++j)
+//       {
+// 	one = TmpV2a[j];
+// 	two = TmpV2b[j];
+// 	one = one*M_I;
+// 	if (Norm(one-two)>1e-10)
+// 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
+//       }  
 
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
