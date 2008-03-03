@@ -183,7 +183,8 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
     }
   else if (NbrParticlesInHighestShell==HighestShellLzMax-1) // case still needs to be checked...
     // 2 holes in upper shell: case still entirely given by Clebsch-Gordan coefficients
-    {  
+    {
+      cout << "2 holes in upper shell"<<endl;
       ClebschGordanCoefficients VectorCoupling(HighestShellLzMax,HighestShellLzMax);
       this->NbrTermsPerLz = new int[TotalL+1];
       this->TermsPerLz = new SlaterComponent*[TotalL+1];
@@ -214,11 +215,11 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
 	      int *tmpI=new int[NbrParticlesInHighestShell];
 	      int avoid1 = (-TmpM1[k]+HighestShellLzMax)/2;
 	      int avoid2 = (-TmpM2[k]+HighestShellLzMax)/2;
-	      int k=0;
+	      int q=0;
 	      for(int l=0; l<NbrParticlesInHighestShell; ++l)
 		{
-		  if ((k==avoid1)||(k==avoid2)) ++k;
-		  tmpI[l]=k++;
+		  if ((q==avoid1)||(k==avoid2)) ++q;
+		  tmpI[l]=q++;
 		}
 	      this->TermsPerLz[i][k]=SlaterComponent(VectorCoupling.GetCoefficient (TmpM1[k], TmpM2[k],
 						       this->TotalL), NbrParticlesInHighestShell,
