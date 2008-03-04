@@ -119,16 +119,15 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
 
+  
   // amount of memory (in bytes) that can be used to store precalculated matrix elements
-  long Memory; 
+  long AllowedMemory;
+  // flag indicating whether fast multiplication data was loaded from a file
+  bool LoadedPrecalculation;
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
   // step between each precalculated index (main part: start at 0, FastMultiplicationStep, 2*FastMultiplicationStep, ...)
   int FastMultiplicationStep;
-  // step between each precalculated index (optional part: start at 1, FastMultiplicationSubStep, 2 * FastMultiplicationSubStep, ...)
-  int FastMultiplicationSubStep;
-  // indicate the poistion of the data relative to the sub step precalculations in NbrInteractionPerComponent, InteractionPerComponentIndex, and InteractionPerComponentCoefficient
-  int FastMultiplicationSubStepPosition;
   // number of non-null real terms in the hamiltonian for each state (typically a small number)
   unsigned short* NbrRealInteractionPerComponent;
   // number of non-null complex terms in the hamiltonian for each state

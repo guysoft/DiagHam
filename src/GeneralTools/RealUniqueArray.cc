@@ -34,9 +34,11 @@
 #include "GeneralTools/Endian.h"
 
 #include <iostream>
+#include <cmath>
 
 using std::cout;
 using std::endl;
+using std::fabs;
 
 
 // standard constructor
@@ -88,7 +90,7 @@ int RealUniqueArray::InsertElement(double element)
 {
   for (int i=0; i<NbrElements; ++i)
     {
-      if (Elements[i]==element)
+      if (fabs(Elements[i]-element)<1e-15)
 	return i;
     }
   // element not found
@@ -119,11 +121,28 @@ int RealUniqueArray::SearchElement(double value)
 {
   for (int i=0; i<NbrElements; ++i)
     {
-      if (Elements[i]==value)
+      if (fabs(Elements[i]-value)<1e-15)
 	return i;
     }
   // element not found
   return -1;
+}
+
+// empty all elements
+// disallocate = flag indicating whether all memory should be unallocated
+// internalSize = minimum table size to allocate (only used if disallocating)
+void RealUniqueArray::Empty(bool disallocate, int internalSize)
+{
+  if (disallocate)
+    {
+      if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+	{
+	  delete [] Elements;
+	}
+      this->InternalSize=internalSize;
+      this->Elements = new double[InternalSize];
+    }
+  this->NbrElements=0;
 }
 
 

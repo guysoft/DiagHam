@@ -93,7 +93,7 @@ HardCoreBoson::HardCoreBoson(int nbrBosons, int nbrStates, unsigned long memory)
   else
     cout << UsedMemory << endl;
 #endif
-
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension<<endl;
 }
 
 // copy constructor (without duplicating datas)

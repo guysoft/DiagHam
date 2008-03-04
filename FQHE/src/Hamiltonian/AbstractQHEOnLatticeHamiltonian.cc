@@ -63,7 +63,24 @@ AbstractQHEOnLatticeHamiltonian::AbstractQHEOnLatticeHamiltonian()
 
 AbstractQHEOnLatticeHamiltonian::~AbstractQHEOnLatticeHamiltonian()
 {
-  // need to insert suitable deletes !!
+  if (FastMultiplicationFlag)
+    {
+      delete [] this->NbrRealInteractionPerComponent;
+      delete [] this->NbrComplexInteractionPerComponent;
+      long MinIndex, MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      for (int i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	{
+	  delete [] this->InteractionPerComponentIndex[i];
+	  delete [] this->InteractionPerComponentCoefficientIndex[i];
+	}
+      delete [] this->InteractionPerComponentIndex;
+      delete [] this->InteractionPerComponentCoefficientIndex;
+      this->RealInteractionCoefficients.Empty();
+      this->ComplexInteractionCoefficients.Empty();
+      this->FastMultiplicationFlag=false;
+    }
 }
 
 // set Hilbert space
@@ -147,8 +164,51 @@ void AbstractQHEOnLatticeHamiltonian::SetNbrFluxQuanta(int nbrFluxQuanta)
     {
       delete [] this->DiagonalInteractionFactors;
       delete [] this->DiagonalQValues;
-    }
+    }  
+  bool EnableFastCalculation=FastMultiplicationFlag;
+  if (FastMultiplicationFlag)
+    {
+      delete [] this->NbrRealInteractionPerComponent;
+      delete [] this->NbrComplexInteractionPerComponent;
+      long MinIndex, MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      for (int i=0; i<EffectiveHilbertSpaceDimension; ++i)
+	{
+	  delete [] this->InteractionPerComponentIndex[i];
+	  delete [] this->InteractionPerComponentCoefficientIndex[i];
+	}
+      delete [] this->InteractionPerComponentIndex;
+      delete [] this->InteractionPerComponentCoefficientIndex;
+      this->RealInteractionCoefficients.Empty();
+      this->ComplexInteractionCoefficients.Empty();
+      this->FastMultiplicationFlag=false;
+    }    
   this->EvaluateInteractionFactors();
+  if (this->LoadedPrecalculation)
+    {
+      cout << "Cannot re-enable fast calculation when precalculation data was loaded from file!"<<endl;
+      cout << "Reverting to slow calculation"<<endl;
+    }
+  else if (EnableFastCalculation)
+    {
+      int TmpMemory = this->FastMultiplicationMemory(0);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+      cout << endl;
+      if (AllowedMemory > 0)
+	{
+	  this->EnableFastMultiplication();
+	}
+    }
 }
 
 // get Hilbert space on which Hamiltonian acts
@@ -1167,94 +1227,98 @@ List<Matrix*> AbstractQHEOnLatticeHamiltonian::RightInteractionOperators()
 // test the amount of memory needed for fast multiplication algorithm
 //
 // allowedMemory = amount of memory that cam be allocated for fast multiplication
+// if allowedMemory == 0, the value from preceding calls is used
 // return value = amount of memory needed
 
 long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemory)
 {
-   long MinIndex;
-   long MaxIndex;
-   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-   int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-   this->NbrRealInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];
-   this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
-   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-     {
-       this->NbrRealInteractionPerComponent[i] = 0x0;
-       this->NbrComplexInteractionPerComponent[i] = 0x0;
-     }
-   timeval TotalStartingTime2;
-   timeval TotalEndingTime2;
-   double Dt2;
-   gettimeofday (&(TotalStartingTime2), 0);
-   cout << "start memory" << endl;
+  this->LoadedPrecalculation=false;
+  if (allowedMemory>0)
+    this->AllowedMemory = allowedMemory;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  this->NbrRealInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];
+  this->NbrComplexInteractionPerComponent = new unsigned short [EffectiveHilbertSpaceDimension];   
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    {
+      this->NbrRealInteractionPerComponent[i] = 0x0;
+      this->NbrComplexInteractionPerComponent[i] = 0x0;
+    }
+  timeval TotalStartingTime2;
+  timeval TotalEndingTime2;
+  double Dt2;
+  gettimeofday (&(TotalStartingTime2), 0);
+  cout << "start memory" << endl;
 
-   QHEParticlePrecalculationOperation Operation(this);
-   Operation.ApplyOperation(this->Architecture);
-   long Memory = 0;
+  QHEParticlePrecalculationOperation Operation(this);
+  Operation.ApplyOperation(this->Architecture);
+  long Memory = 0;
    
-   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-     {
-       Memory += this->NbrRealInteractionPerComponent[i];
-       Memory += this->NbrComplexInteractionPerComponent[i];
-     }
+  for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
+    {
+      Memory += this->NbrRealInteractionPerComponent[i];
+      Memory += this->NbrComplexInteractionPerComponent[i];
+    }
        
 
-    cout << "nbr interaction = " << Memory << endl;
-    // memory requirement, ignoring the actual storage size of the values of matrix
-    // elements, which is assumed small (maybe need to add an estimate, at least)
-    long TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
-    if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
-      {
-	this->FastMultiplicationStep = 1;
-	int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-	while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
-	  {
-	    ++this->FastMultiplicationStep;
-	    ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-	    if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
-	      ++ReducedSpaceDimension;
-	    // memory requirement, ignoring the actual storage size of the values of matrix
-	    // elements, which is assumed small (maybe need to add an estimate, at least, again!)
-	    TmpMemory = allowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension;
-	    Memory = 0;
-	    for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
-	      {
-		Memory += this->NbrRealInteractionPerComponent[i];
-		Memory += this->NbrComplexInteractionPerComponent[i];
-	      }
-	  }
-	if (this->DiskStorageFlag == false)
-	  {
-	    int TotalReducedSpaceDimension = ReducedSpaceDimension;
-	    unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	    unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	    int i = 0;
-	    int Pos = 0;
-	    for (; i < ReducedSpaceDimension; ++i)
-	      {
-		TmpNbrRealInteractionPerComponent[i] = this->NbrRealInteractionPerComponent[Pos];
-		TmpNbrComplexInteractionPerComponent[i] = this->NbrComplexInteractionPerComponent[Pos];
-		Pos += this->FastMultiplicationStep;
-	      }
-	    delete[] this->NbrRealInteractionPerComponent;
-	    delete[] this->NbrComplexInteractionPerComponent;
-	    this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
-	    this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
-	  }
-      }
-    else
-      {
-	Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
-	this->FastMultiplicationStep = 1;
-      }
+  cout << "nbr interaction = " << Memory << endl;
+  // memory requirement, ignoring the actual storage size of the values of matrix
+  // elements, which is assumed small (maybe need to add an estimate, at least)
+  long TmpMemory = AllowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+    {
+      this->FastMultiplicationStep = 1;
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
+	{
+	  ++this->FastMultiplicationStep;
+	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	    ++ReducedSpaceDimension;
+	  // memory requirement, ignoring the actual storage size of the values of matrix
+	  // elements, which is assumed small (maybe need to add an estimate, at least, again!)
+	  TmpMemory = AllowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension;
+	  Memory = 0;
+	  for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
+	    {
+	      Memory += this->NbrRealInteractionPerComponent[i];
+	      Memory += this->NbrComplexInteractionPerComponent[i];
+	    }
+	}
+      if (this->DiskStorageFlag == false)
+	{
+	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
+	  unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
+	  unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
+	  int i = 0;
+	  int Pos = 0;
+	  for (; i < ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrRealInteractionPerComponent[i] = this->NbrRealInteractionPerComponent[Pos];
+	      TmpNbrComplexInteractionPerComponent[i] = this->NbrComplexInteractionPerComponent[Pos];
+	      Pos += this->FastMultiplicationStep;
+	    }
+	  delete[] this->NbrRealInteractionPerComponent;
+	  delete[] this->NbrComplexInteractionPerComponent;
+	  this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
+	  this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
+	}
+    }
+  else
+    {
+      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      this->FastMultiplicationStep = 1;
+    }
 
-    cout << "reduction factor=" << this->FastMultiplicationStep << endl;
-    gettimeofday (&(TotalEndingTime2), 0);
-    cout << "------------------------------------------------------------------" << endl << endl;
-    Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-      ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-    cout << "time = " << Dt2 << endl;
-    return Memory;    
+  cout << "reduction factor=" << this->FastMultiplicationStep << endl;
+  gettimeofday (&(TotalEndingTime2), 0);
+  cout << "------------------------------------------------------------------" << endl << endl;
+  Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+    ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+  cout << "time = " << Dt2 << endl;
+  return Memory;    
 }
 
 
@@ -1598,6 +1662,9 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
     }
       
   delete TmpParticles;
+
+  cout << "Nbr distinct matrix elements: "<<RealInteractionCoefficients.GetNbrElements()<<" real, "
+       << ComplexInteractionCoefficients.GetNbrElements()<<" complex"<<endl;
    
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
@@ -1868,6 +1935,7 @@ bool AbstractQHEOnLatticeHamiltonian::SavePrecalculation (char* fileName)
 
 bool AbstractQHEOnLatticeHamiltonian::LoadPrecalculation (char* fileName)
 {
+  this->LoadedPrecalculation=true;
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
   int Tmp;

@@ -75,6 +75,14 @@ class ComplexUniqueArray
   // returns : index of the element, or -1 if not found
   int SearchElement(const Complex &value);
 
+  // get number of elements
+  int GetNbrElements(){ return NbrElements;}
+
+  // empty all elements
+  // disallocate = flag indicating whether all memory should be unallocated
+  // internalSize = minimum table size to allocate (only used if disallocating)
+  void Empty(bool disallocate = false, int internalSize = 100);
+
   // Access an element
   Complex& operator [] (int i);
 

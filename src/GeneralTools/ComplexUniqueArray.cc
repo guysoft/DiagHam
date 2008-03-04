@@ -88,7 +88,7 @@ int ComplexUniqueArray::InsertElement(const Complex& element)
 {
   for (int i=0; i<NbrElements; ++i)
     {
-      if (Elements[i]==element)
+      if (SqrNorm(Elements[i]-element)<1e-30)
 	return i;
     }
   // element not found
@@ -119,13 +119,29 @@ int ComplexUniqueArray::SearchElement(const Complex &value)
 {
   for (int i=0; i<NbrElements; ++i)
     {
-      if (Elements[i]==value)
+      if (SqrNorm(Elements[i]-value)<1e-30)
 	return i;
     }
   // element not found
   return -1;
 }
 
+// empty all elements
+// disallocate = flag indicating whether all memory should be unallocated
+// internalSize = minimum table size to allocate (only used if disallocating)
+void ComplexUniqueArray::Empty(bool disallocate, int internalSize)
+{
+  if (disallocate)
+    {
+      if ((this->InternalSize!=0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+	{
+	  delete [] Elements;
+	}
+      this->InternalSize=internalSize;
+      this->Elements = new Complex[InternalSize];
+    }
+  this->NbrElements=0;
+}
 
 
 // write to file
