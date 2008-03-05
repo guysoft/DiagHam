@@ -382,7 +382,7 @@ int main(int argc, char** argv)
 		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 		return -1;
 	      }	
-	  if (TzSymmetrizedBasis == true) 
+	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
 //	    if (LzSymmetrizedBasis == false)
 	    {
 	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	  else
-	    if (Z3SymmetrizedBasis == true)
+	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
 	      {
 		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 		  {
@@ -417,18 +417,21 @@ int main(int argc, char** argv)
 		  }
 	      }
 	    else
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
-		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 		    {
-		      ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-		      return 0;
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
+		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			{
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  return 0;
+			}
 		    }
-		}
-	      else
-		{
-		  Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  else
+		    {
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    }
 		}
 	}
 

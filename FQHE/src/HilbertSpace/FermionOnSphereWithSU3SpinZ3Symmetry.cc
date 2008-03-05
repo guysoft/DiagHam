@@ -128,13 +128,15 @@ FermionOnSphereWithSU3SpinZ3Symmetry::FermionOnSphereWithSU3SpinZ3Symmetry (int 
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
-  if (this->HilbertSpaceDimension>0)
+  if (this->HilbertSpaceDimension > 0)
     {
       this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
       this->GenerateLookUpTable(memory);
       delete[] this->StateHighestBit;
       this->StateHighestBit = 0;
       cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
+	this->PrintState(cout, i) << endl;
 //        for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
 // 	 this->PrintState(cout, i) << " r = " << this->GetStateRotationSign(this->StateDescription[i], 0x0ul) 
 // 				   << " l = " << this->GetStateRotationSign(this->StateDescription[i], FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT) << endl;

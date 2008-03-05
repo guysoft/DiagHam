@@ -116,7 +116,17 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
 	this->StateDescription[i] = 0x0ul;
       else
 	{
-	  ++TmpHilbertSpaceDimension;
+	  if ((this->GetStateSymmetry(this->StateDescription[i]) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	    {
+	      unsigned long TmpStateParity = this->GetStateSingletTzParity(this->StateDescription[i]);
+	      if ((((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) == 0) && (minusTzParity == false))
+		  || (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
+		++TmpHilbertSpaceDimension;
+	      else
+		this->StateDescription[i] = 0x0ul;
+	    }
+	  else
+	    ++TmpHilbertSpaceDimension;
 	}
     }
   unsigned long* TmpStateDescription = new unsigned long [TmpHilbertSpaceDimension];
@@ -130,7 +140,7 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   this->HilbertSpaceDimension = TmpHilbertSpaceDimension;
-  if (this->HilbertSpaceDimension>0)
+  if (this->HilbertSpaceDimension > 0)
     {
       this->StateHighestBit =  new int [TmpHilbertSpaceDimension];
       this->GenerateLookUpTable(memory);
