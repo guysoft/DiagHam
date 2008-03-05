@@ -347,24 +347,33 @@ RealVector FermionOnSphereWithSpinLzSymmetry::ConvertToNbodyBasis(RealVector& st
     {
       Signature = nbodyBasis.StateDescription[i];
       TmpState = this->GetSignedCanonicalState(Signature);
-      NewLzMax = 1 + (this->LzMax << 1);
       if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) == Signature)
 	{
 	  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  NewLzMax = 1 + (this->LzMax << 1);
 	  while ((TmpState >> NewLzMax) == 0x0ul)
 	    --NewLzMax;
 	  if (Signature != 0x0ul)	
 	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
 	  else
-	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	    {
+	      Signature = TmpState;
+	      this->GetStateSingletParity(Signature);
+	      if ((((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) == 0) && (this->LzParitySign > 0.0))
+		  || (((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) != 0) && (this->LzParitySign < 0.0)))
+		TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	    }
 	}
       else
 	{
 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  NewLzMax = 1 + (this->LzMax << 1);
 	  while ((TmpState >> NewLzMax) == 0x0ul)
 	    --NewLzMax;
-	  TmpVector[i] = this->LzParitySign * state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+	  Signature = TmpState;
+	  this->GetStateSingletParity(Signature);
+	  TmpVector[i] =  (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->LzParitySign * state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
 	}
     }
   return TmpVector;  
@@ -386,24 +395,33 @@ RealVector FermionOnSphereWithSpinLzSymmetry::ConvertToSymmetricNbodyBasis(RealV
     {
       Signature = nbodyBasis.StateDescription[i];
       TmpState = this->GetSignedCanonicalState(Signature);
-      NewLzMax = 1 + (this->LzMax << 1);
       if ((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) == Signature)
 	{
 	  Signature = TmpState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  NewLzMax = 1 + (this->LzMax << 1);
 	  while ((TmpState >> NewLzMax) == 0x0ul)
 	    --NewLzMax;
 	  if (Signature != 0x0ul)	
 	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += state[i] * M_SQRT1_2;
 	  else
-	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	    {
+	      Signature = TmpState;
+	      this->GetStateSingletParity(Signature);
+	      if ((((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) == 0) && (this->LzParitySign > 0.0))
+		  || (((Signature & FERMION_SPHERE_SU2_SINGLETPARITY_BIT) != 0) && (this->LzParitySign < 0.0)))
+		TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	    }
 	}
       else
 	{
 	  TmpState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+	  NewLzMax = 1 + (this->LzMax << 1);
 	  while ((TmpState >> NewLzMax) == 0x0ul)
 	    --NewLzMax;
-	  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += this->LzParitySign * state[i] * M_SQRT1_2;
+	  Signature = TmpState;
+	  this->GetStateSingletParity(Signature);
+	  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] += (1.0 - 2.0 * ((double) ((Signature >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->LzParitySign * state[i] * M_SQRT1_2;
 	}
     }
   return TmpVector;  
