@@ -117,9 +117,7 @@ FermionOnSphereWithSU3SpinTzSymmetry::FermionOnSphereWithSU3SpinTzSymmetry (int 
 	{
 	  if ((this->GetStateSymmetry(this->StateDescription[i]) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
 	    {
-	      unsigned long TmpStateParity = this->GetStateSingletTzParity(this->StateDescription[i]);
-	      if ((((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) == 0) && (minusTzParity == false))
-		  || (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
+	      if ((this->GetStateSingletTzParity(this->StateDescription[i]) * this->TzParitySign) > 0.0)
 		++TmpHilbertSpaceDimension;
 	      else
 		this->StateDescription[i] = 0x0ul;

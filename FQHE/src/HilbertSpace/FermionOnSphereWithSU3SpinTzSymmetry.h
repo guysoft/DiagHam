@@ -276,8 +276,8 @@ class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
   // compute the parity of the number of spin singlet in the SU(2) sector
   //
   // initialState = reference on the state whose parity has to be evaluated
-  // return value = corresponding parity bit
-  virtual unsigned long GetStateSingletTzParity(unsigned long& initialState);
+  // return value = sign corresponding to the parity (+1 for even , -1 for odd)
+  virtual double GetStateSingletTzParity(unsigned long& initialState);
 
   // factorized code that is used to symmetrize result of the AdxAdy operations
   //
@@ -344,7 +344,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetSignedCanonicalSta
 // initialState = reference on the state whose parity has to be evaluated
 // return value = corresponding parity bit
 
-inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzParity(unsigned long& initialState)
+inline double FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzParity(unsigned long& initialState)
 {
   unsigned long TmpState = initialState;
   TmpState &= (TmpState >> 1);
@@ -357,7 +357,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzSymmetry::GetStateSingletTzPari
   TmpState ^= (TmpState >> 4);
   TmpState ^= (TmpState >> 2);
   TmpState ^= (TmpState >> 1);
-  return ((TmpState & 1) << FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT);
+  return (1.0 - ((double) ((TmpState & 1ul) << 1)));
 }
 
 // factorized code that is used to symmetrize result of the AdxAdy operations
@@ -371,7 +371,7 @@ inline int FermionOnSphereWithSU3SpinTzSymmetry::SymmetrizeAdAdResult(unsigned l
   unsigned long TmpState2 = state;
   if ((this->GetSignedCanonicalState(state) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
     {
-      if (((1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul))) * this->TzParitySign) < 0.0)
+      if ((this->GetStateSingletTzParity(TmpState2) * this->TzParitySign) < 0.0)
 	return this->HilbertSpaceDimension;
       if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
 	coefficient *= M_SQRT2;
@@ -385,7 +385,7 @@ inline int FermionOnSphereWithSU3SpinTzSymmetry::SymmetrizeAdAdResult(unsigned l
     --NewLzMax;
   if (TmpState2 != state)
     {
-      coefficient *= (1.0 - 2.0 * ((double) ((this->GetStateSingletTzParity(TmpState2) >> FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->GetStateSingletTzParity(TmpState2);
       coefficient *= this->TzParitySign;
     }
   if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)

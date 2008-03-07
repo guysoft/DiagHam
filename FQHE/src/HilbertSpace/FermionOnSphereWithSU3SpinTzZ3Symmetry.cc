@@ -107,8 +107,6 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
       exit(1);
     }
 
-//   for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-//     this->PrintState(cout, i) << endl;
   TmpHilbertSpaceDimension = 0;
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     {
@@ -118,9 +116,7 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
 	{
 	  if ((this->GetStateSymmetry(this->StateDescription[i]) & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
 	    {
-	      unsigned long TmpStateParity = this->GetStateSingletTzParity(this->StateDescription[i]);
-	      if ((((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) == 0) && (minusTzParity == false))
-		  || (((TmpStateParity & FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT) != 0) && (minusTzParity == true)))
+	      if ((this->GetStateDoubletTripletParity(this->StateDescription[i]) * this->TzParitySign) > 0.0)
 		++TmpHilbertSpaceDimension;
 	      else
 		this->StateDescription[i] = 0x0ul;
@@ -148,7 +144,9 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
       this->StateHighestBit = 0;
       cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
-	this->PrintState(cout, i) << endl;
+	{	  
+	  this->PrintState(cout, i) << hex << this->StateDescription[i] << dec << " sign = " << this->GetStateSingletTzParity(this->StateDescription[i]) << endl;
+	}
 // " r = " << this->GetStateRotationSign(this->StateDescription[i], 0x0ul) 
 // 				   << " l = " << this->GetStateRotationSign(this->StateDescription[i], FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT) << endl;
 #ifdef __DEBUG__
