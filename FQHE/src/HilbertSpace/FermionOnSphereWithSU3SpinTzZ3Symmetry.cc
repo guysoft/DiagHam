@@ -145,7 +145,7 @@ FermionOnSphereWithSU3SpinTzZ3Symmetry::FermionOnSphereWithSU3SpinTzZ3Symmetry (
       cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)	
 	{	  
-	  this->PrintState(cout, i) << hex << this->StateDescription[i] << dec << " sign = " << this->GetStateSingletTzParity(this->StateDescription[i]) << endl;
+	  this->PrintState(cout, i) << hex << this->StateDescription[i] << dec << " sign = " << this->GetStateSymmetry(this->StateDescription[i]) << endl;
 	}
 // " r = " << this->GetStateRotationSign(this->StateDescription[i], 0x0ul) 
 // 				   << " l = " << this->GetStateRotationSign(this->StateDescription[i], FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT) << endl;

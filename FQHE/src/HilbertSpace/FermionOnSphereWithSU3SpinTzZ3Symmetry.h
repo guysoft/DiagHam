@@ -149,7 +149,6 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetCanonicalState (
   TmpState ^= initialState;
   if (TmpState < CanonicalState)
     CanonicalState = TmpState;
-  initialState = TmpState;
   TmpState = (((initialState & FERMION_SPHERE_SU3_1_MASK) << 2) |
 	      ((initialState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState < CanonicalState)
@@ -160,7 +159,6 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetCanonicalState (
   TmpState ^= initialState;
   if (TmpState < CanonicalState)
    CanonicalState  = TmpState;
-  initialState = TmpState;
   TmpState =  (((initialState & FERMION_SPHERE_SU3_1_MASK) << 2) |
 	       ((initialState & FERMION_SPHERE_SU3_23_MASK) >> 1));
   if (TmpState < CanonicalState)
