@@ -856,7 +856,7 @@ double FermionOnSphereWithSU3Spin::A1A1 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -891,7 +891,7 @@ double FermionOnSphereWithSU3Spin::A1A2 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -926,7 +926,7 @@ double FermionOnSphereWithSU3Spin::A1A3 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -962,7 +962,7 @@ double FermionOnSphereWithSU3Spin::A2A2 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -998,7 +998,7 @@ double FermionOnSphereWithSU3Spin::A2A3 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -1034,7 +1034,7 @@ double FermionOnSphereWithSU3Spin::A3A3 (int index, int n1, int n2)
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n2]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
 #ifdef  __64_BITS__
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
@@ -1078,7 +1078,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad1 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
@@ -1122,7 +1122,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad2 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
@@ -1166,7 +1166,7 @@ int FermionOnSphereWithSU3Spin::Ad1Ad3 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
@@ -1211,7 +1211,7 @@ int FermionOnSphereWithSU3Spin::Ad2Ad2 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
@@ -1256,7 +1256,7 @@ int FermionOnSphereWithSU3Spin::Ad2Ad3 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
@@ -1301,7 +1301,7 @@ int FermionOnSphereWithSU3Spin::Ad3Ad3 (int m1, int m2, double& coefficient)
     NewLzMax = m1;
   else
     {
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m2]];
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
 #ifdef  __64_BITS__
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];

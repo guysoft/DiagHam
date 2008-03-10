@@ -238,7 +238,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetSignedCanonicalS
   TmpState ^= initialState;
   if (TmpState < CanonicalState)
     {      
-      TmpRotationSign = FERMION_SPHERE_SU3_TZ_FLIP_BIT |  FERMION_SPHERE_SU3_Z3RIGHTROTATION_BIT;
+      TmpRotationSign = FERMION_SPHERE_SU3_TZ_FLIP_BIT |  FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT;
       CanonicalState = TmpState;
     }
   else
@@ -257,7 +257,7 @@ inline unsigned long FermionOnSphereWithSU3SpinTzZ3Symmetry::GetSignedCanonicalS
   TmpState ^= initialState;
   if (TmpState < CanonicalState)
     {      
-      TmpRotationSign = FERMION_SPHERE_SU3_TZ_FLIP_BIT |  FERMION_SPHERE_SU3_Z3LEFTROTATION_BIT;
+      TmpRotationSign = FERMION_SPHERE_SU3_TZ_FLIP_BIT |  FERMION_SPHERE_SU3_Z3RIGHTROTATION_BIT;
       CanonicalState = TmpState;
     }
   else
@@ -361,14 +361,17 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
     --NewLzMax;
   if ((TmpSign  & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
     {
-//      cout << "FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT ";
+      //      cout << "FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT " << hex << TmpState2 << " " << state << dec << endl;
       if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) < 0.0)
 	{
 //	  cout << endl;
 	  return this->HilbertSpaceDimension;
 	}
       if (TmpState2 != state)
-	coefficient *= this->GetStateRotationSign(TmpState2, TmpSign);
+	{
+	  coefficient *= this->GetStateRotationSign(TmpState2, TmpSign);
+	  //	  cout << this->GetStateRotationSign(TmpState2, TmpSign) << " " << hex << TmpSign << dec << endl;
+	}
       if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
 	coefficient *= MSQRT1_3;
       else
@@ -379,9 +382,10 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
 //  cout << "NONE ";
   if (TmpState2 != state)
     {
+      //      cout << hex << TmpState2 << " " 
       if ((TmpSign &  FERMION_SPHERE_SU3_TZ_FLIP_BIT) != 0x0ul)
 	{
-	  coefficient *= this->GetStateSingletTzParity(TmpState2);
+	  coefficient *= this->GetStateSingletTzParity(state);
 	  coefficient *= this->TzParitySign;
 	}
       if ((TmpSign & FERMION_SPHERE_SU3_Z3ROTATION_BIT) != 0x0ul)
