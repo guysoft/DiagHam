@@ -52,6 +52,14 @@ elsif ($SU2Flag == 1)
   {
     $L2DiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinL2Diagonalize";
     $SUNConvertProgram ="/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinConvertSymmetrizedState";
+    $SpectrumFileName =~ /^fermions\_sphere\_su2\_szpsym_(.*)\_n\_(\d+)\_2s\_(\d+)\_sz\_(\d+)\_lz\.dat$/;
+    $InteractionName = $1;
+    $NbrParticles = $2;
+    $NbrFluxQuanta = $3;
+    my $TotalSz = $4;
+    $L2DiagonalizationProgram .= " -p ".$NbrParticles." -l ".$NbrFluxQuanta." -z ".$Lz." -s ".$TotalSz." --szsymmetrized-basis --use-hilbert basis.tmp --eigenstate --interaction-name szpsym_".$InteractionName."_l2";
+    $InputSymmetrizedL2VectorPrefix = "fermions_sphere_su2_szpsym_".$InteractionName."_l2_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_sz_".$TotalSz."_lz";
+    $InputUnsymmetrizedL2VectorPrefix = "fermions_sphere_su2_".$InteractionName."_l2_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_sz_".$TotalSz."_lz";
   }
 else
   {
@@ -94,8 +102,8 @@ while ($Count >= 0)
     system($Command);
     if ($Count != 0)
       {
-	rename("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_0.0.vec",
-	       "fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_0.".$Count.".vec");
+	rename("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_".$Lz.".0.vec",
+	       "fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_".$Lz.".".$Count.".vec");
       }
     unlink ($TmpVectorName);
     $Count--;
@@ -119,7 +127,7 @@ while ($TmpL <= $MaxL)
 	$Count = 0;
 	while ($Count < $SUNLDegeneracy[$TmpL])
 	  {
-	    print OUTFILE " fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_0.".($Shift + $Count).".vec";
+	    print OUTFILE " fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_".$Lz.".".($Shift + $Count).".vec";
 	    $Count++;
 	  }
 	print OUTFILE "\n";
@@ -129,9 +137,10 @@ while ($TmpL <= $MaxL)
 	$Tmp =~ /(\d+) linearly independent vectors/gm;
 	$U1LDegeneracy[$TmpL] = $1;
 	$Count = 0;
+	print $Tmp;
 	while ($Count < $SUNLDegeneracy[$TmpL])
 	  {
-	    unlink ("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_0.".($Shift + $Count).".vec");
+	    unlink ("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_".$Lz.".".($Shift + $Count).".vec");
 	    $Count++;
 	  }
 	$Count = 0;
@@ -148,7 +157,7 @@ while ($TmpL <= $MaxL)
 	if ($SUNLDegeneracy[$TmpL] == 1)
 	  {
 	    $U1LDegeneracy[$TmpL] = 1;
-	    rename("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_0.".$Shift.".vec", 
+	    rename("fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_lz_".$Lz.".".$Shift.".vec", 
 		   "fermions_sphere_".$InteractionName."_n_".$NbrParticles."_2s_".$NbrFluxQuanta."_l_".$TmpL.".0.vec");
 	    $Shift++;
 	  }
@@ -172,7 +181,7 @@ print join(" ", @U1LDegeneracy)."\n";
 sub ExtractNbrZeroEnergyStates ()
   {
     my $Spectrum = $_[0];
-    my $Lz = $_[1];
+    my $Lz = $_[1] / 2;    
     my $Error = $_[2];
     my $Count = 0;
     unless (open (INFILE, $Spectrum))
