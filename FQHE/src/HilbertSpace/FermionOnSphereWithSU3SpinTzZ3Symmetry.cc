@@ -295,3 +295,124 @@ AbstractHilbertSpace* FermionOnSphereWithSU3SpinTzZ3Symmetry::Clone()
   return new FermionOnSphereWithSU3SpinTzZ3Symmetry(*this);
 }
 
+// convert a given state from symmetric basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector  
+
+RealVector FermionOnSphereWithSU3SpinTzZ3Symmetry::ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = nbodyBasis.StateDescription[i];
+      unsigned long TmpState2 = TmpState;
+      Signature = this->GetSignedCanonicalState(TmpState);
+      NewLzMax = 2 + (this->LzMax * 3);
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      switch (Signature & FERMION_SPHERE_SU3_TZZ3_SYMMETRIC_BIT)
+	{
+	case  FERMION_SPHERE_SU3_TZZ3_SYMMETRIC_BIT :
+	  {
+	    if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) > 0.0)
+	      {
+		TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	      }
+	  }
+	  break;
+	case FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT :
+	  {
+	    if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) > 0.0)
+	      {
+		if (TmpState2 != TmpState)
+		  TmpVector[i] = this->GetStateRotationSign(TmpState2, Signature) * state[this->FindStateIndex(TmpState, NewLzMax)] * MSQRT1_3;
+		else
+		  TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * MSQRT1_3;
+	      }
+	  }
+	  break;
+	default:
+	  {
+	    double TmpCoefficient = 1.0;
+	    if ((Signature & FERMION_SPHERE_SU3_TZ_FLIP_BIT) != 0x0ul)
+	      {
+		TmpCoefficient *= this->GetStateSingletTzParity(TmpState2);
+		TmpCoefficient *= this->TzParitySign;
+	      }
+	    if ((Signature & FERMION_SPHERE_SU3_Z3ROTATION_BIT) != 0x0ul)
+	      {
+		TmpCoefficient *= this->GetStateRotationSign(TmpState2, Signature);
+	      }
+	    TmpVector[i] = TmpCoefficient * state[this->FindStateIndex(TmpState, NewLzMax)] * MSQRT1_6;
+	  }
+	  break;
+	}
+    }
+  return TmpVector;  
+}
+
+// convert a given state from the usual n-body basis to the symmetric basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereWithSU3SpinTzZ3Symmetry::ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis)
+{
+  RealVector TmpVector (this->GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = nbodyBasis.StateDescription[i];
+      unsigned long TmpState2 = TmpState;
+      Signature = this->GetSignedCanonicalState(TmpState);
+      NewLzMax = 2 + (this->LzMax * 3);
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      switch (Signature & FERMION_SPHERE_SU3_TZZ3_SYMMETRIC_BIT)
+	{
+	case  FERMION_SPHERE_SU3_TZZ3_SYMMETRIC_BIT :
+	  {
+	    if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) > 0.0)
+	      {
+		TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	      }
+	  }
+	  break;
+	case FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT :
+	  {
+	    if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) > 0.0)
+	      {
+		if (TmpState2 != TmpState)
+		  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = this->GetStateRotationSign(TmpState2, Signature) * state[i] * MSQRT1_3;
+		else
+		  TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i] * MSQRT1_3;
+	      }
+	  }
+	  break;
+	default:
+	  {
+	    double TmpCoefficient = 1.0;
+	    if ((Signature & FERMION_SPHERE_SU3_TZ_FLIP_BIT) != 0x0ul)
+	      {
+		TmpCoefficient *= this->GetStateSingletTzParity(TmpState2);
+		TmpCoefficient *= this->TzParitySign;
+	      }
+	    if ((Signature & FERMION_SPHERE_SU3_Z3ROTATION_BIT) != 0x0ul)
+	      {
+		TmpCoefficient *= this->GetStateRotationSign(TmpState2, Signature);
+	      }
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = TmpCoefficient * state[i] * MSQRT1_6;
+	  }
+	  break;
+	}
+    }
+  return TmpVector;  
+}

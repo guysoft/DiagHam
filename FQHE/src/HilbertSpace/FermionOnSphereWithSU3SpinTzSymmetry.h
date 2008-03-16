@@ -44,6 +44,7 @@ class FermionOnSphere;
 
 #define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
 #define FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT     0x2ul
+#define FERMION_SPHERE_SU3_TZZ3_SYMMETRIC_BIT     0x3ul
 #define FERMION_SPHERE_SU3_TZSINGLETPARITY_BIT   0x10000ul
 #define FERMION_SPHERE_SU3_TZSINGLETPARITY_SHIFT 16
 #define FERMION_SPHERE_SU3_Z3ROTATIONSIGN_BIT   0x20000ul
@@ -67,6 +68,9 @@ class FermionOnSphere;
 #endif
 #define MSQRT3   1.73205080756888
 #define MSQRT1_3 0.577350269189626
+#define MSQRT1_6 0.408248290463863
+
+
 class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
 {
 
@@ -135,6 +139,20 @@ class FermionOnSphereWithSU3SpinTzSymmetry :  public FermionOnSphereWithSU3Spin
   // fileName = name of the file where the Hilbert space description is stored
   // return value = true if no error occured
   virtual bool ReadHilbertSpace (char* fileName);
+
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
 
   // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
   //

@@ -103,7 +103,6 @@ int main(int argc, char** argv)
   bool TzSymmetrizedBasis = false;
   bool TzMinusParity = false;
   bool YSymmetrizedBasis = false;
-  bool YMinusParity = false;
   bool LzSymmetrizedBasis = false;
   bool LzMinusParity = false;
   bool FermionFlag = false;
@@ -143,7 +142,7 @@ int main(int argc, char** argv)
 	  }
       if (SU3SymmetryFlag == true)
 	if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(StateFileName, NbrParticles, LzMax, TotalLz, TotalTz, TotalY, TzSymmetrizedBasis, TzMinusParity, 
-								    YSymmetrizedBasis, YMinusParity, LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
+								    YSymmetrizedBasis, LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
 	  {
 	    cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
 	    return -1;
@@ -222,9 +221,9 @@ int main(int argc, char** argv)
 	{
 	  FermionOnSphereWithSU3Spin* Space;
 #ifdef __64_BITS__
-	  if (LzMax <= 15)
+	  if (LzMax <= 20)
 #else
-	    if (LzMax <= 7)
+	    if (LzMax <= 9)
 #endif
 	      {
 		Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, LzMax, TotalTz, TotalY, MemorySpace);

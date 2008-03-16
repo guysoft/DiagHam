@@ -12,9 +12,9 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
-#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
-#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
-#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzZ3Symmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinZ3Symmetry.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -30,7 +30,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHESphereWithSpinConvertSymmetrizedState" , "0.01");
+  OptionManager Manager ("FQHESphereWithSU3SpinConvertSymmetrizedState" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
@@ -41,20 +41,20 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('t', "total-tz", "twice the quantum number of the system associated to the Tz generator", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "total-y", "three time the quantum number of the system associated to the Y generator", 0);
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
-  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
-  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "z3symmetrized-basis", "use Z3 symmetrized version of the basis (only valid if total-y=0 and total-tz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of _*sym_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereWithSpinConvertSymmetrizedState -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereWithSU3SpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
   if (((SingleStringOption*) Manager["input-file"])->GetString() == 0)
     {
-      cout << "error, one input file should be provided. See man page for option syntax or type FQHESphereWithSpinConvertSymmetrizedState -h" << endl;
+      cout << "error, one input file should be provided. See man page for option syntax or type FQHESphereWithSU3SpinConvertSymmetrizedState -h" << endl;
       return -1;
     }
   if (IsFile(((SingleStringOption*) Manager["input-file"])->GetString()) == false)
@@ -76,30 +76,33 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger(); 
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
+  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
   bool SymmetrizeFlag = ((BooleanOption*) Manager["symmetrize"])->GetBoolean();
-  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
+  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
+  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
+  bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
   bool Statistics = true;
+  bool LzSymmetrizedBasis = false;
+  bool LzMinusParity = false;
   long MemorySpace = 9l << 20;
-  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), NbrParticles, LzMax, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
-							   LzSymmetrizedBasis, LzMinusParity, Statistics) == false)
+  if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(), 
+							      NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
+							      TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
+							      LzSymmetrizedBasis, LzMinusParity, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;
     }
       
-  if (((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean() == true)
+  if (((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean() == true)
     {
-      LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-      LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
+      Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
     }
-  if (((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean() == true)
+  if (((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean() == true)
     {
-      SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-      SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+      TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
+      TzMinusParity = ((BooleanOption*) Manager["minustszparity"])->GetBoolean();
     }
   if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
     {
@@ -108,7 +111,7 @@ int main(int argc, char** argv)
       else
 	Statistics = true;
     }
-  if (((NbrParticles * LzMax) & 1) != (TotalLz & 1))
+  if (((NbrParticles * LzMax) & 1) != (TotalLz != 0))
     {
       cout << "incompatible values for nbr-particles, nbr-flux and total-lz" << endl;
       return -1;
@@ -125,15 +128,15 @@ int main(int argc, char** argv)
   if (Statistics == true)
     {
       RealVector OutputState;
-      FermionOnSphereWithSpinLzSzSymmetry* InitialSpace = 0;
-      if (SzSymmetrizedBasis == true) 
-	if (LzSymmetrizedBasis == false)
-	  InitialSpace = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+      FermionOnSphereWithSU3SpinTzSymmetry* InitialSpace = 0;
+      if (TzSymmetrizedBasis == true) 
+	if (Z3SymmetrizedBasis == false)
+	  InitialSpace = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, TzMinusParity, MemorySpace);
 	else
-	  InitialSpace = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
+	  InitialSpace = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, TzMinusParity, MemorySpace);
       else
-	InitialSpace = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
-      FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, LzMax, TotalSz);
+	InitialSpace = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrParticles, TotalLz, LzMax, MemorySpace);
+      FermionOnSphereWithSU3Spin TargetSpace(NbrParticles, TotalLz, LzMax, TotalTz, TotalY, MemorySpace);
       if (SymmetrizeFlag)
 	{
 	  if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())

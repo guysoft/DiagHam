@@ -90,15 +90,14 @@ bool FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(char* filename, int& n
 // y = reference to three time the Y quantum number (grab it only if initial value is 0)
 // tzSymmetry = reference on the flag for the Tz<->-Tz symmetry
 // tzSymmetryMinusParity = reference on the flag for the minus parity sector of the Y<->-Y symmetry
-// ySymmetry = reference on the flag for the Y<->-Y symmetry
-// ySymmetryMinusParity = reference on the flag for the minus parity sector of the Y<->-Y symmetry
+// ySymmetry = reference on the flag for the Z3 symmetry
 // lzSymmetry = reference on the flag for the Lz<->-Lz symmetry
 // lzSymmetryMinusParity = reference on the flag for the minus parity sector of the Lz<->-Lz symmetry
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // return value = true if no error occured
 bool FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lzMax, int& lz, int& tz, int& y,
 							     bool& tzSymmetry, bool& tzSymmetryMinusParity,  bool& ySymmetry, 
-							     bool& ySymmetryMinusParity, bool& lzSymmetry, 
+							     bool& lzSymmetry, 
 							     bool& lzSymmetryMinusParity, bool& statistics);
 
 // try to guess system information from file name for system with an SU(4) degree of freedom

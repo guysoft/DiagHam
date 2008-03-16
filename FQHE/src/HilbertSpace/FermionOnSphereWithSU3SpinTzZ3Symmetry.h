@@ -90,6 +90,20 @@ class FermionOnSphereWithSU3SpinTzZ3Symmetry :  public FermionOnSphereWithSU3Spi
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
+
  protected:
 
   // get canonical expression of a given state
@@ -337,16 +351,10 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
 {
   unsigned long TmpState2 = state;
   unsigned long TmpSign = this->GetSignedCanonicalState(state);
-//  cout << hex << TmpSign << " " << TmpState2 << " " << state << " ";
   if ((TmpSign & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
     {
-//      cout << "FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT ";
       if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) < 0.0)
-	{
-//	  cout << endl;
-	  return this->HilbertSpaceDimension;
-	}
-//      cout << dec << this->TzParitySign << endl;      
+	return this->HilbertSpaceDimension;
       if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) == 0x0ul)
 	coefficient *= MSQRT3;
       if ((this->ProdASignature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) == 0x0ul)
@@ -361,16 +369,13 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
     --NewLzMax;
   if ((TmpSign  & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
     {
-      //      cout << "FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT " << hex << TmpState2 << " " << state << dec << endl;
       if ((this->GetStateDoubletTripletParity(TmpState2) * this->TzParitySign) < 0.0)
 	{
-//	  cout << endl;
 	  return this->HilbertSpaceDimension;
 	}
       if (TmpState2 != state)
 	{
 	  coefficient *= this->GetStateRotationSign(TmpState2, TmpSign);
-	  //	  cout << this->GetStateRotationSign(TmpState2, TmpSign) << " " << hex << TmpSign << dec << endl;
 	}
       if ((this->ProdASignature & FERMION_SPHERE_SU3_Z3_SYMMETRIC_BIT) != 0x0ul)
 	coefficient *= MSQRT1_3;
@@ -379,10 +384,8 @@ inline int FermionOnSphereWithSU3SpinTzZ3Symmetry::SymmetrizeAdAdResult(unsigned
 	  coefficient *= M_SQRT2;
       return this->FindStateIndex(state, NewLzMax);
    }
-//  cout << "NONE ";
   if (TmpState2 != state)
     {
-      //      cout << hex << TmpState2 << " " 
       if ((TmpSign &  FERMION_SPHERE_SU3_TZ_FLIP_BIT) != 0x0ul)
 	{
 	  coefficient *= this->GetStateSingletTzParity(state);

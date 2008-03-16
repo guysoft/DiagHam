@@ -392,9 +392,9 @@ void ParticleOnSphereWithSU3SpinL2Hamiltonian::EvaluateInteractionFactors()
     }
    for (int m3 = 0; m3 < this->LzMax; ++m3)
      {
-       this->M12InteractionFactors11[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
-       this->M12InteractionFactors22[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
-       this->M12InteractionFactors33[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
+       this->M12InteractionFactors12[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
+       this->M12InteractionFactors13[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
+       this->M12InteractionFactors23[TmpNbrM12InterIndices] = Factor * Coefficients(m3, this->LzMax);
       ++TmpNbrM12InterIndices;
        this->M1InterValue[this->NbrM12InterIndices] = m3;
        this->M2InterValue[this->NbrM12InterIndices] = this->LzMax;

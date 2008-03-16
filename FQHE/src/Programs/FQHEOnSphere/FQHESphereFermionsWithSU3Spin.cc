@@ -374,16 +374,15 @@ int main(int argc, char** argv)
       else
 	{
 #ifdef __64_BITS__
-	  if (LzMax >= 20)
+	  if (LzMax > 20)
 #else
-	    if (LzMax >= 9)
+	    if (LzMax > 9)
 #endif
 	      {
 		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 		return -1;
 	      }	
 	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
-//	    if (LzSymmetrizedBasis == false)
 	    {
 	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
 		{

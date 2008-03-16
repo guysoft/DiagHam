@@ -797,3 +797,78 @@ int FermionOnSphereWithSU3SpinTzSymmetry::Ad3Ad3 (int m1, int m2, double& coeffi
   return SymmetrizeAdAdResult(TmpState, coefficient);
 }
 
+// convert a given state from symmetric basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector  
+
+RealVector FermionOnSphereWithSU3SpinTzSymmetry::ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = nbodyBasis.StateDescription[i];
+      unsigned long TmpState2 = TmpState;
+      Signature = this->GetSignedCanonicalState(TmpState);
+      NewLzMax = 2 + (this->LzMax * 3);
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      if ((Signature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	{
+	  if ((this->GetStateSingletTzParity(TmpState2) * this->TzParitySign) > 0.0)
+	    {
+	      TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	    }
+	}
+      else
+	{
+	  if (TmpState2 != TmpState)	    
+	    TmpVector[i] = this->GetStateSingletTzParity(TmpState2) * this->TzParitySign * M_SQRT1_2 * state[this->FindStateIndex(TmpState, NewLzMax)];
+	  else
+	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+	}
+    }
+  return TmpVector;  
+}
+
+// convert a given state from the usual n-body basis to the symmetric basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereWithSU3SpinTzSymmetry::ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis)
+{
+  RealVector TmpVector (this->GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long Signature;  
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = nbodyBasis.StateDescription[i];
+      unsigned long TmpState2 = TmpState;
+      Signature = this->GetSignedCanonicalState(TmpState);
+      NewLzMax = 2 + (this->LzMax * 3);
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      if ((Signature & FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT) != 0x0ul)
+	{
+	  if ((this->GetStateSingletTzParity(TmpState2) * this->TzParitySign) > 0.0)
+	    {
+	      TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i];
+	    }
+	}
+      else
+	{
+	  if (TmpState2 != TmpState)	    
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = this->GetStateSingletTzParity(TmpState2) * this->TzParitySign * M_SQRT1_2 * state[i];
+	  else
+	    TmpVector[this->FindStateIndex(TmpState, NewLzMax)] = state[i] * M_SQRT1_2;
+	}
+    }
+  return TmpVector;  
+}

@@ -25,11 +25,11 @@
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
-// #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
-// #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
-// #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinZ3Symmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSU3SpinTzZ3Symmetry.h"
 
-#include "Hamiltonian/ParticleOnSphereWithSpinSU3L2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSU3SpinL2Hamiltonian.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHESphereWithSpinLValue" , "0.01");
+  OptionManager Manager ("FQHESphereWithSU3SpinLValue" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -63,26 +63,23 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('t', "total-tz", "twice the quantum number of the system associated to the Tz generator", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "total-y", "three time the quantum number of the system associated to the Y generator", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
-  (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "do not compute the S^2 value of the state");
-//  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-//  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-//  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
-//  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0, override auto-detection from file name)");
-  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0, override auto-detection from file name)");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "z3symmetrized-basis", "use Z3 symmetrized version of the basis (only valid if total-y=0 and total-tz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "show-extracted", "show values extracted from file name");
-//  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereWithSpinLValue -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereWithSU3SpinLValue -h" << endl;
       return -1;
     }
   
@@ -94,23 +91,26 @@ int main(int argc, char** argv)
 
   if(((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
-      cout << "no input state" << endl << "see man page for option syntax or type FQHESphereLValue -h" << endl;
+      cout << "no input state" << endl << "see man page for option syntax or type FQHESphereWithSU3SpinLValue -h" << endl;
       return -1;
     }
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
-  int TotalTz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+  int TotalTz = ((SingleIntegerOption*) Manager["total-tz"])->GetInteger();
+  int TotalY = ((SingleIntegerOption*) Manager["total-y"])->GetInteger();
   bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
+  bool TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
+  bool Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
+  bool TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
   bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
   bool FermionFlag = false;
   if (((SingleStringOption*) Manager["statistics"])->GetString() == 0)
     FermionFlag = true;
   if (NbrParticles==0)
-    if (FQHEOnSphereWitSU3hSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalTz, SzSymmetrizedBasis, SzMinusParity, 
+    if (FQHEOnSphereWithSU3SpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, LzMax, TotalLz, TotalTz, TotalY,
+								TzSymmetrizedBasis, TzMinusParity, Z3SymmetrizedBasis,
 								LzSymmetrizedBasis, LzMinusParity, FermionFlag) == false)
       {
 	return -1;
@@ -128,13 +128,17 @@ int main(int argc, char** argv)
 		else
 		  cout << "(plus parity) ";
 	      }
-	    if (SzSymmetrizedBasis == true)
+	    if (TzSymmetrizedBasis == true)
 	      {
-		cout << "  Sz symmetrized basis ";
-		if (SzMinusParity == true)
+		cout << "  Tz symmetrized basis ";
+		if (TzMinusParity == true)
 		  cout << "(minus parity) ";
 		else
 		  cout << "(plus parity) ";
+	      }
+	    if (Z3SymmetrizedBasis == true)
+	      {
+		cout << "  Z3 symmetrized basis ";
 	      }
 	    cout << endl;
 	  }
@@ -144,10 +148,14 @@ int main(int argc, char** argv)
       LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
       LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();      
     }
-  if (((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean() == true)
+  if (((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean() == true)
     {
-      SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-      SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
+      TzSymmetrizedBasis = ((BooleanOption*) Manager["tzsymmetrized-basis"])->GetBoolean();
+      TzMinusParity = ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean();
+    }
+  if (((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean() == true)
+    {
+      Z3SymmetrizedBasis = ((BooleanOption*) Manager["z3symmetrized-basis"])->GetBoolean();
     }
   if (((SingleStringOption*) Manager["statistics"])->GetString() != 0)
     if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
@@ -185,48 +193,87 @@ int main(int argc, char** argv)
 
 
   long MemorySpace = 9l << 20;
-  ParticleOnSphereWithSpin* Space;
+  ParticleOnSphereWithSU3Spin* Space;
   if (FermionFlag == true)
     {
+      if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == false))
+	{
 #ifdef __64_BITS__
-      if (LzMax <= 20)
+	  if (LzMax <= 20)
 #else
-      if (LzMax <= 9)
+	    if (LzMax <= 9)
 #endif
-        {
-	  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-	    Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, LzMax, TotalTz, TotalY, MemorySpace);
-// 	  else
-// 	    {
-// 	      if (SzSymmetrizedBasis == true) 
-// 		if (LzSymmetrizedBasis == false)
-// 		  {
-// 		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-// 		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
-// 		    else
-// 		      Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-// 		  }
-// 		else
-// 		  {
-// 		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-// 		      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
-// 		    else
-// 		      Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-// 		  }
-// 	      else
-// 		{
-// 		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-// 		    Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalTz, LzMinusParity, MemorySpace);
-// 		  else
-// 		    Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
-// 		}
-// 	    }
-        }
+	      {
+		Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, LzMax, TotalTz, TotalY, MemorySpace);
+	      }
+	    else
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	}
       else
 	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
+#ifdef __64_BITS__
+	  if (LzMax > 20)
+#else
+	    if (LzMax > 9)
+#endif
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
+	    {
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		{
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrParticles, TotalLz, LzMax, TotalY, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
+		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    {
+		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      return 0;
+		    }
+		}
+	      else
+		{
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		}
+	    }
+	  else
+	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
+	      {
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		  {
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrParticles, TotalLz, LzMax, TotalTz, MemorySpace);
+		    if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		      {
+			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			return 0;
+		      }
+		  }
+		else
+		  {
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  }
+	      }
+	    else
+	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
+		{
+		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+		    {
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrParticles, TotalLz, LzMax, ((BooleanOption*) Manager["minus-tzparity"])->GetBoolean(), MemorySpace);
+		      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+			{
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+			  return 0;
+			}
+		    }
+		  else
+		    {
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		    }
+		}
+	}
     }
   else
     {
@@ -239,7 +286,7 @@ int main(int argc, char** argv)
       cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
-  ParticleOnSphereWithSpinL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0);
+  ParticleOnSphereWithSU3SpinL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0);
   RealVector TmpState(Space->GetHilbertSpaceDimension());
   VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &State, &TmpState);
   Operation.ApplyOperation(Architecture.GetArchitecture());
@@ -247,16 +294,6 @@ int main(int argc, char** argv)
   double RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
   cout << "<L^2> = " << L2Value << endl
        << "<L> = " << RawTmpAngularMomentum << endl;
-//   if (((BooleanOption*) Manager["no-spin"])->GetBoolean() == false)
-//     {
-//       ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalTz, Architecture.GetArchitecture(), 1.0, 0);
-//       VectorHamiltonianMultiplyOperation Operation2 (&Hamiltonian2, &State, &TmpState);
-//       Operation2.ApplyOperation(Architecture.GetArchitecture());
-//       L2Value = TmpState * State;
-//       RawTmpAngularMomentum = 0.5 * (sqrt ((4.0 * L2Value) + 1.0) - 1.0);
-//       cout << "<S^2> = " << L2Value << endl
-// 	   << "<S> = " << RawTmpAngularMomentum << endl;
-//     }
   delete Space;
   return 0;
 }

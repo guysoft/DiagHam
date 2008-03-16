@@ -90,6 +90,20 @@ class FermionOnSphereWithSU3SpinZ3Symmetry :  public FermionOnSphereWithSU3SpinT
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the symmetric basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereWithSU3Spin& nbodyBasis);
+
  protected:
 
   // get canonical expression of a given state
