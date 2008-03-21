@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FQHEWaveFunction/HalperinOnSphereWaveFunction.h"
 #include "Vector/RealVector.h"
+#include "Matrix/ComplexMatrix.h"
 
 
 // constructor
@@ -150,3 +151,63 @@ Complex HalperinOnSphereWaveFunction::operator ()(RealVector& x)
     }
   return TotalWaveFunction;
 }
+
+// evaluate function at a given point
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
+
+Complex HalperinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+{
+  Complex TotalWaveFunction(1.0);
+  Complex TmpU;
+  Complex TmpV;
+  ComplexMatrix TmpPerm (this->NbrSpinUpParticles, this->NbrSpinUpParticles, true);
+  if (this->M1Index > 0)
+    {
+      Complex WaveFunction(1.0);
+      for (int i = 0; i < this->NbrSpinUpParticles; ++i)
+	{
+	  TmpU = uv[2 * i];
+	  TmpV = uv[2 * i + 1];
+	  for (int j = i + 1; j < this->NbrSpinUpParticles; ++j)
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	}
+      for (int i = 0; i < this->M1Index; ++i)
+	TotalWaveFunction *= WaveFunction;
+    }
+  if (this->M2Index > 0)
+    {
+      Complex WaveFunction(1.0);
+      for (int i = this->NbrSpinUpParticles; i < this->TotalNbrParticles; ++i)
+	{
+	  TmpU = uv[2 * i];
+	  TmpV = uv[2 * i + 1];
+	  for (int j = i + 1; j < this->TotalNbrParticles; ++j)
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	}
+      for (int i = 0; i < this->M2Index; ++i)
+	TotalWaveFunction *= WaveFunction;
+    }
+   if (this->NIndex > 0)
+     {
+       Complex WaveFunction(1.0);
+       for (int i = 0; i < this->NbrSpinUpParticles; ++i)
+ 	{
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
+ 	  for (int j = this->NbrSpinUpParticles; j < this->TotalNbrParticles; ++j)
+	    {
+	      WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      TmpPerm.SetMatrixElement(i, j - this->NbrSpinUpParticles, 1.0 / ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j])));
+	    }	  
+ 	}
+       for (int i = 0; i < this->NIndex; ++i)
+	 TotalWaveFunction *= WaveFunction;
+       TotalWaveFunction *= TmpPerm.Permanent();
+     }
+  return TotalWaveFunction;
+}
+

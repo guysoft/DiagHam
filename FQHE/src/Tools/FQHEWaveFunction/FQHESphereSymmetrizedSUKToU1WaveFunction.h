@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Halperin wave function on sphere                 //
+//            class of U(1) wave function obtained form symmetrization of a   //
+//                        SU(K) wave function on sphere                       //
 //                                                                            //
-//                        last modification : 11/11/2006                      //
+//                        last modification : 17/03/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,64 +29,73 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef HALPERINONSPHEREWAVEFUNCTION_H
-#define HALPERINONSPHEREWAVEFUNCTION_H
+#ifndef FQHESPHERESYMMETRIZEDSUKTOU1WAVEFUNCTION_H
+#define FQHESPHERESYMMETRIZEDSUKTOU1WAVEFUNCTION_H
 
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
-class HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class FQHESphereSymmetrizedSUKToU1WaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
 
-  // number of particles with spin up
-  int NbrSpinUpParticles;
-  // number of particles with spin down
-  int NbrSpinDownParticles;
-  // total number of particles
-  int TotalNbrParticles;
+  // number of particles
+  int NbrParticles;
 
-  // m1 index ( (m1, m2, n) Halperin wave function)
-  int M1Index;
-  // m2 index ( (m1, m2, n) Halperin wave function)
-  int M2Index;
-  // n index ( (m1, m2, n) Halperin wave function)
-  int NIndex;
+  // number of particles per color
+  int NbrParticlesPerColor;
 
-  // temporary arrays used during wave function evaluation
-  Complex* UCoordinates;
-  Complex* VCoordinates;
+  // K index (i.e. SU(K))
+  int KValue;
+
+  // true if the final state should be a fermionic state
+  bool FermionFlag;  
+
+  // internal storage of spinor coordinates
+  Complex* SpinorUCoordinates;
+  Complex* SpinorVCoordinates;
+
+  // pointer to the base SU(K) wave function
+  Abstract1DComplexFunctionOnSphere* SUKWaveFunction;
+  
+  // array containing description of each permutation that appears in the calculation symmetrization process
+  unsigned long** Permutations;
+  // number of permutations that appears in the symmetrization process
+  unsigned long NbrPermutations;
+
+  unsigned long* ColorPermutations;
+  // garable flag associated to the Permutations array
+  GarbageFlag Flag;
 
  public:
 
   // constructor
   //
-  // nbrSpinUpParticles = number of particles with spin up
-  // nbrSpinDownParticles = number of particles with spin down
-  // m1Index = m1 index ( (m1, m2, n) Halperin wave function)
-  // m2Index = m2 index ( (m1, m2, n) Halperin wave function)
-  // nIndex = n index ( (m1, m2, n) Halperin wave function)
-  HalperinOnSphereWaveFunction(int nbrSpinUpParticles, int nbrSpinDownParticles, int m1Index, int m2Index, int nIndex);
+  // nbrParticles = number of particles
+  // kValue = number of particle per cluster
+  // sUKWavefunction = pointer to the base SU(K) wave function
+  // fermionFlag = true if the final state should be a fermionic state
+  FQHESphereSymmetrizedSUKToU1WaveFunction(int nbrParticles, int kValue, Abstract1DComplexFunctionOnSphere* sUKWavefunction, bool fermionFlag = false);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  HalperinOnSphereWaveFunction(const HalperinOnSphereWaveFunction& function);
+  FQHESphereSymmetrizedSUKToU1WaveFunction(const FQHESphereSymmetrizedSUKToU1WaveFunction& function);
 
   // destructor
   //
-   ~HalperinOnSphereWaveFunction();
+  ~FQHESphereSymmetrizedSUKToU1WaveFunction();
 
   // clone function 
   //
   // return value = clone of the function 
   Abstract1DComplexFunction* Clone ();
 
-  // evaluate function at a given point (the first 2*nbrSpinUpParticles coordinates correspond to the position of the spin up particles, 
-  //                                     the other 2*nbrSpinDownParticles are spin down particle positions)
+  // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
@@ -98,6 +108,12 @@ class HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
   // return value = function value at (uv)
   Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
+ private:
+
+  // evaluate all permutations requested to symmetrize the SU(K) state
+  //
+  void EvaluatePermutations();
 
 };
 
