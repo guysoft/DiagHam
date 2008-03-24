@@ -34,4 +34,8 @@ HundRuleBilayerSinglet.cc \
 SlaterSuperposition.cc \
 SlaterComponent.cc \
 SU3HalperinOnSphereWaveFunction.cc \
+AdvancedMooreReadOnSphereWaveFunction.cc \
+ReadRezayiOnSphereBlock.cc \
+ExplicitMooreReadOnSphereWaveFunction.cc \
+PairedCFOnSphere2QHWaveFunction.cc \
 FQHESphereSymmetrizedSUKToU1WaveFunction.cc

@@ -37,10 +37,13 @@
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/ExplicitMooreReadOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/AdvancedMooreReadOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereTwoQuasiholeWaveFunction.h"
 #include "Tools/FQHEWaveFunction/UnprojectedJainCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PairedCFOnSphere2QHWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
@@ -95,7 +98,10 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new SingleDoubleOption  ('\n', "MR-coeff", "coefficient for Moore-Read contribution (pairedcf only)",1.0);
       (*WaveFunctionGroup) += new MultipleDoubleOption  ('\n', "pair-coeff", "sequence of pairing coefficients (pairedcf only)",'+');
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
+      (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (MR)");
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (pairedQH only)",',');
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "QHMC-iter", "Number of MC steps for internal MC (pairedQH only)", 1000);
     }
   else if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
     {
@@ -127,10 +133,12 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * pfaffian : pfaffian state wave function" << endl;
       str << "  * pfaffian2qh : pfaffian state wave function with 2 quasiholes" << endl;
       str << "  * read : Read-Rezayi state wave function" << endl;
+      str << "  * MR : Moore-Read wave function (using blocks)" << endl;
       str << "  * filledcf : composite fermions wave function (only with filled pseudo Landau levels)" << endl;
       str << "  * genericcf : generic composite fermions wave function" << endl;            
       str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
       str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
+      str << "  * pairedQH : paired composite fermion wave function with two quasi-holes at flux 2N-2" << endl;
       str << "  * hund : composite fermion state, if half filled highest shell using Hund's rule" << endl;
     }
   else
@@ -194,6 +202,27 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  return new MooreReadOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), 
 						   this->Options->GetInteger("cluster-size"));
 	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "MR") == 0)
+	{
+	  int N=this->Options->GetInteger("nbr-particles");
+	  if (N%2 != 0)
+	    {
+	      cout << "Number of particles has to be a multiple of the Cluster-size (set to 2)!"<<endl;
+	      exit(1);
+	    }
+	  return new AdvancedMooreReadOnSphereWaveFunction(N/2, this->Options->GetBoolean("fermion-state"));
+	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "ExplicitMR") == 0)
+	{
+	  int N=this->Options->GetInteger("nbr-particles");
+	  int ClusterSize = this->Options->GetInteger("cluster-size");
+	  if (N%ClusterSize != 0)
+	    {
+	      cout << "Number of particles has to be a multiple of the Cluster-size!"<<endl;
+	      exit(1);
+	    }
+	  return new ExplicitMooreReadOnSphereWaveFunction(N/ClusterSize,ClusterSize,this->Options->GetBoolean("fermion-state"));
+	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "filledcf") == 0)
 	{
 	  return new JainCFFilledLevelOnSphereWaveFunction(this->Options->GetInteger("nbr-particles"), 
@@ -222,6 +251,32 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  double MR =this->Options->GetDouble("MR-coeff");
 	  bool conventions = this->Options->GetBoolean("pair-compatibility");
 	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
+	  rst->AdaptAverageMCNorm();
+	  delete [] Coefficients;
+	  return rst;
+	}
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedQH") == 0))
+	{
+	  int N= this->Options->GetInteger("nbr-particles");
+	  int J;
+	  int M=0;
+	  int i;
+	  int *QuantumNumbers = this->Options->GetIntegers("JM-Values",i);
+	  if (i>0) J=QuantumNumbers[0];
+	  else J=N/2;
+	  if (i>1) M=QuantumNumbers[1];
+	  int LL;	  
+	  double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
+	  if (Coefficients==NULL)
+	    {
+	      Coefficients = new double[1];
+	      Coefficients[0]=0.0;
+	      LL=1;
+	    }
+	  double MR =this->Options->GetDouble("MR-coeff");
+	  int QHMCSteps = this->Options->GetInteger("QHMC-iter");
+	  bool conventions = this->Options->GetBoolean("pair-compatibility");
+	  PairedCFOnSphere2QHWaveFunction* rst = new PairedCFOnSphere2QHWaveFunction(N, LL, -1, J, M, MR, Coefficients, QHMCSteps, conventions, 2);
 	  rst->AdaptAverageMCNorm();
 	  delete [] Coefficients;
 	  return rst;

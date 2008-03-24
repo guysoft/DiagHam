@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                 class of function basis for particle on sphere             //
+//              class of Moore Read state wave function on sphere             //
 //                                                                            //
-//                        last modification : 10/12/2002                      //
+//                        last modification : 19/09/2004                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,73 +28,66 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREFUNCTIONBASIS_H
-#define PARTICLEONSPHEREFUNCTIONBASIS_H
+#ifndef READREZAYIONSPHEREBLOCK_H
+#define READREZAYIONSPHEREBLOCK_H
 
 
 #include "config.h"
-#include "FunctionBasis/AbstractFunctionBasis.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
-class ParticleOnSphereFunctionBasis: public AbstractFunctionBasis
+class ReadRezayiOnSphereBlock: public Abstract1DComplexFunction
 {
 
  protected:
 
-  // twice the maximum Lz value reached by a particle
-  int LzMax;
-  
-  // array containing numerical prefactor of each function
-  double* Prefactor;
+  // number of particles
+  int NbrParticles;
 
-  // Chirality of the phase
-  int Chirality;
+  // number of particle per cluster
+  int ClusterSize;
+
+  // number of clusters
+  int NbrClusters;
+
+  // internal storage of spinor coordinates
+  Complex* SpinorUCoordinates;
+  Complex* SpinorVCoordinates;
+
+  // garable flag associated to the Permutations array
+  GarbageFlag Flag;
 
  public:
-
-  enum
-    {
-      RightHanded = +1,
-      LeftHanded = -1
-    };
-
+  
   // constructor
   //
-  // lzMax = twice the maximum Lz value reached by a particle
-  // chirality = flag that allows to choose between either one of two conventions for
-  // the phase of the orbitals
-  ParticleOnSphereFunctionBasis(int lzMax, int chirality=ParticleOnSphereFunctionBasis::RightHanded);
+  // nbrParticlesPerCluster = number of particles per cluster (=N/2)
+  // nbrCluster = number of clusters
+  ReadRezayiOnSphereBlock(int nbrParticlesPerCluster, int nbrCluster);
+    
+  // copy constructor
+  //
+  // function = reference on the wave function to copy
+  ReadRezayiOnSphereBlock(const ReadRezayiOnSphereBlock& function);
 
   // destructor
   //
-  ~ParticleOnSphereFunctionBasis ();
+  ~ReadRezayiOnSphereBlock();
 
-  // get value of the i-th function at a given point (for functions which take values in C)
+  // clone function 
   //
-  // value = reference on the value where the function has to be evaluated
-  // result = reference on the value where the result has to be stored
-  // index = function index 
-  void GetFunctionValue(RealVector& value, Complex& result, int index);
+  // return value = clone of the function 
+  Abstract1DComplexFunction* Clone ();
 
-  // get value of the i-th function at a given point (for functions which take values in C)
+  // evaluate function at a given point
   //
-  // (U, V) = spinor coordinates of point where basis has to be evaluated
-  // result = reference on the vector with values of the basis
-  void GetAllFunctionValues(Complex U, Complex V, Complex *result);
+  // x = point where the function has to be evaluated
+  // return value = function value at x  
+  Complex operator ()(RealVector& x);  
 
-  // get value of the i-th function at a given point (theta, phi=0), which happens to be real
-  //
-  // theta = reference on the value where the function has to be evaluated
-  // index = function index 
-
-  double GetRealFunctionValue(double theta, int index);
-
-  // calculate them all:
-  void GetRealFunctionValues(double theta, double *result);
-
-
+ private:
+  
 };
 
 #endif
-
-

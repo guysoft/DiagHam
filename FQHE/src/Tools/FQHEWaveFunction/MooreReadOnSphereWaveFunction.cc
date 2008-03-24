@@ -57,6 +57,7 @@ MooreReadOnSphereWaveFunction::MooreReadOnSphereWaveFunction(int nbrParticles, i
   this->SpinorUCoordinates = new Complex[this->NbrParticles];
   this->SpinorVCoordinates = new Complex[this->NbrParticles];
   this->EvaluatePermutations();
+  cout << "NbrPermutations="<<NbrPermutations<<endl;
   this->Flag.Initialize();
 }
 
@@ -105,16 +106,31 @@ Abstract1DComplexFunction* MooreReadOnSphereWaveFunction::Clone ()
 
 Complex MooreReadOnSphereWaveFunction::operator ()(RealVector& x)
 {  
+  // for (int i = 0; i < this->NbrParticles; ++i)
+//     {
+//       SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+//       SpinorUCoordinates[i].Im = SpinorUCoordinates[i].Re;
+//       SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+//       SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
+//       SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+//       SpinorVCoordinates[i].Im = SpinorVCoordinates[i].Re;
+//       SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
+//       SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
+//     }
+
+  // CalculateSpinors
+  double s,c;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
-      SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
-      SpinorUCoordinates[i].Im = SpinorUCoordinates[i].Re;
-      SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-      SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
-      SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
-      SpinorVCoordinates[i].Im = SpinorVCoordinates[i].Re;
-      SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-      SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= c;
+      this->SpinorVCoordinates[i].Im *= s;
+      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
     }
 
   return this->ComplexEvaluations();
@@ -325,5 +341,8 @@ Complex MooreReadOnSphereWaveFunction::ComplexEvaluations()
 	  }
       Value += Tmp;
     }
+  for (int i = 0; i < this->NbrParticles; ++i)
+    for (int j = 0; j < i; ++j)
+      Value *=  (this->SpinorUCoordinates[i] * this->SpinorVCoordinates[j]) - (this->SpinorUCoordinates[j] * this->SpinorVCoordinates[i]);
   return Value;
 }

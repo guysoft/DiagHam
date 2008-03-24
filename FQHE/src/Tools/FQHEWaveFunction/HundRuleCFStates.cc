@@ -218,7 +218,12 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
 	      int q=0;
 	      for(int l=0; l<NbrParticlesInHighestShell; ++l)
 		{
-		  if ((q==avoid1)||(k==avoid2)) ++q;
+		  if ((q==avoid1)||(q==avoid2))
+		    {
+		      ++q;
+		      if ((q==avoid1)||(q==avoid2))
+			++q;
+		    }
 		  tmpI[l]=q++;
 		}
 	      this->TermsPerLz[i][k]=SlaterComponent(VectorCoupling.GetCoefficient (TmpM1[k], TmpM2[k],
