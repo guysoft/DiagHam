@@ -78,6 +78,14 @@ class ParticleOnSphereFunctionBasis: public AbstractFunctionBasis
 
   // get value of the i-th function at a given point (for functions which take values in C)
   //
+  // value = reference on the value where the function has to be evaluated
+  // result = reference on the value where the result has to be stored
+  // index = function index 
+  // terrible performance, to be used only for testing
+  void GetFunctionValue(Complex U, Complex V, Complex& result, int index);
+
+  // get value of the i-th function at a given point (for functions which take values in C)
+  //
   // (U, V) = spinor coordinates of point where basis has to be evaluated
   // result = reference on the vector with values of the basis
   void GetAllFunctionValues(Complex U, Complex V, Complex *result);

@@ -100,8 +100,8 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (MR)");
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
-      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (pairedQH only)",',');
-      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "QHMC-iter", "Number of MC steps for internal MC (pairedQH only)", 1000);
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (paired2QH only)",',');
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "QHMC-iter", "Number of MC steps for internal MC (paired2QH only)", 1000);
     }
   else if (this->GeometryID & QHEWaveFunctionManager::SphereWithSpinGeometry)
     {
@@ -138,7 +138,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
       str << "  * genericcf : generic composite fermions wave function" << endl;            
       str << "  * unprojectedcf : generic unprojected composite fermions wave function" << endl;
       str << "  * pairedcf : paired composite fermion wave function at flux 2N-3" << endl;
-      str << "  * pairedQH : paired composite fermion wave function with two quasi-holes at flux 2N-2" << endl;
+      str << "  * paired2QH : paired composite fermion wave function with two quasi-holes at flux 2N-2" << endl;
       str << "  * hund : composite fermion state, if half filled highest shell using Hund's rule" << endl;
     }
   else
@@ -195,7 +195,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "pfaffian2qh") == 0)
 	{
-	  return new PfaffianOnSphereTwoQuasiholeWaveFunction(this->Options->GetInteger("nbr-particles"), 0.0, 0.0, M_PI, 0.0);
+	  return new PfaffianOnSphereTwoQuasiholeWaveFunction(this->Options->GetInteger("nbr-particles"), 0.0, 0.0, M_PI, 0.0, this->Options->GetBoolean("fermion-state"));
 	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "read") == 0)
 	{

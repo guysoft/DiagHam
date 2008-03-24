@@ -83,6 +83,9 @@ class PairedCFOnSphere2QHWaveFunction: public Abstract1DComplexTrialFunctionOnSp
   // Basis functions for quasiholes
   ParticleOnSphereFunctionBasis *QHBasis;
 
+  // Twice the maximum angular momentum of a quasi-hole:
+  int QHLzMax;
+
   // number of MC steps used for internal integration over QP coordinates
   int QuasiParticleMCSteps;
 

@@ -41,11 +41,36 @@
 // phi1 = position of the first quasihole (spherical coordinates, phi angle)
 // theta2 = position of the second quasihole (spherical coordinates, theta angle)
 // phi2 = position of the second quasihole (spherical coordinates, phi angle)
+// fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
 
-PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFunction(int nbrParticles, double theta1, double phi1, double theta2, double phi2)
+PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFunction(int nbrParticles, double theta1, double phi1, double theta2, double phi2, bool fermions)
 {
   this->NbrParticles = nbrParticles;
+  this->Theta1=theta1;
+  this->Phi1=phi1;
+  this->Theta2=theta2;
+  this->Phi2=phi2;
+  
+  this->U1.Re=cos(0.5*phi1);
+  this->U1.Im=-sin(0.5*phi1);
+  this->U1*=cos(0.5*theta1);
+
+  this->V1.Re=cos(0.5*phi1);
+  this->V1.Im=sin(0.5*phi1);
+  this->V1*=sin(0.5*theta1);
+  
+  this->U2.Re=cos(0.5*phi2);
+  this->U2.Im=-sin(0.5*phi2);
+  this->U2*=cos(0.5*theta2);
+
+  this->V2.Re=cos(0.5*phi2);
+  this->V2.Im=sin(0.5*phi2);
+  this->V2*=sin(0.5*theta2);
+
+  this->FermionFlag = fermions;
 }
+
+
 
 // copy constructor
 //
@@ -54,6 +79,15 @@ PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFuncti
 PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFunction(const PfaffianOnSphereTwoQuasiholeWaveFunction& function)
 {
   this->NbrParticles = function.NbrParticles;
+  this->Theta1=function.Theta1;
+  this->Phi1=function.Phi1;
+  this->Theta2=function.Theta2;
+  this->Phi2=function.Phi2;
+  this->U1=function.U1;
+  this->V1=function.V1;
+  this->U2=function.U2;
+  this->V2=function.V2;
+  this->FermionFlag=function.FermionFlag;
 }
 
 // destructor
@@ -79,7 +113,7 @@ Abstract1DComplexFunction* PfaffianOnSphereTwoQuasiholeWaveFunction::Clone ()
 
 Complex PfaffianOnSphereTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 {
-  Complex Tmp;
+  Complex Tmp, T1, T2, T3, T4;
   ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
   Complex WaveFunction(1.0);
   double Theta;
@@ -93,7 +127,21 @@ Complex PfaffianOnSphereTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 	  Tmp.Re = sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
 	  Tmp.Im = sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
 	  WaveFunction *= Tmp;
-	  Tmp = 1.0 / Tmp;
+	  if (FermionFlag)
+	    WaveFunction *= Tmp;
+	  T1.Re = sin(0.5 * (x[i << 1] - Theta1)) * cos(0.5 * (Phi1 - x[1 + (i << 1)]));
+	  T1.Im = sin(0.5 * (Theta1 + x[i << 1])) * sin(0.5 * (Phi1 - x[1 + (i << 1)]));
+
+	  T2.Re = sin(0.5 * (x[j << 1] - Theta2)) * cos(0.5 * (Phi2 - x[1 + (j << 1)]));
+	  T2.Im = sin(0.5 * (Theta1 + x[j << 1])) * sin(0.5 * (Phi2 - x[1 + (j << 1)]));
+
+	  T3.Re = sin(0.5 * (x[i << 1] - Theta2)) * cos(0.5 * (Phi2 - x[1 + (i << 1)]));
+	  T3.Im = sin(0.5 * (Theta2 + x[i << 1])) * sin(0.5 * (Phi2 - x[1 + (i << 1)]));
+
+	  T4.Re = sin(0.5 * (x[j << 1] - Theta1)) * cos(0.5 * (Phi1 - x[1 + (j << 1)]));
+	  T4.Im = sin(0.5 * (Theta1 + x[j << 1])) * sin(0.5 * (Phi1 - x[1 + (j << 1)]));
+	  
+	  Tmp = ( T1*T2-T3*T4 ) / Tmp;
 	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
     }
@@ -119,7 +167,9 @@ Complex PfaffianOnSphereTwoQuasiholeWaveFunction::CalculateFromSpinorVariables(C
 	{	  
 	  Tmp = Factor * ( uv[2*i] * uv[2*j+1] - uv[2*i+1] * uv[2*j] );
 	  WaveFunction *= Tmp;
-	  Tmp = 1.0 / Tmp;
+	  if (FermionFlag)
+	    WaveFunction *= Tmp;
+	  Tmp = ( ((uv[2*i] * V1 - uv[2*i+1] * U1)*(uv[2*j] * V2 - uv[2*j+1] * U2)) - ((uv[2*j] * V1 - uv[2*j+1] * U1)*(uv[2*i] * V2 - uv[2*i+1] * U2)) ) / Tmp;
 	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
     }

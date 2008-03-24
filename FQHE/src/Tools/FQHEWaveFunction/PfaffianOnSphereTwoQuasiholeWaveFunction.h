@@ -51,6 +51,16 @@ class PfaffianOnSphereTwoQuasiholeWaveFunction: public Abstract1DComplexFunction
   double Theta2;
   double Phi2;
 
+  // position of the first quasihole (spinor coordinates)
+  Complex U1;
+  Complex V1;
+
+  // position of the second quasihole (spinor coordinates)
+  Complex U2;
+  Complex V2;
+  
+  // Flag for bosons/fermions
+  bool FermionFlag;
 
  public:
 
@@ -61,7 +71,8 @@ class PfaffianOnSphereTwoQuasiholeWaveFunction: public Abstract1DComplexFunction
   // phi1 = position of the first quasihole (spherical coordinates, phi angle)
   // theta2 = position of the second quasihole (spherical coordinates, theta angle)
   // phi2 = position of the second quasihole (spherical coordinates, phi angle)
-  PfaffianOnSphereTwoQuasiholeWaveFunction(int nbrParticles, double theta1, double phi1, double theta2, double phi2);
+  // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
+  PfaffianOnSphereTwoQuasiholeWaveFunction(int nbrParticles, double theta1=0.0, double phi1=0.0, double theta2=M_PI, double phi2=0.0, bool fermions=false);
 
   // copy constructor
   //

@@ -93,7 +93,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
-  (*SystemGroup) += new BooleanOption  ('\n', "negative-hopping", "reverse sign of hopping terms", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int NbrSites = Lx*Ly;  
-  bool ReverseHopping = Manager.GetBoolean("negative-hopping");
+  bool ReverseHopping = !(Manager.GetBoolean("positive-hopping"));
   double ContactU = Manager.GetDouble("contactU");
   double Delta = Manager.GetDouble("deltaPotential");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;

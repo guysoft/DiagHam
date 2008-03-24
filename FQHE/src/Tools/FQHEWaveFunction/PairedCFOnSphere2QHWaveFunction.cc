@@ -100,6 +100,8 @@ PairedCFOnSphere2QHWaveFunction::PairedCFOnSphere2QHWaveFunction(int nbrParticle
   
   QHBasis = new ParticleOnSphereFunctionBasis(this->NbrParticles/2,ParticleOnSphereFunctionBasis::LeftHanded);
 
+  QHLzMax = this->NbrParticles/2;
+
   // calculate coupling coefficients:
   ClebschGordanCoefficients VectorCoupling(this->NbrParticles/2,this->NbrParticles/2);
 
@@ -109,20 +111,30 @@ PairedCFOnSphere2QHWaveFunction::PairedCFOnSphere2QHWaveFunction(int nbrParticle
   this->NbrCouplings=0;  
   for (int m1=-this->NbrParticles/2; m1<=this->NbrParticles/2; m1+=2)
     {
-      int m2 = MValue - m1;
+      int m2 = 2*MValue - m1;
       if ((m2>=-this->NbrParticles/2) && (m2<=this->NbrParticles/2))
 	{
-	  if (VectorCoupling.GetCoefficient (m1, m2, this->LValue) != 0.0)
+	  if (VectorCoupling.GetCoefficient (m1, m2, 2*this->LValue) != 0.0)
 	    {
-	      M1Values[this->NbrCouplings] = m1+this->NbrParticles/2;
-	      M2Values[this->NbrCouplings] = m2+this->NbrParticles/2;
-	      Couplings[this->NbrCouplings]= VectorCoupling.GetCoefficient (m1, m2, this->LValue);
-	      cout << "Adding coupling : " <<Couplings[this->NbrCouplings]<<"*("<<M1Values[this->NbrCouplings]
-		   <<","<<M2Values[this->NbrCouplings]<<")"<<endl;
+	      M1Values[this->NbrCouplings] = (m1+this->NbrParticles/2)/2;
+	      M2Values[this->NbrCouplings] = (m2+this->NbrParticles/2)/2;
+	      Couplings[this->NbrCouplings]= VectorCoupling.GetCoefficient (m1, m2, 2*this->LValue);
+	      cout << "Adding coupling : " <<Couplings[this->NbrCouplings]<<" * (m1="<<m1/2<<", m2="<<m2/2<<")"<<endl;
 	      ++this->NbrCouplings;	      
 	    }
 	}
     }
+
+  RealVector tmpVector(2);
+  Complex tmpC;
+  tmpVector[0]=QuasiParticles->Theta(0);
+  tmpVector[1]=QuasiParticles->Phi(0);
+  for (int i=0; i<NbrCouplings; ++i)
+    QHBasis->GetFunctionValue(tmpVector, tmpC, M1Values[i]);
+  tmpVector[0]=QuasiParticles->Theta(1);
+  tmpVector[1]=QuasiParticles->Phi(1);
+  for (int i=0; i<NbrCouplings; ++i)
+    QHBasis->GetFunctionValue(tmpVector, tmpC, M2Values[i]);
 
   
   this->Flag.Initialize();
@@ -163,6 +175,7 @@ PairedCFOnSphere2QHWaveFunction::PairedCFOnSphere2QHWaveFunction(const PairedCFO
   this->MValue = function.MValue;
   this->AbsEffectiveFlux = function.AbsEffectiveFlux;
   this->QuasiParticleMCSteps = function.QuasiParticleMCSteps;
+  this->QHLzMax = function.QHLzMax;
   this->Flag = function.Flag;
   this->Orbitals = function.Orbitals;
   this->MooreReadCoefficient=function.MooreReadCoefficient;
@@ -173,6 +186,18 @@ PairedCFOnSphere2QHWaveFunction::PairedCFOnSphere2QHWaveFunction(const PairedCFO
   this->M2Values = function.M2Values;
   this->Couplings = function.Couplings;
   this->NbrCouplings= function.NbrCouplings;
+
+  RealVector tmpVector(2);
+  Complex tmpC;
+  tmpVector[0]=QuasiParticles->Theta(0);
+  tmpVector[1]=QuasiParticles->Phi(0);
+  for (int i=0; i<NbrCouplings; ++i)
+    QHBasis->GetFunctionValue(tmpVector, tmpC, M1Values[i]);
+  tmpVector[0]=QuasiParticles->Theta(1);
+  tmpVector[1]=QuasiParticles->Phi(1);
+  for (int i=0; i<NbrCouplings; ++i)
+    QHBasis->GetFunctionValue(tmpVector, tmpC, M2Values[i]);
+  
   this->Slater = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->Gij = new ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->QuasiParticles = new ParticleOnSphereCollection(this->NbrParticles);
@@ -418,6 +443,7 @@ void PairedCFOnSphere2QHWaveFunction::AdaptAverageMCNorm(int thermalize, int ave
       SumTrialValues+=Norm(TmpMetropolis);
     }  
   this->ElementNorm*= pow(SumTrialValues/average,(double)-2.0/this->NbrParticles);
+  cout << "averaged norm:"<<SumTrialValues/average<<endl;
   delete Particles;
 }
 
@@ -474,33 +500,42 @@ void PairedCFOnSphere2QHWaveFunction::EvaluateTables()
 // integrating over quasihole coordinates by Monte-Carlo
 Complex PairedCFOnSphere2QHWaveFunction::MonteCarloEvaluate()
 {
-  Complex *Uqh, *Vqh, Tmp;
+  Complex *Uqh, *Vqh, *NewBasis, Tmp;
   Complex Result=0.0;
+  int toMove;
+  int *NewMValues;
+  RealVector tmpVector(2);
+  Complex tmpC;
+  Complex *AllBasis = new Complex[QHLzMax+1];
   QuasiParticles->GetSpinorCoordinates(Uqh, Vqh);
   for (int step=0; step<QuasiParticleMCSteps; ++step)
     {
       // integrating with sampling function 1 for the moment
-      if (QuasiParticles->GetRandomNumber() < 0.5)
+      toMove = (int)(2.0*QuasiParticles->GetRandomNumber());
+      if (toMove == 0)
 	{
-	  QuasiParticles->Move(0);
-	  QHBasis->GetAllFunctionValues(Uqh[0],Vqh[0],QH1BasisValues);
-	  // testing:
-	  RealVector tV(2);
-	  tV[0]=QuasiParticles->Theta(0);
-	  tV[1]=QuasiParticles->Phi(0);
-	  Complex tmpC;
-	  for (int i=0; i<=NbrParticles;++i)
-	    {
-	      QHBasis->GetFunctionValue(tV, tmpC, i);
-	      if (Norm(tmpC-QH1BasisValues[i])>1e-10)
-		cout << "Wrong basis " << i <<" : "<< tmpC << " vs " <<QH1BasisValues[i]<<endl;
-	    }
+	  NewBasis=QH1BasisValues;
+	  NewMValues=M1Values;
 	}
       else
 	{
-	  QuasiParticles->Move(1);
-	  QHBasis->GetAllFunctionValues(Uqh[1],Vqh[1],QH2BasisValues);
+	  toMove=1;
+	  NewBasis=QH2BasisValues;
+	  NewMValues=M2Values;
 	}
+      QuasiParticles->Move(toMove);
+      tmpVector[0]=QuasiParticles->Theta(toMove);
+      tmpVector[1]=QuasiParticles->Phi(toMove);
+      // cout << "Uqh0="<<Uqh[0]<<" Vqh0="<<Vqh[0]<<endl<<"Uqh1="<<Uqh[1]<<"Vqh1="<<Vqh[1]<<" toMove="<<toMove<<endl;
+      // QHBasis->GetAllFunctionValues(Uqh[toMove], Vqh[toMove], AllBasis);
+      for (int i=0; i<NbrCouplings; ++i)
+	{
+	  // select one of the following lines
+	  // QHBasis->GetFunctionValue(tmpVector, NewBasis[i], NewMValues[i]);
+	  QHBasis->GetFunctionValue(Uqh[toMove], Vqh[toMove],NewBasis[i],NewMValues[i]);
+	}
+
+      
       // initialize Pfaffian part:
       for (int i=0;i<this->NbrParticles;++i)
 	{
@@ -516,9 +551,10 @@ Complex PairedCFOnSphere2QHWaveFunction::MonteCarloEvaluate()
       Tmp=0.0;
       // calculate effective quasihole wavefunction
       for (int i=0; i<NbrCouplings; ++i)
-	Tmp+=Couplings[i]*QH1BasisValues[M1Values[i]]*QH2BasisValues[M2Values[i]];
+	Tmp+=Couplings[i]*QH1BasisValues[i]*QH2BasisValues[i];
       
       Result+=Tmp*Slater->Pfaffian();
     }
-  return Result*Interpolation;
+  delete [] AllBasis;
+  return Result*Interpolation/QuasiParticleMCSteps;
 }

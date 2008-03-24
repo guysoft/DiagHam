@@ -81,6 +81,21 @@ void ParticleOnSphereFunctionBasis::GetFunctionValue(RealVector& value, Complex&
 
 // get value of the i-th function at a given point (for functions which take values in C)
 //
+// value = reference on the value where the function has to be evaluated
+// result = reference on the value where the result has to be stored
+// index = function index 
+// terrible performance, to be used only for testing
+void ParticleOnSphereFunctionBasis::GetFunctionValue(Complex U, Complex V, Complex& result, int index)
+{
+  Complex tmpC=1.0;
+  for (int i=0; i<index;++i) tmpC*=U;
+  for (int i=0; i<this->LzMax-index;++i) tmpC*=V;
+  result = this->Prefactor[index] * tmpC;
+}
+
+
+// get value of the i-th function at a given point (for functions which take values in C)
+//
 // (theta, phi) = coordinates of point where basis has to be evaluated
 // result = reference on the vector with values of the basis
 void ParticleOnSphereFunctionBasis::GetAllFunctionValues(Complex U, Complex V, Complex *result)
