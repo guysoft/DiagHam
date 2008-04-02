@@ -562,7 +562,7 @@ int HardCoreBoson::GenerateStates(int nbrBosons,int nbrStates)
   while (countdown>-1)
     {      
       this->StateDescription[countdown]=nextone(this->StateDescription[countdown+1]);
-      if (this->StateDescription[countdown] & (1u << (presentHighestBit+1)))
+      if (this->StateDescription[countdown] & (0x1ul << (presentHighestBit+1)))
 	++presentHighestBit;
       this->StateHighestBit[countdown]=presentHighestBit;
       --countdown;

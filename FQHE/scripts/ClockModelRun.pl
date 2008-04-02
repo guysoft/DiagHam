@@ -4,8 +4,11 @@ use strict 'vars';
 use Math::Trig;
 
 # global settings
+#my $DiagonalizationProgram="~/bin/FQHESphereFermionsWithSpin";
+#my $memory = 500;
+
 my $DiagonalizationProgram="/home/gunnar/DiagHam/build1/FQHE/src/Programs/FQHEOnSphere/FQHESphereFermionsWithSpin";
-my $memory = 0;
+my $memory = 1000;
 
 if (!(defined($ARGV[2])))
   {
@@ -111,7 +114,7 @@ my $Phi;
 
 for ( my $point=0; $point<$NbrPoints; $point++)
   {
-    $Phi=$point*2*pi/($NbrPoints);
+    $Phi=$point*pi/($NbrPoints);
     $V0eff=$R0*$R20*cos($Phi);
     $V1eff=$R1*$R21*sin($Phi);
     # write pseudopotentials to file
@@ -131,11 +134,18 @@ for ( my $point=0; $point<$NbrPoints; $point++)
       }
     close (OUTFILE);
     # run calculation
-    my $Command = $DiagonalizationProgram." -p ".$NbrFermions." -l ".$NbrFlux." -s 0 --show-itertime --memory ".$memory." --interaction-file ".$PseudopotentialFile." --interaction-name clock_phi_".$Phi/pi;
+    my $Command = $DiagonalizationProgram." -p ".$NbrFermions." -l ".$NbrFlux." -s 0 --show-itertime --memory ".$memory." --interaction-file ".$PseudopotentialFile." --interaction-name clock_phi_".$Phi/pi;    
     #$Command = $Command." --szsymmetrized-basis";
     if (defined($ARGV[4]))
       {
-	$Command = $Command." --nbr-lz 1 --eigenstate -n2 --force-reorthogonalize";
+  	if ( -e "fermions_sphere_su2_clock_phi_".$Phi/pi."_n_".$NbrFermions."_2s_"..$NbrFlux."_sz_0_lz_0.0.vec" ) 
+	{
+	  print("Skipping phi=".$Phi/pi."\n");
+	}
+	else
+	{
+		$Command = $Command." --nbr-lz 1 --eigenstate -n2 --force-reorthogonalize";
+	}
       }
     if (!defined($ARGV[5]))
       {
