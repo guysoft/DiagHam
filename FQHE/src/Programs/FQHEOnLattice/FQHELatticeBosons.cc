@@ -94,6 +94,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -124,7 +125,10 @@ int main(int argc, char** argv)
   if (NbrFluxQuanta == -1)
     {
       NbrFluxQuanta = 0;
-      NbrFluxValues = NbrSites;
+      if (Manager.GetBoolean("all-flux"))
+	NbrFluxValues = NbrSites+1;
+      else
+	NbrFluxValues = (NbrSites+2)/2;
     }
 
   char* OutputName;
