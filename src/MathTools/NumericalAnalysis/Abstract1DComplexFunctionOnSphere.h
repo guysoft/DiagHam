@@ -58,7 +58,7 @@ class Abstract1DComplexFunctionOnSphere : public Abstract1DComplexFunction
   //
   // x = point where the function has to be evaluated
   // return value = function value at x  
-  virtual Complex operator ()(RealVector& x) = 0;
+  virtual Complex operator ()(RealVector& x);
 
   // evaluate function at a given point
   //

@@ -39,3 +39,27 @@ Abstract1DComplexFunctionOnSphere::~Abstract1DComplexFunctionOnSphere()
 {
 }
 
+// evaluate function at a given point
+//
+// x = point where the function has to be evaluated
+// return value = function value at x  
+
+Complex Abstract1DComplexFunctionOnSphere::operator ()(RealVector& x)
+{
+  double Factor = M_PI * 0.5;
+  int Max = x.GetVectorDimension();
+  ComplexVector UVCoordinates (Max);    
+  for (int i = 0; i < Max; ++i)
+    {
+      UVCoordinates.Re(i) = cos(0.5 * x[i << 1]);
+      UVCoordinates.Im(i) = UVCoordinates.Re(i) * sin(0.5 * x[1 + (i << 1)]) * Factor;
+      UVCoordinates.Re(i) *= cos(0.5 * x[1 + (i << 1)]) * Factor;
+      ++i;
+      UVCoordinates.Re(i) = sin(0.5 * x[i << 1]);
+      UVCoordinates.Im(i) = - UVCoordinates.Re(i) * sin(0.5 * x[1 + (i << 1)]) * Factor;
+      UVCoordinates.Re(i) *= cos(0.5 * x[1 + (i << 1)]) * Factor;
+    }
+  Complex Tmp = this->CalculateFromSpinorVariables(UVCoordinates);
+  return Tmp;
+}
+

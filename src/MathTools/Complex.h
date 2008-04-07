@@ -86,7 +86,8 @@ public:
   friend Complex Conj(const Complex& z);
   // return complex corresponding to the polar definition
   friend Complex Polar(double r,double theta);
-  
+  //return  the invert of a given complex number
+  friend Complex Inv(const Complex& z);
 
 // basic arithmetic operations
   Complex& operator += (const Complex& z);
@@ -281,6 +282,15 @@ inline Complex Polar(double r,double theta)
 {
   return Complex (r * cos(theta),r * sin(theta));
 }
+
+//return  the invert of a given complex number
+
+inline Complex Inv(const Complex& z)
+{
+  double Tmp = 1.0 / SqrNorm(z);
+  return Complex(z.Re * Tmp, -z.Im * Tmp);
+}
+
 
 // basic arithmetic operations
 

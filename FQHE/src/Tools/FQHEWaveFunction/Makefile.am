@@ -38,4 +38,5 @@ AdvancedMooreReadOnSphereWaveFunction.cc \
 ReadRezayiOnSphereBlock.cc \
 ExplicitMooreReadOnSphereWaveFunction.cc \
 PairedCFOnSphere2QHWaveFunction.cc \
-FQHESphereSymmetrizedSUKToU1WaveFunction.cc
+FQHESphereSymmetrizedSUKToU1WaveFunction.cc \
+FQHESU3HalperinPermanentOnSphereWaveFunction.cc 

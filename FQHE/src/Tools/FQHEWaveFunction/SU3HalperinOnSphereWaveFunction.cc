@@ -149,28 +149,20 @@ Abstract1DComplexFunction* SU3HalperinOnSphereWaveFunction::Clone ()
   return new SU3HalperinOnSphereWaveFunction(*this);
 }
 
-// evaluate function at a given point (the first 2*nbrSpinUpIsospinPlusParticles coordinates correspond to the position of the spin up - isposin plus particles, 
-//                                     the following 2*nbrSpinDownIsospinPlusParticles coordinates correspond to the position of spin down - isposin plus particles,
-//                                     the other coordinates obey to the same scheme for isospin minus)
+// evaluate function at a given point
 //
-// x = point where the function has to be evaluated
-// return value = function value at x  
+// uv = ensemble of spinor variables on sphere describing point (the first 2*N1 coordinates correspond to the position of the type 1 particles, 
+//                                     the following 2*N2 coordinates correspond to the position of the type 2 particles,
+//                                     last the 2*N3 coordinates correspond to the position of the type 3 particles)
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// return value = function value at (uv)
 
-Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
+Complex SU3HalperinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {
   Complex Tmp;
   Complex TmpU;
   Complex TmpV;
-  double Factor = M_PI * 0.5;
-  for (int i = 0; i < this->TotalNbrParticles; ++i)
-    {
-      this->UCoordinates[i].Re = cos(0.5 * x[i << 1]);
-      this->UCoordinates[i].Im = this->UCoordinates[i].Re * sin(0.5 * x[1 + (i << 1)]);
-      this->UCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-      this->VCoordinates[i].Re = sin(0.5 * x[i << 1]);
-      this->VCoordinates[i].Im = - this->VCoordinates[i].Re * sin(0.5 * x[1 + (i << 1)]);
-      this->VCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-    }
   int NbrN1N2 = this->NbrN1 + this->NbrN2;
   Complex TotalWaveFunction(1.0);
   if (this->M11 > 0)
@@ -178,10 +170,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrN1; ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = i + 1; j < this->NbrN1; ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M11; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -191,10 +183,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = this->NbrN1; i < (NbrN1N2); ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = i + 1; j < (NbrN1N2); ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *= ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M22; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -204,10 +196,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = NbrN1N2; i < this->TotalNbrParticles; ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = i + 1; j < this->TotalNbrParticles; ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *= ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M33; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -219,10 +211,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrN1; ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = this->NbrN1; j < (NbrN1N2); ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M12; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -233,10 +225,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrN1; ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = NbrN1N2; j < this->TotalNbrParticles; ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *= ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M13; ++i)
 	TotalWaveFunction *= WaveFunction;
@@ -246,10 +238,10 @@ Complex SU3HalperinOnSphereWaveFunction::operator ()(RealVector& x)
       Complex WaveFunction(1.0);
       for (int i = this->NbrN1; i < (NbrN1N2); ++i)
 	{
-	  TmpU = this->UCoordinates[i];
-	  TmpV = this->VCoordinates[i];
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
 	  for (int j = NbrN1N2; j < this->TotalNbrParticles; ++j)
-	    WaveFunction *=  Factor * ((TmpU * this->VCoordinates[j]) - (TmpV * this->UCoordinates[j]));
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M23; ++i)
 	TotalWaveFunction *= WaveFunction;

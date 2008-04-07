@@ -7,8 +7,9 @@
 //                                                                            //
 //                                                                            //
 //         class of SU(3) generalized Halperine wave function on sphere       //
+//                        times the generalized permament                     //
 //                                                                            //
-//                        last modification : 08/02/2008                      //
+//                        last modification : 05/04/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,18 +29,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SU3HALPERINONSPHEREWAVEFUNCTION_H
-#define SU3HALPERINONSPHEREWAVEFUNCTION_H
+#ifndef FQHESU3HALPERINPERMANENTONSPHEREWAVEFUNCTION_H
+#define FQHESU3HALPERINPERMANENTONSPHEREWAVEFUNCTION_H
 
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
+#include "Matrix/ComplexMatrix.h"
 
 
 class ConfigurationParser;
 
 
-class SU3HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class FQHESU3HalperinPermanentOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -67,11 +69,23 @@ class SU3HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // coefficient of the inter-component correlations in the 2 - 3 sector
   int M23;
 
-  
-  // temporary arrays used during wave function evaluation
-  Complex* UCoordinates;
-  Complex* VCoordinates;
 
+  // temporary arrays to store indices while computing the generalized permanent
+  int* Indices2;
+  int* Indices3;
+
+  // temporary array used to store the 3 entry object involved in the generalized permanent evaluation;
+  Complex*** GeneralizedPermanentMatrix;
+  // indicate if the elements of  GeneralizedPermanentMatrix are the invert of the correlations
+  bool InvertFlag;
+  // number of permuation associated to NbrN1  
+  int NbrPermutations;
+
+  ComplexMatrix Permanent12;
+  ComplexMatrix Permanent13;
+  ComplexMatrix Permanent23;
+
+  
  public:
 
   // constructor
@@ -85,13 +99,13 @@ class SU3HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // m12 = coefficient of the inter-component correlations in the 1 - 2 sector
   // m13 = coefficient of the inter-component correlations in the 1 - 3 sector
   // m23 = coefficient of the inter-component correlations in the 2 - 3 sector
-  SU3HalperinOnSphereWaveFunction(int nbrN1, int nbrN2, int nbrN3,
-				  int m11, int m22, int m33, int m12, int m13, int m23);
+  FQHESU3HalperinPermanentOnSphereWaveFunction(int nbrN1, int nbrN2, int nbrN3,
+					       int m11, int m22, int m33, int m12, int m13, int m23);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  SU3HalperinOnSphereWaveFunction(const SU3HalperinOnSphereWaveFunction& function);
+  FQHESU3HalperinPermanentOnSphereWaveFunction(const FQHESU3HalperinPermanentOnSphereWaveFunction& function);
 
   // constructor from configuration file
   //
@@ -99,18 +113,18 @@ class SU3HalperinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // errorFlag = reference on the error flag that is set to false if an error occured while retriving the configuration
   // nbrParticles = reference on the total number of particles (computed from the configuration file datas)
   // lzMax = twice the maximum angular momentum for a particle (computed from the configuration file datas)
-  SU3HalperinOnSphereWaveFunction(ConfigurationParser& configuration, bool& errorFlag, int& nbrParticles, int& lzMax);
+  FQHESU3HalperinPermanentOnSphereWaveFunction(ConfigurationParser& configuration, bool& errorFlag, int& nbrParticles, int& lzMax);
 
   // destructor
   //
-   ~SU3HalperinOnSphereWaveFunction();
+   ~FQHESU3HalperinPermanentOnSphereWaveFunction();
 
   // clone function 
   //
   // return value = clone of the function 
   Abstract1DComplexFunction* Clone ();
 
-  // evaluate function at a given point(the first 2*N1 coordinates correspond to the position of the type 1 particles, 
+  // evaluate function at a given point (the first 2*N1 coordinates correspond to the position of the type 1 particles, 
   //                                     the following 2*N2 coordinates correspond to the position of the type 2 particles,
   //                                     last the 2*N3 coordinates correspond to the position of the type 3 particles)
   //
