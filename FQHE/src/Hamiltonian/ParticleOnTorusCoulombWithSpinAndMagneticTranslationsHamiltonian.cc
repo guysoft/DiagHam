@@ -111,6 +111,7 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
 		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	      else
 		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  cout << endl;
 	  if (memory > 0)
 	    {
 	      this->EnableFastMultiplication();
@@ -147,22 +148,22 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::~ParticleOnTor
   
   delete[] this->CosinusTable;
   delete[] this->SinusTable;
-//   if (this->FastMultiplicationFlag == true)
-//     {
-//       int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-//       if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-// 	++ReducedDim;
-//       for (int i = 0; i < ReducedDim; ++i)
-// 	{
-// 	  delete[] this->InteractionPerComponentIndex[i];
-// 	  delete[] this->InteractionPerComponentCoefficient[i];
-// 	  delete[] this->InteractionPerComponentNbrTranslation[i];
-// 	}
-//       delete[] this->InteractionPerComponentIndex;
-//       delete[] this->InteractionPerComponentCoefficient;
-//       delete[] this->NbrInteractionPerComponent;
-//       delete[] this->InteractionPerComponentNbrTranslation;
-//     }
+   if (this->FastMultiplicationFlag == true)
+     {
+      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	  delete[] this->InteractionPerComponentNbrTranslation[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+      delete[] this->InteractionPerComponentNbrTranslation;
+    }
 }
 
 // set Hilbert space
@@ -178,17 +179,18 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::SetHilber
   delete[] OneBodyInteractionFactorsUpUp;
   delete[] OneBodyInteractionFactorsDownDown;  
 
-//   if (this->FastMultiplicationFlag == true)
-//     {
-//       for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-// 	{
-// 	  delete[] this->InteractionPerComponentIndex[i];
-// 	  delete[] this->InteractionPerComponentCoefficient[i];
-// 	}
-//       delete[] this->InteractionPerComponentIndex;
-//       delete[] this->InteractionPerComponentCoefficient;
-//       delete[] this->NbrInteractionPerComponent;
-//     }
+  if (this->FastMultiplicationFlag == true)
+    {
+      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+    }
+  this->FastMultiplicationFlag = false;
   this->Particles = (ParticleOnTorusWithSpinAndMagneticTranslations*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
@@ -281,7 +283,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 	  }
       cout << "Actual Nbr InteractionUpUp = " << TmpNbrInteractionFactors << endl;
       // matrix elements for different spin
-      this->NbrM12InterIndices = this->NbrLzValue * this->NbrLzValue;
+      this->NbrM12InterIndices = (this->NbrLzValue-1) * (this->NbrLzValue-1);
       this->M12InterValue = new unsigned [this->NbrM12InterIndices];
       this->NbrM34InterValues = new int [this->NbrM12InterIndices];
       this->M34InterValues = new unsigned*[this->NbrM12InterIndices];      
@@ -299,10 +301,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		else
 		  if (m4 >= this->MaxMomentum)
 		    m4 -= this->MaxMomentum;		
-		TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation)
-				       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->LayerSeparation)
-				       - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->LayerSeparation)
-				       - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->LayerSeparation));
+		TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->LayerSeparation);
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;
@@ -316,7 +315,7 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
       TmpNbrInteractionFactors = 0;
       Factor = - 4.0;  // check factor here... xxx 
       for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
+	for (int m2 = 0; m2 < this->MaxMomentum; ++m2)
 	  {
 	    this->M12InterValue[M12Index] = (m1&L16Mask)|((m2&L16Mask)<<16);
 	    this->NbrM34InterValues[M12Index]=0;
@@ -330,9 +329,9 @@ void ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateI
 		    m4 -= this->MaxMomentum;
 		if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
 		  {
-		    this->InteractionFactorsUpDown[TmpNbrInteractionFactors] = TmpCoefficient[Pos];		      
-		    this->M34InterValues[M12Index][this->NbrM34IntraValues[M12Index]]
-			= (m3&L16Mask)|((m4&L16Mask)<<16);
+		    this->InteractionFactorsUpDown[TmpNbrInteractionFactors] = TmpCoefficient[Pos];
+		    this->M34InterValues[M12Index][this->NbrM34InterValues[M12Index]]
+		      = (m3&L16Mask)|((m4&L16Mask)<<16);
 		    ++TmpNbrInteractionFactors;
 		    ++this->NbrM34InterValues[M12Index];
 		  }
@@ -391,7 +390,7 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
 	    }
 	  else
 	    {
-	      Coefficient = 0.0;
+	      Coefficient = 0.0; // could be infinite, here!
 	      Precision = 1.0;
 	    }
 	}
@@ -426,7 +425,7 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
 	    }
 	  else
 	    {
-	      Coefficient = 0.0;
+	      Coefficient = 0.0; // could be infinite, here!
 	      Precision = 1.0;
 	    }
 	}

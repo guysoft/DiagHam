@@ -38,6 +38,7 @@
 #include "HilbertSpace/ParticleOnTorusWithSpinAndMagneticTranslations.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
+
 #include <iostream>
 
 
@@ -116,6 +117,16 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
   bool FastMultiplicationFlag;
   // step between each precalculated index
   int FastMultiplicationStep;
+
+  // stored interactions per component
+  int *NbrInteractionPerComponent;
+
+  // indices of matrix elements per component
+  int **InteractionPerComponentIndex;
+  // coefficients of matrix elements per component
+  double **InteractionPerComponentCoefficient;
+  // translations of matrix elements per component
+  int **InteractionPerComponentNbrTranslation;
   
   //array containing all the cosinus that are needed when computing matrix elements
   double* CosinusTable;

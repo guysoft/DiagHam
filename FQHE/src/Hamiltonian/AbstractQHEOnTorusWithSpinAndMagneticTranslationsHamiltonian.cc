@@ -61,6 +61,7 @@ using std::ostream;
 
 AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::~AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian()
 {
+  
 }
 
 // set Hilbert space
@@ -333,24 +334,24 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      if (Index < Dim)
 			{
 			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
-			  int Index2, NbrTranslation2;
-			  double Coefficientprime;
-			  Index2 = Particles->AduAduAuAu (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
-			  if (Index != Index2)
-			    cout << "Problem with Index in HilbertSpace from AbstractHamiltonian" << endl;
-			  if (Coefficient*Coefficient2 != Coefficientprime)
-			    {
-			      cout << "Problem with Coefficient in HilbertSpace from AbstractHamiltonian: "<<
-				Coefficient*Coefficient2 << " vs " << Coefficientprime << " for i=" << i
-				   << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< endl;
-// 			      cout << "Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
-// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduAuAuV (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
-// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AuAuV(i, m1, m2);
-// 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduV(m3, m4, Coefficient2, NbrTranslation);
-// 			      cout << "Again, Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
-			    }
-			  if (NbrTranslation != NbrTranslation2)
-			    cout << "Problem with NbrTranslation in HilbertSpace from AbstractHamiltonian" << endl;
+			  // int Index2, NbrTranslation2;
+// 			  double Coefficientprime;
+// 			  Index2 = Particles->AduAduAuAu (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
+// 			  if (Index != Index2)
+// 			    cout << "Problem with Index in HilbertSpace from AbstractHamiltonian" << endl;
+// 			  if (Coefficient*Coefficient2 != Coefficientprime)
+// 			    {
+// 			      cout << "Problem with Coefficient in HilbertSpace from AbstractHamiltonian: "<<
+// 				Coefficient*Coefficient2 << " vs " << Coefficientprime << " for i=" << i
+// 				   << " m1= " << m1 << " m2= " << m2 << " m3= " << m3 << " m4= " << m4<< endl;
+// // 			      cout << "Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
+// // 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduAuAuV (i, m3, m4, m1, m2, Coefficientprime, NbrTranslation2);
+// // 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AuAuV(i, m1, m2);
+// // 			      ((FermionOnTorusWithSpinAndMagneticTranslations*)Particles)->AduAduV(m3, m4, Coefficient2, NbrTranslation);
+// // 			      cout << "Again, Coefficient: " << Coefficient << " Coefficient2: " << Coefficient2 << endl;
+// 			    }
+// 			  if (NbrTranslation != NbrTranslation2)
+// 			    cout << "Problem with NbrTranslation in HilbertSpace from AbstractHamiltonian" << endl;
 	       		  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];			  
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
@@ -380,7 +381,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
 		      if (Index < Dim)
 			{
-			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
+			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsDownDown[ReducedNbrInteractionFactors];
 			  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
@@ -394,16 +395,16 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	    }
 	  
 	  ReducedNbrInteractionFactors = 0;
-	  for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+	  for (int m12 = 0; m12 < this->NbrM12InterIndices; ++m12)
 	    {
-	      m1 = this->M12IntraValue[m12] & L16Mask;
-	      m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+	      m1 = this->M12InterValue[m12] & L16Mask;
+	      m2 = (this->M12InterValue[m12] & H16Mask)>>16;
 	      Coefficient = Particles->AuAd(i, m1, m2);	  
 	      if (Coefficient != 0.0)
 		{
 		  SumIndices = m1 + m2;
-		  TmpNbrM34Values = this->NbrM34IntraValues[m12];
-		  TmpM34Values = this->M34IntraValues[m12];
+		  TmpNbrM34Values = this->NbrM34InterValues[m12];
+		  TmpM34Values = this->M34InterValues[m12];
 		  for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
 		    {
 		      m3 = (TmpM34Values[m34]) & L16Mask;
@@ -411,7 +412,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		      Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
 		      if (Index < Dim)
 			{
-			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
+			  Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpDown[ReducedNbrInteractionFactors];
 			  Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
 			  Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
 			  vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
@@ -420,54 +421,284 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 		    }
 		}
 	      else
-		ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+		ReducedNbrInteractionFactors += this->NbrM34InterValues[m12];
 	    }
-	  
 	}  
-    }
 
-  if (this->OneBodyInteractionFactorsUpUp != 0) 
-    if (this->OneBodyInteractionFactorsDownDown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < LastComponent; ++i)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      {
-		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+      if (this->OneBodyInteractionFactorsUpUp != 0) 
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->MaxMomentum; ++j) 
+		  {
+		    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+		    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		  }
+		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
 	      }
-	    vDestination[i] += (this->EnergyShift + TmpDiagonal)* vSource[i];
 	  }
-      }
-    else
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < LastComponent; ++i)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
-	    vDestination[i] += (this->EnergyShift + TmpDiagonal)* vSource[i];
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->MaxMomentum; ++j) 
+		  TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
+	      }
 	  }
-      }
-  else
-    if (this->OneBodyInteractionFactorsDownDown != 0)
-      {
-	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < LastComponent; ++i)
-	  { 
-	    TmpDiagonal = 0.0;
-	    for (int j = 0; j <= this->MaxMomentum; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
-	    vDestination[i] += (this->EnergyShift + TmpDiagonal)* vSource[i];
-	  }
-      }	
-    else
-      for (int i = firstComponent; i < LastComponent; ++i)
-	vDestination[i] += this->EnergyShift * vSource[i];
-  
+      else
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    for (int i = firstComponent; i < LastComponent; ++i)
+	      { 
+		TmpDiagonal = 0.0;
+		for (int j = 0; j <= this->MaxMomentum; ++j) 
+		  TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+		vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+		vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
+	      }
+	  }	
+	else
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      vDestination.Re(i) += (this->EnergyShift) * vSource.Re(i);
+	      vDestination.Im(i) += (this->EnergyShift) * vSource.Im(i);
+	    }
+    }
+  else // fast multiplication
+    {
+      if (this->FastMultiplicationStep == 1)
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int* TmpNbrTranslationArray;
+	  int j;
+	  int TmpNbrInteraction;
+	  double TmpRe;
+	  double TmpIm;
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[i];
+	      TmpIndexArray = this->InteractionPerComponentIndex[i];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
+	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
+	      TmpRe = vSource.Re(i);
+	      TmpIm = vSource.Im(i);
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Cosinus = TmpCoefficientArray[j];
+		  NbrTranslation = TmpNbrTranslationArray[j];
+		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
+		  Cosinus *= this->CosinusTable[NbrTranslation];
+		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
+		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
+		}
+	      vDestination.Re(i) += EnergyShift * TmpRe;
+	      vDestination.Im(i) += EnergyShift * TmpIm;
+	    }
+	}
+      else
+	{
+	  int* TmpIndexArray;
+	  double* TmpCoefficientArray; 
+	  int* TmpNbrTranslationArray;
+	  int j;
+	  int TmpNbrInteraction;
+	  int Pos = firstComponent / this->FastMultiplicationStep; 
+	  int PosMod = firstComponent % this->FastMultiplicationStep;
+	  double TmpRe;
+	  double TmpIm;
+	  if (PosMod != 0)
+	    {
+	      ++Pos;
+	      PosMod = this->FastMultiplicationStep - PosMod;
+	    }
+	  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	    {
+	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
+	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
+	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
+	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[Pos];
+	      TmpRe = vSource.Re(i);
+	      TmpIm = vSource.Im(i);
+	      for (j = 0; j < TmpNbrInteraction; ++j)
+		{
+		  Cosinus = TmpCoefficientArray[j];
+		  NbrTranslation = TmpNbrTranslationArray[j];
+		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
+		  Cosinus *= this->CosinusTable[NbrTranslation];
+		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
+		  vDestination.Im(TmpIndexArray[j]) += ((Sinus * TmpRe) + (Cosinus * TmpIm));
+		}
+	      vDestination.Re(i) += EnergyShift * TmpRe;
+	      vDestination.Im(i) += EnergyShift * TmpIm;
+	      ++Pos;
+	    }
+
+	  double Coefficient2;
+	  double Coefficient3;
+	  int Index;
+	  int m1, m2, m3, m4;      
+	  int SumIndices;
+	  int TmpNbrM34Values;
+	  unsigned* TmpM34Values;      
+	  int ReducedNbrInteractionFactors;
+	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
+	    if (PosMod != k)
+	      {
+		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		  {
+		    ReducedNbrInteractionFactors = 0;
+		    for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+		      {
+			m1 = this->M12IntraValue[m12] & L16Mask;
+			m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+			Coefficient = Particles->AuAu(i, m1, m2);
+			if (Coefficient != 0.0)
+			  {
+			    SumIndices = m1 + m2;
+			    TmpNbrM34Values = this->NbrM34IntraValues[m12];
+			    TmpM34Values = this->M34IntraValues[m12];
+			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+			      {
+				m3 = (TmpM34Values[m34]) & L16Mask;
+				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+				Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+				if (Index < Dim)
+				  {
+				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
+				    Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
+				    Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
+				    vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
+				    vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
+				  }
+				++ReducedNbrInteractionFactors;
+			      }
+			  }
+			else
+			  ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+		      }
+		    ReducedNbrInteractionFactors = 0;
+		    for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+		      {
+			m1 = this->M12IntraValue[m12] & L16Mask;
+			m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+			Coefficient = Particles->AdAd(i, m1, m2);	  
+			if (Coefficient != 0.0)
+			  {
+			    SumIndices = m1 + m2;
+			    TmpNbrM34Values = this->NbrM34IntraValues[m12];
+			    TmpM34Values = this->M34IntraValues[m12];
+			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+			      {
+				m3 = (TmpM34Values[m34]) & L16Mask;
+				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+				Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+				if (Index < Dim)
+				  {
+				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsDownDown[ReducedNbrInteractionFactors];
+				    Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
+				    Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
+				    vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
+				    vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
+				  }
+				++ReducedNbrInteractionFactors;
+			      }
+			  }
+			else
+			  ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+		      }
+		    
+		    ReducedNbrInteractionFactors = 0;
+		    for (int m12 = 0; m12 < this->NbrM12InterIndices; ++m12)
+		      {
+			m1 = this->M12InterValue[m12] & L16Mask;
+			m2 = (this->M12InterValue[m12] & H16Mask)>>16;
+			Coefficient = Particles->AuAd(i, m1, m2);	  
+			if (Coefficient != 0.0)
+			  {
+			    SumIndices = m1 + m2;
+			    TmpNbrM34Values = this->NbrM34InterValues[m12];
+			    TmpM34Values = this->M34InterValues[m12];
+			    for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+			      {
+				m3 = (TmpM34Values[m34]) & L16Mask;
+				m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+				Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+				if (Index < Dim)
+				  {
+				    Coefficient3 = Coefficient * Coefficient2 * this->InteractionFactorsUpDown[ReducedNbrInteractionFactors];
+				    Cosinus = Coefficient3 * this->CosinusTable[NbrTranslation];
+				    Sinus = Coefficient3 * this->SinusTable[NbrTranslation];
+				    vDestination.Re(Index) += ((vSource.Re(i) * Cosinus) - (vSource.Im(i) * Sinus));
+				    vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
+				  }		      ++ReducedNbrInteractionFactors;
+			      }
+			  }
+			else
+			  ReducedNbrInteractionFactors += this->NbrM34InterValues[m12];
+		      }
+		  }  
+		
+		if (this->OneBodyInteractionFactorsUpUp != 0) 
+		  if (this->OneBodyInteractionFactorsDownDown != 0)
+		    {
+		      double TmpDiagonal = 0.0;
+		      for (int i = firstComponent; i < LastComponent; ++i)
+			{ 
+			  TmpDiagonal = 0.0;
+			  for (int j = 0; j <= this->MaxMomentum; ++j) 
+			    {
+			      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+			      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+			    }
+			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
+			}
+		    }
+		  else
+		    {
+		      double TmpDiagonal = 0.0;
+		      for (int i = firstComponent; i < LastComponent; ++i)
+			{ 
+			  TmpDiagonal = 0.0;
+			  for (int j = 0; j <= this->MaxMomentum; ++j) 
+			    TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
+			}
+		    }
+		else
+		  if (this->OneBodyInteractionFactorsDownDown != 0)
+		    {
+		      double TmpDiagonal = 0.0;
+		      for (int i = firstComponent; i < LastComponent; ++i)
+			{ 
+			  TmpDiagonal = 0.0;
+			  for (int j = 0; j <= this->MaxMomentum; ++j) 
+			    TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+			  vDestination.Re(i) += (this->EnergyShift + TmpDiagonal) * vSource.Re(i);
+			  vDestination.Im(i) += (this->EnergyShift + TmpDiagonal) * vSource.Im(i);
+			}
+		    }	
+		  else
+		    for (int i = firstComponent; i < LastComponent; ++i)
+		      {
+			vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
+			vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
+		      }
+	      }
+	}
+    }
+      
   return vDestination;
 }
  
@@ -497,8 +728,7 @@ List<Matrix*> AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Righ
 // return value = amount of memory needed
 
 long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplicationMemory(long allowedMemory)
-{
-  /*
+{  
   this->NbrInteractionPerComponent = new int [this->Particles->GetHilbertSpaceDimension()];
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
     this->NbrInteractionPerComponent[i] = 0;
@@ -516,32 +746,32 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
     Memory += this->NbrInteractionPerComponent[i];
 
   cout << "nbr interaction = " << Memory << endl;
-  long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
-  if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+  long TmpMemory = allowedMemory - (2*sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension();
+  if ((TmpMemory < 0) || ((TmpMemory / ((int) (2*sizeof (int) + sizeof(double)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
-      int ReducedSpaceDimension  = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      while ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(double)))) < Memory))
+      int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      while ((TmpMemory < 0) || ((TmpMemory / ((int) (2*sizeof (int) + sizeof(double)))) < Memory))
 	{
 	  ++this->FastMultiplicationStep;
 	  ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
 	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
 	    ++ReducedSpaceDimension;
-	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
+	  TmpMemory = allowedMemory - (2*sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
 	  Memory = 0;
 	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-      int* TmpNbrInteractionPerComponent = TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
       for (int i = 0; i < ReducedSpaceDimension; ++i)
 	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
       delete[] this->NbrInteractionPerComponent;
       this->NbrInteractionPerComponent = TmpNbrInteractionPerComponent;
-      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * ((2 * sizeof (int)) + sizeof(double)));
+      Memory = ((2*sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension) + (Memory * ((2 * sizeof (int)) + sizeof(double)));
     }
   else
     {
-      Memory = ((sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension()) + (Memory * ((2 * sizeof (int)) + sizeof(double)));
+      Memory = ((2*sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension()) + (Memory * ((2 * sizeof (int)) + sizeof(double)));
       this->FastMultiplicationStep = 1;
     }
 
@@ -552,8 +782,6 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   cout << "time = " << Dt2 << endl;
   return Memory;
-  */
-  return 0;
 }
 
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
@@ -564,37 +792,154 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
 
 long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
-  /*
+  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory("<< firstComponent<<", " <<lastComponent<<")"<<endl;
+  cout.flush();
+  long Memory = 0;  
+  unsigned L16Mask = (1u<<16)-1;
+  unsigned H16Mask = (~0u)^L16Mask;
   int Index;
   double Coefficient;
   int NbrTranslation;
-  long Memory = 0;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
+  int Dim = Particles->GetHilbertSpaceDimension();
   int LastComponent = lastComponent + firstComponent;
+  
+  double Coefficient2;
+  int m1, m2, m3, m4;      
+  int SumIndices;
+  int TmpNbrM34Values;
+  unsigned* TmpM34Values;      
+  int ReducedNbrInteractionFactors;
   for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+    {    
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
 	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  m1 = this->M12IntraValue[m12] & L16Mask;
+	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AuAu(i, m1, m2);
+	  if (Coefficient != 0.0)
 	    {
-	      ++Memory;
-	      ++this->NbrInteractionPerComponent[i];
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
+	      TmpM34Values = this->M34IntraValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i];
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
 	    }
-	}    
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+	}
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+	{
+	  m1 = this->M12IntraValue[m12] & L16Mask;
+	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AdAd(i, m1, m2);	  
+	  if (Coefficient != 0.0)
+	    {
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
+	      TmpM34Values = this->M34IntraValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i];
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+	}
+      
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12InterIndices; ++m12)
+	{
+	  m1 = this->M12InterValue[m12] & L16Mask;
+	  m2 = (this->M12InterValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AuAd(i, m1, m2);	  
+	  if (Coefficient != 0.0)
+	    {
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34InterValues[m12];
+	      TmpM34Values = this->M34InterValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      ++Memory;
+		      ++this->NbrInteractionPerComponent[i];
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34InterValues[m12];
+	}
+
+      // one-particle terms:
+      if (this->OneBodyInteractionFactorsUpUp != 0) 
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	      }
+	    if (TmpDiagonal!=0.0)
+	      {
+		++Memory;
+		++this->NbrInteractionPerComponent[i];
+	      }
+	  }
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+	    if (TmpDiagonal!=0.0)
+	      {
+		++Memory;
+		++this->NbrInteractionPerComponent[i];
+	      }
+	  }
+      else
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	    if (TmpDiagonal!=0.0)
+	      {
+		++Memory;
+		++this->NbrInteractionPerComponent[i];
+	      }
+	  }	
     }
-  Memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * this->Particles->GetHilbertSpaceDimension() + 
+  Memory = ((2*sizeof (int*) + sizeof (int) + sizeof(double*)) * this->Particles->GetHilbertSpaceDimension() + 
 	    Memory *  (sizeof (int) + sizeof(double) + sizeof(int)));
-  return Memory;
-  */
-  return 0;
+  return Memory;  
 }
 
 // enable fast multiplication algorithm
@@ -602,7 +947,8 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 
 void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMultiplication()
 {
-  /*
+  cout << "Calling un-tested AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMultiplication()"<<endl;
+  cout.flush();
   int Index;
   double Coefficient;
   int m1;
@@ -622,10 +968,17 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
   int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
     ++ReducedSpaceDimension;
+  cout << "ReducedSpaceDimension="<<ReducedSpaceDimension<<endl;cout.flush();
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
   this->InteractionPerComponentNbrTranslation = new int* [ReducedSpaceDimension];
+  cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
+  cout << "InteractionPerComponentNbrTranslation="<<InteractionPerComponentNbrTranslation<<endl;
+  cout << "this="<<this<<endl;
+  QHEParticlePrecalculationOperation Operation(this, false);
+  Operation.ApplyOperation(this->Architecture);
 
+  /*
   int TotalPos = 0;
   for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
     {
@@ -653,13 +1006,17 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
 	}
       ++TotalPos;
     }
+
+  */
+  
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
   cout << "------------------------------------------------------------------" << endl << endl;;
   Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   cout << "time = " << Dt2 << endl;
-  */
+  
+  
 }
 
 // enable fast multiplication algorithm (partial evaluation)
@@ -669,47 +1026,190 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
 
 void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
 {
-  /*
+  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication("<<firstComponent<<", "<< lastComponent<<")"<<endl;
+  cout.flush();
+  unsigned L16Mask = (1u<<16)-1;
+  unsigned H16Mask = (~0u)^L16Mask;
   int Index;
   double Coefficient;
   int NbrTranslation;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int* TmpNbrTranslationArray;
+  //  int Min = firstComponent / this->FastMultiplicationStep;
+  //  int Max = lastComponent / this->FastMultiplicationStep;
+  int Dim = Particles->GetHilbertSpaceDimension();
+
+  double Coefficient2;
+  int m1, m2, m3, m4;      
+  int SumIndices;
+  int TmpNbrM34Values;
+  unsigned* TmpM34Values;
   int Pos;
-  int Min = firstComponent / this->FastMultiplicationStep;
-  int Max = lastComponent / this->FastMultiplicationStep;
-  
-  for (int i = Min; i < Max; ++i)
+  int ReducedNbrInteractionFactors;
+  int PosIndex = firstComponent / this->FastMultiplicationStep; 
+  int PosMod = firstComponent % this->FastMultiplicationStep;
+  double TmpRe;
+  double TmpIm;
+  if (PosMod != 0)
     {
-      this->InteractionPerComponentIndex[i] = new int [this->NbrInteractionPerComponent[i]];
-      this->InteractionPerComponentCoefficient[i] = new double [this->NbrInteractionPerComponent[i]];      
-      this->InteractionPerComponentNbrTranslation[i] = new int [this->NbrInteractionPerComponent[i]];
+      ++PosIndex;
+      PosMod = this->FastMultiplicationStep - PosMod;
+    }
+  cout << "PosIndex="<<PosIndex<<endl;
+  cout << "PosMod="<<PosMod<<endl;
+  cout << "this="<<this<<endl;
+  cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
+  cout.flush();
+  for (int i = PosMod + firstComponent; i < lastComponent; i += this->FastMultiplicationStep)  
+    {
+      this->InteractionPerComponentIndex[PosIndex] = new int [this->NbrInteractionPerComponent[i]];
+      this->InteractionPerComponentCoefficient[PosIndex] = new double [this->NbrInteractionPerComponent[i]];      
+      this->InteractionPerComponentNbrTranslation[PosIndex] = new int [this->NbrInteractionPerComponent[i]];
+      ++PosIndex;
       TmpIndexArray = this->InteractionPerComponentIndex[i];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
       TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
       Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+      
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
 	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i * this->FastMultiplicationStep, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  m1 = this->M12IntraValue[m12] & L16Mask;
+	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AuAu(i, m1, m2);
+	  if (Coefficient != 0.0)
 	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      TmpNbrTranslationArray[Pos] = NbrTranslation;
-	      ++Pos;
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
+	      TmpM34Values = this->M34IntraValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AduAdu(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactorsUpUp[ReducedNbrInteractionFactors];
+		      TmpNbrTranslationArray[Pos] = NbrTranslation;
+		      ++Pos;
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
 	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
 	}
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+	{
+	  m1 = this->M12IntraValue[m12] & L16Mask;
+	  m2 = (this->M12IntraValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AdAd(i, m1, m2);	  
+	  if (Coefficient != 0.0)
+	    {
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34IntraValues[m12];
+	      TmpM34Values = this->M34IntraValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AddAdd(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactorsDownDown[ReducedNbrInteractionFactors];
+		      TmpNbrTranslationArray[Pos] = NbrTranslation;
+		      ++Pos;
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34IntraValues[m12];
+	}
+      
+      ReducedNbrInteractionFactors = 0;
+      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+	{
+	  m1 = this->M12InterValue[m12] & L16Mask;
+	  m2 = (this->M12InterValue[m12] & H16Mask)>>16;
+	  Coefficient = Particles->AuAd(i, m1, m2);	  
+	  if (Coefficient != 0.0)
+	    {
+	      SumIndices = m1 + m2;
+	      TmpNbrM34Values = this->NbrM34InterValues[m12];
+	      TmpM34Values = this->M34InterValues[m12];
+	      for (int m34 = 0; m34 < TmpNbrM34Values; ++m34)
+		{
+		  m3 = (TmpM34Values[m34]) & L16Mask;
+		  m4 = ((TmpM34Values[m34]) & H16Mask)>>16;
+		  Index = Particles->AduAdd(m3, m4, Coefficient2, NbrTranslation);
+		  if (Index < Dim)
+		    {
+		      TmpIndexArray[Pos] = Index;
+		      TmpCoefficientArray[Pos] = Coefficient * Coefficient2 * this->InteractionFactorsUpDown[ReducedNbrInteractionFactors];
+		      TmpNbrTranslationArray[Pos] = NbrTranslation;
+		      ++Pos;
+		    }
+		  ++ReducedNbrInteractionFactors;
+		}
+	    }
+	  else
+	    ReducedNbrInteractionFactors += this->NbrM34InterValues[m12];
+	}
+
+      // one-particle terms:
+      if (this->OneBodyInteractionFactorsUpUp != 0) 
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+		TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+		TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	      }
+	    if (TmpDiagonal!=0.0)
+	      {
+		TmpIndexArray[Pos] = i;
+		TmpCoefficientArray[Pos] = (TmpDiagonal);
+		TmpNbrTranslationArray[Pos] = 0;
+		++Pos;
+	      }
+	  }
+	else
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsUpUp[j] * Particles->AduAu(i, j);
+	    if (TmpDiagonal!=0.0)
+	      {
+		TmpIndexArray[Pos] = i;
+		TmpCoefficientArray[Pos] = (TmpDiagonal);
+		TmpNbrTranslationArray[Pos] = 0;
+		++Pos;
+	      }
+	  }
+      else
+	if (this->OneBodyInteractionFactorsDownDown != 0)
+	  {
+	    double TmpDiagonal = 0.0;
+	    TmpDiagonal = 0.0;
+	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      TmpDiagonal += this->OneBodyInteractionFactorsDownDown[j] * Particles->AddAd(i, j);
+	    if (TmpDiagonal!=0.0)
+	      {
+		TmpIndexArray[Pos] = i;
+		TmpCoefficientArray[Pos] = (TmpDiagonal);
+		TmpNbrTranslationArray[Pos] = 0;
+		++Pos;
+	      }
+	  }	
     }
-  */
 }
 
 
