@@ -342,14 +342,6 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
     }
   delete[] Perm;
 
-//   this->ColorPermutations = new unsigned long[6];
-//   this->ColorPermutations[0] = 0x3210ul;
-//   this->ColorPermutations[1] = 0x3120ul;
-//   this->ColorPermutations[2] = 0x1320ul;
-//   this->ColorPermutations[3] = 0x3102ul;
-//   this->ColorPermutations[4] = 0x1302ul;
-//   this->ColorPermutations[5] = 0x1032ul;
-//  this->NbrPermutations = 6;
   return;
 }
 

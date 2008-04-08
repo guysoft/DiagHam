@@ -2,6 +2,7 @@
 #include "Architecture/AbstractArchitecture.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/RandomNumber/FileRandomNumberGenerator.h"
 
 #include "Options/Options.h"
 
@@ -67,7 +68,8 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
- 
+  (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -94,6 +96,7 @@ int main(int argc, char** argv)
   int InterCorrelation = Manager.GetInteger("inter-corr");
   bool OverlapFlag = ((BooleanOption*) Manager["overlap"])->GetBoolean();
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
+  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
 
   Abstract1DComplexFunctionOnSphere* BaseFunction = 0;
   switch (KValue)
@@ -119,6 +122,16 @@ int main(int argc, char** argv)
     }
   FQHESphereSymmetrizedSUKToU1WaveFunction* SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);
   Abstract1DComplexFunctionOnSphere* TestFunction;
+  AbstractRandomNumberGenerator* RandomNumber = 0;
+  if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
+    {
+      RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (NbrWarmUpIter * 4) + (NbrIter * 4) + 2000, 
+						   ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
+    }
+  else
+    {
+      RandomNumber = new StdlibRandomNumberGenerator (29457);
+    }
 //   if ( == true)
 //     {
 //       TestFunction = BaseFunction;
@@ -132,9 +145,6 @@ int main(int argc, char** argv)
 
    if (OverlapFlag == true)
      {
-       int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-       AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
-  
        int RecordStep = Manager.GetInteger("record-step");
        
        Complex* RecordedOverlap = 0;
@@ -353,7 +363,7 @@ int main(int argc, char** argv)
    else
      {
        ComplexVector UV (NbrParticles * 2, true);
-       RandomUV (UV, NbrParticles, &RandomNumberGenerator);
+       RandomUV (UV, NbrParticles, RandomNumber);
        cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;;
        
        for (int i = 0; i < NbrParticles; ++i)
