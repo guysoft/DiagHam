@@ -405,9 +405,9 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
+  // nbrComponent  = number of components that have to be precalcualted
   // return value = number of non-zero matrix element
-  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
 
   // enable fast multiplication algorithm
   //

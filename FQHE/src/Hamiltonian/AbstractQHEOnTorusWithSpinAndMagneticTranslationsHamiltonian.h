@@ -280,9 +280,9 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
   // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
   //
   // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
+  // nbrComponent  = number of components that have to be precalcualted
   // return value = number of non-zero matrix element
-  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
 
   // enable fast multiplication algorithm
   //
@@ -290,9 +290,9 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
 
   // enable fast multiplication algorithm (partial evaluation)
   //
-  // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
-  // nbrJob = number of jobs that proceed the fast multiplication evaluation
-  virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that have to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
 
   // load precalculations from a file
   // 

@@ -495,7 +495,9 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		{
 		  Cosinus = TmpCoefficientArray[j];
+		  cout << "CoefficientArray["<<i<<"]["<<j<<"]="<< TmpCoefficientArray[j]<<endl;
 		  NbrTranslation = TmpNbrTranslationArray[j];
+		  cout << "NbrTranslation="<<NbrTranslation<<endl;
 		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
 		  Cosinus *= this->CosinusTable[NbrTranslation];
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
@@ -787,12 +789,12 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
 // return value = number of non-zero matrix element
 
-long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
-  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory("<< firstComponent<<", " <<lastComponent<<")"<<endl;
+  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory("<< firstComponent<<", " <<nbrComponent<<")"<<endl;
   cout.flush();
   long Memory = 0;  
   unsigned L16Mask = (1u<<16)-1;
@@ -801,7 +803,7 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
   double Coefficient;
   int NbrTranslation;
   int Dim = Particles->GetHilbertSpaceDimension();
-  int LastComponent = lastComponent + firstComponent;
+  int LastComponent = nbrComponent + firstComponent;
   
   double Coefficient2;
   int m1, m2, m3, m4;      
@@ -949,17 +951,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
 {
   cout << "Calling un-tested AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMultiplication()"<<endl;
   cout.flush();
-  int Index;
-  double Coefficient;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  int* TmpIndexArray;
-  int NbrTranslation;
-  double* TmpCoefficientArray;
-  int* TmpNbrTranslationArray;
-  int Pos;
+
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
@@ -968,46 +960,15 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
   int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
     ++ReducedSpaceDimension;
-  cout << "ReducedSpaceDimension="<<ReducedSpaceDimension<<endl;cout.flush();
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
   this->InteractionPerComponentNbrTranslation = new int* [ReducedSpaceDimension];
-  cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
-  cout << "InteractionPerComponentNbrTranslation="<<InteractionPerComponentNbrTranslation<<endl;
-  cout << "this="<<this<<endl;
+//   cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
+//   cout << "InteractionPerComponentNbrTranslation="<<InteractionPerComponentNbrTranslation<<endl;
+//   cout << "this="<<this<<endl;
+  
   QHEParticlePrecalculationOperation Operation(this, false);
   Operation.ApplyOperation(this->Architecture);
-
-  /*
-  int TotalPos = 0;
-  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
-    {
-      this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      this->InteractionPerComponentNbrTranslation[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
-      TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
-      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[TotalPos];
-      Pos = 0;
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
-	{
-	  m1 = this->M1Value[j];
-	  m2 = this->M2Value[j];
-	  m3 = this->M3Value[j];
-	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
-	    {
-	      TmpIndexArray[Pos] = Index;
-	      TmpCoefficientArray[Pos] = Coefficient * this->InteractionFactors[j];
-	      TmpNbrTranslationArray[Pos] = NbrTranslation;
-	      ++Pos;
-	    }
-	}
-      ++TotalPos;
-    }
-
-  */
   
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
@@ -1022,11 +983,11 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
 // enable fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
+// nbrComponent  = number of components that have to be precalcualted
 
-void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
-  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication("<<firstComponent<<", "<< lastComponent<<")"<<endl;
+  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication("<<firstComponent<<", "<< nbrComponent<<")"<<endl;
   cout.flush();
   unsigned L16Mask = (1u<<16)-1;
   unsigned H16Mask = (~0u)^L16Mask;
@@ -1036,10 +997,8 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
   int* TmpIndexArray;
   double* TmpCoefficientArray;
   int* TmpNbrTranslationArray;
-  //  int Min = firstComponent / this->FastMultiplicationStep;
-  //  int Max = lastComponent / this->FastMultiplicationStep;
   int Dim = Particles->GetHilbertSpaceDimension();
-
+  int LastComponent = firstComponent + nbrComponent;
   double Coefficient2;
   int m1, m2, m3, m4;      
   int SumIndices;
@@ -1049,8 +1008,6 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
   int ReducedNbrInteractionFactors;
   int PosIndex = firstComponent / this->FastMultiplicationStep; 
   int PosMod = firstComponent % this->FastMultiplicationStep;
-  double TmpRe;
-  double TmpIm;
   if (PosMod != 0)
     {
       ++PosIndex;
@@ -1061,15 +1018,16 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
   cout << "this="<<this<<endl;
   cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
   cout.flush();
-  for (int i = PosMod + firstComponent; i < lastComponent; i += this->FastMultiplicationStep)  
+  for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)  
     {
       this->InteractionPerComponentIndex[PosIndex] = new int [this->NbrInteractionPerComponent[i]];
       this->InteractionPerComponentCoefficient[PosIndex] = new double [this->NbrInteractionPerComponent[i]];      
       this->InteractionPerComponentNbrTranslation[PosIndex] = new int [this->NbrInteractionPerComponent[i]];
+      TmpIndexArray = this->InteractionPerComponentIndex[PosIndex];
+      TmpCoefficientArray = this->InteractionPerComponentCoefficient[PosIndex];
+      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[PosIndex];
       ++PosIndex;
-      TmpIndexArray = this->InteractionPerComponentIndex[i];
-      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
-      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
+
       Pos = 0;
       
       ReducedNbrInteractionFactors = 0;
@@ -1220,7 +1178,6 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 
 bool AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::SavePrecalculation (char* fileName)
 {
-  /*
   if (this->FastMultiplicationFlag)
     {
       ofstream File;
@@ -1250,9 +1207,7 @@ bool AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::SavePrecalcul
   else
     {
       return false;
-    }
-  */
-  return false;
+    }  
 }
 
 // load precalculations from a file
@@ -1262,7 +1217,6 @@ bool AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::SavePrecalcul
 
 bool AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LoadPrecalculation (char* fileName)
 {
-  /*
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
   int Tmp;
@@ -1298,7 +1252,5 @@ bool AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LoadPrecalcul
   File.close();
   this->FastMultiplicationFlag = true;
   return true;
-  */
-  return false;
 }
 

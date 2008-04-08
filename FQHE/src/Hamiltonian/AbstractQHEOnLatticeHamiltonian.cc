@@ -1326,11 +1326,13 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
 //
 // firstComponent = index of the first component that has to be precalcualted
-// lastComponent  = index of the last component that has to be precalcualted
-// return value = number of non-zero matrix element
+// nbrComponent  = number of components that have to be precalcualted
+// return value = number of non-zero matrix elements
 //
-long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
+  cout << "calling AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory("<<firstComponent<<", "<< nbrComponent<<")\n";
+  int LastComponent = firstComponent + nbrComponent;
   int Index;
   double Coefficient;
   long Memory = 0;
@@ -1346,7 +1348,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       TmpInteraction = this->HoppingTerms[j];
       if (fabs(TmpInteraction.Im)<1e-14)
 	{
-	  for (int i = firstComponent; i < lastComponent; ++i)
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1358,7 +1360,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	}
       else
 	{
-	  for (int i = firstComponent; i < lastComponent; ++i)
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      Index = TmpParticles->AdA(i, qf, qi, Coefficient);
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1382,7 +1384,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	  TmpInteraction = this->InteractionFactors[j];
 	  if (fabs(TmpInteraction.Im)<1e-14)
 	    {
-	      for (int i = firstComponent; i < lastComponent; ++i)
+	      for (int i = firstComponent; i < LastComponent; ++i)
 		{
 		  Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 		  if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1394,7 +1396,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	    }
 	  else
 	    {
-	      for (int i = firstComponent; i < lastComponent; ++i)
+	      for (int i = firstComponent; i < LastComponent; ++i)
 		{
 		  Index = TmpParticles->AdAdAA(i, q1, q2, q3, q4, Coefficient);
 		  if (Index < this->Particles->GetHilbertSpaceDimension())
@@ -1413,7 +1415,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
       int TmpNbrQ34Values;
       int* TmpQ3Values;
       int* TmpQ4Values;
-      for (int i = firstComponent; i < lastComponent; ++i)
+      for (int i = firstComponent; i < LastComponent; ++i)
 	{	  
 	  ProcessedNbrInteractionFactors = 0;
 	  for (int i12 = 0; i12 < this->NbrQ12Indices; ++i12)
@@ -1447,7 +1449,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
   // separated diagonal terms as these will be the general rule for contact interactions
   if (NbrDiagonalInteractionFactors>0)
     {	  
-      for (int i = firstComponent; i < lastComponent; ++i)
+      for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  Coefficient = TmpParticles->AdAdAADiagonal(i, NbrDiagonalInteractionFactors,
 						     DiagonalInteractionFactors, DiagonalQValues);
