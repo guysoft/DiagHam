@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
@@ -92,6 +93,7 @@ int main(int argc, char** argv)
   int IntraCorrelation = Manager.GetInteger("intra-corr");
   int InterCorrelation = Manager.GetInteger("inter-corr");
   bool OverlapFlag = ((BooleanOption*) Manager["overlap"])->GetBoolean();
+  int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
 
   Abstract1DComplexFunctionOnSphere* BaseFunction = 0;
   switch (KValue)
@@ -104,9 +106,6 @@ int main(int argc, char** argv)
       break;
     case 3:
       {
-// 	BaseFunction = new SU3HalperinOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
-// 							    IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
-// 							    InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1);
 	BaseFunction = new FQHESU3HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
 									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
 									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1);
@@ -119,8 +118,15 @@ int main(int argc, char** argv)
       }
     }
   FQHESphereSymmetrizedSUKToU1WaveFunction* SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);
-  PfaffianOnSphereWaveFunction* ReferenceFunction = new PfaffianOnSphereWaveFunction(NbrParticles);
-  JainCFFilledLevelOnSphereWaveFunction* CFFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+  Abstract1DComplexFunctionOnSphere* TestFunction;
+//   if ( == true)
+//     {
+//       TestFunction = BaseFunction;
+//     }
+//   else
+//     {
+      TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+//    }
 
    StdlibRandomNumberGenerator RandomNumberGenerator(29457);
 
@@ -152,34 +158,83 @@ int main(int argc, char** argv)
        int NextCoordinates = 0;
        ComplexVector TmpUV (NbrParticles * 2, true);
        RandomUV (TmpUV, NbrParticles, RandomNumber);
-       Tmp = CFFunction->CalculateFromSpinorVariables(TmpUV);
-       double PreviousProbabilities = Norm(Tmp);
+       Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
+       Complex ValueExact;
+//        if (UseExactFlag == true)
+// 	 {
+// 	   QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+// 	   Operation.ApplyOperation(Architecture.GetArchitecture());      
+// 	   ValueExact = Operation.GetScalar();
+// 	 }
+//        else
+// 	 {
+	   ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+//	 }
+      double PreviousProbabilities = Norm(Tmp);
        double CurrentProbabilities = PreviousProbabilities;
        double TotalProbability = PreviousProbabilities;
+       int Acceptance = 0;
+       double AcceptanceRate = 1.0;
+       if (NbrWarmUpIter > 0)
+	 cout << "starting warm-up sequence" << endl;
+       for (int i = 1; i < NbrWarmUpIter; ++i)
+	 {      
+	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
+	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
+	   RandomUVOneCoordinate(TmpUV, NextCoordinates, RandomNumber);
+	   Complex TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	   CurrentProbabilities = Norm(TmpMetropolis);
+	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	     {
+	       PreviousProbabilities = CurrentProbabilities;
+	       ++Acceptance;
+	     }
+	   else
+	     {
+	       TmpUV.Re(NextCoordinates << 1) = PreviousCoordinatesU.Re;
+	       TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
+	       TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
+	       TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
+	       CurrentProbabilities = PreviousProbabilities;
+	     }
+	   NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
+	   if ((i % 1000) == 0)
+	     {
+	       AcceptanceRate = ((double) Acceptance) / ((double) i);
+	       cout << Acceptance << " / " << i << " = " << ((100.0 * ((double) Acceptance)) / ((double) i)) << "%" << endl;
+	     }
+	 }
+     
+       if (NbrWarmUpIter > 0)
+	 cout << "warm-up sequence is over" << endl;
+       Acceptance = 0;
+      
        for (int i = 0; i < NbrIter; ++i)
 	 {
 	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
 	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
 	   RandomUVOneCoordinate(TmpUV, NextCoordinates, RandomNumber);
-	   Complex TmpMetropolis = CFFunction->CalculateFromSpinorVariables(TmpUV);
+	   Complex TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
 	   CurrentProbabilities = Norm(TmpMetropolis);
 	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	     {
 	       PreviousProbabilities = CurrentProbabilities;
 	       Tmp = TmpMetropolis;
+	       ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+	       ++Acceptance;
 	     }
 	   else
 	     {
-	       TmpUV[NextCoordinates << 1] = PreviousCoordinatesU;
-	       TmpUV[1 + (NextCoordinates << 1)] = PreviousCoordinatesV;
+	       TmpUV.Re(NextCoordinates << 1) = PreviousCoordinatesU.Re;
+	       TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
+	       TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
+	       TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
 	       CurrentProbabilities = PreviousProbabilities;
 	     }
 	   TotalProbability += CurrentProbabilities;
 	   NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
 	   if (NextCoordinates == NbrParticles)
 	     --NextCoordinates;
-	   
-	   Complex ValueExact = CFFunction->CalculateFromSpinorVariables(TmpUV);//SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	   Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
 	   Tmp2bis = (ValueExact.Re * ValueExact.Re) + (ValueExact.Im * ValueExact.Im);
 	   Tmp3 = (Conj(Tmp) * ValueExact);
@@ -249,23 +304,18 @@ int main(int argc, char** argv)
 	       Tmp5.Re *= Tmp4.Re;
 	       Tmp5.Im *= Tmp4.Im;
 	       cout << Tmp4 << " +/- " << Tmp5 << endl;
+	       cout << "acceptance rate = " << (((double) Acceptance) / (((double) i))) << endl;
 	       cout << "-----------------------------------------------" << endl;
 	     }
 	 } 
        cout << " final results :" << endl;
        Complex Tmp4 = Overlap / ((double) NbrIter);
-       cout << Tmp4;
        Complex Tmp5 (sqrt( ((ErrorOverlap.Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
 		     sqrt( ((ErrorOverlap.Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
-       cout << " +/- " << Tmp5 << endl;
        double Tmp6 = Normalization  / ((double) NbrIter);
-       cout << Tmp6;
        double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
-       cout << " +/- " << Tmp7 << endl;	  
        double Tmp8 = NormalizationExact  / ((double) NbrIter);
-       cout << Tmp8;
        double Tmp9 = sqrt( ((ErrorNormalizationExact / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
-       cout << " +/- " << Tmp9 << endl;	  
        
        Tmp5.Re /= Tmp4.Re;
        Tmp5.Im /= Tmp4.Im;
@@ -279,6 +329,7 @@ int main(int argc, char** argv)
        Tmp5.Re *= Tmp4.Re;
        Tmp5.Im *= Tmp4.Im;
        cout << Tmp4 << " +/- " << Tmp5 << endl;
+       cout << Norm(Tmp4) << " +/- " << (2.0 * (fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im))  / Norm(Tmp4)) << endl;
        cout << "-----------------------------------------------" << endl;
        
        
@@ -298,21 +349,6 @@ int main(int argc, char** argv)
 			       << (2 * ((RecordedOverlap[i].Re * RecordedOverlapError[i].Re) + (RecordedOverlap[i].Im * RecordedOverlapError[i].Im))) << endl;
 	   OverlapRecordFile.close();
 	 }
-//       Complex Sum = 0.0;
-//        double RefNorm = 0.0;
-//        double TestNorm = 0.0;
-//        for (int i = 0; i < 100000; ++i)
-// 	 {
-// 	   ComplexVector TmpUV (NbrParticles * 2, true);
-// 	   RandomUV (TmpUV, NbrParticles, &RandomNumberGenerator);      
-// 	   Complex Tmp1 = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-// 	   Complex Tmp2 = CFFunction->CalculateFromSpinorVariables(TmpUV);
-// 	   Sum += (Conj(Tmp2) * Tmp1);
-// 	   RefNorm +=  SqrNorm(Tmp2);
-// 	   TestNorm +=  SqrNorm(Tmp1);
-// 	   if ((i % 100) == 0)
-// 	     cout << (i / 100) << " " << (SqrNorm(Sum) / (RefNorm * TestNorm)) << endl;
-// 	 }
      }
    else
      {
