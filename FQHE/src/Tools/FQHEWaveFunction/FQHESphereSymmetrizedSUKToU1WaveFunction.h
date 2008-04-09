@@ -63,13 +63,15 @@ class FQHESphereSymmetrizedSUKToU1WaveFunction: public Abstract1DComplexFunction
   Abstract1DComplexFunctionOnSphere* SUKWaveFunction;
   
   // array containing description of each permutation that appears in the calculation symmetrization process
-  unsigned long** Permutations;
+  unsigned long* Permutations;
   // number of permutations that appears in the symmetrization process
   unsigned long NbrPermutations;
 
-  unsigned long* ColorPermutations;
   // garable flag associated to the Permutations array
   GarbageFlag Flag;
+
+  // temporary vector to store permutation of the input uv vector
+  ComplexVector TemporaryUV;
 
  public:
 

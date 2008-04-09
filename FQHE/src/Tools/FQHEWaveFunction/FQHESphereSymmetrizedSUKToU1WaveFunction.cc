@@ -41,6 +41,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 // group maximum size in bits
@@ -65,6 +67,7 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFuncti
   this->SUKWaveFunction = (Abstract1DComplexFunctionOnSphere*) (sUKWavefunction->Clone());
   this->EvaluatePermutations();
   this->FermionFlag = fermionFlag;
+  this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
   this->Flag.Initialize();
 }
 
@@ -81,6 +84,7 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFuncti
   this->NbrPermutations = function.NbrPermutations;
   this->SUKWaveFunction = (Abstract1DComplexFunctionOnSphere*) (function.SUKWaveFunction->Clone());
   this->FermionFlag = function.FermionFlag;
+  this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
   this->Flag = function.Flag;
 }
 
@@ -91,8 +95,6 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::~FQHESphereSymmetrizedSUKToU1WaveFunct
 {
   if ((this->Flag.Used() == true) && (this->Flag.Shared() == false))
     {
-      for (unsigned long i = 0; i < this->NbrPermutations; ++i)
-	delete[] this->Permutations[i];
       delete[] this->Permutations;
     }
   delete this->SUKWaveFunction;
@@ -138,44 +140,23 @@ Complex FQHESphereSymmetrizedSUKToU1WaveFunction::operator ()(RealVector& x)
 
 Complex FQHESphereSymmetrizedSUKToU1WaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {  
-//  HalperinOnSphereWaveFunction* BaseFunction = new HalperinOnSphereWaveFunction (NbrParticles >> 1, NbrParticles >> 1, 2, 2, 0);
   Complex TotalValue = 0.0;
-  ComplexVector TmpUV (this->NbrParticles * 2);
   for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
     {
-      int TotalIndex = 0;
-      for (int k = 0; k < this->NbrParticlesPerColor; ++k)
+      unsigned long Tmp = this->Permutations[i];
+      int TmpIndex2 = 0;
+      for (int k = 0; k < this->NbrParticles; ++k)
 	{
-	  unsigned long Tmp = this->Permutations[i][k];
-	  for (int j = 0; j < this->KValue; ++j)
-	    {
-	      unsigned long TmpIndex = ((Tmp >> (j * GROUP_MAXSIZE)) & 0x3ful) << 1;
-	      int TmpIndex2 = TotalIndex + (j * this->NbrParticlesPerColor * 2);
-	      TmpUV.Re(TmpIndex2) = uv.Re(TmpIndex);
-	      TmpUV.Im(TmpIndex2) = uv.Im(TmpIndex);
-	      TmpIndex2 += 1;
-	      TmpIndex += 1ul;
-	      TmpUV.Re(TmpIndex2) = uv.Re(TmpIndex);
-	      TmpUV.Im(TmpIndex2) = uv.Im(TmpIndex);
-	    }
-	  TotalIndex += 2;
+	  unsigned long TmpIndex = ((Tmp >> (k << 2)) & 0xful) << 1;
+	  this->TemporaryUV.Re(TmpIndex2) = uv.Re(TmpIndex);
+	  this->TemporaryUV.Im(TmpIndex2) = uv.Im(TmpIndex);
+	  ++TmpIndex2;
+	  ++TmpIndex;
+	  this->TemporaryUV.Re(TmpIndex2) = uv.Re(TmpIndex);
+	  this->TemporaryUV.Im(TmpIndex2) = uv.Im(TmpIndex);
+	  ++TmpIndex2;
 	}
-//       int TotalIndex = 0;
-//       unsigned long Tmp = this->ColorPermutations[i];
-//       for (int k = 0; k < this->NbrParticles; ++k)
-// 	{
-// 	  unsigned long TmpIndex = ((Tmp >> (k * 4)) & 0xful) << 1;
-// //	  cout << (TotalIndex >> 1) << "->" << (TmpIndex >> 1) << ", ";
-// 	  TmpUV.Re(TmpIndex) = uv.Re(TotalIndex);
-// 	  TmpUV.Im(TmpIndex) = uv.Im(TotalIndex);
-// 	  ++TotalIndex;
-// 	  ++TmpIndex;
-// 	  TmpUV.Re(TmpIndex) = uv.Re(TotalIndex);
-// 	  TmpUV.Im(TmpIndex) = uv.Im(TotalIndex);
-// 	  ++TotalIndex;
-// 	}
-// //      cout << " = " << this->SUKWaveFunction->CalculateFromSpinorVariables(TmpUV) << " " << BaseFunction->CalculateFromSpinorVariables(TmpUV) << endl;
-      TotalValue += this->SUKWaveFunction->CalculateFromSpinorVariables(TmpUV);
+      TotalValue += this->SUKWaveFunction->CalculateFromSpinorVariables(this->TemporaryUV);
     }
   if (this->FermionFlag == true)
     {
@@ -184,10 +165,10 @@ Complex FQHESphereSymmetrizedSUKToU1WaveFunction::CalculateFromSpinorVariables(C
       Complex WaveFunction(1.0);
       for (int i = 0; i < this->NbrParticles; ++i)
 	{
-	  TmpU = TmpUV[2 * i];
-	  TmpV = TmpUV[2 * i + 1];
+	  TmpU = uv[2 * i];
+	  TmpV = uv[2 * i + 1];
 	  for (int j = i + 1; j < this->NbrParticles; ++j)
-	    WaveFunction *=  ((TmpU * TmpUV[2 * j + 1]) - (TmpV * TmpUV[2 * j]));
+	    WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       TotalValue *= WaveFunction;
     }
@@ -203,145 +184,90 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
   unsigned long Fact = 2;
   for (unsigned long i = 3; i <= ((unsigned long) this->NbrParticles); ++i)
     Fact *= i;
-  unsigned long** Perm = new unsigned long* [Fact];
+  unsigned long TmpNbrPermutation = Fact;  
+  unsigned long FactNbrParticlesPerColor = 1;
+  for (unsigned long i = 2; i <= ((unsigned long) this->NbrParticlesPerColor); ++i)
+    FactNbrParticlesPerColor *= i;
+  for (int i = 0; i < this->KValue; ++i)
+    TmpNbrPermutation /= FactNbrParticlesPerColor;
+  unsigned long FactKValue = 1;
+  for (unsigned long i = 2; i <= ((unsigned long) this->KValue); ++i)
+    FactKValue *= i;
+  TmpNbrPermutation /= FactKValue;
 
-  Perm[0] = new unsigned long[this->NbrParticlesPerColor];
-  unsigned long* TmpPerm = Perm[0];
-  int Shift = 0;   
-  for (int k = 0; k < this->NbrParticlesPerColor; ++k) 
+  this->Permutations = new unsigned long[TmpNbrPermutation];
+
+  unsigned long TmpPerm =  0x0ul;
+  unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
+  unsigned long* TmpArrayPerm2 = new unsigned long [this->KValue];
+  int Shift = 0;     
+  for (int k = 0; k < this->NbrParticles; ++k) 
     {
-      TmpPerm[k] = (unsigned long) 0;
-      for (int i = 0; i < this->KValue; ++i)    
-        TmpPerm[k] |= ((unsigned long) (i + Shift)) << (i * GROUP_MAXSIZE);
-      Shift += this->KValue; 
-    }
-  for (unsigned long i = 1; i < Fact; ++i)
-    {
-      Perm[i] = new unsigned long[this->NbrParticlesPerColor];
-      for (int k = 0; k < this->NbrParticlesPerColor; ++k)
-        Perm[i][k] = TmpPerm[k];
+      TmpPerm |= ((unsigned long) k) << (k << 2);
+      TmpArrayPerm[k] = (unsigned long) k;
     }
 
-  int GroupId = 0;
-  int PosInGroup = 0;
-  for (int Pos = 0; Pos < (this->NbrParticles - 2); ++Pos)
+  this->Permutations[0] = TmpPerm;
+  TmpNbrPermutation = 1ul;
+  for (unsigned long j = 1; j < Fact; ++j)
     {
-      unsigned long Step = (unsigned long) 1;
-      unsigned long Lim = (unsigned long)(this->NbrParticles - Pos - 1);
-      for (unsigned long i = 2; i <= Lim; ++i) 
-	Step *= i;
-      unsigned long j = 0;
-      unsigned long Lim2 = Fact / (Step * (Lim + 1l));
-      for (unsigned long k = 0; k < Lim2; ++k)
+      int Pos1 = this->NbrParticles - 1;
+      while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
+	--Pos1;
+      --Pos1;
+      int Pos2 = this->NbrParticles - 1;      
+      while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
+	--Pos2;
+      unsigned long TmpIndex = TmpArrayPerm[Pos1];
+      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+      TmpArrayPerm[Pos2] = TmpIndex;
+      Pos2 = this->NbrParticles - 1;   
+      Pos1++;
+      while (Pos1 < Pos2)
 	{
-	  j += Step;
-	  Lim = j + Step;
-	  int GroupId2 = GroupId;
-	  int PosInGroup2 = PosInGroup + 1;
-	  if (PosInGroup2 == this->KValue)
+	  TmpIndex = TmpArrayPerm[Pos1];
+	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	  TmpArrayPerm[Pos2] = TmpIndex;
+	  ++Pos1;
+	  --Pos2;
+	}
+      bool Flag = true;
+      int TmpIndex2 = 0;
+      for (int i = 0; ((i < this->KValue) && (Flag == true)); ++i)
+	{
+	  int k = 1;
+	  while ((k < this->NbrParticlesPerColor) && (Flag == true))
 	    {
-	      PosInGroup2 = 0;
-	      ++GroupId2;
+	      if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
+		Flag = false;
+	      ++TmpIndex2;
+	      ++k;
 	    }
-	  for (int i = Pos + 1; i < this->NbrParticles; ++i)    
+	  ++TmpIndex2;
+	} 
+      if (Flag == true)
+	{
+	  for (int k = 0; k < this->KValue; ++k)
 	    {
-	      unsigned long Mask1 = ((unsigned long) 0x3f) << (PosInGroup * GROUP_MAXSIZE);
-	      unsigned long Mask2 = ((unsigned long) 0x3f) << (PosInGroup2 * GROUP_MAXSIZE);
-	      unsigned long NegMask1 = ~Mask1;
-	      unsigned long NegMask2 = ~Mask2;
-	      int Shift = (PosInGroup2 - PosInGroup) * GROUP_MAXSIZE;   
-	      if (Shift > 0)
-		{
-		  for (; j < Lim; ++j)
-		    {
-		      unsigned long Tmp1 = (Perm[j][GroupId] & Mask1) << Shift;
-		      unsigned long Tmp2 = (Perm[j][GroupId2] & Mask2) >> Shift;
-		      Perm[j][GroupId] &= NegMask1;
-		      Perm[j][GroupId] |= Tmp2;
-		      Perm[j][GroupId2] &= NegMask2;
-		      Perm[j][GroupId2] |= Tmp1;
-		    }
-		}
-	      else
-		{
-		  Shift *= -1;
-		  for (; j < Lim; ++j)
-		    {
-		      unsigned long Tmp1 = (Perm[j][GroupId] & Mask1) >> Shift;
-		      unsigned long Tmp2 = (Perm[j][GroupId2] & Mask2) << Shift;
-		      Perm[j][GroupId] &= NegMask1;
-		      Perm[j][GroupId] |= Tmp2;
-		      Perm[j][GroupId2] &= NegMask2;
-		      Perm[j][GroupId2] |= Tmp1;
-		    }
-		}
-	      ++PosInGroup2;
-	      if (PosInGroup2 == this->KValue)
-		{
-		  PosInGroup2 = 0;
-		  ++GroupId2;
-		}
-	      Lim += Step;
-	    } 
-	}
-      ++PosInGroup;
-      if (PosInGroup == this->KValue)
-	{
-	  PosInGroup = 0;
-	  ++GroupId;
+	      TmpIndex = 0ul;
+	      for (int i = 0; i < this->NbrParticlesPerColor; ++i)
+		TmpIndex |= TmpArrayPerm[i + (k * this->NbrParticlesPerColor)] << (i << 2);
+	      TmpArrayPerm2[k] = TmpIndex;
+	    }
+	  for (int i = 1; ((i < this->KValue) && (Flag == true)); ++i)
+	    if (TmpArrayPerm2[i - 1] > TmpArrayPerm2[i])
+	      Flag = false;
+	  if (Flag == true)
+	    {
+	      TmpPerm =  0x0ul;
+	      for (int i = 0; i < this->KValue; ++i)
+		TmpPerm |= (TmpArrayPerm2[i] << ((i * this->NbrParticlesPerColor) << 2));
+	      this->Permutations[TmpNbrPermutation] = TmpPerm;	      
+	      ++TmpNbrPermutation;
+	    }
 	}
     }
-  unsigned long Mask1 = ((unsigned long) 0x3f) << (PosInGroup * GROUP_MAXSIZE);
-  unsigned long Mask2 = ((unsigned long) 0x3f) << ((PosInGroup + 1) * GROUP_MAXSIZE);
-  unsigned long NegMask = ~(Mask1 | Mask2);
-  unsigned long Tmp;
-  this->NbrPermutations = Fact;
-  for (unsigned long i = 2; i < ((unsigned long) this->NbrParticlesPerColor); ++i)
-    this->NbrPermutations /= i;
-  this->Permutations = new unsigned long* [this->NbrPermutations];
-  this->NbrPermutations = 0;
-  int j;
-  bool TmpFlag;
-  int ReducedNbrParticlesPerColor = this-> NbrParticlesPerColor - 1;
-  for (unsigned long i = 0; i < Fact; ++i)
-    {
-      j = 0;
-      TmpFlag = false;
-      while ((j < ReducedNbrParticlesPerColor) && (TmpFlag == false))
-	{
-	  if ((Perm[i][j] & ((unsigned long) 0x3f)) > (Perm[i][j + 1] & ((unsigned long) 0x3f))) 
-	    TmpFlag = true;
-	  ++j;
-	}
-      if (TmpFlag == false)
-	{
-	  this->Permutations[this->NbrPermutations] = Perm[i];
-	  ++this->NbrPermutations;
-	}
-      else
-	delete[] Perm[i];
-      ++i;
-      Tmp = ((Perm[i][GroupId] & Mask1) << GROUP_MAXSIZE) | ((Perm[i][GroupId] & Mask2) >> GROUP_MAXSIZE);
-      Perm[i][GroupId] &= NegMask;
-      Perm[i][GroupId] |= Tmp;
-      j = 0;
-      TmpFlag = false;
-      while ((j < ReducedNbrParticlesPerColor) && (TmpFlag == false))
-	{
-	  if ((Perm[i][j] & ((unsigned long) 0x3f)) > (Perm[i][j + 1] & ((unsigned long) 0x3f))) 
-	    TmpFlag = true;
-	  ++j;
-	}
-      if (TmpFlag == false)
-	{
-	  this->Permutations[this->NbrPermutations] = Perm[i];
-	  ++this->NbrPermutations;
-	}
-      else
-	delete[]  Perm[i];
-    }
-  delete[] Perm;
-
+  this->NbrPermutations = TmpNbrPermutation;
   return;
 }
 
