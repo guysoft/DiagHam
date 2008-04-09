@@ -209,6 +209,8 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
 
   this->Permutations[0] = TmpPerm;
   TmpNbrPermutation = 1ul;
+  Fact /= ((unsigned long) this->NbrParticles);
+  Fact *= ((unsigned long) (this->NbrParticles - this->NbrParticlesPerColor + 1));
   for (unsigned long j = 1; j < Fact; ++j)
     {
       int Pos1 = this->NbrParticles - 1;
