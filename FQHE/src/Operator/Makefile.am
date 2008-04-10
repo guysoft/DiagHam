@@ -11,4 +11,6 @@ ParticleOnSphereSquareTotalMomentumOperator.cc \
 ParticleOnSphereLMinusOperator.cc \
 ParticleOnSphereSquareTotalSpinOperator.cc \
 ParticleOnSphereSquareTotalIsospinOperator.cc \
-ParticleOnSphereWithSU4DensityDensityOperator.cc
+ParticleOnSphereWithSU4DensityDensityOperator.cc \
+ParticleOnLatticeOneBodyOperator.cc \
+ParticleOnLatticeTranslationOperator.cc

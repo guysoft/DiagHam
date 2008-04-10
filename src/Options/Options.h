@@ -39,5 +39,6 @@
 #include "Options/SingleDoubleInternalOption.h"
 #include "Options/SingleStringOption.h"
 #include "Options/SingleStringInternalOption.h"
+#include "Options/MultipleStringOption.h"
 
 #endif //OPTIONS_INCL

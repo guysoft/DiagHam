@@ -522,3 +522,48 @@ char* OptionManager::GetString(char *optionName)
       exit(-1);
     }
 }
+
+//accessor routine for Multiple String value
+char** OptionManager::GetStrings(char *optionName)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTStrings)
+	return ((MultipleStringOption*)OptionPointer)->GetStrings();
+      else
+	{
+	  cout << "MultipleString value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}
+
+// alternative accessor routine for Multiple String value
+char** OptionManager::GetStrings(char *optionName, int & length)
+{
+  AbstractOption* OptionPointer = (*this)[optionName];
+  if (OptionPointer!=0)
+    {
+      if (OptionPointer->GetOptionType() == AbstractOption::OTStrings)
+	{
+	  length = ((MultipleStringOption*)OptionPointer)->GetNbrStrings();
+	  return ((MultipleStringOption*)OptionPointer)->GetStrings();
+	}
+      else
+	{
+	  cout << "MultipleString value of Option '"<<optionName<<"' was requested, but is of different type!" << endl;
+	  exit(-1);
+	}
+    }
+  else
+    {
+      cout << "Option '"<<optionName<<"' was requested, but is not implemented!" << endl;
+      exit(-1);
+    }
+}

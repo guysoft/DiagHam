@@ -25,6 +25,8 @@ SingleStringOption.cc \
 SingleStringOption.h \
 SingleStringInternalOption.cc \
 SingleStringInternalOption.h \
+MultipleStringOption.cc \
+MultipleStringOption.h \
 OptionGroup.cc \
 OptionGroup.h \
 OptionManager.cc \

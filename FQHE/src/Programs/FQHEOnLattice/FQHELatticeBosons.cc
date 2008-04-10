@@ -24,7 +24,7 @@ using std::ofstream;
 
 #include "Matrix/ComplexMatrix.h"
 
-// store imaginary Hamiltonian into an complex matrix
+// store imaginary Hamiltonian into a complex matrix
 //
 // M = reference on matrix where Hamiltonian has to be stored
 // return value = reference on  corresponding hermitian matrix
@@ -132,11 +132,11 @@ int main(int argc, char** argv)
     }
 
   char* OutputName;
+  char reverseHoppingString[4]="";
+  char deltaString[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
-      OutputName = new char [256];
-      char reverseHoppingString[4]="";
-      char deltaString[20]="";
+      OutputName = new char [256];      
       if (ReverseHopping)
 	sprintf(reverseHoppingString,"rh_");
       if (Delta!=0.0)
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d_u_%g_q_%d", NbrBosons, Lx, Ly, ContactU, NbrFluxQuanta);
+	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d_u_%g_%s%sq_%d", NbrBosons, Lx, Ly, ContactU, reverseHoppingString, deltaString, NbrFluxQuanta);
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

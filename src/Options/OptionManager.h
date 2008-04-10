@@ -131,6 +131,12 @@ class OptionManager
   int* GetIntegers(char *optionName);
   int* GetIntegers(char *optionName, int &length);
   char* GetString(char *optionName);
+  //accessor routine for Multiple String value
+  char** GetStrings(char *optionName);
+  // alternative accessor routine for Multiple String value
+  char** GetStrings(char *optionName, int & length);
+
+
   
 };
 

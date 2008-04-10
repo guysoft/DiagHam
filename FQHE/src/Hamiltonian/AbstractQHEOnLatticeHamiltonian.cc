@@ -1331,7 +1331,6 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 //
 long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
-  cout << "calling AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory("<<firstComponent<<", "<< nbrComponent<<")\n";
   int LastComponent = firstComponent + nbrComponent;
   int Index;
   double Coefficient;

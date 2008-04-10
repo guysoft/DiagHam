@@ -495,9 +495,7 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
 	      for (j = 0; j < TmpNbrInteraction; ++j)
 		{
 		  Cosinus = TmpCoefficientArray[j];
-		  cout << "CoefficientArray["<<i<<"]["<<j<<"]="<< TmpCoefficientArray[j]<<endl;
 		  NbrTranslation = TmpNbrTranslationArray[j];
-		  cout << "NbrTranslation="<<NbrTranslation<<endl;
 		  Sinus = Cosinus * this->SinusTable[NbrTranslation];
 		  Cosinus *= this->CosinusTable[NbrTranslation];
 		  vDestination.Re(TmpIndexArray[j]) += ((Cosinus * TmpRe) - (Sinus * TmpIm));
@@ -738,7 +736,7 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
   timeval TotalEndingTime2;
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
+  cout << "start memory" << endl;
 
   QHEParticlePrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
@@ -794,8 +792,6 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::FastMultiplic
 
 long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
 {
-  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMultiplicationMemory("<< firstComponent<<", " <<nbrComponent<<")"<<endl;
-  cout.flush();
   long Memory = 0;  
   unsigned L16Mask = (1u<<16)-1;
   unsigned H16Mask = (~0u)^L16Mask;
@@ -949,23 +945,17 @@ long AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialFastMu
 
 void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMultiplication()
 {
-  cout << "Calling un-tested AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMultiplication()"<<endl;
-  cout.flush();
-
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   double Dt2;
   gettimeofday (&(TotalStartingTime2), 0);
-  cout << "start" << endl;
+  cout << "start enable" << endl;
   int ReducedSpaceDimension = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
   if ((ReducedSpaceDimension * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
     ++ReducedSpaceDimension;
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
   this->InteractionPerComponentNbrTranslation = new int* [ReducedSpaceDimension];
-//   cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
-//   cout << "InteractionPerComponentNbrTranslation="<<InteractionPerComponentNbrTranslation<<endl;
-//   cout << "this="<<this<<endl;
   
   QHEParticlePrecalculationOperation Operation(this, false);
   Operation.ApplyOperation(this->Architecture);
@@ -987,8 +977,6 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::EnableFastMul
 
 void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
 {
-  cout << "calling AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnableFastMultiplication("<<firstComponent<<", "<< nbrComponent<<")"<<endl;
-  cout.flush();
   unsigned L16Mask = (1u<<16)-1;
   unsigned H16Mask = (~0u)^L16Mask;
   int Index;
@@ -1013,11 +1001,6 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
       ++PosIndex;
       PosMod = this->FastMultiplicationStep - PosMod;
     }
-  cout << "PosIndex="<<PosIndex<<endl;
-  cout << "PosMod="<<PosMod<<endl;
-  cout << "this="<<this<<endl;
-  cout << "InteractionPerComponentIndex="<<InteractionPerComponentIndex<<endl;
-  cout.flush();
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)  
     {
       this->InteractionPerComponentIndex[PosIndex] = new int [this->NbrInteractionPerComponent[i]];
@@ -1090,7 +1073,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	}
       
       ReducedNbrInteractionFactors = 0;
-      for (int m12 = 0; m12 < this->NbrM12IntraIndices; ++m12)
+      for (int m12 = 0; m12 < this->NbrM12InterIndices; ++m12)
 	{
 	  m1 = this->M12InterValue[m12] & L16Mask;
 	  m2 = (this->M12InterValue[m12] & H16Mask)>>16;
@@ -1118,7 +1101,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 	  else
 	    ReducedNbrInteractionFactors += this->NbrM34InterValues[m12];
 	}
-
+      
       // one-particle terms:
       if (this->OneBodyInteractionFactorsUpUp != 0) 
 	if (this->OneBodyInteractionFactorsDownDown != 0)
@@ -1166,7 +1149,7 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::PartialEnable
 		TmpNbrTranslationArray[Pos] = 0;
 		++Pos;
 	      }
-	  }	
+	  }
     }
 }
 

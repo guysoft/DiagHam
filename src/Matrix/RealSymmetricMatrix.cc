@@ -1869,7 +1869,6 @@ RealDiagonalMatrix& RealSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& 
   delete[] IntegerWorkingArea;
   delete[] TmpMatrix;
   return M;
-  return M;
 }
 
 #endif

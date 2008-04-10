@@ -1037,7 +1037,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
       else
 	{
 	  RealSymmetricMatrix TmpDensityMatrix;
-	  return TmpDensityMatrix;	  
+	  return TmpDensityMatrix;  
 	}
     }
 
@@ -1210,7 +1210,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrix (int subsytem
 // nbrFermionSector = number of particles that belong to the subsytem 
 // groundState = reference on the total system ground state
 // lzSector = Lz sector in which the density matrix has to be evaluated 
-// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+// return value = density matrix of the subsytem (return a zero dimension matrix if the density matrix is equal to zero)
 
 RealSymmetricMatrix  FermionOnSphere::EvaluateShiftedPartialDensityMatrix (int subsytemSize, int subsystemShift, int nbrFermionSector, int lzSector, RealVector& groundState)
 {  

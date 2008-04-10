@@ -144,9 +144,7 @@ class ParticleOnLattice :  public AbstractQHEParticle
 
   // decode a single encoded quantum number q to the set of quantum numbers posx, posy, sublattice
   // posx = position along x-direction
-  // posy = position along y-direction
-  // sublattice = sublattice index
-  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice) = 0;
+  // posy = position along y-direction void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice) = 0;
 
 
   // evaluate wave function in real space using a given basis

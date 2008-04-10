@@ -5,7 +5,7 @@
 //                  Copyright (C) 1998-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of running option                          //
+//                        class of Multiple string option                       //
 //                                                                            //
 //                        last modification : 19/08/2001                      //
 //                                                                            //
@@ -27,61 +27,41 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTOPTION_H
-#define ABSTRACTOPTION_H
+#ifndef MULTIPLESTRINGOPTION_H
+#define MULTIPLESTRINGOPTION_H
 
 
 #include "config.h"
-#include "GeneralTools/List.h"
-
-#include <iostream>
+#include "Options/AbstractOption.h"
 
 
-using std::ostream;
-
-
-class AbstractOption
+class MultipleStringOption : public AbstractOption
 {
 
  protected:
   
-  // standalone character used for otion
-  char OptionCode;
+  char** Strings;
 
-  // option full name
-  char* OptionName;
+  int NbrStrings;
 
-  // string describing option (used for -h option)
-  char* OptionDescription;
-
-  // error code used dor print error method
-  int ErrorCode;
-
-  // flag indicating option Type
-  int OptionType;
-  
  public:
 
-  enum Type
-    {
-      OTBoolean = 0x001,
-      OTInteger = 0x02,
-      OTIntegers = 0x102,
-      OTDouble = 0x004,
-      OTDoubles = 0x104,
-      OTString = 0x008,
-      OTStrings = 0x108
-    };
+  enum
+  {
+    NoError = 0,
+    NoString = 1
+  };
 
-  // virtual destructor
+  // constructor from default datas
   //
-  virtual ~AbstractOption();
+  // optionCode = character associated to the option
+  // optionName = string corresponding to option name
+  // optionDescription = string describing option (used for -h option)
+  MultipleStringOption(char optionCode, const char* optionName, const char* optionDescription);
 
-  // test if a string matches the option name
+  // destructor
   //
-  // optionName = string to test
-  // return value = true if the string matches the option name
-  virtual bool IsOptionName (char* optionName);
+  ~MultipleStringOption();
 
   // Test if an argument corresponds to the current option and read its content
   //
@@ -89,59 +69,61 @@ class AbstractOption
   // nbrArgument = number of arguments in argumentValues array
   // argumentPosition = position of the first argument to read
   // return value = number of arguments that have been read (-1 if an error occured)
-  virtual int ReadOption(char** argumentValues, int nbrArgument, int argumentPosition) = 0;
-
-  // get option value as a string
-  // 
-  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
-  virtual  char* GetAsAString() = 0;
+  int ReadOption(char** argumentValues, int nbrArgument, int argumentPosition);
 
   // print error message on output stream
   //
   // output = reference on output stream;
   // return value = reference on current output stream
-  virtual ostream& PrintError (ostream& output) = 0;
+  ostream& PrintError (ostream& output);
 
-  // print help concerning current option
+  // Get read string number index
   //
-  // output = reference on output stream;
-  // return value = reference on current output stream
-  virtual ostream& DisplayHelp (ostream& output) = 0;
+  // index = position of string read
+  // return value = pointer to string
+  char* GetString(int index=0);
 
+  // Get array of read string
+  //
+  // return value = pointer to string
+  char** GetStrings();
+
+  // Get array of read string
+  //
+  // nbrStrings = returns number of available strings
+  // return value = pointer to string
+  char** GetStrings(int &nbrStrings);
+
+
+  // Get number of available strings
+  //
+  int GetNbrStrings() { return NbrStrings; }
+
+  // get option value as a string
+  //
+  // index = position of string read
+  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+  char* GetAsAString() {return this->GetAsAString(0); }
+
+  // get option value as a string
+  //
+  // index = position of string read
+  // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
+  char* GetAsAString(int index);
+  
   // print the current option and its values
   //  
   // output = reference on output stream;
   // shortVersion = true if return only option code and the option value, false if return option description in addition
   // return value = reference on current output stream
-  virtual ostream& DisplayOption (ostream& output, bool shortVersion = false) = 0;
+  virtual ostream& DisplayOption (ostream& output, bool shortVersion = false);
 
-  // get the Option type
-
-  virtual int GetOptionType(){return this->OptionType;}
-
-  // display help
+  // print help concerning current option
   //
-  // options = option list
-  // str = reference on output stream to use
-  // programName = string containing the program name
-  // return value = true if proceeding succeded
-  friend void DisplayHelp (List<AbstractOption*>& option, ostream& str, char* programName);
+  // output = reference on output stream;
+  // return value = reference on current output stream
+  ostream& DisplayHelp (ostream& output);
 
 };
-
-// Proceed running options 
-//
-// argumentValues = string array of arguments
-// nbrArgument = number of arguments in argumentValues array
-// options = option list
-// return value = true if proceeding succeded
-bool ProceedOptions (char** argumentValues, int nbrArgument, List<AbstractOption*>& option);
-
-// display help
-//
-// options = option list
-// str = reference on output stream to use
-// return value = true if proceeding succeded
-void DisplayHelp (List<AbstractOption*>& option, ostream& str);
 
 #endif

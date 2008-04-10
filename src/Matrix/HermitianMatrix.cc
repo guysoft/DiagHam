@@ -38,6 +38,10 @@
 #include <stdlib.h>
 
 
+extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrix, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
+
+
+
 using std::endl;
 
 
@@ -55,6 +59,9 @@ HermitianMatrix::HermitianMatrix()
   this->TrueNbrColumn = this->NbrColumn;
   this->Increment = 0;
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
 }
 
 // constructor for an empty matrix
@@ -88,6 +95,9 @@ HermitianMatrix::HermitianMatrix(int dimension, bool zero)
 	    }
 	}
     }
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
 }
 
 // constructor from matrix elements (without duplicating datas)
@@ -109,6 +119,9 @@ HermitianMatrix::HermitianMatrix(double* diagonal, double* realOffDiagonal, doub
   this->TrueNbrColumn = this->NbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
 }
 
 // copy constructor (without duplicating datas)
@@ -127,6 +140,9 @@ HermitianMatrix::HermitianMatrix(const HermitianMatrix& M)
   this->TrueNbrColumn = M.TrueNbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
 }
 
 // copy constructor from a real tridiagonal symmetric matrix (without duplicating diagonal elements)
@@ -135,6 +151,9 @@ HermitianMatrix::HermitianMatrix(const HermitianMatrix& M)
 
 HermitianMatrix::HermitianMatrix(const RealTriDiagonalSymmetricMatrix& M) 
 {
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
 }
 
 // destructor
@@ -150,6 +169,15 @@ HermitianMatrix::~HermitianMatrix()
 	delete[] this->RealOffDiagonalElements;
 	delete[] this->ImaginaryOffDiagonalElements;
       }
+#ifdef __LAPACK__
+  if (this->LapackWorkAreaDimension>0)
+    {
+      delete [] LapackMatrix;
+      delete [] LapackWorkingArea;
+      delete [] LapackRealWorkingArea;
+      if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+    }
+#endif
 }
 
 // assignement (without duplicating datas)
@@ -176,6 +204,9 @@ HermitianMatrix& HermitianMatrix::operator = (const HermitianMatrix& M)
   this->TrueNbrRow = M.TrueNbrRow;
   this->TrueNbrColumn = M.TrueNbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
+#ifdef __LAPACK__
+  this->LapackWorkAreaDimension=0;
+#endif
   return *this;
 }
 
@@ -1380,18 +1411,18 @@ RealTriDiagonalSymmetricMatrix& HermitianMatrix::Householder (RealTriDiagonalSym
   int ReducedNbrRow2 ;
   double* TmpVRe = new double [ReducedNbrRow];
   double* TmpVIm = new double [ReducedNbrRow];
-  double* TmpCoefRe = new double [this->NbrRow];
-  double* TmpCoefIm = new double [this->NbrRow];
+//   double* TmpCoefRe = new double [this->NbrRow];
+//   double* TmpCoefIm = new double [this->NbrRow];
   double TmpNorm;
   double Coef;
   int Pos = 0;
   int TmpPos;
-  int TmpPos2;
-  int TmpPos3;
-  int TmpPos4;
-  int TmpPos5;
-  int TmpPos6;
-  int Inc;
+//   int TmpPos2;
+//   int TmpPos3;
+//   int TmpPos4;
+//   int TmpPos5;
+//   int TmpPos6;
+//   int Inc;
   M.DiagonalElement(0) = this->DiagonalElements[0];
   for (int i = 1; i < ReducedNbrRow; ++i)
     {
@@ -1564,6 +1595,9 @@ RealSymmetricMatrix HermitianMatrix::ConvertToSymmetricMatrix()
 
 RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, double err, int maxIter)
 {
+#ifdef __LAPACKONLY__
+  return this->LapackDiagonalize(M, err, maxIter);
+#endif
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());
@@ -1585,6 +1619,9 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, double 
 
 RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
 {
+#ifdef __LAPACKONLY__
+  return this->LapackDiagonalize(M, Q, err, maxIter);
+#endif
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());
@@ -1604,6 +1641,121 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
   
   return M;
 }
+
+
+#ifdef __LAPACK__
+  
+// Diagonalize a complex skew symmetric matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
+{  
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  Complex Tmp;
+  if (this->LapackWorkAreaDimension<this->NbrRow)
+    {
+      if (this->LapackWorkAreaDimension>0)
+	{
+	  delete [] LapackMatrix;
+	  delete [] LapackWorkingArea;
+	  delete [] LapackRealWorkingArea;
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
+	}      
+      this->LapackMatrix = new doublecomplex [this->NbrRow * (this->NbrRow+1)/2];
+      this->LapackEVMatrix = NULL;	  
+      this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
+      this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
+      this->LapackWorkAreaDimension=this->NbrRow;
+    }
+  
+  int Information = 0;  
+  char Jobz = 'N';
+  char UpperLower = 'U';
+  int TotalIndex = 0;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  LapackMatrix[TotalIndex].r = Tmp.Re;
+	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  ++TotalIndex;
+	}
+      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      LapackMatrix[TotalIndex].i = 0.0;
+      ++TotalIndex;      
+    }
+  FORTRAN_NAME(zhpev)(&Jobz, &UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);  
+  return M;
+}
+
+// Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
+{
+  
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  Complex Tmp;
+  if (this->LapackWorkAreaDimension<this->NbrRow)
+    {
+      if (this->LapackWorkAreaDimension>0)
+	{
+	  delete [] LapackMatrix;
+	  delete [] LapackWorkingArea;
+	  delete [] LapackRealWorkingArea;
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
+	}
+      this->LapackMatrix = new doublecomplex [this->NbrRow * (this->NbrRow+1)/2];
+      this->LapackEVMatrix = NULL;
+      this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
+      this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
+      this->LapackWorkAreaDimension=this->NbrRow;
+    }
+  if (LapackEVMatrix==NULL)
+    LapackEVMatrix = new doublecomplex[this->NbrRow * this->NbrRow];
+  int Information = 0;  
+  char Jobz = 'V';
+  char UpperLower = 'U';
+  int TotalIndex = 0;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  LapackMatrix[TotalIndex].r = Tmp.Re;
+	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  ++TotalIndex;
+	}
+      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      LapackMatrix[TotalIndex].i = 0.0;
+      ++TotalIndex;      
+    }
+  FORTRAN_NAME(zhpev)(&Jobz, &UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);
+  
+  TotalIndex=0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	Tmp.Re = LapackEVMatrix[TotalIndex].r;
+	Tmp.Im = LapackEVMatrix[TotalIndex].i;
+	Q.SetMatrixElement(j, i, Tmp);
+	++TotalIndex;
+      }
+  return M;  
+}
+
+#endif
+
 
 
 

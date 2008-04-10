@@ -6,7 +6,6 @@
 
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
-#include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
