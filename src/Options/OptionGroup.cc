@@ -44,7 +44,7 @@ using std::endl;
 //
 // groupName = group full name
 
-OptionGroup::OptionGroup(char* groupName, bool showGroup)
+OptionGroup::OptionGroup(const char* groupName, bool showGroup)
 {
   this->GroupName = new char [strlen(groupName) + 1];
   this->ShowGroup = showGroup;
@@ -81,7 +81,7 @@ OptionGroup& OptionGroup::operator += (AbstractOption* option)
 // optionName = string containing option name
 // return value = poitner to the option if it has been found, 0 either
 
-AbstractOption* OptionGroup::operator[] (char* optionName)
+AbstractOption* OptionGroup::operator[] (const char* optionName)
 {
   ListIterator<AbstractOption*> IterOption(this->Options);
   AbstractOption** TmpOption;

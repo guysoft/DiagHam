@@ -45,7 +45,7 @@ using std::endl;
 // optionDescription = string describing option (used for -h option)
 // defaultValue = boolean default value 
 
-BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDescription, bool defaultValue)
+BooleanOption::BooleanOption(char optionCode, const char* optionName, const char* optionDescription, bool defaultValue)
 {
   this->OptionCode = optionCode;
   this->OptionType = AbstractOption::OTBoolean;
@@ -67,8 +67,8 @@ BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDesc
 // trueString = string output by GetAsString() if optionvalue is true
 // falseString = string output by GetAsString() if optionvalue is false
 // defaultValue = boolean default value 
-BooleanOption::BooleanOption(char optionCode, char* optionName, char* optionDescription,
-			     char* trueString, char* falseString, bool defaultValue)
+BooleanOption::BooleanOption(char optionCode, const char* optionName, const char* optionDescription,
+			     const char* trueString, const char* falseString, bool defaultValue)
 {
   this->OptionCode = optionCode;
   this->OptionType = AbstractOption::OTBoolean;

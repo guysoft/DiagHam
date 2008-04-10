@@ -49,7 +49,7 @@ using std::endl;
 // maxValueFlag = flag to indicates an double maximum value
 // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
 
-SingleDoubleOption::SingleDoubleOption(char optionCode, char* optionName, char* optionDescription, double defaultValue, 
+SingleDoubleOption::SingleDoubleOption(char optionCode, const char* optionName, const char* optionDescription, double defaultValue, 
 				       bool minValueFlag, double minValue, 
 				       bool maxValueFlag, double maxValue)
 {

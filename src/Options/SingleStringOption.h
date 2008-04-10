@@ -56,7 +56,7 @@ class SingleStringOption : public AbstractOption
   // optionName = string corresponding to option name
   // optionDescription = string describing option (used for -h option)
   // string = default value of the string (null pointer if none)
-  SingleStringOption(char optionCode, char* optionName, char* optionDescription, char* string = 0);
+  SingleStringOption(char optionCode, const char* optionName, const char* optionDescription, const char* string = 0);
 
   // destructor
   //

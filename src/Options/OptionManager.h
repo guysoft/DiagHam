@@ -65,7 +65,7 @@ class OptionManager
   // constructor
   //
   // groupName = group full name
-  OptionManager(char* programName, char* programVersion = 0, char* programAdditionalInformations = 0);
+  OptionManager(const char* programName, const char* programVersion = 0, const char* programAdditionalInformations = 0);
 
   // destructor
   //
@@ -81,7 +81,7 @@ class OptionManager
   //
   // optionName = string containing option name
   // return value = poitner to the option if it has been found, 0 either
-  AbstractOption* operator[] (char* optionName);
+  AbstractOption* operator[] (const char* optionName);
 
   // Proceed running options from command line arguments
   //
@@ -115,26 +115,26 @@ class OptionManager
   //
   // format = string describing the format to use (each symbol %optionname% is replaced by the value associated to the option referred as optionname)
   // return value = formatted string (deallocation has to be done manually)
-  char* GetFormattedString (char* format);
+  char* GetFormattedString (const char* format);
 
   // accessor routines for managed options:
   // these are wrappers of the operator[] routine
   // returning the value of the option, if found
   // or exiting with a warning message, otherwise  
-  bool GetBoolean(char *optionName);
-  double GetDouble(char *optionName);
+  bool GetBoolean(const char *optionName);
+  double GetDouble(const char *optionName);
   // from MultipleDoubleOption: possibility to request the length of the vector, if wanted
-  double* GetDoubles(char *optionName);
-  double* GetDoubles(char *optionName, int &length);
-  int GetInteger(char *optionName);
+  double* GetDoubles(const char *optionName);
+  double* GetDoubles(const char *optionName, int &length);
+  int GetInteger(const char *optionName);
   // from MultipleIntegerOption: possibility to request the length of the vector, if wanted
-  int* GetIntegers(char *optionName);
-  int* GetIntegers(char *optionName, int &length);
-  char* GetString(char *optionName);
+  int* GetIntegers(const char *optionName);
+  int* GetIntegers(const char *optionName, int &length);
+  char* GetString(const char *optionName);
   //accessor routine for Multiple String value
-  char** GetStrings(char *optionName);
+  char** GetStrings(const char *optionName);
   // alternative accessor routine for Multiple String value
-  char** GetStrings(char *optionName, int & length);
+  char** GetStrings(const char *optionName, int & length);
 
 
   

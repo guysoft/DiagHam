@@ -33,6 +33,8 @@
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
 
+#include <iostream>
+
   
 // constructor from default datas
 //
@@ -110,7 +112,7 @@ int ParticleOnLatticeOneBodyOperator::GetHilbertSpaceDimension ()
 // annihilationIndex = index of the annihilation operator
 void ParticleOnLatticeOneBodyOperator::SetCreationAnnihilationIndex (int creationIndex, int annihilationIndex)
 {
-  this->CreationIndex=CreationIndex;
+  this->CreationIndex=creationIndex;
   this->AnnihilationIndex=annihilationIndex;
 }
 
@@ -130,7 +132,8 @@ Complex ParticleOnLatticeOneBodyOperator::MatrixElement (RealVector& V1, RealVec
   for (int i = 0; i < Dim; ++i)
     {
       Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+      if ((Index<Dim)&&(Coefficient!=0.0))
+	Element += V1[Index] * V2[i] * Coefficient;
     }
   return Complex(Element);
 }
@@ -145,7 +148,8 @@ Complex ParticleOnLatticeOneBodyOperator::MatrixElement (ComplexVector& V1, Comp
   for (int i = 0; i < Dim; ++i)
     {
       Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
-      Element += (V1[Index] * V2[i] * Coefficient);
+      if ((Index<Dim)&&(Coefficient!=0.0))
+	Element += (Conj(V1[Index]) * V2[i] * Coefficient);
     }
   return Element; 
 }
@@ -161,14 +165,18 @@ Complex ParticleOnLatticeOneBodyOperator::MatrixElement (ComplexVector& V1, Comp
 
 ComplexVector& ParticleOnLatticeOneBodyOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
+  int Dim = this->Particle->GetHilbertSpaceDimension();
   int Last = firstComponent + nbrComponent;;
   int Index;
   double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
       Index = this->Particle->AdA(i, this->CreationIndex, this->AnnihilationIndex, Coefficient);
-      vDestination[Index].Re = vSource[i].Re * Coefficient;
-      vDestination[Index].Im = vSource[i].Im * Coefficient;
+      if ((Index<Dim)&&(Coefficient!=0.0))
+	{
+	  vDestination[Index].Re = vSource[i].Re * Coefficient;
+	  vDestination[Index].Im = vSource[i].Im * Coefficient;
+	}
     }
   return vDestination;
 }

@@ -50,8 +50,8 @@ using std::endl;
 // maxValueFlag = flag to indicates an double maximum value
 // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
 
-MultipleDoubleOption::MultipleDoubleOption(char optionCode, char* optionName, char* optionDescription,
-					   char separator, char altSeparator, char* defaultValues,
+MultipleDoubleOption::MultipleDoubleOption(char optionCode, const char* optionName, const char* optionDescription,
+					   char separator, char altSeparator, const char* defaultValues,
 					   bool minValueFlag, double minValue, 
 					   bool maxValueFlag, double maxValue)
 {
@@ -278,7 +278,7 @@ ostream& MultipleDoubleOption::DisplayHelp (ostream& output)
 
 
 
-int MultipleDoubleOption::AnalyzeString(char *String)
+int MultipleDoubleOption::AnalyzeString(const char *String)
 {
   char *tmpC, *tmpC2, *token;
   char sep[2];

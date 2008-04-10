@@ -76,7 +76,7 @@ class SingleIntegerOption : public AbstractOption
   // minValue = integer minimum value 
   // maxValueFlag = flag to indicates an integer maximum value
   // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
-  SingleIntegerOption(char optionCode, char* optionName, char* optionDescription, int defaultValue = 0, 
+  SingleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, int defaultValue = 0, 
 		      bool minValueFlag = false, int minValue = 0, 
 		      bool maxValueFlag = false, int maxValue = 0);
 

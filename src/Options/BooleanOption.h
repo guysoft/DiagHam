@@ -58,7 +58,7 @@ class BooleanOption : public AbstractOption
   // optionName = string corresponding to option name
   // optionDescription = string describing option (used for -h option)
   // defaultValue = boolean default value 
-  BooleanOption(char optionCode, char* optionName, char* optionDescription, bool defaultValue = false);
+  BooleanOption(char optionCode, const char* optionName, const char* optionDescription, bool defaultValue = false);
 
   // constructor from default datas
   //
@@ -68,7 +68,8 @@ class BooleanOption : public AbstractOption
   // trueString = string output by Manager.GetFormattedString if optionvalue is true
   // falseString = string output by Manager.GetFormattedString if optionvalue is false
   // defaultValue = boolean default value 
-  BooleanOption(char optionCode, char* optionName, char* optionDescription, char* trueString, char* falseString, bool defaultValue = false);
+  BooleanOption(char optionCode, const char* optionName, const char* optionDescription,
+		const char* trueString, const char* falseString, bool defaultValue = false);
 
   // destructor
   //

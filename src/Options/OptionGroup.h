@@ -63,7 +63,7 @@ class OptionGroup
   //
   // groupName = group full name
   // showGroup = Flag indicating if options shown in help
-  OptionGroup(char* groupName, bool showGroup=true);
+  OptionGroup(const char* groupName, bool showGroup=true);
 
   // destructor
   //
@@ -79,7 +79,7 @@ class OptionGroup
   //
   // optionName = string containing option name
   // return value = poitner to the option if it has been found, 0 either
-  AbstractOption* operator[] (char* optionName);
+  AbstractOption* operator[] (const char* optionName);
 
   // Test if an argument corresponds to the current option and read its content
   //

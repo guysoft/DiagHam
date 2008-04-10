@@ -46,7 +46,7 @@ using std::cout;
 //
 // groupName = group full name
 
-OptionManager::OptionManager(char* programName, char* programVersion, char* programAdditionalInformations)
+OptionManager::OptionManager(const char* programName, const char* programVersion, const char* programAdditionalInformations)
 {
   this->ProgramName = new char [strlen(programName) + 1];
   strcpy (this->ProgramName, programName);      
@@ -104,7 +104,7 @@ OptionManager& OptionManager::operator += (OptionGroup* group)
 // optionName = string containing option name
 // return value = poitner to the option if it has been found, 0 either
 
-AbstractOption* OptionManager::operator[] (char* optionName)
+AbstractOption* OptionManager::operator[] (const char* optionName)
 {
   ListIterator<OptionGroup*> IterGroup(this->Groups);
   OptionGroup** TmpGroup;
@@ -260,12 +260,12 @@ ostream& OptionManager::DisplayHelp (ostream& output)
 // format = string describing the format to use (each symbol %optionname% is replaced by the value associated to the option referred as optionname)
 // return value = formatted string (deallocation has to be done manually, 0 if an error occured)
 
-char* OptionManager::GetFormattedString (char* format)
+char* OptionManager::GetFormattedString (const char* format)
 {
   char* TmpScratch = new char [strlen(format)];
   int StringLength = 0;
   List<char*> Values;
-  char* TmpFormat = format;
+  char* TmpFormat = (char*)format;
   char** TmpValue;
   AbstractOption* TmpOption;
   while ((*TmpFormat) != '\0')
@@ -316,7 +316,7 @@ char* OptionManager::GetFormattedString (char* format)
 	  ++TmpFormat;
 	}
     }
-  TmpFormat = format;
+  TmpFormat = (char*)format;
   ListIterator<char*> IterValues(Values);
   char* TmpFormattedString = new char [StringLength + 1];
   char* TmpFormattedString2 = TmpFormattedString;
@@ -349,7 +349,7 @@ char* OptionManager::GetFormattedString (char* format)
 
 
 //accessor routine for Boolean value
-bool OptionManager::GetBoolean(char *optionName)
+bool OptionManager::GetBoolean(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -370,7 +370,7 @@ bool OptionManager::GetBoolean(char *optionName)
 }
 
 //accessor routine for Double value
-double OptionManager::GetDouble(char *optionName)
+double OptionManager::GetDouble(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -391,7 +391,7 @@ double OptionManager::GetDouble(char *optionName)
 }
 
 //accessor routine for Multiple Double value
-double* OptionManager::GetDoubles(char *optionName)
+double* OptionManager::GetDoubles(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -412,7 +412,7 @@ double* OptionManager::GetDoubles(char *optionName)
 }
 
 // alternative accessor routine for Multiple Double value
-double* OptionManager::GetDoubles(char *optionName, int & length)
+double* OptionManager::GetDoubles(const char *optionName, int & length)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -436,7 +436,7 @@ double* OptionManager::GetDoubles(char *optionName, int & length)
 }
 
 //accessor routine for Integer value
-int OptionManager::GetInteger(char *optionName)
+int OptionManager::GetInteger(const char *optionName)
   {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -457,7 +457,7 @@ int OptionManager::GetInteger(char *optionName)
 }
 
 //accessor routine for Multiple Integer value
-int* OptionManager::GetIntegers(char *optionName)
+int* OptionManager::GetIntegers(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -478,7 +478,7 @@ int* OptionManager::GetIntegers(char *optionName)
 }
 
 // alternative accessor routine for Multiple Integer value
-int* OptionManager::GetIntegers(char *optionName, int & length)
+int* OptionManager::GetIntegers(const char *optionName, int & length)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -503,7 +503,7 @@ int* OptionManager::GetIntegers(char *optionName, int & length)
 
 
 //accessor routine for String value
-char* OptionManager::GetString(char *optionName)
+char* OptionManager::GetString(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -524,7 +524,7 @@ char* OptionManager::GetString(char *optionName)
 }
 
 //accessor routine for Multiple String value
-char** OptionManager::GetStrings(char *optionName)
+char** OptionManager::GetStrings(const char *optionName)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)
@@ -545,7 +545,7 @@ char** OptionManager::GetStrings(char *optionName)
 }
 
 // alternative accessor routine for Multiple String value
-char** OptionManager::GetStrings(char *optionName, int & length)
+char** OptionManager::GetStrings(const char *optionName, int & length)
 {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)

@@ -50,7 +50,7 @@ AbstractOption::~AbstractOption()
 // optionName = string to test
 // return value = true if the string matches the option name
 
-bool AbstractOption::IsOptionName (char* optionName)
+bool AbstractOption::IsOptionName (const char* optionName)
 {
   if (strlen(&(this->OptionName[1])) != strlen(optionName))
     return false;

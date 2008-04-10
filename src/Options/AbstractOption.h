@@ -81,7 +81,7 @@ class AbstractOption
   //
   // optionName = string to test
   // return value = true if the string matches the option name
-  virtual bool IsOptionName (char* optionName);
+  virtual bool IsOptionName (const char* optionName);
 
   // Test if an argument corresponds to the current option and read its content
   //

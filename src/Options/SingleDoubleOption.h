@@ -76,7 +76,7 @@ class SingleDoubleOption : public AbstractOption
   // minValue = double minimum value 
   // maxValueFlag = flag to indicates an double maximum value
   // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-  SingleDoubleOption(char optionCode, char* optionName, char* optionDescription, double defaultValue = 0, 
+  SingleDoubleOption(char optionCode, const char* optionName, const char* optionDescription, double defaultValue = 0, 
 		     bool minValueFlag = false, double minValue = 0.0, 
 		     bool maxValueFlag = false, double maxValue = 0.0);
 
