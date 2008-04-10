@@ -37,16 +37,13 @@
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// Rx = x-component of the desired translation
-// Ry = y-component of the desired translation
-ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int Rx, int Ry)
+// rx = x-component of the desired translation
+// ry = y-component of the desired translation
+ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx, int ry)
 {
   this->Particle = (ParticleOnLattice*) (particle->Clone());
-  this->Rx=Rx;
-  this->Ry=Ry;
-  // xxx
-  this->CreationIndices = 0;
-  this->AnnihilationIndices = 0;
+  this->Rx=rx;
+  this->Ry=ry;  
 }
 
 // copy constructor
@@ -58,8 +55,6 @@ ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(const
   this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
   this->Rx=oper.Rx;
   this->Ry=oper.Ry;
-  this->CreationIndices = oper.CreationIndices;
-  this->AnnihilationIndices = oper.AnnihilationIndices;
 }
 
 // destructor
@@ -107,6 +102,16 @@ int ParticleOnLatticeTranslationOperator::GetHilbertSpaceDimension ()
   return this->Particle->GetHilbertSpaceDimension();
 }
 
+// set components of translation vector
+//
+// rx = x-component of the desired translation
+// ry = y-component of the desired translation
+void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int ry)
+{
+  this->Rx=rx;
+  this->Ry=ry;  
+}
+
 
 
   
@@ -119,28 +124,28 @@ int ParticleOnLatticeTranslationOperator::GetHilbertSpaceDimension ()
 Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  double Coefficient = 0.0;
-  double Element = 0.0;
+  Complex TranslationPhase;  
+  Complex Element = 0.0;
   int Index;
   for (int i = 0; i < Dim; ++i)
     {
-      Index = this->Particle->AdA(i, this->CreationIndices[0], this->AnnihilationIndices[0], Coefficient);
-      Element += V1[Index] * V2[i] * Coefficient;
+      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
+      Element += V1[Index] * V2[i] * TranslationPhase;
     }
-  return Complex(Element);
+  return Element;
 }
 
 
 Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  double Coefficient = 0.0;
+  Complex TranslationPhase;
   Complex Element;
   int Index;
   for (int i = 0; i < Dim; ++i)
     {
-      Index = this->Particle->AdA(i, this->CreationIndices[0], this->AnnihilationIndices[0], Coefficient);
-      Element += (V1[Index] * V2[i] * Coefficient);
+      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
+      Element += Conj(V1[Index]) * V2[i] * TranslationPhase;
     }
   return Element; 
 }
@@ -158,13 +163,12 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVec
 {
   int Last = firstComponent + nbrComponent;;
   int Index;
-  double Coefficient = 0.0;
+  Complex TranslationPhase;
   for (int i = firstComponent; i < Last; ++i)
     {
-      // xxx set proper arguments
-      Index = this->Particle->AdA(i, this->CreationIndices[0], this->AnnihilationIndices[0], Coefficient);
-      vDestination[Index].Re = vSource[i].Re * Coefficient;
-      vDestination[Index].Im = vSource[i].Im * Coefficient;
+      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
+      vDestination[Index].Re = vSource[i].Re * TranslationPhase.Re - vSource[i].Im * TranslationPhase.Im;
+      vDestination[Index].Im = vSource[i].Re * TranslationPhase.Im + vSource[i].Im * TranslationPhase.Re;
     }
   return vDestination;
 }

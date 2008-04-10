@@ -64,7 +64,8 @@ class AbstractArchitectureOperation
       NDMAPPrecalculation = 0x400,
       ScalarSum = 0x800,
       QHEParticleWaveFunction = 0x800,
-      MainTask = 0x1000
+      MainTask = 0x1000,
+      VectorOperatorMultiply=0x2000
     };
 
   // destructor

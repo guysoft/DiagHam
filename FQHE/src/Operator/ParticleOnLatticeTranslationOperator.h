@@ -60,9 +60,9 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
-  // Rx = x-component of the desired translation
-  // Ry = y-component of the desired translation
-  ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int Rx, int Ry);
+  // rx = x-component of the desired translation
+  // ry = y-component of the desired translation
+  ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx=0, int ry=1);
 
   // copy constructor
   //
@@ -92,6 +92,13 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
+
+  // set components of translation vector
+  //
+  // rx = x-component of the desired translation
+  // ry = y-component of the desired translation
+  void SetTranslationComponents(int rx, int ry);
+
 
   
   // evaluate matrix element

@@ -124,6 +124,19 @@ class AbstractOperator
   // return value = corresponding matrix element
   virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2) = 0;
 
+  // multiply a vector by the current operator for a given range of indices 
+  // and store result in another vector
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  
+  Vector& Multiply(Vector& vSource, Vector& vDestination, 
+		   int firstComponent, int nbrComponent);
+
+
   // multiply a vector by the current operator and store result in another vector
   //
   // vSource = vector to be multiplied

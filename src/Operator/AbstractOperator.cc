@@ -168,6 +168,32 @@ RealVector& AbstractOperator::LowLevelAddMultiply(RealVector& vSource, RealVecto
   return vDestination;
 }
 
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+Vector& AbstractOperator::Multiply(Vector& vSource, Vector& vDestination, 
+				      int firstComponent, int nbrComponent)
+{
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) != (vDestination.GetVectorType() & Vector::DataTypeMask))
+    return vDestination;
+  if ((vSource.GetVectorType() & Vector::DataTypeMask) == Vector::RealDatas)
+    {
+      return this->LowLevelMultiply((RealVector&) vSource, (RealVector&) vDestination, firstComponent, nbrComponent);
+    }
+  else
+    {
+      return this->LowLevelMultiply((ComplexVector&) vSource, (ComplexVector&) vDestination, firstComponent, nbrComponent);
+    }
+  return vDestination;
+}
+
 // multiply a vector by the current operator and store result in another vector
 //
 // vSource = vector to be multiplied

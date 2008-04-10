@@ -76,6 +76,7 @@ BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta
   this->HilbertSpaceDimension = this->HardCoreBasis->GetHilbertSpaceDimension();
 
   this->TemporaryState = new unsigned long [this->NbrStates];
+  this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];
   this->Flag.Initialize();
 
@@ -106,6 +107,7 @@ BosonOnLattice::BosonOnLattice(const BosonOnLattice& bosons)
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->TemporaryState = new unsigned long [this->NbrStates];
+  this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
 }
 
@@ -118,6 +120,7 @@ BosonOnLattice::~BosonOnLattice ()
     {
       delete this->HardCoreBasis;
       delete[] this->TemporaryState;
+      delete[] this->ShiftedState;
       delete[] this->ProdATemporaryState;
     }
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
@@ -144,6 +147,7 @@ BosonOnLattice& BosonOnLattice::operator = (const BosonOnLattice& bosons)
     {
       delete this->HardCoreBasis;
       delete[] this->TemporaryState;
+      delete[] this->ShiftedState;
       delete[] this->ProdATemporaryState;
     }
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
@@ -172,6 +176,7 @@ BosonOnLattice& BosonOnLattice::operator = (const BosonOnLattice& bosons)
   this->Minors = bosons.Minors;
   this->KeptCoordinates = bosons.KeptCoordinates;
   this->TemporaryState = new unsigned long [this->NbrStates];
+  this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];  
   return *this;
 }
@@ -525,6 +530,44 @@ void BosonOnLattice::DecodeQuantumNumber(int q, int &posx, int &posy, int &subla
   posy=(q%(m*Ly))/m;  
 }
 
+// translate a state by a multiple of the lattice vectors
+// shiftX = length of translation in x-direction
+// shiftY = length of translation in y-direction
+// translationPhase = returns phase inccurred by translation
+// return value = index of translated state
+int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase)
+{
+  this->FermionToBoson(this->HardCoreBasis->StateDescription[index], this->HardCoreBasis->StateHighestBit[index], this->TemporaryState, this->TemporaryStateHighestBit);
+  int BosonsLeft=this->NbrBosons;
+  int Q=TemporaryStateHighestBit;
+  int OldX, OldY, OldSl;
+  int NewQ;
+  int CountYCoordinates=0; // total phase is shiftX * sum_i y_i in Landau gauge
+  Complex PeriodicPhase;
+  Complex CumulatedPhase=1.0;
+  this->ShiftedStateHighestBit=0;
+  while ((Q>-1) && (BosonsLeft>0))
+    {
+      if (this->TemporaryState[Q]!=0)
+	{
+	  this->DecodeQuantumNumber(Q,OldX, OldY, OldSl);
+	  CountYCoordinates+=this->TemporaryState[Q]*OldY;
+	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
+	  CumulatedPhase*=PeriodicPhase;
+	  if (NewQ>ShiftedStateHighestBit)
+	    {
+	      for (int q=ShiftedStateHighestBit; q<NewQ;++q)
+		this->ShiftedState[q]=0;
+	      ShiftedStateHighestBit=NewQ;
+	    }
+	  this->ShiftedState[NewQ]=this->TemporaryState[Q];
+	  BosonsLeft-=TemporaryState[Q];
+	}
+      --Q;
+    }
+  CumulatedPhase*= Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates); // verify sign of phase!
+  return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit), this->ShiftedStateHighestBit + this->NbrBosons - 1);
+}
 
 
 // print a given State

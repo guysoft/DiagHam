@@ -84,6 +84,9 @@ class BosonOnLattice : public ParticleOnLattice
   // temporary state used when applying operators
   unsigned long* TemporaryState;
   int TemporaryStateHighestBit;
+  // state used for translating a state
+  unsigned long* ShiftedState;
+  int ShiftedStateHighestBit;
   // temporary state used when applying ProdA operator
   unsigned long* ProdATemporaryState;
   int ProdATemporaryStateHighestBit;
@@ -217,7 +220,14 @@ class BosonOnLattice : public ParticleOnLattice
   // posx = position along x-direction
   // posy = position along y-direction
   // sublattice = sublattice index
-  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice);  
+  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice);
+
+  // translate a state by a multiple of the lattice vectors
+  // shiftX = length of translation in x-direction
+  // shiftY = length of translation in y-direction
+  // translationPhase = returns phase inccurred by translation
+  // return value = index of translated state
+  virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase);
 
   // print a given State
   //

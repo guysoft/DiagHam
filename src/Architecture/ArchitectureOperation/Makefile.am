@@ -4,6 +4,7 @@ noinst_LIBRARIES=libArchitectureOperation.a
 
 libArchitectureOperation_a_SOURCES=AbstractArchitectureOperation.cc \
 VectorHamiltonianMultiplyOperation.cc \
+VectorOperatorMultiplyOperation.cc \
 MultipleVectorHamiltonianMultiplyOperation.cc \
 MultipleRealScalarProductOperation.cc \
 AddRealLinearCombinationOperation.cc \

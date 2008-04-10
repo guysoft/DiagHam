@@ -1,10 +1,11 @@
 #include "HilbertSpace/BosonOnLattice.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
+#include "Operator/ParticleOnLatticeTranslationOperator.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
 
 #include "MainTask/QHEOnLatticeMainTask.h"
 
@@ -80,6 +81,7 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
   ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
+  ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
 
   int VectorDimension = Space->GetHilbertSpaceDimension();
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
@@ -131,4 +133,48 @@ int main(int argc, char** argv)
   Rho.Diagonalize(M, 1e-10, 250);
   for (int i=0; i<DensityMatrixDimension; ++i)
     cout << "EV["<<i<<"] = " << M[i] << endl;
+
+  
+
+  RealVector TmpState(VectorDimension);
+  for (int i=0; i<NbrVectors; ++i)
+    {
+      TranslationOperator->SetTranslationComponents(1,0);
+      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      Complex Result1 = TmpState * Vectors[i];
+      if (fabs(Norm(Result1)-1.0)>1e-10)
+	{
+	  cout << "State "<<VectorFiles[i]<< " is not a momentum K_x eigenstate (norm "<<Norm(Result1)<<")"<<endl;
+	}
+      else
+	{
+	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result1);
+	  TranslationOperator->SetTranslationComponents(3,0);
+	  VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  Complex Result3 = TmpState * Vectors[i];
+	  cout << " [ check: "<<Arg(Result3)/3<<" ]"<<endl;	  
+	}
+      TranslationOperator->SetTranslationComponents(0,1);
+      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      Complex Result2 = TmpState * Vectors[i];
+      if (fabs(Norm(Result1)-1.0)>1e-10)
+	{
+	  cout << "State "<<VectorFiles[i]<< " is not a momentum K_y eigenstate (norm "<<Norm(Result2)<<")"<<endl;
+	}
+      else
+	{
+	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result2);
+	  TranslationOperator->SetTranslationComponents(0,3);
+	  VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  Complex Result4 = TmpState * Vectors[i];
+	  cout << " [ check: "<<Arg(Result4)/3<<" ]"<<endl;
+	}      
+    }
+
+  delete DensityOperator;
+  delete TranslationOperator;
 }
