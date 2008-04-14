@@ -2,9 +2,9 @@
 
 use strict 'vars';
 
-my $CommandFile="/rscratch/gm360/latticeQHE/ParametersToLaunch";
-my $LaunchedFile="/rscratch/gm360/latticeQHE/ParametersLaunched";
-my $FinishedFile="/rscratch/gm360/latticeQHE/ParametersFinished";
+my $CommandFile="/rscratch/gm360/latticeQHE/Parameters";
+my $LaunchedFile="/rscratch/gm360/latticeQHE/Parameters.launch";
+my $FinishedFile="/rscratch/gm360/latticeQHE/Parameters.finish";
 
 my $Program_32="/rscratch/gm360/bin/FQHELatticeBosons";
 my $Program_64="/rscratch/gm360/bin/FQHELatticeBosons_64";
@@ -12,12 +12,13 @@ my $Program_S5="/scratch/gm360/DiagHam/buildSMP/FQHE/src/Programs/FQHEOnLattice/
 
 if (!defined($ARGV[1]))
   {
-    print("usage ManageBosonsOnLattice.pl Machine# #Processors [PrecalculationMemory=0]\n");
+    print("usage ManageBosonsOnLattice.pl Machine# #Processors [PrecalculationMemory=0] [ParameterFile]\n");
     exit(1);
   }
 
 my $Machine;
 my $Program;
+my $Memory=0;
 my $MaxProcessor=1;
 if ($ARGV[0] =~ /^[0-9]/)
   {
@@ -42,6 +43,7 @@ else
     if ($ARGV[0] =~ /s5/)
       {
 	$Machine="s5.tcm.phy.private";
+	$Program = $Program_S5;	
 	$MaxProcessor=8;
       }
     else
@@ -63,7 +65,16 @@ if ( $ARGV[1] > 1 )
 	$Processors = " -S --processors ".$MaxProcessor." ";
       }
   }
-
+if (defined($ARGV[2]))
+  {
+    $Memory=$ARGV[2];
+  }
+if (defined($ARGV[3]))
+  {
+    $CommandFile=$ARGV[3];
+    $LaunchedFile="${CommandFile}.launch";
+    $FinishedFile="${CommandFile}.finish";
+  }
 # read options file
 system ("cp ".$CommandFile." ".$CommandFile.".save");
 open(MYCOMMANDS, $CommandFile) or die("Error: cannot open file '$CommandFile'\n");
@@ -143,13 +154,14 @@ else
 close(LEFTCOMMANDS);
 system ("cp ".$CommandFile.".remain ".$CommandFile);
 
-my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime > log_p_${NbrBosons}_u_${paramU} \" &";
+my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
 
 open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
 close(LAUNCHEDCOMMANDS);
 
-print $Command."\n"; # launch here after testing!
+print ("running: ".$Command."\n"); # launch here after testing!
+system ($Command);
 
 open(FINISHEDCOMMANDS, ">>${FinishedFile}") or die("Error: cannot open file '$FinishedFile'\n");
 print FINISHEDCOMMANDS ($Parameters." ".$Command."\n");
