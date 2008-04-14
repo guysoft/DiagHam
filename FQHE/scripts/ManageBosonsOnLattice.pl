@@ -19,22 +19,22 @@ if (!defined($ARGV[1]))
 my $Machine;
 my $Program;
 my $MaxProcessor=1;
-if ($ARGV[0][0] =~ /[0-9]/)
+if ($ARGV[0] =~ /^[0-9]/)
   {
     $Machine="tcmpc".$ARGV[0];
     my $tmp = `ssh ${Machine} status`;
     if ( $tmp =~ /x86_64/ )
-      {
-	$Program = $Program_32;
-      }
-    else
       {
 	$Program = $Program_64;
 	if ( $tmp =~ /Core2/ )
 	  {
 	    $MaxProcessor=2;
 	  }
-	print ("found 64-bit ".$MaxProcessor."-processor machine");
+	print ("found 64-bit ".$MaxProcessor."-processor machine\n");
+      }
+    else
+      {
+	$Program = $Program_32;	
       }
   }
 else
@@ -44,8 +44,13 @@ else
 	$Machine="s5.tcm.phy.private";
 	$MaxProcessor=8;
       }
+    else
+      {
+	print ("Machine not recognised!");
+	exit(1);
+      }
   }
-print ("Running on machine ".$Machine);
+print ("Running on machine ".$Machine."\n");
 my $Processors=" ";
 if ( $ARGV[1] > 1 )
   {
@@ -62,7 +67,7 @@ if ( $ARGV[1] > 1 )
 # read options file
 system ("cp ".$CommandFile." ".$CommandFile.".save");
 open(MYCOMMANDS, $CommandFile) or die("Error: cannot open file '$CommandFile'\n");
-open(LEFTCOMMANDS, $CommandFile."remain") or die("Error: cannot open file '$CommandFile.remain'\n");
+open(LEFTCOMMANDS, ">${CommandFile}.remain") or die("Error: cannot open file '$CommandFile.remain'\n");
 my @Lines = <MYCOMMANDS>;
 close (MYCOMMANDS);
 my $TmpLine;
@@ -81,7 +86,7 @@ foreach $TmpLine (@Lines)
   }
 fflush(LEFTCOMMANDS);
 # extract individual parameters
-my @AllParam=split($Parameters,/ /);
+my @AllParam=split($Parameters,/\t/);
 my $paramR = $AllParam[0];
 my $paramT = $AllParam[1];
 my $paramLx = $AllParam[2];
@@ -102,6 +107,15 @@ if ($paramQ>0)
   }
 my $NbrBosons = $paramLx*$paramLy*$paramR/$paramT;
 my $OutputName = "bosons_lattice_n_${NbrBosons}_x_${paramLx}_y_${paramLy}_u_${paramU}_${QString}.dat";
+
+if ( ! -e $SpecDir )
+  {
+    system ("mkdir ${SpecDir}");
+  }
+if ( ! -e $StatesDir )
+  {
+    system ("mkdir ${StatesDir}");
+  }
 if ( $paramN1 == $paramN2 ) # need to calculate only states
   {
     $WorkDir = $StatesDir;
@@ -127,13 +141,13 @@ system ("cp ".$CommandFile."remain ".$CommandFile);
 
 my $Command = "ssh $Machine \"cd ${WorkDir}; $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ ${Processors} ${EigenVectors} --show-itertime\" ";
 
-open(LAUNCHEDCOMMANDS, ">>".$LaunchedFile) or die("Error: cannot open file '$LaunchedFile'\n");
+open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}) or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
 close(LAUNCHEDCOMMANDS);
 
 print $Command; # launch here after testing!
 
-open(FINISHEDCOMMANDS, ">>".$FinishedFile) or die("Error: cannot open file '$FinishedFile'\n");
+open(FINISHEDCOMMANDS, ">>${FinishedFile}") or die("Error: cannot open file '$FinishedFile'\n");
 print FINISHEDCOMMANDS ($Parameters." ".$Command."\n");
 
 
