@@ -113,7 +113,7 @@ int main(int argc, char** argv)
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int NbrSites = Lx*Ly;  
-  bool ReverseHopping = !(Manager.GetBoolean("positive-hopping"));
+  bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   double ContactU = Manager.GetDouble("contactU");
   double Delta = Manager.GetDouble("deltaPotential");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;

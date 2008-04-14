@@ -74,19 +74,23 @@ my $TmpLine;
 my $Parameters="";
 foreach $TmpLine (@Lines)
   {
-    if (( $TmpLine =~ /^#/) || ( $Parameters != "" ))
+    if (( $TmpLine =~ /^#/) || ( $Parameters ne "" ))
       {
 	print LEFTCOMMANDS ($TmpLine);
       }
     else
       {
 	chomp($TmpLine);
-	my $Parameters=$TmpLine;
+	$Parameters=$TmpLine;
       }
   }
-fflush(LEFTCOMMANDS);
+if ( $Parameters eq "" )
+  {
+    print ("Error: No parameters found\n");
+    exit(1);
+  }
 # extract individual parameters
-my @AllParam=split($Parameters,/\t/);
+my @AllParam=split(/\t\s*/,$Parameters);
 my $paramR = $AllParam[0];
 my $paramT = $AllParam[1];
 my $paramLx = $AllParam[2];
@@ -132,23 +136,23 @@ else
       {
 	$WorkDir = $SpecDir;
 	$EigenVectors= "-n ${paramN1}";
-	system ("touch $SpecDir.$OutputName");
+	system ("touch ${SpecDir}${OutputName}");
 	print LEFTCOMMANDS ($Parameters."\tLS\n");
       }
   }
 close(LEFTCOMMANDS);
-system ("cp ".$CommandFile."remain ".$CommandFile);
+system ("cp ".$CommandFile.".remain ".$CommandFile);
 
-my $Command = "ssh $Machine \"cd ${WorkDir}; $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ ${Processors} ${EigenVectors} --show-itertime\" ";
+my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime > log_p_${NbrBosons}_u_${paramU} \" &";
 
-open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}) or die("Error: cannot open file '$LaunchedFile'\n");
+open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
 close(LAUNCHEDCOMMANDS);
 
-print $Command; # launch here after testing!
+print $Command."\n"; # launch here after testing!
 
 open(FINISHEDCOMMANDS, ">>${FinishedFile}") or die("Error: cannot open file '$FinishedFile'\n");
 print FINISHEDCOMMANDS ($Parameters." ".$Command."\n");
-
+close (FINISHEDCOMMANDS);
 
 
