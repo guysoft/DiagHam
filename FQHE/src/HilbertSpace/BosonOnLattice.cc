@@ -545,7 +545,12 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
   int CountYCoordinates=0; // total phase is shiftX * sum_i y_i in Landau gauge
   Complex PeriodicPhase;
   Complex CumulatedPhase=1.0;
+  cout << "TS:";
+  for (int i=0; i<=TemporaryStateHighestBit; ++i)
+    cout << " "<<TemporaryState[i];
+  cout << endl;
   this->ShiftedStateHighestBit=0;
+  this->ShiftedState[0]=0;
   while ((Q>-1) && (BosonsLeft>0))
     {
       if (this->TemporaryState[Q]!=0)
@@ -553,10 +558,12 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
 	  this->DecodeQuantumNumber(Q,OldX, OldY, OldSl);
 	  CountYCoordinates+=this->TemporaryState[Q]*OldY;
 	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
+	  cout << "PeriodicPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<
+	    PeriodicPhase<<endl;
 	  CumulatedPhase*=PeriodicPhase;
 	  if (NewQ>ShiftedStateHighestBit)
 	    {
-	      for (int q=ShiftedStateHighestBit; q<NewQ;++q)
+	      for (int q=ShiftedStateHighestBit+1; q<NewQ;++q)
 		this->ShiftedState[q]=0;
 	      ShiftedStateHighestBit=NewQ;
 	    }
@@ -565,7 +572,13 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
 	}
       --Q;
     }
-  CumulatedPhase*= Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates); // verify sign of phase!
+  // verify sign of phase!
+  cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
+  translationPhase = CumulatedPhase* Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates);  
+  cout << "NS:";
+  for (int i=0; i<=ShiftedStateHighestBit; ++i)
+    cout << " "<<ShiftedState[i];
+  cout << endl;
   return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit), this->ShiftedStateHighestBit + this->NbrBosons - 1);
 }
 

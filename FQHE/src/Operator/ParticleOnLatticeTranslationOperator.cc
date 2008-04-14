@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of particle on lattice 1-body operator              //
+//               class of particle on lattice translation operator            //
 //                                                                            //
 //                        last modification : 09/04/2008                      //
 //                                                                            //
@@ -164,12 +164,15 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVec
   int Last = firstComponent + nbrComponent;;
   int Index;
   Complex TranslationPhase;
+  std::cout << vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;  
   for (int i = firstComponent; i < Last; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
-      vDestination[Index].Re = vSource[i].Re * TranslationPhase.Re - vSource[i].Im * TranslationPhase.Im;
-      vDestination[Index].Im = vSource[i].Re * TranslationPhase.Im + vSource[i].Im * TranslationPhase.Re;
+      std::cout << "Translate("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
+      vDestination.Re(Index) = vSource[i].Re * TranslationPhase.Re - vSource[i].Im * TranslationPhase.Im;
+      vDestination.Im(Index) = vSource[i].Re * TranslationPhase.Im + vSource[i].Im * TranslationPhase.Re;
     }
+  std::cout << vDestination<<std::endl<<"Norm:"<<vDestination.Norm()<<std::endl;
   return vDestination;
 }
 

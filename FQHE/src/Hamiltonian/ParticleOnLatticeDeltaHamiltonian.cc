@@ -177,7 +177,7 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
   this->KineticQf = new int[NbrHoppingTerms];
 
   int TmpNumberTerms=0;
-  double HoppingSign = (this->ReverseHopping ? -1.0 : 1.0);
+  double HoppingSign = (this->ReverseHopping ? 1.0 : -1.0);
   Complex TranslationPhase;
   for (int i=0; i<Lx; ++i) 
     {

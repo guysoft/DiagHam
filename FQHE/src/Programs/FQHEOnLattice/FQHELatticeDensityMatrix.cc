@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
-  (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -94,7 +94,13 @@ int main(int argc, char** argv)
 	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of Hilbert-space!"<<endl;
 	  exit(1);
 	}
-      //cout << "Vector "<<i<<":"<<endl<<Vectors[i]<<endl;
+      cout << "Vector "<<i<<":"<<endl;
+      for (int j=0; j<VectorDimension; ++j)
+	{
+	  cout<<Vectors[i][j]<<" ( ";
+	  Space->PrintState(cout,j);
+	  cout << " )"<<endl;
+	}
     }
 
   int DensityMatrixDimension = NbrSites*NbrVectors;
@@ -110,7 +116,6 @@ int main(int argc, char** argv)
 	  for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
 	    {
 	      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
-	      
 	      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
 	      // calculate possible matrix elements in subspace of vectors
 	      for (int numVector=0; numVector<NbrVectors; ++numVector)
@@ -124,7 +129,7 @@ int main(int argc, char** argv)
 			Rho.SetMatrixElement(TotalIndexI,TotalIndexJ,Tmp);
 		      }
 		  }
-		  
+	      
 	    }
       }
   // cout << "Matrix="<<endl<<Rho<<endl;
@@ -136,7 +141,28 @@ int main(int argc, char** argv)
 
   
 
-  RealVector TmpState(VectorDimension);
+  ComplexVector TmpState(VectorDimension);
+  ComplexMatrix XTranslationMatrix(NbrVectors, NbrVectors);
+  ComplexMatrix YTranslationMatrix(NbrVectors, NbrVectors);  
+  for (int i=0; i<NbrVectors; ++i)
+    for (int j=0; j<NbrVectors; ++j)
+      {
+	TranslationOperator->SetTranslationComponents(1,0);
+	VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+	Operation.ApplyOperation(Architecture.GetArchitecture());      
+	Tmp = TmpState * Vectors[j];
+	XTranslationMatrix.SetMatrixElement(i,j,Tmp);
+
+	TranslationOperator->SetTranslationComponents(0,1);
+	VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+	Operation2.ApplyOperation(Architecture.GetArchitecture());      
+	Tmp = TmpState * Vectors[j];
+	YTranslationMatrix.SetMatrixElement(i,j,Tmp);
+      }
+
+  cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
+  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;  
+  
   for (int i=0; i<NbrVectors; ++i)
     {
       TranslationOperator->SetTranslationComponents(1,0);
@@ -149,32 +175,40 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result1);
-	  TranslationOperator->SetTranslationComponents(3,0);
-	  VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  Complex Result3 = TmpState * Vectors[i];
-	  cout << " [ check: "<<Arg(Result3)/3<<" ]"<<endl;	  
+	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result1)/2.0/M_PI*Lx<<"/"<<Lx;
+	  if (Lx>3)
+	    {
+	      TranslationOperator->SetTranslationComponents(3,0);
+	      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+	      Operation.ApplyOperation(Architecture.GetArchitecture());      
+	      Complex Result3 = TmpState * Vectors[i];
+	      cout << " [ check: "<<Arg(Result3)/6.0/M_PI*Lx<<"/"<<Lx<<" ]"<<endl;
+	    }
+	  else cout << endl;
 	}
       TranslationOperator->SetTranslationComponents(0,1);
       VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
       Operation.ApplyOperation(Architecture.GetArchitecture());      
       Complex Result2 = TmpState * Vectors[i];
-      if (fabs(Norm(Result1)-1.0)>1e-10)
+      if (fabs(Norm(Result2)-1.0)>1e-10)
 	{
 	  cout << "State "<<VectorFiles[i]<< " is not a momentum K_y eigenstate (norm "<<Norm(Result2)<<")"<<endl;
 	}
       else
 	{
-	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result2);
-	  TranslationOperator->SetTranslationComponents(0,3);
-	  VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  Complex Result4 = TmpState * Vectors[i];
-	  cout << " [ check: "<<Arg(Result4)/3<<" ]"<<endl;
-	}      
+	  cout << "Momentum K_y of "<<VectorFiles[i]<<" = "<<Arg(Result2)/2.0/M_PI*Ly<<"/"<<Ly;
+	  if (Ly>3)
+	    {
+	      TranslationOperator->SetTranslationComponents(0,3);
+	      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+	      Operation.ApplyOperation(Architecture.GetArchitecture());
+	      Complex Result4 = TmpState * Vectors[i];
+	      cout << " [ check: "<<Arg(Result4)/6.0/M_PI*Ly<<"/"<<Ly<<" ]"<<endl;
+	    }
+	  else cout << endl;
+	}
     }
-
+  
   delete DensityOperator;
   delete TranslationOperator;
 }
