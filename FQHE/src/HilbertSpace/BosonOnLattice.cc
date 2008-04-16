@@ -574,7 +574,7 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
     }
   // verify sign of phase!
   cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
-  translationPhase = CumulatedPhase* Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates);  
+  translationPhase = CumulatedPhase ;//* Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates);  
   cout << "NS:";
   for (int i=0; i<=ShiftedStateHighestBit; ++i)
     cout << " "<<ShiftedState[i];

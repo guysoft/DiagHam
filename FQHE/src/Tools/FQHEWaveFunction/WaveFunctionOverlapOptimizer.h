@@ -61,8 +61,9 @@ class WaveFunctionOverlapOptimizer
   double *Differentials;
   double MinDifferential;
   double StepLength;
+  double *LastOverlaps;
   Complex *OverlapObservation;
-  int MaxPoints;
+  int MaxPoints; 
   int LinearPoints;
   int CloudyPoints;
   int MaxParameters;
@@ -83,9 +84,21 @@ class WaveFunctionOverlapOptimizer
   
  public:
 
+  // set up an optimizing algorithm based on a Newton type steepest descent procedure
+  // trialState = trial wavefunction
+  // historyFileName = precalculated record of values of the wavefunction for given particle positions
+  // nbrParticles = number of particles
+  // excludeLastParameter = exclude one parameters from optimization
+  // cloudyPoints = number of random parameters values calculated simultaeusly along with steepest descent
+  // linearPoints = number of points calculated at once along direction of steepest descent
+  // limitSamples = upper limit to number of samples used from history-record
+  // logFileName = name of an (optional) logfile
   WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter = true, int linearPoints = 20, int cloudyPoints = 30, int limitSamples = 10000000, char* logFileName = NULL);
   ~WaveFunctionOverlapOptimizer();
-  
+
+  // launch optimization procedure
+  // optimalParameters = initial, and upon return final variational parameters
+  // Overlap = corresponding overlap, upon return
   double GetMaximumSqrOverlap(RealVector &optimalParameters, Complex &Overlap,
 			      double toleranceFinal=1e-6, double toleranceIteration =0.01);
 

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "MathTools/Complex.h"
-#include "Abstract1DComplexFunctionOnSphere.h"
+#include "Abstract1DComplexTrialFunction.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
@@ -42,7 +42,7 @@
 class RealVector;
 
 
-class Abstract1DComplexTrialFunctionOnSphere : public Abstract1DComplexFunctionOnSphere
+class Abstract1DComplexTrialFunctionOnSphere : public Abstract1DComplexTrialFunction
 {
  protected:
   double *TrialParameters;

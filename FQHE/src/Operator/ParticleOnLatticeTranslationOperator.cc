@@ -169,6 +169,7 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVec
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
       std::cout << "Translate("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
+      //std::cout << "Ignoring translation Phase!"<<std::endl; TranslationPhase=1.0;
       vDestination.Re(Index) = vSource[i].Re * TranslationPhase.Re - vSource[i].Im * TranslationPhase.Im;
       vDestination.Im(Index) = vSource[i].Re * TranslationPhase.Im + vSource[i].Im * TranslationPhase.Re;
     }

@@ -20,10 +20,12 @@ my $Machine;
 my $Program;
 my $Memory=0;
 my $MaxProcessor=1;
+my $Have64Bits=0;
+my $RunLocal=0;
 if ($ARGV[0] =~ /^[0-9]/)
   {
-    $Machine="tcmpc".$ARGV[0];
-    my $tmp = `ssh ${Machine} status`;
+    $Machine="ssh tcmpc".$ARGV[0];
+    my $tmp = `${Machine} status`;
     if ( $tmp =~ /x86_64/ )
       {
 	$Program = $Program_64;
@@ -32,6 +34,7 @@ if ($ARGV[0] =~ /^[0-9]/)
 	    $MaxProcessor=2;
 	  }
 	print ("found 64-bit ".$MaxProcessor."-processor machine\n");
+	$Have64Bits=1;
       }
     else
       {
@@ -40,16 +43,28 @@ if ($ARGV[0] =~ /^[0-9]/)
   }
 else
   {
-    if ($ARGV[0] =~ /s5/)
+    if ($ARGV[0] =~ /^s5/)
       {
-	$Machine="s5.tcm.phy.private";
+	$Machine="ssh s5.tcm.phy.private";
 	$Program = $Program_S5;	
 	$MaxProcessor=8;
+	$Have64Bits=1;
       }
     else
       {
-	print ("Machine not recognised!");
-	exit(1);
+	if ($ARGV[0] =~ /locals5/)
+	  {
+	    $Machine="";
+	    $Program = $Program_S5;	
+	    $MaxProcessor=8;
+	    $Have64Bits=1;
+	    $RunLocal=1;
+	  }
+	else
+	  {
+	    print ("Machine not recognised!");
+	    exit(1);
+	  }
       }
   }
 print ("Running on machine ".$Machine."\n");
@@ -110,9 +125,33 @@ my $paramQ = $AllParam[4];
 my $paramU = $AllParam[5];
 my $paramN1 = $AllParam[6];
 my $paramN2 = $AllParam[7];
+my $NbrBosons = $paramLx*$paramLy*$paramR/$paramT;
+
+if ($Have64Bits==0)
+  {
+    if ($paramLx*$paramLy+$NbrBosons > 32)
+      {
+	print ("Need 64 bit processor for next command\n");
+	system ("cp ".${CommandFile}.".save ".$CommandFile);
+	exit(1);
+      }	
+  }
+else
+  {
+    if ($paramLx*$paramLy+$NbrBosons > 64)
+      {
+	print ("Hilbert space cannot be coded in a word of 64 bits!\n");
+	exit(1);
+      }	
+  }
 
 my $StatesDir = "/rscratch/gm360/latticeQHE/states/n_${paramR}_${paramT}/";
 my $SpecDir = "/rscratch/gm360/latticeQHE/spectra/n_${paramR}_${paramT}/";
+if ($RunLocal==1)
+  {
+    $StatesDir = "states/n_${paramR}_${paramT}/";
+    $SpecDir = "spectra/n_${paramR}_${paramT}/";
+  }
 my $WorkDir="";
 my $EigenVectors="";
 my $QString="q";
@@ -120,7 +159,6 @@ if ($paramQ>0)
   {
     $QString="q_${paramQ}";
   }
-my $NbrBosons = $paramLx*$paramLy*$paramR/$paramT;
 my $OutputName = "bosons_lattice_n_${NbrBosons}_x_${paramLx}_y_${paramLy}_u_${paramU}_${QString}.dat";
 
 if ( ! -e $SpecDir )
@@ -133,7 +171,7 @@ if ( ! -e $StatesDir )
   }
 if ( $paramN1 == $paramN2 ) # need to calculate only states
   {
-    $WorkDir = $StatesDir;
+    $WorkDir = $StatesDir;    
     $EigenVectors= "--eigenstate -n ${paramN1}";
   }
 else
@@ -154,7 +192,7 @@ else
 close(LEFTCOMMANDS);
 system ("cp ".$CommandFile.".remain ".$CommandFile);
 
-my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
+my $Command = "$Machine \"cd ${WorkDir}; touch log_p_${NbrBosons}_u_${paramU}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
 
 open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");

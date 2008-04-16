@@ -161,7 +161,7 @@ int main(int argc, char** argv)
       }
 
   cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
-  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;  
+  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;
   
   for (int i=0; i<NbrVectors; ++i)
     {
