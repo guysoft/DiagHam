@@ -35,6 +35,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('1', "state1", "name of the file containing the 1st vector obtained using exact diagonalization");
   (*SystemGroup) += new SingleStringOption  ('2', "state2", "name of the file containing the 2nd vector obtained using exact diagonalization");
+  (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -79,8 +80,13 @@ int main(int argc, char** argv)
     }
 
   double sp=0.0;
-  for (int i=0; i<State1.GetVectorDimension(); ++i)
-    sp+=State1[i]*State2[i];
+  if (((BooleanOption*) Manager["discard-sign"])->GetBoolean() == true)
+    for (int i=0; i<State1.GetVectorDimension(); ++i)
+      sp+=fabs(State1[i]*State2[i]);
+  else
+    for (int i=0; i<State1.GetVectorDimension(); ++i)
+      sp+= State1[i]*State2[i];
+
 
   cout << "The overlap is: |<1|2>|^2 = " << sp*sp << endl;
   

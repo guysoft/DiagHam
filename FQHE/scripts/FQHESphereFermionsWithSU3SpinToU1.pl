@@ -8,7 +8,8 @@ my $SpectrumFileName = $ARGV[0];
 my $Lz = 0;
 my $L2DiagonalizationProgram = "";
 my $SUNConvertProgram = "";
-my $SUNToU1Program = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereSUKToU1";
+my $ProgramPath = "/home/regnault/development/Physics/DiagHam/build/";
+my $SUNToU1Program = $ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereSUKToU1";
 my $SU3Flag = 0;
 my $SU2Flag = 0;
 my $SU4Flag = 0;
@@ -36,9 +37,9 @@ elsif($SpectrumFileName =~ /\_su4\_/)
 
 if ($SU3Flag == 1)
   {
-    $L2DiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU3SpinL2Diagonalize";
-    $SUNConvertProgram ="/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU3SpinConvertSymmetrizedState";
-    $SpectrumFileName =~ /^fermions\_sphere\_su3\_tzmz3sym_(.*)\_n\_(\d+)\_2s\_(\d+)\_tz\_(\d+)\_y\_(\d+)\_lz\.dat$/;
+    $L2DiagonalizationProgram = $ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU3SpinL2Diagonalize";
+    $SUNConvertProgram =$ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU3SpinConvertSymmetrizedState";
+    $SpectrumFileName =~ /^fermions\_sphere\_su3\_tzpz3sym_(.*)\_n\_(\d+)\_2s\_(\d+)\_tz\_(\d+)\_y\_(\d+)\_lz\.dat$/;
     $InteractionName = $1;
     $NbrParticles = $2;
     $NbrFluxQuanta = $3;
@@ -50,8 +51,8 @@ if ($SU3Flag == 1)
   }
 elsif ($SU2Flag == 1)
   {
-    $L2DiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinL2Diagonalize";
-    $SUNConvertProgram ="/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinConvertSymmetrizedState";
+    $L2DiagonalizationProgram = $ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinL2Diagonalize";
+    $SUNConvertProgram =$ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSpinConvertSymmetrizedState";
     $SpectrumFileName =~ /^fermions\_sphere\_su2\_szpsym_(.*)\_n\_(\d+)\_2s\_(\d+)\_sz\_(\d+)\_lz\.dat$/;
     $InteractionName = $1;
     $NbrParticles = $2;
@@ -63,10 +64,10 @@ elsif ($SU2Flag == 1)
   }
 else
   {
-    $L2DiagonalizationProgram = "/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU4SpinL2Diagonalize";
-    $SUNConvertProgram ="/home/regnault/development/Physics/DiagHam/build/FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU4SpinConvertSymmetrizedState";
+    $L2DiagonalizationProgram = $ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU4SpinL2Diagonalize";
+    $SUNConvertProgram =$ProgramPath."FQHE/src/Programs/FQHEOnSphere/FQHESphereWithSU4SpinConvertSymmetrizedState";
   }
-my $LinearlyIndependentProgram = "/home/regnault/development/Physics/DiagHam/build/src/Programs/ExtractLinearlyIndependentVectors";
+my $LinearlyIndependentProgram = $ProgramPath."src/Programs/ExtractLinearlyIndependentVectors";
 
 my $NbrZeroEnergyStates = &ExtractNbrZeroEnergyStates($SpectrumFileName, $Lz, $Error);
 $SpectrumFileName =~ /^fermions\_sphere\_su3\_tzmz3sym_(.*)\_n\_(\d+)\_2s\_(\d+)\_tz\_(\d+)\_y\_(\d+)\_lz\.dat$/;

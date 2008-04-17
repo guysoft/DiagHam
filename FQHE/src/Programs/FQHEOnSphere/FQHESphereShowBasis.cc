@@ -166,6 +166,9 @@ int main(int argc, char** argv)
       
    else
      {
+       int NbrHiddenComponents = 0;
+       double WeightHiddenComponents = 0.0;
+       double Normalization = 0.0;
        RealVector State;
        if (State.ReadVector(((SingleStringOption*) Manager["state"])->GetString()) == false)
 	 {
@@ -183,13 +186,30 @@ int main(int argc, char** argv)
 	   if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
 	     {
 	       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		 if (fabs(State[i]) > Error)
-		   Space->PrintState(File, i) << " : " << State[i] << endl;	   
+		 {
+		   if (fabs(State[i]) > Error)
+		     Space->PrintState(File, i) << " : " << State[i] << endl;	   
+		   else		     
+		     {
+		       WeightHiddenComponents += State[i] * State[i];
+		       ++NbrHiddenComponents; 
+		     }
+		   Normalization += State[i] * State[i];
+		 }
 	     }
 	   else
 	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	       if (fabs(State[i]) > Error)
-		 Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	       {
+		 if (fabs(State[i]) > Error)
+		   Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+		 else		     
+		   {
+		     WeightHiddenComponents += State[i] * State[i];
+		     ++NbrHiddenComponents; 
+		   }
+		 Normalization += State[i] * State[i];
+	       }
+	   cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
 	 }
        else
 	 {

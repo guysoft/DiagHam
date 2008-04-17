@@ -164,7 +164,6 @@ Complex HalperinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector
   Complex TotalWaveFunction(1.0);
   Complex TmpU;
   Complex TmpV;
-  ComplexMatrix TmpPerm (this->NbrSpinUpParticles, this->NbrSpinUpParticles, true);
   if (this->M1Index > 0)
     {
       Complex WaveFunction(1.0);
@@ -201,12 +200,10 @@ Complex HalperinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector
  	  for (int j = this->NbrSpinUpParticles; j < this->TotalNbrParticles; ++j)
 	    {
 	      WaveFunction *=  ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
-	      TmpPerm.SetMatrixElement(i, j - this->NbrSpinUpParticles, 1.0 / ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j])));
 	    }	  
  	}
        for (int i = 0; i < this->NIndex; ++i)
 	 TotalWaveFunction *= WaveFunction;
-       TotalWaveFunction *= TmpPerm.Permanent();
      }
   return TotalWaveFunction;
 }

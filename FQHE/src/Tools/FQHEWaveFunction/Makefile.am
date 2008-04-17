@@ -39,4 +39,5 @@ ReadRezayiOnSphereBlock.cc \
 ExplicitMooreReadOnSphereWaveFunction.cc \
 PairedCFOnSphere2QHWaveFunction.cc \
 FQHESphereSymmetrizedSUKToU1WaveFunction.cc \
+FQHESU2HalperinPermanentOnSphereWaveFunction.cc \
 FQHESU3HalperinPermanentOnSphereWaveFunction.cc 

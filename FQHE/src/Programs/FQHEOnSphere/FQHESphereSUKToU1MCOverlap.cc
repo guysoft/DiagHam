@@ -15,10 +15,11 @@
 #include "Options/Options.h"
 
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSUKToU1WaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESU2HalperinPermanentOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU3HalperinPermanentOnSphereWaveFunction.h"
-#include "Tools/FQHEWaveFunction/HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
 #include "Tools/FQHEWaveFunction/SU3HalperinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
@@ -66,9 +67,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('k', "k-value", "k index of the SU(k) symmetry group", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "intra-corr", "power of the intra-color correlations", 3);  
   (*SystemGroup) += new SingleIntegerOption  ('\n', "inter-corr", "power of the inter-color correlations", 2);  
-  (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
+  (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
@@ -111,6 +112,7 @@ int main(int argc, char** argv)
     }
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  bool InvertFlag = Manager.GetBoolean("reverse-flux");
   int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
   bool UseExactFlag = false;
   bool StatisticFlag = true;
@@ -144,15 +146,15 @@ int main(int argc, char** argv)
     {
     case 2:
       {
-	BaseFunction = new HalperinOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, 
-							 IntraCorrelation - 1, IntraCorrelation - 1, InterCorrelation - 1);
+	BaseFunction = new FQHESU2HalperinPermanentOnSphereWaveFunction (NbrParticlePerColor, NbrParticlePerColor, 
+									 IntraCorrelation - 1, IntraCorrelation - 1, InterCorrelation - 1, InvertFlag);
       }
       break;
     case 3:
       {
 	BaseFunction = new FQHESU3HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
 									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1, 
-									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1);
+									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1, InvertFlag);
       }
       break;
     default:
@@ -180,8 +182,15 @@ int main(int argc, char** argv)
     }
   else
     {
-      TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
-   }
+      if (InvertFlag == false)
+	{
+	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+	}
+      else
+	{
+	  TestFunction = new HundRuleCFStates (NbrParticles,  - (NbrParticles / 2) + 2, 1);
+	}
+    }
 
    StdlibRandomNumberGenerator RandomNumberGenerator(29457);
 

@@ -52,9 +52,11 @@ using std::endl;
 // m12 = coefficient of the inter-component correlations in the 1 - 2 sector
 // m13 = coefficient of the inter-component correlations in the 1 - 3 sector
 // m23 = coefficient of the inter-component correlations in the 2 - 3 sector
+  // invertFlag = if true, use the invert of the matrix elements for the permanents
 
 FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWaveFunction(int nbrN1, int nbrN2, int nbrN3,
-											   int m11, int m22, int m33, int m12, int m13, int m23)
+											   int m11, int m22, int m33, int m12, int m13, int m23,
+											   bool invertFlag)
 {
   this->NbrN1 = nbrN1;
   this->NbrN2 = nbrN2;
@@ -66,19 +68,7 @@ FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWa
   this->M12 = m12;
   this->M13 = m13;
   this->M23 = m23;
-  this->Indices2 = new int[this->NbrN1];
-  this->Indices3 = new int[this->NbrN1];  
-  this->GeneralizedPermanentMatrix = new Complex**[this->NbrN1];  
-  for (int i = 0; i < this->NbrN1; ++i)
-    {
-      this->GeneralizedPermanentMatrix[i] = new Complex*[this->NbrN2];
-      for (int j = 0; j < this->NbrN2; ++j)
-	this->GeneralizedPermanentMatrix[i][j] = new Complex[this->NbrN3];
-    }
-  this->InvertFlag = true;
-  this->NbrPermutations = 1;
-  for (int i = 2; i <= this->NbrN1; ++i)
-    this->NbrPermutations  *= i;
+  this->InvertFlag = invertFlag;
   this->Permanent12 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent13 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent23 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
@@ -101,19 +91,7 @@ FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWa
   this->M12 = function.M12;
   this->M13 = function.M13;
   this->M23 = function.M23;
-  this->Indices2 = new int[this->TotalNbrParticles];
-  this->Indices3 = new int[this->TotalNbrParticles];  
-  this->GeneralizedPermanentMatrix = new Complex**[this->NbrN1];
-  for (int i = 0; i < this->NbrN1; ++i)
-    {
-      this->GeneralizedPermanentMatrix[i] = new Complex*[this->NbrN2];
-      for (int j = 0; j < this->NbrN2; ++j)
-	this->GeneralizedPermanentMatrix[i][j] = new Complex[this->NbrN3];
-    }
   this->InvertFlag = function.InvertFlag;
-  this->NbrPermutations = 1;
-  for (int i = 2; i <= this->NbrN1; ++i)
-    this->NbrPermutations  *= i;
   this->Permanent12 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent13 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent23 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
@@ -129,9 +107,6 @@ FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWa
 FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWaveFunction(ConfigurationParser& configuration, bool& errorFlag, int& nbrParticles, int& lzMax)
 {
   errorFlag = true;
-  this->Indices2 = 0;
-  this->Indices3 = 0;
-  this->GeneralizedPermanentMatrix = 0;
   if ((configuration["WaveFunction"] == 0) || (strcmp ("SU3HalperinPermament", configuration["WaveFunction"]) != 0))
     {
       errorFlag = false;
@@ -157,21 +132,9 @@ FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWa
       errorFlag = false;
       return;
     }
-  this->InvertFlag = true;
+  this->InvertFlag = false;
   if ((configuration.GetAsBoolean("Invert", this->InvertFlag)) == false)
-    this->InvertFlag = true;
-  this->Indices2 = new int[this->TotalNbrParticles];
-  this->Indices3 = new int[this->TotalNbrParticles];  
-  this->GeneralizedPermanentMatrix = new Complex**[this->NbrN1];
-  for (int i = 0; i < this->NbrN1; ++i)
-    {
-      this->GeneralizedPermanentMatrix[i] = new Complex*[this->NbrN2];
-      for (int j = 0; j < this->NbrN2; ++j)
-	this->GeneralizedPermanentMatrix[i][j] = new Complex[this->NbrN3];
-    }
-  this->NbrPermutations = 1;
-  for (int i = 2; i <= this->NbrN1; ++i)
-    this->NbrPermutations  *= i;
+    this->InvertFlag = false;
   this->Permanent12 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent13 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
   this->Permanent23 = ComplexMatrix(this->NbrN1, this->NbrN1, true);
@@ -182,20 +145,6 @@ FQHESU3HalperinPermanentOnSphereWaveFunction::FQHESU3HalperinPermanentOnSphereWa
 
 FQHESU3HalperinPermanentOnSphereWaveFunction::~FQHESU3HalperinPermanentOnSphereWaveFunction()
 {
-  if (this->Indices2 != 0)
-    delete[] this->Indices2;
-  if (this->Indices3 != 0)
-    delete[] this->Indices3;
-  if (this->GeneralizedPermanentMatrix != 0)
-    {
-      for (int i = 0; i < this->NbrN1; ++i)
-	{
-	  for (int j = 0; j < this->NbrN2; ++j)
-	    delete[] this->GeneralizedPermanentMatrix[i][j];
-	  delete[] this->GeneralizedPermanentMatrix[i];
-	}     
-      delete[] this->GeneralizedPermanentMatrix;
-    }
 }
 
 // clone function 
@@ -274,12 +223,9 @@ Complex FQHESU3HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
 	    {
 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	      WaveFunction *= Tmp;
-	      if (this->InvertFlag == true)
+	      if (this->InvertFlag == false)
 		Tmp = Inv(Tmp);
 	      Permanent12.SetMatrixElement(i, j - this->NbrN1, Tmp);
-// 	      Complex* TmpArray = this->GeneralizedPermanentMatrix[i][j - this->NbrN1];
-// 	      for (int k = 0; k < this->NbrN3; ++k)
-// 		TmpArray[k] = Tmp;
 	    }
 	}
       for (int i = 0; i < this->M12; ++i)
@@ -297,13 +243,10 @@ Complex FQHESU3HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
 	    {
 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	      WaveFunction *= Tmp;
-	      if (this->InvertFlag == true)
+	      if (this->InvertFlag == false)
 		Tmp = Inv(Tmp);
-	      Complex** TmpArray = this->GeneralizedPermanentMatrix[i];
 	      int ShiftedJ = j - NbrN1N2;
 	      Permanent13.SetMatrixElement(i, ShiftedJ, Tmp);
-// 	      for (int k = 0; k < this->NbrN2; ++k)
-// 		TmpArray[k][ShiftedJ] *= Tmp;
 	    }
 	}
       for (int i = 0; i < this->M13; ++i)
@@ -320,13 +263,11 @@ Complex FQHESU3HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
 	    {
 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	      WaveFunction *= Tmp;
-	      if (this->InvertFlag == true)
+	      if (this->InvertFlag == false)
 		Tmp = Inv(Tmp);
 	      int ShiftedI = i - this->NbrN1;	      
 	      int ShiftedJ = j - NbrN1N2;
 	      Permanent23.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
-// 	      for (int k = 0; k < this->NbrN2; ++k)
-// 		this->GeneralizedPermanentMatrix[k][ShiftedI][ShiftedJ] *= Tmp;
 	    }
 	}
       for (int i = 0; i < this->M23; ++i)
@@ -334,108 +275,4 @@ Complex FQHESU3HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
     }
 
   return (TotalWaveFunction * Permanent12.Permanent() * Permanent13.Permanent() * Permanent23.Permanent());
-
-//   for (int i = 0; i < this->NbrN1; ++i)
-//     {
-//       this->Indices2[i] = i ;
-//       this->Indices3[i] = i ;
-//     }
-  
-//   Tmp = 1.0;
-//   for (int k = 0; k < this->NbrN1; ++k)
-//     {
-//       Tmp *= this->GeneralizedPermanentMatrix[k][k][k];
-//     }
-//   Complex GeneralizedPermanent = Tmp;
-
-//   for (int j = 1; j < this->NbrPermutations; ++j)
-//     {
-//       int Pos1 = this->NbrN1 - 1;
-//       while (this->Indices3[Pos1 - 1] >= this->Indices3[Pos1])
-// 	--Pos1;
-//       --Pos1;
-//       int Pos2 = this->NbrN1 - 1;      
-//       while (this->Indices3[Pos2] <= this->Indices3[Pos1])
-// 	--Pos2;
-//       int TmpIndex = this->Indices3[Pos1];
-//       this->Indices3[Pos1] = this->Indices3[Pos2];
-//       this->Indices3[Pos2] = TmpIndex;
-//       Pos2 = this->NbrN1 - 1;   
-//       Pos1++;
-//       while (Pos1 < Pos2)
-// 	{
-// 	  TmpIndex = this->Indices3[Pos1];
-// 	  this->Indices3[Pos1] = this->Indices3[Pos2];
-// 	  this->Indices3[Pos2] = TmpIndex;
-// 	  ++Pos1;
-// 	  --Pos2;
-// 	}
-//       Tmp = 1.0;
-//       for (int k = 0; k < this->NbrN1; ++k)
-// 	{
-// 	  Tmp *= this->GeneralizedPermanentMatrix[k][k][this->Indices3[k]];
-// 	}
-//       GeneralizedPermanent += Tmp;
-//     }
-//   for (int i = 1; i < this->NbrPermutations; ++i)
-//     {
-//       int Pos1 = this->NbrN1 - 1;
-//       while (this->Indices2[Pos1 - 1] >= this->Indices2[Pos1])
-// 	--Pos1;
-//       --Pos1;
-//       int Pos2 = this->NbrN1 - 1;      
-//       while (this->Indices2[Pos2] <= this->Indices2[Pos1])
-// 	--Pos2;
-//       int TmpIndex = this->Indices2[Pos1];
-//       this->Indices2[Pos1] = this->Indices2[Pos2];
-//       this->Indices2[Pos2] = TmpIndex;
-//       Pos2 = this->NbrN1 - 1;   
-//       Pos1++;
-//       while (Pos1 < Pos2)
-// 	{
-// 	  TmpIndex = this->Indices2[Pos1];
-// 	  this->Indices2[Pos1] = this->Indices2[Pos2];
-// 	  this->Indices2[Pos2] = TmpIndex;
-// 	  ++Pos1;
-// 	  --Pos2;
-// 	}
-//       for (int k = 0; k < this->NbrN1; ++k)
-// 	this->Indices3[k] = k ;
-//       Tmp = 1.0;
-//       for (int k = 0; k < this->NbrN1; ++k)
-// 	{
-// 	  Tmp *= this->GeneralizedPermanentMatrix[k][this->Indices2[k]][k];
-// 	}
-//       GeneralizedPermanent += Tmp;
-//       for (int j = 1; j < this->NbrPermutations; ++j)
-// 	{
-// 	  Pos1 = this->NbrN1 - 1;
-// 	  while (this->Indices3[Pos1 - 1] >= this->Indices3[Pos1])
-// 	    --Pos1;
-// 	  --Pos1;
-// 	  Pos2 = this->NbrN1 - 1;      
-// 	  while (this->Indices3[Pos2] <= this->Indices3[Pos1])
-// 	    --Pos2;
-// 	  TmpIndex = this->Indices3[Pos1];
-// 	  this->Indices3[Pos1] = this->Indices3[Pos2];
-// 	  this->Indices3[Pos2] = TmpIndex;
-// 	  Pos2 = this->NbrN1 - 1;   
-// 	  Pos1++;
-// 	  while (Pos1 < Pos2)
-// 	    {
-// 	      TmpIndex = this->Indices3[Pos1];
-// 	      this->Indices3[Pos1] = this->Indices3[Pos2];
-// 	      this->Indices3[Pos2] = TmpIndex;
-// 	      ++Pos1;
-// 	      --Pos2;
-// 	    }
-// 	  Tmp = 1.0;
-// 	  for (int k = 0; k < this->NbrN1; ++k)
-// 	    {
-// 	      Tmp *= this->GeneralizedPermanentMatrix[k][this->Indices2[k]][this->Indices3[k]];
-// 	    }
-// 	  GeneralizedPermanent += Tmp;
-// 	}
-//     }
-
 }

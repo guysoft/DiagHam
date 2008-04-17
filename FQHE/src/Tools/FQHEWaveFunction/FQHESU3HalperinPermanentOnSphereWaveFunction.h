@@ -7,7 +7,7 @@
 //                                                                            //
 //                                                                            //
 //         class of SU(3) generalized Halperine wave function on sphere       //
-//                        times the generalized permament                     //
+//                        times the product of permaments                     //
 //                                                                            //
 //                        last modification : 05/04/2008                      //
 //                                                                            //
@@ -69,18 +69,10 @@ class FQHESU3HalperinPermanentOnSphereWaveFunction: public Abstract1DComplexFunc
   // coefficient of the inter-component correlations in the 2 - 3 sector
   int M23;
 
-
-  // temporary arrays to store indices while computing the generalized permanent
-  int* Indices2;
-  int* Indices3;
-
-  // temporary array used to store the 3 entry object involved in the generalized permanent evaluation;
-  Complex*** GeneralizedPermanentMatrix;
   // indicate if the elements of  GeneralizedPermanentMatrix are the invert of the correlations
   bool InvertFlag;
-  // number of permuation associated to NbrN1  
-  int NbrPermutations;
 
+  // temporary matrices that are used to compute the permanents
   ComplexMatrix Permanent12;
   ComplexMatrix Permanent13;
   ComplexMatrix Permanent23;
@@ -99,8 +91,10 @@ class FQHESU3HalperinPermanentOnSphereWaveFunction: public Abstract1DComplexFunc
   // m12 = coefficient of the inter-component correlations in the 1 - 2 sector
   // m13 = coefficient of the inter-component correlations in the 1 - 3 sector
   // m23 = coefficient of the inter-component correlations in the 2 - 3 sector
+  // invertFlag = if true, use the invert of the matrix elements for the permanents
   FQHESU3HalperinPermanentOnSphereWaveFunction(int nbrN1, int nbrN2, int nbrN3,
-					       int m11, int m22, int m33, int m12, int m13, int m23);
+					       int m11, int m22, int m33, int m12, int m13, int m23,
+					       bool invertFlag = false);
 
   // copy constructor
   //
