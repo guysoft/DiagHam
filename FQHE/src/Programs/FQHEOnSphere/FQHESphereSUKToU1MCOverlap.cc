@@ -1,6 +1,14 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/FermionOnSphere.h"
+
+#include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/QHEParticleWaveFunctionOperation.h"
+
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/RandomNumber/FileRandomNumberGenerator.h"
 
@@ -29,9 +37,9 @@ using std::endl;
 using std::ofstream;
 
 
-void RandomUV (ComplexVector& uv, int nbrParticles, AbstractRandomNumberGenerator* randomNumberGenerator);
+void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, AbstractRandomNumberGenerator* randomNumberGenerator);
 
-void RandomUVOneCoordinate(ComplexVector& uv, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
+void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
 
 void FlipCoordinates (ComplexVector& uv, int i, int j);
 
@@ -46,19 +54,21 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
 
-  Manager += SystemGroup;
+   ArchitectureManager Architecture;
+
+ Manager += SystemGroup;
   Manager += MonteCarloGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
   (*SystemGroup) += new SingleIntegerOption  ('k', "k-value", "k index of the SU(k) symmetry group", 2);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "intra-corr", "power of the intra-color correlations", 3);  
   (*SystemGroup) += new SingleIntegerOption  ('\n', "inter-corr", "power of the inter-color correlations", 2);  
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
-  (*SystemGroup) += new BooleanOption ('\n', "overlap", "list all available test wave fuctions");  
+  (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
@@ -94,9 +104,40 @@ int main(int argc, char** argv)
   int NbrParticlePerColor = NbrParticles / KValue;
   int IntraCorrelation = Manager.GetInteger("intra-corr");
   int InterCorrelation = Manager.GetInteger("inter-corr");
-  bool OverlapFlag = ((BooleanOption*) Manager["overlap"])->GetBoolean();
+  bool OverlapFlag = true;
+  if (((BooleanOption*) Manager["test-symmetry"])->GetBoolean() == true)
+    {
+      OverlapFlag = false;
+    }
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
+  bool UseExactFlag = false;
+  bool StatisticFlag = true;
+
+  AbstractQHEParticle* ExactSpace = 0;
+  RealVector* ExactState = 0;
+  AbstractFunctionBasis* ExactBasis = 0;
+  if (((SingleStringOption*) Manager["use-exact"])->GetString() != 0)
+    {
+      UseExactFlag = true;
+      if (StatisticFlag == true)
+	ExactSpace = new FermionOnSphere (NbrParticles, 0, LzMax);
+      else
+	ExactSpace = new BosonOnSphere (NbrParticles, 0, LzMax);
+      ExactState = new RealVector;
+      if (ExactState->ReadVector (((SingleStringOption*) Manager["use-exact"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["use-exact"])->GetString() << endl;
+	  return -1;      
+	}
+      if (ExactSpace->GetHilbertSpaceDimension() != ExactState->GetVectorDimension())
+	{
+	  cout << "dimension mismatch : hilbert space = " << ExactSpace->GetHilbertSpaceDimension() << ", exact state = " << ExactState->GetVectorDimension() << endl;
+	  return -1;
+	}
+      ExactBasis = new ParticleOnSphereFunctionBasis (LzMax);	
+    }
 
   Abstract1DComplexFunctionOnSphere* BaseFunction = 0;
   switch (KValue)
@@ -132,14 +173,15 @@ int main(int argc, char** argv)
     {
       RandomNumber = new StdlibRandomNumberGenerator (29457);
     }
-//   if ( == true)
-//     {
-//       TestFunction = BaseFunction;
-//     }
-//   else
-//     {
+
+  if (UseExactFlag == true)
+    {
+      TestFunction = 0;
+    }
+  else
+    {
       TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
-//    }
+   }
 
    StdlibRandomNumberGenerator RandomNumberGenerator(29457);
 
@@ -167,20 +209,19 @@ int main(int argc, char** argv)
        double Tmp2bis;
        int NextCoordinates = 0;
        ComplexVector TmpUV (NbrParticles * 2, true);
-       RandomUV (TmpUV, NbrParticles, RandomNumber);
-       Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
+       RealVector TmpPositions (NbrParticles * 2, true);
+       RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
+       if (UseExactFlag == false)
+	 Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
+       else
+	 {
+	   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+	   Operation.ApplyOperation(Architecture.GetArchitecture());      
+	   Tmp = Operation.GetScalar();
+	 }
        Complex ValueExact;
-//        if (UseExactFlag == true)
-// 	 {
-// 	   QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-// 	   Operation.ApplyOperation(Architecture.GetArchitecture());      
-// 	   ValueExact = Operation.GetScalar();
-// 	 }
-//        else
-// 	 {
-	   ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-//	 }
-      double PreviousProbabilities = Norm(Tmp);
+       ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+       double PreviousProbabilities = Norm(Tmp);
        double CurrentProbabilities = PreviousProbabilities;
        double TotalProbability = PreviousProbabilities;
        int Acceptance = 0;
@@ -191,8 +232,18 @@ int main(int argc, char** argv)
 	 {      
 	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
 	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
-	   RandomUVOneCoordinate(TmpUV, NextCoordinates, RandomNumber);
-	   Complex TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	   double PreviousCoordinates1 = TmpPositions[NextCoordinates << 1];
+	   double PreviousCoordinates2 = TmpPositions[1 + (NextCoordinates << 1)];
+	   Complex TmpMetropolis;
+	   RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinates, RandomNumber);
+	   if (UseExactFlag == false)
+	     TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	   else
+	     {
+	       QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+	       Operation.ApplyOperation(Architecture.GetArchitecture());      
+	       TmpMetropolis = Operation.GetScalar();
+	     }
 	   CurrentProbabilities = Norm(TmpMetropolis);
 	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	     {
@@ -205,6 +256,8 @@ int main(int argc, char** argv)
 	       TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
 	       TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
 	       TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
+	       TmpPositions[NextCoordinates << 1] = PreviousCoordinates1;
+	       TmpPositions[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
 	       CurrentProbabilities = PreviousProbabilities;
 	     }
 	   NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
@@ -223,8 +276,18 @@ int main(int argc, char** argv)
 	 {
 	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
 	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
-	   RandomUVOneCoordinate(TmpUV, NextCoordinates, RandomNumber);
-	   Complex TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	   double PreviousCoordinates1 = TmpPositions[NextCoordinates << 1];
+	   double PreviousCoordinates2 = TmpPositions[1 + (NextCoordinates << 1)];
+	   RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinates, RandomNumber);
+	   Complex TmpMetropolis;
+	   if (UseExactFlag == false)
+	     TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	   else
+	     {
+	       QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+	       Operation.ApplyOperation(Architecture.GetArchitecture());      
+	       TmpMetropolis = Operation.GetScalar();
+	     }
 	   CurrentProbabilities = Norm(TmpMetropolis);
 	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	     {
@@ -239,6 +302,8 @@ int main(int argc, char** argv)
 	       TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
 	       TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
 	       TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
+	       TmpPositions[NextCoordinates << 1] = PreviousCoordinates1;
+	       TmpPositions[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
 	       CurrentProbabilities = PreviousProbabilities;
 	     }
 	   TotalProbability += CurrentProbabilities;
@@ -363,7 +428,8 @@ int main(int argc, char** argv)
    else
      {
        ComplexVector UV (NbrParticles * 2, true);
-       RandomUV (UV, NbrParticles, RandomNumber);
+       RealVector TmpPositions (NbrParticles * 2, true);
+       RandomUV (UV, TmpPositions, NbrParticles, RandomNumber);
        cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;;
        
        for (int i = 0; i < NbrParticles; ++i)
@@ -381,12 +447,14 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void RandomUV (ComplexVector& uv, int nbrParticles, AbstractRandomNumberGenerator* randomNumberGenerator)
+void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   for (int j = 0; j < nbrParticles; ++j)
     {
       double x = acos (1.0 - (2.0 * randomNumberGenerator->GetRealRandomNumber()));
       double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
+      positions[2 * j] = x;
+      positions[(2 * j) + 1] = y;
       uv.Re(2 * j) = cos(0.5 * x);
       uv.Im(2 * j) = uv.Re(2 * j) * sin(0.5 * y);
       uv.Re(2 * j) *= cos(0.5 * y);
@@ -396,15 +464,17 @@ void RandomUV (ComplexVector& uv, int nbrParticles, AbstractRandomNumberGenerato
     }
 }
 
-void RandomUVOneCoordinate(ComplexVector& uv, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
+void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   coordinate *= 2;
   double x = acos (1.0 - (2.0 * randomNumberGenerator->GetRealRandomNumber()));
   double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
+  positions[coordinate] = x;
   uv.Re(coordinate) = cos(0.5 * x);
   uv.Im(coordinate) = uv.Re(coordinate) * sin(0.5 * y);
   uv.Re(coordinate) *= cos(0.5 * y);
   ++coordinate;
+  positions[coordinate] = y;
   uv.Re(coordinate) = sin(0.5 * x);
   uv.Im(coordinate) = - uv.Re(coordinate) * sin(0.5 * y);
   uv.Re(coordinate) *= cos(0.5 * y);      
