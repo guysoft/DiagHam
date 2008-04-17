@@ -402,7 +402,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
   stepDirection.Copy(this->Gradient);
   stepDirection.Normalize();
   // ultimately, start a loop here:
-  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-7) && ( (NbrIterations <= NUM_SAVE) || (fabs(LastOverlaps[(NbrIterations-1)%NUM_SAVE]-LastOverlaps[(NbrIterations)%NUM_SAVE])>toleranceFinal) ))
+  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-7) && ( (NbrIterations < NUM_SAVE) || (fabs(LastOverlaps[(NbrIterations)%NUM_SAVE]-LastOverlaps[(NbrIterations-NUM_SAVE)%NUM_SAVE])>toleranceFinal) ))
     {
       ++NbrIterations;
       // calculate a series of points (and gradients) along stepDirection, and spaced with StepLength

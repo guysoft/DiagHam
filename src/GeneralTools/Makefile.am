@@ -8,4 +8,5 @@ MultiColumnASCIIFile.cc \
 FilenameTools.cc \
 UnsignedIntegerTools.cc \
 RealUniqueArray.cc \
-ComplexUniqueArray.cc
+ComplexUniqueArray.cc \
+SmallIntegerArray.cc

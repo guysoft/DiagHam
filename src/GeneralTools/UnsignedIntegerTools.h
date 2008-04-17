@@ -66,6 +66,46 @@ unsigned long lastone (unsigned long i);
 int bitcount (unsigned long i);
 
 
+inline int getHighestBit(unsigned long uLong)
+{
+  int result=0;
+#ifdef  __64_BITS__
+  if (uLong&0xffffffff00000000ul)
+    {
+      result+=32;
+      uLong = uLong >> 32;
+    }
+#endif
+  if (uLong&0xffff0000ul)
+    {
+      result+=16;
+      uLong = uLong >> 16;
+    }
+  if (uLong&0xff00ul)
+    {
+      result+=8;
+      uLong = uLong >> 8;
+    }
+  if (uLong&0xf0ul)
+    {
+      result+=4;
+      uLong = uLong >> 4;      
+    }
+  if (uLong&0xcul)
+    {
+      result+=2;
+      uLong = uLong >> 2;
+    }
+  if (uLong&0x2ul)
+    {
+      return result+2;
+    }
+  else
+    {
+      return result+(int)(uLong&0x2ul);
+    }
+}  
+
 // count bits in word
 //
 // i = word to test

@@ -31,6 +31,8 @@
 #include "config.h"
 #include "Tools/FQHEWaveFunction/AdvancedMooreReadOnSphereWaveFunction.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
+#include "MathTools/GroupedPermutations.h"
 #include "Vector/RealVector.h"
 
 #include <iostream>
@@ -177,30 +179,23 @@ Complex AdvancedMooreReadOnSphereWaveFunction::CalculateFromSpinorVariables(Comp
 
 void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
 {
-  double totalWeight=0.0;
-  BinomialCoefficients bico(NbrParticles);
-  this->NbrPermutations = this->ClusterSize+1;
-  this->WeightOfPermutations = new double[NbrPermutations];
+  GroupedPermutations Generator(this->NbrClusters, this->ClusterSize);
+  FactorialCoefficient NbrP;  
+  this->NbrPermutations = Generator.GetNbrPermutations();
   this->Permutations = new unsigned*[NbrPermutations];
+  this->WeightOfPermutations = new double[NbrPermutations];
+  unsigned long *Multiplicities = Generator.GetMultiplicities();
+  SmallIntegerArray *TmpPermutations = Generator.GetPermutations();
   for (unsigned i=0; i<NbrPermutations; ++i)
-    this->Permutations[i] = new unsigned[NbrParticles];
-  for (int i=0; i<NbrParticles; ++i)
-    this->Permutations[0][i] = i;
-  this->WeightOfPermutations[0] = 1.0/(double)bico(NbrParticles,ClusterSize);
-  totalWeight+=WeightOfPermutations[0];
-  for (int i=0; i<ClusterSize; ++i)
     {
-      for (int j=0; j<NbrParticles; ++j)
-	this->Permutations[i+1][j] = this->Permutations[i][j];
-      this->Permutations[i+1][i] = i+ClusterSize;
-      this->Permutations[i+1][i+ClusterSize] = i;
-      this->WeightOfPermutations[i+1] = (double)bico(ClusterSize,i+1)*(double)bico(ClusterSize,i+1)/(double)bico(NbrParticles,ClusterSize);
-      totalWeight+=WeightOfPermutations[i+1];
-      cout << "Permutation "<<i+1<<": [ "<<Permutations[i+1][0];
-      for (int k=1; k<NbrParticles; ++k) cout<<", "<<Permutations[i+1][k];
-      cout << "] has weight "<<WeightOfPermutations[i+1]<<endl;
+      this->Permutations[i] = new unsigned[NbrParticles];
+      TmpPermutations[i].GetElements(this->Permutations[i]);
+      NbrP.SetToOne();
+      NbrP.FactorialDivide(NbrParticles);
+      NbrP *= Multiplicities[i];
+      this->WeightOfPermutations[i] = NbrP.GetNumericalValue();
     }
-  cout << "TotalWeight="<<totalWeight<<endl;
+
   return;
 }
 
@@ -250,3 +245,41 @@ Complex AdvancedMooreReadOnSphereWaveFunction::ComplexEvaluations()
   
   return Value;
 }
+
+
+
+/* code that might be useful later on for evaluation of overlaps (wrong for individual function values)
+
+// evaluate permutations required for the Moore-Read state evaluation
+// using: two symmetric blocs, only permutations changing particles
+//        between blocks are required
+
+void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
+{
+  double totalWeight=0.0;
+  BinomialCoefficients bico(NbrParticles);
+  this->NbrPermutations = this->ClusterSize+1;
+  this->WeightOfPermutations = new double[NbrPermutations];
+  this->Permutations = new unsigned*[NbrPermutations];
+  for (unsigned i=0; i<NbrPermutations; ++i)
+    this->Permutations[i] = new unsigned[NbrParticles];
+  for (int i=0; i<NbrParticles; ++i)
+    this->Permutations[0][i] = i;
+  this->WeightOfPermutations[0] = 1.0/(double)bico(NbrParticles,ClusterSize);
+  totalWeight+=WeightOfPermutations[0];
+  for (int i=0; i<ClusterSize; ++i)
+    {
+      for (int j=0; j<NbrParticles; ++j)
+	this->Permutations[i+1][j] = this->Permutations[i][j];
+      this->Permutations[i+1][i] = i+ClusterSize;
+      this->Permutations[i+1][i+ClusterSize] = i;
+      this->WeightOfPermutations[i+1] = (double)bico(ClusterSize,i+1)*(double)bico(ClusterSize,i+1)/(double)bico(NbrParticles,ClusterSize);
+      totalWeight+=WeightOfPermutations[i+1];
+      cout << "Permutation "<<i+1<<": [ "<<Permutations[i+1][0];
+      for (int k=1; k<NbrParticles; ++k) cout<<", "<<Permutations[i+1][k];
+      cout << "] has weight "<<WeightOfPermutations[i+1]<<endl;
+    }
+  cout << "TotalWeight="<<totalWeight<<endl;
+  return;
+}
+*/

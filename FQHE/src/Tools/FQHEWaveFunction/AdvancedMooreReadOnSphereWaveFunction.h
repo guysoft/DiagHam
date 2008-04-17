@@ -36,7 +36,6 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "GeneralTools/GarbageFlag.h"
 
-
 class AdvancedMooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
@@ -70,6 +69,7 @@ class AdvancedMooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnS
   double* WeightOfPermutations;
   // garable flag associated to the Permutations array
   GarbageFlag Flag;
+  
 
  public:
   
