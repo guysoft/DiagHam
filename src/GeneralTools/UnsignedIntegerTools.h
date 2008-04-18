@@ -88,8 +88,8 @@ inline int getHighestBit(unsigned long uLong)
     }
   if (uLong&0xf0ul)
     {
-      result+=4;
-      uLong = uLong >> 4;      
+      result+=4;      
+      uLong = uLong >> 4;
     }
   if (uLong&0xcul)
     {
@@ -102,7 +102,7 @@ inline int getHighestBit(unsigned long uLong)
     }
   else
     {
-      return result+(int)(uLong&0x2ul);
+      return result+uLong;
     }
 }  
 

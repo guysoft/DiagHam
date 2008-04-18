@@ -49,21 +49,21 @@ class SmallIntegerArray
  public:
 
   // default constructor
-  // nbrBitsPerEntry = number of bits for each entry
-  SmallIntegerArray(int nbrBitsPerEntry=1);
+  // largestInteger = largest integer to hold in each field
+  SmallIntegerArray(int largestInteger=1);
   
   // constructor for an empty array
   // nbrEntries = length of array
-  // nbrBitsPerEntry = length of each entry
+  // largestInteger = largest integer to hold in each field
   //
-  SmallIntegerArray(int nbrEntries, int nbrBitsPerEntry);
+  SmallIntegerArray(int nbrEntries, int largestInteger);
 
   // constructor from given content as integers
   // nbrEntries = length of array
-  // nbrBitsPerEntry = length of each entry
+  // largestInteger = largest integer to hold in each field
   // allEntries = array with entries to be stored
   //
-  SmallIntegerArray(int nbrEntries, int nbrBitsPerEntry, unsigned *allEntries);
+  SmallIntegerArray(int nbrEntries, int largestInteger, unsigned *allEntries);
 
   // copy constructor (full duplication)
   SmallIntegerArray( const SmallIntegerArray &array);

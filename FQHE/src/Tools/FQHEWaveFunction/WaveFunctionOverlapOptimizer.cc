@@ -398,13 +398,12 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
   cout << "Initial parameters: " << presentParameters << endl;
   cout << "Gradient is: " << this->Gradient << endl;
   cout << "stepLength: "<<StepLength<<endl;
-  this->LastOverlaps[NbrIterations%NUM_SAVE]=InitialSqrOverlap;
+  this->LastOverlaps[(NbrIterations++)%NUM_SAVE]=InitialSqrOverlap;
   stepDirection.Copy(this->Gradient);
   stepDirection.Normalize();
   // ultimately, start a loop here:
-  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-7) && ( (NbrIterations < NUM_SAVE) || (fabs(LastOverlaps[(NbrIterations)%NUM_SAVE]-LastOverlaps[(NbrIterations-NUM_SAVE)%NUM_SAVE])>toleranceFinal) ))
+  while ((this->Gradient.Norm() > toleranceFinal) && (StepLength > 1e-7) && ( (NbrIterations < NUM_SAVE) || (fabs(LastOverlaps[(NbrIterations)%NUM_SAVE]-LastOverlaps[(NbrIterations-1)%NUM_SAVE])>toleranceFinal) ))
     {
-      ++NbrIterations;
       // calculate a series of points (and gradients) along stepDirection, and spaced with StepLength
       this->CalculateLinearSeries(presentParameters, stepDirection, overlaps, gradients);
       double lastOverlap=overlaps[0];
@@ -438,7 +437,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
 	  if ( std::exp(- ( overlaps[point]-randomOverlap) / reference ) > Generator->GetRealRandomNumber() )
 	    point = point2; // use random point
 	}
-      this->LastOverlaps[NbrIterations%NUM_SAVE]=overlaps[point];
+      this->LastOverlaps[(NbrIterations++)%NUM_SAVE]=overlaps[point];
       cout << "Overlap "<<overlaps[point] <<" (" <<point+1 <<"/"<<MaxPoints<<"), Grad: " << gradients[point].Norm() <<" "<< this->NewParameters[point*StatesPerPoint][0];
       LogFile << overlaps[point]<< TAB << StepLength << TAB << point << TAB << gradients[point].Norm() << TAB
 	      << this->NewParameters[point*StatesPerPoint][0];

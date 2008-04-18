@@ -28,44 +28,48 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "SmallIntegerArray.h"
+#include "GeneralTools/UnsignedIntegerTools.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
 
 // default constructor
 //
-SmallIntegerArray::SmallIntegerArray(int nbrBitsPerEntry)
+SmallIntegerArray::SmallIntegerArray(int largestInteger)
 {
   this->NbrEntries=0;
-  this->NbrWords=0;
-  this->NbrBitsPerEntry=nbrBitsPerEntry;
+  this->NbrWords=0;  
+  this->NbrBitsPerEntry=getHighestBit(largestInteger);
 }
 
 // constructor for an empty array
 // nbrEntries = length of array, set to be >=1
-// nbrBitsPerEntry = length of each entry
+// largestInteger = largest integer to hold in each field
 //
-SmallIntegerArray::SmallIntegerArray(int nbrEntries, int nbrBitsPerEntry)
+SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger)
 {
+  this->NbrBitsPerEntry=getHighestBit(largestInteger);
   this->NbrEntries=( nbrEntries>0 ? nbrEntries : 1);
-  int EntriesPerWord=32/nbrBitsPerEntry;
+  int EntriesPerWord=32/NbrBitsPerEntry;
   this->NbrWords=NbrEntries/EntriesPerWord;
   if (NbrEntries%EntriesPerWord!=0) ++this->NbrWords;
   this->InternalArray=new unsigned [this->NbrWords];
-  this->NbrBitsPerEntry=nbrBitsPerEntry;
 }
 
 // constructor from given content as integers
 // nbrEntries = length of array
-// nbrBitsPerEntry = length of each entry
+// largestInteger = largest integer to hold in each field
 // allEntries = array with entries to be stored
 // 
-SmallIntegerArray::SmallIntegerArray(int nbrEntries, int nbrBitsPerEntry, unsigned *allEntries)
+SmallIntegerArray::SmallIntegerArray(int nbrEntries, int largestInteger, unsigned *allEntries)
 {
-  int EntriesPerWord=32/nbrBitsPerEntry;
+  this->NbrBitsPerEntry=getHighestBit(largestInteger);
+  int EntriesPerWord=32/NbrBitsPerEntry;
   this->NbrEntries=(nbrEntries>0 ? nbrEntries : 1);
   this->NbrWords=NbrEntries/EntriesPerWord;
   if (NbrEntries%EntriesPerWord!=0) ++this->NbrWords;
   this->InternalArray=new unsigned [this->NbrWords];
-  this->NbrBitsPerEntry=nbrBitsPerEntry;
   this->SetElements(allEntries);
 }
 
@@ -83,7 +87,8 @@ SmallIntegerArray::SmallIntegerArray( const SmallIntegerArray &array)
 //destructor
 SmallIntegerArray::~SmallIntegerArray()
 {
-  if (NbrEntries>0) delete [] this->InternalArray;
+  if (NbrEntries>0)
+    delete [] this->InternalArray;
 }
 
 
@@ -109,7 +114,8 @@ SmallIntegerArray::SmallIntegerArray( const SmallIntegerArray &array, unsigned t
 // return value = reference on current array
 SmallIntegerArray& SmallIntegerArray::operator = (const SmallIntegerArray& array)
 {
-  delete [] this->InternalArray;
+  if (this->NbrEntries>0)
+    delete [] this->InternalArray;
   this->NbrWords=array.NbrWords;
   this->InternalArray=new unsigned [this->NbrWords];
   for (int i=0; i<NbrWords; ++i)
@@ -158,11 +164,11 @@ void SmallIntegerArray::GetElements(unsigned *values)
   int TotalCount=0;
   for (int w=0; w<NbrWords; ++w)
     {
-      int Mask = (0x1u << (NbrBitsPerEntry) -1);
+      int Mask = ((0x1u << NbrBitsPerEntry) - 1);
       int Shift=0;
       for (int i=0; (i<EntriesPerWord)&&(TotalCount<NbrEntries); ++i, ++TotalCount)
       {
-	values[TotalCount]=InternalArray[w]>>Shift;
+	values[TotalCount]=(InternalArray[w] & Mask)>>Shift;
 	Mask <<= NbrBitsPerEntry;
 	Shift += NbrBitsPerEntry;
       }
@@ -178,11 +184,11 @@ void SmallIntegerArray::SetElements(unsigned *values)
   for (int w=0; w<NbrWords; ++w)
     {
       InternalArray[w]=0x0u;
-      int Mask = (0x1u << (NbrBitsPerEntry) -1);
+      int Mask = ((0x1u << NbrBitsPerEntry) -1);
       int Shift=0;
       for (int i=0; (i<EntriesPerWord)&&(TotalCount<NbrEntries); ++i, ++TotalCount)
       {
-	InternalArray[w]|= (values[TotalCount]&Mask)<<Shift;
+	InternalArray[w] |= (values[TotalCount]&Mask)<<Shift;
 	Shift += NbrBitsPerEntry;
       }
     }
@@ -252,8 +258,13 @@ bool operator >= (const SmallIntegerArray& a1,const SmallIntegerArray& a2)
 
 ostream& operator << (ostream & Str, SmallIntegerArray& a)
 {  
-  Str << a.GetElement(0);
-  for (int i=1; i<a.NbrEntries; ++i)
-    Str << " " << a.GetElement(i);
+  if (a.NbrEntries>0)
+    {
+      Str << a.GetElement(0);
+      for (int i=1; i<a.NbrEntries; ++i)
+	Str << " " << a.GetElement(i);
+    }
+  else
+    Str << "--";
   return Str;
 }

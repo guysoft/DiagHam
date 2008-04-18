@@ -36,6 +36,11 @@
 #include "config.h"
 #include "GeneralTools/ListElement.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
 
 template <class ClassName>
 class OrderedList
@@ -240,25 +245,69 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
       while ((Tmp->Element<Element) && (Tmp->NextPointer != 0))
 	{
 	  ++i;
+/* 	  cout << "Found "<<Tmp->Element<< " < " << Element << " -> proceed to next "<< endl; */
 	  Tmp = Tmp->NextPointer;
 	}
+/*       cout<< "Inserting near " << Tmp->Element << endl; */
+/*       if (Tmp->Element<Element) */
+/* 	    { */
+/* 	      cout << Tmp->Element<<" < " << Element << endl; */
+/* 	    } */
+/* 	  else */
+/* 	    { */
+/* 	      cout << Tmp->Element<<" >= " << Element << endl; */
+/* 	    } */
       if ((this->EliminateDuplicates)&&(Tmp->Element==Element))
 	{
 	  Pos=i;
 	  Duplicate = &(Tmp->Element);
 	  return *this;
-	}	
+	}
       if (Tmp->NextPointer == 0)
 	{
-	  this->CurrentElement = new ListElement<ClassName>(Element, this->CurrentElement);
-	  Duplicate = NULL;
-	  Pos = i+1;
+	  if (Tmp->Element<Element) // insert after Tmp
+	    { 
+/* 	      cout << "Next=0 && " << Tmp->Element<<" < " << Element << endl; */
+	      Tmp->NextPointer = new ListElement<ClassName>(Element, this->CurrentElement); 	      
+	      Duplicate = NULL;
+	      Pos = i+1;	      
+	      
+	    }
+	  else // insert before tmp
+	    {
+/* 	      cout << "Next=0 && " << Tmp->Element<<" >= " << Element << endl; */
+	      
+	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
+	      if (Tmp->PreviousPointer->PreviousPointer==0)
+		{
+/* 		  cout << "New first element!"<<endl; */
+		  this->FirstElement = Tmp->PreviousPointer;
+		}
+	      Duplicate = NULL;
+	      Pos = i;
+	    }
 	}
       else
 	{
-	  Tmp->NextPointer = new ListElement<ClassName>(Element, Tmp->NextPointer, Tmp->PreviousPointer);
-	  Duplicate = NULL;
-	  Pos = i;
+	  if (Tmp->Element<Element) // insert after Tmp
+	    {
+/* 	      cout<< "NonZero NextPointer, insert after Tmp"<<endl;	   */
+	      Tmp->NextPointer = new ListElement<ClassName>(Element, Tmp->NextPointer, Tmp->PreviousPointer);
+	      Duplicate = NULL;
+	      Pos = i+1;
+	    }
+	  else // insert before tmp
+	    {
+/* 	      cout << "NonZero NextPointer, " << Tmp->Element<<" >= " << Element << endl;	       */
+	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
+	      if (Tmp->PreviousPointer->PreviousPointer==0)
+		{
+/* 		  cout << "New first element!"<<endl; */
+		  this->FirstElement = Tmp->PreviousPointer;
+		}
+	      Duplicate = NULL;
+	      Pos = i;
+	    }
 	}
       this->NbrElement++;
     }

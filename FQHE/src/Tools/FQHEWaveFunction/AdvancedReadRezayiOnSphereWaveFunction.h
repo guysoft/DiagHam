@@ -28,15 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ADVANCEDMOOREREADONSPHEREWAVEFUNCTION_H
-#define ADVANCEDMOOREREADONSPHEREWAVEFUNCTION_H
+#ifndef ADVANCEDREADREZAYIONSPHEREWAVEFUNCTION_H
+#define ADVANCEDREADREZAYIONSPHEREWAVEFUNCTION_H
 
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "GeneralTools/GarbageFlag.h"
 
-class AdvancedMooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class AdvancedReadRezayiOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -60,7 +60,9 @@ class AdvancedMooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnS
   // individual JastrowFactor terms (squared)
   Complex** JastrowFactorElements;
   Complex** JastrowFactorSquares;
-  
+
+  // Jastrow-Factors for Block k
+  Complex* BlockJk;
   // array containing description of each permutation that appears in the calculation of the Moore-Read state
   unsigned** Permutations;
   // number of different permutations that appear in the calculation of the Moore-Read state
@@ -76,17 +78,18 @@ class AdvancedMooreReadOnSphereWaveFunction: public Abstract1DComplexFunctionOnS
   // constructor
   //
   // nbrParticlesPerCluster = number of particles per cluster (=N/2)
+  // nbrClusters = number of clusters
   // fermionicStatistics = flag indicating whether the pfaffian should be multiplied by a squared Jastrow Factor
-  AdvancedMooreReadOnSphereWaveFunction(int nbrParticlesPerCluster, bool fermionicStatistics = true);
+  AdvancedReadRezayiOnSphereWaveFunction(int nbrParticlesPerCluster, int nbrClusters, bool fermionicStatistics = true);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  AdvancedMooreReadOnSphereWaveFunction(const AdvancedMooreReadOnSphereWaveFunction& function);
+  AdvancedReadRezayiOnSphereWaveFunction(const AdvancedReadRezayiOnSphereWaveFunction& function);
 
   // destructor
   //
-  ~AdvancedMooreReadOnSphereWaveFunction();
+  ~AdvancedReadRezayiOnSphereWaveFunction();
 
   // clone function 
   //

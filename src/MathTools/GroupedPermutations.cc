@@ -1,5 +1,10 @@
 #include "GroupedPermutations.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
+
 class PermutationElement
 {
 public:
@@ -26,7 +31,9 @@ public:
 
   friend bool operator == (const PermutationElement& a1, const PermutationElement& a2);
   friend bool operator < (const PermutationElement& a1,const PermutationElement& a2);
-  friend bool operator > (const PermutationElement& a1,const PermutationElement& a2);  
+  friend bool operator > (const PermutationElement& a1,const PermutationElement& a2);
+
+  friend ostream& operator << ( ostream &Str, PermutationElement PE);
   
 };
 
@@ -86,6 +93,12 @@ bool operator > (const PermutationElement& a1,const PermutationElement& a2)
   return (a1.Value>a2.Value);
 }
 
+ostream& operator << ( ostream &Str, PermutationElement PE)
+{
+  Str << "[" << PE.Value <<"] x "<<PE.Multiplicity;
+  return Str;
+}
+
 
 // default constructor
 // nbrGroups = number of groups
@@ -110,7 +123,7 @@ GroupedPermutations::GroupedPermutations(int nbrGroups, unsigned elementsPerGrou
       this->InverseMapOfGroups[i]=i;
     }
 
-  this->CentralRecursion(this->GetInitialString(),SmallIntegerArray(this->NbrBitsPerGroup), 1);
+  this->CentralRecursion(this->GetInitialString(),SmallIntegerArray(this->NbrGroups), 1);
 
   this->NbrPermutations = PermutationList.GetNbrElement();
   this->Permutations = new SmallIntegerArray[NbrPermutations];
@@ -118,11 +131,12 @@ GroupedPermutations::GroupedPermutations(int nbrGroups, unsigned elementsPerGrou
 
   ListElement<PermutationElement> *ElementPointer = PermutationList.FirstElement;
   int i = 0;
-  while (i++<NbrPermutations)
+  while (i<NbrPermutations)
     {
       this->Permutations[i] = ElementPointer->Element.Value;
       this->Multiplicities[i] = ElementPointer->Element.Multiplicity;      
       ElementPointer = ElementPointer->NextPointer;
+      ++i;
     }
   this->PermutationList.DeleteList();
   
@@ -141,6 +155,8 @@ GroupedPermutations::~GroupedPermutations()
 // central recursive function that generates all different permutations
 void GroupedPermutations::CentralRecursion(SmallIntegerArray remainingElements, SmallIntegerArray permutation, unsigned long multiplicity)
 {
+//   for (int i=0; i<permutation.GetNbrElements(); ++i) cout << " ";
+//   cout << "CentralRecursion ("<<remainingElements<<", "<<permutation<<", "<<multiplicity<<")"<<endl;
   int NbrRemainingElements = remainingElements.GetNbrElements();
   if (NbrRemainingElements>1)
     {      
@@ -150,7 +166,7 @@ void GroupedPermutations::CentralRecursion(SmallIntegerArray remainingElements, 
 	    MyArray[j]=remainingElements.GetElement(j);
 	  for (int j=i+1; j<NbrRemainingElements; ++j)
 	    MyArray[j-1]=remainingElements.GetElement(j);	  
-	  CentralRecursion(SmallIntegerArray(NbrRemainingElements-1, this->NbrBitsPerGroup, MyArray),
+	  CentralRecursion(SmallIntegerArray(NbrRemainingElements-1, this->NbrGroups, MyArray),
 			   SmallIntegerArray(permutation, remainingElements.GetElement(i)), 1);
 	}
     }
@@ -160,11 +176,23 @@ void GroupedPermutations::CentralRecursion(SmallIntegerArray remainingElements, 
       PermutationElement PE(this->GetPermutationString(FinalPermutation),1);
       int Pos;
       PermutationElement *Duplicate;
+      //cout << "Inserting " << PE.Value << endl;
       this->PermutationList.Insert(PE, Pos, Duplicate);
+      //cout << "Found duplicate at pos "<<Pos<<": " << Duplicate << endl;
       if (Duplicate!=NULL)
 	{
 	  Duplicate->Multiplicity+=1;
 	}
+//       cout << "Values in List are now:"<<endl;
+//       for (int i=0; i<PermutationList.GetNbrElement(); ++i)
+// 	{
+// 	  cout << PermutationList[i];
+// 	  if (PermutationList[i] < PermutationList[PermutationList.GetNbrElement()-1])
+// 	    cout << " < " <<PermutationList[PermutationList.GetNbrElement()-1] << endl;
+// 	  else
+// 	    cout << " >= " <<PermutationList[PermutationList.GetNbrElement()-1] << endl;
+// 	}
+//       cout << "End List"<<endl;
     }
   
 }
@@ -174,15 +202,17 @@ SmallIntegerArray GroupedPermutations::GetPermutationString(SmallIntegerArray &p
 {
   for (int i=0; i<NbrGroups; ++i)
     CountOfGroups[i]=0;
+//  cout << "translating "<<permutation;
   if (!this->OrderedGroups)
     {
+//       cout << "getting map for "<<permutation<<endl;
       int PresentGroup=0;
       int PresentElement=1;
       unsigned PresentElementValue;
       this->MapOfGroups[PresentGroup++]=permutation.GetElement(0);
       while (PresentGroup < NbrGroups)
 	{
-	  PresentElementValue=permutation.GetElement(PresentElement);
+	  PresentElementValue=permutation.GetElement(PresentElement++);
 	  bool GroupKnown=false;
 	  for (int i=0; (i<PresentGroup)&&(!GroupKnown); ++i)
 	    if (PresentElementValue==this->MapOfGroups[i])
@@ -193,16 +223,21 @@ SmallIntegerArray GroupedPermutations::GetPermutationString(SmallIntegerArray &p
 	    }
 	}
       for (int i=0; i<NbrGroups; ++i)
-	this->InverseMapOfGroups[MapOfGroups[i]]=i;
+	{
+	  this->InverseMapOfGroups[MapOfGroups[i]]=i;
+// 	  cout << "Map["<<i<<"]="<<MapOfGroups[i]<<endl;
+	}
     }
   for (int i=0; i<NbrElements; ++i)
     {            
       unsigned PresentElementValue=permutation.GetElement(i);
-      unsigned PresentGroup=InverseMapOfGroups[PresentElementValue];
-      MyArray[i]=PresentGroup*ElementsPerGroup+CountOfGroups[PresentGroup];
+      unsigned PresentGroup=MapOfGroups[PresentElementValue];
+      MyArray[PresentGroup*ElementsPerGroup+CountOfGroups[PresentGroup]]=i;
       ++CountOfGroups[PresentGroup];
     }
-  return SmallIntegerArray(this->NbrElements, this->NbrBitsForElements, MyArray);     
+  // SmallIntegerArray tmp(this->NbrElements, this->NbrElements, MyArray);
+  // cout << " -> result: "<< tmp <<endl;
+  return SmallIntegerArray(this->NbrElements, this->NbrElements, MyArray);     
 }
 
 
@@ -214,5 +249,5 @@ SmallIntegerArray GroupedPermutations::GetInitialString()
   for (int g=0; g<NbrGroups; ++g)
     for (int e=0; e<ElementsPerGroup; ++e)
       MyArray[count++]=g;
-  return SmallIntegerArray(this->NbrElements, this->NbrBitsPerGroup, MyArray);
+  return SmallIntegerArray(this->NbrElements, this->NbrGroups, MyArray);
 }

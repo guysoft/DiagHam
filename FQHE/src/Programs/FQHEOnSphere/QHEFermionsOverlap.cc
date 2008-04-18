@@ -13,7 +13,7 @@
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
-#include "Tools/FQHEWaveFunction/AdvancedMooreReadOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/AdvancedReadRezayiOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/ExplicitMooreReadOnSphereWaveFunction.h"
 
 #include "MCObservables/RealObservable.h"
@@ -434,10 +434,10 @@ int main(int argc, char** argv)
 
   // testing code: comparing wavefunctions
 
-//   AdvancedMooreReadOnSphereWaveFunction *MR1 = new AdvancedMooreReadOnSphereWaveFunction(NbrFermions/2, true);
+//   AdvancedReadRezayiOnSphereWaveFunction *MR1 = new AdvancedReadRezayiOnSphereWaveFunction(NbrFermions/2, 2, true);
 //   ExplicitMooreReadOnSphereWaveFunction *MR2 = new ExplicitMooreReadOnSphereWaveFunction(NbrFermions/2, 2, true);
 
-//   Complex T1, T2;
+//    Complex T1, T2;
   
   for (int i = 0; i < NbrIter; ++i)
     {
@@ -447,9 +447,9 @@ int main(int argc, char** argv)
       TmpMetropolis = (*TestWaveFunction)(Particles->GetPositions());
 
       //testing:
-//       T1=(*MR1)(Particles->GetPositions());
-//       T2=(*MR2)(Particles->GetPositions());
-//       cout << "Values: " << T1 << " vs "<< T2 << endl;
+//        T1=(*MR1)(Particles->GetPositions());
+//        T2=(*MR2)(Particles->GetPositions());
+//        cout << "Values: " << T1 << " vs "<< T2 << endl;
 
       
       // accept or reject move according to probability |Psi_new|^2  / |Psi_old|^2

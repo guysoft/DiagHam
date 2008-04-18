@@ -29,11 +29,13 @@
 
 
 #include "config.h"
-#include "Tools/FQHEWaveFunction/AdvancedMooreReadOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/AdvancedReadRezayiOnSphereWaveFunction.h"
 #include "MathTools/BinomialCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/GroupedPermutations.h"
 #include "Vector/RealVector.h"
+
+#include "GeneralTools/OrderedList.h"
 
 #include <iostream>
 #include <math.h>
@@ -45,18 +47,20 @@ using std::endl;
 
 // constructor
 //
-// nbrParticlesPerCluster = number of particles per cluster (=N/2)
+// nbrParticlesPerCluster = number of particles per cluster (=N/k)
+// nbrClusters = number of clusters
 // fermionicStatistics = flag indicating whether the pfaffian should be multiplied by a squared Jastrow Factor
-AdvancedMooreReadOnSphereWaveFunction::AdvancedMooreReadOnSphereWaveFunction(int nbrParticlesPerCluster, bool fermionicStatistics)
+AdvancedReadRezayiOnSphereWaveFunction::AdvancedReadRezayiOnSphereWaveFunction(int nbrParticlesPerCluster, int nbrClusters, bool fermionicStatistics)
 {
   this->NbrParticles = 2*nbrParticlesPerCluster;
   this->ClusterSize = nbrParticlesPerCluster;
-  this->NbrClusters = 2;
+  this->NbrClusters = nbrClusters;
   this->FermionicStatistics = fermionicStatistics;
+  this->BlockJk = new Complex[NbrClusters];
   this->SpinorUCoordinates = new Complex[this->NbrParticles];
   this->SpinorVCoordinates = new Complex[this->NbrParticles];
   this->JastrowFactorElements = new Complex*[this->NbrParticles];
-  this->JastrowFactorSquares = new Complex*[this->NbrParticles];
+  this->JastrowFactorSquares = new Complex*[this->NbrParticles];  
   for (int i=0; i<NbrParticles; ++i)
     {
       this->JastrowFactorElements[i] = new Complex[this->NbrParticles];
@@ -70,12 +74,15 @@ AdvancedMooreReadOnSphereWaveFunction::AdvancedMooreReadOnSphereWaveFunction(int
 //
 // function = reference on the wave function to copy
 
-AdvancedMooreReadOnSphereWaveFunction::AdvancedMooreReadOnSphereWaveFunction(const AdvancedMooreReadOnSphereWaveFunction& function)
+AdvancedReadRezayiOnSphereWaveFunction::AdvancedReadRezayiOnSphereWaveFunction(const AdvancedReadRezayiOnSphereWaveFunction& function)
 {
   this->NbrParticles = function.NbrParticles;
   this->ClusterSize = function.ClusterSize;
   this->NbrClusters = function.NbrClusters;
   this->FermionicStatistics = function.FermionicStatistics;
+  this->BlockJk = function.BlockJk;
+  this->SpinorUCoordinates = function.SpinorUCoordinates;
+  this->SpinorVCoordinates = function.SpinorVCoordinates;
   this->Permutations = function.Permutations;
   this->NbrPermutations = function.NbrPermutations;
   this->WeightOfPermutations = function.WeightOfPermutations;
@@ -87,13 +94,14 @@ AdvancedMooreReadOnSphereWaveFunction::AdvancedMooreReadOnSphereWaveFunction(con
 // destructor
 //
 
-AdvancedMooreReadOnSphereWaveFunction::~AdvancedMooreReadOnSphereWaveFunction()
+AdvancedReadRezayiOnSphereWaveFunction::~AdvancedReadRezayiOnSphereWaveFunction()
 {
   if ((this->Flag.Used() == true) && (this->Flag.Shared() == false))
     {
       for (unsigned i = 0; i < this->NbrPermutations; ++i)
 	delete[] this->Permutations[i];
       delete[] this->Permutations;
+      delete[] this->BlockJk;
       delete[] this->SpinorUCoordinates;
       delete[] this->SpinorVCoordinates;
       for (int i=0; i<NbrParticles; ++i)
@@ -110,9 +118,9 @@ AdvancedMooreReadOnSphereWaveFunction::~AdvancedMooreReadOnSphereWaveFunction()
 //
 // return value = clone of the function 
 
-Abstract1DComplexFunction* AdvancedMooreReadOnSphereWaveFunction::Clone ()
+Abstract1DComplexFunction* AdvancedReadRezayiOnSphereWaveFunction::Clone ()
 {
-  return new AdvancedMooreReadOnSphereWaveFunction(*this);
+  return new AdvancedReadRezayiOnSphereWaveFunction(*this);
 }
 
 // evaluate function at a given point
@@ -120,20 +128,8 @@ Abstract1DComplexFunction* AdvancedMooreReadOnSphereWaveFunction::Clone ()
 // x = point where the function has to be evaluated
 // return value = function value at x  
 
-Complex AdvancedMooreReadOnSphereWaveFunction::operator ()(RealVector& x)
+Complex AdvancedReadRezayiOnSphereWaveFunction::operator ()(RealVector& x)
 {  
-  // for (int i = 0; i < this->NbrParticles; ++i)
-//     {
-//       SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
-//       SpinorUCoordinates[i].Im = SpinorUCoordinates[i].Re;
-//       SpinorUCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-//       SpinorUCoordinates[i].Im *= sin(0.5 * x[1 + (i << 1)]);
-//       SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
-//       SpinorVCoordinates[i].Im = SpinorVCoordinates[i].Re;
-//       SpinorVCoordinates[i].Re *= cos(0.5 * x[1 + (i << 1)]);
-//       SpinorVCoordinates[i].Im *= -sin(0.5 * x[1 + (i << 1)]);
-//     }
-
   // CalculateSpinors
   double s,c;
   for (int i = 0; i < this->NbrParticles; ++i)
@@ -158,7 +154,7 @@ Complex AdvancedMooreReadOnSphereWaveFunction::operator ()(RealVector& x)
 //      where function has to be evaluated
 //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
 // return value = function value at (uv)
-Complex AdvancedMooreReadOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+Complex AdvancedReadRezayiOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {  
   // Import from spinors
   for (int i = 0; i < this->NbrParticles; ++i)
@@ -177,8 +173,8 @@ Complex AdvancedMooreReadOnSphereWaveFunction::CalculateFromSpinorVariables(Comp
 // using: two symmetric blocs, only permutations changing particles
 //        between blocks are required
 
-void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
-{
+void AdvancedReadRezayiOnSphereWaveFunction::EvaluatePermutations()
+{  
   GroupedPermutations Generator(this->NbrClusters, this->ClusterSize);
   FactorialCoefficient NbrP;  
   this->NbrPermutations = Generator.GetNbrPermutations();
@@ -190,6 +186,9 @@ void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
     {
       this->Permutations[i] = new unsigned[NbrParticles];
       TmpPermutations[i].GetElements(this->Permutations[i]);
+      cout << "Permutation["<<i<<"]= ["<<Permutations[i][0];
+      for (int j=1; j<NbrParticles; ++j) cout << " " << Permutations[i][j];
+      cout << "]"<<endl;
       NbrP.SetToOne();
       NbrP.FactorialDivide(NbrParticles);
       NbrP *= Multiplicities[i];
@@ -202,9 +201,9 @@ void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
 // perform complex part of calculations
 // uses internal spinor coordinates as input
 //
-Complex AdvancedMooreReadOnSphereWaveFunction::ComplexEvaluations()
+Complex AdvancedReadRezayiOnSphereWaveFunction::ComplexEvaluations()
 {
-  Complex JA, JB, Tmp;
+  Complex J, Tmp;
 
   for (int i = 0; i < this->NbrParticles; ++i)
     for (int j = 0; j < i; ++j)
@@ -216,32 +215,29 @@ Complex AdvancedMooreReadOnSphereWaveFunction::ComplexEvaluations()
 
   unsigned *TmpP;
   Complex Value(0.0,0.0);
-  cout << "Evaluating function"<<endl;
+  // cout << "Evaluating function"<<endl;
   for (unsigned i=0; i<NbrPermutations; ++i)
     {
       TmpP=this->Permutations[i];
-      JA=1.0;
-      JB=1.0;
-      for (int k=1; k<ClusterSize; ++k)
-	for (int j=0; j<k; ++j)
+      J=1.0;
+      for (int m=0; m<NbrClusters; ++m)
 	{
-	  JA*=JastrowFactorElements[TmpP[k]][TmpP[j]];
-	  cout << "JA*=JastrowFactorElements("<<TmpP[k]<<","<<TmpP[j]<<")"<<endl;
-	  JB*=JastrowFactorElements[TmpP[k+ClusterSize]][TmpP[j+ClusterSize]];
-	  cout << "JB*=JastrowFactorElements("<<TmpP[k+ClusterSize]<<","<<TmpP[j+ClusterSize]<<")"<<endl;
+	  BlockJk[m]=1.0;
+	  for (int k=m*ClusterSize+1; k<(m+1)*ClusterSize; ++k)
+	    for (int j=m*ClusterSize; j<k; ++j)
+	      BlockJk[m]*=JastrowFactorElements[TmpP[k]][TmpP[j]];
+	  J*=BlockJk[m];
 	}
-      cout << "Contribution: "<<JA*JA*JB*JB<<endl;
-      cout << "Weight:" <<WeightOfPermutations[i]<<endl;
-      Value += WeightOfPermutations[i]*JA*JA*JB*JB;
+      Value += WeightOfPermutations[i]*J*J;
     }
-  cout << "Symmetric Part: "<<Value<<endl;
+  // cout << "Symmetric Part: "<<Value<<endl;
   if (this->FermionicStatistics)
     {
       for (int i = 1; i < this->NbrParticles; ++i)
 	for (int j = 0; j < i; ++j)
 	  Value *=  JastrowFactorElements[i][j];
     }
-  cout << "Value ="<<Value<<endl;
+  //  cout << "Value ="<<Value<<endl;
   
   return Value;
 }
@@ -254,7 +250,7 @@ Complex AdvancedMooreReadOnSphereWaveFunction::ComplexEvaluations()
 // using: two symmetric blocs, only permutations changing particles
 //        between blocks are required
 
-void AdvancedMooreReadOnSphereWaveFunction::EvaluatePermutations()
+void AdvancedReadRezayiOnSphereWaveFunction::EvaluatePermutations()
 {
   double totalWeight=0.0;
   BinomialCoefficients bico(NbrParticles);
