@@ -17,6 +17,7 @@
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSUKToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU2HalperinPermanentOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU3HalperinPermanentOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESU4HalperinPermanentOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
@@ -157,6 +158,16 @@ int main(int argc, char** argv)
 									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1, InvertFlag);
       }
       break;
+    case 4:
+      {
+      BaseFunction = new FQHESU4HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
+									NbrParticlePerColor,
+									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1,
+                                                                        IntraCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
+									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
+									InterCorrelation - 1, InvertFlag);
+}
+break;
     default:
       {
 	cout << "invalid or unsupported number of colors (i.e. k)" << endl;

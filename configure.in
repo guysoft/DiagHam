@@ -238,7 +238,7 @@ int main()
 
 dnl Checks for library functions.
 
-CXXFLAGS="-O2 -Wall"
+CXXFLAGS=" -O2 -Wall "
 INCLUDES="-I\$(top_srcdir)/src -I\$(top_srcdir)/Base/src"
 
 dnl check for debugging/profiling mode 
