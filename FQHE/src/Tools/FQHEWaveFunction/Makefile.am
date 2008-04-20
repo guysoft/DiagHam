@@ -41,4 +41,5 @@ PairedCFOnSphere2QHWaveFunction.cc \
 FQHESphereSymmetrizedSUKToU1WaveFunction.cc \
 FQHESU2HalperinPermanentOnSphereWaveFunction.cc \
 FQHESU3HalperinPermanentOnSphereWaveFunction.cc \
-FQHESU4HalperinPermanentOnSphereWaveFunction.cc 
+FQHESU4HalperinPermanentOnSphereWaveFunction.cc \
+FQHESU3GeneralizedGaffnianOnSphereWaveFunction.cc 

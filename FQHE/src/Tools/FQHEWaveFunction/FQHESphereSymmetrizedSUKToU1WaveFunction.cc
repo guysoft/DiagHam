@@ -52,6 +52,13 @@ using std::dec;
 #define GROUP_MAXSIZE 6
 #endif
 
+// default constructor
+//
+
+FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFunction()
+{
+}
+
 // constructor
 //
 // nbrParticles = number of particles
@@ -97,7 +104,8 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::~FQHESphereSymmetrizedSUKToU1WaveFunct
     {
       delete[] this->Permutations;
     }
-  delete this->SUKWaveFunction;
+  if (this->SUKWaveFunction != 0)
+    delete this->SUKWaveFunction;
 }
 
 // clone function 
@@ -273,3 +281,17 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
   return;
 }
 
+// evaluate function at a given point(the first 2*N1 coordinates correspond to the position of the type 1 particles, 
+//                                     the following 2*N2 coordinates correspond to the position of the type 2 particles,
+//                                     last the 2*N3 coordinates correspond to the position of the type 3 particles)
+//
+// uv = ensemble of spinor variables on sphere describing point
+//      where function has to be evaluated
+//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+//      this method is for only for internal class usage
+// return value = function value at (uv)
+
+Complex FQHESphereSymmetrizedSUKToU1WaveFunction::LocalCalculateFromSpinorVariables(ComplexVector& uv)
+{
+  return this->SUKWaveFunction->CalculateFromSpinorVariables(uv);
+}
