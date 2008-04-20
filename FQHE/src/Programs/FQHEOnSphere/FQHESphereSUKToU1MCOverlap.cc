@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
-
+  (*MonteCarloGroup) += new BooleanOption  ('\n', "weight-symmetrized" , "use the norm of the symmetrized wave fonction as probalbility density instead of the exact state");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -117,6 +117,7 @@ int main(int argc, char** argv)
   int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
   bool UseExactFlag = false;
   bool StatisticFlag = true;
+  bool UseBaseAsWeightFlag = ((BooleanOption*) Manager["weight-symmetrized"])->GetBoolean();
 
   AbstractQHEParticle* ExactSpace = 0;
   RealVector* ExactState = 0;
@@ -235,12 +236,24 @@ break;
 	 Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
        else
 	 {
-	   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
-	   Operation.ApplyOperation(Architecture.GetArchitecture());      
-	   Tmp = Operation.GetScalar();
+	   if (UseBaseAsWeightFlag == false)
+	     {
+	       QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+	       Operation.ApplyOperation(Architecture.GetArchitecture());      
+	       Tmp = Operation.GetScalar();
+	     }
+	   else
+	     Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	 }
        Complex ValueExact;
-       ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+       if (UseBaseAsWeightFlag == false)
+	 ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+       else
+	 {
+	   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+	   Operation.ApplyOperation(Architecture.GetArchitecture());      
+	   ValueExact = Operation.GetScalar();
+	 }
        double PreviousProbabilities = Norm(Tmp);
        double CurrentProbabilities = PreviousProbabilities;
        double TotalProbability = PreviousProbabilities;
@@ -260,9 +273,14 @@ break;
 	     TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
 	   else
 	     {
-	       QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
-	       Operation.ApplyOperation(Architecture.GetArchitecture());      
-	       TmpMetropolis = Operation.GetScalar();
+	       if (UseBaseAsWeightFlag == false)
+		 {
+		   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+		   Operation.ApplyOperation(Architecture.GetArchitecture());      
+		   TmpMetropolis = Operation.GetScalar();
+		 }
+	       else
+		 TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	     }
 	   CurrentProbabilities = Norm(TmpMetropolis);
 	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
@@ -304,16 +322,28 @@ break;
 	     TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
 	   else
 	     {
-	       QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
-	       Operation.ApplyOperation(Architecture.GetArchitecture());      
-	       TmpMetropolis = Operation.GetScalar();
+	       if (UseBaseAsWeightFlag == false)
+		 {
+		   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+		   Operation.ApplyOperation(Architecture.GetArchitecture());      
+		   TmpMetropolis = Operation.GetScalar();
+		 }
+	       else
+		 TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	     }
 	   CurrentProbabilities = Norm(TmpMetropolis);
 	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	     {
 	       PreviousProbabilities = CurrentProbabilities;
 	       Tmp = TmpMetropolis;
-	       ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+	       if (UseBaseAsWeightFlag == false)
+		 ValueExact = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+	       else
+		 {
+		   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, &TmpPositions, ExactBasis);
+		   Operation.ApplyOperation(Architecture.GetArchitecture());      
+		   ValueExact = Operation.GetScalar();
+		 }
 	       ++Acceptance;
 	     }
 	   else

@@ -925,7 +925,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 					       int firstComponent, int nbrComponent)
 {
   Complex Value;
-  /*  Complex Tmp;
+  Complex Tmp;
 #ifdef __LAPACK__
   ComplexLapackDeterminant Slater(this->NbrFermions);
 #else
@@ -988,7 +988,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
-    delete[] Indices;*/
+  delete[] Indices;
   return Value;
 }
 
