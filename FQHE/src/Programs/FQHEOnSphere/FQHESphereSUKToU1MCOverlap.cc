@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
+  (*SystemGroup) += new BooleanOption ('\n', "jain-cf", "use composite fermion state instead of the symetrized state");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
@@ -161,21 +162,29 @@ int main(int argc, char** argv)
       break;
     case 4:
       {
-      BaseFunction = new FQHESU4HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
+	BaseFunction = new FQHESU4HalperinPermanentOnSphereWaveFunction(NbrParticlePerColor, NbrParticlePerColor, NbrParticlePerColor, 
 									NbrParticlePerColor,
 									IntraCorrelation - 1, IntraCorrelation - 1, IntraCorrelation - 1,
                                                                         IntraCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
 									InterCorrelation - 1, InterCorrelation - 1, InterCorrelation - 1,
 									InterCorrelation - 1, InvertFlag);
-}
-break;
+      }
+      break;
     default:
       {
 	cout << "invalid or unsupported number of colors (i.e. k)" << endl;
 	return -1;
       }
     }
-  FQHESphereSymmetrizedSUKToU1WaveFunction* SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);
+  Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
+  if (((BooleanOption*) Manager["jain-cf"])->GetBoolean() == true)
+    {
+      SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+    }
+  else
+    {
+      SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);      
+    }
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;
   if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
@@ -204,10 +213,10 @@ break;
 	}
     }
 
-   StdlibRandomNumberGenerator RandomNumberGenerator(29457);
-
-   if (OverlapFlag == true)
-     {
+  StdlibRandomNumberGenerator RandomNumberGenerator(29457);
+  
+  if (OverlapFlag == true)
+    {
        int RecordStep = Manager.GetInteger("record-step");
        
        Complex* RecordedOverlap = 0;
