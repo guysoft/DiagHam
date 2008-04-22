@@ -72,9 +72,10 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFuncti
   this->KValue = kValue;
   this->NbrParticlesPerColor = this->NbrParticles / this->KValue;
   this->SUKWaveFunction = (Abstract1DComplexFunctionOnSphere*) (sUKWavefunction->Clone());
-  this->EvaluatePermutations();
   this->FermionFlag = fermionFlag;
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
+  this->FullySymmetrize = false;  
+  this->EvaluatePermutations();
   this->Flag.Initialize();
 }
 
@@ -92,6 +93,7 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFuncti
   this->SUKWaveFunction = (Abstract1DComplexFunctionOnSphere*) (function.SUKWaveFunction->Clone());
   this->FermionFlag = function.FermionFlag;
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
+  this->FullySymmetrize = false;  
   this->Flag = function.Flag;
 }
 
@@ -164,7 +166,7 @@ Complex FQHESphereSymmetrizedSUKToU1WaveFunction::CalculateFromSpinorVariables(C
 	  this->TemporaryUV.Im(TmpIndex2) = uv.Im(TmpIndex);
 	  ++TmpIndex2;
 	}
-      TotalValue += this->SUKWaveFunction->CalculateFromSpinorVariables(this->TemporaryUV);
+      TotalValue += this->LocalCalculateFromSpinorVariables(this->TemporaryUV);
     }
   if (this->FermionFlag == true)
     {
@@ -192,92 +194,134 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
   unsigned long Fact = 2;
   for (unsigned long i = 3; i <= ((unsigned long) this->NbrParticles); ++i)
     Fact *= i;
-  unsigned long TmpNbrPermutation = Fact;  
-  unsigned long FactNbrParticlesPerColor = 1;
-  for (unsigned long i = 2; i <= ((unsigned long) this->NbrParticlesPerColor); ++i)
-    FactNbrParticlesPerColor *= i;
-  for (int i = 0; i < this->KValue; ++i)
-    TmpNbrPermutation /= FactNbrParticlesPerColor;
-  unsigned long FactKValue = 1;
-  for (unsigned long i = 2; i <= ((unsigned long) this->KValue); ++i)
-    FactKValue *= i;
-  TmpNbrPermutation /= FactKValue;
-
-  this->Permutations = new unsigned long[TmpNbrPermutation];
-
-  unsigned long TmpPerm =  0x0ul;
-  unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
-  unsigned long* TmpArrayPerm2 = new unsigned long [this->KValue];
-  int Shift = 0;     
-  for (int k = 0; k < this->NbrParticles; ++k) 
+  if (this->FullySymmetrize == false)
     {
-      TmpPerm |= ((unsigned long) k) << (k << 2);
-      TmpArrayPerm[k] = (unsigned long) k;
-    }
-
-  this->Permutations[0] = TmpPerm;
-  TmpNbrPermutation = 1ul;
-  Fact /= ((unsigned long) this->NbrParticles);
-  Fact *= ((unsigned long) (this->NbrParticles - this->NbrParticlesPerColor + 1));
-  for (unsigned long j = 1; j < Fact; ++j)
-    {
-      int Pos1 = this->NbrParticles - 1;
-      while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
-	--Pos1;
-      --Pos1;
-      int Pos2 = this->NbrParticles - 1;      
-      while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
-	--Pos2;
-      unsigned long TmpIndex = TmpArrayPerm[Pos1];
-      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
-      TmpArrayPerm[Pos2] = TmpIndex;
-      Pos2 = this->NbrParticles - 1;   
-      Pos1++;
-      while (Pos1 < Pos2)
+      unsigned long TmpNbrPermutation = Fact;  
+      unsigned long FactNbrParticlesPerColor = 1;
+      for (unsigned long i = 2; i <= ((unsigned long) this->NbrParticlesPerColor); ++i)
+	FactNbrParticlesPerColor *= i;
+      for (int i = 0; i < this->KValue; ++i)
+	TmpNbrPermutation /= FactNbrParticlesPerColor;
+      unsigned long FactKValue = 1;
+      for (unsigned long i = 2; i <= ((unsigned long) this->KValue); ++i)
+	FactKValue *= i;
+      TmpNbrPermutation /= FactKValue;
+      
+      this->Permutations = new unsigned long[TmpNbrPermutation];
+      
+      unsigned long TmpPerm =  0x0ul;
+      unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
+      unsigned long* TmpArrayPerm2 = new unsigned long [this->KValue];
+      for (int k = 0; k < this->NbrParticles; ++k) 
 	{
-	  TmpIndex = TmpArrayPerm[Pos1];
+	  TmpPerm |= ((unsigned long) k) << (k << 2);
+	  TmpArrayPerm[k] = (unsigned long) k;
+	}
+      
+      this->Permutations[0] = TmpPerm;
+      TmpNbrPermutation = 1ul;
+      Fact /= ((unsigned long) this->NbrParticles);
+      Fact *= ((unsigned long) (this->NbrParticles - this->NbrParticlesPerColor + 1));
+      for (unsigned long j = 1; j < Fact; ++j)
+	{
+	  int Pos1 = this->NbrParticles - 1;
+	  while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
+	    --Pos1;
+	  --Pos1;
+	  int Pos2 = this->NbrParticles - 1;      
+	  while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
+	    --Pos2;
+	  unsigned long TmpIndex = TmpArrayPerm[Pos1];
 	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
 	  TmpArrayPerm[Pos2] = TmpIndex;
-	  ++Pos1;
-	  --Pos2;
-	}
-      bool Flag = true;
-      int TmpIndex2 = 0;
-      for (int i = 0; ((i < this->KValue) && (Flag == true)); ++i)
-	{
-	  int k = 1;
-	  while ((k < this->NbrParticlesPerColor) && (Flag == true))
+	  Pos2 = this->NbrParticles - 1;   
+	  Pos1++;
+	  while (Pos1 < Pos2)
 	    {
-	      if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
-		Flag = false;
+	      TmpIndex = TmpArrayPerm[Pos1];
+	      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	      TmpArrayPerm[Pos2] = TmpIndex;
+	      ++Pos1;
+	      --Pos2;
+	    }
+	  bool Flag = true;
+	  int TmpIndex2 = 0;
+	  for (int i = 0; ((i < this->KValue) && (Flag == true)); ++i)
+	    {
+	      int k = 1;
+	      while ((k < this->NbrParticlesPerColor) && (Flag == true))
+		{
+		  if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
+		    Flag = false;
+		  ++TmpIndex2;
+		  ++k;
+		}
 	      ++TmpIndex2;
-	      ++k;
-	    }
-	  ++TmpIndex2;
-	} 
-      if (Flag == true)
-	{
-	  for (int k = 0; k < this->KValue; ++k)
-	    {
-	      TmpIndex = 0ul;
-	      for (int i = 0; i < this->NbrParticlesPerColor; ++i)
-		TmpIndex |= TmpArrayPerm[i + (k * this->NbrParticlesPerColor)] << (i << 2);
-	      TmpArrayPerm2[k] = TmpIndex;
-	    }
-	  for (int i = 1; ((i < this->KValue) && (Flag == true)); ++i)
-	    if (TmpArrayPerm2[i - 1] > TmpArrayPerm2[i])
-	      Flag = false;
+	    } 
 	  if (Flag == true)
 	    {
-	      TmpPerm =  0x0ul;
-	      for (int i = 0; i < this->KValue; ++i)
-		TmpPerm |= (TmpArrayPerm2[i] << ((i * this->NbrParticlesPerColor) << 2));
-	      this->Permutations[TmpNbrPermutation] = TmpPerm;	      
-	      ++TmpNbrPermutation;
+	      for (int k = 0; k < this->KValue; ++k)
+		{
+		  TmpIndex = 0ul;
+		  for (int i = 0; i < this->NbrParticlesPerColor; ++i)
+		    TmpIndex |= TmpArrayPerm[i + (k * this->NbrParticlesPerColor)] << (i << 2);
+		  TmpArrayPerm2[k] = TmpIndex;
+		}
+	      for (int i = 1; ((i < this->KValue) && (Flag == true)); ++i)
+		if (TmpArrayPerm2[i - 1] > TmpArrayPerm2[i])
+		  Flag = false;
+	      if (Flag == true)
+		{
+		  TmpPerm =  0x0ul;
+		  for (int i = 0; i < this->KValue; ++i)
+		    TmpPerm |= (TmpArrayPerm2[i] << ((i * this->NbrParticlesPerColor) << 2));
+		  this->Permutations[TmpNbrPermutation] = TmpPerm;	      
+		  ++TmpNbrPermutation;
+		}
 	    }
 	}
+      this->NbrPermutations = TmpNbrPermutation;
     }
-  this->NbrPermutations = TmpNbrPermutation;
+  else
+    {
+      this->Permutations = new unsigned long[Fact];
+      this->NbrPermutations = Fact;
+      unsigned long TmpPerm =  0x0ul;
+      unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
+      for (int k = 0; k < this->NbrParticles; ++k) 
+	{
+	  TmpPerm |= ((unsigned long) k) << (k << 2);
+	  TmpArrayPerm[k] = (unsigned long) k;
+	}
+      this->Permutations[0] = TmpPerm;
+      for (unsigned long j = 1; j < Fact; ++j)
+	{
+	  int Pos1 = this->NbrParticles - 1;
+	  while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
+	    --Pos1;
+	  --Pos1;
+	  int Pos2 = this->NbrParticles - 1;      
+	  while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
+	    --Pos2;
+	  unsigned long TmpIndex = TmpArrayPerm[Pos1];
+	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	  TmpArrayPerm[Pos2] = TmpIndex;
+	  Pos2 = this->NbrParticles - 1;   
+	  Pos1++;
+	  while (Pos1 < Pos2)
+	    {
+	      TmpIndex = TmpArrayPerm[Pos1];
+	      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
+	      TmpArrayPerm[Pos2] = TmpIndex;
+	      ++Pos1;
+	      --Pos2;
+	    }
+	  TmpPerm =  0x0ul;
+	  for (int k = 0; k < this->NbrParticles; ++k) 
+	    TmpPerm |= TmpArrayPerm[k] << (k << 2);
+	  this->Permutations[j] = TmpPerm;
+	}
+    }
   return;
 }
 

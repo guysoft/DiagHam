@@ -17,6 +17,7 @@
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSUKToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU2HalperinPermanentOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU3HalperinPermanentOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESU3GeneralizedGaffnianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHESU4HalperinPermanentOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
@@ -205,7 +206,9 @@ int main(int argc, char** argv)
     {
       if (InvertFlag == false)
 	{
-	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+//	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+	  TestFunction = new FQHESU3GeneralizedGaffnianOnSphereWaveFunction(NbrParticles, 3, 2);
+
 	}
       else
 	{

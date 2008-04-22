@@ -55,14 +55,15 @@ FQHESU3GeneralizedGaffnianOnSphereWaveFunction::FQHESU3GeneralizedGaffnianOnSphe
   this->SUKWaveFunction = 0;
   this->KValue = 3;
   this->NbrParticlesPerColor = this->NbrParticles / this->KValue;
-  this->EvaluatePermutations();
   this->FermionFlag = false;
+  this->FullySymmetrize = true;  
   if ((this->MIntra & 1) == 1)
     {
       this->FermionFlag= true;
       --this->MIntra;
       --this->MInter;
     }
+  this->EvaluatePermutations();
   this->Flag.Initialize();
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
 }
@@ -82,6 +83,7 @@ FQHESU3GeneralizedGaffnianOnSphereWaveFunction::FQHESU3GeneralizedGaffnianOnSphe
   this->FermionFlag = function.FermionFlag;
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
   this->Flag = function.Flag;
+  this->FullySymmetrize = true;  
 }
 
 // constructor from configuration file
@@ -115,14 +117,15 @@ FQHESU3GeneralizedGaffnianOnSphereWaveFunction::FQHESU3GeneralizedGaffnianOnSphe
   this->KValue = 3;
   this->NbrParticlesPerColor = this->NbrParticles / this->KValue;
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
-  this->EvaluatePermutations();
   this->FermionFlag = false;
+  this->FullySymmetrize = true;  
   if ((this->MIntra & 1) == 1)
     {
       this->FermionFlag= true;
       --this->MIntra;
       --this->MInter;
     }
+  this->EvaluatePermutations();
   this->Flag.Initialize();
 }
 
@@ -189,65 +192,79 @@ Complex FQHESU3GeneralizedGaffnianOnSphereWaveFunction::LocalCalculateFromSpinor
 
   if (this->MInter > 0)
     {
-//       Complex WaveFunction(1.0);
-//       for (int i = 0; i < this->NbrParticlesPerColor; ++i)
-// 	{
-//  	  TmpU = uv[2 * i];
-//  	  TmpV = uv[2 * i + 1];
-// 	  for (int j = this->NbrParticlesPerColor; j < (NbrN1N2); ++j)
-// 	    {
-// 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
-// 	      WaveFunction *= Tmp;
-// 	      if (this->InvertFlag == false)
-// 		Tmp = Inv(Tmp);
-// 	      Permanent12.SetMatrixElement(i, j - this->NbrParticlesPerColor, Tmp);
-// 	    }
-// 	}
-//       for (int i = 0; i < this->M12; ++i)
-// 	TotalWaveFunction *= WaveFunction;
-//     }
+      Complex WaveFunction(1.0);
+      Complex WaveFunction2(1.0);
+      for (int i = 0; i < this->NbrParticlesPerColor; ++i)
+	{
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
+	  int Lim = i + this->NbrParticlesPerColor;
+	  int j = this->NbrParticlesPerColor;
+	  for (; j < Lim; ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	  Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	  WaveFunction *= Tmp;
+	  ++j;
+	  for (; j < (NbrN1N2); ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	}
+      for (int i = 0; i < this->NbrParticlesPerColor; ++i)
+	{
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
+	  int Lim = i + NbrN1N2;
+	  int j = NbrN1N2;
+	  for (; j < Lim; ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	  Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	  WaveFunction *= Tmp;
+	  ++j;
+	  for (; j < this->NbrParticles; ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	}
+      for (int i = this->NbrParticlesPerColor; i < NbrN1N2; ++i)
+	{
+ 	  TmpU = uv[2 * i];
+ 	  TmpV = uv[2 * i + 1];
+	  int Lim = i + this->NbrParticlesPerColor;
+	  int j = NbrN1N2;
+	  for (; j < Lim; ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	  Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	  WaveFunction *= Tmp;
+	  ++j;
+	  for (; j < this->NbrParticles; ++j)
+	    {
+	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
+	      WaveFunction *= Tmp;
+	      WaveFunction2 *= Tmp;
+	    }
+	}
+      TotalWaveFunction *= WaveFunction2;
+      for (int i = 0; i < (this->MInter - 1); ++i)
+	TotalWaveFunction *= WaveFunction;
 
-//   if (this->M13 > 0)
-//     {
-//       Complex WaveFunction(1.0);
-//       for (int i = 0; i < this->NbrParticlesPerColor; ++i)
-// 	{
-//  	  TmpU = uv[2 * i];
-//  	  TmpV = uv[2 * i + 1];
-// 	  for (int j = NbrN1N2; j < this->NbrParticles; ++j)
-// 	    {
-// 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
-// 	      WaveFunction *= Tmp;
-// 	      if (this->InvertFlag == false)
-// 		Tmp = Inv(Tmp);
-// 	      int ShiftedJ = j - NbrN1N2;
-// 	      Permanent13.SetMatrixElement(i, ShiftedJ, Tmp);
-// 	    }
-// 	}
-//       for (int i = 0; i < this->M13; ++i)
-// 	TotalWaveFunction *= WaveFunction;
-//     }
-//   if (this->M23 > 0)
-//     {
-//       Complex WaveFunction(1.0);
-//       for (int i = this->NbrParticlesPerColor; i < (NbrN1N2); ++i)
-// 	{
-//  	  TmpU = uv[2 * i];
-//  	  TmpV = uv[2 * i + 1];
-// 	  for (int j = NbrN1N2; j < this->NbrParticles; ++j)
-// 	    {
-// 	      Tmp = ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
-// 	      WaveFunction *= Tmp;
-// 	      if (this->InvertFlag == false)
-// 		Tmp = Inv(Tmp);
-// 	      int ShiftedI = i - this->NbrParticlesPerColor;	      
-// 	      int ShiftedJ = j - NbrN1N2;
-// 	      Permanent23.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
-// 	    }
-// 	}
-//       for (int i = 0; i < this->M23; ++i)
-// 	TotalWaveFunction *= WaveFunction;
     }
 
-  return (TotalWaveFunction);// * Permanent12.Permanent() * Permanent13.Permanent() * Permanent23.Permanent());
+  return (TotalWaveFunction);
 }

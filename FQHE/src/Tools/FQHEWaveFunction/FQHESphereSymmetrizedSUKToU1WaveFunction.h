@@ -55,6 +55,9 @@ class FQHESphereSymmetrizedSUKToU1WaveFunction: public Abstract1DComplexFunction
   // true if the final state should be a fermionic state
   bool FermionFlag;  
 
+  // true if the summation has to be done over all the permutations of S_NbrParticles 
+  bool FullySymmetrize;
+
   // internal storage of spinor coordinates
   Complex* SpinorUCoordinates;
   Complex* SpinorVCoordinates;
