@@ -206,8 +206,8 @@ int main(int argc, char** argv)
     {
       if (InvertFlag == false)
 	{
-//	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
-	  TestFunction = new FQHESU3GeneralizedGaffnianOnSphereWaveFunction(NbrParticles, 3, 2);
+	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+//	  TestFunction = new FQHESU3GeneralizedGaffnianOnSphereWaveFunction(NbrParticles, 2, 1);
 
 	}
       else
@@ -489,11 +489,25 @@ int main(int argc, char** argv)
      }
    else
      {
+//       SymmetrizedFunction = TestFunction;
+       
        ComplexVector UV (NbrParticles * 2, true);
        RealVector TmpPositions (NbrParticles * 2, true);
        RandomUV (UV, TmpPositions, NbrParticles, RandomNumber);
        cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;;
        
+//        UV.Re(2) = UV.Re(0);
+//        UV.Im(2) = UV.Im(0);
+//        UV.Re(3) = UV.Re(1);
+//        UV.Im(3) = UV.Im(1);
+//        UV.Re(4) = UV.Re(0);
+//        UV.Im(4) = UV.Im(0);
+//        UV.Re(5) = UV.Re(1);
+//        UV.Im(5) = UV.Im(1);
+//        UV.Re(6) = UV.Re(0);
+//        UV.Im(6) = UV.Im(0);
+//        UV.Re(7) = UV.Re(1);
+//        UV.Im(7) = UV.Im(1);
        for (int i = 0; i < NbrParticles; ++i)
 	 {
 	   for (int j = i + 1; j < NbrParticles; ++j)
