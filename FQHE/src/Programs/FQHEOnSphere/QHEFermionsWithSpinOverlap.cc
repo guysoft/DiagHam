@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  FermionOnSphereWithSpin *Space;
+  FermionOnSphereWithSpin *Space = NULL;
 
   if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
     {
@@ -247,7 +247,10 @@ int main(int argc, char** argv)
       if (LzMax <= 15)
 #endif
 	{
-	  Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
+	  if (State.GetVectorDimension()>0)
+	    {
+	      Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
+	    }
 	}
       else
 	{

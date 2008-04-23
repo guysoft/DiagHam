@@ -7,7 +7,7 @@
 //                                                                            //
 //                                                                            //
 //             class of bosons on sphere for system size such that            //
-//      NbrStates + NbrBosons - 1 < 63 or 31 (64 bits or 32bits systems)      //
+//      NbrStates + NbrBosons - 1 < 63 or 31 (64 bit or 32bit systems)        //
 //                                                                            //
 //                        last modification : 10/02/2008                      //
 //                                                                            //
@@ -574,7 +574,7 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
     }
   // verify sign of phase!
   cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
-  translationPhase = CumulatedPhase ;//* Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates);  
+  translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates) * CumulatedPhase;
   cout << "NS:";
   for (int i=0; i<=ShiftedStateHighestBit; ++i)
     cout << " "<<ShiftedState[i];

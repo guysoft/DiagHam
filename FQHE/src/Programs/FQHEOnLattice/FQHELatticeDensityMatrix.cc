@@ -165,47 +165,35 @@ int main(int argc, char** argv)
   
   for (int i=0; i<NbrVectors; ++i)
     {
-      TranslationOperator->SetTranslationComponents(1,0);
-      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      Complex Result1 = TmpState * Vectors[i];
-      if (fabs(Norm(Result1)-1.0)>1e-10)
+      for (int dX=1; dX<=Lx; dX++)
 	{
-	  cout << "State "<<VectorFiles[i]<< " is not a momentum K_x eigenstate (norm "<<Norm(Result1)<<")"<<endl;
-	}
-      else
-	{
-	  cout << "Momentum K_x of "<<VectorFiles[i]<<" = "<<Arg(Result1)/2.0/M_PI*Lx<<"/"<<Lx;
-	  if (Lx>3)
+	  TranslationOperator->SetTranslationComponents(dX,0);
+	  VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  Complex Result1 = TmpState * Vectors[i];
+	  if (fabs(Norm(Result1)-1.0)>1e-10)
 	    {
-	      TranslationOperator->SetTranslationComponents(3,0);
-	      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-	      Operation.ApplyOperation(Architecture.GetArchitecture());      
-	      Complex Result3 = TmpState * Vectors[i];
-	      cout << " [ check: "<<Arg(Result3)/6.0/M_PI*Lx<<"/"<<Lx<<" ]"<<endl;
+	      cout << "dX= "<<dX<<": State "<<VectorFiles[i]<< " is not a momentum K_x eigenstate (norm "<<Norm(Result1)<<")"<<endl;
 	    }
-	  else cout << endl;
-	}
-      TranslationOperator->SetTranslationComponents(0,1);
-      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      Complex Result2 = TmpState * Vectors[i];
-      if (fabs(Norm(Result2)-1.0)>1e-10)
-	{
-	  cout << "State "<<VectorFiles[i]<< " is not a momentum K_y eigenstate (norm "<<Norm(Result2)<<")"<<endl;
-	}
-      else
-	{
-	  cout << "Momentum K_y of "<<VectorFiles[i]<<" = "<<Arg(Result2)/2.0/M_PI*Ly<<"/"<<Ly;
-	  if (Ly>3)
+	  else
 	    {
-	      TranslationOperator->SetTranslationComponents(0,3);
-	      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      Complex Result4 = TmpState * Vectors[i];
-	      cout << " [ check: "<<Arg(Result4)/6.0/M_PI*Ly<<"/"<<Ly<<" ]"<<endl;
+	      cout << "Momentum K_x from translation "<<dX<<" of "<<VectorFiles[i]<<" = "<<Arg(Result1)/2.0/M_PI*Lx<<"/"<<Lx<<endl;
+	    }	  
+	}
+      for (int dY=1; dY<=Ly; dY++)
+	{
+	  TranslationOperator->SetTranslationComponents(0,dY);
+	  VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());      
+	  Complex Result2 = TmpState * Vectors[i];
+	  if (fabs(Norm(Result2)-1.0)>1e-10)
+	    {
+	      cout << "dY= "<<dY<<": State "<<VectorFiles[i]<< " is not a momentum K_y eigenstate (norm "<<Norm(Result2)<<")"<<endl;
 	    }
-	  else cout << endl;
+	  else
+	    {
+	      cout << "Momentum K_y from translation "<<dY<<" of "<<VectorFiles[i]<<" = "<<Arg(Result2)/2.0/M_PI*Ly<<"/"<<Ly<<endl;
+	    }	     
 	}
     }
   
