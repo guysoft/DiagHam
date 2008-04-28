@@ -51,6 +51,7 @@ class SubspaceSpaceConverter
   friend class RealSymmetricMatrix;
   friend class RealAntisymmetricMatrix;
   friend class RealDiagonalMatrix;
+  friend class ComplexDiagonalMatrix;
 
 protected:
 

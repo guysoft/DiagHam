@@ -45,6 +45,7 @@ extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const in
 #endif
 
 
+using std::cout;
 using std::endl;
 
 
@@ -1624,21 +1625,50 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
 {
 #ifdef __LAPACKONLY__
   return this->LapackDiagonalize(M, Q, err, maxIter);
-#endif
+#endif  
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
-  RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, this->NbrColumn);
+  ComplexVector TmpVector(this->NbrRow);
+  RealSymmetricMatrix TmpMatrix1 (this->ConvertToSymmetricMatrix());  
   RealDiagonalMatrix TmpMatrix2(2 * this->NbrRow);
   RealMatrix TmpMatrix3(2 * this->NbrRow, 2 * this->NbrRow);
   TmpMatrix1.Diagonalize(TmpMatrix2, TmpMatrix3, err, maxIter);
   TmpMatrix2.SortMatrixUpOrder(TmpMatrix3);
+  double LastEV=-1e300;
+  int NewEVIndex=-1;
   for (int i = 0; i < M.GetNbrRow(); ++i)
     {
       M[i] = TmpMatrix2[2 * i];
-      for (int j = 0; j < M.GetNbrRow(); ++j)
+      if (fabs(M[i]-LastEV)>1e-13)
 	{
-	  Q[i].Re(j) = TmpMatrix3[2 * i][j];
-	  Q[i].Im(j) = TmpMatrix3[2 * i][j + M.GetNbrRow()];	  
+	  LastEV=M[i];
+	  NewEVIndex=i;
+	  for (int j = 0; j < M.GetNbrRow(); ++j)
+	    {
+	      Q[i].Re(j) = TmpMatrix3[2 * i][j];
+	      Q[i].Im(j) = -TmpMatrix3[2 * i][j + M.GetNbrRow()];
+	    }
+	}
+      else
+	{
+	  // Orthogonalize degenerate eigenvectors
+	  for (int j = 0; j < M.GetNbrRow(); ++j)
+	    {
+	      TmpVector.Re(j) = TmpMatrix3[2 * i][j];
+	      TmpVector.Im(j) = -TmpMatrix3[2 * i][j + M.GetNbrRow()];
+	    }
+	  for (int k=NewEVIndex; k<i; ++k)
+	    {
+	      TmpVector -= (Q[k]*TmpVector) * Q[k];
+	    }
+	  TmpVector/=TmpVector.Norm();
+	  for (int j = 0; j < M.GetNbrRow(); ++j)
+	    {
+	      Q[i].Re(j) = TmpVector.Re(j);
+	      Q[i].Im(j) = TmpVector.Im(j);
+	    }
 	}
     }
   
@@ -1655,7 +1685,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
-{  
+{
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
   Complex Tmp;
@@ -1705,9 +1735,10 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
 // return value = reference on real matrix consisting of eigenvalues
 RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err, int maxIter)
 {
-  
   if (M.GetNbrRow() != this->NbrRow)
     M.Resize(this->NbrRow, this->NbrColumn);
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, this->NbrColumn);
   Complex Tmp;
   if (this->LapackWorkAreaDimension<this->NbrRow)
     {
@@ -1750,7 +1781,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
     for (int j = 0; j < this->NbrRow; ++j)
       {
 	Tmp.Re = LapackEVMatrix[TotalIndex].r;
-	Tmp.Im = LapackEVMatrix[TotalIndex].i;
+	Tmp.Im = -LapackEVMatrix[TotalIndex].i;
 	Q.SetMatrixElement(j, i, Tmp);
 	++TotalIndex;
       }

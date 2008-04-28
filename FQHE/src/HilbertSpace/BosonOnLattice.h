@@ -229,6 +229,15 @@ class BosonOnLattice : public ParticleOnLattice
   // return value = index of translated state
   virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase);
 
+  // find whether there is a translation vector from state i to state f
+  // i = index of initial state
+  // f = index of final state
+  // shiftX = length of translation in x-direction
+  // shiftY = length of translation in y-direction
+  // return value = final state can be reached by translation
+  virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY);
+
+
   // print a given State
   //
   // Str = reference on current output stream 

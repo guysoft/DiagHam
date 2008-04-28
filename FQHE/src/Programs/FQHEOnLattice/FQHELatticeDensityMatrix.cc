@@ -11,7 +11,10 @@
 
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Options/Options.h"
 
@@ -94,15 +97,27 @@ int main(int argc, char** argv)
 	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of Hilbert-space!"<<endl;
 	  exit(1);
 	}
-      cout << "Vector "<<i<<":"<<endl;
-      for (int j=0; j<VectorDimension; ++j)
-	{
-	  cout<<Vectors[i][j]<<" ( ";
-	  Space->PrintState(cout,j);
-	  cout << " )"<<endl;
-	}
+      // cout << "Vector "<<i<<":"<<endl;
+//       for (int j=0; j<VectorDimension; ++j)
+// 	{
+// 	  cout<<Vectors[i][j]<<" ( ";
+// 	  Space->PrintState(cout,j);
+// 	  cout << " )"<<endl;
+// 	}
+      
+//       int dX, dY;
+//       for (int d=1;d<VectorDimension;++d)
+// 	{
+// 	  if (fabs(Norm(Vectors[i][d])-Norm(Vectors[i][0]))<1e-10)
+// 	    {
+// 	      cout << "Potential translation invariance 0->"<<d<<endl;	      
+// 	      if (Space->IsTranslation(0,d,dX,dY))
+// 		cout << "States have same particle numbers"<<endl;
+// 	    }
+// 	}
     }
 
+  
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
 
@@ -139,63 +154,107 @@ int main(int argc, char** argv)
   for (int i=0; i<DensityMatrixDimension; ++i)
     cout << "EV["<<i<<"] = " << M[i] << endl;
 
-  
 
   ComplexVector TmpState(VectorDimension);
+  ComplexVector TmpState2(VectorDimension);
+  ComplexMatrix TrRep(VectorDimension, VectorDimension);
+  // testing unitarity of translation operator matrix:
+  
+  TranslationOperator->SetTranslationComponents(1,0);
+  for (int i=0; i<VectorDimension; ++i)
+    {
+      TmpState2.ClearVector();
+      TmpState2.Re(i)=1.0;
+      VectorOperatorMultiplyOperation Operation (TranslationOperator, &TmpState2, &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());      
+      for (int j=0; j<VectorDimension; ++j)
+	TrRep.SetMatrixElement(j,i,TmpState[j]);
+    }
+
+  cout << "Representation of T_x"<<endl<<TrRep<<endl;
+
+  
   ComplexMatrix XTranslationMatrix(NbrVectors, NbrVectors);
-  ComplexMatrix YTranslationMatrix(NbrVectors, NbrVectors);  
-  for (int i=0; i<NbrVectors; ++i)
-    for (int j=0; j<NbrVectors; ++j)
-      {
-	TranslationOperator->SetTranslationComponents(1,0);
-	VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-	Operation.ApplyOperation(Architecture.GetArchitecture());      
-	Tmp = TmpState * Vectors[j];
-	XTranslationMatrix.SetMatrixElement(i,j,Tmp);
+  ComplexMatrix YTranslationMatrix(NbrVectors, NbrVectors);
+  ComplexVector TmpState3(VectorDimension);
 
-	TranslationOperator->SetTranslationComponents(0,1);
-	VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-	Operation2.ApplyOperation(Architecture.GetArchitecture());      
-	Tmp = TmpState * Vectors[j];
-	YTranslationMatrix.SetMatrixElement(i,j,Tmp);
-      }
+  int Degeneracy=1;
+  int n1=1, n2=1;
+  int FluxModulo = FindGCD(NbrFluxQuanta, Lx*Ly);
+  int r=NbrFluxQuanta/FluxModulo;
+  int t=Lx*Ly/FluxModulo;
 
-  cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
-  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;
+  while ((((Ly*n1)%t)!=0) && (n1<Lx)) ++n1;
+  while ((((Lx*n2)%t)!=0) && (n2<Ly)) ++n2;
+
+  if ((Lx%n1)!=0)
+    cout << "Extending range of n1 to Lx"<<endl;
+  if ((Ly%n2)!=0)
+    cout << "Extending range of n2 to Ly"<<endl;
+
+  if (((n1*n2*NbrFluxQuanta)%t) != 0)
+    {
+      cout << "Cannot resolve translations: Brillouin zone trivial?"<<endl;
+      n1=Lx;
+      n2=Ly;
+    }
+
+  while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
+  
+  cout << "N_phi = "<<r<<"/"<<t<<endl;
+  cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
   
   for (int i=0; i<NbrVectors; ++i)
     {
-      for (int dX=1; dX<=Lx; dX++)
+      // cout<<"Vector["<<i<<"]="<<endl;
+//       for (int k=0; k<VectorDimension; ++k)
+// 	cout << Vectors[i].Re(k) << "+"<<Vectors[i].Im(k)<<"i"<<endl;      
+      TranslationOperator->SetTranslationComponents(n1,0);
+      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      
+      // cout<<"T_x*Vector["<<i<<"]="<<endl;
+//       for (int k=0; k<VectorDimension; ++k)
+// 	cout << TmpState.Re(k) << "+"<<TmpState.Im(k)<<"i"<<endl;
+      
+      for (int j=0; j<NbrVectors; ++j)
 	{
-	  TranslationOperator->SetTranslationComponents(dX,0);
-	  VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  Complex Result1 = TmpState * Vectors[i];
-	  if (fabs(Norm(Result1)-1.0)>1e-10)
-	    {
-	      cout << "dX= "<<dX<<": State "<<VectorFiles[i]<< " is not a momentum K_x eigenstate (norm "<<Norm(Result1)<<")"<<endl;
-	    }
-	  else
-	    {
-	      cout << "Momentum K_x from translation "<<dX<<" of "<<VectorFiles[i]<<" = "<<Arg(Result1)/2.0/M_PI*Lx<<"/"<<Lx<<endl;
-	    }	  
+	  Tmp = Vectors[j] * TmpState;
+	  XTranslationMatrix.SetMatrixElement(i,j,Tmp);
 	}
-      for (int dY=1; dY<=Ly; dY++)
+	
+      TranslationOperator->SetTranslationComponents(0,n2);
+      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
+      Operation2.ApplyOperation(Architecture.GetArchitecture());
+      for (int j=0; j<NbrVectors; ++j)
 	{
-	  TranslationOperator->SetTranslationComponents(0,dY);
-	  VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-	  Operation2.ApplyOperation(Architecture.GetArchitecture());      
-	  Complex Result2 = TmpState * Vectors[i];
-	  if (fabs(Norm(Result2)-1.0)>1e-10)
-	    {
-	      cout << "dY= "<<dY<<": State "<<VectorFiles[i]<< " is not a momentum K_y eigenstate (norm "<<Norm(Result2)<<")"<<endl;
-	    }
-	  else
-	    {
-	      cout << "Momentum K_y from translation "<<dY<<" of "<<VectorFiles[i]<<" = "<<Arg(Result2)/2.0/M_PI*Ly<<"/"<<Ly<<endl;
-	    }	     
+	  Tmp = Vectors[j] * TmpState;
+	  YTranslationMatrix.SetMatrixElement(i,j,Tmp);
 	}
+      
     }
+
+  cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
+  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;
+
+  ComplexMatrix XT2((Matrix&)XTranslationMatrix);
+  
+  
+  ComplexMatrix EVecX(NbrVectors, NbrVectors);
+  ComplexMatrix EVecY(NbrVectors, NbrVectors);
+  ComplexDiagonalMatrix EValX(NbrVectors, NbrVectors);
+  ComplexDiagonalMatrix EValY(NbrVectors, NbrVectors);
+  
+  XTranslationMatrix.Diagonalize(EValX);
+  cout << "X Eigenvalues="<<endl<<EValX<<endl;
+  
+  XTranslationMatrix.Diagonalize(EValX,EVecX);
+  YTranslationMatrix.Diagonalize(EValY,EVecY);
+
+  cout << "X Eigenvalues="<<endl<<EValX<<endl;
+  cout << "X Eigenvectors="<<endl<<EVecX<<endl;
+  cout << "Y Eigenvalues="<<endl<<EValY<<endl;
+  cout << "Y Eigenvectors="<<endl<<EVecY<<endl;
   
   delete DensityOperator;
   delete TranslationOperator;

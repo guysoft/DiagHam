@@ -161,20 +161,22 @@ Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, 
 
 ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;;
+  int Last = firstComponent + nbrComponent;
   int Index;
   Complex TranslationPhase;
-  std::cout << vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;  
+  vDestination.ClearVector();
+  //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;  
   for (int i = firstComponent; i < Last; ++i)
     {
       Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
-      std::cout << "Translate("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
-      std::cout << "Norm("<<i<<")="<<Norm(vSource[i])<<", Norm("<<Index<<")="<<Norm(vSource[Index])<<std::endl;
+      //std::cout << "Translated("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
+      //std::cout << "Norm("<<i<<")="<<Norm(vSource[i])<<", Norm("<<Index<<")="<<Norm(vSource[Index])<<std::endl;
       //std::cout << "Ignoring translation Phase!"<<std::endl; TranslationPhase=1.0;
-      vDestination.Re(Index) = vSource[i].Re * TranslationPhase.Re - vSource[i].Im * TranslationPhase.Im;
-      vDestination.Im(Index) = vSource[i].Re * TranslationPhase.Im + vSource[i].Im * TranslationPhase.Re;
+      // permuted i and Index on the following lines!
+      vDestination.Re(i) += vSource[Index].Re * TranslationPhase.Re - vSource[Index].Im * TranslationPhase.Im;
+      vDestination.Im(i) += vSource[Index].Re * TranslationPhase.Im + vSource[Index].Im * TranslationPhase.Re;
     }
-  std::cout << vDestination<<std::endl<<"Norm:"<<vDestination.Norm()<<std::endl;
+  //std::cout << vDestination<<std::endl<<"Norm:"<<vDestination.Norm()<<std::endl;
   return vDestination;
 }
 

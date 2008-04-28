@@ -400,7 +400,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	      else
 		{
 		  ComplexMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-		  HRep.Diagonalize(EVs, Q, /* error */ 1e-10 , /* maxIter */ 250);  
+		  HRep.Diagonalize(EVs, Q, /* error */ 1e-10 , /* maxIter */ 250);
 		  
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
 		  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -409,7 +409,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+		      cout << ((Q[j]*TmpEigenvector) - this->EnergyShift) << " " << endl;
 		    }
 		  // cout.flush();
 // 		  cout << endl << "eigenvector_0:"<<endl;
@@ -431,7 +431,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 			{
 			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
 			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-			  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			  File << " " << ((Q[j]*TmpEigenvector) - this->EnergyShift);
 			}
 		      File << endl;
 		    }		  

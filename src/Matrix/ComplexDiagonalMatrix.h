@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of real symmetric matrix                      //
+//                       class of complex diagonal matrix                     //
 //                                                                            //
 //                        last modification : 09/03/2001                      //
 //                                                                            //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef REALDIAGONALMATRIX_H
-#define REALDIAGONALMATRIX_H
+#ifndef COMPLEXDIAGONALMATRIX_H
+#define COMPLEXDIAGONALMATRIX_H
 
 
 #include "config.h"
@@ -48,54 +48,54 @@ class RealVector;
 class ComplexVector;
 class RealMatrix;
 class ComplexMatrix;
+class RealDiagonalMatrix;
 
-
-class RealDiagonalMatrix : public Matrix
+class ComplexDiagonalMatrix : public Matrix
 {
 
   friend class RealVector;
   friend class ComplexVector;
   friend class RealSymmetricMatrix;
   friend class HermitianMatrix;
-  friend class ComplexDiagonalMatrix;
 
  protected:
 
-  double* DiagonalElements;
+  Complex* DiagonalElements;
   int* DiagonalGarbageFlag;
 
  public:
 
   // default constructor
   //
-  RealDiagonalMatrix();
+  ComplexDiagonalMatrix();
 
   // constructor for an empty matrix
   //
   // dimension = matrix dimension
   // zero = true if matrix has to be filled with zeros
-  RealDiagonalMatrix(int dimension, bool zero = false);
+  ComplexDiagonalMatrix(int dimension, bool zero = false);
 
   // constructor from matrix elements (without duplicating datas)
   //
   // diagonal = pointer to diagonal element array
   // dimension = matrix dimension
-  RealDiagonalMatrix(double* diagonal, int dimension);
+  ComplexDiagonalMatrix(Complex* diagonal, int dimension);
 
   // copy constructor (without duplicating datas)
   //
   // M = matrix to copy
-  RealDiagonalMatrix(const RealDiagonalMatrix& M);
+  ComplexDiagonalMatrix(const ComplexDiagonalMatrix& M);
+  
 
   // destructor
   //
-  ~RealDiagonalMatrix();
+  ~ComplexDiagonalMatrix();
 
   // assignement (without duplicating datas)
   //
   // M = matrix to copy
   // return value = reference on modified matrix
-  RealDiagonalMatrix& operator = (const RealDiagonalMatrix& M);
+  ComplexDiagonalMatrix& operator = (const ComplexDiagonalMatrix& M);
 
   // return pointer on a clone matrix (without duplicating datas)
   //
@@ -116,6 +116,15 @@ class RealDiagonalMatrix : public Matrix
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
 
+  // set a matrix element
+  //
+  // i = line position
+  // j = column position
+  // real = real part of new value for matrix element
+  // imag = imaginary part of new value for matrix element
+  void SetMatrixElement(int i, int j, double real, double imag);
+
+
   // add a value to a matrix element
   //
   // i = line position
@@ -134,14 +143,14 @@ class RealDiagonalMatrix : public Matrix
   //
   // i = line position
   // j = column position
-  // return value = reference om matrix elememt
+  // return value = reference on real part of matrix elememt
   double& operator () (int i, int j);
 
   // get reference of a given matrix diagonal element
   //
   // i = line position
   // return value = reference om matrix elememt
-  double& operator [] (int i);
+  Complex& operator [] (int i);
 
   // Resize matrix
   //
@@ -168,16 +177,16 @@ class RealDiagonalMatrix : public Matrix
   // M1 = first matrix
   // M2 = second matrix
   // return value = sum of the two matrices
-  friend RealDiagonalMatrix operator + (const RealDiagonalMatrix& M1, 
-					const RealDiagonalMatrix& M2);
+  friend ComplexDiagonalMatrix operator + (const ComplexDiagonalMatrix& M1, 
+					const ComplexDiagonalMatrix& M2);
 
   // substract two matrices
   //
   // M1 = first matrix
   // M2 = matrix to substract to M1
   // return value = difference of the two matrices
-  friend RealDiagonalMatrix operator - (const RealDiagonalMatrix& M1, 
-					 const RealDiagonalMatrix& M2);
+  friend ComplexDiagonalMatrix operator - (const ComplexDiagonalMatrix& M1, 
+					 const ComplexDiagonalMatrix& M2);
 
 
   // multiply a matrix by a real number (right multiplication)
@@ -185,107 +194,139 @@ class RealDiagonalMatrix : public Matrix
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealDiagonalMatrix operator * (const RealDiagonalMatrix& M, double x);
+  friend ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, double x);
 
   // multiply a matrix by a real number (left multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = product result
-  friend RealDiagonalMatrix operator * (double x, const RealDiagonalMatrix& M);
+  friend ComplexDiagonalMatrix operator * (double x, const ComplexDiagonalMatrix& M);
 
   // divide a matrix by a real number (right multiplication)
   //
   // M = source matrix
   // x = real number to use
   // return value = division result
-  friend RealDiagonalMatrix operator / (const RealDiagonalMatrix& M, double x);
+  friend ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, double x);
+
+  // multiply a matrix by a complex number (right multiplication)
+  //
+  // M = source matrix
+  // x = complex number to use
+  // return value = product result
+  friend ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, Complex &x);
+
+  // multiply a matrix by a real number (left multiplication)
+  //
+  // M = source matrix
+  // x = Complex number to use
+  // return value = product result
+  friend ComplexDiagonalMatrix operator * (Complex &x, const ComplexDiagonalMatrix& M);
+
+  // divide a matrix by a Complex number (right multiplication)
+  //
+  // M = source matrix
+  // x = Complex number to use
+  // return value = division result
+  friend ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, Complex &x);
 
   // add two matrices
   //
   // M = matrix to add to current matrix
   // return value = reference on current matrix
-  RealDiagonalMatrix& operator += (const RealDiagonalMatrix& M);
+  ComplexDiagonalMatrix& operator += (const RealDiagonalMatrix& M);
 
   // substract two matrices
   //
   // M = matrix to substract to current matrix
   // return value = reference on current matrix
-  RealDiagonalMatrix& operator -= (const RealDiagonalMatrix& M);
+  ComplexDiagonalMatrix& operator -= (const RealDiagonalMatrix& M);
+
+  // add two matrices
+  //
+  // M = matrix to add to current matrix
+  // return value = reference on current matrix
+  ComplexDiagonalMatrix& operator += (const ComplexDiagonalMatrix& M);
+
+  // substract two matrices
+  //
+  // M = matrix to substract to current matrix
+  // return value = reference on current matrix
+  ComplexDiagonalMatrix& operator -= (const ComplexDiagonalMatrix& M);
 
   // multiply a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealDiagonalMatrix& operator *= (double x);
+  ComplexDiagonalMatrix& operator *= (double x);
 
   // divide a matrix by a real number
   //
   // x = real number to use
   // return value = reference on current matrix
-  RealDiagonalMatrix& operator /= (double x) ;
+  ComplexDiagonalMatrix& operator /= (double x) ;
+
+    // multiply a matrix by a complex number
+  //
+  // x = real number to use
+  // return value = reference on current matrix
+  ComplexDiagonalMatrix& operator *= (Complex &x);
+
+  // divide a matrix by a complex number
+  //
+  // x = real number to use
+  // return value = reference on current matrix
+  ComplexDiagonalMatrix& operator /= (Complex &x) ;
+
 
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
-  double MatrixElement (RealVector& V1, RealVector& V2);
+  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
 
   // evaluate matrix trace
   //
   // return value = matrix trace 
-  double Tr ();
+  Complex Trace ();
 
   // evaluate matrix determinant
   //
   // return value = matrix determinant 
-  double Det ();
+  Complex Determinant ();
 
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   //
   // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixDownOrder();
+  ComplexDiagonalMatrix& SortMatrixDownOrder();
   
-  // Sort Matrix such that diagnonal elements are sort in decreasing order
-  // and apply corresponding transformation to column of a given real matrix 
-  //
-  // matrix = matrix on which transformation has to be applied
-  // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixDownOrder(RealMatrix& matrix);
-
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
   // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix);
+  ComplexDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix);
 
   // Sort Matrix such that diagnonal elements are sort in increasing order
   //
   // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixUpOrder();
+  ComplexDiagonalMatrix& SortMatrixUpOrder();
   
-  // Sort Matrix such that diagnonal elements are sort in increasing order
-  // and apply corresponding transformation to column of a given real matrix 
-  //
-  // matrix = matrix on which transformation has to be applied
-  // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixUpOrder(RealMatrix& matrix);
-
   // Sort Matrix such that diagnonal elements are sort in increasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
   // return value = reference on current Matrix
-  RealDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
+  ComplexDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
 
   // Output Stream overload
   //
   // Str = reference on output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, const RealDiagonalMatrix& P);
+  friend ostream& operator << (ostream& Str, const ComplexDiagonalMatrix& P);
 
 #ifdef USE_OUTPUT
 
@@ -294,7 +335,7 @@ class RealDiagonalMatrix : public Matrix
   // Str = reference on Mathematica output stream
   // P = matrix to print
   // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealDiagonalMatrix& P);
+  friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexDiagonalMatrix& P);
 
 #endif
 

@@ -545,10 +545,10 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
   int CountYCoordinates=0; // total phase is shiftX * sum_i y_i in Landau gauge
   Complex PeriodicPhase;
   Complex CumulatedPhase=1.0;
-  cout << "TS:";
-  for (int i=0; i<=TemporaryStateHighestBit; ++i)
-    cout << " "<<TemporaryState[i];
-  cout << endl;
+  //cout << "TS:";
+  //for (int i=0; i<=TemporaryStateHighestBit; ++i)
+  //  cout << " "<<TemporaryState[i];
+  //cout << endl;
   this->ShiftedStateHighestBit=0;
   this->ShiftedState[0]=0;
   while ((Q>-1) && (BosonsLeft>0))
@@ -558,8 +558,8 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
 	  this->DecodeQuantumNumber(Q,OldX, OldY, OldSl);
 	  CountYCoordinates+=this->TemporaryState[Q]*OldY;
 	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
-	  cout << "PeriodicPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<
-	    PeriodicPhase<<endl;
+	  //cout << "PeriodicPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<
+	  // PeriodicPhase<<endl;
 	  CumulatedPhase*=PeriodicPhase;
 	  if (NewQ>ShiftedStateHighestBit)
 	    {
@@ -573,13 +573,42 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
       --Q;
     }
   // verify sign of phase!
-  cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
-  translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates) * CumulatedPhase;
-  cout << "NS:";
-  for (int i=0; i<=ShiftedStateHighestBit; ++i)
-    cout << " "<<ShiftedState[i];
-  cout << endl;
+  //cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
+  translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates);//* CumulatedPhase;
+  //cout << "NS:";
+  //for (int i=0; i<=ShiftedStateHighestBit; ++i)
+  //  cout << " "<<ShiftedState[i];
+  //cout << endl;
   return this->HardCoreBasis->FindStateIndex(this->BosonToFermion(this->ShiftedState, this->ShiftedStateHighestBit), this->ShiftedStateHighestBit + this->NbrBosons - 1);
+}
+
+// find whether there is a translation vector from state i to state f
+// i = index of initial state
+// f = index of final state
+// shiftX = length of translation in x-direction
+// shiftY = length of translation in y-direction
+// return value = final state can be reached by translation
+bool BosonOnLattice::IsTranslation(int i, int f, int &shiftX, int &shiftY)
+{
+  this->FermionToBoson(this->HardCoreBasis->StateDescription[i], this->HardCoreBasis->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
+  this->FermionToBoson(this->HardCoreBasis->StateDescription[f], this->HardCoreBasis->StateHighestBit[f], this->ShiftedState, this->ShiftedStateHighestBit);
+  int *count = new int[this->NbrBosons];
+  int *count2 = new int[this->NbrBosons];
+  for (int j=0; j<this->NbrBosons; ++j)
+    {
+      count[j]=0;
+      count2[j]=0;
+    }  
+  for (int j=0; j<=this->TemporaryStateHighestBit; ++j) if (TemporaryState[j]>0) ++count[TemporaryState[j]-1];
+  for (int j=0; j<=this->ShiftedStateHighestBit; ++j) if (ShiftedState[j]>0) ++count2[ShiftedState[j]-1];
+  for (int j=0; j<this->NbrBosons; ++j)    
+    if (count[j]!=count2[j]) return false;
+  delete [] count2;
+  
+  // more tests needed...
+  
+  delete [] count;
+  return true;
 }
 
 
@@ -595,7 +624,7 @@ ostream& BosonOnLattice::PrintState (ostream& Str, int state)
   int i = 0;
   for (; i <= this->TemporaryStateHighestBit; ++i)
     Str << this->TemporaryState[i] << " ";
-  for (; i <= this->NbrStates; ++i)
+  for (; i < this->NbrStates; ++i)
     Str << "0 ";
   Str << "   highestBit = " << this->TemporaryStateHighestBit;
   return Str;

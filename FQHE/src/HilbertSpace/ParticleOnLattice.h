@@ -155,6 +155,14 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = index of translated state
   virtual int TranslateState(int index, int shiftX, int shiftY, Complex &translationPhase) = 0;
 
+  // find whether there is a translation vector from state i to state f
+  // i = index of initial state
+  // f = index of final state
+  // shiftX = length of translation in x-direction
+  // shiftY = length of translation in y-direction
+  // return value = final state can be reached by translation
+  virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY) = 0;
+
   // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis

@@ -62,6 +62,7 @@ class ComplexVector : public Vector
   friend class ComplexUpperTriangularMatrix;
   friend class RealTriDiagonalSymmetricMatrix;
   friend class ComplexTriDiagonalHermitianMatrix;
+  friend class ComplexDiagonalMatrix;
   friend ComplexMatrix operator + (const ComplexMatrix& M1, const ComplexMatrix& M2);
   friend ComplexMatrix operator + (const RealTriDiagonalSymmetricMatrix& M1, const ComplexMatrix& M2);
   friend ComplexMatrix operator + (const ComplexMatrix& M1, const RealTriDiagonalSymmetricMatrix& M2);

@@ -38,6 +38,7 @@
 #include "Output/MathematicaOutput.h"
 #endif
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -122,6 +123,14 @@ class ComplexMatrix : public Matrix
   // j = column position
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
+
+  // set a matrix element
+  //
+  // i = line position
+  // j = column position
+  // real = new real value for matrix element
+  // imag = new imaginary value for matrix element
+  void SetMatrixElement(int i, int j, double real, double imag);
 
   // get a matrix element (real part if complex)
   //
@@ -348,11 +357,52 @@ class ComplexMatrix : public Matrix
 
 #endif
 
+  // Diagonalize an hermitian matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  ComplexDiagonalMatrix& Diagonalize (ComplexDiagonalMatrix& M);
+
+  // Diagonalize an hermitian matrix and evaluate transformation matrix (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix where result has to be stored
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real tridiagonal symmetric matrix
+  ComplexDiagonalMatrix& Diagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+
 #ifdef __LAPACK__
 
   // calculate a determinant using the LAPACK library (conserving current matrix)
   //
   Complex LapackDeterminant ();
+
+    // Diagonalize a hermitian matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M);
+
+  // Diagonalize a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+
+ private:
+  int LapackWorkAreaDimension;
+  doublecomplex *LapackMatrix;
+  doublecomplex *LapackEVMatrix;
+  doublecomplex *LapackWorkingArea;
+  double *LapackRealWorkingArea;  
 
 #endif
 

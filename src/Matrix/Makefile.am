@@ -17,6 +17,7 @@ RealTriDiagonalSymmetricMatrix.cc \
 RealUpperTriangularMatrix.cc \
 RealLowerTriangularMatrix.cc \
 ComplexUpperTriangularMatrix.cc \
+ComplexDiagonalMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc \
 ComplexLapackDeterminant.cc
 
