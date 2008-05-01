@@ -237,7 +237,7 @@ class ComplexDiagonalMatrix : public Matrix
   // M = source matrix
   // x = Complex number to use
   // return value = division result
-  friend ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, Complex &x);
+  friend ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, const Complex &x);
 
   // add two matrices
   //

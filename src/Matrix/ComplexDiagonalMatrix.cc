@@ -501,7 +501,7 @@ ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, double x)
 // x = complex number to use
 // return value = division result
 
-ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, Complex &x) 
+ComplexDiagonalMatrix operator / (const ComplexDiagonalMatrix& M, const Complex &x) 
 {
   Complex y = (Complex)1.0 / x;
   Complex* Diagonal = new Complex [M.NbrRow];
