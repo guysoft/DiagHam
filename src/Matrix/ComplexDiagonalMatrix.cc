@@ -436,7 +436,7 @@ ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, double x)
 // x = complex number to use
 // return value = product result
 
-ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, Complex& x) 
+ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, const Complex& x) 
 {
   Complex* Diagonal = new Complex [M.NbrRow];
   for (int i = 0; i < M.NbrRow; i++)
@@ -468,7 +468,7 @@ ComplexDiagonalMatrix operator * (double x, const ComplexDiagonalMatrix& M)
 // x = complexnumber to use
 // return value = product result
 
-ComplexDiagonalMatrix operator * (Complex &x, const ComplexDiagonalMatrix& M) 
+ComplexDiagonalMatrix operator * (const Complex &x, const ComplexDiagonalMatrix& M) 
 {
   Complex* Diagonal = new Complex [M.NbrRow];
   for (int i = 0; i < M.NbrRow; i++)

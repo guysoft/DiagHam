@@ -223,14 +223,14 @@ class ComplexDiagonalMatrix : public Matrix
   // M = source matrix
   // x = complex number to use
   // return value = product result
-  friend ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, Complex &x);
+  friend ComplexDiagonalMatrix operator * (const ComplexDiagonalMatrix& M, const Complex &x);
 
   // multiply a matrix by a real number (left multiplication)
   //
   // M = source matrix
   // x = Complex number to use
   // return value = product result
-  friend ComplexDiagonalMatrix operator * (Complex &x, const ComplexDiagonalMatrix& M);
+  friend ComplexDiagonalMatrix operator * (const Complex &x, const ComplexDiagonalMatrix& M);
 
   // divide a matrix by a Complex number (right multiplication)
   //
