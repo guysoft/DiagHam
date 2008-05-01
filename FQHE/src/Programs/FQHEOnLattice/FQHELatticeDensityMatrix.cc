@@ -16,6 +16,8 @@
 
 #include "MathTools/IntegerAlgebraTools.h"
 
+#include "Tools/FQHEFiles/QHEOnLatticeFileTools.h"
+
 #include "Options/Options.h"
 
 #include <iostream>
@@ -68,9 +70,9 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "filenames of state vectors to be processed");
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 8);
-  (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 5);
-  (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
 #ifdef __LAPACK__
@@ -89,7 +91,6 @@ int main(int argc, char** argv)
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
-  int NbrSites = Lx*Ly;  
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   int NbrVectors;
@@ -100,26 +101,31 @@ int main(int argc, char** argv)
       cout << "At least one vector file is required!"<<endl;
       exit(1);
     }
+  double Interaction=0.0;
+  int TmpI=-1;
+  bool Statistics=false;
+  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics) == false)
+    {
+      cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
+      exit(1);
+    }
 
-  ParticleOnLattice* Space=new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-
-  ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
-  ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
-
-  int VectorDimension = Space->GetHilbertSpaceDimension();
+  int NbrSites = Lx*Ly;    
+  int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
-  bool haveVector=false;
+  bool tmpB, haveVector=false;
   for (int i=0; i<NbrVectors; ++i)
     {
-      Vectors[i].Resize(VectorDimension);
-      haveVector=haveVector | Vectors[i].ReadVector(VectorFiles[i]);
-      if (Vectors[i].GetVectorDimension()!=VectorDimension)
+      tmpB = Vectors[i].ReadVector(VectorFiles[i]);
+      if (!haveVector)
+	VectorDimension=Vectors[i].GetVectorDimension();
+      if (haveVector && (Vectors[i].GetVectorDimension()!=VectorDimension))
 	{
-	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of Hilbert-space!"<<endl;
+	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of previous vectors!"<<endl;
 	  exit(1);
 	}
+      haveVector=haveVector | tmpB;
+	    
 //       cout << "Vector "<<i<<":"<<endl;
 //       for (int j=0; j<VectorDimension; ++j)
 // 	{
@@ -139,7 +145,20 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-  cout<< "====== Analysis of density matrix ====="<<endl;
+  ParticleOnLattice* Space=new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+
+  if (VectorDimension != Space->GetHilbertSpaceDimension())
+    {
+      cout<<"Dimension of vectors does not match size of Hilbert-space!"<<endl;
+	  exit(1);
+    }
+  
+  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+
+  ParticleOnLatticeOneBodyOperator *DensityOperator= new ParticleOnLatticeOneBodyOperator(Space);
+  ParticleOnLatticeTranslationOperator *TranslationOperator= new ParticleOnLatticeTranslationOperator(Space);
+
+  cout<< "========= Analysis of density matrix ========"<<endl;
   
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
