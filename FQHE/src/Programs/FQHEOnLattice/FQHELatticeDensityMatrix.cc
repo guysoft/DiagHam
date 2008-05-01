@@ -78,6 +78,8 @@ int main(int argc, char** argv)
 #endif
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('v', "get-vectors", "writes the basis of momentum eigenstates");
+  (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");
+  (*MiscGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
   (*MiscGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
     (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -108,10 +110,11 @@ int main(int argc, char** argv)
 
   int VectorDimension = Space->GetHilbertSpaceDimension();
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
+  bool haveVector=false;
   for (int i=0; i<NbrVectors; ++i)
     {
       Vectors[i].Resize(VectorDimension);
-      Vectors[i].ReadVector(VectorFiles[i]);
+      haveVector=haveVector | Vectors[i].ReadVector(VectorFiles[i]);
       if (Vectors[i].GetVectorDimension()!=VectorDimension)
 	{
 	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of Hilbert-space!"<<endl;
@@ -130,6 +133,13 @@ int main(int argc, char** argv)
 // 	    cout << "Potential translation " << 0 << "->"<<fi<<endl;
     }
 
+  if (!haveVector)
+    {
+      cout << "No valid vector files found!"<<endl;
+      exit(1);
+    }
+
+  cout<< "====== Analysis of density matrix ====="<<endl;
   
   int DensityMatrixDimension = NbrSites*NbrVectors;
   HermitianMatrix Rho(DensityMatrixDimension);  
@@ -162,11 +172,15 @@ int main(int argc, char** argv)
       }
   // cout << "Matrix="<<endl<<Rho<<endl;
   // calculate eigenvalues & vectors of Rho
+  double dynamics = Manager.GetDouble("dynamic-range");
   RealDiagonalMatrix M;
   Rho.Diagonalize(M, 1e-10, 250);
   for (int i=0; i<DensityMatrixDimension; ++i)
-    cout << "EV["<<i<<"] = " << M[i] << endl;
+    if (fabs(M[DensityMatrixDimension-1-i])>dynamics*M[DensityMatrixDimension-1])
+      cout << "EV["<<i<<"] = " << M[DensityMatrixDimension-1-i] << endl;
 
+
+  cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
 
   ComplexVector TmpState(VectorDimension);
   ComplexVector TmpState2(VectorDimension);
@@ -277,21 +291,29 @@ int main(int argc, char** argv)
 
   bool IsDiagonal;
       
-  ComplexDiagonalMatrix XEV(EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY),IsDiagonal);
+  ComplexDiagonalMatrix XEV(EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY),IsDiagonal, 1e-6);
+  
   if (IsDiagonal)
-    cout << "EVals(Tx)="<<endl<<XEV<<endl;
+    {
+      if (Manager.GetBoolean("verbose"))
+	cout << "EVals(Tx)="<<endl<<XEV<<endl;
+    }
   else
     cout << "EVals(Tx)=  !!! Attention, was not fully diagonal !!!"
 	 <<endl<<EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY)<<endl;
 
-  ComplexDiagonalMatrix YEV(EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY),IsDiagonal);
+  ComplexDiagonalMatrix YEV(EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY),IsDiagonal, 1e-6);
   if (IsDiagonal)
-    cout << "EVals(Ty)="<<endl<<XEV<<endl;
+    {
+      if (Manager.GetBoolean("verbose"))
+	cout << "EVals(Ty)="<<endl<<XEV<<endl;
+    }
   else
     cout << "EVals(Ty)=  !!! Attention, was not fully diagonal !!!"
 	 <<endl<<EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY)<<endl;
-
-  cout << "Eigenvectors="<<endl<<EVecXY<<endl;
+  
+  if (Manager.GetBoolean("verbose"))
+    cout << "Eigenvectors="<<endl<<EVecXY<<endl;
 
   cout << "#i\tKx\tKy"<<endl;
   for (int i=0; i<NbrVectors; ++i)
