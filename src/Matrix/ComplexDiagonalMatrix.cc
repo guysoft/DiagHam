@@ -112,6 +112,34 @@ ComplexDiagonalMatrix::ComplexDiagonalMatrix(const ComplexDiagonalMatrix& M)
   this->MatrixType = Matrix::ComplexElements | Matrix::Symmetric | Matrix::Diagonal;
 }
 
+// constructor from a full complex matrix
+// M = matrix to copy
+// isDiagonal = returns whether off-diagonal elements were non-zero
+// tolerance = maximal value of off-diagonal elements before isDiagonal is set false
+//
+ComplexDiagonalMatrix::ComplexDiagonalMatrix(const ComplexMatrix& M, bool &isDiagonal, double tolerance) 
+{
+  this->DiagonalGarbageFlag =  new int;
+  *(this->DiagonalGarbageFlag) = 1;  
+  this->NbrRow = M.GetNbrRow();
+  this->NbrColumn = M.GetNbrColumn();
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->MatrixType = Matrix::ComplexElements | Matrix::Symmetric | Matrix::Diagonal;
+  int dim = (NbrRow<NbrColumn?NbrRow:NbrColumn);
+  this->DiagonalElements = new Complex[dim];
+  for (int i = 0; i < dim; i++)
+    M.GetMatrixElement(i,i,this->DiagonalElements[i]);
+  isDiagonal=true;
+  Complex Tmp;
+  for (int i = 0; (i < M.GetNbrColumn())&(isDiagonal); ++i)
+    for (int j = 0; (j < M.GetNbrRow())&(isDiagonal); ++j)
+      {
+	M.GetMatrixElement(j,i,Tmp);
+	if ((i!=j)&&(Norm(Tmp)>tolerance)) isDiagonal=false;
+      }
+}
+
 // destructor
 //
 

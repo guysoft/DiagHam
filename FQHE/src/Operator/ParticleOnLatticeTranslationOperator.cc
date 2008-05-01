@@ -165,12 +165,15 @@ ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVec
   int Index;
   Complex TranslationPhase;
   vDestination.ClearVector();
-  //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;  
+  //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;
+  std::cout.precision(8);
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
+      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
       //std::cout << "Translated("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
-      //std::cout << "Norm("<<i<<")="<<Norm(vSource[i])<<", Norm("<<Index<<")="<<Norm(vSource[Index])<<std::endl;
+      
+      //      std::cout << "Source("<<i<<")="<<Norm(vSource[i])<<", Target("<<Index<<")="<<Norm(vSource[Index])<<" d="<<(Arg(vSource[i]/vSource[Index]))/M_PI<<"pi, TranslationPhase="<<Arg(TranslationPhase)/M_PI<<"pi"<<std::endl;
+      
       //std::cout << "Ignoring translation Phase!"<<std::endl; TranslationPhase=1.0;
       // permuted i and Index on the following lines!
       vDestination.Re(i) += vSource[Index].Re * TranslationPhase.Re - vSource[Index].Im * TranslationPhase.Im;

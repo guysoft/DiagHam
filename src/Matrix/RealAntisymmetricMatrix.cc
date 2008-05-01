@@ -269,7 +269,7 @@ void RealAntisymmetricMatrix::AddToMatrixElement(int i, int j, double x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, double& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
     {
@@ -294,7 +294,7 @@ void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, double& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, Complex& x)
+void RealAntisymmetricMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
     {

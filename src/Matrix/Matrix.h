@@ -112,17 +112,17 @@ class Matrix
   // get matrix type
   //
   // return value = matrix type 
-  virtual int GetMatrixType ();
+  virtual int GetMatrixType () const;
 
   // get number of row
   //
   // return value = number of row
-  virtual int GetNbrRow ();
+  virtual int GetNbrRow () const;
 
   // get number of column
   //
   // return value = number of column
-  virtual int GetNbrColumn ();
+  virtual int GetNbrColumn () const;
 
   // set a matrix element
   //
@@ -143,14 +143,14 @@ class Matrix
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  virtual void GetMatrixElement(int i, int j, double& x);
+  virtual void GetMatrixElement(int i, int j, double& x) const;
 
   // get a matrix element
   //
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  virtual void GetMatrixElement(int i, int j, Complex& x);
+  virtual void GetMatrixElement(int i, int j, Complex& x) const;
 
   // add a value to a matrix element
   //
@@ -244,7 +244,7 @@ class Matrix
 //
 // return value = matrix type 
 
-inline int Matrix::GetMatrixType ()
+inline int Matrix::GetMatrixType () const
 {
   return this->MatrixType;
 }
@@ -253,7 +253,7 @@ inline int Matrix::GetMatrixType ()
 //
 // return value = number of row
 
-inline int Matrix::GetNbrRow ()
+inline int Matrix::GetNbrRow () const
 {
   return this->NbrRow;
 }
@@ -262,7 +262,7 @@ inline int Matrix::GetNbrRow ()
 //
 // return value = number of column
 
-inline int Matrix::GetNbrColumn ()
+inline int Matrix::GetNbrColumn () const
 {
   return this->NbrColumn;
 }

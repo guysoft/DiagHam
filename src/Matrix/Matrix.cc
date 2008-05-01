@@ -119,7 +119,7 @@ void Matrix::AddToMatrixElement(int i, int j, double x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void Matrix::GetMatrixElement(int i, int j, double& x)
+void Matrix::GetMatrixElement(int i, int j, double& x) const
 {
   return;
 }
@@ -130,7 +130,7 @@ void Matrix::GetMatrixElement(int i, int j, double& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void Matrix::GetMatrixElement(int i, int j, Complex& x)
+void Matrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   return;
 }

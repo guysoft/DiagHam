@@ -108,7 +108,7 @@ class ComplexMatrix : public Matrix
   // return pointer on a clone matrix (without duplicating datas)
   //
   // retrun value = pointer on new matrix 
-  Matrix* Clone ();
+  Matrix* Clone ();  
 
   // set a matrix element
   //
@@ -137,14 +137,14 @@ class ComplexMatrix : public Matrix
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  void GetMatrixElement(int i, int j, double& x);
+  void GetMatrixElement(int i, int j, double& x) const;
 
   // get a matrix element
   //
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  void GetMatrixElement(int i, int j, Complex& x);
+  void GetMatrixElement(int i, int j, Complex& x) const;
 
   // add a value to a matrix element
   //
@@ -301,6 +301,11 @@ class ComplexMatrix : public Matrix
   // return value = reference on current matrix
   ComplexMatrix& OrthoNormalizeColumns ();
 
+  // get adjoint (hermitian conjugate) matrix 
+  //
+  // return value = reference on modified matrix
+  ComplexMatrix GetAdjoint();
+
   // evaluate matrix determinant (skrewing up matrix elements)
   //
   // return value = matrix determinant 
@@ -397,6 +402,14 @@ class ComplexMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
 
+  // reduce a complex matrix to its Schur form S
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // S = matrix where Schur form of matrix has to be stored
+  // return value = reference o1n real matrix consisting of eigenvalues
+  ComplexDiagonalMatrix& LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S);
+
  private:
   int LapackWorkAreaDimension;
   doublecomplex *LapackMatrix;
@@ -424,7 +437,7 @@ inline ComplexVector& ComplexMatrix::operator [] (int i)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-inline void ComplexMatrix::GetMatrixElement(int i, int j, double& x)
+inline void ComplexMatrix::GetMatrixElement(int i, int j, double& x) const
 {
   x = this->Columns[j].Re(i);
 }
@@ -435,7 +448,7 @@ inline void ComplexMatrix::GetMatrixElement(int i, int j, double& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-inline void ComplexMatrix::GetMatrixElement(int i, int j, Complex& x)
+inline void ComplexMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   x.Re = this->Columns[j].Re(i);
   x.Im = this->Columns[j].Im(i);

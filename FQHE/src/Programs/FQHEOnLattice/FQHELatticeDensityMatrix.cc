@@ -31,6 +31,24 @@ using std::endl;
 using std::ofstream;
 
 
+void GetTranslationMatrix(ParticleOnLatticeTranslationOperator *Operator, int NbrVectors,
+			  ComplexVector *Vectors, ComplexMatrix &MatrixRepresentation,
+			  ComplexVector &TmpState, ArchitectureManager &Architecture)
+{
+  Complex Tmp;
+  for (int i=0; i<NbrVectors; ++i)
+    {
+      VectorOperatorMultiplyOperation Operation (Operator, &(Vectors[i]), &TmpState);      
+      Operation.ApplyOperation(Architecture.GetArchitecture());           
+      for (int j=0; j<NbrVectors; ++j)
+	{
+	  Tmp = Vectors[j] * TmpState;
+	  MatrixRepresentation.SetMatrixElement(i,j,Tmp);
+	}
+    }
+}
+
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -59,7 +77,9 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
-  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+  (*MiscGroup) += new BooleanOption  ('v', "get-vectors", "writes the basis of momentum eigenstates");
+  (*MiscGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
+    (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
   
@@ -97,24 +117,17 @@ int main(int argc, char** argv)
 	  cout<<"Dimension of vector "<<VectorFiles[i]<<" does not match size of Hilbert-space!"<<endl;
 	  exit(1);
 	}
-      // cout << "Vector "<<i<<":"<<endl;
+//       cout << "Vector "<<i<<":"<<endl;
 //       for (int j=0; j<VectorDimension; ++j)
 // 	{
 // 	  cout<<Vectors[i][j]<<" ( ";
 // 	  Space->PrintState(cout,j);
 // 	  cout << " )"<<endl;
 // 	}
-      
 //       int dX, dY;
-//       for (int d=1;d<VectorDimension;++d)
-// 	{
-// 	  if (fabs(Norm(Vectors[i][d])-Norm(Vectors[i][0]))<1e-10)
-// 	    {
-// 	      cout << "Potential translation invariance 0->"<<d<<endl;	      
-// 	      if (Space->IsTranslation(0,d,dX,dY))
-// 		cout << "States have same particle numbers"<<endl;
-// 	    }
-// 	}
+//       for (int fi=0; fi<VectorDimension; ++fi)
+// 	if (Space->IsTranslation(0, fi, dX, dY))
+// 	    cout << "Potential translation " << 0 << "->"<<fi<<endl;
     }
 
   
@@ -157,21 +170,26 @@ int main(int argc, char** argv)
 
   ComplexVector TmpState(VectorDimension);
   ComplexVector TmpState2(VectorDimension);
-  ComplexMatrix TrRep(VectorDimension, VectorDimension);
-  // testing unitarity of translation operator matrix:
-  
-  TranslationOperator->SetTranslationComponents(1,0);
-  for (int i=0; i<VectorDimension; ++i)
-    {
-      TmpState2.ClearVector();
-      TmpState2.Re(i)=1.0;
-      VectorOperatorMultiplyOperation Operation (TranslationOperator, &TmpState2, &TmpState);      
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      for (int j=0; j<VectorDimension; ++j)
-	TrRep.SetMatrixElement(j,i,TmpState[j]);
-    }
 
-  cout << "Representation of T_x"<<endl<<TrRep<<endl;
+
+  if (Manager.GetBoolean("show-translation"))
+  {
+    // testing unitarity of translation operator matrix and display it:
+    ComplexMatrix TrRep(VectorDimension, VectorDimension);  
+    
+    TranslationOperator->SetTranslationComponents(1,0);
+    for (int i=0; i<VectorDimension; ++i)
+      {
+	TmpState2.ClearVector();
+	TmpState2.Re(i)=1.0;
+	VectorOperatorMultiplyOperation Operation (TranslationOperator, &TmpState2, &TmpState);      
+	Operation.ApplyOperation(Architecture.GetArchitecture());      
+	for (int j=0; j<VectorDimension; ++j)
+	  TrRep.SetMatrixElement(j,i,TmpState[j]);
+      }
+    
+    cout << "Representation of T_x"<<endl<<TrRep<<endl;
+  }
 
   
   ComplexMatrix XTranslationMatrix(NbrVectors, NbrVectors);
@@ -203,59 +221,115 @@ int main(int argc, char** argv)
   
   cout << "N_phi = "<<r<<"/"<<t<<endl;
   cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
-  
-  for (int i=0; i<NbrVectors; ++i)
-    {
-      // cout<<"Vector["<<i<<"]="<<endl;
-//       for (int k=0; k<VectorDimension; ++k)
-// 	cout << Vectors[i].Re(k) << "+"<<Vectors[i].Im(k)<<"i"<<endl;      
-      TranslationOperator->SetTranslationComponents(n1,0);
-      VectorOperatorMultiplyOperation Operation (TranslationOperator, &(Vectors[i]), &TmpState);      
-      Operation.ApplyOperation(Architecture.GetArchitecture());
-      
-      // cout<<"T_x*Vector["<<i<<"]="<<endl;
-//       for (int k=0; k<VectorDimension; ++k)
-// 	cout << TmpState.Re(k) << "+"<<TmpState.Im(k)<<"i"<<endl;
-      
-      for (int j=0; j<NbrVectors; ++j)
-	{
-	  Tmp = Vectors[j] * TmpState;
-	  XTranslationMatrix.SetMatrixElement(i,j,Tmp);
-	}
-	
-      TranslationOperator->SetTranslationComponents(0,n2);
-      VectorOperatorMultiplyOperation Operation2 (TranslationOperator, &(Vectors[i]), &TmpState);      
-      Operation2.ApplyOperation(Architecture.GetArchitecture());
-      for (int j=0; j<NbrVectors; ++j)
-	{
-	  Tmp = Vectors[j] * TmpState;
-	  YTranslationMatrix.SetMatrixElement(i,j,Tmp);
-	}
-      
-    }
 
-  cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
-  cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;
+  int RemainingDegeneracy=Degeneracy;
 
-  ComplexMatrix XT2((Matrix&)XTranslationMatrix);
-  
-  
   ComplexMatrix EVecX(NbrVectors, NbrVectors);
-  ComplexMatrix EVecY(NbrVectors, NbrVectors);
+  ComplexMatrix EVecY(NbrVectors, NbrVectors);  
   ComplexDiagonalMatrix EValX(NbrVectors, NbrVectors);
   ComplexDiagonalMatrix EValY(NbrVectors, NbrVectors);
   
-  XTranslationMatrix.Diagonalize(EValX);
-  cout << "X Eigenvalues="<<endl<<EValX<<endl;
-  
-  XTranslationMatrix.Diagonalize(EValX,EVecX);
-  YTranslationMatrix.Diagonalize(EValY,EVecY);
+  TranslationOperator->SetTranslationComponents(n1,0);
+  GetTranslationMatrix(TranslationOperator, NbrVectors, Vectors, XTranslationMatrix, TmpState, Architecture);
 
-  cout << "X Eigenvalues="<<endl<<EValX<<endl;
-  cout << "X Eigenvectors="<<endl<<EVecX<<endl;
-  cout << "Y Eigenvalues="<<endl<<EValY<<endl;
-  cout << "Y Eigenvectors="<<endl<<EVecY<<endl;
+  XTranslationMatrix.Diagonalize(EValX);  
+  if ((fabs(Norm(EValX[0])-1.0)>1e-10)||((Ly/n2)<Degeneracy))
+    {
+      int GCD = FindGCD(Lx/n1, Degeneracy);
+      RemainingDegeneracy/=GCD;
+      if (GCD!=1) cout << "Multiplying factor "<<GCD<<" of degeneracy onto n1"<<endl;
+      n1*=GCD;
+      TranslationOperator->SetTranslationComponents(n1,0);
+      GetTranslationMatrix(TranslationOperator, NbrVectors, Vectors, XTranslationMatrix, TmpState, Architecture);
+    }
   
+  if ((Ly/n2)%RemainingDegeneracy!=0)
+    {
+      cout<<"Did not treat degeneracy properly -> need to put onto n1?"<<endl;
+      exit(1);      
+    }
+  else
+    {
+      if (RemainingDegeneracy!=1)
+	cout << "Multiplying factor "<<RemainingDegeneracy<<" of degeneracy onto n2"<<endl;
+      n2*=RemainingDegeneracy;
+      RemainingDegeneracy=1;
+    }
+      
+  TranslationOperator->SetTranslationComponents(0,n2);
+  GetTranslationMatrix(TranslationOperator, NbrVectors, Vectors, YTranslationMatrix, TmpState, Architecture);
+
+  if (Manager.GetBoolean("show-translation"))
+    {
+      cout << "XTranslationMatrix="<<endl<<XTranslationMatrix<<endl;
+      cout << "YTranslationMatrix="<<endl<<YTranslationMatrix<<endl;
+    }
+
+  ComplexMatrix EVecXY(NbrVectors, NbrVectors);
+
+
+  // form linear superposition of Tx and Ty to diagonalize:
+  ComplexMatrix Z((Matrix&)XTranslationMatrix);
+  Z*=log(91.0); // scale with some random number > 1
+  Z+=YTranslationMatrix;
+  Z.Diagonalize(EValX,EVecXY);
+  ComplexMatrix QH=EVecXY.GetAdjoint();
+
+  bool IsDiagonal;
+      
+  ComplexDiagonalMatrix XEV(EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY),IsDiagonal);
+  if (IsDiagonal)
+    cout << "EVals(Tx)="<<endl<<XEV<<endl;
+  else
+    cout << "EVals(Tx)=  !!! Attention, was not fully diagonal !!!"
+	 <<endl<<EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY)<<endl;
+
+  ComplexDiagonalMatrix YEV(EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY),IsDiagonal);
+  if (IsDiagonal)
+    cout << "EVals(Ty)="<<endl<<XEV<<endl;
+  else
+    cout << "EVals(Ty)=  !!! Attention, was not fully diagonal !!!"
+	 <<endl<<EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY)<<endl;
+
+  cout << "Eigenvectors="<<endl<<EVecXY<<endl;
+
+  cout << "#i\tKx\tKy"<<endl;
+  for (int i=0; i<NbrVectors; ++i)
+    cout <<i<<"\t"<<Arg(XEV[i])/M_PI<<"\t"<<Arg(YEV[i])/M_PI<<endl;
+
+  if (Manager.GetBoolean("get-vectors"))
+    {
+      char *vectorName=new char [strlen(VectorFiles[0])+10];
+      strcpy(vectorName,VectorFiles[0]);
+      int endBase=strlen(vectorName)-1;
+      int countDot=0;
+      for (;(endBase>=0)&&(countDot<2);--endBase)
+	if (vectorName[endBase]=='.') ++countDot;
+      endBase++;
+      int nbrVec;
+      int minNbrVec=1000;
+      int maxNbrVec=-1;
+      for (int i=0;i<NbrVectors;++i)
+	{
+	  sscanf(VectorFiles[i]+endBase+1,"%d.vec",&nbrVec);
+	  if (nbrVec>maxNbrVec) maxNbrVec = nbrVec;
+	  if (nbrVec<minNbrVec) minNbrVec = nbrVec;
+	  //cout << "Number of vector="<<nbrVec<<" char " <<(char)('A'+nbrVec)<<endl;
+	}
+      VectorFiles[0][endBase]='\0';
+      for (int i=0;i<NbrVectors;++i)
+	{
+	  sprintf(vectorName,"%s.%c.vec",VectorFiles[0],'a'+minNbrVec+i);
+	  TmpState.ClearVector();
+	  for (int j=0; j<NbrVectors;++j)
+	    TmpState.AddLinearCombination(Conj(EVecXY[i][j]),Vectors[j]);
+	  cout << "Vector="<<i<<"="<<vectorName<<endl;
+	  TmpState.WriteVector(vectorName);
+	}
+    }
+      
+  delete Space;
+  delete [] Vectors;
   delete DensityOperator;
   delete TranslationOperator;
 }

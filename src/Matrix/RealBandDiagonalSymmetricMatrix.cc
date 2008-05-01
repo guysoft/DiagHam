@@ -223,7 +223,7 @@ void RealBandDiagonalSymmetricMatrix::SetMatrixElement(int i, int j, double x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void RealBandDiagonalSymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+void RealBandDiagonalSymmetricMatrix::GetMatrixElement(int i, int j, double& x) const
 {
   if ((i == j) && (i < this->NbrRow))
     {

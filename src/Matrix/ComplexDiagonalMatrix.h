@@ -85,6 +85,14 @@ class ComplexDiagonalMatrix : public Matrix
   //
   // M = matrix to copy
   ComplexDiagonalMatrix(const ComplexDiagonalMatrix& M);
+
+  
+  // constructor from a full complex matrix
+  // M = matrix to copy
+  // isDiagonal = returns whether off-diagonal elements were non-zero
+  // tolerance = maximal value of off-diagonal elements before isDiagonal is set false
+  //
+  ComplexDiagonalMatrix(const ComplexMatrix& M, bool &isDiagonal, double tolerance=1e-12);
   
 
   // destructor

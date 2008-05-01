@@ -135,14 +135,14 @@ class ComplexSkewSymmetricMatrix : public Matrix
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  void GetMatrixElement(int i, int j, double& x);
+  void GetMatrixElement(int i, int j, double& x) const;
 
   // get a matrix element
   //
   // i = line position
   // j = column position
   // x = reference on the variable where to store the requested matrix element
-  void GetMatrixElement(int i, int j, Complex& x);
+  void GetMatrixElement(int i, int j, Complex& x) const;
 
   // add a value to a matrix element
   //

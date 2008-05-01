@@ -64,7 +64,7 @@ extern "C" void FORTRAN_NAME(zhseqr)(const char* jobZ, const char* compZ, const 
 				     const doublecomplex* schurZ,  const int* leadingDimensionZ,
 				     const doublecomplex* complexWork, const int *lComplexWork, const int *info);
 // extract eigenvectors
-extern "C" void FORTRAN_NAME(zhsein)(const char* side, const char* eigsrc, const char* initV, const bool *select,
+extern "C" void FORTRAN_NAME(zhsein)(const char* side, const char* eigsrc, const char* initV, const int *select,
 				     const int* dimensionN, const doublecomplex* matrixH,
 				     const int* leadingDimensionH, const doublecomplex* eigenValues,
 				     const doublecomplex* matrixVL, const int* leadingDimensionVL,
@@ -72,12 +72,35 @@ extern "C" void FORTRAN_NAME(zhsein)(const char* side, const char* eigsrc, const
 				     const int* columnsVecRL, const int* columnsVecRLrequired,
 				     const doublecomplex* complexWork, const double * realWork,
 				     const int * columnIFailL, const int * columnIFailR, const int *info);
+// extract eigenvectors and optionally use transformation matrix to get eigenvectors of initial matrix
+extern "C" void FORTRAN_NAME(ztrevc)(const char* side,const char* howMNY, const int *select,
+				     const int* dimensionN, const doublecomplex* matrixT,
+				     const int* leadingDimensionT, const doublecomplex* matrixVL,
+				     const int* leadingDimensionVL, const doublecomplex* matrixVR,
+				     const int* leadingDimensionVR, const int* columnsVecRL,
+				     const int* columnsVecRLrequired, const doublecomplex* complexWork,
+				     const double * realWork, const int *info);
 // extract unitary matrix from short for returned by zgehrd
+extern "C" void FORTRAN_NAME(zunghr)( const int* dimensionN, const int *iLow, const int *iHigh,
+				      const doublecomplex *matrixA, const int* leadingDimensionA,
+				      const doublecomplex* tau, const doublecomplex* complexWork,
+				      const int *lComplexWork, const int *info);
+// multiply other matrix with unitary matrix from short for returned by zgehrd
 extern "C" void FORTRAN_NAME(zunmhr)(const char* side, const char* trans, const int *numRows, const int *numCols,
 				     const int *iLow, const int *iHigh, const doublecomplex *matrixA,
 				     const int* leadingDimensionA, const doublecomplex* tau,
 				     const doublecomplex *outputMatrixC,  const int* leadingDimensionC,
 				     const doublecomplex* complexWork, const int *lComplexWork, const int *info);
+// after all this pain: the one function which does it all...
+extern "C" void FORTRAN_NAME(zgeevx)(const char* balanc,const char* jobVL,const char* jobVR, const char* sense,
+				     const int* dimensionN, const doublecomplex *matrixA,
+				     const int* leadingDimensionA, const doublecomplex* eigenValues,
+				     const doublecomplex* matrixVL, const int* leadingDimensionVL,
+				     const doublecomplex* matrixVR, const int* leadingDimensionVR,
+				     const int *iLow, const int *iHigh, const double *scale,
+				     const double *absNorm, const double *reciCondVal, const double *reciCondVec, 
+				     const doublecomplex* complexWork, const int *lComplexWork,
+				     const double * realWork, const int *info);
 
 #endif
 
@@ -655,7 +678,7 @@ ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2)
       for (int j = 0; j < M1.NbrRow; ++j)
 	{
 	  TmpColumns[i].RealComponents[j] = 0.0;
-	  TmpColumns[i].ImaginaryComponents[j + 1] = 0.0;
+	  TmpColumns[i].ImaginaryComponents[j] = 0.0;
 	  for (int k = 0; k < M2.NbrRow; ++k)	
 	    {
 	      TmpColumns[i].RealComponents[j] += (M1.Columns[k].RealComponents[j] * M2.Columns[i].RealComponents[k] - 
@@ -857,6 +880,18 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
   return *this;
 }
 
+
+// get adjoint (hermitian conjugate) matrix 
+//
+// return value = reference on modified matrix
+ComplexMatrix ComplexMatrix::GetAdjoint()
+{
+  ComplexMatrix rst(this->NbrColumn, this->NbrRow);
+  for (int j=0; j<this->NbrColumn; ++j)
+    for (int i=0; i<this->NbrRow; ++i)
+      rst.SetMatrixElement(j,i,Conj(this->Columns[j][i]));
+  return rst;
+}
 
 // evaluate matrix determinant (screwing up matrix elements)
 //
@@ -1513,13 +1548,94 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
     M.Resize(this->NbrColumn, this->NbrColumn);
   if (Q.GetNbrColumn() != this->NbrColumn)
     Q.Resize(this->NbrColumn, this->NbrColumn);
-  doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
-  doublecomplex* Deflectors = new doublecomplex [this->NbrRow * this->NbrRow];
-  doublecomplex* Tau = new doublecomplex [this->NbrRow];
+  doublecomplex* matrixA = new doublecomplex [this->NbrRow * this->NbrRow];
+  double* scale = new double [this->NbrRow];
+  double *reciCondVal = new double [this->NbrRow];
+  double *reciCondVec = new double [this->NbrRow];
+  doublecomplex* TransQ = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
   doublecomplex* EigenvectorsR = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* EigenvectorsL = NULL;
-  //double *Scale = new double[this->NbrRow];
+  double *TmpColumnReal;
+  double *TmpColumnImag;
+  for (int j=0;j<NbrRow;++j)
+    {
+      TmpColumnReal=this->Columns[j].RealComponents;
+      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      for (int i=0; i<NbrRow;++i)
+	{
+	  matrixA[i+j*NbrRow].r=TmpColumnReal[i];
+	  matrixA[i+j*NbrRow].i=TmpColumnImag[i];
+	}
+    }  
+  int Information = 0;
+  int Dim = this->NbrRow;
+  int iLow=1, iHigh=this->NbrRow;
+  doublecomplex *complexWork = new doublecomplex[1];
+  double *realWork = new double[2*NbrRow];
+  double absNorm;
+  int lComplexWork=-1;
+  // workspace query
+  FORTRAN_NAME(zgeevx)("Balance","No left eigenvectors","Vectors on right", "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &Dim, EigenvectorsR, &Dim,
+		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
+		       complexWork, &lComplexWork, realWork, &Information);  
+  lComplexWork=(int)(complexWork[0].r);
+  delete [] complexWork;
+  complexWork = new doublecomplex[lComplexWork];
+  FORTRAN_NAME(zgeevx)("Balance","No left eigenvectors","Vectors on right", "No condition numbers",
+		       &Dim, matrixA, &Dim, Eigenvalues, EigenvectorsL, &Dim, EigenvectorsR, &Dim,
+		       &iLow, &iHigh, scale, &absNorm, reciCondVal, reciCondVec, 
+		       complexWork, &lComplexWork, realWork, &Information);
+  if (Information < 0)
+    {
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }
+  else if (Information > 0)
+    {
+      cout << "Attention: Only part of eigenvalues converged in LAPACK function call to zgeevx in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+    }
+    
+  // recover values of eigenvalues and eigenvectors
+  for (int j=0;j<NbrRow;++j)
+    {
+      M.SetMatrixElement(j, j, Eigenvalues[j].r, Eigenvalues[j].i);
+      for (int i=0; i<NbrRow;++i)
+	Q.SetMatrixElement(i, j, EigenvectorsR[i+j*NbrRow].r, EigenvectorsR[i+j*NbrRow].i);
+    }
+  
+  delete [] matrixA;
+  delete [] Eigenvalues;
+  delete [] EigenvectorsR;
+  delete [] TransQ;
+  delete [] reciCondVal;
+  delete [] reciCondVec;
+  delete [] scale;
+  delete [] complexWork;
+  delete [] realWork;
+    
+  return M;
+}
+
+// reduce a complex matrix to its Schur form S
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// S = matrix where Schur form of matrix has to be stored
+// return value = reference on real matrix consisting of eigenvalues
+ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S)
+{
+  if (M.GetNbrColumn() != this->NbrColumn)
+    M.Resize(this->NbrColumn, this->NbrColumn);
+  if (Q.GetNbrColumn() != this->NbrColumn)
+    Q.Resize(this->NbrColumn, this->NbrColumn);
+  if (S.GetNbrColumn() != this->NbrColumn)
+    S.Resize(this->NbrColumn, this->NbrColumn);
+  doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
+  doublecomplex* TransQ = new doublecomplex [this->NbrRow * this->NbrRow];
+  doublecomplex* Tau = new doublecomplex [this->NbrRow];
+  doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
   double *TmpColumnReal;
   double *TmpColumnImag;
   for (int j=0;j<NbrRow;++j)
@@ -1536,16 +1652,20 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   int DimensionM=NbrRow;
   int iLow=1;
   int iHigh=DimensionM;
-  doublecomplex *complexWork=new doublecomplex[1];
-  int lComplexWork=-1;
+  int dimZ=DimensionM;
+  doublecomplex *complexWork=new doublecomplex[this->NbrRow * this->NbrRow];
+  int lComplexWork=this->NbrRow * this->NbrRow;
   // balancing omitted
   // workspace query
-  FORTRAN_NAME(zgehrd)(&DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM, Tau,
-		       complexWork, &lComplexWork, &Information);
-  lComplexWork=(int)(complexWork[0].r);
-  delete [] complexWork;
-  complexWork=new doublecomplex[lComplexWork];
+
+//   FORTRAN_NAME(zgehrd)(&DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM, Tau,
+// 		       complexWork, &lComplexWork, &Information);
+//   lComplexWork=(int)(complexWork[0].r);
+//   delete [] complexWork;
+//   complexWork=new doublecomplex[lComplexWork];
+  
   // reduce to hessenberg form
+
   FORTRAN_NAME(zgehrd)(&DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM, Tau,
 		       complexWork, &lComplexWork, &Information);  
   if (Information < 0)
@@ -1554,26 +1674,33 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
       exit(1);
     }
   // store part of TmpMatrix associated with deflectors
-  for (int j=iLow-1;j<iHigh;++j)
+  for (int j=0;j<NbrRow;++j)
+    for (int i=0; i<NbrRow;++i)
+      {
+	TransQ[i+j*NbrRow].r = TmpMatrix[i+j*NbrRow].r;
+	TransQ[i+j*NbrRow].i = TmpMatrix[i+j*NbrRow].i;
+      }
+
+  // extract unitary matrix from short for returned by zgehrd
+  FORTRAN_NAME(zunghr)( &DimensionM, &iLow, &iHigh, TransQ, &DimensionM, Tau, complexWork,
+			&lComplexWork, &Information);
+  if (Information < 0)
     {
-      for (int i=iLow-1; i<j-1;++i)
-	{
-	  Deflectors[i+j*NbrRow].r = TmpMatrix[i+j*NbrRow].r;
-	  Deflectors[i+j*NbrRow].i = TmpMatrix[i+j*NbrRow].i;
-	}
-    }
-  doublecomplex* SchurZ= new doublecomplex [this->NbrRow * this->NbrRow];
-  int dimZ=DimensionM;
-  lComplexWork=-1;
+      cout << "Illegal argument " << -Information << " in LAPACK function call to zunghr in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
+      exit(1);
+    }  
+  //  lComplexWork=-1;
   // workspace query
-  FORTRAN_NAME(zhseqr)("E", "I", &DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM,
-		       Eigenvalues, SchurZ, &dimZ, complexWork, &lComplexWork, &Information);
-  lComplexWork=(int)(complexWork[0].r);
-  delete [] complexWork;
-  complexWork=new doublecomplex[lComplexWork];
+
+//   FORTRAN_NAME(zhseqr)("S", "I", &DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM,
+// 		       Eigenvalues, SchurZ, &dimZ, complexWork, &lComplexWork, &Information);
+//   lComplexWork=(int)(complexWork[0].r);
+//   delete [] complexWork;
+//   complexWork=new doublecomplex[lComplexWork];
+  
   // perform eigenvalue and schur decomposition calculation
-  FORTRAN_NAME(zhseqr)("S", "I", &DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM,
-		       Eigenvalues, SchurZ, &dimZ, complexWork, &lComplexWork, &Information);
+  FORTRAN_NAME(zhseqr)("S", "V", &DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM,
+		       Eigenvalues, TransQ, &dimZ, complexWork, &lComplexWork, &Information);    
   if (Information < 0)
     {
       cout << "Illegal argument " << -Information << " in LAPACK function call to zhseqr in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
@@ -1583,58 +1710,42 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
     {
       cout << "Only part of eigenvalues calculated in ComplexMatrix::LapackDiagonalize, line "<< __LINE__<<endl;
     }
-  bool *select = new bool[NbrRow];
-  for (int i=0; i<NbrRow; ++i) select[i]=true;
-  int dimL=1;
-  if (lComplexWork<NbrRow*NbrRow)
+  cout << "Schur matrix:"<<endl;
+  for (int i=0; i<dimZ; ++i)
     {
-      delete [] complexWork;
-      complexWork = new doublecomplex[NbrRow*NbrRow];
-      lComplexWork=NbrRow*NbrRow;
+      cout << TransQ[i*dimZ].r<<"+I*"<<TransQ[i*dimZ].i;
+      for (int j=1; j<dimZ; ++j)
+	cout << "  " <<TransQ[i*dimZ+j].r<<"+I*"<<TransQ[i*dimZ+j].i;      
+      cout << endl;
     }
-  double *realWork = new double[NbrRow];
-  int *iFailL = NULL;
-  int *iFailR = new int[NbrRow];
-  // extract eigenvectors
-  FORTRAN_NAME(zhsein)("R", "Q", "N", select, &DimensionM, TmpMatrix, &DimensionM, Eigenvalues,
-		       EigenvectorsL, &dimL, EigenvectorsR, &DimensionM, &DimensionM, &DimensionM,
-		       complexWork, realWork, iFailL, iFailR, &Information);
-  if (Information < 0)
+
+  cout << "Schur form of initial matrix:"<<endl;
+  for (int i=0; i<dimZ; ++i)
     {
-      cout << "Illegal argument " << -Information << " in LAPACK function call to zhsein in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
-      exit(1);
+      cout << TmpMatrix[i*dimZ].r<<"+I*"<<TmpMatrix[i*dimZ].i;
+      for (int j=1; j<dimZ; ++j)
+	cout << "  " <<TmpMatrix[i*dimZ+j].r<<"+I*"<<TmpMatrix[i*dimZ+j].i;      
+      cout << endl;
     }
-  if (Information > 0)
-    {
-      cout << "Only part of eigenvalues calculated in ComplexMatrix::LapackDiagonalize, line "<< __LINE__<<endl;
-    }  
+  
   // store eigenvalues as return argument
   for (int i=0; i<DimensionM; ++i)
     M.SetMatrixElement(i,i,Eigenvalues[i].r, Eigenvalues[i].i);  
-  // get eigenvectors of the initial matri by multiplication with unitary transformation matrix
-  // as returned in short by zgehrd
-  FORTRAN_NAME(zunmhr)("R", "C", &DimensionM, &DimensionM, &iLow, &iHigh, Deflectors, &DimensionM,
-		       Tau, EigenvectorsR, &DimensionM, complexWork, &lComplexWork, &Information);
-  if (Information < 0)
-    {
-      cout << "Illegal argument " << -Information << " in LAPACK function call to zunmhr in ComplexMatrix.cc in LapackDiagonalize, line "<< __LINE__<<endl;
-      exit(1);
-    }
-  // recover values of eigenvectors
-  for (int j=iLow-1;j<iHigh;++j)
-    for (int i=iLow-1; i<j-1;++i)
-      Q.SetMatrixElement(i, j, EigenvectorsR[i+j*NbrRow].r, EigenvectorsR[i+j*NbrRow].i);
+ 
+  // recover values of schur form and transition matrix
+  for (int j=0;j<NbrRow;++j)
+    for (int i=0; i<NbrRow;++i)
+      {
+	Q.SetMatrixElement(i, j, TransQ[i+j*NbrRow].r, TransQ[i+j*NbrRow].i);
+	S.SetMatrixElement(i, j, TmpMatrix[i+j*NbrRow].r, TmpMatrix[i+j*NbrRow].i);
+      }
   
   delete [] TmpMatrix;
   delete [] Tau;
   delete [] Eigenvalues;
-  delete [] EigenvectorsR;
-  delete [] Deflectors;
+  delete [] TransQ;
   //delete [] Scale;
-  delete [] select;
   delete [] complexWork;
-  delete [] realWork;
-  delete [] iFailR;
   
   return M;
 }

@@ -302,7 +302,7 @@ void HermitianMatrix::SetMatrixElement(int i, int j, const Complex& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void HermitianMatrix::GetMatrixElement(int i, int j, double& x)
+void HermitianMatrix::GetMatrixElement(int i, int j, double& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn))
     return;
@@ -329,7 +329,7 @@ void HermitianMatrix::GetMatrixElement(int i, int j, double& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x)
+void HermitianMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn))
     return;

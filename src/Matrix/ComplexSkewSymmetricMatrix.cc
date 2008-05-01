@@ -249,7 +249,7 @@ void ComplexSkewSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, double& x)
+void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, double& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
     {
@@ -274,7 +274,7 @@ void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, double& x)
 // j = column position
 // x = reference on the variable where to store the requested matrix element
 
-void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x)
+void ComplexSkewSymmetricMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   if ((i >= this->NbrRow) || (j >= this->NbrColumn) || (i == j))
     {
