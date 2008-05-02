@@ -133,9 +133,10 @@ Vector& Vector::AddLinearCombination (double x, Vector& V)
       return ((RealVector&) (*this)).AddLinearCombination (x, (RealVector&) V);
       break;
     case (Vector::ComplexDatas):
-      return *this;
+      return ((ComplexVector&) (*this)).AddLinearCombination (x, (ComplexVector&) V);
       break;
     default:
+      cout <<"Vector type not recognized!"<<endl;
       return *this;
     }
   return *this;
@@ -155,8 +156,7 @@ Vector& Vector::AddLinearCombination (double x, Vector& V, int firstComponent, i
       return ((RealVector&) (*this)).AddLinearCombination (x, (RealVector&) V, firstComponent, nbrComponent);
       break;
     case (Vector::ComplexDatas):
-      return *this;
-      break;
+      return ((ComplexVector&) (*this)).AddLinearCombination (x, (ComplexVector&) V, firstComponent, nbrComponent);      break;
     default:
       return *this;
     }
@@ -179,7 +179,7 @@ Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2, Vector& 
       return ((RealVector&) (*this)).AddLinearCombination (x1, (RealVector&) v1, x1, (RealVector&) v2);
       break;
     case (Vector::ComplexDatas):
-      return *this;
+      return ((ComplexVector&) (*this)).AddLinearCombination (x1, (ComplexVector&) v1, x1, (ComplexVector&) v2);      
       break;
     default:
       return *this;
@@ -206,7 +206,7 @@ Vector& Vector::AddLinearCombination (double x1, Vector& v1, double x2,
       return ((RealVector&) (*this)).AddLinearCombination (x1, (RealVector&) v1, x1, (RealVector&) v2, firstComponent, nbrComponent);
       break;
     case (Vector::ComplexDatas):
-      return *this;
+      return ((ComplexVector&) (*this)).AddLinearCombination (x1, (ComplexVector&) v1, x1, (ComplexVector&) v2, firstComponent, nbrComponent);
       break;
     default:
       return *this;

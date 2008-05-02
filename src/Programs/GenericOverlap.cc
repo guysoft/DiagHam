@@ -1,4 +1,5 @@
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -35,6 +36,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('1', "state1", "name of the file containing the 1st vector obtained using exact diagonalization");
   (*SystemGroup) += new SingleStringOption  ('2', "state2", "name of the file containing the 2nd vector obtained using exact diagonalization");
+  (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -55,39 +57,68 @@ int main(int argc, char** argv)
       cout << "GenericOverlap requires an exact state" << endl;
       return -1;
     }
-  RealVector State1;
-  if (State1.ReadVector (((SingleStringOption*) Manager["state1"])->GetString()) == false)
-    {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state1"])->GetString() << endl;
-      return -1;      
-    }
   if (((SingleStringOption*) Manager["state2"])->GetString() == 0)
     {
       cout << "GenericOverlap requires a 2nd state to compare to." << endl;
       return -1;
     }
-  RealVector State2;
-  if (State2.ReadVector (((SingleStringOption*) Manager["state2"])->GetString()) == false)
+  Complex sp=0.0;
+  
+  if (Manager.GetBoolean("complex"))
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state2"])->GetString() << endl;
-      return -1;      
-    }
+      ComplexVector State1, State2;
+      if (State1.ReadVector (((SingleStringOption*) Manager["state1"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state1"])->GetString() << endl;
+	  return -1;      
+	}
+      if (State2.ReadVector (((SingleStringOption*) Manager["state2"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state2"])->GetString() << endl;
+	  return -1;      
+	}
+      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
+	{
+	  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
+	  return -2;
+	}
 
-  if (State1.GetVectorDimension() != State2.GetVectorDimension() )
+      if (Manager.GetBoolean("discard-sign"))
+	for (int i=0; i<State1.GetVectorDimension(); ++i)
+	  sp+=Norm(State1[i]*State2[i]);
+      else
+	for (int i=0; i<State1.GetVectorDimension(); ++i)
+	  sp+= Conj(State1[i])*State2[i];
+    }
+  else // real vectors
     {
-      cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
-      return -2;
+      RealVector State1, State2;
+      if (State1.ReadVector (((SingleStringOption*) Manager["state1"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state1"])->GetString() << endl;
+	  return -1;      
+	}
+      if (State2.ReadVector (((SingleStringOption*) Manager["state2"])->GetString()) == false)
+	{
+	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state2"])->GetString() << endl;
+	  return -1;      
+	}
+      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
+	{
+	  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
+	  return -2;
+	}
+      
+      
+      if (Manager.GetBoolean("discard-sign"))
+	for (int i=0; i<State1.GetVectorDimension(); ++i)
+	  sp+=fabs(State1[i]*State2[i]);
+      else
+	for (int i=0; i<State1.GetVectorDimension(); ++i)
+	  sp+= State1[i]*State2[i];      
     }
+  
 
-  double sp=0.0;
-  if (((BooleanOption*) Manager["discard-sign"])->GetBoolean() == true)
-    for (int i=0; i<State1.GetVectorDimension(); ++i)
-      sp+=fabs(State1[i]*State2[i]);
-  else
-    for (int i=0; i<State1.GetVectorDimension(); ++i)
-      sp+= State1[i]*State2[i];
-
-
-  cout << "The overlap is: |<1|2>|^2 = " << sp*sp << endl;
+  cout << "The overlap is: |<1|2>|^2 = " << SqrNorm(sp) << endl;
   
 }

@@ -598,6 +598,7 @@ ComplexVector& ComplexVector::AddLinearCombination (double x, const ComplexVecto
 {
   if ((this->Dimension == 0) || (this->Dimension != V.Dimension))
     {
+      cout << "Wrong vector dimension!"<<endl;
       return *this;
     }
   for (int i = 0; i < this->Dimension; ++i)
