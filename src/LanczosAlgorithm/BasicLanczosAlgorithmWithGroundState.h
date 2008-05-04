@@ -71,6 +71,13 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   // value of the last wanted eigenvalue at previous Lanczos iteration
   double PreviousLastWantedEigenvalue;
 
+  // number of vectors to which eigenstates have to be othogonal
+  int OrthogonalizationSetSize;
+  // vectors to which eigenstates have to be othogonal
+  RealVector* OrthogonalizationSet;
+  // names of the files corresponding to vectors to which eigenstates have to be othogonal
+  char** OrthogonalizationSetFileNames;
+
  public:
 
   // default constructor
@@ -98,6 +105,12 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   //
   // vector = reference to the vector used as first step vector
   void InitializeLanczosAlgorithm(const Vector& vector);
+
+  // force orthogonalization with respect to a set of vectors
+  //
+  // fileName = name of the file describing the set of vectors
+  // return value = true if no error occured
+  bool ForceOrthogonalization(char* fileName);
 
   // get the n first eigenstates (limited to the ground state fro this class, return NULL if nbrEigenstates > 1)
   //
@@ -131,6 +144,11 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   //
   // return value = true if no error occurs
   bool WriteState();
+
+  // orthogonalize a vector with respect to a set of external vectors
+  //
+  // inputVector = reference on the vector whose component on the external set has to be removed 
+  void ExternalOrthonogalization(RealVector& inputVector);
 
 };
 

@@ -71,6 +71,9 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(Abstr
   this->GroundStateFlag = false;
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
+  this->OrthogonalizationSetSize = 0;
+  this->OrthogonalizationSet = 0;
+  this->OrthogonalizationSetFileNames = 0;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -108,6 +111,9 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(const
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->NbrEigenvalue = 1;
+  this->OrthogonalizationSetSize = 0;
+  this->OrthogonalizationSet = 0;
+  this->OrthogonalizationSetFileNames = 0;
 }
 
 // destructor
@@ -115,6 +121,15 @@ BasicLanczosAlgorithmWithGroundState::BasicLanczosAlgorithmWithGroundState(const
 
 BasicLanczosAlgorithmWithGroundState::~BasicLanczosAlgorithmWithGroundState() 
 {
+  if (this->OrthogonalizationSet != 0)
+    delete[] this->OrthogonalizationSet;
+  if (this->OrthogonalizationSetFileNames != 0)
+    {
+      for (int i = 0; i < this->OrthogonalizationSetSize; ++i)
+	delete[] this->OrthogonalizationSetFileNames[i];
+      delete[] this->OrthogonalizationSetFileNames;
+    }
+
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -134,6 +149,7 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
 	{
 	  this->V1[i] = Scale * ((double) (rand() - Shift));
 	}
+      this->ExternalOrthonogalization(this->V1);
       this->V1 /= this->V1.Norm();
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (this->V1, true);
@@ -160,6 +176,11 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vect
       this->V1 = vector;
       this->V2 = RealVector (Dimension);
       this->V3 = RealVector (Dimension);
+      if (this->OrthogonalizationSetSize > 0)
+	{
+	  this->ExternalOrthonogalization(this->V1);
+	  this->V1 /= this->V1.Norm();
+	}
       if (this->DiskFlag == false)
 	this->InitialState = RealVector (vector, true);
       else
@@ -175,6 +196,17 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vect
       this->V3 = RealVector (Dimension);
       this->ReadState();
     }
+}
+
+// force orthogonalization with respect to a set of vectors
+//
+// fileName = name of the file describing the set of vectors
+// return value = true if no error occured
+
+bool BasicLanczosAlgorithmWithGroundState::ForceOrthogonalization(char* fileName)
+{
+  this->OrthogonalizationSetSize = 0;
+  return true;
 }
 
 // get the n first eigenstates (limited to the ground state fro this class, return NULL if nbrEigenstates > 1)
@@ -226,6 +258,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
 	  Operation1.ApplyOperation(this->Architecture);
 	  this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
+	  this->ExternalOrthonogalization(this->V3);
 	  this->V3 /= this->V3.Norm();
 	  this->V2.Copy(this->InitialState);
 	  this->GroundState.AddLinearCombination(TmpComponents[1], this->V3);
@@ -241,6 +274,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	      AddRealLinearCombinationOperation Operation4 (&(this->V1),  TmpVector, 2, TmpCoefficient);
 	      Operation4.ApplyOperation(this->Architecture);
 	      delete[] TmpVector;
+	      this->ExternalOrthonogalization(this->V1);
 	      this->V1 /= this->V1.Norm();
 	      this->GroundState.AddLinearCombination(TmpComponents[i], this->V1);
 	      RealVector TmpV (this->V2);
@@ -267,6 +301,7 @@ Vector& BasicLanczosAlgorithmWithGroundState::GetGroundState()
 	  delete[] TmpVectorName;
 	}
       cout << endl;
+      this->ExternalOrthonogalization(this->GroundState);
       this->GroundState /= this->GroundState.Norm();
       this->GroundStateFlag = true;
       delete[] TmpComponents;
@@ -293,6 +328,7 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2);
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
+      this->ExternalOrthonogalization(this->V2);
       this->V2 /= this->V2.Norm(); 
       if (this->DiskFlag == true)
 	this->V2.WriteVector("vector.1");
@@ -320,6 +356,7 @@ void BasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter)
 	  AddRealLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
 	  Operation4.ApplyOperation(this->Architecture);
 	  delete[] TmpVector;
+	  this->ExternalOrthonogalization(this->V3);
 	  this->V3 /= this->V3.Norm();
 	  if (this->DiskFlag == true)
 	    {
@@ -451,4 +488,39 @@ bool BasicLanczosAlgorithmWithGroundState::ReadState()
   this->V3.ReadVector(TmpVectorName);
   delete[] TmpVectorName;
   return true;
+}
+
+
+// orthogonalize a vector with respect to a set of external vectors
+//
+// inputVector = reference on the vector whose component on the external set has to be removed 
+
+void  BasicLanczosAlgorithmWithGroundState::ExternalOrthonogalization(RealVector& inputVector)
+{
+  if (this->OrthogonalizationSetSize > 0)
+    {
+      if (this->DiskFlag == false)
+	{
+	  double* TmpCoefficient = new double[this->OrthogonalizationSetSize];
+	  for (int i = 0; i < this->OrthogonalizationSetSize; ++i)
+	    TmpCoefficient[i] = - (inputVector * this->OrthogonalizationSet[i]);
+	  AddRealLinearCombinationOperation Operation (&inputVector, this->OrthogonalizationSet, 
+						       this->OrthogonalizationSetSize, TmpCoefficient);
+	  Operation.ApplyOperation(this->Architecture);	      
+	  delete[] TmpCoefficient;
+	}
+      else
+	{
+	  double TmpCoefficient = 0.0;
+	  RealVector TmpVector(this->Hamiltonian->GetHilbertSpaceDimension());
+	  for (int i = 0; i < this->OrthogonalizationSetSize; ++i)
+	    {
+	      TmpVector.ReadVector(this->OrthogonalizationSetFileNames[i]);	      
+	      TmpCoefficient = - (inputVector * TmpVector);
+	      AddRealLinearCombinationOperation Operation (&inputVector, &(TmpVector), 
+							   1, &TmpCoefficient);
+	      Operation.ApplyOperation(this->Architecture);	      
+	    }
+	}
+    }
 }

@@ -85,6 +85,12 @@ class AbstractLanczosAlgorithm
   //
   virtual void ResumeLanczosAlgorithm();
   
+  // force orthogonalization with respect to a set of vectors
+  //
+  // fileName = name of the file describing the set of vectors
+  // return value = true if no error occured
+  virtual bool ForceOrthogonalization(char* fileName);
+
   // get ground state
   //
   // return value = reference on ground state

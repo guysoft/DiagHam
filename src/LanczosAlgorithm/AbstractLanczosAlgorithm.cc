@@ -83,6 +83,16 @@ void AbstractLanczosAlgorithm::ResumeLanczosAlgorithm()
   this->InitializeLanczosAlgorithm();
 }
   
+// force orthogonalization with respect to a set of vectors
+//
+// fileName = name of the file describing the set of vectors
+// return value = true if no error occured
+
+bool AbstractLanczosAlgorithm::ForceOrthogonalization(char* fileName)
+{
+  return false;
+}
+
 // diagonalize tridiagonalized matrix and find ground state energy
 //
 
