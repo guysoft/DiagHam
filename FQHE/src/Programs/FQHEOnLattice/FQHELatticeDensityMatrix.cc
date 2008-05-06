@@ -315,20 +315,20 @@ int main(int argc, char** argv)
   if (IsDiagonal)
     {
       if (Manager.GetBoolean("verbose"))
-	cout << "EVals(Tx)="<<endl<<XEV<<endl;
+	cout << "EigenValues(Tx)="<<endl<<XEV<<endl;
     }
   else
-    cout << "EVals(Tx)=  !!! Attention, was not fully diagonal !!!"
+    cout << "EigenValues(Tx)=  !!! Attention, was not fully diagonal !!!"
 	 <<endl<<EVecXY.GetAdjoint()*(XTranslationMatrix*EVecXY)<<endl;
 
   ComplexDiagonalMatrix YEV(EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY),IsDiagonal, 1e-6);
   if (IsDiagonal)
     {
       if (Manager.GetBoolean("verbose"))
-	cout << "EVals(Ty)="<<endl<<XEV<<endl;
+	cout << "EigenValues(Ty)="<<endl<<XEV<<endl;
     }
   else
-    cout << "EVals(Ty)=  !!! Attention, was not fully diagonal !!!"
+    cout << "EigenValues(Ty)=  !!! Attention, was not fully diagonal !!!"
 	 <<endl<<EVecXY.GetAdjoint()*(YTranslationMatrix*EVecXY)<<endl;
   
   if (Manager.GetBoolean("verbose"))
