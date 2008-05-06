@@ -5,13 +5,13 @@
 use strict 'vars';
 
 
-my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
-#my $Program_32="FQHELatticeDensityMatrix";
+#my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
+my $Program_32="FQHELatticeDensityMatrix";
 my $Program_64="/rscratch/gm360/bin/FQHELatticeDensityMatrix_64";
 
 if (!defined($ARGV[0]))
   {
-    print("usage EvaluateBosonsOnLattice.pl [Directory|single file]\n");
+    print("usage EvaluateBosonsOnLattice.pl Directory|single file\n");
     exit(1);
   }
 
@@ -168,18 +168,21 @@ sub AnalyzeVectors
 		  }
 		my $AverageDensity=0.0;
 		my $LargeEVCount=0;
-		while (($LargeEVCount<=$#DensityEVs) && ($DensityEVs[LargeEVCount] > $Threshold))
+		while (($LargeEVCount<=$#DensityEVs) && ($DensityEVs[$LargeEVCount] > $Threshold))
 		  {
 		    $AverageDensity+=$DensityEVs[$LargeEVCount];
 		    ++$LargeEVCount;
 		  }
-		$AverageDensity /= $LargeEVCount;		
+		if ( $LargeEVCount > 0.0 )
+		  {
+		    $AverageDensity /= $LargeEVCount;
+		  }
 		close(INFILE2);
 
 		system("grep -A255 ^#i $ProtocolName2 | grep -A254 ^0 > $TmpFileName");
 		open (INFILE2, $TmpFileName);
-		my $Kx;
-		my $Ky;
+		my $Kx=0.0;
+		my $Ky=0.0;
 		my $NewAbsK;
 		my $AbsK=-1.0;
 		my $QuestionMark="";
