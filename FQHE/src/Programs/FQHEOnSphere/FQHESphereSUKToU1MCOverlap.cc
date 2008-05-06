@@ -124,7 +124,7 @@ int main(int argc, char** argv)
   AbstractQHEParticle* ExactSpace = 0;
   RealVector* ExactState = 0;
   AbstractFunctionBasis* ExactBasis = 0;
-  if (((SingleStringOption*) Manager["use-exact"])->GetString() != 0)
+  if ((((SingleStringOption*) Manager["use-exact"])->GetString() != 0) && (OverlapFlag == true))
     {
       UseExactFlag = true;
       if (StatisticFlag == true)
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
       RandomNumber = new StdlibRandomNumberGenerator (29457);
     }
 
-  if (UseExactFlag == true)
+  if ((UseExactFlag == true) ||  (OverlapFlag == false))
     {
       TestFunction = 0;
     }
@@ -512,6 +512,7 @@ int main(int argc, char** argv)
 	 {
 	   for (int j = i + 1; j < NbrParticles; ++j)
 	     {
+	       cout << i << "<->" << j << " : ";
 	       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << " | " ;
 	       FlipCoordinates(UV, i, j);
 	       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;

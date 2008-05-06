@@ -237,7 +237,7 @@ Complex FQHESU4HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
 	{
  	  TmpU = uv[2 * i];
  	  TmpV = uv[2 * i + 1];
-	  for (int j = i + 1; j < this->TotalNbrParticles; ++j)
+	  for (int j = i + 1; j < NbrN1N2N3; ++j)
 	    WaveFunction *= ((TmpU * uv[2 * j + 1]) - (TmpV * uv[2 * j]));
 	}
       for (int i = 0; i < this->M33; ++i)
@@ -309,8 +309,8 @@ Complex FQHESU4HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
               WaveFunction *= Tmp;
               if (this->InvertFlag == false)
                 Tmp = Inv(Tmp);
-              int ShiftedJ = j - NbrN1N2;
-              Permanent13.SetMatrixElement(i, ShiftedJ, Tmp);
+              int ShiftedJ = j - NbrN1N2N3;
+              Permanent14.SetMatrixElement(i, ShiftedJ, Tmp);
             }
         }
       for (int i = 0; i < this->M14; ++i)
@@ -351,11 +351,11 @@ Complex FQHESU4HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
               if (this->InvertFlag == false)
                 Tmp = Inv(Tmp);
               int ShiftedI = i - this->NbrN1;
-              int ShiftedJ = j - NbrN1N2;
-              Permanent23.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
+              int ShiftedJ = j - NbrN1N2N3;
+              Permanent24.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
             }
         }
-      for (int i = 0; i < this->M23; ++i)
+      for (int i = 0; i < this->M24; ++i)
         TotalWaveFunction *= WaveFunction;
     }
   if (this->M34 > 0)
@@ -371,15 +371,14 @@ Complex FQHESU4HalperinPermanentOnSphereWaveFunction::CalculateFromSpinorVariabl
               WaveFunction *= Tmp;
               if (this->InvertFlag == false)
                 Tmp = Inv(Tmp);
-              int ShiftedI = i - this->NbrN1;
-              int ShiftedJ = j - NbrN1N2;
-              Permanent23.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
+              int ShiftedI = i - NbrN1N2;
+              int ShiftedJ = j - NbrN1N2N3;
+              Permanent34.SetMatrixElement(ShiftedI, ShiftedJ, Tmp);
             }
         }
       for (int i = 0; i < this->M34; ++i)
         TotalWaveFunction *= WaveFunction;
     }
-
-  return (TotalWaveFunction * Permanent12.Permanent() * Permanent13.Permanent() * Permanent23.Permanent()
-	  * Permanent14.Permanent() * Permanent24.Permanent() * Permanent24.Permanent());
+  return (TotalWaveFunction * Permanent12.Permanent() * Permanent13.Permanent() * Permanent14.Permanent()
+	  * Permanent23.Permanent() * Permanent24.Permanent() * Permanent34.Permanent());
 }
