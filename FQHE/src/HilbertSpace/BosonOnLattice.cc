@@ -559,7 +559,7 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
 	  CountYCoordinates+=this->TemporaryState[Q]*OldY;
 	  NewQ=this->EncodeQuantumNumber(OldX+shiftX, OldY+shiftY, OldSl, PeriodicPhase);
 	  //cout << "PeriodicPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<< PeriodicPhase<<endl;
-	  CumulatedPhase*=PeriodicPhase;
+	  for (unsigned i=0; i<this->TemporaryState[Q]; ++i) CumulatedPhase*=PeriodicPhase;
 	  if (NewQ>ShiftedStateHighestBit)
 	    {
 	      for (int q=ShiftedStateHighestBit+1; q<NewQ;++q)
@@ -572,7 +572,7 @@ int BosonOnLattice::TranslateState(int index, int shiftX, int shiftY, Complex &t
       --Q;
     }
   // verify sign of phase!
-  //cout << "TranslationPhase for shift ("<<OldX<<","<<OldY<<")->("<<OldX+shiftX<<","<<OldY+shiftY<<")="<<Polar(1.0, -2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
+  //cout << "TranslationPhase for shift by ("<<shiftX<<","<<shiftY<<")="<<Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)<<endl;
   translationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*shiftX*CountYCoordinates)* Conj(CumulatedPhase);
   //cout<<"Cumulated Phase="<<Arg(CumulatedPhase)/M_PI<<"pi"<<endl;
   //cout << "NS:";

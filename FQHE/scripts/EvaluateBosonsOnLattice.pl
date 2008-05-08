@@ -213,8 +213,14 @@ sub AnalyzeVectors
 		$BeginMultiplet=$EndMultiplet+1;
 		$EndMultiplet=$BeginMultiplet;		
 	      }
+	    close(OUTFILE);
 	  }
-	close(OUTFILE);
+	else
+	  {
+	    # no vector files present: clean up and delete otherwise empty protocol file!
+	    close(OUTFILE);
+	    system("rm $ProtocolName");
+	  }
       }
     system ("rm $TmpFileName");
   }
