@@ -325,7 +325,7 @@ int main(int argc, char** argv)
   if (IsDiagonal)
     {
       if (Manager.GetBoolean("verbose"))
-	cout << "EigenValues(Ty)="<<endl<<XEV<<endl;
+	cout << "EigenValues(Ty)="<<endl<<YEV<<endl;
     }
   else
     cout << "EigenValues(Ty)=  !!! Attention, was not fully diagonal !!!"

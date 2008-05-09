@@ -20,21 +20,20 @@ my $Machine;
 my $Program;
 my $Memory=0;
 my $MaxProcessor=1;
-my $Have64Bits=0;
-my $RunLocal=0;
+my $Have64Bit=0;
 if ($ARGV[0] =~ /^[0-9]/)
   {
-    $Machine="ssh tcmpc".$ARGV[0];
-    my $tmp = `${Machine} status`;
+    $Machine="tcmpc".$ARGV[0];
+    my $tmp = `ssh ${Machine} status`;
     if ( $tmp =~ /x86_64/ )
       {
 	$Program = $Program_64;
+	$Have64Bit=1;
 	if ( $tmp =~ /Core2/ )
 	  {
 	    $MaxProcessor=2;
 	  }
 	print ("found 64-bit ".$MaxProcessor."-processor machine\n");
-	$Have64Bits=1;
       }
     else
       {
@@ -43,28 +42,17 @@ if ($ARGV[0] =~ /^[0-9]/)
   }
 else
   {
-    if ($ARGV[0] =~ /^s5/)
+    if ($ARGV[0] =~ /s5/)
       {
-	$Machine="ssh s5.tcm.phy.private";
+	$Have64Bit=1;
+	$Machine="s5.tcm.phy.private";
 	$Program = $Program_S5;	
 	$MaxProcessor=8;
-	$Have64Bits=1;
       }
     else
       {
-	if ($ARGV[0] =~ /locals5/)
-	  {
-	    $Machine="";
-	    $Program = $Program_S5;	
-	    $MaxProcessor=8;
-	    $Have64Bits=1;
-	    $RunLocal=1;
-	  }
-	else
-	  {
-	    print ("Machine not recognised!");
-	    exit(1);
-	  }
+	print ("Machine not recognised!");
+	exit(1);
       }
   }
 print ("Running on machine ".$Machine."\n");
@@ -117,6 +105,7 @@ if ( $Parameters eq "" )
   }
 # extract individual parameters
 my @AllParam=split(/\t\s*/,$Parameters);
+chomp(@AllParam);
 my $paramR = $AllParam[0];
 my $paramT = $AllParam[1];
 my $paramLx = $AllParam[2];
@@ -125,33 +114,9 @@ my $paramQ = $AllParam[4];
 my $paramU = $AllParam[5];
 my $paramN1 = $AllParam[6];
 my $paramN2 = $AllParam[7];
-my $NbrBosons = $paramLx*$paramLy*$paramR/$paramT;
-
-if ($Have64Bits==0)
-  {
-    if ($paramLx*$paramLy+$NbrBosons > 32)
-      {
-	print ("Need 64 bit processor for next command\n");
-	system ("cp ".${CommandFile}.".save ".$CommandFile);
-	exit(1);
-      }	
-  }
-else
-  {
-    if ($paramLx*$paramLy+$NbrBosons > 64)
-      {
-	print ("Hilbert space cannot be coded in a word of 64 bits!\n");
-	exit(1);
-      }	
-  }
 
 my $StatesDir = "/rscratch/gm360/latticeQHE/states/n_${paramR}_${paramT}/";
 my $SpecDir = "/rscratch/gm360/latticeQHE/spectra/n_${paramR}_${paramT}/";
-if ($RunLocal==1)
-  {
-    $StatesDir = "states/n_${paramR}_${paramT}/";
-    $SpecDir = "spectra/n_${paramR}_${paramT}/";
-  }
 my $WorkDir="";
 my $EigenVectors="";
 my $QString="q";
@@ -159,8 +124,18 @@ if ($paramQ>0)
   {
     $QString="q_${paramQ}";
   }
+my $NbrBosons = $paramLx*$paramLy*$paramR/$paramT;
+my $MaxBits = 32*(1+$Have64Bit );
+if ( $NbrBosons+$paramLx*$paramLy > $MaxBits )
+{
+   print LEFTCOMMANDS ($Parameters."\tsize!!\n");
+   print "Postponing job: need larger word size\n";
+   close(LEFTCOMMANDS);
+   system ("cp ".$CommandFile.".remain ".$CommandFile);
+   exit(-2);
+}
 my $OutputName = "bosons_lattice_n_${NbrBosons}_x_${paramLx}_y_${paramLy}_u_${paramU}_${QString}.dat";
-
+my $WantAbort=0;
 if ( ! -e $SpecDir )
   {
     system ("mkdir ${SpecDir}");
@@ -171,7 +146,7 @@ if ( ! -e $StatesDir )
   }
 if ( $paramN1 == $paramN2 ) # need to calculate only states
   {
-    $WorkDir = $StatesDir;    
+    $WorkDir = $StatesDir;
     $EigenVectors= "--eigenstate -n ${paramN1}";
   }
 else
@@ -180,6 +155,12 @@ else
       {
 	$WorkDir = $StatesDir;
 	$EigenVectors= "--eigenstate -n ${paramN2}";
+	if ( -e $StatesDir.$OutputName )
+	{
+	    $WantAbort=1;
+	    print ("Previously done!\n");
+	    print LEFTCOMMANDS ($Parameters."\tDone\n");
+	}
       }
     else
       {
@@ -191,8 +172,12 @@ else
   }
 close(LEFTCOMMANDS);
 system ("cp ".$CommandFile.".remain ".$CommandFile);
+if ( $WantAbort == 1)
+{
+    exit(1);
+}
 
-my $Command = "$Machine \"cd ${WorkDir}; touch log_p_${NbrBosons}_u_${paramU}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
+my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
 
 open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
