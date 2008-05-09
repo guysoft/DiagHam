@@ -47,13 +47,18 @@ print OUTFILE ("with string\nstring on\nstring 0.175, 0.29\nstring def \"\\xN(r\
 print OUTFILE ("with string\nstring on\nstring 0.71, 0.46\nstring def \"d(GS)\"\n");
 print OUTFILE ("with string\nstring on\nstring 0.71, 0.29\nstring def \"|K|\\sGS\"\n");
 
+
+my $N;
+my $x;
+my $y;
+
 foreach $TmpFile (@ListFiles)
   {
     print ("Adding ".$TmpFile."\n");
     $TmpFile =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_u\_(-*\d*[\.]*\d*)\_/;
-    my $N = $1;
-    my $x = $2;
-    my $y = $3;
+    $N = $1;
+    $x = $2;
+    $y = $3;
     my $u = $4;
     my $Factor=1.0/$x/$y;
     print OUTFILE ("READ BLOCK \"${TmpFile}\"\n");
@@ -95,6 +100,12 @@ foreach $TmpFile (@ListFiles)
     print OUTFILE ("S_.x = S_.x*${Factor}\n");
   }
 
+
+my $gcd=FindGCD($N,$x*$y);
+my $r = $N/$gcd;
+my $t = ($x*$y)/$gcd;
+print OUTFILE ("with string\nstring on\nstring 0.45, 0.89\nstring def \"Plot at fixed particle density n=${r}/${t}\"\n");
+
 for (my $i=0; $i<6; ++$i)
   {
     print OUTFILE ("with G${i}\n");
@@ -113,3 +124,30 @@ system("sleep 2");
 system ("rm $TmpFileName");
 
 
+# find greatest common divider (recurisive part of the method)
+# $_[0] = first integer
+# $_[1] = second integer
+
+sub FindGCD
+{
+  my $m;
+  my $n;
+  if ( $_[0] > $_[1] )
+    {
+      $n=$_[0];
+      $m=$_[1];
+    }
+  else
+    {
+      $n=$_[1];
+      $m=$_[0];
+    }
+  if ($m == 0)
+    {
+      return $n;
+    }
+  else
+    {
+      return FindGCD (($n % $m), $m);
+    }
+}
