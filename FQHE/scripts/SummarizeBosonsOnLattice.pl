@@ -73,37 +73,47 @@ sub AnalyzeProtocols
     my $TmpLine;
     my $ProtocolName = $BaseName."\.gs";	
     open (OUTFILE, ">$ProtocolName");
-    print OUTFILE ("# q\tN\tN_s\tGap\trho_0/rho_1\trho_ave\tEVCount\t|K|\tDeg\tKx\tKy\n");
+    my $CountEntries=0;
+    print OUTFILE ("# q\tN\tN_s\tGap\trho_0/rho_1\trho_ave\tEVCount\t|K|\tDeg\n");
     for ($q=0; $q<=$Ns;++$q)
       {
-	$FileName = $BaseName."_q_${q}.eval";
+	$FileName = $BaseName."_${q}.eval";
 	print ("Working on $FileName\n");
 	if ( -e $FileName )
 	  {
 	    $TmpLine = `grep ^0 $FileName`;
-	    chomp($TmpLine);
-	    my @Data = split(/\t/,$TmpLine);
-	    chomp(@Data);
-	    my $Energy0 = $Data[1];
-	    my $Rho0 = $Data[2];
-	    my $RhoBar = $Data[3];
-	    my $EVCount = $Data[4];
-	    my $AbsK = $Data[5];
-	    my $Degeneracy = $Data[6];
-	    my $Gap = -1;
-	    $TmpLine = `grep ^1 $FileName`;
-	    if ($Tmpline -gt "")
+	    if ($TmpLine gt "")
 	      {
+		++$CountEntries;
 		chomp($TmpLine);
-		@Data = split(/\t/,$TmpLine);
+		my @Data = split(/\t/,$TmpLine);
 		chomp(@Data);
-		my $Energy1 = $Data[1];
-		$Gap=$Energy1-$Energy0;
+		my $Energy0 = $Data[1];
+		my $Rho0 = $Data[2];
+		my $RhoBar = $Data[3];
+		my $EVCount = $Data[4];
+		my $AbsK = $Data[5];
+		my $Degeneracy = $Data[6];
+		my $Gap = -1;
+		$TmpLine = `grep ^1 $FileName`;
+		if ($TmpLine gt "")
+		  {
+		    chomp($TmpLine);
+		    @Data = split(/\t/,$TmpLine);
+		    chomp(@Data);
+		    my $Energy1 = $Data[1];
+		    $Gap=$Energy1-$Energy0;
+		  }
+		print OUTFILE ("${q}\t${N}\t${Ns}\t${Gap}\t${Rho0}\t${RhoBar}\t${EVCount}\t${AbsK}\t${Degeneracy}\n");
 	      }
-	    print OUTFILE("${q}\t${N}\t${Ns}\t${Gap}\t${Rho0}\t${RhoBar}\t${EVCount}\t${AbsK}\t${Degeneracy}\n");
 	  }
       }
     close(OUTFILE);
+    if ($CountEntries == 0)
+      {
+	print ("No data found for present series\n");
+	system ("rm $ProtocolName");
+      }
   }
 
 
