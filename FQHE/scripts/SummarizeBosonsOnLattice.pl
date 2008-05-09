@@ -75,10 +75,11 @@ sub AnalyzeProtocols
     open (OUTFILE, ">$ProtocolName");
     my $CountEntries=0;
     print OUTFILE ("# q\tN\tN_s\tGap\trho_0/rho_1\trho_ave\tEVCount\t|K|\tDeg\n");
+    print ("q=");
     for ($q=0; $q<=$Ns;++$q)
       {
 	$FileName = $BaseName."_${q}.eval";
-	print ("Working on $FileName\n");
+	print ("${q}..");
 	if ( -e $FileName )
 	  {
 	    $TmpLine = `grep ^0 $FileName`;
@@ -108,6 +109,7 @@ sub AnalyzeProtocols
 	      }
 	  }
       }
+    print ("done!\n");
     close(OUTFILE);
     if ($CountEntries == 0)
       {

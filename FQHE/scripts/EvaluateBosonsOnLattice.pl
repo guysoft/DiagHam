@@ -5,8 +5,8 @@
 use strict 'vars';
 
 
-#my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
-my $Program_32="FQHELatticeDensityMatrix";
+my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
+#my $Program_32="FQHELatticeDensityMatrix";
 my $Program_64="/rscratch/gm360/bin/FQHELatticeDensityMatrix_64";
 
 if (!defined($ARGV[0]))
