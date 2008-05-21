@@ -226,6 +226,15 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->FastDiskFlag = false;
       this->ResumeFastDiskFlag = false;
     }
+
+  if ((((*options)["set-reorthogonalize"]) != 0) && (((SingleStringOption*) (*options)["set-reorthogonalize"])->GetString() != 0))
+    {
+      this->LanczosReorthogonalization = ((SingleStringOption*) (*options)["set-reorthogonalize"])->GetString();
+    }
+  else
+    {
+      this->LanczosReorthogonalization = 0;
+    }
   this->FirstRun = firstRun;
 }  
  
@@ -464,6 +473,10 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	    }
 	  else
 	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+	}
+      if (this->LanczosReorthogonalization != 0)
+	{
+	  Lanczos->ForceOrthogonalization(this->LanczosReorthogonalization);
 	}
       if (this->LanczosPrecision != 0.0)
 	Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);

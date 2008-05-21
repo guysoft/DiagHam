@@ -120,6 +120,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
+  // name of the file that contains a optional set of vectors to which eigenstates have to be orthogonal
+  char* LanczosReorthogonalization;
 
  public:
 

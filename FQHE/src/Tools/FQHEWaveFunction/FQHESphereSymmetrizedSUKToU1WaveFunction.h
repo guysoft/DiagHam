@@ -90,6 +90,13 @@ class FQHESphereSymmetrizedSUKToU1WaveFunction: public Abstract1DComplexFunction
   // fermionFlag = true if the final state should be a fermionic state
   FQHESphereSymmetrizedSUKToU1WaveFunction(int nbrParticles, int kValue, Abstract1DComplexFunctionOnSphere* sUKWavefunction, bool fermionFlag = false);
 
+  // constructor from data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // sUKWavefunction = pointer to the base SU(K) wave function
+  // fermionFlag = true if the final state should be a fermionic state
+  FQHESphereSymmetrizedSUKToU1WaveFunction(char* filename, Abstract1DComplexFunctionOnSphere* sUKWavefunction, bool fermionFlag = false);
+
   // copy constructor
   //
   // function = reference on the wave function to copy
@@ -118,11 +125,23 @@ class FQHESphereSymmetrizedSUKToU1WaveFunction: public Abstract1DComplexFunction
   // return value = function value at (uv)
   virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
+  // write all permutations requested to symmetrize the SU(K) state to data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool WritePermutations(char* filename);
+
  protected:
+
+  // get all permutations requested to symmetrize the SU(K) state from data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool ReadPermutations(char* filename);
 
   // evaluate all permutations requested to symmetrize the SU(K) state
   //
-  void EvaluatePermutations();
+  virtual void EvaluatePermutations();
 
   // evaluate function at a given point(the first 2*N1 coordinates correspond to the position of the type 1 particles, 
   //                                     the following 2*N2 coordinates correspond to the position of the type 2 particles,

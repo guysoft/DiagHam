@@ -43,6 +43,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new BooleanOption  ('r', "reverse", "convert a state from the n-body basis to the Haldane basis");
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
@@ -73,6 +74,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   int TotalLz = 0;
+  bool ReverseFlag = ((BooleanOption*) Manager["reverse"])->GetBoolean();
   bool Statistics = true;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
 						   NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
@@ -190,12 +192,20 @@ int main(int argc, char** argv)
       if (SymmetrizedBasis == false)
 	{
 	  FermionOnSphereHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	  if ((ReverseFlag == false) && (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
 	  FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
-	  RealVector OutputState(InitialSpace.ConvertToNbodyBasis(State, TargetSpace));
+	  if ((ReverseFlag == true) && (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
+	    {
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
+	    }	    
+	  RealVector OutputState;
+	  if (ReverseFlag == false)
+	    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	  else
+	    OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace);
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
 	      cout << "error while writing output state " << OutputFileName << endl;
@@ -204,13 +214,22 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  cout << "warning : code is untested !!!" << endl;
 	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
-	  if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+	  if ((ReverseFlag == false) && (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
 	    {
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	    }
 	  FermionOnSphereSymmetricBasis TargetSpace(NbrParticles, NbrFluxQuanta);
-	  RealVector OutputState(InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace));
+	  if ((ReverseFlag == true) && (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
+	    {
+	      cout << "dimension mismatch between Hilbert space and input state" << endl;
+	    }	    
+	  RealVector OutputState;
+	  if (ReverseFlag == false)
+	    OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	  else
+	    OutputState = InitialSpace.ConvertFromSymmetricNbodyBasis(State, TargetSpace);
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
 	      cout << "error while writing output state " << OutputFileName << endl;

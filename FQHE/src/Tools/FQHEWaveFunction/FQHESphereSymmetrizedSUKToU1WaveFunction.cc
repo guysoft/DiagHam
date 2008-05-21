@@ -34,6 +34,7 @@
 #include "Tools/FQHEWaveFunction/FQHESphereSymmetrizedSUKToU1WaveFunction.h"
 #include "Tools/FQHEWaveFunction/HalperinOnSphereWaveFunction.h"
 #include "Vector/RealVector.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 #include <math.h>
@@ -43,6 +44,9 @@ using std::cout;
 using std::endl;
 using std::hex;
 using std::dec;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 
 
 // group maximum size in bits
@@ -76,6 +80,25 @@ FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFuncti
   this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
   this->FullySymmetrize = false;  
   this->EvaluatePermutations();
+  this->Flag.Initialize();
+}
+
+// constructor from data file 
+//
+// filename = pointer to the file name that described the symmetrization procedure
+// sUKWavefunction = pointer to the base SU(K) wave function
+// fermionFlag = true if the final state should be a fermionic state
+ 
+FQHESphereSymmetrizedSUKToU1WaveFunction::FQHESphereSymmetrizedSUKToU1WaveFunction(char* filename, Abstract1DComplexFunctionOnSphere* sUKWavefunction, bool fermionFlag)
+{
+  this->NbrParticles = 0;
+  this->KValue = 0;
+  this->ReadPermutations(filename);
+  this->NbrParticlesPerColor = this->NbrParticles / this->KValue;
+  this->SUKWaveFunction = (Abstract1DComplexFunctionOnSphere*) (sUKWavefunction->Clone());
+  this->FermionFlag = fermionFlag;
+  this->TemporaryUV = ComplexVector(this->NbrParticles * 2);
+  this->FullySymmetrize = false;  
   this->Flag.Initialize();
 }
 
@@ -323,6 +346,54 @@ void FQHESphereSymmetrizedSUKToU1WaveFunction::EvaluatePermutations()
 	}
     }
   return;
+}
+
+
+// get all permutations requested to symmetrize the SU(K) state from data file 
+//
+// filename = pointer to the file name that described the symmetrization procedure
+// return value = true if no error occured
+
+bool FQHESphereSymmetrizedSUKToU1WaveFunction::ReadPermutations(char* filename)
+{
+  ifstream File;
+  File.open(filename, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << filename << endl;
+      return false;
+    }
+  ReadLittleEndian(File, this->NbrParticles);
+  ReadLittleEndian(File, this->KValue);
+  ReadLittleEndian(File, this->NbrPermutations);
+  this->Permutations = new unsigned long[this->NbrPermutations];
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    ReadLittleEndian(File, this->Permutations[i]);
+  File.close();
+  return true;
+}
+
+// write all permutations requested to symmetrize the SU(K) state to data file 
+//
+// filename = pointer to the file name that described the symmetrization procedure
+// return value = true if no error occured
+
+bool FQHESphereSymmetrizedSUKToU1WaveFunction::WritePermutations(char* filename)
+{
+  ofstream File;
+  File.open(filename, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << filename << endl;
+      return false;
+    }
+  WriteLittleEndian(File, this->NbrParticles);
+  WriteLittleEndian(File, this->KValue);
+  WriteLittleEndian(File, this->NbrPermutations);
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    WriteLittleEndian(File, this->Permutations[i]);
+  File.close();
+  return true;
 }
 
 // evaluate function at a given point(the first 2*N1 coordinates correspond to the position of the type 1 particles, 

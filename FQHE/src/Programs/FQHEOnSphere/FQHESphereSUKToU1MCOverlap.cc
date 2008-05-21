@@ -74,6 +74,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
   (*SystemGroup) += new BooleanOption ('\n', "jain-cf", "use composite fermion state instead of the symetrized state");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
+  (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
+  (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
@@ -184,7 +186,15 @@ int main(int argc, char** argv)
     }
   else
     {
-      SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);      
+      if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (NbrParticles, KValue, BaseFunction, true);      
+      else
+	SymmetrizedFunction = new FQHESphereSymmetrizedSUKToU1WaveFunction (((SingleStringOption*) Manager["load-permutations"])->GetString(), BaseFunction, true);  
+      if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+	{
+	  ((FQHESphereSymmetrizedSUKToU1WaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+	  return 0;
+	}
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;

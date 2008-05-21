@@ -450,6 +450,21 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector&
   return TmpVector;
 }
 
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertFromNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
 // convert a gien state from Haldane basis to the usual symmetric n-body basis
 //
 // state = reference on the vector to convert
@@ -459,11 +474,45 @@ RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToNbodyBasis(RealVector&
 RealVector FermionOnSphereHaldaneSymmetricBasis::ConvertToSymmetricNbodyBasis(RealVector& state, FermionOnSphereSymmetricBasis& nbodyBasis)
 {
   RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  unsigned long TmpState;
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->StateDescription[i];
+      NewLzMax = this->LzMax;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], NewLzMax)] = state[i];
+    }
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
   return TmpVector;
 }
 
+// convert a given state from the usual symmetric n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector  FermionOnSphereHaldaneSymmetricBasis::ConvertFromSymmetricNbodyBasis(RealVector& state, FermionOnSphereSymmetricBasis& nbodyBasis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  unsigned long TmpState;
+  int NewLzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState = this->StateDescription[i];
+      NewLzMax = this->LzMax;
+      TmpState &= FERMION_SPHERE_SYMMETRIC_MASK;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;
+      TmpVector[i] = state[nbodyBasis.FindStateIndex(this->StateDescription[i], NewLzMax)];
+    }
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;  
+}
 
 
 // convert a gien state from Lz-symmetric Haldane basis to the usual Haldane n-body basis

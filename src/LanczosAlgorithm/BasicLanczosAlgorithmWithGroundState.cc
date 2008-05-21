@@ -37,7 +37,9 @@
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Matrix/RealMatrix.h"
+
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -205,7 +207,24 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vect
 
 bool BasicLanczosAlgorithmWithGroundState::ForceOrthogonalization(char* fileName)
 {
-  this->OrthogonalizationSetSize = 0;
+  ConfigurationParser OrthogonalizationSet;
+  if (OrthogonalizationSet.Parse(fileName) == false)
+    {
+      this->OrthogonalizationSetSize = 0;
+      OrthogonalizationSet.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (OrthogonalizationSet.GetAsStringArray("Vectors", ' ', this->OrthogonalizationSetFileNames, this->OrthogonalizationSetSize) == false)
+    {
+      cout << "Vectors are not defined or have a wrong value in " << fileName << endl;
+      return false;
+    }
+  if (this->DiskFlag == false)
+    {
+      this->OrthogonalizationSet = new RealVector[this->OrthogonalizationSetSize];
+      for (int i = 0; i < this->OrthogonalizationSetSize; ++i)
+	this->OrthogonalizationSet[i].ReadVector(this->OrthogonalizationSetFileNames[i]);
+    }
   return true;
 }
 
