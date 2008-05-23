@@ -84,6 +84,15 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis);
 
+  // evaluate wave functions in real space using a given basis
+  //
+  // states = array of vector corresponding to the state in the Fock basis
+  // nbrStates = number of states in the states array
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // waveFuntions = array where the  wave function values at the given location will be stored
+  virtual void EvaluateWaveFunctions (RealVector* states, int nbrStates, RealVector& position, AbstractFunctionBasis& basis, Complex* waveFuntions);
+
   // evaluate wave function in real space using a given basis, using time coherence
   //
   // state = vector corresponding to the state in the Fock basis
@@ -104,6 +113,18 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   // return value = wave function evaluated at the given location
   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 					int firstComponent, int nbrComponent);                                
+  
+  // evaluate wave functions in real space using a given basis and only for agiven range of components
+  //
+  // states = array of vector corresponding to the state in the Fock basis
+  // nbrStates = number of states in the states array
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // waveFuntions = array where the  wave function values at the given location will be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void EvaluateWaveFunctions (RealVector* states, int nbrStates, RealVector& position, AbstractFunctionBasis& basis,
+				      Complex* waveFuntions, int firstComponent, int nbrComponent);                                
   
   // evaluate wave function in real space using a given basis and only for a given range of components, using time coherence
   //

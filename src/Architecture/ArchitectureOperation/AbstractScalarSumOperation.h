@@ -48,6 +48,10 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   int NbrComponent;
   // complex scalar used to store the results
   Complex Scalar;
+  // array complex scalars used to store the results in case of multiple scalar sum evaluation
+  Complex* Scalars;
+  // number of complex scalars in the Scalars array
+  int NbrScalars;
 
  public:
   
@@ -68,8 +72,9 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
 
   // return scalar corresponding to the result of the operation
   //
+  // index = optional index in case of multiple scalar sum evaluation
   // return value = reference ont the scalar used to store the operation
-  virtual Complex& GetScalar();
+  virtual Complex& GetScalar(int index = 0);
 
   // apply operation for SMP architecture
   //
@@ -82,11 +87,15 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
 
 // return scalar corresponding to the result of the operation
 //
+// index = optional index in case of multiple scalar sum evaluation
 // return value = reference ont the scalar used to store the operation
 
-inline Complex& AbstractScalarSumOperation::GetScalar()
+inline Complex& AbstractScalarSumOperation::GetScalar(int index)
 {
-  return this->Scalar;
+  if (this->Scalars == 0)
+    return this->Scalar;
+  else
+    return this->Scalars[index];
 }                                                                                                                                                                                  
 
 #endif

@@ -48,8 +48,12 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
 
   // pointer to the Hilbert space
   AbstractQHEParticle* HilbertSpace;
+
   // vector corresponding to the state in the Fock basis  
   RealVector* State;
+  // array of vectors corresponding to the states in the Fock basis
+  RealVector* States;
+
   // vector whose components give coordinates of the point where the wave function has to be evaluated
   RealVector* Position;
   // one body real space basis to use
@@ -67,6 +71,17 @@ class QHEParticleWaveFunctionOperation: public AbstractScalarSumOperation
   // basis = one body real space basis to use
   // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
   QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* state, RealVector* position, 
+				   AbstractFunctionBasis* basis, int nextCoordinates = -1);
+
+  // constructor for multiple wave function evaluations
+  //
+  // space = pointer to the Hilbert space to use
+  // states = array of vectors corresponding to the states in the Fock basis
+  // nbrStates = number of states in the states array
+  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
+  // basis = one body real space basis to use
+  // nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+  QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* states, int nbrStates, RealVector* position, 
 				   AbstractFunctionBasis* basis, int nextCoordinates = -1);
 
   // copy constructor 

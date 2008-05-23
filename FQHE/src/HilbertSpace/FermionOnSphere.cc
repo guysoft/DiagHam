@@ -992,6 +992,91 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   return Value;
 }
 
+// evaluate wave functions in real space using a given basis and only for agiven range of components
+//
+// states = array of vector corresponding to the state in the Fock basis
+// nbrStates = number of states in the states array
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// waveFuntions = array where the  wave function values at the given location will be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+
+void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, RealVector& position, AbstractFunctionBasis& basis,
+					     Complex* waveFuntions, int firstComponent, int nbrComponent)
+{
+  for (int i = 0; i < nbrStates; ++i)
+    waveFuntions[i] = 0.0;
+  Complex Tmp;
+#ifdef __LAPACK__
+  ComplexLapackDeterminant Slater(this->NbrFermions);
+#else
+  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
+#endif
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
+  RealVector TmpCoordinates(2);
+  int* Indices = new int [this->NbrFermions];
+  int Pos;
+  int Lz;
+  for (int j = 0; j < this->NbrFermions; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
+  double Factor = 1.0;
+  for (int i = 2; i <= this->NbrFermions; ++i)
+    Factor *= (double) i;
+  Factor = 1.0 / sqrt(Factor);
+  unsigned long TmpStateDescription;
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
+    {
+      Pos = 0;
+      Lz = 0;
+      TmpStateDescription = this->StateDescription[k];
+      while (Pos < this->NbrFermions)
+	{
+	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
+	    {
+	      Indices[Pos] = Lz;
+	      ++Pos;
+	    }
+	  ++Lz;
+	  TmpStateDescription >>= 1;
+	}
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < this->NbrFermions; ++j)
+	    {
+#ifdef __LAPACK__
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
+#else
+	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
+#endif
+	    }
+	}
+      //cout << Slater << endl;
+
+      // can calculate with lapack for a regular ComplexMatrix by Complex SlaterDet = Slater.LapackDeterminant();
+
+      Complex SlaterDet = Slater.Determinant();
+      SlaterDet *= Factor;
+      for (int i = 0; i < nbrStates; ++i)
+	waveFuntions[i] += SlaterDet * states[i][k];
+    }
+  delete[] Indices;
+
+}
+                               
+  
 // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
 //
 // timeCoherence = true if time coherence has to be used

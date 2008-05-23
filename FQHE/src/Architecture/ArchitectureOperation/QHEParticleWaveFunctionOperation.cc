@@ -57,6 +57,43 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation (AbstractQHEP
   this->Position = position;
   this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
   this->Basis = basis;    
+  this->Scalars = 0;
+  this->States = 0;
+  this->NbrScalars = 1;
+}
+
+// constructor for multiple wave function evaluations
+//
+// space = pointer to the Hilbert space to use
+// states = array of vectors corresponding to the states in the Fock basis
+// nbrStates = number of states in the states array
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// nextCoordinates = indicate which coordinates will be change during next time step (-1 if no time coherence has to be used)
+
+QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(AbstractQHEParticle* space, RealVector* states, int nbrStates, RealVector* position, 
+								   AbstractFunctionBasis* basis, int nextCoordinates)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->NextCoordinates = nextCoordinates;
+  if (this->NextCoordinates != -1)
+    space->InitializeWaveFunctionEvaluation(true);
+  else
+    space->InitializeWaveFunctionEvaluation(false);
+  this->HilbertSpace = (AbstractQHEParticle*) space->Clone();
+  this->State = 0;
+  this->Position = position;
+  this->OperationType = AbstractArchitectureOperation::QHEParticleWaveFunction;
+  this->Basis = basis;    
+  this->NbrScalars = nbrStates;
+  this->Scalars = new Complex[this->NbrScalars];
+  this->States = new RealVector[this->NbrScalars];
+  for (int i = 0; i < this->NbrScalars; ++i)
+    {
+      this->Scalars[i] = 0.0;
+      this->States[i] = states[i];
+    }
 }
 
 // copy constructor 
@@ -74,6 +111,22 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEPart
   this->Basis = operation.Basis;
   this->Scalar = operation.Scalar;
   this->NextCoordinates = operation.NextCoordinates;
+  this->NbrScalars = operation.NbrScalars;
+  if (this->NbrScalars > 1)
+    {
+      this->Scalars = new Complex[this->NbrScalars];
+      this->States = new RealVector[this->NbrScalars];
+      for (int i = 0; i < this->NbrScalars; ++i)
+	{
+	  this->Scalars[i] = operation.Scalars[i];
+	  this->States[i] = operation.States[i];
+	}
+    }
+  else
+    {
+      this->Scalars = 0;
+      this->States = 0;
+    }
 }
   
 // destructor
@@ -81,6 +134,11 @@ QHEParticleWaveFunctionOperation::QHEParticleWaveFunctionOperation(const QHEPart
 
 QHEParticleWaveFunctionOperation::~QHEParticleWaveFunctionOperation()
 {
+  if (this->NbrScalars > 1)
+    {
+      delete[] this->Scalars;
+      delete[] this->States;
+    }
   delete this->HilbertSpace;
 }
   
@@ -111,8 +169,16 @@ AbstractArchitectureOperation* QHEParticleWaveFunctionOperation::Clone()
 bool QHEParticleWaveFunctionOperation::RawApplyOperation()
 {
   if (this->NextCoordinates == -1)
-    this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
-							    this->FirstComponent, this->NbrComponent);
+    if (this->NbrScalars <= 1)
+      {
+	this->Scalar = this->HilbertSpace->EvaluateWaveFunction(*(this->State), *(this->Position), *(this->Basis),
+								this->FirstComponent, this->NbrComponent);
+      }
+    else
+      {
+	this->HilbertSpace->EvaluateWaveFunctions(this->States, this->NbrScalars, *(this->Position), *(this->Basis),
+						  this->Scalars, this->FirstComponent, this->NbrComponent);
+      }
   else
     this->Scalar = this->HilbertSpace->EvaluateWaveFunctionWithTimeCoherence(*(this->State), *(this->Position), 
 									     *(this->Basis), this->NextCoordinates, 

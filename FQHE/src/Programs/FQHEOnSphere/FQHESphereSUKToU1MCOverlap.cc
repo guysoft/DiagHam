@@ -3,6 +3,7 @@
 
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "Architecture/ArchitectureManager.h"
@@ -26,6 +27,8 @@
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 
 #include "Vector/ComplexVector.h"
+
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -57,9 +60,9 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* MonteCarloGroup = new OptionGroup ("Monte Carlo options");
 
-   ArchitectureManager Architecture;
+  ArchitectureManager Architecture;
 
- Manager += SystemGroup;
+  Manager += SystemGroup;
   Manager += MonteCarloGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
@@ -73,6 +76,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
   (*SystemGroup) += new BooleanOption ('\n', "jain-cf", "use composite fermion state instead of the symetrized state");  
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
@@ -110,6 +115,7 @@ int main(int argc, char** argv)
   int NbrParticlePerColor = NbrParticles / KValue;
   int IntraCorrelation = Manager.GetInteger("intra-corr");
   int InterCorrelation = Manager.GetInteger("inter-corr");
+  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool OverlapFlag = true;
   if (((BooleanOption*) Manager["test-symmetry"])->GetBoolean() == true)
     {
@@ -130,7 +136,43 @@ int main(int argc, char** argv)
     {
       UseExactFlag = true;
       if (StatisticFlag == true)
-	ExactSpace = new FermionOnSphere (NbrParticles, 0, LzMax);
+	{
+	  if (HaldaneBasisFlag == false)
+	    ExactSpace = new FermionOnSphere (NbrParticles, 0, LzMax);
+	  else
+	    {
+	      int* ReferenceState = 0;
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		  return -1;     
+		}
+	      if (MaxNbrLz != (LzMax + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return -1;     
+		}
+	      int TotalLz = 0;
+	      ExactSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+	    }
+	}
       else
 	ExactSpace = new BosonOnSphere (NbrParticles, 0, LzMax);
       ExactState = new RealVector;

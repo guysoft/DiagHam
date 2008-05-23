@@ -73,10 +73,22 @@ bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitec
   TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->GetDimension() - FirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
-  for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+  if (this->NbrScalars > 1)
     {
-      this->GetScalar() += TmpOperations[i]->GetScalar();
-      delete TmpOperations[i];
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  for (int j = 0; j < this->NbrScalars; ++j)
+	    this->GetScalar(j) += TmpOperations[i]->GetScalar(j);
+	  delete TmpOperations[i];
+	}
+    }
+  else
+    {
+      for (int i = 0; i < architecture->GetNbrThreads(); ++i)
+	{
+	  this->GetScalar() += TmpOperations[i]->GetScalar();
+	  delete TmpOperations[i];
+	}
     }
   delete[] TmpOperations;
   return true;
