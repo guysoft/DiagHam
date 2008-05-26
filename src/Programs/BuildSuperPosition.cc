@@ -162,7 +162,8 @@ int main(int argc, char** argv)
 	      return -1;	      
 	    }
 	  double* Coefficients = Description.GetAsDoubleArray(1);
-	  for (int i = 1; i < Description.GetNbrLines(); ++i)
+	  Result *= Coefficients[0];
+ 	  for (int i = 1; i < Description.GetNbrLines(); ++i)
 	    {
 	      ComplexVector TmpVector;
 	      if (TmpVector.ReadVector(Description(0, i)) == false)
@@ -184,7 +185,8 @@ int main(int argc, char** argv)
 	      return -1;	      
 	    }
 	  double* Coefficients = Description.GetAsDoubleArray(1);
-	  for (int i = 1; i < Description.GetNbrLines(); ++i)
+	  Result *= Coefficients[0];
+ 	  for (int i = 1; i < Description.GetNbrLines(); ++i)
 	    {
 	      RealVector TmpVector;
 	      if (TmpVector.ReadVector(Description(0, i)) == false)
