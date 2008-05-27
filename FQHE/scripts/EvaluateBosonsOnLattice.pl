@@ -3,7 +3,7 @@
 # script for analysis of eigenvector files designed to run on TCM group PC's
 #
 use strict 'vars';
-
+use File::stat;
 
 my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
 #my $Program_32="FQHELatticeDensityMatrix";
@@ -143,13 +143,43 @@ sub AnalyzeVectors
 		    ++$EndMultiplet;
 		  }
 		$SizeMultiplet = $EndMultiplet - $BeginMultiplet + 1;
-		my $Vectors="";
+		my $Vectors="";		
 		for (my $i=$BeginMultiplet; $i<=$EndMultiplet; ++$i)
 		  {
 		    $Vectors=$Vectors." ".$EigenVectors[$i];
 		  }
 		my $ProtocolName2 = $BaseName."\_$q\_r\_$Rank\.dm";
-		system("$Program $Vectors > $ProtocolName2");
+		my $WantToCompute = 1;
+		if ( -e $ProtocolName2 )
+		  {
+		    my $stat1 = stat($ProtocolName2);
+		    my $mtime2=0;
+		    for (my $i=$BeginMultiplet; $i<=$EndMultiplet; ++$i)
+		      {
+			my $stat2 = stat($EigenVectors[$i]);
+			if ( $stat2->mtime > $mtime2 )
+			  {
+			    $mtime2 =$stat2->mtime;
+			  }
+		      }
+		    if ($mtime2 > $stat1->mtime)
+		      {
+			$WantToCompute = 1;
+		      }
+		    else
+		      {
+			$WantToCompute = 0;
+		      }
+		  }
+
+		if ( $WantToCompute == 1)
+		  {
+		    system("$Program $Vectors > $ProtocolName2");
+		  }
+		else
+		  {
+		    print ($ProtocolName2." exists, skipping...\n");
+		  }
 		system("grep ^EV $ProtocolName2 > $TmpFileName");
 
 		open (INFILE2, $TmpFileName);
