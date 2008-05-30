@@ -20,3 +20,6 @@ ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc \
 BasicLanczosAlgorithmWithGroundStateDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.cc \
 LanczosManager.cc
+
+
+#ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 

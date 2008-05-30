@@ -46,8 +46,9 @@ using std::endl;
 // interaction = strength of interaction parameter
 // flux = number of flux quanta
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
-bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, bool& statistics)
+bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, bool& statistics, bool& hardcore)
 {
   char* StrNbrParticles;
   if (nbrParticles == 0)
@@ -128,7 +129,13 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 	  return false;            
 	}
     }
-  if (interaction == 0)
+  StrNbrParticles = strstr(filename, "hardcore");
+  if (StrNbrParticles != 0)
+    {
+      interaction=0.0;
+      hardcore=true;
+    }
+  if ((interaction == 0.0)&&(hardcore=false))
     {
       StrNbrParticles = strstr(filename, "_u_");
       if (StrNbrParticles != 0)
@@ -150,10 +157,11 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 	}
       if (StrNbrParticles == 0)
 	{
-	  cout << "can't guess length ly from file name " << filename << endl;
+	  cout << "can't guess interaction u from file name " << filename << endl;
 	  return false;            
 	}
     }
+  
   if (flux == 0)
     {
       StrNbrParticles = strstr(filename, "_q_");
@@ -213,8 +221,9 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 // flux = number of flux quanta
 // nbrState = number of eigenstate
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// hardcore = returns true if hardcore bosons encountered
 // return value = true if no error occured
-bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, int &nbrState, bool& statistics)
+bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore)
 {
   char* StrNbrParticles;
   if (nbrParticles == 0)
@@ -295,7 +304,13 @@ bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParti
 	  return false;            
 	}
     }
-  if (interaction == 0)
+  StrNbrParticles = strstr(filename, "hardcore");
+  if (StrNbrParticles != 0)
+    {
+      interaction=0.0;
+      hardcore=true;
+    }
+  if ((interaction == 0)&& (hardcore==false))
     {
       StrNbrParticles = strstr(filename, "_u_");
       if (StrNbrParticles != 0)

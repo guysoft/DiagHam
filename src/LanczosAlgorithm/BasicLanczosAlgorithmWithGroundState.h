@@ -56,7 +56,7 @@ class BasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
   //vector that contains the ground state (if GroundStateFlag is set to true)
   RealVector GroundState;
 
-  // flag to indicate if ground state has already been compute
+  // flag to indicate if ground state has already been computed
   bool GroundStateFlag;
 
   // flag to indicate the use of disk storage to increase speed of ground state calculation

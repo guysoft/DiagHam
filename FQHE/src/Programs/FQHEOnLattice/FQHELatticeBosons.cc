@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnLattice.h"
+#include "HilbertSpace/HardCoreBosonOnLattice.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -92,6 +93,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
+  (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
@@ -114,7 +116,9 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int NbrSites = Lx*Ly;  
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
+  bool HardCore = Manager.GetBoolean("hard-core");
   double ContactU = Manager.GetDouble("contactU");
+  if (HardCore) ContactU=0.0;
   double Delta = Manager.GetDouble("deltaPotential");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
@@ -134,19 +138,26 @@ int main(int argc, char** argv)
   char* OutputName;
   char reverseHoppingString[4]="";
   char deltaString[20]="";
+  char interactionStr[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      
       if (ReverseHopping)
 	sprintf(reverseHoppingString,"rh_");
       if (Delta!=0.0)
-	sprintf(deltaString,"d_%g_",Delta);  
+	sprintf(deltaString,"d_%g_",Delta);
+      if (HardCore)
+	sprintf(interactionStr,"_hardcore");
+      else sprintf(interactionStr,"_u_%g", ContactU);
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d_u_%g_%s%sq_%d.dat", NbrBosons, Lx, Ly, ContactU, reverseHoppingString, deltaString, NbrFluxQuanta);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d_u_%g_%s%sq.dat", NbrBosons, Lx, Ly, ContactU, reverseHoppingString, deltaString);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
     }
-  ParticleOnLattice* Space=new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  ParticleOnLattice* Space;
+  if (HardCore)
+    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
   
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
@@ -213,7 +224,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d_u_%g_%s%sq_%d", NbrBosons, Lx, Ly, ContactU, reverseHoppingString, deltaString, NbrFluxQuanta);
+	  sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
 	}
       QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

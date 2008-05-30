@@ -233,7 +233,7 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
   this->NbrQ12Indices=0;
   
   // contact interactions come to play for bosons, only!
-  if (this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic)
+  if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->ContactInteractionU!=0.0))
     {
       cout << "adding interaction terms"<<endl;
       this->NbrDiagonalInteractionFactors=this->NbrSites;

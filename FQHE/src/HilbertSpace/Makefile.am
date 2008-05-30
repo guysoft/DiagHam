@@ -54,4 +54,5 @@ FermionOnSphereWithSU3SpinZ3Symmetry.cc \
 FermionOnSphereWithSU3SpinTzZ3Symmetry.cc \
 HardCoreBoson.cc \
 ParticleOnLattice.cc \
-BosonOnLattice.cc
+BosonOnLattice.cc \
+HardCoreBosonOnLattice.cc

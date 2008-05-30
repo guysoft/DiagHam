@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnLattice.h"
+#include "HilbertSpace/HardCoreBosonOnLattice.h"
 
 #include "Operator/ParticleOnLatticeOneBodyOperator.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
+  (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -104,12 +106,13 @@ int main(int argc, char** argv)
   double Interaction=0.0;
   int TmpI=-1;
   bool Statistics=false;
-  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics) == false)
+  bool HardCore;
+  if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
     {
       cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
       exit(1);
     }
-
+  HardCore|=Manager.GetBoolean("hard-core");
   int NbrSites = Lx*Ly;    
   int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
@@ -143,9 +146,12 @@ int main(int argc, char** argv)
     {
       cout << "No valid vector files found!"<<endl;
       exit(1);
-    }
+    }  
 
-  ParticleOnLattice* Space=new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  ParticleOnLattice* Space;
+  if (HardCore)
+    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
 
   if (VectorDimension != Space->GetHilbertSpaceDimension())
     {
