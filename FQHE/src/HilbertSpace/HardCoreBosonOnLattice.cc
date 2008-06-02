@@ -77,11 +77,19 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, i
   this->Flag.Initialize();
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrBosons,NbrStates);
+  
   this->StateDescription=new unsigned long[this->HilbertSpaceDimension];
   this->StateHighestBit=new int[this->HilbertSpaceDimension];
   this->GenerateStates(nbrBosons,NbrStates);
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
+
+//   for (int i=0; i<HilbertSpaceDimension; ++i)
+//     {
+//       this->PrintState(cout,i);
+//       cout << endl;
+//     }
+
   this->Flag.Initialize();
 #ifdef __DEBUG__
   // for (int i=0; i<HilbertSpaceDimension; ++i)
@@ -395,16 +403,16 @@ int HardCoreBosonOnLattice::AdAd (int m1, int m2, double& coefficient)
 // index = index of the state on which the operator has to be applied
 // m = index of the creation operator
 // n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
+// coefficient = reference on the double where the multiplicative factor has to be stored (always 1.0)
 // return value = index of the destination state 
 
-int HardCoreBosonOnLattice::AdA (int index, int m, int n)
+int HardCoreBosonOnLattice::AdA (int index, int m, int n, double &coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];
-  unsigned long State = this->StateDescription[index];
+  unsigned long State = this->StateDescription[index];  
   if (m!=n)
     {
-      if ((n > StateHighestBit) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+      if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0))
 	{
 	  return this->HilbertSpaceDimension;
 	}
@@ -425,6 +433,7 @@ int HardCoreBosonOnLattice::AdA (int index, int m, int n)
 	  NewHighestBit = m;
 	}
       TmpState |= (((unsigned long) (0x1)) << m);
+      coefficient = 1.0;
       return this->TargetSpace->FindStateIndex(TmpState, NewHighestBit);
     }
   else
@@ -432,7 +441,10 @@ int HardCoreBosonOnLattice::AdA (int index, int m, int n)
       if ((m > StateHighestBit) || ((State & (((unsigned long) (0x1)) << m)) == 0))
 	return this->HilbertSpaceDimension;
       else
-	return index;
+	{
+	  coefficient = 1.0;
+	  return index;
+	}
     }
 }
 

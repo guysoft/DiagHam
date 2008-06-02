@@ -106,14 +106,14 @@ int main(int argc, char** argv)
   double Interaction=0.0;
   int TmpI=-1;
   bool Statistics=false;
-  bool HardCore;
+  bool HardCore=false;
   if (FQHEOnLatticeFindSystemInfoFromVectorFileName(VectorFiles[0], NbrBosons, Lx, Ly, Interaction, NbrFluxQuanta, TmpI, Statistics, HardCore) == false)
     {
       cout<<"Please use standard file-names, or indicate all system parameters!"<<endl;
       exit(1);
-    }
-  HardCore|=Manager.GetBoolean("hard-core");
-  int NbrSites = Lx*Ly;    
+    }  
+  HardCore=(HardCore||Manager.GetBoolean("hard-core"));
+  int NbrSites = Lx*Ly;
   int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
   bool tmpB, haveVector=false;

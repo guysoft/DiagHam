@@ -213,8 +213,9 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // index = index of the state on which the operator has to be applied
   // m = index of the creation operator
   // n = index of the annihilation operator
+  // coefficient = reference on the multiplicative factor (result always 1.0 here)
   // return value = index of the destination state 
-  virtual int AdA (int index, int m, int n);
+  virtual int AdA (int index, int m, int n, double& coefficient);
 
  
   // apply \sum q U_q a^+_q a_q ( a^+_q a_q - 1 )
