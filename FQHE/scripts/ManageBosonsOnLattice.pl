@@ -115,6 +115,17 @@ my $paramU = $AllParam[5];
 my $paramN1 = $AllParam[6];
 my $paramN2 = $AllParam[7];
 
+my $Interaction;
+
+if ($paramU == "c")
+  {
+    $Interaction="-c"
+  }
+else
+  {
+    $Interaction="-u ".$paramU;
+  }
+
 my $StatesDir = "/rscratch/gm360/latticeQHE/states/n_${paramR}_${paramT}/";
 my $SpecDir = "/rscratch/gm360/latticeQHE/spectra/n_${paramR}_${paramT}/";
 my $WorkDir="";
@@ -177,7 +188,7 @@ if ( $WantAbort == 1)
     exit(1);
 }
 
-my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ -u $paramU ${Processors} ${EigenVectors} -m $Memory--show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
+my $Command = "ssh $Machine \"cd ${WorkDir}; nohup nice -n15 $Program -p ${NbrBosons} -x ${paramLx} -y ${paramLy} -q $paramQ ${Interaction} ${Processors} ${EigenVectors} -m $Memory --show-itertime >> log_p_${NbrBosons}_u_${paramU} \" &";
 
 open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$LaunchedFile'\n");
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
