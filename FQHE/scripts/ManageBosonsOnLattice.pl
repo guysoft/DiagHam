@@ -117,7 +117,7 @@ my $paramN2 = $AllParam[7];
 
 my $Interaction;
 
-if ($paramU == "c")
+if ($paramU eq "c")
   {
     $Interaction="-c"
   }
