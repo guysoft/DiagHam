@@ -143,9 +143,19 @@ typedef struct { doublereal r, i; } doublecomplex;
 
 #ifdef __INTEL_COMPILER
 
+// test if we might be running the LP64 / Intel hybrid (e.g. Darwin HPC facility)
+#ifdef __LP64__
+
+#define LONGLONG long long
+#define ULONGLONG unsigned long long
+
+#else
+
 #define __128_BIT_LONGLONG__
 #define LONGLONG __m128i
 #define ULONGLONG __m128i
+
+#endif
 
 #else
 

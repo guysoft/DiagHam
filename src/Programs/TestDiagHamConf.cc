@@ -136,6 +136,12 @@ int main()
 
 #endif
 
+#ifdef __INTEL_COMPILER
+
+  cout << "Intel compiler found"<<endl;
+
+#endif
+
 // define long long types (128 bits on x86_64 architecture, 64 bits elsewhere)
 
 #ifdef __x86_64__
