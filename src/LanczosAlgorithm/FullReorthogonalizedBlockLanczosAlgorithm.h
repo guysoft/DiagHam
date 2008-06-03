@@ -86,6 +86,9 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   // array used to store temporary scalar products
   double* TemporaryCoefficients;
 
+  // rely on LAPACK library to diagonalize the block matrix
+  bool LapackFlag;
+
  public:
 
   // default constructor
@@ -95,8 +98,9 @@ class FullReorthogonalizedBlockLanczosAlgorithm : public AbstractLanczosAlgorith
   // blockSize = size of the block used for the block Lanczos algorithm
   // maxIter = an approximation of maximal number of iteration (rounded to the upper multiple of blockSize)
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  // lapackFlag = rely on LAPACK library to diagonalize the block matrix
   FullReorthogonalizedBlockLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize = 2, int maxIter = 1000,
-					    bool strongConvergence = false);
+					    bool strongConvergence = false, bool lapackFlag = false);
 
   // copy constructor
   //

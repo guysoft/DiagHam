@@ -467,7 +467,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  if (this->DiskFlag == false)
 	    {
 	      if (this->BlockLanczosFlag == true)
-		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos);
+		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
 	      else
 		Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	    }

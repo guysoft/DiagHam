@@ -30,11 +30,29 @@
 
 #include "Matrix/RealBandDiagonalSymmetricMatrix.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
 
 #include <math.h>
+
+
+#ifdef HAVE_LAPACK
+
+// binding to the LAPACK dsyev function
+//
+extern "C" void FORTRAN_NAME(dsyev)(const char* jobz, const char* uplo, const int* dimension, const double* matrix, const int* leadingDimension,
+				    const double* eigenvalues, const double* workingArea, const int* workingAreaSize, const int* information);
+
+// binding to the LAPACK dsyevd function
+//
+extern "C" void FORTRAN_NAME(dsyevd)(const char* jobz, const char* uplo, const int* dimension, const double* matrix, const int* leadingDimension,
+                                     const double* eigenvalues, const double* workingArea, const int* workingAreaSize, 
+				     const int* integerWorkingArea, const int* integerWorkingAreaSize, const int* information);
+
+#endif
+
 
 
 using std::cout;
@@ -1066,6 +1084,129 @@ RealTriDiagonalSymmetricMatrix& RealBandDiagonalSymmetricMatrix::Tridiagonalize 
 
   return M;
 }
+
+#ifdef __LAPACK__
+
+// Diagonalize a real symmetric matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealBandDiagonalSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& M, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  double* TmpMatrix = new double [this->NbrRow * this->NbrRow];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  double TmpWorkingArea;
+  char Jobz = 'N';
+  char UpperLower = 'L';
+  int TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      int j = 0;
+      for (; j < i; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[i];
+      ++TotalIndex;
+      ++j;
+      int TmpMax = this->NbrRow - i - 1;
+      if (TmpMax > this->NbrBands)
+	TmpMax = this->NbrBands;
+      for (int k = 0; k < TmpMax; ++k)
+	{
+	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[k][i];
+	  ++TotalIndex;
+	  ++j;
+	}
+      for (; j < this->NbrRow; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  FORTRAN_NAME(dsyev)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dsyev)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, WorkingArea, &WorkingAreaSize, &Information);  
+  delete[] WorkingArea;
+  delete[] TmpMatrix;
+  return M;
+}
+
+// Diagonalize a real symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix where result has to be stored
+// Q = matrix where transformation matrix has to be stored
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real tridiagonal symmetric matrix
+
+RealDiagonalMatrix& RealBandDiagonalSymmetricMatrix::LapackDiagonalize (RealDiagonalMatrix& M, RealMatrix& Q, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  double* TmpMatrix = new double [this->NbrRow * this->NbrRow];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  double TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz = 'V';
+  char UpperLower = 'L';
+  int TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      int j = 0;
+      for (; j < i; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[i];
+      ++TotalIndex;
+      ++j;
+      int TmpMax = this->NbrRow - i - 1;
+      if (TmpMax > this->NbrBands)
+	TmpMax = this->NbrBands;
+      for (int k = 0; k < TmpMax; ++k)
+	{
+	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[k][i];
+	  ++TotalIndex;
+	  ++j;
+	}
+      for (; j < this->NbrRow; ++j)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  FORTRAN_NAME(dsyevd)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &IntegerWorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  IntegerWorkingAreaSize = TmpIntegerWorkingArea;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+  FORTRAN_NAME(dsyevd)(&Jobz, &UpperLower, &this->NbrRow, TmpMatrix, &this->NbrRow, M.DiagonalElements, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &IntegerWorkingAreaSize, &Information);  
+  TotalIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	Q(j, i) = TmpMatrix[TotalIndex];
+	++TotalIndex;
+      }
+  delete[] WorkingArea;
+  delete[] IntegerWorkingArea;
+  delete[] TmpMatrix;
+  return M;
+}
+
+#endif
 
 // Output Stream overload
 //
