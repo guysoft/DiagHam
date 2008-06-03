@@ -69,12 +69,33 @@ foreach $TmpFile (@ListFiles)
 sub AnalyzeVectors
   {
     my $FileName = $_[0];
-    $FileName =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_u\_(-*\d*[\.]*\d*)\_/;
-    my $N = $1;
-    my $x = $2;
-    my $y = $3;
-    my $u = $4;
-    my $q = -1;
+    my $HardCore;
+    my $N;
+    my $x;
+    my $y;
+    my $u;
+    my $q;
+    if ($FileName =~ m/hardcore/)
+      {
+
+	$FileName =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_/;
+	$N = $1;
+	$x = $2;
+	$y = $3;
+	$u = 0;
+	$HardCore=1;
+	$q = -1;
+      }
+    else
+      {
+	$FileName =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_u\_(-*\d*[\.]*\d*)\_/;
+	$N = $1;
+	$x = $2;
+	$y = $3;
+	$u = $4;
+	$HardCore=0;
+	$q = -1;
+      }
     my $BaseName = $FileName;
     if ($FileName =~ /bosons\_lattice.*\_q\_(\d*).dat/)
       {
@@ -85,7 +106,14 @@ sub AnalyzeVectors
       {
 	$BaseName =~ s/q.dat/q/;	
       }
-    print "n = ".$N."  x = ".$x."  y = ".$y."  u = ".$u."\n";
+    if ( $HardCore == 1)
+      {
+	print "n = ".$N."  x = ".$x."  y = ".$y."  (hardcore bosons)\n";
+      }
+    else
+      {
+	print "n = ".$N."  x = ".$x."  y = ".$y."  u = ".$u."\n";
+      }
     my $MinQ;
     my $MaxQ;
     if ( $q==-1 )
