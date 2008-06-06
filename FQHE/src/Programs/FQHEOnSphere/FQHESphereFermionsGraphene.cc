@@ -521,8 +521,10 @@ int main(int argc, char** argv)
 	  return -1;	  
 	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      AbstractQHEHamiltonian* Hamiltonian;
-      
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+        Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
+      AbstractQHEHamiltonian* Hamiltonian;      
       Hamiltonian = new ParticleOnSphereWithSU4SpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, 
 								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
       Hamiltonian->ShiftHamiltonian(Shift);
