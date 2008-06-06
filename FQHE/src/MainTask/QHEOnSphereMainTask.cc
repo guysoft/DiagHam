@@ -48,6 +48,7 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 
 #include "Options/OptionManager.h"
@@ -213,7 +214,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
       this->LanczosPrecision = 0.0;
     }
 
-  if (((*options)["fast-disk"] != 0) && (this->NbrEigenvalue == 1) && (this->EvaluateEigenvectors == true))
+  if (((*options)["fast-disk"] != 0) && (this->EvaluateEigenvectors == true))
     {
       this->FastDiskFlag = ((BooleanOption*) (*options)["fast-disk"])->GetBoolean();
       if ((*options)["resume-fastdisk"] != 0)
@@ -464,15 +465,26 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  if (this->DiskFlag == false)
+	  if (this->FullReorthogonalizationFlag == true)
+	    {
+	      if (this->DiskFlag == false)
+		{
+		  if (this->BlockLanczosFlag == true)
+		    Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+		  else
+		    Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		}
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+	    }
+	  else
 	    {
 	      if (this->BlockLanczosFlag == true)
-		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+		Lanczos = new BasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+							  this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
 	      else
 		Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	    }
-	  else
-	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
 	}
       if (this->LanczosReorthogonalization != 0)
 	{

@@ -71,16 +71,9 @@ BasicBlockLanczosAlgorithm::BasicBlockLanczosAlgorithm(AbstractArchitecture* arc
     this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 1) * this->BlockSize;
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
-  if (this->DiskFlag == false)
-    {
-      this->LanczosVectors = new RealVector [3 * this->BlockSize];
-      this->TemporaryCoefficients = new double [3 * this->BlockSize];
-    }
-  else
-    {
-      this->LanczosVectors = new RealVector [2 * this->BlockSize];
-      this->TemporaryCoefficients = new double [2 * this->BlockSize];
-    }
+  this->LanczosVectors = new RealVector [3 * this->BlockSize];
+  this->TemporaryCoefficients = new double [3 * this->BlockSize];
+  this->InitialStates = new RealVector [this->BlockSize];
 
   if (this->MaximumNumberIteration > 0)
     {
@@ -162,27 +155,45 @@ BasicBlockLanczosAlgorithm::~BasicBlockLanczosAlgorithm()
 
 void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm() 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->LanczosVectors[0] = RealVector (Dimension);
-  for (int i = 0; i < Dimension; i++)
-    this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
-  this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
-  double* TmpCoef = new double [this->NbrEigenvalue];
-  for (int j = 1; j < this->BlockSize; ++j)
+  if (this->ResumeDiskFlag == false)
     {
-      this->LanczosVectors[j] = RealVector (Dimension);
-      for (int i = 0; i < Dimension; ++i)
-	this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
-      for (int i = 0; i < j; ++i)
-	TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
-      for (int i = 0; i < j; ++i)
-	this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
-      double TmpNorm = this->LanczosVectors[j].Norm();
-      this->LanczosVectors[j] /= TmpNorm;
+      int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+      this->LanczosVectors[0] = RealVector (Dimension);
+      for (int i = 0; i < Dimension; i++)
+	this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
+      this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
+      double* TmpCoef = new double [this->NbrEigenvalue];
+      for (int j = 1; j < this->BlockSize; ++j)
+	{
+	  this->LanczosVectors[j] = RealVector (Dimension);
+	  for (int i = 0; i < Dimension; ++i)
+	    this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
+	  for (int i = 0; i < j; ++i)
+	    TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
+	  for (int i = 0; i < j; ++i)
+	    this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
+	  double TmpNorm = this->LanczosVectors[j].Norm();
+	  this->LanczosVectors[j] /= TmpNorm;
+	}
+      delete[] TmpCoef;
+      if (this->DiskFlag == false)
+	{	  
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    this->InitialStates[j] = RealVector (this->LanczosVectors[j], true);
+	}
+      else
+	{
+	  char* TmpVectorName = new char [256];
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", k);
+	      this->LanczosVectors[k].WriteVector(TmpVectorName);
+	    }
+	  delete[] TmpVectorName;	  
+	}
+      this->Index = 0;
+      this->ReducedMatrix.Resize(0, 0);
     }
-  delete[] TmpCoef;
-  this->Index = 0;
-  this->ReducedMatrix.Resize(0, 0);
 }
   
 // initialize Lanczos algorithm with a given vector
@@ -191,24 +202,42 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
 
 void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector& vector) 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->LanczosVectors[0] = vector;
-  double* TmpCoef = new double [this->NbrEigenvalue];
-  for (int j = 1; j < this->NbrEigenvalue; ++j)
+  if (this->ResumeDiskFlag == false)
     {
-      this->LanczosVectors[j] = RealVector (Dimension);
-      for (int i = 0; i < Dimension; ++i)
-	this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
-      for (int i = 0; i < j; ++i)
-	TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
-      for (int i = 0; i < j; ++i)
-	  this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
-      double TmpNorm = this->LanczosVectors[j].Norm();
-      this->LanczosVectors[j] /= TmpNorm;
+      int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+      this->LanczosVectors[0] = vector;
+      double* TmpCoef = new double [this->NbrEigenvalue];
+      for (int j = 1; j < this->NbrEigenvalue; ++j)
+	{
+	  this->LanczosVectors[j] = RealVector (Dimension);
+	  for (int i = 0; i < Dimension; ++i)
+	    this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
+	  for (int i = 0; i < j; ++i)
+	    TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
+	  for (int i = 0; i < j; ++i)
+	    this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
+	  double TmpNorm = this->LanczosVectors[j].Norm();
+	  this->LanczosVectors[j] /= TmpNorm;
+	}
+      delete[] TmpCoef;
+      this->Index = 0;
+      if (this->DiskFlag == false)
+	{	  
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    this->InitialStates[j] = RealVector (this->LanczosVectors[j], true);
+	}
+      else
+	{
+	  char* TmpVectorName = new char [256];
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", k);
+	      this->LanczosVectors[k].WriteVector(TmpVectorName);
+	    }
+	  delete[] TmpVectorName;	  
+	}
+      this->ReducedMatrix.Resize(0, 0);
     }
-  delete[] TmpCoef;
-  this->Index = 0;
-  this->ReducedMatrix.Resize(0, 0);
 }
 
 // get last produced vector
@@ -261,7 +290,7 @@ Vector& BasicBlockLanczosAlgorithm::GetGroundState()
 
 Vector* BasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 {
-  RealVector* Eigenstates = new RealVector [nbrEigenstates];
+  RealVector* Eigenstates = new RealVector [this->BlockSize];
   RealMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
   for (int i = 0; i < this->ReducedMatrix.GetNbrRow(); ++i)
     TmpEigenvector(i, i) = 1.0;
@@ -285,17 +314,132 @@ Vector* BasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
     }
 #endif
   SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
-  double* TmpCoefficents = new double [this->ReducedMatrix.GetNbrRow()];
-  for (int i = 0; i < nbrEigenstates; ++i) 
+
+  double* TmpCoefficents = new double [this->BlockSize];
+  if (this->DiskFlag == false)
     {
-      for (int j = 0; j < this->ReducedMatrix.GetNbrRow(); ++j)
-	TmpCoefficents[j] = TmpEigenvector(j, i);
-      Eigenstates[i] = RealVector (this->Hamiltonian->GetHilbertSpaceDimension());
-      Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
-      AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->ReducedMatrix.GetNbrRow() - 1, &(TmpCoefficents[1]));
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  Eigenstates[i].Copy(this->InitialStates[0], TmpEigenvector(0, i));
+	  for (int j = 1; j < this->BlockSize; ++j)
+	    TmpCoefficents[j - 1] = TmpEigenvector(j, i);	  
+	  AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->InitialStates[1]), this->BlockSize - 1,  TmpCoefficents);
+	  Operation.ApplyOperation(this->Architecture);
+	  this->LanczosVectors[i].Copy(this->InitialStates[i]);
+	}       
+      MultipleVectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, this->LanczosVectors, &(this->LanczosVectors[this->BlockSize]), this->BlockSize);
       Operation.ApplyOperation(this->Architecture);
-      Eigenstates[i] /= Eigenstates[i].Norm();
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize]), this->LanczosVectors,   
+							i + 1, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	  for (int j = 0; j <= i; ++j)
+	    {
+	      this->ReducedMatrix(i, j) = this->TemporaryCoefficients[j];
+	    }
+	}
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    this->TemporaryCoefficients[j] = -this->ReducedMatrix(i, j);
+	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[this->BlockSize + i]), this->LanczosVectors, 
+							this->BlockSize, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	}
+      
+      this->ReorthogonalizeVectors(&(this->LanczosVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, 0, this->BlockSize);
+      for (int k = 0; k < this->BlockSize; ++k)
+ 	{
+ 	  for (int j = 0; j < this->BlockSize; ++j)
+ 	    TmpCoefficents[j] = TmpEigenvector(this->BlockSize + j, k);	  
+ 	  AddRealLinearCombinationOperation Operation5 (&(Eigenstates[k]), &(this->LanczosVectors[this->BlockSize]), this->BlockSize,  TmpCoefficents);
+ 	  Operation5.ApplyOperation(this->Architecture);
+ 	}       
+      for (int i = 1; i < this->Index; ++i)
+	{
+	  this->ReducedMatrix.Resize((i + 1) * this->BlockSize, (i + 1) * this->BlockSize);
+	  int NewVectorPosition = i * this->BlockSize;
+	  MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
+								 &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
+	  Operation2.ApplyOperation(this->Architecture);
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[k + (2 * this->BlockSize)]), 
+							    &(this->LanczosVectors[this->BlockSize]),   
+							    k + 1, this->TemporaryCoefficients);
+	      Operation.ApplyOperation(this->Architecture);
+	      for (int j = 0; j <= k; ++j)
+		{
+		  this->ReducedMatrix(NewVectorPosition + k, NewVectorPosition + j) = this->TemporaryCoefficients[j];
+		}
+	    }
+	  int Lim = (i - 1) * this->BlockSize;
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    {
+	      for (int k = j; k < (2 * this->BlockSize); ++k)
+		this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
+	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + (2 * this->BlockSize)]), &(this->LanczosVectors[j]), 
+							    2 * this->BlockSize - j,
+							    this->TemporaryCoefficients);	  
+	      Operation2.ApplyOperation(this->Architecture);
+	    }
+	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
+				       NewVectorPosition - this->BlockSize, NewVectorPosition);  
+ 	  for (int k = 0; k < this->BlockSize; ++k)
+ 	    {
+ 	      for (int j = 0; j < this->BlockSize; ++j)
+ 		TmpCoefficents[j] = TmpEigenvector(((i + 1) * this->BlockSize) + j, k);	  
+ 	      AddRealLinearCombinationOperation Operation5 (&(Eigenstates[k]), &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize,  TmpCoefficents);
+ 	      Operation5.ApplyOperation(this->Architecture);
+ 	    }       	  
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      RealVector TmpVector = this->LanczosVectors[k];
+	      this->LanczosVectors[k] = this->LanczosVectors[k + this->BlockSize];
+	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
+	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
+	    }
+ 	  cout << ".";
+ 	  cout.flush();
+	}
     }
+  else
+    {
+      char* TmpVectorName = new char [256];
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", j);
+	      this->LanczosVectors[j].ReadVector(TmpVectorName);
+	    }
+	  Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
+	  for (int j = 1; j < this->BlockSize; ++j)
+	    TmpCoefficents[j - 1] = TmpEigenvector(j, i);	  
+	  AddRealLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->LanczosVectors[1]), this->BlockSize - 1,  TmpCoefficents);
+	  Operation.ApplyOperation(this->Architecture);
+	}       
+      for (int i = 1; i < this->Index; ++i)
+	{
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", ((i * this->BlockSize) + j));
+	      this->LanczosVectors[j].ReadVector(TmpVectorName);
+	    }
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      for (int j = 0; j < this->BlockSize; ++j)
+		TmpCoefficents[j] = TmpEigenvector((i * this->BlockSize) + j, k);	  
+	      AddRealLinearCombinationOperation Operation (&(Eigenstates[k]), this->LanczosVectors, this->BlockSize,  TmpCoefficents);
+	      Operation.ApplyOperation(this->Architecture);
+	    }
+	}
+      delete[] TmpVectorName;
+    }
+  for (int i = 0; i < this->BlockSize; ++i)
+    Eigenstates[i] /= Eigenstates[i].Norm();
+  cout << endl;
   delete[] TmpCoefficents;
   return Eigenstates;
 }
@@ -340,41 +484,30 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	}
 
       this->ReorthogonalizeVectors(&(this->LanczosVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, 0, this->BlockSize);
-      
-      if (this->DiskFlag == false)
+      if (this->DiskFlag == true)
 	{
+	  char* TmpVectorName = new char [256];
 	  for (int k = 0; k < this->BlockSize; ++k)
-	    this->LanczosVectors[k + (2 * this->BlockSize)] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
-	  MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
-								 &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
-	  Operation3.ApplyOperation(this->Architecture);
-	  for (int i = 0; i < this->BlockSize; ++i)
 	    {
-	      MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + (2 * this->BlockSize)]), 
-							     &(this->LanczosVectors[this->BlockSize]),   
-							     i + 1, this->TemporaryCoefficients);
-	      Operation2.ApplyOperation(this->Architecture);
-	      for (int j = 0; j <= i; ++j)
-		{
-		  this->ReducedMatrix(this->BlockSize + i, this->BlockSize + j) = this->TemporaryCoefficients[j];
-		}
+	      sprintf(TmpVectorName, "vector.%d", (k + this->BlockSize));
+	      this->LanczosVectors[k + this->BlockSize].WriteVector(TmpVectorName);
 	    }
+	  delete[] TmpVectorName;
 	}
-      else
+      for (int k = 0; k < this->BlockSize; ++k)
+	this->LanczosVectors[k + (2 * this->BlockSize)] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
+      MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
+							     &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
+      Operation3.ApplyOperation(this->Architecture);
+      for (int i = 0; i < this->BlockSize; ++i)
 	{
-	  MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, this->LanczosVectors), 
-								 &(this->LanczosVectors[this->BlockSize]), this->BlockSize);
-	  Operation3.ApplyOperation(this->Architecture);	  
-	  for (int i = 0; i < this->BlockSize; ++i)
+	  MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + (2 * this->BlockSize)]), 
+							 &(this->LanczosVectors[this->BlockSize]),   
+							 i + 1, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	  for (int j = 0; j <= i; ++j)
 	    {
-	      MultipleRealScalarProductOperation Operation2 (&(this->LanczosVectors[i + this->BlockSize)]), 
-							     this->LanczosVectors),   
-							     i + 1, this->TemporaryCoefficients);
-	      Operation2.ApplyOperation(this->Architecture);
-	      for (int j = 0; j <= i; ++j)
-		{
-		  this->ReducedMatrix(this->BlockSize + i, this->BlockSize + j) = this->TemporaryCoefficients[j];
-		}
+	      this->ReducedMatrix(this->BlockSize + i, this->BlockSize + j) = this->TemporaryCoefficients[j];
 	    }
 	}
  
@@ -391,19 +524,34 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
       int NewVectorPosition = this->Index * this->BlockSize;
       int Lim = (this->Index - 2) * this->BlockSize;
 
-      if (this->DiskFlag == false)
+      for (int j = 0; j < this->BlockSize; ++j)
 	{
-	  for (int j = 0; j < this->BlockSize; ++j)
+	  for (int k = j; k < (2 * this->BlockSize); ++k)
+	    this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
+	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + (2 * this->BlockSize)]), &(this->LanczosVectors[j]), 
+							2 * this->BlockSize - j,
+							this->TemporaryCoefficients);	  
+	  Operation2.ApplyOperation(this->Architecture);
+	}
+      this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
+				   NewVectorPosition - this->BlockSize, NewVectorPosition);  
+      if (this->DiskFlag == true)
+	{
+	  char* TmpVectorName = new char [256];
+	  for (int k = 0; k < this->BlockSize; ++k)
 	    {
-	      for (int k = j; k < (2 * this->BlockSize); ++k)
-		this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
-	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + (2 * this->BlockSize)]), &(this->LanczosVectors[j]), 
-							    2 * this->BlockSize - j,
-							    this->TemporaryCoefficients);	  
-	      Operation2.ApplyOperation(this->Architecture);
+	      sprintf(TmpVectorName, "vector.%d", (this->Index * this->BlockSize) + k);
+	      this->LanczosVectors[(2 * this->BlockSize) + k].WriteVector(TmpVectorName);
+	      RealVector TmpVector = this->LanczosVectors[k];
+	      this->LanczosVectors[k] = this->LanczosVectors[k + this->BlockSize];
+	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
+	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
+	      this->LanczosVectors[k] = RealVector();
 	    }
-	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
-				       NewVectorPosition - this->BlockSize, NewVectorPosition);  
+	  delete[] TmpVectorName;
+	}
+      else
+	{
 	  for (int k = 0; k < this->BlockSize; ++k)
 	    {
 	      RealVector TmpVector = this->LanczosVectors[k];
@@ -411,59 +559,30 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	      this->LanczosVectors[k + this->BlockSize] = this->LanczosVectors[k + (2 * this->BlockSize)];
 	      this->LanczosVectors[k + (2 * this->BlockSize)] = TmpVector;
 	    }
-	  delete[] TmpVectorName;
-	  MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[NewVectorPosition]), 
-								 &(this->LanczosVectors[this->BlockSize + NewVectorPosition]), this->BlockSize);
-	  Operation2.ApplyOperation(this->Architecture);
-	  
-	  for (int k = 0; k < this->BlockSize; ++k)
-	    {
-	      MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[k + (2 * this->BlockSize)]), 
-							    &(this->LanczosVectors[this->BlockSize]),   
-							    k + 1, this->TemporaryCoefficients);
-	      Operation.ApplyOperation(this->Architecture);
-	      for (int j = 0; j <= k; ++j)
-		{
-		  this->ReducedMatrix(NewVectorPosition + k, NewVectorPosition + j) = this->TemporaryCoefficients[j];
-		}
-	    }
 	}
-      else
+      MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[this->BlockSize]), 
+							     &(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize);
+      Operation2.ApplyOperation(this->Architecture);
+      if (this->DiskFlag == true)
 	{
-	  for (int j = 0; j < this->BlockSize; ++j)
-	    {
-	      for (int k = j; k < (2 * this->BlockSize); ++k)
-		this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
-	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + NewVectorPosition]), &(this->LanczosVectors[Lim + j]), 
-							    2 * this->BlockSize - j,
-							    this->TemporaryCoefficients);	  
-	      Operation2.ApplyOperation(this->Architecture);
-	    }
-	  this->ReorthogonalizeVectors(&(this->LanczosVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
-				       NewVectorPosition - this->BlockSize, NewVectorPosition);  
 	  char* TmpVectorName = new char [256];
 	  for (int k = 0; k < this->BlockSize; ++k)
 	    {
-	      sprintf(TmpVectorName, "vector.%d", i);
-	      this->LanczosVectors[k].WriteState();
-	      RealVector TmpVector = this->LanczosVectors[k];
-	      this->LanczosVectors[k] = this->LanczosVectors[k + this->BlockSize];
-	      this->LanczosVectors[k + this->BlockSize] = TmpVector;
+	      char* TmpVectorName = new char [256];
+	      sprintf(TmpVectorName, "vector.%d", (k + ((this->Index - 1) * this->BlockSize)));
+	      this->LanczosVectors[k].ReadVector(TmpVectorName);
 	    }
-	  MultipleVectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->LanczosVectors[NewVectorPosition]), 
-								 &(this->LanczosVectors[this->BlockSize + NewVectorPosition]), this->BlockSize);
-	  Operation2.ApplyOperation(this->Architecture);
-	  
-	  for (int k = 0; k < this->BlockSize; ++k)
+	  delete[] TmpVectorName;
+	}      
+      for (int k = 0; k < this->BlockSize; ++k)
+	{
+	  MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[k + (2 * this->BlockSize)]), 
+							&(this->LanczosVectors[this->BlockSize]),   
+							k + 1, this->TemporaryCoefficients);
+	  Operation.ApplyOperation(this->Architecture);
+	  for (int j = 0; j <= k; ++j)
 	    {
-	      MultipleRealScalarProductOperation Operation (&(this->LanczosVectors[k + this->BlockSize]), 
-							    this->LanczosVectors,   
-							    k + 1, this->TemporaryCoefficients);
-	      Operation.ApplyOperation(this->Architecture);
-	      for (int j = 0; j <= k; ++j)
-		{
-		  this->ReducedMatrix(NewVectorPosition + k, NewVectorPosition + j) = this->TemporaryCoefficients[j];
-		}
+	      this->ReducedMatrix(NewVectorPosition + k, NewVectorPosition + j) = this->TemporaryCoefficients[j];
 	    }
 	}
       ++this->Index;

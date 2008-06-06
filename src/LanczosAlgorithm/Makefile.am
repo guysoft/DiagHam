@@ -19,6 +19,7 @@ FullReorthogonalizedBlockLanczosAlgorithm.cc \
 ImplicitRestartedArnoldiWithReorthogonalizationAlgorithm.cc \
 BasicLanczosAlgorithmWithGroundStateDiskStorage.cc \
 ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.cc \
+BasicBlockLanczosAlgorithm.cc \
 LanczosManager.cc
 
 
