@@ -38,6 +38,7 @@
 
 StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const unsigned int& seed)
 {
+  this->NbrGeneratedNumbers = 0ul;
   if (seed != 0)
     srand (seed);
 }
@@ -48,6 +49,7 @@ StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const unsigned int& see
 
 StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const StdlibRandomNumberGenerator& generator)
 {
+  this->NbrGeneratedNumbers = generator.NbrGeneratedNumbers;
 }
 
 // destructor

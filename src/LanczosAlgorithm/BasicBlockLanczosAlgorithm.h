@@ -153,12 +153,19 @@ class BasicBlockLanczosAlgorithm : public AbstractLanczosAlgorithm
 
  protected:
   
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  bool ReadState();
+
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  bool WriteState();
+
   // diagonalize tridiagonalized matrix and find ground state energy
   //
   void Diagonalize ();
-
-
- private:
 
   // reorthogonalize a set of vectors using Gram-Schmidt algorithm
   //

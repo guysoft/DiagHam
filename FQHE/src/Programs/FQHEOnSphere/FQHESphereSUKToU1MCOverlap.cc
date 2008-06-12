@@ -30,6 +30,8 @@
 
 #include "GeneralTools/ConfigurationParser.h"
 
+#include "GeneralTools/Endian.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -85,6 +87,7 @@ int main(int argc, char** argv)
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
+  (*MonteCarloGroup) += new BooleanOption  ('r', "resume", "resume from a previous run");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
@@ -125,6 +128,7 @@ int main(int argc, char** argv)
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   bool InvertFlag = Manager.GetBoolean("reverse-flux");
+  bool ResumeFlag = Manager.GetBoolean("resume");
   int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
   bool UseExactFlag = false;
   bool StatisticFlag = true;
@@ -273,8 +277,21 @@ int main(int argc, char** argv)
   AbstractRandomNumberGenerator* RandomNumber = 0;
   if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
     {
-      RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (NbrWarmUpIter * 4) + (NbrIter * 4) + 2000, 
-						   ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
+      if (ResumeFlag == true)
+	{
+	  ifstream MCState;
+	  MCState.open("mcstate.dat", ios::in | ios::binary);
+	  int TmpNbrIter;
+	  ReadLittleEndian(MCState, TmpNbrIter);
+	  unsigned long TmpNumber;
+	  ReadLittleEndian(MCState, TmpNumber);
+	  MCState.close();
+	  RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), TmpNumber, 
+						       ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());	  
+	}
+      else
+	RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (NbrWarmUpIter * 4) + (NbrIter * 4) + 2000, 
+						     ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
     }
   else
     {
@@ -305,19 +322,6 @@ int main(int argc, char** argv)
     {
        int RecordStep = Manager.GetInteger("record-step");
        
-       Complex** RecordedOverlap = 0;
-       Complex** RecordedOverlapError = 0;
-       if (RecordStep != 0)
-	 {
-	   RecordedOverlap  = new Complex*[NbrExactStates];
-	   RecordedOverlapError  = new Complex*[NbrExactStates];
-	   for (int j = 0; j < NbrExactStates; ++j)
-	     {
-	       RecordedOverlap[j] = new Complex [(NbrIter / RecordStep) + 1];
-	       RecordedOverlapError[j] = new Complex [(NbrIter / RecordStep) + 1];
-	     }
-	 }
-       int RecordIndex = 0;
        double Normalization = 0.0;
        double ErrorNormalization = 0.0;
        Complex Tmp;
@@ -328,98 +332,144 @@ int main(int argc, char** argv)
        double* ErrorNormalizationExact = new double[NbrExactStates];
        Complex* Tmp3 = new Complex[NbrExactStates];
        double* Tmp2bis = new double[NbrExactStates];
-       for (int j = 0; j < NbrExactStates; ++j)
-	 {
-	   Overlap[j] = 0.0;
-	   ErrorOverlap[j] = 0.0;
-	   NormalizationExact[j] = 0.0;	   
-	   ErrorNormalizationExact[j] = 0.0;	 
-	   Tmp3[j] = 0.0;	   
-	   Tmp2bis[j] = 0.0;	 
-	 }
-      int NextCoordinates = 0;
+       int NextCoordinates = 0;
        ComplexVector TmpUV (NbrParticles * 2, true);
        RealVector TmpPositions (NbrParticles * 2, true);
-       RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
-       if (UseExactFlag == false)
-	 Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
-       else
-	 {
-	   if (UseBaseAsWeightFlag == false)
-	     {
-	       QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
-	       Operation.ApplyOperation(Architecture.GetArchitecture());      
-	       Tmp = Operation.GetScalar();
-	     }
-	   else
-	     Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-	 }
        Complex* ValueExact = new Complex[NbrExactStates];
-       if (UseBaseAsWeightFlag == false)
-	 ValueExact[0] = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-       else
-	 {
-	   QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
-	   Operation.ApplyOperation(Architecture.GetArchitecture());      
-	   ValueExact[0] = Operation.GetScalar();
-	 }
-       double PreviousProbabilities = Norm(Tmp);
-       double CurrentProbabilities = PreviousProbabilities;
-       double TotalProbability = PreviousProbabilities;
+       double PreviousProbabilities = 0.0;
+       double CurrentProbabilities = 0.0;
+       double TotalProbability = 0.0;
        int Acceptance = 0;
        double AcceptanceRate = 1.0;
-       if (NbrWarmUpIter > 0)
-	 cout << "starting warm-up sequence" << endl;
-       for (int i = 1; i < NbrWarmUpIter; ++i)
-	 {      
-	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
-	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
-	   double PreviousCoordinates1 = TmpPositions[NextCoordinates << 1];
-	   double PreviousCoordinates2 = TmpPositions[1 + (NextCoordinates << 1)];
-	   Complex TmpMetropolis;
-	   RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinates, RandomNumber);
+       int InitialNbrIter = 0;
+       if (ResumeFlag == false)
+	 {
+	   for (int j = 0; j < NbrExactStates; ++j)
+	     {
+	       Overlap[j] = 0.0;
+	       ErrorOverlap[j] = 0.0;
+	       NormalizationExact[j] = 0.0;	   
+	       ErrorNormalizationExact[j] = 0.0;	 
+	       Tmp3[j] = 0.0;	   
+	       Tmp2bis[j] = 0.0;	 
+	     }
+	   RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	   if (UseExactFlag == false)
-	     TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	     Tmp = TestFunction->CalculateFromSpinorVariables(TmpUV);
 	   else
 	     {
 	       if (UseBaseAsWeightFlag == false)
 		 {
 		   QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
 		   Operation.ApplyOperation(Architecture.GetArchitecture());      
-		   TmpMetropolis = Operation.GetScalar();
+		   Tmp = Operation.GetScalar();
 		 }
 	       else
-		 TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+		 Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	     }
-	   CurrentProbabilities = Norm(TmpMetropolis);
-	   if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
-	     {
-	       PreviousProbabilities = CurrentProbabilities;
-	       ++Acceptance;
-	     }
+	   if (UseBaseAsWeightFlag == false)
+	     ValueExact[0] = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	   else
 	     {
-	       TmpUV.Re(NextCoordinates << 1) = PreviousCoordinatesU.Re;
-	       TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
-	       TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
-	       TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
-	       TmpPositions[NextCoordinates << 1] = PreviousCoordinates1;
-	       TmpPositions[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
-	       CurrentProbabilities = PreviousProbabilities;
+	       QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
+	       Operation.ApplyOperation(Architecture.GetArchitecture());      
+	       ValueExact[0] = Operation.GetScalar();
 	     }
-	   NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
-	   if ((i % 1000) == 0)
+	   PreviousProbabilities = Norm(Tmp);
+	   CurrentProbabilities = PreviousProbabilities;
+	   TotalProbability = PreviousProbabilities;
+	   Acceptance = 0;
+	   AcceptanceRate = 1.0;
+	   if (NbrWarmUpIter > 0)
+	     cout << "starting warm-up sequence" << endl;
+	   for (int i = 1; i < NbrWarmUpIter; ++i)
+	     {      
+	       Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
+	       Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
+	       double PreviousCoordinates1 = TmpPositions[NextCoordinates << 1];
+	       double PreviousCoordinates2 = TmpPositions[1 + (NextCoordinates << 1)];
+	       Complex TmpMetropolis;
+	       RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinates, RandomNumber);
+	       if (UseExactFlag == false)
+		 TmpMetropolis = TestFunction->CalculateFromSpinorVariables(TmpUV);
+	       else
+		 {
+		   if (UseBaseAsWeightFlag == false)
+		     {
+		       QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
+		       Operation.ApplyOperation(Architecture.GetArchitecture());      
+		       TmpMetropolis = Operation.GetScalar();
+		     }
+		   else
+		     TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+		 }
+	       CurrentProbabilities = Norm(TmpMetropolis);
+	       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+		 {
+		   PreviousProbabilities = CurrentProbabilities;
+		   ++Acceptance;
+		 }
+	       else
+		 {
+		   TmpUV.Re(NextCoordinates << 1) = PreviousCoordinatesU.Re;
+		   TmpUV.Im(NextCoordinates << 1) = PreviousCoordinatesU.Im;
+		   TmpUV.Re(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Re;
+		   TmpUV.Im(1 + (NextCoordinates << 1)) = PreviousCoordinatesV.Im;
+		   TmpPositions[NextCoordinates << 1] = PreviousCoordinates1;
+		   TmpPositions[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
+		   CurrentProbabilities = PreviousProbabilities;
+		 }
+	       NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
+	       if ((i % 1000) == 0)
+		 {
+		   AcceptanceRate = ((double) Acceptance) / ((double) i);
+		   cout << Acceptance << " / " << i << " = " << ((100.0 * ((double) Acceptance)) / ((double) i)) << "%" << endl;
+		 }
+	     }
+	   
+	   if (NbrWarmUpIter > 0)
+	     cout << "warm-up sequence is over" << endl;
+	   Acceptance = 0;
+	   if ((RecordStep != 0) && (ResumeFlag == false))
 	     {
-	       AcceptanceRate = ((double) Acceptance) / ((double) i);
-	       cout << Acceptance << " / " << i << " = " << ((100.0 * ((double) Acceptance)) / ((double) i)) << "%" << endl;
+	       ofstream OverlapRecordFile;
+	       OverlapRecordFile.precision(14);
+	       OverlapRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary);
+	       OverlapRecordFile << "# Monte Carlo overlap calculation" << endl
+				 << "# step overlap.Re overlap.Im error.Re error.Im [(scalar_product.Re scalar_product.Im error_scalar_product.Re error_scalar_product.Im normalization_exact error_normalization_exact) per state] normalization error_normalization" << endl;
 	     }
 	 }
-     
-       if (NbrWarmUpIter > 0)
-	 cout << "warm-up sequence is over" << endl;
-       Acceptance = 0;
-      
-       for (int i = 0; i < NbrIter; ++i)
+       else
+	 {
+	   ifstream MCState;
+	   MCState.open("mcstate.dat", ios::in | ios::binary);
+	   ReadLittleEndian(MCState, InitialNbrIter);
+	   unsigned long TmpNumber;
+	   ReadLittleEndian(MCState, TmpNumber);
+	   ReadLittleEndian(MCState, Acceptance);
+	   ReadLittleEndian(MCState, PreviousProbabilities);
+	   ReadLittleEndian(MCState, CurrentProbabilities);
+	   ReadLittleEndian(MCState, TotalProbability);
+	   ReadLittleEndian(MCState, NextCoordinates);
+	   for (int j = 0; j < (NbrParticles >> 1); ++j)
+	     {		   	       
+	       ReadLittleEndian(MCState, TmpUV.Re(j));
+	       ReadLittleEndian(MCState, TmpUV.Im(j));
+	     }
+	   ReadLittleEndian(MCState, Normalization);
+	   ReadLittleEndian(MCState, ErrorNormalization);
+	   for (int j = 0; j < NbrExactStates; ++j)
+	     {		   	       
+	       ReadLittleEndian(MCState, Overlap[j].Re);
+	       ReadLittleEndian(MCState, Overlap[j].Im);
+	       ReadLittleEndian(MCState, ErrorOverlap[j].Re);
+	       ReadLittleEndian(MCState, ErrorOverlap[j].Im);
+	       ReadLittleEndian(MCState, NormalizationExact[j]);
+	       ReadLittleEndian(MCState, ErrorNormalizationExact[j]);
+	     }
+	   MCState.close();	     
+	 }
+       for (int i = InitialNbrIter; i < NbrIter; ++i)
 	 {
 	   Complex PreviousCoordinatesU = TmpUV[NextCoordinates << 1];
 	   Complex PreviousCoordinatesV = TmpUV[1 + (NextCoordinates << 1)];
@@ -499,6 +549,10 @@ int main(int argc, char** argv)
 	   ErrorNormalization += Tmp2 * Tmp2;
 	   if ((i > 0) && ((RecordStep != 0) && ((i % RecordStep) == 0)))
 	     {
+	       ofstream OverlapRecordFile;
+	       OverlapRecordFile.precision(14);
+	       OverlapRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary | ios::app);
+	       OverlapRecordFile << i ;
 	       double Tmp6 = Normalization  / ((double) i);
 	       double Tmp7 = sqrt( ((ErrorNormalization / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
 	       for (int j = 0; j < NbrExactStates; ++j)
@@ -519,10 +573,38 @@ int main(int argc, char** argv)
 		   Tmp4 /= sqrt(Tmp6 * Tmp8);	  
 		   Tmp5.Re *= Tmp4.Re;
 		   Tmp5.Im *= Tmp4.Im;
-		   RecordedOverlap[j][RecordIndex] = Tmp4;
-		   RecordedOverlapError[j][RecordIndex] = Tmp5;
+		   OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " " 
+				     << ErrorOverlap[j].Re << " " << ErrorOverlap[j].Im << " " << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
 		 }
-	       ++RecordIndex;
+	       OverlapRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
+	       OverlapRecordFile.close();
+	       ofstream MCState;
+	       MCState.open("mcstate.dat", ios::out | ios::binary);
+	       WriteLittleEndian(MCState, i);
+	       unsigned long TmpNumber = RandomNumber->GetNbrGeneratedNumbers();
+	       WriteLittleEndian(MCState, TmpNumber);
+	       WriteLittleEndian(MCState, Acceptance);
+	       WriteLittleEndian(MCState, PreviousProbabilities);
+	       WriteLittleEndian(MCState, CurrentProbabilities);
+	       WriteLittleEndian(MCState, TotalProbability);
+	       WriteLittleEndian(MCState, NextCoordinates);
+	       for (int j = 0; j < (NbrParticles >> 1); ++j)
+		 {		   	       
+		   WriteLittleEndian(MCState, TmpUV.Re(j));
+		   WriteLittleEndian(MCState, TmpUV.Im(j));
+		 }
+	       WriteLittleEndian(MCState, Normalization);
+	       WriteLittleEndian(MCState, ErrorNormalization);
+	       for (int j = 0; j < NbrExactStates; ++j)
+		 {		   	       
+		   WriteLittleEndian(MCState, Overlap[j].Re);
+		   WriteLittleEndian(MCState, Overlap[j].Im);
+		   WriteLittleEndian(MCState, ErrorOverlap[j].Re);
+		   WriteLittleEndian(MCState, ErrorOverlap[j].Im);
+		   WriteLittleEndian(MCState, NormalizationExact[j]);
+		   WriteLittleEndian(MCState, ErrorNormalizationExact[j]);
+		 }
+	       MCState.close();	     
 	     }
 	   if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
 	     {
@@ -564,6 +646,38 @@ int main(int argc, char** argv)
 	       cout << "-----------------------------------------------" << endl;
 	     }
 	 } 
+       if (((RecordStep != 0) && ((NbrIter % RecordStep) == 0)))
+	 {
+	   ofstream OverlapRecordFile;
+	   OverlapRecordFile.precision(14);
+	   OverlapRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary | ios::app);
+	   OverlapRecordFile << NbrIter ;
+	   double Tmp6 = Normalization  / ((double) NbrIter);
+	   double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
+	   for (int j = 0; j < NbrExactStates; ++j)
+	     {
+	       Complex Tmp4 = Overlap[j] / ((double) NbrIter);
+	       Complex Tmp5 (sqrt( ((ErrorOverlap[j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+			     sqrt( ((ErrorOverlap[j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+	       double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
+	       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
+	       Tmp5.Re /= Tmp4.Re;
+	       Tmp5.Im /= Tmp4.Im;
+	       Tmp5.Re = fabs(Tmp5.Re);
+	       Tmp5.Im = fabs(Tmp5.Im);
+	       Tmp5.Re += (Tmp7 / Tmp6);
+	       Tmp5.Im += (Tmp7 / Tmp6);
+	       Tmp5.Re += (Tmp9 / Tmp8);
+	       Tmp5.Im += (Tmp9 / Tmp8);
+	       Tmp4 /= sqrt(Tmp6 * Tmp8);	  
+	       Tmp5.Re *= Tmp4.Re;
+	       Tmp5.Im *= Tmp4.Im;
+	       OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " " 
+				 << ErrorOverlap[j].Re << " " << ErrorOverlap[j].Im << " " << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
+	     }
+	   OverlapRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
+	   OverlapRecordFile.close();
+	 }
        cout << " final results :" << endl;
        double Tmp6 = Normalization  / ((double) NbrIter);
        double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
@@ -590,36 +704,10 @@ int main(int argc, char** argv)
 	     cout << "overlap " << j << " : ";
 	   cout << Tmp4 << " +/- " << Tmp5 << endl;
 	   cout << Norm(Tmp4) << " +/- " << ((fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im))  / Norm(Tmp4)) << endl;
-	   if (RecordStep != 0)
-	     {
-	       RecordedOverlap[j][RecordIndex] = Tmp4;
-	       RecordedOverlapError[j][RecordIndex] = Tmp5;
-	     }
 	 }
        cout << "-----------------------------------------------" << endl;
        
        
-       if (RecordStep != 0)
-	 {
-	   ofstream OverlapRecordFile;
-	   OverlapRecordFile.precision(14);
-	   OverlapRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary);
-	   int NbrRecords = NbrIter / RecordStep;
-	   OverlapRecordFile << "# Monte Carlo overlap calculation" << endl
-			     << "# step overlap.Re overlap.Im overlap2 error.Re error.Im error2" << endl;
-	   for (int i = 0; i < NbrRecords; ++i)
-	     {
-	       OverlapRecordFile << i ;
-	       for (int j = 0; j < NbrExactStates; ++j)
-		 {
-		   OverlapRecordFile << " " << RecordedOverlap[j][i].Re << " " << RecordedOverlap[j][i].Im << " " << SqrNorm(RecordedOverlap[j][i])
-				     << " " << RecordedOverlapError[j][i].Re << " " <<  RecordedOverlapError[j][i].Im << " " 
-				     << (((RecordedOverlap[j][i].Re * RecordedOverlapError[j][i].Re) + (RecordedOverlap[j][i].Im * RecordedOverlapError[j][i].Im)));
-		 }
-	       OverlapRecordFile << endl;
-	     }
-	   OverlapRecordFile.close();
-	 }
      }
    else
      {

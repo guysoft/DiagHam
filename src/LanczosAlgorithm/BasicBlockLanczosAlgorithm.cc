@@ -39,10 +39,15 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+#include "GeneralTools/Endian.h"
+
 #include <stdlib.h>
 #include <iostream>
 
 
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
@@ -524,17 +529,24 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
       int NewVectorPosition = this->Index * this->BlockSize;
       int Lim = (this->Index - 2) * this->BlockSize;
 
-      for (int j = 0; j < this->BlockSize; ++j)
+      if (this->ResumeDiskFlag == false)
 	{
-	  for (int k = j; k < (2 * this->BlockSize); ++k)
-	    this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
-	  AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + (2 * this->BlockSize)]), &(this->LanczosVectors[j]), 
-							2 * this->BlockSize - j,
-							this->TemporaryCoefficients);	  
-	  Operation2.ApplyOperation(this->Architecture);
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    {
+	      for (int k = j; k < (2 * this->BlockSize); ++k)
+		this->TemporaryCoefficients[k - j] = -this->ReducedMatrix(Lim + this->BlockSize + j, Lim + k);
+	      AddRealLinearCombinationOperation Operation2 (&(this->LanczosVectors[j + (2 * this->BlockSize)]), &(this->LanczosVectors[j]), 
+							    2 * this->BlockSize - j,
+							    this->TemporaryCoefficients);	  
+	      Operation2.ApplyOperation(this->Architecture);
+	    }
+	  this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
+				       NewVectorPosition - this->BlockSize, NewVectorPosition);  
 	}
-      this->ReorthogonalizeVectors(&(this->LanczosVectors[2 * this->BlockSize]), this->BlockSize, this->ReducedMatrix, 
-				   NewVectorPosition - this->BlockSize, NewVectorPosition);  
+      else
+	{
+	  this->ResumeDiskFlag = false;
+	}
       if (this->DiskFlag == true)
 	{
 	  char* TmpVectorName = new char [256];
@@ -549,6 +561,7 @@ void BasicBlockLanczosAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	      this->LanczosVectors[k] = RealVector();
 	    }
 	  delete[] TmpVectorName;
+	  this->WriteState();
 	}
       else
 	{
@@ -706,3 +719,78 @@ void BasicBlockLanczosAlgorithm::ReorthogonalizeVectors (RealVector* vectors, in
       vectors[i] /= TmpNorm;      
     }
 }
+
+// read current Lanczos state from disk
+//
+// return value = true if no error occurs
+
+bool BasicBlockLanczosAlgorithm::ReadState()
+{
+  ifstream File;
+  File.open("lanczos.dat", ios::binary | ios::in);
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->NbrEigenvalue);
+  ReadLittleEndian(File, this->BlockSize);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  ReadLittleEndian(File, this->MaximumNumberIteration);  
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+  this->ReducedMatrix.Resize(TmpDimension, TmpDimension);
+  int TwiceBlockSize = 2 * this->BlockSize;
+  int TmpMax = TmpDimension - TwiceBlockSize;
+   for (int i = 0; i < TmpMax; ++i)    
+    {    
+      for (int j = 0; j < TwiceBlockSize; ++j)
+	ReadLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
+    }  
+  for (int i = TmpMax; i < TmpDimension; ++i)    
+    {    
+      for (int j = TmpMax + 1; j < TmpDimension; ++j)
+	ReadLittleEndian(File, this->TridiagonalizedMatrix(i, j));
+    }  
+  File.close();  
+  char* TmpVectorName = new char [256];
+  for (int k = 0; k < this->BlockSize; ++k)
+    {
+      sprintf(TmpVectorName, "vector.%d", ((this->Index * this->BlockSize) + k));
+      this->LanczosVectors[k].ReadVector(TmpVectorName);
+      sprintf(TmpVectorName, "vector.%d", (((this->Index + 1) * this->BlockSize) + k));
+      this->LanczosVectors[k + this->BlockSize].ReadVector(TmpVectorName);
+      sprintf(TmpVectorName, "vector.%d", (((this->Index + 2) * this->BlockSize) + k));
+      this->LanczosVectors[k + (this->BlockSize * 2)].ReadVector(TmpVectorName);
+    }
+  delete[] TmpVectorName;
+  return true;
+}
+
+// write current Lanczos state on disk
+//
+// return value = true if no error occurs
+
+bool BasicBlockLanczosAlgorithm::WriteState()
+{
+  ofstream File;
+  File.open("lanczos.dat", ios::binary | ios::out);
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->NbrEigenvalue);
+  WriteLittleEndian(File, this->BlockSize);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  WriteLittleEndian(File, this->MaximumNumberIteration);  
+  int TmpDimension = this->ReducedMatrix.GetNbrRow();
+  WriteLittleEndian(File, TmpDimension);
+  int TwiceBlockSize = 2 * this->BlockSize;
+  int TmpMax = TmpDimension - TwiceBlockSize;
+  for (int i = 0; i < TmpMax; ++i)    
+    {    
+      for (int j = 0; j < TwiceBlockSize; ++j)
+	WriteLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
+    }  
+  for (int i = TmpMax; i < TmpDimension; ++i)    
+    {    
+      for (int j = TmpMax + 1; j < TmpDimension; ++j)
+	WriteLittleEndian(File, this->TridiagonalizedMatrix(i, j));
+    }  
+  File.close();  
+  return true;
+}
+

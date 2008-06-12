@@ -30,6 +30,7 @@ NumRecRandomGenerator::NumRecRandomGenerator(long seed)
   this->iy=0;
   this->iset=0;
   this->GetRealRandomNumber(); //get one random number -> if array iv was not initialized, now it will be
+  this->NbrGeneratedNumbers = 1ul;
   if (seed!=-1) this->SetSeed(seed);  
 }
 
@@ -42,6 +43,7 @@ NumRecRandomGenerator::NumRecRandomGenerator(const NumRecRandomGenerator& genera
   for (int i=0; i<NTAB; ++i)
     this->iv[i]=generator.iv[i];
   this->gset=generator.gset;
+  this->NbrGeneratedNumbers = generator.NbrGeneratedNumbers;
 }
 
 NumRecRandomGenerator::~NumRecRandomGenerator()
@@ -72,6 +74,7 @@ void NumRecRandomGenerator::SetSeed(const unsigned long& seed)
 // return value = random number
 double NumRecRandomGenerator::GetRealRandomNumber()
 {
+  ++this->NbrGeneratedNumbers;
   int j;
   long k;
   double temp;

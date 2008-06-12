@@ -46,13 +46,13 @@ using std::endl;
 // nbrRandomNumbers = number of random numbers to read from inputFile
 // seekPosition = position of random numbers to read
 
-FileRandomNumberGenerator::FileRandomNumberGenerator(char* inputFile, int nbrRandomNumbers, int seekPosition)
+FileRandomNumberGenerator::FileRandomNumberGenerator(char* inputFile, unsigned long nbrRandomNumbers, unsigned long seekPosition)
 {
   this->NbrRandomNumbers = nbrRandomNumbers;
   this->RealRandomNumbers = new double [this->NbrRandomNumbers];
   this->IntegerRandomNumbers = new unsigned long [this->NbrRandomNumbers];  
   this->Flag.Initialize();
-  this->Position = 0;
+  this->Position = 0ul;
   ifstream File;
   File.open(inputFile, ios::binary | ios::in);
   if (!File.is_open())
@@ -61,7 +61,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(char* inputFile, int nbrRan
       this->NbrRandomNumbers = 0;
       return;
     }  
-  int TmpNbrRandomNumbers = 0;
+  unsigned long TmpNbrRandomNumbers = 0;
   ReadLittleEndian(File, TmpNbrRandomNumbers);
   ReadLittleEndian(File, this->MaxInteger);
   if ((seekPosition + this->NbrRandomNumbers) >  TmpNbrRandomNumbers)
@@ -70,7 +70,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(char* inputFile, int nbrRan
     }
   File.seekg((sizeof(unsigned long) + sizeof(double)) * seekPosition, ios::cur);
   cout << this->NbrRandomNumbers << endl;
-  for (int i = 0; i < this->NbrRandomNumbers; ++i)
+  for (unsigned long i = 0; i < this->NbrRandomNumbers; ++i)
      {
        ReadLittleEndian(File, this->IntegerRandomNumbers[i]);
        ReadLittleEndian(File, this->RealRandomNumbers[i]);
@@ -91,7 +91,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(AbstractRandomNumberGenerat
   this->IntegerRandomNumbers = new unsigned long [this->NbrRandomNumbers];
   this->MaxInteger = generator->GetMaxInteger();
   double InvMax = 1.0 / ((double) generator->GetMaxInteger());
-  for (int i = 0; i < this->NbrRandomNumbers; ++i)
+  for (unsigned long i = 0; i < this->NbrRandomNumbers; ++i)
     {
       this->IntegerRandomNumbers[i] = generator->GetIntegerRandomNumber();
       this->RealRandomNumbers[i] = ((double) this->IntegerRandomNumbers[i]) * InvMax;      
@@ -102,7 +102,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(AbstractRandomNumberGenerat
   File.open(outputFile, ios::binary | ios::out);
   WriteLittleEndian(File, this->NbrRandomNumbers);
   WriteLittleEndian(File, this->MaxInteger);
-  for (int i = 0; i < this->NbrRandomNumbers; ++i)
+  for (unsigned long i = 0; i < this->NbrRandomNumbers; ++i)
     {
       WriteLittleEndian(File, this->IntegerRandomNumbers[i]);
       WriteLittleEndian(File, this->RealRandomNumbers[i]);
