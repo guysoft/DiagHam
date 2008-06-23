@@ -140,7 +140,7 @@ sub AnalyzeVectors
 	my @EigenVectors;
 	my $ProtocolName = $BaseName."\_$q\.eval";	
 	open (OUTFILE, ">$ProtocolName");
-	print OUTFILE ("# ID\tEnergy\trho_0/rho_1\trho_ave\tEVCount\t|K|\tDeg\tKx\tKy\n");
+	print OUTFILE ("# ID\tEnergy\trho_0\trho_0/rho_1\trho_ave\tEVCount\t|K|\tDeg\tKx\tKy\n");
 	foreach $TmpLine (<INFILE>)
 	  {
 	    $VectorFile = $BaseName."\_$q\.$CountEV\.vec";
@@ -224,6 +224,7 @@ sub AnalyzeVectors
 		  {
 		    $DensityRatio = $DensityEVs[0]/$DensityEVs[1];
 		  }
+		my $DensityRho0 = $DensityEVs[0];
 		my $AverageDensity=0.0;
 		my $LargeEVCount=0;
 		while (($LargeEVCount<=$#DensityEVs) && ($DensityEVs[$LargeEVCount] > $Threshold))
@@ -266,7 +267,7 @@ sub AnalyzeVectors
 		  }
 		close(INFILE2);
 		
-		print OUTFILE ($Rank."\t".$EigenValues[$BeginMultiplet]."\t".$DensityRatio."\t".$AverageDensity."\t".$LargeEVCount."\t".$AbsK."\t".$SizeMultiplet."\t".$Kx."\t".$Ky.$QuestionMark."\n");
+		print OUTFILE ($Rank."\t".$EigenValues[$BeginMultiplet]."\t".$DensityRho0."\t".$DensityRatio."\t".$AverageDensity."\t".$LargeEVCount."\t".$AbsK."\t".$SizeMultiplet."\t".$Kx."\t".$Ky.$QuestionMark."\n");
 		++$Rank;
 		$BeginMultiplet=$EndMultiplet+1;
 		$EndMultiplet=$BeginMultiplet;		

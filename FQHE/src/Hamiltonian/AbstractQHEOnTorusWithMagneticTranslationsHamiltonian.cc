@@ -337,7 +337,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	      vDestination.Im(Index) += ((vSource.Re(i) * Sinus) + (vSource.Im(i) * Cosinus));
 	    }
 	  vDestination.Re(i) += this->EnergyShift * vSource.Re(i);
-	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i);
+	  vDestination.Im(i) += this->EnergyShift * vSource.Im(i); 
 	}
     }
   else

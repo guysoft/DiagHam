@@ -49,6 +49,7 @@
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 #include "Tools/FQHEWaveFunction/TwoThirdSingletState.h"
+#include "Tools/FQHEWaveFunction/TwoThirdUnpolarizedCF.h"
 #include "Tools/FQHEWaveFunction/HundRuleCFStates.h"
 #include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 
@@ -156,6 +157,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	  str << "  * XH : Extended Halperin wavefunctions (z-z)^k (w-w)^k (z-w)^l det((z-w)^q) per((z-w)^r)" << endl;
 	  str << "  * 1s : Spin-singlet state at filling one" << endl;
 	  str << "  * 2-3s : Spin-singlet state at filling two-thirds" << endl;
+	  str << "  * 2-3up : Spin-unpolarized composite fermion state at two-third filling" << endl;
 	  str << "  * pairedcf : paired composite fermion wave function at flux 2N_1-1" << endl;	  
 	  str << "  * pairedcfcb : paired composite fermion wave function at flux 2N_1-1 with CB component" << endl;
 	  str << "  * hund : singlet state with each layer formed according to Hund's rule" << endl;
@@ -447,6 +449,13 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }
+	  if ((strcmp (this->Options->GetString("test-wavefunction"), "2-3up") == 0))
+	    {
+	      int N= this->Options->GetInteger("nbr-particles");
+	      TwoThirdUnpolarizedCF* rst = new TwoThirdUnpolarizedCF(N);
+	      rst->AdaptAverageMCNorm();
+	      return rst;
+	    }
 	}
     else
       if (this->GeometryID == QHEWaveFunctionManager::SphereWithSU3SpinGeometry)
@@ -525,6 +534,8 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::OneS;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "2-3s") == 0))
     return QHEWaveFunctionManager::TwoThirdsS;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "2-3up") == 0))
+    return QHEWaveFunctionManager::TwoThirdsUnpolarized;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "hund") == 0))
     return QHEWaveFunctionManager::HundRuleSinglet;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "halperin") == 0))

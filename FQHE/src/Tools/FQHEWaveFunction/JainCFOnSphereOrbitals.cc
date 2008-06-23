@@ -68,7 +68,7 @@ JainCFOnSphereOrbitals::JainCFOnSphereOrbitals(int nbrParticles, int nbrLandauLe
   this->TwiceS = abs(nbrEffectiveFlux);
   if (nbrEffectiveFlux<0) this->ReverseFluxFlag=true;
   else this->ReverseFluxFlag=false;
-  this->NbrOrbitals = NbrLandauLevels*(NbrLandauLevels+TwiceS);
+  this->NbrOrbitals = NbrLandauLevels*(NbrLandauLevels+TwiceS);  
   this->Orbitals=new ComplexMatrix(NbrParticles,NbrOrbitals);
   this->ActualJastrowPower = jastrowPower;  
   if ((this->ActualJastrowPower & 1) == 1)

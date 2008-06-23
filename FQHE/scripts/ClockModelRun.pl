@@ -98,8 +98,20 @@ else
 	      }
 	    else
 	      {
-		$RawRescale=1.0;
-		print("Attention: Unknown state! Scaling factor set to one!");
+		if ($Filling =~ "2/5" )
+		  {
+		    $RawRescale=sqrt(2.0*$NbrFlux/$NbrFermions/5.0);
+		    if ( $NbrFlux == 5*$NbrFermions/2-3 )
+		      {
+			# shift of the p-wave paired state
+			print ("nu=2/5 Halperin state at 5/2 N - 3.\n");
+		      }
+		  }
+		else
+		  {
+		    $RawRescale=1.0;
+		    print("Attention: Unknown state! Scaling factor set to one!");
+		  }
 	      }
 	  }
       }
@@ -119,7 +131,7 @@ for ( my $point=0; $point<$NbrPoints; $point++)
     $V1eff=$R1*$R21*sin($Phi);
     # write pseudopotentials to file
     $Filling =~ s/\//\_/g;
-    print("Filling:".$Filling);
+    print("Filling:".$Filling."\n");
     my $PseudopotentialFile = "pseudopotentials_2s_".$NbrFlux."_phi_".$Phi/pi."pi_nu_".$Filling.".dat";
     unless (open (OUTFILE, ">".$PseudopotentialFile))
       {

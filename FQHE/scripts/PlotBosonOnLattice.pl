@@ -55,48 +55,63 @@ my $y;
 foreach $TmpFile (@ListFiles)
   {
     print ("Adding ".$TmpFile."\n");
-    $TmpFile =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_u\_(-*\d*[\.]*\d*)\_/;
+    $TmpFile =~ /n\_(\d+)\_x\_(\d*)\_y\_(\d*)\_/;
     $N = $1;
     $x = $2;
     $y = $3;
-    my $u = $4;
+    my $u;
+    if ( $TmpFile =~ m/hardcore/ )
+      {
+	$u="inf";
+      }
+    else
+      {
+	$TmpFile =~ /\_u\_(-*\d*[\.]*\d*)\_/;
+	$u = $1;
+      }
     my $Factor=1.0/$x/$y;
+    # gap :
     print OUTFILE ("READ BLOCK \"${TmpFile}\"\n");
     print OUTFILE ("with g0\n");
     print OUTFILE ("BLOCK xy \"1:4\"\n");
-    print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
+    print OUTFILE ("S_ legend \"N=${N}, ${x}x${y}, u=${u}\"\n");
     print OUTFILE ("S_ comment \"${TmpFile} :: 1:4\"\n");
     print OUTFILE ("S_.x = S_.x*${Factor}\n");
 
+    # rho_0/rho_1 :
     print OUTFILE ("with g1\n");
-    print OUTFILE ("BLOCK xy \"1:5\"\n");
-    print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
-    print OUTFILE ("S_ comment \"${TmpFile} :: 1:5\"\n");
-    print OUTFILE ("S_.x = S_.x*${Factor}\n");
-
-    print OUTFILE ("with g2\n");
     print OUTFILE ("BLOCK xy \"1:6\"\n");
     print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
     print OUTFILE ("S_ comment \"${TmpFile} :: 1:6\"\n");
     print OUTFILE ("S_.x = S_.x*${Factor}\n");
 
-    print OUTFILE ("with g3\n");
+    # rho_ave :
+    print OUTFILE ("with g2\n");
     print OUTFILE ("BLOCK xy \"1:7\"\n");
     print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
     print OUTFILE ("S_ comment \"${TmpFile} :: 1:7\"\n");
     print OUTFILE ("S_.x = S_.x*${Factor}\n");
-    print OUTFILE ("S_.y = S_.y/${N}\n");
 
-    print OUTFILE ("with g4\n");
-    print OUTFILE ("BLOCK xy \"1:9\"\n");
-    print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
-    print OUTFILE ("S_ comment \"${TmpFile} :: 1:9\"\n");
-    print OUTFILE ("S_.x = S_.x*${Factor}\n");
-
-    print OUTFILE ("with g5\n");
+    # count rho EV :
+    print OUTFILE ("with g3\n");
     print OUTFILE ("BLOCK xy \"1:8\"\n");
     print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
     print OUTFILE ("S_ comment \"${TmpFile} :: 1:8\"\n");
+    print OUTFILE ("S_.x = S_.x*${Factor}\n");
+    print OUTFILE ("S_.y = S_.y/${N}\n");
+
+    # GS degeneracy
+    print OUTFILE ("with g4\n");
+    print OUTFILE ("BLOCK xy \"1:10\"\n");
+    print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
+    print OUTFILE ("S_ comment \"${TmpFile} :: 1:10\"\n");
+    print OUTFILE ("S_.x = S_.x*${Factor}\n");
+
+    # GS momentum |K|
+    print OUTFILE ("with g5\n");
+    print OUTFILE ("BLOCK xy \"1:9\"\n");
+    print OUTFILE ("S_ legend \"N=${N}, u=${u}\"\n");
+    print OUTFILE ("S_ comment \"${TmpFile} :: 1:9\"\n");
     print OUTFILE ("S_.x = S_.x*${Factor}\n");
   }
 
