@@ -31,6 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -1950,3 +1951,45 @@ RealVector FermionOnSphereWithSU4Spin::ForgeU1FromSU4(RealVector& state, Fermion
   return FinalState;  
 }
 
+// create a SU(2) state from an SU(4) state (fusing same spin values,i.e symmetrizing over the isospin)
+//
+// state = vector describing the SU(4) state
+// su2Space = reference on the Hilbert space associated to the SU(2) state
+// return value = resulting SU(2) state
+
+RealVector FermionOnSphereWithSU4Spin::ForgeSU2FromSU4(RealVector& state, FermionOnSphereWithSpin& su2Space)
+{
+  RealVector FinalState(su2Space.GetHilbertSpaceDimension(), true);
+  for (int j = 0; j < this->HilbertSpaceDimension; ++j)    
+    {
+      unsigned long TmpState = this->StateDescription[j];
+      unsigned long TmpState2 = TmpState; 
+      int TmpPos = this->LzMax << 2;
+      while (TmpPos >=0)
+	{
+	  if ((((TmpState2 >> 3) & (TmpState2 >> 2) & 0x1ul) != 0x0ul) &&
+	      (((TmpState2 >> 1) & TmpState2 & 0x1ul) != 0x0ul))
+	    TmpPos = 1;
+	  TmpState2 >>= 4;
+	  TmpPos -= 4;
+	}
+      if (TmpPos != -3)
+	{ 
+	  TmpPos = 0;
+	  TmpState2 = 0x0ul; 
+	  while (TmpPos <= this->LzMax)
+	    {
+	      TmpState2 |= ((TmpState | (TmpState >> 1)) & 0x1ul) << TmpPos;
+	      ++TmpPos;
+	      TmpState2 |= (((TmpState >> 2) | (TmpState >> 3)) & 0x1ul) << TmpPos;
+	      TmpState >>= 4;
+	      ++TmpPos;
+	    }
+	  while ((TmpState2 >> TmpPos) == 0x0ul)
+	    --TmpPos;
+	  FinalState[su2Space.FindStateIndex(TmpState2, TmpPos)] += state[j];
+	}
+    }
+  FinalState /= FinalState.Norm();
+  return FinalState;  
+}

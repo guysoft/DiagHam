@@ -460,8 +460,6 @@ ostream& BosonOnDisk::PrintState (ostream& Str, int state)
     Str << TmpState[i] << " ";
   for (; i <= this->TotalLz; ++i)
     Str << "0 ";
-  Str << " key = " << this->Keys[state] << " lzmax position = " << this->LzMaxPosition[Max * (this->NbrBosons + 1) + TmpState[Max]]
-      << " position = " << FindStateIndex(TmpState, Max);
   return Str;
 }
 

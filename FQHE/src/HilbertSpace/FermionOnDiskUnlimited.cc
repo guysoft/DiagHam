@@ -442,7 +442,6 @@ int FermionOnDiskUnlimited::FindStateIndex(FermionOnSphereLongState& stateDescri
 ostream& FermionOnDiskUnlimited::PrintState (ostream& Str, int state)
 {
   this->StateDescription[state].PrintState(Str, this->ReducedNbrState[state], FermionOnSphereLongStateGetRemainderNbrState(this->StateLzMax[state] + 1));
-  Str << " position = " << this->FindStateIndex(this->StateDescription[state], this->ReducedNbrState[state], this->StateLzMax[state])  << "   ";
   return Str;
 }
 

@@ -401,7 +401,6 @@ ostream& FermionOnDisk::PrintState (ostream& Str, int state)
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrLzValue; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateLzMax[state]) << "   " << TmpState;
   return Str;
 }
 

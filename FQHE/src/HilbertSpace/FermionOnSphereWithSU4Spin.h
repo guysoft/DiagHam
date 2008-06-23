@@ -39,6 +39,7 @@
 
 
 class FermionOnSphere;
+class FermionOnSphereWithSpin;
 
 
 class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
@@ -372,6 +373,13 @@ class FermionOnSphereWithSU4Spin :  public ParticleOnSphereWithSU4Spin
   // u1Space = reference on the Hilbert space associated to the U(1) state
   // return value = resulting U(1) state
   virtual RealVector ForgeU1FromSU4(RealVector& state, FermionOnSphere& u1Space);
+
+  // create a SU(2) state from an SU(4) state (fusing same spin values,i.e symmetrizing over the isospin)
+  //
+  // state = vector describing the SU(4) state
+  // su2Space = reference on the Hilbert space associated to the SU(2) state
+  // return value = resulting SU(2) state
+  virtual RealVector ForgeSU2FromSU4(RealVector& state, FermionOnSphereWithSpin& su2Space);
 
   private:
 
