@@ -128,12 +128,13 @@ class ParticleOnSphereNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBody
 
  protected:
  
-  // compute all projector coefficient associated to a given a 
+  // compute all projector coefficient associated to a given relative angular momentum between k particles
   //
+  // relativeMomentum = value of twice the relative angular momentum between the k particles
   // nbrIndices = number of indices per set
   // indices = array that contains all possible sets of indices (size of the array is nbrIndices * nbrIndexSets)
   // nbrIndexSets = number of sets
-  double* ComputeProjectorCoefficients(int nbrIndices, int* indices, int nbrIndexSets);
+  double* ComputeProjectorCoefficients(int relativeMomentum, int nbrIndices, int* indices, int nbrIndexSets);
 
   // compute a given projector coefficient for the 4-body interaction 
   //

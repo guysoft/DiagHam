@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //
-//                         n-body hard core interaction                       //
+//                         a generic n-body interaction                       //
 //                                                                            //
-//                        last modification : 23/09/2004                      //
+//                        last modification : 23/06/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereGenericNBodyHamiltonian.h"
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -47,120 +47,8 @@ using std::endl;
 // default constructor
 //
 
-ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian()
+ParticleOnSphereGenericNBodyHamiltonian::ParticleOnSphereGenericNBodyHamiltonian()
 {
-}
-
-// constructor from default datas
-//
-// particles = Hilbert space associated to the system
-// nbrParticles = number of particles
-// lzmax = maximum Lz value reached by a particle in the state
-// nbrBody = number of particle that interact simultaneously through the hard core interaction
-// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
-// architecture = architecture to use for precalculation
-// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
-ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody, double l2Factor,
-										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
-										   char* precalculationFileName)
-{
-  this->Particles = particles;
-  this->LzMax = lzmax;
-  this->NbrLzValue = this->LzMax + 1;
-  this->NbrParticles = nbrParticles;
-
-  this->OneBodyTermFlag = false;
-  this->FullTwoBodyFlag = false;
-  this->NbrNbody = nbrBody;
-  this->MaxNBody = this->NbrNbody;
-  this->NBodyFlags = new bool [this->MaxNBody + 1];
-  this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
-  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
-  this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
-  this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
-  this->MinSumIndices = new int [this->MaxNBody + 1];
-  this->MaxSumIndices = new int [this->MaxNBody + 1];
-  this->NBodySign = new double[this->MaxNBody + 1];
-
-  for (int k = 0; k <= this->MaxNBody; ++k)
-    {
-      this->MinSumIndices[k] = 1;
-      this->MaxSumIndices[k] = 0;      
-      this->NBodyFlags[k] = false;
-      this->NBodyInteractionWeightFactors[k] = 0.0;
-      this->NBodySign[k] = 1.0;
-      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	{
-	  this->NBodySign[k] = -1.0;
-	  if (k == 4)
-	    this->NBodySign[k] = 1.0;
-	}
-    }
-  this->NBodyFlags[this->NbrNbody] = true;
-  this->NBodyInteractionWeightFactors[this->NbrNbody] = 1.0;
-  this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->HamiltonianShift = 0.0;
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
-  this->DiskStorageFlag = onDiskCacheFlag;
-  this->Memory = memory;
-  if (precalculationFileName == 0)
-    {
-      if (memory > 0)
-	{
-	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
-	  if (this->DiskStorageFlag == false)
-	    {
-	      this->EnableFastMultiplication();
-	    }
-	  else
-	    {
-	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
-	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
-	      delete[] TmpFileName;
-	    }
-	}
-      else
-	{
-	  this->FastMultiplicationFlag = false;
-	}
-    }
-  else
-    this->LoadPrecalculation(precalculationFileName);
-
-  if (l2Factor != 0.0)
-    {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
-    }
-  else
-    {
-      this->L2Operator = 0;
-    }
-
 }
 
 // constructor from default datas
@@ -170,16 +58,17 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
 // maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
-// nBodyFactors = weight of the different n-body interaction terms with respect to each other
+// maxRelativeMomenta = array that indicates the maximum relative angular momentum between n particles that may occur in the given n-body channel (negative if the channel is absent)
+// nBodyFactors = weight of the different n-body interaction terms with respect to each other (first entry being the n, second the relative angular momentum between n particles)
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-										   int maxNbrBody, double* nBodyFactors, double l2Factor,
-										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-										   char* precalculationFileName)
+ParticleOnSphereGenericNBodyHamiltonian::ParticleOnSphereGenericNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
+										 int maxNbrBody, int* maxRelativeMomenta, double** nBodyFactors, double l2Factor,
+										 AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+										 char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzmax;
@@ -192,144 +81,24 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
   this->MaxNBody = maxNbrBody;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
-  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
+  this->NBodyInteractionWeightFactors = new double* [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
 
-  for (int k = 0; k <= this->MaxNBody; ++k)
+  for (int k = 2; k <= this->MaxNBody; ++k)
     {
       this->MinSumIndices[k] = 1;
       this->MaxSumIndices[k] = 0;      
-      if (nBodyFactors[k] == 0.0)
+      if (maxRelativeMomenta[k] == 0.0)
 	this->NBodyFlags[k] = false;
       else
 	this->NBodyFlags[k] = true;
-      this->NBodyInteractionWeightFactors[k] = nBodyFactors[k];
-      this->NBodySign[k] = 1.0;
-      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
-	this->NBodySign[k] = -1.0;
-      if (this->NBodyInteractionWeightFactors[k] < 0.0)
-	{
-	  this->NBodyInteractionWeightFactors[k] *= -1.0;
-	  this->NBodySign[k] *= -1.0;
-	}
-    }
-  this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->HamiltonianShift = 0.0;
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
-  this->DiskStorageFlag = onDiskCacheFlag;
-  this->Memory = memory;
-  if (precalculationFileName == 0)
-    {
-      if (memory > 0)
-	{
-	  long TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
-	    cout  << "fast = " <<  TmpMemory << "b ";
-	  else
-	    if (TmpMemory < (1 << 20))
-	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	    else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (this->DiskStorageFlag == false)
-	    {
-	      this->EnableFastMultiplication();
-	    }
-	  else
-	    {
-	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
-	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
-	      delete[] TmpFileName;
-	    }
-	}
-      else
-	{
-	  this->FastMultiplicationFlag = false;
-	}
-    }
-  else
-    this->LoadPrecalculation(precalculationFileName);
-  if (l2Factor != 0.0)
-    {
-      this->L2Operator = new ParticleOnSphereSquareTotalMomentumOperator(this->Particles, this->LzMax, l2Factor);
-    }
-  else
-    {
-      this->L2Operator = 0;
-    }
-}
-
-// constructor from datas with a fully-defined two body interaction
-//
-// particles = Hilbert space associated to the system
-// nbrParticles = number of particles
-// lzmax = maximum Lz value reached by a particle in the state
-// maxNbrBody = maximum number of particle that interact simultaneously through the hard core interaction
-// nBodyFactors = weight of the different n-body interaction terms with respect to each other
-// l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
-// architecture = architecture to use for precalculation
-// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-
-ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-										   int maxNbrBody, double* nBodyFactors, double l2Factor, double* pseudoPotential, 
-										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
-										   char* precalculationFileName)
-{
-  this->Particles = particles;
-  this->LzMax = lzmax;
-  this->NbrLzValue = this->LzMax + 1;
-  this->NbrParticles = nbrParticles;
-
-  if (pseudoPotential != 0)
-    {
-      this->PseudoPotential = new double [this->NbrLzValue];
-      for (int i = 0; i < this->NbrLzValue; ++i)
-	this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
-      this->FullTwoBodyFlag = true;
-    }
-  else
-    {
-      this->FullTwoBodyFlag = false;
-    }
-
-  this->OneBodyTermFlag = false;
-  this->FullTwoBodyFlag = true;
-  this->NbrNbody = maxNbrBody;
-  this->MaxNBody = maxNbrBody;
-  this->NBodyFlags = new bool [this->MaxNBody + 1];
-  this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
-  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
-  this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
-  this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
-  this->MinSumIndices = new int [this->MaxNBody + 1];
-  this->MaxSumIndices = new int [this->MaxNBody + 1];
-  this->NBodySign = new double[this->MaxNBody + 1];
-  this->PseudoPotential = new double [this->NbrLzValue];
-
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
-
-  for (int k = 0; k <= this->MaxNBody; ++k)
-    {
-      this->MinSumIndices[k] = 1;
-      this->MaxSumIndices[k] = 0;      
-      if (nBodyFactors[k] == 0.0)
-	this->NBodyFlags[k] = false;
-      else
-	this->NBodyFlags[k] = true;
-      this->NBodyInteractionWeightFactors[k] = nBodyFactors[k];
+      this->NBodyInteractionWeightFactors[k] = new double[maxRelativeMomenta[k] + 1];
+      for (int i = 0; i <= maxRelativeMomenta[k]; ++i)
+	this->NBodyInteractionWeightFactors[k][i] = nBodyFactors[k][i];
       this->NBodySign[k] = 1.0;
       if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
 	this->NBodySign[k] = -1.0;
@@ -394,7 +163,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::ParticleOnSphereNBodyHardCoreHamiltoni
 // destructor
 //
 
-ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamiltonian()
+ParticleOnSphereGenericNBodyHamiltonian::~ParticleOnSphereGenericNBodyHamiltonian()
 {
   for (int k = 1; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
@@ -457,7 +226,7 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
 // evaluate all interaction factors
 //   
 
-void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
+void ParticleOnSphereGenericNBodyHamiltonian::EvaluateInteractionFactors()
 {
   double* TmpNormalizationCoeffients = new double[this->NbrLzValue];
   double TmpFactor = ((double) this->NbrLzValue) / (4.0 * M_PI);
@@ -639,28 +408,6 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	  Pos = 0;
 	  MaxCoefficient *= MACHINE_PRECISION;
 	  double Factor = - 4.0;// / sqrt (0.5 * ((double) this->LzMax));
-// 	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
-// 	    for (int m2 = 0; m2 < m1; ++m2)
-// 	      {
-// 		Lim = m1 + m2;
-// 		if (Lim > this->LzMax)
-// 		  Lim = this->LzMax;
-// 		Min = m1 + m2 - this->LzMax;
-// 		if (Min < 0)
-// 		  Min = 0;
-// 		for (int m3 = Min; m3 <= Lim; ++m3)
-// 		  {
-// 		    if (/*(fabs(TmpCoefficient[Pos]) > MaxCoefficient) &&*/ ((2 * m3) > (m1 + m2)))
-// 		      {
-// 			this->InteractionFactors[this->NbrInteractionFactors] = Factor * TmpCoefficient[Pos];
-// 			this->M1Value[this->NbrInteractionFactors] = m1;
-// 			this->M2Value[this->NbrInteractionFactors] = m2;
-// 			this->M3Value[this->NbrInteractionFactors] = m3;
-// 			++this->NbrInteractionFactors;
-// 		      }
-// 		    ++Pos;
-// 		  }
-// 	      }
 	  this->NbrM12Indices = (this->NbrLzValue * (this->NbrLzValue - 1)) / 2;
 	  this->M1Value = new int [this->NbrM12Indices];
 	  this->M2Value = new int [this->NbrM12Indices];
@@ -807,146 +554,3 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
     }
 }
 
-// compute all projector coefficient associated to a given relative angular momentum between k particles
-//
-// relativeMomentum = value of twice the relative angular momentum between the k particles 
-// nbrIndices = number of indices per set
-// indices = array that contains all possible sets of indices (size of the array is nbrIndices * nbrIndexSets)
-// nbrIndexSets = number of sets
-
-double* ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients(int relativeMomentum, int nbrIndices, int* indices, int nbrIndexSets)
-{
-  double* TmpCoefficients = new double [nbrIndexSets];
-  int JValue = (nbrIndices * this->LzMax) - relativeMomentum;
-  switch (nbrIndices)
-    {
-    case 2:
-      {
-	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
-	for (int i = 0; i < nbrIndexSets; ++i)
-	  {
-	    TmpCoefficients[i] = Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1) - this->LzMax), JValue);
-	    indices += 2;
-	  }
-      }
-      break;
-    case 3:
-      {
-	int MaxJ = 2 * this->LzMax;
-	if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-	  MaxJ -= 2;
-	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
-	ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[MaxJ + 1];
-	int MinJ = JValue - this->LzMax;
-	if (MinJ < 0)
-	  MinJ = 0;
-	for (int j = MaxJ; j >= MinJ; j -= 4)
-	  ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
-	for (int i = 0; i < nbrIndexSets; ++i)
-	  {
-	    double Tmp = 0.0;
-	    int Sum = ((indices[0] + indices[1]) << 1)  - (2 * this->LzMax);
-	    int TmpMinJ = MinJ;
-	    if (TmpMinJ < abs(Sum))
-	      TmpMinJ = abs(Sum);
-	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
-	      {
-		Tmp += (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j) * 
-			ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue)); 
-	      }
-	    Sum = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
-	    TmpMinJ = MinJ;
-	    if (TmpMinJ < abs(Sum))
-	      TmpMinJ = abs(Sum);
-	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
-	      {
-		Tmp += (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
-			ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
-	      }
-	    Sum = ((indices[2] + indices[0]) << 1)  - (2 * this->LzMax);
-	    TmpMinJ = MinJ;
-	    if (TmpMinJ < abs(Sum))
-	      TmpMinJ = abs(Sum);
-	    for (int j = MaxJ; j >= TmpMinJ; j -= 4)
-	      {
-		Tmp += (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) * 
-			ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
-	      }
-	    TmpCoefficients[i] = Tmp;
-	    indices += 3;
-	  }
-	delete[] ClebshArray;
-      }
-      break;
-    case 4:
-      {
-	int TotalMaxJ = 3 * this->LzMax - 2;
-	ClebschGordanCoefficients Clebsh (this->LzMax, this->LzMax);
-	ClebschGordanCoefficients* ClebshArray = new ClebschGordanCoefficients[TotalMaxJ + 1];
-	int MinJ = JValue - this->LzMax;
-	if (MinJ < 0)
-	  MinJ = 0;
-	for (int j = TotalMaxJ; j >= 0; --j)
-	  ClebshArray[j] = ClebschGordanCoefficients(j, this->LzMax);
-	for (int i = 0; i < nbrIndexSets; ++i)
-	  {
-	    double Tmp = 0.0;
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[2], indices[3], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[1], indices[3], indices[2], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[1], indices[3], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[2], indices[3], indices[1], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[2], indices[1], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[0], indices[3], indices[1], indices[2], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[0], indices[3], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[2], indices[3], indices[0], JValue, ClebshArray);
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[2], indices[0], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[1], indices[3], indices[0], indices[2], JValue, ClebshArray);	  
-	    Tmp += this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[0], indices[1], JValue, ClebshArray);
-	    Tmp -= this->ComputeProjectorCoefficients4Body(indices[2], indices[3], indices[1], indices[0], JValue, ClebshArray);
-	    TmpCoefficients[i] = Tmp;
-	    indices += 4;
-	  }
-	delete[] ClebshArray;
-      }
-      break;
-    default:
-      {
-      }
-    }
-  return TmpCoefficients;
-}
-
-// compute a given projector coefficient for the 4-body interaction 
-//
-// m1 = first index
-// m2 = second index
-// m3 = third inde
-// m4 = fourth index
-// jValue = total angular momentum
-// minJ = minimum angular momentum that can be reach by three particles
-// return value = corresponding projector coefficient
-
-double ParticleOnSphereNBodyHardCoreHamiltonian::ComputeProjectorCoefficients4Body(int m1, int m2, int m3, int m4, int jValue, 
-										   ClebschGordanCoefficients* clebshArray)
-{
-  double Tmp = 0.0;
-  double Tmp2 = 0.0;
-  int TmpMinJ2;
-  int Sum1 = ((m1 + m2) << 1)  - (2 * this->LzMax);
-  int Sum2 = Sum1 + (m3 << 1)  - this->LzMax;
-  int TmpMinJ = abs(Sum1);
-  int MaxJ = 2 * this->LzMax - 2;
-  for (int j1 = MaxJ; j1 >= TmpMinJ; j1 -= 4)
-    {
-      Tmp2 = clebshArray[this->LzMax].GetCoefficient(((m1 << 1) - this->LzMax), ((m2 << 1)- this->LzMax), j1);
-      TmpMinJ2 = abs(jValue - this->LzMax);
-      if (TmpMinJ2 < abs(Sum2))
-	TmpMinJ2 = abs(Sum2);
-      for (int j2 = j1 + this->LzMax; j2 >= TmpMinJ2; j2 -= 2)
-	{
-	  Tmp += Tmp2 * (clebshArray[j1].GetCoefficient(Sum1, ((m3 << 1) - this->LzMax), j2) * 
-			 clebshArray[j2].GetCoefficient(Sum2, ((m4 << 1) - this->LzMax), jValue)); 
-	}
-    }
-  return Tmp;
-}
