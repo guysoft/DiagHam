@@ -374,7 +374,7 @@ int FermionOnDisk::ProdAdProdA (int index, int* m, int* n, int nbrIndices, doubl
 
 double FermionOnDisk::AdA (int index, int m)
 {
-  if ((this->StateLzMax[index] & (((unsigned long) (0x1)) << m)) == 0)
+  if ((this->StateDescription[index] & (((unsigned long) (0x1)) << m)) == 0)
     return 0.0;
   else
     return 1.0;

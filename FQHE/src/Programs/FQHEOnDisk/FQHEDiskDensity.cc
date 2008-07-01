@@ -16,6 +16,8 @@
 #include "Operator/ParticleOnDiskDensityOperator.h"
 #include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
 
+#include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -32,7 +34,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEDensity" , "0.01");
+  OptionManager Manager ("FQHEDiskDensity" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");  
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -43,19 +45,20 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (overriding the one found in the vector file name if greater than 0)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "momentum", "single particle momentum (overriding the one found in the vector file name if greater than 0)", 0, true, 0);
-  (*SystemGroup) += new BooleanOption  ('\n', "bosons", "use boson statistics");
-  (*SystemGroup) += new BooleanOption  ('\n', "fermions", "use fermion statistics");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (overriding the one found in the vector file name if greater than 0)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use boson statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermion statistics");
   (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
+  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name", "density.dat");
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samples", "number of samples in radial direction", 1000, true, 10);
-  (*PlotOptionGroup) += new BooleanOption  ('\n', "profile", "only draw density profile");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEDensity -h" << endl;
+      cout << "see man page for option syntax or type FQHEDiskDensity -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -71,11 +74,23 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int Lz = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
-  bool BosonFlag = ((BooleanOption*) Manager["bosons"])->GetBoolean();
-  bool FermionFlag = ((BooleanOption*) Manager["fermions"])->GetBoolean();
-  bool ProfileFlag = ((BooleanOption*) Manager["profile"])->GetBoolean();
+  int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
+  bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
   char* OutputName = ((SingleStringOption*) Manager["output"])->GetString();
   int NbrSamples = ((SingleIntegerOption*) Manager["nbr-samples"])->GetInteger();
+  bool Statistics = true;
+
+  if (FQHEOnDiskFindSystemInfoFromFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, ForceMaxMomentum, Lz, Statistics) == false)
+    {
+      return -1;      
+    }
+  if ((((BooleanOption*) Manager["boson"])->GetBoolean() == true) || (((BooleanOption*) Manager["fermion"])->GetBoolean() == true))
+    {
+      if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+        Statistics = false;
+      else
+        Statistics = true;
+    }
   
   RealVector State;
   if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
@@ -84,107 +99,52 @@ int main(int argc, char** argv)
       return -1;      
     }
 
-  char* StrNbrParticles;
-  if (NbrParticles == 0)
-    {
-      StrNbrParticles = strstr(((SingleStringOption*) Manager["state"])->GetString(), "_n_");
-      if (StrNbrParticles != 0)
-	{
-	  StrNbrParticles += 3;
-	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
-	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
-	    {
-	      StrNbrParticles[SizeString] = '\0';
-	      NbrParticles = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '_';
-	      StrNbrParticles += SizeString;
-	    }
-	  else
-	    StrNbrParticles = 0;
-	}
-      if (StrNbrParticles == 0)
-	{
-	  cout << "can't guess number of particles from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
-	       << "use --nbr-particles option" << endl;
-	  return -1;            
-	}
-    }
-  if (Lz == 0)
-    {
-      StrNbrParticles = strstr(((SingleStringOption*) Manager["state"])->GetString(), "_lz_");
-      if (StrNbrParticles != 0)
-	{
-	  StrNbrParticles += 4;
-	  int SizeString = 0;
-	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
-	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
-	    {
-	      StrNbrParticles[SizeString] = '\0';
-	      Lz = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '_';
-	      StrNbrParticles += SizeString;
-	    }
-	  else
-	    StrNbrParticles = 0;
-	}
-      if (StrNbrParticles == 0)
-	{
-	  cout << "can't guess momentum from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
-	       << "use --momentum option" << endl;
-	  return -1;            
-	}
-    }
-  if ((FermionFlag == false) && (BosonFlag == false))
-    {
-       if (strncmp(((SingleStringOption*) Manager["state"])->GetString(), "bosons", 6) == 0)
-	 BosonFlag = true;
-       else
-	 if (strncmp(((SingleStringOption*) Manager["state"])->GetString(), "bosons", 6) == 0)
-	   FermionFlag = true;
-	 else
-	   {
-	     cout << "can't guess statistics from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl
-		  << "use --bosons or --fermions option" << endl;
-	     return -1;            
-	   }
-    }
   ParticleOnDiskFunctionBasis Basis(Lz);
   ParticleOnDisk* Space = 0;
-  if (BosonFlag == true)
+  int TmpMaxMomentum = 0;
+  if (Statistics == false)
     {
+      TmpMaxMomentum = Lz;
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;      
       Space = new BosonOnDisk(NbrParticles, Lz);
     }
   else
     {
+      TmpMaxMomentum = (Lz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
 #ifdef __64_BITS__
-      if ((Lz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2)) < 63)      
+      if (TmpMaxMomentum < 63)      
 #else
-      if ((Lz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2)) < 31)
+      if (TmpMaxMomentum < 31)
 #endif
-	Space = new FermionOnDisk (NbrParticles, Lz);
+	Space = new FermionOnDisk (NbrParticles, Lz, TmpMaxMomentum);
       else
-	Space = new FermionOnDiskUnlimited (NbrParticles, Lz);      
+	Space = new FermionOnDiskUnlimited (NbrParticles, Lz, TmpMaxMomentum);      
     }
-  Complex* PrecalculatedValues = new Complex [Lz + 1];
+
+  if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+    {
+      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+      return -1;
+    }
+
+  Complex* PrecalculatedValues = new Complex [TmpMaxMomentum + 1];
 	  
-  for (int i = 0; i <= Lz; ++i)
+  for (int i = 0; i <= TmpMaxMomentum; ++i)
     {
       ParticleOnDiskDensityOperator Operator (Space, i);
       PrecalculatedValues[i] = Operator.MatrixElement(State, State);
     }
   
-  if (ProfileFlag == true)
+  ofstream File;
+  File.precision(14);
+  File.open(OutputName, ios::binary | ios::out);
+  if (CoefficientOnlyFlag == false)
     {
       Complex Tmp (0.0);
       double RInc = 1.2 * ((double) Lz) / ((double) NbrSamples);
-      ofstream File;
-      File.precision(14);
-      File.open(OutputName, ios::binary | ios::out);
       NbrSamples *= 2;      
       RealVector Value(2, true);
       Value[0] = - 1.2 * ((double) Lz);
@@ -200,8 +160,15 @@ int main(int argc, char** argv)
 	  File << Value[0] << " " << (Tmp.Re * exp (-0.5 * (Value[0] * Value[0]))) << endl;
 	  Value[0] += RInc;
 	}
-      File.close();
     }
+  else
+    {
+      File << "# density coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      File << "#" << endl << "# m    c_m" << endl;
+      for (int i = 0; i <= TmpMaxMomentum; ++i)
+        File << i << " " << PrecalculatedValues[i].Re << endl;
+    }
+  File.close();
 
   delete[] PrecalculatedValues;
   delete Space;

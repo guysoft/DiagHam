@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [256];
 	  if (ForceMaxMomentum >= 0)
-	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d_lz_%d", NbrFermions, ForceMaxMomentum, L);
+	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lzmax_%d_lz_%d", NbrFermions, ForceMaxMomentum, L);
 	  else
 	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d", NbrFermions, L);
 	}
