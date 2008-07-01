@@ -140,6 +140,16 @@ class FactorialCoefficient
   // return value = reference on current coefficient
   FactorialCoefficient& PartialFactorialDivide (long start, long end);
 
+  // return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
+  //
+  // return value = numerical value associated to the coefficient numerator  
+  long GetIntegerNumeratorValue();
+
+  // return integer value associated to the coefficient denominator (0 if the coefficient can't be cast into an integer)
+  //
+  // return value = numerical value associated to the coefficient denominator
+  long GetIntegerDenominatorValue();
+
   // return numerical value associated to the coefficient
   //
   // return value = numerical value associated to the coefficient

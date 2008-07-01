@@ -34,6 +34,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "total lz value", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int TotalLz = ((SingleIntegerOption*) Manager["lz-value"])->GetInteger();
+  int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
     
   ParticleOnDisk* Space = 0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
@@ -63,14 +65,17 @@ int main(int argc, char** argv)
     }
   else
     {
+      int TmpMaxMomentum = (TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
 #ifdef __64_BITS__
-      if ((TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2)) < 63)      
+      if (TmpMaxMomentum < 63)      
 #else
-      if ((TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2)) < 31)
+      if (TmpMaxMomentum < 31)
 #endif
-	Space = new FermionOnDisk(NbrParticles, TotalLz);
+	Space = new FermionOnDisk(NbrParticles, TotalLz, TmpMaxMomentum);
       else
-	Space = new FermionOnDiskUnlimited(NbrParticles, TotalLz);
+	Space = new FermionOnDiskUnlimited(NbrParticles, TotalLz, TmpMaxMomentum);
     }
 
 

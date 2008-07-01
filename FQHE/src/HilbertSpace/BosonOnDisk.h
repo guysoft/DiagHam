@@ -75,7 +75,8 @@ class BosonOnDisk :  public ParticleOnDisk
   // 
   // nbrBosons = number of bosons
   // totalLz = momentum total value
-  BosonOnDisk (int nbrBosons, int totalLz);
+  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrBosons and totalLz)
+  BosonOnDisk (int nbrBosons, int totalLz, int lzMax = -1);
 
   // copy constructor (without duplicating datas)
   //

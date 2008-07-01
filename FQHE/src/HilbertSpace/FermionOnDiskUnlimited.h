@@ -84,7 +84,8 @@ class FermionOnDiskUnlimited:  public ParticleOnDisk
   // 
   // nbrFermions = number of fermions
   // totalLz = momentum total value
-  FermionOnDiskUnlimited (int nbrFermions, int totalLz);
+  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrFermions and totalLz)
+  FermionOnDiskUnlimited (int nbrFermions, int totalLz, int lzMax = -1);
 
   // copy constructor (without duplicating datas)
   //

@@ -413,6 +413,36 @@ long  FactorialCoefficient::GetIntegerValue()
   return x;
 }
 
+// return integer value associated to the coefficient numerator (0 if the coefficient can't be cast into an integer)
+//
+// return value = numerical value associated to the coefficient numerator
+
+long  FactorialCoefficient::GetIntegerNumeratorValue()
+{
+  long x = 1;
+  for (int i = 0; i <= this->NumeratorPosition; ++i)
+    if ((x * this->Numerator[i]) >= x)
+      x *= this->Numerator[i];
+    else
+      return 0;
+  return x;
+}
+
+// return integer value associated to the coefficient denominator (0 if the coefficient can't be cast into an integer)
+//
+// return value = numerical value associated to the coefficient denominator
+
+long  FactorialCoefficient::GetIntegerDenominatorValue()
+{
+  long x = 1;
+  for (int i = 0; i <= this->DenominatorPosition; ++i)
+    if ((x * this->Denominator[i]) >= x)
+      x *= this->Denominator[i];
+    else
+      return 0;
+  return x;
+}
+
 // find greatest common divider (recursive part of the method)
 //
 // m = first integer  

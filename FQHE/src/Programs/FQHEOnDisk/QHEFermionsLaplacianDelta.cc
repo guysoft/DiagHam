@@ -61,10 +61,11 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
- (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
- (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
- (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
-
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 7);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum total angular momentum to study", 10, true, 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum total angular momentum to study", 1, true, 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
+  
   (*LanczosGroup) += new SingleIntegerOption ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
   (*LanczosGroup) += new SingleIntegerOption ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup) += new SingleIntegerOption ('\n', "full-diag", 
@@ -98,29 +99,36 @@ int main(int argc, char** argv)
     }  
   
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;  
   int MMin = ((SingleIntegerOption*) Manager["minimum-momentum"])->GetInteger();
   int MMax = ((SingleIntegerOption*) Manager["maximum-momentum"])->GetInteger();
   if (MMin < (((NbrFermions - 1) * (NbrFermions)) / 2))
     MMin = (((NbrFermions - 1) * (NbrFermions)) / 2);
   if (MMax < MMin)
     MMax = MMin;
+  int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   bool FirstRun = true;
 
   char* OutputNameLz = new char [1024];
-  sprintf (OutputNameLz, "fermions_disk_laplaciandelta_n_%d_lz_%d.dat", NbrFermions, MMax);
+  if (ForceMaxMomentum >= 0)
+    sprintf (OutputNameLz, "fermions_disk_laplaciandelta_n_%d_lzmax_%d_lz_%d.dat", NbrFermions, ForceMaxMomentum, MMax);
+  else
+    sprintf (OutputNameLz, "fermions_disk_laplaciandelta_n_%d_lz_%d.dat", NbrFermions, MMax);
   for (int  L = MMin; L <= MMax; ++L)
     {
       ParticleOnDisk* Space;
+      int TmpMaxMomentum = (L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2));
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
 #ifdef __64_BITS__
-      if ((L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 63)      
+      if (TmpMaxMomentum < 63)      
 #else
-      if ((L - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 31)
+      if (TmpMaxMomentum < 31)
 #endif
-	Space = new FermionOnDisk (NbrFermions, L);
+	Space = new FermionOnDisk (NbrFermions, L, TmpMaxMomentum);
       else
-	Space = new FermionOnDiskUnlimited (NbrFermions, L);
+	Space = new FermionOnDiskUnlimited (NbrFermions, L, TmpMaxMomentum);
       cout << "Nbr fermions = " << NbrFermions << "    L = " << L << "    Dimension = " << Space->GetHilbertSpaceDimension() << endl;
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(Space, NbrFermions, 
@@ -131,8 +139,11 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d", NbrFermions, L);
+	  EigenvectorName = new char [256];
+	  if (ForceMaxMomentum >= 0)
+	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d_lz_%d", NbrFermions, ForceMaxMomentum, L);
+	  else
+	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d", NbrFermions, L);
 	}
       QHEOnDiskMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);

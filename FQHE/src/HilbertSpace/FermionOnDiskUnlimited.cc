@@ -50,13 +50,17 @@ using std::dec;
 // 
 // nbrFermions = number of fermions
 // totalLz = momentum total value
+// lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrFermions and totalLz)
 
-FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz)
+FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz, int lzMax)
 {
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
-  this->LzMax = this->TotalLz - (((this->NbrFermions - 1) * (this->NbrFermions - 2)) / 2);
+  if (lzMax < nbrFermions)
+    this->LzMax = this->TotalLz - (((this->NbrFermions - 1) * (this->NbrFermions - 2)) / 2);
+  else
+    this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();

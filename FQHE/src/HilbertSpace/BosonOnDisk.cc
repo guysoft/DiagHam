@@ -48,8 +48,9 @@ using std::endl;
 // 
 // nbrBosons = number of bosons
 // totalLz = momentum total value
+// lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrBosons and totalLz)
 
-BosonOnDisk::BosonOnDisk (int nbrBosons, int totalLz)
+BosonOnDisk::BosonOnDisk (int nbrBosons, int totalLz, int lzMax)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
