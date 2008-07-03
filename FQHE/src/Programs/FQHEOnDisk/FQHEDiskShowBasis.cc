@@ -64,7 +64,7 @@ int main(int argc, char** argv)
   int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
 
-  ParticleOnDisk* Space = 0;
+  ParticleOnSphere* Space = 0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
     {
       Space = new BosonOnDisk(NbrParticles, TotalLz);

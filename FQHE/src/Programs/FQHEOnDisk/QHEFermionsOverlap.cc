@@ -1,6 +1,6 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  ParticleOnDisk* Space;
+  ParticleOnSphere* Space;
 #ifdef __64_BITS__
   if ((MMax - (((NbrFermions - 1) * (NbrFermions - 2)) / 2)) < 63)      
 #else

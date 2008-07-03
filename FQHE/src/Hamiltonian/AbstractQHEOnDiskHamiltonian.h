@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
 #include <iostream>
@@ -54,7 +54,7 @@ class AbstractQHEOnDiskHamiltonian : public AbstractQHEHamiltonian
  protected:
   
   // Hilbert space associated to the system
-  ParticleOnDisk* Particles;
+  ParticleOnSphere* Particles;
 
   // number of particles
   int NbrParticles;

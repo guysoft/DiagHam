@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractQHEOnDiskNBodyInteractionHamiltonian.h"
 
 #include <iostream>
@@ -62,7 +62,7 @@ class ParticleOnDiskNBodyHardCoreHamiltonian : public AbstractQHEOnDiskNBodyInte
   // nbrBody = number of particle that interact simultaneously through the hard core interaction
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnDiskNBodyHardCoreHamiltonian(ParticleOnDisk* particles, int nbrParticles, int lzmax, int nbrBody,
+  ParticleOnDiskNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
 					 AbstractArchitecture* architecture, long memory = -1, 
 					 char* precalculationFileName = 0);
 

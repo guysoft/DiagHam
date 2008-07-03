@@ -59,7 +59,7 @@ using std::ostream;
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
 // architecture = architecture to use for precalculation
-// pseudoPotential = array with the psedo-potentials (ordered such that the first element corresponds to the delta interaction)
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction)
 // l2Factor = multiplicative factor in front of an additional L^2 operator in the Hamiltonian (0 if none)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements

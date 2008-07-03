@@ -43,6 +43,8 @@
 class FermionOnSphereUnlimited :  public ParticleOnSphere
 {
 
+ protected:
+
   // number of fermions
   int NbrFermions;
   // number of fermions plus 1
@@ -87,6 +89,10 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
 
  public:
 
+  // default constructor
+  //
+  FermionOnSphereUnlimited();
+
   // basic constructor
   // 
   // nbrFermions = number of fermions
@@ -102,7 +108,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
 
   // destructor
   //
-  ~FermionOnSphereUnlimited ();
+  virtual ~FermionOnSphereUnlimited ();
 
   // assignement (without duplicating datas)
   //
@@ -113,31 +119,31 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
 
   // get the particle statistic 
   //
   // return value = particle statistic
-  int GetParticleStatistic();
+  virtual int GetParticleStatistic();
 
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  List<AbstractQuantumNumber*> GetQuantumNumbers ();
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  AbstractQuantumNumber* GetQuantumNumber (int index);
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
-  AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
-					 SubspaceSpaceConverter& converter);
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
+						 SubspaceSpaceConverter& converter);
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
@@ -148,7 +154,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
   //
@@ -158,7 +164,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
 
   // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //
@@ -166,7 +172,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
   // nbrIndices = number of creation (or annihilation) operators
   // return value =  multiplicative factor 
-  double ProdA (int index, int* n, int nbrIndices);
+  virtual double ProdA (int index, int* n, int nbrIndices);
 
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   //
@@ -174,21 +180,21 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  int ProdAd (int* m, int nbrIndices, double& coefficient);
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
-  double AdA (int index, int m);
+  virtual double AdA (int index, int m);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
@@ -198,15 +204,15 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = wave function evaluated at the given location
-  Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-				int firstComponent, int nbrComponent);                                
+  virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
+					int firstComponent, int nbrComponent);                                
   
   // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
   //
   // timeCoherence = true if time coherence has to be used
-  void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+  virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
-  private:
+ protected:
 
   // find state index
   //
@@ -214,7 +220,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // reducedNbrState =reduced number of state (aka the number of unsigned long per state) minus 1
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(FermionOnSphereLongState& stateDescription, int reducedNbrState, int lzmax);
+  virtual int FindStateIndex(FermionOnSphereLongState& stateDescription, int reducedNbrState, int lzmax);
 
   // evaluate Hilbert space dimension
   //
@@ -222,7 +228,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -230,12 +236,12 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  void GenerateLookUpTable(unsigned long memory);
+  virtual void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
   // 
@@ -245,7 +251,7 @@ class FermionOnSphereUnlimited :  public ParticleOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  virtual int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
 
 };
 

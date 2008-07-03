@@ -47,5 +47,5 @@ AbstractQHEOnSphereWithSU3SpinHamiltonian.cc \
 ParticleOnSphereWithSU3SpinGenericHamiltonian.cc \
 ParticleOnSphereWithSU3SpinL2Hamiltonian.cc \
 AbstractQHEOnLatticeHamiltonian.cc \
-ParticleOnLatticeDeltaHamiltonian.cc
-
+ParticleOnLatticeDeltaHamiltonian.cc \
+ParticleOnDiskGenericHamiltonian.cc

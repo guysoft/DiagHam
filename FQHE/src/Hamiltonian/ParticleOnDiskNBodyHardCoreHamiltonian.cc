@@ -52,12 +52,12 @@ using std::endl;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(ParticleOnDisk* particles, int nbrParticles, int lzmax, int nbrBody,
+ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, int nbrBody,
 									       AbstractArchitecture* architecture, long memory, 
 									       char* precalculationFileName)
 {
   this->Particles = particles;
-  this->MaxMomentum = this->Particles->GetMaxLz();
+  this->MaxMomentum = lzmax;
   this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
 
@@ -161,7 +161,7 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       TmpBinomial /= ((double) i);
       TmpNormalizationCoeffients[i] = sqrt (TmpBinomial * TmpFactor);
     }
-  if (this->Particles->GetParticleStatistic() == ParticleOnDisk::FermionicStatistic)
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       // useless part (trivially equal to zero for fermions), to be used as an example for other interactions
       for (int k = 2; k <= this->MaxNBody; ++k)

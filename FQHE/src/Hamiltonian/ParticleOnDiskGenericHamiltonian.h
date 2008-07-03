@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of bosons on disk                         //
+//        class of hamiltonian associated to particles on a disk with         //
+//             generic interaction defined by its pseudopotential             //
 //                                                                            //
-//                        last modification : 04/06/2002                      //
+//                        last modification : 03/07/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,51 +29,62 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONDISK_H
-#define BOSONONDISK_H
+#ifndef PARTICLEONDISKGENERICHAMILTONIAN_H
+#define PARTICLEONDISKGENERICHAMILTONIAN_H
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/ParticleOnSphere.h"
+#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnSphereHamiltonian.h"
+
+#include <iostream>
 
 
-class BosonOnDisk :  public BosonOnSphere
+using std::ostream;
+
+
+class MathematicaOutput;
+class AbstractArchitecture;
+
+
+class ParticleOnDiskGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
 {
 
+  friend class QHEParticlePrecalculationOperation;
+
+ protected:
+
+  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
+  double* PseudoPotential;
 
  public:
 
-  // basic constructor
-  // 
-  // nbrBosons = number of bosons
-  // totalLz = momentum total value
-  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrBosons and totalLz)
-  BosonOnDisk (int nbrBosons, int totalLz, int lzMax = -1);
-
-  // copy constructor (without duplicating datas)
+  // constructor from default datas
   //
-  // bosons = reference on the hilbert space to copy to copy
-  BosonOnDisk(const BosonOnDisk& bosons);
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzMax = maximum angular momentum that a single particle can reach
+  // architecture = architecture to use for precalculation
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential,
+				   AbstractArchitecture* architecture, long memory = -1,
+				   bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~BosonOnDisk ();
+  ~ParticleOnDiskGenericHamiltonian();
 
-  // assignement (without duplicating datas)
-  //
-  // bosons = reference on the hilbert space to copy to copy
-  // return value = reference on current hilbert space
-  BosonOnDisk& operator = (const BosonOnDisk& bosons);
+ 
+ protected:
 
-  // forge an eigenstate from a description given by a file
-  //
-  // filename = name of the file that contains the state description
-  // state = reference on the vector where the state has to be stored
-  // return value = true if no error occured
-  bool ForgeEigenstate(char* filename, RealVector& state);
+   // evaluate all interaction factors
+  //   
+  virtual void EvaluateInteractionFactors();
 
 };
 
 #endif
-
-

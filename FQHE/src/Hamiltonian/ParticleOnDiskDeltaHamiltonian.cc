@@ -53,7 +53,7 @@ using std::ostream;
 // bosons = Hilbert space associated to the system
 // lzmax = maximum Lz value reached by a boson in the state
 
-ParticleOnDiskDeltaHamiltonian::ParticleOnDiskDeltaHamiltonian(ParticleOnDisk* bosons, int lzmax)
+ParticleOnDiskDeltaHamiltonian::ParticleOnDiskDeltaHamiltonian(ParticleOnSphere* bosons, int lzmax)
 {
   this->Particles = bosons;
   this->LzMax = lzmax;
@@ -79,7 +79,7 @@ void ParticleOnDiskDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilb
   for (int i = 0; i <= this->LzMax; ++i)
     delete[] this->InteractionFactors[i];    
   delete[] this->InteractionFactors;
-  this->Particles = (ParticleOnDisk*) hilbertSpace;
+  this->Particles = (ParticleOnSphere*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
 

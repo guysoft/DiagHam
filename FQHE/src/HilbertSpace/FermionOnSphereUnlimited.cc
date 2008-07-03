@@ -46,6 +46,13 @@ using std::hex;
 using std::dec;
 
 
+// default constructor
+//
+
+FermionOnSphereUnlimited::FermionOnSphereUnlimited()
+{
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions

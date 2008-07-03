@@ -6,9 +6,11 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of bosons on disk                         //
+//                class of fermions on disk that allow LzMax up to            //
+//                  127 (for systems with 128 bit integer support)            //
+//               or 63 (on 32 bit systems without 128 bit integer support)    //
 //                                                                            //
-//                        last modification : 04/06/2002                      //
+//                        last modification : 03/07/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,50 +30,51 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BOSONONDISK_H
-#define BOSONONDISK_H
+#ifndef FERMIONONDISKLONG_H
+#define FERMIONONDISKLONG_H
 
 
 #include "config.h"
-#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
 
 
-class BosonOnDisk :  public BosonOnSphere
+class FermionOnDiskLong:  public FermionOnSphereLong
 {
+
 
 
  public:
 
+  // default constuctor
+  //
+  FermionOnDiskLong();
+
   // basic constructor
   // 
-  // nbrBosons = number of bosons
+  // nbrFermions = number of fermions
   // totalLz = momentum total value
-  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrBosons and totalLz)
-  BosonOnDisk (int nbrBosons, int totalLz, int lzMax = -1);
+  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrFermions and totalLz)
+  // memory = amount of memory granted for precalculations
+  FermionOnDiskLong (int nbrFermions, int totalLz, int lzMax = -1, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
-  // bosons = reference on the hilbert space to copy to copy
-  BosonOnDisk(const BosonOnDisk& bosons);
+  // fermions = reference on the hilbert space to copy to copy
+  FermionOnDiskLong(const FermionOnDiskLong& fermions);
 
   // destructor
   //
-  ~BosonOnDisk ();
+  virtual ~FermionOnDiskLong ();
 
   // assignement (without duplicating datas)
   //
-  // bosons = reference on the hilbert space to copy to copy
+  // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnDisk& operator = (const BosonOnDisk& bosons);
+  virtual FermionOnDiskLong& operator = (const FermionOnDiskLong& fermions);
 
-  // forge an eigenstate from a description given by a file
-  //
-  // filename = name of the file that contains the state description
-  // state = reference on the vector where the state has to be stored
-  // return value = true if no error occured
-  bool ForgeEigenstate(char* filename, RealVector& state);
 
 };
+
 
 #endif
 

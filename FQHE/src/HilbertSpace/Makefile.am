@@ -19,7 +19,6 @@ FermionOnTorusWithMagneticTranslations.cc \
 FermionOnTorusWithSpinAndMagneticTranslations.cc \
 BosonOnTorusWithMagneticTranslations.cc \
 BosonOnTorusState.cc \
-ParticleOnDisk.cc \
 FermionOnDisk.cc \
 FermionOnSphereLongState.cc \
 FermionOnDiskUnlimited.cc \
@@ -56,4 +55,5 @@ HardCoreBoson.cc \
 ParticleOnLattice.cc \
 BosonOnLattice.cc \
 HardCoreBosonOnLattice.cc \
-FermionOnDiskHaldaneBasis.cc
+FermionOnDiskHaldaneBasis.cc \
+FermionOnDiskLong.cc

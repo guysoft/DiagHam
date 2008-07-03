@@ -6,10 +6,11 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of fermions on disk with no restriction on the         //
-//               number of reachable states or the number of fermions         //
+//                class of fermions on disk that allow LzMax up to            //
+//                  127 (for systems with 128 bit integer support)            //
+//               or 63 (on 32 bit systems without 128 bit integer support)    //
 //                                                                            //
-//                        last modification : 03/03/2004                      //
+//                        last modification : 03/07/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +31,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnDiskUnlimited.h"
+#include "HilbertSpace/FermionOnDiskLong.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -46,6 +47,13 @@ using std::hex;
 using std::dec;
 
 
+// default constuctor
+//
+
+FermionOnDiskLong::FermionOnDiskLong()
+{
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -53,8 +61,9 @@ using std::dec;
 // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrFermions and totalLz)
 // memory = amount of memory granted for precalculations
 
-FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
+FermionOnDiskLong::FermionOnDiskLong (int nbrFermions, int totalLz, int lzMax, unsigned long memory)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
@@ -65,32 +74,16 @@ FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz, in
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
-  this->StateDescription = new FermionOnSphereLongState [this->HilbertSpaceDimension];
-  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
-  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
-  this->ProdATemporaryStateReducedNbrState = this->TemporaryStateReducedNbrState;
-  this->ProdATemporaryState.Resize(this->ProdATemporaryStateReducedNbrState);
+  this->StateDescription = new ULONGLONG [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
-  this->ReducedNbrState = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
-  long UsedMemory = 0;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    UsedMemory += ((this->ReducedNbrState[i] + 1) * sizeof(unsigned long));
-  UsedMemory += this->HilbertSpaceDimension * (3 * sizeof(int));
+  unsigned long UsedMemory = 0;
+  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(ULONGLONG) + sizeof(int));
   UsedMemory += this->NbrLzValue * sizeof(int);
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    {
-      if (this->NbrStateInLookUpTable[i] != 0)
-	{
-	  for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
-	    if (this->NbrStateInLookUpTable[i][j] > 0)      
-	      UsedMemory += this->NbrStateInLookUpTable[i][j] * sizeof(int);
-	}
-    }
-  UsedMemory += this->NbrLzValue * sizeof(int*);
+  UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
@@ -107,38 +100,31 @@ FermionOnDiskUnlimited::FermionOnDiskUnlimited (int nbrFermions, int totalLz, in
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnDiskUnlimited::FermionOnDiskUnlimited(const FermionOnDiskUnlimited& fermions)
+FermionOnDiskLong::FermionOnDiskLong(const FermionOnDiskLong& fermions)
 {
+  this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->StateDescription = fermions.StateDescription;
+  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->ReducedNbrState = fermions.ReducedNbrState;
-
+  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
+  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
+  this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;
-  this->NbrStateInLookUpTable = fermions.NbrStateInLookUpTable;
-  this->HashKeyMask = fermions.HashKeyMask;
-
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-
-  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
-  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
-  this->ProdATemporaryStateReducedNbrState = this->TemporaryStateReducedNbrState;
-  this->ProdATemporaryState.Resize(this->ProdATemporaryStateReducedNbrState);
 }
 
 // destructor
 //
 
-FermionOnDiskUnlimited::~FermionOnDiskUnlimited ()
+FermionOnDiskLong::~FermionOnDiskLong ()
 {
 }
 
@@ -147,7 +133,7 @@ FermionOnDiskUnlimited::~FermionOnDiskUnlimited ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskUnlimited& fermions)
+FermionOnDiskLong& FermionOnDiskLong::operator = (const FermionOnDiskLong& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -155,46 +141,31 @@ FermionOnDiskUnlimited& FermionOnDiskUnlimited::operator = (const FermionOnDiskU
       delete[] this->StateLzMax;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      delete[] this->ReducedNbrState;
+      delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrLzValue; ++i)
-	{
-	  if (this->NbrStateInLookUpTable[i] != 0)
-	    {
-	      for (unsigned long j = 0; j <= this->HashKeyMask; ++j)
-		if (this->NbrStateInLookUpTable[i][j] > 0)
-		  delete[] this->LookUpTable[i][j];
-	      delete[] this->LookUpTable[i];
-	      delete[] this->NbrStateInLookUpTable[i];
-	    }
-	}
+	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
-      delete[] this->NbrStateInLookUpTable;
     }
+  if (this->TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->StateDescription = fermions.StateDescription;
+  this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
- 
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->ReducedNbrState = fermions.ReducedNbrState;
-
+  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
+  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
+  this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;
-  this->NbrStateInLookUpTable = fermions.NbrStateInLookUpTable;
-  this->HashKeyMask = fermions.HashKeyMask;
-
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-
-  this->TemporaryStateReducedNbrState = FermionOnSphereLongStateGetReducedNbrState(this->NbrLzValue);
-  this->TemporaryState.Resize(this->TemporaryStateReducedNbrState);
-  this->ProdATemporaryStateReducedNbrState = this->TemporaryStateReducedNbrState;
-  this->ProdATemporaryState.Resize(this->ProdATemporaryStateReducedNbrState);
   return *this;
 }
-
 

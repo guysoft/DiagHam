@@ -34,7 +34,6 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
 #include "Hamiltonian/AbstractQHEOnDiskHamiltonian.h"
 
 #include <iostream>

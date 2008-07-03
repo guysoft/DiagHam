@@ -34,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractQHEOnDiskHamiltonian.h"
 
 #include <iostream>
@@ -52,7 +52,7 @@ class ParticleOnDiskDeltaHamiltonian : public AbstractQHEOnDiskHamiltonian
  protected:
   
   // Hilbert space associated to the system
-  ParticleOnDisk* Particles;
+  ParticleOnSphere* Particles;
 
   // maximum Lz value reached by a boson in the state
   int LzMax;
@@ -66,7 +66,7 @@ class ParticleOnDiskDeltaHamiltonian : public AbstractQHEOnDiskHamiltonian
   //
   // bosons = Hilbert space associated to the system
   // lzmax = maximum Lz value reached by a boson in the state
-  ParticleOnDiskDeltaHamiltonian(ParticleOnDisk* bosons, int lzmax);
+  ParticleOnDiskDeltaHamiltonian(ParticleOnSphere* bosons, int lzmax);
 
   // destructor
   //

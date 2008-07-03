@@ -3,7 +3,7 @@
 #include "HilbertSpace/BosonOnDisk.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
       State.ReadVector(((SingleStringOption*) Manager["additional-state"])->GetString());
       State *= ((SingleDoubleOption*) Manager["additional-coefficient"])->GetDouble();
     }
-  ParticleOnDisk* Space = 0;
+  ParticleOnSphere* Space = 0;
   if (BosonFlag == true)
     {
       Space = new BosonOnDisk(NbrParticles, Lz);
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
       else
 	Space = new FermionOnDiskUnlimited (NbrParticles, Lz);      
     }
-  Space->ForgeEigenstate(InputName, State);
+  ((BosonOnDisk*) Space)->ForgeEigenstate(InputName, State);
   if (State.WriteVector(OutputName) == false)
     {
       cout << "can't open vector file " << OutputName << endl;

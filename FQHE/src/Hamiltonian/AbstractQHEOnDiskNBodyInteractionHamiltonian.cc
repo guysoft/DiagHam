@@ -78,7 +78,7 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
       double* TmpInteraction;
       double Coefficient2;
       double Coefficient3;
-      ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+      ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true)
 	  {
@@ -137,7 +137,7 @@ RealVector& AbstractQHEOnDiskNBodyInteractionHamiltonian::LowLevelAddMultiply(Re
 	}
       else
 	{
-	  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+	  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
 	  int* TmpIndexArray;
 	  double* TmpCoefficientArray; 
 	  int j;
@@ -228,7 +228,7 @@ long AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialFastMultiplicationMemo
   long Memory = 0;
   int* MIndices;
   int* NIndices;
-  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   for (int k = 2; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
@@ -358,7 +358,7 @@ void AbstractQHEOnDiskNBodyInteractionHamiltonian::PartialEnableFastMultiplicati
   int Pos;
   int Min = firstComponent / this->FastMultiplicationStep;
   int Max = lastComponent / this->FastMultiplicationStep;
-  ParticleOnDisk* TmpParticles = (ParticleOnDisk*) this->Particles->Clone();
+  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   double* TmpInteraction;
   int* MIndices;
   int* NIndices;

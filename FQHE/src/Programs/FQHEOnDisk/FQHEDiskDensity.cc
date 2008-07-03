@@ -3,7 +3,7 @@
 #include "HilbertSpace/BosonOnDisk.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
 
 #include "Options/OptionManager.h"
@@ -14,7 +14,7 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
-#include "Operator/ParticleOnDiskDensityOperator.h"
+#include "Operator/ParticleOnSphereDensityOperator.h"
 #include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
 
 #include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     }
 
   ParticleOnDiskFunctionBasis Basis(TotalLz);
-  ParticleOnDisk* Space = 0;
+  ParticleOnSphere* Space = 0;
   int TmpMaxMomentum = 0;
   if (Statistics == false)
     {
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 	  
   for (int i = 0; i <= TmpMaxMomentum; ++i)
     {
-      ParticleOnDiskDensityOperator Operator (Space, i);
+      ParticleOnSphereDensityOperator Operator (Space, i);
       PrecalculatedValues[i] = Operator.MatrixElement(State, State);
     }
   

@@ -1,7 +1,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 
   for (int  L = MMin; L <= MMax; ++L)
     {
-      ParticleOnDisk* Space;
+      ParticleOnSphere* Space;
       int TmpMaxMomentum = (L - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
 	TmpMaxMomentum = ForceMaxMomentum;
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 	}
       cout << "Nbr fermions = " << NbrParticles << "    L = " << L << "    Dimension = " << Space->GetHilbertSpaceDimension() << endl;
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(Space, NbrParticles, 
+      ParticleOnDiskLaplacianDeltaHamiltonian* Hamiltonian = new ParticleOnDiskLaplacianDeltaHamiltonian(Space, NbrParticles, TmpMaxMomentum,
 													 Architecture.GetArchitecture(), Memory, 
 													 LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) MMax));

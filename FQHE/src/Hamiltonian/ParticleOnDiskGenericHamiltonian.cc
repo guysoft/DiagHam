@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //        class of hamiltonian associated to particles on a disk with         //
-//                          laplacian delta interaction                       //
+//             generic interaction defined by its pseudopotential             //
 //                                                                            //
-//                        last modification : 05/02/2004                      //
+//                        last modification : 03/07/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnDiskLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnDiskGenericHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -55,14 +55,15 @@ using std::ostream;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzMax = maximum angular momentum that a single particle can reach
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax,
-										 AbstractArchitecture* architecture, long memory, 
-										 bool onDiskCacheFlag, char* precalculationFileName)
+ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential,
+								   AbstractArchitecture* architecture, long memory, 
+								   bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = lzMax;
@@ -71,6 +72,9 @@ ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
+  this->PseudoPotential = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -122,12 +126,13 @@ ParticleOnDiskLaplacianDeltaHamiltonian::ParticleOnDiskLaplacianDeltaHamiltonian
 // destructor
 //
 
-ParticleOnDiskLaplacianDeltaHamiltonian::~ParticleOnDiskLaplacianDeltaHamiltonian() 
+ParticleOnDiskGenericHamiltonian::~ParticleOnDiskGenericHamiltonian() 
 {
   delete[] this->InteractionFactors;
   delete[] this->M1Value;
   delete[] this->M2Value;
   delete[] this->M3Value;
+  delete[] this->PseudoPotential;
   if (this->FastMultiplicationFlag == true)
     {
        if (this->DiskStorageFlag == false)
@@ -159,7 +164,7 @@ ParticleOnDiskLaplacianDeltaHamiltonian::~ParticleOnDiskLaplacianDeltaHamiltonia
 // evaluate all interaction factors
 //   
 
-void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 {
   int Lim;
   int Min;
@@ -179,13 +184,16 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	    Min = m1 + m2 - this->LzMax;
 	    if (Min < 0)
 	      Min = 0;
+	    int MaxSum = m1 + m2;
 	    for (int m3 = Min; m3 <= Lim; ++m3)
 	      {
 		m4 = m1 + m2 - m3;
-		TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-				       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-				       - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-				       - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+		double TmpCoef = 0.0;
+		for (int j = 1; j <= MaxSum; j += 2)
+		  {
+		    TmpCoef += this->PseudoPotential[j];
+		  }
+		TmpCoefficient[Pos] = TmpCoef;
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;
@@ -243,25 +251,6 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	      }
 	    ++TotalIndex;
 	  }
-//       for (int m1 = 0; m1 <= this->LzMax; ++m1)
-// 	for (int m2 = 0; m2 < m1; ++m2)
-// 	  for (int m3 = 0; m3 <= this->LzMax; ++m3)
-// 	    {
-// 	      m4 = m1 + m2 - m3;
-// 	      if ((m4 >= 0) && (m3 > m4))
-// 		{
-// 		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-// 		    {
-// 		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-// 		      this->M1Value[this->NbrInteractionFactors] = m1;
-// 		      this->M2Value[this->NbrInteractionFactors] = m2;
-// 		      this->M3Value[this->NbrInteractionFactors] = m3;
-// 		      this->M4Value[this->NbrInteractionFactors] = m4;
-// 		      ++this->NbrInteractionFactors;
-// 		    }
-// 		  ++Pos;
-// 		}
-// 	    }
     }
   else
     {
@@ -274,6 +263,7 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 	    Min = m1 + m2 - this->LzMax;
 	    if (Min < 0)
 	      Min = 0;
+	    int MaxSum = m1 + m2;
 	    for (int m3 = Min; m3 <= Lim; ++m3)
 	      {
 		m4 = m1 + m2 - m3;
@@ -281,14 +271,22 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		  {
 		    if (m1 != m2)
 		      {
-			TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					       + this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					       + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+			double TmpCoef = 0.0;
+			for (int j = 0; j <= MaxSum; j += 2)
+			  {
+			    TmpCoef += this->PseudoPotential[j];
+			  }
+			TmpCoefficient[Pos] = TmpCoef;
 		      }
 		    else
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3));
+		      {
+			double TmpCoef = 0.0;
+			for (int j = 0; j <= MaxSum; j += 2)
+			  {
+			    TmpCoef += this->PseudoPotential[j];
+			  }
+			TmpCoefficient[Pos] = TmpCoef;
+		      }
 		    if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		    ++Pos;
@@ -297,10 +295,23 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		  if (m3 == m4)
 		    {
 		      if (m1 != m2)
-			TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					       + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+			{
+			  double TmpCoef = 0.0;
+			  for (int j = 0; j <= MaxSum; j += 2)
+			    {
+			      TmpCoef += this->PseudoPotential[j];
+			    }
+			  TmpCoefficient[Pos] = TmpCoef;
+			}
 		      else
-			TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4);
+			{
+			  double TmpCoef = 0.0;
+			  for (int j = 0; j <= MaxSum; j += 2)
+			    {
+			      TmpCoef += this->PseudoPotential[j];
+			    }
+			  TmpCoefficient[Pos] = TmpCoef;
+			}
 		      if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 			MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		      ++Pos;
@@ -426,43 +437,5 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
   delete[] TmpCoefficient;
-}
-
-// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
-//
-// m1 = first index
-// m2 = second index
-// m3 = third index
-// m4 = fourth index
-// return value = numerical coefficient
-
-double ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
-{
-  if ((m1 == m2) || (m3 == m4))
-    return 0.0;
-  FactorialCoefficient Coef;
-  Coef.SetToOne();
-  if (m2 > 1)
-    {
-      Coef.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
-      Coef.FactorialDivide(m2);
-    }
-  else
-    {
-      if (m2 == 0)
-	Coef /= m1;	
-    }
-  if (m4 > 1)
-    {
-      Coef.PartialFactorialMultiply(m3 + 1, m3 + m4 - 1);
-      Coef.FactorialDivide(m4);
-    }
-  else
-    {
-      if (m4 == 0)
-	Coef /= m3;	
-    }
-  Coef.Power2Divide(2 * (m1 + m2));
-  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4))) / M_PI);
 }
 

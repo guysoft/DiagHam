@@ -1,6 +1,6 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
