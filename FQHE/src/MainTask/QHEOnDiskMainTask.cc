@@ -48,6 +48,7 @@
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/FullReorthogonalizedBlockLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundStateDiskStorage.h"
 
 #include "Options/OptionManager.h"
@@ -151,14 +152,6 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
     {
       this->PartialLanczos = false;
     }
-  if ((*options)["use-lapack"] != 0)
-    {
-      this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
-    }
-  else
-    {
-      this->LapackFlag = false;
-    }
   if ((*options)["limit-time"] != 0)
     {
       this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());
@@ -166,6 +159,59 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
   else
     {
       this->MaximumAllowedTime = 0;
+    }
+  if ((((*options)["use-hilbert"]) != 0) && (((SingleStringOption*) (*options)["use-hilbert"])->GetString() != 0))
+    {
+      this->ReducedHilbertSpaceDescription = ((SingleStringOption*) (*options)["use-hilbert"])->GetString();
+    }
+  else
+    {
+      this->ReducedHilbertSpaceDescription = 0;
+    }
+  if ((*options)["get-hvalue"] != 0)
+    {
+      this->ComputeEnergyFlag = ((BooleanOption*) (*options)["get-hvalue"])->GetBoolean();
+    }
+  else
+    {
+      this->ComputeEnergyFlag = false;
+    }
+  if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
+    {
+      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+      this->Hamiltonian->GetHamiltonian(HRep);
+      cout << HRep << endl;
+    }
+  if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
+    {
+      this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();
+    }
+  else
+    {
+      this->LanczosPrecision = 0.0;
+    }
+
+  if (((*options)["fast-disk"] != 0) && (this->EvaluateEigenvectors == true))
+    {
+      this->FastDiskFlag = ((BooleanOption*) (*options)["fast-disk"])->GetBoolean();
+      if ((*options)["resume-fastdisk"] != 0)
+	{
+	  this->ResumeFastDiskFlag = ((BooleanOption*) (*options)["resume-fastdisk"])->GetBoolean();
+	}
+    }
+  else
+    {
+      this->FastDiskFlag = false;
+      this->ResumeFastDiskFlag = false;
+    }
+
+  if ((((*options)["set-reorthogonalize"]) != 0) && (((SingleStringOption*) (*options)["set-reorthogonalize"])->GetString() != 0))
+    {
+      this->LanczosReorthogonalization = ((SingleStringOption*) (*options)["set-reorthogonalize"])->GetString();
+    }
+  else
+    {
+      this->LanczosReorthogonalization = 0;
     }
   this->FirstRun = firstRun;
 }  
@@ -180,6 +226,20 @@ QHEOnDiskMainTask::~QHEOnDiskMainTask()
     delete[] this->EigenvectorFileName;
 }
   
+// set architecture binded to the task
+// 
+// architecture = pointer to the architecture to use
+
+void QHEOnDiskMainTask::SetArchitecture(AbstractArchitecture* architecture)
+{
+  this->Architecture = architecture;
+  if ((this->Architecture->GetArchitectureID() & AbstractArchitecture::WithCommunicator) != 0)
+    if (this->OperationManagers.GetNbrElement() == 0)
+      {
+	this->OperationManagers += new ArchitectureBaseOperationManager((SimpleMPIArchitecture*) this->Architecture, this->Hamiltonian);
+      }
+}
+
 // execute the main task
 // 
 // return value = 0 if no error occurs, else return error code
@@ -191,6 +251,10 @@ int QHEOnDiskMainTask::ExecuteMainTask()
     {
       File.open(this->OutputFileName, ios::binary | ios::out);
       this->FirstRun = false;
+      File << "# Lz E";
+      if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
+	File << " <H>";
+      File << endl;
     }
   else
     {
@@ -290,7 +354,7 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	{
 	  if (this->DiskFlag == false)
 	    if (this->EvaluateEigenvectors == true)
-	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos);
+	      Lanczos = new BasicLanczosAlgorithmWithGroundState(this->Architecture, this->MaxNbrIterLanczos, this->FastDiskFlag, this->ResumeFastDiskFlag);
 	    else
 	      Lanczos = new BasicLanczosAlgorithm(this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	  else
@@ -301,16 +365,33 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  if (this->DiskFlag == false)
+	  if (this->FullReorthogonalizationFlag == true)
+	    {
+	      if (this->DiskFlag == false)
+		{
+		  if (this->BlockLanczosFlag == true)
+		    Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, false, this->LapackFlag);
+		  else
+		    Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
+		}
+	      else
+		Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
+	    }
+	  else
 	    {
 	      if (this->BlockLanczosFlag == true)
-		Lanczos = new FullReorthogonalizedBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos);
+		Lanczos = new BasicBlockLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->SizeBlockLanczos, this->MaxNbrIterLanczos, 
+							  this->FastDiskFlag, this->ResumeFastDiskFlag, false, this->LapackFlag);
 	      else
 		Lanczos = new FullReorthogonalizedLanczosAlgorithm (this->Architecture, this->NbrEigenvalue, this->MaxNbrIterLanczos);
 	    }
-	  else
-	    Lanczos = new FullReorthogonalizedLanczosAlgorithmWithDiskStorage (this->Architecture, this->NbrEigenvalue, this->VectorMemory, this->MaxNbrIterLanczos);
 	}
+      if (this->LanczosReorthogonalization != 0)
+	{
+	  Lanczos->ForceOrthogonalization(this->LanczosReorthogonalization);
+	}
+      if (this->LanczosPrecision != 0.0)
+	Lanczos->SetEigenvaluePrecision(this->LanczosPrecision);
       double GroundStateEnergy;
       double Precision = 1.0;
       double PreviousLowest = 1e50;
@@ -339,7 +420,7 @@ int QHEOnDiskMainTask::ExecuteMainTask()
       double Dt;
       gettimeofday (&(TotalStartingTime), 0);
       int StartTimeSecond = TotalStartingTime.tv_sec;
-      if (ResumeFlag == false)
+      if (this->ResumeFlag == false)
 	{
 	  Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
 	  CurrentNbrIterLanczos = NbrEigenvalue + 3;
@@ -380,7 +461,7 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	  TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
 	  TmpMatrix.SortMatrixUpOrder();
 	}
-      if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
+      if (CurrentNbrIterLanczos >= this->MaxNbrIterLanczos)
 	{
 	  cout << "too much Lanczos iterations" << endl;
 	  File << "too much Lanczos iterations" << endl;
@@ -394,19 +475,21 @@ int QHEOnDiskMainTask::ExecuteMainTask()
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	{
 	  cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
-	  File << this->LValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
+	  if  (this->ComputeEnergyFlag == false)
+	    File << this->LValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
 	}
       cout << endl;
-      if ((this->EvaluateEigenvectors == true) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
-										 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
-						   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
-						    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
+      if ((this->EvaluateEigenvectors == true) && 
+	  (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
+					 ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
+	   ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||
+	    ((this->PartialLanczos == true) && (CurrentNbrIterLanczos < this->NbrIterLanczos)))))
 	{
 	  RealVector* Eigenvectors = (RealVector*) Lanczos->GetEigenstates(this->NbrEigenvalue);
-	  if ((Eigenvectors != 0) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
+	  if (Eigenvectors != 0)
 	    {
 	      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-	      if (this->EigenvectorConvergence == true)
+	      if ((this->EigenvectorConvergence == true) && ((this->PartialLanczos == false) || (CurrentNbrIterLanczos <= this->NbrIterLanczos)))
 		{
 		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[this->NbrEigenvalue - 1]), &TmpEigenvector);
 		  Operation1.ApplyOperation(this->Architecture);
@@ -425,7 +508,7 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		      Operation1.ApplyOperation(this->Architecture);
 		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
 		      Scalar = TmpEigenvector * Eigenvectors[this->NbrEigenvalue - 1];
-		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));
+		      Precision = fabs((Scalar - TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1)) / TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1));		  
 		      cout << (TmpMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->EnergyShift) << " " << (Scalar - this->EnergyShift) << " " 
 			   << Precision << " ";
 		      if (this->ShowIterationTime == true)
@@ -440,21 +523,30 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		      cout << endl;
 		    }
 		}
-	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
 	      for (int i = 0; i < this->NbrEigenvalue; ++i)
 		{
+		  if (this->ComputeEnergyFlag == true)
+		    File << this->LValue << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift);
 		  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Eigenvectors[i]), &TmpEigenvector);
 		  Operation1.ApplyOperation(this->Architecture);
-		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";		  
-		  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
-		    {	  
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
-		    }
-		  else
+		  cout << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << " ";	
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+		      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
+			{	  
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			}
+		      else
+			{
+			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			}
+		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
-		  Eigenvectors[i].WriteVector(TmpVectorName);
+		  if (this->ComputeEnergyFlag == true)
+		    {
+		      File << " " << ((TmpEigenvector * Eigenvectors[i]) - this->EnergyShift) << endl;
+		    }
 		}
 	      cout << endl;
 	      delete[] TmpVectorName;

@@ -99,9 +99,20 @@ class QHEOnDiskMainTask: public AbstractMainTask
   bool PartialLanczos;
   // use LAPACK libraries instead of DiagHam libraries
   bool LapackFlag;
-
+  // name of the file that contains the vector files used to describe the Hilbert subspace
+  char* ReducedHilbertSpaceDescription;
+  // compute hamiltonian mean value for each eigenvalue
+  bool ComputeEnergyFlag;
+  // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
+  double LanczosPrecision;
+  // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state
+  bool FastDiskFlag;
+  // indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
+  // name of the file that contains a optional set of vectors to which eigenstates have to be orthogonal
+  char* LanczosReorthogonalization;
 
  public:
 
@@ -123,6 +134,11 @@ class QHEOnDiskMainTask: public AbstractMainTask
   //  
   ~QHEOnDiskMainTask();
   
+  // set architecture binded to the task
+  // 
+  // architecture = pointer to the architecture to use
+  void SetArchitecture(AbstractArchitecture* architecture);
+
   // execute the main task
   // 
   // return value = 0 if no error occurs, else return error code
