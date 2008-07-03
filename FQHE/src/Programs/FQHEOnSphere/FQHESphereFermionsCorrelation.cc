@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsCorrelation" , "0.01");
+  OptionManager Manager ("FQHESphereFermionsCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -75,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -83,7 +84,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsCorrelation -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereFermionsCorrelation -h" << endl;
       return -1;
     }
   
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
   bool ChordFlag = ((BooleanOption*) Manager["chord"])->GetBoolean();
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
   bool Statistics = true;
  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
@@ -113,7 +115,7 @@ int main(int argc, char** argv)
 
   if (((SingleStringOption*) Manager["state"])->GetString() == 0)
     {
-      cout << "QHEFermionsCorrelation requires a state" << endl;
+      cout << "FQHESphereFermionsCorrelation requires a state" << endl;
       return -1;
     }
   RealVector State;
@@ -357,31 +359,44 @@ int main(int argc, char** argv)
   ofstream File;
   File.precision(14);
   File.open(OutputNameCorr, ios::binary | ios::out);
-  double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
-  if (DensityFlag == true)
-    Factor1 = 1.0;//4.0 * M_PI;
-  double Factor2;
-  if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
-    Factor2 = 1.0;
-  else
-    Factor2 = sqrt (0.5 * LzMax);
-  for (int x = 0; x < NbrPoints; ++x)
+  if (CoefficientOnlyFlag == true)
     {
-      Value[0] = X;
-      Sum = 0.0;
-      for (int i = 0; i <= LzMax; ++i)
- 	{
- 	  Basis->GetFunctionValue(Value, TmpValue, i);
- 	  Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
- 	}
-      if (ChordFlag == false)
-	File << (X * Factor2) << " " << (Norm(Sum)  * Factor1) << endl;
+      if (DensityFlag == true)      
+	File << "# density correlation coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
       else
-	File << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
-      X += XInc;
+	File << "# density-density correlation coefficientsfor " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      File << "#" << endl << "# (l+S)    c_l" << endl;
+      for (int i = 0; i <= LzMax; ++i)
+	File << i << " " << PrecalculatedValues[i]<< endl;
     }
-
-
+  else
+    {
+      double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      if (DensityFlag == true)
+	Factor1 = 1.0;//4.0 * M_PI;
+      double Factor2;
+      if (((BooleanOption*) Manager["radians"])->GetBoolean() == true)
+	Factor2 = 1.0;
+      else
+	Factor2 = sqrt (0.5 * LzMax);
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  Sum = 0.0;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      Basis->GetFunctionValue(Value, TmpValue, i);
+	      Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	    }
+	  if (ChordFlag == false)
+	    File << (X * Factor2) << " " << (Norm(Sum)  * Factor1) << endl;
+	  else
+	    File << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
+	  X += XInc;
+	}
+    }
+  File.close();
+ 
   delete[] OutputNameCorr;	  
   delete[] PrecalculatedValues;
 

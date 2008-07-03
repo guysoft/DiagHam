@@ -6,10 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of fermions on disk with restriction on the            //
-//              number of reachable states or the number of fermions          //
+//               class of fermions on disk using the Haldane basis            //
 //                                                                            //
-//                        last modification : 30/01/2004                      //
+//                        last modification : 01/07/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,110 +28,78 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONDISK_H
-#define FERMIONONDISK_H
+#ifndef FERMIONONDISKHALDANEBASIS_H
+#define FERMIONONDISKHALDANEBASIS_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/FermionOnDisk.h"
+
+#include <iostream>
 
 
-class FermionOnDisk:  public ParticleOnDisk
+class FermionOnDisk;
+
+
+class FermionOnDiskHaldaneBasis :  public FermionOnDisk
 {
-
-  friend class FermionOnDiskHaldaneBasis;
-
 
  protected:
 
-  // number of fermions
-  int NbrFermions;
-  // number of fermions plus 1
-  int IncNbrFermions;
-  // momentum total value
-  int TotalLz;
-  //  maximum momentum that can be reached by a fermion
-  int LzMax;
-  // number of one particle state with a different momentum
-  int NbrLzValue;
+  // topmost state 
+  unsigned long ReferenceState;
 
-  // array describing each state
-  unsigned long* StateDescription;
-  // array giving maximum Lz value reached for a fermion in a given state
-  int* StateLzMax;
-
-  // multiplicative factors used during key construction
-  int* KeyMultiplicationTable;
-  // keys associated to each state
-  int* Keys;
-  // indicate position of the first state with a given number of fermion having a given maximum Lz value
-  int* LzMaxPosition;
-
-  // maximum shift used for searching a position in the look-up table
-  int MaximumLookUpShift;
-  // memory used for the look-up table in a given lzmax sector
-  int LookUpTableMemorySize;
-  // shift used in each lzmax sector
-  int* LookUpTableShift;
-  // mask to apply to a state after shifting it by the corresponding LookUpTableShift
-  unsigned long* LookUpTableMask;
-  // look-up table with two entries : the first one used lzmax value of the state an the second 
-  int** LookUpTable;
-
-  // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
-  double* SignLookUpTable;
-  // a table containing the mask on the bits to keep for each shift that is requested by sign evaluation
-  unsigned long* SignLookUpTableMask;
-  // number to evalute size of SignLookUpTable
-  int MaximumSignLookUp;
-
-  // temporary state used when applying ProdA operator
-  unsigned long ProdATemporaryState;
-  // Lz maximum value associated to temporary state used when applying ProdA operator
-  int ProdALzMax;
+  // three temporary arrays used during Hilbert space generation
+  unsigned long* TmpGeneratedStates;
+  int* TmpGeneratedStatesLzMax;
+  unsigned long* KeepStateFlag;
 
  public:
 
-  // default constuctor
+  // default constructor
   //
-  FermionOnDisk();
+  FermionOnDiskHaldaneBasis();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
-  // totalLz = momentum total value
-  // lzMax = maximum angular momentum that a single particle can reach (negative if it has to be deduced from nbrFermions and totalLz)
-  FermionOnDisk (int nbrFermions, int totalLz, int lzMax = -1);
+  // totalLz = reference on the angular momentum total value, totalLz will be recomputed from referenceState and stored in totalLz
+  // lzMax =  the maximum Lz value reached by a fermion
+  // referenceState = array that describes the reference state to start from
+  // memory = amount of memory granted for precalculations
+  FermionOnDiskHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState, unsigned long memory = 10000000);
+
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  FermionOnDiskHaldaneBasis (char* fileName, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnDisk(const FermionOnDisk& fermions);
+  FermionOnDiskHaldaneBasis(const FermionOnDiskHaldaneBasis& fermions);
 
   // destructor
   //
-  virtual ~FermionOnDisk ();
+  virtual ~FermionOnDiskHaldaneBasis ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  virtual FermionOnDisk& operator = (const FermionOnDisk& fermions);
+  FermionOnDiskHaldaneBasis& operator = (const FermionOnDiskHaldaneBasis& fermions);
+
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  virtual AbstractHilbertSpace* Clone();
-
-  // get the particle statistic 
-  //
-  // return value = particle statistic
-  virtual int GetParticleStatistic();
-
-  // get the maximum angular momentum that can be reached by a particle 
-  //
-  // return value = maximum momentum
-  virtual int GetMaxLz();
+  AbstractHilbertSpace* Clone();
 
   // return a list of all possible quantum numbers 
   //
@@ -153,6 +120,21 @@ class FermionOnDisk:  public ParticleOnDisk
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
+  // convert a given state from Haldane basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToNbodyBasis(RealVector& state, FermionOnDisk& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the Haldane basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertFromNbodyBasis(RealVector& state, FermionOnDisk& nbodyBasis);
+
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied
@@ -162,7 +144,7 @@ class FermionOnDisk:  public ParticleOnDisk
   // n2 = second index for annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-   virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
   // apply Prod_i a^+_mi Prod_i a_ni operator to a given state (with Sum_i  mi= Sum_i ni)
   //
@@ -172,61 +154,63 @@ class FermionOnDisk:  public ParticleOnDisk
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-   virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+  virtual int ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int nbrIndices);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
 
   // apply a^+_m a_m operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m a_m
-   virtual double AdA (int index, int m);
+  virtual double AdA (int index, int m);
 
-  // print a given State
+  // apply a^+_m a_n operator to a given state 
   //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-   virtual ostream& PrintState (ostream& Str, int state);
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient);
 
-  // evaluate wave function in real space using a given basis and only for agiven range of components
-  //
-  // state = vector corresponding to the state in the Fock basis
-  // position = vector whose components give coordinates of the point where the wave function has to be evaluated
-  // basis = one body real space basis to use
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = wave function evaluated at the given location
-   virtual Complex EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
-					 int firstComponent, int nbrComponent);                                
-  
-  // initialize evaluation of wave function in real space using a given basis and only for a given range of components and
-  //
-  // timeCoherence = true if time coherence has to be used
-   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
-  
  protected:
 
   // find state index
   //
-  // stateDescription = array describing the state
+  // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
-  // evaluate Hilbert space dimension
-  //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // return value = Hilbert space dimension
-  virtual unsigned long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
-
   // generate look-up table associated to current Hilbert space
   // 
-  // memory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(int memory);
+  // memeory = memory size that can be allocated for the look-up table
+  virtual void GenerateLookUpTable(unsigned long memory);
 
   // generate all states corresponding to the constraints
+  // 
+  // lzMax = momentum maximum value for a fermion
+  // totalLz = momentum total value
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
+
+  // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
   // 
   // nbrFermions = number of fermions
   // lzMax = momentum maximum value for a fermion
@@ -234,27 +218,10 @@ class FermionOnDisk:  public ParticleOnDisk
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-   virtual int GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  virtual unsigned long RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, unsigned long pos);
+
 
 };
-
-// get the particle statistic 
-//
-// return value = particle statistic
-
-inline int FermionOnDisk::GetParticleStatistic()
-{
-  return ParticleOnDisk::FermionicStatistic;
-}
-
-// get the maximum angular momentum that can be reached by a particle 
-//
-// return value = maximum momentum
-
-inline int FermionOnDisk::GetMaxLz()
-{
-  return this->LzMax;
-}
 
 #endif
 

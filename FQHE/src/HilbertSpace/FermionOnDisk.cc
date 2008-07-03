@@ -46,6 +46,13 @@ using std::hex;
 using std::dec;
 
 
+// default constuctor
+//
+
+FermionOnDisk::FermionOnDisk()
+{
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -62,7 +69,7 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz, int lzMax)
   else
     this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  this->HilbertSpaceDimension = (int) this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
@@ -586,17 +593,17 @@ void FermionOnDisk::GenerateLookUpTable(int memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+unsigned long FermionOnDisk::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return 0;
+    return 0ul;
   int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
   if (LzTotalMax < totalLz)
-    return 0;
+    return 0ul;
   if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1;
+    return 1ul;
   if (LzTotalMax == totalLz)
-    return 1;
+    return 1ul;
   return  (this->EvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   + this->EvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }

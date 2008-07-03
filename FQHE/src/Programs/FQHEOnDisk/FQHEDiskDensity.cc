@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "HilbertSpace/ParticleOnDisk.h"
+#include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -17,6 +18,8 @@
 #include "FunctionBasis/ParticleOnDiskFunctionBasis.h"
 
 #include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
+
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -49,6 +52,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use boson statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermion statistics");
   (*SystemGroup) += new SingleStringOption  ('\0', "state", "name of the vector file describing the state whose density has to be plotted");
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name", "density.dat");
@@ -73,14 +78,15 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int Lz = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
+  int TotalLz = ((SingleIntegerOption*) Manager["momentum"])->GetInteger();
   int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
   bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
+  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   char* OutputName = ((SingleStringOption*) Manager["output"])->GetString();
   int NbrSamples = ((SingleIntegerOption*) Manager["nbr-samples"])->GetInteger();
   bool Statistics = true;
 
-  if (FQHEOnDiskFindSystemInfoFromFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, ForceMaxMomentum, Lz, Statistics) == false)
+  if (FQHEOnDiskFindSystemInfoFromFileName(((SingleStringOption*) Manager["state"])->GetString(), NbrParticles, ForceMaxMomentum, TotalLz, Statistics) == false)
     {
       return -1;      
     }
@@ -99,29 +105,68 @@ int main(int argc, char** argv)
       return -1;      
     }
 
-  ParticleOnDiskFunctionBasis Basis(Lz);
+  ParticleOnDiskFunctionBasis Basis(TotalLz);
   ParticleOnDisk* Space = 0;
   int TmpMaxMomentum = 0;
   if (Statistics == false)
     {
-      TmpMaxMomentum = Lz;
+      TmpMaxMomentum = TotalLz;
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
 	TmpMaxMomentum = ForceMaxMomentum;      
-      Space = new BosonOnDisk(NbrParticles, Lz);
+      Space = new BosonOnDisk(NbrParticles, TotalLz);
     }
   else
     {
-      TmpMaxMomentum = (Lz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
-      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
-	TmpMaxMomentum = ForceMaxMomentum;
+      if (HaldaneBasisFlag == false)
+	{
+	  TmpMaxMomentum = (TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
+	  if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	    TmpMaxMomentum = ForceMaxMomentum;
 #ifdef __64_BITS__
-      if (TmpMaxMomentum < 63)      
+	  if (TmpMaxMomentum < 63)      
 #else
-      if (TmpMaxMomentum < 31)
+	    if (TmpMaxMomentum < 31)
 #endif
-	Space = new FermionOnDisk (NbrParticles, Lz, TmpMaxMomentum);
+	      Space = new FermionOnDisk (NbrParticles, TotalLz, TmpMaxMomentum);
+	    else
+	      Space = new FermionOnDiskUnlimited (NbrParticles, TotalLz, TmpMaxMomentum);      
+	}
       else
-	Space = new FermionOnDiskUnlimited (NbrParticles, Lz, TmpMaxMomentum);      
+	{
+	  int* ReferenceState = 0;
+	  ConfigurationParser ReferenceStateDefinition;
+	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	    {
+	      ReferenceStateDefinition.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	    {
+	      cout << "NbrParticles is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", ForceMaxMomentum) == false) || (ForceMaxMomentum <= 0))
+	    {
+	      cout << "ForceMaxMomentum is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  TmpMaxMomentum = ForceMaxMomentum;
+	  int MaxNbrLz;
+	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	    {
+	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	      return -1;     
+	    }
+	  if (MaxNbrLz != (ForceMaxMomentum + 1))
+	    {
+	      cout << "wrong LzMax value in ReferenceState" << endl;
+	      return -1;     
+	    }
+	  TotalLz = 0;
+	  for (int i = 1; i <= ForceMaxMomentum; ++i)
+	    TotalLz += i * ReferenceState[i];
+	  Space = new FermionOnDiskHaldaneBasis (NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	}
     }
 
   if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
@@ -144,15 +189,15 @@ int main(int argc, char** argv)
   if (CoefficientOnlyFlag == false)
     {
       Complex Tmp (0.0);
-      double RInc = 1.2 * ((double) Lz) / ((double) NbrSamples);
+      double RInc = 1.2 * ((double) TotalLz) / ((double) NbrSamples);
       NbrSamples *= 2;      
       RealVector Value(2, true);
-      Value[0] = - 1.2 * ((double) Lz);
+      Value[0] = - 1.2 * ((double) TotalLz);
       Complex TmpValue;
       for (int i = 0; i <= NbrSamples; ++i)
 	{
 	  Tmp = 0.0;
-	  for (int j = 0; j <= Lz; ++j)
+	  for (int j = 0; j <= TotalLz; ++j)
 	    {
 	      Basis.GetFunctionValue(Value, TmpValue, j);
 	      Tmp += PrecalculatedValues[j] * SqrNorm(TmpValue);
