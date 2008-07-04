@@ -71,6 +71,7 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis()
 FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (int nbrFermions, int& totalLz, int lzMax, int* referenceState,
 						      unsigned long memory)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->LzMax = lzMax;
@@ -265,6 +266,7 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (char* fileName, unsigned l
 
   File.close();
 
+  this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -294,6 +296,7 @@ FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis (char* fileName, unsigned l
 
 FermionOnDiskHaldaneBasis::FermionOnDiskHaldaneBasis(const FermionOnDiskHaldaneBasis& fermions)
 {
+  this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -350,6 +353,10 @@ FermionOnDiskHaldaneBasis& FermionOnDiskHaldaneBasis::operator = (const FermionO
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
+  if (this->TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;

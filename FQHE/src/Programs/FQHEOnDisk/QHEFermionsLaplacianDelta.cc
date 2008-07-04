@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 	}
       if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", ForceMaxMomentum) == false) || (ForceMaxMomentum <= 0))
 	{
-	  cout << "ForceMaxMomentum is not defined or as a wrong value" << endl;
+	  cout << "LzMax is not defined or as a wrong value" << endl;
 	  return -1;
 	}
       int MaxNbrLz;
