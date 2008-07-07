@@ -77,12 +77,9 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
-  this->PseudoPotential = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    {
-      this->PseudoPotential[i] = pseudoPotential[i];
-      cout << this->PseudoPotential[i] << endl;
-    }
+  this->PseudoPotential = new double [this->LzMax + this->NbrLzValue];
+  for (int i = 0; i <= (2 * this->LzMax); ++i)
+    this->PseudoPotential[i] = pseudoPotential[i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -153,9 +150,9 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->Architecture = architecture;
-  this->PseudoPotential = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
+  this->PseudoPotential = new double [this->LzMax + this->NbrLzValue];
+  for (int i = 0; i <= (2 * this->LzMax); ++i)
+    this->PseudoPotential[i] = pseudoPotential[i];
   this->OneBodyTermFlag = true;
   this->OneBodyPotentials = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
@@ -282,8 +279,6 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 		  {
 		    TmpCoef -= 4.0 * this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 		  }
-		if (m3 >= m4)
-		cout << m1 << " " << m2  << " " << m3 << " " << m4 << " : " <<   TmpCoef << endl;
 		TmpCoefficient[Pos] = TmpCoef;
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
@@ -559,5 +554,43 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
   delete[] TmpCoefficient;
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+double ParticleOnDiskGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+{
+  if ((m1 == m2) || (m3 == m4))
+    return 0.0;
+  FactorialCoefficient Coef;
+  Coef.SetToOne();
+  if (m2 > 1)
+    {
+      Coef.PartialFactorialMultiply(m1 + 1, m1 + m2 - 1);
+      Coef.FactorialDivide(m2);
+    }
+  else
+    {
+      if (m2 == 0)
+	Coef /= m1;	
+    }
+  if (m4 > 1)
+    {
+      Coef.PartialFactorialMultiply(m3 + 1, m3 + m4 - 1);
+      Coef.FactorialDivide(m4);
+    }
+  else
+    {
+      if (m4 == 0)
+	Coef /= m3;	
+    }
+  Coef.Power2Divide(2 * (m1 + m2));
+  return (sqrt(Coef.GetNumericalValue()) * ((double) ((m2 - m1) * (m3 - m4))) / M_PI);
 }
 

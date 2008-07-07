@@ -156,23 +156,23 @@ void ClebschGordanDiskCoefficients::EvaluateClebschGordanDiskCoefficients()
     }
   BinomialCoefficients BCoefficients (2 * this->MaximumMomentum);
 
-  for (int i = 0; i < TotalM; ++i)
+  for (int i = 0; i <= this->MaximumMomentum; ++i)
     for (int j = 0; j <= i; ++j)
       {
 	int TmpMax = i + j;
-	double TmpCoefficient = sqrt(((double) BCoefficients(TmpMax, i)) / (4.0 * M_PI ));       
+	double TmpCoefficient = sqrt(((double) BCoefficients(TmpMax, i)) / (4.0 * M_PI * pow(2.0, (double) TmpMax)));       
 	for (int k = 0; k <= TmpMax; ++k)
 	  {
 	    double TmpCoefficient2 = 0.0;
 	    double Sign = 1.0;
-	    if ((k & 1) != 0)
-	      Sign = -1.0;
 	    int TmpMin2 = 0;
 	    int TmpMax2 = i;
 	    if (k < i)
 	      TmpMax2 = k;
 	    if (k > j)
 	      TmpMin2 = k - j;
+	    if (((k - TmpMin2) & 1) != 0)
+	      Sign = -1.0;
 	    for (int l = TmpMin2; l <= TmpMax2; ++l)
 	      {
 		TmpCoefficient2 += ((double) BCoefficients(i, l)) * ((double) BCoefficients(j, k - l)) * Sign;
@@ -180,12 +180,15 @@ void ClebschGordanDiskCoefficients::EvaluateClebschGordanDiskCoefficients()
 	      }
 	    TmpCoefficient2 *= TmpCoefficient;
 	    this->Coefficients[i][j][k] = TmpCoefficient2;
-	    Sign = 1.0;
-	    if ((k & 1) != 0)
-	      Sign = -1.0;
-	    this->Coefficients[j][i][k] = Sign * TmpCoefficient2;
+	    if (j != i)
+	      {
+		Sign = 1.0;
+		if ((k & 1) != 0)
+		  Sign = -1.0;
+		this->Coefficients[j][i][k] = Sign * TmpCoefficient2;
+	      }
 	    if (k != TmpMax)
-	      TmpCoefficient /= 2.0 * sqrt(((double) (TmpMax - k)));	    
+	      TmpCoefficient /= sqrt(0.5 * ((double) (TmpMax - k)));	    
 	  }	
       }
 

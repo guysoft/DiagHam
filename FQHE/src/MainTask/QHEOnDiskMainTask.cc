@@ -152,6 +152,14 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
     {
       this->PartialLanczos = false;
     }
+  if ((*options)["use-lapack"] != 0)
+    {
+      this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
+    }
+  else
+    {
+      this->LapackFlag = false;
+    }
   if ((*options)["limit-time"] != 0)
     {
       this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());

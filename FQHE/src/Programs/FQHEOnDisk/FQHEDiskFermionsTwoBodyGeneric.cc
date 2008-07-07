@@ -226,17 +226,16 @@ int main(int argc, char** argv)
 #endif
 	      {
 		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnDiskHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
 		else
-		  Space = new FermionOnSphereHaldaneBasis(NbrParticles, L, TmpMaxMomentum, ReferenceState, MemorySpace);
+		  Space = new FermionOnDiskHaldaneBasis(NbrParticles, L, TmpMaxMomentum, ReferenceState, MemorySpace);
 		if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 		  {
-		    ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		    ((FermionOnDiskHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 		    return 0;
 		  }
 	      }
 	}
-      
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

@@ -78,7 +78,7 @@ class ParticleOnDiskLaplacianDeltaHamiltonian : public AbstractQHEOnSphereHamilt
   //   
   virtual void EvaluateInteractionFactors();
 
- // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
   // m1 = first index
   // m2 = second index
