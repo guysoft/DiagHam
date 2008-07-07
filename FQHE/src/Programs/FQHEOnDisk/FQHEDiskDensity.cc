@@ -20,6 +20,7 @@
 #include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -56,7 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
-  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name", "density.dat");
+  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name", 0);
   (*PlotOptionGroup) += new SingleIntegerOption ('\n', "nbr-samples", "number of samples in radial direction", 1000, true, 10);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -185,6 +186,8 @@ int main(int argc, char** argv)
   
   ofstream File;
   File.precision(14);
+  if (OutputName == 0)
+    OutputName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["state"])->GetString(), "vec", "rho.dat");
   File.open(OutputName, ios::binary | ios::out);
   if (CoefficientOnlyFlag == false)
     {
@@ -209,9 +212,18 @@ int main(int argc, char** argv)
   else
     {
       File << "# density coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-      File << "#" << endl << "# m    c_m" << endl;
-      for (int i = 0; i <= TmpMaxMomentum; ++i)
-        File << i << " " << PrecalculatedValues[i].Re << endl;
+      if (PrecalculatedValues[TmpMaxMomentum].Re != 0.0)
+	{
+	  File << "#" << endl << "# m    n_m    (n_m / n_Nphi)" << endl;
+	  for (int i = 0; i <= TmpMaxMomentum; ++i)
+	    File << i << " " << PrecalculatedValues[i].Re << " " << (PrecalculatedValues[i].Re / PrecalculatedValues[TmpMaxMomentum].Re) << endl;
+	}
+      else
+	{
+	  File << "#" << endl << "# m    n_m" << endl;
+	  for (int i = 0; i <= TmpMaxMomentum; ++i)
+	    File << i << " " << PrecalculatedValues[i].Re << endl;
+	}
     }
   File.close();
 

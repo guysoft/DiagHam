@@ -274,7 +274,6 @@ int QHEOnDiskMainTask::ExecuteMainTask()
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRep);
-//      cout << HRep << endl;
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
 #ifdef __LAPACK__
@@ -284,26 +283,38 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	      if (this->EvaluateEigenvectors == false)
 		{
 		  HRep.LapackDiagonalize(TmpDiag);
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    File << this->LValue << " " << (TmpDiag[j] - this->EnergyShift) << endl;
 		}
 	      else
 		{
 		  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
 		  HRep.LapackDiagonalize(TmpDiag, Q);
-		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
-		    }	      
-		  cout << endl;
-		  delete[] TmpVectorName;
-		}
-	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		{
-		  File << this->LValue << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		      for (int j = 0; j < this->NbrEigenvalue; ++j)
+			{
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			  Q[j].WriteVector(TmpVectorName);
+			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			}
+		      cout << endl;			  
+		      delete[] TmpVectorName;
+		    }
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    {
+		      File << this->LValue << " " << (TmpDiag[j] - this->EnergyShift);
+		      if (this->ComputeEnergyFlag == true)
+			{
+			  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			}
+		      File << endl;
+		    }
 		}
 	    }
 	  else
@@ -312,9 +323,11 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	      RealTriDiagonalSymmetricMatrix TmpTriDiag (this->Hamiltonian->GetHilbertSpaceDimension());
 	      if (this->EvaluateEigenvectors == false)
 		{
-		  HRep.Householder(TmpTriDiag, MACHINE_PRECISION);
+		  HRep.Householder(TmpTriDiag, 1e-7);
 		  TmpTriDiag.Diagonalize();
 		  TmpTriDiag.SortMatrixUpOrder();
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
 		}
 	      else
 		{
@@ -322,21 +335,31 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		  HRep.Householder(TmpTriDiag, 1e-7, Q);
 		  TmpTriDiag.Diagonalize(Q);
 		  TmpTriDiag.SortMatrixUpOrder(Q);
-		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-		  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
-		  for (int j = 0; j < this->NbrEigenvalue; ++j)
+		  if (this->EvaluateEigenvectors == true)
 		    {
-		      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
-		      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-		      Q[j].WriteVector(TmpVectorName);
-		      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " ";		  
-		    }	      
-		  cout << endl;
-		  delete[] TmpVectorName;
-		}
-	      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		{
-		  File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
+		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+		      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+		      for (int j = 0; j < this->NbrEigenvalue; ++j)
+			{
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+			  Q[j].WriteVector(TmpVectorName);
+			  cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			}	      
+		      cout << endl;
+		      delete[] TmpVectorName;
+		    }
+		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
+		    {
+		      File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift);
+		      if (this->ComputeEnergyFlag == true)
+			{
+			  RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
+			  this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
+			  File << " " << ((TmpEigenvector * Q[j]) - this->EnergyShift);
+			}
+		      File << endl;
+		    }
 		}
 #ifdef __LAPACK__
 	    }
@@ -344,7 +367,10 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	}
       else
 	{
-	  File << this->LValue << " " << (HRep(0, 0)  - this->EnergyShift) << endl;
+	  File << this->LValue << " " << (HRep(0, 0)  - this->EnergyShift);
+	  if (this->ComputeEnergyFlag == true)
+	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
+	  File << endl;
 	}
     }
   else

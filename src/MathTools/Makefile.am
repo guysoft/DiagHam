@@ -6,5 +6,5 @@ libMathTools_a_SOURCES=FactorialCoefficient.cc \
 ClebschGordanCoefficients.cc \
 IntegerAlgebraTools.cc \
 BinomialCoefficients.cc \
-GroupedPermutations.cc
-
+GroupedPermutations.cc \
+ClebschGordanDiskCoefficients.cc

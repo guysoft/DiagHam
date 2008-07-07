@@ -186,6 +186,8 @@ void ParticleOnDiskLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 				       + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
 				       - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
 				       - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
+		if (m3 >= m4)
+		  cout << m1 << " " << m2  << " " << m3 << " " << m4 << " : " <<  TmpCoefficient[Pos]  << endl;
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
 		++Pos;

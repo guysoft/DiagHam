@@ -364,8 +364,8 @@ int main(int argc, char** argv)
       if (DensityFlag == true)      
 	File << "# density correlation coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
       else
-	File << "# density-density correlation coefficientsfor " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
-      File << "#" << endl << "# (l+S)    c_l" << endl;
+	File << "# density-density correlation coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      File << "#" << endl << "# (l+S)    n_l" << endl;
       for (int i = 0; i <= LzMax; ++i)
 	File << i << " " << PrecalculatedValues[i]<< endl;
     }

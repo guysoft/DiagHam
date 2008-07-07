@@ -30,14 +30,19 @@
 
 
 #include "Hamiltonian/ParticleOnDiskGenericHamiltonian.h"
+
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
+
 #include "MathTools/Complex.h"
-#include "Output/MathematicaOutput.h"
+#include "MathTools/ClebschGordanDiskCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
+
+#include "Output/MathematicaOutput.h"
+
 #include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
@@ -74,7 +79,87 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
   this->Architecture = architecture;
   this->PseudoPotential = new double [this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
+    {
+      this->PseudoPotential[i] = pseudoPotential[i];
+      cout << this->PseudoPotential[i] << endl;
+    }
+  this->EvaluateInteractionFactors();
+  this->HamiltonianShift = 0.0;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = onDiskCacheFlag;
+  this->Memory = memory;
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+	  if (this->DiskStorageFlag == false)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+  this->L2Operator = 0;
+}
+
+// constructor with one body terms
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// lzMax = maximum angular momentum that a single particle can reach
+// architecture = architecture to use for precalculation
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
+// oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
+ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials,
+								   AbstractArchitecture* architecture, long memory,
+								   bool onDiskCacheFlag, char* precalculationFileName)
+{
+  this->Particles = particles;
+  this->LzMax = lzMax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->NbrParticles = nbrParticles;
+  this->FastMultiplicationFlag = false;
+  this->Architecture = architecture;
+  this->PseudoPotential = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
     this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
+  this->OneBodyTermFlag = true;
+  this->OneBodyPotentials = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->OneBodyPotentials[i] = oneBodyPotentials[i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
@@ -133,6 +218,8 @@ ParticleOnDiskGenericHamiltonian::~ParticleOnDiskGenericHamiltonian()
   delete[] this->M2Value;
   delete[] this->M3Value;
   delete[] this->PseudoPotential;
+  if (this->OneBodyTermFlag == true)
+    delete[] this->OneBodyPotentials;
   if (this->FastMultiplicationFlag == true)
     {
        if (this->DiskStorageFlag == false)
@@ -173,6 +260,8 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
   double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
   double MaxCoefficient = 0.0;
 
+  ClebschGordanDiskCoefficients CGCoefficients(this->LzMax);
+
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
@@ -191,8 +280,10 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 		double TmpCoef = 0.0;
 		for (int j = 1; j <= MaxSum; j += 2)
 		  {
-		    TmpCoef += this->PseudoPotential[j];
+		    TmpCoef -= 4.0 * this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 		  }
+		if (m3 >= m4)
+		cout << m1 << " " << m2  << " " << m3 << " " << m4 << " : " <<   TmpCoef << endl;
 		TmpCoefficient[Pos] = TmpCoef;
 		if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
 		  MaxCoefficient = fabs(TmpCoefficient[Pos]);
@@ -274,7 +365,7 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 			double TmpCoef = 0.0;
 			for (int j = 0; j <= MaxSum; j += 2)
 			  {
-			    TmpCoef += this->PseudoPotential[j];
+			    TmpCoef += 4.0 * this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 			  }
 			TmpCoefficient[Pos] = TmpCoef;
 		      }
@@ -283,7 +374,7 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 			double TmpCoef = 0.0;
 			for (int j = 0; j <= MaxSum; j += 2)
 			  {
-			    TmpCoef += this->PseudoPotential[j];
+			    TmpCoef += 2.0 * this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 			  }
 			TmpCoefficient[Pos] = TmpCoef;
 		      }
@@ -299,7 +390,7 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 			  double TmpCoef = 0.0;
 			  for (int j = 0; j <= MaxSum; j += 2)
 			    {
-			      TmpCoef += this->PseudoPotential[j];
+			      TmpCoef += 2.0 * this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 			    }
 			  TmpCoefficient[Pos] = TmpCoef;
 			}
@@ -308,7 +399,7 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 			  double TmpCoef = 0.0;
 			  for (int j = 0; j <= MaxSum; j += 2)
 			    {
-			      TmpCoef += this->PseudoPotential[j];
+			      TmpCoef += this->PseudoPotential[j] * (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
 			    }
 			  TmpCoefficient[Pos] = TmpCoef;
 			}
@@ -433,6 +524,37 @@ void ParticleOnDiskGenericHamiltonian::EvaluateInteractionFactors()
 // 		  ++Pos;
 // 		}
 // 	    }
+    }
+  if (this->OneBodyTermFlag == true)
+    {
+      this->NbrOneBodyInteractionFactors = 0;
+      for (int i = 0; i <= this->LzMax; ++i)
+	if (this->OneBodyPotentials[i] != 0)
+	  ++this->NbrOneBodyInteractionFactors;
+      if (this->NbrOneBodyInteractionFactors != 0)
+	{
+	  double Sign = 1.0;
+	  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+	    Sign = -1.0;
+	  this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
+	  this->NbrOneBodyInteractionFactors = 0;
+	  for (int i = 0; i <= this->LzMax; ++i)
+	    if (this->OneBodyPotentials[i] != 0)
+	      {
+		this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
+		this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = i;
+		cout << this->OneBodyPotentials[i] << endl;
+		this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->OneBodyPotentials[i] * Sign;
+		++this->NbrOneBodyInteractionFactors;
+	      }	  
+	}
+      else
+	{
+	  delete[] this->OneBodyPotentials;
+	  this->OneBodyTermFlag = false;
+	}
     }
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;

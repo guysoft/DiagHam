@@ -58,6 +58,9 @@ class ParticleOnDiskGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   double* PseudoPotential;
 
+  // array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  double* OneBodyPotentials;
+
  public:
 
   // constructor from default datas
@@ -71,6 +74,21 @@ class ParticleOnDiskGenericHamiltonian : public AbstractQHEOnSphereHamiltonian
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential,
+				   AbstractArchitecture* architecture, long memory = -1,
+				   bool onDiskCacheFlag = false, char* precalculationFileName = 0);
+
+  // constructor with one body terms
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzMax = maximum angular momentum that a single particle can reach
+  // architecture = architecture to use for precalculation
+  // pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
+  // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnDiskGenericHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzMax, double* pseudoPotential, double* oneBodyPotentials,
 				   AbstractArchitecture* architecture, long memory = -1,
 				   bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

@@ -77,8 +77,8 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
   this->PseudoPotential = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->PseudoPotential[i] = pseudoPotential[this->LzMax - i];
+  for (int i = 0; i < (this->LzMax + this->NbrLzValue); ++i)
+    this->PseudoPotential[i] = pseudoPotential[i];
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
   long MinIndex;
