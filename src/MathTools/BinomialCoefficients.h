@@ -49,8 +49,11 @@ class BinomialCoefficients
   // maximum major index that can be requested
   int MaximumIndex;
 
-  // array that contained all q-deformed binomial coefficients
+  // array that contained all binomial coefficients (integer version)
   long** Coefficients;
+
+  // array that contained all binomial coefficients (double version)
+  double** NumericalCoefficients;
 
    // garbage flag used for the polynomials
   GarbageFlag Flag;
@@ -71,12 +74,19 @@ class BinomialCoefficients
   //
   ~BinomialCoefficients();
 
-  // request a given qbinomial coefficient (referring to the [m n] notation)
+  // request a given binomial coefficient (referring to the [m n] notation)
   //
   // m = major index
   // n = minor index
   // return value = reference on the correponding binomial coefficient
   long operator () (int m, int n);
+
+  // request a given binomial coefficient (referring to the [m n] notation) in double format
+  //
+  // m = major index
+  // n = minor index
+  // return value = reference on the correponding binomial coefficient
+  double GetNumericalCoefficient (int m, int n);
 
   // modify the maximum major index that can be requested
   //
@@ -108,6 +118,28 @@ inline long BinomialCoefficients::operator ()(int m, int n)
   else
     {
       return this->Coefficients[m][m - n];
+    }
+}
+
+// request a given binomial coefficient (referring to the [m n] notation) in double format
+//
+// m = major index
+// n = minor index
+// return value = reference on the correponding binomial coefficient
+
+inline double BinomialCoefficients::GetNumericalCoefficient (int m, int n)
+{
+  if ((m < 0) || (n < 0) || (m < n))
+    return 0.0;
+  if (m > this->MaximumIndex)
+    this->Resize(m);
+  if ((n <= (m >> 1)))
+    {
+      return this->NumericalCoefficients[m][n];
+    }
+  else
+    {
+      return this->NumericalCoefficients[m][m - n];
     }
 }
 

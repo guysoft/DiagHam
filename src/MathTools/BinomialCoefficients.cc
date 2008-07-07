@@ -49,6 +49,14 @@ BinomialCoefficients::BinomialCoefficients (int maximumIndex)
   this->Coefficients[2] = new long [2];
   this->Coefficients[2][0] = 1l;
   this->Coefficients[2][1] = 2l;  
+  this->NumericalCoefficients = new double* [3];
+  this->NumericalCoefficients[0] = new double [1];
+  this->NumericalCoefficients[0][0] = 1.0;
+  this->NumericalCoefficients[1] = new double [1];
+  this->NumericalCoefficients[1][0] = 1.0;
+  this->NumericalCoefficients[2] = new double [2];
+  this->NumericalCoefficients[2][0] = 1.0;
+  this->NumericalCoefficients[2][1] = 2.0;
   this->Resize(maximumIndex);
   this->Flag.Initialize();
 }
@@ -61,8 +69,12 @@ BinomialCoefficients::BinomialCoefficients (const BinomialCoefficients& binomial
 {
   this->MaximumIndex = binomial.MaximumIndex;
   this->Coefficients = new long* [this->MaximumIndex + 1];
+  this->NumericalCoefficients = new double* [this->MaximumIndex + 1];
   for (int i = 0; i <= this->MaximumIndex; ++i)
-    this->Coefficients[i] = binomial.Coefficients[i];
+    {
+      this->Coefficients[i] = binomial.Coefficients[i];
+      this->NumericalCoefficients[i] = binomial.NumericalCoefficients[i];
+    }
   this->Flag = binomial.Flag;
 }
 
@@ -76,9 +88,11 @@ BinomialCoefficients::~BinomialCoefficients()
       for (int i = 0; i <= this->MaximumIndex; ++i)
 	{
 	  delete[] this->Coefficients[i];
+          delete[] this->NumericalCoefficients[i];
 	}
     }
-  delete[] this->Coefficients;
+  delete[] this->Coefficients; 
+  delete[] this->NumericalCoefficients;
 }
 
 // modify the maximum major index that can be requested
@@ -91,21 +105,32 @@ BinomialCoefficients& BinomialCoefficients::Resize(int maximumIndex)
   if (maximumIndex <= this->MaximumIndex)
     return *this;
   long** TmpCoefficients = new long* [maximumIndex + 1];
+  double** TmpNumericalCoefficients = new double* [maximumIndex + 1];
   int i = 0;
   if (this->Flag.Shared() == false)
     for (; i <= this->MaximumIndex; ++i)
-      TmpCoefficients[i] = this->Coefficients[i];
+      {
+	TmpCoefficients[i] = this->Coefficients[i];
+	TmpNumericalCoefficients[i] = this->NumericalCoefficients[i];
+      }
   else
     {
       TmpCoefficients[0] = new long [1];
       this->Coefficients[0][0] = 0l;
+      TmpNumericalCoefficients[0] = new double [1];
+      this->NumericalCoefficients[0][0] = 0.0;
       for (; i <= this->MaximumIndex; ++i)
 	{	  
 	  int Half = i >> 1;
 	  TmpCoefficients[i] = new long [Half + 1];
-	  TmpCoefficients[i][0] = TmpCoefficients[0][0];
+          TmpCoefficients[i][0] = TmpCoefficients[0][0];
+	  TmpNumericalCoefficients[i] = new double [Half + 1];
+	  TmpNumericalCoefficients[i][0] = TmpNumericalCoefficients[0][0];
 	  for (int j = 1; j <= Half; ++j)
-	    TmpCoefficients[i][j] = this->Coefficients[i][j];     
+	    {
+	      TmpCoefficients[i][j] = this->Coefficients[i][j];     
+              TmpNumericalCoefficients[i][j] = this->NumericalCoefficients[i][j];
+	    }
 	}
       this->Flag.Initialize();
     }
@@ -114,22 +139,29 @@ BinomialCoefficients& BinomialCoefficients::Resize(int maximumIndex)
       int Half = i >> 1;
       TmpCoefficients[i] = new long [Half + 1];
       TmpCoefficients[i][0] = TmpCoefficients[0][0];
+      TmpNumericalCoefficients[i] = new double [Half + 1];
+      TmpNumericalCoefficients[i][0] = TmpNumericalCoefficients[0][0];
       if ((i & 1) != 0)
 	for (int j = 1; j <= Half; ++j)
 	  {
 	    TmpCoefficients[i][j] = TmpCoefficients[i - 1][j - 1] + TmpCoefficients[i - 1][j];
+	    TmpNumericalCoefficients[i][j] = TmpNumericalCoefficients[i - 1][j - 1] + TmpNumericalCoefficients[i - 1][j];
 	  }
       else
 	{
 	  for (int j = 1; j < Half; ++j)
 	    {
-	      TmpCoefficients[i][j] = TmpCoefficients[i - 1][j - 1] + TmpCoefficients[i - 1][j];
+              TmpCoefficients[i][j] = TmpCoefficients[i - 1][j - 1] + TmpCoefficients[i - 1][j];
+ 	      TmpNumericalCoefficients[i][j] = TmpNumericalCoefficients[i - 1][j - 1] + TmpNumericalCoefficients[i - 1][j];
 	    }
 	  TmpCoefficients[i][Half] = TmpCoefficients[i - 1][Half - 1] + TmpCoefficients[i - 1][i - 1 - Half];
+          TmpNumericalCoefficients[i][Half] = TmpNumericalCoefficients[i - 1][Half - 1] + TmpNumericalCoefficients[i - 1][i - 1 - Half];
 	}
     }
   delete[] this->Coefficients;
   this->Coefficients = TmpCoefficients;
+  delete[] this->NumericalCoefficients;
+  this->NumericalCoefficients = TmpNumericalCoefficients;
   this->MaximumIndex = maximumIndex;
   return *this;
 }

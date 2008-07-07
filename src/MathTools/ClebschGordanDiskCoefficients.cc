@@ -33,6 +33,7 @@
 #include "config.h"
 #include "MathTools/ClebschGordanDiskCoefficients.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/FactorialCoefficient.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -154,13 +155,18 @@ void ClebschGordanDiskCoefficients::EvaluateClebschGordanDiskCoefficients()
       for (int j = 0; j < TotalM; ++j)
 	this->Coefficients[i][j] = new double [i + j + 1];
     }
-  BinomialCoefficients BCoefficients (2 * this->MaximumMomentum);
+  BinomialCoefficients BCoefficients (this->MaximumMomentum);
+  FactorialCoefficient TmpCoef;
 
   for (int i = 0; i <= this->MaximumMomentum; ++i)
     for (int j = 0; j <= i; ++j)
       {
 	int TmpMax = i + j;
-	double TmpCoefficient = sqrt(((double) BCoefficients(TmpMax, i)) / (4.0 * M_PI * pow(2.0, (double) TmpMax)));       
+	TmpCoef.SetToOne();
+	TmpCoef.PartialFactorialMultiply(TmpMax - i + 1, TmpMax);
+	TmpCoef.FactorialDivide(i);
+	TmpCoef.Power2Divide(TmpMax);
+	double TmpCoefficient = sqrt(TmpCoef.GetNumericalValue() / (4.0 * M_PI));       
 	for (int k = 0; k <= TmpMax; ++k)
 	  {
 	    double TmpCoefficient2 = 0.0;
@@ -175,7 +181,7 @@ void ClebschGordanDiskCoefficients::EvaluateClebschGordanDiskCoefficients()
 	      Sign = -1.0;
 	    for (int l = TmpMin2; l <= TmpMax2; ++l)
 	      {
-		TmpCoefficient2 += ((double) BCoefficients(i, l)) * ((double) BCoefficients(j, k - l)) * Sign;
+		TmpCoefficient2 += BCoefficients.GetNumericalCoefficient(i, l) * BCoefficients.GetNumericalCoefficient(j, k - l) * Sign;
 		Sign *= -1.0;
 	      }
 	    TmpCoefficient2 *= TmpCoefficient;
