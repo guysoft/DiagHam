@@ -61,7 +61,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -257,9 +256,9 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [256];
 	  if (ForceMaxMomentum >= 0)
-	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lzmax_%d_lz_%d", NbrParticles, ForceMaxMomentum, L);
+	    sprintf (EigenvectorName, "fermions_disk_%s_n_%d_lzmax_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, ForceMaxMomentum, L);
 	  else
-	    sprintf (EigenvectorName, "fermions_disk_laplaciandelta_n_%d_lz_%d", NbrParticles, L);
+	    sprintf (EigenvectorName, "fermions_disk_%s_n_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, L);
 	}
       
       QHEOnDiskMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
@@ -270,6 +269,7 @@ int main(int argc, char** argv)
 	  delete[] EigenvectorName;
 	}
       delete Hamiltonian;
+      delete Space;
       if (FirstRun == true)
 	FirstRun = false;
     }

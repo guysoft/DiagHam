@@ -5,6 +5,8 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
+
 #include "MainTask/QHEOnDiskMainTask.h"
 
 #include "Options/OptionManager.h"
@@ -33,18 +35,18 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsNBodyHardCore" , "0.01");
-  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionManager Manager ("FQHEDiskBosonsNBodyHardCore" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += LanczosGroup;
+  Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
@@ -52,28 +54,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
   (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum single particle momentum to study", 10, true, 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum single particle momentum to study", 1, true, 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
-
-  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
-						"maximum Hilbert space dimension for which full diagonalization is applied", 
-						500, true, 100);
-
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);  
-  (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
-  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
-  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
-  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -85,7 +71,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEBosonsNBodyHardCore -h" << endl;
+      cout << "see man page for option syntax or type FQHEDiskBosonsNBodyHardCore -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -102,29 +88,52 @@ int main(int argc, char** argv)
   int MMax = ((SingleIntegerOption*) Manager["maximum-momentum"])->GetInteger();
   if (MMax < MMin)
     MMax = MMin;
+  int ForceMaxMomentum = ((SingleIntegerOption*) Manager["force-maxmomentum"])->GetInteger();
+  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   bool FirstRun = true;
 
   char* OutputNameLz = new char [1024];
-  sprintf (OutputNameLz, "bosons_disk_hardcore_nbody_%d_n_%d_2s_%d_l.dat", NbrNBody, NbrBosons, MMax);
+  if (ForceMaxMomentum >= 0)
+    if (HaldaneBasisFlag == true)
+      sprintf (OutputNameLz, "bosons_disk_haldane_hardcore_nbody_%d_n_%d_lzmax_%d_lz_%d.dat", NbrNBody, NbrBosons, ForceMaxMomentum, MMax);
+    else
+      sprintf (OutputNameLz, "bosons_disk_hardcore_nbody_%d_n_%d_lzmax_%d_lz_%d.dat", NbrNBody, NbrBosons, ForceMaxMomentum, MMax);
+  else
+    if (HaldaneBasisFlag == true)
+      sprintf (OutputNameLz, "bosons_disk_haldane_hardcore_nbody_%d_n_%d_lz_%d.dat", NbrNBody, NbrBosons, MMax);
+    else
+      sprintf (OutputNameLz, "bosons_disk_hardcore_nbody_%d_n_%d_lz_%d.dat", NbrNBody, NbrBosons, MMax);
+    else
   for (int  L = MMin; L <= MMax; ++L)
     {
-      BosonOnDisk Space (NbrBosons, L);
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
-      AbstractQHEOnDiskHamiltonian* Hamiltonian = new ParticleOnDiskNBodyHardCoreHamiltonian(&Space, NbrBosons, MMax, NbrNBody, Architecture.GetArchitecture(), 
-											     Memory, LoadPrecalculationFileName);
+      ParticleOnSphere* Space = 0;
+      int TmpMaxMomentum = L;
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
+      Space = new BosonOnDisk (NbrBosons, L, ForceMaxMomentum);
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+      Hamiltonian = new ParticleOnDiskNBodyHardCoreHamiltonian(Space, NbrBosons, TmpMaxMomentum, NbrNBody, Architecture.GetArchitecture(), 
+							       Memory, LoadPrecalculationFileName);
       double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) MMax));
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_disk_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, MMax, L);
+	  if (HaldaneBasisFlag == true)
+	    sprintf (EigenvectorName, "bosons_disk_haldane_hardcore_nbody_%d_n_%d_lzmax_%d_lz_%d", NbrNBody, NbrBosons, ForceMaxMomentum, L);
+	  else
+	    sprintf (EigenvectorName, "bosons_disk_hardcore_nbody_%d_n_%d_lzmax_%d_lz_%d", NbrNBody, NbrBosons, ForceMaxMomentum, L);
 	}
-      QHEOnDiskMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnDiskMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
+      delete Space;
       if (EigenvectorName != 0)
 	{
 	  delete[] EigenvectorName;

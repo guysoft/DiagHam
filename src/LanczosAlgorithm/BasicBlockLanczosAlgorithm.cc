@@ -741,12 +741,12 @@ bool BasicBlockLanczosAlgorithm::ReadState()
    for (int i = 0; i < TmpMax; ++i)    
     {    
       for (int j = 0; j < TwiceBlockSize; ++j)
-	ReadLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
+	ReadLittleEndian(File, this->ReducedMatrix(i, i + j));
     }  
   for (int i = TmpMax; i < TmpDimension; ++i)    
     {    
       for (int j = TmpMax + 1; j < TmpDimension; ++j)
-	ReadLittleEndian(File, this->TridiagonalizedMatrix(i, j));
+	ReadLittleEndian(File, this->ReducedMatrix(i, j));
     }  
   File.close();  
   char* TmpVectorName = new char [256];
@@ -783,12 +783,12 @@ bool BasicBlockLanczosAlgorithm::WriteState()
   for (int i = 0; i < TmpMax; ++i)    
     {    
       for (int j = 0; j < TwiceBlockSize; ++j)
-	WriteLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
+	WriteLittleEndian(File, this->ReducedMatrix(i, i + j));
     }  
   for (int i = TmpMax; i < TmpDimension; ++i)    
     {    
       for (int j = TmpMax + 1; j < TmpDimension; ++j)
-	WriteLittleEndian(File, this->TridiagonalizedMatrix(i, j));
+	WriteLittleEndian(File, this->ReducedMatrix(i, j));
     }  
   File.close();  
   return true;

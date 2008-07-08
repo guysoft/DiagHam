@@ -219,6 +219,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
   
 
   //  Factor = 0.0 * this->LFactor;
+  Factor = this->LFactor;
    if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
      Factor *= -1.0;
   this->NbrOneBodyInteractionFactors = this->LzMax + 1;

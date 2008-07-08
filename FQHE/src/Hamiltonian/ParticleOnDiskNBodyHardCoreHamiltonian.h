@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/AbstractQHEOnDiskNBodyInteractionHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnSphereNBodyInteractionHamiltonian.h"
 
 #include <iostream>
 
@@ -43,14 +43,20 @@
 using std::ostream;
 
 
-class ParticleOnDiskNBodyHardCoreHamiltonian : public AbstractQHEOnDiskNBodyInteractionHamiltonian
+class ParticleOnDiskNBodyHardCoreHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
 {
 
- private:
+ protected:
 
   // number of particle that interact simultaneously through the hard core interaction
   int NbrNbody;
   
+  // weight of the different n-body interaction terms with respect to each other
+  double* NBodyInteractionWeightFactors;
+
+  // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
+  double* PseudoPotential;
+
  public:
 
   // constructor from default datas

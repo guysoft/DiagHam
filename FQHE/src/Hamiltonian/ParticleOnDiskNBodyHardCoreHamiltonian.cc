@@ -57,21 +57,39 @@ ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(P
 									       char* precalculationFileName)
 {
   this->Particles = particles;
-  this->MaxMomentum = lzmax;
-  this->NbrLzValue = this->MaxMomentum + 1;
+  this->LzMax = lzmax;
+  this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
 
+  this->OneBodyTermFlag = false;
+  this->FullTwoBodyFlag = false;
   this->NbrNbody = nbrBody;
   this->MaxNBody = this->NbrNbody;
   this->NBodyFlags = new bool [this->MaxNBody + 1];
   this->NBodyInteractionFactors = new double** [this->MaxNBody + 1];
+  this->NBodyInteractionWeightFactors = new double [this->MaxNBody + 1];
   this->NbrSortedIndicesPerSum = new int* [this->MaxNBody + 1];
   this->SortedIndicesPerSum = new int** [this->MaxNBody + 1];
+  this->MinSumIndices = new int [this->MaxNBody + 1];
+  this->MaxSumIndices = new int [this->MaxNBody + 1];
+  this->NBodySign = new double[this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
-    this->NBodyFlags[k] = false;
+    {
+      this->MinSumIndices[k] = 1;
+      this->MaxSumIndices[k] = 0;      
+      this->NBodyFlags[k] = false;
+      this->NBodyInteractionWeightFactors[k] = 0.0;
+      this->NBodySign[k] = 1.0;
+      if ((this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic) && ((k & 1) == 0))
+	{
+	  this->NBodySign[k] = -1.0;
+	  if (k == 4)
+	    this->NBodySign[k] = 1.0;
+	}
+    }
   this->NBodyFlags[this->NbrNbody] = true;
-
+  this->NBodyInteractionWeightFactors[this->NbrNbody] = 1.0;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -79,6 +97,8 @@ ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(P
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
+  this->DiskStorageFlag = false;
+  this->Memory = memory;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -93,15 +113,34 @@ ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(P
 	  if (TmpMemory < (1 << 30))
 	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	  else
-	    cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
-	  if (memory > 0)
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+	  if (this->DiskStorageFlag == false)
 	    {
 	      this->EnableFastMultiplication();
 	    }
+	  else
+	    {
+	      char* TmpFileName = this->Architecture->GetTemporaryFileName();
+	      this->EnableFastMultiplicationWithDiskStorage(TmpFileName);	      
+	      delete[] TmpFileName;
+	    }
+	}
+      else
+	{
+	  this->FastMultiplicationFlag = false;
 	}
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+  this->L2Operator = 0;
 }
 
 // destructor
@@ -109,10 +148,10 @@ ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(P
 
 ParticleOnDiskNBodyHardCoreHamiltonian::~ParticleOnDiskNBodyHardCoreHamiltonian()
 {
-  for (int k = 2; k <= this->MaxNBody; ++k)
+  for (int k = 1; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       {
-	for (int MinSum = this->MinSumIndices; MinSum <= this->MaxSumIndices; ++MinSum)
+	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	  {
 	    delete[] this->SortedIndicesPerSum[k][MinSum];
 	    delete[] this->NBodyInteractionFactors[k][MinSum];
@@ -125,23 +164,42 @@ ParticleOnDiskNBodyHardCoreHamiltonian::~ParticleOnDiskNBodyHardCoreHamiltonian(
   delete[] this->NBodyInteractionFactors;
   delete[] this->SortedIndicesPerSum;
   delete[] this->NbrSortedIndicesPerSum;
-
+  delete[] this->NBodyInteractionWeightFactors;
+  delete[] this->MinSumIndices;
+  delete[] this->MaxSumIndices;
+  delete[] this->NBodySign;
+  if (this->FullTwoBodyFlag == true)
+    {
+      delete[] this->InteractionFactors;
+      delete[] this->M1Value;
+      delete[] this->M2Value;
+      delete[] this->M3Value;
+      delete[] this->PseudoPotential;
+    }
   if (this->FastMultiplicationFlag == true)
     {
-      long MinIndex;
-      long MaxIndex;
-      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
+      if (this->DiskStorageFlag == false)
 	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
+	  long MinIndex;
+	  long MaxIndex;
+	  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+	  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+	  int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+	  if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+	    ++ReducedDim;
+	  for (int i = 0; i < ReducedDim; ++i)
+	    {
+	      delete[] this->InteractionPerComponentIndex[i];
+	      delete[] this->InteractionPerComponentCoefficient[i];
+	    }
+	  delete[] this->InteractionPerComponentIndex;
+	  delete[] this->InteractionPerComponentCoefficient;
 	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
+      else
+	{
+	  remove (this->DiskStorageFileName);
+	  delete[] this->DiskStorageFileName;
+	}
       delete[] this->NbrInteractionPerComponent;
     }
 }
@@ -170,11 +228,11 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	    double SumCoefficient = 0.0;
 	    double Coefficient;
 	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k]);
-	    this->MaxSumIndices = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
-	    this->MinSumIndices = (k * (k - 1)) / 2;
-	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
+	    this->MaxSumIndices[k] = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
+	    this->MinSumIndices[k] = (k * (k - 1)) / 2;
+	    this->NBodyInteractionFactors[k] = new double* [this->MaxSumIndices[k] + 1];
 	    int Lim;
-	    for (int MinSum = this->MinSumIndices; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
 		this->NBodyInteractionFactors[k][MinSum] = new double [Lim];
@@ -196,19 +254,19 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
       for (int k = 2; k <= this->MaxNBody; ++k)
 	if (this->NBodyFlags[k] == true) 
 	  {
-	    this->MinSumIndices = 0;
-	    this->MaxSumIndices = this->MaxMomentum * k;
+	    this->MinSumIndices[k] = 0;
+	    this->MaxSumIndices[k] = this->LzMax * k;
 	    double** SortedIndicesPerSumSymmetryFactor;
 	    GetAllSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k],
 				   SortedIndicesPerSumSymmetryFactor);
-	    this->NBodyInteractionFactors[k] = new double* [MaxSumIndices + 1];
+	    this->NBodyInteractionFactors[k] = new double* [this->MaxSumIndices[k] + 1];
 	    int Lim;
 	    double Factor = 1.0;
 	    for (int i = 1; i < k; ++i)
 	      Factor *= 8.0 * M_PI;
 	    Factor = 1.0 / Factor;
 	    FactorialCoefficient Coef;
-	    for (int MinSum = 0; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
 		double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
@@ -228,7 +286,7 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 		    TmpMIndices += k;
 		  }
 	      }
-	    for (int MinSum = 0; MinSum <= MaxSumIndices; ++MinSum)
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
 	      }
