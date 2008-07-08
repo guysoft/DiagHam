@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   double Shift = ((SingleDoubleOption*) Manager["lanczos-shift"])->GetDouble();
   bool EigenstateFlag = ((BooleanOption*) Manager["eigenstate"])->GetBoolean();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  bool BlockLanczosFlag = ((BooleanOption*) (*(this->Options))["block-lanczos"])->GetBoolean();
+  bool BlockLanczosFlag = ((BooleanOption*) Manager["block-lanczos"])->GetBoolean();
 
   int LanczosIndex;
   double PreviousLastWantedEigenvalue;
@@ -154,20 +154,20 @@ int main(int argc, char** argv)
       ReadLittleEndian(File, PreviousLastWantedEigenvalue);
       ReadLittleEndian(File, MaximumNumberIteration);
       ReadLittleEndian(File, TmpDimension);
-      TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
-      --TmpDimension;
-      int TwiceBlockSize = 2 * this->BlockSize;
-      int TmpMax = TmpDimension - TwiceBlockSize;
-      for (int i = 0; i < TmpMax; ++i)    
-	{    
-	  for (int j = 0; j < TwiceBlockSize; ++j)
-	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
-	}  
-      for (int i = TmpMax; i < TmpDimension; ++i)    
-	{    
-	  for (int j = TmpMax + 1; j < TmpDimension; ++j)
-	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, j));
-	}  
+//       TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
+//       --TmpDimension;
+//       int TwiceBlockSize = 2 * this->BlockSize;
+//       int TmpMax = TmpDimension - TwiceBlockSize;
+//       for (int i = 0; i < TmpMax; ++i)    
+// 	{    
+// 	  for (int j = 0; j < TwiceBlockSize; ++j)
+// 	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, i + j));
+// 	}  
+//       for (int i = TmpMax; i < TmpDimension; ++i)    
+// 	{    
+// 	  for (int j = TmpMax + 1; j < TmpDimension; ++j)
+// 	    ReadLittleEndian(File, this->TridiagonalizedMatrix(i, j));
+// 	}  
       File.close();  
     }
   return 0;  

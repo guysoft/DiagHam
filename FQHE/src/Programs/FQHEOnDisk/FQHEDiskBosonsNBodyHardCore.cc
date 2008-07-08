@@ -104,7 +104,6 @@ int main(int argc, char** argv)
       sprintf (OutputNameLz, "bosons_disk_haldane_hardcore_nbody_%d_n_%d_lz_%d.dat", NbrNBody, NbrBosons, MMax);
     else
       sprintf (OutputNameLz, "bosons_disk_hardcore_nbody_%d_n_%d_lz_%d.dat", NbrNBody, NbrBosons, MMax);
-    else
   for (int  L = MMin; L <= MMax; ++L)
     {
       ParticleOnSphere* Space = 0;

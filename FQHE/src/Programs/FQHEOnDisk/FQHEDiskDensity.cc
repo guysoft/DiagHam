@@ -114,7 +114,7 @@ int main(int argc, char** argv)
       TmpMaxMomentum = TotalLz;
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
 	TmpMaxMomentum = ForceMaxMomentum;      
-      Space = new BosonOnDisk(NbrParticles, TotalLz);
+      Space = new BosonOnDisk(NbrParticles, TotalLz, ForceMaxMomentum);
     }
   else
     {
