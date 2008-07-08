@@ -1,4 +1,6 @@
 #include "HilbertSpace/BosonOnDisk.h"
+#include "HilbertSpace/BosonOnDiskShort.h"
+#include "HilbertSpace/BosonOnDiskHaldaneBasisShort.h"
 #include "Hamiltonian/ParticleOnDiskNBodyHardCoreHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -16,6 +18,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "GeneralTools/ConfigurationParser.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -93,6 +97,42 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
   bool FirstRun = true;
 
+  int* ReferenceState = 0;
+  if (HaldaneBasisFlag == true)
+    {
+      ConfigurationParser ReferenceStateDefinition;
+      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	{
+	  ReferenceStateDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrBosons) == false) || (NbrBosons <= 0))
+	{
+	  cout << "NbrParticles is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", ForceMaxMomentum) == false) || (ForceMaxMomentum <= 0))
+	{
+	  cout << "LzMax is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      int MaxNbrLz;
+      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	{
+	  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	  return -1;     
+	}
+      if (MaxNbrLz != (ForceMaxMomentum + 1))
+	{
+	  cout << "wrong LzMax value in ReferenceState" << endl;
+	  return -1;     
+	}
+      MMax = 0;
+      for (int i = 1; i <= ForceMaxMomentum; ++i)
+	MMax += i * ReferenceState[i];
+      MMin = MMax;
+    }
+
   char* OutputNameLz = new char [1024];
   if (ForceMaxMomentum >= 0)
     if (HaldaneBasisFlag == true)
@@ -110,7 +150,26 @@ int main(int argc, char** argv)
       int TmpMaxMomentum = L;
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
 	TmpMaxMomentum = ForceMaxMomentum;
-      Space = new BosonOnDisk (NbrBosons, L, ForceMaxMomentum);
+      if (HaldaneBasisFlag == false)
+	{
+#ifdef  __64_BITS__
+	  if ((ForceMaxMomentum + NbrBosons - 1) < 63)
+#else
+	    if ((ForceMaxMomentum + NbrBosons - 1) < 31)	
+#endif
+	      Space = new BosonOnDiskShort (NbrBosons, L, ForceMaxMomentum);	  
+	    else	  
+	      Space = new BosonOnDisk (NbrBosons, L, ForceMaxMomentum);
+	}
+      else
+	{
+#ifdef  __64_BITS__
+	  if ((ForceMaxMomentum + NbrBosons - 1) < 63)
+#else
+	    if ((ForceMaxMomentum + NbrBosons - 1) < 31)	
+#endif
+	      Space = new BosonOnDiskHaldaneBasisShort(NbrBosons, L, TmpMaxMomentum, ReferenceState);
+	}
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

@@ -67,7 +67,10 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
     {
-      Space = new BosonOnDisk(NbrParticles, TotalLz);
+      int TmpMaxMomentum = TotalLz;
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
+      Space = new BosonOnDisk(NbrParticles, TotalLz, TmpMaxMomentum);
     }
   else
     {
