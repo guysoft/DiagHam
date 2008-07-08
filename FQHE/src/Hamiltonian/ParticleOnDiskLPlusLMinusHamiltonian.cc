@@ -146,6 +146,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
   for (int i = 0; i <= this->LzMax; ++i)
     {
       double TmpCoefficient = sqrt((double) i) * ((double) (this->NbrFluxQuanta + 1 - i));
+      //      double TmpCoefficient = sqrt((double) i);
       for (int j = 0; j <= this->LzMax; ++j)
 	Coefficients(j, i) *= TmpCoefficient;
     }
@@ -216,24 +217,29 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
 	}
     }  
   
-//    if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-//      Factor *= -1.0;
+
+  //  Factor = 0.0 * this->LFactor;
+   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+     Factor *= -1.0;
   this->NbrOneBodyInteractionFactors = this->LzMax + 1;
   this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
   this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
   this->OneBodyInteractionFactors = new double[this->NbrOneBodyInteractionFactors];
   this->OneBodyMValues[0] = 0;
   this->OneBodyNValues[0] = 0;
-  this->OneBodyInteractionFactors[0] = Factor * ((double) (this->NbrFluxQuanta * this->NbrFluxQuanta));
+  //  this->OneBodyInteractionFactors[0] = Factor * ((double) (this->NbrFluxQuanta * this->NbrFluxQuanta));
+  this->OneBodyInteractionFactors[0] = Factor * (Coefficients(0, 1) + Coefficients(1, 0));
   for (int i = 1; i < this->LzMax; ++i)
     {
       this->OneBodyMValues[i] = i;
       this->OneBodyNValues[i] = i;
-      this->OneBodyInteractionFactors[i] = Factor * ((double) ((i + 1) * (this->NbrFluxQuanta - i) * (this->NbrFluxQuanta - i)));
+//      this->OneBodyInteractionFactors[i] = Factor * ((double) ((i + 1) * (this->NbrFluxQuanta - i) * (this->NbrFluxQuanta - i)));
+      this->OneBodyInteractionFactors[i] = Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
     }
   this->OneBodyMValues[this->LzMax] = this->LzMax;
   this->OneBodyNValues[this->LzMax] = this->LzMax;
-  this->OneBodyInteractionFactors[this->LzMax] = Factor * ((double) ((this->LzMax + 1) * (this->NbrFluxQuanta - this->LzMax) * (this->NbrFluxQuanta - this->LzMax)));
+//  this->OneBodyInteractionFactors[this->LzMax] = Factor * ((double) ((this->LzMax + 1) * (this->NbrFluxQuanta - this->LzMax) * (this->NbrFluxQuanta - this->LzMax)));
+  this->OneBodyInteractionFactors[this->LzMax] = Factor * (Coefficients(this->LzMax - 1, this->LzMax) + Coefficients(this->LzMax, this->LzMax - 1));
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }
