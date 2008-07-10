@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/FermionOnDiskHaldaneBasis.h"
+#include "HilbertSpace/BosonOnDiskHaldaneBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -113,62 +114,82 @@ int main(int argc, char** argv)
     {
       TmpMaxMomentum = TotalLz;
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
-	TmpMaxMomentum = ForceMaxMomentum;      
-      Space = new BosonOnDisk(NbrParticles, TotalLz, ForceMaxMomentum);
+	TmpMaxMomentum = ForceMaxMomentum; 
     }
   else
     {
-      if (HaldaneBasisFlag == false)
+      TmpMaxMomentum = (TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
+      if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
+	TmpMaxMomentum = ForceMaxMomentum;
+    }     
+
+  if (HaldaneBasisFlag == false)
+    {
+      if (Statistics == true)
 	{
-	  TmpMaxMomentum = (TotalLz - (((NbrParticles - 1) * (NbrParticles - 2)) / 2));
-	  if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
-	    TmpMaxMomentum = ForceMaxMomentum;
 #ifdef __64_BITS__
-	  if (TmpMaxMomentum < 63)      
+      if (TmpMaxMomentum < 63)      
 #else
-	    if (TmpMaxMomentum < 31)
+	if (TmpMaxMomentum < 31)
 #endif
-	      Space = new FermionOnDisk (NbrParticles, TotalLz, TmpMaxMomentum);
-	    else
-	      Space = new FermionOnDiskUnlimited (NbrParticles, TotalLz, TmpMaxMomentum);      
+	  Space = new FermionOnDisk (NbrParticles, TotalLz, TmpMaxMomentum);
+	else
+	  Space = new FermionOnDiskUnlimited (NbrParticles, TotalLz, TmpMaxMomentum);      
 	}
       else
 	{
-	  int* ReferenceState = 0;
-	  ConfigurationParser ReferenceStateDefinition;
-	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
-	    {
-	      ReferenceStateDefinition.DumpErrors(cout) << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
-	    {
-	      cout << "NbrParticles is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", ForceMaxMomentum) == false) || (ForceMaxMomentum <= 0))
-	    {
-	      cout << "ForceMaxMomentum is not defined or as a wrong value" << endl;
-	      return -1;
-	    }
-	  TmpMaxMomentum = ForceMaxMomentum;
-	  int MaxNbrLz;
-	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-	    {
-	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-	      return -1;     
-	    }
-	  if (MaxNbrLz != (ForceMaxMomentum + 1))
-	    {
-	      cout << "wrong LzMax value in ReferenceState" << endl;
-	      return -1;     
-	    }
-	  TotalLz = 0;
-	  for (int i = 1; i <= ForceMaxMomentum; ++i)
-	    TotalLz += i * ReferenceState[i];
-	  Space = new FermionOnDiskHaldaneBasis (NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	  Space = new BosonOnDisk(NbrParticles, TotalLz, ForceMaxMomentum);
 	}
     }
+  else
+    {
+      int* ReferenceState = 0;
+      ConfigurationParser ReferenceStateDefinition;
+      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	{
+	  ReferenceStateDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	{
+	  cout << "NbrParticles is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", ForceMaxMomentum) == false) || (ForceMaxMomentum <= 0))
+	{
+	  cout << "ForceMaxMomentum is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      TmpMaxMomentum = ForceMaxMomentum;
+      int MaxNbrLz;
+      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	{
+	  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	  return -1;     
+	}
+      if (MaxNbrLz != (ForceMaxMomentum + 1))
+	{
+	  cout << "wrong LzMax value in ReferenceState" << endl;
+	  return -1;     
+	}
+      TotalLz = 0;
+      for (int i = 1; i <= ForceMaxMomentum; ++i)
+	TotalLz += i * ReferenceState[i];
+      if (Statistics == true)
+	{
+	  Space = new FermionOnDiskHaldaneBasis (NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	}
+      else
+	{
+#ifdef  __64_BITS__
+	  if ((ForceMaxMomentum + NbrParticles - 1) < 63)
+#else
+	    if ((ForceMaxMomentum + NbrParticles - 1) < 31)	
+#endif
+	      Space = new BosonOnDiskHaldaneBasisShort(NbrParticles, TotalLz, ForceMaxMomentum, ReferenceState);
+	}
+    }
+
 
   if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
     {
