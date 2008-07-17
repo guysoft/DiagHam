@@ -153,7 +153,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["initial-blockvectors"] != 0)
     {
-      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvector"])->GetString();
+      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvectors"])->GetString();
     }
   else
     {
@@ -544,7 +544,9 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 			{
 			  RealVector* InitialVectors = new RealVector[TmpNbrInitialVectors];
 			  for (int i = 0; i < TmpNbrInitialVectors; ++i)
-			    InitialVectors[i].ReadVector(VectorFileNames[i]);
+			    {
+			      InitialVectors[i].ReadVector(VectorFileNames[i]);
+			    }
 			  Lanczos->InitializeLanczosAlgorithm(InitialVectors, TmpNbrInitialVectors);		  
 			  delete[] InitialVectors;
 			}

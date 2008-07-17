@@ -136,22 +136,37 @@ ParticleOnDiskLPlusLMinusHamiltonian::~ParticleOnDiskLPlusLMinusHamiltonian()
 
 void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
 {
-  RealMatrix Coefficients (this->LzMax + 1, this->LzMax + 1);
+  RealMatrix CoefficientsLMinus (this->LzMax + 1, this->LzMax + 1);
   for (int i = 0; i <= this->LzMax; ++i)
     {
       double TmpCoefficient = sqrt((double) (i + 1)) * ((double) (this->NbrFluxQuanta - i));
       for (int j = 0; j <= this->LzMax; ++j)
-	Coefficients(i, j) = TmpCoefficient;
+	CoefficientsLMinus(i, j) = TmpCoefficient;
     }
   for (int i = 0; i <= this->LzMax; ++i)
     {
       double TmpCoefficient = sqrt((double) i) * ((double) (this->NbrFluxQuanta + 1 - i));
       //      double TmpCoefficient = sqrt((double) i);
       for (int j = 0; j <= this->LzMax; ++j)
-	Coefficients(j, i) *= TmpCoefficient;
+	CoefficientsLMinus(j, i) *= 2.0 * TmpCoefficient;
     }
 
-  double Factor = 2.0 * this->LFactor;
+  RealMatrix CoefficientsLPlus (this->LzMax + 1, this->LzMax + 1);
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      double TmpCoefficient = sqrt((double) (i + 1));
+      for (int j = 0; j <= this->LzMax; ++j)
+	CoefficientsLPlus(i, j) = TmpCoefficient;
+    }
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      double TmpCoefficient = sqrt((double) i);
+      //      double TmpCoefficient = sqrt((double) i);
+      for (int j = 0; j <= this->LzMax; ++j)
+	CoefficientsLPlus(j, i) *= 0.5 * TmpCoefficient;
+    }
+
+  double Factor = this->LFactor;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       Factor *= -1.0;
@@ -172,7 +187,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
       if ((this->Particles->GetParticleStatistic() != ParticleOnSphere::FermionicStatistic) ||
 	  (m3 != 2))
 	{
-	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(0, m3);
+	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * (CoefficientsLMinus(0, m3) + CoefficientsLPlus(0, m3));
 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
 	  this->M2Value[this->NbrInteractionFactors] = 1;
 	  this->M3Value[this->NbrInteractionFactors] = m3;
@@ -187,7 +202,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
 	  if ((this->Particles->GetParticleStatistic() != ParticleOnSphere::FermionicStatistic) ||
 	      (m3 != (m4 + 2)))
 	    {
-	      this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
+	      this->InteractionFactors[this->NbrInteractionFactors] = Factor * (CoefficientsLMinus(m4, m3) + CoefficientsLPlus(m4, m3));
 	      this->M1Value[this->NbrInteractionFactors] = m3 - 1;
 	      this->M2Value[this->NbrInteractionFactors] = m4 + 1;
 	      this->M3Value[this->NbrInteractionFactors] = m3;
@@ -196,7 +211,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
 	}
       if (this->Particles->GetParticleStatistic() != ParticleOnSphere::FermionicStatistic)
 	{
-	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
+	  this->InteractionFactors[this->NbrInteractionFactors] = Factor * (CoefficientsLMinus(m4, m3) + CoefficientsLPlus(m4, m3));
 	  this->M1Value[this->NbrInteractionFactors] = m3 - 1;
 	  this->M2Value[this->NbrInteractionFactors] = m4 + 1;
 	  this->M3Value[this->NbrInteractionFactors] = m3;
@@ -208,7 +223,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
 	  if ((this->Particles->GetParticleStatistic() != ParticleOnSphere::FermionicStatistic) ||
 	      (m3 != (m4 + 2)))
 	    {
-	      this->InteractionFactors[this->NbrInteractionFactors] = Factor * Coefficients(m4, m3);
+	      this->InteractionFactors[this->NbrInteractionFactors] = Factor * (CoefficientsLMinus(m4, m3) + CoefficientsLPlus(m4, m3));
 	      this->M1Value[this->NbrInteractionFactors] = m3 - 1;
 	      this->M2Value[this->NbrInteractionFactors] = m4 + 1;
 	      this->M3Value[this->NbrInteractionFactors] = m3;
@@ -218,7 +233,7 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
     }  
   
 
-  //  Factor = 0.0 * this->LFactor;
+//  Factor = 0.0 * this->LFactor;
   Factor = this->LFactor;
    if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
      Factor *= -1.0;
@@ -229,18 +244,18 @@ void ParticleOnDiskLPlusLMinusHamiltonian::EvaluateInteractionFactors()
   this->OneBodyMValues[0] = 0;
   this->OneBodyNValues[0] = 0;
   //  this->OneBodyInteractionFactors[0] = Factor * ((double) (this->NbrFluxQuanta * this->NbrFluxQuanta));
-  this->OneBodyInteractionFactors[0] = Factor * (Coefficients(0, 1) + Coefficients(1, 0));
+  this->OneBodyInteractionFactors[0] = Factor * (CoefficientsLMinus(0, 1) + CoefficientsLPlus(1, 0));// + Coefficients(1, 0));
   for (int i = 1; i < this->LzMax; ++i)
     {
       this->OneBodyMValues[i] = i;
       this->OneBodyNValues[i] = i;
 //      this->OneBodyInteractionFactors[i] = Factor * ((double) ((i + 1) * (this->NbrFluxQuanta - i) * (this->NbrFluxQuanta - i)));
-      this->OneBodyInteractionFactors[i] = Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
+      this->OneBodyInteractionFactors[i] = Factor * (CoefficientsLMinus(i, i + 1) + CoefficientsLPlus(i - 1, i));
     }
   this->OneBodyMValues[this->LzMax] = this->LzMax;
   this->OneBodyNValues[this->LzMax] = this->LzMax;
 //  this->OneBodyInteractionFactors[this->LzMax] = Factor * ((double) ((this->LzMax + 1) * (this->NbrFluxQuanta - this->LzMax) * (this->NbrFluxQuanta - this->LzMax)));
-  this->OneBodyInteractionFactors[this->LzMax] = Factor * (Coefficients(this->LzMax - 1, this->LzMax) + Coefficients(this->LzMax, this->LzMax - 1));
+  this->OneBodyInteractionFactors[this->LzMax] = Factor * (CoefficientsLMinus(this->LzMax, this->LzMax - 1) + CoefficientsLPlus(this->LzMax - 1, this->LzMax));
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }
