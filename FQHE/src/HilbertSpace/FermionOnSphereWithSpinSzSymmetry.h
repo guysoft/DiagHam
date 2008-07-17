@@ -132,30 +132,6 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // return value = index of the destination state 
   virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient);
 
-  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin up)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AduAdu (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAdd (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AduAdd (int m1, int m2, double& coefficient);
-
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -174,13 +150,6 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   
   protected:
 
-  // find state index
-  //
-  // stateDescription = unsigned integer describing the state
-  // lzmax = maximum Lz value reached by a fermion in the state
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
-
   // get canonical expression of a given state
   //
   // initialState = state that has to be converted to its canonical expression
@@ -197,6 +166,13 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // initialState = state that has to be converted to its canonical expression
   // return value = corresponding canonical state (with symmetry bit)
   virtual unsigned long GetSignedCanonicalState (unsigned long initialState);
+
+  // factorized code that is used to symmetrize result of the AdxAdy operations
+  //
+  // state = reference on the state that has been produced with the AdxAdy operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state
+  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient);
 
 };
 
@@ -245,6 +221,42 @@ inline unsigned long FermionOnSphereWithSpinSzSymmetry::GetSignedCanonicalState 
       return (initialState | FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT);
     else
       return initialState;
+}
+
+// factorized code that is used to symmetrize result of the AdxAdy operations
+//
+// state = reference on the state that has been produced with the AdxAdy operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state
+
+inline int FermionOnSphereWithSpinSzSymmetry::SymmetrizeAdAdResult(unsigned long& state, double& coefficient)
+{
+  unsigned long TmpState2 = state;
+  state = this->GetSignedCanonicalState(state);
+  if ((state & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+    {
+      this->GetStateSingletParity(TmpState2);
+      if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
+	return this->HilbertSpaceDimension;
+      int NewLzMax = 1 + (this->LzMax << 1);
+      while (((state & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+	--NewLzMax;
+      if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) != 0x0ul)
+	coefficient *= M_SQRT2;
+      return this->FindStateIndex(state, NewLzMax);
+    }
+  int NewLzMax = 1 + (this->LzMax << 1);
+  while (((state & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
+    --NewLzMax;
+  if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (state  & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
+    {
+      this->GetStateSingletParity(TmpState2);
+      coefficient *= (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
+      coefficient *= this->SzParitySign;
+    }
+  if ((this->ProdASignature & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) == 0x0ul)
+    coefficient *= M_SQRT1_2;
+  return this->FindStateIndex(state, NewLzMax);
 }
 
 #endif

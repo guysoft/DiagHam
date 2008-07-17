@@ -931,22 +931,6 @@ double FermionOnSphereWithSpinLzSzSymmetry::AuAu (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
   return Coefficient;
-//   this->ProdATemporaryState &= ~TmpMask;
-
-//   TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
-// 	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
-//   TmpMask &= this->ProdATemporaryState;
-
-// #ifdef  __64_BITS__
-//   TmpMask ^= TmpMask >> 32;
-// #endif
-//   TmpMask ^= TmpMask >> 16;
-//   TmpMask ^= TmpMask >> 8;
-//   TmpMask ^= TmpMask >> 4;
-//   TmpMask ^= TmpMask >> 2;
-//   TmpMask ^= TmpMask << 1;
-//   TmpMask &= 0x2ul;
-//   return (1.0 - ((double) TmpMask));
 }
 
 // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
@@ -982,21 +966,6 @@ double FermionOnSphereWithSpinLzSzSymmetry::AdAd (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
   return Coefficient;
-//   this->ProdATemporaryState &= ~TmpMask;
-
-//   TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
-// 	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
-//   TmpMask &= this->ProdATemporaryState;
-// #ifdef  __64_BITS__
-//   TmpMask ^= TmpMask >> 32;
-// #endif
-//   TmpMask ^= TmpMask >> 16;
-//   TmpMask ^= TmpMask >> 8;
-//   TmpMask ^= TmpMask >> 4;
-//   TmpMask ^= TmpMask >> 2;
-//   TmpMask ^= TmpMask << 1;
-//   TmpMask &= 0x2ul;
-//   return (1.0 - ((double) TmpMask));
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
@@ -1018,25 +987,6 @@ double FermionOnSphereWithSpinLzSzSymmetry::AuAd (int index, int n1, int n2)
     return 0.0;
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
-//   unsigned long truc = this->ProdATemporaryState;
-//   this->ProdATemporaryState &= ~TmpMask;
-
-//   TmpMask = ((((0x1ul << n2) - 1ul) & ~((0x1ul << n1) - 1ul)) |
-// 	     (((0x1ul << n1) - 1ul) & ~((0x1ul << n2) - 1ul)));
-//   TmpMask &= this->ProdATemporaryState;
-
-// #ifdef  __64_BITS__
-//   TmpMask ^= TmpMask >> 32;
-// #endif
-//   TmpMask ^= TmpMask >> 16;
-//   TmpMask ^= TmpMask >> 8;
-//   TmpMask ^= TmpMask >> 4;
-//   TmpMask ^= TmpMask >> 2;
-//   TmpMask ^= TmpMask << 1;
-//   TmpMask &= 0x2ul;
-// //  return (1.0 - ((double) TmpMask));
-
-//   this->ProdATemporaryState = truc;
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
 #ifdef  __64_BITS__
@@ -1052,9 +1002,6 @@ double FermionOnSphereWithSpinLzSzSymmetry::AuAd (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n1);
   return Coefficient;
-//  if (Coefficient != -(1.0 - ((double) TmpMask)))
-//   cout << Coefficient << "  " <<  (1.0 - ((double) TmpMask)) << " " << n1 << " " << n2 << " " << hex << (this->StateDescription[index] & FERMION_SPHERE_SU2_SYMMETRIC_MASK) << dec << endl;
-//  return Coefficient;
 }
 
 
@@ -1089,110 +1036,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdu (int m1, int m2, double& coeffic
 #endif
   TmpState |= (0x1ul << m1);
   
-  unsigned long TmpState2 = TmpState;
-  TmpState = this->GetSignedCanonicalState(TmpState);
-  //cout << " u u : m1 = " << m1 << " m2 = " << m2 << " " << hex << this->ProdATemporaryState << " " << TmpState << " " << (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) << dec << endl;
-  switch (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-    {
-    case 0x0ul:
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != 0x0ul)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	      coefficient *= 2;
-	    else
-	      coefficient *= M_SQRT2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT :
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	//cout << hex << "u u : " << ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul) << " " << ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul) << dec << endl;
-	coefficient *= 1.0 + ((double) (((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
-					 | (TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-        }
-      break;
-    case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->LzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;      
-    default:
-      {
-	if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
-	  {
-	    this->GetStateSingletParity(TmpState2);
-	    double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	  }
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	      coefficient *= 0.5;
-	    else
-	      coefficient *= M_SQRT1_2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);      
-      }
-    }
-  return this->HilbertSpaceDimension;
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
 }
   
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
@@ -1224,110 +1068,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AddAdd (int m1, int m2, double& coeffic
 #endif
   TmpState |= (0x1ul << m1);
 
-  unsigned long TmpState2 = TmpState;
-  TmpState = this->GetSignedCanonicalState(TmpState);
-  //cout << " d d : m1 = " << m1 << " m2 = " << m2 << " " << hex << this->ProdATemporaryState << " " << TmpState << " " << (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) << dec << endl;
-  switch (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-    {
-    case 0x0ul:
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != 0x0ul)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	      coefficient *= 2;
-	    else
-	      coefficient *= M_SQRT2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT :
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	//cout << hex << "d d : " << ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul) << " " << ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul) << dec << endl;
-	coefficient *= 1.0 + ((double) (((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
-					 | (TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-        }
-      break;
-    case  FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->LzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;      
-    default:
-      {
-	if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
-	  {
-	    this->GetStateSingletParity(TmpState2);
-	    double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	  }
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	      coefficient *= 0.5;
-	    else
-	      coefficient *= M_SQRT1_2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);      
-      }
-    }
-  return this->HilbertSpaceDimension;
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
 }
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
@@ -1360,110 +1101,84 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdd (int m1, int m2, double& coeffic
 #endif
   TmpState |= (0x1ul << m1);
 
-  unsigned long TmpState2 = TmpState;
-  TmpState = this->GetSignedCanonicalState(TmpState);
-  //cout << " u d : m1 = " << m1 << " m2 = " << m2 << " " << hex << this->ProdATemporaryState << " " << TmpState << " " << (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) << dec << endl;
-  switch (TmpState & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
+}
+
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double FermionOnSphereWithSpinLzSzSymmetry::ProdA (int index, int* n, int* spinIndices, int nbrIndices)
+{
+  this->ProdALzMax = this->StateHighestBit[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  int Index;
+  double Coefficient = 1.0;
+  for (int i = nbrIndices - 1; i >= 0; --i)
     {
-    case 0x0ul:
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	if (((1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul))) * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != 0x0ul)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	      coefficient *= 2;
-	    else
-	      coefficient *= M_SQRT2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SZ_SYMMETRIC_BIT :
-      {
-	if (this->LzSzSameParityFlag == false)
-	  return this->HilbertSpaceDimension;	
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	//cout << hex << "u d : " << ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul) << " " << ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul) << dec << endl;
-	coefficient *= 1.0 + ((double) (((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) 
-					 | (TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT)) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-        }
-      break;
-    case FERMION_SPHERE_SU2_SZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->LzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;
-    case FERMION_SPHERE_SU2_LZ_SYMMETRIC_TEST :
-      {
-	this->GetStateSingletParity(TmpState2);
-	double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	if ((TmpSign * this->SzParitySign) < 0.0)
-	  return this->HilbertSpaceDimension;
-	coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	  coefficient *= M_SQRT1_2;
-	else
-	  if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	    coefficient *= M_SQRT2;
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);
-      }
-      break;      
-    default:
-      {
-	if ((TmpState2 & FERMION_SPHERE_SU2_SYMMETRIC_MASK) != (TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK))
-	  {
-	    this->GetStateSingletParity(TmpState2);
-	    double TmpSign = (1.0 - 2.0 * ((double) ((TmpState2 >> FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT) & 0x1ul)));
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_LZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->LzParitySign) - 1.0);
-	    coefficient *= 1.0 + ((double) ((TmpState >> FERMION_SPHERE_SU2_SZ_TRANSFORMATION_SHIFT) & 0x1ul)) * ((TmpSign * this->SzParitySign) - 1.0);
-	  }
-	if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) != FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT)
-	  {
-	    if ((this->ProdASignature & FERMION_SPHERE_SU2_FULLY_SYMMETRIC_BIT) == 0x0ul)
-	      coefficient *= 0.5;
-	    else
-	      coefficient *= M_SQRT1_2;
-	  }
-	int NewLzMax = 1 + (this->LzMax << 1);
-	while (((TmpState & FERMION_SPHERE_SU2_SYMMETRIC_MASK) >> NewLzMax) == 0)
-	  --NewLzMax;
-	return this->FindStateIndex(TmpState, NewLzMax);      
-      }
+      Index = (n[i] << 1) + spinIndices[i];
+      if ((this->ProdATemporaryState & (0x1l << Index)) == 0)
+	{
+	  return 0.0;
+	}
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
+#ifdef  __64_BITS__
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+      this->ProdATemporaryState &= ~(0x1l << Index);
     }
-  return this->HilbertSpaceDimension;
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+    --this->ProdALzMax;
+
+  return Coefficient;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinLzSzSymmetry::ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient)
+{
+  coefficient = 1.0;
+  unsigned long TmpState = this->ProdATemporaryState;
+  int NewLzMax = this->ProdALzMax;
+  int Index;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      Index = (m[i] << 1) + spinIndices[i];
+      if ((TmpState & (0x1l << Index)) != 0)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      if (Index > NewLzMax)
+	{
+	  NewLzMax = Index;
+	}
+      else
+	{
+	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
+#ifdef  __64_BITS__
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+	}
+      TmpState |= (0x1l << Index);
+    }
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
 }
 
 // find state index

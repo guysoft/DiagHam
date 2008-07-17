@@ -245,6 +245,58 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector& vector
     }
 }
 
+// initialize Lanczos algorithm with a set of given vectors
+//
+// vectors = array of vectors used as first step vectors
+// nbrVectors = number of vectors in the array
+
+void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors)
+{
+  if (this->ResumeDiskFlag == false)
+    {
+      int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+      int MaxNbrVector = nbrVectors;
+      if (MaxNbrVector > this->BlockSize)
+	MaxNbrVector = this->BlockSize;
+      for (int i = 0; i < MaxNbrVector; ++i)    
+	this->LanczosVectors[i] = vectors[i];
+      if (nbrVectors < this->BlockSize)
+	{
+	  double* TmpCoef = new double [this->BlockSize];
+	  for (int j = nbrVectors; j < this->BlockSize; ++j)
+	    {
+	      this->LanczosVectors[j] = RealVector (Dimension);
+	      for (int i = 0; i < Dimension; ++i)
+		this->LanczosVectors[j][i] = (drand48() - 0.5) * 2.0;
+	      for (int i = 0; i < j; ++i)
+		TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
+	      for (int i = 0; i < j; ++i)
+		this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
+	      double TmpNorm = this->LanczosVectors[j].Norm();
+	      this->LanczosVectors[j] /= TmpNorm;
+	    }
+	  delete[] TmpCoef;
+	}
+      if (this->DiskFlag == false)
+	{	  
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    this->InitialStates[j] = RealVector (this->LanczosVectors[j], true);
+	}
+      else
+	{
+	  char* TmpVectorName = new char [256];
+	  for (int k = 0; k < this->BlockSize; ++k)
+	    {
+	      sprintf(TmpVectorName, "vector.%d", k);
+	      this->LanczosVectors[k].WriteVector(TmpVectorName);
+	    }
+	  delete[] TmpVectorName;	  
+	}
+      this->Index = 0;
+      this->ReducedMatrix.Resize(0, 0);
+    }
+}
+
 // get last produced vector
 //
 // return value = reference on lest produced vector

@@ -151,6 +151,14 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->InitialVectorFileName = 0;
     }
+  if ((*options)["initial-blockvectors"] != 0)
+    {
+      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvector"])->GetString();
+    }
+  else
+    {
+      this->InitialBlockVectorFileName = 0;
+    }
   if ((*options)["partial-lanczos"] != 0)
     {
       this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
@@ -502,15 +510,46 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	Lanczos->ResumeLanczosAlgorithm();
       else
 	{
-	  if (this->InitialVectorFileName == 0)
+	  if (this->BlockLanczosFlag == false)
 	    {
-	      Lanczos->InitializeLanczosAlgorithm();
+	      if (this->InitialVectorFileName == 0)
+		Lanczos->InitializeLanczosAlgorithm();
+	      else
+		{	   
+		  RealVector InitialVector;
+		  InitialVector.ReadVector(this->InitialVectorFileName);
+		  Lanczos->InitializeLanczosAlgorithm(InitialVector);
+		}
 	    }
 	  else
-	    {	      
-	      RealVector InitialVector;
-	      InitialVector.ReadVector(this->InitialVectorFileName);
-	      Lanczos->InitializeLanczosAlgorithm(InitialVector);
+	    {
+	      if (this->InitialBlockVectorFileName == 0)
+		Lanczos->InitializeLanczosAlgorithm();
+	      else
+		{
+		  int TmpNbrInitialVectors;
+		  ConfigurationParser InitialVectorDescription;
+		  if (InitialVectorDescription.Parse(this->InitialBlockVectorFileName) == false)
+		    {
+		      InitialVectorDescription.DumpErrors(cout) << endl;
+		    }
+		  else
+		    {
+		      char** VectorFileNames;
+		      if (InitialVectorDescription.GetAsStringArray("InitialVectors", ' ', VectorFileNames, TmpNbrInitialVectors) == false)
+			{
+			  cout << "Vectors are not defined or have a wrong value in " << this->InitialBlockVectorFileName << endl;
+			}
+		      else
+			{
+			  RealVector* InitialVectors = new RealVector[TmpNbrInitialVectors];
+			  for (int i = 0; i < TmpNbrInitialVectors; ++i)
+			    InitialVectors[i].ReadVector(VectorFileNames[i]);
+			  Lanczos->InitializeLanczosAlgorithm(InitialVectors, TmpNbrInitialVectors);		  
+			  delete[] InitialVectors;
+			}
+		    }
+		}
 	    }
 	}
       cout << "Run Lanczos Algorithm" << endl;

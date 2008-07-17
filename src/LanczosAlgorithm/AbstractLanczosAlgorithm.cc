@@ -83,6 +83,16 @@ void AbstractLanczosAlgorithm::ResumeLanczosAlgorithm()
   this->InitializeLanczosAlgorithm();
 }
   
+// initialize Lanczos algorithm with a set of given vectors
+//
+// vectors = array of vectors used as first step vectors
+// nbrVectors = number of vectors in the array
+
+void AbstractLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors)
+{
+  this->InitializeLanczosAlgorithm(vectors[0]);
+}
+
 // force orthogonalization with respect to a set of vectors
 //
 // fileName = name of the file describing the set of vectors

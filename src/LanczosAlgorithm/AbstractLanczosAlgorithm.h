@@ -81,6 +81,12 @@ class AbstractLanczosAlgorithm
   // vector = reference to the vector used as first step vector
   virtual void InitializeLanczosAlgorithm(const Vector& vector) = 0;
 
+  // initialize Lanczos algorithm with a set of given vectors
+  //
+  // vectors = array of vectors used as first step vectors
+  // nbrVectors = number of vectors in the array
+  virtual void InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors);
+
   // resume Lanczos algorithm from disk datas in current directory
   //
   virtual void ResumeLanczosAlgorithm();

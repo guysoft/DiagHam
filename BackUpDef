@@ -10,6 +10,7 @@
 
 Makefile.am
 Makefile.in
+config_ac.h.in
 configure.in
 configure
 
@@ -26,3 +27,4 @@ aclocal.m4
 install-sh
 missing
 mkinstalldirs
+depcomp
