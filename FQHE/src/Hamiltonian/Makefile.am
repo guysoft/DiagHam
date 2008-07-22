@@ -48,4 +48,5 @@ ParticleOnSphereWithSU3SpinL2Hamiltonian.cc \
 AbstractQHEOnLatticeHamiltonian.cc \
 ParticleOnLatticeDeltaHamiltonian.cc \
 ParticleOnDiskGenericHamiltonian.cc \
-ParticleOnDiskLPlusLMinusHamiltonian.cc
+ParticleOnDiskLPlusLMinusHamiltonian.cc \
+ParticleOnSphereGenericThreeBodyHamiltonian.cc

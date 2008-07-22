@@ -491,6 +491,8 @@ Vector* BasicBlockLanczosAlgorithm::GetEigenstates(int nbrEigenstates)
 	      AddRealLinearCombinationOperation Operation (&(Eigenstates[k]), this->LanczosVectors, this->BlockSize,  TmpCoefficents);
 	      Operation.ApplyOperation(this->Architecture);
 	    }
+ 	  cout << ".";
+ 	  cout.flush();
 	}
       delete[] TmpVectorName;
     }

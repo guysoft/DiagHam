@@ -60,7 +60,7 @@ using std::ostream;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzMax = maximum angular momentum that a single particle can reach
-// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2m V(r) e^(-r^2/8) )
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
@@ -134,7 +134,7 @@ ParticleOnDiskGenericHamiltonian::ParticleOnDiskGenericHamiltonian(ParticleOnSph
 // nbrParticles = number of particles
 // lzMax = maximum angular momentum that a single particle can reach
 // architecture = architecture to use for precalculation
-// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2 V(r) e^(-r^2/8) )
+// pseudoPotential = array with the pseudo-potentials (ordered such that the first element corresponds to the delta interaction, V_m=\int d^2r r^2m V(r) e^(-r^2/8) )
 // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements

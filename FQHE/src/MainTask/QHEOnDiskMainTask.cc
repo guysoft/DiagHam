@@ -148,7 +148,7 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
     }
   if ((*options)["initial-blockvectors"] != 0)
     {
-      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvector"])->GetString();
+      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvectors"])->GetString();
     }
   else
     {

@@ -85,6 +85,7 @@ ParticleOnSphereNBodyHardCoreWithTwoImpuritiesHamiltonian::ParticleOnSphereNBody
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
+  this->MNNBodyInteractionFactors = 0;
 
   this->OneBodyTermFlag = true;
   this->FullTwoBodyFlag = false;
