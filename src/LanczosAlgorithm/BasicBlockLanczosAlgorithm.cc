@@ -259,7 +259,7 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vectors, int
       if (MaxNbrVector > this->BlockSize)
 	MaxNbrVector = this->BlockSize;
       for (int i = 0; i < MaxNbrVector; ++i)    
-	this->LanczosVectors[i] = vectors[i];
+	this->LanczosVectors[i] = ((RealVector*) vectors)[i];
       if (nbrVectors < this->BlockSize)
 	{
 	  double* TmpCoef = new double [this->BlockSize];

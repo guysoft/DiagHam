@@ -78,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
   (*SystemGroup) += new BooleanOption ('\n', "jain-cf", "use composite fermion state instead of the symetrized state");  
+  (*SystemGroup) += new BooleanOption ('\n', "cf-symmetrized", "compute ovelaps between exact states and both the symetrized state and Jain CF state (norm of the CF state is used as probalbility density)");  
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");  
@@ -133,6 +134,11 @@ int main(int argc, char** argv)
   bool UseExactFlag = false;
   bool StatisticFlag = true;
   bool UseBaseAsWeightFlag = ((BooleanOption*) Manager["weight-symmetrized"])->GetBoolean();
+  bool JainAndSymmetrizedFlag = ((BooleanOption*) Manager["cf-symmetrized"])->GetBoolean();
+  if (JainAndSymmetrizedFlag == true)
+    {
+      UseBaseAsWeightFlag = true;
+    }
 
   AbstractQHEParticle* ExactSpace = 0;
   RealVector* ExactState = 0;
@@ -257,6 +263,7 @@ int main(int argc, char** argv)
       }
     }
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
+  Abstract1DComplexFunctionOnSphere* SymmetrizedFunction2 = 0;
   if (((BooleanOption*) Manager["jain-cf"])->GetBoolean() == true)
     {
       SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
@@ -271,6 +278,11 @@ int main(int argc, char** argv)
 	{
 	  ((FQHESphereSymmetrizedSUKToU1WaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
 	  return 0;
+	}
+      if (JainAndSymmetrizedFlag == true)
+	{
+	  SymmetrizedFunction2 = SymmetrizedFunction;
+	  SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
 	}
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;
@@ -308,7 +320,6 @@ int main(int argc, char** argv)
 	{
 	  TestFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
 //	  TestFunction = new FQHESU3GeneralizedGaffnianOnSphereWaveFunction(NbrParticles, 2, 1);
-
 	}
       else
 	{
@@ -324,10 +335,15 @@ int main(int argc, char** argv)
        
        double Normalization = 0.0;
        double ErrorNormalization = 0.0;
+       double Normalization2 = 0.0;
+       double ErrorNormalization2 = 0.0;
        Complex Tmp;
+       Complex Value2;
        double Tmp2;
        Complex* Overlap = new Complex[NbrExactStates];
        Complex* ErrorOverlap = new Complex[NbrExactStates];
+       Complex* Overlap2 = new Complex[NbrExactStates];
+       Complex* ErrorOverlap2 = new Complex[NbrExactStates];
        double* NormalizationExact = new double[NbrExactStates];
        double* ErrorNormalizationExact = new double[NbrExactStates];
        Complex* Tmp3 = new Complex[NbrExactStates];
@@ -348,6 +364,8 @@ int main(int argc, char** argv)
 	     {
 	       Overlap[j] = 0.0;
 	       ErrorOverlap[j] = 0.0;
+	       Overlap2[j] = 0.0;
+	       ErrorOverlap2[j] = 0.0;
 	       NormalizationExact[j] = 0.0;	   
 	       ErrorNormalizationExact[j] = 0.0;	 
 	       Tmp3[j] = 0.0;	   
@@ -371,9 +389,23 @@ int main(int argc, char** argv)
 	     ValueExact[0] = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	   else
 	     {
-	       QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
-	       Operation.ApplyOperation(Architecture.GetArchitecture());      
-	       ValueExact[0] = Operation.GetScalar();
+	       if (NbrExactStates == 1)
+		 {
+		   QHEParticleWaveFunctionOperation Operation(ExactSpace, &(ExactState[0]), &TmpPositions, ExactBasis);
+		   Operation.ApplyOperation(Architecture.GetArchitecture());      
+		   ValueExact[0] = Operation.GetScalar();
+		 }
+	       else
+		 {
+		   QHEParticleWaveFunctionOperation Operation(ExactSpace, ExactState, NbrExactStates, &TmpPositions, ExactBasis);
+		   Operation.ApplyOperation(Architecture.GetArchitecture());      
+		   for (int j = 0; j < NbrExactStates; ++j)
+		     {
+		       ValueExact[j] = Operation.GetScalar(j);
+		     }
+		 }
+	       if (JainAndSymmetrizedFlag == true)
+		 Value2 = SymmetrizedFunction2->CalculateFromSpinorVariables(TmpUV);
 	     }
 	   PreviousProbabilities = Norm(Tmp);
 	   CurrentProbabilities = PreviousProbabilities;
@@ -514,6 +546,8 @@ int main(int argc, char** argv)
 			   ValueExact[j] = Operation.GetScalar(j);
 			 }
 		     }
+		   if (JainAndSymmetrizedFlag == true)
+		     Value2 = SymmetrizedFunction2->CalculateFromSpinorVariables(TmpUV);
 		 }
 	       ++Acceptance;
 	     }
@@ -531,6 +565,7 @@ int main(int argc, char** argv)
 	   NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
 	   if (NextCoordinates == NbrParticles)
 	     --NextCoordinates;
+
 	   Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
 	   Tmp2 /= CurrentProbabilities;
 	   for (int j = 0; j < NbrExactStates; ++j)
@@ -547,6 +582,25 @@ int main(int argc, char** argv)
 	     }
 	   Normalization += Tmp2;
 	   ErrorNormalization += Tmp2 * Tmp2;
+
+	   if (JainAndSymmetrizedFlag == true)
+	     {
+	       Tmp2 = (Value2.Re * Value2.Re) + (Value2.Im * Value2.Im);
+	       Tmp2 /= CurrentProbabilities;
+	       for (int j = 0; j < NbrExactStates; ++j)
+		 {
+		   Tmp2bis[j] = (ValueExact[j].Re * ValueExact[j].Re) + (ValueExact[j].Im * ValueExact[j].Im);
+		   Tmp3[j] = (Conj(Value2) * ValueExact[j]);
+		   Tmp3[j] /= CurrentProbabilities;      
+		   Tmp2bis[j] /= CurrentProbabilities;  
+		   Overlap2[j] += Tmp3[j];
+		   ErrorOverlap2[j].Re += Tmp3[j].Re * Tmp3[j].Re;
+		   ErrorOverlap2[j].Im += Tmp3[j].Im * Tmp3[j].Im;
+		 }
+	       Normalization2 += Tmp2;
+	       ErrorNormalization2 += Tmp2 * Tmp2;	   
+	     }
+
 	   if ((i > 0) && ((RecordStep != 0) && ((i % RecordStep) == 0)))
 	     {
 	       ofstream OverlapRecordFile;
@@ -609,6 +663,8 @@ int main(int argc, char** argv)
 	   if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
 	     {
 	       cout << " i = " << i << endl;
+	       if (JainAndSymmetrizedFlag == true)
+		 cout << "  overlap with the Jain CF state :" << endl;
 	       double Tmp6 = Normalization  / ((double) i);
 	       double Tmp7 = sqrt( ((ErrorNormalization / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
 	       for (int j = 0; j < NbrExactStates; ++j)
@@ -641,6 +697,43 @@ int main(int argc, char** argv)
 		   Tmp5.Re *= Tmp4.Re;
 		   Tmp5.Im *= Tmp4.Im;
 		   cout << Tmp4 << " +/- " << Tmp5 << endl;
+		 }
+	       if (JainAndSymmetrizedFlag == true)
+		 {
+		   cout << "  overlap with the symmetrized state :" << endl;
+		   Tmp6 = Normalization2  / ((double) i);
+		   Tmp7 = sqrt( ((ErrorNormalization2 / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
+		   for (int j = 0; j < NbrExactStates; ++j)
+		     {		   
+		       Complex Tmp4 = Overlap2[j] / ((double) i);
+		       Complex Tmp5 (sqrt( ((ErrorOverlap2[j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+				     sqrt( ((ErrorOverlap2[j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+		       double Tmp8 = NormalizationExact[j]  / ((double) i);
+		       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
+		       if (NbrExactStates > 1)
+			 cout << "overlap " << j << " : ";
+		       if (((BooleanOption*) Manager["show-details"])->GetBoolean() == true)
+			 {
+			   cout << Tmp4;
+			   cout << " +/- " << Tmp5 << endl;
+			   cout << Tmp6;
+			   cout << " +/- " << Tmp7 << endl;	  
+			   cout << Tmp8;
+			   cout << " +/- " << Tmp9 << endl;	  
+			 }
+		       Tmp5.Re /= Tmp4.Re;
+		       Tmp5.Im /= Tmp4.Im;
+		       Tmp5.Re = fabs(Tmp5.Re);
+		       Tmp5.Im = fabs(Tmp5.Im);
+		       Tmp5.Re += (Tmp7 / Tmp6);
+		       Tmp5.Im += (Tmp7 / Tmp6);
+		       Tmp5.Re += (Tmp9 / Tmp8);
+		       Tmp5.Im += (Tmp9 / Tmp8);
+		       Tmp4 /= sqrt(Tmp6 * Tmp8);	  
+		       Tmp5.Re *= Tmp4.Re;
+		       Tmp5.Im *= Tmp4.Im;
+		       cout << Tmp4 << " +/- " << Tmp5 << endl;
+		     }
 		 }
 	       cout << "acceptance rate = " << (((double) Acceptance) / (((double) i))) << endl;
 	       cout << "-----------------------------------------------" << endl;
@@ -679,8 +772,12 @@ int main(int argc, char** argv)
 	   OverlapRecordFile.close();
 	 }
        cout << " final results :" << endl;
+       if (JainAndSymmetrizedFlag == true)
+	 cout << "  overlap with the Jain CF state :" << endl;
        double Tmp6 = Normalization  / ((double) NbrIter);
        double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
+       double TotalNorm = 0.0;
+       double TotalNormError = 0.0;
        for (int j = 0; j < NbrExactStates; ++j)
 	 {
 	   Complex Tmp4 = Overlap[j] / ((double) NbrIter);
@@ -704,8 +801,44 @@ int main(int argc, char** argv)
 	     cout << "overlap " << j << " : ";
 	   cout << Tmp4 << " +/- " << Tmp5 << endl;
 	   cout << Norm(Tmp4) << " +/- " << ((fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im))  / Norm(Tmp4)) << endl;
+	   TotalNorm += SqrNorm(Tmp4);
+	   TotalNormError += 2.0 * fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im);
 	 }
-       cout << "-----------------------------------------------" << endl;
+       cout << "total overlap = " << TotalNorm << " +/- " << TotalNormError << endl;
+       if (JainAndSymmetrizedFlag == true)
+	 {
+	   cout << "  overlap with the symmetrized state :" << endl;
+	   Tmp6 = Normalization2  / ((double) NbrIter);
+	   Tmp7 = sqrt( ((ErrorNormalization2 / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
+	   TotalNorm = 0.0;
+	   for (int j = 0; j < NbrExactStates; ++j)
+	     {		   
+	       Complex Tmp4 = Overlap2[j] / ((double) NbrIter);
+	       Complex Tmp5 (sqrt( ((ErrorOverlap2[j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+			     sqrt( ((ErrorOverlap2[j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+	       double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
+	       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
+	       if (NbrExactStates > 1)
+		 cout << "overlap " << j << " : ";
+	       Tmp5.Re /= Tmp4.Re;
+	       Tmp5.Im /= Tmp4.Im;
+	       Tmp5.Re = fabs(Tmp5.Re);
+	       Tmp5.Im = fabs(Tmp5.Im);
+	       Tmp5.Re += (Tmp7 / Tmp6);
+	       Tmp5.Im += (Tmp7 / Tmp6);
+	       Tmp5.Re += (Tmp9 / Tmp8);
+	       Tmp5.Im += (Tmp9 / Tmp8);
+	       Tmp4 /= sqrt(Tmp6 * Tmp8);	  
+	       Tmp5.Re *= Tmp4.Re;
+	       Tmp5.Im *= Tmp4.Im;
+	       cout << Tmp4 << " +/- " << Tmp5 << endl;
+	       cout << Norm(Tmp4) << " +/- " << ((fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im))  / Norm(Tmp4)) << endl;
+	       TotalNorm += SqrNorm(Tmp4);
+	       TotalNormError += 2.0 * fabs(Tmp4.Re * Tmp5.Re) + fabs(Tmp4.Im * Tmp5.Im);
+	     }
+	   cout << "total overlap = " << TotalNorm << " +/- " << TotalNormError << endl;	   
+	 }
+      cout << "-----------------------------------------------" << endl;
        
        
      }
