@@ -341,9 +341,14 @@ int main(int argc, char** argv)
        Complex Value2;
        double Tmp2;
        Complex* Overlap = new Complex[NbrExactStates];
-       Complex* ErrorOverlap = new Complex[NbrExactStates];
        Complex* Overlap2 = new Complex[NbrExactStates];
-       Complex* ErrorOverlap2 = new Complex[NbrExactStates];
+       Complex** ErrorOverlap = new Complex*[NbrExactStates];
+       Complex** ErrorOverlap2 = new Complex*[NbrExactStates];
+       for (int i = 0; i < NbrExactStates; ++i)
+	 {
+	   ErrorOverlap[i] = new  Complex[NbrExactStates];
+	   ErrorOverlap2[i] = new  Complex[NbrExactStates];
+	 }
        double* NormalizationExact = new double[NbrExactStates];
        double* ErrorNormalizationExact = new double[NbrExactStates];
        Complex* Tmp3 = new Complex[NbrExactStates];
@@ -363,9 +368,12 @@ int main(int argc, char** argv)
 	   for (int j = 0; j < NbrExactStates; ++j)
 	     {
 	       Overlap[j] = 0.0;
-	       ErrorOverlap[j] = 0.0;
+	       for (int k = 0; k <= j; ++k)
+		 {
+		   ErrorOverlap[j][k] = 0.0;
+		   ErrorOverlap2[j][k] = 0.0;
+		 }
 	       Overlap2[j] = 0.0;
-	       ErrorOverlap2[j] = 0.0;
 	       NormalizationExact[j] = 0.0;	   
 	       ErrorNormalizationExact[j] = 0.0;	 
 	       Tmp3[j] = 0.0;	   
@@ -494,10 +502,28 @@ int main(int argc, char** argv)
 	     {		   	       
 	       ReadLittleEndian(MCState, Overlap[j].Re);
 	       ReadLittleEndian(MCState, Overlap[j].Im);
-	       ReadLittleEndian(MCState, ErrorOverlap[j].Re);
-	       ReadLittleEndian(MCState, ErrorOverlap[j].Im);
+	       for (int k = 0; k <=j; ++k)
+		 {
+		   ReadLittleEndian(MCState, ErrorOverlap[j][k].Re);
+		   ReadLittleEndian(MCState, ErrorOverlap[j][k].Im);
+		 }
 	       ReadLittleEndian(MCState, NormalizationExact[j]);
 	       ReadLittleEndian(MCState, ErrorNormalizationExact[j]);
+	     }
+	   if (JainAndSymmetrizedFlag == true)
+	     {
+	       ReadLittleEndian(MCState, Normalization2);
+	       ReadLittleEndian(MCState, ErrorNormalization2);
+	       for (int j = 0; j < NbrExactStates; ++j)
+		 {		   	       
+		   ReadLittleEndian(MCState, Overlap2[j].Re);
+		   ReadLittleEndian(MCState, Overlap2[j].Im);
+		   for (int k = 0; k <=j; ++k)
+		     {
+		       ReadLittleEndian(MCState, ErrorOverlap2[j][k].Re);
+		       ReadLittleEndian(MCState, ErrorOverlap2[j][k].Im);
+		     }
+		 }
 	     }
 	   MCState.close();	     
 	 }
@@ -575,8 +601,11 @@ int main(int argc, char** argv)
 	       Tmp3[j] /= CurrentProbabilities;      
 	       Tmp2bis[j] /= CurrentProbabilities;  
 	       Overlap[j] += Tmp3[j];
-	       ErrorOverlap[j].Re += Tmp3[j].Re * Tmp3[j].Re;
-	       ErrorOverlap[j].Im += Tmp3[j].Im * Tmp3[j].Im;
+	       for (int k = 0; k <= j; ++k)
+		 {
+		   ErrorOverlap[j][k].Re += Tmp3[j].Re * Tmp3[k].Re;
+		   ErrorOverlap[j][k].Im += Tmp3[j].Im * Tmp3[k].Im;
+		 }
 	       NormalizationExact[j] += Tmp2bis[j];
 	       ErrorNormalizationExact[j] += Tmp2bis[j] * Tmp2bis[j];
 	     }
@@ -594,8 +623,11 @@ int main(int argc, char** argv)
 		   Tmp3[j] /= CurrentProbabilities;      
 		   Tmp2bis[j] /= CurrentProbabilities;  
 		   Overlap2[j] += Tmp3[j];
-		   ErrorOverlap2[j].Re += Tmp3[j].Re * Tmp3[j].Re;
-		   ErrorOverlap2[j].Im += Tmp3[j].Im * Tmp3[j].Im;
+		   for (int k = 0; k <= j; ++k)
+		     {
+		       ErrorOverlap2[j][k].Re += Tmp3[j].Re * Tmp3[k].Re;
+		       ErrorOverlap2[j][k].Im += Tmp3[j].Im * Tmp3[k].Im;
+		     }
 		 }
 	       Normalization2 += Tmp2;
 	       ErrorNormalization2 += Tmp2 * Tmp2;	   
@@ -612,8 +644,8 @@ int main(int argc, char** argv)
 	       for (int j = 0; j < NbrExactStates; ++j)
 		 {
 		   Complex Tmp4 = Overlap[j] / ((double) i);
-		   Complex Tmp5 (sqrt( ((ErrorOverlap[j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
-				 sqrt( ((ErrorOverlap[j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+		   Complex Tmp5 (sqrt( ((ErrorOverlap[j][j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+			     sqrt( ((ErrorOverlap[j][j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
 		   double Tmp8 = NormalizationExact[j]  / ((double) i);
 		   double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
 		   Tmp5.Re /= Tmp4.Re;
@@ -627,11 +659,40 @@ int main(int argc, char** argv)
 		   Tmp4 /= sqrt(Tmp6 * Tmp8);	  
 		   Tmp5.Re *= Tmp4.Re;
 		   Tmp5.Im *= Tmp4.Im;
-		   OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " " 
-				     << ErrorOverlap[j].Re << " " << ErrorOverlap[j].Im << " " << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
+		   OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " ";
+		   for (int k = 0; k <= j; ++k)
+		     OverlapRecordFile << ErrorOverlap[j][k].Re << " " << ErrorOverlap[j][k].Im << " ";
+		   OverlapRecordFile << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
 		 }
-	       OverlapRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
+	       if (JainAndSymmetrizedFlag == true)
+		 {
+		   Tmp6 = Normalization2 / ((double) i);
+		   Tmp7 = sqrt( ((ErrorNormalization2 / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
+		   for (int j = 0; j < NbrExactStates; ++j)
+		     {
+		       Complex Tmp4 = Overlap2[j] / ((double) i);
+		       Complex Tmp5 (sqrt( ((ErrorOverlap2[j][j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+				     sqrt( ((ErrorOverlap2[j][j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+		       double Tmp8 = NormalizationExact[j]  / ((double) i);
+		       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
+		       Tmp5.Re /= Tmp4.Re;
+		       Tmp5.Im /= Tmp4.Im;
+		       Tmp5.Re = fabs(Tmp5.Re);
+		       Tmp5.Im = fabs(Tmp5.Im);
+		       Tmp5.Re += (Tmp7 / Tmp6);
+		       Tmp5.Im += (Tmp7 / Tmp6);
+		       Tmp5.Re += (Tmp9 / Tmp8);
+		       Tmp5.Im += (Tmp9 / Tmp8);
+		       Tmp4 /= sqrt(Tmp6 * Tmp8);	  
+		       Tmp5.Re *= Tmp4.Re;
+		       Tmp5.Im *= Tmp4.Im;
+		       OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap2[j].Re << " " << Overlap2[j].Im << " ";
+		       for (int k = 0; k <= j; ++k)
+			 OverlapRecordFile << ErrorOverlap2[j][k].Re << " " << ErrorOverlap2[j][k].Im << " ";
+		     }
+		 }
 	       OverlapRecordFile.close();
+
 	       ofstream MCState;
 	       MCState.open("mcstate.dat", ios::out | ios::binary);
 	       WriteLittleEndian(MCState, i);
@@ -653,10 +714,28 @@ int main(int argc, char** argv)
 		 {		   	       
 		   WriteLittleEndian(MCState, Overlap[j].Re);
 		   WriteLittleEndian(MCState, Overlap[j].Im);
-		   WriteLittleEndian(MCState, ErrorOverlap[j].Re);
-		   WriteLittleEndian(MCState, ErrorOverlap[j].Im);
+		   for (int k = 0; k <=j; ++k)
+		     {
+		       WriteLittleEndian(MCState, ErrorOverlap[j][k].Re);
+		       WriteLittleEndian(MCState, ErrorOverlap[j][k].Im);
+		     }
 		   WriteLittleEndian(MCState, NormalizationExact[j]);
 		   WriteLittleEndian(MCState, ErrorNormalizationExact[j]);
+		 }
+	       if (JainAndSymmetrizedFlag == true)
+		 {
+		   WriteLittleEndian(MCState, Normalization2);
+		   WriteLittleEndian(MCState, ErrorNormalization2);
+		   for (int j = 0; j < NbrExactStates; ++j)
+		     {		   	       
+		       WriteLittleEndian(MCState, Overlap2[j].Re);
+		       WriteLittleEndian(MCState, Overlap2[j].Im);
+		       for (int k = 0; k <=j; ++k)
+			 {
+			   WriteLittleEndian(MCState, ErrorOverlap2[j][k].Re);
+			   WriteLittleEndian(MCState, ErrorOverlap2[j][k].Im);
+			 }
+		     }
 		 }
 	       MCState.close();	     
 	     }
@@ -670,8 +749,8 @@ int main(int argc, char** argv)
 	       for (int j = 0; j < NbrExactStates; ++j)
 		 {		   
 		   Complex Tmp4 = Overlap[j] / ((double) i);
-		   Complex Tmp5 (sqrt( ((ErrorOverlap[j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
-				 sqrt( ((ErrorOverlap[j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+		   Complex Tmp5 (sqrt( ((ErrorOverlap[j][j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+				 sqrt( ((ErrorOverlap[j][j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
 		   double Tmp8 = NormalizationExact[j]  / ((double) i);
 		   double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
 		   if (NbrExactStates > 1)
@@ -706,8 +785,8 @@ int main(int argc, char** argv)
 		   for (int j = 0; j < NbrExactStates; ++j)
 		     {		   
 		       Complex Tmp4 = Overlap2[j] / ((double) i);
-		       Complex Tmp5 (sqrt( ((ErrorOverlap2[j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
-				     sqrt( ((ErrorOverlap2[j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
+		       Complex Tmp5 (sqrt( ((ErrorOverlap2[j][j].Re / ((double) i)) - (Tmp4.Re * Tmp4.Re)) / ((double) i) ),
+				     sqrt( ((ErrorOverlap2[j][j].Im / ((double) i)) - (Tmp4.Im * Tmp4.Im)) / ((double) i) ));
 		       double Tmp8 = NormalizationExact[j]  / ((double) i);
 		       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) i))  -  (Tmp8 * Tmp8)) / ((double) i) );	  
 		       if (NbrExactStates > 1)
@@ -750,8 +829,8 @@ int main(int argc, char** argv)
 	   for (int j = 0; j < NbrExactStates; ++j)
 	     {
 	       Complex Tmp4 = Overlap[j] / ((double) NbrIter);
-	       Complex Tmp5 (sqrt( ((ErrorOverlap[j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
-			     sqrt( ((ErrorOverlap[j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+	       Complex Tmp5 (sqrt( ((ErrorOverlap[j][j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+			     sqrt( ((ErrorOverlap[j][j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
 	       double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
 	       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
 	       Tmp5.Re /= Tmp4.Re;
@@ -765,8 +844,37 @@ int main(int argc, char** argv)
 	       Tmp4 /= sqrt(Tmp6 * Tmp8);	  
 	       Tmp5.Re *= Tmp4.Re;
 	       Tmp5.Im *= Tmp4.Im;
-	       OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " " 
-				 << ErrorOverlap[j].Re << " " << ErrorOverlap[j].Im << " " << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
+	       OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap[j].Re << " " << Overlap[j].Im << " ";
+	       for (int k = 0; k <= j; ++k)
+		 OverlapRecordFile << ErrorOverlap[j][k].Re << " " << ErrorOverlap[j][k].Im << " ";
+	       OverlapRecordFile << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
+	     }
+	   if (JainAndSymmetrizedFlag == true)
+	     {
+	       Tmp6 = Normalization2 / ((double) NbrIter);
+	       Tmp7 = sqrt( ((ErrorNormalization2 / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
+	       for (int j = 0; j < NbrExactStates; ++j)
+		 {
+		   Complex Tmp4 = Overlap2[j] / ((double) NbrIter);
+		   Complex Tmp5 (sqrt( ((ErrorOverlap2[j][j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+				 sqrt( ((ErrorOverlap2[j][j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+		   double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
+		   double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
+		   Tmp5.Re /= Tmp4.Re;
+		   Tmp5.Im /= Tmp4.Im;
+		   Tmp5.Re = fabs(Tmp5.Re);
+		   Tmp5.Im = fabs(Tmp5.Im);
+		   Tmp5.Re += (Tmp7 / Tmp6);
+		   Tmp5.Im += (Tmp7 / Tmp6);
+		   Tmp5.Re += (Tmp9 / Tmp8);
+		   Tmp5.Im += (Tmp9 / Tmp8);
+		   Tmp4 /= sqrt(Tmp6 * Tmp8);	  
+		   Tmp5.Re *= Tmp4.Re;
+		   Tmp5.Im *= Tmp4.Im;
+		   OverlapRecordFile << " " << Tmp4.Re << " " << Tmp4.Im << " " << Tmp5.Re << " " << Tmp5.Im << " " << Overlap2[j].Re << " " << Overlap2[j].Im << " ";
+		   for (int k = 0; k <= j; ++k)
+		     OverlapRecordFile << ErrorOverlap2[j][k].Re << " " << ErrorOverlap2[j][k].Im << " ";
+		 }
 	     }
 	   OverlapRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
 	   OverlapRecordFile.close();
@@ -781,8 +889,8 @@ int main(int argc, char** argv)
        for (int j = 0; j < NbrExactStates; ++j)
 	 {
 	   Complex Tmp4 = Overlap[j] / ((double) NbrIter);
-	   Complex Tmp5 (sqrt( ((ErrorOverlap[j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
-			 sqrt( ((ErrorOverlap[j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+	   Complex Tmp5 (sqrt( ((ErrorOverlap[j][j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+			 sqrt( ((ErrorOverlap[j][j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
 	   double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
 	   double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
 	   
@@ -814,8 +922,8 @@ int main(int argc, char** argv)
 	   for (int j = 0; j < NbrExactStates; ++j)
 	     {		   
 	       Complex Tmp4 = Overlap2[j] / ((double) NbrIter);
-	       Complex Tmp5 (sqrt( ((ErrorOverlap2[j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
-			     sqrt( ((ErrorOverlap2[j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
+	       Complex Tmp5 (sqrt( ((ErrorOverlap2[j][j].Re / ((double) NbrIter)) - (Tmp4.Re * Tmp4.Re)) / ((double) NbrIter) ),
+			     sqrt( ((ErrorOverlap2[j][j].Im / ((double) NbrIter)) - (Tmp4.Im * Tmp4.Im)) / ((double) NbrIter) ));
 	       double Tmp8 = NormalizationExact[j]  / ((double) NbrIter);
 	       double Tmp9 = sqrt( ((ErrorNormalizationExact[j] / ((double) NbrIter))  -  (Tmp8 * Tmp8)) / ((double) NbrIter) );	  
 	       if (NbrExactStates > 1)
