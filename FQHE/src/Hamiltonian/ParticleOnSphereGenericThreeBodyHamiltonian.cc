@@ -112,7 +112,7 @@ ParticleOnSphereGenericThreeBodyHamiltonian::ParticleOnSphereGenericThreeBodyHam
     }
 
   this->MaxRelativeAngularMomentum = maxRelativeAngularMomentum;
-  this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum;
+  this->NbrThreeBodyPseudoPotential = maxRelativeAngularMomentum + 1;
   this->ThreeBodyPseudoPotential = new double[this->NbrThreeBodyPseudoPotential];
   for (int i = 0; i < this->NbrThreeBodyPseudoPotential; ++i)
     this->ThreeBodyPseudoPotential[i] = threeBodyPseudoPotential[i];
@@ -460,36 +460,60 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
 	{
 	  int Lim = this->NbrSortedIndicesPerSum[3][MinSum];
-	  int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
-	  double* TmpProjectorCoefficients = this->ComputeProjectorCoefficients(6, 1, TmpNIndices2, Lim);
-	  for (int i = 0; i < Lim; ++i)
+	  if (Lim > 0)
 	    {
-	      this->NbrMIndices[3][TmpNbrNIndices] = Lim;		    
-	      this->MIndices[3][TmpNbrNIndices] = new int [Lim * 3];
-	      this->MNNBodyInteractionFactors[3][TmpNbrNIndices] = new double [Lim];
-	      int* TmpMIndices = this->MIndices[3][TmpNbrNIndices];
-	      int* TmpMIndices2 = this->SortedIndicesPerSum[3][MinSum];
-	      double* TmpInteraction = this->MNNBodyInteractionFactors[3][TmpNbrNIndices];
-	      Coefficient = TmpProjectorCoefficients[i];// * this->NBodyInteractionWeightFactors[3];
-	      for (int j = 0; j < Lim; ++j)
+	      int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
+	      int TmpMaxRealtiveMonentum = 8;
+	      if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
+		TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum;
+	      int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
+	      while (((3 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
+		--TmpMaxRealtiveMonentum;
+	      double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
+	      if (this->ThreeBodyPseudoPotential[3] != 0.0)
+		TmpProjectorCoefficients[3] = this->ComputeProjectorCoefficients(6, 1, TmpNIndices2, Lim);
+	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
+		if (this->ThreeBodyPseudoPotential[i] != 0.0)
+		  TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
+	      for (int i = 0; i < Lim; ++i)
 		{
-		  for (int l = 0; l < 3; ++l)
+		  this->NbrMIndices[3][TmpNbrNIndices] = Lim;		    
+		  this->MIndices[3][TmpNbrNIndices] = new int [Lim * 3];
+		  this->MNNBodyInteractionFactors[3][TmpNbrNIndices] = new double [Lim];
+		  int* TmpMIndices = this->MIndices[3][TmpNbrNIndices];
+		  int* TmpMIndices2 = this->SortedIndicesPerSum[3][MinSum];
+		  double* TmpInteraction = this->MNNBodyInteractionFactors[3][TmpNbrNIndices];
+		  for (int j = 0; j < Lim; ++j)
 		    {
-		      (*TmpMIndices) = (*TmpMIndices2);			
-		      ++TmpMIndices;
-		      ++TmpMIndices2;
-		    }			
-		  TmpInteraction[j] = Coefficient * TmpProjectorCoefficients[j];
+		      for (int l = 0; l < 3; ++l)
+			{
+			  (*TmpMIndices) = (*TmpMIndices2);			
+			  ++TmpMIndices;
+			  ++TmpMIndices2;
+			}			
+		      double& TmpInteraction2 = TmpInteraction[j];
+		      TmpInteraction2 = 0.0;
+		      if (this->ThreeBodyPseudoPotential[3] != 0.0)
+			TmpInteraction2 += this->ThreeBodyPseudoPotential[3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
+		      for (int k = 5; k <= TmpMaxRealtiveMonentum; ++k)  
+			if (this->ThreeBodyPseudoPotential[k] != 0.0)
+			  TmpInteraction2 += this->ThreeBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		    }
+		  for (int j = 0; j < 3; ++j)
+		    {
+		      (*TmpNIndices) = (*TmpNIndices2);			
+		      ++TmpNIndices;
+		      ++TmpNIndices2;
+		    }
+		  ++TmpNbrNIndices;
 		}
-	      for (int j = 0; j < 3; ++j)
-		{
-		  (*TmpNIndices) = (*TmpNIndices2);			
-		  ++TmpNIndices;
-		  ++TmpNIndices2;
-		}
-	      ++TmpNbrNIndices;
+	      if (this->ThreeBodyPseudoPotential[3] != 0.0)
+		delete[] TmpProjectorCoefficients[3];
+	      for (int i = 5; i <= TmpMaxRealtiveMonentum; ++i)  
+		if (this->ThreeBodyPseudoPotential[i] != 0.0)
+		  delete[] TmpProjectorCoefficients[i];
+	      delete[] TmpProjectorCoefficients;		
 	    }
-	  delete[] TmpProjectorCoefficients;		
 	}
       delete[] TmpInteractionCoeffients;
     }
@@ -542,6 +566,18 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	  int Lim = this->NbrSortedIndicesPerSum[3][MinSum];
 	  double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
 	  int* TmpNIndices2 = this->SortedIndicesPerSum[3][MinSum];
+	  int TmpMaxRealtiveMonentum = 5;
+	  if (this->MaxRelativeAngularMomentum <= TmpMaxRealtiveMonentum)
+	    TmpMaxRealtiveMonentum = this->MaxRelativeAngularMomentum;
+	  int TmpSum = TmpNIndices2[0] + TmpNIndices2[1] + TmpNIndices2[2];
+	  while (((3 * this->LzMax) - TmpMaxRealtiveMonentum)  < TmpSum)
+	    --TmpMaxRealtiveMonentum;
+	  double** TmpProjectorCoefficients = new double* [TmpMaxRealtiveMonentum + 1];
+	  if (this->ThreeBodyPseudoPotential[0] != 0.0)
+	    TmpProjectorCoefficients[0] = this->ComputeProjectorCoefficients(0, 1, TmpNIndices2, Lim);
+	  for (int i = 2; i <= TmpMaxRealtiveMonentum; ++i)  
+	    if (this->ThreeBodyPseudoPotential[i] != 0.0)
+	      TmpProjectorCoefficients[i] = this->ComputeProjectorCoefficients(2 * i, 1, TmpNIndices2, Lim);
 	  for (int i = 0; i < Lim; ++i)
 	    {
 	      this->NbrMIndices[3][TmpNbrNIndices] = Lim;		    
@@ -550,9 +586,6 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 	      int* TmpMIndices = this->MIndices[3][TmpNbrNIndices];
 	      int* TmpMIndices2 = this->SortedIndicesPerSum[3][MinSum];
 	      double* TmpInteraction = this->MNNBodyInteractionFactors[3][TmpNbrNIndices];
-	      Coefficient = TmpSymmetryFactors[i] * TmpInteractionCoeffients[MinSum] * TmpInteractionCoeffients[MinSum];
-	      for (int l = 0; l < 3; ++l)
-		Coefficient *= TmpNormalizationCoeffients[TmpNIndices2[l]];		    		      
 	      for (int j = 0; j < Lim; ++j)
 		{
 		  double Coefficient2 = TmpSymmetryFactors[j];
@@ -563,7 +596,14 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 		      ++TmpMIndices;
 		      ++TmpMIndices2;
 		    }			
-		  TmpInteraction[j] = Coefficient * Coefficient2;
+		  double& TmpInteraction2 = TmpInteraction[j];
+		  TmpInteraction2 = 0.0;
+		  if (this->ThreeBodyPseudoPotential[0] != 0.0)
+		    TmpInteraction2 += this->ThreeBodyPseudoPotential[0] * TmpProjectorCoefficients[0][i] * TmpProjectorCoefficients[0][j];
+		  for (int k = 2; k <= TmpMaxRealtiveMonentum; ++k)  
+		    if (this->ThreeBodyPseudoPotential[k] != 0.0)
+		      TmpInteraction2 += this->ThreeBodyPseudoPotential[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+		  TmpInteraction2 *= TmpSymmetryFactors[i] * TmpSymmetryFactors[j];
 		}
 	      for (int j = 0; j < 3; ++j)
 		{
@@ -573,6 +613,12 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
 		}
 	      ++TmpNbrNIndices;
 	    }		
+	  if (this->ThreeBodyPseudoPotential[0] != 0.0)
+	    delete[] TmpProjectorCoefficients[0];
+	  for (int i = 2; i <= TmpMaxRealtiveMonentum; ++i)  
+	    if (this->ThreeBodyPseudoPotential[i] != 0.0)
+	      delete[] TmpProjectorCoefficients[i];
+	  delete[] TmpProjectorCoefficients;		
 	}
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
 	{
