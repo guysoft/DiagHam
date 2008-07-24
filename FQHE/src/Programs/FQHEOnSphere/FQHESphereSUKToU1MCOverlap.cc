@@ -135,9 +135,11 @@ int main(int argc, char** argv)
   bool StatisticFlag = true;
   bool UseBaseAsWeightFlag = ((BooleanOption*) Manager["weight-symmetrized"])->GetBoolean();
   bool JainAndSymmetrizedFlag = ((BooleanOption*) Manager["cf-symmetrized"])->GetBoolean();
+  bool JainFlag =  ((BooleanOption*) Manager["jain-cf"])->GetBoolean();
   if (JainAndSymmetrizedFlag == true)
     {
       UseBaseAsWeightFlag = true;
+      JainFlag = false;
     }
 
   AbstractQHEParticle* ExactSpace = 0;
@@ -264,7 +266,7 @@ int main(int argc, char** argv)
     }
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction2 = 0;
-  if (((BooleanOption*) Manager["jain-cf"])->GetBoolean() == true)
+  if (JainFlag == true)
     {
       SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
     }
@@ -664,7 +666,8 @@ int main(int argc, char** argv)
 		     OverlapRecordFile << ErrorOverlap[j][k].Re << " " << ErrorOverlap[j][k].Im << " ";
 		   OverlapRecordFile << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
 		 }
-	       if (JainAndSymmetrizedFlag == true)
+	       OverlapRecordFile << " " << Normalization << " " << ErrorNormalization;
+ 	       if (JainAndSymmetrizedFlag == true)
 		 {
 		   Tmp6 = Normalization2 / ((double) i);
 		   Tmp7 = sqrt( ((ErrorNormalization2 / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
@@ -690,7 +693,9 @@ int main(int argc, char** argv)
 		       for (int k = 0; k <= j; ++k)
 			 OverlapRecordFile << ErrorOverlap2[j][k].Re << " " << ErrorOverlap2[j][k].Im << " ";
 		     }
-		 }
+		   OverlapRecordFile << Normalization2 << " " << ErrorNormalization2;
+ 		 }
+	       OverlapRecordFile << endl;
 	       OverlapRecordFile.close();
 
 	       ofstream MCState;
@@ -849,6 +854,7 @@ int main(int argc, char** argv)
 		 OverlapRecordFile << ErrorOverlap[j][k].Re << " " << ErrorOverlap[j][k].Im << " ";
 	       OverlapRecordFile << NormalizationExact[j] << " " << ErrorNormalizationExact[j];
 	     }
+           OverlapRecordFile << " " << Normalization << " " << ErrorNormalization;
 	   if (JainAndSymmetrizedFlag == true)
 	     {
 	       Tmp6 = Normalization2 / ((double) NbrIter);
@@ -875,8 +881,9 @@ int main(int argc, char** argv)
 		   for (int k = 0; k <= j; ++k)
 		     OverlapRecordFile << ErrorOverlap2[j][k].Re << " " << ErrorOverlap2[j][k].Im << " ";
 		 }
+	       OverlapRecordFile << Normalization2 << " " << ErrorNormalization2;
 	     }
-	   OverlapRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
+	   OverlapRecordFile << endl;
 	   OverlapRecordFile.close();
 	 }
        cout << " final results :" << endl;
