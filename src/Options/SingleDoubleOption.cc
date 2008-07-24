@@ -65,7 +65,9 @@ SingleDoubleOption::SingleDoubleOption(char optionCode, const char* optionName, 
   this->MaxValue = maxValue;
   this->MinValue = minValue;
   this->Double = defaultValue;
-  this->DefaultValue = defaultValue;  
+  this->DefaultValue = defaultValue;
+  this->OutputFormat = new char[strlen("%.14f")+1];
+  strcpy(this->OutputFormat,"%.14f");
 }
 
 // destructor
@@ -227,8 +229,18 @@ double SingleDoubleOption::GetDouble()
 char* SingleDoubleOption::GetAsAString()
 {
   char* TmpString = new char [32];
-  sprintf (TmpString, "%.14f", this->Double);
+  sprintf (TmpString, this->OutputFormat, this->Double);
   return TmpString;
+}
+
+// set output format used by GetAsAString()
+// 
+// format = format for a double, using conventions of printf
+void SingleDoubleOption::SetStringFormat(char *format)
+{
+  delete [] this->OutputFormat;
+  this->OutputFormat = new char[strlen(format)+1];
+  strcpy(this->OutputFormat,format);
 }
 
 // print the current option and its values

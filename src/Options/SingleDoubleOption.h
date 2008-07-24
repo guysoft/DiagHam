@@ -55,6 +55,9 @@ class SingleDoubleOption : public AbstractOption
   // flag indicating there is a minimum value allowed
   bool MinValueFlag;
 
+  // format option for output
+  char *OutputFormat;
+
  public:
 
   enum
@@ -120,6 +123,11 @@ class SingleDoubleOption : public AbstractOption
   // 
   // return value = corresponding string (deallocation has to be done manually, 0 if an error occured)
   char* GetAsAString();
+
+  // set output format used by GetAsAString()
+  // 
+  // format = format for a double, using conventions of printf
+  void SetStringFormat(char *format);
 
 };
 
