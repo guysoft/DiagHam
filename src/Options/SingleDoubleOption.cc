@@ -66,7 +66,7 @@ SingleDoubleOption::SingleDoubleOption(char optionCode, const char* optionName, 
   this->MinValue = minValue;
   this->Double = defaultValue;
   this->DefaultValue = defaultValue;
-  this->OutputFormat = new char[strlen("%.14f")+1];
+  this->OutputFormat = new char[7];
   strcpy(this->OutputFormat,"%.14f");
 }
 
@@ -77,6 +77,7 @@ SingleDoubleOption::~SingleDoubleOption()
 {
   delete[] this->OptionName;
   delete[] this->OptionDescription;
+  delete[] this->OutputFormat;
 }
  
 // Test if an argument corresponds to the current option and read its content

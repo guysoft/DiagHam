@@ -548,6 +548,8 @@ int main(int argc, char** argv)
       OverlapRecordFile.close();
     }
   delete Particles;
+  if (Space!=NULL)
+    delete Space;
   return 0;
 }
 
