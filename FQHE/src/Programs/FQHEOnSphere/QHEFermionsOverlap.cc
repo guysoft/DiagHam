@@ -422,11 +422,11 @@ int main(int argc, char** argv)
 	{
 	  TimeCoherence = -1;
 	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  ValueExact = Operation.GetScalar();
 	}
       // initialize function values at initial positions: - trial function
-      TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
+      TrialValue = (*TestWaveFunction)(Particles->GetPositions());
       PreviousSamplingAmplitude = SqrNorm(TrialValue);
       CurrentSamplingAmplitude = PreviousSamplingAmplitude;
     } 

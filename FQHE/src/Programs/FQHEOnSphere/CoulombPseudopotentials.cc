@@ -1,10 +1,4 @@
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
-#include "Options/SingleDoubleOption.h"
+#include "Options/Options.h"
 
 #include "Tools/FQHESpectrum/PseudoPotentials.h"
 #include "Vector/RealVector.h"
@@ -40,8 +34,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "north-potential", "potential assosciated to the impurity at the north pole", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "south-potential", "potential assosciated to the impurity at the south pole", 0.0);
   (*SystemGroup) += new  BooleanOption ('\n', "relativistic-fermions", "assume relativistic fermions");
-
+  
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation / thickness",0.0);
+
+  (*SystemGroup) += new  BooleanOption ('n', "nbody", "add n-body potentials");
+  (*SystemGroup) += new  MultipleDoubleOption ('p', "nbody-potentials", "values of n-body potentials to be added (separated by ','",',');
 
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name (default is pseudopotential_coulomb_l_x_2s_y.dat)");
   (*SystemGroup) += new BooleanOption ('\n', "std-output", "use standard output instead of an output file");
@@ -126,6 +123,25 @@ int main(int argc, char** argv)
 	    File << " " << OneBodyPotentials[i];
 	  File << endl;
 	}
+      if (Manager.GetBoolean("nbody"))
+	{
+	  int Length;
+	  double *potentials = Manager.GetDoubles("nbody-potentials",Length);
+	  if (potentials != 0)
+	    {
+	      File << endl << "NbrNBody = "<<Length-1<<endl;
+	      File << "Weights =";
+	      for (int i=0; i<Length; ++i)
+		File <<" "<<potentials[i];
+	      File <<endl;
+	    }
+	  else
+	    {
+	      File << endl << "NbrNBody = 2"<<endl;
+	      File << "Weights = 0 0 0";
+	    }
+	}
+      
       File.close();
     }
   else

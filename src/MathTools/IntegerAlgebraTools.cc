@@ -57,7 +57,7 @@ int RecursiveFindGCD(int m, int n)
   if (m == 0)
     return n;
   else
-    return FindGCD ((n % m), m);
+    return RecursiveFindGCD ((n % m), m);
 }
 
 // get all binomial coefficients up to a given number of element

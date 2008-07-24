@@ -449,6 +449,8 @@ void JainCFOnSphereOrbitals::EvaluateNormalizationPrefactors()
 	      Coef.FactorialMultiply(j);
 	      Coef.FactorialDivide(this->TwiceS + i);
 	      this->NormalizationPrefactors[i][j] = Sign * sqrt(Factor * Coef.GetNumericalValue());
+	      // testing signs here:
+	      Sign *= -1.0;
 	    }
 	  MaxMomentum += 2;
 	}

@@ -31,7 +31,7 @@ if ($ReadMore == 1) # array still empty?
   {
     foreach $TmpFile (<*>)
       {
-	if ($TmpFile =~ /bosons\_lattice.*q_0.eval/)
+	if ($TmpFile =~ /bosons\_lattice.*q_\d*\.eval/)
 	  {
 	    push (@ListFiles, $TmpFile);
 	  }	

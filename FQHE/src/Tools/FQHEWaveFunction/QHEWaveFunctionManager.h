@@ -89,7 +89,8 @@ class QHEWaveFunctionManager
       ExtendedHalperin = 0x800000,
       HundRuleSinglet = 0xf00000,
       TrialWaveFunction = 0x10000,
-      Halperin = 0x1000000
+      Halperin = 0x1000000,
+      SLBS = 0x2000000
     };
   
   // constructor

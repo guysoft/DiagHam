@@ -80,6 +80,9 @@ TwoThirdUnpolarizedCF::TwoThirdUnpolarizedCF(int nbrParticles)
   for (int i=0; i<NbrParticles; ++i)
     this->Jij[i] = new Complex[this->NbrParticles];
 
+  this->SpinorUCoordinates = new Complex[NbrParticles];
+  this->SpinorVCoordinates = new Complex[NbrParticles];
+
   
 }
 
@@ -106,6 +109,9 @@ TwoThirdUnpolarizedCF::TwoThirdUnpolarizedCF(const TwoThirdUnpolarizedCF& functi
   this->Jij = new Complex*[this->NbrParticles];
   for (int i=0; i<NbrParticles; ++i)
     this->Jij[i] = new Complex[this->NbrParticles];
+
+  this->SpinorUCoordinates = new Complex[NbrParticles];
+  this->SpinorVCoordinates = new Complex[NbrParticles];
 }
 
 // destructor
@@ -122,6 +128,8 @@ TwoThirdUnpolarizedCF::~TwoThirdUnpolarizedCF()
 	}
       delete SlaterUp;
       delete SlaterDown;
+      delete [] SpinorUCoordinates;
+      delete [] SpinorVCoordinates;
       for (int i=0; i<NbrParticles;++i)
 	delete [] Jij[i];
       delete [] Jij;
@@ -144,10 +152,25 @@ Abstract1DComplexFunction* TwoThirdUnpolarizedCF::Clone ()
 
 Complex TwoThirdUnpolarizedCF::operator ()(RealVector& x)
 {
+  double c, s;
+  for (int i = 0; i < this->NbrParticles; ++i)
+    {
+      SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      SpinorUCoordinates[i].Im = SpinorUCoordinates[i].Re;
+      SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+      SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+      SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      SpinorVCoordinates[i].Im = SpinorVCoordinates[i].Re;
+      SpinorVCoordinates[i].Re *= c;
+      SpinorVCoordinates[i].Im *= s;
+      //cout << "U["<<i<<"]="<<SpinorUCoordinates[i]<<", "<< "V["<<i<<"]="<<SpinorVCoordinates[i]<<endl;
+    }
+  
   RealVector part=x.Extract(0, 2*this->NbrParticlesPerSpin-1);
   this->OrbitalsUp = (*OrbitalFactoryUp)(part);
   part = x.Extract(2*this->NbrParticlesPerSpin, 4*this->NbrParticlesPerSpin-1);
-  this->OrbitalsDown = (*OrbitalFactoryDown)(part);
+  this->OrbitalsDown = (*OrbitalFactoryDown)(part);  
+  
   this->EvaluateTables();
   Complex Ji;
   Complex Tmp;
@@ -336,6 +359,7 @@ void TwoThirdUnpolarizedCF::EvaluateTables()
 	      Jij[i][j] = OrbitalFactoryUp->JastrowFactorElement(i,j);
 	      Jij[j][i] = - Jij[i][j];
 	    }
+	  Jij[i][j] = 0.0;
 	  for(j=i+1;j<NbrParticlesPerSpin;j++)
 	    {
 	      Jij[i][j] = OrbitalFactoryUp->JastrowFactorElement(i,j);
@@ -348,8 +372,16 @@ void TwoThirdUnpolarizedCF::EvaluateTables()
       cout << "Critical Event" << endl;
       for (i=0;i<this->NbrParticlesPerSpin;i++)
        	{	  
-       	  for(j=0;j<i;j++) Jij[i][j] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryUp->SpinorV(j)) - (OrbitalFactoryUp->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
-       	  for(j=i+1;j<NbrParticlesPerSpin;j++) Jij[i][j] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryUp->SpinorV(j)) - (OrbitalFactoryUp->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
+       	  for(j=0;j<i;j++)
+	    {
+	      Jij[i][j] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryUp->SpinorV(j)) - (OrbitalFactoryUp->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
+	      Jij[j][i] = - Jij[i][j];
+	    }
+       	  for(j=i+1;j<NbrParticlesPerSpin;j++)
+	    {
+	      Jij[i][j] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryUp->SpinorV(j)) - (OrbitalFactoryUp->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
+	      Jij[j][i] = - Jij[i][j];
+	    }
       	}
     }
 
@@ -374,14 +406,26 @@ void TwoThirdUnpolarizedCF::EvaluateTables()
       cout << "Critical Event" << endl;
       for (i=0;i<this->NbrParticlesPerSpin;i++)
        	{	  
-       	  for(j=0;j<i;j++) Jij[i+NbrParticlesPerSpin][j+NbrParticlesPerSpin] = ((OrbitalFactoryDown->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryDown->SpinorV(i)));
-       	  for(j=i+1;j<NbrParticlesPerSpin;j++) Jij[i+NbrParticlesPerSpin][j+NbrParticlesPerSpin] = ((OrbitalFactoryDown->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryDown->SpinorV(i)));
+       	  for(j=0;j<i;j++)
+	    {
+	      Jij[i+NbrParticlesPerSpin][j+NbrParticlesPerSpin] = ((OrbitalFactoryDown->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryDown->SpinorV(i)));
+	      Jij[j][i] = - Jij[i][j];
+	    }
+       	  for(j=i+1;j<NbrParticlesPerSpin;j++)
+	    {
+	      Jij[i+NbrParticlesPerSpin][j+NbrParticlesPerSpin] = ((OrbitalFactoryDown->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryDown->SpinorV(i)));
+	      Jij[j][i] = - Jij[i][j];
+	    }
       	}
     }
 
   for (i=0;i<this->NbrParticlesPerSpin;i++)
        	{
-       	  for(j=0;j<NbrParticlesPerSpin;j++) Jij[i][j+NbrParticlesPerSpin] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
+       	  for(j=0;j<NbrParticlesPerSpin;j++)
+	    {
+	      Jij[i][j+NbrParticlesPerSpin] = ((OrbitalFactoryUp->SpinorU(i) * OrbitalFactoryDown->SpinorV(j)) - (OrbitalFactoryDown->SpinorU(j) * OrbitalFactoryUp->SpinorV(i)));
+	      Jij[j+NbrParticlesPerSpin][i] = - Jij[i][j+NbrParticlesPerSpin];
+	    }
       	}
 
 
@@ -391,9 +435,48 @@ void TwoThirdUnpolarizedCF::EvaluateTables()
   for (int i=0; i<this->NbrParticlesPerSpin;++i)
     for (int j=this->NbrParticlesPerSpin; j<2*this->NbrParticlesPerSpin;++j)
       {
-	this->InterSpinJastrow*=Factor*Jij[i][j];
+	this->InterSpinJastrow*=(-Factor*Jij[i][j]);
       }
   this->InterSpinJastrow*=this->InterSpinJastrow; // take square
+
+  // testing Jastrow-factors:
+  Complex *SpinorU=new Complex[NbrParticles];
+  Complex *SpinorV=new Complex[NbrParticles];
+  for (int i=0; i<NbrParticlesPerSpin; ++i)
+    {
+      SpinorU[i]=OrbitalFactoryUp->SpinorU(i);
+      if (Norm(SpinorU[i]-this->SpinorUCoordinates[i])>1e-10)
+	{
+	  cout << "problem with SpinorU["<<i<<"]"<<endl;
+	}
+      SpinorV[i]=OrbitalFactoryUp->SpinorV(i);
+      if (Norm(SpinorV[i]-this->SpinorVCoordinates[i])>1e-10)
+	{
+	  cout << "problem with SpinorV["<<i<<"]"<<endl;
+	}
+      SpinorU[NbrParticlesPerSpin+i]=OrbitalFactoryDown->SpinorU(i);
+      if (Norm(SpinorU[NbrParticlesPerSpin+i]-this->SpinorUCoordinates[NbrParticlesPerSpin+i])>1e-10)
+	{
+	  cout << "problem with SpinorU["<<NbrParticlesPerSpin+i<<"]"<<endl;
+	}
+      SpinorV[NbrParticlesPerSpin+i]=OrbitalFactoryDown->SpinorV(i);
+      if (Norm(SpinorV[NbrParticlesPerSpin+i]-this->SpinorVCoordinates[NbrParticlesPerSpin+i])>1e-10)
+	{
+	  cout << "problem with SpinorV["<<NbrParticlesPerSpin+i<<"]"<<endl;
+	}
+    }
+  for (int i=0; i<NbrParticles; ++i)
+    for (int j=0; j<i; ++j)
+      {
+	Complex newJij=SpinorU[i]*SpinorV[j]-SpinorU[j]*SpinorV[i];
+	if (Norm(newJij-Jij[i][j])>1e-10)
+	  cout << "Jastrow factors "<<i<<","<<j<<" differ: "<< newJij << " vs "<<Jij[i][j]<<endl;
+	
+      }
+
+  delete [] SpinorU;
+  delete [] SpinorV;
+    
 }
 
 

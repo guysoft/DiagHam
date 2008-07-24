@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TWOTHIRDUNPOLARIZEDCF_H
-#define TWOTHIRDUNPOLARIZEDCF_H
+#ifndef SLBSWAVEFUNCTION_H
+#define SLBSWAVEFUNCTION_H
 
 
 #include "config.h"
@@ -38,44 +38,46 @@
 #include "MathTools/Complex.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "Tools/FQHEWaveFunction/JainCFOnSphereOrbitals.h"
 
-class TwoThirdUnpolarizedCF: public Abstract1DComplexFunctionOnSphere
+class SLBSWavefunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
 
-  JainCFOnSphereOrbitals *OrbitalFactoryUp;
-  JainCFOnSphereOrbitals *OrbitalFactoryDown;
+  JainCFOnSphereOrbitals *OrbitalFactory;
 
+  bool NegativeFieldFlag;
+  
   int NbrParticles;
-  int NbrParticlesPerSpin;
   int EffectiveFlux;
 
   GarbageFlag Flag;
   
-  // factor used to multiply each element of the Slater matrix and Cauchy Permanent
+  // factor used to multiply each element of the Slater determinant
   double SlaterElementNorm;
 
-  ComplexMatrix OrbitalsUp;
-  ComplexMatrix OrbitalsDown;
-  ComplexMatrix *SlaterUp;
-  ComplexMatrix *SlaterDown;
+  ComplexMatrix Orbitals;
+  ComplexMatrix *Slater;
+
+  // for Pfaffian part
+  ComplexSkewSymmetricMatrix *Pfaffian;
+  
   
   // For internal communication with AdaptNorm:
-  Complex DeterminantUpValue;
-  Complex DeterminantDownValue;
+  Complex Determinant;
+  Complex PfaffianValue;
+
+  // factor of a filled LL;
+  Complex Chi1;
 
   // single-particle Jastrow factors
   Complex **Jij;
 
-  // inter-spin Jastrow factor
-  Complex InterSpinJastrow;
-  
   // if particles are very close to each other, interpolation occurs in JainCFOrbitals
   // this variable is used to pass on this value between the different subroutines
-  double InterpolationUp;
-  double InterpolationDown;
+  double Interpolation;
 
   // for testing:
   Complex * SpinorUCoordinates;
@@ -85,21 +87,22 @@ class TwoThirdUnpolarizedCF: public Abstract1DComplexFunctionOnSphere
 
   // default constructor
   //
-  TwoThirdUnpolarizedCF();
+  SLBSWavefunction();
 
   // constructor
   //
   // nbrParticles = number of particles
-  TwoThirdUnpolarizedCF(int nbrParticles);
+  // negFluxFlag = indicating sign of Jain wavefunction component
+  SLBSWavefunction(int nbrParticles, bool negFluxFlag);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  TwoThirdUnpolarizedCF(const TwoThirdUnpolarizedCF& function);
+  SLBSWavefunction(const SLBSWavefunction& function);
 
   // destructor
   //
-  ~TwoThirdUnpolarizedCF();
+  ~SLBSWavefunction();
 
   // clone function 
   //
@@ -139,4 +142,4 @@ class TwoThirdUnpolarizedCF: public Abstract1DComplexFunctionOnSphere
 
 
 
-#endif //TWOTHIRDUNPOLARIZEDCF
+#endif //SLBSWAVEFUNCTION
