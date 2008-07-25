@@ -4,6 +4,10 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 #include "Hamiltonian/ParticleOnSphereL2Hamiltonian.h"
 
@@ -44,7 +48,6 @@ int main(int argc, char** argv)
 
   // some running options and help
   OptionManager Manager ("FQHESphereL2Diagonalize" , "0.01");
-  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -108,9 +111,12 @@ int main(int argc, char** argv)
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+  if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
+    sprintf (OutputNameLz, "fermions_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
+  else
+    sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
 
-  ParticleOnSphere* Space;
+  ParticleOnSphere* Space = 0;
   if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
     {
       if (HaldaneBasisFlag == false)
@@ -223,7 +229,69 @@ int main(int argc, char** argv)
     }
   else
     {
-      Space = new BosonOnSphere(NbrParticles, TotalLz, LzMax);
+      if (HaldaneBasisFlag == false)
+	{
+#ifdef  __64_BITS__
+	  if ((LzMax + NbrParticles - 1) < 63)
+#else
+	    if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+	      {
+		if (SymmetrizedBasis == false)
+		  Space = new BosonOnSphereShort (NbrParticles, TotalLz, LzMax);
+		else
+		  Space = new BosonOnSphereSymmetricBasisShort (NbrParticles, LzMax);
+	      }  
+	    else
+	      {	  
+		if (SymmetrizedBasis == false)
+		  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
+		else
+		  Space = new BosonOnSphereSymmetricBasis (NbrParticles, LzMax);
+	      }
+	}
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	    {
+	      cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
+	      return -1;
+	    }
+	  ConfigurationParser ReferenceStateDefinition;
+	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+	    {
+	      ReferenceStateDefinition.DumpErrors(cout) << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+	    {
+	      cout << "NbrParticles is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+	    {
+	      cout << "LzMax is not defined or as a wrong value" << endl;
+	      return -1;
+	    }
+	  int MaxNbrLz;
+	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+	    {
+	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	      return -1;     
+	    }
+	  if (MaxNbrLz != (LzMax + 1))
+	    {
+	      cout << "wrong LzMax value in ReferenceState" << endl;
+	      return -1;     
+	    }
+#ifdef  __64_BITS__
+	  if ((LzMax + NbrParticles - 1) < 63)
+#else
+	    if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+	      Space = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	}
     }
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -241,7 +309,10 @@ int main(int argc, char** argv)
   if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
     {
       EigenvectorName = new char [64];
-      sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalLz);
+      if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
+	sprintf (EigenvectorName, "fermions_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalLz);
+      else
+	sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalLz);
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
   MainTaskOperation TaskOperation (&Task);

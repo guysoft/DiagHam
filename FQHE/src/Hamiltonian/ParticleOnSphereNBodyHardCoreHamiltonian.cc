@@ -447,11 +447,14 @@ ParticleOnSphereNBodyHardCoreHamiltonian::~ParticleOnSphereNBodyHardCoreHamilton
 	  }
       }
 
-  delete[] this->NbrNIndices;
-  delete[] this->NIndices;
-  delete[] this->NbrMIndices;
-  delete[] this->MIndices;
-  delete[] this->MNNBodyInteractionFactors;
+  if (this->MNNBodyInteractionFactors != 0)
+    {
+      delete[] this->NbrNIndices;
+      delete[] this->NIndices;
+      delete[] this->NbrMIndices;
+      delete[] this->MIndices;
+      delete[] this->MNNBodyInteractionFactors;
+    }
 
   delete[] this->NBodyFlags;
   delete[] this->NBodyInteractionFactors;

@@ -2,6 +2,8 @@
 #include "Architecture/AbstractArchitecture.h"
 
 #include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
@@ -85,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "use-set", "file name of a file describing a set of exact states that have to be used as test wave functions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
@@ -132,7 +135,7 @@ int main(int argc, char** argv)
   bool ResumeFlag = Manager.GetBoolean("resume");
   int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
   bool UseExactFlag = false;
-  bool StatisticFlag = true;
+  bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool UseBaseAsWeightFlag = ((BooleanOption*) Manager["weight-symmetrized"])->GetBoolean();
   bool JainAndSymmetrizedFlag = ((BooleanOption*) Manager["cf-symmetrized"])->GetBoolean();
   bool JainFlag =  ((BooleanOption*) Manager["jain-cf"])->GetBoolean();
@@ -189,7 +192,57 @@ int main(int argc, char** argv)
 	    }
 	}
       else
-	ExactSpace = new BosonOnSphere (NbrParticles, 0, LzMax);
+	{
+	  if (HaldaneBasisFlag == false)
+	    {
+#ifdef  __64_BITS__
+	  if ((LzMax + NbrParticles - 1) < 63)
+#else
+	    if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+	      ExactSpace = new BosonOnSphereShort (NbrParticles, 0, LzMax);
+	    else
+	      ExactSpace = new BosonOnSphere (NbrParticles, 0, LzMax);
+	    }
+	  else
+	    {
+	      int* ReferenceState = 0;
+	      ConfigurationParser ReferenceStateDefinition;
+	      if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		{
+		  ReferenceStateDefinition.DumpErrors(cout) << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		{
+		  cout << "NbrParticles is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
+		{
+		  cout << "LzMax is not defined or as a wrong value" << endl;
+		  return -1;
+		}
+	      int MaxNbrLz;
+	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		{
+		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		  return -1;     
+		}
+	      if (MaxNbrLz != (LzMax + 1))
+		{
+		  cout << "wrong LzMax value in ReferenceState" << endl;
+		  return -1;     
+		}
+	      int TotalLz = 0;
+#ifdef  __64_BITS__
+	      if ((LzMax + NbrParticles - 1) < 63)
+#else
+		if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+		  ExactSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);
+	    }
+	}
       if (((SingleStringOption*) Manager["use-set"])->GetString() != 0)
 	{
 	  ConfigurationParser ExactSetDefinition;
@@ -268,7 +321,7 @@ int main(int argc, char** argv)
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction2 = 0;
   if (JainFlag == true)
     {
-      SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+      SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, InterCorrelation);
     }
   else
     {
@@ -284,7 +337,7 @@ int main(int argc, char** argv)
       if (JainAndSymmetrizedFlag == true)
 	{
 	  SymmetrizedFunction2 = SymmetrizedFunction;
-	  SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, 2);
+	  SymmetrizedFunction = new JainCFFilledLevelOnSphereWaveFunction(NbrParticles, KValue, InterCorrelation);
 	}
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;

@@ -73,7 +73,12 @@ ParticleOnDiskNBodyHardCoreHamiltonian::ParticleOnDiskNBodyHardCoreHamiltonian(P
   this->MinSumIndices = new int [this->MaxNBody + 1];
   this->MaxSumIndices = new int [this->MaxNBody + 1];
   this->NBodySign = new double[this->MaxNBody + 1];
-  this->MNNBodyInteractionFactors = 0;
+
+  this->NbrNIndices = new long[this->MaxNBody + 1];
+  this->NIndices = new int*[this->MaxNBody + 1];
+  this->NbrMIndices = new long*[this->MaxNBody + 1];
+  this->MIndices = new int**[this->MaxNBody + 1];
+  this->MNNBodyInteractionFactors = new double**[this->MaxNBody + 1];
 
   for (int k = 0; k <= this->MaxNBody; ++k)
     {
@@ -155,12 +160,36 @@ ParticleOnDiskNBodyHardCoreHamiltonian::~ParticleOnDiskNBodyHardCoreHamiltonian(
 	for (int MinSum = this->MinSumIndices[k]; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	  {
 	    delete[] this->SortedIndicesPerSum[k][MinSum];
-	    delete[] this->NBodyInteractionFactors[k][MinSum];
+	    if (this->MNNBodyInteractionFactors == 0)
+	      delete[] this->NBodyInteractionFactors[k][MinSum];	      
 	  }
 	delete[] this->NbrSortedIndicesPerSum[k];
 	delete[] this->SortedIndicesPerSum[k];
-	delete[] this->NBodyInteractionFactors[k];
+	if (this->MNNBodyInteractionFactors == 0)
+	  delete[] this->NBodyInteractionFactors[k];
+	else
+	  {
+	    for (int i = 0; i < this->NbrNIndices[k]; ++i)
+	      {
+		delete[] this->MNNBodyInteractionFactors[k][i];		
+		delete[] this->MIndices[k][i];
+	      }
+	    delete[] this->NIndices[k];
+	    delete[] this->NbrMIndices[k];
+	    delete[] this->MIndices[k];
+	    delete[] this->MNNBodyInteractionFactors[k];
+	  }
       }
+
+  if (this->MNNBodyInteractionFactors != 0)
+    {
+      delete[] this->NbrNIndices;
+      delete[] this->NIndices;
+      delete[] this->NbrMIndices;
+      delete[] this->MIndices;
+      delete[] this->MNNBodyInteractionFactors;
+    }
+
   delete[] this->NBodyFlags;
   delete[] this->NBodyInteractionFactors;
   delete[] this->SortedIndicesPerSum;
@@ -267,24 +296,64 @@ void ParticleOnDiskNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	      Factor *= 8.0 * M_PI;
 	    Factor = 1.0 / Factor;
 	    FactorialCoefficient Coef;
+
+
+	    long TmpNbrNIndices = 0;
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
+	      TmpNbrNIndices += this->NbrSortedIndicesPerSum[k][MinSum];
+	    this->NbrNIndices[k] = TmpNbrNIndices;
+	    this->NIndices[k] = new int[TmpNbrNIndices * k];
+	    this->NbrMIndices[k] = new long[TmpNbrNIndices];
+	    this->MIndices[k] = new int*[TmpNbrNIndices];
+	    this->MNNBodyInteractionFactors[k] = new double* [TmpNbrNIndices];
+	    TmpNbrNIndices = 0;	 
+	    int* TmpNIndices = this->NIndices[k];
 	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)
 	      {
 		Lim = this->NbrSortedIndicesPerSum[k][MinSum];
 		double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
-		this->NBodyInteractionFactors[k][MinSum] = new double [Lim];
-		double* TmpNBodyInteractionFactors = this->NBodyInteractionFactors[k][MinSum];		  
-		int* TmpMIndices = this->SortedIndicesPerSum[k][MinSum];
+		double* TmpNBodyInteractionFactors = new double [Lim];
+		this->NBodyInteractionFactors[k][MinSum] = TmpNBodyInteractionFactors;
+		int* TmpNIndices2 = this->SortedIndicesPerSum[k][MinSum];
 		for (int i = 0; i < Lim; ++i)
 		  {
 		    Coef.SetToOne();
 		    Coef.FactorialMultiply(MinSum);
 		    for (int l = 0; l < k; ++l)
 		      {
-			Coef.FactorialDivide(TmpMIndices[l]);
+			Coef.FactorialDivide(TmpNIndices2[l]);
 		      }
 		    Coef.PowerNDivide(k, MinSum);
 		    TmpNBodyInteractionFactors[i] = sqrt(Coef.GetNumericalValue() * Factor) * TmpSymmetryFactors[i];
-		    TmpMIndices += k;
+		    TmpNIndices2 += k;
+		  }
+		TmpNIndices2 = this->SortedIndicesPerSum[k][MinSum];
+		for (int i = 0; i < Lim; ++i)
+		  {
+		    this->NbrMIndices[k][TmpNbrNIndices] = Lim;		    
+		    this->MIndices[k][TmpNbrNIndices] = new int [Lim * k];
+		    this->MNNBodyInteractionFactors[k][TmpNbrNIndices] = new double [Lim];
+		    int* TmpMIndices = this->MIndices[k][TmpNbrNIndices];
+		    int* TmpMIndices2 = this->SortedIndicesPerSum[k][MinSum];
+		    double* TmpInteraction = this->MNNBodyInteractionFactors[k][TmpNbrNIndices];
+		    double Coefficient = TmpNBodyInteractionFactors[i] * this->NBodyInteractionWeightFactors[k];
+		    for (int j = 0; j < Lim; ++j)
+		      {
+			for (int l = 0; l < k; ++l)
+			  {
+			    (*TmpMIndices) = (*TmpMIndices2);			
+			    ++TmpMIndices;
+			    ++TmpMIndices2;
+			  }			
+			TmpInteraction[j] = Coefficient *  TmpNBodyInteractionFactors[j];
+		      }
+		    for (int j = 0; j < k; ++j)
+		      {
+			(*TmpNIndices) = (*TmpNIndices2);			
+			++TmpNIndices;
+			++TmpNIndices2;
+		      }
+		    ++TmpNbrNIndices;
 		  }
 	      }
 	    for (int MinSum = 0; MinSum <= this->MaxSumIndices[k]; ++MinSum)

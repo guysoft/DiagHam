@@ -224,6 +224,8 @@ int BosonOnSphereShort::AdAdAA (int index, int m1, int m2, int n1, int n2, doubl
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
+  for (int i = this->TemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = 0ul;
   coefficient = this->TemporaryState[n2];
   --this->TemporaryState[n2];
   coefficient *= this->TemporaryState[n1];
@@ -260,6 +262,8 @@ int BosonOnSphereShort::ProdAdProdA (int index, int* m, int* n, int nbrIndices, 
 	  return this->HilbertSpaceDimension;
 	}
     }
+  for (int i = this->TemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = 0ul;
   coefficient = 1.0;
   for (int i = nbrIndices; i >= 0; --i)
     {
@@ -409,6 +413,86 @@ ostream& BosonOnSphereShort::PrintState (ostream& Str, int state)
   return Str;
 }
 
+
+// evaluate wave function in real space using a given basis and only for a given range of components
+//
+// state = vector corresponding to the state in the Fock basis
+// position = vector whose components give coordinates of the point where the wave function has to be evaluated
+// basis = one body real space basis to use
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = wave function evaluated at the given location
+
+Complex BosonOnSphereShort::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis, 
+						  int firstComponent, int nbrComponent)
+{
+  Complex Value;
+  Complex Tmp;
+  ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrBosons);
+  RealVector TmpCoordinates(2);
+  int* Indices = new int [this->NbrBosons];
+  int Pos;
+  int Lz;
+  for (int j = 0; j < this->NbrBosons; ++j)
+    {
+      TmpCoordinates[0] = position[j << 1];
+      TmpCoordinates[1] = position[1 + (j << 1)];
+      for (int i = 0; i <= this->LzMax; ++i)
+	{
+	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
+	}
+    }
+  double* Factors = new double [this->NbrBosons + 1];
+  Factors[0] = 1.0;
+  Factors[1] = 1.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    Factors[i] = Factors[i - 1] / sqrt((double) i);
+  double TmpFactor;
+  int* ChangeBitSign;
+  int* ChangeBit;
+  int TmpStateDescription;
+  Perm.EvaluateFastPermanentPrecalculationArray(ChangeBit, ChangeBitSign);
+  int LastComponent = firstComponent + nbrComponent;
+  for (int k = firstComponent; k < LastComponent; ++k)
+    {
+      Pos = 0;
+      Lz = 0;
+      TmpFactor = state[k] * Factors[this->NbrBosons];
+      this->FermionToBoson(this->FermionBasis->StateDescription[k], this->FermionBasis->StateLzMax[k], this->TemporaryState, this->TemporaryStateLzMax);
+      while (Pos < this->NbrBosons)
+	{
+	  TmpStateDescription = this->TemporaryState[Lz];
+	  if (TmpStateDescription != 0)
+	    {
+	      TmpFactor *= Factors[TmpStateDescription];
+	      for (int j = 0; j < TmpStateDescription; ++j)
+		{
+		  Indices[Pos] = Lz;
+		  ++Pos;
+		}
+	    }
+	  ++Lz;
+	}
+      for (int i = 0; i < this->NbrBosons; ++i)
+	{
+	  ComplexVector& TmpColum2 = Functions[i];	  
+	  for (int j = 0; j < this->NbrBosons; ++j)
+	    {
+	      Perm[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Perm[i].Im(j) = TmpColum2.Im(Indices[j]);
+	    }
+	}
+      Value += Perm.FastPermanent(ChangeBit, ChangeBitSign) * TmpFactor;
+    }
+  delete[] ChangeBitSign;
+  delete[] ChangeBit;
+  delete[] Factors;
+  delete[] Indices;
+  return Value;
+}
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
 // 
