@@ -35,6 +35,9 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexLapackDeterminant.h"
+
 
 #include <iostream>
 
@@ -94,6 +97,16 @@ class FermionOnSphere :  public ParticleOnSphere
 
   // pointer to the target space when an index is require after applying basic operation
   FermionOnSphere* TargetSpace;
+
+  // fields used by EvaluateWaveFunction
+#ifdef __LAPACK__
+  ComplexLapackDeterminant Slater;
+#else
+  ComplexMatrix Slater;
+#endif
+  ComplexMatrix Functions;
+
+  int* Indices;
 
 
  public:

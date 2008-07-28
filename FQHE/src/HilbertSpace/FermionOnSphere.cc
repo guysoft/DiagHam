@@ -32,8 +32,6 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
-#include "Matrix/ComplexMatrix.h"
-#include "Matrix/ComplexLapackDeterminant.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/Endian.h"
@@ -95,6 +93,8 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   else
     cout << UsedMemory << endl;
 #endif
+  this->Indices=NULL;    
+  this->InitializeWaveFunctionEvaluation();
 }
 
 // copy constructor (without duplicating datas)
@@ -120,6 +120,8 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->Indices=NULL;    
+  this->InitializeWaveFunctionEvaluation();
 }
 
 // destructor
@@ -139,6 +141,8 @@ FermionOnSphere::~FermionOnSphere ()
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
+  if (this->Indices!=NULL)
+    delete [] Indices;
 }
 
 // assignement (without duplicating datas)
@@ -926,12 +930,6 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 {
   Complex Value;
   Complex Tmp;
-#ifdef __LAPACK__
-  ComplexLapackDeterminant Slater(this->NbrFermions);
-#else
-  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
-#endif
-  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrFermions];
   int Pos;
@@ -988,7 +986,6 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
-  delete[] Indices;
   return Value;
 }
 
@@ -1008,12 +1005,6 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
   for (int i = 0; i < nbrStates; ++i)
     waveFuntions[i] = 0.0;
   Complex Tmp;
-#ifdef __LAPACK__
-  ComplexLapackDeterminant Slater(this->NbrFermions);
-#else
-  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
-#endif
-  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrFermions];
   int Pos;
@@ -1072,8 +1063,6 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       for (int i = 0; i < nbrStates; ++i)
 	waveFuntions[i] += SlaterDet * states[i][k];
     }
-  delete[] Indices;
-
 }
                                
   
@@ -1083,6 +1072,15 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 
 void FermionOnSphere::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
+#ifdef __LAPACK__
+  this->Slater.Resize(this->NbrFermions);
+#else
+  this->Slater.Resize(this->NbrFermions, this->NbrFermions);
+#endif
+  this->Functions.Resize(this->LzMax + 1, this->NbrFermions);
+  if (this->Indices!=NULL)
+    delete [] this->Indices;
+  this->Indices = new int [this->NbrFermions];
 }
 
   
@@ -1337,7 +1335,7 @@ RealSymmetricMatrix  FermionOnSphere::EvaluateShiftedPartialDensityMatrix (int s
   int ShiftedLzSector = (lzSector + nbrFermionSector * (subsytemSize + (subsystemShift << 1) - 1)) >> 1;
   int ShiftedLzComplementarySector = ShiftedTotalLz - ShiftedLzSector;
   int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
-  int TmpStateMaxLz = ShiftedLzComplementarySector - (((NbrFermionsComplementarySector - 2 + (subsytemSize << 1)) * (NbrFermionsComplementarySector - 1)) >> 1);
+  //  int TmpStateMaxLz = ShiftedLzComplementarySector - (((NbrFermionsComplementarySector - 2 + (subsytemSize << 1)) * (NbrFermionsComplementarySector - 1)) >> 1);
   int MinIndex = 0;
   int MaxIndex = this->HilbertSpaceDimension - 1;
 //   if ((NbrFermionsComplementarySector > 0) && ((NbrFermionsComplementarySector + subsytemSize - 2) > this->StateLzMax[MaxIndex]))

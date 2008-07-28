@@ -32,7 +32,7 @@ ComplexLapackDeterminant::ComplexLapackDeterminant(int dimension, bool zero)
   this->Components=new doublecomplex[dimension*dimension];
   this->Permutation = new int[dimension];
   if (zero)
-    for (int i=0;i<dimension*dimension;++i) {Components[i].r=0;Components[i].i=0;}
+    for (int i=0;i<dimension*dimension;++i) {Components[i].r=0.0;Components[i].i=0.0;}
 }
 
 // destructor
