@@ -754,17 +754,17 @@ Complex ComplexUpperTriangularMatrix::MatrixElement (ComplexVector& V1, ComplexV
   for (int i = 0; i < this->NbrRow ; i++)
     {
       Complex x2;
-      x2.Re = this->RealDiagonalElements[i] * V2.RealComponents[i] - this->ImaginaryDiagonalElements[i] * V2.ImaginaryComponents[i];
-      x2.Im = this->ImaginaryDiagonalElements[i] * V2.RealComponents[i] + this->RealDiagonalElements[i] * V2.ImaginaryComponents[i];
+      x2.Re = this->RealDiagonalElements[i] * V2.Components[i].Re - this->ImaginaryDiagonalElements[i] * V2.Components[i].Im;
+      x2.Im = this->ImaginaryDiagonalElements[i] * V2.Components[i].Re + this->RealDiagonalElements[i] * V2.Components[i].Im;
       int l = (i - 1);
       for (int k = 0; k < i; k++)
 	{
-	  x2.Re += this->RealDiagonalElements[l] * V2.RealComponents[k] - this->ImaginaryDiagonalElements[l] * V2.ImaginaryComponents[k];
-	  x2.Im += this->ImaginaryDiagonalElements[l] * V2.RealComponents[k] + this->RealDiagonalElements[l] * V2.ImaginaryComponents[k];
+	  x2.Re += this->RealDiagonalElements[l] * V2.Components[k].Re - this->ImaginaryDiagonalElements[l] * V2.Components[k].Im;
+	  x2.Im += this->ImaginaryDiagonalElements[l] * V2.Components[k].Re + this->RealDiagonalElements[l] * V2.Components[k].Im;
 	  l += (this->NbrColumn - 2 - k) + this->Increment;
 	}
-      x.Re += (x2.Re * V1.RealComponents[i] + x2.Im * V1.ImaginaryComponents[i]);
-      x.Im += (x2.Im * V1.RealComponents[i] - x2.Re * V1.ImaginaryComponents[i]);
+      x.Re += (x2.Re * V1.Components[i].Re + x2.Im * V1.Components[i].Im);
+      x.Im += (x2.Im * V1.Components[i].Re - x2.Re * V1.Components[i].Im);
     }
   return x;
 }

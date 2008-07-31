@@ -728,23 +728,23 @@ Complex ComplexSkewSymmetricMatrix::MatrixElement (ComplexVector& V1, ComplexVec
       int l = (i - 1);
       for (int k = 0; k < i; k++)
 	{
-	  x2.Re -= (this->RealOffDiagonalElements[l] * V2.RealComponents[k] - 
-		    this->ImaginaryOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
-	  x2.Im -= (this->ImaginaryOffDiagonalElements[l] * V2.RealComponents[k] + 
-		    this->RealOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
+	  x2.Re -= (this->RealOffDiagonalElements[l] * V2.Components[k].Re - 
+		    this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Im);
+	  x2.Im -= (this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Re + 
+		    this->RealOffDiagonalElements[l] * V2.Components[k].Im);
 	  l += (this->NbrColumn - 2 - k) + this->Increment;
 	}
       l++;
       for (int k = i + 1; k < this->NbrColumn; k++)
 	{
-	  x2.Re += (this->RealOffDiagonalElements[l] * V2.RealComponents[k] -
-		    this->ImaginaryOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
-	  x2.Im += (this->ImaginaryOffDiagonalElements[l] * V2.RealComponents[k] + 
-		    this->RealOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
+	  x2.Re += (this->RealOffDiagonalElements[l] * V2.Components[k].Re -
+		    this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Im);
+	  x2.Im += (this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Re + 
+		    this->RealOffDiagonalElements[l] * V2.Components[k].Im);
 	  ++l;
 	}      
-      x.Re += (x2.Re * V1.RealComponents[i] + x2.Im * V1.ImaginaryComponents[i]);
-      x.Re += (x2.Im * V1.RealComponents[i] - x2.Re * V1.ImaginaryComponents[i]);
+      x.Re += (x2.Re * V1.Components[i].Re + x2.Im * V1.Components[i].Im);
+      x.Re += (x2.Im * V1.Components[i].Re - x2.Re * V1.Components[i].Im);
     }
   return x;
 }
@@ -780,24 +780,24 @@ Matrix* ComplexSkewSymmetricMatrix::Conjugate(ComplexMatrix& UnitaryM)
 	      l = (j - 1);
 	      for (; k < j; k++)
 		{
-		  tmp1.Re -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] - 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		  tmp1.Im -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] + 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		  tmp1.Re -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re - 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		  tmp1.Im -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im + 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		  l += Inc - k;
 		}
 	      l++;
 	      k++;
 	      for (; k < this->NbrColumn; k++)
 		{
-		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] - 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] + 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re - 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im + 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		  ++l;
 		}
-	      TmpRealOffDiag[i2] += tmp1.Re * UnitaryM.Columns[i].RealComponents[j] + tmp1.Im * UnitaryM.Columns[i].ImaginaryComponents[j];
-	      TmpImaginaryOffDiag[i2] += tmp1.Im * UnitaryM.Columns[i].RealComponents[j] - tmp1.Re * UnitaryM.Columns[i].ImaginaryComponents[j] ;
+	      TmpRealOffDiag[i2] += tmp1.Re * UnitaryM.Columns[i].Components[j].Re + tmp1.Im * UnitaryM.Columns[i].Components[j].Im;
+	      TmpImaginaryOffDiag[i2] += tmp1.Im * UnitaryM.Columns[i].Components[j].Re - tmp1.Re * UnitaryM.Columns[i].Components[j].Im ;
 	    }
 	  ++i2;
 	}    
@@ -835,24 +835,24 @@ void ComplexSkewSymmetricMatrix::Conjugate(ComplexMatrix& UnitaryM, int sourcePo
 		       sourcePosition * (this->NbrRow + this->Increment - 1));
 	      for (; k < j; k++)
 		{
-		  tmp1.Re -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] + 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		  tmp1.Im -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] - 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		  tmp1.Re -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re + 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		  tmp1.Im -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im - 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		  l += (this->NbrColumn - 2 - k - sourcePosition) + this->Increment;
 		}
 	      l++;
 	      k++;
 	      for (; k < UnitaryM.NbrRow; k++)
 		{
-		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] - 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] + 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re - 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im + 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		  ++l;
 		}
-	      matrix.RealOffDiagonalElements[i2] += tmp1.Re * UnitaryM.Columns[i].RealComponents[j] + tmp1.Im * UnitaryM.Columns[i].ImaginaryComponents[j];
-	      matrix.RealOffDiagonalElements[i2] += tmp1.Im * UnitaryM.Columns[i].RealComponents[j] - tmp1.Re * UnitaryM.Columns[i].ImaginaryComponents[j];
+	      matrix.RealOffDiagonalElements[i2] += tmp1.Re * UnitaryM.Columns[i].Components[j].Re + tmp1.Im * UnitaryM.Columns[i].Components[j].Im;
+	      matrix.RealOffDiagonalElements[i2] += tmp1.Im * UnitaryM.Columns[i].Components[j].Re - tmp1.Re * UnitaryM.Columns[i].Components[j].Im;
 	    }
 	  i2++;
 	}
@@ -895,14 +895,14 @@ void ComplexSkewSymmetricMatrix::Conjugate(ComplexMatrix& UnitaryMl, ComplexMatr
 		       (sourceRowIndex + j) * (this->NbrRow + this->Increment - 1));
 	      for (int k = 0; k < UnitaryMr.NbrRow; k++)
 		{
-		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryMr.Columns[m].RealComponents[k] - 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryMr.Columns[m].ImaginaryComponents[k]);
-		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryMr.Columns[m].ImaginaryComponents[k] + 
-			      this->ImaginaryOffDiagonalElements[l] * UnitaryMr.Columns[m].RealComponents[k]);
+		  tmp1.Re += (this->RealOffDiagonalElements[l] * UnitaryMr.Columns[m].Components[k].Re - 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryMr.Columns[m].Components[k].Im);
+		  tmp1.Im += (this->RealOffDiagonalElements[l] * UnitaryMr.Columns[m].Components[k].Im + 
+			      this->ImaginaryOffDiagonalElements[l] * UnitaryMr.Columns[m].Components[k].Re);
 		  ++l;
 		}
-	      matrix.RealOffDiagonalElements[i2] += tmp1.Re * UnitaryMl.Columns[i].RealComponents[j] + tmp1.Im * UnitaryMl.Columns[i].ImaginaryComponents[j];
-	      matrix.ImaginaryOffDiagonalElements[i2] += tmp1.Im * UnitaryMl.Columns[i].RealComponents[j] - tmp1.Re * UnitaryMl.Columns[i].ImaginaryComponents[j] ;
+	      matrix.RealOffDiagonalElements[i2] += tmp1.Re * UnitaryMl.Columns[i].Components[j].Re + tmp1.Im * UnitaryMl.Columns[i].Components[j].Im;
+	      matrix.ImaginaryOffDiagonalElements[i2] += tmp1.Im * UnitaryMl.Columns[i].Components[j].Re - tmp1.Re * UnitaryMl.Columns[i].Components[j].Im ;
 	    }
 	  i2++;
 	}

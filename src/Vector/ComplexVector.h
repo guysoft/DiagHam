@@ -78,8 +78,7 @@ class ComplexVector : public Vector
 #endif
  protected:
   
-  double* RealComponents;
-  double* ImaginaryComponents;
+  Complex* Components;
   GarbageFlag Flag;
 
  public:
@@ -100,6 +99,12 @@ class ComplexVector : public Vector
   // imaginary = array of doubles corresponding to imaginary part
   // size = Vector Dimension 
   ComplexVector(double* real, double* imaginary, int size) ;
+
+  // constructor from Complex array
+  //
+  // components = array of Complex values
+  // size = Vector Dimension 
+  ComplexVector(Complex *components, int size) ;
 
   // copy constructor
   //
@@ -592,7 +597,7 @@ class ComplexVector : public Vector
   // return reference on vector i-th coordinate
   //
   // i = coordinate position
-  virtual Complex operator [] (int i);
+  virtual Complex& operator [] (int i);
   
   // return reference on real part of vector i-th coordinate
   //
@@ -746,9 +751,9 @@ class ComplexVector : public Vector
 //
 // i = coordinate position
 
-inline Complex ComplexVector::operator [] (int i) 
+inline Complex& ComplexVector::operator [] (int i) 
 {
-  return Complex(this->RealComponents[i],  this->ImaginaryComponents[i]);
+  return this->Components[i];
 }
   
 // return reference on real part of vector i-th coordinate
@@ -757,7 +762,7 @@ inline Complex ComplexVector::operator [] (int i)
 
 inline double& ComplexVector::Re (int i)
 {
-  return this->RealComponents[i];
+  return (this->Components[i].Re);
 }
 
 // return reference on imaginary part of vector i-th coordinate
@@ -766,7 +771,7 @@ inline double& ComplexVector::Re (int i)
 
 inline double& ComplexVector::Im (int i)
 {
-  return this->ImaginaryComponents[i];
+  return (this->Components[i].Im);
 }
   
 

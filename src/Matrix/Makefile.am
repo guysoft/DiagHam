@@ -21,6 +21,7 @@ ComplexDiagonalMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc \
 ComplexLapackDeterminant.cc
 
+
 libArray_a_SOURCES = \
 Double3DArray.cc \
 Complex3DArray.cc \

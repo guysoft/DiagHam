@@ -63,8 +63,7 @@ PartialComplexVector::PartialComplexVector()
   this->VectorType = Vector::ComplexDatas | Vector::PartialData;
   this->Dimension = 0;
   this->TrueDimension = 0;
-  this->RealComponents = 0;
-  this->ImaginaryComponents = 0;
+  this->Components = 0;
   this->VectorId = 0;
   this->IndexShift = 0;
   this->RealDimension = 0;
@@ -84,15 +83,13 @@ PartialComplexVector::PartialComplexVector(int size, int realSize, int indexShif
   this->IndexShift = indexShift;
   this->RealDimension = realSize;
   this->TrueDimension = this->Dimension;
-  this->RealComponents = new double [this->Dimension + 1]; 
-  this->ImaginaryComponents = new double [this->Dimension + 1]; 
+  this->Components = new Complex [this->Dimension + 1]; 
   this->Flag.Initialize();
   this->VectorId = 0;
   if (zeroFlag == true)
     for (int i = 0; i < this->Dimension; i++)
       {
-	this->RealComponents[i] = 0.0;
-	this->ImaginaryComponents[i] = 0.0;
+	this->Components[i] = 0.0;
       }
 }
 
@@ -108,12 +105,18 @@ PartialComplexVector::PartialComplexVector(double* real, double* imaginary, int 
 {
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
-  this->RealComponents = real;
-  this->ImaginaryComponents = imaginary;
   this->Flag.Initialize();
   this->VectorId = 0;
   this->IndexShift = indexShift;
   this->RealDimension = realSize;
+  this->Components = new Complex [this->Dimension + 1];
+  for (int i = 0; i < this->Dimension; ++i)
+    {
+      this->Components[i].Re = real[i];
+      this->Components[i].Im = imaginary[i];
+    }
+  // delete [] real;
+  // delete [] imaginary;
 }
 
 // copy constructor
@@ -131,8 +134,7 @@ PartialComplexVector::PartialComplexVector(const PartialComplexVector& vector, b
   this->RealDimension = vector.RealDimension;
   if (duplicateFlag == false)
     {
-      this->RealComponents = vector.RealComponents;
-      this->ImaginaryComponents = vector.ImaginaryComponents;
+      this->Components = vector.Components;
       this->Flag = vector.Flag;
     }
   else
@@ -140,18 +142,15 @@ PartialComplexVector::PartialComplexVector(const PartialComplexVector& vector, b
       if (vector.Dimension > 0)
 	{
 	  this->Flag.Initialize();
-	  this->RealComponents = new double [this->TrueDimension + 1]; 
-	  this->ImaginaryComponents = new double [this->TrueDimension + 1]; 
+	  this->Components = new Complex [this->TrueDimension + 1]; 
 	  for (int i = 0; i < this->Dimension; i++)
 	    {
-	      this->RealComponents[i] = vector.RealComponents[i];
-	      this->ImaginaryComponents[i] = vector.ImaginaryComponents[i];
+	      this->Components[i] = vector.Components[i];
 	    }
 	}
       else
 	{
-	  this->RealComponents = 0;
-	  this->ImaginaryComponents = 0;
+	  this->Components = 0;
 	}
     }
 }
@@ -176,26 +175,22 @@ PartialComplexVector::PartialComplexVector(MPI::Intracomm& communicator, int id,
   this->VectorId = TmpArray[1];
   this->IndexShift = TmpArray[3];
   this->RealDimension = TmpArray[4];
-  this->RealComponents = new double [this->Dimension + 1];
-  this->ImaginaryComponents = new double [this->Dimension + 1];
+  this->Components = new Complex [this->Dimension + 1];
   if (TmpArray[2] == 1)
     for (int i = 0; i <= this->Dimension; ++i) 
       {
-	this->RealComponents[i] = 0.0;
-	this->ImaginaryComponents[i] = 0.0;
+	this->Components[i] = 0.0;
       }
   else
     if (TmpArray[2] == 2)
       {
 	if (broadcast == true)
 	  {
-	    communicator.Bcast(this->RealComponents, this->Dimension, MPI::DOUBLE, id);      
-	    communicator.Bcast(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id);      
+	    communicator.Bcast(this->Components, 2*this->Dimension, MPI::DOUBLE, id);      
 	  }
 	else
 	  {
-	    communicator.Recv(this->RealComponents, this->Dimension, MPI::DOUBLE, id, 1);   
-	    communicator.Recv(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id, 1);   
+	    communicator.Recv(this->Components, 2*this->Dimension, MPI::DOUBLE, id, 1);   
 	  }
       }
   this->TrueDimension = this->Dimension;
@@ -221,13 +216,11 @@ PartialComplexVector& PartialComplexVector::operator = (const PartialComplexVect
 {
   if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->RealComponents;
-      delete[] this->ImaginaryComponents;
+      delete[] this->Components;
     }
   this->Flag = vector.Flag;
   this->VectorId = vector.VectorId;
-  this->RealComponents = vector.RealComponents;
-  this->ImaginaryComponents = vector.ImaginaryComponents;
+  this->Components = vector.Components;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.Dimension;
   this->IndexShift = vector.IndexShift;
@@ -251,8 +244,8 @@ PartialComplexVector& PartialComplexVector::Copy (PartialComplexVector& vector, 
   this->RealDimension = vector.RealDimension;
   for (int i = 0; i < this->Dimension; i++)
     {
-      this->RealComponents[i] = vector.RealComponents[i] * coefficient;
-      this->ImaginaryComponents[i] = vector.ImaginaryComponents[i] * coefficient;
+      this->Components[i].Re = vector.Components[i].Re * coefficient;
+      this->Components[i].Im = vector.Components[i].Im * coefficient;
     }
   this->Delocalize();
   vector.Delocalize();
@@ -299,8 +292,8 @@ bool PartialComplexVector::WriteVector (char* fileName)
   WriteLittleEndian(File, this->IndexShift);
   for (int i = 0; i < this->Dimension; ++i)
     {
-      WriteLittleEndian(File, this->RealComponents[i]);
-      WriteLittleEndian(File, this->ImaginaryComponents[i]);
+      WriteLittleEndian(File, this->Components[i].Re);
+      WriteLittleEndian(File, this->Components[i].Im);
     }
   File.close();
   this->Delocalize();
@@ -328,8 +321,8 @@ bool PartialComplexVector::ReadVector (char* fileName)
   ReadLittleEndian(File, this->IndexShift);
   for (int i = 0; i < this->Dimension; ++i)
     {
-      ReadLittleEndian(File, this->RealComponents[i]);
-      ReadLittleEndian(File, this->ImaginaryComponents[i]);
+      ReadLittleEndian(File, this->Components[i].Re);
+      ReadLittleEndian(File, this->Components[i].Im);
     }
   File.close();
   return true;
@@ -353,8 +346,7 @@ Vector& PartialComplexVector::SendVector(MPI::Intracomm& communicator, int id)
     return *this;
   communicator.Send(&this->IndexShift, 1, MPI::INT, id, 1);
   communicator.Send(&this->RealDimension, 1, MPI::INT, id, 1); 
-  communicator.Send(this->RealComponents, this->Dimension, MPI::DOUBLE, id, 1); 
-  communicator.Send(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id, 1); 
+  communicator.Send(this->Components, 2*this->Dimension, MPI::DOUBLE, id, 1); 
   return *this;
 }
 
@@ -400,8 +392,7 @@ Vector& PartialComplexVector::BroadcastVector(MPI::Intracomm& communicator,  int
     {
       this->Resize(TmpDimension);      
     }
-  communicator.Bcast(this->RealComponents, this->Dimension, MPI::DOUBLE, id); 
-  communicator.Bcast(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id); 
+  communicator.Bcast(this->Components, 2*this->Dimension, MPI::DOUBLE, id); 
   return *this;
 }
 
@@ -451,8 +442,7 @@ Vector& PartialComplexVector::BroadcastPartialVector(MPI::Intracomm& communicato
     {
       this->Resize(TmpDimension);      
     }
-  communicator.Bcast(this->RealComponents + firstComponent, nbrComponent, MPI::DOUBLE, id);
-  communicator.Bcast(this->ImaginaryComponents + firstComponent, nbrComponent, MPI::DOUBLE, id);
+  communicator.Bcast(this->Components + firstComponent, 2*nbrComponent, MPI::DOUBLE, id);
   return *this;
 }
 
@@ -486,8 +476,7 @@ Vector& PartialComplexVector::ReceiveVector(MPI::Intracomm& communicator, int id
     }
   communicator.Recv(&this->IndexShift, 1, MPI::INT, id, 1);
   communicator.Recv(&this->RealDimension, 1, MPI::INT, id, 1); 
-  communicator.Recv(this->RealComponents, this->Dimension, MPI::DOUBLE, id, 1); 
-  communicator.Recv(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id, 1); 
+  communicator.Recv(this->Components, 2*this->Dimension, MPI::DOUBLE, id, 1); 
   return *this;
 }
 
@@ -529,24 +518,18 @@ Vector& PartialComplexVector::SumVector(MPI::Intracomm& communicator, int id)
     {
       return *this;
     }
-  double* TmpComponents = 0;
+  Complex* TmpComponents = 0;
   if (id == communicator.Get_rank())
     {
-      TmpComponents = new double [this->Dimension];
+      TmpComponents = new Complex [this->Dimension];
     }
   communicator.Bcast(&this->IndexShift, 1, MPI::INT, id);
   communicator.Bcast(&this->RealDimension, 1, MPI::INT, id); 
-  communicator.Reduce(this->RealComponents, TmpComponents, this->Dimension, MPI::DOUBLE, MPI::SUM, id); 
+  communicator.Reduce(this->Components, TmpComponents, 2*this->Dimension, MPI::DOUBLE, MPI::SUM, id); 
   if (id == communicator.Get_rank())
     {
       for (int i = 0; i < this->Dimension; ++i)
-	this->RealComponents[i] = TmpComponents[i];
-    }
-  communicator.Reduce(this->ImaginaryComponents, TmpComponents, this->Dimension, MPI::DOUBLE, MPI::SUM, id); 
-  if (id == communicator.Get_rank())
-    {
-      for (int i = 0; i < this->Dimension; ++i)
-	this->ImaginaryComponents[i] = TmpComponents[i];
+	this->Components[i] = TmpComponents[i];
       delete[] TmpComponents;
     }
   return *this;
@@ -571,8 +554,7 @@ Vector* PartialComplexVector::BroadcastClone(MPI::Intracomm& communicator, int i
       TmpArray[3] = this->IndexShift;
       TmpArray[4] = this->RealDimension;
       communicator.Bcast(TmpArray, 5, MPI::INT, id);      
-      communicator.Bcast(this->RealComponents, this->Dimension, MPI::DOUBLE, id);      
-      communicator.Bcast(this->ImaginaryComponents, this->Dimension, MPI::DOUBLE, id);      
+      communicator.Bcast(this->Components, 2*this->Dimension, MPI::DOUBLE, id);      
     }
   else
     {

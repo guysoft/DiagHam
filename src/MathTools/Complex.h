@@ -119,6 +119,8 @@ public:
   // return value = reference on the current complex number
   Complex& ConjugateProduct(const Complex& z);
 
+  Complex& AddMultiply(const Complex& z, double x);
+
 // logical operations
   friend bool operator == (const Complex& z1,const Complex& z2);
   friend bool operator != (const Complex& z1,const Complex& z2);
@@ -449,6 +451,14 @@ inline Complex& Complex::ConjugateProduct(const Complex& z)
   this->Re = x;  
   return *this;
 }
+
+inline Complex& Complex::AddMultiply(const Complex& z, double x)
+{
+  this->Re+=z.Re*x;
+  this->Im+=z.Im*x;
+  return *this;
+}
+  
 
 // basic mathematical functions
 

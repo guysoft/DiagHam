@@ -76,7 +76,7 @@ Complex ComplexLapackDeterminant::Determinant()
   FORTRAN_NAME(zgetrf)(&Dimension, &Dimension, Components, &Dimension , Permutation, &Information);
   if (Information < 0)
     {
-      cout << "Illegal argument " << -Information << " in LAPACK function call in ComplexMatrix.cc, line "<< __LINE__<<endl;
+      cout << "Illegal argument " << -Information << " in LAPACK function call in ComplexLapackDeterminant.cc, line "<< __LINE__<<endl;
       exit(1);
     }
 

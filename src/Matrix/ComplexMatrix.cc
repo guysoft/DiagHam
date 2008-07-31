@@ -290,8 +290,8 @@ void ComplexMatrix::SetMatrixElement(int i, int j, double x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  this->Columns[j].RealComponents[i] = x;
-  this->Columns[j].ImaginaryComponents[i] = 0.0;
+  this->Columns[j].Components[i].Re = x;
+  this->Columns[j].Components[i].Im = 0.0;
 }
 
 // set a matrix element
@@ -304,8 +304,8 @@ void ComplexMatrix::SetMatrixElement(int i, int j, const Complex& x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  this->Columns[j].RealComponents[i] = x.Re;
-  this->Columns[j].ImaginaryComponents[i] = x.Im;
+  this->Columns[j].Components[i].Re = x.Re;
+  this->Columns[j].Components[i].Im = x.Im;
 }
 
 // set a matrix element
@@ -318,8 +318,8 @@ void ComplexMatrix::SetMatrixElement(int i, int j, double real, double imag)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  this->Columns[j].RealComponents[i] = real;
-  this->Columns[j].ImaginaryComponents[i] = imag;
+  this->Columns[j].Components[i].Re = real;
+  this->Columns[j].Components[i].Im = imag;
 }
 
 
@@ -333,7 +333,7 @@ void ComplexMatrix::AddToMatrixElement(int i, int j, double x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  this->Columns[j].RealComponents[i] += x;
+  this->Columns[j].Components[i].Re += x;
 }
 
 // add a value  a matrix element
@@ -345,8 +345,8 @@ void ComplexMatrix::AddToMatrixElement(int i, int j, const Complex& x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  this->Columns[j].RealComponents[i] += x.Re;
-  this->Columns[j].ImaginaryComponents[i] += x.Im;
+  this->Columns[j].Components[i].Re += x.Re;
+  this->Columns[j].Components[i].Im += x.Im;
 }
 
 // Resize matrix
@@ -449,8 +449,8 @@ ComplexMatrix operator + (const ComplexMatrix& M1, const ComplexMatrix& M2)
       TmpColumns[i] = ComplexVector (M1.NbrRow);
       for (int j = 0; j < M1.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] + M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j] + M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re + M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im + M2.Columns[i].Components[j].Im;
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -473,29 +473,29 @@ ComplexMatrix operator + (const RealTriDiagonalSymmetricMatrix& M1, const Comple
       int j = 0;
       for (; j < (i - 1); ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M2.Columns[i].Components[j].Im;
 	}
       if (i > 0)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.UpperDiagonalElements[i - 1] + M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.UpperDiagonalElements[i - 1] + M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M2.Columns[i].Components[j].Im;
 	  ++j;
 	}
-      TmpColumns[i].RealComponents[j] = M1.DiagonalElements[i] + M2.Columns[i].RealComponents[j];
-      TmpColumns[i].ImaginaryComponents[j] = M2.Columns[i].ImaginaryComponents[j];
+      TmpColumns[i].Components[j].Re = M1.DiagonalElements[i] + M2.Columns[i].Components[j].Re;
+      TmpColumns[i].Components[j].Im = M2.Columns[i].Components[j].Im;
       ++j;
       if (i < (M1.NbrColumn - 1))
 	{
-	  TmpColumns[i].RealComponents[j] = M1.UpperDiagonalElements[i + 1] + M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.UpperDiagonalElements[i + 1] + M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M2.Columns[i].Components[j].Im;
 	  ++j;
 	}
       ++j;
       for (; j < M1.NbrColumn; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M2.Columns[i].RealComponents[j];	
-	  TmpColumns[i].ImaginaryComponents[j] = M2.Columns[i].ImaginaryComponents[j];	
+	  TmpColumns[i].Components[j].Re = M2.Columns[i].Components[j].Re;	
+	  TmpColumns[i].Components[j].Im = M2.Columns[i].Components[j].Im;	
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -519,29 +519,29 @@ ComplexMatrix operator + (const ComplexMatrix& M1,
       int j = 0;
       for (; j < (i - 1); ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	}
       if (i > 0)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] + M2.UpperDiagonalElements[i - 1];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re + M2.UpperDiagonalElements[i - 1];
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	  ++j;
 	}
-      TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] + M2.DiagonalElements[i];
-      TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+      TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re + M2.DiagonalElements[i];
+      TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
       ++j;
       if (i < (M1.NbrColumn - 1))
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] + M2.UpperDiagonalElements[i + 1];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re + M2.UpperDiagonalElements[i + 1];
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	  ++j;
 	}
       ++j;
       for (; j < M1.NbrColumn; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j];	
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];	
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re;	
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;	
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -563,8 +563,8 @@ ComplexMatrix operator - (const ComplexMatrix& M1, const ComplexMatrix& M2)
       TmpColumns[i] = ComplexVector (M1.NbrRow);
       for (int j = 0; j < M1.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] - M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j] - M2.Columns[i].ImaginaryComponents[j];	  
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re - M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im - M2.Columns[i].Components[j].Im;	  
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -587,29 +587,29 @@ ComplexMatrix operator - (const RealTriDiagonalSymmetricMatrix& M1, const Comple
       int j = 0;
       for (; j < (i - 1); ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = -M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = -M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = -M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = -M2.Columns[i].Components[j].Im;
 	}
       if (i > 0)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.UpperDiagonalElements[i - 1] - M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = -M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.UpperDiagonalElements[i - 1] - M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = -M2.Columns[i].Components[j].Im;
 	  ++j;
 	}
-      TmpColumns[i].RealComponents[j] = M1.DiagonalElements[i] - M2.Columns[i].RealComponents[j];
-      TmpColumns[i].ImaginaryComponents[j] = -M2.Columns[i].ImaginaryComponents[j];
+      TmpColumns[i].Components[j].Re = M1.DiagonalElements[i] - M2.Columns[i].Components[j].Re;
+      TmpColumns[i].Components[j].Im = -M2.Columns[i].Components[j].Im;
       ++j;
       if (i < (M1.NbrColumn - 1))
 	{
-	  TmpColumns[i].RealComponents[j] = M1.UpperDiagonalElements[i + 1] - M2.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = -M2.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.UpperDiagonalElements[i + 1] - M2.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = -M2.Columns[i].Components[j].Im;
 	  ++j;
 	}
       ++j;
       for (; j < M1.NbrColumn; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = -M2.Columns[i].RealComponents[j];	
-	  TmpColumns[i].ImaginaryComponents[j] = -M2.Columns[i].ImaginaryComponents[j];	
+	  TmpColumns[i].Components[j].Re = -M2.Columns[i].Components[j].Re;	
+	  TmpColumns[i].Components[j].Im = -M2.Columns[i].Components[j].Im;	
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -633,29 +633,29 @@ ComplexMatrix operator - (const ComplexMatrix& M1,
       int j = 0;
       for (; j < (i - 1); ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re;
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	}
       if (i > 0)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] - M2.UpperDiagonalElements[i - 1];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re - M2.UpperDiagonalElements[i - 1];
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	  ++j;
 	}
-      TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] - M2.DiagonalElements[i];
-      TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+      TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re - M2.DiagonalElements[i];
+      TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
       ++j;
       if (i < (M1.NbrColumn - 1))
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j] - M2.UpperDiagonalElements[i + 1];
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re - M2.UpperDiagonalElements[i + 1];
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;
 	  ++j;
 	}
       ++j;
       for (; j < M1.NbrColumn; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M1.Columns[i].RealComponents[j];	
-	  TmpColumns[i].ImaginaryComponents[j] = M1.Columns[i].ImaginaryComponents[j];	
+	  TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re;	
+	  TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im;	
 	}
     }
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
@@ -677,14 +677,14 @@ ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2)
       TmpColumns[i] = ComplexVector (M1.NbrRow);
       for (int j = 0; j < M1.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = 0.0;
-	  TmpColumns[i].ImaginaryComponents[j] = 0.0;
+	  TmpColumns[i].Components[j].Re = 0.0;
+	  TmpColumns[i].Components[j].Im = 0.0;
 	  for (int k = 0; k < M2.NbrRow; ++k)	
 	    {
-	      TmpColumns[i].RealComponents[j] += (M1.Columns[k].RealComponents[j] * M2.Columns[i].RealComponents[k] - 
-						  M1.Columns[k].ImaginaryComponents[j] * M2.Columns[i].ImaginaryComponents[k]);
-	      TmpColumns[i].ImaginaryComponents[j] += (M1.Columns[k].RealComponents[j] * M2.Columns[i].ImaginaryComponents[k] + 
-						       M1.Columns[k].ImaginaryComponents[j] * M2.Columns[i].RealComponents[k]);
+	      TmpColumns[i].Components[j].Re += (M1.Columns[k].Components[j].Re * M2.Columns[i].Components[k].Re - 
+						  M1.Columns[k].Components[j].Im * M2.Columns[i].Components[k].Im);
+	      TmpColumns[i].Components[j].Im += (M1.Columns[k].Components[j].Re * M2.Columns[i].Components[k].Im + 
+						       M1.Columns[k].Components[j].Im * M2.Columns[i].Components[k].Re);
 	    }
 	}
     }
@@ -705,8 +705,8 @@ ComplexMatrix operator * (const ComplexMatrix& M, double x)
       TmpColumns[i] = ComplexVector (M.NbrRow);
       for (int j = 0; j < M.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M.Columns[i].RealComponents[j] * x;
-	  TmpColumns[i].ImaginaryComponents[j] = M.Columns[i].ImaginaryComponents[j] * x;
+	  TmpColumns[i].Components[j].Re = M.Columns[i].Components[j].Re * x;
+	  TmpColumns[i].Components[j].Im = M.Columns[i].Components[j].Im * x;
 	}
     }
   return ComplexMatrix(TmpColumns, M.NbrRow);
@@ -726,8 +726,8 @@ ComplexMatrix operator * (double x, const ComplexMatrix& M)
       TmpColumns[i] = ComplexVector (M.NbrRow);
       for (int j = 0; j < M.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M.Columns[i].RealComponents[j] * x;
-	  TmpColumns[i].ImaginaryComponents[j] = M.Columns[i].ImaginaryComponents[j] * x;
+	  TmpColumns[i].Components[j].Re = M.Columns[i].Components[j].Re * x;
+	  TmpColumns[i].Components[j].Im = M.Columns[i].Components[j].Im * x;
 	}
     }
   return ComplexMatrix(TmpColumns, M.NbrRow);
@@ -748,8 +748,8 @@ ComplexMatrix operator / (const ComplexMatrix& M, double x)
       TmpColumns[i] = ComplexVector (M.NbrRow);
       for (int j = 0; j < M.NbrRow; ++j)
 	{
-	  TmpColumns[i].RealComponents[j] = M.Columns[i].RealComponents[j] * x;
-	  TmpColumns[i].ImaginaryComponents[j] = M.Columns[i].ImaginaryComponents[j] * x;
+	  TmpColumns[i].Components[j].Re = M.Columns[i].Components[j].Re * x;
+	  TmpColumns[i].Components[j].Im = M.Columns[i].Components[j].Im * x;
 	}
     }
   return ComplexMatrix(TmpColumns, M.NbrRow);
@@ -778,12 +778,12 @@ ComplexMatrix& ComplexMatrix::operator += (const RealTriDiagonalSymmetricMatrix&
 {
   if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->ColumnGarbageFlag == 0))
     return *this;  
-  this->Columns[0].RealComponents[0] += M.DiagonalElements[0];
+  this->Columns[0].Components[0].Re += M.DiagonalElements[0];
   for (int i = 1; i < this->NbrColumn; i++)
     {
-      this->Columns[i].RealComponents[i] += M.DiagonalElements[i];
-      this->Columns[i].RealComponents[i - 1] += M.UpperDiagonalElements[i - 1];
-      this->Columns[i - 1].RealComponents[i] += M.UpperDiagonalElements[i - 1];
+      this->Columns[i].Components[i].Re += M.DiagonalElements[i];
+      this->Columns[i].Components[i - 1].Re += M.UpperDiagonalElements[i - 1];
+      this->Columns[i - 1].Components[i].Re += M.UpperDiagonalElements[i - 1];
     }
   return *this;
 }
@@ -811,12 +811,12 @@ ComplexMatrix& ComplexMatrix::operator -= (const RealTriDiagonalSymmetricMatrix&
 {
   if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->ColumnGarbageFlag == 0))
     return *this;  
-  this->Columns[0].RealComponents[0] -= M.DiagonalElements[0];
+  this->Columns[0].Components[0].Re -= M.DiagonalElements[0];
   for (int i = 1; i < this->NbrColumn; i++)
     {
-      this->Columns[i].RealComponents[i] -= M.DiagonalElements[i];
-      this->Columns[i].RealComponents[i - 1] -= M.UpperDiagonalElements[i - 1];
-      this->Columns[i - 1].RealComponents[i] -= M.UpperDiagonalElements[i - 1];
+      this->Columns[i].Components[i].Re -= M.DiagonalElements[i];
+      this->Columns[i].Components[i - 1].Re -= M.UpperDiagonalElements[i - 1];
+      this->Columns[i - 1].Components[i].Re -= M.UpperDiagonalElements[i - 1];
     }
   return *this;
 }
@@ -994,8 +994,8 @@ Complex ComplexMatrix::Permanent()
 	  ComplexVector& TmpColumn = this->Columns[Index];
 	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
-	      Tmp[i].Re -= TmpColumn.RealComponents[i];
-	      Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];
+	      Tmp[i].Re -= TmpColumn.Components[i].Re;
+	      Tmp[i].Im -= TmpColumn.Components[i].Im;
 	    }
 	}
       else
@@ -1009,8 +1009,8 @@ Complex ComplexMatrix::Permanent()
 	  ComplexVector& TmpColumn = this->Columns[Index];
 	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
-	      Tmp[i].Re += TmpColumn.RealComponents[i];
-	      Tmp[i].Im += TmpColumn.ImaginaryComponents[i];
+	      Tmp[i].Re += TmpColumn.Components[i].Re;
+	      Tmp[i].Im += TmpColumn.Components[i].Im;
 	    }
 	}
       Tmp2 = Tmp[0];
@@ -1066,13 +1066,13 @@ void ComplexMatrix::PermanentMinorDevelopment(int column, Complex*& minors)
 	      ComplexVector& TmpColumn = this->Columns[Index];
 	      for (; i < l; ++i)
 		{
-		  Tmp[i].Re -= TmpColumn.RealComponents[i];
-		  Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];
+		  Tmp[i].Re -= TmpColumn.Components[i].Re;
+		  Tmp[i].Im -= TmpColumn.Components[i].Im;
 		}
 	      for (; i < ReducedNbrColumn; ++i)
 		{
-		  Tmp[i].Re -= TmpColumn.RealComponents[i + 1];
-		  Tmp[i].Im -= TmpColumn.ImaginaryComponents[i + 1];
+		  Tmp[i].Re -= TmpColumn.Components[i + 1].Re;
+		  Tmp[i].Im -= TmpColumn.Components[i + 1].Im;
 		}
 	    }
 	  else
@@ -1089,13 +1089,13 @@ void ComplexMatrix::PermanentMinorDevelopment(int column, Complex*& minors)
 	      ComplexVector& TmpColumn = this->Columns[Index];
 	      for (; i < l; ++i)
 		{
-		  Tmp[i].Re += TmpColumn.RealComponents[i];
-		  Tmp[i].Im += TmpColumn.ImaginaryComponents[i];
+		  Tmp[i].Re += TmpColumn.Components[i].Re;
+		  Tmp[i].Im += TmpColumn.Components[i].Im;
 		}
 	      for (; i < ReducedNbrColumn; ++i)
 		{
-		  Tmp[i].Re += TmpColumn.RealComponents[i + 1];
-		  Tmp[i].Im += TmpColumn.ImaginaryComponents[i + 1];
+		  Tmp[i].Re += TmpColumn.Components[i + 1].Re;
+		  Tmp[i].Im += TmpColumn.Components[i + 1].Im;
 		}
 	    }
  	  Tmp2 = Tmp[0];
@@ -1132,16 +1132,16 @@ Complex ComplexMatrix::FastPermanent(int* changeBit, int* changeBitSign)
 	{
 	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
-	      Tmp[i].Re -= TmpColumn.RealComponents[i];
-	      Tmp[i].Im -= TmpColumn.ImaginaryComponents[i];	  
+	      Tmp[i].Re -= TmpColumn.Components[i].Re;
+	      Tmp[i].Im -= TmpColumn.Components[i].Im;	  
 	    }
 	}
       else
 	{
 	  for (int i = 0; i < this->NbrColumn; ++i)
 	    {
-	      Tmp[i].Re += TmpColumn.RealComponents[i];
-	      Tmp[i].Im += TmpColumn.ImaginaryComponents[i];	  
+	      Tmp[i].Re += TmpColumn.Components[i].Re;
+	      Tmp[i].Im += TmpColumn.Components[i].Im;	  
 	    }
 	}
       Tmp2 = Tmp[0];
@@ -1193,13 +1193,13 @@ void ComplexMatrix::FastPermanentMinorDevelopment(int* changeBit, int* changeBit
 	      int i = 0;
 	      for (; i < l; ++i)
 		{
-		  Tmp[i].Re -= TmpColumn->RealComponents[i];
-		  Tmp[i].Im -= TmpColumn->ImaginaryComponents[i];	  
+		  Tmp[i].Re -= TmpColumn->Components[i].Re;
+		  Tmp[i].Im -= TmpColumn->Components[i].Im;	  
 		}
 	      for (; i < ReducedNbrColumn; ++i)
 		{
-		  Tmp[i].Re -= TmpColumn->RealComponents[i + 1];
-		  Tmp[i].Im -= TmpColumn->ImaginaryComponents[i + 1];	  
+		  Tmp[i].Re -= TmpColumn->Components[i + 1].Re;
+		  Tmp[i].Im -= TmpColumn->Components[i + 1].Im;
 		}
 	    }
 	  else
@@ -1207,13 +1207,13 @@ void ComplexMatrix::FastPermanentMinorDevelopment(int* changeBit, int* changeBit
 	      int i = 0;
 	      for (; i < l; ++i)
 		{
-		  Tmp[i].Re += TmpColumn->RealComponents[i];
-		  Tmp[i].Im += TmpColumn->ImaginaryComponents[i];	  
+		  Tmp[i].Re += TmpColumn->Components[i].Re;
+		  Tmp[i].Im += TmpColumn->Components[i].Im;	  
 		}
 	      for (; i < ReducedNbrColumn; ++i)
 		{
-		  Tmp[i].Re += TmpColumn->RealComponents[i + 1];
-		  Tmp[i].Im += TmpColumn->ImaginaryComponents[i + 1];	  
+		  Tmp[i].Re += TmpColumn->Components[i + 1].Re;
+		  Tmp[i].Im += TmpColumn->Components[i + 1].Im;	  
 		}
 	    }
 	  Tmp2 = Tmp[0];
@@ -1282,21 +1282,21 @@ ostream& operator << (ostream& Str, const ComplexMatrix& P)
     {
       for (int j = 0; j < (P.NbrColumn - 1); j ++)
 	{
-	  Str << P.Columns[j].RealComponents[i];      
-	  if (P.Columns[j].ImaginaryComponents[i] < 0.0)
-	    Str << P.Columns[j].ImaginaryComponents[i] << "i    ";
+	  Str << P.Columns[j].Components[i].Re;      
+	  if (P.Columns[j].Components[i].Im < 0.0)
+	    Str << P.Columns[j].Components[i].Im << "i    ";
 	  else
-	    if (P.Columns[j].ImaginaryComponents[i] != 0.0)
-	      Str << "+" << P.Columns[j].ImaginaryComponents[i] << "i    ";
+	    if (P.Columns[j].Components[i].Im != 0.0)
+	      Str << "+" << P.Columns[j].Components[i].Im << "i    ";
 	    else
 	      Str << "    ";
 	}
-      Str << P.Columns[P.NbrColumn - 1].RealComponents[i];      
-      if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] < 0.0)
-	Str << P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] << "i";
+      Str << P.Columns[P.NbrColumn - 1].Components[i].Re;      
+      if (P.Columns[P.NbrColumn - 1].Components[i].Im < 0.0)
+	Str << P.Columns[P.NbrColumn - 1].Components[i].Im << "i";
       else
-	if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] != 0.0)
-	  Str << "+" << P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] << "i";
+	if (P.Columns[P.NbrColumn - 1].Components[i].Im != 0.0)
+	  Str << "+" << P.Columns[P.NbrColumn - 1].Components[i].Im << "i";
       Str << endl;
     }
   return Str;
@@ -1318,41 +1318,41 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P)
       Str << "{";
       for (int j = 0; j < (P.NbrColumn - 1); ++j)
 	{
-	  Str << P.Columns[j].RealComponents[i];      
-	  if (P.Columns[j].ImaginaryComponents[i] < 0.0)
-	    Str << P.Columns[j].ImaginaryComponents[i] << "I,";
+	  Str << P.Columns[j].Components[i].Re;      
+	  if (P.Columns[j].Components[i].Im < 0.0)
+	    Str << P.Columns[j].Components[i].Im << "I,";
 	  else
-	    if (P.Columns[j].ImaginaryComponents[i] != 0.0)
-	      Str << "+" << P.Columns[j].ImaginaryComponents[i] << "I,";
+	    if (P.Columns[j].Components[i].Im != 0.0)
+	      Str << "+" << P.Columns[j].Components[i].Im << "I,";
 	    else
 	      Str << ",";
 	}
-      Str << P.Columns[P.NbrColumn - 1].RealComponents[i];      
-      if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] < 0.0)
-	Str << P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] << "I";
+      Str << P.Columns[P.NbrColumn - 1].Components[i].Re;      
+      if (P.Columns[P.NbrColumn - 1].Components[i].Im < 0.0)
+	Str << P.Columns[P.NbrColumn - 1].Components[i].Im << "I";
       else
-	if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] != 0.0)
-	  Str << "+" << P.Columns[P.NbrColumn - 1].ImaginaryComponents[i] << "I";
+	if (P.Columns[P.NbrColumn - 1].Components[i].Im != 0.0)
+	  Str << "+" << P.Columns[P.NbrColumn - 1].Components[i].Im << "I";
       Str << "},";
     }
   Str << "{";
   for (int j = 0; j < (P.NbrColumn - 1); ++j)
     {
-      Str << P.Columns[j].RealComponents[P.NbrRow - 1];      
-      if (P.Columns[j].ImaginaryComponents[P.NbrRow - 1] < 0.0)
-	Str << P.Columns[j].ImaginaryComponents[P.NbrRow - 1] << "I,";
+      Str << P.Columns[j].Components[P.NbrRow - 1].Re;
+      if (P.Columns[j].Components[P.NbrRow - 1].Im < 0.0)
+	Str << P.Columns[j].Components[P.NbrRow - 1].Im << "I,";
       else
-	if (P.Columns[j].ImaginaryComponents[P.NbrRow - 1] != 0.0)
-	  Str << "+" << P.Columns[j].ImaginaryComponents[P.NbrRow - 1] << "I,";
+	if (P.Columns[j].Components[P.NbrRow - 1].Im != 0.0)
+	  Str << "+" << P.Columns[j].Components[P.NbrRow - 1].Im << "I,";
 	else
 	  Str << ",";
     }
-  Str << P.Columns[P.NbrColumn - 1].RealComponents[P.NbrRow - 1];      
-  if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[P.NbrRow - 1] < 0.0)
-    Str << P.Columns[P.NbrColumn - 1].ImaginaryComponents[P.NbrRow - 1] << "I";
+  Str << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1].Re;      
+  if (P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1].Im < 0.0)
+    Str << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1].Im << "I";
   else
-    if (P.Columns[P.NbrColumn - 1].ImaginaryComponents[P.NbrRow - 1] != 0.0)
-      Str << "+" << P.Columns[P.NbrColumn - 1].ImaginaryComponents[P.NbrRow - 1] << "I";
+    if (P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1].Im != 0.0)
+      Str << "+" << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1].Im << "I";
   Str << "}}";
   return Str;
 }
@@ -1370,16 +1370,14 @@ Complex ComplexMatrix::LapackDeterminant ()
   if (this->NbrColumn != this->NbrRow)
     return 0.0;
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
-  double *TmpColumnReal;
-  double *TmpColumnImag;
+  Complex *TmpColumn;
   for (int j=0;j<NbrRow;++j)
     {
-      TmpColumnReal=this->Columns[j].RealComponents;
-      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      TmpColumn=this->Columns[j].Components;
       for (int i=0; i<NbrRow;++i)
 	{
-	  TmpMatrix[i+j*NbrRow].r=TmpColumnReal[i];
-	  TmpMatrix[i+j*NbrRow].i=TmpColumnImag[i];
+	  TmpMatrix[i+j*NbrRow].r=TmpColumn[i].Re;
+	  TmpMatrix[i+j*NbrRow].i=TmpColumn[i].Im;
 	}
     }
   int Information = 0;
@@ -1469,16 +1467,14 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   doublecomplex* Tau = new doublecomplex [this->NbrRow];
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
   //double *Scale = new double[this->NbrRow];
-  double *TmpColumnReal;
-  double *TmpColumnImag;
+  Complex *TmpColumn;
   for (int j=0;j<NbrRow;++j)
     {
-      TmpColumnReal=this->Columns[j].RealComponents;
-      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      TmpColumn=this->Columns[j].Components;
       for (int i=0; i<NbrRow;++i)
 	{
-	  TmpMatrix[i+j*NbrRow].r=TmpColumnReal[i];
-	  TmpMatrix[i+j*NbrRow].i=TmpColumnImag[i];
+	  TmpMatrix[i+j*NbrRow].r=TmpColumn[i].Re;
+	  TmpMatrix[i+j*NbrRow].i=TmpColumn[i].Im;
 	}
     }
   int Information = 0;
@@ -1556,16 +1552,14 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
   doublecomplex* EigenvectorsR = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* EigenvectorsL = NULL;
-  double *TmpColumnReal;
-  double *TmpColumnImag;
+  Complex *TmpColumn;
   for (int j=0;j<NbrRow;++j)
     {
-      TmpColumnReal=this->Columns[j].RealComponents;
-      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      TmpColumn=this->Columns[j].Components;
       for (int i=0; i<NbrRow;++i)
 	{
-	  matrixA[i+j*NbrRow].r=TmpColumnReal[i];
-	  matrixA[i+j*NbrRow].i=TmpColumnImag[i];
+	  matrixA[i+j*NbrRow].r=TmpColumn[i].Re;
+	  matrixA[i+j*NbrRow].i=TmpColumn[i].Im;
 	}
     }  
   int Information = 0;
@@ -1636,16 +1630,14 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
   doublecomplex* TransQ = new doublecomplex [this->NbrRow * this->NbrRow];
   doublecomplex* Tau = new doublecomplex [this->NbrRow];
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
-  double *TmpColumnReal;
-  double *TmpColumnImag;
+  Complex *TmpColumn;
   for (int j=0;j<NbrRow;++j)
     {
-      TmpColumnReal=this->Columns[j].RealComponents;
-      TmpColumnImag=this->Columns[j].ImaginaryComponents;
+      TmpColumn=this->Columns[j].Components;
       for (int i=0; i<NbrRow;++i)
 	{
-	  TmpMatrix[i+j*NbrRow].r=TmpColumnReal[i];
-	  TmpMatrix[i+j*NbrRow].i=TmpColumnImag[i];
+	  TmpMatrix[i+j*NbrRow].r=TmpColumn[i].Re;
+	  TmpMatrix[i+j*NbrRow].i=TmpColumn[i].Im;
 	}
     }
   int Information = 0;

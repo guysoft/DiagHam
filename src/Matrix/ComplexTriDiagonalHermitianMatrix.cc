@@ -729,46 +729,46 @@ Polynomial& ComplexTriDiagonalHermitianMatrix::CharacteristicEquation()
 ComplexVector& ComplexTriDiagonalHermitianMatrix::Eigenvector(double eigenvalue, ComplexVector& eigenvector)
 {
   double Norm = 1.0;
-  eigenvector.RealComponents[0] = 1.0;
-  eigenvector.ImaginaryComponents[0] = 0.0;
+  eigenvector.Components[0].Re = 1.0;
+  eigenvector.Components[0].Im = 0.0;
   if (this->RealUpperDiagonalElements[0] == 0.0)
     {
-      eigenvector.RealComponents[1] = 0.0;
-      eigenvector.ImaginaryComponents[1] = 0.0;
+      eigenvector.Components[1].Re = 0.0;
+      eigenvector.Components[1].Im = 0.0;
     }
   else
     {
       double fac = 1.0 / (this->RealUpperDiagonalElements[0] * this->RealUpperDiagonalElements[0]
 			  + this->ImaginaryUpperDiagonalElements[0] * this->ImaginaryUpperDiagonalElements[0]);
-      eigenvector.RealComponents[1] = (eigenvalue - this->DiagonalElements[0]) * this->RealUpperDiagonalElements[0] * fac;
-      eigenvector.ImaginaryComponents[1] = (this->DiagonalElements[0] - eigenvalue) * this->ImaginaryUpperDiagonalElements[0] * fac;
+      eigenvector.Components[1].Re = (eigenvalue - this->DiagonalElements[0]) * this->RealUpperDiagonalElements[0] * fac;
+      eigenvector.Components[1].Im = (this->DiagonalElements[0] - eigenvalue) * this->ImaginaryUpperDiagonalElements[0] * fac;
     }
   for (int i = 2; i < this->NbrRow; i++)
     {
       if ((this->RealUpperDiagonalElements[i - 1] == 0.0) && (this->ImaginaryUpperDiagonalElements[i - 1] == 0.0))
 	{
-	  eigenvector.RealComponents[i] = 0.0;
-	  eigenvector.ImaginaryComponents[i] = 0.0;
+	  eigenvector.Components[i].Re = 0.0;
+	  eigenvector.Components[i].Im = 0.0;
 	}
       else
 	{
 	  double fac = 1.0 / (this->RealUpperDiagonalElements[i - 1] * this->RealUpperDiagonalElements[i - 1]
 			      + this->ImaginaryUpperDiagonalElements[i - 1] * this->ImaginaryUpperDiagonalElements[i - 1]);
-	  eigenvector.RealComponents[i] = (((eigenvalue - this->DiagonalElements[i - 1]) * eigenvector.RealComponents[i - 1]
-					    - this->ImaginaryUpperDiagonalElements[i - 2] * eigenvector.ImaginaryComponents[i - 1] 
-					    - this->RealUpperDiagonalElements[i - 2] * eigenvector.RealComponents[i - 2]) * fac);
-	  eigenvector.ImaginaryComponents[i] = (((eigenvalue - this->DiagonalElements[i - 1]) * eigenvector.ImaginaryComponents[i - 1]
-						 + this->ImaginaryUpperDiagonalElements[i - 2] * eigenvector.RealComponents[i - 2] 
-						 - this->RealUpperDiagonalElements[i - 2] * eigenvector.ImaginaryComponents[i - 2]) * fac);
-	  Norm += (eigenvector.RealComponents[i] * eigenvector.RealComponents[i] 
-		   + eigenvector.ImaginaryComponents[i] * eigenvector.ImaginaryComponents[i]);
+	  eigenvector.Components[i].Re = (((eigenvalue - this->DiagonalElements[i - 1]) * eigenvector.Components[i - 1].Re
+					   - this->ImaginaryUpperDiagonalElements[i - 2] * eigenvector.Components[i - 1].Im 
+					    - this->RealUpperDiagonalElements[i - 2] * eigenvector.Components[i - 2].Re) * fac);
+	  eigenvector.Components[i].Im = (((eigenvalue - this->DiagonalElements[i - 1]) * eigenvector.Components[i - 1].Im
+						 + this->ImaginaryUpperDiagonalElements[i - 2] * eigenvector.Components[i - 2].Re 
+						 - this->RealUpperDiagonalElements[i - 2] * eigenvector.Components[i - 2].Im) * fac);
+	  Norm += (eigenvector.Components[i].Re * eigenvector.Components[i].Re 
+		   + eigenvector.Components[i].Im * eigenvector.Components[i].Im);
 	}
     }      
   Norm = 1.0 / sqrt (Norm);
   for (int i = 0; i < eigenvector.Dimension; ++i)
     {
-      eigenvector.RealComponents[i] *= Norm;
-      eigenvector.ImaginaryComponents[i] *= Norm;
+      eigenvector.Components[i].Re *= Norm;
+      eigenvector.Components[i].Im *= Norm;
     }
   return eigenvector;
 }

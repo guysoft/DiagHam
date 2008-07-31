@@ -142,7 +142,7 @@ RealVector::RealVector(const ComplexVector& vector)
       this->Components = new double[this->Dimension + 1];
       for (int i = 0; i < this->Dimension; ++i)
 	{
-	  this->Components[i] = vector.RealComponents[i];
+	  this->Components[i] = vector.Components[i].Re;
 	}
     }
   else
@@ -174,7 +174,7 @@ RealVector::RealVector(const Vector& vector)
 	    this->Components = new double[this->Dimension + 1];
 	    for (int i = 0; i < this->Dimension; ++i)
 	      {
-		this->Components[i] = ((ComplexVector&) vector).RealComponents[i];
+		this->Components[i] = ((ComplexVector&) vector).Components[i].Re;
 	      }
 	  }
 	else
@@ -271,7 +271,7 @@ RealVector& RealVector::operator = (const ComplexVector& vector)
   this->VectorId = 0;
   for (int i = 0; i < this->Dimension; ++i)
     {
-      this->Components[i] = vector.RealComponents[i];
+      this->Components[i] = vector.Components[i].Re;
     }
   this->Flag.Initialize();
   return *this;

@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "number of iteration between two consecutive result displays", -1);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "seed to be used to initialize random number generator", -1);
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history, 4=continue to generate given history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  

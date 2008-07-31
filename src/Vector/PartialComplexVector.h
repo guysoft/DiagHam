@@ -135,7 +135,7 @@ class PartialComplexVector : public ComplexVector
   // return reference on vector i-th coordinate
   //
   // i = coordinate position
-  virtual Complex operator [] (int i);
+  virtual Complex& operator [] (int i);
   
   // return reference on real part of vector i-th coordinate
   //
@@ -237,9 +237,9 @@ inline int PartialComplexVector::GetVectorDimension()
 //
 // i = coordinate position
 
-inline Complex PartialComplexVector::operator [] (int i)
+inline Complex& PartialComplexVector::operator [] (int i)
 {
-  return Complex(this->RealComponents[i - this->IndexShift],  this->ImaginaryComponents[i - this->IndexShift]);
+  return Components[i - this->IndexShift];
 }
  
 // return reference on real part of vector i-th coordinate
@@ -248,7 +248,7 @@ inline Complex PartialComplexVector::operator [] (int i)
 
 inline double& PartialComplexVector::Re (int i)
 {
-  return this->RealComponents[i - this->IndexShift];
+  return this->Components[i - this->IndexShift].Re;
 }
 
 // return reference on imaginary part of vector i-th coordinate
@@ -257,7 +257,7 @@ inline double& PartialComplexVector::Re (int i)
 
 inline double& PartialComplexVector::Im (int i)
 {
-  return this->ImaginaryComponents[i - this->IndexShift];
+  return this->Components[i - this->IndexShift].Im;
 }
   
 

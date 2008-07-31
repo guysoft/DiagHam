@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of complex symmetric matrix                      //
+//                        class of complex symmetric matrix                   //
 //                                                                            //
 //                        last modification : 09/03/2001                      //
 //                                                                            //
@@ -656,10 +656,10 @@ Complex ComplexDiagonalMatrix::MatrixElement (ComplexVector& V1, ComplexVector& 
     return x;
   for (int i = 0; i < this->NbrRow ; i++)
     {
-      TmpRe=this->DiagonalElements[i].Re * V2.RealComponents[i] - this->DiagonalElements[i].Im * V2.ImaginaryComponents[i];
-      TmpIm=this->DiagonalElements[i].Im * V2.RealComponents[i] + this->DiagonalElements[i].Re * V2.ImaginaryComponents[i];
-      x.Re += V1.RealComponents[i] * TmpRe + V1.ImaginaryComponents[i] * TmpIm;
-      x.Im += V1.RealComponents[i] * TmpIm - V1.ImaginaryComponents[i] * TmpRe;
+      TmpRe=this->DiagonalElements[i].Re * V2.Components[i].Re - this->DiagonalElements[i].Im * V2.Components[i].Im;
+      TmpIm=this->DiagonalElements[i].Im * V2.Components[i].Re + this->DiagonalElements[i].Re * V2.Components[i].Im;
+      x.Re += V1.Components[i].Re * TmpRe + V1.Components[i].Im * TmpIm;
+      x.Im += V1.Components[i].Re * TmpIm - V1.Components[i].Im * TmpRe;
     }
   return x;
 }

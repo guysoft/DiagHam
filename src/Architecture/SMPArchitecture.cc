@@ -119,7 +119,7 @@ void SMPArchitecture::SendJobs ()
   pthread_t* Threads2 = new pthread_t [this->NbrThreads];
   for (int i = 0; i < this->NbrThreads; ++i)
     {
-      if (pthread_create (&(Threads2[i]), 0l, ThreadExecuteOperation, (void*) &(this->ThreadParameters[i])) )
+      if (pthread_create (&(Threads2[i]), (const pthread_attr_t *)NULL, ThreadExecuteOperation, (void*) &(this->ThreadParameters[i])) )
 	{
 	  cout << "error, cannot create thread" << endl;
 	  exit(1);

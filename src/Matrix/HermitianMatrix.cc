@@ -860,26 +860,26 @@ Complex HermitianMatrix::MatrixElement (ComplexVector& V1, ComplexVector& V2)
     return Z;
   for (int i = 0; i < this->NbrRow ; ++i)
     {
-      Complex Z2(this->DiagonalElements[i] * V2.RealComponents[i], this->DiagonalElements[i] * V2.ImaginaryComponents[i]);
+      Complex Z2(this->DiagonalElements[i] * V2.Components[i].Re, this->DiagonalElements[i] * V2.Components[i].Im);
       int l = (i - 1);
       for (int k = 0; k < i; ++k)
 	{
-	  Z2.Re += (this->RealOffDiagonalElements[l] * V2.RealComponents[k] + 
-		    this->ImaginaryOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
-	  Z2.Im += (this->RealOffDiagonalElements[l] * V2.ImaginaryComponents[k] - 
-		    this->ImaginaryOffDiagonalElements[l] * V2.RealComponents[k]);
+	  Z2.Re += (this->RealOffDiagonalElements[l] * V2.Components[k].Re + 
+		    this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Im);
+	  Z2.Im += (this->RealOffDiagonalElements[l] * V2.Components[k].Im - 
+		    this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Re);
 	  l += (this->NbrColumn - 2 - k) + this->Increment;
 	}
       ++l;
       for (int k = i + 1; k < this->NbrColumn; ++k)
 	{
-	  Z2.Re += (this->RealOffDiagonalElements[l] * V2.RealComponents[k] - 
-		   this->ImaginaryOffDiagonalElements[l] * V2.ImaginaryComponents[k]);
-	  Z2.Im += (this->RealOffDiagonalElements[l] * V2.ImaginaryComponents[k] + 
-		   this->ImaginaryOffDiagonalElements[l] * V2.RealComponents[k]);
+	  Z2.Re += (this->RealOffDiagonalElements[l] * V2.Components[k].Re - 
+		   this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Im);
+	  Z2.Im += (this->RealOffDiagonalElements[l] * V2.Components[k].Im + 
+		   this->ImaginaryOffDiagonalElements[l] * V2.Components[k].Re);
 	  ++l;
 	}      
-      Z += Z2 * Complex (V1.RealComponents[i], -V1.ImaginaryComponents[i]);
+      Z += Z2 * Complex (V1.Components[i].Re, -V1.Components[i].Im);
     }
   return Z;
 }
@@ -979,27 +979,27 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
 	  int l = (j - 1);
 	  for (; k < j; ++k)
 	    {
-	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].RealComponents[k] + 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].ImaginaryComponents[k]);
-	      tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].ImaginaryComponents[k] - 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].RealComponents[k]);
+	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Re + 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Im);
+	      tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Im - 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Re);
 	      ++k;
 	      l += (this->NbrColumn - 2 - k) + this->Increment;
 	    }
 	  ++l;
-	  tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[i].RealComponents[k];
-	  tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[i].ImaginaryComponents[k];
+	  tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[i].Components[k].Re;
+	  tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[i].Components[k].Im;
 	  ++k;
 	  for (; k < this->NbrColumn; ++k)
 	    {
-	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].RealComponents[k] - 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].ImaginaryComponents[k]);
-	      tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].ImaginaryComponents[k] + 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].RealComponents[k]);
+	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Re - 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Im);
+	      tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Im + 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[i].Components[k].Re);
 	      ++l;
 	      ++k;
 	    }
-	  TmpDiag[i] += tmp1 * UnitaryM.Columns[i].RealComponents[j] + tmp2 * UnitaryM.Columns[i].ImaginaryComponents[j];
+	  TmpDiag[i] += tmp1 * UnitaryM.Columns[i].Components[j].Re + tmp2 * UnitaryM.Columns[i].Components[j].Im;
 	}
     }    
   int ReducedNbrColumn = UnitaryM.NbrColumn - 1;
@@ -1017,26 +1017,26 @@ HermitianMatrix HermitianMatrix::Conjugate(ComplexMatrix& UnitaryM)
 	    int l = (j - 1);
 	    for (; k < j; k++)
 	      {
-		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] + 
-			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] - 
-			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re + 
+			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im - 
+			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		l += (this->NbrColumn - 2 - k) + this->Increment;
 	      }
 	    ++l;
-	    tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[m].RealComponents[k];
-	    tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[m].ImaginaryComponents[k];
+	    tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[m].Components[k].Re;
+	    tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[m].Components[k].Im;
 	    ++k;
 	    for (; k < this->NbrColumn; ++k)
 	      {
-		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k] - 
-			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k]);
-		tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].ImaginaryComponents[k] + 
-			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].RealComponents[k]);
+		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re - 
+			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im);
+		tmp2 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Im + 
+			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[m].Components[k].Re);
 		++l;
 	      }
-	    TmpRealOffDiag[i2] += tmp1 * UnitaryM.Columns[i].RealComponents[j] + tmp2 * UnitaryM.Columns[i].ImaginaryComponents[j];
-	    TmpImaginaryOffDiag[i2] += tmp2 * UnitaryM.Columns[i].RealComponents[j] - tmp1 * UnitaryM.Columns[i].ImaginaryComponents[j] ;
+	    TmpRealOffDiag[i2] += tmp1 * UnitaryM.Columns[i].Components[j].Re + tmp2 * UnitaryM.Columns[i].Components[j].Im;
+	    TmpImaginaryOffDiag[i2] += tmp2 * UnitaryM.Columns[i].Components[j].Re - tmp1 * UnitaryM.Columns[i].Components[j].Im ;
 	  }
 	++i2;
       }    
@@ -1067,25 +1067,25 @@ HermitianMatrix HermitianMatrix::InvConjugate(ComplexMatrix& UnitaryM)
 	  int l = (j - 1);
 	  for (; k < j; k++)
 	    {
-	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[i] - 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[i]);
-	      tmp2 -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[i] + 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[i]);
+	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Re - 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Im);
+	      tmp2 -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Im + 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Re);
 	      l += (this->NbrColumn - 2 - k) + this->Increment;
 	    }
 	  ++l;
-	  tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[k].RealComponents[i];
-	  tmp2 -= this->DiagonalElements[j] * UnitaryM.Columns[k].ImaginaryComponents[i];
+	  tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[k].Components[i].Re;
+	  tmp2 -= this->DiagonalElements[j] * UnitaryM.Columns[k].Components[i].Im;
 	  ++k;
 	  for (; k < this->NbrColumn; ++k)
 	    {
-	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[i] + 
-		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[i]);
-	      tmp2 += (this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[i] - 
-		       this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[i] );
+	      tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Re + 
+		      this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Im);
+	      tmp2 += (this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Re - 
+		       this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[i].Im );
 	      ++l;
 	    }
-	  TmpDiag[i] += tmp1 * UnitaryM.Columns[i].RealComponents[j] - tmp2 * UnitaryM.Columns[i].ImaginaryComponents[j];
+	  TmpDiag[i] += tmp1 * UnitaryM.Columns[i].Components[j].Re - tmp2 * UnitaryM.Columns[i].Components[j].Im;
 	}
     }    
   int ReducedNbrRow = UnitaryM.NbrRow - 1;
@@ -1102,26 +1102,26 @@ HermitianMatrix HermitianMatrix::InvConjugate(ComplexMatrix& UnitaryM)
 	    int l = (j - 1);
 	    for (; k < j; k++)
 	      {
-		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[m] - 
-			 this->ImaginaryOffDiagonalElements[l + 1] * UnitaryM.Columns[k].ImaginaryComponents[m]);
-		tmp2 -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[m] + 
-			 this->ImaginaryOffDiagonalElements[l + 1] * UnitaryM.Columns[k].RealComponents[m]);
+		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Re - 
+			 this->ImaginaryOffDiagonalElements[l + 1] * UnitaryM.Columns[k].Components[m].Im);
+		tmp2 -= (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Im + 
+			 this->ImaginaryOffDiagonalElements[l + 1] * UnitaryM.Columns[k].Components[m].Re);
 		l += (this->NbrColumn - 2 - k) + this->Increment;
 	      }
 	    ++l;
-	    tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[k].RealComponents[m];
-	    tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[k].ImaginaryComponents[m];
+	    tmp1 += this->DiagonalElements[j] * UnitaryM.Columns[k].Components[m].Re;
+	    tmp2 += this->DiagonalElements[j] * UnitaryM.Columns[k].Components[m].Im;
 	    ++k;
 	    for (; k < this->NbrColumn; ++k)
 	      {
-		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[m] + 
-			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[m]);
-		tmp2 += (this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].RealComponents[m] - 
-			 this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].ImaginaryComponents[m]);
+		tmp1 += (this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Re + 
+			 this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Im);
+		tmp2 += (this->ImaginaryOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Re - 
+			 this->RealOffDiagonalElements[l] * UnitaryM.Columns[k].Components[m].Im);
 		++l;
 	      }
-	    TmpRealOffDiag[i] += tmp1 * UnitaryM.Columns[j].RealComponents[i] - tmp2 * UnitaryM.Columns[j].ImaginaryComponents[i];
-	    TmpImaginaryOffDiag[i] += tmp2 * UnitaryM.Columns[j].RealComponents[i] + tmp1 * UnitaryM.Columns[j].ImaginaryComponents[i] ;
+	    TmpRealOffDiag[i] += tmp1 * UnitaryM.Columns[j].Components[i].Re - tmp2 * UnitaryM.Columns[j].Components[i].Im;
+	    TmpImaginaryOffDiag[i] += tmp2 * UnitaryM.Columns[j].Components[i].Re + tmp1 * UnitaryM.Columns[j].Components[i].Im ;
 	  }
       }    
   return HermitianMatrix(TmpDiag, TmpRealOffDiag, TmpImaginaryOffDiag, UnitaryM.NbrColumn);
@@ -1400,15 +1400,15 @@ RealTriDiagonalSymmetricMatrix& HermitianMatrix::Householder (RealTriDiagonalSym
      {
        for (int j = 0; j < i; j++)
 	 {
-	   Q.Columns[j].RealComponents[i] = 0.0;       
-	   Q.Columns[j].ImaginaryComponents[i] = 0.0;       
+	   Q.Columns[j].Components[i].Re = 0.0;       
+	   Q.Columns[j].Components[i].Im = 0.0;       
 	 }
-       Q.Columns[i].RealComponents[i] = 1.0;
-       Q.Columns[i].ImaginaryComponents[i] = 0.0;       
+       Q.Columns[i].Components[i].Re = 1.0;
+       Q.Columns[i].Components[i].Im = 0.0;       
        for (int j = i + 1; j < Q.NbrColumn; j++)
 	 {
-	   Q.Columns[j].RealComponents[i] = 0.0;       
-	   Q.Columns[j].ImaginaryComponents[i] = 0.0;       
+	   Q.Columns[j].Components[i].Re = 0.0;       
+	   Q.Columns[j].Components[i].Im = 0.0;       
 	 }
      }
   int ReducedNbrRow = this->NbrRow -1;
@@ -1469,10 +1469,10 @@ RealTriDiagonalSymmetricMatrix& HermitianMatrix::Householder (RealTriDiagonalSym
 	      TmpCoefIm[TmpPos5] = 0.0;
 	      for (int k = i; k < this->NbrRow; ++k)
 		{
-	 	  TmpCoefRe[TmpPos5] += Q.Columns[k].RealComponents[j] * this->RealOffDiagonalElements[TmpPos]
-		    + Q.Columns[k].ImaginaryComponents[j] * this->ImaginaryOffDiagonalElements[TmpPos];
-	 	  TmpCoefIm[TmpPos5] += Q.Columns[k].RealComponents[j] * this->ImaginaryOffDiagonalElements[TmpPos]
-		    -  Q.Columns[k].ImaginaryComponents[j] * this->RealOffDiagonalElements[TmpPos];
+	 	  TmpCoefRe[TmpPos5] += Q.Columns[k].Components[j].Re * this->RealOffDiagonalElements[TmpPos]
+		    + Q.Columns[k].Components[j].Im * this->ImaginaryOffDiagonalElements[TmpPos];
+	 	  TmpCoefIm[TmpPos5] += Q.Columns[k].Components[j].Re * this->ImaginaryOffDiagonalElements[TmpPos]
+		    -  Q.Columns[k].Components[j].Im * this->RealOffDiagonalElements[TmpPos];
 		  ++TmpPos;
 		}
 	      ++TmpPos5;

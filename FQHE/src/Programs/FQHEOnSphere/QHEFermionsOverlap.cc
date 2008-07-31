@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "number of iteration between two consecutive result displays", -1);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "value of random seed to be used", -1);
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history, 4=continue to generate given history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
@@ -110,6 +110,21 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+
+  cout << "Sizeof(double)="<<sizeof(double)<<endl;
+  cout << "Sizeof(Complex)="<<sizeof(Complex)<<endl;
+
+  Complex *test = new Complex[10];
+  for (int i=0; i<10;++i)
+    {
+      test[i].Re=i;
+      test[i].Im=i+0.5;
+    }
+  double *test2 = (double*)test;
+  for (int i=0; i<20;++i)
+    {
+      cout << "test2["<<i<<"]="<<test2[i]<<endl;
+    }
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {

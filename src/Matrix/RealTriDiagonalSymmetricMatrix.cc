@@ -834,16 +834,16 @@ RealTriDiagonalSymmetricMatrix& RealTriDiagonalSymmetricMatrix::Diagonalize(Comp
 		      double tmp;
 		      for (int n = 0; n < Q.NbrRow; n++)
 			{
-			  tmp = Q.Columns[k + 1].RealComponents[n];
-			  Q.Columns[k + 1].RealComponents[n] *= Cos;
-			  Q.Columns[k + 1].RealComponents[n] += Sin * Q.Columns[k].RealComponents[n];
-			  Q.Columns[k].RealComponents[n] *= Cos;
-			  Q.Columns[k].RealComponents[n] -= Sin * tmp;
-			  tmp = Q.Columns[k + 1].ImaginaryComponents[n];
-			  Q.Columns[k + 1].ImaginaryComponents[n] *= Cos;
-			  Q.Columns[k + 1].ImaginaryComponents[n] += Sin * Q.Columns[k].ImaginaryComponents[n];
-			  Q.Columns[k].ImaginaryComponents[n] *= Cos;
-			  Q.Columns[k].ImaginaryComponents[n] -= Sin * tmp;
+			  tmp = Q.Columns[k + 1].Components[n].Re;
+			  Q.Columns[k + 1].Components[n].Re *= Cos;
+			  Q.Columns[k + 1].Components[n].Re += Sin * Q.Columns[k].Components[n].Re;
+			  Q.Columns[k].Components[n].Re *= Cos;
+			  Q.Columns[k].Components[n].Re -= Sin * tmp;
+			  tmp = Q.Columns[k + 1].Components[n].Im;
+			  Q.Columns[k + 1].Components[n].Im *= Cos;
+			  Q.Columns[k + 1].Components[n].Im += Sin * Q.Columns[k].Components[n].Im;
+			  Q.Columns[k].Components[n].Im *= Cos;
+			  Q.Columns[k].Components[n].Im -= Sin * tmp;
 			}
 		    }
 		}
@@ -1578,29 +1578,29 @@ RealVector& RealTriDiagonalSymmetricMatrix::Eigenvector(double eigenvalue, RealV
 ComplexVector& RealTriDiagonalSymmetricMatrix::Eigenvector(double eigenvalue, ComplexVector& eigenvector)
 {
   double Norm = 1.0;
-  eigenvector.RealComponents[0] = 1.0;
-  eigenvector.ImaginaryComponents[0] = 0.0;
-  eigenvector.ImaginaryComponents[1] = 0.0;
+  eigenvector.Components[0].Re = 1.0;
+  eigenvector.Components[0].Im = 0.0;
+  eigenvector.Components[1].Im = 0.0;
   if (this->UpperDiagonalElements[0] == 0.0)
-    eigenvector.RealComponents[1] = 0.0;
+    eigenvector.Components[1].Re = 0.0;
   else
-    eigenvector.RealComponents[1] = (eigenvalue - this->DiagonalElements[0])/ this->UpperDiagonalElements[0];
+    eigenvector.Components[1].Re = (eigenvalue - this->DiagonalElements[0])/ this->UpperDiagonalElements[0];
   for (int i = 2; i < this->NbrRow; i++)
     {
       if (this->UpperDiagonalElements[i - 1] == 0.0)
-	eigenvector.RealComponents[i] = 0.0;
+	eigenvector.Components[i].Re = 0.0;
       else
 	{
-	  eigenvector.RealComponents[i] = - (((this->DiagonalElements[i - 1] - eigenvalue) * eigenvector.RealComponents[i - 1]
-					      + this->UpperDiagonalElements[i - 2] * eigenvector.RealComponents[i - 2])
+	  eigenvector.Components[i].Re = - (((this->DiagonalElements[i - 1] - eigenvalue) * eigenvector.Components[i - 1].Re
+					      + this->UpperDiagonalElements[i - 2] * eigenvector.Components[i - 2].Re)
 					     / this->UpperDiagonalElements[i - 1]);
-	  Norm += eigenvector.RealComponents[i] * eigenvector.RealComponents[i];
+	  Norm += eigenvector.Components[i].Re * eigenvector.Components[i].Re;
 	}
-      eigenvector.ImaginaryComponents[i] = 0.0;
+      eigenvector.Components[i].Im = 0.0;
     }      
   Norm = 1.0 / sqrt (Norm);
   for (int i = 0; i < eigenvector.Dimension; i++)
-    eigenvector.RealComponents[i] *= Norm;
+    eigenvector.Components[i].Re *= Norm;
   return eigenvector;
 }
 
