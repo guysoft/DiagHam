@@ -79,7 +79,7 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
 #ifdef __MPI__
   (*ParallelizationGroup) += new BooleanOption  ('\n', "mpi", "enable MPI mode");  
 #ifdef __SMP__
-  (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
+  (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");  
 #endif
   (*ParallelizationGroup) += new SingleStringOption  ('\n', "cluster-profil", "enable cluster profiling, the name of the log file  has to be passed as argument");  
 #endif

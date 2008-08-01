@@ -47,7 +47,7 @@ class MixedMPISMPArchitecture : public SimpleMPIArchitecture
 
  protected:
 
-  // number of cpu atteched to each MPI node
+  // number of cpu attached to each MPI node
   int* NbrCPUPerNode;
 
   // array that conatins hostname of each MPI node (only relevant for the master node)

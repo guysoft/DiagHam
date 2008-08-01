@@ -114,9 +114,19 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 		  int* TmpNbrCPUNode = ClusterFile.GetAsIntegerArray(1);
 		  if (TmpNbrCPUNode != 0)
 		    {
+		      int DefaultCPUPerNode=1;
+		      for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
+			{
+			  if (strcmp("default", ClusterFile(0,j)) == 0) 
+			    {
+			      this->DefaultCPUPerNode = TmpNbrCPUNode[j];
+			      j = ClusterFile.GetNbrLines();
+			    }
+			}
 		      for (int i = 0; i < this->NbrMPINodes; ++i)
 			{
-			  this->NbrCPUPerNode[i] = 1;
+			  this->NbrCPUPerNode[i] = DefaultCPUPerNode;
+			  this->ClusterPerformanceArray[i] = (double)DefaultCPUPerNode;
 			  for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
 			    {
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
@@ -131,7 +141,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				  else
 				    this->ClusterMemoryArray[i] = -1l;
 				  j = ClusterFile.GetNbrLines();
-				}			     
+				}
 			    }
 			}
 		      delete[] TmpNbrCPUNode;

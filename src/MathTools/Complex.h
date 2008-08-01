@@ -594,10 +594,10 @@ inline Complex argth (const Complex& z)
 
 inline Complex pow (const Complex& z, const double y) 
 {
-  if ((y == 0) && (z == Complex (0, 0)))
-    return Complex (1, 0);
-  if (y == 0)
-    return Complex (0, 0);
+  if ((y == 0.0) && (z == Complex (0.0, 0.0)))
+    return Complex (1.0, 0.0);
+  if (y == 0.0)
+    return Complex (0.0, 0.0);
   return exp(y * ln(z));
 }
 
@@ -605,10 +605,10 @@ inline Complex pow (const Complex& z, const double y)
 
 inline Complex pow (const double y, const Complex& z)
 {
-  if ((y == 0) && ( z == Complex (0, 0)))
-    return Complex (1, 0);
-  if (Complex (0, 0) == z)
-    return Complex (0, 0);
+  if ((y == 0.0) && ( z == Complex (0.0, 0.0)))
+    return Complex (1.0, 0.0);
+  if (Complex (0.0, 0.0) == z)
+    return Complex (0.0, 0.0);
   return exp(z * log(y));
 }
 
@@ -616,10 +616,10 @@ inline Complex pow (const double y, const Complex& z)
 
 inline Complex pow (const Complex& z, const Complex& y)
 {
-  if ((y == Complex (0, 0)) && (z == Complex (0, 0)))
-    return Complex (1, 0);
-  if (y == Complex (0, 0))
-    return Complex (0, 0);
+  if ((y == Complex (0.0, 0.0)) && (z == Complex (0.0, 0.0)))
+    return Complex (1.0, 0.0);
+  if (y == Complex (0.0, 0.0))
+    return Complex (0.0, 0.0);
   return exp(y * ln(z));
 }
 
@@ -627,7 +627,7 @@ inline Complex pow (const Complex& z, const Complex& y)
 
 inline Complex I()
 {
-  return Complex(0, 1);
+  return Complex(0.0, 1.0);
 }
 
 // Output Stream overload
