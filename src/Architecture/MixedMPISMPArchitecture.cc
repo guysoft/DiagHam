@@ -115,18 +115,43 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 		  if (TmpNbrCPUNode != 0)
 		    {
 		      int DefaultCPUPerNode=1;
+		      double DefaultPerNodePerformance=1.0;
+		      long DefaultPerNodeMemory=-1l;
 		      for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
 			{
 			  if (strcmp("default", ClusterFile(0,j)) == 0) 
 			    {
-			      this->DefaultCPUPerNode = TmpNbrCPUNode[j];
+			      DefaultCPUPerNode = TmpNbrCPUNode[j];
+			      DefaultPerNodePerformance = (double)DefaultCPUPerNode;
+			      if (TmpClusterPerformanceArray !=0)
+				DefaultPerNodePerformance *= TmpClusterPerformanceArray[j];
+			      if (TmpClusterMemoryArray != 0)
+				DefaultPerNodeMemory = (TmpClusterMemoryArray[j]) << 20;
+			      cout << "Default node configuration: "<<TmpNbrCPUNode<<" CPUs, Performance: "
+				   <<DefaultPerNodePerformance<<", Memory: "<<DefaultPerNodeMemory<<endl;
+			      j = ClusterFile.GetNbrLines();
+			    }
+			}
+		      int DefaultMasterCPUs=DefaultCPUPerNode;
+		      double DefaultMasterPerformance=1.0;
+		      long DefaultMasterMemory=-1l;
+		      bool OverrideMaster=false;
+		      for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
+			{
+			  if (strcmp("master", ClusterFile(0,j)) == 0) 
+			    {
+			      DefaultMasterCPUs = TmpNbrCPUNode[j];
+			      DefaultMasterPerformance  = TmpClusterPerformanceArray[j];
+			      DefaultMasterMemory = TmpClusterMemoryArray[j];
+			      OverrideMaster=true;
 			      j = ClusterFile.GetNbrLines();
 			    }
 			}
 		      for (int i = 0; i < this->NbrMPINodes; ++i)
 			{
 			  this->NbrCPUPerNode[i] = DefaultCPUPerNode;
-			  this->ClusterPerformanceArray[i] = (double)DefaultCPUPerNode;
+			  this->ClusterPerformanceArray[i] = DefaultCPUPerNode;
+			  this->ClusterMemoryArray[i] = DefaultPerNodeMemory;
 			  for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
 			    {
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
@@ -143,6 +168,12 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				  j = ClusterFile.GetNbrLines();
 				}
 			    }
+			}
+		      if (OverrideMaster)
+			{
+			  this->NbrCPUPerNode[0] = DefaultMasterCPUs;
+			  this->ClusterPerformanceArray[i] = DefaultMasterPerformance;
+			  ClusterMemoryArray[0] = DefaultMasterMemory;
 			}
 		      delete[] TmpNbrCPUNode;
 		    }
