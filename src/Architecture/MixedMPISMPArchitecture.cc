@@ -172,7 +172,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 		      if (OverrideMaster)
 			{
 			  this->NbrCPUPerNode[0] = DefaultMasterCPUs;
-			  this->ClusterPerformanceArray[i] = DefaultMasterPerformance;
+			  this->ClusterPerformanceArray[0] = DefaultMasterPerformance;
 			  ClusterMemoryArray[0] = DefaultMasterMemory;
 			}
 		      delete[] TmpNbrCPUNode;
