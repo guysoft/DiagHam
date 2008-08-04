@@ -64,7 +64,7 @@ class MultipleComplexScalarProductOperation: public AbstractArchitectureOperatio
   ComplexVector** RightVectorsByPointers;
   // real matrix where vectors to use for the right hand side of the scalar product are stored (can be used instead of RightVectors)
   ComplexMatrix RightVectorMatrix;
-
+  
   // pointer to the vector to use for the left hand side of the scalar product
   ComplexVector* LeftVector;  
 
