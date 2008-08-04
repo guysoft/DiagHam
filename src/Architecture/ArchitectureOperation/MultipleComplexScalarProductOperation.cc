@@ -47,8 +47,8 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(Com
   this->NbrComponents = leftVector->GetVectorDimension();
   this->NbrScalarProduct = nbrScalarProduct;
   this->ScalarProducts = scalarProducts;
-  this->RightVectors = rightVectors; 
-  this->RightVectorsByPointers = 0; 
+  this->RightVectors = rightVectors;
+  this->RightVectorsByPointers = 0;
   this->LeftVector = leftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;
   this->Strategy = MultipleComplexScalarProductOperation::VectorSubdivision;
@@ -107,7 +107,8 @@ MultipleComplexScalarProductOperation::MultipleComplexScalarProductOperation(con
   this->NbrComponents = operation.NbrComponents;
   this->NbrScalarProduct = operation.NbrScalarProduct;
   this->ScalarProducts = operation.ScalarProducts;
-  this->RightVectors = operation.RightVectors; 
+  this->RightVectors = operation.RightVectors;
+  this->RightVectorsByPointers = operation.RightVectorsByPointers;
   this->RightVectorMatrix = operation.RightVectorMatrix;
   this->LeftVector = operation.LeftVector;
   this->OperationType = AbstractArchitectureOperation::MultipleComplexScalarProduct;

@@ -160,7 +160,7 @@ inline Type*& AbstractArchitecture::New (Type*& pointer, unsigned long size)
 {
   pointer = new Type [size];
   this->AllocateMemory(pointer, size * sizeof(Type));
- return pointer;
+  return pointer;
 }
   
 // delete an array that has been requested by the New function
@@ -174,7 +174,7 @@ inline void AbstractArchitecture::Delete (Type*& pointer)
   delete[] pointer;
   this->DeallocateMemory(pointer);
 }
-  
+
 // indicate an allocation of memory to the architecture
 //
 // pointer = pointer to the memory zone which will be allocated

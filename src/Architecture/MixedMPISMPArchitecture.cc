@@ -127,7 +127,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				DefaultPerNodePerformance *= TmpClusterPerformanceArray[j];
 			      if (TmpClusterMemoryArray != 0)
 				DefaultPerNodeMemory = (TmpClusterMemoryArray[j]) << 20;
-			      cout << "Default node configuration: "<<TmpNbrCPUNode<<" CPUs, Performance: "
+			      cout << "Default node configuration: "<<DefaultCPUPerNode<<" CPUs, Performance: "
 				   <<DefaultPerNodePerformance<<", Memory: "<<DefaultPerNodeMemory<<endl;
 			      j = ClusterFile.GetNbrLines();
 			    }

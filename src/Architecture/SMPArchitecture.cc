@@ -122,6 +122,7 @@ void SMPArchitecture::SendJobs ()
       if (pthread_create (&(Threads2[i]), (const pthread_attr_t *)NULL, ThreadExecuteOperation, (void*) &(this->ThreadParameters[i])) )
 	{
 	  cout << "error, cannot create thread" << endl;
+	  cout << "pthread_create exit code: "<<code<<endl;
 	  exit(1);
 	}
     }
