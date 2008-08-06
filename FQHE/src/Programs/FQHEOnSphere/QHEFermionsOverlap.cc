@@ -111,21 +111,6 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
-  cout << "Sizeof(double)="<<sizeof(double)<<endl;
-  cout << "Sizeof(Complex)="<<sizeof(Complex)<<endl;
-
-  Complex *test = new Complex[10];
-  for (int i=0; i<10;++i)
-    {
-      test[i].Re=i;
-      test[i].Im=i+0.5;
-    }
-  double *test2 = (double*)test;
-  for (int i=0; i<20;++i)
-    {
-      cout << "test2["<<i<<"]="<<test2[i]<<endl;
-    }
-
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
       cout << "see man page for option syntax or type QHEFermionOverlap -h" << endl;

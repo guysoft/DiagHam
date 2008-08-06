@@ -5,8 +5,8 @@
 use strict 'vars';
 use File::stat;
 
-my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
-#my $Program_32="FQHELatticeDensityMatrix";
+#my $Program_32="/rscratch/gm360/bin/FQHELatticeDensityMatrix";
+my $Program_32="FQHELatticeDensityMatrix";
 my $Program_64="/rscratch/gm360/bin/FQHELatticeDensityMatrix_64";
 
 if (!defined($ARGV[0]))
@@ -199,7 +199,7 @@ sub AnalyzeVectors
 			$WantToCompute = 0;
 		      }
 		  }
-
+		
 		if ( $WantToCompute == 1)
 		  {
 		    system("$Program $Vectors > $ProtocolName2");
@@ -266,7 +266,15 @@ sub AnalyzeVectors
 		      }
 		  }
 		close(INFILE2);
-		
+
+		if ( $WantToCompute == 1)
+		  {
+		    system("echo '# Corresponding Energy levels' >> $ProtocolName2");
+		    for (my $i=$BeginMultiplet; $i<=$EndMultiplet; ++$i)
+		      {
+			system("echo 'E${i} = ".$EigenValues[$i]."' >> $ProtocolName2");
+		      }
+		  }		
 		print OUTFILE ($Rank."\t".$EigenValues[$BeginMultiplet]."\t".$DensityRho0."\t".$DensityRatio."\t".$AverageDensity."\t".$LargeEVCount."\t".$AbsK."\t".$SizeMultiplet."\t".$Kx."\t".$Ky.$QuestionMark."\n");
 		++$Rank;
 		$BeginMultiplet=$EndMultiplet+1;
