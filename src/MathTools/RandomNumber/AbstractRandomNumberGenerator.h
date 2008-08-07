@@ -53,6 +53,11 @@ class AbstractRandomNumberGenerator
   //
   // seed = new seed
   virtual void SetSeed(const unsigned long& seed) = 0;
+
+  // set seed of the random number generator to system time
+  //
+  virtual void UseTimeSeed();
+
   
   // get real random number between 0 and 1
   //

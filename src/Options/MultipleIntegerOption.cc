@@ -49,9 +49,9 @@ using std::endl;
 // minValue = integer minimum value 
 // maxValueFlag = flag to indicates an integer maximum value
 // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
-MultipleIntegerOption::MultipleIntegerOption(char optionCode, char* optionName, char* optionDescription,
+MultipleIntegerOption::MultipleIntegerOption(char optionCode, const char* optionName, const char* optionDescription,
 					 char separator, char altSeparator,
-					 char *defaultValues, bool minValueFlag, int minValue, 
+					     const char *defaultValues, bool minValueFlag, int minValue, 
 					 bool maxValueFlag, int maxValue)
 {
   this->OptionCode = optionCode;
@@ -222,7 +222,7 @@ char* MultipleIntegerOption::GetAsAString()
   else
     {
       TmpString= new char[7];
-      TmpString="empty";
+      strcpy(TmpString,"empty");
     }
   return TmpString;
 }
@@ -276,7 +276,7 @@ ostream& MultipleIntegerOption::DisplayHelp (ostream& output)
   return output;
 }
 
-int MultipleIntegerOption::AnalyzeString(char *String)
+int MultipleIntegerOption::AnalyzeString(const char *String)
 {
   char *tmpC, *tmpC2, *token;
   char sep[2];

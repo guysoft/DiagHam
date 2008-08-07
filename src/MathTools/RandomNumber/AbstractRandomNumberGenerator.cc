@@ -31,10 +31,18 @@
 #include "config.h"
 #include "MathTools/RandomNumber/AbstractRandomNumberGenerator.h"
 
+#include <ctime>
 
 // virtual destructor
 //
 
 AbstractRandomNumberGenerator::~AbstractRandomNumberGenerator()
 {
+}
+
+// set seed of the random number generator to system time
+//
+void AbstractRandomNumberGenerator::UseTimeSeed()
+{
+  this->SetSeed(time(NULL));
 }

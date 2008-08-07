@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
   
@@ -120,6 +121,7 @@ int main(int argc, char** argv)
   double ContactU = Manager.GetDouble("contactU");
   if (HardCore) ContactU=0.0;
   double Delta = Manager.GetDouble("deltaPotential");
+  double Random = Manager.GetDouble("randomPotential");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
@@ -146,6 +148,8 @@ int main(int argc, char** argv)
 	sprintf(reverseHoppingString,"rh_");
       if (Delta!=0.0)
 	sprintf(deltaString,"d_%g_",Delta);
+      if (Random!=0.0)
+	sprintf(deltaString,"R_%g_",Random);
       if (HardCore)
 	sprintf(interactionStr,"_hardcore");
       else sprintf(interactionStr,"_u_%g", ContactU);
@@ -163,7 +167,7 @@ int main(int argc, char** argv)
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian;
   Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU,
-						      ReverseHopping, Delta, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+						      ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
 
 //   // testing Hamiltonian:
   

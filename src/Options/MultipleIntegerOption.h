@@ -84,9 +84,9 @@ class MultipleIntegerOption : public AbstractOption
   // minValue = integer minimum value 
   // maxValueFlag = flag to indicates an integer maximum value
   // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
-  MultipleIntegerOption(char optionCode, char* optionName, char* optionDescription, char separator, char altSeparator = 0,
-		      char *defaultValues = NULL, bool minValueFlag = false, int minValue = 0, 
-		      bool maxValueFlag = false, int maxValue = 0);
+  MultipleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, char separator,
+			char altSeparator = 0, const char *defaultValues = NULL, bool minValueFlag = false,
+			int minValue = 0, bool maxValueFlag = false, int maxValue = 0);
 
   // destructor
   //
@@ -140,7 +140,7 @@ class MultipleIntegerOption : public AbstractOption
   
  private:
   // analyzes the string given as an argument
-  int AnalyzeString(char *String);
+  int AnalyzeString(const char *String);
 
 
 };

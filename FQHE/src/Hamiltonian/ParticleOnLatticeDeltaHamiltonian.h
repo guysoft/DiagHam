@@ -56,6 +56,9 @@ class ParticleOnLatticeDeltaHamiltonian : public AbstractQHEOnLatticeHamiltonian
   // strength of delta-potential at the origin
   double DeltaPotential;
 
+  // strength of random potential at individual sites
+  double RandomPotential;
+
   // flag for reversed hopping
   bool ReverseHopping;
 
@@ -71,10 +74,11 @@ class ParticleOnLatticeDeltaHamiltonian : public AbstractQHEOnLatticeHamiltonian
   // contactInteractionU = strength of on-site delta interaction
   // reverseHopping = flag to indicate if sign of hopping terms should be reversed
   // deltaPotential = strength of a delta potential at site (0,0)
+  // randomPotential = strength of a random on-site potential
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+  ParticleOnLatticeDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

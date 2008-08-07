@@ -260,7 +260,8 @@ int main(int argc, char** argv)
 	  }
       Rho2.Diagonalize(M2, 1e-10, 250);      
       for (int i=0; i<DensityMatrixDimension2; ++i)
-	if (fabs(M2[DensityMatrixDimension2-1-i])>dynamics*M2[DensityMatrixDimension2-1])
+	if (fabs(M2[DensityMatrixDimension2-1-i])
+	    >dynamics*M2[DensityMatrixDimension2-1])
 	  cout << "Sum-EV["<<i<<"] = " << M2[DensityMatrixDimension2-1-i] << endl;
     }
 
