@@ -82,6 +82,7 @@ int main(int argc, char** argv)
 #endif
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('v', "get-vectors", "writes the basis of momentum eigenstates");
+  (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");
   (*MiscGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
   (*MiscGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
@@ -194,7 +195,8 @@ int main(int argc, char** argv)
 		  }
 	      
 	    }
-      }
+      }  
+  
   // cout << "Matrix="<<endl<<Rho<<endl;
   // calculate eigenvalues & vectors of Rho
   double dynamics = Manager.GetDouble("dynamic-range");
@@ -203,6 +205,38 @@ int main(int argc, char** argv)
   for (int i=0; i<DensityMatrixDimension; ++i)
     if (fabs(M[DensityMatrixDimension-1-i])>dynamics*M[DensityMatrixDimension-1])
       cout << "EV["<<i<<"] = " << M[DensityMatrixDimension-1-i] << endl;
+
+  if (NbrVectors==2)
+    {
+      cout << "==== Analysing superpositions of form |1> + e^(i phi) |2> ====" << endl;
+      ComplexVector Superposition = ComplexVector(Vectors[0].GetVectorDimension());
+      for (int k=0; k<Manager.GetInteger("superpositions");++k)
+	{
+	  Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*k)/Manager.GetInteger("superpositions"));
+	  Superposition.Copy(Vectors[0],sqrt(0.5));
+	  Superposition.AddLinearCombination (Phase, Vectors[1]);
+	  for (int CreationX=0; CreationX<Lx; ++CreationX)
+	    for (int CreationY=0; CreationY<Ly; ++CreationY)
+	      {
+		CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, 0, Tmp);	
+		for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+		  for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+		    {
+		      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
+		      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+		      // calculate possible matrix elements in subspace of vectors
+		      if (CreationIndex <= AnnihilationIndex)
+			{
+			  Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
+			  Rho.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+			}
+		    }
+	      }
+	  
+	  Rho.Diagonalize(M, 1e-10, 250);
+	  cout << "EV_0["<<Arg(Phase)<<"] = " << M[DensityMatrixDimension-1] << endl;
+	}
+    }
 
 
   cout<< "====== Analysis of momentum eigenvalues ====="<<endl;
