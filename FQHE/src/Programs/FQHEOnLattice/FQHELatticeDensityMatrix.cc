@@ -209,6 +209,7 @@ int main(int argc, char** argv)
   if (NbrVectors==2)
     {
       int DensityMatrixDimension2 = NbrSites;
+      RealDiagonalMatrix M2;	  
       HermitianMatrix Rho2(DensityMatrixDimension2);  
       cout << "====== Analysing superpositions of form |1> + e^(i phi) |2> ======" << endl;
       ComplexVector Superposition = ComplexVector(Vectors[0].GetVectorDimension());
@@ -234,10 +235,33 @@ int main(int argc, char** argv)
 			}
 		    }
 	      }
-	  Rho2.Diagonalize(M, 1e-10, 250);
-	  cout << "EV's["<<k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M[DensityMatrixDimension2-1] << ", "
-	       <<M[DensityMatrixDimension2-2] <<", "<<M[DensityMatrixDimension2-3]<<endl;
+	  Rho2.Diagonalize(M2, 1e-10, 250);
+	  cout << "EV's["<<k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M2[DensityMatrixDimension2-1] << ", "
+	       <<M2[DensityMatrixDimension2-2] <<", "<<M2[DensityMatrixDimension2-3]<<endl;
 	}
+
+      cout << "====== Analysing sum of density matrices ======" << endl;
+      for (int CreationX=0; CreationX<Lx; ++CreationX)
+	for (int CreationY=0; CreationY<Ly; ++CreationY)
+	  {
+	    CreationIndex = Space->EncodeQuantumNumber(CreationX, CreationY, 0, Tmp);	
+	    for (int AnnihilationX=0; AnnihilationX<Lx; ++AnnihilationX)
+	      for (int AnnihilationY=0; AnnihilationY<Ly; ++AnnihilationY)
+		{
+		  AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
+		  DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
+		  // calculate possible matrix elements in subspace of vectors
+		  // if (CreationIndex <= AnnihilationIndex)
+		  Tmp=0.0;
+		  for (int i=0; i<NbrVectors; ++i)
+		    Tmp+=DensityOperator->MatrixElement(Vectors[i], Vectors[i]);
+		  Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+		}
+	  }
+      Rho2.Diagonalize(M2, 1e-10, 250);      
+      for (int i=0; i<DensityMatrixDimension2; ++i)
+	if (fabs(M2[DensityMatrixDimension2-1-i])>dynamics*M2[DensityMatrixDimension2-1])
+	  cout << "Sum-EV["<<i<<"] = " << M2[DensityMatrixDimension2-1-i] << endl;
     }
 
 

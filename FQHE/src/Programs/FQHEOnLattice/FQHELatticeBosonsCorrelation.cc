@@ -49,7 +49,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   Manager += PrecalculationGroup;
 
-    (*SystemGroup) += new MultipleStringOption  ('\0', "states", "filenames of state vectors to be processed");
+  (*SystemGroup) += new MultipleStringOption  ('\0', "states", "filenames of state vectors to be processed");
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);  
-  
+  (*MiscGroup) += new BooleanOption  ('g', "gnuplot", "format output for gnuplot, and make plot");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
       exit(1);
     }
   ParticleOnLattice* Space = 0;
-
+  bool Plot = Manager.GetBoolean("gnuplot");
   for (int i=0; i<NbrVectors; ++i)
     {      
       double Interaction=0.0;
@@ -109,10 +109,21 @@ int main(int argc, char** argv)
 	strncpy(OutputNameCorr, VectorFiles[i], ending-VectorFiles[i]);
       else
 	strcpy(OutputNameCorr, VectorFiles[i]);
+      char* PlotNameCmd=0;
+      char* PlotNamePS=0;
+      if (Plot)
+	{
+	  PlotNameCmd = new char  [10 + strlen (VectorFiles[i])];
+	  PlotNamePS = new char  [10 + strlen (VectorFiles[i])];
+	  sprintf (PlotNameCmd, "%s.gp", OutputNameCorr);
+	  sprintf (PlotNamePS, "%s.ps", OutputNameCorr);
+	}
       if (DensityFlag == false)
 	sprintf (OutputNameCorr, "%s.rho_rho.dat", OutputNameCorr);
       else
 	sprintf (OutputNameCorr, "%s.rho.dat", OutputNameCorr);
+      
+	
       cout << "<in  "<<VectorFiles[i]<<endl<<">out "<<OutputNameCorr<<endl;
       if ((Space == 0) || (Space->GetHilbertSpaceDimension()!=VectorDimension))
 	{
@@ -138,27 +149,49 @@ int main(int argc, char** argv)
 	  ParticleOnLatticeOneBodyOperator Operator0 (Space, 0, 0);
 	  Complex Zero=Operator0.MatrixElement(State, State);
 	  for (int x = 0; x < Lx; ++x)
-	    for (int y = 0; y < Ly; ++y)
-	      {
-		int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
-		cout << "q="<<q<<endl;
-		ParticleOnLatticeDensityDensityOperator Operator (Space, q, 0, q, 0);
-		double ME=Real(Operator.MatrixElement(State, State));
-		if (q==0) ME = Real(Zero)*Real(Zero);
-		File << x << "\t" << y << "\t" << ME << endl;		  
-	      }
+	    {
+	      for (int y = 0; y < Ly; ++y)
+		{
+		  int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
+		  ParticleOnLatticeDensityDensityOperator Operator (Space, q, 0, q, 0);
+		  double ME=Real(Operator.MatrixElement(State, State));
+		  if (q==0) ME = Real(Zero)*Real(Zero);
+		  File << x << "\t" << y << "\t" << ME << endl;		  
+		}
+	      if (Plot) File << endl;
+	    }
 	}
       else
 	{
 	  File << "# density-profile for " << VectorFiles[i]<< endl;
 	  File << "# x\t<\tg"<< endl;
 	  for (int x = 0; x < Lx; ++x)
-	    for (int y = 0; y < Ly; ++y)
-	      {
-		int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
-		ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
-		File << x << "\t" << y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
-	      }
+	    {
+	      for (int y = 0; y < Ly; ++y)
+		{
+		  int q=Space->EncodeQuantumNumber(x, y, 0, Tmp);
+		  ParticleOnLatticeOneBodyOperator Operator (Space, q, q);
+		  File << x << "\t" << y << "\t" << Real(Operator.MatrixElement(State, State)) << endl;		  
+		}
+	      if (Plot) File << endl;
+	    }
+	}
+      File.close();
+      if (Plot)
+	{
+	  File.open(PlotNameCmd, ios::binary | ios::out);      
+	  File<< "set pm3d at b" << endl <<"set xlabel \"x\""<<endl<<"set ylabel \"y\""<<endl;
+	  File<<"set terminal postscript eps enhanced \"Helvetica\" 14 color"<<endl;
+	  File<<"set palette rgbformulae 4,9,15"<<endl;
+	  File<<"set output \""<<PlotNamePS<<"\""<<endl;
+	  File<<"splot \""<<OutputNameCorr<<"\" u 1:2:3 title \"correlations\" w lines 1"<<endl;
+	  File.close();
+	  char tmpC[255];
+	  sprintf(tmpC,"gnuplot %s",PlotNameCmd);
+	  system(tmpC);
+	  cout<< "created graph "<<PlotNamePS<<endl;
+	  delete [] PlotNameCmd;
+	  delete [] PlotNamePS;
 	}
       delete[] OutputNameCorr;	  
 
