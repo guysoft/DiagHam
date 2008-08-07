@@ -31,6 +31,9 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnLattice.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
 
 // virtual destructor
 //
@@ -77,6 +80,7 @@ int ParticleOnLattice::GetHilbertSpaceAdditionalSymmetry()
 
 int ParticleOnLattice::AdAdAA (int index, int q1, int q2, int r1, int r2, double& coefficient)
 {
+  cout << "ParticleOnLattice::AdAdAA"<<endl;
   return this->HilbertSpaceDimension;
 }
 

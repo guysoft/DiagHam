@@ -298,8 +298,9 @@ void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int HardCoreBosonOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2)
+int HardCoreBosonOnLattice::AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient)
 {
+  coefficient = 1.0;
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   if ((n1 > StateHighestBit) || (n2 > StateHighestBit) || ((State & (((unsigned long) (0x1)) << n1)) == 0) 

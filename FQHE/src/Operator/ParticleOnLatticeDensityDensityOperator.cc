@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of particle on lattice translation operator            //
+//             class of particle on lattice density-density operator          //
 //                                                                            //
-//                        last modification : 09/04/2008                      //
+//                        last modification : 10/12/2002                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,59 +27,72 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+
 #include "config.h"
-#include "Operator/ParticleOnLatticeTranslationOperator.h"
+#include "Operator/ParticleOnLatticeDensityDensityOperator.h"
+#include "Output/MathematicaOutput.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
+#include "HilbertSpace/BosonOnLattice.h"
 
-  
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles
-// rx = x-component of the desired translation
-// ry = y-component of the desired translation
-ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx, int ry)
+// creationIndex1 = index of the leftmost creation operator
+// creationIndex2 = index of the rightmost creation operator
+// annihilationIndex1 = index of the leftmost annihilation operator
+// annihilationIndex2 = index of the rightmost annihilation operator
+
+ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(ParticleOnLattice* particle,
+										 int creationIndex1, int creationIndex2,
+										 int annihilationIndex1, int annihilationIndex2)
 {
   this->Particle = (ParticleOnLattice*) (particle->Clone());
-  this->Rx=rx;
-  this->Ry=ry;  
+  this->CreationIndex1 = creationIndex1;
+  this->CreationIndex2 = creationIndex2;
+  this->AnnihilationIndex1 = annihilationIndex1;
+  this->AnnihilationIndex2 = annihilationIndex2;
 }
 
-// copy constructor
-//
-// oper = reference on the operator to copy
- 
-ParticleOnLatticeTranslationOperator::ParticleOnLatticeTranslationOperator(const ParticleOnLatticeTranslationOperator& oper)
+ParticleOnLatticeDensityDensityOperator::ParticleOnLatticeDensityDensityOperator(const ParticleOnLatticeDensityDensityOperator& oper)
 {
   this->Particle = (ParticleOnLattice*) (oper.Particle->Clone());
-  this->Rx=oper.Rx;
-  this->Ry=oper.Ry;
+  this->CreationIndex1 = this->CreationIndex1;
+  this->CreationIndex2 = this->CreationIndex2;
+  this->AnnihilationIndex1 = this->AnnihilationIndex1;
+  this->AnnihilationIndex2 = this->AnnihilationIndex2;
 }
+
 
 // destructor
 //
 
-ParticleOnLatticeTranslationOperator::~ParticleOnLatticeTranslationOperator()
+ParticleOnLatticeDensityDensityOperator::~ParticleOnLatticeDensityDensityOperator()
 {
-  delete this->Particle;
 }
-  
   
 // clone operator without duplicating datas
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractOperator* ParticleOnLatticeTranslationOperator::Clone ()
+AbstractOperator* ParticleOnLatticeDensityDensityOperator::Clone ()
 {
-  return new ParticleOnLatticeTranslationOperator(*this);
+  return new ParticleOnLatticeDensityDensityOperator(*this);
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnLatticeTranslationOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnLatticeDensityDensityOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particle = (ParticleOnLattice*) hilbertSpace;
 }
@@ -88,7 +101,7 @@ void ParticleOnLatticeTranslationOperator::SetHilbertSpace (AbstractHilbertSpace
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnLatticeTranslationOperator::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnLatticeDensityDensityOperator::GetHilbertSpace ()
 {
   return this->Particle;
 }
@@ -97,23 +110,10 @@ AbstractHilbertSpace* ParticleOnLatticeTranslationOperator::GetHilbertSpace ()
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnLatticeTranslationOperator::GetHilbertSpaceDimension ()
+int ParticleOnLatticeDensityDensityOperator::GetHilbertSpaceDimension ()
 {
   return this->Particle->GetHilbertSpaceDimension();
 }
-
-// set components of translation vector
-//
-// rx = x-component of the desired translation
-// ry = y-component of the desired translation
-void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int ry)
-{
-  this->Rx=rx;
-  this->Ry=ry;  
-}
-
-
-
   
 // evaluate matrix element
 //
@@ -121,35 +121,42 @@ void ParticleOnLatticeTranslationOperator::SetTranslationComponents(int rx, int 
 // V2 = vector to right multiply with current matrix
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (RealVector& V1, RealVector& V2)
+Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (RealVector& V1, RealVector& V2)
 {
   int Dim = this->Particle->GetHilbertSpaceDimension();
-  Complex TranslationPhase;  
+  double Coefficient = 0.0;
+  double Element = 0.0;
+  int Index;
+  for (int i = 0; i < Dim; ++i)
+    {
+      Index = ((BosonOnLattice*)(this->Particle))->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      if (Index != Dim)
+	Element += V1[Index] * V2[i] * Coefficient;      
+    }
+  return Complex(Element);
+}
+  
+// evaluate matrix element
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// return value = corresponding matrix element
+
+Complex ParticleOnLatticeDensityDensityOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
+{
+  int Dim = this->Particle->GetHilbertSpaceDimension();
+  double Coefficient = 0.0;
   Complex Element = 0.0;
   int Index;
   for (int i = 0; i < Dim; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
-      Element += V1[Index] * V2[i] * TranslationPhase;
+      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      if (Index != Dim)
+	Element += Conj(V1[Index]) * V2[i] * Coefficient;      
     }
   return Element;
 }
 
-
-Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, ComplexVector& V2)
-{
-  int Dim = this->Particle->GetHilbertSpaceDimension();
-  Complex TranslationPhase;
-  Complex Element = 0.0;
-  int Index;
-  for (int i = 0; i < Dim; ++i)
-    {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);
-      Element += Conj(V1[Index]) * V2[i] * TranslationPhase;
-    }
-  return Element; 
-}
-   
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //
@@ -158,29 +165,21 @@ Complex ParticleOnLatticeTranslationOperator::MatrixElement (ComplexVector& V1, 
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
-
-ComplexVector& ParticleOnLatticeTranslationOperator::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnLatticeDensityDensityOperator::LowLevelMultiply(ComplexVector& vSource,
+									 ComplexVector& vDestination, 
+									 int firstComponent, int nbrComponent)
 {
-  int Last = firstComponent + nbrComponent;
+  int Dim = this->Particle->GetHilbertSpaceDimension();
+  int Last = firstComponent + nbrComponent;;
   int Index;
-  Complex TranslationPhase;
-  vDestination.ClearVector();
-  //std::cout << "R=("<<Rx<<", "<<Ry<<")"<<std::endl<<vSource<<std::endl<<"Norm:"<<vSource.Norm()<<std::endl;
-  std::cout.precision(8);
+  double Coefficient = 0.0;
   for (int i = firstComponent; i < Last; ++i)
     {
-      Index = this->Particle->TranslateState(i, this->Rx, this->Ry, TranslationPhase);      
-      //std::cout << "Translated("<<i<<")="<<TranslationPhase<<"* ["<<Index<<"]"<<std::endl;
-      
-      //std::cout << "Source("<<i<<")="<<Norm(vSource[i])<<", Target("<<Index<<")="<<Norm(vSource[Index])<<" d="<<(Arg(vSourc e[i]/vSource[Index]))/M_PI<<"pi, TranslationPhase="<<Arg(TranslationPhase)/M_PI<<"pi"<<std::endl;
-      
-      //std::cout << "Ignoring translation Phase!"<<std::endl; TranslationPhase=1.0;
-      // permuted i and Index on the following lines!
-      vDestination.Re(i) += vSource[Index].Re * TranslationPhase.Re - vSource[Index].Im * TranslationPhase.Im;
-      vDestination.Im(i) += vSource[Index].Re * TranslationPhase.Im + vSource[Index].Im * TranslationPhase.Re;
+      Index = this->Particle->AdAdAA(i, this->CreationIndex1, this->CreationIndex2, this->AnnihilationIndex1, this->AnnihilationIndex2, Coefficient);
+      if (Index != Dim)
+	vDestination[Index] = vSource[i] * Coefficient;
     }
-  //std::cout << vDestination<<std::endl<<"Norm:"<<vDestination.Norm()<<std::endl;
   return vDestination;
 }
-
+  
 

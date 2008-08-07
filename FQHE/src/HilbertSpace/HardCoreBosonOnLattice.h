@@ -183,7 +183,7 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value = index of the destination state 
-  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2);
+  virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double &coefficient);
 
   // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
   //

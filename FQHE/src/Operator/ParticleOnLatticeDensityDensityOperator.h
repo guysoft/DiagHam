@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of particle on lattice 1-body operator              //
+//             class of particle on lattice density-density operator          //
 //                                                                            //
-//                        last modification : 09/04/2008                      //
+//                        last modification : 10/12/2002                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -27,51 +27,53 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PARTICLEONLATTICETRANSLATIONOPERATOR_H
-#define PARTICLEONLATTICETRANSLATIONOPERATOR_H
+
+#ifndef PARTICLEONLATTICEDENSITYDENSITYOPERATOR_H
+#define PARTICLEONLATTICEDENSITYDENSITYOPERATOR_H
+
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
 #include "Operator/AbstractOperator.h"
 #include "HilbertSpace/ParticleOnLattice.h"
 
-class ParticleOnLatticeTranslationOperator : public AbstractOperator
+
+class ParticleOnLatticeDensityDensityOperator : public AbstractOperator
 {
 
  protected:
 
   // hilbert space associated to the particles
   ParticleOnLattice* Particle;
-
-  // x-component of the translation
-  int Rx;
-  // y-component of the translation
-  int Ry;
   
-  // indices of the creation operators
-  int* CreationIndices;
-  // index of the annihilation operators
-  int* AnnihilationIndices;
-  // complex phase of the operator pairs from magnetic translational invariance
-  Complex* TranslationPhases;
+  // indices attached to the a+_i a+_j a_k a_l
+  // index of the leftmost creation operator
+  int CreationIndex1;
+  // index of the rightmost creation operator
+  int CreationIndex2;
+  // index of the leftmost annihilation operator
+  int AnnihilationIndex1;
+  // index of the rightmost annihilation operator
+  int AnnihilationIndex2;
   
  public:
   
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles
-  // rx = x-component of the desired translation
-  // ry = y-component of the desired translation
-  ParticleOnLatticeTranslationOperator(ParticleOnLattice* particle, int rx=0, int ry=1);
+  // creationIndex1 = index of the leftmost creation operator
+  // creationIndex2 = index of the rightmost creation operator
+  // annihilationIndex1 = index of the leftmost annihilation operator
+  // annihilationIndex2 = index of the rightmost annihilation operator
+  ParticleOnLatticeDensityDensityOperator(ParticleOnLattice* particle, int creationIndex1, int creationIndex2,
+					 int annihilationIndex1, int annihilationIndex2);
 
   // copy constructor
-  //
-  // oper = reference on the operator to copy
-  ParticleOnLatticeTranslationOperator(const ParticleOnLatticeTranslationOperator& oper);
+  ParticleOnLatticeDensityDensityOperator(const ParticleOnLatticeDensityDensityOperator& oper);
 
   // destructor
   //
-  ~ParticleOnLatticeTranslationOperator();
+  ~ParticleOnLatticeDensityDensityOperator();
   
   // clone operator without duplicating datas
   //
@@ -92,13 +94,7 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
-
-  // set components of translation vector
-  //
-  // rx = x-component of the desired translation
-  // ry = y-component of the desired translation
-  void SetTranslationComponents(int rx, int ry);
-
+  
   // evaluate matrix element
   //
   // V1 = vector to left multiply with current matrix
@@ -112,7 +108,8 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   // V2 = vector to right multiply with current matrix
   // return value = corresponding matrix element
   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-   
+
+
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
@@ -122,8 +119,7 @@ class ParticleOnLatticeTranslationOperator : public AbstractOperator
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-  
+				  int firstComponent, int nbrComponent);  
 };
 
-#endif 
+#endif

@@ -86,10 +86,10 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");
   (*MiscGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
   (*MiscGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
-    (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
-
-  Manager.StandardProceedings(argv, argc, cout);
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
+  Manager.StandardProceedings(argv, argc, cout);
+    
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
@@ -208,7 +208,9 @@ int main(int argc, char** argv)
 
   if (NbrVectors==2)
     {
-      cout << "==== Analysing superpositions of form |1> + e^(i phi) |2> ====" << endl;
+      int DensityMatrixDimension2 = NbrSites;
+      HermitianMatrix Rho2(DensityMatrixDimension2);  
+      cout << "====== Analysing superpositions of form |1> + e^(i phi) |2> ======" << endl;
       ComplexVector Superposition = ComplexVector(Vectors[0].GetVectorDimension());
       for (int k=0; k<Manager.GetInteger("superpositions");++k)
 	{
@@ -225,16 +227,16 @@ int main(int argc, char** argv)
 		      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
 		      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
 		      // calculate possible matrix elements in subspace of vectors
-		      if (CreationIndex <= AnnihilationIndex)
+		      // if (CreationIndex <= AnnihilationIndex)
 			{
 			  Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
-			  Rho.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
+			  Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);
 			}
 		    }
 	      }
-	  
-	  Rho.Diagonalize(M, 1e-10, 250);
-	  cout << "EV_0["<<Arg(Phase)<<"] = " << M[DensityMatrixDimension-1] << endl;
+	  Rho2.Diagonalize(M, 1e-10, 250);
+	  cout << "EV's["<<k<<"/"<<Manager.GetInteger("superpositions")<<"pi] = " << M[DensityMatrixDimension2-1] << ", "
+	       <<M[DensityMatrixDimension2-2] <<", "<<M[DensityMatrixDimension2-3]<<endl;
 	}
     }
 

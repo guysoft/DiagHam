@@ -167,7 +167,6 @@ class BosonOnLattice : public ParticleOnLattice
   // return value = index of the destination state 
   virtual int AdAdAA (int index, int q1, int q2, int r1, int r2, double& coefficient);
 
-
   // apply a_r1 a_r2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
   //
   // index = index of the state on which the operator has to be applied
