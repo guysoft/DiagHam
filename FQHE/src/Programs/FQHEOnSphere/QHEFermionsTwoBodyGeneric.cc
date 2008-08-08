@@ -153,6 +153,7 @@ int main(int argc, char** argv)
 	  cout << "Weights is not defined or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
 	  return -1;
 	}
+      cout << "LzMax= " << TmpNbrPseudoPotentials << " " << LzMax << endl;
       if (TmpNbrPseudoPotentials != (LzMax +1))
 	{
 	  cout << "Invalid number of pseudo-potentials" << endl;

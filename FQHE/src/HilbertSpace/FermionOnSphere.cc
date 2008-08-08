@@ -141,7 +141,7 @@ FermionOnSphere::~FermionOnSphere ()
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->Indices!=NULL)
+  if (this->Indices != 0)
     delete [] Indices;
 }
 

@@ -74,6 +74,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
     this->InvertUnshift = this->InvertShift - 1;
   else
     this->InvertUnshift = this->InvertShift;
+  this->Indices = 0;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
@@ -147,6 +148,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
     ReadLittleEndian(File, this->StateDescription[i]);
   File.close();
 
+  this->Indices = 0;
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -201,6 +203,7 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
 
 FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis(const FermionOnSphereSymmetricBasis& fermions)
 {
+  this->Indices = 0;
   this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
