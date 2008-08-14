@@ -450,8 +450,7 @@ inline void ComplexMatrix::GetMatrixElement(int i, int j, double& x) const
 
 inline void ComplexMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
-  x.Re = this->Columns[j].Re(i);
-  x.Im = this->Columns[j].Im(i);
+  x = this->Columns[j][i];
 }
 
 #endif

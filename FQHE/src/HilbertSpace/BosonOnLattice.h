@@ -156,6 +156,12 @@ class BosonOnLattice : public ParticleOnLattice
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
   void SetNbrFluxQuanta(int nbrFluxQuanta);
 
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // q = quantum number of boson to be added
+  virtual unsigned long Ad (unsigned long state, int q);
+
   // apply a^+_q1 a^+_q2 a_r1 a_r2 operator to a given state (with q1+q2=r1+r2)
   //
   // index = index of the state on which the operator has to be applied
@@ -243,6 +249,13 @@ class BosonOnLattice : public ParticleOnLattice
   // state = ID of the state to print
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
  protected:
 

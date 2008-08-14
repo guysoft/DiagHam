@@ -1638,10 +1638,10 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
   TmpMatrix2.SortMatrixUpOrder(TmpMatrix3);
   double LastEV=-1e300;
   int NewEVIndex=-1;
-  for (int i = 0; i < M.GetNbrRow(); ++i)
+  for (int i = M.GetNbrRow()-1; i > 0; --i)
     {
       M[i] = TmpMatrix2[2 * i];
-      if (fabs(M[i]-LastEV)>1e-13)
+      if (fabs(M[i]-LastEV)>1e-10)
 	{
 	  LastEV=M[i];
 	  NewEVIndex=i;
@@ -1659,7 +1659,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
 	      TmpVector.Re(j) = TmpMatrix3[2 * i][j];
 	      TmpVector.Im(j) = -TmpMatrix3[2 * i][j + M.GetNbrRow()];
 	    }
-	  for (int k=NewEVIndex; k<i; ++k)
+	  for (int k=NewEVIndex; k>i; --k)
 	    {
 	      TmpVector -= (Q[k]*TmpVector) * Q[k];
 	    }

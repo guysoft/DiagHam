@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [256];
   sprintf (OutputNameLz, "fermions_coulomb_n_%d_2s_%d_lz.dat", NbrFermions, LzMax);
 
-  int Shift = 0;
+  // int Shift = 0;
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   int Max = ((LzMax - NbrFermions + 1) * NbrFermions);

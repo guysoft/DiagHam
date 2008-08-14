@@ -1854,6 +1854,29 @@ ComplexVector& ComplexVector::Merge(const RealVector& V, int firstCoordinate, in
     }
   return *this;
 }
+
+// reverse elements of the current vector (i.e. exchanging i <-> N - i)
+//
+// return value = reference to the current Vector
+
+ComplexVector& ComplexVector::ReverseVector()
+{
+  if (this->Dimension != 0)
+    {
+      this->Localize();
+      int Max = this->Dimension - 1;
+      Complex Tmp;
+      for (int i = 0; i < this->Dimension/2; ++i)
+	{
+	  Tmp = this->Components[i];
+	  this->Components[i] = this->Components[Max - i];
+	  this->Components[Max - i] = Tmp;
+	}
+      this->Delocalize(true);
+    }
+  return *this;
+}
+
   
 // Output Stream overload
 //
@@ -1914,7 +1937,7 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexVector& v)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool ComplexVector::WriteVector (char* fileName)
+bool ComplexVector::WriteVector (const char* fileName)
 {
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
@@ -1933,7 +1956,7 @@ bool ComplexVector::WriteVector (char* fileName)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool ComplexVector::WriteAsciiVector (char* fileName)
+bool ComplexVector::WriteAsciiVector (const char* fileName)
 {
   ofstream File;
   File.precision(14);
@@ -1951,7 +1974,7 @@ bool ComplexVector::WriteAsciiVector (char* fileName)
 // fileName = name of the file where the vector has to be read
 // return value = true if no error occurs
 
-bool ComplexVector::ReadVector (char* fileName)
+bool ComplexVector::ReadVector (const char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);

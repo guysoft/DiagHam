@@ -84,7 +84,7 @@ ConfigurationParser::~ConfigurationParser()
 // filename = name of the file to parse
 // return value = true if no error occurs
 
-bool ConfigurationParser::Parse(char* filename)
+bool ConfigurationParser::Parse(const char* filename)
 {
   ifstream File;
   File.open(filename, ios::binary | ios::in);
@@ -187,7 +187,7 @@ bool ConfigurationParser::Parse(char* filename)
 // parameterName = string corresponding to a parameter name
 // return value = string (must not be altered) corresponding to a configuration parameter, null if the parameter is not defined
 
-char* ConfigurationParser::operator [] (char* parameterName)
+char* ConfigurationParser::operator [] (const char* parameterName)
 {
   ListIterator<char*> IterNames(this->ParameterNames);
   ListIterator<char*> IterValues(this->ParameterValues);
@@ -291,7 +291,7 @@ bool ConfigurationParser::CleanLine (char* line)
 // falseString = string which means false (case insensitive)
 // return value = true if no error occured
 
-bool ConfigurationParser::GetAsBoolean (char* parameterName, bool& value, char* trueString, char* falseString)
+bool ConfigurationParser::GetAsBoolean (const char* parameterName, bool& value, const char* trueString, const char* falseString)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -320,7 +320,7 @@ bool ConfigurationParser::GetAsBoolean (char* parameterName, bool& value, char* 
 // value = reference on the integer where the read value has to be stored
 // return value = true if no errro occured
 
-bool ConfigurationParser::GetAsSingleInteger (char* parameterName, int& value)
+bool ConfigurationParser::GetAsSingleInteger (const char* parameterName, int& value)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -346,7 +346,7 @@ bool ConfigurationParser::GetAsSingleInteger (char* parameterName, int& value)
 // nbrValues = reference on the integer where the number of read values has to be stored
 // return value = true if no errro occured
 
-bool ConfigurationParser::GetAsIntegerArray (char* parameterName, char separator, int*& array, int& nbrValues)
+bool ConfigurationParser::GetAsIntegerArray (const char* parameterName, char separator, int*& array, int& nbrValues)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -442,7 +442,7 @@ bool ConfigurationParser::GetAsIntegerArray (char* parameterName, char separator
 // value = reference on the double where the read value has to be stored
 // return value = true if no errro occured
 
-bool ConfigurationParser::GetAsSingleDouble (char* parameterName, double& value)
+bool ConfigurationParser::GetAsSingleDouble (const char* parameterName, double& value)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -468,7 +468,7 @@ bool ConfigurationParser::GetAsSingleDouble (char* parameterName, double& value)
 // nbrValues = reference on the double where the number of read values has to be stored
 // return value = true if no errro occured
 
-bool ConfigurationParser::GetAsDoubleArray (char* parameterName, char separator, double*& array, int& nbrValues)
+bool ConfigurationParser::GetAsDoubleArray (const char* parameterName, char separator, double*& array, int& nbrValues)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -567,7 +567,7 @@ bool ConfigurationParser::GetAsDoubleArray (char* parameterName, char separator,
 // nbrValues = reference on the integer where the number of read values has to be stored
 // return value = true if no errro occured
 
-bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator, char**& array, int& nbrValues)
+bool ConfigurationParser::GetAsStringArray (const char* parameterName, char separator, char**& array, int& nbrValues)
 {
   char* TmpValue = (*this)[parameterName];
   if (TmpValue == 0)
@@ -587,7 +587,7 @@ bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator,
       nbrValues = 0;
       Start = TmpValue;
       char* End = TmpValue;
-      char* Error;
+      // char* Error;
       while ((*Start) != '\0')
 	{
 	  while (((*End) != '\0') && ((*End) != separator))
@@ -625,7 +625,7 @@ bool ConfigurationParser::GetAsStringArray (char* parameterName, char separator,
       nbrValues = 0;
       Start = TmpValue;
       char* End = TmpValue;
-      char* Error;
+      // char* Error;
       while ((*Start) != '\0')
 	{
 	  while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))

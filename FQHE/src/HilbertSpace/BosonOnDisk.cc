@@ -223,7 +223,7 @@ bool BosonOnDisk::ForgeEigenstate(char* filename, RealVector& state)
       TmpNorm += Coefficients[i].Re * Coefficients[i].Re;
     }
   TmpNorm = 1.0 / sqrt(TmpNorm);
-  int Pos = 0;
+  //  int Pos = 0;
   bool SuccessfullParsing = true;
   for (int i = 0; i < NbrComponents; ++i)
     {

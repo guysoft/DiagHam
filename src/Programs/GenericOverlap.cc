@@ -1,13 +1,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -34,8 +28,8 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('1', "state1", "name of the file containing the 1st vector obtained using exact diagonalization");
-  (*SystemGroup) += new SingleStringOption  ('2', "state2", "name of the file containing the 2nd vector obtained using exact diagonalization");
+  (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of the vector files obtained using exact diagonalization");
+  
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   
@@ -52,73 +46,87 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["state1"])->GetString() == 0)
+  int NbrVectors;
+  char** VectorFiles = Manager.GetStrings("states",NbrVectors);
+
+  if (NbrVectors<2)
     {
-      cout << "GenericOverlap requires an exact state" << endl;
-      return -1;
+      cout << "At least two vector files are required!"<<endl;
+      exit(1);
     }
-  if (((SingleStringOption*) Manager["state2"])->GetString() == 0)
-    {
-      cout << "GenericOverlap requires a 2nd state to compare to." << endl;
-      return -1;
-    }
+
+  for (int i=0; i<NbrVectors; ++i)    
+    cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
+
   Complex sp=0.0;
   
   if (Manager.GetBoolean("complex"))
-    {
+    {      
       ComplexVector State1, State2;
-      if (State1.ReadVector (((SingleStringOption*) Manager["state1"])->GetString()) == false)
+      for (int i=0; i<NbrVectors; ++i)
 	{
-	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state1"])->GetString() << endl;
-	  return -1;      
+	  if (State1.ReadVector (VectorFiles[i]) == false)
+	    {
+	      cout << "can't open vector file " << VectorFiles[i] << endl;
+	      return -1;      
+	    }
+	  for (int j=i+1; j<NbrVectors; ++j)
+	    {	      
+	      if (State2.ReadVector (VectorFiles[j]) == false)
+		{
+		  cout << "can't open vector file " << VectorFiles[j] << endl;
+		  return -1;      
+		}
+	      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
+		{
+		  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
+		  return -2;
+		}
+	      sp=0.0;
+	      if (Manager.GetBoolean("discard-sign"))
+		for (int i=0; i<State1.GetVectorDimension(); ++i)
+		  sp+=Norm(State1[i]*State2[i]);
+	      else
+		for (int i=0; i<State1.GetVectorDimension(); ++i)
+		  sp+= Conj(State1[i])*State2[i];
+	      
+	      cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	    }
 	}
-      if (State2.ReadVector (((SingleStringOption*) Manager["state2"])->GetString()) == false)
-	{
-	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state2"])->GetString() << endl;
-	  return -1;      
-	}
-      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
-	{
-	  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
-	  return -2;
-	}
-
-      if (Manager.GetBoolean("discard-sign"))
-	for (int i=0; i<State1.GetVectorDimension(); ++i)
-	  sp+=Norm(State1[i]*State2[i]);
-      else
-	for (int i=0; i<State1.GetVectorDimension(); ++i)
-	  sp+= Conj(State1[i])*State2[i];
     }
   else // real vectors
     {
       RealVector State1, State2;
-      if (State1.ReadVector (((SingleStringOption*) Manager["state1"])->GetString()) == false)
+      for (int i=0; i<NbrVectors; ++i)
 	{
-	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state1"])->GetString() << endl;
-	  return -1;      
+	  if (State1.ReadVector (VectorFiles[i]) == false)
+	    {
+	      cout << "can't open vector file " << VectorFiles[i] << endl;
+	      return -1;      
+	    }
+	  for (int j=i+1; j<NbrVectors; ++j)
+	    {	      
+	      if (State2.ReadVector (VectorFiles[j]) == false)
+		{
+		  cout << "can't open vector file " << VectorFiles[j] << endl;
+		  return -1;      
+		}
+	      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
+		{
+		  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
+		  return -2;
+		}
+	      
+	      sp=0.0;
+	      if (Manager.GetBoolean("discard-sign"))
+		for (int i=0; i<State1.GetVectorDimension(); ++i)
+		  sp+=fabs(State1[i]*State2[i]);
+	      else
+		for (int i=0; i<State1.GetVectorDimension(); ++i)
+		  sp+= State1[i]*State2[i];
+	      
+	      cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	    }
 	}
-      if (State2.ReadVector (((SingleStringOption*) Manager["state2"])->GetString()) == false)
-	{
-	  cout << "can't open vector file " << ((SingleStringOption*) Manager["state2"])->GetString() << endl;
-	  return -1;      
-	}
-      if (State1.GetVectorDimension() != State2.GetVectorDimension() )
-	{
-	  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
-	  return -2;
-	}
-      
-      
-      if (Manager.GetBoolean("discard-sign"))
-	for (int i=0; i<State1.GetVectorDimension(); ++i)
-	  sp+=fabs(State1[i]*State2[i]);
-      else
-	for (int i=0; i<State1.GetVectorDimension(); ++i)
-	  sp+= State1[i]*State2[i];      
     }
-  
-
-  cout << "The overlap is: |<1|2>|^2 = " << SqrNorm(sp) << endl;
-  
 }

@@ -288,6 +288,21 @@ void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 }
 
 
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// q = quantum number of boson to be added
+unsigned long HardCoreBosonOnLattice::Ad (unsigned long state, int q)
+{
+  if ((state & (((unsigned long) (0x1)) << q))!= 0)
+    {
+      return 0x0l;
+    }
+  state |= (((unsigned long) (0x1)) << q);
+  return state;
+}
+
+
 // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -700,7 +715,7 @@ ostream& HardCoreBosonOnLattice::PrintState (ostream& Str, int state)
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->NbrStates; ++i)
     Str << ((TmpState >> i) & ((unsigned long) 0x1)) << " ";
-  Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
+  Str << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]) ;// << ", hb="<<this->StateHighestBit[state];
   if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
     Str << " error! ";
   return Str;
@@ -739,6 +754,34 @@ int HardCoreBosonOnLattice::FindStateIndex(unsigned long stateDescription, int h
   else
     return PosMin;
 }
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int HardCoreBosonOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+{
+//   bitset<20> b=stateDescription;
+//   cout << "Searching " << b <<", bitcount="<<bitcount(stateDescription);
+  if (bitcount(stateDescription)!=this->NbrBosons)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  if (highestBit<0)
+    {
+      highestBit = getHighestBit(stateDescription)-1;
+    }
+//   cout << ", highestBit="<<highestBit;
+  if (highestBit >= this->NbrStates)
+    {
+      return this->HilbertSpaceDimension;
+    }
+//   cout <<", Found index="<<this->FindStateIndex(stateDescription, highestBit)<<endl;
+//   this->PrintState(cout, this->FindStateIndex(stateDescription, highestBit));
+  return this->FindStateIndex(stateDescription, highestBit);
+}
+
 
 
 // evaluate Hilbert space dimension

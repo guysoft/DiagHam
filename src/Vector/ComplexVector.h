@@ -647,24 +647,30 @@ class ComplexVector : public Vector
   // step = distance to the next coordinate in the destination vector (1 means to take the following)
   // return value = reference to the current Vector
   ComplexVector& Merge(const RealVector& V, int firstCoordinate, int step = 1);
+
+  // reverse elements of the current vector (i.e. exchanging i <-> N - i)
+  //
+  // return value = reference to the current Vector
+  ComplexVector& ReverseVector();
+
   
   // write vector in a file 
   //
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
-  bool WriteVector (char* fileName);
+  bool WriteVector (const char* fileName);
 
   // write vector in a file in ascii mode
   //
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
-  bool WriteAsciiVector (char* fileName);
+  bool WriteAsciiVector (const char* fileName);
 
   // read vector from a file 
   //
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
-  bool ReadVector (char* fileName);
+  bool ReadVector (const char* fileName);
 
   // Output Stream overload
   //

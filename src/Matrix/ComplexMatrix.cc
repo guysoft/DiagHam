@@ -383,8 +383,19 @@ void ComplexMatrix::Resize (int nbrRow, int nbrColumn)
 	Tmp[i] = this->Columns[i];      
       for (int i = this->NbrColumn; i < nbrColumn; i++)
 	Tmp[i] = ComplexVector(nbrRow);
-      delete[] this->Columns;
+      if (this->ColumnGarbageFlag != 0)
+	{
+	  if ((*(this->ColumnGarbageFlag)) == 1)
+	    {
+	      delete[] this->Columns;
+	      delete this->ColumnGarbageFlag;
+	    }
+	  else
+	    (*(this->ColumnGarbageFlag))--;
+	}
       this->Columns = Tmp;
+      this->ColumnGarbageFlag = new int;
+      *(this->ColumnGarbageFlag) = 1;
       this->TrueNbrColumn = nbrColumn;
       this->NbrColumn = nbrColumn;
     }
@@ -425,8 +436,19 @@ void ComplexMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 	Tmp[i] = this->Columns[i];      
       for (int i = this->NbrColumn; i < nbrColumn; i++)
 	Tmp[i] = ComplexVector(nbrRow, true);
-      delete[] this->Columns;
+      if (this->ColumnGarbageFlag != 0)
+	{
+	  if ((*(this->ColumnGarbageFlag)) == 1)
+	    {
+	      delete[] this->Columns;
+	      delete this->ColumnGarbageFlag;
+	    }
+	  else
+	    (*(this->ColumnGarbageFlag))--;
+	}
       this->Columns = Tmp;
+      this->ColumnGarbageFlag = new int;
+      *(this->ColumnGarbageFlag) = 1;
       this->TrueNbrColumn = nbrColumn;
       this->NbrColumn = nbrColumn;
     }

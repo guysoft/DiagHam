@@ -2733,7 +2733,7 @@ RealVector& RealVector::ReverseVector()
       this->Localize();
       int Max = this->Dimension - 1;
       double Tmp;
-      for (int i = 0; i < this->Dimension; ++i)
+      for (int i = 0; i < this->Dimension/2; ++i)
 	{
 	  Tmp = this->Components[i];
 	  this->Components[i] = this->Components[Max - i];
@@ -2779,7 +2779,7 @@ ostream& operator << (ostream& str, RealVector& v)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool RealVector::WriteVector (char* fileName)
+bool RealVector::WriteVector (const char* fileName)
 {
   this->Localize();
   ofstream File;
@@ -2797,7 +2797,7 @@ bool RealVector::WriteVector (char* fileName)
 // fileName = name of the file where the vector has to be stored
 // return value = true if no error occurs
 
-bool RealVector::WriteAsciiVector (char* fileName)
+bool RealVector::WriteAsciiVector (const char* fileName)
 {
   this->Localize();
   ofstream File;
@@ -2817,7 +2817,7 @@ bool RealVector::WriteAsciiVector (char* fileName)
 // fileName = name of the file where the vector has to be read
 // return value = true if no error occurs
 
-bool RealVector::ReadVector (char* fileName)
+bool RealVector::ReadVector (const char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);

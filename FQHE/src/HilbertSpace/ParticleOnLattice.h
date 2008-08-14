@@ -80,6 +80,13 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
   virtual void SetNbrFluxQuanta(int nbrFluxQuanta) = 0;
 
+
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // q = quantum number of boson to be added
+  virtual unsigned long Ad (unsigned long state, int q)=0;
+
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied
@@ -209,6 +216,16 @@ class ParticleOnLattice :  public AbstractQHEParticle
   //
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit)=0;
+
+ protected:
+  
   
 };
 

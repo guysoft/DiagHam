@@ -110,7 +110,7 @@ inline int getHighestBit(unsigned long uLong)
 //
 // i = word to test
 // return value = number of bits
-inline double FastBitCount (unsigned long uLong)
+inline double FastBitParity (unsigned long uLong)
 {
 #ifdef  __64_BITS__
   uLong ^= uLong >> 32;

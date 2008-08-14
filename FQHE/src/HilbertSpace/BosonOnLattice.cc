@@ -36,6 +36,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
+#include "GeneralTools/UnsignedIntegerTools.h"
 
 #include <math.h>
 
@@ -235,6 +236,26 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
   //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
   this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
 }
+
+
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// q = quantum number of boson to be added
+unsigned long BosonOnLattice::Ad (unsigned long state, int q)
+{
+  int StateHighestBit = getHighestBit(state);
+  this->FermionToBoson(state, StateHighestBit, this->TemporaryState, this->TemporaryStateHighestBit);
+  ++this->TemporaryState[q];
+  if (q>this->TemporaryStateHighestBit)
+    {
+      for (int i = this->TemporaryStateHighestBit + 1; i <= q; ++i)
+	this->TemporaryState[i] = 0ul;
+      this->TemporaryStateHighestBit = q;
+    }
+  return this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
+}
+
 
 // apply a^+_q1 a^+_q2 a_r1 a_r2 operator to a given state (with q1+q2=n1+r2)
 //
@@ -631,3 +652,26 @@ ostream& BosonOnLattice::PrintState (ostream& Str, int state)
 }
 
 
+
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int BosonOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+{
+  if (bitcount(stateDescription)!=this->NbrBosons)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  if (highestBit<0)
+    {
+      highestBit = getHighestBit(stateDescription);
+    }
+  if (highestBit >= this->NbrStates+this->NbrBosons - 1)
+    {
+      return this->HilbertSpaceDimension;
+    }      
+  return this->HardCoreBasis->FindStateIndex(stateDescription, highestBit);
+}

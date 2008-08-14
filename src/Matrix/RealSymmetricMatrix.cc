@@ -1718,6 +1718,7 @@ RealTriDiagonalSymmetricMatrix& RealSymmetricMatrix::Householder (RealTriDiagona
   M.UpperDiagonalElement(ReducedNbrRow - 1) = this->OffDiagonalElements[Pos - this->Increment];  
   M.DiagonalElement(ReducedNbrRow) = this->DiagonalElements[ReducedNbrRow];
   delete[] TmpV;
+  delete[] TmpCoef;
   return M;
 }
 

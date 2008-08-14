@@ -857,19 +857,19 @@ class RealVector : public Vector
   //
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
-  bool WriteVector (char* fileName);
+  bool WriteVector (const char* fileName);
 
   // write vector in a file in ascii mode
   //
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
-  bool WriteAsciiVector (char* fileName);
+  bool WriteAsciiVector (const char* fileName);
 
   // read vector from a file 
   //
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
-  bool ReadVector (char* fileName);
+  bool ReadVector (const char* fileName);
 
   // Output Stream overload
   //
