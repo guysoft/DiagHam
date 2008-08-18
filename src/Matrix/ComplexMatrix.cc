@@ -112,7 +112,6 @@ extern "C" void FORTRAN_NAME(zgeevx)(const char* balanc,const char* jobVL,const 
 ComplexMatrix::ComplexMatrix() 
 {
   this->Columns = 0;
-  this->ColumnGarbageFlag = 0;
   this->NbrRow = 0;
   this->NbrColumn = 0;
   this->TrueNbrRow = this->NbrRow;
@@ -128,8 +127,7 @@ ComplexMatrix::ComplexMatrix()
 
 ComplexMatrix::ComplexMatrix(int nbrRow, int nbrColumn, bool zero)
 {
-  this->ColumnGarbageFlag = new int;
-  *(this->ColumnGarbageFlag) = 1;
+  this->Flag.Initialize();
   this->NbrColumn = nbrColumn;
   this->NbrRow = nbrRow;
   this->TrueNbrRow = this->NbrRow;
@@ -148,8 +146,7 @@ ComplexMatrix::ComplexMatrix(int nbrRow, int nbrColumn, bool zero)
 ComplexMatrix::ComplexMatrix(ComplexVector* columns, int nbrColumn) 
 {
   this->Columns = columns;
-  this->ColumnGarbageFlag = new int;
-  *(this->ColumnGarbageFlag) = 1;
+  this->Flag.Initialize();
   this->NbrRow = columns[0].GetVectorDimension();
   this->NbrColumn = nbrColumn;
   this->TrueNbrRow = this->NbrRow;
@@ -164,8 +161,7 @@ ComplexMatrix::ComplexMatrix(ComplexVector* columns, int nbrColumn)
 ComplexMatrix::ComplexMatrix(const ComplexMatrix& M) 
 {
   this->Columns = M.Columns;
-  this->ColumnGarbageFlag = M.ColumnGarbageFlag;
-  (*(this->ColumnGarbageFlag))++;
+  this->Flag = M.Flag;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
@@ -182,7 +178,6 @@ ComplexMatrix::ComplexMatrix(Matrix& M)
   if ((M.GetNbrRow() == 0) || (M.GetNbrColumn() == 0))
     {
       this->Columns = 0;
-      this->ColumnGarbageFlag = 0;
       this->NbrRow = 0;
       this->NbrColumn = 0;
       this->TrueNbrRow = 0;
@@ -191,8 +186,7 @@ ComplexMatrix::ComplexMatrix(Matrix& M)
     }
   else
     {
-      this->ColumnGarbageFlag = new int;
-      *(this->ColumnGarbageFlag) = 1;
+      this->Flag.Initialize();
       this->NbrColumn = M.GetNbrColumn();
       this->NbrRow = M.GetNbrRow();
       this->TrueNbrRow = this->NbrRow;
@@ -218,16 +212,11 @@ ComplexMatrix::ComplexMatrix(Matrix& M)
 
 ComplexMatrix::~ComplexMatrix() 
 {
-  if (this->ColumnGarbageFlag != 0)
-    {
-      if ((*(this->ColumnGarbageFlag)) == 1)
-	{
-	  delete[] this->Columns;
-	  delete this->ColumnGarbageFlag;
-	}
-      else
-	(*(this->ColumnGarbageFlag))--;
-    }
+  if ((this->Columns != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->Columns;
+      }
 }
 
 // assignement (without duplicating datas)
@@ -237,37 +226,18 @@ ComplexMatrix::~ComplexMatrix()
 
 ComplexMatrix& ComplexMatrix::operator = (const ComplexMatrix& M) 
 {
-  if (this->ColumnGarbageFlag != 0)
-    {
-      if ((*(this->ColumnGarbageFlag)) == 1)
-	{
-	  delete[] this->Columns;
-	  delete this->ColumnGarbageFlag;
-	}
-      else
-	(*(this->ColumnGarbageFlag))--;
-    }
-  if (M.ColumnGarbageFlag != 0)
-    {
-      this->Columns = M.Columns;
-      this->ColumnGarbageFlag = M.ColumnGarbageFlag;
-      (*(this->ColumnGarbageFlag))++;
-      this->NbrRow = M.NbrRow;
-      this->NbrColumn = M.NbrColumn;
-      this->TrueNbrRow = M.TrueNbrRow;
-      this->TrueNbrColumn = M.TrueNbrColumn;  
-      this->MatrixType = Matrix::ComplexElements;
-    }
-  else
-    {
-      this->Columns = 0;
-      this->ColumnGarbageFlag = 0;
-      this->NbrRow = 0;
-      this->NbrColumn = 0;
-      this->TrueNbrRow = this->NbrRow;
-      this->TrueNbrColumn = this->NbrColumn;  
-      this->MatrixType = Matrix::ComplexElements;
-    }
+  if ((this->Columns != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->Columns;
+      }
+  this->Columns = M.Columns;
+  this->Flag = M.Flag;
+  this->NbrRow = M.NbrRow;
+  this->NbrColumn = M.NbrColumn;
+  this->TrueNbrRow = M.TrueNbrRow;
+  this->TrueNbrColumn = M.TrueNbrColumn;  
+  this->MatrixType = Matrix::ComplexElements;
   return *this;
 }
 
@@ -383,21 +353,15 @@ void ComplexMatrix::Resize (int nbrRow, int nbrColumn)
 	Tmp[i] = this->Columns[i];      
       for (int i = this->NbrColumn; i < nbrColumn; i++)
 	Tmp[i] = ComplexVector(nbrRow);
-      if (this->ColumnGarbageFlag != 0)
+      if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	{
-	  if ((*(this->ColumnGarbageFlag)) == 1)
-	    {
-	      delete[] this->Columns;
-	      delete this->ColumnGarbageFlag;
-	    }
-	  else
-	    (*(this->ColumnGarbageFlag))--;
+	  delete[] this->Columns;
 	}
       this->Columns = Tmp;
-      this->ColumnGarbageFlag = new int;
-      *(this->ColumnGarbageFlag) = 1;
       this->TrueNbrColumn = nbrColumn;
       this->NbrColumn = nbrColumn;
+      this->Flag = GarbageFlag();
+      this->Flag.Initialize();
     }
   return;
 }
@@ -436,19 +400,13 @@ void ComplexMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 	Tmp[i] = this->Columns[i];      
       for (int i = this->NbrColumn; i < nbrColumn; i++)
 	Tmp[i] = ComplexVector(nbrRow, true);
-      if (this->ColumnGarbageFlag != 0)
+      if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	{
-	  if ((*(this->ColumnGarbageFlag)) == 1)
-	    {
-	      delete[] this->Columns;
-	      delete this->ColumnGarbageFlag;
-	    }
-	  else
-	    (*(this->ColumnGarbageFlag))--;
+	  delete[] this->Columns;
 	}
       this->Columns = Tmp;
-      this->ColumnGarbageFlag = new int;
-      *(this->ColumnGarbageFlag) = 1;
+      this->Flag = GarbageFlag();
+      this->Flag.Initialize();
       this->TrueNbrColumn = nbrColumn;
       this->NbrColumn = nbrColumn;
     }
@@ -798,7 +756,7 @@ ComplexMatrix& ComplexMatrix::operator += (const ComplexMatrix& M)
 
 ComplexMatrix& ComplexMatrix::operator += (const RealTriDiagonalSymmetricMatrix& M) 
 {
-  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->ColumnGarbageFlag == 0))
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->Columns == 0))
     return *this;  
   this->Columns[0].Components[0].Re += M.DiagonalElements[0];
   for (int i = 1; i < this->NbrColumn; i++)
@@ -831,7 +789,7 @@ ComplexMatrix& ComplexMatrix::operator -= (const ComplexMatrix& M)
 
 ComplexMatrix& ComplexMatrix::operator -= (const RealTriDiagonalSymmetricMatrix& M) 
 {
-  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->ColumnGarbageFlag == 0))
+  if ((this->NbrColumn != M.NbrColumn) || (this->NbrRow != M.NbrRow) || (this->Columns == 0))
     return *this;  
   this->Columns[0].Components[0].Re -= M.DiagonalElements[0];
   for (int i = 1; i < this->NbrColumn; i++)
@@ -906,6 +864,7 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
 // get adjoint (hermitian conjugate) matrix 
 //
 // return value = reference on modified matrix
+
 ComplexMatrix ComplexMatrix::GetAdjoint()
 {
   ComplexMatrix rst(this->NbrColumn, this->NbrRow);
@@ -1479,6 +1438,7 @@ ComplexDiagonalMatrix& ComplexMatrix::Diagonalize (ComplexDiagonalMatrix& M, Com
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
 {
   if (this->NbrColumn != this->NbrRow)
@@ -1560,6 +1520,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
 // err = absolute error on matrix element
 // maxIter = maximum number of iteration to fund an eigenvalue
 // return value = reference on real matrix consisting of eigenvalues
+
 ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q)
 {
   if (M.GetNbrColumn() != this->NbrColumn)
@@ -1640,6 +1601,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
 // Q = matrix where transformation matrix has to be stored
 // S = matrix where Schur form of matrix has to be stored
 // return value = reference on real matrix consisting of eigenvalues
+
 ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S)
 {
   if (M.GetNbrColumn() != this->NbrColumn)

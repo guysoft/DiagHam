@@ -227,6 +227,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = density matrix of the subsytem
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
 
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
 };
 
 #endif

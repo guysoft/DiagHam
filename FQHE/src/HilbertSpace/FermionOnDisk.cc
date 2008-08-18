@@ -73,6 +73,7 @@ FermionOnDisk::FermionOnDisk (int nbrFermions, int totalLz, int lzMax, unsigned 
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
+  this->Indices = NULL;    
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, this->TotalLz, 0);

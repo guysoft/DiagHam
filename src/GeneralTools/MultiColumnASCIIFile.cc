@@ -31,6 +31,7 @@
 #include "config.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/StringTools.h"
 
 #include <string.h>
 #include <fstream>
@@ -122,11 +123,11 @@ bool MultiColumnASCIIFile::Parse(char* filename)
       while ((Pos < Size) && (TmpBuffer[Pos] != '\n'))
 	++Pos;
       TmpBuffer[Pos] = '\0';
-      if (this->CleanLine (Start) == true)
+      if (CleanLine (Start) == true)
 	{
 	  if (this->NbrColumns == 0)
 	    {
-	      this->NbrColumns = this->SplitLine(Start, TmpArray, this->Separator);
+	      this->NbrColumns = SplitLine(Start, TmpArray, this->Separator);
 	      if (this->NbrColumns <= 0)
 		{
 		  char* TmpString = new char [strlen (filename) + 256]; 
@@ -144,7 +145,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	    }
 	  else
 	    {
-	      if (this->FixedSplitLine(Start, TmpArray, this->NbrColumns, this->Separator) != this->NbrColumns)
+	      if (FixedSplitLine(Start, TmpArray, this->NbrColumns, this->Separator) != this->NbrColumns)
 		{
 		  char* TmpString = new char [strlen (filename) + 256]; 
 		  sprintf (TmpString, "fatal error at line %d in file %s : the number of columns is different from %d\n", LineNumber, filename, this->NbrColumns);
@@ -172,170 +173,6 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	}
     }
   return true;
-}
-
-// clean a line from useless comments and spaces
-// 
-// line = pointer to the line to clean
-// return value = true if the line still contains usefull information
-
-bool MultiColumnASCIIFile::CleanLine (char* line)
-{
-  int NbrCharacters = strlen(line);
-  if (NbrCharacters == 0)
-    return false;
-  int Index = 0;
-  while ((Index < NbrCharacters) && ((line[Index] == ' ') || (line[Index] == '\t')))
-    Index ++;
-  if (Index == NbrCharacters)
-    return false;
-  char* Start = line + Index;
-  NbrCharacters -= Index;
-  Index = 0;
-  while ((Index < NbrCharacters) && ((Start[Index] != '#') || ((Index > 0) && (Start[Index - 1] == '\\'))))
-    Index ++;
-  if (Index == 0)
-    return false;
-  for (int i = 0; i < Index; ++i)
-    line[i] = Start[i];
-  line[Index] = '\0';
-  return true;
-}
-
-// split a line using a given separator
-//
-// string = string to split
-// array = reference on the array where elements have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
-// separator = character which is used as separator between columns 
-//             if \s (i.e \t or space) is used, then any number of consecutive \s or \t are identify as one separator
-// return value = number of elements in the line (zero if an error occured)
-
-int MultiColumnASCIIFile::SplitLine(char* string, char**& array, char separator)
-{
-  char* End = string;
-  int NbrElements = 1;
-  if ((separator == ' ') || (separator == '\t'))
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if (((*End) == ' ') || ((*End) == '\t'))
-	  {
-	    ++NbrElements;
-	    while ((((*End) != '\0') || ((*End) != '\n')) && (((*End) == ' ') || ((*End) == '\t')))
-	      ++End;
-	  }
-	else
-	  ++End;
-      }
-  else
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if ((*End) == separator)
-	  ++NbrElements;
-	++End;
-      }
-  array = new char*[NbrElements];  
-  NbrElements = 0;
-  long TmpLength;
-  End = string;
-  if ((separator == ' ') || (separator == '\t'))
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if (((*End) == ' ') || ((*End) == '\t'))
-	  {
-	    TmpLength = End - string;
-	    array[NbrElements] = new char [TmpLength + 1];
-	    strncpy (array[NbrElements], string, TmpLength);
-	    array[NbrElements][TmpLength] = '\0';
-	    ++NbrElements;
-	    while ((((*End) != '\0') && ((*End) != '\n')) && (((*End) == ' ') || ((*End) == '\t')))
-	      ++End;
-	    string = End;
-	  }
-	else
-	  ++End;
-      }
-  else
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if ((*End) == separator)
-	  {
-	    TmpLength = End - string;
-	    array[NbrElements] = new char [TmpLength + 1];
-	    strncpy (array[NbrElements], string, TmpLength);
-	    array[NbrElements][TmpLength] = '\0';
-	    ++NbrElements;
-	    string = End + 1;
-	  }
-	++End;
-      }
-  TmpLength = End - string;
-  array[NbrElements] = new char [TmpLength + 1];
-  strncpy (array[NbrElements], string, TmpLength);
-  array[NbrElements][TmpLength] = '\0';
-  ++NbrElements;	
-  return NbrElements;
-}
-
-// split a line using a given separator and requesting a fixed number of elements
-//
-// string = string to split
-// array = pointer on the array to use to store elements
-// nbrElements = number of elements to retrieve 
-// separator = character which is used as separator between columns 
-//             if \s (i.e \t or space) is used, then any number of consecutive \s or \t are identify as one separator
-// return value = number of elements in the line (should be equal if no error occured)
-
-int MultiColumnASCIIFile::FixedSplitLine(char* string, char** array, int nbrElements, char separator)
-{
-  char* End = string;
-  int NbrElements = 0;
-  long TmpLength;
-  if ((separator == ' ') || (separator == '\t'))
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if (((*End) == ' ') || ((*End) == '\t'))
-	  {
-	    if (NbrElements < nbrElements)
-	      {
-		TmpLength = End - string;
-		array[NbrElements] = new char [TmpLength + 1];
-		strncpy (array[NbrElements], string, TmpLength);
-		array[NbrElements][TmpLength] = '\0';
-	      }
-	    ++NbrElements;
-	    while ((((*End) != '\0') && ((*End) != '\n')) && (((*End) == ' ') || ((*End) == '\t')))
-	      ++End;
-	    string = End;
-	  }
-	else
-	  ++End;
-      }
-  else
-    while (((*End) != '\0') && ((*End) != '\n'))
-      {
-	if ((*End) == separator)
-	  {
-	    if (NbrElements < nbrElements)
-	      {
-		TmpLength = End - string;
-		array[NbrElements] = new char [TmpLength + 1];
-		strncpy (array[NbrElements], string, TmpLength);
-		array[NbrElements][TmpLength] = '\0';
-	      }
-	    ++NbrElements;
-	    string = End + 1;
-	  }
-	++End;
-      }
-  if (NbrElements < nbrElements)
-    {
-      TmpLength = End - string;
-      array[NbrElements] = new char [TmpLength + 1];
-      strncpy (array[NbrElements], string, TmpLength);
-      array[NbrElements][TmpLength] = '\0';
-    }
-  ++NbrElements;	
-  return NbrElements;
 }
 
 // retrieve a given value (warning the string is not duplicated, thus should not be modified nor de-allocated)

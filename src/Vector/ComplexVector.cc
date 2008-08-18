@@ -44,7 +44,6 @@ using std::endl;
 ComplexVector::ComplexVector() 
 {
   this->Components = 0;
-  this->Flag.Initialize();
   this->Dimension = 0;
   this->VectorId = 0;
   this->TrueDimension = this->Dimension;

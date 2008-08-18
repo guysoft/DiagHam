@@ -106,6 +106,7 @@ class FermionOnSphere :  public ParticleOnSphere
 #endif
   ComplexMatrix Functions;
 
+  // temporary array used to stored indices when evaluating wave function
   int* Indices;
 
 
@@ -311,6 +312,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // state = vector corresponding to the state to symmetrize
   // holeBasis = n-body basis on which the symmetrized state has to be expressed
   virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
+
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
 
  protected:
 

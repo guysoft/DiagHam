@@ -9,4 +9,5 @@ FilenameTools.cc \
 UnsignedIntegerTools.cc \
 RealUniqueArray.cc \
 ComplexUniqueArray.cc \
-SmallIntegerArray.cc
+SmallIntegerArray.cc \
+StringTools.cc

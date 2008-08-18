@@ -35,8 +35,10 @@
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/StringTools.h"
 
 #include <math.h>
+#include <stdlib.h>
 #include <fstream>
 
 
@@ -93,7 +95,7 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   else
     cout << UsedMemory << endl;
 #endif
-  this->Indices=NULL;    
+  this->Indices = NULL;    
   this->InitializeWaveFunctionEvaluation();
 }
 
@@ -120,7 +122,7 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->Indices=NULL;    
+  this->Indices = NULL;    
   this->InitializeWaveFunctionEvaluation();
 }
 
@@ -690,6 +692,36 @@ int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
     return PosMin;
 }
 
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
+
+int FermionOnSphere::FindStateIndex(char* stateDescription)
+{
+  char** TmpDescription;
+  if (SplitLine(stateDescription, TmpDescription, ' ') != (this->LzMax + 1))
+    return -1;
+  unsigned long TmpState = 0x0ul;
+  int TmpNbrParticles = 0;
+  int TmpTotalLz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      int Tmp = atoi(TmpDescription[i]);
+      TmpState |= ((unsigned long)  Tmp) << i;
+      TmpTotalLz += (i * Tmp);
+      TmpNbrParticles += Tmp;
+      delete[] TmpDescription[i];
+    }
+  delete[] TmpDescription;
+  if ((TmpNbrParticles != this->NbrFermions) || (TmpTotalLz != ((this->TotalLz + this->NbrFermions * this->LzMax) >> 1)))
+    return -1;
+  int TmpLzMax = this->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  return this->FindStateIndex(TmpState, TmpLzMax);
+}
+
 // print a given State
 //
 // Str = reference on current output stream 
@@ -986,6 +1018,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
+  delete[] Indices;
   return Value;
 }
 
@@ -1006,7 +1039,6 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
     waveFuntions[i] = 0.0;
   Complex Tmp;
   RealVector TmpCoordinates(2);
-  int* Indices = new int [this->NbrFermions];
   int Pos;
   int Lz;
   for (int j = 0; j < this->NbrFermions; ++j)
@@ -1035,7 +1067,7 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
-	      Indices[Pos] = Lz;
+	      this->Indices[Pos] = Lz;
 	      ++Pos;
 	    }
 	  ++Lz;
@@ -1047,10 +1079,10 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
 #ifdef __LAPACK__
-	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(this->Indices[j]), TmpColum2.Im(this->Indices[j]));
 #else
-	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(this->Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(this->Indices[j]);
 #endif
 	    }
 	}

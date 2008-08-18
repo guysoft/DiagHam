@@ -305,3 +305,13 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrix (int subsytem
   return PartialDensityMatrix;
 }
 
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
+
+int ParticleOnSphere::FindStateIndex(char* stateDescription)
+{
+  return -1;
+}
+

@@ -64,6 +64,7 @@ FullFermionOnSphere::FullFermionOnSphere (int nbrFermions, int totalLz, int lzMa
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax);
   cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;
   this->Flag.Initialize();
+  this->Indices = NULL;    
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
   this->FullGenerateStates(this->NbrFermions, this->LzMax);

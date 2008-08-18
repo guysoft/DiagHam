@@ -40,6 +40,7 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
 #include "Vector/ComplexVector.h"
+#include "GeneralTools/GarbageFlag.h"
 
 #include <iostream>
 
@@ -64,7 +65,7 @@ class ComplexMatrix : public Matrix
  protected:
 
   ComplexVector* Columns; 
-  int* ColumnGarbageFlag;
+  GarbageFlag Flag;
 
  public:
 

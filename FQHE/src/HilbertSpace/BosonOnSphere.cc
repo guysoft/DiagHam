@@ -35,8 +35,10 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
+#include "GeneralTools/StringTools.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 
 using std::cout;
@@ -560,6 +562,35 @@ int BosonOnSphere::FindStateIndex(int* stateDescription, int lzmax)
         }
     }
   return TmpKeyInvertIndices[TmpPos];
+}
+
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
+
+int BosonOnSphere::FindStateIndex(char* stateDescription)
+{
+  char** TmpDescription;
+  if (SplitLine(stateDescription, TmpDescription, ' ') != (this->LzMax + 1))
+    return -1;
+  int TmpNbrParticles = 0;
+  int TmpTotalLz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      int Tmp = atoi(TmpDescription[i]);
+      this->TemporaryState[i] = Tmp;
+      TmpTotalLz += (i * Tmp);
+      TmpNbrParticles += Tmp;
+      delete[] TmpDescription[i];
+    }
+  delete[] TmpDescription;
+  if ((TmpNbrParticles != this->NbrBosons) || (TmpTotalLz != ((this->TotalLz + this->NbrBosons * this->LzMax) >> 1)))
+    return -1;
+  int NewLzMax = this->LzMax;
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  return this->FindStateIndex(this->TemporaryState, NewLzMax);
 }
 
 // print a given State
