@@ -221,6 +221,9 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   delete[] this->TmpGeneratedStatesLzMax;
 
   this->GenerateLookUpTable(memory);
+  this->Indices = NULL;
+  this->InitializeWaveFunctionEvaluation();
+
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -275,6 +278,8 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
   this->Flag.Initialize();
 
   this->GenerateLookUpTable(memory);
+  this->Indices = NULL;
+  this->InitializeWaveFunctionEvaluation();
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -316,7 +321,8 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHa
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->Indices = 0;
+  this->Indices = NULL;
+  this->InitializeWaveFunctionEvaluation();
 }
 
 // destructor
@@ -365,6 +371,7 @@ FermionOnSphereHaldaneBasis& FermionOnSphereHaldaneBasis::operator = (const Ferm
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->InitializeWaveFunctionEvaluation();
   return *this;
 }
 

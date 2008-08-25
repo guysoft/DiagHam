@@ -185,6 +185,7 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
+  this->InitializeWaveFunctionEvaluation();
   return *this;
 }
 
@@ -963,7 +964,6 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
   Complex Value;
   Complex Tmp;
   RealVector TmpCoordinates(2);
-  int* Indices = new int [this->NbrFermions];
   int Pos;
   int Lz;
   for (int j = 0; j < this->NbrFermions; ++j)
@@ -973,8 +973,8 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  Functions[j].Re(i) = Tmp.Re;
-	  Functions[j].Im(i) = Tmp.Im;
+	  this->Functions[j].Re(i) = Tmp.Re;
+	  this->Functions[j].Im(i) = Tmp.Im;
 	}
     }
   double Factor = 1.0;
@@ -992,7 +992,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
-	      Indices[Pos] = Lz;
+	      this->Indices[Pos] = Lz;
 	      ++Pos;
 	    }
 	  ++Lz;
@@ -1004,10 +1004,10 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
 #ifdef __LAPACK__
-	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(this->Indices[j]), TmpColum2.Im(this->Indices[j]));
 #else
-	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(this->Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(this->Indices[j]);
 #endif
 	    }
 	}
@@ -1018,7 +1018,6 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
-  delete[] Indices;
   return Value;
 }
 
@@ -1048,8 +1047,8 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  Functions[j].Re(i) = Tmp.Re;
-	  Functions[j].Im(i) = Tmp.Im;
+	  this->Functions[j].Re(i) = Tmp.Re;
+	  this->Functions[j].Im(i) = Tmp.Im;
 	}
     }
   double Factor = 1.0;
