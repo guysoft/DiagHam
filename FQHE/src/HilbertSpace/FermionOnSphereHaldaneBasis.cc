@@ -80,7 +80,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   this->ReferenceState = 0x0ul;
   int ReferenceStateLzMax = 0;
   this->TotalLz = 0;
-  this->Indices = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
       this->ReferenceState |= ((unsigned long) (referenceState[i] & 1)) << i;
@@ -221,8 +220,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
   delete[] this->TmpGeneratedStatesLzMax;
 
   this->GenerateLookUpTable(memory);
-  this->Indices = NULL;
-  this->InitializeWaveFunctionEvaluation();
 
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
@@ -270,7 +267,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
 
   File.close();
 
-  this->Indices = 0;
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -278,8 +274,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
   this->Flag.Initialize();
 
   this->GenerateLookUpTable(memory);
-  this->Indices = NULL;
-  this->InitializeWaveFunctionEvaluation();
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -321,8 +315,6 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis(const FermionOnSphereHa
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->Indices = NULL;
-  this->InitializeWaveFunctionEvaluation();
 }
 
 // destructor

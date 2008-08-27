@@ -12,7 +12,7 @@ my $Program_S5="/scratch/gm360/DiagHam/buildSMP/FQHE/src/Programs/FQHEOnLattice/
 
 if (!defined($ARGV[1]))
   {
-    print("usage ManageBosonsOnLattice.pl Machine# #Processors [PrecalculationMemory=0] [ParameterFile]\n");
+    print("usage ManageBosonsOnLattice.pl Machine# #Processors [PrecalculationMemory=0] [ParameterFile] [cmd]\n");
     exit(1);
   }
 
@@ -77,6 +77,11 @@ if (defined($ARGV[3]))
     $CommandFile=$ARGV[3];
     $LaunchedFile="${CommandFile}.launch";
     $FinishedFile="${CommandFile}.finish";
+  }
+my $PrintOnly=0;
+if (defined($ARGV[1]))
+  {
+    $PrintOnly=1;
   }
 # read options file
 system ("cp ".$CommandFile." ".$CommandFile.".save");
@@ -194,11 +199,16 @@ open(LAUNCHEDCOMMANDS, ">>${LaunchedFile}") or die("Error: cannot open file '$La
 print LAUNCHEDCOMMANDS ($Parameters." ".$Command."\n");
 close(LAUNCHEDCOMMANDS);
 
-print ("running: ".$Command."\n"); # launch here after testing!
-system ($Command);
-
-open(FINISHEDCOMMANDS, ">>${FinishedFile}") or die("Error: cannot open file '$FinishedFile'\n");
-print FINISHEDCOMMANDS ($Parameters." ".$Command."\n");
-close (FINISHEDCOMMANDS);
-
+if ($PrintOnly==1)
+  {
+    print ("to run, type ".$Command."\n");
+  }
+else
+  {
+    print ("running: ".$Command."\n");
+    system ($Command);
+    open(FINISHEDCOMMANDS, ">>${FinishedFile}") or die("Error: cannot open file '$FinishedFile'\n");
+    print FINISHEDCOMMANDS ($Parameters." ".$Command."\n");
+    close (FINISHEDCOMMANDS);
+  }
 

@@ -95,8 +95,6 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   else
     cout << UsedMemory << endl;
 #endif
-  this->Indices = NULL;    
-  this->InitializeWaveFunctionEvaluation();
 }
 
 // copy constructor (without duplicating datas)
@@ -122,8 +120,6 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->Indices = NULL;    
-  this->InitializeWaveFunctionEvaluation();
 }
 
 // destructor
@@ -143,8 +139,6 @@ FermionOnSphere::~FermionOnSphere ()
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
-  if (this->Indices != 0)
-    delete [] Indices;
 }
 
 // assignement (without duplicating datas)
@@ -961,6 +955,17 @@ int FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int l
 Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& position, AbstractFunctionBasis& basis,
 					       int firstComponent, int nbrComponent)
 {
+  // fields used by EvaluateWaveFunction
+#ifdef __LAPACK__
+  ComplexLapackDeterminant Slater(this->NbrFermions);
+#else
+  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
+#endif
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
+  
+  // temporary array used to stored indices when evaluating wave function
+  int* Indices = new int [this->NbrFermions];
+  
   Complex Value;
   Complex Tmp;
   RealVector TmpCoordinates(2);
@@ -973,8 +978,8 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  this->Functions[j].Re(i) = Tmp.Re;
-	  this->Functions[j].Im(i) = Tmp.Im;
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
 	}
     }
   double Factor = 1.0;
@@ -992,7 +997,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
-	      this->Indices[Pos] = Lz;
+	      Indices[Pos] = Lz;
 	      ++Pos;
 	    }
 	  ++Lz;
@@ -1004,10 +1009,10 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
 #ifdef __LAPACK__
-	      Slater.SetMatrixElement(i,j,TmpColum2.Re(this->Indices[j]), TmpColum2.Im(this->Indices[j]));
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
 #else
-	      Slater[i].Re(j) = TmpColum2.Re(this->Indices[j]);
-	      Slater[i].Im(j) = TmpColum2.Im(this->Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
 #endif
 	    }
 	}
@@ -1018,6 +1023,7 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
       Complex SlaterDet = Slater.Determinant();
       Value += SlaterDet * (state[k] * Factor);
     }
+  delete [] Indices;
   return Value;
 }
 
@@ -1034,6 +1040,17 @@ Complex FermionOnSphere::EvaluateWaveFunction (RealVector& state, RealVector& po
 void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, RealVector& position, AbstractFunctionBasis& basis,
 					     Complex* waveFuntions, int firstComponent, int nbrComponent)
 {
+  // fields used by EvaluateWaveFunction
+#ifdef __LAPACK__
+  ComplexLapackDeterminant Slater(this->NbrFermions);
+#else
+  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
+#endif
+  ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
+  
+  // temporary array used to stored indices when evaluating wave function
+  int* Indices = new int [this->NbrFermions];
+  
   for (int i = 0; i < nbrStates; ++i)
     waveFuntions[i] = 0.0;
   Complex Tmp;
@@ -1047,8 +1064,8 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       for (int i = 0; i <= this->LzMax; ++i)
 	{
 	  basis.GetFunctionValue(TmpCoordinates, Tmp, i);
-	  this->Functions[j].Re(i) = Tmp.Re;
-	  this->Functions[j].Im(i) = Tmp.Im;
+	  Functions[j].Re(i) = Tmp.Re;
+	  Functions[j].Im(i) = Tmp.Im;
 	}
     }
   double Factor = 1.0;
@@ -1066,7 +1083,7 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 	{
 	  if ((TmpStateDescription & ((unsigned long) 1)) == ((unsigned long) 1))
 	    {
-	      this->Indices[Pos] = Lz;
+	      Indices[Pos] = Lz;
 	      ++Pos;
 	    }
 	  ++Lz;
@@ -1078,10 +1095,10 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
 #ifdef __LAPACK__
-	      Slater.SetMatrixElement(i,j,TmpColum2.Re(this->Indices[j]), TmpColum2.Im(this->Indices[j]));
+	      Slater.SetMatrixElement(i,j,TmpColum2.Re(Indices[j]), TmpColum2.Im(Indices[j]));
 #else
-	      Slater[i].Re(j) = TmpColum2.Re(this->Indices[j]);
-	      Slater[i].Im(j) = TmpColum2.Im(this->Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
 #endif
 	    }
 	}
@@ -1094,6 +1111,7 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
       for (int i = 0; i < nbrStates; ++i)
 	waveFuntions[i] += SlaterDet * states[i][k];
     }
+  delete [] Indices;
 }
                                
   
@@ -1103,15 +1121,6 @@ void FermionOnSphere::EvaluateWaveFunctions (RealVector* states, int nbrStates, 
 
 void FermionOnSphere::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
-#ifdef __LAPACK__
-  this->Slater.Resize(this->NbrFermions);
-#else
-  this->Slater.Resize(this->NbrFermions, this->NbrFermions);
-#endif
-  this->Functions.Resize(this->LzMax + 1, this->NbrFermions);
-  if (this->Indices!=NULL)
-    delete [] this->Indices;
-  this->Indices = new int [this->NbrFermions];
 }
 
   

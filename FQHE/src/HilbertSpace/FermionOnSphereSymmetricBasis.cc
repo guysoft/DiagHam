@@ -74,7 +74,6 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (int nbrFermions, i
     this->InvertUnshift = this->InvertShift - 1;
   else
     this->InvertUnshift = this->InvertShift;
-  this->Indices = 0;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
@@ -148,7 +147,6 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
     ReadLittleEndian(File, this->StateDescription[i]);
   File.close();
 
-  this->Indices = 0;
   this->TargetSpace = this;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
@@ -203,7 +201,6 @@ FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis (char* fileName, un
 
 FermionOnSphereSymmetricBasis::FermionOnSphereSymmetricBasis(const FermionOnSphereSymmetricBasis& fermions)
 {
-  this->Indices = 0;
   this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
@@ -855,7 +852,7 @@ Complex FermionOnSphereSymmetricBasis::EvaluateWaveFunction (RealVector& state, 
 {
   Complex Value;
   Complex Tmp;
-  ComplexMatrix Slatter(this->NbrFermions, this->NbrFermions);
+  ComplexMatrix Slater(this->NbrFermions, this->NbrFermions);
   ComplexMatrix Functions(this->LzMax + 1, this->NbrFermions);
   RealVector TmpCoordinates(2);
   int* Indices = new int [this->NbrFermions];
@@ -898,12 +895,12 @@ Complex FermionOnSphereSymmetricBasis::EvaluateWaveFunction (RealVector& state, 
 	  ComplexVector& TmpColum2 = Functions[i];	  
 	  for (int j = 0; j < this->NbrFermions; ++j)
 	    {
-	      Slatter[i].Re(j) = TmpColum2.Re(Indices[j]);
-	      Slatter[i].Im(j) = TmpColum2.Im(Indices[j]);
+	      Slater[i].Re(j) = TmpColum2.Re(Indices[j]);
+	      Slater[i].Im(j) = TmpColum2.Im(Indices[j]);
 	    }
 	}
-      Complex SlatterDet = Slatter.Determinant();
-      Value += SlatterDet * (state[k] * Factor);
+      Complex SlaterDet = Slater.Determinant();
+      Value += SlaterDet * (state[k] * Factor);
     }
   delete[] Indices;
   return Value;

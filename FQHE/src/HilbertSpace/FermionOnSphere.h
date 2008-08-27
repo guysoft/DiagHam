@@ -98,18 +98,6 @@ class FermionOnSphere :  public ParticleOnSphere
   // pointer to the target space when an index is require after applying basic operation
   FermionOnSphere* TargetSpace;
 
-  // fields used by EvaluateWaveFunction
-#ifdef __LAPACK__
-  ComplexLapackDeterminant Slater;
-#else
-  ComplexMatrix Slater;
-#endif
-  ComplexMatrix Functions;
-
-  // temporary array used to stored indices when evaluating wave function
-  int* Indices;
-
-
  public:
 
   // default constuctor
