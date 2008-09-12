@@ -332,7 +332,7 @@ bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParti
 	}
       if (StrNbrParticles == 0)
 	{
-	  cout << "can't guess length ly from file name " << filename << endl;
+	  cout << "can't guess interaction from file name " << filename << endl;
 	  return false;            
 	}
     }

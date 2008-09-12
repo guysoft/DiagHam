@@ -113,7 +113,7 @@ bool MultiColumnASCIIFile::Parse(char* filename)
   Pos = 0;
   char* Start = TmpBuffer;
   int LineNumber = 1;
-  bool Flag = true;
+  // bool Flag = true;
   this->NbrColumns = 0;
   this->NbrLines = 0;
   char** TmpArray = 0;

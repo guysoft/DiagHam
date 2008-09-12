@@ -1638,7 +1638,7 @@ RealDiagonalMatrix& HermitianMatrix::Diagonalize (RealDiagonalMatrix& M, Complex
   TmpMatrix2.SortMatrixUpOrder(TmpMatrix3);
   double LastEV=-1e300;
   int NewEVIndex=-1;
-  for (int i = M.GetNbrRow()-1; i > 0; --i)
+  for (int i = M.GetNbrRow()-1; i >= 0; --i)
     {
       M[i] = TmpMatrix2[2 * i];
       if (fabs(M[i]-LastEV)>1e-10)

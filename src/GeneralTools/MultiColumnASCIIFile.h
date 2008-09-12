@@ -65,7 +65,7 @@ class MultiColumnASCIIFile
   // default constructor
   //
   // separator = character which is used as separator between columns 
-   //             if \s (i.e \t or space) is used, then any number of consecutive \s or \t are identify as one separator
+   //             if \s (i.e \t or space) is used, then any number of consecutive \s or \t are identified as one separator
   MultiColumnASCIIFile(char separator = ' ');
 
   // destructor
@@ -98,7 +98,7 @@ class MultiColumnASCIIFile
   // get a column converting it to integer
   //
   // column = column index
-  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by han)
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
   int* GetAsIntegerArray (int column);
 
   // get a column converting it to long
