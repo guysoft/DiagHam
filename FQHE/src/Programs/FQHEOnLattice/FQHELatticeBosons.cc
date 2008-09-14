@@ -131,6 +131,8 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   bool FirstRun = true;
 
+  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
+
   int NbrFluxValues = 1;
   if (NbrFluxQuanta == -1)
     {

@@ -330,6 +330,7 @@ int main(int argc, char** argv)
 	      Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max1)/Manager.GetInteger("superpositions"));
 	      Superposition.Copy(Vectors[0],sqrt(0.5));
 	      Superposition.AddLinearCombination (Phase, Vectors[1]);
+	      Superposition/=Superposition.Norm();
 	      Superposition.WriteVector(RhoVecOut);
 	    }
 	}
@@ -345,6 +346,7 @@ int main(int argc, char** argv)
 	      Complex Phase = Polar(sqrt(0.5),(2.0*M_PI*Max2)/Manager.GetInteger("superpositions"));
 	      Superposition.Copy(Vectors[0],sqrt(0.5));
 	      Superposition.AddLinearCombination (Phase, Vectors[1]);
+	      Superposition/=Superposition.Norm();
 	      Superposition.WriteVector(RhoVecOut);
 	    }
 	}
