@@ -41,7 +41,7 @@
 #include <iostream>
 
 
-#ifdef __64_BITS__
+#ifdef __128_BIT_LONGLONG__
 #define FERMION_SPHERE_LONG_SYMMETRIC_BIT  (((ULONGLONG) 0x8000000000000000) << 64)
 #define FERMION_SPHERE_LONG_SYMMETRIC_MASK ((((ULONGLONG) 0x7fffffffffffffff) << 64) | ((ULONGLONG) 0xffffffffffffffff))
 #else

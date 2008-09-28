@@ -100,6 +100,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
   (*MonteCarloGroup) += new BooleanOption  ('\n', "weight-symmetrized" , "use the norm of the symmetrized wave fonction as probalbility density instead of the exact state");
+  (*MonteCarloGroup) += new  SingleStringOption ('\n', "record-wavefunctions", "optional file where each wavefunctions will be tabulated and recorded");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -143,6 +144,13 @@ int main(int argc, char** argv)
     {
       UseBaseAsWeightFlag = true;
       JainFlag = false;
+    }
+  char* RecordWaveFunctions = ((SingleStringOption*) Manager["record-wavefunctions"])->GetString();
+  if (RecordWaveFunctions != 0)
+    {
+      ofstream RecordFile;
+      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
+      RecordFile.close();
     }
 
   AbstractQHEParticle* ExactSpace = 0;
@@ -629,6 +637,22 @@ int main(int argc, char** argv)
 		     }
 		   if (JainAndSymmetrizedFlag == true)
 		     Value2 = SymmetrizedFunction2->CalculateFromSpinorVariables(TmpUV);
+		 }
+	       if (RecordWaveFunctions != 0)
+		 {
+		   ofstream RecordFile;
+		   RecordFile.precision(14);
+		   RecordFile.open(RecordWaveFunctions, ios::out | ios::binary | ios::app);
+		   for (int j = 0; j < (NbrParticles << 1); ++j)
+		     RecordFile << TmpUV[j] << "|a";
+		   RecordFile << TmpMetropolis;
+		   if (UseBaseAsWeightFlag == false)
+		     RecordFile << "|" << ValueExact[0];
+		   else
+		     for (int j = 0; j < NbrExactStates; ++j)
+		       RecordFile << "|c" << ValueExact[j];
+		   RecordFile << endl;
+		   RecordFile.close();
 		 }
 	       ++Acceptance;
 	     }

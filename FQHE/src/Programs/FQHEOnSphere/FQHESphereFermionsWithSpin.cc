@@ -1,9 +1,13 @@
 #include "HilbertSpace/AbstractQHEParticle.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSqueezedBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
 
@@ -301,16 +305,27 @@ int main(int argc, char** argv)
 		  }
 		else
 		  {
-		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		    return -1;
-		  }	
+#ifdef __128_BIT_LONGLONG__
+		    if (LzMax <= 63)
+#else
+		      if (LzMax <= 31)
+#endif
+			{
+			  Space = new FermionOnSphereWithSpinLong(NbrFermions, L, LzMax, SzTotal, MemorySpace);
+			}
+		      else
+			{
+			  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+			  return -1;
+			}	
+		  }
 	    }
 	  else
 	    {
-#ifdef __64_BITS__
-	      if (LzMax >= 31)
+#ifdef __128_BIT_LONGLONG__
+	      if (LzMax >= 61)
 #else
-		if (LzMax >= 15)
+		if (LzMax >= 29)
 #endif
 		  {
 		    cout << "States of this Hilbert space cannot be represented in a single word." << endl;
@@ -319,24 +334,70 @@ int main(int argc, char** argv)
 	      if (SzSymmetrizedBasis == true) 
 		if (LzSymmetrizedBasis == false)
 		  {
-		    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
-		    else
-		      Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+#ifdef __64_BITS__
+		    if (LzMax <= 28)
+#else
+		      if (LzMax <= 13)
+#endif
+			{
+			  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			    Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+			  else
+			    Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			}
+		      else
+			{
+			  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			    Space = new FermionOnSphereWithSpinSzSymmetryLong(NbrFermions, L, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+			  else
+			    Space = new FermionOnSphereWithSpinSzSymmetryLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			}
 		  }
 		else
-		  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		    {
-		      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-		    }
-		  else
-		    Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+#ifdef __64_BITS__
+		  if (LzMax <= 28)
+#else
+		    if (LzMax <= 13)
+#endif
+		      {
+			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			  {
+			    Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+									    ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+			  }
+			else
+			  Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+		      }
+		    else
+		      {
+			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			  {
+			    Space = new FermionOnSphereWithSpinLzSzSymmetryLong(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+										((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+			  }
+			else
+			  Space = new FermionOnSphereWithSpinLzSzSymmetryLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
+			
+		      }
 	      else
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-		else
-		  Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+#ifdef __64_BITS__
+		  if (LzMax <= 28)
+#else
+		    if (LzMax <= 13)
+#endif
+		      {
+			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+			else
+			  Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+		      }
+		    else
+		      {
+			if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
+			  Space = new FermionOnSphereWithSpinLzSymmetryLong(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+			else
+			  Space = new FermionOnSphereWithSpinLzSymmetryLong(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
+		      }
 	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 		{
 		  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());

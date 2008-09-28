@@ -15,6 +15,10 @@
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetryLong.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetryLong.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -125,34 +129,72 @@ int main(int argc, char** argv)
   if (Statistics == true)
     {
       RealVector OutputState;
-      FermionOnSphereWithSpinLzSzSymmetry* InitialSpace = 0;
-      if (SzSymmetrizedBasis == true) 
-	if (LzSymmetrizedBasis == false)
-	  InitialSpace = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+#ifdef __64_BITS__
+      if (LzMax <= 31)
+#else
+	if (LzMax <= 15)
+#endif
+	  {
+	    FermionOnSphereWithSpinLzSzSymmetry* InitialSpace = 0;
+	    if (SzSymmetrizedBasis == true) 
+	      if (LzSymmetrizedBasis == false)
+		InitialSpace = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+	      else
+		InitialSpace = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
+	    else
+	      InitialSpace = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
+	    FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, LzMax, TotalSz);
+	    if (SymmetrizeFlag)
+	      {
+		if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace->ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	      }
+	    else
+	      {
+		if (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
+		delete InitialSpace;
+	      }
+	  }
 	else
-	  InitialSpace = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
-      else
-	InitialSpace = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
-      FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, LzMax, TotalSz);
-      if (SymmetrizeFlag)
-	{
-	  if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;
-	    }
-	  OutputState = InitialSpace->ConvertToSymmetricNbodyBasis(State, TargetSpace);
-	}
-      else
-	{
-	  if (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension())
-	    {
-	      cout << "dimension mismatch between Hilbert space and input state" << endl;
-	      return -1;
-	    }
-	  OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
-	  delete InitialSpace;
-	}
+	  {
+	    FermionOnSphereWithSpinLzSzSymmetryLong* InitialSpace = 0;
+	    if (SzSymmetrizedBasis == true) 
+	      if (LzSymmetrizedBasis == false)
+		InitialSpace = new FermionOnSphereWithSpinSzSymmetryLong(NbrParticles, TotalLz, LzMax, SzMinusParity, MemorySpace);
+	      else
+		InitialSpace = new FermionOnSphereWithSpinLzSzSymmetryLong(NbrParticles, LzMax, SzMinusParity, LzMinusParity, MemorySpace);
+	    else
+	      InitialSpace = new FermionOnSphereWithSpinLzSymmetryLong(NbrParticles, LzMax, TotalSz, LzMinusParity, MemorySpace);
+	    FermionOnSphereWithSpinLong TargetSpace(NbrParticles, TotalLz, LzMax, TotalSz);
+	    if (SymmetrizeFlag)
+	      {
+		if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace->ConvertToSymmetricNbodyBasis(State, TargetSpace);
+	      }
+	    else
+	      {
+		if (InitialSpace->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		  {
+		    cout << "dimension mismatch between Hilbert space and input state" << endl;
+		    return -1;
+		  }
+		OutputState = InitialSpace->ConvertToNbodyBasis(State, TargetSpace);
+		delete InitialSpace;
+	      }
+	  }
       if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
 	{
 	  cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
