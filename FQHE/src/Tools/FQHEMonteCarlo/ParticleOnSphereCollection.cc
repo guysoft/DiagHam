@@ -13,6 +13,33 @@ ParticleOnSphereCollection::ParticleOnSphereCollection(int N, long seed)
   this->LastMoved=-1;
   this->Flag.Initialize();
   this->Generator = new NumRecRandomGenerator(seed);
+  ExternalGenerator = false;
+  this->Theta0 = (0.2*M_PI/sqrt((double)N/10.0));
+  this->ThetaPhi.Resize(2*N);  
+  double phi, theta,  c, s;
+  for (int i=0; i<N; ++i)
+    {
+      phi=Generator->GetRealRandomNumber()*2.0*M_PI;
+      theta=acos(1.0-2.0*Generator->GetRealRandomNumber());
+      s=sin(theta/2.); c = cos(theta/2.);
+      this->SpinorUCoordinates[i].Re =c*cos(phi/2.0);
+      this->SpinorUCoordinates[i].Im =-c*sin(phi/2.0);      
+      this->SpinorVCoordinates[i].Re = s*cos(phi/2.0);
+      this->SpinorVCoordinates[i].Im = s*sin(phi/2.0);
+      this->ThetaPhi[i<<1] = (2.0*acos(Norm(SpinorUCoordinates[i])));
+      this->ThetaPhi[(i<<1)+1] = (Arg(SpinorVCoordinates[i])-Arg(SpinorUCoordinates[i]));
+    }
+}
+
+ParticleOnSphereCollection::ParticleOnSphereCollection(int N, AbstractRandomNumberGenerator *generator)
+{
+  this->NbrParticles = N;
+  this->SpinorUCoordinates = new Complex[N];
+  this->SpinorVCoordinates = new Complex[N];
+  this->LastMoved=-1;
+  this->Flag.Initialize();
+  this->Generator = generator;
+  this->ExternalGenerator = true;
   this->Theta0 = (0.2*M_PI/sqrt((double)N/10.0));
   this->ThetaPhi.Resize(2*N);  
   double phi, theta,  c, s;
@@ -43,6 +70,7 @@ ParticleOnSphereCollection::ParticleOnSphereCollection(const ParticleOnSphereCol
   this->SpinorVCoordinates = tocopy.SpinorVCoordinates;
   this->Flag  = tocopy.Flag;
   this->Generator = tocopy.Generator;
+  this->ExternalGenerator = tocopy.ExternalGenerator;
   this->ThetaPhi = tocopy.ThetaPhi;
   this->Theta0 = tocopy.Theta0;
 }
@@ -53,7 +81,8 @@ ParticleOnSphereCollection::~ParticleOnSphereCollection()
     {
       delete [] SpinorUCoordinates;
       delete [] SpinorVCoordinates;
-      delete Generator;
+      if (!this->ExternalGenerator)
+	delete Generator;
     }
 }
 

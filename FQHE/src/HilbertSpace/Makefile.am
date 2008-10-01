@@ -55,6 +55,7 @@ HardCoreBoson.cc \
 ParticleOnLattice.cc \
 BosonOnLattice.cc \
 HardCoreBosonOnLattice.cc \
+BosonOnLatticeKy.cc \
 FermionOnDiskHaldaneBasis.cc \
 FermionOnDiskLong.cc \
 BosonOnDiskShort.cc \

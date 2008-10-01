@@ -37,6 +37,11 @@
 
 class AbstractRandomNumberGenerator
 {
+ protected:
+  // flag indicating if a gaussian random number is stored
+  int iset;
+  // stored value of gaussian random number
+  double gset;
 
  public:
 
@@ -63,6 +68,11 @@ class AbstractRandomNumberGenerator
   //
   // return value = random number
   virtual double GetRealRandomNumber() = 0;
+
+  // get real random number with gaussian distribution (uses multiple calls to generator)
+  //
+  // return value = random number
+  virtual double GetGaussianRandomNumber ();
 
   // get integer random number between 0 and GetMaxInteger
   //

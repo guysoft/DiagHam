@@ -11,6 +11,7 @@
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/RandomNumber/FileRandomNumberGenerator.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
 #include "Tools/FQHEWaveFunction/AdvancedReadRezayiOnSphereWaveFunction.h"
@@ -96,8 +97,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('t', "nbr-warmup-iter", "number of steps for thermalization", 500);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
-  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "value of random seed to be used", -1);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "randomSeed", "value of random seed to be used", 29457);
   (*MonteCarloGroup) += new SingleIntegerOption ('H', "history-mode", "use on-file history: (0=off, 1=generate new, 2=read history, 3=optimize with history, 4=continue to generate given history)", 1);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
@@ -108,6 +110,8 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
+  (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
   (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -133,6 +137,7 @@ int main(int argc, char** argv)
   int NbrFermions = Manager.GetInteger("nbr-particles");
   int LzMax = Manager.GetInteger("lzmax");
   int NbrIter = Manager.GetInteger("nbr-iter");
+  int NbrWarmUpIter = Manager.GetInteger("nbr-warmup-iter");
   int Lz = Manager.GetInteger("lz");
   RealVector State;
 
@@ -203,7 +208,18 @@ int main(int argc, char** argv)
       Lz = 0;
     }
 
-  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
+  AbstractRandomNumberGenerator* RandomNumber = 0;
+  if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
+    {
+      RandomNumber = new FileRandomNumberGenerator(((SingleStringOption*) Manager["random-file"])->GetString(), (unsigned long)((NbrWarmUpIter + NbrIter) * 4.33) + 2000, 
+						     ((SingleIntegerOption*) Manager["random-seek"])->GetInteger());
+    }
+  else
+    {
+      RandomNumber = new StdlibRandomNumberGenerator (Manager.GetInteger("randomSeed"));
+    }
+
+  ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, RandomNumber);
   FermionOnSphere *Space=NULL;
   Complex ValueExact;
   Complex TrialValue;
@@ -230,6 +246,18 @@ int main(int argc, char** argv)
 		  // default filename: add extension to exact vector
 		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
 		  sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+		  char * tmpC = new char[strlen(HistoryFileName)+5];
+		  sprintf(tmpC,"%s",HistoryFileName);
+		  std::ifstream testExistant(tmpC,std::ios::in);
+		  int count=1;
+		  while (testExistant.is_open())
+		    {
+		      testExistant.close();
+		      sprintf(tmpC,"%s%d",HistoryFileName,count++);
+		      testExistant.open(tmpC,std::ios::in);
+		    }
+		  delete [] HistoryFileName;
+		  HistoryFileName = tmpC;
 		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
@@ -347,7 +375,7 @@ int main(int argc, char** argv)
   if (!UsePfaffian)
     Space = new FermionOnSphere(NbrFermions, Lz, LzMax);
   ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
-  AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (29457);
+  
   double PreviousSamplingAmplitude;
   
   int RecordStep = Manager.GetInteger("record-step");
@@ -432,12 +460,37 @@ int main(int argc, char** argv)
     } 
 
 
-  // testing code: comparing wavefunctions
+// testing code: comparing wavefunctions
 
 //   AdvancedReadRezayiOnSphereWaveFunction *MR1 = new AdvancedReadRezayiOnSphereWaveFunction(NbrFermions/2, 2, true);
 //   ExplicitMooreReadOnSphereWaveFunction *MR2 = new ExplicitMooreReadOnSphereWaveFunction(NbrFermions/2, 2, true);
 
 //    Complex T1, T2;
+
+  // thermalization loop
+  for (int i = 0; i < NbrWarmUpIter; ++i)
+    {
+      // make a random move of particle NextCoordinates
+      Particles->Move(NextCoordinates);
+      // evaluate new trial wavefunction value
+      TmpMetropolis = (*TestWaveFunction)(Particles->GetPositions());
+
+      CurrentSamplingAmplitude = SqrNorm(TmpMetropolis);
+      if ((CurrentSamplingAmplitude > PreviousSamplingAmplitude) ||
+	  ((RandomNumber->GetRealRandomNumber() * PreviousSamplingAmplitude) < CurrentSamplingAmplitude))
+	{
+	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
+	  TrialValue = TmpMetropolis;
+	}
+      else
+	{
+	  Particles->RestoreMove();
+	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	}
+      // determine next particle to move
+      NextCoordinates = (int) (((double) NbrFermions) * RandomNumber->GetRealRandomNumber());
+      if (NextCoordinates == NbrFermions) --NextCoordinates;
+    } // end thermalization
   
   for (int i = 0; i < NbrIter; ++i)
     {

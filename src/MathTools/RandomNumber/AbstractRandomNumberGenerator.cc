@@ -32,6 +32,7 @@
 #include "MathTools/RandomNumber/AbstractRandomNumberGenerator.h"
 
 #include <ctime>
+#include <cmath>
 
 // virtual destructor
 //
@@ -40,9 +41,36 @@ AbstractRandomNumberGenerator::~AbstractRandomNumberGenerator()
 {
 }
 
+
 // set seed of the random number generator to system time
 //
 void AbstractRandomNumberGenerator::UseTimeSeed()
 {
   this->SetSeed(time(NULL));
+}
+
+
+// get real random number with gaussian distribution (uses multiple calls to generator)
+//
+// return value = random number
+double AbstractRandomNumberGenerator::GetGaussianRandomNumber ()
+{
+  double fac, rsq, v1, v2;
+  if (this->iset == 0)
+    {
+     
+mark: v1=2.*GetRealRandomNumber()-1.0;      
+      v2=2.*GetRealRandomNumber()-1.0;
+      rsq=v1*v1+v2*v2;
+      if (rsq >=1.0 || rsq == 0.0 ) goto mark;
+      fac = sqrt(-2.*log(rsq)/rsq);
+      this->gset=v1*fac;
+      this->iset=1;
+      return (v2*fac);
+    }
+  else 
+    {
+      this->iset=0;
+      return this->gset;
+    }
 }

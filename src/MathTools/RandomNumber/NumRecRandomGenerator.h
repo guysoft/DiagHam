@@ -23,8 +23,6 @@ class NumRecRandomGenerator:public AbstractRandomNumberGenerator
   long idum;    //global seed for the random number generator
   long iy;   
   long iv[NTAB];
-  long iset;
-  double gset;
 
   // number of generated random numbers
   unsigned long NbrGeneratedNumbers;
@@ -59,7 +57,7 @@ class NumRecRandomGenerator:public AbstractRandomNumberGenerator
   // get standard gaussian distributed real random number
   //
   // return value = random number
-  virtual double GetGaussianRandomNumber();
+  // now inherited from Abstract Random number :  virtual double GetGaussianRandomNumber();
 
   // get integer random number between 0 and GetMaxInteger
   //

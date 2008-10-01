@@ -3,6 +3,7 @@
 #include "Vector/RealVector.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 #include "MathTools/RandomNumber/FileRandomNumberGenerator.h"
 
 #include "Options/Options.h"
@@ -46,14 +47,16 @@ int main(int argc, char** argv)
     }
 
   AbstractRandomNumberGenerator* RandomNumber = 0;
-  if (strcasecmp(((SingleStringOption*) Manager["random-file"])->GetString(), "NumRecRandomGenerator") == 0)
+  if (strcasecmp(Manager.GetString("random-generator"), "NumRecRandomGenerator") == 0)
     {
-      RandomNumber = new StdlibRandomNumberGenerator (29457);
-   }
+      cout << "Using NumRecRandomGenerator"<<endl;
+      RandomNumber = new NumRecRandomGenerator (29457);      
+    }
   else
     {
+      cout << "Using StdlibRandomNumberGenerator"<<endl;
       RandomNumber = new StdlibRandomNumberGenerator (29457);
-   }
+    }
   FileRandomNumberGenerator RandomNumber2 (RandomNumber, Manager.GetInteger("nbr-random"), ((SingleStringOption*) Manager["random-file"])->GetString());
   return 0;  
 }

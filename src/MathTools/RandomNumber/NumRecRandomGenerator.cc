@@ -100,24 +100,3 @@ double NumRecRandomGenerator::GetRealRandomNumber()
 }
 
 
-double NumRecRandomGenerator::GetGaussianRandomNumber ()
-{
-  double fac, rsq, v1, v2;
-  if (iset == 0)
-    {
-     
-mark: v1=2.*GetRealRandomNumber()-1.0;      
-      v2=2.*GetRealRandomNumber()-1.0;
-      rsq=v1*v1+v2*v2;
-      if (rsq >=1.0 || rsq == 0.0 ) goto mark;
-      fac = sqrt(-2.*log(rsq)/rsq);
-      gset=v1*fac;
-      iset=1;
-      return (v2*fac);
-    }
-  else 
-    {
-      iset=0;
-      return gset;
-    }
-}

@@ -48,15 +48,17 @@ class ParticleOnSphereCollection : public AbstractParticleCollection {
   double LastPhi;
   Complex *SpinorUCoordinates;
   Complex *SpinorVCoordinates;      
-  NumRecRandomGenerator *Generator;
+  AbstractRandomNumberGenerator *Generator;
+  bool ExternalGenerator;
   GarbageFlag Flag;
-  RealVector ThetaPhi;
+  RealVector ThetaPhi;  
   
  public:
 
   // constructors:
   ParticleOnSphereCollection();
   ParticleOnSphereCollection(int N, long seed =-1);
+  ParticleOnSphereCollection(int N, AbstractRandomNumberGenerator *generator);
   ParticleOnSphereCollection(const ParticleOnSphereCollection &tocopy);
 
   //destructor
