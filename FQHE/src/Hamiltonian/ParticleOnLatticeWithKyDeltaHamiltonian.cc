@@ -48,20 +48,22 @@ using std::ostream;
 // nbrParticles = number of particles
 // lx = length of simulation cell in x-direction
 // ly = length of simulation cell in y-direction
+// kyMax = maximum value of momentum in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // contactInteractionU = strength of on-site delta interaction
 // reverseHopping = flag to indicate if sign of hopping terms should be reversed
-// deltaPotential = strength of a delta potential at site (0,0)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
+ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int kyMax, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double randomPotential, AbstractArchitecture* architecture, int memory, char* precalculationFileName)
 {
   this->Particles=particles;
   this->NbrParticles=nbrParticles;
   this->Lx=lx;
   this->Ly=ly;
   this->SubLattices=1;
+  this->HaveKySymmetry=true;
+  this->KyMax=kyMax;  
   this->NbrCells=lx*ly;
   this->NbrSites=NbrCells*SubLattices;
   this->NbrFluxQuanta=nbrFluxQuanta;
@@ -69,7 +71,7 @@ ParticleOnLatticeWithKyDeltaHamiltonian::ParticleOnLatticeWithKyDeltaHamiltonian
   this->FluxDensity=((double)nbrFluxQuanta)/NbrCells;
   this->ContactInteractionU=contactInteractionU;
   this->ReverseHopping = reverseHopping;
-  this->DeltaPotential = deltaPotential;
+  this->DeltaPotential = 0.0;
   this->RandomPotential = randomPotential;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
@@ -167,7 +169,7 @@ MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnLatticeWithKyD
 
 
 // evaluate all interaction factors
-//   
+//
 void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 {  
   // hopping terms are present independent of statistics:
@@ -181,89 +183,187 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
   int TmpNumberTerms=0;
   double HoppingSign = (this->ReverseHopping ? 1.0 : -1.0);
   Complex TranslationPhase;
+  int p = Ly/KyMax;
+  int compositeKy, compositeKy2;
+  double PreFactor = 1.0/KyMax;
   for (int i=0; i<Lx; ++i) 
     {
       Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
-      for (int j=0; j<Ly; ++j)
-	{
-	  KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
-	  // if (TranslationPhase!=1.0)
-// 	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-// 		 <<TranslationPhase<<endl;
-	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
-	  // if (TranslationPhase!=1.0)
-// 	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-// 		 <<TranslationPhase<<endl;
-	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
-	  // if (TranslationPhase!=1.0)
-// 	    cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-// 		 <<TranslationPhase<<endl;
-	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
-	  // if (TranslationPhase!=1.0)
-// 	    cout << "(j="<<j<<"->"<<j-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-// 		 <<TranslationPhase<<endl;
-	  //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-	  ++TmpNumberTerms;
-	}
-    }
+      for (int k=0; k<KyMax; ++k)
+	for (int s=0; s<p; ++s)
+	  {
+	    compositeKy = k*p+s;
+	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
+	    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, compositeKy, 0, TranslationPhase);
+	    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*TranslationPhase;
+	    // if (TranslationPhase!=1.0)
+	    // 	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+	    // 		 <<TranslationPhase<<endl;
+	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	    ++TmpNumberTerms;
+	    KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, compositeKy, 0, TranslationPhase);
+	    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*TranslationPhase;	    
+	    // if (TranslationPhase!=1.0)
+	    // 	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+	    // 		 <<TranslationPhase<<endl;
+	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	    ++TmpNumberTerms;
 
-  if (this->DeltaPotential != 0.0)
-    {
-      KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(0, 0, 0, TranslationPhase);
-      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(0, 0, 0, TranslationPhase);
-      HoppingTerms[TmpNumberTerms] = this->DeltaPotential;
-      //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-      ++TmpNumberTerms;
+	    // coupling in y-direction: distinguish p=0 and p>0!
+	    if (p==0)
+	      {
+		KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, k, 0, TranslationPhase);
+		KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
+		HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*2.0*cos(2.0*M_PI*(this->FluxDensity*(double)i-(double)k/Ly))*TranslationPhase;
+		// if (TranslationPhase!=1.0)
+		// 	    cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		// 		 <<TranslationPhase<<endl;
+		//cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+		++TmpNumberTerms;
+	      }
+	    else
+	      {
+		if (s<p-1)
+		  {
+		    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
+		    compositeKy2 = k*p+s+1;
+		    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
+		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Phase*TranslationPhase;
+		  }
+		else
+		  {
+		    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
+		    compositeKy2 = k*p+s+1;
+		    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
+		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Phase*TranslationPhase
+		      *Polar(1.0,-2.0*M_PI*(double)k/KyMax);
+		  }
+		++TmpNumberTerms;
+		if (s==0)
+		  {
+		    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
+		    compositeKy2 = k*p+s-1;
+		    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
+		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Conj(Phase)*TranslationPhase
+		      *Polar(1.0,+2.0*M_PI*(double)k/KyMax);
+		  }
+		else
+		  {
+		    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
+		    compositeKy2 = k*p+s-1;
+		    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
+		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Conj(Phase)*TranslationPhase;
+		  }
+		++TmpNumberTerms;
+	      }
+	  }
     }
   if (this->RandomPotential != 0.0)
     {
-      NumRecRandomGenerator G;
-      G.UseTimeSeed();
-      for (int x=0; x<Lx; ++x)
-	for (int y=0; y<Ly; ++y)
-	  {
-	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(x, y, 0, TranslationPhase);
-	    KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
-	    HoppingTerms[TmpNumberTerms] = this->DeltaPotential*(-0.5+G.GetRealRandomNumber());
-	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
-	    ++TmpNumberTerms;
-	  }
+//       NumRecRandomGenerator G;
+//       G.UseTimeSeed();
+//       for (int x=0; x<Lx; ++x)
+// 	for (int y=0; y<Ly; ++y)
+// 	  {
+// 	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(x, y, 0, TranslationPhase);
+// 	    KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
+// 	    HoppingTerms[TmpNumberTerms] = this->DeltaPotential*(-0.5+G.GetRealRandomNumber());
+// 	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+// 	    ++TmpNumberTerms;
+// 	  }
     }
 
-  // we have no general four-particle interactions:
-  this->NbrInteractionFactors=0;
-  this->NbrQ12Indices=0;
+  // interactions are not fully diagonal in k-space:
+  this->NbrDiagonalInteractionFactors=0;
+  this->DiagonalInteractionFactors=0;
+  this->DiagonalQValues=0;
   
   // contact interactions come to play for bosons, only!
   if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->ContactInteractionU!=0.0))
     {
       cout << "adding interaction terms"<<endl;
-      this->NbrDiagonalInteractionFactors=this->NbrSites;
-      this->DiagonalInteractionFactors=new double[NbrDiagonalInteractionFactors];
-      this->DiagonalQValues=new int[NbrDiagonalInteractionFactors];
-      for (int i=0; i<NbrDiagonalInteractionFactors; ++i)
-	{
-	  this->DiagonalQValues[i]=i;
-	  this->DiagonalInteractionFactors[i]=this->ContactInteractionU;
-	}
+      // general four-particle interactions:      
+      int Pos=0;
+      int k4;
+      double* TmpCoefficient = new double [Lx * p * KyMax * KyMax * KyMax];
+      double Strength = this->ContactInteractionU * KyMax;  // Check Amplitude!!
+      double MaxCoefficient = 0.0;
+      for (int i=0; i<Lx; ++i)
+	for (int s=0; s<p; ++s)
+	  for (int k1 = 0; k1 < this->KyMax; ++k1)
+	    for (int k2 = 0; k2 <= k1; ++k2)
+	      for (int k3 = 0; k3 < this->KyMax; ++k3)
+		{
+		  k4 = k1 + k2 - k3;
+		  if (k4 < 0)
+		    k4 += this->KyMax;
+		  else
+		    if (k4 >= this->KyMax)
+		      k4 -= this->KyMax;
+		  if (k3 > k4)
+		    {
+		      if (k1 != k2)
+			{
+			  TmpCoefficient[Pos] = 4.0*Strength;
+			}
+		      else
+			TmpCoefficient[Pos] = 2.0*Strength;
+		      if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
+			MaxCoefficient = fabs(TmpCoefficient[Pos]);
+		      ++Pos;
+		    }
+		  else
+		    if (k3 == k4)
+		      {
+			if (k1 != k2)
+			  TmpCoefficient[Pos] = 2.0*Strength;
+			else
+			  TmpCoefficient[Pos] = Strength;
+			if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
+			  MaxCoefficient = fabs(TmpCoefficient[Pos]);
+			++Pos;
+		      }
+		}
+      this->NbrInteractionFactors = 0;
+      this->Q1Value = new int [Pos];
+      this->Q2Value = new int [Pos];
+      this->Q3Value = new int [Pos];
+      this->Q4Value = new int [Pos];
+      this->InteractionFactors = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+      for (int i=0; i<Lx; ++i)
+	for (int s=0; s<p; ++s)
+	  for (int k1 = 0; k1 < this->KyMax; ++k1)
+	    for (int k2 = 0; k2 <= k1; ++k2)
+	      for (int k3 = 0; k3 < this->KyMax; ++k3)
+		{
+		  k4 = k1 + k2 - k3;
+		  if (k4 < 0)
+		    k4 += this->KyMax;
+		  else
+		    if (k4 >= this->KyMax)
+		      k4 -= this->KyMax;
+		  if (k3 >= k4)
+		    {
+		      if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
+			{
+			  this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+			  this->Q1Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k1*p+s, 0, TranslationPhase);
+			  this->Q2Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k2*p+s, 0, TranslationPhase);
+			  this->Q3Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k3*p+s, 0, TranslationPhase);
+			  this->Q4Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k4*p+s, 0, TranslationPhase);
+			  ++this->NbrInteractionFactors;
+			}
+		      ++Pos;
+		    }
+		}
     }
   else // no such interactions
     {
-      NbrDiagonalInteractionFactors=0;
+      
     }
     
   

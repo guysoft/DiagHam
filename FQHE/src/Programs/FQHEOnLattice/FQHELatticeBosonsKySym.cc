@@ -1,6 +1,6 @@
 #include "HilbertSpace/BosonOnLatticeKy.h"
 //#include "HilbertSpace/HardCoreBosonOnLattice.h"
-#include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeWithKyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -98,7 +98,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction (-1=all)", -1);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
-  (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
@@ -125,7 +124,6 @@ int main(int argc, char** argv)
   bool HardCore = Manager.GetBoolean("hard-core");
   double ContactU = Manager.GetDouble("contactU");
   if (HardCore) ContactU=0.0;
-  double Delta = Manager.GetDouble("deltaPotential");
   double Random = Manager.GetDouble("randomPotential");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
@@ -145,30 +143,29 @@ int main(int argc, char** argv)
 
   char* OutputName;
   char reverseHoppingString[4]="";
-  char deltaString[20]="";
+  char randomString[20]="";
+  char kyString[20]="";
   char interactionStr[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      
       if (ReverseHopping)
 	sprintf(reverseHoppingString,"rh_");
-      if (Delta!=0.0)
-	sprintf(deltaString,"d_%g_",Delta);
       if (Random!=0.0)
-	sprintf(deltaString,"R_%g_",Random);
+	sprintf(randomString,"R_%g_",Random);
       if (HardCore)
 	sprintf(interactionStr,"_hardcore");
+      if (Manager.GetInteger("ky")>=0)
+	sprintf(kyString,"_k_%d",Manager.GetInteger("ky"));
       else sprintf(interactionStr,"_u_%g", ContactU);
       if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString);
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString);
     }
-  ParticleOnLattice* Space=0;    
+  ParticleOnLattice* Space=0;
   
   AbstractQHEOnLatticeHamiltonian* Hamiltonian=0;
-  //  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
-
   
   if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -178,7 +175,7 @@ int main(int argc, char** argv)
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	  //  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+	  Hamiltonian = new ParticleOnLatticeWithKyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(), NbrFluxQuanta, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
 
 	  char* StateFileName = Manager.GetString("energy-expectation");
 	  if (IsFile(StateFileName) == false)
@@ -271,7 +268,7 @@ int main(int argc, char** argv)
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	  //  Hamiltonian = new ParticleOnLatticeDeltaHamiltonian(Space, NbrBosons, Lx, Ly, NbrFluxQuanta, ContactU, ReverseHopping, Delta, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
+	  Hamiltonian = new ParticleOnLatticeWithKyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(), NbrFluxQuanta, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
 
 	  if (Ky<0) MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
 	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;

@@ -173,7 +173,7 @@ void ParticleOnTorusDeltaHamiltonian::EvaluateInteractionFactors()
 
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
-     for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
+      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
 	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
 	    {

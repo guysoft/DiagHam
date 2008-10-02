@@ -62,6 +62,8 @@ ParticleOnLatticeDeltaHamiltonian::ParticleOnLatticeDeltaHamiltonian(ParticleOnL
   this->Lx=lx;
   this->Ly=ly;
   this->SubLattices=1;
+  this->HaveKySymmetry=false;
+  this->KyMax=0;  
   this->NbrCells=lx*ly;
   this->NbrSites=NbrCells*SubLattices;
   this->NbrFluxQuanta=nbrFluxQuanta;

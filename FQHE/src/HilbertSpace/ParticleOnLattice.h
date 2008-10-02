@@ -46,8 +46,8 @@ class ParticleOnLattice :  public AbstractQHEParticle
   enum 
     {
       NoSymmetry = 0x0,
-      XTranslations = 0x1,
-      YTranslations = 0x2
+      YTranslations = 0x1,
+      XTranslations = 0x2      
     };
 
 

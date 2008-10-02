@@ -70,15 +70,15 @@ class ParticleOnLatticeWithKyDeltaHamiltonian : public AbstractQHEOnLatticeHamil
   // nbrParticles = number of particles
   // lx = length of simulation cell in x-direction
   // ly = length of simulation cell in y-direction
+  // kyMax = maximum value of momentum in y-direction
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // contactInteractionU = strength of on-site delta interaction
   // reverseHopping = flag to indicate if sign of hopping terms should be reversed
-  // deltaPotential = strength of a delta potential at site (0,0)
   // randomPotential = strength of a random on-site potential
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double deltaPotential, double randomPotential, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
+  ParticleOnLatticeWithKyDeltaHamiltonian(ParticleOnLattice* particles, int nbrParticles, int lx, int ly, int kyMax, int nbrFluxQuanta, double contactInteractionU, bool reverseHopping, double randomPotential, AbstractArchitecture* architecture, int memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

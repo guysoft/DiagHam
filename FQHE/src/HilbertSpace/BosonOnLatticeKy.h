@@ -246,13 +246,21 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // sublattice = sublattice index
   // translationPhase = returns phase occurred from translating the
   //                    site to the fundamental region [0,Lx-1] x [0,Ly-1]
-  virtual int EncodeQuantumNumber(int posx, int ky, int sublattice, Complex &translationPhase);
+  virtual int EncodeQuantumNumber(int posx, int ky, int sublattice, Complex &translationPhase); 
 
   // decode a single encoded quantum number q to the set of quantum numbers posx, posy, sublattice
   // posx = position along x-direction
   // ky = momentum in y-direction
   // sublattice = sublattice index
   virtual void DecodeQuantumNumber(int q, int &posx, int &ky, int &sublattice);
+
+  // ky = true momentum in y-direction
+  // fluxSubLattice = 'sublattice' index remaining after translation symmetry
+  virtual int EncodeCompositeMomentum(int ky, int fluxSubLattice);
+
+  // ky = true momentum in y-direction
+  // fluxSubLattice = 'sublattice' index remaining after translation symmetry
+  virtual void DecodeCompositeMomentum(int q, int &ky, int &fluxSubLattice);
 
   // extract the momentum ky from a quantum number q
   // return: momentum ky (in range 0...Kmax-1)

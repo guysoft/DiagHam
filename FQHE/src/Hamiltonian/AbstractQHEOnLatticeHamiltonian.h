@@ -67,7 +67,11 @@ class AbstractQHEOnLatticeHamiltonian : public AbstractQHEHamiltonian
   int Ly;
   // number of sublattice sites per unit cell
   int SubLattices;
-    // number of sites
+  // ky-symmetry-flag
+  bool HaveKySymmetry;
+  // maximum ky-momentum
+  int KyMax;  
+  // number of sites
   int NbrSites;  
   // number of unit cells
   int NbrCells;

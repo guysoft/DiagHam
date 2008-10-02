@@ -665,7 +665,7 @@ int BosonOnLatticeKy::EncodeQuantumNumber(int posx, int ky, int sublattice, Comp
   while (posx<0)
     {
       posx+=this->Lx;
-      ++numXTranslations;      
+      ++numXTranslations;
     }
   while (posx>=this->Lx)
     {
@@ -736,6 +736,23 @@ int BosonOnLatticeKy::DecodeKy(int q)
   ky=(q%(m*Ly))/m;
   return ky/TranslationCell;
 }
+
+
+// ky = true momentum in y-direction
+// fluxSubLattice = 'sublattice' index remaining after translation symmetry
+int BosonOnLatticeKy::EncodeCompositeMomentum(int ky, int fluxSubLattice)
+{
+  return ky*TranslationCell+fluxSubLattice;
+}
+
+// ky = true momentum in y-direction
+// fluxSubLattice = 'sublattice' index remaining after translation symmetry
+void BosonOnLatticeKy::DecodeCompositeMomentum(int q, int &ky, int &fluxSubLattice)
+{
+  ky = q/TranslationCell;
+  fluxSubLattice = q%TranslationCell;
+}
+
 
 // translate a state by a multiple of the lattice vectors
 // shiftX = length of translation in x-direction
