@@ -48,6 +48,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
@@ -74,6 +75,8 @@ int main(int argc, char** argv)
   bool SU3SpinFlag = ((BooleanOption*) Manager["su3-spin"])->GetBoolean();
   bool SU4SpinFlag = ((BooleanOption*) Manager["su4-spin"])->GetBoolean();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int TotalIz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
+  int TotalPz = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
     {
@@ -106,8 +109,11 @@ int main(int argc, char** argv)
  	if (SU2SpinFlag == true)
 	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
 	else
- 	if (SU3SpinFlag == true)
-	  Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
+	  if (SU3SpinFlag == true)
+	    Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);
+	  else
+	    if (SU4SpinFlag == true)
+	      Space = new FermionOnSphereWithSU4Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, TotalIz, TotalPz);	    
     }
   
 
@@ -139,7 +145,8 @@ int main(int argc, char** argv)
 		if (SU3SpinFlag == true)
 		  sprintf (OutputFileName, "fermions_sphere_su3_n_%d_2s_%d_lz_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalTz, TotalY);
 		else
-		  sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+		  if (SU4SpinFlag == true)
+		    sprintf (OutputFileName, "fermions_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d_iz_%d_pz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz, TotalIz, TotalPz);
 	}
       else
 	{

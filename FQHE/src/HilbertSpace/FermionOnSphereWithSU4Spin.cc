@@ -421,9 +421,6 @@ ostream& FermionOnSphereWithSU4Spin::PrintState (ostream& Str, int state)
 	Str << "0 ";
       Str << "| ";
     }
-  Str << this->StateHighestBit[state] << " position = " << this->FindStateIndex(TmpState, this->StateHighestBit[state]);
-  if (state !=  this->FindStateIndex(TmpState, this->StateHighestBit[state]))
-    Str << " error! ";
   return Str;
 }
 
@@ -1967,7 +1964,7 @@ RealVector FermionOnSphereWithSU4Spin::ForgeSU2FromSU4(RealVector& state, Fermio
       int TmpPos = this->LzMax << 2;
       while (TmpPos >=0)
 	{
-	  if ((((TmpState2 >> 3) & (TmpState2 >> 2) & 0x1ul) != 0x0ul) &&
+	  if ((((TmpState2 >> 3) & (TmpState2 >> 2) & 0x1ul) != 0x0ul) ||
 	      (((TmpState2 >> 1) & TmpState2 & 0x1ul) != 0x0ul))
 	    TmpPos = 1;
 	  TmpState2 >>= 4;
@@ -1977,7 +1974,8 @@ RealVector FermionOnSphereWithSU4Spin::ForgeSU2FromSU4(RealVector& state, Fermio
 	{ 
 	  TmpPos = 0;
 	  TmpState2 = 0x0ul; 
-	  while (TmpPos <= this->LzMax)
+	  int TmpLzMax = this->LzMax << 1;
+	  while (TmpPos <= TmpLzMax)
 	    {
 	      TmpState2 |= ((TmpState | (TmpState >> 1)) & 0x1ul) << TmpPos;
 	      ++TmpPos;

@@ -336,8 +336,8 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  RealVector* LowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
+  virtual RealVector* LowLevelMultipleAddMultiplyDiskStorage(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							     int firstComponent, int nbrComponent);
 
   // evaluate all interaction factors
   //   

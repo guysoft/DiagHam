@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //       class of hamiltonian associated to particles on a sphere with        //
-//                          generic 3-body interaction                        //
+//                     spin and generic 3-body interaction                    //
 //                                                                            //
-//                        last modification : 22/07/2008                      //
+//                        last modification : 26/08/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -34,8 +34,8 @@
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/AbstractQHEOnSphereNBodyInteractionHamiltonian.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "Hamiltonian/AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian.h"
 
 #include <iostream>
 
@@ -46,18 +46,35 @@ using std::ostream;
 class ClebschGordanCoefficients;
 
 
-class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNBodyInteractionHamiltonian
+class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian
 {
 
  protected:
 
   
-  // array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  double* ThreeBodyPseudoPotential;
+  // array with the three-body pseudo-potentials between spin up - spin up, sorted with respect to the relative angular momentum, 
+  // taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
+  double* ThreeBodyPseudoPotentialUpUp;
   // nuber of elements in the ThreeBodyPseudoPotential array
-  int NbrThreeBodyPseudoPotential;
+  int NbrThreeBodyPseudoPotentialUpUp;
   // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
-  int MaxRelativeAngularMomentum;
+  int MaxRelativeAngularMomentumUpUp;
+
+  // array with the three-body pseudo-potentials between spin down - spin down, sorted with respect to the relative angular momentum, 
+  // taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
+  double* ThreeBodyPseudoPotentialDownDown;
+  // nuber of elements in the ThreeBodyPseudoPotential array
+  int NbrThreeBodyPseudoPotentialDownDown;
+  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
+  int MaxRelativeAngularMomentumDownDown;
+
+  // array with the three-body pseudo-potentials between spin up - spin down, sorted with respect to the relative angular momentum, 
+  // taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
+  double* ThreeBodyPseudoPotentialUpDown;
+  // nuber of elements in the ThreeBodyPseudoPotential array
+  int NbrThreeBodyPseudoPotentialUpDown;
+  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
+  int MaxRelativeAngularMomentumUpDown;
 
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   double* PseudoPotential;
@@ -66,7 +83,7 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
 
   // default constructor
   //
-  ParticleOnSphereGenericThreeBodyHamiltonian();
+  ParticleOnSphereWithSpinGenericThreeBodyHamiltonian();
 
   // constructor from default datas
   //
@@ -81,10 +98,10 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
-					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-					      char* precalculationFileName = 0);
+  ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
+						      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum, double l2Factor, 
+						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+						      char* precalculationFileName = 0);
 
   // constructor from datas with a fully-defined two body interaction
   //
@@ -100,15 +117,15 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereGenericThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int lzmax, 
-					      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum,
-					      double l2Factor, double* pseudoPotential, 
-					      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-					      char* precalculationFileName = 0);
+  ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
+						      double* threeBodyPseudoPotential, int maxRelativeAngularMomentum,
+						      double l2Factor, double* pseudoPotential, 
+						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+						      char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnSphereGenericThreeBodyHamiltonian();
+  ~ParticleOnSphereWithSpinGenericThreeBodyHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -128,7 +145,7 @@ class ParticleOnSphereGenericThreeBodyHamiltonian : public AbstractQHEOnSphereNB
 
   // evaluate all interaction factors
   //   
-  virtual void EvaluateInteractionFactors();
+  void EvaluateInteractionFactors();
 
 
 };
