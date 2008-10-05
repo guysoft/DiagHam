@@ -64,4 +64,5 @@ BosonOnDiskHaldaneBasisShort.cc \
 FermionOnSphereWithSpinLong.cc \
 FermionOnSphereWithSpinLzSzSymmetryLong.cc \
 FermionOnSphereWithSpinLzSymmetryLong.cc \
-FermionOnSphereWithSpinSzSymmetryLong.cc
+FermionOnSphereWithSpinSzSymmetryLong.cc \
+ParticleOnSphereManager.cc

@@ -81,6 +81,12 @@ class OptionGroup
   // return value = poitner to the option if it has been found, 0 either
   AbstractOption* operator[] (const char* optionName);
 
+  // test if a name corresponds to the current group name
+  //
+  // optionGroupName = string containing option group name
+  // return value = true if the current group name matches
+  bool IsGroupName(const char* optionGroupName);
+
   // Test if an argument corresponds to the current option and read its content
   //
   // argumentValues = string array of arguments

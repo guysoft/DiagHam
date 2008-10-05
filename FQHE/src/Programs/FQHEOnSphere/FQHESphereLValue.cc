@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 	FermionFlag = true;
       }
     else
-      if ((strcmp ("fermions", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
+      if ((strcmp ("bosons", ((SingleStringOption*) Manager["statistics"])->GetString()) == 0))
 	{
 	  FermionFlag = false;
 	}

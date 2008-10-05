@@ -32,6 +32,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
+  (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -46,6 +47,8 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  bool QuietFlag = Manager.GetBoolean("quiet");
+
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
 
@@ -55,8 +58,9 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-  for (int i=0; i<NbrVectors; ++i)    
-    cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
+  if (QuietFlag == false)
+    for (int i=0; i<NbrVectors; ++i)    
+      cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
 
   Complex sp=0.0;
   
@@ -89,8 +93,10 @@ int main(int argc, char** argv)
 	      else
 		for (int i=0; i<State1.GetVectorDimension(); ++i)
 		  sp+= Conj(State1[i])*State2[i];
-	      
-	      cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	      if (QuietFlag == false)
+		cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	      else
+		cout << SqrNorm(sp) << endl;
 	    }
 	}
     }
@@ -125,7 +131,10 @@ int main(int argc, char** argv)
 		for (int i=0; i<State1.GetVectorDimension(); ++i)
 		  sp+= State1[i]*State2[i];
 	      
-	      cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	      if (QuietFlag == false)
+		cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	      else
+		cout << SqrNorm(sp) << endl;
 	    }
 	}
     }

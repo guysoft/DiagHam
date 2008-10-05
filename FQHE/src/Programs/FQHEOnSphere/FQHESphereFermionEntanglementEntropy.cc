@@ -65,9 +65,9 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the reduced density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
-  (*OutputGroup) += new SingleIntegerOption  ('\n', "na_eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed number of particles", 0);
-  (*OutputGroup) += new SingleIntegerOption  ('\n', "lza_eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
-  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr_eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "na-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed number of particles", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
   (*OutputGroup) += new BooleanOption ('\n', "no-sort", "don't sort the density eigenvalues before computing the entanglement entropy (require less memory, still can lead to some minor rounding errors)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
@@ -109,9 +109,9 @@ int main(int argc, char** argv)
 #endif
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
   bool EigenstateFlag = ((BooleanOption*) Manager["density-eigenstate"])->GetBoolean();
-  int FilterNa = ((SingleIntegerOption*) Manager["na_eigenstate"])->GetInteger();
-  int FilterLza = ((SingleIntegerOption*) Manager["lza_eigenstate"])->GetInteger();
-  int NbrEigenstates = ((SingleIntegerOption*) Manager["nbr_eigenstates"])->GetInteger();
+  int FilterNa = ((SingleIntegerOption*) Manager["na-eigenstate"])->GetInteger();
+  int FilterLza = ((SingleIntegerOption*) Manager["lza-eigenstate"])->GetInteger();
+  int NbrEigenstates = ((SingleIntegerOption*) Manager["nbr-eigenstates"])->GetInteger();
   bool EquatorialStripeFlag = ((BooleanOption*) Manager["equatorial-stripe"])->GetBoolean();
   int TotalLz = 0;
   bool Statistics = true;
@@ -376,7 +376,8 @@ int main(int argc, char** argv)
 	      SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
-						     ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+						     ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))) &&
+		    ((EigenstateFlag == false) || ((FilterNa == SubsystemNbrParticles) && (FilterLza == SubsystemTotalLz))))
 		  {
 		    cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 		    RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);

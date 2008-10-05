@@ -80,8 +80,14 @@ class OptionManager
   // get option from its name
   //
   // optionName = string containing option name
-  // return value = poitner to the option if it has been found, 0 either
+  // return value = pointer to the option if it has been found, 0 either
   AbstractOption* operator[] (const char* optionName);
+
+  // get an option group from its name
+  //
+  // optionGroupName = string containing option group name
+  // return value = pointer to the option group if it has been found, 0 either
+  OptionGroup* GetOptionGroup(const char* optionGroupName);
 
   // Proceed running options from command line arguments
   //

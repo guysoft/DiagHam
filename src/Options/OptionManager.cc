@@ -116,6 +116,23 @@ AbstractOption* OptionManager::operator[] (const char* optionName)
   return TmpOption; 
 }
 
+// get an option group from its name
+//
+// optionGroupName = string containing option group name
+// return value = pointer to the option group if it has been found, 0 either
+
+OptionGroup* OptionManager::GetOptionGroup(const char* optionGroupName)
+{
+  ListIterator<OptionGroup*> IterGroup(this->Groups);
+  OptionGroup** TmpGroup;
+  while ((TmpGroup = IterGroup()))
+    {
+      if ((*TmpGroup)->IsGroupName(optionGroupName) == true)
+	return (*TmpGroup);
+    }
+  return 0;  
+}
+
 // Proceed running options from command line arguments
 //
 // argumentValues = string array of arguments

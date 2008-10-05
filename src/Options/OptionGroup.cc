@@ -95,6 +95,19 @@ AbstractOption* OptionGroup::operator[] (const char* optionName)
   return 0;
 }
 
+// test if a name corresponds to the current group name
+//
+// optionGroupName = string containing option group name
+// return value = true if the current group name matches
+
+bool OptionGroup::IsGroupName(const char* optionGroupName)
+{
+  if (strcmp(this->GroupName, optionGroupName) == 0)
+    return true;
+  else
+    return false;
+}
+
 // Test if an argument corresponds to the current option and read its content
 //
 // argumentValues = string array of arguments
