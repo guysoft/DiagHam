@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+//#include "HilbertSpace/FermionOnSphereBernevigBasis.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int TotalIz = ((SingleIntegerOption*) Manager["total-isosz"])->GetInteger();
   int TotalPz = ((SingleIntegerOption*) Manager["total-entanglement"])->GetInteger();
+  bool BernevigFlag = false;
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
     {
@@ -93,17 +95,30 @@ int main(int argc, char** argv)
     {
       if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
 	{
+	  if (BernevigFlag == false)
+	    {
 #ifdef __64_BITS__
-	  if (NbrFluxQuanta <= 63)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+	      if (NbrFluxQuanta <= 63)
+		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #else
-	  if (NbrFluxQuanta <= 31)
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	  else
-	    Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+	      if (NbrFluxQuanta <= 31)
+		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	      else
+		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #endif
+	    }
+// 	  else
+// 	    {
+// 	      int* ReferenceState = 0;
+// 	      ReferenceState = new int[NbrFluxQuanta + 1];
+// 	      for (int i = 0; i <= NbrFluxQuanta; ++i)
+// 		ReferenceState[i] = 0;
+// 	      for (int i = 0; i <= NbrFluxQuanta; i += 3)
+// 		ReferenceState[i] = 1;
+// 	      Space = new FermionOnSphereBernevigBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+// 	    }
 	}
       else
  	if (SU2SpinFlag == true)

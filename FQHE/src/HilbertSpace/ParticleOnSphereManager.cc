@@ -541,7 +541,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 		return 0;
 	      }	
-	  if ((SzSymmetrizedBasis == true)  && (SzTotal != 0))
+	  if ((SzSymmetrizedBasis == true)  && (SzTotal == 0))
 	    if ((LzSymmetrizedBasis == false) || (totalLz != 0))
 	      {
 #ifdef __64_BITS__
