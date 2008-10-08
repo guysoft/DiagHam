@@ -281,7 +281,8 @@ int main(int argc, char** argv)
       WeightedRealObservable NormTrialObs(100);
       WeightedRealObservable NormExactObs(100);
       WeightedComplexObservable OverlapObs(100);
-      History = new MCHistoryRecord(HistoryFileName, 2*NbrFermions /* could add additional observables here */);
+      int NbrCoordinates = 2*NbrFermions;
+      History = new MCHistoryRecord(HistoryFileName, NbrCoordinates /* could add additional observables here */);
       double typicalSA=0.0, typicalWF=0.0, typicalTV=0.0;
       int averageTypical=50;
       int initialSkip=10;

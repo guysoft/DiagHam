@@ -30,8 +30,9 @@ using std::endl;
 // logFileName = name of an (optional) logfile
 WaveFunctionOverlapOptimizer::WaveFunctionOverlapOptimizer( Abstract1DComplexTrialFunction *trialState, char *historyFileName, int nbrParticles, bool excludeLastParameter, int linearPoints, int cloudyPoints, int limitSamples, char *logFileName)
 {
-  this->NbrParticles = nbrParticles;  
-  this->History = new MCHistoryRecord(historyFileName, 2*nbrParticles /* could add additional observables here */);
+  this->NbrParticles = nbrParticles;
+  int nbrCoordinates = 2*nbrParticles;
+  this->History = new MCHistoryRecord(historyFileName, nbrCoordinates /* could add additional observables here */);
   this->Positions.Resize(2*nbrParticles);
   this->TrialState = trialState;
   this->NbrParameters = this->TrialState->GetNbrParameters();

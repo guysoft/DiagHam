@@ -93,7 +93,8 @@ int main(int argc, char** argv)
       cout << "FQHESphereHistoryCheck requires a History-file to be checking" << endl;
       return -1;
     }
-  History = new MCHistoryRecord(Manager.GetString("history-to-check"), 2*NbrFermions
+  int NbrCoordinates = 2*NbrFermions;
+  History = new MCHistoryRecord(Manager.GetString("history-to-check"), NbrCoordinates
 				/* could add additional observables here */);
 
   
