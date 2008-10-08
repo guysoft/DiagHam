@@ -524,7 +524,7 @@ void ParticleOnSphereNBodyHardCoreHamiltonian::EvaluateInteractionFactors()
 	  {
 	    double Coefficient;
 	    GetAllSkewSymmetricIndices(this->NbrLzValue, k, this->NbrSortedIndicesPerSum[k], this->SortedIndicesPerSum[k]);
-	    this->MaxSumIndices[k] = (((this->NbrLzValue - 1) * this->NbrLzValue) - ((k - 1) * (k - 2)))/ 2;
+	    this->MaxSumIndices[k] = (this->LzMax * k) - (((k - 1) * (k - 2))/ 2);
 	    this->MinSumIndices[k] = (k * (k - 1)) / 2;
 	    double* TmpInteractionCoeffients = new double[this->MaxSumIndices[k] + 1];
 	    TmpInteractionCoeffients[0] = 1.0;

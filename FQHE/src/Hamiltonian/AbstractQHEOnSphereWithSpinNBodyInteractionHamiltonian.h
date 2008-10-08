@@ -53,19 +53,19 @@ class AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian : public AbstractQH
   // indicates which n-body interaction terms are present in the Hamiltonian
   bool* NBodyFlags;
 
-  // maximum value that the sum of indices can reach per n-body interaction for up-up and down-down interactions
-  int* MaxSumIndices;
-  // minimum value that the sum of indices can reach per n-body interaction for up-up and down-down interactions
-  int* MinSumIndices;
-  // array containing all interaction factors per N body interaction (first index for interaction type and second for index sum) for up-up and down-down interactions
-  double*** NBodyInteractionFactors;
-  // array containing the number of index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for up-up and down-down interactions
-  int** NbrSortedIndicesPerSum;
-  // array containing the index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for up-up and down-down interactions
-  int*** SortedIndicesPerSum;
-  // sign in front of each n-body interaction term (including the one coming from the statistics) for up-up and down-down interactions
-  double* NBodySign;
-
+  // maximum value that the sum of indices can reach per n-body interaction for each spin sector
+  int** MaxSumIndices;
+  // minimum value that the sum of indices can reach per n-body interaction for each spin sector
+  int** MinSumIndices;
+  // array containing all interaction factors per N body interaction (first index for interaction type and second for index sum) for each spin sector
+  double**** NBodyInteractionFactors;
+  // array containing the number of index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for each spin sector
+  int*** NbrSortedIndicesPerSum;
+  // array containing the index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for each spin sector
+  int**** SortedIndicesPerSum;
+ 
+ // sign in front of each n-body interaction term (including the one coming from the statistics, per spin indices
+  double** NBodySign;
   // spin indices for each annihilation/creation opertor set per n-body interaction
   int*** SpinIndices;
   // number of group of annihilation operator indices per n-body interaction and per spin indices
@@ -78,20 +78,6 @@ class AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian : public AbstractQH
   int**** MIndices;
   // interaction factor (first index for the  n-body interaction type,  second index for spin index type, third index for the index of the annihilation operator indices, forth is the index on group of creation indices )
   double**** MNNBodyInteractionFactors;
-
-  // maximum value that the sum of indices can reach per n-body interaction for up-down interactions
-  int* MaxSumIndicesUpDown;
-  // minimum value that the sum of indices can reach per n-body interaction for up-down interactions
-  int* MinSumIndicesUpDown;
-  // array containing all interaction factors per N body interaction (first index for interaction type and second for index sum) for up-down interactions
-  double*** NBodyInteractionFactorsUpDown;
-  // array containing the number of index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for up-down interactions
-  int** NbrSortedIndicesPerSumUpDown;
-  // array containing the index group per interaction (first index)and per index sum (second indices) for the creation (or annhilation) operators for up-down interactions
-  int*** SortedIndicesPerSumUpDown;
-  // sign in front of each n-body interaction term (including the one coming from the statistics) for up-down interactions
-  double* NBodySignUpDown;
-
 
   // flag to indicate a fully defined (i.e with pseudo-potentials) two body interaction
   bool FullTwoBodyFlag;

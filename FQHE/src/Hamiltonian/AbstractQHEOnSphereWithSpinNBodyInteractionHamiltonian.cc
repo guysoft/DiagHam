@@ -316,12 +316,7 @@ RealVector* AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::LowLevelMult
 
 long AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
-  int Index;
-  double Coefficient;
-  double Coefficient2;
   long Memory = 0;
-  int* TmpMIndices;
-  int* TmpNIndices;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   
@@ -537,17 +532,17 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EnableFastMultiplic
 	    }
 	  if (this->NBodyFlags[1] == true)
 	    {
-	      double Sign = this->NBodySign[1];
-	      int TmpMinSumIndices = this->MinSumIndices[1];
-	      int TmpMaxSumIndices = this->MaxSumIndices[1];	      
+	      double Sign = this->NBodySign[1][0];
+	      int TmpMinSumIndices = this->MinSumIndices[1][0];
+	      int TmpMaxSumIndices = this->MaxSumIndices[1][0];	      
 	      for (int j = TmpMinSumIndices; j <= TmpMaxSumIndices; ++j)
 		{
-		  int Lim = NbrSortedIndicesPerSum[1][j];
-		  TmpNIndices = this->SortedIndicesPerSum[1][j];
-		  TmpInteraction = this->NBodyInteractionFactors[1][j];
+		  int Lim = NbrSortedIndicesPerSum[1][0][j];
+		  TmpNIndices = this->SortedIndicesPerSum[1][0][j];
+		  TmpInteraction = this->NBodyInteractionFactors[1][0][j];
 		  for (int i1 = 0; i1 < Lim; ++i1)
 		    {
-		      TmpMIndices = this->SortedIndicesPerSum[1][j];
+		      TmpMIndices = this->SortedIndicesPerSum[1][0][j];
 		      for (int i2 = 0; i2 < Lim; ++i2)
 			{
 			  Index = this->Particles->AdA(i, TmpMIndices[i1], TmpNIndices[i2], Coefficient);
@@ -689,7 +684,7 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllSkewSymmetri
 	}
     }
 
-  int MaxSum = (((nbrValues - 1) * nbrValues) - ((nbrIndices - 1) * (nbrIndices - 2)))/ 2;
+  int MaxSum = ((nbrValues - 1) * nbrIndices) - (((nbrIndices - 1) * (nbrIndices)) / 2);
   int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
   nbrSortedIndicesPerSum = new int [MaxSum + 1];
   sortedIndicesPerSum = new int* [MaxSum + 1];
@@ -861,13 +856,13 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
 {
   int* TmpNbrSortedIndicesPerSumUp;
   int** TmpSortedIndicesPerSumUp;
-  long NbrIndexGroupUp = this->GetAllSkewSymmetricIndices(nbrValues, nbrIndicesUp, TmpNbrSortedIndicesPerSumUp, TmpSortedIndicesPerSumUp);
-  int MaxSumUp = (((nbrValues - 1) * nbrValues) - ((nbrIndicesUp - 1) * (nbrIndicesUp - 2)))/ 2;
+  this->GetAllSkewSymmetricIndices(nbrValues, nbrIndicesUp, TmpNbrSortedIndicesPerSumUp, TmpSortedIndicesPerSumUp);
+  int MaxSumUp = ((nbrValues - 1) * nbrIndicesUp) - (((nbrIndicesUp - 1) * nbrIndicesUp) / 2);
   int MinSumUp = (nbrIndicesUp * (nbrIndicesUp - 1)) / 2;
   long NbrElements = 0l;
   if (nbrIndicesDown == 1)
     {
-      int MaxSum = MaxSumUp + nbrValues;
+      int MaxSum = MaxSumUp + nbrValues - 1;
       int MinSum = MinSumUp;
       nbrSortedIndicesPerSum = new int [MaxSum + 1];
       sortedIndicesPerSum = new int* [MaxSum + 1];
@@ -897,11 +892,11 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
 	{
 	  for (int j = 0; j < nbrIndicesUp; ++j)
 	    TmpSortedIndicesPerSum[Pos2++] = TmpSortedIndicesPerSumUp2[Pos++];
-	  TmpSortedIndicesPerSum[Pos2++] = nbrValues;
+	  TmpSortedIndicesPerSum[Pos2++] = nbrValues - 1;
 	}
       for (int i = MinSum + 1; i < MaxSum; ++i)
 	{
-	  int TmpMinSumUp = i - nbrValues;
+	  int TmpMinSumUp = i - nbrValues + 1;
 	  if (TmpMinSumUp < MinSumUp)
 	    TmpMinSumUp = MinSumUp;
 	  int TmpMaxSumUp = i;
@@ -932,8 +927,8 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
     {
       int* TmpNbrSortedIndicesPerSumDown;
       int** TmpSortedIndicesPerSumDown;
-      long NbrIndexGroupDown = this->GetAllSkewSymmetricIndices(nbrValues, nbrIndicesDown, TmpNbrSortedIndicesPerSumDown, TmpSortedIndicesPerSumDown);
-      int MaxSumDown = (((nbrValues - 1) * nbrValues) - ((nbrIndicesDown - 1) * (nbrIndicesDown - 2)))/ 2;
+      this->GetAllSkewSymmetricIndices(nbrValues, nbrIndicesDown, TmpNbrSortedIndicesPerSumDown, TmpSortedIndicesPerSumDown);
+      int MaxSumDown = ((nbrValues - 1) * nbrIndicesDown) - (((nbrIndicesDown - 1) * nbrIndicesDown) / 2);
       int MinSumDown = (nbrIndicesDown * (nbrIndicesDown - 1)) / 2;
       int MaxSum = MaxSumUp + MaxSumDown;
       int MinSum = MinSumUp + MinSumDown;
@@ -972,12 +967,12 @@ long  AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::GetAllTwoSetSkewSy
 		}
 	    }
 	}
-      for (long i = 0; i < NbrIndexGroupDown; ++i)
+      for (long i = MinSumDown; i <= MaxSumDown; ++i)
 	delete[] TmpSortedIndicesPerSumDown[i];
       delete[] TmpNbrSortedIndicesPerSumDown;
       delete[] TmpSortedIndicesPerSumDown;
     }
-  for (long i = 0; i < NbrIndexGroupUp; ++i)
+  for (long i = MinSumUp; i <= MaxSumUp; ++i)
     delete[] TmpSortedIndicesPerSumUp[i];
   delete[] TmpNbrSortedIndicesPerSumUp;
   delete[] TmpSortedIndicesPerSumUp;

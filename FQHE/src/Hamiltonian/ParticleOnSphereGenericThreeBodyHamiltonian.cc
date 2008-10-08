@@ -421,7 +421,7 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
     {
       double Coefficient;
       GetAllSkewSymmetricIndices(this->NbrLzValue, 3, this->NbrSortedIndicesPerSum[3], this->SortedIndicesPerSum[3]);
-      this->MaxSumIndices[3] = (((this->NbrLzValue - 1) * this->NbrLzValue) - 2) / 2;
+      this->MaxSumIndices[3] = (this->LzMax * 3) - 2;
       this->MinSumIndices[3] = 3;
       double* TmpInteractionCoeffients = new double[this->MaxSumIndices[3] + 1];
       TmpInteractionCoeffients[0] = 1.0;

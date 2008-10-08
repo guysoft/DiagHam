@@ -1,13 +1,14 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
-#include "Hamiltonian/ParticleOnSphereGenericThreeBodyHamiltonian.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+
+#include "Hamiltonian/ParticleOnSphereGenericThreeBodyHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
