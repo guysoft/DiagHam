@@ -150,18 +150,20 @@ int main(int argc, char** argv)
     {
       OutputName = new char [256];      
       if (ReverseHopping)
-	sprintf(reverseHoppingString,"rh_");
+	sprintf(reverseHoppingString,"_rh");
       if (Random!=0.0)
-	sprintf(randomString,"R_%g_",Random);
+	sprintf(randomString,"_R_%g",Random);
       if (HardCore)
 	sprintf(interactionStr,"_hardcore");
+      else sprintf(interactionStr,"_u_%g", ContactU);
       if (Manager.GetInteger("ky")>=0)
 	sprintf(kyString,"_k_%d",Manager.GetInteger("ky"));
-      else sprintf(interactionStr,"_u_%g", ContactU);
-      if (NbrFluxValues == 1)
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
       else
-	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%s%sq.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString);
+	sprintf(kyString,"_k");
+      if (NbrFluxValues == 1)
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
+      else
+	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString);
     }
   ParticleOnLattice* Space=0;
   
@@ -248,7 +250,7 @@ int main(int argc, char** argv)
 // 	if (Norm(one-two)>1e-10)
 // 	  cout << "Discrepancy in "<<j<<": "<<one << " vs " << two << endl;
 //       }  
-
+  bool FirstRun=true;
 
   for (int iter=0; iter<NbrFluxValues; ++iter, ++NbrFluxQuanta)
     {
@@ -273,19 +275,20 @@ int main(int argc, char** argv)
 	  if (Ky<0) MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
 	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;
           
-// 	  char* EigenvectorName = 0;
-// 	  if (Manager.GetBoolean("eigenstate"))	
-// 	    {
-// 	      EigenvectorName = new char [64];
-// 	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d_k_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta, k);
-// 	    }
-// 	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName);
-// 	  MainTaskOperation TaskOperation (&Task);
-// 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-// 	  if (EigenvectorName != 0)
-// 	    {
-// 	      delete[] EigenvectorName;
-// 	    }
+	  char* EigenvectorName = 0;
+	  if (Manager.GetBoolean("eigenstate"))	
+	    {
+	      EigenvectorName = new char [100];
+	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
+	    }
+	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName, k);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  FirstRun=false;
+	  if (EigenvectorName != 0)
+	    {
+	      delete[] EigenvectorName;
+	    }
 	  cout << "----------------------------------------------------------------" << endl;
 	}
     }

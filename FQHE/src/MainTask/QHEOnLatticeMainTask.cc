@@ -50,6 +50,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 #include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/ParticleOnLattice.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
 
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
@@ -138,10 +139,11 @@ template<class T>
 // outputFileName = name of the file where results have to be stored
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+// ky = many-body momentum in y-direction
 
 QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space, 
 					   AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift,
-					   char* outputFileName, bool firstRun, char* eigenvectorFileName)
+					   char* outputFileName, bool firstRun, char* eigenvectorFileName, int ky)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -159,6 +161,7 @@ QHEOnLatticeMainTask::QHEOnLatticeMainTask(OptionManager* options, AbstractHilbe
   this->Hamiltonian = hamiltonian;
   this->Space = space;
   this->NbrFluxQuanta = nbrFluxQuanta;
+  this->Ky=ky;
   this->EnergyShift = shift;
   this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
   this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
@@ -297,7 +300,10 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
     {
       File.open(this->OutputFileName, ios::binary | ios::out);
       this->FirstRun = false;
-      File << "# NbrFlux E";      
+      File << "# NbrFlux";
+      if (Space->GetHilbertSpaceAdditionalSymmetry()&ParticleOnLattice::YTranslations)
+	File <<" Ky";
+      File <<" E";
       File << endl;
     }
   else
@@ -335,7 +341,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 // 		{
 // 		  HRep.LapackDiagonalize(TmpDiag);
 // 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-// 		    File << this->NbrFluxQuanta << " " << (TmpDiag[j] - this->EnergyShift) << endl;
+//	            this->WriteResult(File,TmpDiag[j] - this->EnergyShift);
 // 		}
 // 	      else
 // 		{
@@ -358,7 +364,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 // 		  if (this->ComputeLValueFlag == false)
 // 		    for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 // 		      {
-// 			File << this->NbrFluxQuanta << " " << (TmpDiag[j] - this->EnergyShift);
+//      	        this->WriteResult(File,TmpDiag[j] - this->EnergyShift);
 // 			if (this->ComputeEnergyFlag == true)
 // 			  {
 // 			    RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -372,7 +378,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 // 		      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
 // 		      for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 // 			{
-// 			  File << this->NbrFluxQuanta << " " << (TmpDiag[j] - this->EnergyShift);
+//	                  this->WriteResult(File,TmpDiag[j] - this->EnergyShift);	      
 // 			  if (this->ComputeEnergyFlag == true)
 // 			    {
 // 			      RealVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -395,7 +401,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 		{		  
 		  HRep.Diagonalize(EVs, /* error */ 1e-10 , /* maxIter */ 250);  
 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
-		    File << this->NbrFluxQuanta << " " << (EVs[j] - this->EnergyShift) << endl;
+		    this->WriteResult(File, EVs[j] - this->EnergyShift);
 		}
 	      else
 		{
@@ -426,7 +432,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 
 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		    {
-		      File << this->NbrFluxQuanta << " " << (EVs[j] - this->EnergyShift);
+		      this->WriteResult(File, EVs[j] - this->EnergyShift, false);
 		      if (this->ComputeEnergyFlag == true)
 			{
 			  ComplexVector TmpEigenvector(this->Hamiltonian->GetHilbertSpaceDimension());
@@ -442,7 +448,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	}
       else // Hilbert space of dimension one
 	{
-	  File << this->NbrFluxQuanta << " " << (HRep(0, 0)  - this->EnergyShift);
+	  this->WriteResult(File, (HRep(0, 0)  - this->EnergyShift), false);
 	  if (this->ComputeEnergyFlag == true)
 	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
 	  File << endl;	  
@@ -633,7 +639,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	    {
 	      cout << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << " ";
 	      if  (this->ComputeEnergyFlag == false)
-		File << this->NbrFluxQuanta << " " << (TmpMatrix.DiagonalElement(i) - this->EnergyShift) << endl;
+		this->WriteResult(File, (TmpMatrix.DiagonalElement(i) - this->EnergyShift));
 	    }
 	  cout << endl;
 	  if ((this->EvaluateEigenvectors == true) && 
@@ -886,4 +892,18 @@ void QHEOnLatticeMainTask::AddOptionGroup(OptionManager *optionManager)
 #ifdef HAVE_ARPACK
   (*LanczosGroup) += new  BooleanOption ('\n',"use-arpack","use ARPACK routines for Lanczos algorithm");
 #endif
+}
+
+// write a line of output to the results file
+//
+// file = stream to write to
+// value = numerical value to be printed after columns for flux and momentum (if defined)
+// terminate = indicate if line should be terminated with endl
+void QHEOnLatticeMainTask::WriteResult(ofstream& file, double value, bool terminate)
+{
+  file << NbrFluxQuanta<<" ";
+  if (this->Ky>=0) file << this->Ky << " ";
+  file << value;
+  if (terminate)
+    file << endl;
 }

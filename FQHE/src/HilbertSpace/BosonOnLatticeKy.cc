@@ -71,6 +71,19 @@ BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int n
   this->Ly = ly;
   this->NbrSublattices = 1;  
   this->NbrStates = Lx*Ly;
+
+  this->NbrCodingBits = NbrStates + NbrBosons - 1;
+
+#ifdef __64_BITS__  
+  if (NbrCodingBits>64)    
+#else
+  if (NbrCodingBits>32)    
+#endif
+    {
+      cout<<"BosonOnLatticeKy: Cannot represent the "<<NbrCodingBits<<" coding bits requested in a single word"<<endl;
+      exit(1);
+    }
+
   
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
@@ -100,16 +113,22 @@ BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int n
 
   this->StateDescription=new unsigned long[this->HilbertSpaceDimension];
   this->StateHighestBit=new int[this->HilbertSpaceDimension];
-
+  
   this->TemporaryState = new unsigned long [this->NbrStates];
   this->ShiftedState = new unsigned long [this->NbrStates];
   this->ProdATemporaryState = new unsigned long [this->NbrStates];
   this->Flag.Initialize();
   
-  this->GenerateStates(nbrBosons, NbrStates-1, NbrStates-1, 0, 0);
+  this->GenerateStates(nbrBosons, NbrStates-1, NbrStates-1, 0, 0, /* debug */ 0);
   
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
+
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      PrintState(cout, i);
+      cout << endl;
+    }
 
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
@@ -132,6 +151,7 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;
   this->NbrStates = bosons.NbrStates;
+  this->NbrCodingBits = bosons.NbrCodingBits;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
 
@@ -154,15 +174,18 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
 
 BosonOnLatticeKy::~BosonOnLatticeKy ()
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if (this->HilbertSpaceDimension != 0) 
     {
-      delete[] this->StateDescription;
-      if (this->StateHighestBit != 0)
-	delete[] this->StateHighestBit;
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrStates; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
+      if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+	{
+	  delete[] this->StateDescription;
+	  if (this->StateHighestBit != 0)
+	    delete[] this->StateHighestBit;
+	  delete[] this->LookUpTableShift;
+	  for (int i = 0; i < this->NbrCodingBits; ++i)
+	    delete[] this->LookUpTable[i];
+	  delete[] this->LookUpTable;
+	}
       delete[] this->TemporaryState;
       delete[] this->ShiftedState;
       delete[] this->ProdATemporaryState;
@@ -193,7 +216,7 @@ BosonOnLatticeKy& BosonOnLatticeKy::operator = (const BosonOnLatticeKy& bosons)
       if (this->StateHighestBit != 0)
 	delete[] this->StateHighestBit;
       delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrStates; ++i)
+      for (int i = 0; i < this->NbrCodingBits; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
       delete[] this->TemporaryState;
@@ -220,6 +243,7 @@ BosonOnLatticeKy& BosonOnLatticeKy::operator = (const BosonOnLatticeKy& bosons)
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;
   this->NbrStates = bosons.NbrStates;
+  this->NbrCodingBits = bosons.NbrCodingBits;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->StateDescription = bosons.StateDescription;
@@ -265,6 +289,15 @@ AbstractQuantumNumber* BosonOnLatticeKy::GetQuantumNumber (int index)
 {
   return new NumberParticleQuantumNumber(this->NbrBosons);
 }
+
+// get information about any additional symmetry of the Hilbert space
+//
+// return value = symmetry id
+int BosonOnLatticeKy::GetHilbertSpaceAdditionalSymmetry()
+{
+  return ParticleOnLattice::YTranslations;
+}
+
 
 // extract subspace with a fixed quantum number
 //
@@ -333,18 +366,18 @@ int BosonOnLatticeKy::AdAdAA (int index, int q1, int q2, int r1, int r2, double&
     }
   coefficient = this->TemporaryState[r2];
   --this->TemporaryState[r2];
-  if (this->TemporaryState[r2]==0)
+  if ((TemporaryStateHighestBit>0)&&(this->TemporaryState[r2]==0))
     {
       --TemporaryStateHighestBit;
-      while (TemporaryState[TemporaryStateHighestBit] == 0)
+      while ((TemporaryStateHighestBit>0)&&(TemporaryState[TemporaryStateHighestBit] == 0))
 	--TemporaryStateHighestBit;
     }
   coefficient *= this->TemporaryState[r1];
   --this->TemporaryState[r1];
-  if (this->TemporaryState[r1]==0)
+  if ((TemporaryStateHighestBit>0)&&(this->TemporaryState[r1]==0))
     {
       --TemporaryStateHighestBit;
-      while (TemporaryState[TemporaryStateHighestBit] == 0)
+      while ((TemporaryStateHighestBit>0)&&(TemporaryState[TemporaryStateHighestBit] == 0))
 	--TemporaryStateHighestBit;
     }
   if (q2 > TemporaryStateHighestBit)
@@ -364,7 +397,9 @@ int BosonOnLatticeKy::AdAdAA (int index, int q1, int q2, int r1, int r2, double&
   ++this->TemporaryState[q1];
   coefficient *= this->TemporaryState[q1];  
   coefficient = sqrt(coefficient);
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+  int tmpI = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit), this->TemporaryStateHighestBit + this->NbrBosons - 1);
+  cout << "Index found: " << tmpI <<endl;
+  return tmpI;
 }
 
 
@@ -545,8 +580,9 @@ double BosonOnLatticeKy::AdAdAADiagonal(int index, int nbrInteraction, double *i
 // currentMomentum = current value of the momentum
 // return value = position from which new states have to be stored
 
-int BosonOnLatticeKy::GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum)
+int BosonOnLatticeKy::GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum, int debugLevel)
 {
+  // for (int I=0; I<debugLevel; ++I) cout << " "; cout << "Called: GenerateStates("<< nbrBosons <<" ," << maxQ <<", "<< currentMaxQ<<", "<< pos<<", "<< currentMomentum<<")"<<endl;
   bitset<32> b;
   if (nbrBosons == 0)
     {
@@ -555,7 +591,7 @@ int BosonOnLatticeKy::GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, i
 	{	  
 	  this->StateHighestBit[pos] = 0;
 	  this->StateDescription[pos] = 0x0l;	  
- 	  //cout << "creating empty record "<<pos<<endl;
+ 	  //for (int I=0; I<debugLevel; ++I) cout << " "; cout << "creating empty record "<<pos<<endl;
 	  return pos + 1;
 	}
       else
@@ -568,43 +604,59 @@ int BosonOnLatticeKy::GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, i
       // create an entry for the current state and fill the lowest bit with the remaining bosons
       if ((currentMomentum % this->Kmax) == this->Ky)
 	{
-	  this->StateHighestBit[pos] = 0;
 	  TemporaryState[0] = nbrBosons;
 	  TemporaryStateHighestBit = 0;
-	  this->StateDescription[pos] = this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
-	  //b=this->StateDescription[pos];
-	  //cout << "creating record "<<pos<<" = " << b << endl;
+	  this->StateDescription[pos] = this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit, this->StateHighestBit[pos]);
+	  b=this->StateDescription[pos];
+	  // for (int I=0; I<debugLevel; ++I) cout << " "; cout << "creating record "<<pos<<" = " << b << endl;
 	  return pos + 1;
 	}
       else
-	return pos;
+	{
+	  return pos;
+	}
     }
 
   int TmpNbrBosons = 0;
   int ReducedCurrentMaxQ = currentMaxQ - 1;
   int TmpPos = pos;
   int currentQMomentum = this->DecodeKy(currentMaxQ);
-  unsigned int TmpStateDescription;
+  // unsigned int TmpStateDescription;
   while (TmpNbrBosons < nbrBosons)
     {
-      TmpPos = this->GenerateStates(TmpNbrBosons, maxQ, ReducedCurrentMaxQ, pos, currentMomentum + (nbrBosons - TmpNbrBosons) * currentQMomentum);      
+      //for (int I=0; I<debugLevel; ++I) cout << " "; cout << "Loop 1 with currentQMomentum=" <<currentQMomentum<<", TmpNbrBosons="<<TmpNbrBosons<< endl;
+      TmpPos = this->GenerateStates(TmpNbrBosons, maxQ, ReducedCurrentMaxQ, pos, currentMomentum + (nbrBosons - TmpNbrBosons) * currentQMomentum, debugLevel+1);      
       for (int i = pos; i < TmpPos; i++)
-	{	  
+	{
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "SD0: " << this->StateDescription[i] << endl;	  
+// 	  b=this->StateDescription[i];	  
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "converting state "<<i<<" current value: "<<b;	  
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << " ("<<this->StateHighestBit[i]<<")"<<endl;
+	  
 	  this->FermionToBoson(this->StateDescription[i], this->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
+	  
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "Putting "<<nbrBosons - TmpNbrBosons<< " bosons to state "<<currentMaxQ<<endl;
+	  
+	  for (int bit=TemporaryStateHighestBit+1; bit<currentMaxQ; ++bit) this->TemporaryState[bit] = 0;	  
 	  this->TemporaryState[currentMaxQ] = nbrBosons - TmpNbrBosons;
-	  TmpStateDescription = this->BosonToFermion(this->TemporaryState, currentMaxQ);
-	  this->StateDescription[i] = TmpStateDescription;
-	  this->StateHighestBit[i] = currentMaxQ;
-	  //b=this->StateDescription[i];
-	  //cout << "updating record "<<pos<< " = " << b <<endl;
+	  this->StateDescription[i] = this->BosonToFermion(this->TemporaryState, currentMaxQ, this->StateHighestBit[i]);
+	  
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "return from conversion: "<<this->StateHighestBit[i] <<endl;
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "SD: "<<this->StateDescription[i] <<endl;
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "CHMQ: "<<currentMaxQ << endl;
+// 	  // this->StateHighestBit[i] = currentMaxQ;
+// 	  b=this->StateDescription[i];	  
+// 	  for (int I=0; I<debugLevel; ++I) cout << " "; cout << "updating record "<<i<< " = " << b << " ("<<this->StateHighestBit[i]<<")"<<endl;	  
 	}
       ++TmpNbrBosons;
       pos = TmpPos;
     }
   if (maxQ == currentMaxQ)
-    return this->GenerateStates(nbrBosons, ReducedCurrentMaxQ, ReducedCurrentMaxQ, pos, currentMomentum);
+    return this->GenerateStates(nbrBosons, ReducedCurrentMaxQ, ReducedCurrentMaxQ, pos, currentMomentum, debugLevel+1);
   else
-    return this->GenerateStates(nbrBosons, maxQ, ReducedCurrentMaxQ, pos, currentMomentum);
+    {
+      return this->GenerateStates(nbrBosons, maxQ, ReducedCurrentMaxQ, pos, currentMomentum, debugLevel+1);
+    }
 }
 
 
@@ -850,7 +902,8 @@ ostream& BosonOnLatticeKy::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i < this->NbrStates; ++i)
     Str << "0 ";
-  Str << "   highestBit = " << this->TemporaryStateHighestBit;
+  bitset<16> b = this->StateDescription[state];
+  Str << "   " << b << "   highestBit = " << this->StateHighestBit[state] << "   highestState = "<<this->TemporaryStateHighestBit;
   return Str;
 }
 
@@ -863,9 +916,12 @@ ostream& BosonOnLatticeKy::PrintState (ostream& Str, int state)
 
 int BosonOnLatticeKy::FindStateIndex(unsigned long stateDescription, int highestBit)
 {
-  // bitset <32> b = stateDescription;
-//   cout << "in FindStateIndex: desc=" << b<<", highest bit=" << highestBit << endl;
-  long PosMax = stateDescription >> this->LookUpTableShift[highestBit];
+  bitset <32> b = stateDescription;
+  cout << "in FindStateIndex: desc=" << b<<", highest bit=" << highestBit << endl;
+  cout << "LookUpTable = "<<this->LookUpTableShift[highestBit]<<"   "; cout.flush();
+  long PosMax = stateDescription >> this->LookUpTableShift[highestBit];  
+  cout << "PosMax = "<<PosMax<<"   "; cout.flush();
+  cout << "highestBit = "<<highestBit<<endl; cout.flush();
   long PosMin = this->LookUpTable[highestBit][PosMax];
   PosMax = this->LookUpTable[highestBit][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
@@ -897,22 +953,29 @@ int BosonOnLatticeKy::FindStateIndex(unsigned long stateDescription, int highest
 void BosonOnLatticeKy::GenerateLookUpTable(unsigned long memory)
 {
   // evaluate look-up table size
-  memory /= (sizeof(int*) * this->NbrStates);
+  memory /= (sizeof(int*) * this->NbrCodingBits);
   this->MaximumLookUpShift = 1;
   while (memory > 0)
     {
       memory >>= 1;
       ++this->MaximumLookUpShift;
     }
-  if (this->MaximumLookUpShift > this->NbrStates)
-    this->MaximumLookUpShift = this->NbrStates;
+  if (this->MaximumLookUpShift > this->NbrCodingBits)
+    this->MaximumLookUpShift = this->NbrCodingBits;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
-  this->LookUpTable = new int* [this->NbrStates];
-  this->LookUpTableShift = new int [this->NbrStates];
-  for (int i = 0; i < this->NbrStates; ++i)
-    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+  this->LookUpTable = new int* [this->NbrCodingBits];
+  this->LookUpTableShift = new int [this->NbrCodingBits];
+  for (int i = 0; i < this->NbrCodingBits; ++i)
+    {
+      this->LookUpTableShift[i]=0;
+      this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+      for (unsigned int j=0; j<this->LookUpTableMemorySize + 1; ++j)
+	this->LookUpTable[i][j]=0;
+    }
+      
+  
   int CurrentHighestBit = this->StateHighestBit[0];
   int* TmpLookUpTable = this->LookUpTable[CurrentHighestBit];
   if (CurrentHighestBit < this->MaximumLookUpShift)

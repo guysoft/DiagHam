@@ -91,6 +91,8 @@ class BosonOnLatticeKy : public ParticleOnLattice
   int NbrFluxQuanta;  
   // flux density (flux quanta per unit cell)
   double FluxDensity;
+  // number of bits in internal representation
+  int NbrCodingBits;
 
   // phases occurred when translating the system by a full system length (at y=1, or x=1)
   // in the x-direction
@@ -154,6 +156,11 @@ class BosonOnLatticeKy : public ParticleOnLattice
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
+
+  // get information about any additional symmetry of the Hilbert space
+  //
+  // return value = symmetry id  
+  int GetHilbertSpaceAdditionalSymmetry();
 
   // return a list of all possible quantum numbers 
   //
@@ -313,7 +320,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum);
+  int GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum, int debugLevel);
 
 
   // recursively evaluate Hilbert space dimension 
@@ -339,6 +346,15 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = corresponding fermionic state
   unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax);
 
+  // convert a bosonic state into its fermionic counterpart
+  //
+  // initialState = reference on the array where initialbosonic  state is stored
+  // initialStateLzMax = reference on the initial bosonic state maximum Lz value
+  // finalStateHighestBit = reference on the value where highest bit of fermionic represenation should be stored
+  // return value = corresponding fermionic state
+  
+  unsigned long BosonToFermion(unsigned long*& initialState, int& initialStateLzMax, int &finalStateHighestBit);
+
   // convert a fermionic state into its bosonic  counterpart
   //
   // initialState = initial fermionic state
@@ -363,6 +379,29 @@ inline int BosonOnLatticeKy::GetParticleStatistic()
 //
 // initialState = reference on the array where initialbosonic  state is stored
 // initialStateLzMax = reference on the initial bosonic state maximum Lz value
+// finalStateHighestBit = reference on the value where highest bit of fermionic represenation should be stored
+// return value = corresponding fermionic state
+
+inline unsigned long BosonOnLatticeKy::BosonToFermion(unsigned long*& initialState, int& initialStateLzMax, int &finalStateHighestBit)
+{
+  // cout << "BosonToFermion: LzMax="<<initialStateLzMax;
+  unsigned long TmpState = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= initialStateLzMax; ++i)
+    {
+      TmpState |= ((1ul << initialState[i]) - 1ul) << Shift;
+      Shift += initialState[i];
+      ++Shift;
+    }
+  // cout << ", LzMax2="<<initialStateLzMax<<", Shift="<<Shift<<endl;
+  finalStateHighestBit = (Shift>1?Shift-2:0);
+  return TmpState;
+}
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialState = reference on the array where initialbosonic  state is stored
+// initialStateLzMax = reference on the initial bosonic state maximum Lz value
 // return value = corresponding fermionic state
 
 inline unsigned long BosonOnLatticeKy::BosonToFermion(unsigned long*& initialState, int& initialStateLzMax)
@@ -374,9 +413,10 @@ inline unsigned long BosonOnLatticeKy::BosonToFermion(unsigned long*& initialSta
       TmpState |= ((1ul << initialState[i]) - 1ul) << Shift;
       Shift += initialState[i];
       ++Shift;
-    }
+    }  
   return TmpState;
 }
+
 
 // convert a fermionic state into its bosonic counterpart
 //
@@ -409,6 +449,7 @@ inline void BosonOnLatticeKy::FermionToBoson(unsigned long initialState, int ini
 #endif
 //      cout << TmpPower << endl;
       finalState[finalStateLzMax] = (unsigned long) TmpPower;
+      //cout << "finalState["<<finalStateLzMax<<"]="<<finalState[finalStateLzMax]<<endl;
       ++TmpPower;
       initialState >>= TmpPower;
       ++finalStateLzMax;

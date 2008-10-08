@@ -196,18 +196,18 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 	    KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 	    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, compositeKy, 0, TranslationPhase);
 	    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*TranslationPhase;
-	    // if (TranslationPhase!=1.0)
-	    // 	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-	    // 		 <<TranslationPhase<<endl;
-	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	    if (TranslationPhase!=1.0)
+	    	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+	     		 <<TranslationPhase<<endl;
+	    cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	    ++TmpNumberTerms;
 	    KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
 	    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, compositeKy, 0, TranslationPhase);
 	    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*TranslationPhase;	    
-	    // if (TranslationPhase!=1.0)
-	    // 	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-	    // 		 <<TranslationPhase<<endl;
-	    //cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	    if (TranslationPhase!=1.0)
+	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+	    	 <<TranslationPhase<<endl;
+	    cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 	    ++TmpNumberTerms;
 
 	    // coupling in y-direction: distinguish p=0 and p>0!
@@ -216,10 +216,10 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, k, 0, TranslationPhase);
 		KineticQf[TmpNumberTerms] = KineticQi[TmpNumberTerms];
 		HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*2.0*cos(2.0*M_PI*(this->FluxDensity*(double)i-(double)k/Ly))*TranslationPhase;
-		// if (TranslationPhase!=1.0)
-		// 	    cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
-		// 		 <<TranslationPhase<<endl;
-		//cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+		if (TranslationPhase!=1.0)
+		  cout << "(k="<<k<<"->"<<k<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+				 <<TranslationPhase<<endl;
+		cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 		++TmpNumberTerms;
 	      }
 	    else
@@ -239,6 +239,10 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Phase*TranslationPhase
 		      *Polar(1.0,-2.0*M_PI*(double)k/KyMax);
 		  }
+		if (TranslationPhase!=1.0)
+		  cout << "(sk)="<<compositeKy<<"->"<<compositeKy2<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+				 <<TranslationPhase<<endl;
+		cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 		++TmpNumberTerms;
 		if (s==0)
 		  {
@@ -255,6 +259,10 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
 		    HoppingTerms[TmpNumberTerms] = PreFactor*HoppingSign*Conj(Phase)*TranslationPhase;
 		  }
+		if (TranslationPhase!=1.0)
+		  cout << "(sk)="<<compositeKy<<"->"<<compositeKy2<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+				 <<TranslationPhase<<endl;
+		cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 		++TmpNumberTerms;
 	      }
 	  }
@@ -360,11 +368,14 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		      ++Pos;
 		    }
 		}
+      delete [] TmpCoefficient;
     }
   else // no such interactions
     {
-      
+      this->NbrInteractionFactors = 0;
     }
+
+  
     
   
 }

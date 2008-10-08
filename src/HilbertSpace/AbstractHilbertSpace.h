@@ -85,6 +85,11 @@ class AbstractHilbertSpace
   // return value = pointer to corresponding quantum number
   virtual AbstractQuantumNumber* GetQuantumNumber (int index) = 0;
 
+  // get information about any additional symmetry of the Hilbert space
+  //
+  // return value = symmetry id  
+  int GetHilbertSpaceAdditionalSymmetry();
+
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value

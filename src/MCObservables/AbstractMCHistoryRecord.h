@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                      Copyright (C) 2007 Gunnar Moeller                     //
 //                                                                            //
 //                                                                            //
-//                       class of abstract Hilbert space                      //
+//   interface to storing the history of a Monte-Carlo overlap calculation    //
 //                                                                            //
-//                        last modification : 23/04/2001                      //
+//                       last modification : 28/05/2007                       //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,23 +28,33 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#ifndef ABSTRACTMCHISTORYRECORD_H
+#define ABSTRACTMCHISTORYRECORD_H
 
+#include "MathTools/Complex.h"
 
-// virtual destructor
-//
-
-AbstractHilbertSpace::~AbstractHilbertSpace () 
+class AbstractMCHistoryRecord
 {
-}
+ public:
+  
+  enum
+    {
+      Recording = 0x01,
+      Reading = 0x02
+    };
 
+  // destructor -> automatically closes LogFile
+  virtual ~AbstractMCHistoryRecord();  
 
-// get information about any additional symmetry of the Hilbert space
-//
-// return value = symmetry id  
-int AbstractHilbertSpace::GetHilbertSpaceAdditionalSymmetry()
-{
-  return 0; // universal coding for no symmetry
-}
+  // read one MC sample back from file, gives back the parameters in call of RecordAcceptedStep
+  // sampleCount additionally gives the multiplicity of each record
+  virtual bool GetMonteCarloStep( int &sampleCount, double & samplingAmplitude, double *positions, Complex &valueExact) = 0;
 
+  // rewind in reading mode:
+  virtual void RewindHistory() = 0;
 
+  // get projected Samples
+  virtual int GetProjectedSamples() = 0;
+};
+
+#endif // MCHISTORYRECORD_H

@@ -9,9 +9,15 @@ using std::endl;
 
 // constructors
 // for recording mode
-MCHistoryRecord::MCHistoryRecord(int projectedSamples, int nbrPositions, char* exactFile, char* samplingDescriptor, char* fileName, List<AbstractMCHistoryData> *additionalData)
+// projectedSamples : number of samples to be expected
+// nbrPositions : number of (individual 1d) coordinates contained within each record
+// exactFile : name of exact file that was sampled
+// samplingDescriptor : description of sampling function
+// fileName : name of outputFile to be created
+// additionalData : description of (optional) additional data to be recorded
+MCHistoryRecord::MCHistoryRecord(int projectedSamples, int nbrPositions, const char* exactFile, const char* samplingDescriptor, char* fileName, List<AbstractMCHistoryData> *additionalData)
 {
-  this->RecordMode = MCHistoryRecord::Recording;
+  this->RecordMode = AbstractMCHistoryRecord::Recording;
   this->LastSampleCount=0;
   this->TotalSampleCount=0;
   this->TotalRecordCount=0;
@@ -51,7 +57,7 @@ MCHistoryRecord::MCHistoryRecord(int projectedSamples, int nbrPositions, char* e
 // double & samplingAmplitude, double *positions, Complex &valueExact: describing last recorded positions
 MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samplingAmplitude, double *positions, Complex &valueExact, List<AbstractMCHistoryData> *additionalData)
 {
-  this->RecordMode = MCHistoryRecord::Recording;
+  this->RecordMode = AbstractMCHistoryRecord::Recording;
   HistoryFile.open(fileName, ios::binary | ios::in);
   this->TotalSampleCount=0;
   ReadLittleEndian(HistoryFile, this->ProjectedStepNum);
@@ -179,17 +185,24 @@ MCHistoryRecord::MCHistoryRecord(char* fileName, int nbrPositions, double & samp
 
 
 // for reading mode
-MCHistoryRecord::MCHistoryRecord(char *Input, int nbrPositions, List<AbstractMCHistoryData> *additionalData)
+// Input = name of MCHistoryRecord file to be read
+// nbrPositions = requested number of positions in each record (0=return number of positions in record)
+// additionalData = descriptor of eventual additional fields
+MCHistoryRecord::MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMCHistoryData> *additionalData)
 {
-  this->RecordMode = MCHistoryRecord::Reading;
+  this->RecordMode = AbstractMCHistoryRecord::Reading;
   HistoryFile.open(Input, ios::binary | ios::in);
   this->TotalSampleCount=0;
   ReadLittleEndian(HistoryFile, this->ProjectedStepNum);
   ReadLittleEndian(HistoryFile, this->NbrPositions);
-  if (this->NbrPositions != nbrPositions)
+  if ((nbrPositions>0)&&(this->NbrPositions != nbrPositions))
     {
       cout << "Mismatch of nbrPositions in reading MCHistoryRecord" << endl;
       exit (-1);
+    }
+  else
+    {
+      nbrPositions = this->NbrPositions;
     }
   int numAdditional;
   ReadLittleEndian(HistoryFile,numAdditional);
@@ -267,7 +280,7 @@ MCHistoryRecord::~MCHistoryRecord()
       LogFile.close();
       if (AdditionalData != 0) delete [] AdditionalData;
     }
-  else if (this->RecordMode & MCHistoryRecord::Reading)
+  else if (this->RecordMode & AbstractMCHistoryRecord::Reading)
     {
       HistoryFile.close();
       if (AdditionalData != 0) delete [] AdditionalData;
@@ -304,6 +317,12 @@ bool MCHistoryRecord::RecordAcceptedStep( double samplingAmplitude, RealVector &
   return true;
 }
 
+// read one MC sample back from file, gives back the parameters in call of RecordAcceptedStep
+// sampleCount additionally gives the multiplicity of each record
+// sampleCount : number of microsteps that the simulation remained at this position (for information only)
+// samplingAmplitude : effective samplingAmplitude, including the factor for the multiplicity
+// positions : particle positions for this sample
+// valueExact : value of the exact wavefunction for this sample
 bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmplitude, double *positions, Complex &valueExact)
 {
   if ( ! (HistoryFile.eof()))
@@ -328,6 +347,7 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 	  ReadLittleEndian(HistoryFile,this->LastSampleCount);
 	  this->TotalSampleCount+=this->LastSampleCount;
 	  sampleCount=this->LastSampleCount;
+	  samplingAmplitude*=sampleCount;
 	  return true;
 	}
       else if (signature == 'e')
@@ -342,7 +362,7 @@ bool MCHistoryRecord::GetMonteCarloStep( int &sampleCount, double &samplingAmpli
 
 void MCHistoryRecord::RewindHistory()
 {
-  if (this->RecordMode & MCHistoryRecord::Reading)
+  if (this->RecordMode & AbstractMCHistoryRecord::Reading)
     {
       HistoryFile.seekg(StartPos);
       char c = HistoryFile.peek();

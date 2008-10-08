@@ -58,6 +58,8 @@ class QHEOnLatticeMainTask: public AbstractMainTask
 
   // number of flux quanta piercing the lattice 
   int NbrFluxQuanta;
+  // momentum in y-direction
+  int Ky;
   // energy shift applied to the hamiltonian
   double EnergyShift;
 
@@ -127,9 +129,10 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   // outputFileName = name of the file where results have to be stored
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+  // ky = many-body momentum in y-direction
   QHEOnLatticeMainTask(OptionManager* options, AbstractHilbertSpace* space, 
-		      AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0);
+		       AbstractQHEHamiltonian* hamiltonian, int nbrFluxQuanta, double shift, char* outputFileName,
+		       bool firstRun = true, char* eigenvectorFileName = 0, int ky=-1);
   
   // destructor
   //  
@@ -157,6 +160,12 @@ class QHEOnLatticeMainTask: public AbstractMainTask
   // file = reference on the output file stream where eigenvalues have to be stored
   void DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
 
+  // write a line of output to the results file
+  //
+  // file = stream to write to
+  // value = numerical value to be printed after columns for flux and momentum (if defined)
+  // terminate = indicate if line should be terminated with endl
+  void WriteResult(ofstream& file, double value, bool terminate=true);
 };
 
 #endif

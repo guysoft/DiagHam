@@ -28,71 +28,57 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef MCHISTORYRECORD_H
-#define MCHISTORYRECORD_H
+#ifndef MULTIFILEMCHISTORYRECORD_H
+#define MULTIFILEMCHISTORYRECORD_H
 
 #include <fstream>
 #include "AbstractMCHistoryData.h"
 #include "AbstractMCHistoryRecord.h"
+#include "MCHistoryRecord.h"
 #include "GeneralTools/List.h"
 #include "Vector/RealVector.h"
 #include "MathTools/Complex.h"
 
 using std::fstream;
 
-class MCHistoryRecord : public AbstractMCHistoryRecord
+class MultiFileMCHistoryRecord : public AbstractMCHistoryRecord
 {
  protected:
-  int LastSampleCount;
-  int TotalSampleCount;
-  int TotalRecordCount;
   int ProjectedStepNum;
 
   int NbrPositions;
   
-  int NumAdditionalData;
-  AbstractMCHistoryData **AdditionalData;
-  unsigned SkipAdditional;
-
-  ofstream LogFile;
-  ifstream HistoryFile;
+  int NbrHistoryFiles;
+  int NbrPresentHistory;
+  
+  MCHistoryRecord **InputHistories;
 
   int RecordMode;
-  std::streampos StartPos;
+
  public:
 
-  // constructors
-  // for recording mode
-  // projectedSamplex: expected number of MC steps
-  // nbrPositions: Number of coordinates for each call of wavefunction (2*N for a two-D system)
-  MCHistoryRecord(int projectedSamples, int nbrPositions, const char* exactFile, const char* samplingDescriptor, char* fileName, List<AbstractMCHistoryData> *additionalData=NULL);
+  enum
+    {
+      Recording = 0x01,
+      Reading = 0x02
+    };
 
-  // to continue aborted calculation
-  // fileName: file to continue
-  // double & samplingAmplitude, double *positions, Complex &valueExact: describing last recorded positions
-  MCHistoryRecord(char* fileName, int nbrPositions, double & samplingAmplitude, double *positions, Complex &valueExact, List<AbstractMCHistoryData> *additionalData=NULL);
-  
-  // for reading mode
-  // Input = name of MCHistoryRecord file to be read
-  // nbrPositions = requested number of positions in each record (call with value 0 -> return number of positions in record)
-  // additionalData = descriptor of eventual additional fields
-  MCHistoryRecord(char *Input, int &nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL);  
+  // phantom standard constructor
+  MultiFileMCHistoryRecord();
 
+  // to merge a number of records into a single file, (remain open in reading mode)
+  // outputFileName: new history file to be generated (NULL => only open for reading)
+  // nbrInputFiles: number of input files
+  // inputFileNames: history files to be merged
+  // nbrPositions: requested number of particle positions (call with 0 to return value given in input files)
+  // additionalData: description of additional fields
+  MultiFileMCHistoryRecord(char* outputFileName, int nbrInputFiles, char **inputFileNames, int &nbrPositions, List<AbstractMCHistoryData> *additionalData=NULL);
+    
   // destructor -> automatically closes LogFile
-  virtual ~MCHistoryRecord();
-  
-  // record rejected step - to be called for rejected Microsteps
-  void RecordRejectedStep();
-
-  // record accepted step - to be called for each accepted step, or at every step to be written to file
-  bool RecordAcceptedStep(double samplingAmplitude, RealVector &positions, Complex &valueExact);
-
+  virtual ~MultiFileMCHistoryRecord();
+    
   // read one MC sample back from file, gives back the parameters in call of RecordAcceptedStep
   // sampleCount additionally gives the multiplicity of each record
-  // sampleCount : number of microsteps that the simulation remained at this position (for information only)
-  // samplingAmplitude : effective samplingAmplitude, including the factor for the multiplicity
-  // positions : particle positions for this sample
-  // valueExact : value of the exact wavefunction for this sample
   virtual bool GetMonteCarloStep( int &sampleCount, double & samplingAmplitude, double *positions, Complex &valueExact);
 
   // rewind in reading mode:
@@ -102,4 +88,4 @@ class MCHistoryRecord : public AbstractMCHistoryRecord
   virtual int GetProjectedSamples() {return ProjectedStepNum;}
 };
 
-#endif // MCHISTORYRECORD_H
+#endif // MULTIFILEMCHISTORYRECORD_H
