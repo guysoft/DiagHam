@@ -129,7 +129,8 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // degeneracyIndex = optional degeneracy index for relative angular momentum greater than 5 for bosons (8 for fermions)
   // indices = array that contains all possible sets of indices (size of the array is 3 * nbrIndexSets)
   // nbrIndexSets = number of sets
-  double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets);
+  // maxJValue = twice the maximum total angular momentum two particles can have
+  double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets, int maxJValue, int nbrIdenticalSpins);
 
   // evaluate all interaction factors
   //   

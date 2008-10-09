@@ -41,6 +41,8 @@
 
 
 using std::ostream;
+using std::cout;
+using std::endl;
 
 
 class AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian : public AbstractQHEOnSphereWithSpinHamiltonian
@@ -516,6 +518,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 	{
 	  for (int index = firstComponent; index < lastComponent; ++index)
 	    {
+/* 	      cout << index << " " << Dim << " " << nbodyIndex << " " << TmpNIndices[0] << " " << TmpNIndices[1] << " " << TmpNIndices[2]  */
+/* 		   << " " << TmpSpinIndicesUp[0] << " " << TmpSpinIndicesUp[1] << " " << TmpSpinIndicesUp[2] << endl; */
 	      double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
 	      if (Coefficient3 != 0.0)
 		{
@@ -548,8 +552,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 		      TmpMIndices += nbodyIndex;	      
 		    }
 		}
-	      TmpNIndices += nbodyIndex;
 	    }
+	  TmpNIndices += nbodyIndex;
 	}
     }
   if ((nbodyIndex & 1) == 0)
@@ -578,8 +582,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 		      TmpMIndices += nbodyIndex;	      
 		    }
 		}
-	      TmpNIndices += nbodyIndex;
 	    }
+	  TmpNIndices += nbodyIndex;
 	}
     }
 }
