@@ -112,13 +112,7 @@ int main(int argc, char** argv)
 
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
-  double** PseudoPotentials  = new double*[3];
-  for (int i = 0; i < 3; ++i)
-    {
-      PseudoPotentials[i] = new double[LzMax + 1];
-      for (int j = 0; j <= LzMax; ++j)
-	PseudoPotentials[i][j] = 0.0;
-    };
+  double** PseudoPotentials  = 0;
 
   double** ThreeBodyPotentials = new double* [4];
   int* NbrThreeBodyPseudoPotentials = new int[4];
@@ -303,9 +297,13 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials in Pseudopotentials" << endl;
 	      return -1;	  
 	    }
+	  PseudoPotentials = new double*[3];
 	  for (int i = 0; i < 3; ++i)
-	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	      PseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	    {  
+	      PseudoPotentials[i] = new double[LzMax + 1];
+	      for (int j = 0; j <= LzMax; ++j)
+		PseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	    }
 	}
       else
 	if (InteractionDefinition["Pseudopotentials"] != 0)
@@ -321,8 +319,17 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials in PseudopotentialsUpUp" << endl;
 	      return -1;	  
 	    }
-	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	    PseudoPotentials[0][j] = TmpPseudoPotentials[j];
+	  if (PseudoPotentials == 0)
+	    {
+	      PseudoPotentials = new double*[3];
+	      for (int i = 0; i < 3; ++i)
+		PseudoPotentials[i] = new double[LzMax + 1];
+	      for (int j = 0; j <= LzMax; ++j)
+		PseudoPotentials[0][j] = TmpPseudoPotentials[j];
+	    }
+	  else
+	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	      PseudoPotentials[0][j] = TmpPseudoPotentials[j];
 	}
       else
 	if (InteractionDefinition["PseudopotentialsUpUp"] != 0)
@@ -335,11 +342,17 @@ int main(int argc, char** argv)
 	  Flag = true;
 	  if (TmpNbrPseudoPotentials != (LzMax +1))
 	    {
-	      cout << "Invalid number of pseudo-potentials in PseudopotentialsDownDown" << endl;
+	      cout << "Invalid number of pseudo-potentials in PseudopotentialsUpDown" << endl;
 	      return -1;	  
 	    }
-	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	    PseudoPotentials[1][j] = TmpPseudoPotentials[j];
+	  if (PseudoPotentials == 0)
+	    {
+	      cout << "Pseudopotentials and PseudopotentialsUpUp are not defined" << endl;
+	      return -1;	  	      
+	    }
+	  else
+	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	      PseudoPotentials[1][j] = TmpPseudoPotentials[j];
 	}
       else
 	if (InteractionDefinition["PseudopotentialsDownDown"] != 0)
@@ -355,8 +368,14 @@ int main(int argc, char** argv)
 	      cout << "Invalid number of pseudo-potentials in PseudopotentialsUpDown" << endl;
 	      return -1;	  
 	    }
-	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	    PseudoPotentials[2][j] = TmpPseudoPotentials[j];
+	  if (PseudoPotentials == 0)
+	    {
+	      cout << "Pseudopotentials,PseudopotentialsUpUp and PseudopotentialsDownDown are not defined" << endl;
+	      return -1;	  	      
+	    }
+	  else
+	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	      PseudoPotentials[2][j] = TmpPseudoPotentials[j];
 	}
       else
 	if (InteractionDefinition["PseudopotentialsUpDown"] != 0)

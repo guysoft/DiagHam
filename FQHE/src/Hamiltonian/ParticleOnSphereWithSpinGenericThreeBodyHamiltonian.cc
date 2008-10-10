@@ -89,6 +89,7 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
 
   this->NBodySign = new double*[this->MaxNBody + 1];
   this->SpinIndices = new int** [this->MaxNBody + 1];
+  this->SpinIndicesShort = new int* [this->MaxNBody + 1];
   this->NbrNIndices = new long*[this->MaxNBody + 1];
   this->NIndices = new int**[this->MaxNBody + 1];
   this->NbrMIndices = new long**[this->MaxNBody + 1];
@@ -134,7 +135,12 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->SpinIndices[3][3][0] = 1;
   this->SpinIndices[3][3][1] = 1;
   this->SpinIndices[3][3][2] = 0;
-
+  this->SpinIndicesShort[3] = new int[4];
+  this->SpinIndicesShort[3][0] = 0x0;
+  this->SpinIndicesShort[3][1] = 0x7;
+  this->SpinIndicesShort[3][2] = 0x4;
+  this->SpinIndicesShort[3][3] = 0x3;
+  
   this->NbrSortedIndicesPerSum[3] = new int* [2];
   this->SortedIndicesPerSum[3] = new int** [2];
   this->MinSumIndices[3] = new int [2];
@@ -281,6 +287,7 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
 
   this->NBodySign = new double*[this->MaxNBody + 1];
   this->SpinIndices = new int** [this->MaxNBody + 1];
+  this->SpinIndicesShort = new int* [this->MaxNBody + 1];
   this->NbrNIndices = new long*[this->MaxNBody + 1];
   this->NIndices = new int**[this->MaxNBody + 1];
   this->NbrMIndices = new long**[this->MaxNBody + 1];
@@ -326,6 +333,11 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->SpinIndices[3][3][0] = 1;
   this->SpinIndices[3][3][1] = 1;
   this->SpinIndices[3][3][2] = 0;
+  this->SpinIndicesShort[3] = new int[4];
+  this->SpinIndicesShort[3][0] = 0x0;
+  this->SpinIndicesShort[3][1] = 0x7;
+  this->SpinIndicesShort[3][2] = 0x4;
+  this->SpinIndicesShort[3][3] = 0x3;
 
   this->NbrSortedIndicesPerSum[3] = new int* [2];
   this->SortedIndicesPerSum[3] = new int** [2];

@@ -70,6 +70,8 @@ class AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian : public AbstractQH
   double** NBodySign;
   // spin indices for each annihilation/creation opertor set per n-body interaction
   int*** SpinIndices;
+  // spin indices for each annihilation/creation opertor set per n-body interaction, encoded in a unique integer
+  int** SpinIndicesShort;
   // number of group of annihilation operator indices per n-body interaction and per spin indices
   long** NbrNIndices;
   // annihilation operator indices for each n-body interaction (first index for the  n-body interaction type, second index is a linearilized index on group of annihilation indices) for up-up and down-down interactions
@@ -239,8 +241,10 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
     {
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
-      int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1];
+/*       int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; */
+/*       int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; */
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
+      int TmpSpinIndicesDown = this->SpinIndicesShort[nbodyIndex][(i << 1) + 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -281,7 +285,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
       int i = (nbodyIndex >> 1);
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+//      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -323,8 +328,10 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
     {
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
-      int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1];
+/*       int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; */
+/*       int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; */
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
+      int TmpSpinIndicesDown = this->SpinIndicesShort[nbodyIndex][(i << 1) + 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -375,7 +382,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
       int i = (nbodyIndex >> 1);
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+//      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -421,8 +429,10 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
-      int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1];
+/*       int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; */
+/*       int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; */
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
+      int TmpSpinIndicesDown = this->SpinIndicesShort[nbodyIndex][(i << 1) + 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -469,7 +479,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
       int i = (nbodyIndex >> 1);
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+//      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  double Coefficient3 = particles->ProdA(index, TmpNIndices, TmpSpinIndicesUp, nbodyIndex);
@@ -512,8 +523,10 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
-      int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1];
+/*       int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1]; */
+/*       int* TmpSpinIndicesDown = this->SpinIndices[nbodyIndex][(i << 1) + 1]; */
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
+      int TmpSpinIndicesDown = this->SpinIndicesShort[nbodyIndex][(i << 1) + 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  for (int index = firstComponent; index < lastComponent; ++index)
@@ -561,7 +574,8 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
       int i = (nbodyIndex >> 1);
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
-      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+//      int* TmpSpinIndicesUp = this->SpinIndices[nbodyIndex][i << 1];
+      int TmpSpinIndicesUp = this->SpinIndicesShort[nbodyIndex][i << 1];
       for (long j = 0; j < TmpNbrNIndices; ++j)
 	{
 	  for (int index = firstComponent; index < lastComponent; ++index)
