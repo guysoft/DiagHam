@@ -80,25 +80,26 @@ AbstractQHEOnSphereWithSpinHamiltonian::~AbstractQHEOnSphereWithSpinHamiltonian(
       delete[] this->InterSectorIndicesPerSum;
     }
   else
-    {
-      delete[] this->M1IntraValue;
-      delete[] this->M2IntraValue;
-      for (int i = 0; i < this->NbrM12IntraIndices; ++i)
-	delete[] this->M3IntraValues[i];
-      delete[] this->M3IntraValues;
-      delete[] this->NbrM3IntraValues;
-
-      delete[] this->M1InterValue;
-      delete[] this->M2InterValue;
-      for (int i = 0; i < this->NbrM12InterIndices; ++i)
-	delete[] this->M3InterValues[i];
-      delete[] this->M3InterValues;
-      delete[] this->NbrM3InterValues;
-
-      delete[] this->M12InteractionFactorsupup;
-      delete[] this->M12InteractionFactorsdowndown;
-      delete[] this->M12InteractionFactorsupdown;
-    }
+    if ((this->M1IntraValue != 0) || (this->M1InterValue != 0))
+      {
+	delete[] this->M1IntraValue;
+	delete[] this->M2IntraValue;
+	for (int i = 0; i < this->NbrM12IntraIndices; ++i)
+	  delete[] this->M3IntraValues[i];
+	delete[] this->M3IntraValues;
+	delete[] this->NbrM3IntraValues;
+	
+	delete[] this->M1InterValue;
+	delete[] this->M2InterValue;
+	for (int i = 0; i < this->NbrM12InterIndices; ++i)
+	  delete[] this->M3InterValues[i];
+	delete[] this->M3InterValues;
+	delete[] this->NbrM3InterValues;
+	
+	delete[] this->M12InteractionFactorsupup;
+	delete[] this->M12InteractionFactorsdowndown;
+	delete[] this->M12InteractionFactorsupdown;
+      }
   if (this->OneBodyInteractionFactorsupup != 0)
     delete[] this->OneBodyInteractionFactorsupup;
   if (this->OneBodyInteractionFactorsdowndown != 0)

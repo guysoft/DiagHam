@@ -77,7 +77,13 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->NbrParticles = nbrParticles;
 
   this->OneBodyTermFlag = false;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
   this->FullTwoBodyFlag = false;
+  this->NbrIntraSectorSums = 0;
+  this->NbrInterSectorSums = 0;
+  this->M1IntraValue = 0;
+  this->M1InterValue = 0;
   this->MaxNBody = 3;
 
   this->NBodyFlags = new bool [this->MaxNBody + 1];
@@ -155,12 +161,12 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
 
   this->MaxRelativeAngularMomentum = new int[4];
   for (int i = 0; i < 4; ++i)
-    this->MaxRelativeAngularMomentum[i] = maxRelativeAngularMomentum[i] + 1;
+    this->MaxRelativeAngularMomentum[i] = maxRelativeAngularMomentum[i] ;
   this->ThreeBodyPseudoPotentials = new double*[4];
   this->NbrThreeBodyPseudoPotentials = new int[4];
   for (int i = 0; i < 4; ++i)
     {
-      this->NbrThreeBodyPseudoPotentials[i] = this->MaxRelativeAngularMomentum[i];
+      this->NbrThreeBodyPseudoPotentials[i] = this->MaxRelativeAngularMomentum[i] + 1;
       this->ThreeBodyPseudoPotentials[i] = new double[this->NbrThreeBodyPseudoPotentials[i]];
       for (int k = 0; k < this->NbrThreeBodyPseudoPotentials[i]; ++k)
 	this->ThreeBodyPseudoPotentials[i][k] = threeBodyPseudoPotential[i][k];
