@@ -369,7 +369,6 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EnableFastMultiplic
     {
       this->InteractionPerComponentIndex[TotalPos] = new int [this->NbrInteractionPerComponent[TotalPos]];
       this->InteractionPerComponentCoefficient[TotalPos] = new double [this->NbrInteractionPerComponent[TotalPos]];      
-      cout << i << " : " << this->NbrInteractionPerComponent[TotalPos] << endl;
       TmpIndexArray = this->InteractionPerComponentIndex[TotalPos];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[TotalPos];
       Pos = 0;
@@ -391,7 +390,6 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EnableFastMultiplic
 	  TmpCoefficientArray[Pos] = TmpDiagonal;
 	  ++Pos;	  
 	}
-      ++TotalPos;
       ++TotalPos;
     }
   this->FastMultiplicationFlag = true;

@@ -235,7 +235,7 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 {  
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  for (int i = 0; i < (nbodyIndex >> 1); ++i)
+  for (int i = 0; i <= (nbodyIndex >> 1); ++i)
     {
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
@@ -319,7 +319,7 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  for (int i = 0; i < (nbodyIndex >> 1); ++i)
+  for (int i = 0; i <= (nbodyIndex >> 1); ++i)
     {
       int TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
@@ -417,7 +417,7 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  for (int i = 0; i < (nbodyIndex >> 1); ++i)
+  for (int i = 0; i <= (nbodyIndex >> 1); ++i)
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];
@@ -508,7 +508,7 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
-  for (int i = 0; i < (nbodyIndex >> 1); ++i)
+  for (int i = 0; i <= (nbodyIndex >> 1); ++i)
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
       int* TmpNIndices = this->NIndices[nbodyIndex][i];

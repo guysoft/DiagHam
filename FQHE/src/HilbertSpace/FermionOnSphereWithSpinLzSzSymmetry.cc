@@ -1114,7 +1114,6 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAdd (int m1, int m2, double& coeffic
 
 double FermionOnSphereWithSpinLzSzSymmetry::ProdA (int index, int* n, int* spinIndices, int nbrIndices)
 {
-  this->ProdALzMax = this->StateHighestBit[index];
   this->ProdATemporaryState = this->StateDescription[index];
   this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
   this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
@@ -1135,9 +1134,6 @@ double FermionOnSphereWithSpinLzSzSymmetry::ProdA (int index, int* n, int* spinI
 #endif
       this->ProdATemporaryState &= ~(0x1l << Index);
     }
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
-
   return Coefficient;
 }
 
@@ -1153,7 +1149,6 @@ int FermionOnSphereWithSpinLzSzSymmetry::ProdAd (int* m, int* spinIndices, int n
 {
   coefficient = 1.0;
   unsigned long TmpState = this->ProdATemporaryState;
-  int NewLzMax = this->ProdALzMax;
   int Index;
   for (int i = nbrIndices - 1; i >= 0; --i)
     {
@@ -1163,19 +1158,12 @@ int FermionOnSphereWithSpinLzSzSymmetry::ProdAd (int* m, int* spinIndices, int n
 	  coefficient = 0.0;
 	  return this->HilbertSpaceDimension;
 	}
-      if (Index > NewLzMax)
-	{
-	  NewLzMax = Index;
-	}
-      else
-	{
-	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
+      coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
 #ifdef  __64_BITS__
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
 #endif
-	}
       TmpState |= (0x1l << Index);
     }
   return this->SymmetrizeAdAdResult(TmpState, coefficient);

@@ -130,7 +130,8 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // indices = array that contains all possible sets of indices (size of the array is 3 * nbrIndexSets)
   // nbrIndexSets = number of sets
   // maxJValue = twice the maximum total angular momentum two particles can have
-  double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets, int maxJValue, int nbrIdenticalSpins);
+  // spinIndex = indicate for which of three body operators coeeficients are computed (0 for up-up-up, 1 for up-up-down, 2 for up-down-up, 3 for down-up-up) 
+  double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets, int maxJValue, int spinIndex);
 
   // evaluate all interaction factors
   //   
