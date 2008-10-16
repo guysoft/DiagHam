@@ -5,8 +5,11 @@
 //                                                                            //
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
+//  class of bosons on linearly indexed system for a system size such that    //
+//               NbrStates  < 63 or 31 (64 bits or 32bits systems)            //
 //                                                                            //
-//          class of hard-core boson with a single quantum number             //
+//                  states indexed by y-momentum and x-position               //
+//                    (Landau gauge, A(r) = \alpha x \vec e_y)                //
 //                                                                            //
 //                        last modification : 11/02/2008                      //
 //                                                                            //

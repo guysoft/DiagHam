@@ -1,5 +1,5 @@
 #include "HilbertSpace/BosonOnLatticeKy.h"
-//#include "HilbertSpace/HardCoreBosonOnLattice.h"
+#include "HilbertSpace/HardCoreBosonOnLatticeKy.h"
 #include "Hamiltonian/ParticleOnLatticeWithKyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
   int NbrFluxQuanta = Manager.GetInteger("flux");
-  int NbrSites = Lx*Ly;  
+  int NbrSites = Lx*Ly;
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
   double ContactU = Manager.GetDouble("contactU");
@@ -173,9 +173,9 @@ int main(int argc, char** argv)
 	{
 	  if (HardCore)
 	    {
-	      //Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	      Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	    }
-	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  Hamiltonian = new ParticleOnLatticeWithKyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(), NbrFluxQuanta, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
 
@@ -266,7 +266,7 @@ int main(int argc, char** argv)
 
 	  if (HardCore)
 	    {
-	      //Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+	      Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

@@ -564,6 +564,33 @@ void HermitianMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
   this->ImaginaryOffDiagonalElements = TmpImaginaryOffDiag;
 }
 
+
+// return reference on real part of a given matrix element
+// to access the full complex valued matrix element, use GetMatrixElement
+//
+// i = line position
+// j = column position
+// return value = reference on real part 
+double& HermitianMatrix::operator () (int i, int j)
+{
+  if (i == j)
+    {
+      return this->DiagonalElements[i];
+    }
+  else
+    {
+      if (i > j)
+	{
+	  int tmp = j;
+	  j = i;
+	  i = tmp;
+	}
+      j -= i * (i - 2 * this->NbrRow - this->Increment + 3) / 2 + 1;
+      return this->RealOffDiagonalElements[j];
+    }
+}
+
+
 // add two matrices
 //
 // M1 = first matrix

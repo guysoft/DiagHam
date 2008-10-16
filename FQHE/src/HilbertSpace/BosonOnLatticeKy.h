@@ -320,7 +320,7 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  int GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum, int debugLevel);
+  int GenerateStates(int nbrBosons, int maxQ, int currentMaxQ, int pos, int currentMomentum);
 
 
   // recursively evaluate Hilbert space dimension 

@@ -81,6 +81,12 @@ BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta
   this->ProdATemporaryState = new unsigned long [this->NbrStates];
   this->Flag.Initialize();
 
+  for (int i=0; i<this->HilbertSpaceDimension; ++i)
+    {
+      PrintState(cout, i);
+      cout << endl;
+    }
+
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;
   this->Minors = 0;

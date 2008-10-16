@@ -448,7 +448,7 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	}
       else // Hilbert space of dimension one
 	{
-	  this->WriteResult(File, (HRep(0, 0)  - this->EnergyShift), false);
+	  this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
 	  if (this->ComputeEnergyFlag == true)
 	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
 	  File << endl;	  
@@ -904,6 +904,7 @@ void QHEOnLatticeMainTask::WriteResult(ofstream& file, double value, bool termin
   file << NbrFluxQuanta<<" ";
   if (this->Ky>=0) file << this->Ky << " ";
   file << value;
+  cout <<"wrote value "<<value<<" to file"<<endl;
   if (terminate)
     file << endl;
 }

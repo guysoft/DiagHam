@@ -1339,7 +1339,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
   int qi;
   int qf;
   Complex TmpInteraction;
-  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
+  ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();  
   for (int j = 0; j < NbrHoppingTerms; ++j)
     {
       qi = this->KineticQi[j];
@@ -1353,7 +1353,7 @@ long AbstractQHEOnLatticeHamiltonian::PartialFastMultiplicationMemory(int firstC
 	      if (Index < this->Particles->GetHilbertSpaceDimension())
 		{
 		  ++Memory;		
-		  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];
+		  ++this->NbrRealInteractionPerComponent[i - this->PrecalculationShift];		  
 		}
 	    }
 	}
@@ -1542,6 +1542,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 		  ++PosC;
 		}
+	      cout << "connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
 	    }
 	}
 
@@ -1583,6 +1584,8 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		      TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 		      ++PosC;
 		    }
+		  cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->InteractionFactors[j]<<
+		    " (q's=["<<q1<<","<<q2<<","<<q3<<","<<q4<<"])"<<endl;
 		}
 	    }
 	}
@@ -1657,6 +1660,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		}
 	      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
 	      ++PosR;
+	      cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
 	    }	   
 	}
       ++TotalPos;

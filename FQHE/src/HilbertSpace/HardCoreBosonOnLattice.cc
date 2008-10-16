@@ -437,7 +437,7 @@ int HardCoreBosonOnLattice::AdA (int index, int m, int n, double &coefficient)
       // perform annihilation operators
       TmpState &= ~(((unsigned long) (0x1)) << n);
       if (NewHighestBit == n)
-	while ((TmpState >> NewHighestBit) == 0)
+	while ((NewHighestBit > 0)&&((TmpState >> NewHighestBit) == 0))
 	  --NewHighestBit;
       // create particle at m
       if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)

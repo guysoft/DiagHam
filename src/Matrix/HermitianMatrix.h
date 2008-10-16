@@ -174,6 +174,15 @@ class HermitianMatrix : public Matrix
   // nbrColumn = new number of columns
   void ResizeAndClean (int nbrRow, int nbrColumn);
 
+  // return reference on real part of a given matrix element
+  // to access the full complex valued matrix element, use GetMatrixElement
+  //
+  // i = line position
+  // j = column position
+  // return value = reference on real part 
+  double& operator () (int i, int j);
+  
+
   // add two matrices
   //
   // M1 = first matrix
