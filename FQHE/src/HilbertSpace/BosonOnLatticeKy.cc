@@ -124,11 +124,13 @@ BosonOnLatticeKy::BosonOnLatticeKy (int nbrBosons, int lx, int ly, int ky, int n
   this->TargetSpace=this;
   this->GenerateLookUpTable(memory);
 
+#ifdef DEBUG_OUTPUT
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     {
       PrintState(cout, i);
       cout << endl;
     }
+#endif
 
   this->KeptCoordinates = new int;
   (*(this->KeptCoordinates)) = -1;

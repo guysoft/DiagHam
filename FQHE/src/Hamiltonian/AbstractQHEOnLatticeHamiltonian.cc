@@ -1542,7 +1542,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		  TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 		  ++PosC;
 		}
-	      cout << "connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
+	      // cout << "connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->HoppingTerms[j]<<endl;
 	    }
 	}
 
@@ -1584,8 +1584,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		      TmpCoefficientIndexArray[PosC] = (unsigned short) tmpElementPos;
 		      ++PosC;
 		    }
-		  cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->InteractionFactors[j]<<
-		    " (q's=["<<q1<<","<<q2<<","<<q3<<","<<q4<<"])"<<endl;
+		  //cout << "4b - connecting :"<<Index<<", "<<i<<": "<<Coefficient*this->InteractionFactors[j]<< " (q's=["<<q1<<","<<q2<<","<<q3<<","<<q4<<"])"<<endl;
 		}
 	    }
 	}
@@ -1660,7 +1659,7 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 		}
 	      TmpCoefficientIndexArray[PosR] = (unsigned short) tmpElementPos;
 	      ++PosR;
-	      cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
+	      // cout << "diag - connecting :"<<i<<", "<<i<<": "<<Coefficient<<endl;
 	    }	   
 	}
       ++TotalPos;

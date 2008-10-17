@@ -1,5 +1,9 @@
 #include "ParticleOnSphereCollection.h"
 
+// switch for debugging output:
+//#define DEBUG_OUTPUT
+
+
 ParticleOnSphereCollection::ParticleOnSphereCollection()
 {
   this->NbrParticles = 0;

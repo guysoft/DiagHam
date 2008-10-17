@@ -42,7 +42,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 
 // constructor for contact interactions on a square lattice
@@ -291,7 +291,9 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 // 	    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(x, y, 0, TranslationPhase);
 // 	    KineticQf[this->NbrHoppingTerms] = KineticQi[this->NbrHoppingTerms];
 // 	    HoppingTerms[this->NbrHoppingTerms] = this->DeltaPotential*(-0.5+G.GetRealRandomNumber());
+//#ifdef DEBUG_OUTPUT
 // 	    //cout << "H["<<KineticQi[this->NbrHoppingTerms]<<"->"<<KineticQf[this->NbrHoppingTerms]<<"]="<<HoppingTerms[this->NbrHoppingTerms]<<" tP="<<TranslationPhase<<endl;
+//#endif
 // 	    ++this->NbrHoppingTerms;
 // 	  }
     }
@@ -304,14 +306,12 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
   // contact interactions come to play for bosons, only!
   if ((this->Particles->GetParticleStatistic() == ParticleOnLattice::BosonicStatistic) && (this->ContactInteractionU!=0.0))
     {
-      cout << "adding interaction terms"<<endl;
       // general four-particle interactions:
       int Pos=0;
       int k4;
       double* TmpCoefficient = new double [Lx * p * KyMax * KyMax * KyMax];
       double Strength = this->ContactInteractionU / KyMax;  // Check Amplitude!!
       double MaxCoefficient = 0.0;
-      cout << "KyMax="<<KyMax<<endl;
       for (int i=0; i<Lx; ++i)
 	for (int s=0; s<p; ++s)
 	  for (int k1 = 0; k1 < this->KyMax; ++k1)
@@ -378,7 +378,9 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 			  this->Q2Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k2*p+s, 0, TranslationPhase);
 			  this->Q3Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k3*p+s, 0, TranslationPhase);
 			  this->Q4Value[this->NbrInteractionFactors] = Particles->EncodeQuantumNumber(i, k4*p+s, 0, TranslationPhase);
+#ifdef DEBUG_OUTPUT
 			  cout << "4-body term: "<<this->InteractionFactors[this->NbrInteractionFactors]<< " a^\\dag_"<< this->Q4Value[this->NbrInteractionFactors]<<"a^\\dag_"<<this->Q3Value[this->NbrInteractionFactors]<<"a_"<<this->Q2Value[this->NbrInteractionFactors]<<"a_"<<this->Q1Value[this->NbrInteractionFactors]<<endl;
+#endif
 			  ++this->NbrInteractionFactors;
 			}
 		      ++Pos;

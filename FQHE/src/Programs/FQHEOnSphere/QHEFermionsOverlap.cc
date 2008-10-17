@@ -220,6 +220,7 @@ int main(int argc, char** argv)
     }
 
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, RandomNumber);
+  Particles->MultiplyStepLength(sqrt((double)LzMax/NbrFermions/3.0));
   FermionOnSphere *Space=NULL;
   Complex ValueExact;
   Complex TrialValue;
