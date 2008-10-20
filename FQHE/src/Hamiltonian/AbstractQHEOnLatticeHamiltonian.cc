@@ -557,6 +557,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMu
 {
 
   cout << "AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMultiply must be defined"<<endl;
+  exit(-1);
 //   int LastComponent = firstComponent + nbrComponent;
 //   int Dim = this->Particles->GetHilbertSpaceDimension();
 //   double Coefficient;
@@ -696,7 +697,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(C
 									   int firstComponent, int nbrComponent)
 {
   cout << "AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage must be defined" << endl;
-  
+  exit(1);
 //   double Coefficient;
 //   int* BufferIndexArray = new int [this->BufferSize * this->MaxNbrInteractionPerComponent];
 //   double* BufferCoefficientArray  = new double [this->BufferSize * this->MaxNbrInteractionPerComponent];

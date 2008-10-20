@@ -270,10 +270,16 @@ int main(int argc, char** argv)
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-	  Hamiltonian = new ParticleOnLatticeWithKyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(), NbrFluxQuanta, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);
-
-	  if (Ky<0) MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
+	  
+	  if (Ky<0)
+	    {
+	      MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
+	      cout << "Maximum Ky="<<MaxK-1<<endl;
+	    }
+	  
 	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;
+	  
+	  Hamiltonian = new ParticleOnLatticeWithKyDeltaHamiltonian(Space, NbrBosons, Lx, Ly, ((BosonOnLatticeKy*)Space)->GetMaximumKy(), NbrFluxQuanta, ContactU, ReverseHopping, Random, Architecture.GetArchitecture(), Memory, LoadPrecalculationFileName);	  
           
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate"))	
