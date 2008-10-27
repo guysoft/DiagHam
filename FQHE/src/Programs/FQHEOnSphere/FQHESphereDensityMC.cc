@@ -198,6 +198,7 @@ int main(int argc, char** argv)
       ParticleOnSphereFunctionBasis FunctionBasis(NbrOrbitals - 1);
       Complex* FunctionBasisEvaluation = new Complex [NbrOrbitals];
       double* FunctionBasisDecomposition = new double [NbrOrbitals];
+      double* TmpFunctionBasisDecomposition = new double [NbrOrbitals];
       double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
       for (int k = 0; k < NbrOrbitals; ++k)
 	{
@@ -255,7 +256,16 @@ int main(int argc, char** argv)
       cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
       for (int k = 0; k < NbrOrbitals; ++k)
-	FunctionBasis.GetFunctionValue(TmpUV[0], TmpUV[1], FunctionBasisEvaluation[k], k);
+	{
+	  double TmpTruc1 = 0.0;
+	  Complex TmpTruc2 = 0.0;
+	  for (int j = 0; j < NbrParticles; ++j)
+	    {
+	      FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
+	      TmpTruc1 +=  SqrNorm(TmpTruc2);
+	    }
+	  TmpFunctionBasisDecomposition[k] = TmpTruc1;
+	}
 
       cout << "starting MC sequence" << endl;
       Acceptance = 0;
@@ -270,36 +280,56 @@ int main(int argc, char** argv)
 	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
-//  	       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
-//  		 {
-//  		   PreviousProbabilities = CurrentProbabilities;
-//  		   ++Acceptance;
-// 		   for (int k = 0; k < NbrOrbitals; ++k)
-// 		     FunctionBasis.GetFunctionValue(TmpUV[0], TmpUV[1], FunctionBasisEvaluation[k], k);
-//  		 }
-//  	       else
-//  		 {
-// 		   for (int j = 0; j < (NbrParticles * 2); ++j)
-// 		     {
-// 		       TmpUV[j] = PreviousTmpUV[j];
-// 		       TmpPositions[j] = PreviousTmpPositions[j];
-// 		     }
-//  		   CurrentProbabilities = PreviousProbabilities;
-//  		 }
-	  TotalProbability += CurrentProbabilities;
-	  TotalProbabilityError += CurrentProbabilities * CurrentProbabilities;
+	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	    {
+	      PreviousProbabilities = CurrentProbabilities;
+	      ++Acceptance;
+	      for (int k = 0; k < NbrOrbitals; ++k)
+		{
+		  double TmpTruc1 = 0.0;
+		  Complex TmpTruc2 = 0.0;
+		  for (int j = 0; j < NbrParticles; ++j)
+		    {
+		      FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
+		      TmpTruc1 +=  SqrNorm(TmpTruc2);
+		    }
+		  TmpFunctionBasisDecomposition[k] = TmpTruc1;
+		}
+	    }
+	  else
+	    {
+	      for (int j = 0; j < (NbrParticles * 2); ++j)
+		{
+		  TmpUV[j] = PreviousTmpUV[j];
+		  TmpPositions[j] = PreviousTmpPositions[j];
+		}
+	      CurrentProbabilities = PreviousProbabilities;
+	    }
+	  
 	  for (int k = 0; k < NbrOrbitals; ++k)
 	    {
-	      double TmpTruc1 = 0.0;
-	      Complex TmpTruc2 = 0.0;
-	      for (int j = 0; j < NbrParticles; ++j)
-		{
-		  FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
-		  TmpTruc1 +=  SqrNorm(TmpTruc2);
-		}
-	      FunctionBasisDecomposition[k] += TmpTruc1 * CurrentProbabilities;
-	      FunctionBasisDecompositionError[k] += (TmpTruc1 * CurrentProbabilities * TmpTruc1 * CurrentProbabilities);
+	      FunctionBasisDecomposition[k] += TmpFunctionBasisDecomposition[k];
+	      FunctionBasisDecompositionError[k] += TmpFunctionBasisDecomposition[k] * TmpFunctionBasisDecomposition[k];
 	    }
+	  TotalProbability++;	  
+	  TotalProbabilityError++;
+
+// 	  TotalProbability += CurrentProbabilities;
+// 	  TotalProbabilityError += CurrentProbabilities * CurrentProbabilities;
+// 	  for (int k = 0; k < NbrOrbitals; ++k)
+// 	    {
+// 	      double TmpTruc1 = 0.0;
+// 	      Complex TmpTruc2 = 0.0;
+// 	      for (int j = 0; j < NbrParticles; ++j)
+// 		{
+// 		  FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
+// 		  TmpTruc1 +=  SqrNorm(TmpTruc2);
+// 		}
+// 	      FunctionBasisDecomposition[k] += TmpTruc1 * CurrentProbabilities;
+// 	      FunctionBasisDecompositionError[k] += (TmpTruc1 * CurrentProbabilities * TmpTruc1 * CurrentProbabilities);
+// 	    }
+
+
 	}
       cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
 
