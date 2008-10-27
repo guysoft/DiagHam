@@ -67,6 +67,7 @@ PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFuncti
   this->V2.Im=sin(0.5*phi2);
   this->V2*=sin(0.5*theta2);
 
+  this->TmpPfaffian = ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->FermionFlag = fermions;
 }
 
@@ -87,6 +88,7 @@ PfaffianOnSphereTwoQuasiholeWaveFunction::PfaffianOnSphereTwoQuasiholeWaveFuncti
   this->V1=function.V1;
   this->U2=function.U2;
   this->V2=function.V2;
+  this->TmpPfaffian = ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->FermionFlag=function.FermionFlag;
 }
 
@@ -114,7 +116,6 @@ Abstract1DComplexFunction* PfaffianOnSphereTwoQuasiholeWaveFunction::Clone ()
 Complex PfaffianOnSphereTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 {
   Complex Tmp, T1, T2, T3, T4;
-  ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
   Complex WaveFunction(1.0);
   double Theta;
   double Phi;
@@ -142,7 +143,7 @@ Complex PfaffianOnSphereTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 	  T4.Im = sin(0.5 * (Theta1 + x[j << 1])) * sin(0.5 * (Phi1 - x[1 + (j << 1)]));
 	  
 	  Tmp = ( T1*T2-T3*T4 ) / Tmp;
-	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
+	  this->TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
     }
   WaveFunction *= TmpPfaffian.Pfaffian();
@@ -158,21 +159,28 @@ Complex PfaffianOnSphereTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 Complex PfaffianOnSphereTwoQuasiholeWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {
   Complex Tmp;
-  ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
+  Complex TmpU;
+  Complex TmpV;
+  Complex TmpHole1;
+  Complex TmpHole2;
   Complex WaveFunction(1.0);
   double Factor = M_PI * 0.5;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
+      TmpU = uv[2*i];
+      TmpV = uv[2*i+1];
+      TmpHole1 = (TmpU * this->V1 - TmpV * this->U1);
+      TmpHole2 = (TmpU * this->V2 - TmpV * this->U2);
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{	  
-	  Tmp = Factor * ( uv[2*i] * uv[2*j+1] - uv[2*i+1] * uv[2*j] );
+	  Tmp = Factor * (TmpU * uv[2*j+1] - TmpV * uv[2*j] );
 	  WaveFunction *= Tmp;
-	  if (FermionFlag)
-	    WaveFunction *= Tmp;
-	  Tmp = ( ((uv[2*i] * V1 - uv[2*i+1] * U1)*(uv[2*j] * V2 - uv[2*j+1] * U2)) - ((uv[2*j] * V1 - uv[2*j+1] * U1)*(uv[2*i] * V2 - uv[2*i+1] * U2)) ) / Tmp;
-	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
+	  Tmp = ((TmpHole1 * (uv[2*j] * this->V2 - uv[2*j+1] * this->U2)) + ((uv[2*j] * this->V1 - uv[2*j+1] * this->U1) * TmpHole2)) / Tmp;
+	  this->TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
     }
-  WaveFunction *= TmpPfaffian.Pfaffian();
+  if (this->FermionFlag == true)
+    WaveFunction *= WaveFunction;
+  WaveFunction *= this->TmpPfaffian.Pfaffian();
   return WaveFunction;
 }

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Pfaffian wave function on sphere                 //
+//       class of Pfaffian wave function with two quasiholes on disk          //
 //                                                                            //
-//                        last modification : 01/09/2004                      //
+//                        last modification : 23/10/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,22 +28,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PFAFFIANONSPHEREWAVEFUNCTION_H
-#define PFAFFIANONSPHEREWAVEFUNCTION_H
+#ifndef PFAFFIANONDISKTWOQUASIHOLEWAVEFUNCTION_H
+#define PFAFFIANONDISKTWOQUASIHOLEWAVEFUNCTION_H
 
 
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 
 
-class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class PfaffianOnDiskTwoQuasiholeWaveFunction: public Abstract1DComplexFunction
 {
 
  protected:
 
   // number of particles
   int NbrParticles;
+
+  // position of the first quasihole
+  Complex ZHole1;
+  // position of the second quasihole
+  Complex ZHole2;
 
   // Flag for bosons/fermions
   bool FermionFlag;
@@ -56,17 +61,19 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // constructor
   //
   // nbrParticles = number of particles
+  // zHole1 = position of the first quasihole
+  // zHole2 = position of the second quasihole (spherical coordinates, theta angle)
   // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
-  PfaffianOnSphereWaveFunction(int nbrParticles, bool fermions = false);
+  PfaffianOnDiskTwoQuasiholeWaveFunction(int nbrParticles, Complex zHole1, Complex zHole2, bool fermions=false);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  PfaffianOnSphereWaveFunction(const PfaffianOnSphereWaveFunction& function);
+  PfaffianOnDiskTwoQuasiholeWaveFunction(const PfaffianOnDiskTwoQuasiholeWaveFunction& function);
 
   // destructor
   //
-   ~PfaffianOnSphereWaveFunction();
+   ~PfaffianOnDiskTwoQuasiholeWaveFunction();
 
   // clone function 
   //
@@ -78,14 +85,6 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // x = point where the function has to be evaluated
   // return value = function value at x  
   Complex operator ()(RealVector& x);
-
-  // evaluate function at a given point
-  //
-  // uv = ensemble of spinor variables on sphere describing point
-  //      where function has to be evaluated
-  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
-  // return value = function value at (uv)
-  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
 
 };
 

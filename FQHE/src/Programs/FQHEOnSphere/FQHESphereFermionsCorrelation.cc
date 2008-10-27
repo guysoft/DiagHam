@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
@@ -155,7 +155,9 @@ int main(int argc, char** argv)
 	if (LzMax <= 30)
 #endif
 	  if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	    Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    {
+	      Space = new FermionOnSphere(NbrParticles, TotalLz, LzMax, MemorySpace);
+	    }
 	  else
 	    {
 	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
@@ -254,7 +256,7 @@ int main(int argc, char** argv)
 	      cout << "wrong LzMax value in ReferenceState" << endl;
 	      return -1;     
 	    }
-	}
+	}	
       if (SymmetrizedBasis == false)
 	{
 #ifdef __64_BITS__

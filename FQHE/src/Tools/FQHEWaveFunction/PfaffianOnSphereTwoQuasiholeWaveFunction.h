@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
+#include "Matrix/ComplexSkewSymmetricMatrix.h"
 
 
 class PfaffianOnSphereTwoQuasiholeWaveFunction: public Abstract1DComplexFunctionOnSphere
@@ -61,6 +62,9 @@ class PfaffianOnSphereTwoQuasiholeWaveFunction: public Abstract1DComplexFunction
   
   // Flag for bosons/fermions
   bool FermionFlag;
+
+  // temporary array where the Pfaffian has to be stored
+  ComplexSkewSymmetricMatrix TmpPfaffian;
 
  public:
 

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Pfaffian wave function on sphere                 //
+//    class of Pfaffian wave function with two quasielectrons on sphere       //
 //                                                                            //
-//                        last modification : 01/09/2004                      //
+//                        last modification : 23/10/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,16 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PFAFFIANONSPHEREWAVEFUNCTION_H
-#define PFAFFIANONSPHEREWAVEFUNCTION_H
+#ifndef PFAFFIANONSPHERETWOQUASIELECTRONWAVEFUNCTION_H
+#define PFAFFIANONSPHERETWOQUASIELECTRONWAVEFUNCTION_H
 
 
 #include "config.h"
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
-#include "Matrix/ComplexSkewSymmetricMatrix.h"
 
 
-class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunctionOnSphere
 {
 
  protected:
@@ -45,28 +44,51 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // number of particles
   int NbrParticles;
 
+  // position of the first quasielectron (spinor coordinates)
+  Complex UElectron1;
+  Complex VElectron1;
+
+  // position of the second quasielectron (spinor coordinates)
+  Complex UElectron2;
+  Complex VElectron2;
+  
   // Flag for bosons/fermions
   bool FermionFlag;
 
   // temporary array where the Pfaffian has to be stored
-  ComplexSkewSymmetricMatrix TmpPfaffian;
+  Complex** TmpPfaffian;
+  // temporary array where indices are stored
+  int* TmpIndexArray;
+  // temporary array used to store weights
+  Complex* TmpWeights;
+
+  // array containing description of each permutation that appears in the calculation symmetrization process
+  unsigned long* Permutations;
+  // number of permutations that appears in the symmetrization process
+  unsigned long NbrPermutations;
+  // garable flag associated to the Permutations array
+  GarbageFlag Flag;
 
  public:
 
   // constructor
   //
   // nbrParticles = number of particles
+  // theta1 = position of the first quasielectron (spherical coordinates, theta angle)
+  // phi1 = position of the first quasielectron (spherical coordinates, phi angle)
+  // theta2 = position of the second quasielectron (spherical coordinates, theta angle)
+  // phi2 = position of the second quasielectron (spherical coordinates, phi angle)
   // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
-  PfaffianOnSphereWaveFunction(int nbrParticles, bool fermions = false);
+  PfaffianOnSphereTwoQuasielectronWaveFunction(int nbrParticles, double theta1=0.0, double phi1=0.0, double theta2=M_PI, double phi2=0.0, bool fermions=false);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  PfaffianOnSphereWaveFunction(const PfaffianOnSphereWaveFunction& function);
+  PfaffianOnSphereTwoQuasielectronWaveFunction(const PfaffianOnSphereTwoQuasielectronWaveFunction& function);
 
   // destructor
   //
-   ~PfaffianOnSphereWaveFunction();
+   ~PfaffianOnSphereTwoQuasielectronWaveFunction();
 
   // clone function 
   //
@@ -86,6 +108,24 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
   // return value = function value at (uv)
   virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
+
+  // write all permutations requested to symmetrize the state to data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool WritePermutations(char* filename);
+
+ protected:
+
+  // get all permutations requested to symmetrize the state from data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool ReadPermutations(char* filename);
+
+  // evaluate all permutations requested to symmetrize the state
+  //
+  virtual void EvaluatePermutations();
 
 };
 

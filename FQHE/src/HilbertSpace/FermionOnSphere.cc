@@ -598,7 +598,7 @@ int FermionOnSphere::AdAd (int m1, int m2, double& coefficient)
 
 double FermionOnSphere::AdA (int index, int m)
 {
-  if ((this->StateDescription[index] & (((unsigned long) (0x1)) << m)) != 0)
+  if ((this->StateDescription[index] & (0x1ul << m)) != 0ul)
     return 1.0;
   else
     return 0.0;

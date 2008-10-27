@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Pfaffian wave function on sphere                 //
+//       class of Pfaffian wave function with two quasielectrons on disk      //
 //                                                                            //
-//                        last modification : 01/09/2004                      //
+//                        last modification : 23/10/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,16 +28,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PFAFFIANONSPHEREWAVEFUNCTION_H
-#define PFAFFIANONSPHEREWAVEFUNCTION_H
+#ifndef PFAFFIANONDISKTWOQUASIELECTRONWAVEFUNCTION_H
+#define PFAFFIANONDISKTWOQUASIELECTRONWAVEFUNCTION_H
 
 
 #include "config.h"
-#include "MathTools/NumericalAnalysis/Abstract1DComplexFunctionOnSphere.h"
-#include "Matrix/ComplexSkewSymmetricMatrix.h"
+#include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
+#include "GeneralTools/GarbageFlag.h"
 
 
-class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
+class PfaffianOnDiskTwoQuasielectronWaveFunction: public Abstract1DComplexFunction
 {
 
  protected:
@@ -45,28 +45,57 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // number of particles
   int NbrParticles;
 
+  // position of the first quasielectron
+  Complex ZElectron1;
+  // position of the second quasielectron
+  Complex ZElectron2;
+  // gaussian weight associated to the quasielectrons
+  double GaussianWeight;
+
   // Flag for bosons/fermions
   bool FermionFlag;
 
   // temporary array where the Pfaffian has to be stored
-  ComplexSkewSymmetricMatrix TmpPfaffian;
+  Complex** TmpPfaffian;
+  // temporary array where indices are stored
+  int* TmpIndexArray;
+  // temporary array used to store gaussian weights
+  Complex* TmpGaussianWeights;
+
+  // array containing description of each permutation that appears in the calculation symmetrization process
+  unsigned long* Permutations;
+  // number of permutations that appears in the symmetrization process
+  unsigned long NbrPermutations;
+  // garable flag associated to the Permutations array
+  GarbageFlag Flag;
+
 
  public:
 
   // constructor
   //
   // nbrParticles = number of particles
+  // zElectron1 = position of the first quasielectron
+  // zElectron2 = position of the second quasielectron (spherical coordinates, theta angle)
   // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
-  PfaffianOnSphereWaveFunction(int nbrParticles, bool fermions = false);
+  PfaffianOnDiskTwoQuasielectronWaveFunction(int nbrParticles, Complex zElectron1, Complex zElectron2, bool fermions=false);
+
+  // constructor from data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // zElectron1 = position of the first quasielectron
+  // zElectron2 = position of the second quasielectron (spherical coordinates, theta angle)
+  // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
+  PfaffianOnDiskTwoQuasielectronWaveFunction(char* filename, Complex zElectron1, Complex zElectron2, bool fermions=false);
 
   // copy constructor
   //
   // function = reference on the wave function to copy
-  PfaffianOnSphereWaveFunction(const PfaffianOnSphereWaveFunction& function);
+  PfaffianOnDiskTwoQuasielectronWaveFunction(const PfaffianOnDiskTwoQuasielectronWaveFunction& function);
 
   // destructor
   //
-   ~PfaffianOnSphereWaveFunction();
+   ~PfaffianOnDiskTwoQuasielectronWaveFunction();
 
   // clone function 
   //
@@ -79,13 +108,25 @@ class PfaffianOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // return value = function value at x  
   Complex operator ()(RealVector& x);
 
-  // evaluate function at a given point
+  // write all permutations requested to symmetrize the state to data file 
   //
-  // uv = ensemble of spinor variables on sphere describing point
-  //      where function has to be evaluated
-  //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
-  // return value = function value at (uv)
-  virtual Complex CalculateFromSpinorVariables(ComplexVector& uv);
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool WritePermutations(char* filename);
+
+ protected:
+
+
+  // get all permutations requested to symmetrize the state from data file 
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // return value = true if no error occured
+  virtual bool ReadPermutations(char* filename);
+
+  // evaluate all permutations requested to symmetrize the state
+  //
+  virtual void EvaluatePermutations();
+
 
 };
 

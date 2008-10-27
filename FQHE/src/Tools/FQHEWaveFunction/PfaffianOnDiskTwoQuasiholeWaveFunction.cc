@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of Pfaffian wave function on sphere                 //
+//       class of Pfaffian wave function with two quasiholes on disk          //
 //                                                                            //
-//                        last modification : 01/09/2004                      //
+//                        last modification : 23/10/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,31 +29,38 @@
 
 
 #include "config.h"
-#include "Tools/FQHEWaveFunction/PfaffianOnSphereWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PfaffianOnDiskTwoQuasiholeWaveFunction.h"
 #include "Vector/RealVector.h"
-#include "Vector/ComplexVector.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 
 
 // constructor
 //
 // nbrParticles = number of particles
+// zHole1 = position of the first quasihole
+// zHole2 = position of the second quasihole (spherical coordinates, theta angle)
 // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
 
-PfaffianOnSphereWaveFunction::PfaffianOnSphereWaveFunction(int nbrParticles, bool fermions)
+PfaffianOnDiskTwoQuasiholeWaveFunction::PfaffianOnDiskTwoQuasiholeWaveFunction(int nbrParticles, Complex zHole1, Complex zHole2, bool fermions)
 {
   this->NbrParticles = nbrParticles;
+  this->ZHole1 = zHole1;
+  this->ZHole2 = zHole2;
   this->TmpPfaffian = ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->FermionFlag = fermions;
 }
+
+
 
 // copy constructor
 //
 // function = reference on the wave function to copy
 
-PfaffianOnSphereWaveFunction::PfaffianOnSphereWaveFunction(const PfaffianOnSphereWaveFunction& function)
+PfaffianOnDiskTwoQuasiholeWaveFunction::PfaffianOnDiskTwoQuasiholeWaveFunction(const PfaffianOnDiskTwoQuasiholeWaveFunction& function)
 {
   this->NbrParticles = function.NbrParticles;
+  this->ZHole1 = function.ZHole1;
+  this->ZHole2 = function.ZHole2;
   this->TmpPfaffian = ComplexSkewSymmetricMatrix(this->NbrParticles);
   this->FermionFlag=function.FermionFlag;
 }
@@ -61,7 +68,7 @@ PfaffianOnSphereWaveFunction::PfaffianOnSphereWaveFunction(const PfaffianOnSpher
 // destructor
 //
 
-PfaffianOnSphereWaveFunction::~PfaffianOnSphereWaveFunction()
+PfaffianOnDiskTwoQuasiholeWaveFunction::~PfaffianOnDiskTwoQuasiholeWaveFunction()
 {
 }
 
@@ -69,9 +76,9 @@ PfaffianOnSphereWaveFunction::~PfaffianOnSphereWaveFunction()
 //
 // return value = clone of the function 
 
-Abstract1DComplexFunction* PfaffianOnSphereWaveFunction::Clone ()
+Abstract1DComplexFunction* PfaffianOnDiskTwoQuasiholeWaveFunction::Clone ()
 {
-  return new PfaffianOnSphereWaveFunction(*this);
+  return new PfaffianOnDiskTwoQuasiholeWaveFunction(*this);
 }
 
 // evaluate function at a given point
@@ -79,60 +86,38 @@ Abstract1DComplexFunction* PfaffianOnSphereWaveFunction::Clone ()
 // x = point where the function has to be evaluated
 // return value = function value at x  
 
-Complex PfaffianOnSphereWaveFunction::operator ()(RealVector& x)
+Complex PfaffianOnDiskTwoQuasiholeWaveFunction::operator ()(RealVector& x)
 {
-  Complex Tmp;
-  Complex WaveFunction(1.0);
-  double Theta;
-  double Phi;
-  for (int i = 0; i < this->NbrParticles; ++i)
-    {
-      Theta = x[i << 1];
-      Phi = x[1 + (i << 1)];
-      for (int j = i + 1; j < this->NbrParticles; ++j)
-	{
-	  Tmp.Re = sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	  Tmp.Im = sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
-	  WaveFunction *= Tmp;
-	  Tmp = 1.0 / Tmp;
-	  this->TmpPfaffian.SetMatrixElement (i , j, Tmp);
-	}
-    }
-  if (this->FermionFlag == true)
-    WaveFunction *= WaveFunction;
-  WaveFunction *= this->TmpPfaffian.Pfaffian();
-  return WaveFunction;
-}
-
-// evaluate function at a given point
-//
-// uv = ensemble of spinor variables on sphere describing point
-//      where function has to be evaluated
-//      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
-// return value = function value at (uv)
-
-Complex PfaffianOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
-{
-  Complex Tmp;
+  Complex TmpZ;
+  Complex TmpHole1;
+  Complex TmpHole2;
+  Complex TmpHole3;
+  Complex TmpHole4;
   ComplexSkewSymmetricMatrix TmpPfaffian (this->NbrParticles);
   Complex WaveFunction(1.0);
-  double Factor = M_PI * 0.5; 
-  Complex TmpU;
-  Complex TmpV; 
+  Complex Tmp;
   for (int i = 0; i < this->NbrParticles; ++i)
-    {      
-      TmpU = uv[i << 1];
-      TmpV = uv[(i << 1) + 1]; 
+    {
+      TmpZ.Re = x[i << 1];
+      TmpZ.Im = x[1 + (i << 1)];
+      TmpHole1 = TmpZ - this->ZHole1;
+      TmpHole2 = TmpZ - this->ZHole2;
       for (int j = i + 1; j < this->NbrParticles; ++j)
-	{	  
-	  Tmp = Factor * ((TmpU * uv[2*j+1]) - (TmpV * uv[2*j]));
-	  WaveFunction *= Tmp;
-	  Tmp = 1.0 / Tmp;
-	  this->TmpPfaffian.SetMatrixElement (i , j, Tmp);
+	{
+	  Tmp.Re = x[j << 1];
+	  Tmp.Im = x[1 + (j << 1)];
+	  TmpHole3 = Tmp - this->ZHole1;
+	  TmpHole4 = Tmp - this->ZHole2;
+	  Tmp -= TmpZ;
+	  Tmp *= -1.0;
+	  WaveFunction *= Tmp;	  
+	  Tmp = (TmpHole1 *TmpHole4  + TmpHole2 * TmpHole3) / Tmp;
+	  TmpPfaffian.SetMatrixElement (i , j, Tmp);
 	}
     }
   if (this->FermionFlag == true)
     WaveFunction *= WaveFunction;
-  WaveFunction *= this->TmpPfaffian.Pfaffian();
+  WaveFunction *= TmpPfaffian.Pfaffian();
   return WaveFunction;
 }
+
