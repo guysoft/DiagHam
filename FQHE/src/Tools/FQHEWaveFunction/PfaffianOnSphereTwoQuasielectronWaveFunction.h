@@ -81,6 +81,16 @@ class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunc
   // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
   PfaffianOnSphereTwoQuasielectronWaveFunction(int nbrParticles, double theta1=0.0, double phi1=0.0, double theta2=M_PI, double phi2=0.0, bool fermions=false);
 
+  // constructor using permutation description stored in a file
+  //
+  // filename = pointer to the file name that described the symmetrization procedure
+  // theta1 = position of the first quasielectron (spherical coordinates, theta angle)
+  // phi1 = position of the first quasielectron (spherical coordinates, phi angle)
+  // theta2 = position of the second quasielectron (spherical coordinates, theta angle)
+  // phi2 = position of the second quasielectron (spherical coordinates, phi angle)
+  // fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
+  PfaffianOnSphereTwoQuasielectronWaveFunction(char* filename, double theta1 = 0.0, double phi1 = 0.0, 
+					       double theta2 = M_PI, double phi2 = 0.0, bool fermions = false);
   // copy constructor
   //
   // function = reference on the wave function to copy

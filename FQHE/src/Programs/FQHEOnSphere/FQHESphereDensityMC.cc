@@ -86,6 +86,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "quasielectron", "plot quasiparticles instead of quasiholes");  
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name", "density.dat"); 
 
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals used to sample the sphere geometry", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
@@ -121,6 +122,7 @@ int main(int argc, char** argv)
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrSteps = ((SingleIntegerOption*) Manager["nbr-step"])->GetInteger();
+  int NbrOrbitals = ((SingleIntegerOption*) Manager["nbr-orbitals"])->GetInteger();
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
@@ -144,13 +146,21 @@ int main(int argc, char** argv)
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
   if (QuasielectronFlag == true)
     {
-      SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, true);
-      //      SymmetrizedFunction = new PfaffianOnSphereWaveFunction(NbrParticles);
+      if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, true);
+      else
+	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
+									       0.0, 0.0, M_PI, 0.0, true);
+      if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+	{
+	  ((PfaffianOnSphereTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+	  return 0;
+	}
+
     }
   else
     {
       SymmetrizedFunction = new PfaffianOnSphereTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, true);
-      //      SymmetrizedFunction = new PfaffianOnSphereWaveFunction(NbrParticles);
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;
@@ -180,86 +190,86 @@ int main(int argc, char** argv)
 
   if (OverlapFlag == true)
     {
-       RealVector TmpPositions (NbrParticles * 2, true);
-       RealVector PreviousTmpPositions (NbrParticles * 2, true);
-       ComplexVector TmpUV (NbrParticles * 2, true);
-       ComplexVector PreviousTmpUV (NbrParticles * 2, true);
+      RealVector TmpPositions (NbrParticles * 2, true);
+      RealVector PreviousTmpPositions (NbrParticles * 2, true);
+      ComplexVector TmpUV (NbrParticles * 2, true);
+      ComplexVector PreviousTmpUV (NbrParticles * 2, true);
+      
+      ParticleOnSphereFunctionBasis FunctionBasis(NbrOrbitals - 1);
+      Complex* FunctionBasisEvaluation = new Complex [NbrOrbitals];
+      double* FunctionBasisDecomposition = new double [NbrOrbitals];
+      double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
+      for (int k = 0; k < NbrOrbitals; ++k)
+	{
+	  FunctionBasisDecomposition[k] = 0.0;
+	  FunctionBasisDecompositionError[k] = 0.0;
+	}
 
-	  int NbrOrbitals = 3 * LzMax + 1;
-	  ParticleOnSphereFunctionBasis FunctionBasis(NbrOrbitals - 1);
-	  Complex* FunctionBasisEvaluation = new Complex [NbrOrbitals];
-	  double* FunctionBasisDecomposition = new double [NbrOrbitals];
-	  for (int k = 0; k < NbrOrbitals; ++k)
-	    FunctionBasisDecomposition[k] = 0.0;
-	  double TotalProbability = 0.0;
-
+      double TotalProbability = 0.0;
+      double TotalProbabilityError = 0.0;
       double ThetaStep = M_PI / NbrSteps;
-      double Theta = ThetaStep;
+
+      double Theta = 0.0;
       double* Density = new double [NbrSteps];
       for (int i = 0; i < NbrSteps; ++i)
 	Density[i] = 0.0;
-      //      for (int step = 1; step < NbrSteps; ++step)
+
+      RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
+      
+      int NextCoordinates = 0;
+      double PreviousProbabilities = 0.0;
+      double CurrentProbabilities = 0.0;
+      TotalProbability = 0.0;
+      int Acceptance = 0;	  
+      
+      Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+      CurrentProbabilities = SqrNorm(Tmp);
+      PreviousProbabilities = CurrentProbabilities;
+      
+      cout << "starting warm-up sequence" << endl;
+      for (int i = 1; i < NbrWarmUpIter; ++i)
 	{
-	  cout << "Computing theta = " << Theta << endl;
-	  RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
-
-	  int NextCoordinates = 0;
-	  double PreviousProbabilities = 0.0;
-	  double CurrentProbabilities = 0.0;
-	  TotalProbability = 0.0;
-	  int Acceptance = 0;	  
-	  
- 	  Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-	  CurrentProbabilities = SqrNorm(Tmp);
-	  PreviousProbabilities = CurrentProbabilities;
-
-	  cout << "starting warm-up sequence" << endl;
-	  for (int i = 1; i < NbrWarmUpIter; ++i)
+	  for (int j = 0; j < (NbrParticles * 2); ++j)
+	    {
+	      PreviousTmpUV[j] = TmpUV[j];
+	      PreviousTmpPositions[j] = TmpPositions[j];
+	    }
+	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
+	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	    {
+	      PreviousProbabilities = CurrentProbabilities;
+	      ++Acceptance;
+	    }
+	  else
 	    {
 	      for (int j = 0; j < (NbrParticles * 2); ++j)
 		{
-		  PreviousTmpUV[j] = TmpUV[j];
-		  PreviousTmpPositions[j] = TmpPositions[j];
+		  TmpUV[j] = PreviousTmpUV[j];
+		  TmpPositions[j] = PreviousTmpPositions[j];
 		}
-	       RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
-	      Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-	      CurrentProbabilities = SqrNorm(TmpMetropolis);
-	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
-		{
-		  PreviousProbabilities = CurrentProbabilities;
-		  ++Acceptance;
-		}
-	      else
-		{
-		  for (int j = 0; j < (NbrParticles * 2); ++j)
-		    {
-		      TmpUV[j] = PreviousTmpUV[j];
-		      TmpPositions[j] = PreviousTmpPositions[j];
-		    }
-		  CurrentProbabilities = PreviousProbabilities;
-		}
-	    } 
-	  cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
+	      CurrentProbabilities = PreviousProbabilities;
+	    }
+	} 
+      cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
+      
+      for (int k = 0; k < NbrOrbitals; ++k)
+	FunctionBasis.GetFunctionValue(TmpUV[0], TmpUV[1], FunctionBasisEvaluation[k], k);
 
-	  for (int k = 0; k < NbrOrbitals; ++k)
-	    FunctionBasis.GetFunctionValue(TmpUV[0], TmpUV[1], FunctionBasisEvaluation[k], k);
-	  cout << "starting MC sequence" << endl;
-	  Acceptance = 0;
+      cout << "starting MC sequence" << endl;
+      Acceptance = 0;
 
-
-	  for (int i = 0; i < NbrIter; ++i)
+      for (int i = 0; i < NbrIter; ++i)
+	{
+	  for (int j = 0; j < (NbrParticles * 2); ++j)
 	    {
-	      for (int j = 0; j < (NbrParticles * 2); ++j)
-		{
-		  PreviousTmpUV[j] = TmpUV[j];
-		  PreviousTmpPositions[j] = TmpPositions[j];
-		}
-	       RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
-	       Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-// 	       QHEParticleWaveFunctionOperation Operation(ExactSpace, &ExactState, &TmpPositions, &FunctionBasis);
-// 	       Operation.ApplyOperation(Architecture.GetArchitecture());      
-// 	       Complex TmpMetropolis = Operation.GetScalar();
- 	       CurrentProbabilities = SqrNorm(TmpMetropolis);
+	      PreviousTmpUV[j] = TmpUV[j];
+	      PreviousTmpPositions[j] = TmpPositions[j];
+	    }
+	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
+	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+	  CurrentProbabilities = SqrNorm(TmpMetropolis);
 //  	       if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 //  		 {
 //  		   PreviousProbabilities = CurrentProbabilities;
@@ -276,66 +286,58 @@ int main(int argc, char** argv)
 // 		     }
 //  		   CurrentProbabilities = PreviousProbabilities;
 //  		 }
- 	       TotalProbability += CurrentProbabilities;
-	       for (int k = 0; k < NbrOrbitals; ++k)
-		 {
-		   double TmpTruc1 = 0.0;
-		   Complex TmpTruc2 = 0.0;
-		   for (int j = 0; j < NbrParticles; ++j)
-		     {
-		       FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
-		       TmpTruc1 +=  SqrNorm(TmpTruc2);
-		     }
-		   FunctionBasisDecomposition[k] += TmpTruc1 * CurrentProbabilities;
-		   //		   cout << FunctionBasisDecomposition[0] << " " << FunctionBasisDecomposition[21] << endl;
-		 }
-// 	       if ((i % 100) == 0)
-// 		 cout << FunctionBasisDecomposition[0] << " " << FunctionBasisDecomposition[21] << endl;
-// 	       for (int j = 0; j < NbrParticles; ++j)
-// 		 {
-// 		   for (int k = 0; k < NbrOrbitals; ++k)
-// 		     FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], FunctionBasisEvaluation[k], k);
-// 		   for (int k = 0; k < NbrOrbitals; ++k)
-// 		     FunctionBasisDecomposition[k] += SqrNorm(FunctionBasisEvaluation[k]) * CurrentProbabilities;
-// 		 }
-	       //	       for (int k = 0; k < NbrParticles; ++k)
-	       //		 Density[(int) (TmpPositions[k << 1] / ThetaStep)] += CurrentProbabilities;
-	     }
-	  cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
-	   Theta += ThetaStep;
+	  TotalProbability += CurrentProbabilities;
+	  TotalProbabilityError += CurrentProbabilities * CurrentProbabilities;
+	  for (int k = 0; k < NbrOrbitals; ++k)
+	    {
+	      double TmpTruc1 = 0.0;
+	      Complex TmpTruc2 = 0.0;
+	      for (int j = 0; j < NbrParticles; ++j)
+		{
+		  FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
+		  TmpTruc1 +=  SqrNorm(TmpTruc2);
+		}
+	      FunctionBasisDecomposition[k] += TmpTruc1 * CurrentProbabilities;
+	      FunctionBasisDecompositionError[k] += (TmpTruc1 * CurrentProbabilities * TmpTruc1 * CurrentProbabilities);
+	    }
+	}
+      cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
+
+      TotalProbabilityError /= (double) NbrIter;
+      TotalProbabilityError -= (TotalProbability * TotalProbability) / (((double) NbrIter) * ((double) NbrIter));
+      TotalProbabilityError = sqrt(TotalProbabilityError) / (TotalProbability / ((double) NbrIter));
+      TotalProbabilityError /= sqrt ((double) NbrIter);
+      for (int k = 0; k < NbrOrbitals; ++k)
+	{
+	  FunctionBasisDecompositionError[k] *= ((double) NbrIter);
+	  FunctionBasisDecompositionError[k] -= FunctionBasisDecomposition[k] * FunctionBasisDecomposition[k];
+	  FunctionBasisDecompositionError[k] = sqrt(FunctionBasisDecompositionError[k] / ((double) NbrIter)) / FunctionBasisDecomposition[k];
+	  FunctionBasisDecompositionError[k] += TotalProbabilityError;
 	}
 
-//       double Sum = 0.0;
-//       Theta = ThetaStep;
-//       for (int i = 1; i < NbrSteps; ++i)
-// 	{
-// 	  Sum += Density[i] * sin(Theta);
-// 	  Theta += ThetaStep;
-// 	}
-//       Sum *= ThetaStep;
-//       Theta = ThetaStep;
-//       Sum = ((double) NbrParticles) / (Sum * 2.0 * M_PI);
-
-	TotalProbability =  1.0 / TotalProbability;
+      TotalProbability =  1.0 / TotalProbability;
       for (int k = 0; k < NbrOrbitals; ++k)
-	FunctionBasisDecomposition[k] *= TotalProbability;
-	for (int k = 0; k < NbrOrbitals; ++k)
-	  {
-	    cout << k << " " << FunctionBasisDecomposition[k] << endl;
-	  }
+	{
+	  FunctionBasisDecomposition[k] *= TotalProbability;
+	  FunctionBasisDecompositionError[k] *= FunctionBasisDecomposition[k];
+	}
 
       ofstream DensityRecordFile;
       DensityRecordFile.precision(14);
       DensityRecordFile.open(((SingleStringOption*) Manager["output"])->GetString(), ios::out);
-//       for (int i = 1; i < NbrSteps; ++i)
-// 	{
-// 	  DensityRecordFile << Theta << " " << (Density[i] * Sum) << endl;
-// 	  Theta += ThetaStep;
-// 	}
+
       RealVector TmpPos(2, true);
       Theta = 0.0;
       double Sum = 0.0; 
       double TmpFactor = 4.0 * M_PI / ((double) NbrOrbitals);
+      DensityRecordFile << "# decomposition of the wave on " << NbrOrbitals << " orbitals" << endl; 
+      DensityRecordFile << "# orbital_index     component    error" << endl;
+      for (int k = 0; k < NbrOrbitals; ++k)
+	{
+	  DensityRecordFile << "# " << k << " " << FunctionBasisDecomposition[k] << " " <<  FunctionBasisDecompositionError [k] << endl;
+	  cout << k << " " << FunctionBasisDecomposition[k] << " " <<  FunctionBasisDecompositionError [k] << endl;
+	}
+      DensityRecordFile << "#" << endl << "# density wave function " << endl << "# theta density" << endl;
       for (int i = 0; i <= NbrSteps; ++i)
 	{
 	  TmpPos[0] = Theta;
@@ -426,38 +428,4 @@ void FlipCoordinates (ComplexVector& uv, int i, int j)
   uv.Im(2 * j + 1) = Tmp.Im;
 }
 
-
-//       for (int step = 1; step < NbrSteps; ++step)
-// 	{
-// 	  cout << "Computing theta = " << Theta << endl;
-// 	   RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
-// 	   double TmpPhi = M_PI * RandomNumber->GetRealRandomNumber();
-// 	   TmpUV[0].Re = cos (0.5 * Theta) * cos (TmpPhi);
-// 	   TmpUV[0].Im = cos (0.5 * Theta) * sin (TmpPhi);
-// 	   TmpUV[1].Re = sin (0.5 * Theta) * cos (TmpPhi);
-// 	   TmpUV[1].Im = sin (0.5 * Theta) * sin (-TmpPhi);
-
-// 	   int NextCoordinates = 0;
-// 	   double PreviousProbabilities = 0.0;
-// 	   double CurrentProbabilities = 0.0;
-// 	   double TotalProbability = 0.0;
-// 	   int Acceptance = 0;
-
-// 	   Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-
-// 	   cout << "starting MC sequence" << endl;
-// 	   for (int i = 0; i < NbrIter; ++i)
-// 	     {
-// 	       RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
-// 	       TmpPhi = M_PI * RandomNumber->GetRealRandomNumber();
-// 	       TmpUV[0].Re = cos (0.5 * Theta) * cos (TmpPhi);
-// 	       TmpUV[0].Im = cos (0.5 * Theta) * sin (TmpPhi);
-// 	       TmpUV[1].Re = sin (0.5 * Theta) * cos (TmpPhi);
-// 	       TmpUV[1].Im = sin (0.5 * Theta) * sin (-TmpPhi);
-// 	       Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
-// 	       TotalProbability += SqrNorm(TmpMetropolis);
-// 	     }
-// 	   Density[step] = TotalProbability;
-// 	   Theta += ThetaStep;
-// 	}
 

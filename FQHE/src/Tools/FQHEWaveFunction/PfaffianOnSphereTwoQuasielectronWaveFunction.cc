@@ -98,6 +98,50 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->FermionFlag = fermions;
 }
 
+// constructor using permutation description stored in a file
+//
+// filename = pointer to the file name that described the symmetrization procedure
+// theta1 = position of the first quasielectron (spherical coordinates, theta angle)
+// phi1 = position of the first quasielectron (spherical coordinates, phi angle)
+// theta2 = position of the second quasielectron (spherical coordinates, theta angle)
+// phi2 = position of the second quasielectron (spherical coordinates, phi angle)
+// fermions = flag indicating whether to calculate bosonic or fermionic pfaffian
+
+PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWaveFunction(char* filename, 
+											   double theta1, double phi1, 
+											   double theta2, double phi2, bool fermions)
+{
+  this->NbrParticles = 0;
+
+  this->ReadPermutations(filename);
+  this->Flag.Initialize();
+
+  this->TmpPfaffian = new Complex* [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    this->TmpPfaffian[i] = new Complex [this->NbrParticles];
+  this->TmpIndexArray = new int [this->NbrParticles];
+  this->TmpWeights = new Complex [2 * this->NbrParticles];
+  this->FermionFlag = fermions;
+
+  this->UElectron1.Re = cos(0.5*phi1);
+  this->UElectron1.Im= -sin(0.5*phi1);
+  this->UElectron1 *= cos(0.5*theta1);
+
+  this->VElectron1.Re = cos(0.5*phi1);
+  this->VElectron1.Im = sin(0.5*phi1);
+  this->VElectron1 *= sin(0.5*theta1);
+  
+  this->UElectron2.Re = cos(0.5*phi2);
+  this->UElectron2.Im = -sin(0.5*phi2);
+  this->UElectron2 *= cos(0.5*theta2);
+
+  this->VElectron2.Re = cos(0.5*phi2);
+  this->VElectron2.Im = sin(0.5*phi2);
+  this->VElectron2 *= sin(0.5*theta2);
+
+  this->FermionFlag = fermions;
+}
+
 
 
 // copy constructor
