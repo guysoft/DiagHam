@@ -58,6 +58,8 @@ void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordin
 
 void FlipCoordinates (ComplexVector& uv, int i, int j);
 
+void FlipLzMinusLz (ComplexVector& uv);
+
 
 int main(int argc, char** argv)
 {
@@ -80,6 +82,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
+  (*SystemGroup) += new BooleanOption ('\n', "force-symmetry", "assume the wave function is invariant under the Lz <->-Lz symmetry");  
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
@@ -119,6 +122,7 @@ int main(int argc, char** argv)
     {
       OverlapFlag = false;
     }
+  bool SymmetryFlag = false;
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrSteps = ((SingleIntegerOption*) Manager["nbr-step"])->GetInteger();
@@ -126,6 +130,15 @@ int main(int argc, char** argv)
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
+  if (((BooleanOption*) Manager["force-symmetry"])->GetBoolean() == true)
+    {
+      SymmetryFlag = true;
+      if ((NbrOrbitals  & 1) != 0)
+	{
+	  --NbrOrbitals; 
+	  cout << "number of orbitals has to be even when using the --force-symmetry option, it will reduced to " << NbrOrbitals << endl;
+	}
+    }
   char* RecordWaveFunctions = ((SingleStringOption*) Manager["record-wavefunctions"])->GetString();
   if (RecordWaveFunctions != 0)
     {
@@ -217,7 +230,7 @@ int main(int argc, char** argv)
 
       RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
       
-      int NextCoordinates = 0;
+      int NextCoordinate = 0;
       double PreviousProbabilities = 0.0;
       double CurrentProbabilities = 0.0;
       TotalProbability = 0.0;
@@ -225,6 +238,8 @@ int main(int argc, char** argv)
       
       Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
       CurrentProbabilities = SqrNorm(Tmp);
+      for (int k = 0; k < NbrParticles; ++k)
+	CurrentProbabilities *= sin(TmpPositions[k << 1]);
       PreviousProbabilities = CurrentProbabilities;
       
       cout << "starting warm-up sequence" << endl;
@@ -235,9 +250,12 @@ int main(int argc, char** argv)
 	      PreviousTmpUV[j] = TmpUV[j];
 	      PreviousTmpPositions[j] = TmpPositions[j];
 	    }
-	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
+	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
+	  //	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  for (int k = 0; k < NbrParticles; ++k)
+	    CurrentProbabilities *= sin(TmpPositions[k << 1]);
 	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	    {
 	      PreviousProbabilities = CurrentProbabilities;
@@ -252,6 +270,7 @@ int main(int argc, char** argv)
 		}
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
+	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 	} 
       cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
@@ -277,9 +296,12 @@ int main(int argc, char** argv)
 	      PreviousTmpUV[j] = TmpUV[j];
 	      PreviousTmpPositions[j] = TmpPositions[j];
 	    }
-	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
+	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
+	  //	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  for (int k = 0; k < NbrParticles; ++k)
+	    CurrentProbabilities *= sin(TmpPositions[k << 1]);
 	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	    {
 	      PreviousProbabilities = CurrentProbabilities;
@@ -305,14 +327,23 @@ int main(int argc, char** argv)
 		}
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
-	  
-	  for (int k = 0; k < NbrOrbitals; ++k)
-	    {
-	      FunctionBasisDecomposition[k] += TmpFunctionBasisDecomposition[k];
-	      FunctionBasisDecompositionError[k] += TmpFunctionBasisDecomposition[k] * TmpFunctionBasisDecomposition[k];
-	    }
+	  if (SymmetryFlag == false)
+	    for (int k = 0; k < NbrOrbitals; ++k)
+	      {
+		FunctionBasisDecomposition[k] += TmpFunctionBasisDecomposition[k];
+		FunctionBasisDecompositionError[k] += TmpFunctionBasisDecomposition[k] * TmpFunctionBasisDecomposition[k];
+	      }
+	  else
+	    for (int k = 0; k < NbrOrbitals; ++k)
+	      {
+		FunctionBasisDecomposition[k] += 0.5 * (TmpFunctionBasisDecomposition[k] + TmpFunctionBasisDecomposition[NbrOrbitals - 1 - k]);
+		FunctionBasisDecompositionError[k] += 0.25 * ((TmpFunctionBasisDecomposition[k] + TmpFunctionBasisDecomposition[NbrOrbitals - 1 - k])
+							      * (TmpFunctionBasisDecomposition[k] + TmpFunctionBasisDecomposition[NbrOrbitals - 1 - k]));
+	      }
 	  TotalProbability++;	  
 	  TotalProbabilityError++;
+
+	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 
 // 	  TotalProbability += CurrentProbabilities;
 // 	  TotalProbabilityError += CurrentProbabilities * CurrentProbabilities;
@@ -402,10 +433,13 @@ int main(int argc, char** argv)
 	       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << " | " ;
 	       FlipCoordinates(UV, i, j);
 	       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
-	       FlipCoordinates(UV, i, j);
-	       
+	       FlipCoordinates(UV, i, j);	       
 	     }
 	 }
+       cout << "Lz <-> -Lz : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << " | " ;
+       FlipLzMinusLz(UV);
+       cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
+       FlipLzMinusLz(UV);
      }
   return 0;
 }
@@ -430,8 +464,30 @@ void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, Abstr
 void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   coordinate *= 2;
-  double x = acos (1.0 - (2.0 * randomNumberGenerator->GetRealRandomNumber()));
-  double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
+  //  double x = acos (1.0 - (2.0 * randomNumberGenerator->GetRealRandomNumber()));
+  //  double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
+  double Dist = 0.2 * M_PI;
+  double x = positions[coordinate];
+  double y = positions[coordinate + 1];
+  x += Dist *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
+  if (x < 0.0) 
+    {
+      x *= -1.0;
+      y += M_PI;
+    }
+  else
+    if (x > M_PI) 
+      {
+	x = (2.0 * M_PI) - x;
+	y += M_PI;
+      }
+  y += 2.0 * Dist *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
+  if (y < 0.0)
+    y += 2.0 * M_PI;
+  else
+    if (y > (2.0 * M_PI))
+    y -= 2.0 * M_PI;
+
   positions[coordinate] = x;
   uv.Re(coordinate) = cos(0.5 * x);
   uv.Im(coordinate) = uv.Re(coordinate) * sin(0.5 * y);
@@ -456,6 +512,16 @@ void FlipCoordinates (ComplexVector& uv, int i, int j)
   uv.Re(2 * j + 1) = Tmp.Re;
   uv.Im(2 * i + 1) = uv.Im(2 * j + 1);
   uv.Im(2 * j + 1) = Tmp.Im;
+}
+
+void FlipLzMinusLz (ComplexVector& uv)
+{
+  for (int i = 0; i < uv.GetVectorDimension(); i += 2)
+    {
+      Complex Tmp = uv[i + 1];
+      uv[i + 1] = uv[i];
+      uv[i] = Tmp;
+    }
 }
 
 
