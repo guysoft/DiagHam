@@ -45,6 +45,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 
+#define M_2PI 6.283185307179586477
 
 using std::ios;
 using std::cout;
@@ -130,6 +131,7 @@ int main(int argc, char** argv)
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
+  double StepSize = 0.25;
   if (((BooleanOption*) Manager["force-symmetry"])->GetBoolean() == true)
     {
       SymmetryFlag = true;
@@ -207,9 +209,14 @@ int main(int argc, char** argv)
       RealVector PreviousTmpPositions (NbrParticles * 2, true);
       ComplexVector TmpUV (NbrParticles * 2, true);
       ComplexVector PreviousTmpUV (NbrParticles * 2, true);
-      
+      Complex PreviousTmpU;
+      Complex PreviousTmpV;
+      double PreviousTmpPositionTheta;
+      double  PreviousTmpPositionPhi;
       ParticleOnSphereFunctionBasis FunctionBasis(NbrOrbitals - 1);
-      Complex* FunctionBasisEvaluation = new Complex [NbrOrbitals];
+      Complex** FunctionBasisEvaluation = new Complex* [NbrParticles];
+      for (int k = 0; k < NbrParticles; ++k)
+	FunctionBasisEvaluation[k] = new Complex [NbrOrbitals];
       double* FunctionBasisDecomposition = new double [NbrOrbitals];
       double* TmpFunctionBasisDecomposition = new double [NbrOrbitals];
       double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
@@ -218,6 +225,7 @@ int main(int argc, char** argv)
 	  FunctionBasisDecomposition[k] = 0.0;
 	  FunctionBasisDecompositionError[k] = 0.0;
 	}
+      double* SinTable = new double [NbrParticles];
 
       double TotalProbability = 0.0;
       double TotalProbabilityError = 0.0;
@@ -229,7 +237,6 @@ int main(int argc, char** argv)
 	Density[i] = 0.0;
 
       RandomUV (TmpUV, TmpPositions, NbrParticles, RandomNumber);
-      
       int NextCoordinate = 0;
       double PreviousProbabilities = 0.0;
       double CurrentProbabilities = 0.0;
@@ -239,23 +246,25 @@ int main(int argc, char** argv)
       Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
       CurrentProbabilities = SqrNorm(Tmp);
       for (int k = 0; k < NbrParticles; ++k)
-	CurrentProbabilities *= sin(TmpPositions[k << 1]);
+	{
+	  SinTable[k] = sin(TmpPositions[k << 1]);
+	  CurrentProbabilities *= SinTable[k];
+	}
       PreviousProbabilities = CurrentProbabilities;
       
       cout << "starting warm-up sequence" << endl;
       for (int i = 1; i < NbrWarmUpIter; ++i)
 	{
-	  for (int j = 0; j < (NbrParticles * 2); ++j)
-	    {
-	      PreviousTmpUV[j] = TmpUV[j];
-	      PreviousTmpPositions[j] = TmpPositions[j];
-	    }
+	  PreviousTmpU = TmpUV[(NextCoordinate << 1)];
+	  PreviousTmpV = TmpUV[(NextCoordinate << 1) + 1];
+	  PreviousTmpPositionTheta = TmpPositions[(NextCoordinate << 1)];
+	  PreviousTmpPositionPhi = TmpPositions[(NextCoordinate << 1) + 1];
 	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
-	  //	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
 	  for (int k = 0; k < NbrParticles; ++k)
-	    CurrentProbabilities *= sin(TmpPositions[k << 1]);
+	    CurrentProbabilities *= SinTable[k];
 	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	    {
 	      PreviousProbabilities = CurrentProbabilities;
@@ -263,27 +272,25 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      for (int j = 0; j < (NbrParticles * 2); ++j)
-		{
-		  TmpUV[j] = PreviousTmpUV[j];
-		  TmpPositions[j] = PreviousTmpPositions[j];
-		}
+	      TmpUV[(NextCoordinate << 1)] = PreviousTmpU;
+	      TmpUV[(NextCoordinate << 1) + 1] = PreviousTmpV;
+	      TmpPositions[(NextCoordinate << 1)] = PreviousTmpPositionTheta;
+	      TmpPositions[(NextCoordinate << 1) + 1] = PreviousTmpPositionPhi;
+	      SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 	} 
       cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
+      for (int k = 0; k < NbrParticles; ++k)
+	FunctionBasis.GetAllFunctionValues(TmpUV[k << 1], TmpUV[(k << 1) + 1], FunctionBasisEvaluation[k]);
       for (int k = 0; k < NbrOrbitals; ++k)
 	{
-	  double TmpTruc1 = 0.0;
-	  Complex TmpTruc2 = 0.0;
+	  double Tmp1 = 0.0;
 	  for (int j = 0; j < NbrParticles; ++j)
-	    {
-	      FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
-	      TmpTruc1 +=  SqrNorm(TmpTruc2);
-	    }
-	  TmpFunctionBasisDecomposition[k] = TmpTruc1;
+	    Tmp1 +=  SqrNorm(FunctionBasisEvaluation[j][k]);
+	  TmpFunctionBasisDecomposition[k] = Tmp1;
 	}
 
       cout << "starting MC sequence" << endl;
@@ -291,40 +298,36 @@ int main(int argc, char** argv)
 
       for (int i = 0; i < NbrIter; ++i)
 	{
-	  for (int j = 0; j < (NbrParticles * 2); ++j)
-	    {
-	      PreviousTmpUV[j] = TmpUV[j];
-	      PreviousTmpPositions[j] = TmpPositions[j];
-	    }
+	  PreviousTmpU = TmpUV[(NextCoordinate << 1)];
+	  PreviousTmpV = TmpUV[(NextCoordinate << 1) + 1];
+	  PreviousTmpPositionTheta = TmpPositions[(NextCoordinate << 1)];
+	  PreviousTmpPositionPhi = TmpPositions[(NextCoordinate << 1) + 1];
 	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
-	  //	  RandomUV(TmpUV, TmpPositions, NbrParticles, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
 	  for (int k = 0; k < NbrParticles; ++k)
-	    CurrentProbabilities *= sin(TmpPositions[k << 1]);
+	    CurrentProbabilities *= SinTable[k];
 	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	    {
 	      PreviousProbabilities = CurrentProbabilities;
-	      ++Acceptance;
+	      ++Acceptance;	      
+	      FunctionBasis.GetAllFunctionValues(TmpUV[NextCoordinate << 1], TmpUV[(NextCoordinate << 1) + 1], FunctionBasisEvaluation[NextCoordinate]);
 	      for (int k = 0; k < NbrOrbitals; ++k)
 		{
-		  double TmpTruc1 = 0.0;
-		  Complex TmpTruc2 = 0.0;
+		  double Tmp1 = 0.0;
 		  for (int j = 0; j < NbrParticles; ++j)
-		    {
-		      FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
-		      TmpTruc1 +=  SqrNorm(TmpTruc2);
-		    }
-		  TmpFunctionBasisDecomposition[k] = TmpTruc1;
+		    Tmp1 +=  SqrNorm(FunctionBasisEvaluation[j][k]);
+		  TmpFunctionBasisDecomposition[k] = Tmp1;
 		}
 	    }
 	  else
 	    {
-	      for (int j = 0; j < (NbrParticles * 2); ++j)
-		{
-		  TmpUV[j] = PreviousTmpUV[j];
-		  TmpPositions[j] = PreviousTmpPositions[j];
-		}
+	      TmpUV[(NextCoordinate << 1)] = PreviousTmpU;
+	      TmpUV[(NextCoordinate << 1) + 1] = PreviousTmpV;
+	      TmpPositions[(NextCoordinate << 1)] = PreviousTmpPositionTheta;
+	      TmpPositions[(NextCoordinate << 1) + 1] = PreviousTmpPositionPhi;
+	      SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
 	  if (SymmetryFlag == false)
@@ -344,22 +347,6 @@ int main(int argc, char** argv)
 	  TotalProbabilityError++;
 
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
-
-// 	  TotalProbability += CurrentProbabilities;
-// 	  TotalProbabilityError += CurrentProbabilities * CurrentProbabilities;
-// 	  for (int k = 0; k < NbrOrbitals; ++k)
-// 	    {
-// 	      double TmpTruc1 = 0.0;
-// 	      Complex TmpTruc2 = 0.0;
-// 	      for (int j = 0; j < NbrParticles; ++j)
-// 		{
-// 		  FunctionBasis.GetFunctionValue(TmpUV[j << 1], TmpUV[(j << 1) + 1], TmpTruc2, k);
-// 		  TmpTruc1 +=  SqrNorm(TmpTruc2);
-// 		}
-// 	      FunctionBasisDecomposition[k] += TmpTruc1 * CurrentProbabilities;
-// 	      FunctionBasisDecompositionError[k] += (TmpTruc1 * CurrentProbabilities * TmpTruc1 * CurrentProbabilities);
-// 	    }
-
 
 	}
       cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
@@ -407,7 +394,6 @@ int main(int argc, char** argv)
 	  for (int k = 0; k < NbrOrbitals; ++k)
 	    {
 	      FunctionBasis.GetFunctionValue(TmpPos, Tmp2, k);
-	      //	      Tmp += SqrNorm(Tmp2);
 	      Tmp += FunctionBasisDecomposition[k] * SqrNorm(Tmp2);
 	    }
 	  Tmp *= TmpFactor;
@@ -464,8 +450,6 @@ void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, Abstr
 void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   coordinate *= 2;
-  //  double x = acos (1.0 - (2.0 * randomNumberGenerator->GetRealRandomNumber()));
-  //  double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
   double Dist = 0.2 * M_PI;
   double x = positions[coordinate];
   double y = positions[coordinate + 1];
@@ -478,15 +462,15 @@ void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordin
   else
     if (x > M_PI) 
       {
-	x = (2.0 * M_PI) - x;
+	x = M_2PI - x;
 	y += M_PI;
       }
   y += 2.0 * Dist *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
   if (y < 0.0)
-    y += 2.0 * M_PI;
+    y += M_2PI;
   else
-    if (y > (2.0 * M_PI))
-    y -= 2.0 * M_PI;
+    if (y > M_2PI)
+    y -= M_2PI;
 
   positions[coordinate] = x;
   uv.Re(coordinate) = cos(0.5 * x);

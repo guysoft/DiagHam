@@ -44,19 +44,25 @@ class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunc
   // number of particles
   int NbrParticles;
 
-  // position of the first quasielectron (spinor coordinates)
+  // position of the first quasielectron (spinor coordinates) and its conjugate
   Complex UElectron1;
   Complex VElectron1;
+  Complex ConjUElectron1;
+  Complex ConjVElectron1;
 
-  // position of the second quasielectron (spinor coordinates)
+  // position of the second quasielectron (spinor coordinates) and its conjugate
   Complex UElectron2;
   Complex VElectron2;
+  Complex ConjUElectron2;
+  Complex ConjVElectron2;
   
   // Flag for bosons/fermions
   bool FermionFlag;
 
   // temporary array where the Pfaffian has to be stored
   Complex** TmpPfaffian;
+  // temporary array where the sqyuare elements of the Pfaffian have to be stored
+  Complex** TmpSqrPfaffian;
   // temporary array where indices are stored
   int* TmpIndexArray;
   // temporary array used to store weights
