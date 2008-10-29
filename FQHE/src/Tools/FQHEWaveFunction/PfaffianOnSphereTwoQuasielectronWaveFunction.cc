@@ -76,7 +76,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpWeights = new Complex [2 * this->NbrParticles];
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
   this->FermionFlag = fermions;
 
   this->EvaluatePermutations();
@@ -131,7 +132,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpWeights = new Complex [2 * this->NbrParticles];
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
   this->FermionFlag = fermions;
 
   this->UElectron1.Re = cos(0.5*phi1);
@@ -187,7 +189,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpWeights = new Complex [2 * this->NbrParticles];
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
 }
 
 // destructor
@@ -207,7 +210,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::~PfaffianOnSphereTwoQuasielectronW
       delete[] this->Permutations;
     }
   delete[] this->TmpIndexArray;
-  delete[] this->TmpWeights;
+  delete[] this->TmpWeights1;
+  delete[] this->TmpWeights2;
 }
 
 // clone function 
@@ -248,8 +252,8 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
     {
       TmpU1 = uv[i << 1];
       TmpV1 = uv[1 + (i << 1)];
-      this->TmpWeights[i << 1] = ((this->ConjUElectron1 * TmpU1) + (this->ConjVElectron1 * TmpV1));
-      this->TmpWeights[(i << 1) + 1] =  ((this->ConjUElectron2 * TmpU1) + (this->ConjVElectron2 * TmpV1));
+      this->TmpWeights1[i] = ((this->ConjUElectron1 * TmpU1) + (this->ConjVElectron1 * TmpV1));
+      this->TmpWeights2[i] =  ((this->ConjUElectron2 * TmpU1) + (this->ConjVElectron2 * TmpV1));
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
 	  TmpU2 = uv[j << 1];
@@ -267,19 +271,22 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
     WaveFunction = 1.0;
 
   int NbrParticlesPerColor = this->NbrParticles >> 1;
+  int Shift = ((NbrParticlesPerColor - 1) << 2);
+  unsigned long Mask = (0x1ul << (NbrParticlesPerColor << 2)) - 0x1ul;
   Complex WaveFunctionSum = 0.0;
   for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
     {
       unsigned long TmpPerm = this->Permutations[i];
       unsigned long TmpPerm2 = TmpPerm >> (NbrParticlesPerColor << 2);
-      TmpPerm &= (0x1ul << (NbrParticlesPerColor << 2)) - 0x1ul;
+      TmpPerm &= Mask;
       Complex WaveFunctionPart1 = 0.0;
       for (int j = 0; j < NbrParticlesPerColor; ++ j)	
 	{
 	  Complex WaveFunctionPart12 = 0.0;	  
+	  Complex WaveFunctionPart12b = 1.0;	  
 	  for (int k = 0; k < NbrParticlesPerColor; ++k)
 	    TmpIndexArray[k] = (TmpPerm >> (k << 2)) & 0xful;
-	  TmpPerm = (TmpPerm  >> 4) | ((TmpPerm & 0xful) << ((NbrParticlesPerColor - 1) << 2));
+	  TmpPerm = (TmpPerm  >> 4) | ((TmpPerm & 0xful) << Shift);
 
 	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
 	  for (int k = 1; k < NbrParticlesPerColor; ++k)
@@ -287,44 +294,41 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
 	      Tmp = 1.0; 
 	      for (int l = 1; l < k; ++l)
 		Tmp *= TmpArray[TmpIndexArray[l]];
-	      Tmp *= this->TmpWeights[TmpIndexArray[k] << 1];
-	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
+	      Tmp *= this->TmpWeights1[TmpIndexArray[k]];
+ 	      Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
+ 	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+ 		{
+ 		  Tmp *= TmpArray[TmpIndexArray[l]];
+ 		  WaveFunctionPart12b *= TmpArraySqr[TmpIndexArray[l]];
+ 		}
 	      WaveFunctionPart12 += Tmp;
 	    }
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-	      {
-		Tmp = this->TmpPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-		WaveFunctionPart12 *= this->TmpSqrPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-	      }
-	  WaveFunctionPart1 += WaveFunctionPart12;
+	  WaveFunctionPart1 += WaveFunctionPart12 * WaveFunctionPart12b;
 	}
       Complex WaveFunctionPart2 = 0.0;
       for (int j = 0; j < NbrParticlesPerColor; ++ j)
 	{
 	  Complex WaveFunctionPart22 = 0.0;	  
+	  Complex WaveFunctionPart22b = 1.0;	  
 	  for (int k = 0; k < NbrParticlesPerColor; ++k)
 	    TmpIndexArray[k] = (TmpPerm2 >> (k << 2)) & 0xful;
-	  TmpPerm2 = (TmpPerm2  >> 4) | ((TmpPerm2 & 0xful) << ((NbrParticlesPerColor - 1) << 2));
+	  TmpPerm2 = (TmpPerm2  >> 4) | ((TmpPerm2 & 0xful) << Shift);
 	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
 	  for (int k = 1; k < NbrParticlesPerColor; ++k)
 	    {
 	      Tmp = 1.0; 
 	      for (int l = 1; l < k; ++l)
 		Tmp *= TmpArray[TmpIndexArray[l]];	      
-	      Tmp *= this->TmpWeights[(TmpIndexArray[k] << 1) + 1];
+	      Tmp *= this->TmpWeights2[TmpIndexArray[k]];
+	      Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
 	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
+		{
+		  Tmp *= TmpArray[TmpIndexArray[l]];	      
+		  WaveFunctionPart22b *=  TmpArraySqr[TmpIndexArray[l]];
+		}
 	      WaveFunctionPart22 += Tmp;
 	    }
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-	      {
-		Tmp = this->TmpPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-		WaveFunctionPart22 *= this->TmpSqrPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-	      }
-	  WaveFunctionPart2 += WaveFunctionPart22;
+	  WaveFunctionPart2 += WaveFunctionPart22 * WaveFunctionPart22b;
 	}      
 
       WaveFunctionSum += WaveFunctionPart1 * WaveFunctionPart2;

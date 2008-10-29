@@ -66,7 +66,8 @@ class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunc
   // temporary array where indices are stored
   int* TmpIndexArray;
   // temporary array used to store weights
-  Complex* TmpWeights;
+  Complex* TmpWeights1;
+  Complex* TmpWeights2;
 
   // array containing description of each permutation that appears in the calculation symmetrization process
   unsigned long* Permutations;
