@@ -78,6 +78,9 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->TmpIndexArray = new int [this->NbrParticles];
   this->TmpWeights1 = new Complex [this->NbrParticles];
   this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
+  this->TmpPreviousPfaffian = new Complex [this->NbrParticles];
+  this->TmpPreviousSqrPfaffian = new Complex [this->NbrParticles];
   this->FermionFlag = fermions;
 
   this->EvaluatePermutations();
@@ -105,6 +108,7 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->ConjVElectron2 = Conj(this->VElectron2);
 
   this->FermionFlag = fermions;
+
 }
 
 // constructor using permutation description stored in a file
@@ -134,6 +138,9 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->TmpIndexArray = new int [this->NbrParticles];
   this->TmpWeights1 = new Complex [this->NbrParticles];
   this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
+  this->TmpPreviousPfaffian = new Complex [this->NbrParticles];
+  this->TmpPreviousSqrPfaffian = new Complex [this->NbrParticles];
   this->FermionFlag = fermions;
 
   this->UElectron1.Re = cos(0.5*phi1);
@@ -191,6 +198,9 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->TmpIndexArray = new int [this->NbrParticles];
   this->TmpWeights1 = new Complex [this->NbrParticles];
   this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
+  this->TmpPreviousPfaffian = new Complex [this->NbrParticles];
+  this->TmpPreviousSqrPfaffian = new Complex [this->NbrParticles];
 }
 
 // destructor
@@ -212,6 +222,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::~PfaffianOnSphereTwoQuasielectronW
   delete[] this->TmpIndexArray;
   delete[] this->TmpWeights1;
   delete[] this->TmpWeights2;
+  delete[] this->TmpPreviousPfaffian;
+  delete[] this->TmpPreviousSqrPfaffian;
 }
 
 // clone function 
@@ -240,6 +252,7 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::operator ()(RealVector& x)
 //      where function has to be evaluated
 //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
 // return value = function value at (uv)
+
 Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {
   Complex Tmp;
@@ -298,7 +311,7 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
  	      Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
  	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
  		{
- 		  Tmp *= TmpArray[TmpIndexArray[l]];
+		  Tmp *= TmpArray[TmpIndexArray[l]];
  		  WaveFunctionPart12b *= TmpArraySqr[TmpIndexArray[l]];
  		}
 	      WaveFunctionPart12 += Tmp;

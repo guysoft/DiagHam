@@ -76,6 +76,17 @@ class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunc
   // garable flag associated to the Permutations array
   GarbageFlag Flag;
 
+  // index of coordinate that will be changed in the next evaluation of the wavefunction
+  int NextCoordinate;
+
+  // temporary arrays and variable use to back-up coefficients involving a previous coordinate
+  Complex* TmpPreviousPfaffian;
+  Complex* TmpPreviousSqrPfaffian;
+  Complex TmpPreviousWeights1;
+  Complex TmpPreviousWeights2;
+ 
+
+
  public:
 
   // constructor

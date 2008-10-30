@@ -50,6 +50,7 @@
 using std::ios;
 using std::cout;
 using std::endl;
+using std::flush;
 using std::ofstream;
 
 
@@ -150,10 +151,9 @@ int main(int argc, char** argv)
     }
 
 
-  int LzMax = 2 * NbrParticles - 2;
-  if (QuasielectronFlag == true)
-    LzMax -= 2;
-
+//   int LzMax = 2 * NbrParticles - 2;
+//   if (QuasielectronFlag == true)
+//     LzMax -= 2;
 //   AbstractQHEParticle* ExactSpace = new FermionOnSphere (NbrParticles, 0, LzMax);
 //   RealVector ExactState;
 //   ExactState.ReadVector ("fermions_hardcore_nbody_3_n_6_2s_9_lz_0.0.vec");
@@ -162,10 +162,10 @@ int main(int argc, char** argv)
   if (QuasielectronFlag == true)
     {
       if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
-	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, true);
+	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
       else
 	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
-									       0.0, 0.0, M_PI, 0.0, true);
+									       0.0, 0.0, M_PI, 0.0, StatisticFlag);
       if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
 	{
 	  ((PfaffianOnSphereTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      SymmetrizedFunction = new PfaffianOnSphereTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, true);
+      SymmetrizedFunction = new PfaffianOnSphereTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
       double TotalProbability = 0.0;
       double TotalProbabilityError = 0.0;
       double ThetaStep = M_PI / NbrSteps;
-
+      int CurrentPercent = 0;
       double Theta = 0.0;
       double* Density = new double [NbrSteps];
       for (int i = 0; i < NbrSteps; ++i)
@@ -280,9 +280,15 @@ int main(int argc, char** argv)
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
+	  if (((i * 20) / NbrWarmUpIter) != CurrentPercent)
+	    {
+	      CurrentPercent = (i * 20) / NbrWarmUpIter;
+	      cout << (CurrentPercent * 5) << "% " << flush;
+	    }
 	} 
-      cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
+      cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
+      CurrentPercent = 0;
       for (int k = 0; k < NbrParticles; ++k)
 	FunctionBasis.GetAllFunctionValues(TmpUV[k << 1], TmpUV[(k << 1) + 1], FunctionBasisEvaluation[k]);
       for (int k = 0; k < NbrOrbitals; ++k)
@@ -348,8 +354,13 @@ int main(int argc, char** argv)
 
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 
+	  if (((i * 20) / NbrIter) != CurrentPercent)
+	    {
+	      CurrentPercent = (i * 20) / NbrIter;
+	      cout << (CurrentPercent * 5) << "% " << flush;
+	    }
 	}
-      cout << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
+      cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
 
       TotalProbabilityError /= (double) NbrIter;
       TotalProbabilityError -= (TotalProbability * TotalProbability) / (((double) NbrIter) * ((double) NbrIter));
