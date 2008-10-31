@@ -48,4 +48,6 @@ SLBSWavefunction.cc \
 FQHESphereSymmetrizedSU2ToU1WaveFunction.cc \
 PfaffianOnDiskTwoQuasiholeWaveFunction.cc \
 PfaffianOnDiskTwoQuasielectronWaveFunction.cc \
-PfaffianOnSphereTwoQuasielectronWaveFunction.cc 
+PfaffianOnSphereTwoQuasielectronWaveFunction.cc \
+FQHESphereLaughlinOneQuasiholeWaveFunction.cc \
+FQHESphereLaughlinOneQuasielectronWaveFunction.cc

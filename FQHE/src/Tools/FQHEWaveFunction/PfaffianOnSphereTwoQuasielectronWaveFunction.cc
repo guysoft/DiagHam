@@ -33,6 +33,8 @@
 #include "Vector/RealVector.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
+#include "MathTools/BinomialCoefficients.h"
 
 
 #include <iostream>
@@ -187,7 +189,10 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->ConjUElectron2 = Conj(this->UElectron2);
   this->ConjVElectron2 = Conj(this->VElectron2);
 
-  this->FermionFlag=function.FermionFlag;
+  this->FermionFlag = function.FermionFlag;
+  this->NbrPermutations = function.NbrPermutations;
+  this->Permutations1= function.Permutations1;
+  this->Permutations2= function.Permutations2;
 
   this->TmpPfaffian = new Complex* [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
@@ -217,7 +222,8 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::~PfaffianOnSphereTwoQuasielectronW
   delete[] this->TmpSqrPfaffian;
   if ((this->Flag.Used() == true) && (this->Flag.Shared() == false))
     {
-      delete[] this->Permutations;
+      delete[] this->Permutations1;
+      delete[] this->Permutations2;
     }
   delete[] this->TmpIndexArray;
   delete[] this->TmpWeights1;
@@ -284,13 +290,13 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
     WaveFunction = 1.0;
 
   int NbrParticlesPerColor = this->NbrParticles >> 1;
-  int Shift = ((NbrParticlesPerColor - 1) << 2);
-  unsigned long Mask = (0x1ul << (NbrParticlesPerColor << 2)) - 0x1ul;
+  int Shift = ((NbrParticlesPerColor - 1) * 5);
+  unsigned long Mask = (0x1ul << (NbrParticlesPerColor * 5)) - 0x1ul;
   Complex WaveFunctionSum = 0.0;
   for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
     {
-      unsigned long TmpPerm = this->Permutations[i];
-      unsigned long TmpPerm2 = TmpPerm >> (NbrParticlesPerColor << 2);
+      unsigned long TmpPerm = this->Permutations1[i];
+      unsigned long TmpPerm2 = this->Permutations2[i];
       TmpPerm &= Mask;
       Complex WaveFunctionPart1 = 0.0;
       for (int j = 0; j < NbrParticlesPerColor; ++ j)	
@@ -298,8 +304,8 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
 	  Complex WaveFunctionPart12 = 0.0;	  
 	  Complex WaveFunctionPart12b = 1.0;	  
 	  for (int k = 0; k < NbrParticlesPerColor; ++k)
-	    TmpIndexArray[k] = (TmpPerm >> (k << 2)) & 0xful;
-	  TmpPerm = (TmpPerm  >> 4) | ((TmpPerm & 0xful) << Shift);
+	    TmpIndexArray[k] = (TmpPerm >> (k * 5)) & 0x1ful;
+	  TmpPerm = (TmpPerm  >> 5) | ((TmpPerm & 0x1ful) << Shift);
 
 	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
 	  for (int k = 1; k < NbrParticlesPerColor; ++k)
@@ -324,8 +330,8 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
 	  Complex WaveFunctionPart22 = 0.0;	  
 	  Complex WaveFunctionPart22b = 1.0;	  
 	  for (int k = 0; k < NbrParticlesPerColor; ++k)
-	    TmpIndexArray[k] = (TmpPerm2 >> (k << 2)) & 0xful;
-	  TmpPerm2 = (TmpPerm2  >> 4) | ((TmpPerm2 & 0xful) << Shift);
+	    TmpIndexArray[k] = (TmpPerm2 >> (k * 5)) & 0x1ful;
+	  TmpPerm2 = (TmpPerm2  >> 5) | ((TmpPerm2 & 0x1ful) << Shift);
 	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
 	  for (int k = 1; k < NbrParticlesPerColor; ++k)
 	    {
@@ -355,95 +361,53 @@ Complex PfaffianOnSphereTwoQuasielectronWaveFunction::CalculateFromSpinorVariabl
 
 void PfaffianOnSphereTwoQuasielectronWaveFunction::EvaluatePermutations()
 {
-  unsigned long Fact = 2;
-  for (unsigned long i = 3; i <= ((unsigned long) this->NbrParticles); ++i)
-    Fact *= i;
-
+  BinomialCoefficients Binomial(this->NbrParticles);
   int NbrParticlesPerColor = this->NbrParticles >> 1;
-  unsigned long TmpNbrPermutation = Fact;  
-  unsigned long FactNbrParticlesPerColor = 1;
-  for (unsigned long i = 2; i <= ((unsigned long) NbrParticlesPerColor); ++i)
-    FactNbrParticlesPerColor *= i;
-  TmpNbrPermutation /= FactNbrParticlesPerColor;
-  TmpNbrPermutation /= FactNbrParticlesPerColor;
-  //  TmpNbrPermutation /= 2;
-  
-  this->Permutations = new unsigned long[TmpNbrPermutation];
-  
-  unsigned long TmpPerm =  0x0ul;
-  unsigned long TmpPerm2 = 0x0ul;
-  unsigned long TmpPerm3 = 0x0ul;
+  this->NbrPermutations = Binomial(this->NbrParticles, NbrParticlesPerColor);
+  this->Permutations1 = new unsigned long[this->NbrPermutations];
+  this->Permutations2 = new unsigned long[this->NbrPermutations];
+  unsigned long MinValue = (0x1ul << NbrParticlesPerColor) - 0x1ul;
+  unsigned long MaxValue = MinValue << (this->NbrParticles - NbrParticlesPerColor);
   unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
-  for (int k = 0; k < this->NbrParticles; ++k) 
+  this->NbrPermutations = 0;
+  for (; MinValue <= MaxValue; ++MinValue)
     {
-      TmpPerm |= ((unsigned long) k) << (k << 2);
-      TmpArrayPerm[k] = (unsigned long) k;
-    }
-  
-  this->Permutations[0] = TmpPerm;
-  TmpNbrPermutation = 1ul;
-  Fact /= ((unsigned long) this->NbrParticles);
-  Fact *= ((unsigned long) (this->NbrParticles - NbrParticlesPerColor + 1));
-  for (unsigned long j = 1; j < Fact; ++j)
-    {
-      int Pos1 = this->NbrParticles - 1;
-      while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
-	--Pos1;
-      --Pos1;
-      int Pos2 = this->NbrParticles - 1;      
-      while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
-	--Pos2;
-      unsigned long TmpIndex = TmpArrayPerm[Pos1];
-      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
-      TmpArrayPerm[Pos2] = TmpIndex;
-      Pos2 = this->NbrParticles - 1;   
-      Pos1++;
-      while (Pos1 < Pos2)
+      int Count = 0;
+      int Pos = 0;
+      while ((Pos < this->NbrParticles) && (Count <= NbrParticlesPerColor))
 	{
-	  TmpIndex = TmpArrayPerm[Pos1];
-	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
-	  TmpArrayPerm[Pos2] = TmpIndex;
-	  ++Pos1;
-	  --Pos2;
+	  if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+	    ++Count;
+	  ++Pos;
 	}
-      bool Flag = true;
-      int TmpIndex2 = 0;
-      int k = 1;
-      while ((k < NbrParticlesPerColor) && (Flag == true))
+      if (Count == NbrParticlesPerColor)
 	{
-	  if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
-	    Flag = false;
-	  ++TmpIndex2;
-	  ++k;
-	}
-      ++TmpIndex2;
-      k = 1;
-      while ((k < NbrParticlesPerColor) && (Flag == true))
-	{
-	  if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
-	    Flag = false;
-	  ++TmpIndex2;
-	  ++k;
-	}
-      if (Flag == true)
-	{
-	  TmpPerm2 = 0ul;
-	  TmpPerm3 = 0ul;
+	  int Pos1 = 0;
+	  int Pos2 = NbrParticlesPerColor;
+	  for (Pos = 0; Pos < this->NbrParticles; ++Pos)
+	    if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+	      {
+		TmpArrayPerm[Pos1] = (unsigned long) Pos;
+		++Pos1;
+	      }
+	    else
+	      {
+		TmpArrayPerm[Pos2] = (unsigned long) Pos;
+		++Pos2;
+	      }
+	  unsigned long TmpPerm2 = 0ul;
+	  unsigned long TmpPerm3 = 0ul;
 	  for (int i = 0; i < NbrParticlesPerColor; ++i)
 	    {
-	      TmpPerm2 |= TmpArrayPerm[i] << (i << 2);
-	      TmpPerm3 |= TmpArrayPerm[i + NbrParticlesPerColor] << (i << 2);
+	      TmpPerm2 |= TmpArrayPerm[i] << (i * 5);
+	      TmpPerm3 |= TmpArrayPerm[i + NbrParticlesPerColor] << (i *5);
 	    }
-	  //	  if (TmpPerm2 < TmpPerm3)
-	    {
-	      this->Permutations[TmpNbrPermutation] = TmpPerm2 | (TmpPerm3 << (NbrParticlesPerColor << 2));	      
-	      ++TmpNbrPermutation;
-	    }
+	  this->Permutations1[this->NbrPermutations] = TmpPerm2;
+	  this->Permutations2[this->NbrPermutations] = TmpPerm3;	      
+	  ++this->NbrPermutations;
 	}
     }
-  
-  this->NbrPermutations = TmpNbrPermutation;
-
+  delete[] TmpArrayPerm;
   return;
 }
 
@@ -464,9 +428,12 @@ bool PfaffianOnSphereTwoQuasielectronWaveFunction::ReadPermutations(char* filena
     }
   ReadLittleEndian(File, this->NbrParticles);
   ReadLittleEndian(File, this->NbrPermutations);
-  this->Permutations = new unsigned long[this->NbrPermutations];
+  this->Permutations1 = new unsigned long[this->NbrPermutations];
+  this->Permutations2 = new unsigned long[this->NbrPermutations];
   for (unsigned long i = 0; i < this->NbrPermutations; ++i)
-    ReadLittleEndian(File, this->Permutations[i]);
+    ReadLittleEndian(File, this->Permutations1[i]);
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    ReadLittleEndian(File, this->Permutations2[i]);
   File.close();
   return true;
 }
@@ -488,7 +455,9 @@ bool PfaffianOnSphereTwoQuasielectronWaveFunction::WritePermutations(char* filen
   WriteLittleEndian(File, this->NbrParticles);
   WriteLittleEndian(File, this->NbrPermutations);
   for (unsigned long i = 0; i < this->NbrPermutations; ++i)
-    WriteLittleEndian(File, this->Permutations[i]);
+    WriteLittleEndian(File, this->Permutations1[i]);
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    WriteLittleEndian(File, this->Permutations2[i]);
   File.close();
   return true;
 }

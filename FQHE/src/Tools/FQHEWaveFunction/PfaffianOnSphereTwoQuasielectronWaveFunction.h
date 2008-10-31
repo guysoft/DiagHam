@@ -70,7 +70,8 @@ class PfaffianOnSphereTwoQuasielectronWaveFunction: public Abstract1DComplexFunc
   Complex* TmpWeights2;
 
   // array containing description of each permutation that appears in the calculation symmetrization process
-  unsigned long* Permutations;
+  unsigned long* Permutations1;
+  unsigned long* Permutations2;
   // number of permutations that appears in the symmetrization process
   unsigned long NbrPermutations;
   // garable flag associated to the Permutations array

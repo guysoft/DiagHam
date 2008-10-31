@@ -32,6 +32,8 @@
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereTwoQuasiholeWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnSphereTwoQuasielectronWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESphereLaughlinOneQuasiholeWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHESphereLaughlinOneQuasielectronWaveFunction.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -83,6 +85,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
+  (*SystemGroup) += new BooleanOption ('\n', "laughlin", "do the calculation for the Laughlin state instead of the Moore-Read state");  
   (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new BooleanOption ('\n', "force-symmetry", "assume the wave function is invariant under the Lz <->-Lz symmetry");  
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
@@ -132,6 +135,7 @@ int main(int argc, char** argv)
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
+  bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
   double StepSize = 0.25;
   if (((BooleanOption*) Manager["force-symmetry"])->GetBoolean() == true)
     {
@@ -161,21 +165,28 @@ int main(int argc, char** argv)
   Abstract1DComplexFunctionOnSphere* SymmetrizedFunction = 0;
   if (QuasielectronFlag == true)
     {
-      if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
-	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+      if (LaughlinFlag == true)
+	SymmetrizedFunction = new FQHESphereLaughlinOneQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
       else
-	SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
-									       0.0, 0.0, M_PI, 0.0, StatisticFlag);
-      if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
 	{
-	  ((PfaffianOnSphereTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
-	  return 0;
+	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+	    SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+	  else
+	    SymmetrizedFunction = new PfaffianOnSphereTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
+										   0.0, 0.0, M_PI, 0.0, StatisticFlag);
+	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+	    {
+	      ((PfaffianOnSphereTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+	      return 0;
+	    }
 	}
-
     }
   else
     {
-      SymmetrizedFunction = new PfaffianOnSphereTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+      if (LaughlinFlag == true)
+	SymmetrizedFunction = new FQHESphereLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
+      else
+	SymmetrizedFunction = new PfaffianOnSphereTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
     }
   Abstract1DComplexFunctionOnSphere* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;
