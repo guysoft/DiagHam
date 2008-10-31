@@ -64,6 +64,8 @@ SLBSWavefunction::SLBSWavefunction(int nbrParticles, bool negFluxFlag)
       exit(1);
     }
   this->NbrParticles = nbrParticles;
+  // discard "bad" state with positive flux:
+  negFluxFlag = true;
   this->NegativeFieldFlag = negFluxFlag;
   this->EffectiveFlux = ((NbrParticles -2)/2 - 1)*(1-2*NegativeFieldFlag);
   cout << "EffectiveFlux="<<EffectiveFlux<<endl;

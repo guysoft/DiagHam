@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnLatticeKy.h"
+#include "HilbertSpace/BosonOnLattice.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/NumberParticleQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -1092,3 +1093,74 @@ int BosonOnLatticeKy::CarefulFindStateIndex(unsigned long stateDescription, int 
     }      
   return this->FindStateIndex(stateDescription, highestBit);
 }
+
+
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// returns: vector in many-body basis of targetSpace
+ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis)
+{
+  this->TargetVector.ResizeAndClean(nbodyBasis.GetHilbertSpaceDimension());
+  this->FullSpace = &nbodyBasis;
+  int *QuantumNumbers = new int[this->NbrBosons];  
+  for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
+    {
+      this->FermionToBoson(this->StateDescription[i], this->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
+      int NbrQ=0;
+      for (int q=0; q<TemporaryStateHighestBit; ++q)
+	while (this->TemporaryState[q]>0) QuantumNumbers[NbrQ++]=q;
+      if (Norm(state[i])>1e-15)
+	this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]); 
+    }
+  cout << "Norm was:" << TargetVector.Norm();
+  TargetVector/=TargetVector.Norm();
+  return TargetVector;
+}
+
+
+// recursive expansion of an operator-product of creation operators in k
+// in the full n-body basis
+// nbrOperators = number of operators N remaining to be applied
+// quantumNumbers = array of quantum numbers q1,...qN of creation operators
+// state = state to be acted upon
+// prefactor = previous coefficients applied to state
+// 
+// in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
+void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex prefactor)
+{
+  int Index;
+  unsigned long ResultingState;
+  int K, N, S, Subl, TargetQ;
+  double NewFactor = sqrt(1.0/(double)Kmax); 
+  Complex TranslationPhase;
+  this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, K, Subl);
+  this->DecodeCompositeMomentum(quantumNumbers[nbrOperators-1], K, S);
+  double ExpFactor = 2.0*M_PI*(double)K/(double)Kmax;
+  if (nbrOperators>1)
+    {
+      for (int r=0; r<this->Kmax; ++r)
+	{
+	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
+	  ResultingState = this->FullSpace->Ad(state,TargetQ);
+	  if (ResultingState!=0x0l)
+	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*NewFactor*Polar(1.0,ExpFactor*r));
+	}
+    }
+  else
+    {
+      for (int r=0; r<this->Kmax; ++r)
+	{
+	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
+	  ResultingState = this->FullSpace->Ad(state,TargetQ);
+	  if (ResultingState!=0x0l)
+	    {	      
+	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
+		{
+		  this->TargetVector[Index]+= prefactor*NewFactor*Polar(1.0,ExpFactor*r);
+		}
+	    }
+	}
+    }
+}
+

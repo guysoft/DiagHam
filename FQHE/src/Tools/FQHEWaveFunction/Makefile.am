@@ -45,6 +45,9 @@ FQHESU3HalperinPermanentOnSphereWaveFunction.cc \
 FQHESU4HalperinPermanentOnSphereWaveFunction.cc \
 FQHESU3GeneralizedGaffnianOnSphereWaveFunction.cc \
 SLBSWavefunction.cc \
+SLBSWavefunction2.cc \
+SLBSVariationalState.cc \
+SLBSWavefunction.cc \
 FQHESphereSymmetrizedSU2ToU1WaveFunction.cc \
 PfaffianOnDiskTwoQuasiholeWaveFunction.cc \
 PfaffianOnDiskTwoQuasielectronWaveFunction.cc \

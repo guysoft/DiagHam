@@ -95,7 +95,12 @@ PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction(int nbrParticles, int
 	  this->TrialParameters[n]*=Coef.GetNumericalValue()*Coef.GetNumericalValue();
 	  //cout << "Correction["<<n<<"]="<<Coef.GetNumericalValue()<<"from: " << nbrEffectiveFlux+p*(nbrParticles-1)+2<<","<<nbrEffectiveFlux+2*p*(nbrParticles-1)+1<<","<< p*(nbrParticles-1)+n+2<<","<<2*p*(nbrParticles-1)+n+1<<endl;
 	}
-    }  
+    }
+
+  cout << "trial parameters in Paired:";
+  for (int i=0; i<NbrParameters; ++i) cout <<" "<<TrialParameters[i];
+  cout << endl;
+
 }
 
 // copy constructor
@@ -258,7 +263,7 @@ void PairedCFOnSphereWaveFunction::GetForManyParameters(ComplexVector &results, 
       tmp=Slater->Pfaffian()*this->Interpolation;
       results.Re(s)=Real(tmp);
       results.Im(s)=Imag(tmp);
-    }
+    }  
 }
 
 

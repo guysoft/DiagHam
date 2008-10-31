@@ -173,7 +173,9 @@ int main(int argc, char** argv)
 	{
 	  if (HardCore)
 	    {
-	      Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
+	      cout << "Hard-Core bosons not defined with translations!"<<endl;
+	      exit(1);
+	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, Manager.GetInteger("ky"), NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -266,7 +268,9 @@ int main(int argc, char** argv)
 
 	  if (HardCore)
 	    {
-	      Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
+	      cout << "Hard-Core bosons not defined with translations!"<<endl;
+	      exit(1);
+	      //Space =new HardCoreBosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	    }
 	  else Space = new BosonOnLatticeKy(NbrBosons, Lx, Ly, k, NbrFluxQuanta, MemorySpace);
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

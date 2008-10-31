@@ -59,5 +59,19 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 // return value = true if no error occured
 bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& lx, int& ly, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore);
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// lx, ly = indication of lattice geometry
+// interaction = strength of interaction parameter
+// kyMomentum = momentum in y-direction when using symmetries
+// flux = number of flux quanta
+// nbrState = number of eigenstate
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// hardcore = returns true if hardcore bosons encountered
+// return value = true if no error occured
+bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nbrParticles, int& lx, int& ly, int &kyMomentum, double &interaction, int &flux, int &nbrState, bool& statistics, bool &hardcore);
+
 
 #endif

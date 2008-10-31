@@ -35,6 +35,8 @@
 #include "Tools/FQHEWaveFunction/JainCFOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
 #include "Tools/FQHEWaveFunction/SLBSWavefunction.h"
+#include "Tools/FQHEWaveFunction/SLBSWavefunction2.h"
+#include "Tools/FQHEWaveFunction/SLBSVariationalState.h"
 #include "Tools/FQHEWaveFunction/JainCFFilledLevelOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnSphereWaveFunction.h"
 #include "Tools/FQHEWaveFunction/MooreReadOnSphereWaveFunction.h"
@@ -218,12 +220,38 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	    }
 	  return new AdvancedReadRezayiOnSphereWaveFunction(N/k, k, this->Options->GetBoolean("fermion-state"));
 	}
+      if ((strcmp (this->Options->GetString("test-wavefunction"), "SLBSV") == 0))
+	{
+	  int N= this->Options->GetInteger("nbr-particles");
+	  int LL;
+	  double *Coefficients = this->Options->GetDoubles("pair-coeff",LL);
+	  if (Coefficients==NULL)
+	    {
+	      Coefficients = new double[1];
+	      Coefficients[0]=0.0;
+	      LL=1;
+	    }
+	  double MR =this->Options->GetDouble("MR-coeff");
+	  SLBSVariationalState* rst = new SLBSVariationalState(N, LL, MR, Coefficients);
+	  rst->AdaptAverageMCNorm();
+	  delete [] Coefficients;
+	  return rst;
+	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS2") == 0)
+	{
+	  int N=this->Options->GetInteger("nbr-particles");
+	  SLBSWavefunction2 *rst = new SLBSWavefunction2(N);
+	  rst->AdaptAverageMCNorm();
+	  return rst;
+	}      
       if (strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");
 	  bool Flag=this->Options->GetBoolean("negflux");
-	  return new SLBSWavefunction(N, Flag);
-	}
+	  SLBSWavefunction *rst = new SLBSWavefunction(N, Flag);
+	  rst->AdaptAverageMCNorm();
+	  return rst;
+	}      
       if (strcmp (this->Options->GetString("test-wavefunction"), "ExplicitMR") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");
@@ -549,5 +577,9 @@ int QHEWaveFunctionManager::GetWaveFunctionType()
     return QHEWaveFunctionManager::HundRuleSinglet;
   if ((strcmp (this->Options->GetString("test-wavefunction"), "halperin") == 0))
     return QHEWaveFunctionManager::Halperin;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "SLBSV") == 0))
+    return QHEWaveFunctionManager::SLBSV;
+  if ((strcmp (this->Options->GetString("test-wavefunction"), "SLBS") == 0))
+    return QHEWaveFunctionManager::SLBS;
   return QHEWaveFunctionManager::InvalidWaveFunction;
 }

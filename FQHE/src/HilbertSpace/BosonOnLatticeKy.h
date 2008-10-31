@@ -39,6 +39,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnLattice.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
 
@@ -47,6 +48,8 @@ using std::cout;
 using std::endl;
 using std::dec;
 using std::hex;
+
+class BosonOnLattice;
 
 
 class BosonOnLatticeKy : public ParticleOnLattice
@@ -114,6 +117,10 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // temporary state used when applying ProdA operator
   unsigned long* ProdATemporaryState;
   int ProdATemporaryStateHighestBit;
+
+  // temperory items used in conversion to full n-body basis:
+  ComplexVector TargetVector;
+  BosonOnLattice *FullSpace;
 
  public:
 
@@ -303,6 +310,12 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = corresponding index, or dimension of space, if not found
   virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
+  // conversion to generic (full) many-body representation in real-space basis
+  // inputState: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation
+  // returns: vector in many-body basis of targetSpace
+  ComplexVector& ConvertToNbodyBasis(ComplexVector& inputState, BosonOnLattice &nbodyBasis);
+  
  protected:
 
   // find state index
@@ -337,6 +350,16 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // memory = memory size that can be allocated for the look-up table  
   void GenerateLookUpTable(unsigned long memory);
 
+
+  // recursive expansion of an operator-product of creation operators in k
+  // in the full n-body basis
+  // nbrOperators = number of operators N remaining to be applied
+  // quantumNumbers = array of quantum numbers q1,...qN of creation operators
+  // state = state to be acted upon
+  // prefactor = previous coefficients applied to state
+  // 
+  // in last stage of recursion, writes to this->TargetVector using the Hilbert-Space this->FullSpace
+  void ExpandBasisState (int nbrOperators, int *quantumNumbers, unsigned long state, Complex prefactor);
 
 
   // convert a bosonic state into its fermionic counterpart
