@@ -104,8 +104,8 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleStringOption ('\n', "history-file", "name of the file where overlap recording has to be done", NULL);
   (*MonteCarloGroup) += new BooleanOption ('\n', "varyMR", "vary coefficient of 1/z in pair wavefunction");  
   (*MonteCarloGroup) += new SingleIntegerOption ('d', "sample-density", "spacing of samples to be saved in History-mode", 1);
-  (*MonteCarloGroup) += new SingleIntegerOption ('\n', "linearPoints", "number of function evaluations along the gradient in optimising History mode ", 20);
-  (*MonteCarloGroup) += new SingleIntegerOption ('\n', "randomPoints", "number of random function evaluations in optimising History mode ", 30);
+  (*MonteCarloGroup) += new SingleIntegerOption ('\n', "linearPoints", "number of function evaluations along the gradient in optimising History mode ", 25);
+  (*MonteCarloGroup) += new SingleIntegerOption ('\n', "randomPoints", "number of random function evaluations in optimising History mode ", 0);
   (*MonteCarloGroup) += new SingleIntegerOption ('\n', "limitSamples", "maximal number of samples to be used from history-file", 10000000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iterations between two consecutive result recording the overlap value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where overlap recording has to be done", "montecarlo.dat");

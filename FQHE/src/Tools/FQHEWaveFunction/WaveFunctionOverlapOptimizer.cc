@@ -235,7 +235,7 @@ void WaveFunctionOverlapOptimizer::EvaluateTrialOverlaps()
 
 
 void WaveFunctionOverlapOptimizer::DetermineGradientAndDifferentials(double *parameters)
-{  
+{
   this->ManyValues.Resize(1+2*DIFFERENTIAL_SPREAD*this->EffectiveNbrParameters);
   // set parameters for which the overlap shall be calculated:
   for (int s=0; s<1+2*DIFFERENTIAL_SPREAD*EffectiveNbrParameters; ++s)
@@ -337,10 +337,9 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
     {
       for (int i=0; i<NbrParameters; ++i)
 	{
-	  this->NewParameters[p*StatesPerPoint][i]=startParameters[i];
+	  this->NewParameters[p*StatesPerPoint][i]=startParameters[i] + this->GetRandomOffset(i);
 	  for (int j=0; j<EffectiveNbrParameters; ++j)
 	    {
-	      this->NewParameters[p*StatesPerPoint][i] += this->GetRandomOffset(j);
 	      this->NewParameters[p*StatesPerPoint+2*j+1][i]=this->NewParameters[p*StatesPerPoint][i];
 	      this->NewParameters[p*StatesPerPoint+2*j+2][i]=this->NewParameters[p*StatesPerPoint][i];
 	    }
@@ -350,7 +349,6 @@ void WaveFunctionOverlapOptimizer::CalculateLinearSeries(RealVector &startParame
 	  this->NewParameters[p*StatesPerPoint+2*j+1][j]+=Differentials[j];
 	  this->NewParameters[p*StatesPerPoint+2*j+2][j]-=Differentials[j];
 	}
-      TmpParameters+=TmpStep;
     }
   // define internal function with the instructions to calculate averages for the given parameters in ManyValues, NewParameters!  
   this->EvaluateTrialOverlaps();
@@ -432,7 +430,7 @@ double WaveFunctionOverlapOptimizer::GetMaximumSqrOverlap(RealVector &optimalPar
       // choose actual next step:
       if (randomOverlap > overlaps[point])
 	point = point2; // use random point
-      else
+      else if(CloudyPoints>0)
 	{  // random Overlap lower, but give it a chance here, anyways
 	  double reference = (point==0 ? Precision : overlaps[point]-overlaps[0]);
 	  if ( std::exp(- ( overlaps[point]-randomOverlap) / reference ) > Generator->GetRealRandomNumber() )
