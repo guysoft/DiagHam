@@ -58,7 +58,8 @@ using std::ofstream;
 
 void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, AbstractRandomNumberGenerator* randomNumberGenerator);
 
-void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
+void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, double jumpDistance, 
+			   AbstractRandomNumberGenerator* randomNumberGenerator);
 
 void FlipCoordinates (ComplexVector& uv, int i, int j);
 
@@ -136,6 +137,7 @@ int main(int argc, char** argv)
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
   bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
+  double JumpDistance = 0.2 * M_PI;
   double StepSize = 0.25;
   if (((BooleanOption*) Manager["force-symmetry"])->GetBoolean() == true)
     {
@@ -270,7 +272,7 @@ int main(int argc, char** argv)
 	  PreviousTmpV = TmpUV[(NextCoordinate << 1) + 1];
 	  PreviousTmpPositionTheta = TmpPositions[(NextCoordinate << 1)];
 	  PreviousTmpPositionPhi = TmpPositions[(NextCoordinate << 1) + 1];
-	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
+	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, JumpDistance, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
 	  SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
@@ -319,7 +321,7 @@ int main(int argc, char** argv)
 	  PreviousTmpV = TmpUV[(NextCoordinate << 1) + 1];
 	  PreviousTmpPositionTheta = TmpPositions[(NextCoordinate << 1)];
 	  PreviousTmpPositionPhi = TmpPositions[(NextCoordinate << 1) + 1];
-	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, RandomNumber);
+	  RandomUVOneCoordinate(TmpUV, TmpPositions, NextCoordinate, JumpDistance, RandomNumber);
 	  Complex TmpMetropolis = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
 	  SinTable[NextCoordinate] = sin(TmpPositions[NextCoordinate << 1]);
@@ -469,13 +471,13 @@ void RandomUV (ComplexVector& uv, RealVector& positions, int nbrParticles, Abstr
     }
 }
 
-void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
+void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordinate, double jumpDistance,
+			   AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   coordinate *= 2;
-  double Dist = 0.2 * M_PI;
   double x = positions[coordinate];
   double y = positions[coordinate + 1];
-  x += Dist *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
+  x += jumpDistance *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
   if (x < 0.0) 
     {
       x *= -1.0;
@@ -487,7 +489,7 @@ void RandomUVOneCoordinate(ComplexVector& uv, RealVector& positions, int coordin
 	x = M_2PI - x;
 	y += M_PI;
       }
-  y += 2.0 * Dist *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
+  y += 2.0 * jumpDistance *  (1.0 - 2.0 * randomNumberGenerator->GetRealRandomNumber());
   if (y < 0.0)
     y += M_2PI;
   else

@@ -41,6 +41,12 @@ void RandomZ (RealVector& positions, double scale, int nbrParticles, AbstractRan
 
 void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
 
+// flip two one-body coordinates
+//
+// coordinates = reference on the n-body coordinate vector
+// i = index of the first one body coordinate
+// j = index of the second one body coordinate
+void FlipCoordinates (ComplexVector& coordinates, int i, int j);
 
 
 int main(int argc, char** argv)
@@ -62,16 +68,17 @@ int main(int argc, char** argv)
 
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum angular monentum a particle can have", 10);
-  (*SystemGroup) += new SingleIntegerOption  ('k', "k-value", "k index of the SU(k) symmetry group", 2);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "intra-corr", "power of the intra-color correlations", 3);  
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "inter-corr", "power of the inter-color correlations", 2);  
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
-  (*SystemGroup) += new BooleanOption ('\n', "reverse-flux", "use reverse flux attachment for the composite fermions");  
-  (*SystemGroup) += new BooleanOption ('\n', "jain-cf", "use composite fermion state instead of the symetrized state");  
+  (*SystemGroup) += new BooleanOption ('\n', "laughlin", "do the calculation for the Laughlin state instead of the Moore-Read state");  
+  (*SystemGroup) += new BooleanOption ('\n', "test-symmetry", "check the test wave function is symmetric/antisymmetric");  
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
- 
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
+  (*SystemGroup) += new BooleanOption ('\n', "quasielectron", "plot quasiparticles instead of quasiholes");  
+  (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name", "density.dat"); 
+
+  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals used to sample the disk geometry", 100);
+  (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil in each direction", 20);
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
   (*MonteCarloGroup) += new BooleanOption  ('r', "resume", "resume from a previous run");
@@ -79,8 +86,10 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "record-file", "name of the file where energy recording has to be done", "montecarlo.dat");
   (*MonteCarloGroup) += new BooleanOption  ('\n', "with-timecoherence", "use time coherence between two successive evaluation of the wave function");
+  (*MonteCarloGroup) += new BooleanOption  ('\n', "show-details", "show intermediate values used for overlap calculation", false);
   (*MonteCarloGroup) += new SingleStringOption ('\n', "random-file", "name of the file where random number to use are stored (use internal random generator if no file name is provided)");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "random-seek", "if usage of a random number file is activiated, jump the first random numbers up to the seek position", 0);
+  (*MonteCarloGroup) += new  SingleStringOption ('\n', "record-wavefunctions", "optional file where each wavefunctions will be tabulated and recorded");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -95,33 +104,56 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles");
-  int KValue = Manager.GetInteger("k-value");
-  if ((NbrParticles % KValue) != 0)
+  bool OverlapFlag = true;
+  if (((BooleanOption*) Manager["test-symmetry"])->GetBoolean() == true)
     {
-      cout << "the number of particles has to be a multiple of the number of colors (i.e. k)" << endl;
-      return -1;
+      OverlapFlag = false;
     }
-  int NbrParticlePerColor = NbrParticles / KValue;
-  int IntraCorrelation = Manager.GetInteger("intra-corr");
-  int InterCorrelation = Manager.GetInteger("inter-corr");
   int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
   int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  bool InvertFlag = Manager.GetBoolean("reverse-flux");
+  int NbrSteps = ((SingleIntegerOption*) Manager["nbr-step"])->GetInteger();
+  int NbrOrbitals = ((SingleIntegerOption*) Manager["nbr-orbitals"])->GetInteger();
   bool ResumeFlag = Manager.GetBoolean("resume");
-  int LzMax = NbrParticlePerColor * (((KValue - 1) * InterCorrelation) + IntraCorrelation) - IntraCorrelation - KValue + 1;
-  bool StatisticFlag = true;
-  int NbrMomenta = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger() + 1;
-  int RecordStep = Manager.GetInteger("record-step");
-  double InvSqrLengthScale = sqrt(3.0 * ((double) NbrParticles)) / sqrt(2.0 * ((double) ((NbrMomenta - 1))));
+  bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
+  bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
+  bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
+  double StepSize = 0.25;
+  char* RecordWaveFunctions = ((SingleStringOption*) Manager["record-wavefunctions"])->GetString();
+  if (RecordWaveFunctions != 0)
+    {
+      ofstream RecordFile;
+      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
+      RecordFile.close();
+    }
 
-  AbstractQHEParticle* ExactSpace = 0;
-  RealVector* ExactState = 0;
-  AbstractFunctionBasis* ExactBasis = 0;
 
-
-
-//  Abstract1DComplexFunction* WaveFunction = new PfaffianOnDiskWaveFunction(NbrParticles);
-  Abstract1DComplexFunction* WaveFunction = new LaughlinOnDiskWaveFunction(NbrParticles, 3);
+  Abstract1DComplexFunction* SymmetrizedFunction = 0;
+  if (QuasielectronFlag == true)
+    {
+      if (LaughlinFlag == true)
+	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
+      else
+	{
+	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+	  else
+	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
+										   0.0, 0.0, M_PI, 0.0, StatisticFlag);
+	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+	    {
+	      ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+	      return 0;
+	    }
+	}
+    }
+  else
+    {
+      if (LaughlinFlag == true)
+	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
+      else
+	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+    }
+  Abstract1DComplexFunctionOnDisk* TestFunction;
   AbstractRandomNumberGenerator* RandomNumber = 0;
   if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
     {
@@ -143,54 +175,58 @@ int main(int argc, char** argv)
     }
   else
     {
-      RandomNumber = new StdlibRandomNumberGenerator (29457);
+      //      RandomNumber = new StdlibRandomNumberGenerator (29457);
+      RandomNumber = new NumRecRandomGenerator(29457);
     }
 
-
-       
-  double Normalization = 0.0;
-  double ErrorNormalization = 0.0;
-  Complex Tmp;
-  double Tmp2;
-  double* Momentum = new double[NbrMomenta];
-  double* ErrorMomentum = new double[NbrMomenta];
-  double* Tmp3 = new double[NbrMomenta];
-  int NextCoordinates = 0;
-  RealVector TmpZ (NbrParticles * 2, true);
-  RealVector TmpPositions (NbrParticles * 2, true);
-  double* ValueExact = new double[NbrMomenta];
-  double PreviousProbabilities = 0.0;
-  double CurrentProbabilities = 0.0;
-  double TotalProbability = 0.0;
-  int Acceptance = 0;
-  double AcceptanceRate = 1.0;
-  int InitialNbrIter = 0;
-  if (ResumeFlag == false)
+  if (OverlapFlag == true)
     {
-      for (int j = 0; j < NbrMomenta; ++j)
+      ComplexVector TmpZ (NbrParticles, true);
+      Complex PreviousTmpZ;
+      Complex** FunctionBasisEvaluation = new Complex* [NbrSteps];
+      for (int k = 0; k < NbrSteps; ++k)
 	{
-	  Momentum[j] = 0.0;
-	  ErrorMomentum[j] = 0.0;
-	  Tmp3[j] = 0.0;	   
+	  FunctionBasisEvaluation[k] = new Complex [NbrSteps];
+	  for (int j = 0; j < NbrSteps; ++j)
+	    FunctionBasisEvaluation[k][j] = 0.O;
 	}
-      RandomZ (TmpZ, InvSqrLengthScale, NbrParticles, RandomNumber);
-      Tmp = (*WaveFunction)(TmpZ);
-      PreviousProbabilities = Norm(Tmp);
-      CurrentProbabilities = PreviousProbabilities;
-      TotalProbability = PreviousProbabilities;
-      Acceptance = 0;
-      AcceptanceRate = 1.0;
-      if (NbrWarmUpIter > 0)
-	cout << "starting warm-up sequence" << endl;
+      double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
+      double* ExpTable = new double [NbrParticles];
+      double PreviousExp = 0.0;
+
+      double TotalProbability = 0.0;
+      double TotalProbabilityError = 0.0;
+      double ThetaStep = M_PI / NbrSteps;
+      int CurrentPercent = 0;
+      double Theta = 0.0;
+
+      RandomZ (TmpUV, TmpPositions, NbrParticles, RandomNumber);
+      int NextCoordinate = 0;
+      double PreviousProbabilities = 0.0;
+      double CurrentProbabilities = 0.0;
+      TotalProbability = 0.0;
+      int Acceptance = 0;	  
+      
+      Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+      CurrentProbabilities = SqrNorm(Tmp);
+      for (int k = 0; k < NbrParticles; ++k)
+	{
+	  SinTable[k] = exp (-0.5 * SqrNorm(TmpZ[k]));
+	  CurrentProbabilities *= SinTable[k];
+	}
+      PreviousProbabilities = CurrentProbabilities;
+      
+      cout << "starting warm-up sequence" << endl;
       for (int i = 1; i < NbrWarmUpIter; ++i)
-	{      
-	  double PreviousCoordinates1 = TmpZ[NextCoordinates << 1];
-	  double PreviousCoordinates2 = TmpZ[1 + (NextCoordinates << 1)];
-	  Complex TmpMetropolis;
-	  RandomZOneCoordinate(TmpZ, InvSqrLengthScale, NextCoordinates, RandomNumber);
-	  TmpMetropolis = (*WaveFunction)(TmpZ);
+	{
+	  PreviousTmpZ = TmpZ[NextCoordinate];
+	  PreviousExp = NbrParticles[NextCoordinate];
+	  RandomZOneCoordinate(TmpZ, Scale, NextCoordinate, RandomNumber);
+	  Complex TmpMetropolis = SymmetrizedFunction(TmpZ);
 	  CurrentProbabilities = SqrNorm(TmpMetropolis);
-	  cout << CurrentProbabilities << " " << TmpZ[2 * NextCoordinates] << " " << TmpZ[1 + 2 * NextCoordinates] << " " << endl;
+	  ExpTable[NextCoordinate] = exp(-0.5 * SqrNorm(TmpZ[NextCoordinate]));
+	  for (int k = 0; k < NbrParticles; ++k)
+	    CurrentProbabilities *= ExpTable[k];
 	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 	    {
 	      PreviousProbabilities = CurrentProbabilities;
@@ -198,210 +234,132 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      TmpZ[NextCoordinates << 1] = PreviousCoordinates1;
-	      TmpZ[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
+	      TmpZ[NextCoordinate] = PreviousTmpZ;
+	      ExpTable[NextCoordinate] = PreviousExp;
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
-	  NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
-	  if ((i % 1000) == 0)
+	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
+	  if (((i * 20) / NbrWarmUpIter) != CurrentPercent)
 	    {
-	      AcceptanceRate = ((double) Acceptance) / ((double) i);
-	      cout << Acceptance << " / " << i << " = " << ((100.0 * ((double) Acceptance)) / ((double) i)) << "%" << endl;
+	      CurrentPercent = (i * 20) / NbrWarmUpIter;
+	      cout << (CurrentPercent * 5) << "% " << flush;
 	    }
-	}
+	} 
+      cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
-      if (NbrWarmUpIter > 0)
-	cout << "warm-up sequence is over" << endl;
-      Acceptance = 0;
-      if ((RecordStep != 0) && (ResumeFlag == false))
-	{
-	  ofstream MomentumRecordFile;
-	  MomentumRecordFile.precision(14);
-	  MomentumRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary);
-	  MomentumRecordFile << "# Monte Carlo calculation of the " << endl
-			    << "# step overlap.Re overlap.Im error.Re error.Im [(scalar_product.Re scalar_product.Im error_scalar_product.Re error_scalar_product.Im normalization_exact error_normalization_exact) per state] normalization error_normalization" << endl;
-	}
-    }
-  else
-    {
-      ifstream MCState;
-      MCState.open("mcstate.dat", ios::in | ios::binary);
-      ReadLittleEndian(MCState, InitialNbrIter);
-      unsigned long TmpNumber;
-      ReadLittleEndian(MCState, TmpNumber);
-      ReadLittleEndian(MCState, Acceptance);
-      ReadLittleEndian(MCState, PreviousProbabilities);
-      ReadLittleEndian(MCState, CurrentProbabilities);
-      ReadLittleEndian(MCState, TotalProbability);
-      ReadLittleEndian(MCState, NextCoordinates);
-      for (int j = 0; j < (NbrParticles >> 1); ++j)
-	{		   	       
-	  ReadLittleEndian(MCState, TmpZ[j]);
-	}
-      ReadLittleEndian(MCState, Normalization);
-      ReadLittleEndian(MCState, ErrorNormalization);
-      for (int j = 0; j < NbrMomenta; ++j)
-	{		   	       
-	  ReadLittleEndian(MCState, Momentum[j]);
-	  ReadLittleEndian(MCState, ErrorMomentum[j]);
-	}
-      MCState.close();	     
-    }
-  for (int i = InitialNbrIter; i < NbrIter; ++i)
-    {
-      double PreviousCoordinates1 = TmpZ[NextCoordinates << 1];
-      double PreviousCoordinates2 = TmpZ[1 + (NextCoordinates << 1)];
-      RandomZOneCoordinate(TmpZ, 1.0,NextCoordinates, RandomNumber);
-      Complex TmpMetropolis;
-      TmpMetropolis = (*WaveFunction)(TmpZ);
-      CurrentProbabilities = SqrNorm(TmpMetropolis);
-      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
-	{
-	  PreviousProbabilities = CurrentProbabilities;
-	  Tmp = TmpMetropolis;
-	  double TmpSqrRadius = ((TmpZ[0] * TmpZ[0]) + (TmpZ[1] * TmpZ[1]));
-	  ValueExact[0] = 1.0;//exp (-0.5 * TmpSqrRadius);
-	  TmpSqrRadius /= InvSqrLengthScale * InvSqrLengthScale;
-	  for (int j = 1; j < NbrMomenta; ++j)
-	    ValueExact[j] = ValueExact[j - 1] * TmpSqrRadius / (((double) j));
-	  ++Acceptance;
-	}
-      else
-	{
-	  TmpZ[NextCoordinates << 1] = PreviousCoordinates1;
-	  TmpZ[1 + (NextCoordinates << 1)] = PreviousCoordinates2;
-	  CurrentProbabilities = PreviousProbabilities;
-	}
-      TotalProbability += CurrentProbabilities;
-      NextCoordinates = (int) (((double) NbrParticles) * RandomNumber->GetRealRandomNumber());
-      if (NextCoordinates == NbrParticles)
-	--NextCoordinates;
-      Tmp2 = (Tmp.Re * Tmp.Re) + (Tmp.Im * Tmp.Im);
-      Tmp2 /= CurrentProbabilities;
-      Tmp2 = 1.0;
-      for (int j = 0; j < NbrMomenta; ++j)
-	{
-	  Tmp3[j] = (Tmp2 * ValueExact[j]);
-	  Momentum[j] += Tmp3[j];
-	  ErrorMomentum[j] += Tmp3[j] * Tmp3[j];
-	}
-      Normalization += Tmp2;
-      ErrorNormalization += Tmp2 * Tmp2;
-      if ((i > 0) && ((RecordStep != 0) && ((i % RecordStep) == 0)))
-	{
-	  ofstream MomentumRecordFile;
-	  MomentumRecordFile.precision(14);
-	  MomentumRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary | ios::app);
-	  MomentumRecordFile << i ;
-	  double Tmp6 = Normalization  / ((double) i);
-	  double Tmp7 = sqrt( ((ErrorNormalization / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
-	  for (int j = 0; j < NbrMomenta; ++j)
-	    {
-	      double Tmp4 = Momentum[j] / ((double) i);
-	      double Tmp5 = sqrt(((ErrorMomentum[j]/ ((double) i)) - (Tmp4 * Tmp4)) / ((double) i) );
-	      Tmp5 /= Tmp4;
-	      Tmp5 = fabs(Tmp5);
-	      Tmp5 += Tmp7 / Tmp6;
-	      Tmp4 /= Tmp6;	  
-	      Tmp5 *= Tmp4;
-	      MomentumRecordFile << " " << Tmp4 << " " << Tmp5 << " " << Momentum[j] << " " << ErrorMomentum[j];
-	    }
-	  MomentumRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
-	  MomentumRecordFile.close();
-	  ofstream MCState;
-	  MCState.open("mcstate.dat", ios::out | ios::binary);
-	  WriteLittleEndian(MCState, i);
-	  unsigned long TmpNumber = RandomNumber->GetNbrGeneratedNumbers();
-	  WriteLittleEndian(MCState, TmpNumber);
-	  WriteLittleEndian(MCState, Acceptance);
-	  WriteLittleEndian(MCState, PreviousProbabilities);
-	  WriteLittleEndian(MCState, CurrentProbabilities);
-	  WriteLittleEndian(MCState, TotalProbability);
-	  WriteLittleEndian(MCState, NextCoordinates);
-	  for (int j = 0; j < (NbrParticles >> 1); ++j)
-	    {		   	       
-	      WriteLittleEndian(MCState, TmpZ[j]);
-	      WriteLittleEndian(MCState, TmpZ[j]);
-	    }
-	  WriteLittleEndian(MCState, Normalization);
-	  WriteLittleEndian(MCState, ErrorNormalization);
-	  for (int j = 0; j < NbrMomenta; ++j)
-	    {		   	       
-	      WriteLittleEndian(MCState, Momentum[j]);
-	      WriteLittleEndian(MCState, ErrorMomentum[j]);
-	    }
-	  MCState.close();	     
-	}
-      if ((i > 0) && ((i % (((SingleIntegerOption*) Manager["display-step"])->GetInteger())) == 0))
-	{
-	  cout << " i = " << i << endl;
-	  double Tmp6 = Normalization  / ((double) i);
-	  double Tmp7 = sqrt( ((ErrorNormalization / ((double) i))  -  (Tmp6 * Tmp6)) / ((double) i) );	  
-	  for (int j = 0; j < NbrMomenta; ++j)
-	    {		   
-	      double Tmp4 = Momentum[j] / ((double) i);
-	      double Tmp5 = sqrt( ((ErrorMomentum[j] / ((double) i)) - (Tmp4 * Tmp4)) / ((double) i) );
-	      Tmp5 /= Tmp4;
-	      Tmp5 = fabs(Tmp5);
-	      Tmp5 += Tmp7 / Tmp6;
-	      Tmp4 /= Tmp6;	  
-	      Tmp5 *= Tmp4;
-	      cout << "n_" << j << " : " << Tmp4 << " +/- " << Tmp5 << endl;
-	    }
-	  cout << "acceptance rate = " << (((double) Acceptance) / (((double) i))) << endl;
-	  cout << "-----------------------------------------------" << endl;
-	}
-    } 
-  if (((RecordStep != 0) && ((NbrIter % RecordStep) == 0)))
-    {
-      ofstream MomentumRecordFile;
-      MomentumRecordFile.precision(14);
-      MomentumRecordFile.open(((SingleStringOption*) Manager["record-file"])->GetString(), ios::out | ios::binary | ios::app);
-      MomentumRecordFile << NbrIter ;
-      double Tmp6 = Normalization  / ((double) NbrIter);
-      double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
-      for (int j = 0; j < NbrMomenta; ++j)
-	{
-	  double Tmp4 = Momentum[j] / ((double) NbrIter);
-	  double Tmp5 = sqrt(((ErrorMomentum[j]/ ((double) NbrIter)) - (Tmp4 * Tmp4)) / ((double) NbrIter) );
-	  Tmp5 /= Tmp4;
-	  Tmp5 = fabs(Tmp5);
-	  Tmp5 += Tmp7 / Tmp6;
-	  Tmp4 /= Tmp6;	  
-	  Tmp5 *= Tmp4;
-	  MomentumRecordFile << " " << Tmp4 << " " << Tmp5 << " " << Momentum[j] << " " << ErrorMomentum[j];
-	}
-      MomentumRecordFile << " " << Normalization << " " << ErrorNormalization << endl;
-      MomentumRecordFile.close();
-    }
-  cout << " final results :" << endl;
-  double Tmp6 = Normalization  / ((double) NbrIter);
-  double Tmp7 = sqrt( ((ErrorNormalization / ((double) NbrIter))  -  (Tmp6 * Tmp6)) / ((double) NbrIter) );	  
-  double Tmp4Ref = Momentum[NbrMomenta - 1] / ((double) NbrIter);
-  double Tmp5Ref = sqrt(((ErrorMomentum[NbrMomenta - 1]/ ((double) NbrIter)) - (Tmp4Ref * Tmp4Ref)) / ((double) NbrIter) );
-  Tmp5Ref /= Tmp4Ref;
-  Tmp5Ref = fabs(Tmp5Ref);
-  Tmp5Ref += Tmp7 / Tmp6;
-  Tmp4Ref /= Tmp6;	  
-  Tmp5Ref *= Tmp4Ref;
-  for (int j = 0; j < NbrMomenta; ++j)
-    {
-      double Tmp4 = Momentum[j] / ((double) NbrIter);
-      double Tmp5 = sqrt(((ErrorMomentum[j]/ ((double) NbrIter)) - (Tmp4 * Tmp4)) / ((double) NbrIter) );
-      Tmp5 /= Tmp4;
-      Tmp5 = fabs(Tmp5);
-      Tmp5 += Tmp7 / Tmp6;
-      Tmp4 /= Tmp6;	  
-      Tmp5 *= Tmp4;
-      double TmpCoef = 1.0;
-      for (int m = NbrMomenta - 1; m > j; --m)
-	TmpCoef *= 2.0 * (InvSqrLengthScale * InvSqrLengthScale);
-      cout << "n_" << j << " : " << Tmp4 << " +/- " << Tmp5 << "   ,   " << (TmpCoef * Tmp4 / Tmp4Ref) << " +/- " << ((Tmp5 / Tmp4Ref) + (Tmp5Ref * Tmp4 / (Tmp4Ref * Tmp4Ref))) << endl;
-    }
-  cout << "-----------------------------------------------" << endl;
-  
-  
+      CurrentPercent = 0;
 
+      cout << "starting MC sequence" << endl;
+      Acceptance = 0;
+
+      for (int i = 0; i < NbrIter; ++i)
+	{
+	  PreviousTmpZ = TmpZ[NextCoordinate];
+	  PreviousExp = NbrParticles[NextCoordinate];
+	  RandomZOneCoordinate(TmpZ, Scale, NextCoordinate, RandomNumber);
+	  Complex TmpMetropolis = SymmetrizedFunction(TmpZ);
+	  CurrentProbabilities = SqrNorm(TmpMetropolis);
+	  ExpTable[NextCoordinate] = exp(-0.5 * SqrNorm(TmpZ[NextCoordinate]));
+	  for (int k = 0; k < NbrParticles; ++k)
+	    CurrentProbabilities *= ExpTable[k];
+	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	    {
+	      PreviousProbabilities = CurrentProbabilities;
+	      ++Acceptance;	      
+	    }
+	  else
+	    {
+	      TmpZ[NextCoordinate] = PreviousTmpZ;
+	      ExpTable[NextCoordinate] = PreviousExp;
+	      CurrentProbabilities = PreviousProbabilities;
+	    }
+	  for (int k = 0; k < NbrSteps; ++k)
+	    {
+	      FunctionBasisDecomposition[k] += TmpFunctionBasisDecomposition[k];
+	      FunctionBasisDecompositionError[k] += TmpFunctionBasisDecomposition[k] * TmpFunctionBasisDecomposition[k];
+	    }
+	  TotalProbability++;	  
+	  TotalProbabilityError++;
+
+	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
+
+	  if (((i * 20) / NbrIter) != CurrentPercent)
+	    {
+	      CurrentPercent = (i * 20) / NbrIter;
+	      cout << (CurrentPercent * 5) << "% " << flush;
+	    }
+	}
+      cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
+
+      TotalProbabilityError /= (double) NbrIter;
+      TotalProbabilityError -= (TotalProbability * TotalProbability) / (((double) NbrIter) * ((double) NbrIter));
+      TotalProbabilityError = sqrt(TotalProbabilityError) / (TotalProbability / ((double) NbrIter));
+      TotalProbabilityError /= sqrt ((double) NbrIter);
+      for (int k = 0; k < NbrOrbitals; ++k)
+	{
+	  FunctionBasisDecompositionError[k] *= ((double) NbrIter);
+	  FunctionBasisDecompositionError[k] -= FunctionBasisDecomposition[k] * FunctionBasisDecomposition[k];
+	  FunctionBasisDecompositionError[k] = sqrt(FunctionBasisDecompositionError[k] / ((double) NbrIter)) / FunctionBasisDecomposition[k];
+	  FunctionBasisDecompositionError[k] += TotalProbabilityError;
+	}
+
+      TotalProbability =  1.0 / TotalProbability;
+      for (int k = 0; k < NbrOrbitals; ++k)
+	{
+	  FunctionBasisDecomposition[k] *= TotalProbability;
+	  FunctionBasisDecompositionError[k] *= FunctionBasisDecomposition[k];
+	}
+
+      ofstream DensityRecordFile;
+      DensityRecordFile.precision(14);
+      DensityRecordFile.open(((SingleStringOption*) Manager["output"])->GetString(), ios::out);
+
+      DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
+      double TmpX = InitialX;
+      for (int i = 0; i <= NbrSteps; ++i)
+	{
+	  double TmpY = InitialX;
+	  for (int j = 0; j <= NbrSteps; ++j)
+	    {
+	      DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[i][j] << endl;
+	      TmpY += StepValue;
+	    }
+	  DensityRecordFile << endl;
+	  TmpX += StepValue;
+	}
+	  TmpPos[0] = Theta;
+	  double Tmp = 0.0;
+	  Complex Tmp2;
+	  for (int k = 0; k < NbrOrbitals; ++k)
+	    {
+	      FunctionBasis.GetFunctionValue(TmpPos, Tmp2, k);
+	      Tmp += FunctionBasisDecomposition[k] * SqrNorm(Tmp2);
+	    }
+	  Tmp *= TmpFactor;
+	  Sum += sin(Theta) * Tmp;
+	  DensityRecordFile << Theta << " " << Tmp << endl;
+	  Theta += ThetaStep;
+	}
+      DensityRecordFile.close();
+      cout << "Sum = " << (Sum * ThetaStep * 2.0 * M_PI) << endl;
+    }
+   else
+     {
+       ComplexVector TmpZ (NbrParticles, true);
+       RandomZ (TmpZ, Scale, NbrParticles, RandomNumber);
+       cout << SymmetrizedFunction(TmpZ) << endl;;
+       for (int i = 0; i < NbrParticles; ++i)
+	 {
+	   for (int j = i + 1; j < NbrParticles; ++j)
+	     {
+	       cout << i << "<->" << j << " : ";
+	       cout << SymmetrizedFunction(TmpZ) << " | " ;
+	       FlipCoordinates(TmpZ, i, j);
+	       cout << SymmetrizedFunction(TmpZ) << endl;
+	       FlipCoordinates(TmpZ, i, j);	       
+	     }
+	 }
+     }
   return 0;
 }
 
@@ -426,3 +384,17 @@ void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, A
   positions[coordinate] = x * sin(y);
 }
 
+// flip two one-body coordinates
+//
+// coordinates = reference on the n-body coordinate vector
+// i = index of the first one body coordinate
+// j = index of the second one body coordinate
+
+void FlipCoordinates (ComplexVector& coordinates, int i, int j)
+{
+  Complex Tmp = coordinates[i];  
+  coordinates.Re(i) = coordinates.Re(j);
+  coordinates.Re(j) = Tmp.Re;
+  coordinates.Im(i) = coordinates.Im(j);
+  coordinates.Im(j) = Tmp.Im;
+}
