@@ -52,8 +52,9 @@ HundRuleCFStates::HundRuleCFStates()
 // nbrParticles = number of particles in system
 // nbrEffectiveFlux = effective flux seen by composite fermions
 // jastrowP = power of jastrow factors div 2
+// overrideK = calculate for value of angular momentum < maximumL (only active for 2 or more particles)
 //
-HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int jastrowP)
+HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int jastrowP, int overrideL)
 {
   this->NbrParticles = nbrParticles;
   if (nbrParticles<0)
@@ -143,6 +144,8 @@ HundRuleCFStates::HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int j
     }
   else if (NbrParticlesInHighestShell==2) // case entirely given by Clebsch-Gordan coefficients
     {
+      if ((overrideL>=0) && (this->TotalL>overrideL))
+	this->TotalL=overrideL;
       ClebschGordanCoefficients VectorCoupling(HighestShellLzMax,HighestShellLzMax);
       this->NbrTermsPerLz = new int[TotalL+1];
       this->TermsPerLz = new SlaterComponent*[TotalL+1];

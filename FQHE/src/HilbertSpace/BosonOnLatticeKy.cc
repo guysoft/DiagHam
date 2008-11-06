@@ -48,6 +48,9 @@ using std::bitset;
 using std::cout;
 using std::endl;
 
+// switch some debugging output
+//#define DEBUG_OUTPUT
+
 
 // default constructor
 //
@@ -334,18 +337,25 @@ int BosonOnLatticeKy::GetMaximumKy()
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
-unsigned long BosonOnLatticeKy::Ad (unsigned long state, int q)
+unsigned long BosonOnLatticeKy::Ad (unsigned long state, int q, double &coefficient)
 {
-  int StateHighestBit = getHighestBit(state);
+  int StateHighestBit = getHighestBit(state)-1;
   this->FermionToBoson(state, StateHighestBit, this->TemporaryState, this->TemporaryStateHighestBit);
-  ++this->TemporaryState[q];
   if (q>this->TemporaryStateHighestBit)
     {
-      for (int i = this->TemporaryStateHighestBit + 1; i <= q; ++i)
+      for (int i = this->TemporaryStateHighestBit + 1; i < q; ++i)
 	this->TemporaryState[i] = 0ul;
+      this->TemporaryState[q] = 1ul;
       this->TemporaryStateHighestBit = q;
+      coefficient = 1.0;
+    }
+  else
+    {
+      ++this->TemporaryState[q];
+      coefficient = sqrt(this->TemporaryState[q]);
     }
   return this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
+
 }
 
 
@@ -822,12 +832,14 @@ int BosonOnLatticeKy::EncodeCompositeMomentum(int ky, int fluxSubLattice)
   return ky*TranslationCell+fluxSubLattice;
 }
 
+// decode composite ky-momentum
+// cK = composite momentum (momentum plus flux sublattice)
 // ky = true momentum in y-direction
 // fluxSubLattice = 'sublattice' index remaining after translation symmetry
-void BosonOnLatticeKy::DecodeCompositeMomentum(int q, int &ky, int &fluxSubLattice)
+void BosonOnLatticeKy::DecodeCompositeMomentum(int cK, int &ky, int &fluxSubLattice)
 {
-  ky = q/TranslationCell;
-  fluxSubLattice = q%TranslationCell;
+  ky = cK/TranslationCell;
+  fluxSubLattice = cK%TranslationCell;
 }
 
 
@@ -927,8 +939,11 @@ ostream& BosonOnLatticeKy::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i < this->NbrStates; ++i)
     Str << "0 ";
-  bitset<16> b = this->StateDescription[state];
-  Str << "   " << b << "   highestBit = " << this->StateHighestBit[state] << "   highestState = "<<this->TemporaryStateHighestBit;
+#ifdef DEBUG_OUTPUT
+  bitset<32> b = this->StateDescription[state];
+  Str << "   " << b << "   highestBit = " << this->StateHighestBit[state];
+  cout << "   highestState = "<<this->TemporaryStateHighestBit;
+#endif
   return Str;
 }
 
@@ -1095,6 +1110,17 @@ int BosonOnLatticeKy::CarefulFindStateIndex(unsigned long stateDescription, int 
 }
 
 
+void print_array(int length, long unsigned int*array)
+{
+  if (length>0)
+    {
+      cout << array[0];
+      for (int i=1; i<length; ++i) cout << " " << array[i];
+      cout << " (length "<<length<<")"<<endl;
+    }
+}
+  
+
 // conversion to generic (full) many-body representation in real-space basis
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation
@@ -1103,17 +1129,31 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Boson
 {
   this->TargetVector.ResizeAndClean(nbodyBasis.GetHilbertSpaceDimension());
   this->FullSpace = &nbodyBasis;
-  int *QuantumNumbers = new int[this->NbrBosons];  
+  int *QuantumNumbers = new int[this->NbrBosons];
+  double Normalization;
+  bitset <32> b;
   for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
     {
       this->FermionToBoson(this->StateDescription[i], this->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
       int NbrQ=0;
-      for (int q=0; q<TemporaryStateHighestBit; ++q)
-	while (this->TemporaryState[q]>0) QuantumNumbers[NbrQ++]=q;
+      Normalization=1.0;
       if (Norm(state[i])>1e-15)
-	this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]); 
+	{
+	  for (int q=0; q<=TemporaryStateHighestBit; ++q)
+	    if (this->TemporaryState[q]>0)
+	      {		
+		for (unsigned int l=this->TemporaryState[q];l>0; --l)
+		  {
+		    Normalization*=l;
+		    QuantumNumbers[NbrQ]=q;
+		    cout << "QuantumNumbers["<<NbrQ<<"]="<< QuantumNumbers[NbrQ]<<endl;
+		    ++NbrQ;
+		  }
+	      }
+	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]/sqrt(Normalization));
+	}
     }
-  cout << "Norm was:" << TargetVector.Norm();
+  cout << "Norm was:" << TargetVector.Norm() << endl;
   TargetVector/=TargetVector.Norm();
   return TargetVector;
 }
@@ -1131,20 +1171,25 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
 {
   int Index;
   unsigned long ResultingState;
-  int K, N, S, Subl, TargetQ;
-  double NewFactor = sqrt(1.0/(double)Kmax); 
+  int cK, K, N, S, Subl, TargetQ;
+  double NewFactor = sqrt(1.0/(double)Kmax);
+  double AdFactor;
   Complex TranslationPhase;
-  this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, K, Subl);
-  this->DecodeCompositeMomentum(quantumNumbers[nbrOperators-1], K, S);
+  this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, cK, Subl);
+  cout << "Decoded step 1 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", cK="<<cK<<", Subl="<<Subl<<endl;
+  this->DecodeCompositeMomentum(cK, K, S);
+  cout << "Decoded step 2 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", K="<<K<<", S="<<S<<", Subl="<<Subl<<endl;
   double ExpFactor = 2.0*M_PI*(double)K/(double)Kmax;
   if (nbrOperators>1)
     {
       for (int r=0; r<this->Kmax; ++r)
 	{
 	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
-	  ResultingState = this->FullSpace->Ad(state,TargetQ);
+	  cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;	  
+	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
+	  cout << "Recursing with state: "<<ResultingState<<endl;
 	  if (ResultingState!=0x0l)
-	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*NewFactor*Polar(1.0,ExpFactor*r));
+	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r));
 	}
     }
   else
@@ -1152,12 +1197,15 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
       for (int r=0; r<this->Kmax; ++r)
 	{
 	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
-	  ResultingState = this->FullSpace->Ad(state,TargetQ);
+	  cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;
+	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
+	  cout << "Finishing with state: "<<ResultingState<<endl;
 	  if (ResultingState!=0x0l)
 	    {	      
 	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
 		{
-		  this->TargetVector[Index]+= prefactor*NewFactor*Polar(1.0,ExpFactor*r);
+		  this->TargetVector[Index]+= prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r);
+		  cout << "Adding "<< prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r) <<" to component "<<Index<<endl;
 		}
 	    }
 	}

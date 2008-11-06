@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2007 Gunnar Möller                  //
+//                      Copyright (C) 2007 Gunnar Möller                      //
 //                                                                            //
 //                                                                            //
 //           class of Jain composite fermion wave function on sphere          //

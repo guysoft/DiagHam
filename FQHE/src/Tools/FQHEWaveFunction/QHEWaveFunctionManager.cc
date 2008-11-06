@@ -105,6 +105,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "fermion-state", "generate a fermionic wavefunction (RR)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "negflux", "use Jain state with negative flux (SLBS)");      
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "Jz-Value", "Total angular momentum Jz (hund only)", 0);
+      (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "hund-L2", "Total angular momentum J if less than maximal (hund only)", -1);
       (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "JM-Values", "Angular momentum J and projection on z axis J,M (paired2QH only)",',');
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "QHMC-iter", "Number of MC steps for internal MC (paired2QH only)", 1000);
     }
@@ -326,13 +327,14 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  int N = this->Options->GetInteger("nbr-particles");
 	  int JastrowP = this->Options->GetInteger("nbr-flux")/2;
 	  int effectiveFlux = this->Options->GetInteger("lzmax")-2*JastrowP*(N-1);
+	  int overrideL = this->Options->GetInteger("hund-L2");
 	  if (JastrowP==0)
 	    {
 	      cout << "To obtain CF's, at least two flux need to be attached. Try:  --nbr-flux 2"<<endl;
 	      exit(1);
 	    }
 	  cout << "Effective flux for CF's: "<<effectiveFlux<<endl;
-	  HundRuleCFStates* rst = new HundRuleCFStates(N, effectiveFlux, JastrowP);
+	  HundRuleCFStates* rst = new HundRuleCFStates(N, effectiveFlux, JastrowP, overrideL);
 	  rst->SelectMValue(this->Options->GetInteger("Jz-Value"));
 	  rst->AdaptAverageMCNorm();
 	  return rst;

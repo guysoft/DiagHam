@@ -85,7 +85,8 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // for state-coding and quantum numbers of this space
   // state = word to be acted upon
   // q = quantum number of boson to be added
-  virtual unsigned long Ad (unsigned long state, int q)=0;
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long Ad (unsigned long state, int q, double &coefficient)=0;
 
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //

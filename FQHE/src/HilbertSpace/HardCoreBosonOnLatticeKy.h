@@ -188,7 +188,7 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   // for state-coding and quantum numbers of this space
   // state = word to be acted upon
   // q = quantum number of boson to be added
-  virtual unsigned long Ad (unsigned long state, int q);
+  virtual unsigned long Ad (unsigned long state, int q, double &coefficient);
 
   // apply a^+_q1 a^+_q2 a_r1 a_r2 operator to a given state (with q1+q2=r1+r2)
   //

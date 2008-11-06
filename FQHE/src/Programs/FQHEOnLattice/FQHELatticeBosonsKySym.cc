@@ -96,11 +96,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 1);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction (-1=all)", -1);
+  
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
   (*SystemGroup) += new BooleanOption  ('\n', "all-flux", "calculate all values of the flux to test symmetry under n_phi->1-n_phi", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-ky", "calculate all values of the flux to test symmetry under ky->ky_max-ky", false);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -139,7 +141,7 @@ int main(int argc, char** argv)
 	NbrFluxValues = NbrSites+1;
       else
 	NbrFluxValues = (NbrSites+2)/2;
-    }  
+    }
 
   char* OutputName;
   char reverseHoppingString[4]="";
@@ -261,7 +263,8 @@ int main(int argc, char** argv)
 
       int Ky = Manager.GetInteger("ky");
       int MaxK = (Ky<0?1:Ky+1);
-      for (int k=(Ky>=0?Ky:0); k<MaxK; ++k)
+      int UpperLimit = MaxK;      
+      for (int k=(Ky>=0?Ky:0); k<UpperLimit; ++k)
 	{
 	  if (Space!=0) delete Space;
 	  if (Hamiltonian!=0) delete Hamiltonian;
@@ -279,6 +282,15 @@ int main(int argc, char** argv)
 	    {
 	      MaxK = ((BosonOnLatticeKy*)Space)->GetMaximumKy();
 	      cout << "Maximum Ky="<<MaxK-1<<endl;
+	      if (Manager.GetBoolean("all-ky"))
+		{
+		  UpperLimit = MaxK;
+		}
+	      else
+		{
+		  UpperLimit = (MaxK+2)/2;
+		  cout << "Evaluating up to Ky="<<UpperLimit-1<<endl;
+		}
 	    }
 	  
 	  cout << "Momentum Ky="<<k<<": dim="<<Space->GetHilbertSpaceDimension()<<endl;
@@ -288,8 +300,8 @@ int main(int argc, char** argv)
 	  char* EigenvectorName = 0;
 	  if (Manager.GetBoolean("eigenstate"))	
 	    {
-	      EigenvectorName = new char [100];
-	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s%s_q_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, kyString, NbrFluxQuanta);
+	      EigenvectorName = new char [100];	      
+	      sprintf (EigenvectorName, "bosons_lattice_n_%d_x_%d_y_%d%s%s%s_k_%d_q_%d", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, randomString, k, NbrFluxQuanta);
 	    }
 	  QHEOnLatticeMainTask Task (&Manager, Space, Hamiltonian, NbrFluxQuanta, 0.0, OutputName, FirstRun, EigenvectorName, k);
 	  MainTaskOperation TaskOperation (&Task);

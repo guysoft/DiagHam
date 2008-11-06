@@ -40,12 +40,17 @@
 
 #include <math.h>
 
-//#include <bitset>
-//using std::bitset;
+#include <bitset>
+using std::bitset;
 
 
 using std::cout;
 using std::endl;
+
+
+// switch verbosity:
+//#define DEBUG_OUTPUT
+
 
 
 // default constructor
@@ -246,20 +251,37 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 }
 
 
+void print_array2(int length, long unsigned int*array)
+{
+  if (length>0)
+    {
+      cout << array[0];
+      for (int i=1; i<length; ++i) cout << " " << array[i];
+      cout << " (length "<<length<<")"<<endl;
+    }
+}
+
+
 // apply creation operator to a word, using the conventions
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
-unsigned long BosonOnLattice::Ad (unsigned long state, int q)
+unsigned long BosonOnLattice::Ad (unsigned long state, int q, double& coefficient)
 {
-  int StateHighestBit = getHighestBit(state);
+  int StateHighestBit = getHighestBit(state)-1;
   this->FermionToBoson(state, StateHighestBit, this->TemporaryState, this->TemporaryStateHighestBit);
-  ++this->TemporaryState[q];
   if (q>this->TemporaryStateHighestBit)
     {
-      for (int i = this->TemporaryStateHighestBit + 1; i <= q; ++i)
+      for (int i = this->TemporaryStateHighestBit + 1; i < q; ++i)
 	this->TemporaryState[i] = 0ul;
+      this->TemporaryState[q] = 1ul;
       this->TemporaryStateHighestBit = q;
+      coefficient = 1.0;
+    }
+  else
+    {
+      ++this->TemporaryState[q];
+      coefficient = sqrt(this->TemporaryState[q]);
     }
   return this->BosonToFermion(this->TemporaryState, this->TemporaryStateHighestBit);
 }
@@ -655,7 +677,9 @@ ostream& BosonOnLattice::PrintState (ostream& Str, int state)
     Str << this->TemporaryState[i] << " ";
   for (; i < this->NbrStates; ++i)
     Str << "0 ";
+#ifdef DEBUG_OUTPUT
   Str << "   highestBit = " << this->TemporaryStateHighestBit;
+#endif
   return Str;
 }
 
@@ -675,11 +699,23 @@ int BosonOnLattice::CarefulFindStateIndex(unsigned long stateDescription, int hi
     }
   if (highestBit<0)
     {
-      highestBit = getHighestBit(stateDescription);
+      highestBit = getHighestBit(stateDescription)-1;
     }
   if (highestBit >= this->NbrStates+this->NbrBosons - 1)
     {
       return this->HilbertSpaceDimension;
-    }      
-  return this->HardCoreBasis->FindStateIndex(stateDescription, highestBit);
+    }
+  int Index = this->HardCoreBasis->FindStateIndex(stateDescription, highestBit);  
+  if (this->HardCoreBasis->StateDescription[Index] == stateDescription)
+    return Index;
+  else
+    {
+      cout << "Unexpected situation in CarefulFindStateIndex!"<<endl;
+      for (int i=0; i<HilbertSpaceDimension; ++i)
+	if (this->HardCoreBasis->StateDescription[i] == stateDescription)
+	  cout << "Element now found at i="<<i<<", "<<this->HardCoreBasis->StateDescription[i]
+	       <<"="<<stateDescription<<"!"<<endl;
+      
+      return this->HilbertSpaceDimension;
+    }
 }

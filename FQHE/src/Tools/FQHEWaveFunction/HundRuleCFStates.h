@@ -136,8 +136,9 @@ class HundRuleCFStates : public Abstract1DComplexFunctionOnSphere
   // nbrParticles = number of particles in system
   // nbrEffectiveFlux = effective flux seen by composite fermions
   // jastrowP = power of jastrow factors div 2
+  // overrideK = calculate for value of angular momentum < maximumL (only active for 2 or more particles)
   //
-  HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int jastrowP = 1);
+  HundRuleCFStates(int nbrParticles, int nbrEffectiveFlux, int jastrowP = 1, int overrideL=-1);
 
   // copy constructor
   HundRuleCFStates(HundRuleCFStates &toCopy);

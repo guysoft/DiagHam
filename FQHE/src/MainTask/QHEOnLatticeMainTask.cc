@@ -451,7 +451,18 @@ int QHEOnLatticeMainTask::ExecuteMainTask()
 	  this->WriteResult(File, HRep(0, 0)  - this->EnergyShift, false);
 	  if (this->ComputeEnergyFlag == true)
 	    File << " " << (HRep(0, 0)  - this->EnergyShift) ;
-	  File << endl;	  
+	  File << endl;
+
+	  if (this->EvaluateEigenvectors)
+	    {
+	      
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      ComplexVector TmpEigenvector(1);
+	      TmpEigenvector[0]=1.0;
+	      sprintf (TmpVectorName, "%s.0.vec", this->EigenvectorFileName);
+	      TmpEigenvector.WriteVector(TmpVectorName);
+	      delete [] TmpVectorName;
+	    }
 	}
     }
   else
@@ -904,7 +915,7 @@ void QHEOnLatticeMainTask::WriteResult(ofstream& file, double value, bool termin
   file << NbrFluxQuanta<<" ";
   if (this->Ky>=0) file << this->Ky << " ";
   file << value;
-  cout <<"wrote value "<<value<<" to file"<<endl;
+  // cout <<"wrote value "<<value<<" to file"<<endl;
   if (terminate)
     file << endl;
 }

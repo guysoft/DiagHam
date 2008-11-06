@@ -150,25 +150,26 @@ void GutzwillerWaveFunction::Product (int exponent, unsigned long state, Complex
 {
   int Index;
   unsigned long ResultingState;
+  double AdFactor;
   if (exponent>1)
     {
       for (int q=0; q<this->NbrStates; ++q)
 	{
-	  ResultingState = Space->Ad(state,q);
+	  ResultingState = Space->Ad(state, q, AdFactor);
 	  if (ResultingState!=0x0l)
-	    Product(exponent-1, ResultingState, prefactor*CondensateState[q]);
+	    Product(exponent-1, ResultingState, prefactor*AdFactor*CondensateState[q]);
 	}
     }
   else
     {      
       for (int q=0; q<this->NbrStates; ++q)
 	{
-	  ResultingState = Space->Ad(state,q);
+	  ResultingState = Space->Ad(state, q, AdFactor);
 	  if (ResultingState!=0x0l)
 	    {	      
 	      if ((Index=Space->CarefulFindStateIndex(ResultingState,-1))<Dim)
 		{
-		  TargetVector[Index]+= prefactor*CondensateState[q];
+		  TargetVector[Index]+= prefactor*AdFactor*CondensateState[q];
 		}
 	    }
 
@@ -187,23 +188,24 @@ void GutzwillerWaveFunction::Product2 (int nextQ, int nbrBosons, unsigned long s
 {
   int Index;
   unsigned long ResultingState;
+  double AdFactor;
   if (nextQ>0)
     {
       if (nbrBosons<this->NbrParticles)
 	{
-	  ResultingState = Space->Ad(state,nextQ);
+	  ResultingState = Space->Ad(state,nextQ,AdFactor);
 	  Product2(nextQ-1, nbrBosons+1, ResultingState, prefactor*CondensateState[nextQ]);
 	}
-      Product2(nextQ-1, nbrBosons, state, prefactor*UnoccupiedTerms[nextQ]);
+      Product2(nextQ-1, nbrBosons, state, prefactor*AdFactor*UnoccupiedTerms[nextQ]);
     }
   else
     {
       if (nbrBosons==this->NbrParticles-1)
 	{
-	  ResultingState = Space->Ad(state,nextQ);
+	  ResultingState = Space->Ad(state,nextQ, AdFactor);
 	  if ((Index=Space->CarefulFindStateIndex(ResultingState,-1))<Dim)
 	    {
-	      TargetVector[Index]+= prefactor*CondensateState[nextQ];
+	      TargetVector[Index]+= prefactor*AdFactor*CondensateState[nextQ];
 	    }
 	}
       else if (nbrBosons==this->NbrParticles)

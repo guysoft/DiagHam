@@ -315,12 +315,13 @@ int HardCoreBosonOnLatticeKy::GetMaximumKy()
 // for state-coding and quantum numbers of this space
 // state = word to be acted upon
 // q = quantum number of boson to be added
-unsigned long HardCoreBosonOnLatticeKy::Ad (unsigned long state, int q)
+unsigned long HardCoreBosonOnLatticeKy::Ad (unsigned long state, int q, double &coefficient)
 {
   if ((state & (((unsigned long) (0x1)) << q))!= 0)
     {
       return 0x0l;
     }
+  coefficient=1.0;
   state |= (((unsigned long) (0x1)) << q);
   return state;
 }
