@@ -84,10 +84,6 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
   cout << "Max dimension: " << this->HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
   cout << "Actual dimension: " << this->HilbertSpaceDimension << endl;
-  for (int i=0; i<HilbertSpaceDimension; ++i) {
-    PrintState (cout, i);
-    cout << endl;
-  }
 
   this->Flag.Initialize();
   this->GenerateLookUpTable(1000000);

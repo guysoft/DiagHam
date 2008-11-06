@@ -393,7 +393,7 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[Pos];
 	      TmpIndexArray = this->InteractionPerComponentIndex[Pos];
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[Pos];
-	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[i];
+	      TmpNbrTranslationArray = this->InteractionPerComponentNbrTranslation[Pos];
 	      TmpRe = vSource.Re(i);
 	      TmpIm = vSource.Im(i);
 	      for (j = 0; j < TmpNbrInteraction; ++j)
