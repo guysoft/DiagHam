@@ -69,8 +69,7 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin()
 // 
 // nbrFermions = number of fermions
 // totalLz = twice the momentum total value
-// lzMax = twice the maximum Lz value reached by a fermion
-// totalSpin = twce the total spin value
+// lzMax = twice the maximum Lz value reached by a fermion// totalSpin = twce the total spin value
 // memory = amount of memory granted for precalculations
 
 FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, int lzMax, int totalSpin, unsigned long memory)
@@ -242,6 +241,39 @@ AbstractHilbertSpace* FermionOnSphereWithSpin::ExtractSubspace (AbstractQuantumN
 							SubspaceSpaceConverter& converter)
 {
   return 0;
+}
+
+
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// m = Lz value of particle to be added
+// s = spin index of particle to be added (0=down, 1=up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long FermionOnSphereWithSpin::Ad (unsigned long state, int m, int s, double& coefficient)
+{
+  m = (m<<1) + (s&1);
+  if ((state & (0x1ul << m)) != 0)
+    {
+      coefficient=0.0;
+      return 0x0l;
+    }
+  int NewHighestBit = getHighestBit(state)-1;
+  coefficient = 1.0;
+  if (m > NewHighestBit)
+    NewHighestBit = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(state >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(state >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(state >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  state |= (0x1ul << m);
+
+  return state;
 }
 
 // apply a^+_u_m1 a^+_u_m2 a_u_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
@@ -887,6 +919,41 @@ int FermionOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, do
       TmpState |= (0x1l << Index);
     }
   return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+{
+   if (bitcount(stateDescription)!=this->NbrFermions)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  if (highestBit<0)
+    {
+      highestBit = getHighestBit(stateDescription)-1;
+    }
+  if (highestBit >= 2*(LzMax+1))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  int Index = this->FindStateIndex(stateDescription, highestBit);  
+  if (this->StateDescription[Index] == stateDescription)
+    return Index;
+  else
+    {
+      cout << "Unexpected situation in CarefulFindStateIndex!"<<endl;
+      for (int i=0; i<HilbertSpaceDimension; ++i)
+	if (this->StateDescription[i] == stateDescription)
+	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
+	       <<"="<<stateDescription<<"!"<<endl;      
+      return this->HilbertSpaceDimension;
+    }
+
 }
 
 // find state index

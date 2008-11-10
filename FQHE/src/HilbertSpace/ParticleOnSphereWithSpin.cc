@@ -31,6 +31,9 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
+#include <iostream>
+using std::cout;
+using std::endl;
 
 // virtual destructor
 //
@@ -38,6 +41,19 @@
 ParticleOnSphereWithSpin::~ParticleOnSphereWithSpin ()
 {
 }
+
+// apply creation operator to a word, using the conventions
+// for state-coding and quantum numbers of this space
+// state = word to be acted upon
+// m = Lz value of particle to be added
+// s = spin index of particle to be added (0=down, 1=up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+unsigned long ParticleOnSphereWithSpin::Ad (unsigned long state, int m, int s, double& coefficient)
+{
+  cout << "Attention: calling placeholder function ParticleOnSphereWithSpin::Ad - please override in inherited class!" <<endl;
+  return 0x0l;
+}
+
 
 // apply sum_s a^+_m_s a_m_s operator to a given state (sum over all spin states)
 //
@@ -223,6 +239,16 @@ int ParticleOnSphereWithSpin::ProdAd (int* m, int* spinIndices, int nbrIndices, 
 // return value = index of the destination state 
 
 int ParticleOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int ParticleOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
 {
   return this->HilbertSpaceDimension;
 }

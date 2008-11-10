@@ -155,6 +155,15 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
+  // apply creation operator to a word, using the conventions
+  // for state-coding and quantum numbers of this space
+  // state = word to be acted upon
+  // m = Lz value of particle to be added
+  // s = spin index of particle to be added (0=down, 1=up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  virtual unsigned long Ad (unsigned long state, int m, int s, double& coefficient);
+
+
   // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
   //
   // index = index of the state on which the operator has to be applied
@@ -285,6 +294,13 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
   // print a given State
   //

@@ -16,6 +16,7 @@
 #include "Tools/FQHEWaveFunction/PairedCFOnSphereWithSpinWaveFunction.h"
 #include "Tools/FQHEWaveFunction/WaveFunctionOverlapOptimizer.h"
 #include "Tools/FQHEWaveFunction/ExtendedHalperinWavefunction.h"
+#include "Tools/FQHEWaveFunction/HundRuleBilayerSinglet.h"
 #include "Tools/FQHEMonteCarlo/ParticleOnSphereCollection.h"
 
 #include "MCObservables/RealObservable.h"
@@ -86,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 9);
   (*SystemGroup) += new SingleIntegerOption  ('s', "SzTotal", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "exact-state", "name of the file containing the vector obtained using exact diagonalization");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-trial", "calculate overlap against a known trial state");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function");
   // (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
@@ -130,6 +132,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  bool UseTrial = Manager.GetBoolean("use-trial");
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["SzTotal"])->GetInteger();
@@ -149,7 +152,7 @@ int main(int argc, char** argv)
     }
   
   RealVector State;
-  if (Manager.GetInteger("history-mode")<2)
+  if ((Manager.GetInteger("history-mode")<2) && (! UseTrial))
     {
       if (Manager.GetString("exact-state") == 0)
 	{
@@ -196,13 +199,22 @@ int main(int argc, char** argv)
       
     }
   
-  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();    
-  
+  Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
+
   if (TestWaveFunction == 0)
     {
       cout << "no or unknown analytical wave function" << endl;
       return -1;
     }
+
+  Abstract1DComplexFunction* ReplaceExactFunction = NULL;
+  if (UseTrial)
+    {      
+      ReplaceExactFunction = new HundRuleBilayerSinglet(NbrFermions/2);
+      ((HundRuleBilayerSinglet*)ReplaceExactFunction)->AdaptAverageMCNorm();
+      LzMax = NbrFermions-1;
+    }
+  
 
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(NbrFermions, Manager.GetInteger("randomSeed"));
   Particles->MultiplyStepLength(sqrt(2.0));
@@ -221,9 +233,17 @@ int main(int argc, char** argv)
 	{
 	  if (HistoryFileName==NULL)
 	    {
-	      // default filename: add extension to exact vector
-	      HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
-	      sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+	      if (UseTrial)
+		{
+		  HistoryFileName = new char[30];
+		  sprintf(HistoryFileName,"hund_n%d.samp",NbrFermions);
+		}
+	      else
+		{
+		  // default filename: add extension to exact vector
+		  HistoryFileName = new char[strlen(Manager.GetString("exact-state"))+6];
+		  sprintf(HistoryFileName,"%s.samp",Manager.GetString("exact-state"));
+		}
 	    }
 	  char *tmpC = WaveFunctionManager.GetDescription();
 	  History=new MCHistoryRecord(NbrIter, 2*NbrFermions, Manager.GetString("exact-state"), tmpC, HistoryFileName
@@ -239,64 +259,66 @@ int main(int argc, char** argv)
 
   FermionOnSphereWithSpin *Space = NULL;
 
-  if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+  if (!UseTrial)
     {
+      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+	{
 #ifdef __64_BITS__
-      if (LzMax <= 31)
+	  if (LzMax <= 31)
 #else
-      if (LzMax <= 15)
+	    if (LzMax <= 15)
 #endif
-	{
-	  if (State.GetVectorDimension()>0)
-	    {
-	      Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
-	    }
-	}
-      else
-	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
-    }
-  else
-    {
-#ifdef __64_BITS__
-      if (LzMax >= 31)
-#else
-      if (LzMax >= 15)
-#endif
-	{
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-	}	
-      if (SzSymmetrizedBasis == true) 
-	if (LzSymmetrizedBasis == false)
-	  {
-	    if (Manager.GetString("load-hilbert") == 0)
-	      Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+	      {
+		if (State.GetVectorDimension()>0)
+		  {
+		    Space = new FermionOnSphereWithSpin(NbrFermions, 0, LzMax, SzTotal, MemorySpace);
+		  }
+	      }
 	    else
-	      Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
-	  }
-	else
-	  if (Manager.GetString("load-hilbert") == 0)
-	    {
-	      Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-							      ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	    }
-	  else
-	    Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	}
       else
-	if (Manager.GetString("load-hilbert") == 0)
-	  Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	else
-	  Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
-      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
 	{
-	  ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	  return 0;
+#ifdef __64_BITS__
+	  if (LzMax >= 31)
+#else
+	    if (LzMax >= 15)
+#endif
+	      {
+		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		return -1;
+	      }	
+	  if (SzSymmetrizedBasis == true) 
+	    if (LzSymmetrizedBasis == false)
+	      {
+		if (Manager.GetString("load-hilbert") == 0)
+		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, 0, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
+		else
+		  Space = new FermionOnSphereWithSpinSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	      }
+	    else
+	      if (Manager.GetString("load-hilbert") == 0)
+		{
+		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
+								  ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+		}
+	      else
+		Space = new FermionOnSphereWithSpinLzSzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);
+	  else
+	    if (Manager.GetString("load-hilbert") == 0)
+	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
+	    else
+	      Space = new FermionOnSphereWithSpinLzSymmetry(Manager.GetString("load-hilbert"), MemorySpace);	      
+	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	    {
+	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      return 0;
+	    }
 	}
     }
-
   
 // #ifdef __64_BITS__
 //       if (LzMax <= 31)
@@ -363,10 +385,15 @@ int main(int argc, char** argv)
 	      if (State.GetVectorDimension()>0) // have exact state!
 		{
 		  cout << "Checking if abnormal result is reproduced!" << endl;
-		  ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
-		  QHEParticleWaveFunctionOperation Operation(Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
-		  Operation.ApplyOperation(Architecture.GetArchitecture());      
-		  ValueExact = Operation.GetScalar();
+		  if (UseTrial)
+		    ValueExact = (*ReplaceExactFunction)(Particles->GetPositions());
+		  else
+		    {
+		      ParticleOnSphereFunctionBasis Basis(LzMax,ParticleOnSphereFunctionBasis::LeftHanded);  
+		      QHEParticleWaveFunctionOperation Operation(Space, &State, &Positions, &Basis, /* TimeCoherence */ -1);
+		      Operation.ApplyOperation(Architecture.GetArchitecture());      
+		      ValueExact = Operation.GetScalar();
+		    }
 		  cout << "Comparing: " << ValueExact << " (new) to "<< rawExact << " (old) (ratio " << ValueExact/rawExact << ")" <<endl;
 		}
 	    }
@@ -445,9 +472,14 @@ int main(int argc, char** argv)
   if ((SzTotal==0)&&(NbrFermions%2==0)) // otherwise this is not so easy...
     {
       // calculate value:
-      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis);
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      Complex ValueExact (Operation.GetScalar());      
+      if (UseTrial)
+	ValueExact = (*ReplaceExactFunction)(Particles->GetPositions());
+      else
+	{
+	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());      
+	  Complex ValueExact (Operation.GetScalar());
+	}
       Complex ValueTrial, ValueTrial2;
       ValueTrial = (*TestWaveFunction)(Particles->GetPositions());      
       double Tmp2;
@@ -464,9 +496,16 @@ int main(int argc, char** argv)
 	}
       // recalculate:
       ValueTrial2 = (*TestWaveFunction)(Particles->GetPositions());
-      QHEParticleWaveFunctionOperation Operation2(Space, &State, &(Particles->GetPositions()), &Basis,-1);
-      Operation2.ApplyOperation(Architecture.GetArchitecture());      
-      Complex ValueExact2 (Operation2.GetScalar());
+      Complex ValueExact2;
+      if (UseTrial)
+	ValueExact2 = (*ReplaceExactFunction)(Particles->GetPositions());
+      else
+	{
+	  QHEParticleWaveFunctionOperation Operation2(Space, &State, &(Particles->GetPositions()), &Basis,-1);
+	  Operation2.ApplyOperation(Architecture.GetArchitecture());
+	  ValueExact2 = (Operation2.GetScalar());
+	}
+      
       cout << "Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
       cout << "Parity: " << ValueExact/ValueExact2 << endl;
       cout << "Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
@@ -514,9 +553,14 @@ int main(int argc, char** argv)
     {
       // - exact function
       TimeCoherence = -1;
-      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-      Operation.ApplyOperation(Architecture.GetArchitecture());      
-      ValueExact = Operation.GetScalar();
+      if (UseTrial)
+	ValueExact = (*ReplaceExactFunction)(Particles->GetPositions());
+      else
+	{
+	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());	  
+	  ValueExact = Operation.GetScalar();
+	}
       // initialize function values at initial positions: - trial function
       TrialValue = (*TestWaveFunction)(Particles->GetPositions());  
       PreviousSamplingAmplitude = SqrNorm(TrialValue);
@@ -541,10 +585,15 @@ int main(int argc, char** argv)
 	    {
 	      // recalculate exact function value:
 	      TimeCoherence = NextCoordinates;
-	      if (NoTimeCoherence) TimeCoherence = -1;      
-	      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      ValueExact = Operation.GetScalar();
+	      if (NoTimeCoherence) TimeCoherence = -1;
+	      if (UseTrial)
+		ValueExact = (*ReplaceExactFunction)(Particles->GetPositions());
+	      else
+		{		  
+		  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());
+		  ValueExact = Operation.GetScalar();
+		}
 	      if (History)
 		History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	    }
@@ -560,10 +609,15 @@ int main(int argc, char** argv)
 	{
 	  // recalculate exact function value:
 	  TimeCoherence = NextCoordinates;
-	  if (NoTimeCoherence) TimeCoherence = -1;      
-	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  ValueExact = Operation.GetScalar();
+	  if (NoTimeCoherence) TimeCoherence = -1;
+	  if (UseTrial)
+	    ValueExact = (*ReplaceExactFunction)(Particles->GetPositions());
+	  else
+	    {	      
+	      QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis, TimeCoherence);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());      
+	      ValueExact = Operation.GetScalar();
+	    }
 	  if (History) History->RecordAcceptedStep( CurrentSamplingAmplitude, Particles->GetPositions(), ValueExact);
 	}
       // determine next particle to move

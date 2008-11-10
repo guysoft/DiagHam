@@ -601,6 +601,7 @@ void PairedCFOnSphereWithSpinWaveFunction::EvaluateTables()
 	      {
 		//offset-alpha gives Phi[] with -m 
 		tmp+=this->fsgn((m2+AbsEffectiveFlux)/2)*OrbitalValues1[alpha][i]*OrbitalValues2[offset-alpha][j];
+
 		//cout << "matching up " << alpha << " with " << offset-alpha<<" sign: "<<this->fsgn((m2+AbsEffectiveFlux)/2)<<endl;
 		alpha++;
 	      }
