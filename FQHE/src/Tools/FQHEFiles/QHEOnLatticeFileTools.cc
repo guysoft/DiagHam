@@ -172,11 +172,12 @@ bool FQHEOnLatticeFindSystemInfoFromFileName(char* filename, int& nbrParticles, 
 	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 		 && (StrNbrParticles[SizeString] <= '9'))
 	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	  if (SizeString != 0)
 	    {
+	      char tmpC = StrNbrParticles[SizeString];
 	      StrNbrParticles[SizeString] = '\0';
 	      flux = atoi(StrNbrParticles);
-	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles[SizeString] = tmpC;
 	      StrNbrParticles += SizeString;
 	    }
 	  else
@@ -344,16 +345,17 @@ bool FQHEOnLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbrParti
 	  StrNbrParticles += 3;
 	  int SizeString = 0;
 	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
-		 && (StrNbrParticles[SizeString] <= '9'))
+		 && (StrNbrParticles[SizeString] <= '9') && (StrNbrParticles[SizeString] >= '0'))
 	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	  if (SizeString != 0)
 	    {
+	      char tmpC=StrNbrParticles[SizeString];
 	      StrNbrParticles[SizeString] = '\0';
 	      if (flux == 0)
 		{
 		  flux = atoi(StrNbrParticles);
 		}
-	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles[SizeString] = tmpC;
 	      StrNbrParticles += SizeString;
 	    }
 	  else
@@ -574,14 +576,15 @@ bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nb
 	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 		 && (StrNbrParticles[SizeString] <= '9'))
 	    ++SizeString;
-	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	  if (SizeString != 0)
 	    {
+	      char tmpC=StrNbrParticles[SizeString];
 	      StrNbrParticles[SizeString] = '\0';
 	      if (flux == 0)
 		{
 		  flux = atoi(StrNbrParticles);
 		}
-	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles[SizeString] = tmpC;
 	      StrNbrParticles += SizeString;
 	    }
 	  else

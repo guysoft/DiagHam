@@ -843,6 +843,47 @@ void BosonOnLatticeKy::DecodeCompositeMomentum(int cK, int &ky, int &fluxSubLatt
 }
 
 
+// obtain a list of quantum numbers in state
+// index = index of many-body state to be considered
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+// normalization = indicating the multiplicity of the state for bosonic spaces
+void BosonOnLatticeKy::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateHighestBit[index], this->TemporaryState, this->TemporaryStateHighestBit);
+  int NbrQ=0;
+  normalization=1.0;
+  for (int q=0; q<=TemporaryStateHighestBit; ++q)
+    if (this->TemporaryState[q]>0)
+      {		
+	for (unsigned int l=this->TemporaryState[q];l>0; --l)
+	  {
+	    normalization*=l;
+	    quantumNumbers[NbrQ]=q;
+	    ++NbrQ;
+	  }
+      }
+  normalization=sqrt(normalization);
+}
+
+// obtain a list of quantum numbers in state
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+void BosonOnLatticeKy::ListQuantumNumbers(int index, int *quantumNumbers)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateHighestBit[index], this->TemporaryState, this->TemporaryStateHighestBit);
+  int NbrQ=0;
+  for (int q=0; q<=TemporaryStateHighestBit; ++q)
+    if (this->TemporaryState[q]>0)
+      {		
+	for (unsigned int l=this->TemporaryState[q];l>0; --l)
+	  {
+	    quantumNumbers[NbrQ]=q;
+	    ++NbrQ;
+	  }
+      }
+}
+
+
+
 // translate a state by a multiple of the lattice vectors
 // shiftX = length of translation in x-direction
 // shiftY = length of translation in y-direction
@@ -1134,23 +1175,10 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Boson
   bitset <32> b;
   for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
     {
-      this->FermionToBoson(this->StateDescription[i], this->StateHighestBit[i], this->TemporaryState, this->TemporaryStateHighestBit);
-      int NbrQ=0;
-      Normalization=1.0;
       if (Norm(state[i])>1e-15)
 	{
-	  for (int q=0; q<=TemporaryStateHighestBit; ++q)
-	    if (this->TemporaryState[q]>0)
-	      {		
-		for (unsigned int l=this->TemporaryState[q];l>0; --l)
-		  {
-		    Normalization*=l;
-		    QuantumNumbers[NbrQ]=q;
-		    cout << "QuantumNumbers["<<NbrQ<<"]="<< QuantumNumbers[NbrQ]<<endl;
-		    ++NbrQ;
-		  }
-	      }
-	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]/sqrt(Normalization));
+	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
+	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]/Normalization);
 	}
     }
   cout << "Norm was:" << TargetVector.Norm() << endl;

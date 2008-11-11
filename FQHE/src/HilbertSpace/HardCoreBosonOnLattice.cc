@@ -564,6 +564,28 @@ void HardCoreBosonOnLattice::DecodeQuantumNumber(int q, int &posx, int &posy, in
   posy=(q%(m*Ly))/m;  
 }
 
+// obtain a list of quantum numbers in state
+// index = index of many-body state to be considered
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+// normalization = indicating the multiplicity of the state for bosonic spaces
+void HardCoreBosonOnLattice::ListQuantumNumbers(int index, int *quantumNumbers, double &normalization)
+{
+  normalization=1.0;
+  this->ListQuantumNumbers(index, quantumNumbers);
+}
+
+// obtain a list of quantum numbers in state
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+void HardCoreBosonOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
+{
+  unsigned long State = this->StateDescription[index];
+  int HighestBit = this->StateHighestBit[index];
+  int NbrQ=0;
+  for (int q=0; q<=HighestBit; ++q)
+    if (State&(0x1u<<q))
+      quantumNumbers[NbrQ++]=q;
+}
+
 // translate a state by a multiple of the lattice vectors
 // shiftX = length of translation in x-direction
 // shiftY = length of translation in y-direction

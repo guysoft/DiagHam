@@ -253,7 +253,7 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   // posx = position along x-direction
   // ky = momentum in y-direction
   // sublattice = sublattice index
-  virtual void DecodeQuantumNumber(int q, int &posx, int &ky, int &sublattice);
+  virtual void DecodeQuantumNumber(int q, int &posx, int &ky, int &sublattice);  
 
   // ky = true momentum in y-direction
   // fluxSubLattice = 'sublattice' index remaining after translation symmetry
@@ -266,6 +266,17 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   // extract the momentum ky from a quantum number q
   // return: momentum ky (in range 0...Kmax-1)
   int DecodeKy(int q);
+  
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  // normalization = indicating the multiplicity of the state for bosonic spaces
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers, double &normalization);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers);
 
   // translate a state by a multiple of the lattice vectors
   // shiftX = length of translation in x-direction

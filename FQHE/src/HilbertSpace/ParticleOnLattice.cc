@@ -148,6 +148,16 @@ double ParticleOnLattice::AdAdAADiagonal(int index, int nbrInteraction, double *
 }
 
 
+// obtain a list of quantum numbers in state
+// quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+void ParticleOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
+{
+  double tmp;
+  this->ListQuantumNumbers(index, quantumNumbers, tmp);
+}
+
+
+
 // evaluate wave function in real space using a given basis
 //
 // state = vector corresponding to the state in the Fock basis

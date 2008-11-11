@@ -279,6 +279,17 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // fluxSubLattice = 'sublattice' index remaining after translation symmetry
   virtual void DecodeCompositeMomentum(int cK, int &ky, int &fluxSubLattice);
 
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  // normalization = indicating the multiplicity of the state for bosonic spaces
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers, double &normalization);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers);
+
   // extract the momentum ky from a quantum number q
   // return: momentum ky (in range 0...Kmax-1)
   int DecodeKy(int q);

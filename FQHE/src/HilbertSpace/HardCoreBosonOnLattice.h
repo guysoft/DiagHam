@@ -245,7 +245,18 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // posx = position along x-direction
   // posy = position along y-direction
   // sublattice = sublattice index
-  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice);  
+  virtual void DecodeQuantumNumber(int q, int &posx, int &posy, int &sublattice);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  // normalization = indicating the multiplicity of the state for bosonic spaces
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers, double &normalization);
+
+  // obtain a list of quantum numbers in state
+  // index = index of many-body state to be considered
+  // quantumNumbers = integer array of length NbrParticles, to be written with quantum numbers of individual particles
+  virtual void ListQuantumNumbers(int index, int *quantumNumbers);
 
   // translate a state by a multiple of the lattice vectors
   // shiftX = length of translation in x-direction

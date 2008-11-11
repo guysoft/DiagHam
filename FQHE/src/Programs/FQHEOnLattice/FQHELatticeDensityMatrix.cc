@@ -109,7 +109,7 @@ int main(int argc, char** argv)
       cout << "At least one vector file is required!"<<endl;
       exit(1);
     }
-  double Interaction=0.0;
+  double Interaction=-1.0;
   int TmpI=-1;
   bool Statistics=false;
   bool HardCore=false;
