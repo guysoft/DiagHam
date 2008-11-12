@@ -12,11 +12,15 @@
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 #include "MathTools/RandomNumber/FileRandomNumberGenerator.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 
 #include "Options/Options.h"
 
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHEDiskLaughlinOneQuasiholeWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PfaffianOnDiskTwoQuasiholeWaveFunction.h"
+#include "Tools/FQHEWaveFunction/PfaffianOnDiskTwoQuasielectronWaveFunction.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -34,6 +38,7 @@
 using std::ios;
 using std::cout;
 using std::endl;
+using std::flush;
 using std::ofstream;
 
 
@@ -41,12 +46,14 @@ void RandomZ (RealVector& positions, double scale, int nbrParticles, AbstractRan
 
 void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
 
+bool RandomZOneCoordinateWithJump(RealVector& positions, double scale, double jump, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
+
 // flip two one-body coordinates
 //
 // coordinates = reference on the n-body coordinate vector
 // i = index of the first one body coordinate
 // j = index of the second one body coordinate
-void FlipCoordinates (ComplexVector& coordinates, int i, int j);
+void FlipCoordinates (RealVector& coordinates, int i, int j);
 
 
 int main(int argc, char** argv)
@@ -79,6 +86,9 @@ int main(int argc, char** argv)
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals used to sample the disk geometry", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil in each direction", 20);
+  (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "grid-length", "size of the sampling grid (in unit of the magnetic length", 20);
+  (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "jump", "length of the jump used for the metropolis algorithm", 0.3);
+  
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
   (*MonteCarloGroup) += new BooleanOption  ('r', "resume", "resume from a previous run");
@@ -125,35 +135,42 @@ int main(int argc, char** argv)
       RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
       RecordFile.close();
     }
-
+  double GridScale =  ((SingleDoubleOption*) Manager["grid-length"])->GetDouble();
+  double InvGridStep = ((double) NbrSteps) / GridScale;
+  double GridStep = 1.0 / InvGridStep;
+  double GridShift = -0.5 * GridScale;
+  double MCJump = ((SingleDoubleOption*) Manager["jump"])->GetDouble();
 
   Abstract1DComplexFunction* SymmetrizedFunction = 0;
   if (QuasielectronFlag == true)
     {
-      if (LaughlinFlag == true)
-	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
-      else
-	{
-	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
-	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
-	  else
-	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
-										   0.0, 0.0, M_PI, 0.0, StatisticFlag);
-	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
-	    {
-	      ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
-	      return 0;
-	    }
-	}
+//      if (LaughlinFlag == true)
+//	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
+//      else
+// 	{
+// 	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+// 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+// 	  else
+// 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
+// 										   0.0, 0.0, M_PI, 0.0, StatisticFlag);
+// 	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+// 	    {
+// 	      ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+// 	      return 0;
+// 	    }
+// 	}
     }
   else
     {
       if (LaughlinFlag == true)
-	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
+	if (StatisticFlag == true)
+	  SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 3);
+	else
+	  SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 2);
       else
-	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
+	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, -0.25 * GridScale, 0.25 * GridScale, StatisticFlag);
     }
-  Abstract1DComplexFunctionOnDisk* TestFunction;
+
   AbstractRandomNumberGenerator* RandomNumber = 0;
   if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
     {
@@ -181,64 +198,79 @@ int main(int argc, char** argv)
 
   if (OverlapFlag == true)
     {
-      ComplexVector TmpZ (NbrParticles, true);
-      Complex PreviousTmpZ;
-      Complex** FunctionBasisEvaluation = new Complex* [NbrSteps];
+      int TwiceNbrParticles = NbrParticles * 2;
+      RealVector TmpZ (TwiceNbrParticles, true);
+      double PreviousTmpZRe;
+      double PreviousTmpZIm;
+      double** FunctionBasisDecomposition = new double* [NbrSteps];
       for (int k = 0; k < NbrSteps; ++k)
 	{
-	  FunctionBasisEvaluation[k] = new Complex [NbrSteps];
+	  FunctionBasisDecomposition[k] = new double [NbrSteps];
 	  for (int j = 0; j < NbrSteps; ++j)
-	    FunctionBasisEvaluation[k][j] = 0.O;
+	    FunctionBasisDecomposition[k][j] = 0.0;
 	}
       double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
       double* ExpTable = new double [NbrParticles];
-      int TwiceNbrParticles = NbrParticles * 2;
-      int* GridLocations = new int [TwiceNbrParticles];
       double PreviousExp = 0.0;
+
+      int* GridLocations = new int [TwiceNbrParticles];
 
       double TotalProbability = 0.0;
       double TotalProbabilityError = 0.0;
-      double ThetaStep = M_PI / NbrSteps;
       int CurrentPercent = 0;
-      double Theta = 0.0;
 
-      RandomZ (TmpUV, TmpPositions, NbrParticles, RandomNumber);
+      RandomZ (TmpZ, GridScale, NbrParticles, RandomNumber);
       int NextCoordinate = 0;
       double PreviousProbabilities = 0.0;
       double CurrentProbabilities = 0.0;
       TotalProbability = 0.0;
       int Acceptance = 0;	  
       
-      Complex Tmp = SymmetrizedFunction->CalculateFromSpinorVariables(TmpUV);
+      Complex Tmp = (*SymmetrizedFunction)(TmpZ);
       CurrentProbabilities = SqrNorm(Tmp);
       for (int k = 0; k < NbrParticles; ++k)
 	{
-	  SinTable[k] = exp (-0.5 * SqrNorm(TmpZ[k]));
-	  CurrentProbabilities *= SinTable[k];
+	  ExpTable[k] = exp(-0.5 * ((TmpZ[(k << 1)] * TmpZ[(k << 1)])
+				    + (TmpZ[(k << 1) + 1] * TmpZ[(k << 1) + 1])));
+	  CurrentProbabilities *= ExpTable[k];
 	}
       PreviousProbabilities = CurrentProbabilities;
       
       cout << "starting warm-up sequence" << endl;
       for (int i = 1; i < NbrWarmUpIter; ++i)
 	{
-	  PreviousTmpZ = TmpZ[NextCoordinate];
-	  PreviousExp = NbrParticles[NextCoordinate];
-	  RandomZOneCoordinate(TmpZ, Scale, NextCoordinate, RandomNumber);
-	  Complex TmpMetropolis = SymmetrizedFunction(TmpZ);
-	  CurrentProbabilities = SqrNorm(TmpMetropolis);
-	  ExpTable[NextCoordinate] = exp(-0.5 * SqrNorm(TmpZ[NextCoordinate]));
-	  for (int k = 0; k < NbrParticles; ++k)
-	    CurrentProbabilities *= ExpTable[k];
-	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
+	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
+	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
 	    {
-	      PreviousProbabilities = CurrentProbabilities;
-	      ++Acceptance;
+	      PreviousExp = ExpTable[NextCoordinate];
+	      Complex TmpMetropolis = (*SymmetrizedFunction)(TmpZ);
+	      CurrentProbabilities = SqrNorm(TmpMetropolis);
+ 	      ExpTable[NextCoordinate] = exp(-0.5 * ((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)])
+ 						     + (TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])));
+//	      ExpTable[NextCoordinate] = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
+//						     + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
+//	      cout << ExpTable[NextCoordinate] << endl;
+ 	      for (int k = 0; k < NbrParticles; ++k)
+ 		CurrentProbabilities *= ExpTable[k];
+//	      CurrentProbabilities *= ExpTable[NextCoordinate];
+	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+		{
+		  PreviousProbabilities = CurrentProbabilities;
+		  ++Acceptance;
+		}
+	      else
+		{
+		  TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
+		  TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
+		  ExpTable[NextCoordinate] = PreviousExp;
+		  CurrentProbabilities = PreviousProbabilities;
+		}
 	    }
 	  else
 	    {
-	      TmpZ[NextCoordinate] = PreviousTmpZ;
-	      ExpTable[NextCoordinate] = PreviousExp;
-	      CurrentProbabilities = PreviousProbabilities;
+	      TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
+	      TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
 	    }
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 	  if (((i * 20) / NbrWarmUpIter) != CurrentPercent)
@@ -250,33 +282,58 @@ int main(int argc, char** argv)
       cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
       CurrentPercent = 0;
+      for (int i = 0; i < TwiceNbrParticles; ++i)
+	GridLocations[i] = (int) ((TmpZ[i] - GridShift) * InvGridStep);
 
       cout << "starting MC sequence" << endl;
       Acceptance = 0;
 
       for (int i = 0; i < NbrIter; ++i)
 	{
-	  PreviousTmpZ = TmpZ[NextCoordinate];
-	  PreviousExp = NbrParticles[NextCoordinate];
-	  RandomZOneCoordinate(TmpZ, Scale, NextCoordinate, RandomNumber);
-	  Complex TmpMetropolis = SymmetrizedFunction(TmpZ);
-	  CurrentProbabilities = SqrNorm(TmpMetropolis);
-	  ExpTable[NextCoordinate] = exp(-0.5 * SqrNorm(TmpZ[NextCoordinate]));
-	  for (int k = 0; k < NbrParticles; ++k)
-	    CurrentProbabilities *= ExpTable[k];
-	  if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
+	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
+	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
 	    {
-	      PreviousProbabilities = CurrentProbabilities;
-	      ++Acceptance;	      
+	      PreviousExp = ExpTable[NextCoordinate];
+	      Complex TmpMetropolis = (*SymmetrizedFunction)(TmpZ);
+	      CurrentProbabilities = SqrNorm(TmpMetropolis);
+// 	      ExpTable[NextCoordinate] = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
+// 						     + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
+	      ExpTable[NextCoordinate] = exp(-0.5 * ((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)])
+						     + (TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])));
+	      for (int k = 0; k < NbrParticles; ++k)
+		CurrentProbabilities *= ExpTable[k];
+//	      CurrentProbabilities *= ExpTable[NextCoordinate];
+	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
+		{
+		  PreviousProbabilities = CurrentProbabilities;
+		  GridLocations[NextCoordinate << 1] = (int) ((TmpZ[NextCoordinate << 1] - GridShift) * InvGridStep);
+		  if ((GridLocations[NextCoordinate << 1] < 0) || (GridLocations[NextCoordinate << 1] >= NbrSteps))
+		    {
+		      cout << "1 : " << GridLocations[NextCoordinate << 1] << " " << TmpZ[NextCoordinate << 1] << " " <<  GridShift << " " << InvGridStep << endl;
+		    }
+		  GridLocations[(NextCoordinate << 1) + 1] = (int) ((TmpZ[(NextCoordinate << 1) + 1] - GridShift) * InvGridStep);
+		  if ((GridLocations[(NextCoordinate << 1) + 1] < 0) || (GridLocations[(NextCoordinate << 1) + 1] >= NbrSteps))
+		    {
+		      cout << "2 : " << GridLocations[(NextCoordinate << 1) + 1] << " " << TmpZ[(NextCoordinate << 1) + 1] << " " <<  GridShift << " " << InvGridStep << endl;
+		    }
+		  ++Acceptance;	      
+		}
+	      else
+		{
+		  TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
+		  TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
+		  ExpTable[NextCoordinate] = PreviousExp;
+		  CurrentProbabilities = PreviousProbabilities;
+		}
 	    }
 	  else
 	    {
-	      TmpZ[NextCoordinate] = PreviousTmpZ;
-	      ExpTable[NextCoordinate] = PreviousExp;
-	      CurrentProbabilities = PreviousProbabilities;
+	      TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
+	      TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
 	    }
 
-	  for (int j = 0; j < TwiceNbrParticles; j += 2;)
+	  for (int j = 0; j < TwiceNbrParticles; j += 2)
 	    FunctionBasisDecomposition[GridLocations[j]][GridLocations[j + 1]] += 1.0;
 
 	  TotalProbability++;	  
@@ -296,67 +353,47 @@ int main(int argc, char** argv)
       TotalProbabilityError -= (TotalProbability * TotalProbability) / (((double) NbrIter) * ((double) NbrIter));
       TotalProbabilityError = sqrt(TotalProbabilityError) / (TotalProbability / ((double) NbrIter));
       TotalProbabilityError /= sqrt ((double) NbrIter);
-      for (int k = 0; k < NbrOrbitals; ++k)
-	{
-	  FunctionBasisDecompositionError[k] *= ((double) NbrIter);
-	  FunctionBasisDecompositionError[k] -= FunctionBasisDecomposition[k] * FunctionBasisDecomposition[k];
-	  FunctionBasisDecompositionError[k] = sqrt(FunctionBasisDecompositionError[k] / ((double) NbrIter)) / FunctionBasisDecomposition[k];
-	  FunctionBasisDecompositionError[k] += TotalProbabilityError;
-	}
 
       TotalProbability =  1.0 / TotalProbability;
-      for (int k = 0; k < NbrOrbitals; ++k)
-	{
-	  FunctionBasisDecomposition[k] *= TotalProbability;
-	  FunctionBasisDecompositionError[k] *= FunctionBasisDecomposition[k];
-	}
+      for (int i = 0; i < NbrSteps; ++i)
+	for (int j = 0; j < NbrSteps; ++j)	  
+	  FunctionBasisDecomposition[i][j] *= TotalProbability;
 
       ofstream DensityRecordFile;
       DensityRecordFile.precision(14);
       DensityRecordFile.open(((SingleStringOption*) Manager["output"])->GetString(), ios::out);
 
       DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
-      double TmpX = InitialX;
-      for (int i = 0; i <= NbrSteps; ++i)
+      double TmpX = GridShift;
+      double Sum = 0.0;
+      for (int i = 0; i < NbrSteps; ++i)
 	{
-	  double TmpY = InitialX;
-	  for (int j = 0; j <= NbrSteps; ++j)
+	  double TmpY = GridShift;
+	  for (int j = 0; j < NbrSteps; ++j)
 	    {
 	      DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[i][j] << endl;
-	      TmpY += StepValue;
+	      Sum += FunctionBasisDecomposition[i][j];
+	      TmpY += GridStep;
 	    }
 	  DensityRecordFile << endl;
-	  TmpX += StepValue;
-	}
-	  TmpPos[0] = Theta;
-	  double Tmp = 0.0;
-	  Complex Tmp2;
-	  for (int k = 0; k < NbrOrbitals; ++k)
-	    {
-	      FunctionBasis.GetFunctionValue(TmpPos, Tmp2, k);
-	      Tmp += FunctionBasisDecomposition[k] * SqrNorm(Tmp2);
-	    }
-	  Tmp *= TmpFactor;
-	  Sum += sin(Theta) * Tmp;
-	  DensityRecordFile << Theta << " " << Tmp << endl;
-	  Theta += ThetaStep;
+	  TmpX += GridStep;
 	}
       DensityRecordFile.close();
-      cout << "Sum = " << (Sum * ThetaStep * 2.0 * M_PI) << endl;
+      cout << "Sum = " << Sum << endl;
     }
    else
      {
-       ComplexVector TmpZ (NbrParticles, true);
-       RandomZ (TmpZ, Scale, NbrParticles, RandomNumber);
-       cout << SymmetrizedFunction(TmpZ) << endl;;
+       RealVector TmpZ (2 * NbrParticles, true);
+       RandomZ (TmpZ, GridScale, NbrParticles, RandomNumber);
+       cout << (*SymmetrizedFunction)(TmpZ) << endl;;
        for (int i = 0; i < NbrParticles; ++i)
 	 {
 	   for (int j = i + 1; j < NbrParticles; ++j)
 	     {
 	       cout << i << "<->" << j << " : ";
-	       cout << SymmetrizedFunction(TmpZ) << " | " ;
+	       cout << (*SymmetrizedFunction)(TmpZ) << " | " ;
 	       FlipCoordinates(TmpZ, i, j);
-	       cout << SymmetrizedFunction(TmpZ) << endl;
+	       cout << (*SymmetrizedFunction)(TmpZ) << endl;
 	       FlipCoordinates(TmpZ, i, j);	       
 	     }
 	 }
@@ -368,21 +405,34 @@ void RandomZ (RealVector& positions, double scale, int nbrParticles, AbstractRan
 {
   for (int j = 0; j < nbrParticles; ++j)
     {
-      double x = scale * sqrt(-2.0 * log(1.0 - randomNumberGenerator->GetRealRandomNumber()));
-      double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
-      positions[2 * j] = x * cos(y);
-      positions[(2 * j) + 1] = x * sin(y);
+      positions[2 * j] = scale * (0.5 - randomNumberGenerator->GetRealRandomNumber());
+      positions[(2 * j) + 1] = scale * (0.5 - randomNumberGenerator->GetRealRandomNumber());
     }
 }
 
 void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
 {
   coordinate *= 2;
-  double x = scale * sqrt(-2.0 * log(1.0 - randomNumberGenerator->GetRealRandomNumber()));
-  double y = 2.0 * M_PI * randomNumberGenerator->GetRealRandomNumber();
-  positions[coordinate] = x * cos(y);
+  positions[coordinate] = scale * (0.5 - randomNumberGenerator->GetRealRandomNumber());
   ++coordinate;
-  positions[coordinate] = x * sin(y);
+  positions[coordinate] = scale * (0.5 - randomNumberGenerator->GetRealRandomNumber());
+}
+
+bool RandomZOneCoordinateWithJump(RealVector& positions, double scale, double jump, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
+{
+  coordinate *= 2;
+  double OldCoordinate =  positions[coordinate];
+  double TmpJump = scale * jump * (0.5 - randomNumberGenerator->GetRealRandomNumber());
+  if (((OldCoordinate + TmpJump) > (0.5 * scale)) || ((OldCoordinate + TmpJump) < -(0.5 * scale)))
+    return false;
+  positions[coordinate] += TmpJump;
+  ++coordinate;
+  OldCoordinate =  positions[coordinate];
+  TmpJump = scale * jump * (0.5 - randomNumberGenerator->GetRealRandomNumber()); 
+  if (((OldCoordinate + TmpJump) > (0.5 * scale)) || ((OldCoordinate + TmpJump) < -(0.5 * scale)))
+    return false;
+  positions[coordinate] += TmpJump;
+  return true;
 }
 
 // flip two one-body coordinates
@@ -391,13 +441,14 @@ void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, A
 // i = index of the first one body coordinate
 // j = index of the second one body coordinate
 
-void FlipCoordinates (ComplexVector& coordinates, int i, int j)
+void FlipCoordinates (RealVector& coordinates, int i, int j)
 {
-  Complex Tmp = coordinates[i];  
-  coordinates.Re(i) = coordinates.Re(j);
-  coordinates.Re(j) = Tmp.Re;
-  coordinates.Im(i) = coordinates.Im(j);
-  coordinates.Im(j) = Tmp.Im;
+  double Tmp = coordinates[i << 1];  
+  coordinates[i << 1] = coordinates[j << 1];
+  coordinates[j << 1] = Tmp;
+  Tmp = coordinates[(i << 1) + 1];  
+  coordinates[(i << 1) + 1] = coordinates[(j << 1) + 1];
+  coordinates[(j << 1) + 1] = Tmp;
 }
 
 
@@ -408,11 +459,8 @@ void FlipCoordinates (ComplexVector& coordinates, int i, int j)
 // invGridStep = sinvert of the grid cell size
 // gridShift = X (or Y) coordinate of the grid upper left corner
 
-void GetGridCoordinates (ComplexVector& coordinates, int* locations, double invGridStep, double gridShift)
+void GetGridCoordinates (RealVector& coordinates, int* locations, double invGridStep, double gridShift)
 {
   for (int i = 0; i < coordinates.GetVectorDimension(); ++i)
-    {
-      locations[i << 1] = (int) ((coordinates[i].Re - gridShift) * invGridStep);
-      locations[(i << 1) + 1] = (int) ((coordinates[i].Im - gridShift) * invGridStep);
-    }
+    locations[i] = (int) ((coordinates[i] - gridShift) * invGridStep);
 }
