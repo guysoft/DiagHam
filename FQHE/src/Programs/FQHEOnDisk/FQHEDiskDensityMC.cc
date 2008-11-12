@@ -192,6 +192,8 @@ int main(int argc, char** argv)
 	}
       double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
       double* ExpTable = new double [NbrParticles];
+      int TwiceNbrParticles = NbrParticles * 2;
+      int* GridLocations = new int [TwiceNbrParticles];
       double PreviousExp = 0.0;
 
       double TotalProbability = 0.0;
@@ -273,11 +275,10 @@ int main(int argc, char** argv)
 	      ExpTable[NextCoordinate] = PreviousExp;
 	      CurrentProbabilities = PreviousProbabilities;
 	    }
-	  for (int k = 0; k < NbrSteps; ++k)
-	    {
-	      FunctionBasisDecomposition[k] += TmpFunctionBasisDecomposition[k];
-	      FunctionBasisDecompositionError[k] += TmpFunctionBasisDecomposition[k] * TmpFunctionBasisDecomposition[k];
-	    }
+
+	  for (int j = 0; j < TwiceNbrParticles; j += 2;)
+	    FunctionBasisDecomposition[GridLocations[j]][GridLocations[j + 1]] += 1.0;
+
 	  TotalProbability++;	  
 	  TotalProbabilityError++;
 
@@ -397,4 +398,21 @@ void FlipCoordinates (ComplexVector& coordinates, int i, int j)
   coordinates.Re(j) = Tmp.Re;
   coordinates.Im(i) = coordinates.Im(j);
   coordinates.Im(j) = Tmp.Im;
+}
+
+
+// get locations on the grid from a position vector
+//
+// coordinates = reference on the n-body coordinate vector
+// locations = array of integer location on the grid
+// invGridStep = sinvert of the grid cell size
+// gridShift = X (or Y) coordinate of the grid upper left corner
+
+void GetGridCoordinates (ComplexVector& coordinates, int* locations, double invGridStep, double gridShift)
+{
+  for (int i = 0; i < coordinates.GetVectorDimension(); ++i)
+    {
+      locations[i << 1] = (int) ((coordinates[i].Re - gridShift) * invGridStep);
+      locations[(i << 1) + 1] = (int) ((coordinates[i].Im - gridShift) * invGridStep);
+    }
 }
