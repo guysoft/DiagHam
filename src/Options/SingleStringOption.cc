@@ -169,16 +169,20 @@ char* SingleStringOption::GetAsAString()
 
 ostream& SingleStringOption::DisplayOption (ostream& output, bool shortVersion)
 {
-  if (shortVersion)
+  if (this->String != 0)
     {
-      output << "-" << this->OptionName << " " <<  this->String;
-      return output;    
+      if (shortVersion)
+	{
+	  output << "-" << this->OptionName << " " <<  this->String;
+	  return output;    
+	}
+      else
+	{
+	  output << "-" << this->OptionName << " : " << this->OptionDescription << " : " << this->String;
+	  return output;   
+	}
     }
-  else
-    {
-      output << "-" << this->OptionName << " : " << this->OptionDescription << " : " << this->String;
-      return output;   
-    }
+  return output; 
 }
 
 // print help concerning current option

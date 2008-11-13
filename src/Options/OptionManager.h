@@ -108,8 +108,9 @@ class OptionManager
   //  
   // output = reference on output stream;
   // shortVersion = true if return only option code and the option value, false if return option description in addition
+  // comment = if different from the null character, add it in front of each line
   // return value = reference on current output stream
-  ostream& DisplayOption (ostream& output, bool shortVersion = false);
+  ostream& DisplayOption (ostream& output, bool shortVersion = false, char comment = '\0');
 
   // print help concerning current option group
   //

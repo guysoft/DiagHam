@@ -147,9 +147,10 @@ ostream& OptionGroup::PrintError (ostream& output)
 //  
 // output = reference on output stream;
 // shortVersion = true if return only option code and the option value, false if return option description in addition
+// comment = if different from the null character, add it in front of each line
 // return value = reference on current output stream
 
-ostream& OptionGroup::DisplayOption (ostream& output, bool shortVersion)
+ostream& OptionGroup::DisplayOption (ostream& output, bool shortVersion, char comment)
 {
   if (shortVersion)
     {      
@@ -161,12 +162,15 @@ ostream& OptionGroup::DisplayOption (ostream& output, bool shortVersion)
     }
   else
     {    
+      if (comment != '\0')
+	output << comment << " ";
       output << this->GroupName << ":" << endl;
       ListIterator<AbstractOption*> IterOption(this->Options);
       AbstractOption** TmpOption;
       while ((TmpOption = IterOption()))
 	{
-	  output << "    ";
+	  if (comment != '\0')
+	    output << comment << " ";
 	  (*TmpOption)->DisplayOption(output, shortVersion) << endl;
 	}
       return output;

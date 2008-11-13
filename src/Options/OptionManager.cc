@@ -193,18 +193,21 @@ void OptionManager::StandardProceedings(char** argumentValues, int nbrArgument, 
 //  
 // output = reference on output stream;
 // shortVersion = true if return only option code and the option value, false if return option description in addition
+// comment = if different from the null character, add it in front of each line
 // return value = reference on current output stream
 
-ostream& OptionManager::DisplayOption (ostream& output, bool shortVersion)
+ostream& OptionManager::DisplayOption (ostream& output, bool shortVersion, char comment)
 {
   if (shortVersion)
     {
+      if (comment != '\0')
+	output << comment << " ";
       output << this->ProgramName << "  ";
       ListIterator<OptionGroup*> IterGroup(this->Groups);
       OptionGroup** TmpGroup;
       while ((TmpGroup = IterGroup()))
 	{
-	  (*TmpGroup)->DisplayOption(output, shortVersion);
+	  (*TmpGroup)->DisplayOption(output, shortVersion, comment);
 	}
       return output;
     }
@@ -212,6 +215,8 @@ ostream& OptionManager::DisplayOption (ostream& output, bool shortVersion)
     {
       if ((this->ProgramVersion != 0) || (this->ProgramAdditionalInformations != 0))
 	{
+	  if (comment != '\0')
+	    output << comment << " ";
 	  output << this->ProgramName;
 	  if (this->ProgramVersion != 0)
 	    {
@@ -223,15 +228,28 @@ ostream& OptionManager::DisplayOption (ostream& output, bool shortVersion)
 	    }
 	  if (this->ProgramAdditionalInformations != 0)
 	    {
+	      if (comment != '\0')
+		output << comment << " ";
 	      output << this->ProgramAdditionalInformations << endl;
 	    }
 	}  
-      output << endl << "Options:" << endl << endl;
+      if (comment != '\0')
+	output << comment << " ";
+      output << endl;
+      if (comment != '\0')
+	output << comment << " ";
+      output << "Options:" << endl;
+      if (comment != '\0')
+	output << comment << " ";
+      cout << endl;
       ListIterator<OptionGroup*> IterGroup(this->Groups);
       OptionGroup** TmpGroup;
       while ((TmpGroup = IterGroup()))
 	{
-	  (*TmpGroup)->DisplayOption(output, shortVersion) << endl;
+	  (*TmpGroup)->DisplayOption(output, shortVersion, comment);
+	  if (comment != '\0')
+	    output << comment << " ";	  
+	  cout << endl;
 	}
       return output;
     }
