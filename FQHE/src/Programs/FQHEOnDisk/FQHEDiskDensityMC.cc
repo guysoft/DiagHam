@@ -19,6 +19,7 @@
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/LaughlinOnDiskWaveFunction.h"
 #include "Tools/FQHEWaveFunction/FQHEDiskLaughlinOneQuasiholeWaveFunction.h"
+#include "Tools/FQHEWaveFunction/FQHEDiskLaughlinOneJainQuasielectronWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskTwoQuasiholeWaveFunction.h"
 #include "Tools/FQHEWaveFunction/PfaffianOnDiskTwoQuasielectronWaveFunction.h"
 
@@ -82,9 +83,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
   (*SystemGroup) += new BooleanOption ('\n', "quasielectron", "plot quasiparticles instead of quasiholes");  
+  (*SystemGroup) += new SingleDoubleOption ('\n', "excitation-position", "position of the excitation from the center (in grid length unit)", 0.15);  
+  (*SystemGroup) += new BooleanOption ('\n', "force-xsymmetry", "assume the wave function is invariant under the x <->-x symmetry");  
+  (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name", "density.dat"); 
 
-  (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals used to sample the disk geometry", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil in each direction", 20);
   (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "grid-length", "size of the sampling grid (in unit of the magnetic length", 20);
   (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "jump", "length of the jump used for the metropolis algorithm", 0.3);
@@ -119,15 +122,13 @@ int main(int argc, char** argv)
     {
       OverlapFlag = false;
     }
-  int NbrWarmUpIter = ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
-  int NbrIter = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
+  long NbrWarmUpIter = (long) ((SingleIntegerOption*) Manager["nbr-warmup"])->GetInteger();
+  long NbrIter = (long) ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
   int NbrSteps = ((SingleIntegerOption*) Manager["nbr-step"])->GetInteger();
-  int NbrOrbitals = ((SingleIntegerOption*) Manager["nbr-orbitals"])->GetInteger();
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
   bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
-  double StepSize = 0.25;
   char* RecordWaveFunctions = ((SingleStringOption*) Manager["record-wavefunctions"])->GetString();
   if (RecordWaveFunctions != 0)
     {
@@ -135,30 +136,49 @@ int main(int argc, char** argv)
       RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
       RecordFile.close();
     }
+  bool XSymmetryFlag = ((BooleanOption*) Manager["force-xsymmetry"])->GetBoolean();
+  bool YSymmetryFlag = ((BooleanOption*) Manager["force-ysymmetry"])->GetBoolean();
+  if ((XSymmetryFlag == true) || (YSymmetryFlag == true))
+    {
+      if ((NbrSteps  & 1) != 0)
+	{
+	  --NbrSteps; 
+	  cout << "number of grid steps has to be even when using the --force-xsymmetry or --force-ysymmetry options, it will reduced to " << NbrSteps << endl;
+	}
+    }
   double GridScale =  ((SingleDoubleOption*) Manager["grid-length"])->GetDouble();
   double InvGridStep = ((double) NbrSteps) / GridScale;
   double GridStep = 1.0 / InvGridStep;
   double GridShift = -0.5 * GridScale;
   double MCJump = ((SingleDoubleOption*) Manager["jump"])->GetDouble();
+  bool WaveFunctionMemory = false;
+
+  double ExcitationPosition = ((SingleDoubleOption*) Manager["excitation-position"])->GetDouble();
 
   Abstract1DComplexFunction* SymmetrizedFunction = 0;
   if (QuasielectronFlag == true)
     {
-//      if (LaughlinFlag == true)
-//	SymmetrizedFunction = new FQHEDiskLaughlinOneQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, StatisticFlag);
-//      else
-// 	{
-// 	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
-// 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(NbrParticles, 0.0, 0.0, M_PI, 0.0, StatisticFlag);
-// 	  else
-// 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
-// 										   0.0, 0.0, M_PI, 0.0, StatisticFlag);
-// 	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
-// 	    {
-// 	      ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
-// 	      return 0;
-// 	    }
-// 	}
+      if (LaughlinFlag == true)
+	{
+	  if (StatisticFlag == true)
+	    SymmetrizedFunction = new FQHEDiskLaughlinOneJainQuasielectronWaveFunction(NbrParticles, 0.0, GridScale, 3);
+	  else
+	    SymmetrizedFunction = new FQHEDiskLaughlinOneJainQuasielectronWaveFunction(NbrParticles, 0.0, GridScale, 2);
+	}
+      else
+ 	{
+ 	  if (((SingleStringOption*) Manager["load-permutations"])->GetString() == 0)
+ 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(NbrParticles,  - ExcitationPosition * GridScale, ExcitationPosition * GridScale, StatisticFlag);
+ 	  else
+ 	    SymmetrizedFunction = new PfaffianOnDiskTwoQuasielectronWaveFunction(((SingleStringOption*) Manager["load-permutations"])->GetString(),
+										 -ExcitationPosition * GridScale, ExcitationPosition * GridScale, StatisticFlag);
+ 	  if (((SingleStringOption*) Manager["save-permutations"])->GetString() != 0)
+ 	    {
+ 	      ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->WritePermutations(((SingleStringOption*) Manager["save-permutations"])->GetString());
+ 	      return 0;
+ 	    }
+	  WaveFunctionMemory = false;
+ 	}
     }
   else
     {
@@ -168,7 +188,7 @@ int main(int argc, char** argv)
 	else
 	  SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 2);
       else
-	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, -0.25 * GridScale, 0.25 * GridScale, StatisticFlag);
+	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, -ExcitationPosition * GridScale, ExcitationPosition * GridScale, StatisticFlag);
     }
 
   AbstractRandomNumberGenerator* RandomNumber = 0;
@@ -209,15 +229,13 @@ int main(int argc, char** argv)
 	  for (int j = 0; j < NbrSteps; ++j)
 	    FunctionBasisDecomposition[k][j] = 0.0;
 	}
-      double* FunctionBasisDecompositionError  = new double [NbrOrbitals];
-      double* ExpTable = new double [NbrParticles];
-      double PreviousExp = 0.0;
+      double TmpExp = 0.0;
 
       int* GridLocations = new int [TwiceNbrParticles];
 
       double TotalProbability = 0.0;
       double TotalProbabilityError = 0.0;
-      int CurrentPercent = 0;
+      long CurrentPercent = 0;
 
       RandomZ (TmpZ, GridScale, NbrParticles, RandomNumber);
       int NextCoordinate = 0;
@@ -228,32 +246,22 @@ int main(int argc, char** argv)
       
       Complex Tmp = (*SymmetrizedFunction)(TmpZ);
       CurrentProbabilities = SqrNorm(Tmp);
-      for (int k = 0; k < NbrParticles; ++k)
-	{
-	  ExpTable[k] = exp(-0.5 * ((TmpZ[(k << 1)] * TmpZ[(k << 1)])
-				    + (TmpZ[(k << 1) + 1] * TmpZ[(k << 1) + 1])));
-	  CurrentProbabilities *= ExpTable[k];
-	}
       PreviousProbabilities = CurrentProbabilities;
-      
+
       cout << "starting warm-up sequence" << endl;
-      for (int i = 1; i < NbrWarmUpIter; ++i)
+      for (long i = 1; i < NbrWarmUpIter; ++i)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
 	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
 	    {
-	      PreviousExp = ExpTable[NextCoordinate];
+	      if (WaveFunctionMemory == true)
+		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
 	      Complex TmpMetropolis = (*SymmetrizedFunction)(TmpZ);
 	      CurrentProbabilities = SqrNorm(TmpMetropolis);
- 	      ExpTable[NextCoordinate] = exp(-0.5 * ((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)])
- 						     + (TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])));
-//	      ExpTable[NextCoordinate] = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
-//						     + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
-//	      cout << ExpTable[NextCoordinate] << endl;
- 	      for (int k = 0; k < NbrParticles; ++k)
- 		CurrentProbabilities *= ExpTable[k];
-//	      CurrentProbabilities *= ExpTable[NextCoordinate];
+	      TmpExp = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
+				   + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
+	      CurrentProbabilities *= TmpExp;
 	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 		{
 		  PreviousProbabilities = CurrentProbabilities;
@@ -263,8 +271,9 @@ int main(int argc, char** argv)
 		{
 		  TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
 		  TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
-		  ExpTable[NextCoordinate] = PreviousExp;
 		  CurrentProbabilities = PreviousProbabilities;
+		  if (WaveFunctionMemory == true)
+		    ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->RestorePreviousData();
 		}
 	    }
 	  else
@@ -273,37 +282,34 @@ int main(int argc, char** argv)
 	      TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
 	    }
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
-	  if (((i * 20) / NbrWarmUpIter) != CurrentPercent)
+	  if ((( i * 20l) / NbrWarmUpIter) != CurrentPercent)
 	    {
-	      CurrentPercent = (i * 20) / NbrWarmUpIter;
-	      cout << (CurrentPercent * 5) << "% " << flush;
+	      CurrentPercent = (i * 20l) / NbrWarmUpIter;
+	      cout << (CurrentPercent * 5l) << "% " << flush;
 	    }
 	} 
       cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrWarmUpIter)) * 100.0) << "%" <<endl;
       
-      CurrentPercent = 0;
+      CurrentPercent = 0l;
       for (int i = 0; i < TwiceNbrParticles; ++i)
 	GridLocations[i] = (int) ((TmpZ[i] - GridShift) * InvGridStep);
 
       cout << "starting MC sequence" << endl;
       Acceptance = 0;
 
-      for (int i = 0; i < NbrIter; ++i)
+      for (long i = 0; i < NbrIter; ++i)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
 	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
 	    {
-	      PreviousExp = ExpTable[NextCoordinate];
+	      if (WaveFunctionMemory == true)
+		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
 	      Complex TmpMetropolis = (*SymmetrizedFunction)(TmpZ);
 	      CurrentProbabilities = SqrNorm(TmpMetropolis);
-// 	      ExpTable[NextCoordinate] = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
-// 						     + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
-	      ExpTable[NextCoordinate] = exp(-0.5 * ((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)])
-						     + (TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])));
-	      for (int k = 0; k < NbrParticles; ++k)
-		CurrentProbabilities *= ExpTable[k];
-//	      CurrentProbabilities *= ExpTable[NextCoordinate];
+	      TmpExp = exp(-0.5 * (((TmpZ[(NextCoordinate << 1)] * TmpZ[(NextCoordinate << 1)]) - (PreviousTmpZRe * PreviousTmpZRe))
+				   + ((TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])) - (PreviousTmpZIm * PreviousTmpZIm)));
+	      CurrentProbabilities *= TmpExp;
 	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 		{
 		  PreviousProbabilities = CurrentProbabilities;
@@ -323,8 +329,9 @@ int main(int argc, char** argv)
 		{
 		  TmpZ[NextCoordinate << 1] = PreviousTmpZRe;
 		  TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
-		  ExpTable[NextCoordinate] = PreviousExp;
 		  CurrentProbabilities = PreviousProbabilities;
+		  if (WaveFunctionMemory == true)
+		    ((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->RestorePreviousData();
 		}
 	    }
 	  else
@@ -341,10 +348,10 @@ int main(int argc, char** argv)
 
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 
-	  if (((i * 20) / NbrIter) != CurrentPercent)
+	  if (((i * 20l) / NbrIter) != CurrentPercent)
 	    {
-	      CurrentPercent = (i * 20) / NbrIter;
-	      cout << (CurrentPercent * 5) << "% " << flush;
+	      CurrentPercent = (i * 20l) / NbrIter;
+	      cout << (CurrentPercent * 5l) << "% " << flush;
 	    }
 	}
       cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
@@ -355,20 +362,74 @@ int main(int argc, char** argv)
       TotalProbabilityError /= sqrt ((double) NbrIter);
 
       TotalProbability =  1.0 / TotalProbability;
-      for (int i = 0; i < NbrSteps; ++i)
-	for (int j = 0; j < NbrSteps; ++j)	  
-	  FunctionBasisDecomposition[i][j] *= TotalProbability;
+      if (XSymmetryFlag == true) 
+	{
+	  int HalfNbrSteps = NbrSteps >> 1;
+	  if (YSymmetryFlag == true) 
+	    {
+	      for (int i = 0; i < HalfNbrSteps; ++i)
+		for (int j = 0; j < HalfNbrSteps; ++j)	  
+		  {
+		    double TmpTotal = FunctionBasisDecomposition[i][j];
+		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1];
+		    TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
+		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
+		    TmpTotal *= 0.25;
+		    TmpTotal *= TotalProbability;
+		    FunctionBasisDecomposition[i][j] = TmpTotal;
+		    FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1] = TmpTotal;
+		    FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
+		    FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
+		  }
+	    }
+	  else
+	    {
+	      for (int i = 0; i < HalfNbrSteps; ++i)
+		for (int j = 0; j < NbrSteps; ++j)	  
+		  {
+		    double TmpTotal = FunctionBasisDecomposition[i][j];
+		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
+		    TmpTotal *= 0.5;
+		    TmpTotal *= TotalProbability;
+		    FunctionBasisDecomposition[i][j] = TmpTotal;
+		    FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
+		  }
+	    }
+	}
+      else
+	if (YSymmetryFlag == true) 
+	  {
+	    int HalfNbrSteps = NbrSteps >> 1;
+	    for (int i = 0; i < NbrSteps; ++i)
+	      for (int j = 0; j < HalfNbrSteps; ++j)	  
+		{
+		  double TmpTotal = FunctionBasisDecomposition[i][j];
+		  TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
+		  TmpTotal *= 0.5;
+		  TmpTotal *= TotalProbability;
+		  FunctionBasisDecomposition[i][j] = TmpTotal;
+		  FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
+		}
+	  }
+	else
+	  {
+	    for (int i = 0; i < NbrSteps; ++i)
+	      for (int j = 0; j < NbrSteps; ++j)	  
+		FunctionBasisDecomposition[i][j] *= TotalProbability;
+	  }
 
       ofstream DensityRecordFile;
       DensityRecordFile.precision(14);
       DensityRecordFile.open(((SingleStringOption*) Manager["output"])->GetString(), ios::out);
 
+      Manager.DisplayOption(DensityRecordFile, true, '#');
+      DensityRecordFile << "#" << endl;
       DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
-      double TmpX = GridShift;
+      double TmpX = GridShift + (0.5 * GridStep);
       double Sum = 0.0;
       for (int i = 0; i < NbrSteps; ++i)
 	{
-	  double TmpY = GridShift;
+	  double TmpY = GridShift + (0.5 * GridStep);
 	  for (int j = 0; j < NbrSteps; ++j)
 	    {
 	      DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[i][j] << endl;
