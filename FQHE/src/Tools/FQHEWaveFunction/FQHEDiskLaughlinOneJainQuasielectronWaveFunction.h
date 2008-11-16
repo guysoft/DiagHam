@@ -48,14 +48,20 @@ class FQHEDiskLaughlinOneJainQuasielectronWaveFunction: public Abstract1DComplex
   // inverse value of the filling factor
   int InvFillingFactor;
 
+  // invert of the maximum x value
+  double InvScale;
+
   // quasielectron position 
   Complex ZElectron;
 
   // gaussian weight associated to the quasielectron
-  double ElectronWeigth;
+  double ElectronWeight;
+  Complex* TmpElectronWeight;
 
-  // temporary array where terms of the Jastrow factor will be stored 
+  // temporary array where terms (and square of) of the Jastrow factor will be stored 
   Complex** TmpJastrow;
+  Complex** TmpSqrJastrow;
+
 
  public:
 
@@ -63,8 +69,9 @@ class FQHEDiskLaughlinOneJainQuasielectronWaveFunction: public Abstract1DComplex
   //
   // nbrParticles = number of particles
   // zElectron = quasielectron position
+  // scale = typical sytem size
   // invFillingFactor = inverse value of the filling factor
-  FQHEDiskLaughlinOneJainQuasielectronWaveFunction(int nbrParticles, Complex zElectron,int invFillingFactor);
+  FQHEDiskLaughlinOneJainQuasielectronWaveFunction(int nbrParticles, Complex zElectron, double scale, int invFillingFactor);
 
   // copy constructor
   //

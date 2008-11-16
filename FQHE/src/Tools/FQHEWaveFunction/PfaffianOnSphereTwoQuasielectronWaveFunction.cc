@@ -193,6 +193,7 @@ PfaffianOnSphereTwoQuasielectronWaveFunction::PfaffianOnSphereTwoQuasielectronWa
   this->NbrPermutations = function.NbrPermutations;
   this->Permutations1= function.Permutations1;
   this->Permutations2= function.Permutations2;
+  this->Flag = function.Flag;
 
   this->TmpPfaffian = new Complex* [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)

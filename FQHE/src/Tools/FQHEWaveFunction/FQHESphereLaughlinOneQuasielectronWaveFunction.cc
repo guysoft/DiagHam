@@ -71,8 +71,12 @@ FQHESphereLaughlinOneQuasielectronWaveFunction::FQHESphereLaughlinOneQuasielectr
   this->ConjVElectron = Conj(this->VElectron);
 
   this->TmpJastrow = new Complex* [this->NbrParticles]; 
+  this->TmpSqrJastrow = new Complex*[this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
-    this->TmpJastrow[i] = new Complex [this->NbrParticles]; 
+    {
+      this->TmpJastrow[i] = new Complex [this->NbrParticles];
+      this->TmpSqrJastrow[i] = new Complex [this->NbrParticles];
+    }
   this->TmpWeights = new Complex [this->NbrParticles]; 
 }
 
@@ -92,8 +96,12 @@ FQHESphereLaughlinOneQuasielectronWaveFunction::FQHESphereLaughlinOneQuasielectr
   this->FermionFlag=function.FermionFlag;
 
   this->TmpJastrow = new Complex* [this->NbrParticles]; 
+  this->TmpSqrJastrow = new Complex*[this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
-    this->TmpJastrow[i] = new Complex [this->NbrParticles]; 
+    {
+      this->TmpJastrow[i] = new Complex [this->NbrParticles];
+      this->TmpSqrJastrow[i] = new Complex [this->NbrParticles];
+    }
   this->TmpWeights = new Complex [this->NbrParticles]; 
 }
 
@@ -102,10 +110,14 @@ FQHESphereLaughlinOneQuasielectronWaveFunction::FQHESphereLaughlinOneQuasielectr
 
 FQHESphereLaughlinOneQuasielectronWaveFunction::~FQHESphereLaughlinOneQuasielectronWaveFunction()
 {
-  delete[] this->TmpWeights;
   for (int i = 0; i < this->NbrParticles; ++i)
-    delete[] this->TmpJastrow[i]; 
+    {
+      delete[] this->TmpSqrJastrow[i];
+      delete[] this->TmpJastrow[i];
+    }
+  delete[] this->TmpSqrJastrow;
   delete[] this->TmpJastrow;
+  delete[] this->TmpWeights;
 }
 
 // clone function 
@@ -138,6 +150,8 @@ Complex FQHESphereLaughlinOneQuasielectronWaveFunction::operator ()(RealVector& 
 Complex FQHESphereLaughlinOneQuasielectronWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {
   Complex Tmp;
+  Complex Tmp2;
+  Complex Tmp3;
   Complex TmpU1;
   Complex TmpV1;
   Complex WaveFunction(1.0);
@@ -151,30 +165,56 @@ Complex FQHESphereLaughlinOneQuasielectronWaveFunction::CalculateFromSpinorVaria
 	  Tmp = (TmpU1 * uv[1 + (j << 1)]) - (uv[j << 1] * TmpV1);
 	  this->TmpJastrow[i][j] = Tmp;
 	  this->TmpJastrow[j][i] = -Tmp;
+	  this->TmpSqrJastrow[i][j] = Tmp * Tmp;
+	  this->TmpSqrJastrow[j][i] = this->TmpSqrJastrow[i][j];
 	  WaveFunction *= Tmp;
 	}
     }
 
-//   if (this->FermionFlag == true)
-//     WaveFunction *= WaveFunction;
   
-  if (this->FermionFlag == false)
-    WaveFunction *= WaveFunction;
-  else
-    WaveFunction *= WaveFunction * WaveFunction;
-  
-  Complex WaveFunction2(0.0);
-  for (int i = 0; i < this->NbrParticles; ++i)
+  Complex WaveFunction2(0.0);  
+  for (int i =0; i < this->NbrParticles; ++i)
     {
+      Tmp = this->TmpWeights[i];
+      Tmp2 = 0.0;
       for (int j = 0; j < i; ++j)
-	WaveFunction2 += this->TmpWeights[j] / this->TmpJastrow[i][j];
+	{
+	  Tmp3 = 1.0;
+	  for (int k = 0; k < j; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = j + 1; k < i; ++k)	
+	    {
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];	    
+	    }
+	  for (int k = i + 1; k < this->NbrParticles; ++k)
+	    {	
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];
+	    }
+	  Tmp2 += Tmp3;
+	}
       for (int j = i + 1; j < this->NbrParticles; ++j)
-	WaveFunction2 += this->TmpWeights[j] / this->TmpJastrow[i][j];
-   }
+	{
+	  Tmp3 = 1.0;
+	  for (int k = 0; k < i; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = i + 1; k < j; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = j + 1; k < this->NbrParticles; ++k)	
+	    {
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];
+	    }
+	  Tmp2 += Tmp3;
+	}
+      Tmp *= Tmp2;
+      WaveFunction2 += Tmp;
+    }
 
+  if (this->FermionFlag == true)
+    WaveFunction2 *= WaveFunction;
 
-  //  cout << WaveFunction << " " << WaveFunction2 << endl;
-  WaveFunction *= WaveFunction2;
-  return WaveFunction;
+  return WaveFunction2;
 }
 

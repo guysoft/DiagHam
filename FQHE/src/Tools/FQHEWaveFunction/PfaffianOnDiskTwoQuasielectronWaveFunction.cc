@@ -33,6 +33,7 @@
 #include "Vector/RealVector.h"
 #include "Matrix/ComplexSkewSymmetricMatrix.h"
 #include "GeneralTools/Endian.h"
+#include "MathTools/BinomialCoefficients.h"
 
 #include <iostream>
 
@@ -67,15 +68,25 @@ PfaffianOnDiskTwoQuasielectronWaveFunction::PfaffianOnDiskTwoQuasielectronWaveFu
   this->ZElectron1 = zElectron1;
   this->ZElectron2 = zElectron2;
   this->GaussianWeight = exp (-0.125 * (SqrNorm(this->ZElectron1) + SqrNorm(this->ZElectron2)));
+  this->InvScale = 1.0 / 10.0;
 
   this->TmpPfaffian = new Complex* [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpPfaffian[i] = new Complex [this->NbrParticles];
+  this->TmpSqrPfaffian = new Complex* [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpGaussianWeights = new Complex [2 * this->NbrParticles];
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
   this->FermionFlag = fermions;
 
   this->EvaluatePermutations();
+  this->CurrentWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->CurrentWaveFunctionPart2 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart2 = new Complex [this->NbrPermutations];
   this->Flag.Initialize();
 }
 
@@ -94,14 +105,24 @@ PfaffianOnDiskTwoQuasielectronWaveFunction::PfaffianOnDiskTwoQuasielectronWaveFu
   this->ZElectron1 = zElectron1;
   this->ZElectron2 = zElectron2;
   this->GaussianWeight = exp (-0.125 * (SqrNorm(this->ZElectron1) + SqrNorm(this->ZElectron2)));
+  this->InvScale = 1.0 / 10.0;
 
   this->TmpPfaffian = new Complex* [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpPfaffian[i] = new Complex [this->NbrParticles];
+  this->TmpSqrPfaffian = new Complex* [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpGaussianWeights = new Complex [2 * this->NbrParticles];
-  this->FermionFlag = fermions;
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
+  this->CurrentWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->CurrentWaveFunctionPart2 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart2 = new Complex [this->NbrPermutations];
 
+  this->FermionFlag = fermions;
   this->Flag.Initialize();
 }
 
@@ -116,17 +137,30 @@ PfaffianOnDiskTwoQuasielectronWaveFunction::PfaffianOnDiskTwoQuasielectronWaveFu
   this->ZElectron1 = function.ZElectron1;
   this->ZElectron2 = function.ZElectron2;
   this->GaussianWeight = exp (-0.125 * (SqrNorm(this->ZElectron1) + SqrNorm(this->ZElectron2)));
+  this->InvScale = function.InvScale;
+
   this->TmpPfaffian = new Complex* [this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
     this->TmpPfaffian[i] = new Complex [this->NbrParticles];
+  this->TmpSqrPfaffian = new Complex* [this->NbrParticles];
+  for (int i = 0; i < this->NbrParticles; ++i)
+    this->TmpSqrPfaffian[i] = new Complex [this->NbrParticles];
   this->TmpIndexArray = new int [this->NbrParticles];
-  this->TmpGaussianWeights = new Complex [2 * this->NbrParticles];
+  this->TmpWeights1 = new Complex [this->NbrParticles];
+  this->TmpWeights2 = new Complex [this->NbrParticles];
+  this->NextCoordinate = -1;
 
   this->FermionFlag=function.FermionFlag;
 
-  this->Permutations = function.Permutations;
   this->NbrPermutations = function.NbrPermutations;
+  this->Permutations1= function.Permutations1;
+  this->Permutations2= function.Permutations2;
   this->Flag = function.Flag;
+
+  this->CurrentWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->CurrentWaveFunctionPart2 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart1 = new Complex [this->NbrPermutations];
+  this->PreviousWaveFunctionPart2 = new Complex [this->NbrPermutations];
 }
 
 // destructor
@@ -135,14 +169,24 @@ PfaffianOnDiskTwoQuasielectronWaveFunction::PfaffianOnDiskTwoQuasielectronWaveFu
 PfaffianOnDiskTwoQuasielectronWaveFunction::~PfaffianOnDiskTwoQuasielectronWaveFunction()
 {
   for (int i = 0; i < this->NbrParticles; ++i)
-    delete[] this->TmpPfaffian[i];
+    {
+      delete[] this->TmpPfaffian[i];
+      delete[] this->TmpSqrPfaffian[i];
+    }
   delete[] this->TmpPfaffian;
+  delete[] this->TmpSqrPfaffian;
   if ((this->Flag.Used() == true) && (this->Flag.Shared() == false))
     {
-      delete[] this->Permutations;
+      delete[] this->Permutations1;
+      delete[] this->Permutations2;
     }
   delete[] this->TmpIndexArray;
-  delete[] this->TmpGaussianWeights;
+  delete[] this->TmpWeights1;
+  delete[] this->TmpWeights2;
+  delete[] this->CurrentWaveFunctionPart1;
+  delete[] this->CurrentWaveFunctionPart2;
+  delete[] this->PreviousWaveFunctionPart1;
+  delete[] this->PreviousWaveFunctionPart2;  
 }
 
 // clone function 
@@ -170,88 +214,189 @@ Complex PfaffianOnDiskTwoQuasielectronWaveFunction::operator ()(RealVector& x)
     {
       TmpZ.Re = x[i << 1];
       TmpZ.Im = x[1 + (i << 1)];
-      this->TmpGaussianWeights[i << 1] = exp (0.25 * (Conj(this->ZElectron1) * TmpZ));
-      this->TmpGaussianWeights[(i << 1) + 1] = exp (0.25 * (Conj(this->ZElectron1) * TmpZ));
+      this->TmpWeights1[i] = exp (0.25 * (Conj(this->ZElectron1) * TmpZ));
+      this->TmpWeights2[i] = exp (0.25 * (Conj(this->ZElectron2) * TmpZ));
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
 	  Tmp.Re = TmpZ.Re - x[j << 1];
 	  Tmp.Im = TmpZ.Im - x[1 + (j << 1)];
+	  Tmp *= this->InvScale;
 	  this->TmpPfaffian[i][j] = Tmp;
 	  this->TmpPfaffian[j][i] = -Tmp;
+	  this->TmpSqrPfaffian[i][j] = Tmp * Tmp;
+	  this->TmpSqrPfaffian[j][i] = this->TmpSqrPfaffian[i][j];
 	  WaveFunction *= Tmp;
 	}
     }
-  if (this->FermionFlag == false)
-    WaveFunction = 1.0;
 
   int NbrParticlesPerColor = this->NbrParticles >> 1;
+  int Shift = ((NbrParticlesPerColor - 1) * 5);
   Complex WaveFunctionSum = 0.0;
-  for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
-    {
-      unsigned long TmpPerm = this->Permutations[i];
-      unsigned long TmpPerm2 = TmpPerm >> (NbrParticlesPerColor << 2);
-      TmpPerm &= (0x1ul << (NbrParticlesPerColor << 2)) - 0x1ul;
-      Complex WaveFunctionPart1 = 0.0;
-      for (int j = 0; j < NbrParticlesPerColor; ++ j)	
-	{
-	  Complex WaveFunctionPart12 = 0.0;	  
-	  for (int k = 0; k < NbrParticlesPerColor; ++k)
-	    TmpIndexArray[k] = (TmpPerm >> (k << 2)) & 0xful;
-	  TmpPerm = (TmpPerm  >> 4) | ((TmpPerm & 0xful) << ((NbrParticlesPerColor - 1) << 2));
-
-	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    {
-	      Tmp = 1.0; 
-	      for (int l = 1; l < k; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
-	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
-	      WaveFunctionPart12 += Tmp;
-	    }
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+  if (this->NextCoordinate == -1)
+    for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
+      {
+	unsigned long TmpPerm = this->Permutations1[i];
+	unsigned long TmpPerm2 = this->Permutations2[i];
+	Complex WaveFunctionPart1 = 0.0;
+	for (int j = 0; j < NbrParticlesPerColor; ++ j)	
+	  {
+	    Complex WaveFunctionPart12 = 0.0;	  
+	    Complex WaveFunctionPart12b = 1.0;	  
+	    for (int k = 0; k < NbrParticlesPerColor; ++k)
+	      TmpIndexArray[k] = (TmpPerm >> (k * 5)) & 0x1ful;
+	    TmpPerm = (TmpPerm  >> 5) | ((TmpPerm & 0x1ful) << Shift);
+	    
+	    Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
+	    for (int k = 1; k < NbrParticlesPerColor; ++k)
 	      {
-		TmpZ = this->TmpPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-		WaveFunctionPart12 *= TmpZ;
-		WaveFunctionPart12 *= TmpZ;
+		Tmp = 1.0; 
+		for (int l = 1; l < k; ++l)
+		  Tmp *= TmpArray[TmpIndexArray[l]];
+		Tmp *= this->TmpWeights1[TmpIndexArray[k]];
+		Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
+		for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+		  {
+		    Tmp *= TmpArray[TmpIndexArray[l]];
+		    WaveFunctionPart12b *= TmpArraySqr[TmpIndexArray[l]];
+		  }
+		WaveFunctionPart12 += Tmp;
 	      }
-	  WaveFunctionPart12 *= this->TmpGaussianWeights[(TmpIndexArray[0] << 1)];
-	  WaveFunctionPart1 += WaveFunctionPart12;
-	}
-      Complex WaveFunctionPart2 = 0.0;
-      for (int j = 0; j < NbrParticlesPerColor; ++ j)
-	{
-	  Complex WaveFunctionPart22 = 0.0;	  
-	  for (int k = 0; k < NbrParticlesPerColor; ++k)
-	    TmpIndexArray[k] = (TmpPerm2 >> (k << 2)) & 0xful;
-	  TmpPerm2 = (TmpPerm2  >> 4) | ((TmpPerm2 & 0xful) << ((NbrParticlesPerColor - 1) << 2));
-	  Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    {
-	      Tmp = 1.0; 
-	      for (int l = 1; l < k; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
-	      for (int l = k + 1; l < NbrParticlesPerColor; ++l)
-		Tmp *= TmpArray[TmpIndexArray[l]];	      
-	      WaveFunctionPart22 += Tmp;
-	    }
-	  for (int k = 1; k < NbrParticlesPerColor; ++k)
-	    for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+	    WaveFunctionPart1 += WaveFunctionPart12 * WaveFunctionPart12b;
+	  }
+	this->CurrentWaveFunctionPart1[i] = WaveFunctionPart1;
+	
+	Complex WaveFunctionPart2 = 0.0;
+	for (int j = 0; j < NbrParticlesPerColor; ++ j)
+	  {
+	    Complex WaveFunctionPart22 = 0.0;	  
+	    Complex WaveFunctionPart22b = 1.0;	  
+	    for (int k = 0; k < NbrParticlesPerColor; ++k)
+	      TmpIndexArray[k] = (TmpPerm2 >> (k * 5)) & 0x1ful;
+	    TmpPerm2 = (TmpPerm2  >> 5) | ((TmpPerm2 & 0x1ful) << Shift);
+	    Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
+	    for (int k = 1; k < NbrParticlesPerColor; ++k)
 	      {
-		TmpZ = this->TmpPfaffian[TmpIndexArray[k]][TmpIndexArray[l]];
-		WaveFunctionPart22 *= TmpZ;
-		WaveFunctionPart22 *= TmpZ;
+		Tmp = 1.0; 
+		for (int l = 1; l < k; ++l)
+		  Tmp *= TmpArray[TmpIndexArray[l]];	      
+		Tmp *= this->TmpWeights2[TmpIndexArray[k]];
+		Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
+		for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+		  {
+		    Tmp *= TmpArray[TmpIndexArray[l]];	      
+		    WaveFunctionPart22b *=  TmpArraySqr[TmpIndexArray[l]];
+		  }
+		WaveFunctionPart22 += Tmp;
 	      }
-	  WaveFunctionPart22 *= this->TmpGaussianWeights[(TmpIndexArray[0] << 1)];
-	  WaveFunctionPart2 += WaveFunctionPart22;
-	}      
+	    WaveFunctionPart2 += WaveFunctionPart22 * WaveFunctionPart22b;
+	  }      
+	this->CurrentWaveFunctionPart2[i] = WaveFunctionPart2;
+	
+	WaveFunctionSum += WaveFunctionPart1 * WaveFunctionPart2;
+      }
+  else
+    for (unsigned long i = 0ul; i < this->NbrPermutations; ++i)
+      {
+	unsigned long TmpPerm = this->Permutations1[i];
+	unsigned long TmpPerm2 = this->Permutations2[i];
+	Complex WaveFunctionPart1 = 0.0;
 
-      WaveFunctionSum += WaveFunctionPart1 * WaveFunctionPart2;
-    }
-  WaveFunction *= this->GaussianWeight;
+	for (int j = 0; j < NbrParticlesPerColor; ++j)	
+	  if (((TmpPerm >> (5 * j)) & 0x1ful)  == ((unsigned long) this->NextCoordinate))
+	    TmpPerm = 0ul;
+	if (TmpPerm != 0ul)
+	  for (int j = 0; j < NbrParticlesPerColor; ++j)	
+	    {
+	      Complex WaveFunctionPart12 = 0.0;	  
+	      Complex WaveFunctionPart12b = 1.0;	  
+	      for (int k = 0; k < NbrParticlesPerColor; ++k)
+		TmpIndexArray[k] = (TmpPerm >> (k * 5)) & 0x1ful;
+	      TmpPerm = (TmpPerm  >> 5) | ((TmpPerm & 0x1ful) << Shift);
+	      
+	      Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
+	      for (int k = 1; k < NbrParticlesPerColor; ++k)
+		{
+		  Tmp = 1.0; 
+		  for (int l = 1; l < k; ++l)
+		    Tmp *= TmpArray[TmpIndexArray[l]];
+		  Tmp *= this->TmpWeights1[TmpIndexArray[k]];
+		  Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
+		  for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+		    {
+		      Tmp *= TmpArray[TmpIndexArray[l]];
+		      WaveFunctionPart12b *= TmpArraySqr[TmpIndexArray[l]];
+		    }
+		  WaveFunctionPart12 += Tmp;
+		}
+	      WaveFunctionPart1 += WaveFunctionPart12 * WaveFunctionPart12b;
+	    }
+	else
+	  WaveFunctionPart1 = this->PreviousWaveFunctionPart1[i];
+	this->CurrentWaveFunctionPart1[i] = WaveFunctionPart1;
+
+	Complex WaveFunctionPart2 = 0.0;
+	if (TmpPerm == 0ul)
+	  for (int j = 0; j < NbrParticlesPerColor; ++ j)
+	    {
+	      Complex WaveFunctionPart22 = 0.0;	  
+	      Complex WaveFunctionPart22b = 1.0;	  
+	      for (int k = 0; k < NbrParticlesPerColor; ++k)
+		TmpIndexArray[k] = (TmpPerm2 >> (k * 5)) & 0x1ful;
+	      TmpPerm2 = (TmpPerm2  >> 5) | ((TmpPerm2 & 0x1ful) << Shift);
+	      Complex* TmpArray = this->TmpPfaffian[TmpIndexArray[0]];
+	      for (int k = 1; k < NbrParticlesPerColor; ++k)
+		{
+		  Tmp = 1.0; 
+		  for (int l = 1; l < k; ++l)
+		    Tmp *= TmpArray[TmpIndexArray[l]];	      
+		  Tmp *= this->TmpWeights2[TmpIndexArray[k]];
+		  Complex* TmpArraySqr = this->TmpSqrPfaffian[TmpIndexArray[k]];
+		  for (int l = k + 1; l < NbrParticlesPerColor; ++l)
+		    {
+		      Tmp *= TmpArray[TmpIndexArray[l]];	      
+		      WaveFunctionPart22b *=  TmpArraySqr[TmpIndexArray[l]];
+		    }
+		  WaveFunctionPart22 += Tmp;
+		}
+	      WaveFunctionPart2 += WaveFunctionPart22 * WaveFunctionPart22b;
+	    }      
+	else
+	  WaveFunctionPart2 = this->PreviousWaveFunctionPart2[i];
+	this->CurrentWaveFunctionPart2[i] = WaveFunctionPart2;
+	
+	WaveFunctionSum += WaveFunctionPart1 * WaveFunctionPart2;
+      }
   WaveFunction *= WaveFunctionSum;
+  WaveFunction *= this->GaussianWeight;
   return WaveFunction;
+}
+
+// indicate that only a given coordinate will be changed during the next wave function evaluation
+//
+// coordinate = coordinate index (-1 to reset the wave function memory)
+
+void PfaffianOnDiskTwoQuasielectronWaveFunction::SetNextCoordinate(int coordinate)
+{
+  this->NextCoordinate = coordinate;
+  Complex* Tmp = this->CurrentWaveFunctionPart1;
+  this->CurrentWaveFunctionPart1 = this->PreviousWaveFunctionPart1;
+  this->PreviousWaveFunctionPart1 = Tmp;
+  Tmp = this->CurrentWaveFunctionPart2;
+  this->CurrentWaveFunctionPart2 = this->PreviousWaveFunctionPart2;
+  this->PreviousWaveFunctionPart2 = Tmp;
+}
+
+// cancel data that have been modified during the last wave function evaluation
+//
+
+void PfaffianOnDiskTwoQuasielectronWaveFunction::RestorePreviousData()
+{
+  Complex* Tmp = this->CurrentWaveFunctionPart1;
+  this->CurrentWaveFunctionPart1 = this->PreviousWaveFunctionPart1;
+  this->PreviousWaveFunctionPart1 = Tmp;
+  Tmp = this->CurrentWaveFunctionPart2;
+  this->CurrentWaveFunctionPart2 = this->PreviousWaveFunctionPart2;
+  this->PreviousWaveFunctionPart2 = Tmp;
 }
 
 // evaluate all permutations requested to symmetrize the state
@@ -259,95 +404,53 @@ Complex PfaffianOnDiskTwoQuasielectronWaveFunction::operator ()(RealVector& x)
 
 void PfaffianOnDiskTwoQuasielectronWaveFunction::EvaluatePermutations()
 {
-  unsigned long Fact = 2;
-  for (unsigned long i = 3; i <= ((unsigned long) this->NbrParticles); ++i)
-    Fact *= i;
-
+  BinomialCoefficients Binomial(this->NbrParticles);
   int NbrParticlesPerColor = this->NbrParticles >> 1;
-  unsigned long TmpNbrPermutation = Fact;  
-  unsigned long FactNbrParticlesPerColor = 1;
-  for (unsigned long i = 2; i <= ((unsigned long) NbrParticlesPerColor); ++i)
-    FactNbrParticlesPerColor *= i;
-  TmpNbrPermutation /= FactNbrParticlesPerColor;
-  TmpNbrPermutation /= FactNbrParticlesPerColor;
-  TmpNbrPermutation /= 2;
-  
-  this->Permutations = new unsigned long[TmpNbrPermutation];
-  
-  unsigned long TmpPerm =  0x0ul;
-  unsigned long TmpPerm2 = 0x0ul;
-  unsigned long TmpPerm3 = 0x0ul;
+  this->NbrPermutations = Binomial(this->NbrParticles, NbrParticlesPerColor);
+  this->Permutations1 = new unsigned long[this->NbrPermutations];
+  this->Permutations2 = new unsigned long[this->NbrPermutations];
+  unsigned long MinValue = (0x1ul << NbrParticlesPerColor) - 0x1ul;
+  unsigned long MaxValue = MinValue << (this->NbrParticles - NbrParticlesPerColor);
   unsigned long* TmpArrayPerm = new unsigned long [this->NbrParticles];
-  for (int k = 0; k < this->NbrParticles; ++k) 
+  this->NbrPermutations = 0;
+  for (; MinValue <= MaxValue; ++MinValue)
     {
-      TmpPerm |= ((unsigned long) k) << (k << 2);
-      TmpArrayPerm[k] = (unsigned long) k;
-    }
-  
-  this->Permutations[0] = TmpPerm;
-  TmpNbrPermutation = 1ul;
-  Fact /= ((unsigned long) this->NbrParticles);
-  Fact *= ((unsigned long) (this->NbrParticles - NbrParticlesPerColor + 1));
-  for (unsigned long j = 1; j < Fact; ++j)
-    {
-      int Pos1 = this->NbrParticles - 1;
-      while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
-	--Pos1;
-      --Pos1;
-      int Pos2 = this->NbrParticles - 1;      
-      while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
-	--Pos2;
-      unsigned long TmpIndex = TmpArrayPerm[Pos1];
-      TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
-      TmpArrayPerm[Pos2] = TmpIndex;
-      Pos2 = this->NbrParticles - 1;   
-      Pos1++;
-      while (Pos1 < Pos2)
+      int Count = 0;
+      int Pos = 0;
+      while ((Pos < this->NbrParticles) && (Count <= NbrParticlesPerColor))
 	{
-	  TmpIndex = TmpArrayPerm[Pos1];
-	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
-	  TmpArrayPerm[Pos2] = TmpIndex;
-	  ++Pos1;
-	  --Pos2;
+	  if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+	    ++Count;
+	  ++Pos;
 	}
-      bool Flag = true;
-      int TmpIndex2 = 0;
-      int k = 1;
-      while ((k < NbrParticlesPerColor) && (Flag == true))
+      if (Count == NbrParticlesPerColor)
 	{
-	  if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
-	    Flag = false;
-	  ++TmpIndex2;
-	  ++k;
-	}
-      ++TmpIndex2;
-      k = 1;
-      while ((k < NbrParticlesPerColor) && (Flag == true))
-	{
-	  if (TmpArrayPerm[TmpIndex2] > TmpArrayPerm[TmpIndex2 + 1])
-	    Flag = false;
-	  ++TmpIndex2;
-	  ++k;
-	}
-      if (Flag == true)
-	{
-	  TmpPerm2 = 0ul;
-	  TmpPerm3 = 0ul;
+	  int Pos1 = 0;
+	  int Pos2 = NbrParticlesPerColor;
+	  for (Pos = 0; Pos < this->NbrParticles; ++Pos)
+	    if (((MinValue >> Pos) & 0x1ul) != 0x0ul)
+	      {
+		TmpArrayPerm[Pos1] = (unsigned long) Pos;
+		++Pos1;
+	      }
+	    else
+	      {
+		TmpArrayPerm[Pos2] = (unsigned long) Pos;
+		++Pos2;
+	      }
+	  unsigned long TmpPerm2 = 0ul;
+	  unsigned long TmpPerm3 = 0ul;
 	  for (int i = 0; i < NbrParticlesPerColor; ++i)
 	    {
-	      TmpPerm2 |= TmpArrayPerm[i] << (i << 2);
-	      TmpPerm3 |= TmpArrayPerm[i + NbrParticlesPerColor] << (i << 2);
+	      TmpPerm2 |= TmpArrayPerm[i] << (i * 5);
+	      TmpPerm3 |= TmpArrayPerm[i + NbrParticlesPerColor] << (i *5);
 	    }
-	  if (TmpPerm2 < TmpPerm3)
-	    {
-	      this->Permutations[TmpNbrPermutation] = TmpPerm2 | (TmpPerm3 << (NbrParticlesPerColor << 2));	      
-	      ++TmpNbrPermutation;
-	    }
+	  this->Permutations1[this->NbrPermutations] = TmpPerm2;
+	  this->Permutations2[this->NbrPermutations] = TmpPerm3;	      
+	  ++this->NbrPermutations;
 	}
     }
-  
-  this->NbrPermutations = TmpNbrPermutation;
-
+  delete[] TmpArrayPerm;
   return;
 }
 
@@ -368,9 +471,12 @@ bool PfaffianOnDiskTwoQuasielectronWaveFunction::ReadPermutations(char* filename
     }
   ReadLittleEndian(File, this->NbrParticles);
   ReadLittleEndian(File, this->NbrPermutations);
-  this->Permutations = new unsigned long[this->NbrPermutations];
+  this->Permutations1 = new unsigned long[this->NbrPermutations];
+  this->Permutations2 = new unsigned long[this->NbrPermutations];
   for (unsigned long i = 0; i < this->NbrPermutations; ++i)
-    ReadLittleEndian(File, this->Permutations[i]);
+    ReadLittleEndian(File, this->Permutations1[i]);
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    ReadLittleEndian(File, this->Permutations2[i]);
   File.close();
   return true;
 }
@@ -392,7 +498,9 @@ bool PfaffianOnDiskTwoQuasielectronWaveFunction::WritePermutations(char* filenam
   WriteLittleEndian(File, this->NbrParticles);
   WriteLittleEndian(File, this->NbrPermutations);
   for (unsigned long i = 0; i < this->NbrPermutations; ++i)
-    WriteLittleEndian(File, this->Permutations[i]);
+    WriteLittleEndian(File, this->Permutations1[i]);
+  for (unsigned long i = 0; i < this->NbrPermutations; ++i)
+    WriteLittleEndian(File, this->Permutations2[i]);
   File.close();
   return true;
 }

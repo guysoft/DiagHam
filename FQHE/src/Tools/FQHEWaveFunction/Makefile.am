@@ -54,4 +54,5 @@ PfaffianOnDiskTwoQuasielectronWaveFunction.cc \
 PfaffianOnSphereTwoQuasielectronWaveFunction.cc \
 FQHESphereLaughlinOneQuasiholeWaveFunction.cc \
 FQHESphereLaughlinOneQuasielectronWaveFunction.cc \
-FQHEDiskLaughlinOneQuasiholeWaveFunction.cc
+FQHEDiskLaughlinOneQuasiholeWaveFunction.cc \
+FQHEDiskLaughlinOneJainQuasielectronWaveFunction.cc

@@ -86,7 +86,7 @@ Complex FQHEDiskLaughlinOneQuasiholeWaveFunction::operator ()(RealVector& x)
   double ZRe;
   double ZIm;
   Complex HoleFactor (1.0);
-  double Scale = 1.0 / 30.0;
+  double Scale = 1.0 / 15;
   for (int i = 0; i < this->NbrParticles; ++i)
     {
       ZRe = x[i << 1];

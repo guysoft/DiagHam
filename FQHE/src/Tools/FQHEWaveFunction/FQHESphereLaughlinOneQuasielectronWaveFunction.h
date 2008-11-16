@@ -55,6 +55,7 @@ class FQHESphereLaughlinOneQuasielectronWaveFunction: public Abstract1DComplexFu
 
   // temporary array where the Jastrow coefficients have to be stored
   Complex** TmpJastrow;
+  Complex** TmpSqrJastrow;
   // temporary array used to store weights
   Complex* TmpWeights;
 

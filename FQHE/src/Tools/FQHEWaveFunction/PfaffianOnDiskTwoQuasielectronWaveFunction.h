@@ -52,23 +52,39 @@ class PfaffianOnDiskTwoQuasielectronWaveFunction: public Abstract1DComplexFuncti
   // gaussian weight associated to the quasielectrons
   double GaussianWeight;
 
+  // invert of the maximum x value
+  double InvScale;
+
   // Flag for bosons/fermions
   bool FermionFlag;
 
   // temporary array where the Pfaffian has to be stored
   Complex** TmpPfaffian;
+  // temporary array where the sqyuare elements of the Pfaffian have to be stored
+  Complex** TmpSqrPfaffian;
   // temporary array where indices are stored
   int* TmpIndexArray;
-  // temporary array used to store gaussian weights
-  Complex* TmpGaussianWeights;
+  // temporary array used to store weights
+  Complex* TmpWeights1;
+  Complex* TmpWeights2;
 
   // array containing description of each permutation that appears in the calculation symmetrization process
-  unsigned long* Permutations;
+  unsigned long* Permutations1;
+  unsigned long* Permutations2;
   // number of permutations that appears in the symmetrization process
   unsigned long NbrPermutations;
   // garable flag associated to the Permutations array
   GarbageFlag Flag;
 
+  // index of coordinate that will be changed in the next evaluation of the wavefunction
+  int NextCoordinate;
+
+  // temporary arrays and variable use to back-up coefficients involving a previous coordinate
+  Complex* CurrentWaveFunctionPart1;
+  Complex* CurrentWaveFunctionPart2;
+  Complex* PreviousWaveFunctionPart1;
+  Complex* PreviousWaveFunctionPart2;
+ 
 
  public:
 
@@ -113,6 +129,16 @@ class PfaffianOnDiskTwoQuasielectronWaveFunction: public Abstract1DComplexFuncti
   // filename = pointer to the file name that described the symmetrization procedure
   // return value = true if no error occured
   virtual bool WritePermutations(char* filename);
+
+  // indicate that only a given coordinate will be changed during the next wave function evaluation
+  //
+  // coordinate = coordinate index (-1 to reset the wave function memory)
+  void SetNextCoordinate(int coordinate = -1);
+
+  // cancel data that have been modified during the last wave function evaluation
+  //
+  void RestorePreviousData();
+
 
  protected:
 

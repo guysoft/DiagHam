@@ -38,17 +38,24 @@
 //
 // nbrParticles = number of particles
 // zElectron = quasielectron position
+// scale = typical sytem size
 // invFillingFactor = inverse value of the filling factor
 
-FQHEDiskLaughlinOneJainQuasielectronWaveFunction::FQHEDiskLaughlinOneJainQuasielectronWaveFunction(int nbrParticles, Complex zElectron, int invFillingFactor)
+FQHEDiskLaughlinOneJainQuasielectronWaveFunction::FQHEDiskLaughlinOneJainQuasielectronWaveFunction(int nbrParticles, Complex zElectron, double scale, int invFillingFactor)
 {
   this->InvFillingFactor = invFillingFactor;
   this->NbrParticles = nbrParticles;
-  this->ZElectron = zElectron;
-  this->ElectronWeigth = exp (-0.25 * SqrNorm(this->ZElectron));
+  this->InvScale = 2.0 / scale;
+  this->ZElectron = zElectron;  
+  this->ElectronWeight = exp (-0.125 * SqrNorm(this->ZElectron));
+  this->TmpElectronWeight = new Complex [this->NbrParticles];
   this->TmpJastrow = new Complex*[this->NbrParticles];
+  this->TmpSqrJastrow = new Complex*[this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
-    this->TmpJastrow[i] = new Complex [this->NbrParticles];
+    {
+      this->TmpJastrow[i] = new Complex [this->NbrParticles];
+      this->TmpSqrJastrow[i] = new Complex [this->NbrParticles];
+    }
 }
 
 // copy constructor
@@ -59,11 +66,17 @@ FQHEDiskLaughlinOneJainQuasielectronWaveFunction::FQHEDiskLaughlinOneJainQuasiel
 {
   this->NbrParticles = function.NbrParticles;
   this->InvFillingFactor = function.InvFillingFactor;
+  this->InvScale = function.InvScale;
   this->ZElectron = function.ZElectron;
-  this->ElectronWeigth = exp (-0.25 * SqrNorm(this->ZElectron));
+  this->ElectronWeight = exp (-0.125 * SqrNorm(this->ZElectron));
+  this->TmpElectronWeight = new Complex [this->NbrParticles];
   this->TmpJastrow = new Complex*[this->NbrParticles];
+  this->TmpSqrJastrow = new Complex*[this->NbrParticles];
   for (int i = 0; i < this->NbrParticles; ++i)
-    this->TmpJastrow[i] = new Complex [this->NbrParticles];
+    {
+      this->TmpJastrow[i] = new Complex [this->NbrParticles];
+      this->TmpSqrJastrow[i] = new Complex [this->NbrParticles];
+    }
 }
 
 // destructor
@@ -72,8 +85,13 @@ FQHEDiskLaughlinOneJainQuasielectronWaveFunction::FQHEDiskLaughlinOneJainQuasiel
 FQHEDiskLaughlinOneJainQuasielectronWaveFunction::~FQHEDiskLaughlinOneJainQuasielectronWaveFunction()
 {
   for (int i = 0; i < this->NbrParticles; ++i)
-    delete[] this->TmpJastrow[i];
+    {
+      delete[] this->TmpSqrJastrow[i];
+      delete[] this->TmpJastrow[i];
+    }
+  delete[] this->TmpSqrJastrow;
   delete[] this->TmpJastrow;
+  delete[] this->TmpElectronWeight;
 }
 
 // clone function 
@@ -93,6 +111,8 @@ Abstract1DComplexFunction* FQHEDiskLaughlinOneJainQuasielectronWaveFunction::Clo
 Complex FQHEDiskLaughlinOneJainQuasielectronWaveFunction::operator ()(RealVector& x)
 {
   Complex Tmp;
+  Complex Tmp2;
+  Complex Tmp3;
   Complex WaveFunction(1.0);
   double ZRe;
   double ZIm;
@@ -100,19 +120,63 @@ Complex FQHEDiskLaughlinOneJainQuasielectronWaveFunction::operator ()(RealVector
     {
       ZRe = x[i << 1];
       ZIm = x[1 + (i << 1)];
+      Tmp.Re = 0.25 * (this->ZElectron.Re * ZRe + this->ZElectron.Im * ZIm);
+      Tmp.Im = 0.25 * (this->ZElectron.Re * ZIm - this->ZElectron.Im * ZRe);
+      this->TmpElectronWeight[i] = exp (Tmp);
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
 	  Tmp.Re = ZRe - x[j << 1];
 	  Tmp.Im = ZIm - x[1 + (j << 1)];
+	  Tmp *= this->InvScale;
 	  this->TmpJastrow[i][j] = Tmp;
 	  this->TmpJastrow[j][i] = -Tmp;
+	  this->TmpSqrJastrow[i][j] = Tmp * Tmp;
+	  this->TmpSqrJastrow[j][i] = this->TmpSqrJastrow[i][j];
 	  WaveFunction *= Tmp;
 	}
     }
-  Tmp = WaveFunction;
-  for (int i = 2; i < this->InvFillingFactor; ++i)
+
+  Complex WaveFunction2(0.0);  
+  for (int i =0; i < this->NbrParticles; ++i)
     {
-      WaveFunction *= Tmp;
+      Tmp = this->TmpElectronWeight[i];
+      Tmp *= this->ElectronWeight;
+      Tmp2 = 0.0;
+      for (int j = 0; j < i; ++j)
+	{
+	  Tmp3 = 1.0;
+	  for (int k = 0; k < j; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = j + 1; k < i; ++k)	
+	    {
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];	    
+	    }
+	  for (int k = i + 1; k < this->NbrParticles; ++k)
+	    {	
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];
+	    }
+	  Tmp2 += Tmp3;
+	}
+      for (int j = i + 1; j < this->NbrParticles; ++j)
+	{
+	  Tmp3 = 1.0;
+	  for (int k = 0; k < i; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = i + 1; k < j; ++k)
+	    Tmp3 *= this->TmpJastrow[i][k];	    
+	  for (int k = j + 1; k < this->NbrParticles; ++k)	
+	    {
+	      Tmp *= this->TmpSqrJastrow[j][k];
+	      Tmp3 *= this->TmpJastrow[i][k];
+	    }
+	  Tmp2 += Tmp3;
+	}
+      Tmp *= Tmp2;
+      WaveFunction2 += Tmp;
     }
-  return WaveFunction;
+  for (int i = 2; i < this->InvFillingFactor; ++i)
+    WaveFunction2 *= WaveFunction;
+  return WaveFunction2;
 }
