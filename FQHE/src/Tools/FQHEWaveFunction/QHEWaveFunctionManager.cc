@@ -117,7 +117,7 @@ void QHEWaveFunctionManager::AddOptionGroup(OptionManager* manager)
       (*WaveFunctionGroup) += new SingleIntegerOption  ('\n', "pair-wave", "choose pairing channel s,+p,... (pairedcf* only)",1);
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "pair-compatibility", "adopt old conventions for normalisation (pairedcf* only)");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "jastrow-inside", "move jastrow factors inside determinant (1s only)");
-      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,q,r) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
+      (*WaveFunctionGroup) += new MultipleIntegerOption  ('\n', "XHC", "coefficients (k,l,p,q,r,s,t) of extended Halperin wavefunction  (XH only)",',' ,',', "2,2,-2,0");
       (*WaveFunctionGroup) += new BooleanOption  ('\n', "antisymmetrize", "antisymmetrize wavefunction (XH only)");
     }
   else 
@@ -160,7 +160,7 @@ ostream& QHEWaveFunctionManager::ShowAvalaibleWaveFunctions (ostream& str)
 	{	  
 	  str << "  * 111 : 111-state" << endl;
 	  str << "  * HR : Haldane-Rezayi state" << endl;
-	  str << "  * XH : Extended Halperin wavefunctions (z-z)^k (w-w)^k (z-w)^l det((z-w)^q) per((z-w)^r)" << endl;
+	  str << "  * XH : Extended Halperin wavefunctions (z-z)^k (w-w)^k (z-w)^l [det((z-w)^p)]^r [per((z-w)^q)]^s Pf[1/(r_i - r_j)]^t" << endl;
 	  str << "  * 1s : Spin-singlet state at filling one" << endl;
 	  str << "  * 2-3s : Spin-singlet state at filling two-thirds" << endl;
 	  str << "  * 2-3up : Spin-unpolarized composite fermion state at two-third filling" << endl;
@@ -456,14 +456,15 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int length;
 	      int *Params = Options->GetIntegers("XHC",length);
 	      cout <<"Read "<<length<<" coefficients for XHC"<<endl;
-	      int K=1, M=1, P=0, Q=0, R=1, S=1;
+	      int K=1, L=1, P=0, Q=0, R=1, S=1, T=0;
 	      if (length>0) K = Params[0];
-	      if (length>1) M = Params[1];
+	      if (length>1) L = Params[1];
 	      if (length>2) P = Params[2];
 	      if (length>3) Q = Params[3];
 	      if (length>4) R = Params[4];
 	      if (length>5) S = Params[5];
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, M, P, Q, R, S);
+	      if (length>6) T = Params[6];
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T);
 	      rst->AdaptAverageMCNorm();
 	      if (Options->GetBoolean("antisymmetrize"))
 		{
@@ -477,7 +478,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	    {
 	      int N= this->Options->GetInteger("nbr-particles");
 	      bool inside = Options->GetBoolean("jastrow-inside");
-	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, 0, 1, 1, inside);
+	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, 0, 2, -2, 0, 1, 1, 0, inside);
 	      rst->AdaptAverageMCNorm();
 	      return rst;
 	    }

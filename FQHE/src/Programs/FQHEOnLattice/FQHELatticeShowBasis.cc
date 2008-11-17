@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
 
 
-  double Interaction=0.0;
+  double Interaction=-1.0;
   int TmpI=-1;
   bool Statistics=false;
   bool HardCore=false;

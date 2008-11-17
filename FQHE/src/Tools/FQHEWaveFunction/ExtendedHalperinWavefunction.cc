@@ -60,8 +60,9 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction()
 // q = power inside Cauchy-permanent
 // r = power of Cauchy-determinant
 // s = power of Cauchy-permanent
+// t = power of overall Pfaffian factor
 // moveJastrowInside = flag to indicate whether Jastrow factors should be moved inside Cauchy determinant
-ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q, int r, int s, bool moveJastrowInside )
+ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int k, int m, int p, int q, int r, int s, int t,bool moveJastrowInside )
 {  
   if (nbrParticles&1)
     {
@@ -79,6 +80,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->Q=q;
   this->R=r;
   this->S=s;
+  this->T=t;
   // cout << "P="<<P<<" Q="<<Q<<" R="<<R<<" S="<<S<<endl;
   if ( (moveJastrowInside) && (P!=0) && (R==1))
     {
@@ -109,7 +111,12 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(int nbrParticles, int
   this->Matrix = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
 #endif
   this->Matrix2 = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
-
+  
+  if (this->T>0)
+    this->PfaffianFactor = new ComplexSkewSymmetricMatrix(this->NbrParticles);
+  else
+    this->PfaffianFactor = NULL;
+  
   this->J11 = new Complex[this->NbrParticlesPerLayer];
   this->J12 = new Complex[this->NbrParticlesPerLayer];
   this->J21 = new Complex[this->NbrParticlesPerLayer];
@@ -140,6 +147,7 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
   this->Q=function.Q;
   this->R=function.R;
   this->S=function.S;
+  this->T=function.T;
   this->HaveDeterminant=function.HaveDeterminant;
   this->DeterminantNorm=function.DeterminantNorm;
   this->PermanentNorm=function.PermanentNorm;
@@ -152,6 +160,11 @@ ExtendedHalperinWavefunction::ExtendedHalperinWavefunction(const ExtendedHalperi
   this->Matrix = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
 #endif
   this->Matrix2 = new ComplexMatrix(this->NbrParticlesPerLayer,this->NbrParticlesPerLayer);
+  
+  if (this->T>0)
+    this->PfaffianFactor = new ComplexSkewSymmetricMatrix(this->NbrParticles);
+  else
+    this->PfaffianFactor = NULL;
 
   this->J11 = new Complex[this->NbrParticlesPerLayer];
   this->J12 = new Complex[this->NbrParticlesPerLayer];
@@ -184,7 +197,9 @@ ExtendedHalperinWavefunction::~ExtendedHalperinWavefunction()
       delete [] J21;
       delete [] J22;
       delete Matrix;
-      delete Matrix2;      
+      delete Matrix2;
+      if (this->T>0)
+	delete [] PfaffianFactor;
     }
 }
 
@@ -295,6 +310,13 @@ Complex ExtendedHalperinWavefunction::operator()(RealVector& x)
       tmp = Matrix2->Permanent();
       for (int s=this->S; s>0; --s) result*=tmp;
       for (int s=this->S; s<0; ++s) result/=tmp;
+    }
+  if (T>0)
+    {
+      for (int i=1; i<NbrParticles; ++i)
+	for (int j=0; j<i; ++j)
+	  PfaffianFactor->SetMatrixElement(i,j,0.5*M_PI/JastrowFactorElements[i][j]);
+      result*=PfaffianFactor->Pfaffian();
     }
   return result;
 }

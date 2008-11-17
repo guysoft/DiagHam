@@ -190,23 +190,23 @@ int main(int argc, char** argv)
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     {
       Space->ListQuantumNumbers(i,QuantumNumbers,Multiplicity);
-      cout << "Q=["<<QuantumNumbers[0];
-      for (int k=1; k<NbrBosons; ++k) cout<<", "<<QuantumNumbers[k];
-      cout << "]"<<endl;
+      //cout << "Q=["<<QuantumNumbers[0];
+      //for (int k=1; k<NbrBosons; ++k) cout<<", "<<QuantumNumbers[k];
+      //cout << "]"<<endl;
       if (Multiplicity<1.01) // ignore state with multiple occupation
 	{	  
 	  for (int p = 0; p < NbrBosons; ++p)
 	    {
-	      ComplexVector TmpEigenFctCF = CFEigenVecs[p];
-	      ComplexVector TmpEigenFctJastrow = JastrowEigenVecs[p];
+// 	      ComplexVector TmpEigenFctCF = CFEigenVecs[p];
+// 	      ComplexVector TmpEigenFctJastrow = JastrowEigenVecs[p];
 	      for (int q = 0; q < NbrBosons; ++q)
 		{
-		  SlaterCF.SetMatrixElement(p,q,TmpEigenFctCF[QuantumNumbers[q]]);
-		  SlaterJastrow.SetMatrixElement(p,q,TmpEigenFctJastrow[QuantumNumbers[q]]);
-		}
-	      CFState[i] = SlaterCF.Determinant();
-	      JastrowState[i] = SlaterJastrow.Determinant();
+		  SlaterCF.SetMatrixElement(p,q,CFEigenVecs[p][QuantumNumbers[q]]);
+		  SlaterJastrow.SetMatrixElement(p,q,JastrowEigenVecs[p][QuantumNumbers[q]]);
+		}	      
 	    }
+	  CFState[i] = SlaterCF.Determinant();
+	  JastrowState[i] = SlaterJastrow.Determinant();
 	}
     }
   CFState /= CFState.Norm();  
