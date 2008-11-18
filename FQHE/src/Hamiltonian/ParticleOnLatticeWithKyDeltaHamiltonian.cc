@@ -247,7 +247,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    compositeKy2 = k*p;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
 		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
-		      *Polar(1.0,2.0*M_PI*(double)k/KyMax);
+		      *Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
 		  }		
 #ifdef DEBUG_OUTPUT
 		if (TranslationPhase!=1.0)
@@ -262,7 +262,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    compositeKy2 = k*p+p-1;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
 		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
-		      *Polar(1.0,-2.0*M_PI*(double)k/KyMax);
+		      *Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
 		  }
 		else
 		  {
