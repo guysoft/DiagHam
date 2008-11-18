@@ -56,6 +56,14 @@ bool RandomZOneCoordinateWithJump(RealVector& positions, double scale, double ju
 // j = index of the second one body coordinate
 void FlipCoordinates (RealVector& coordinates, int i, int j);
 
+// find the index of a radius in a given array of radius
+//
+// radius = radius to find
+// radiusArray = array of radius
+// nbrRadius = number of radius in the array
+// return value = radius index
+int GetRadiusCoordinate (double radius, double* radiusArray, int nbrRadius);
+
 
 int main(int argc, char** argv)
 {
@@ -86,6 +94,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "excitation-position", "position of the excitation from the center (in grid length unit)", 0.15);  
   (*SystemGroup) += new BooleanOption ('\n', "force-xsymmetry", "assume the wave function is invariant under the x <->-x symmetry");  
   (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
+  (*SystemGroup) += new BooleanOption ('\n', "force-rsymmetry", "assume the wave function is invariant under rotation");  
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output file name", "density.dat"); 
 
   (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil in each direction", 20);
@@ -136,6 +145,8 @@ int main(int argc, char** argv)
       RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
       RecordFile.close();
     }
+  long RecordStep = (long) Manager.GetInteger("record-step");
+
   bool XSymmetryFlag = ((BooleanOption*) Manager["force-xsymmetry"])->GetBoolean();
   bool YSymmetryFlag = ((BooleanOption*) Manager["force-ysymmetry"])->GetBoolean();
   if ((XSymmetryFlag == true) || (YSymmetryFlag == true))
@@ -146,12 +157,25 @@ int main(int argc, char** argv)
 	  cout << "number of grid steps has to be even when using the --force-xsymmetry or --force-ysymmetry options, it will reduced to " << NbrSteps << endl;
 	}
     }
+
   double GridScale =  ((SingleDoubleOption*) Manager["grid-length"])->GetDouble();
   double InvGridStep = ((double) NbrSteps) / GridScale;
   double GridStep = 1.0 / InvGridStep;
   double GridShift = -0.5 * GridScale;
   double MCJump = ((SingleDoubleOption*) Manager["jump"])->GetDouble();
   bool WaveFunctionMemory = false;
+
+  bool RSymmetryFlag = ((BooleanOption*) Manager["force-rsymmetry"])->GetBoolean();
+  if (RSymmetryFlag == true)
+    {
+      XSymmetryFlag = false;
+      YSymmetryFlag = false;
+    }
+  double* RadiusArray = new double [NbrSteps];
+  double AreaStep = 2.0 * GridScale * GridScale / ((double) NbrSteps); 
+  RadiusArray[0] = 0.0;
+  for (int i = 1; i < NbrSteps; ++i)
+    RadiusArray[i] = sqrt ((RadiusArray[i - 1] * RadiusArray[i - 1]) + AreaStep) - RadiusArray[i - 1]; 
 
   double ExcitationPosition = ((SingleDoubleOption*) Manager["excitation-position"])->GetDouble();
 
@@ -313,15 +337,14 @@ int main(int argc, char** argv)
 	      if ((CurrentProbabilities > PreviousProbabilities) || ((RandomNumber->GetRealRandomNumber() * PreviousProbabilities) < CurrentProbabilities))
 		{
 		  PreviousProbabilities = CurrentProbabilities;
-		  GridLocations[NextCoordinate << 1] = (int) ((TmpZ[NextCoordinate << 1] - GridShift) * InvGridStep);
-		  if ((GridLocations[NextCoordinate << 1] < 0) || (GridLocations[NextCoordinate << 1] >= NbrSteps))
+		  if (RSymmetryFlag == false)
 		    {
-		      cout << "1 : " << GridLocations[NextCoordinate << 1] << " " << TmpZ[NextCoordinate << 1] << " " <<  GridShift << " " << InvGridStep << endl;
+		      GridLocations[NextCoordinate << 1] = (int) ((TmpZ[NextCoordinate << 1] - GridShift) * InvGridStep);
+		      GridLocations[(NextCoordinate << 1) + 1] = (int) ((TmpZ[(NextCoordinate << 1) + 1] - GridShift) * InvGridStep);
 		    }
-		  GridLocations[(NextCoordinate << 1) + 1] = (int) ((TmpZ[(NextCoordinate << 1) + 1] - GridShift) * InvGridStep);
-		  if ((GridLocations[(NextCoordinate << 1) + 1] < 0) || (GridLocations[(NextCoordinate << 1) + 1] >= NbrSteps))
+		  else
 		    {
-		      cout << "2 : " << GridLocations[(NextCoordinate << 1) + 1] << " " << TmpZ[(NextCoordinate << 1) + 1] << " " <<  GridShift << " " << InvGridStep << endl;
+		      GridLocations[NextCoordinate] = GetRadiusCoordinate((TmpZ[NextCoordinate << 1] * TmpZ[NextCoordinate << 1]) + (GridLocations[(NextCoordinate << 1) + 1] * GridLocations[(NextCoordinate << 1) + 1]), RadiusArray, NbrSteps);
 		    }
 		  ++Acceptance;	      
 		}
@@ -340,9 +363,16 @@ int main(int argc, char** argv)
 	      TmpZ[(NextCoordinate << 1) + 1] = PreviousTmpZIm;
 	    }
 
-	  for (int j = 0; j < TwiceNbrParticles; j += 2)
-	    FunctionBasisDecomposition[GridLocations[j]][GridLocations[j + 1]] += 1.0;
-
+	  if (RSymmetryFlag == false)
+	    {
+	      for (int j = 0; j < TwiceNbrParticles; j += 2)
+		FunctionBasisDecomposition[GridLocations[j]][GridLocations[j + 1]] += 1.0;
+	    }
+	  else
+	    {
+	      for (int j = 0; j < NbrParticles; ++j)
+		FunctionBasisDecomposition[0][GridLocations[j]] += 1.0;
+	    }
 	  TotalProbability++;	  
 	  TotalProbabilityError++;
 
@@ -352,6 +382,27 @@ int main(int argc, char** argv)
 	    {
 	      CurrentPercent = (i * 20l) / NbrIter;
 	      cout << (CurrentPercent * 5l) << "% " << flush;
+	    }
+
+	  if ((RecordWaveFunctions != 0) && ((i % RecordStep) == 0l))
+	    {
+	      ofstream RecordFile;
+	      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary | ios::app);
+	      RecordFile.precision(14);
+	      RecordFile << i << " " << TotalProbability;
+	      if (RSymmetryFlag == false)
+		{
+		  for (int j = 0; j < NbrSteps; ++j)
+		    for (int k = 0; k < NbrSteps; ++k)
+		      RecordFile << " " << FunctionBasisDecomposition[j][k];
+		}
+	      else
+		{
+		  for (int k = 0; k < NbrSteps; ++k)
+		    RecordFile << " " << FunctionBasisDecomposition[0][k];
+		}
+	      RecordFile << endl;
+	      RecordFile.close();
 	    }
 	}
       cout << endl << "acceptance rate = " <<  ((((double) Acceptance) / ((double) NbrIter)) * 100.0) << "%" <<endl;
@@ -424,20 +475,47 @@ int main(int argc, char** argv)
 
       Manager.DisplayOption(DensityRecordFile, true, '#');
       DensityRecordFile << "#" << endl;
-      DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
-      double TmpX = GridShift + (0.5 * GridStep);
       double Sum = 0.0;
-      for (int i = 0; i < NbrSteps; ++i)
+
+      if (RSymmetryFlag == false)
 	{
-	  double TmpY = GridShift + (0.5 * GridStep);
+	  DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
+	  double TmpX = GridShift + (0.5 * GridStep);
+	  for (int i = 0; i < NbrSteps; ++i)
+	    {
+	      double TmpY = GridShift + (0.5 * GridStep);
+	      for (int j = 0; j < NbrSteps; ++j)
+		{
+		  DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[i][j] << endl;
+		  Sum += FunctionBasisDecomposition[i][j];
+		  TmpY += GridStep;
+		}
+	      DensityRecordFile << endl;
+	      TmpX += GridStep;
+	    }
+	}
+      else 
+	{
+	  DensityRecordFile << "#" << endl << "# density wave function " << endl << "# radius  density density_error" << endl;
 	  for (int j = 0; j < NbrSteps; ++j)
 	    {
-	      DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[i][j] << endl;
-	      Sum += FunctionBasisDecomposition[i][j];
-	      TmpY += GridStep;
+	      DensityRecordFile << "# " << RadiusArray[j] << " " << FunctionBasisDecomposition[0][j] << endl;
 	    }
-	  DensityRecordFile << endl;
-	  TmpX += GridStep;
+	  DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
+	  double TmpX = GridShift + (0.5 * GridStep);
+	  for (int i = 0; i < NbrSteps; ++i)
+	    {
+	      double TmpY = GridShift + (0.5 * GridStep);
+	      for (int j = 0; j < NbrSteps; ++j)
+		{
+		  DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[0][GetRadiusCoordinate((TmpX * TmpX) + (TmpY * TmpY), RadiusArray, NbrSteps)] << endl;
+		  Sum += FunctionBasisDecomposition[0][j] * AreaStep;
+		  TmpY += GridStep;
+		}
+	      DensityRecordFile << endl;
+	      TmpX += GridStep;
+	    }	  
+	  Sum *= M_PI;
 	}
       DensityRecordFile.close();
       cout << "Sum = " << Sum << endl;
@@ -524,4 +602,31 @@ void GetGridCoordinates (RealVector& coordinates, int* locations, double invGrid
 {
   for (int i = 0; i < coordinates.GetVectorDimension(); ++i)
     locations[i] = (int) ((coordinates[i] - gridShift) * invGridStep);
+}
+
+// find the index of a radius in a given array of radius
+//
+// radius = radius to find
+// radiusArray = array of radius
+// nbrRadius = number of radius in the array
+// return value = radius index
+
+int GetRadiusCoordinate (double radius, double* radiusArray, int nbrRadius)
+{
+  --nbrRadius;
+  if (radius >= radiusArray[nbrRadius])
+    return nbrRadius;
+  int Pos = 0;
+  while (Pos < (nbrRadius - 1))
+    {
+      int Mid = (Pos + nbrRadius) >> 1;
+      if (radius < radiusArray[Mid])
+	nbrRadius = Mid;
+      else 
+	Pos = Mid;
+    }
+  if (radius < radiusArray[nbrRadius])
+    return Pos;
+  else
+    return nbrRadius;
 }
