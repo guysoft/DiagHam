@@ -80,6 +80,8 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
   this->PseudoPotentials = new double* [3];
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
   for (int j = 0; j < 3; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];

@@ -76,6 +76,8 @@ ParticleOnSphereWithSpinS2Hamiltonian::ParticleOnSphereWithSpinS2Hamiltonian(Par
   this->FastMultiplicationFlag = false;
   this->OneBodyTermFlag = true;
   this->S2Factor = s2Factor;
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = this->S2Factor * (0.25 * ((double) (this->TotalSz * this->TotalSz)) + 0.5 * ((double) this->NbrParticles));

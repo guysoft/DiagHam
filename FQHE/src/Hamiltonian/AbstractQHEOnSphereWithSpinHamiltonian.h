@@ -43,6 +43,10 @@
 using std::ostream;
 
 
+class ParticleOnSphereWithSpinL2Hamiltonian;
+class ParticleOnSphereWithSpinS2Hamiltonian;
+
+
 class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamiltonian
 {
 
@@ -106,6 +110,10 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // array that contains all one-body interaction factors for particles with spin down
   double* OneBodyInteractionFactorsdowndown;
   
+  // pointer to an optional L^2 operator in the Hamiltonian 
+  ParticleOnSphereWithSpinL2Hamiltonian* L2Hamiltonian;
+  // pointer to an optional S^2 operator in the Hamiltonian 
+  ParticleOnSphereWithSpinS2Hamiltonian* S2Hamiltonian;
 
  public:
 
@@ -135,6 +143,23 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   // return value = pointer to the array of vectors where result has been stored
   virtual  RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
 						   int firstComponent, int nbrComponent);
+
+  // add an additional S^2 term to the Hamiltonian
+  //
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // factor = factor in front of the S^2
+  // memory = amount of memory that can be used for S^2  precalculations 
+  void AddS2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l);
+
+  // add an additional L^2 term to the Hamiltonian
+  //
+  // totalLz = twice the projected momentum total value
+  // totalSz = twice the projected spin total value
+  // factor = factor in front of the L^2
+  // memory = amount of memory that can be used for L^2  precalculations   
+  void AddL2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l);
+
 
  protected:
   

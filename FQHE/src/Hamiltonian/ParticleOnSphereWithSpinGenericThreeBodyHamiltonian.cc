@@ -76,6 +76,9 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
 
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
+
   this->OneBodyTermFlag = false;
   this->OneBodyInteractionFactorsupup = 0;
   this->OneBodyInteractionFactorsdowndown = 0;
@@ -254,6 +257,9 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->LzMax = lzmax;
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
+
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
 
   this->PseudoPotentials = new double* [3];
   for (int j = 0; j < 3; ++j)
@@ -440,7 +446,6 @@ AbstractHamiltonian* ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::Clone 
 {
   return 0;
 }
-
 
 // evaluate all interaction factors
 //   

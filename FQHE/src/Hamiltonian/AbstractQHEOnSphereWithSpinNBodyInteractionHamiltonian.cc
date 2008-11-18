@@ -31,6 +31,8 @@
 
 #include "config.h"
 #include "Hamiltonian/AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
@@ -165,6 +167,10 @@ RealVector& AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::LowLevelAddM
 	    this->LowLevelAddMultiplyDiskStorage(vSource, vDestination, firstComponent, nbrComponent);	  
 	}
     }
+  if (this->L2Hamiltonian != 0)
+    this->L2Hamiltonian->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+  if (this->S2Hamiltonian != 0)
+    this->S2Hamiltonian->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
   return vDestination;
 }
 
@@ -305,6 +311,10 @@ RealVector* AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::LowLevelMult
 	    this->LowLevelMultipleAddMultiplyDiskStorage(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	}
     }
+  if (this->L2Hamiltonian != 0)
+    this->L2Hamiltonian->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
+  if (this->S2Hamiltonian != 0)
+    this->S2Hamiltonian->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
   return vDestinations;
 }
 
