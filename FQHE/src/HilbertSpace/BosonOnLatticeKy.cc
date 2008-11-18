@@ -1172,7 +1172,7 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Boson
   this->FullSpace = &nbodyBasis;
   int *QuantumNumbers = new int[this->NbrBosons];
   double Normalization;
-  bitset <32> b;
+  // bitset <32> b;
   for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
     {
       if (Norm(state[i])>1e-15)
@@ -1204,18 +1204,19 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
   double AdFactor;
   Complex TranslationPhase;
   this->DecodeQuantumNumber(quantumNumbers[nbrOperators-1], N, cK, Subl);
-  cout << "Decoded step 1 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", cK="<<cK<<", Subl="<<Subl<<endl;
+  //cout << "Decoded step 1 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", cK="<<cK<<", Subl="<<Subl<<endl;
   this->DecodeCompositeMomentum(cK, K, S);
-  cout << "Decoded step 2 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", K="<<K<<", S="<<S<<", Subl="<<Subl<<endl;
+  //cout << "Decoded step 2 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", K="<<K<<", S="<<S<<", Subl="<<Subl<<endl;
   double ExpFactor = 2.0*M_PI*(double)K/(double)Kmax;
+  
   if (nbrOperators>1)
     {
       for (int r=0; r<this->Kmax; ++r)
 	{
 	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
-	  cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;	  
+	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;	  
 	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
-	  cout << "Recursing with state: "<<ResultingState<<endl;
+	  //cout << "Recursing with state: "<<ResultingState<<endl;
 	  if (ResultingState!=0x0l)
 	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r));
 	}
@@ -1225,15 +1226,15 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
       for (int r=0; r<this->Kmax; ++r)
 	{
 	  TargetQ=this->FullSpace->EncodeQuantumNumber(N, TranslationCell*r+S, Subl, TranslationPhase);
-	  cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;
+	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;
 	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
-	  cout << "Finishing with state: "<<ResultingState<<endl;
+	  //cout << "Finishing with state: "<<ResultingState<<endl;
 	  if (ResultingState!=0x0l)
 	    {	      
 	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
 		{
 		  this->TargetVector[Index]+= prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r);
-		  cout << "Adding "<< prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r) <<" to component "<<Index<<endl;
+		  //cout << "Adding "<< prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r) <<" to component "<<Index<<endl;
 		}
 	    }
 	}

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
-  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "lx", "length in x-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ly", "length in y-direction of given lattice", 0);
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice", 0);
@@ -63,7 +63,6 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");
   unsigned long MemorySpace = 9 << 20;
 
-  int NbrVectors;
   char* InputFileName = Manager.GetString("input-file");
   bool SymmetrizeFlag = Manager.GetBoolean("symmetrize");
 
@@ -93,6 +92,15 @@ int main(int argc, char** argv)
       return -1;      
     }
 
+  cout << "Using the following system info: "<<endl;
+  cout << "N="<<NbrParticles<<", Lx="<<Lx<<", Ly="<<Ly<<", N_phi="<<NbrFluxQuanta<<", Ky="<<Ky<<endl;
+
+  char *OutputName = Manager.GetString("output-file");
+  if (OutputName==NULL)
+    {
+      OutputName = new char[strlen(Manager.GetString("input-file"))+10];
+      sprintf(OutputName,"%s.full",Manager.GetString("input-file"));
+    }
 
   if (Statistics == true)
     {
@@ -124,11 +132,12 @@ int main(int argc, char** argv)
 	    }
 	  OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 	}
-      if (OutputState.WriteVector(Manager.GetString("output-file")) == false)
+      if (OutputState.WriteVector(OutputName) == false)
 	{
-	  cout << "error while writing output state " << Manager.GetString("output-file") << endl;
+	  cout << "error while writing output state " << OutputName << endl;
 	  return -1;
 	}
     }
+  delete [] OutputName;
 }
 

@@ -32,6 +32,7 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
+  (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -63,11 +64,13 @@ int main(int argc, char** argv)
       cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
 
   Complex sp=0.0;
+
+  int MaxVectors=(Manager.GetBoolean("no-cross")?1:NbrVectors);
   
   if (Manager.GetBoolean("complex"))
     {      
       ComplexVector State1, State2;
-      for (int i=0; i<NbrVectors; ++i)
+      for (int i=0; i<MaxVectors; ++i)
 	{
 	  if (State1.ReadVector (VectorFiles[i]) == false)
 	    {
@@ -103,7 +106,7 @@ int main(int argc, char** argv)
   else // real vectors
     {
       RealVector State1, State2;
-      for (int i=0; i<NbrVectors; ++i)
+      for (int i=0; i<MaxVectors; ++i)
 	{
 	  if (State1.ReadVector (VectorFiles[i]) == false)
 	    {

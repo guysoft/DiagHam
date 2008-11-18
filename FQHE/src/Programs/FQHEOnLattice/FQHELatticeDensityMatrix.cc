@@ -550,7 +550,7 @@ int main(int argc, char** argv)
 	  TmpState.ClearVector();
 	  for (int j=0; j<NbrVectors;++j)
 	    TmpState.AddLinearCombination(Conj(EVecXY[i][j]),Vectors[j]);
-	  cout << "Vector="<<i<<"="<<vectorName<<endl;
+	  cout << "Vector-"<<i<<"="<<vectorName<<endl;
 	  TmpState.WriteVector(vectorName);
 	}
     }

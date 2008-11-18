@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (grabbed from condensate)", 0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons (~Gutzwiller projection)");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
+  (*SystemGroup) += new BooleanOption('r',"first-real","Multiply each vector with a phase such that the first non-zero coefficient is real");
 
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction", 0);
 
@@ -64,7 +65,8 @@ int main(int argc, char** argv)
   char** VectorFiles = Manager.GetStrings("input-files",NbrVectors);
   int VectorDimension=0;
   ComplexVector *Vectors = new ComplexVector[NbrVectors];
-
+  Complex *Phases = new Complex[NbrVectors];
+  for (int i=0; i<NbrVectors; ++i) Phases[i]=1.0;
 
   double Interaction=-1.0;
   int TmpI=-1;
@@ -125,13 +127,25 @@ int main(int argc, char** argv)
       else Space = new BosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
     }
 
+  if (Manager.GetBoolean("first-real"))
+    {
+      for (int k=0; k<NbrVectors; ++k)
+	{
+	  int i=0;
+	  while ((Norm(Vectors[k][i])<1e-10)&&(i<Space->GetHilbertSpaceDimension()))
+	    ++i;
+	  Phases[k]=Polar(1.0,-Arg(Vectors[k][i]));
+	}
+	  
+    }
+
   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
     {
       Space->PrintState(cout, i);
       if (NbrVectors>0)
-	cout << " : " << Vectors[0][i];
+	cout << " : " << "("<<Real(Vectors[0][i]*Phases[0])<<"+I*"<<Imag(Vectors[0][i]*Phases[0])<<")";
       for (int k=1; k<NbrVectors; ++k)
-	cout << "  " << Vectors[k][i];
+	cout << "  " << "("<<Real(Vectors[k][i]*Phases[k])<<"+I*"<<Imag(Vectors[k][i]*Phases[k])<<")";
       cout << endl;
     }
 
