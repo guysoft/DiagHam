@@ -1514,9 +1514,10 @@ void AbstractQHEOnLatticeHamiltonian::EnableFastMultiplication()
 	  qi = this->KineticQi[j];
 	  qf = this->KineticQf[j];
 	  // considering: this->HoppingTerms[j]
-	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);
+	  Index = TmpParticles->AdA(i, qf, qi, Coefficient);	  
 	  if (Index < Dim)
 	    {
+	      //cout << "Element ("<<qi<<"->"<<qf<<"): "<<Coefficient<<endl;
 	      if (fabs(this->HoppingTerms[j].Im)<1e-14) // real element
 		{
 		  TmpIndexArray[PosR] = Index;

@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnLattice.h"
+#include "HilbertSpace/FermionOnLattice.h"
 #include "HilbertSpace/HardCoreBosonOnLattice.h"
 #include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
 #include "Operator/ParticleOnLatticeTranslationOperator.h"
@@ -60,8 +61,7 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");  
 
   Manager += SystemGroup;
-  Architecture.AddOptionGroup(&Manager);
-  QHEOnLatticeMainTask::AddOptionGroup(&Manager);
+  Architecture.AddOptionGroup(&Manager);  
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -92,11 +92,10 @@ int main(int argc, char** argv)
     {
       OutputName = new char [256];      
       if (HardCore)
-	sprintf(interactionStr,"_hardcore");
-      
+	sprintf(interactionStr,"_hardcore");      
       sprintf (OutputName, "bosons_lattice_CF_n_%d_x_%d_y_%d%s_q_%d_p_%d", NbrBosons, Lx, Ly, interactionStr, NbrFluxQuanta, CFFlux);
     }
-  char *TmpC = new char[strlen(OutputName)+10];
+  char *TmpC = new char[strlen(OutputName)+20];
 
   cout << "* Full Hilbert-space: N="<<NbrBosons<<" bosons in "<<Lx<<" x "<<Ly<<" cells at N_phi="<<NbrFluxQuanta<<endl;
   ParticleOnLattice* Space;
@@ -113,7 +112,8 @@ int main(int argc, char** argv)
   
   cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
   // space in which CF's live (statistics doesn't matter as we consider single particle physics!)
-  BosonOnLattice *CFSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
+  //BosonOnLattice *CFSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
+  FermionOnLattice *CFSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
   TranslationOperator = new ParticleOnLatticeTranslationOperator(CFSpace);
   
   // corresponding Hamiltonians
@@ -142,7 +142,8 @@ int main(int argc, char** argv)
   cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;
   
   // calculate states required to build Jastrow factor:
-  BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
+  // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
+  FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
 
   AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
   delete TranslationOperator;
@@ -201,8 +202,10 @@ int main(int argc, char** argv)
 // 	      ComplexVector TmpEigenFctJastrow = JastrowEigenVecs[p];
 	      for (int q = 0; q < NbrBosons; ++q)
 		{
-		  SlaterCF.SetMatrixElement(p,q,CFEigenVecs[p][QuantumNumbers[q]]);
-		  SlaterJastrow.SetMatrixElement(p,q,JastrowEigenVecs[p][QuantumNumbers[q]]);
+		  // need to consider proper ordering of matrix elements
+		  // in Hilbert-space, largest quantum number q corresponds to position 0!
+		  SlaterCF.SetMatrixElement(p,q,CFEigenVecs[p][CFHamiltonian->GetHilbertSpaceDimension()-1-QuantumNumbers[q]]);
+		  SlaterJastrow.SetMatrixElement(p,q,JastrowEigenVecs[p][JastrowHamiltonian->GetHilbertSpaceDimension()-1-QuantumNumbers[q]]);
 		}	      
 	    }
 	  CFState[i] = SlaterCF.Determinant();
@@ -313,7 +316,6 @@ ComplexMatrix& DiagonalizeMomentaInSubspace(RealDiagonalMatrix &values, ComplexM
   while ((start > 0)&&(abs(values[start]-values[start-1])<1e-12)) --start;
   while ((end < values.GetNbrRow()-1)&&(fabs(values[end]-values[end-1])<1e-12))
     {
-      cout << "Difference: "<<fabs(values[end]-values[end-1])<<endl;
       ++end;
     }
   

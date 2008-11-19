@@ -294,7 +294,7 @@ int main(int argc, char** argv)
 		      AnnihilationIndex = Space->EncodeQuantumNumber(AnnihilationX, AnnihilationY, 0, Tmp);
 		      DensityOperator->SetCreationAnnihilationIndex(CreationIndex,AnnihilationIndex);
 		      // calculate possible matrix elements in subspace of vectors
-		      // if (CreationIndex <= AnnihilationIndex)
+		      if (CreationIndex <= AnnihilationIndex)
 			{
 			  Tmp=DensityOperator->MatrixElement(Superposition, Superposition);
 			  Rho2.SetMatrixElement(CreationIndex, AnnihilationIndex, Tmp);

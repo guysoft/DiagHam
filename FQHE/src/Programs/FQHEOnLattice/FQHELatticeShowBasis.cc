@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 
       if (!haveVector)
 	{
-	  cout << "No valid vector files found: printing basis, only!"<<endl;
+	  cout << "No valid vector files found: printing basis only!"<<endl;
 	  NbrVectors=0;
 	}
     }
