@@ -175,7 +175,7 @@ Complex FQHESphereLaughlinOneQuasielectronWaveFunction::CalculateFromSpinorVaria
   Complex WaveFunction2(0.0);  
   for (int i =0; i < this->NbrParticles; ++i)
     {
-      Tmp = this->TmpWeights[i];
+      Tmp = 1.0;
       Tmp2 = 0.0;
       for (int j = 0; j < i; ++j)
 	{
@@ -192,6 +192,7 @@ Complex FQHESphereLaughlinOneQuasielectronWaveFunction::CalculateFromSpinorVaria
 	      Tmp *= this->TmpSqrJastrow[j][k];
 	      Tmp3 *= this->TmpJastrow[i][k];
 	    }
+	  Tmp3 *= this->TmpWeights[j];
 	  Tmp2 += Tmp3;
 	}
       for (int j = i + 1; j < this->NbrParticles; ++j)
@@ -206,6 +207,7 @@ Complex FQHESphereLaughlinOneQuasielectronWaveFunction::CalculateFromSpinorVaria
 	      Tmp *= this->TmpSqrJastrow[j][k];
 	      Tmp3 *= this->TmpJastrow[i][k];
 	    }
+	  Tmp3 *= this->TmpWeights[j];
 	  Tmp2 += Tmp3;
 	}
       Tmp *= Tmp2;
