@@ -175,8 +175,11 @@ int main(int argc, char** argv)
   double AreaStep = 2.0 * GridScale * GridScale / ((double) NbrSteps); 
   RadiusArray[0] = 0.0;
   for (int i = 1; i < NbrSteps; ++i)
-    RadiusArray[i] = sqrt ((RadiusArray[i - 1] * RadiusArray[i - 1]) + AreaStep) - RadiusArray[i - 1]; 
-
+    {
+//      RadiusArray[i] = sqrt ((RadiusArray[i - 1] * RadiusArray[i - 1]) + AreaStep); 
+      RadiusArray[i] = RadiusArray[i - 1] + (0.5 * M_SQRT2 * GridScale / ((double) NbrSteps)); 
+      cout << i << " " << RadiusArray[i] << endl;
+    }
   double ExcitationPosition = ((SingleDoubleOption*) Manager["excitation-position"])->GetDouble();
 
   Abstract1DComplexFunction* SymmetrizedFunction = 0;
@@ -344,7 +347,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      GridLocations[NextCoordinate] = GetRadiusCoordinate((TmpZ[NextCoordinate << 1] * TmpZ[NextCoordinate << 1]) + (GridLocations[(NextCoordinate << 1) + 1] * GridLocations[(NextCoordinate << 1) + 1]), RadiusArray, NbrSteps);
+		      GridLocations[NextCoordinate] = GetRadiusCoordinate(sqrt((TmpZ[NextCoordinate << 1] * TmpZ[NextCoordinate << 1]) + (TmpZ[(NextCoordinate << 1) + 1] * TmpZ[(NextCoordinate << 1) + 1])), RadiusArray, NbrSteps);
 		    }
 		  ++Acceptance;	      
 		}
@@ -503,13 +506,14 @@ int main(int argc, char** argv)
 	    }
 	  DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
 	  double TmpX = GridShift + (0.5 * GridStep);
+	  double AreaRatio = GridStep * GridStep / (M_PI * AreaStep);
 	  for (int i = 0; i < NbrSteps; ++i)
 	    {
 	      double TmpY = GridShift + (0.5 * GridStep);
 	      for (int j = 0; j < NbrSteps; ++j)
 		{
-		  DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[0][GetRadiusCoordinate((TmpX * TmpX) + (TmpY * TmpY), RadiusArray, NbrSteps)] << endl;
-		  Sum += FunctionBasisDecomposition[0][j] * AreaStep;
+		  DensityRecordFile << TmpX << " " << TmpY << " " << (FunctionBasisDecomposition[0][GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps)] * AreaRatio) << endl;
+		  Sum += FunctionBasisDecomposition[0][GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps)] * AreaRatio;
 		  TmpY += GridStep;
 		}
 	      DensityRecordFile << endl;
