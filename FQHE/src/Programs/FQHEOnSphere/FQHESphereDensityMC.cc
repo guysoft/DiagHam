@@ -98,6 +98,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals used to sample the sphere geometry", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('s', "nbr-step", "number of steps for the density profil", 100);
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
+  (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "jump", "length of the jump used for the metropolis algorithm", 0.3);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
   (*MonteCarloGroup) += new BooleanOption  ('r', "resume", "resume from a previous run");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
@@ -137,7 +138,7 @@ int main(int argc, char** argv)
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
   bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
-  double JumpDistance = 0.2 * M_PI;
+  double JumpDistance = ((SingleDoubleOption*) Manager["jump"])->GetDouble();
   double StepSize = 0.25;
   if (((BooleanOption*) Manager["force-symmetry"])->GetBoolean() == true)
     {
@@ -155,6 +156,7 @@ int main(int argc, char** argv)
       RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
       RecordFile.close();
     }
+  int RecordStep = Manager.GetInteger("record-step");
 
 
 //   int LzMax = 2 * NbrParticles - 2;
@@ -367,6 +369,18 @@ int main(int argc, char** argv)
 
 	  NextCoordinate = (int) (RandomNumber->GetRealRandomNumber() * (double) NbrParticles);
 
+	  if ((RecordWaveFunctions != 0) && ((i % RecordStep) == 0l))
+	    {
+	      ofstream RecordFile;
+	      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary | ios::app);
+	      RecordFile.precision(14);
+	      RecordFile << i << " " << TotalProbability;
+	      for (int j = 0; j < NbrOrbitals; ++j)
+		RecordFile << " " << FunctionBasisDecomposition[j] << " " << FunctionBasisDecompositionError[j];
+	      RecordFile << endl;
+	      RecordFile.close();
+	    }
+
 	  if (((i * 20) / NbrIter) != CurrentPercent)
 	    {
 	      CurrentPercent = (i * 20) / NbrIter;
@@ -402,6 +416,7 @@ int main(int argc, char** argv)
       Theta = 0.0;
       double Sum = 0.0; 
       double TmpFactor = 4.0 * M_PI / ((double) NbrOrbitals);
+      Manager.DisplayOption(DensityRecordFile, true, '#');
       DensityRecordFile << "# decomposition of the wave on " << NbrOrbitals << " orbitals" << endl; 
       DensityRecordFile << "# orbital_index     component    error" << endl;
       for (int k = 0; k < NbrOrbitals; ++k)
