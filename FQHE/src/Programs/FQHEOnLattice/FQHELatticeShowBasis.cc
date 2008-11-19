@@ -127,6 +127,12 @@ int main(int argc, char** argv)
       else Space = new BosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
     }
 
+  if (Space->GetHilbertSpaceDimension() != VectorDimension)
+    {
+      cout << "Dimension of vectors does not match the size of the Hilbert-Space!"<<endl;
+      exit(1);	
+    }
+
   if (Manager.GetBoolean("first-real"))
     {
       for (int k=0; k<NbrVectors; ++k)

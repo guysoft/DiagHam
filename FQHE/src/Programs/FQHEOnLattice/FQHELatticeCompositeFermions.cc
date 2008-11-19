@@ -221,7 +221,7 @@ int main(int argc, char** argv)
   JastrowState.WriteVector(TmpC);
   
   sprintf(TmpC,"%s.vec",OutputName);
-  for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)    
+  for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     CFState[i] *= JastrowState[i];
   CFState /= CFState.Norm();
   CFState.WriteVector(TmpC);  
