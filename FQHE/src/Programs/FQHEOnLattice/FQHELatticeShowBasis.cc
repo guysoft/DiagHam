@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons (~Gutzwiller projection)");
   (*SystemGroup) += new BooleanOption('n',"no-hard-core","Do not use Hilbert-space of hard-core bosons (overriding detection from filename)");
   (*SystemGroup) += new BooleanOption('r',"first-real","Multiply each vector with a phase such that the first non-zero coefficient is real");
+  (*SystemGroup) += new SingleIntegerOption('e',"real-element","Index of element to be made real with option 'first-real'",0);
 
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction", 0);
 
@@ -134,13 +135,13 @@ int main(int argc, char** argv)
     }
 
   if (Manager.GetBoolean("first-real"))
-    {
+    {      
       for (int k=0; k<NbrVectors; ++k)
 	{
-	  int i=0;
-	  while ((Norm(Vectors[k][i])<1e-10)&&(i<Space->GetHilbertSpaceDimension()))
-	    ++i;
-	  Phases[k]=Polar(1.0,-Arg(Vectors[k][i]));
+	  int e=(Manager.GetInteger("real-element")<Space->GetHilbertSpaceDimension()?Manager.GetInteger("real-element"):0);
+	  while ((Norm(Vectors[k][e])<1e-10)&&(e<Space->GetHilbertSpaceDimension()))
+	    ++e;
+	  Phases[k]=Polar(1.0,-Arg(Vectors[k][e]));
 	}
 	  
     }

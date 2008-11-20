@@ -47,7 +47,7 @@ FermionOnSphereWithSpinSzProjection::FermionOnSphereWithSpinSzProjection()
 // nbrFermions = number of fermions
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
-// totalSpin = twce the total spin value
+// totalSpin = twice the total spin value
 // szProjectionValue = -1 / +1
 // memory = amount of memory granted for precalculations
 

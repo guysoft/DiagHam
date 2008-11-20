@@ -33,7 +33,6 @@
 
 #include <string.h>
 
-
 // split a line using a given separator
 //
 // string = string to split
@@ -200,3 +199,22 @@ bool CleanLine (char* line)
   return true;
 }
 
+
+// print the given memory size in b, kb, Mb, or Gb
+// str = stream to write to
+// bytes = size in bytes
+// return = reference on stream
+ostream& PrintMemorySize(ostream &str, int bytes)
+{
+  if (bytes >= 1024)
+    if (bytes >= 1048576)
+      if (bytes >= 1073741824)
+	str << (bytes >> 30) << "Go";
+      else
+	str << (bytes >> 20) << "Mo";
+    else
+      str << (bytes >> 10) << "ko";
+  else
+    str << bytes;
+  return str;
+}

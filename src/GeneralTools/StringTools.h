@@ -33,6 +33,8 @@
 
 #include "config.h"
 
+#include <ostream>
+using std::ostream;
 
 // split a line using a given separator
 //
@@ -58,6 +60,15 @@ int FixedSplitLine(char* string, char** array, int nbrElements, char separator);
 // line = pointer to the line to clean
 // return value = true if the line still contains usefull information
 bool CleanLine (char* line);
+
+
+// print the given memory size in b, kb, Mb, or Gb
+// str = stream to write to
+// bytes = size in bytes
+// return = reference on stream
+ostream& PrintMemorySize(ostream &str, int bytes);
+
+
 
 
 #endif
