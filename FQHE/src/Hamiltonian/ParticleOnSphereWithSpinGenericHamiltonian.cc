@@ -63,12 +63,13 @@ using std::ostream;
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+										       double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
 										       AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 										       char* precalculationFileName)
 {
@@ -109,6 +110,13 @@ ParticleOnSphereWithSpinGenericHamiltonian::ParticleOnSphereWithSpinGenericHamil
       this->OneBodyInteractionFactorsdowndown = new double [this->NbrLzValue];
       for (int i = 0; i <= this->LzMax; ++i)
 	this->OneBodyInteractionFactorsdowndown[i] = onebodyPotentialDownDown[i];
+    }
+  this->OneBodyInteractionFactorsupdown = 0;
+  if (onebodyPotentialUpDown != 0)
+    {
+      this->OneBodyInteractionFactorsupdown = new double [this->NbrLzValue];
+      for (int i = 0; i <= this->LzMax; ++i)
+	this->OneBodyInteractionFactorsupdown[i] = onebodyPotentialUpDown[i];
     }
   if (precalculationFileName == 0)
     {
@@ -434,12 +442,12 @@ void ParticleOnSphereWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 //       }
 
 
-  int Lim;
-  int Min;
-  int Pos = 0;
+  // int Lim;
+  // int Min;
+  // int Pos = 0;
   ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
   int J = 2 * this->LzMax - 2;
-  int m4;
+  // int m4;
   double ClebschCoef;
   long TotalNbrInteractionFactors = 0;
 

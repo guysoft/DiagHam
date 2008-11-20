@@ -70,11 +70,13 @@ class ParticleOnSphereWithSpinGenericHamiltonian : public AbstractQHEOnSphereWit
   //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
   // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
   // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+  // onebodyPotentialUpDown =  one-body tunnelling potential (sorted from component on the lowest Lz state to component on the highest Lz state), on site, symmetric spin up / spin down
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
 					     double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+					     double* onebodyPotentialUpDown, 
 					     AbstractArchitecture* architecture, long memory = -1, 
 					     bool onDiskCacheFlag = false, char* precalculationFileName = 0);
 

@@ -106,6 +106,9 @@ AbstractQHEOnSphereWithSpinHamiltonian::~AbstractQHEOnSphereWithSpinHamiltonian(
     delete[] this->OneBodyInteractionFactorsupup;
   if (this->OneBodyInteractionFactorsdowndown != 0)
     delete[] this->OneBodyInteractionFactorsdowndown;
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    delete [] this->OneBodyInteractionFactorsupdown;
+  
   if (this->S2Hamiltonian != 0)
     delete this->S2Hamiltonian;
   if (this->L2Hamiltonian != 0)
@@ -520,6 +523,27 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
 	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 	}
     }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  for (int j=0; j<LzMax+1; ++j)
+	    {
+	      Index = TmpParticles->AddAu(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	      Index = TmpParticles->AduAd(i, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  ++Memory;
+		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		}
+	    }
+	}
+    }
 
   delete TmpParticles;
 
@@ -549,8 +573,9 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
   this->InteractionPerComponentIndex = new int* [ReducedSpaceDimension];
   this->InteractionPerComponentCoefficient = new double* [ReducedSpaceDimension];
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles;
-
+  int Dim = TmpParticles->GetHilbertSpaceDimension();
   int TotalPos = 0;
+  
 
   for (int i = 0; i < EffectiveHilbertSpaceDimension; i += this->FastMultiplicationStep)
     {
@@ -564,15 +589,37 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplication()
 	{
 	  double TmpDiagonal = 0.0;
 	  if (this->OneBodyInteractionFactorsupup != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
+	    for (int j = 0; j <= this->LzMax; ++j)
 	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i + this->PrecalculationShift, j);
 	  if (this->OneBodyInteractionFactorsdowndown != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);
+	    for (int j = 0; j <= this->LzMax; ++j)
+	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);	  
 	  TmpIndexArray[Pos] = i + this->PrecalculationShift;
 	  TmpCoefficientArray[Pos] = TmpDiagonal;
 	  ++Pos;	  
 	}
+      if (this->OneBodyInteractionFactorsupdown != 0)
+	{
+	  double Coefficient;
+	  int Index;
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = TmpParticles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpIndexArray[Pos] = Index;
+		  TmpCoefficientArray[Pos] = Coefficient * OneBodyInteractionFactorsupdown[j];
+		  ++Pos;
+		}
+	      Index = TmpParticles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  TmpIndexArray[Pos] = Index;
+		  TmpCoefficientArray[Pos] = Coefficient * OneBodyInteractionFactorsupdown[j];
+		  ++Pos;
+		}
+	    }
+	}       
       ++TotalPos;
     }
   this->FastMultiplicationFlag = true;
@@ -627,9 +674,9 @@ void AbstractQHEOnSphereWithSpinHamiltonian::EnableFastMultiplicationWithDiskSto
   cout << "start" << endl;
   this->InteractionPerComponentIndex = 0;
   this->InteractionPerComponentCoefficient = 0;
-  double* TmpInteraction;
-  int* MIndices;
-  int* NIndices;
+  // double* TmpInteraction;
+  // int* MIndices;
+  // int* NIndices;
   this->MaxNbrInteractionPerComponent = 0;
 
   int TotalPos = 0;

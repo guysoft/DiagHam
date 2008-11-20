@@ -82,6 +82,7 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
   this->OneBodyTermFlag = false;
   this->OneBodyInteractionFactorsupup = 0;
   this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
   this->FullTwoBodyFlag = false;
   this->NbrIntraSectorSums = 0;
   this->NbrInterSectorSums = 0;

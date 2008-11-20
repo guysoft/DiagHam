@@ -228,6 +228,24 @@ class FermionOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // return value =  multiplicative factor 
   virtual double AuAd (int index, int n1, int n2);
 
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient);
+
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
@@ -358,7 +376,9 @@ class FermionOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension      
-  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int level=0);
+
+  virtual long ShiftedEvaluateHilbertSpaceDimension2(int nbrFermions, int posMax, int totalLz, int level=0);
 
   // generate look-up table associated to current Hilbert space
   // 

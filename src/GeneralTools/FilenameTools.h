@@ -45,7 +45,7 @@ using std::ios;
 //
 // pattern = string that corresponds to the pattern  (i.e. /to/directory/pattern)
 // matchedFileArray = reference on the sorted array (with respect to xxx) of files or directories names (with the optional relative/absolute path), 
-//                    memory allocation isd one by the function itself
+//                    memory allocation is done by the function itself
 // suffix = optional suffix  to test
 // return value = number of matched files
 int GetAllFilesDirectories(char* pattern, char**& matchedFileArray, char* suffix = 0);

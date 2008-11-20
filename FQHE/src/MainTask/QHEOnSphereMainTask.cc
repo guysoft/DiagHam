@@ -112,40 +112,40 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
   this->LValue = lValue;
   this->LzMax = lzMax;
   this->EnergyShift = shift;
-  this->ResumeFlag = ((BooleanOption*) (*options)["resume"])->GetBoolean();
-  this->DiskFlag = ((BooleanOption*) (*options)["disk"])->GetBoolean();
-  this->MaxNbrIterLanczos = ((SingleIntegerOption*) (*options)["iter-max"])->GetInteger();
-  this->NbrIterLanczos = ((SingleIntegerOption*) (*options)["nbr-iter"])->GetInteger();
-  this->NbrEigenvalue = ((SingleIntegerOption*) (*options)["nbr-eigen"])->GetInteger();
+  this->ResumeFlag = options->GetBoolean("resume");
+  this->DiskFlag = options->GetBoolean("disk");
+  this->MaxNbrIterLanczos = options->GetInteger("iter-max");
+  this->NbrIterLanczos = options->GetInteger("nbr-iter");
+  this->NbrEigenvalue = options->GetInteger("nbr-eigen");
   if (this->NbrEigenvalue > this->Space->GetHilbertSpaceDimension())
     {
       this->NbrEigenvalue = this->Space->GetHilbertSpaceDimension();
     }
-  this->FullDiagonalizationLimit = ((SingleIntegerOption*) (*options)["full-diag"])->GetInteger();
+  this->FullDiagonalizationLimit = options->GetInteger("full-diag");
   this->BlockLanczosFlag = false;
   if ((*options)["block-lanczos"] != 0)
     {
-      this->BlockLanczosFlag = ((BooleanOption*) (*options)["block-lanczos"])->GetBoolean();
+      this->BlockLanczosFlag = options->GetBoolean("block-lanczos");
     }
   this->SizeBlockLanczos = 1;
   if ((*options)["block-size"] != 0)
     {
-      this->SizeBlockLanczos = ((SingleIntegerOption*) (*options)["block-size"])->GetInteger();
+      this->SizeBlockLanczos = options->GetInteger("block-size");
     }
-  this->VectorMemory = ((SingleIntegerOption*) (*options)["nbr-vector"])->GetInteger();
-  this->SavePrecalculationFileName = ((SingleStringOption*) (*options)["save-precalculation"])->GetString();
-  this->FullReorthogonalizationFlag = ((BooleanOption*) (*options)["force-reorthogonalize"])->GetBoolean();
-  this->EvaluateEigenvectors = ((BooleanOption*) (*options)["eigenstate"])->GetBoolean();
-  this->EigenvectorConvergence = ((BooleanOption*) (*options)["eigenstate-convergence"])->GetBoolean();
+  this->VectorMemory = options->GetInteger("nbr-vector");
+  this->SavePrecalculationFileName = options->GetString("save-precalculation");
+  this->FullReorthogonalizationFlag = options->GetBoolean("force-reorthogonalize");
+  this->EvaluateEigenvectors = options->GetBoolean("eigenstate");
+  this->EigenvectorConvergence = options->GetBoolean("eigenstate-convergence");
   if ((*options)["show-itertime"] != 0)
     {
-      this->ShowIterationTime = ((BooleanOption*) (*options)["show-itertime"])->GetBoolean();
+      this->ShowIterationTime = options->GetBoolean("show-itertime");
     }
   else
     this->ShowIterationTime = false;
   if ((*options)["initial-vector"] != 0)
     {
-      this->InitialVectorFileName = ((SingleStringOption*) (*options)["initial-vector"])->GetString();
+      this->InitialVectorFileName = options->GetString("initial-vector");
     }
   else
     {
@@ -153,7 +153,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["initial-blockvectors"] != 0)
     {
-      this->InitialBlockVectorFileName = ((SingleStringOption*) (*options)["initial-blockvectors"])->GetString();
+      this->InitialBlockVectorFileName = options->GetString("initial-blockvectors");
     }
   else
     {
@@ -161,7 +161,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["partial-lanczos"] != 0)
     {
-      this->PartialLanczos = ((BooleanOption*) (*options)["partial-lanczos"])->GetBoolean();
+      this->PartialLanczos = options->GetBoolean("partial-lanczos");
     }
   else
     {
@@ -169,7 +169,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["use-lapack"] != 0)
     {
-      this->LapackFlag = ((BooleanOption*) (*options)["use-lapack"])->GetBoolean();
+      this->LapackFlag = options->GetBoolean("use-lapack");
     }
   else
     {
@@ -177,7 +177,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["limit-time"] != 0)
     {
-      this->MaximumAllowedTime = (((SingleIntegerOption*) (*options)["limit-time"])->GetInteger());
+      this->MaximumAllowedTime = (options->GetInteger("limit-time"));
     }
   else
     {
@@ -185,7 +185,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((((*options)["use-hilbert"]) != 0) && (((SingleStringOption*) (*options)["use-hilbert"])->GetString() != 0))
     {
-      this->ReducedHilbertSpaceDescription = ((SingleStringOption*) (*options)["use-hilbert"])->GetString();
+      this->ReducedHilbertSpaceDescription = options->GetString("use-hilbert");
     }
   else
     {
@@ -193,7 +193,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["get-lvalue"] != 0)
     {
-      this->ComputeLValueFlag = ((BooleanOption*) (*options)["get-lvalue"])->GetBoolean();
+      this->ComputeLValueFlag = options->GetBoolean("get-lvalue");
     }
   else
     {
@@ -201,7 +201,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if ((*options)["get-hvalue"] != 0)
     {
-      this->ComputeEnergyFlag = ((BooleanOption*) (*options)["get-hvalue"])->GetBoolean();
+      this->ComputeEnergyFlag = options->GetBoolean("get-hvalue");
     }
   else
     {
@@ -215,7 +215,7 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
-      this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();
+      this->LanczosPrecision = options->GetDouble("lanczos-precision");
     }
   else
     {
@@ -224,10 +224,10 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
 
   if (((*options)["fast-disk"] != 0) && (this->EvaluateEigenvectors == true))
     {
-      this->FastDiskFlag = ((BooleanOption*) (*options)["fast-disk"])->GetBoolean();
+      this->FastDiskFlag = options->GetBoolean("fast-disk");
       if ((*options)["resume-fastdisk"] != 0)
 	{
-	  this->ResumeFastDiskFlag = ((BooleanOption*) (*options)["resume-fastdisk"])->GetBoolean();
+	  this->ResumeFastDiskFlag = options->GetBoolean("resume-fastdisk");
 	}
     }
   else

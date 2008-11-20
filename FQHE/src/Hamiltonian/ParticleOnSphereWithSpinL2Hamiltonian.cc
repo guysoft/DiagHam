@@ -393,7 +393,8 @@ void ParticleOnSphereWithSpinL2Hamiltonian::EvaluateInteractionFactors()
       this->OneBodyInteractionFactorsdowndown[i] = this->L2Factor * (Coefficients(i, i + 1) + Coefficients(i - 1, i));
     }	  
   this->OneBodyInteractionFactorsupup[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
-  this->OneBodyInteractionFactorsdowndown[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);
+  this->OneBodyInteractionFactorsdowndown[this->LzMax] = this->L2Factor * Coefficients(this->LzMax - 1, this->LzMax);  
+  this->OneBodyInteractionFactorsupdown = NULL;
   cout << "nbr interaction = " << ((2 * (this->NbrM12IntraIndices + this->LzMax)) + 2 + this->NbrM12InterIndices) << endl;
   cout << "====================================" << endl;
 }

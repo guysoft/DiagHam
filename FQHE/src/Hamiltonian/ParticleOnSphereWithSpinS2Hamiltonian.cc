@@ -260,7 +260,7 @@ void ParticleOnSphereWithSpinS2Hamiltonian::EvaluateInteractionFactors()
 
   this->OneBodyInteractionFactorsupup = 0;
   this->OneBodyInteractionFactorsdowndown = 0;
-
+  this->OneBodyInteractionFactorsupdown = 0;
   cout << "nbr interaction = " << this->NbrM12InterIndices << endl;
   cout << "====================================" << endl;
 }

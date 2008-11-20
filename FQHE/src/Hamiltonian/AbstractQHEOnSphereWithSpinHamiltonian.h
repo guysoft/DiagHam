@@ -109,6 +109,8 @@ class AbstractQHEOnSphereWithSpinHamiltonian : public AbstractQHEOnSphereHamilto
   double* OneBodyInteractionFactorsupup;
   // array that contains all one-body interaction factors for particles with spin down
   double* OneBodyInteractionFactorsdowndown;
+  // array that contains all one-body interaction factors for tunnelling terms for particles with different spin
+  double* OneBodyInteractionFactorsupdown;
   
   // pointer to an optional L^2 operator in the Hamiltonian 
   ParticleOnSphereWithSpinL2Hamiltonian* L2Hamiltonian;
@@ -750,7 +752,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyFastMultipl
 inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent,
 											  int step, RealVector& vSource, RealVector& vDestination)
 {
-  if (this->OneBodyInteractionFactorsupup != 0) 
+  if (this->OneBodyInteractionFactorsupup != 0)
     if (this->OneBodyInteractionFactorsdowndown != 0)
       {
 	double TmpDiagonal = 0.0;
@@ -768,7 +770,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
     else
       {
 	double TmpDiagonal = 0.0;
-	for (int i = firstComponent; i < lastComponent; ++i)
+	for (int i = firstComponent; i < lastComponent; i += step)
 	  { 
 	    TmpDiagonal = 0.0;
 	    for (int j = 0; j <= this->LzMax; ++j) 
@@ -791,6 +793,30 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
     else
       for (int i = firstComponent; i < lastComponent; i += step)
 	vDestination[i] += this->HamiltonianShift * vSource[i];
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      double Coefficient;
+      double Source;
+      int Dim = particles->GetHilbertSpaceDimension();
+      int Index;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  Source = vSource[i];
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  vDestination[Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * Source;
+		}
+	      Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  vDestination[Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * Source;
+		}
+	    }
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -874,6 +900,31 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyAddMultiply
       for (int i = firstComponent; i < lastComponent; i += step)
 	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
     }
+  if (this->OneBodyInteractionFactorsupdown != 0)
+    {
+      double Coefficient;
+      int Dim = particles->GetHilbertSpaceDimension();
+      int Index;
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{
+	  for (int j = 0; j <= this->LzMax; ++j)
+	    {
+	      Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		}
+	      Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
+	      if (Index < Dim)
+		{
+		  for (int p = 0; p < nbrVectors; ++p)
+		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		}
+	    }
+	}
+    }
+
 }
 
 // core part of the PartialFastMultiplicationMemory method involving two-body term
@@ -889,7 +940,7 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNTwoBodyFastMultipl
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
   int* TmpIndices;
-  double* TmpInteractionFactor;
+  // double* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
   int SumIndices;
   int TmpNbrM3Values;
