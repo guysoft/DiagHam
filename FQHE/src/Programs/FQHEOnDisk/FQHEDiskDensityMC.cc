@@ -140,11 +140,11 @@ int main(int argc, char** argv)
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
   bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
-  char* RecordWaveFunctions = ((SingleStringOption*) Manager["record-wavefunctions"])->GetString();
-  if (RecordWaveFunctions != 0)
+  char* RecordFileName = ((SingleStringOption*) Manager["record-file"])->GetString();
+  if (RecordFileName != 0)
     {
       ofstream RecordFile;
-      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary);
+      RecordFile.open(RecordFileName, ios::out | ios::binary);
       RecordFile.close();
     }
   long RecordStep = (long) Manager.GetInteger("record-step");
@@ -180,7 +180,6 @@ int main(int argc, char** argv)
     {
 //      RadiusArray[i] = sqrt ((RadiusArray[i - 1] * RadiusArray[i - 1]) + AreaStep); 
       RadiusArray[i] = RadiusArray[i - 1] + (0.5 * M_SQRT2 * GridScale / ((double) NbrSteps)); 
-      cout << i << " " << RadiusArray[i] << endl;
     }
   double SquareScale = RadiusArray[NbrSteps];
   double ExcitationPosition = ((SingleDoubleOption*) Manager["excitation-position"])->GetDouble();
@@ -283,8 +282,12 @@ int main(int argc, char** argv)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
-//	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
-	  if (RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber))
+	  bool TmpFlag = false;
+	  if (RSymmetryFlag == false)
+	    TmpFlag = RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber);
+	  else
+	    TmpFlag = RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber);
+	  if (TmpFlag == true)
 	    {
 	      if (WaveFunctionMemory == true)
 		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
@@ -332,8 +335,12 @@ int main(int argc, char** argv)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
-//	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
-	  if (RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber))
+	  bool TmpFlag = false;
+	  if (RSymmetryFlag == false)
+	    TmpFlag = RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber);
+	  else
+	    TmpFlag = RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber);
+	  if (TmpFlag == true)
 	    {
 	      if (WaveFunctionMemory == true)
 		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
@@ -392,10 +399,10 @@ int main(int argc, char** argv)
 	      cout << (CurrentPercent * 5l) << "% " << flush;
 	    }
 
-	  if ((RecordWaveFunctions != 0) && ((i % RecordStep) == 0l))
+	  if ((RecordFileName != 0) && ((i % RecordStep) == 0l))
 	    {
 	      ofstream RecordFile;
-	      RecordFile.open(RecordWaveFunctions, ios::out | ios::binary | ios::app);
+	      RecordFile.open(RecordFileName, ios::out | ios::binary | ios::app);
 	      RecordFile.precision(14);
 	      RecordFile << i << " " << TotalProbability;
 	      if (RSymmetryFlag == false)
