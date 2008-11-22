@@ -229,6 +229,9 @@ Complex PfaffianOnDiskTwoQuasielectronWaveFunction::operator ()(RealVector& x)
 	}
     }
 
+  if (this->FermionFlag == false)
+    WaveFunction = 1.0;
+
   int NbrParticlesPerColor = this->NbrParticles >> 1;
   int Shift = ((NbrParticlesPerColor - 1) * 5);
   Complex WaveFunctionSum = 0.0;

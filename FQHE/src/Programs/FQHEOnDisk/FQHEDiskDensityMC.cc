@@ -49,6 +49,8 @@ void RandomZOneCoordinate(RealVector& positions, double scale, int coordinate, A
 
 bool RandomZOneCoordinateWithJump(RealVector& positions, double scale, double jump, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
 
+bool RandomZOneCoordinateWithJumpRadial(RealVector& positions, double scale, double jump, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator);
+
 // flip two one-body coordinates
 //
 // coordinates = reference on the n-body coordinate vector
@@ -171,15 +173,16 @@ int main(int argc, char** argv)
       XSymmetryFlag = false;
       YSymmetryFlag = false;
     }
-  double* RadiusArray = new double [NbrSteps];
+  double* RadiusArray = new double [NbrSteps + 1];
   double AreaStep = 2.0 * GridScale * GridScale / ((double) NbrSteps); 
   RadiusArray[0] = 0.0;
-  for (int i = 1; i < NbrSteps; ++i)
+  for (int i = 1; i <= NbrSteps; ++i)
     {
 //      RadiusArray[i] = sqrt ((RadiusArray[i - 1] * RadiusArray[i - 1]) + AreaStep); 
       RadiusArray[i] = RadiusArray[i - 1] + (0.5 * M_SQRT2 * GridScale / ((double) NbrSteps)); 
       cout << i << " " << RadiusArray[i] << endl;
     }
+  double SquareScale = RadiusArray[NbrSteps];
   double ExcitationPosition = ((SingleDoubleOption*) Manager["excitation-position"])->GetDouble();
 
   Abstract1DComplexFunction* SymmetrizedFunction = 0;
@@ -280,7 +283,8 @@ int main(int argc, char** argv)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
-	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
+//	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
+	  if (RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber))
 	    {
 	      if (WaveFunctionMemory == true)
 		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
@@ -328,7 +332,8 @@ int main(int argc, char** argv)
 	{
 	  PreviousTmpZRe = TmpZ[NextCoordinate << 1];
 	  PreviousTmpZIm = TmpZ[(NextCoordinate << 1) + 1];
-	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
+//	  if (RandomZOneCoordinateWithJump(TmpZ, GridScale, MCJump, NextCoordinate, RandomNumber))
+	  if (RandomZOneCoordinateWithJumpRadial(TmpZ, SquareScale, MCJump, NextCoordinate, RandomNumber))
 	    {
 	      if (WaveFunctionMemory == true)
 		((PfaffianOnDiskTwoQuasielectronWaveFunction*) SymmetrizedFunction)->SetNextCoordinate(NextCoordinate);
@@ -416,63 +421,74 @@ int main(int argc, char** argv)
       TotalProbabilityError /= sqrt ((double) NbrIter);
 
       TotalProbability =  1.0 / TotalProbability;
-      if (XSymmetryFlag == true) 
-	{
-	  int HalfNbrSteps = NbrSteps >> 1;
-	  if (YSymmetryFlag == true) 
-	    {
-	      for (int i = 0; i < HalfNbrSteps; ++i)
-		for (int j = 0; j < HalfNbrSteps; ++j)	  
-		  {
-		    double TmpTotal = FunctionBasisDecomposition[i][j];
-		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1];
-		    TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
-		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
-		    TmpTotal *= 0.25;
-		    TmpTotal *= TotalProbability;
-		    FunctionBasisDecomposition[i][j] = TmpTotal;
-		    FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1] = TmpTotal;
-		    FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
-		    FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
-		  }
-	    }
-	  else
-	    {
-	      for (int i = 0; i < HalfNbrSteps; ++i)
-		for (int j = 0; j < NbrSteps; ++j)	  
-		  {
-		    double TmpTotal = FunctionBasisDecomposition[i][j];
-		    TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
-		    TmpTotal *= 0.5;
-		    TmpTotal *= TotalProbability;
-		    FunctionBasisDecomposition[i][j] = TmpTotal;
-		    FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
-		  }
-	    }
-	}
-      else
-	if (YSymmetryFlag == true) 
-	  {
-	    int HalfNbrSteps = NbrSteps >> 1;
-	    for (int i = 0; i < NbrSteps; ++i)
-	      for (int j = 0; j < HalfNbrSteps; ++j)	  
-		{
-		  double TmpTotal = FunctionBasisDecomposition[i][j];
-		  TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
-		  TmpTotal *= 0.5;
-		  TmpTotal *= TotalProbability;
-		  FunctionBasisDecomposition[i][j] = TmpTotal;
-		  FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
-		}
-	  }
-	else
-	  {
-	    for (int i = 0; i < NbrSteps; ++i)
-	      for (int j = 0; j < NbrSteps; ++j)	  
-		FunctionBasisDecomposition[i][j] *= TotalProbability;
-	  }
-
-      ofstream DensityRecordFile;
+     if (RSymmetryFlag == false)
+       {
+	 if (XSymmetryFlag == true) 
+	   {
+	     int HalfNbrSteps = NbrSteps >> 1;
+	     if (YSymmetryFlag == true) 
+	       {
+		 for (int i = 0; i < HalfNbrSteps; ++i)
+		   for (int j = 0; j < HalfNbrSteps; ++j)	  
+		     {
+		       double TmpTotal = FunctionBasisDecomposition[i][j];
+		       TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1];
+		       TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
+		       TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
+		       TmpTotal *= 0.25;
+		       TmpTotal *= TotalProbability;
+		       FunctionBasisDecomposition[i][j] = TmpTotal;
+		       FunctionBasisDecomposition[NbrSteps - i - 1][NbrSteps - j - 1] = TmpTotal;
+		       FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
+		       FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
+		     }
+	       }
+	     else
+	       {
+		 for (int i = 0; i < HalfNbrSteps; ++i)
+		   for (int j = 0; j < NbrSteps; ++j)	  
+		     {
+		       double TmpTotal = FunctionBasisDecomposition[i][j];
+		       TmpTotal += FunctionBasisDecomposition[NbrSteps - i - 1][j];
+		       TmpTotal *= 0.5;
+		       TmpTotal *= TotalProbability;
+		       FunctionBasisDecomposition[i][j] = TmpTotal;
+		       FunctionBasisDecomposition[NbrSteps - i - 1][j] = TmpTotal;
+		     }
+	       }
+	   }
+	 else
+	   if (YSymmetryFlag == true) 
+	     {
+	       int HalfNbrSteps = NbrSteps >> 1;
+	       for (int i = 0; i < NbrSteps; ++i)
+		 for (int j = 0; j < HalfNbrSteps; ++j)	  
+		   {
+		     double TmpTotal = FunctionBasisDecomposition[i][j];
+		     TmpTotal += FunctionBasisDecomposition[i][NbrSteps - j - 1];
+		     TmpTotal *= 0.5;
+		     TmpTotal *= TotalProbability;
+		     FunctionBasisDecomposition[i][j] = TmpTotal;
+		     FunctionBasisDecomposition[i][NbrSteps - j - 1] = TmpTotal;
+		   }
+	     }
+	   else
+	     {
+	       for (int i = 0; i < NbrSteps; ++i)
+		 for (int j = 0; j < NbrSteps; ++j)	  
+		   FunctionBasisDecomposition[i][j] *= TotalProbability;
+	     }
+       }
+     else
+       {
+	 for (int i = 0; i < NbrSteps; ++i)
+	   {
+	     FunctionBasisDecomposition[0][i] *= TotalProbability;
+//	     FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
+	   }
+       }
+     
+     ofstream DensityRecordFile;
       DensityRecordFile.precision(14);
       DensityRecordFile.open(((SingleStringOption*) Manager["output"])->GetString(), ios::out);
 
@@ -506,20 +522,20 @@ int main(int argc, char** argv)
 	    }
 	  DensityRecordFile << "#" << endl << "# density wave function " << endl << "# x y  density density_error" << endl;
 	  double TmpX = GridShift + (0.5 * GridStep);
-	  double AreaRatio = GridStep * GridStep / (M_PI * AreaStep);
 	  for (int i = 0; i < NbrSteps; ++i)
 	    {
 	      double TmpY = GridShift + (0.5 * GridStep);
 	      for (int j = 0; j < NbrSteps; ++j)
 		{
-		  DensityRecordFile << TmpX << " " << TmpY << " " << (FunctionBasisDecomposition[0][GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps)] * AreaRatio) << endl;
-		  Sum += FunctionBasisDecomposition[0][GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps)] * AreaRatio;
+		  int TmpCoordinate = GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps);
+		  DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[0][TmpCoordinate] << endl;
+		  FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
+//		  Sum += FunctionBasisDecomposition[0][TmpCoordinate] * GridStep * GridStep;
 		  TmpY += GridStep;
 		}
 	      DensityRecordFile << endl;
 	      TmpX += GridStep;
 	    }	  
-	  Sum *= M_PI;
 	}
       DensityRecordFile.close();
       cout << "Sum = " << Sum << endl;
@@ -539,6 +555,12 @@ int main(int argc, char** argv)
 	       cout << (*SymmetrizedFunction)(TmpZ) << endl;
 	       FlipCoordinates(TmpZ, i, j);	       
 	     }
+	 }
+       for (int i = 1; i < NbrParticles; ++i)
+	 {
+	   TmpZ[(i << 1)] = TmpZ[0];
+	   TmpZ[(i << 1) + 1] = TmpZ[1];
+	   cout << (i  + 1) << " body cancellation : " << (*SymmetrizedFunction)(TmpZ) << endl;
 	 }
      }
   return 0;
@@ -575,6 +597,20 @@ bool RandomZOneCoordinateWithJump(RealVector& positions, double scale, double ju
   if (((OldCoordinate + TmpJump) > (0.5 * scale)) || ((OldCoordinate + TmpJump) < -(0.5 * scale)))
     return false;
   positions[coordinate] += TmpJump;
+  return true;
+}
+
+bool RandomZOneCoordinateWithJumpRadial(RealVector& positions, double scale, double jump, int coordinate, AbstractRandomNumberGenerator* randomNumberGenerator)
+{
+  coordinate *= 2;
+  double& OldCoordinate1 =  positions[coordinate];
+  double TmpJump1 = scale * jump * (0.5 - randomNumberGenerator->GetRealRandomNumber());
+  double& OldCoordinate2 =  positions[coordinate + 1];
+  double TmpJump2 = scale * jump * (0.5 - randomNumberGenerator->GetRealRandomNumber());
+  if ((((OldCoordinate1 + TmpJump1) * (OldCoordinate1 + TmpJump1)) + ((OldCoordinate2 + TmpJump2) * (OldCoordinate2 + TmpJump2))) > (scale * scale))
+    return false;
+  OldCoordinate1 += TmpJump1;
+  OldCoordinate2 += TmpJump2;
   return true;
 }
 
