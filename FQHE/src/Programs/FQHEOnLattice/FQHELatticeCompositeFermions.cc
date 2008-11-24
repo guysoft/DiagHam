@@ -16,6 +16,7 @@
 #include "MainTask/QHEOnLatticeMainTask.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
+#include "MathTools/JacobiThetaFunction.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -23,7 +24,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 #include <sys/time.h>
 #include <stdio.h>
 
@@ -139,7 +140,8 @@ int main(int argc, char** argv)
     }
 
 
-  cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;
+  cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;  
+  
   
   // calculate states required to build Jastrow factor:
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
@@ -169,6 +171,20 @@ int main(int argc, char** argv)
       JastrowEigenVecs[i].WriteVector(TmpC);      
     }
 
+  // for calculation of analytic Laughlin state:
+  JacobiThetaFunction ThetaRel(1,Complex(0.0,((double)Ly)/Lx));
+  JacobiThetaFunction ThetaCM1((NbrFluxQuanta-2.0)/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
+  JacobiThetaFunction ThetaCM2( NbrFluxQuanta/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
+
+  ComplexVector AnalyticJastrow(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticRelative(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM1(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM2(Space->GetHilbertSpaceDimension(), true);
+
+  int *PosX = new int[NbrBosons];
+  int *PosY = new int[NbrBosons];
+  int Subl, SumX, SumY;
+  Complex FRel;  
   
   // cycle through all configurations of the Hilbert-space and calculate the corresponding Slater determinants
 
@@ -210,6 +226,24 @@ int main(int argc, char** argv)
 	    }
 	  CFState[i] = SlaterCF.Determinant();
 	  JastrowState[i] = SlaterJastrow.Determinant();
+	  
+	  // analytic states:
+	  SumX=0; SumY=0;
+	  for (int q = 0; q < NbrBosons; ++q)
+	    {
+	      Space->DecodeQuantumNumber(QuantumNumbers[q],PosX[q],PosY[q],Subl);
+	      SumX+=PosX[q];
+	      SumY+=PosY[q];
+	    }
+
+	  FRel=1.0;
+	  for (int bi = 1; bi < NbrBosons; ++bi)
+	    for (int bj = 0; bj < bi; ++bj)
+	      FRel*=ThetaRel.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,((double)(PosY[bi]-PosY[bj]))/Lx));
+	  AnalyticJastrow[i] = FRel;
+	  AnalyticRelative[i] = FRel*FRel;
+	  AnalyticCM1[i] = AnalyticRelative[i] * ThetaCM1.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
+	  AnalyticCM2[i] = AnalyticRelative[i] * ThetaCM2.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
 	}
     }
   CFState /= CFState.Norm();  
