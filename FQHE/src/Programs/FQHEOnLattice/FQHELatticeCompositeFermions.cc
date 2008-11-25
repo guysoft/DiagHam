@@ -172,8 +172,8 @@ int main(int argc, char** argv)
     }
 
   // for calculation of analytic Laughlin state:
-  JacobiThetaFunction ThetaRel(1,Complex(0.0,((double)Ly)/Lx));
-  JacobiThetaFunction ThetaCM1((NbrFluxQuanta-2.0)/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
+  JacobiThetaFunction ThetaRel(0.5,0.5,Complex(0.0,((double)Ly)/Lx));
+  JacobiThetaFunction ThetaCM1(0.0/2.0+(NbrFluxQuanta-2.0)/4.0,1.0/2.0-(NbrFluxQuanta-2.0)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
   JacobiThetaFunction ThetaCM2( NbrFluxQuanta/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
 
   ComplexVector AnalyticJastrow(Space->GetHilbertSpaceDimension(), true);
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
 
   int *PosX = new int[NbrBosons];
   int *PosY = new int[NbrBosons];
-  int Subl, SumX, SumY;
+  int Subl, SumX, SumY, SumSqY;
   Complex FRel;  
   
   // cycle through all configurations of the Hilbert-space and calculate the corresponding Slater determinants
@@ -228,20 +228,22 @@ int main(int argc, char** argv)
 	  JastrowState[i] = SlaterJastrow.Determinant();
 	  
 	  // analytic states:
-	  SumX=0; SumY=0;
+	  SumX=0; SumY=0, SumSqY=0;	  
 	  for (int q = 0; q < NbrBosons; ++q)
 	    {
 	      Space->DecodeQuantumNumber(QuantumNumbers[q],PosX[q],PosY[q],Subl);
 	      SumX+=PosX[q];
 	      SumY+=PosY[q];
+	      SumSqY+=PosY[q]*PosY[q];
 	    }
 
 	  FRel=1.0;
 	  for (int bi = 1; bi < NbrBosons; ++bi)
 	    for (int bj = 0; bj < bi; ++bj)
 	      FRel*=ThetaRel.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,((double)(PosY[bi]-PosY[bj]))/Lx));
-	  AnalyticJastrow[i] = FRel;
-	  AnalyticRelative[i] = FRel*FRel;
+	  
+	  AnalyticJastrow[i] = FRel * exp(-0.5*SumSqY);
+	  AnalyticRelative[i] = FRel*FRel * exp(-0.5*SumSqY);
 	  AnalyticCM1[i] = AnalyticRelative[i] * ThetaCM1.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
 	  AnalyticCM2[i] = AnalyticRelative[i] * ThetaCM2.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
 	}
@@ -258,7 +260,24 @@ int main(int argc, char** argv)
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     CFState[i] *= JastrowState[i];
   CFState /= CFState.Norm();
-  CFState.WriteVector(TmpC);  
+  CFState.WriteVector(TmpC);
+
+  AnalyticJastrow /= AnalyticJastrow.Norm();
+  sprintf(TmpC,"%s.AJ.vec",OutputName);
+  AnalyticJastrow.WriteVector(TmpC);
+
+  AnalyticRelative /= AnalyticRelative.Norm();
+  sprintf(TmpC,"%s.ACF.vec",OutputName);
+  AnalyticRelative.WriteVector(TmpC);
+
+  AnalyticCM1 /= AnalyticCM1.Norm();
+  sprintf(TmpC,"%s.CM1.vec",OutputName);
+  AnalyticCM1.WriteVector(TmpC);
+
+  AnalyticCM2 /= AnalyticCM2.Norm();
+  sprintf(TmpC,"%s.CM2.vec",OutputName);
+  AnalyticCM2.WriteVector(TmpC);
+
   
   delete [] TmpC;
   delete [] QuantumNumbers;
