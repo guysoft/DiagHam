@@ -1733,8 +1733,8 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
     }
   
   int Information = 0;  
-  char Jobz = 'N';
-  char UpperLower = 'U';
+  char* Jobz = "N";
+  char* UpperLower = "U";
   int TotalIndex = 0;
   for (int j = 0; j < this->NbrRow; ++j)
     {
@@ -1749,7 +1749,7 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
       LapackMatrix[TotalIndex].i = 0.0;
       ++TotalIndex;      
     }
-  FORTRAN_NAME(zhpev)(&Jobz, &UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);  
+  FORTRAN_NAME(zhpev)(Jobz, UpperLower, &this->NbrRow, LapackMatrix, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, &Information);  
   return M;
 }
 
