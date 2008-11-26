@@ -1551,3 +1551,60 @@ RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOn
   return TmpVector;
 }
 
+// compute particule-hole symmetric state from a given state
+//
+// state = vector corresponding to the state to symmetrize
+// holeBasis = n-body basis on which the symmetrized state has to be expressed
+
+RealVector FermionOnSphere::ParticleHoleSymmetrize2 (RealVector& state, FermionOnSphere& holeBasis)
+{
+  int ShiftedTotalLz = (holeBasis.TotalLz + holeBasis.NbrFermions * holeBasis.LzMax) >> 1;
+  RealVector TmpVector(holeBasis.HilbertSpaceDimension, true);
+  unsigned long TmpMask = (0x1ul << (holeBasis.LzMax + 1)) - 1;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i] & TmpMask;
+      unsigned long Remainder = TmpState >> holeBasis.LzMax;
+      while ((Remainder != 0x0ul) && ((TmpState ^ Remainder) == (TmpState | Remainder)))
+	{
+	  TmpState |= Remainder;
+	  TmpState &= TmpMask;
+	  Remainder >>= holeBasis.LzMax;
+	}
+      int TmpLzMax = this->StateLzMax[i];
+//       int Pos = 0;
+//       for (int j = holeBasis.LzMax + 1; ((j <= TmpLzMax) && (Remainder != 0x0ul)); ++j)
+// 	{
+// 	  if (((Remainder >> j) & 0x1ul) != 0x0ul)
+// 	    {
+// 	      if ((TmpState & (0x1ul << Pos)) != 0x0ul)
+// 		Remainder = 0x0ul;
+// 	      else
+// 		{
+// 		  TmpState |= 0x1ul;
+// 		}
+// 	    }
+// 	  ++Pos;
+// 	  if (Pos > hole.LzMax)
+// 	    Pos = 0;
+// 	}
+      if (Remainder == 0x0ul)
+	{
+	  int TmpTotaLz = 0;
+	  int TmpNbrParticles = 0;
+	  TmpLzMax = 0;
+	  for (int j = 0; j <= holeBasis.LzMax; ++j)
+	    {
+	      if (((TmpState >> j) & 0x1ul) != 0x0ul)
+		{
+		  ++TmpNbrParticles;
+		  TmpTotaLz += j;
+		  TmpLzMax = j;
+		}
+	    }
+	  if ((TmpTotaLz == ShiftedTotalLz) && (TmpNbrParticles == holeBasis.NbrFermions))
+	    TmpVector[holeBasis.FindStateIndex(TmpState, TmpLzMax)] = state[i];
+	}
+    }
+  return TmpVector;  
+}

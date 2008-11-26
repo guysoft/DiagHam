@@ -303,6 +303,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // holeBasis = n-body basis on which the symmetrized state has to be expressed
   virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
 
+  // compute particule-hole symmetric state from a given state
+  //
+  // state = vector corresponding to the state to symmetrize
+  // holeBasis = n-body basis on which the symmetrized state has to be expressed
+  virtual RealVector ParticleHoleSymmetrize2 (RealVector& state, FermionOnSphere& holeBasis);
+
   // find state index from a string
   //
   // stateDescription = string describing the state
