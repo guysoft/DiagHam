@@ -151,6 +151,11 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
   // return value = particle statistic
   virtual int GetParticleStatistic();
 
+  // get the quantization axis 
+  //
+  // return value = particle statistic
+  virtual char GetLandauGaugeAxis();
+
   // get information about any additional symmetry of the Hilbert space
   //
   // return value = symmetry id  
@@ -353,6 +358,14 @@ class HardCoreBosonOnLatticeKy : public ParticleOnLattice
 inline int HardCoreBosonOnLatticeKy::GetParticleStatistic()
 {
   return ParticleOnLattice::BosonicStatistic;
+}
+
+// get the quantization axis 
+//
+// return value = particle statistic
+inline char HardCoreBosonOnLatticeKy::GetLandauGaugeAxis()
+{
+  return 'y';
 }
 
 #endif

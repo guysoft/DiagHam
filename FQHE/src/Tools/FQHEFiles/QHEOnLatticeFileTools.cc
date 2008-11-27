@@ -562,8 +562,8 @@ bool FQHEOnLatticeFindSystemInfoWithKyFromVectorFileName(char* filename, int& nb
 	}
       if (StrNbrParticles == 0)
 	{
-	  cout << "can't guess length ly from file name " << filename << endl;
-	  return false;            
+	  cout << "could not guess momentum ky from file name " << filename << endl;
+	  return false;
 	}
     }
   // definitely search for _q_ even if q!=0

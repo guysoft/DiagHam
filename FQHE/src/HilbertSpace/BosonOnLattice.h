@@ -69,6 +69,9 @@ class BosonOnLattice : public ParticleOnLattice
   int NbrFluxQuanta;
   // flux density (flux quanta per unit cell)
   double FluxDensity;
+  // direction of Landau-gauge (x/y)
+  char LandauGaugeAxis;
+ 
 
   // phases occurred when translating the system by a full system length (at y=1, or x=1)
   // in the x-direction
@@ -104,7 +107,8 @@ class BosonOnLattice : public ParticleOnLattice
   // ly = length of simulation cell in y-direction
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // memory = memory that can be allocated for precalculations
-  BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000);
+  // landauGaugeAxis = direction of Landau-gauge
+  BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, char landauGaugeAxis='y');
 
 
   // copy constructor (without duplicating datas)
@@ -131,6 +135,12 @@ class BosonOnLattice : public ParticleOnLattice
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
+
+  // get the quantization axis 
+  //
+  // return value = particle statistic
+  virtual char GetLandauGaugeAxis() {return this->LandauGaugeAxis;}
+
 
   // return a list of all possible quantum numbers 
   //

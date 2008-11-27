@@ -164,6 +164,12 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // return value = particle statistic
   virtual int GetParticleStatistic();
 
+  // get the quantization axis 
+  //
+  // return value = particle statistic
+  virtual char GetLandauGaugeAxis();
+
+
   // get information about any additional symmetry of the Hilbert space
   //
   // return value = symmetry id  
@@ -411,6 +417,16 @@ inline int BosonOnLatticeKy::GetParticleStatistic()
 {
   return ParticleOnLattice::BosonicStatistic;
 }
+
+
+// get the quantization axis 
+//
+// return value = particle statistic
+inline char BosonOnLatticeKy::GetLandauGaugeAxis()
+{
+  return 'y';
+}
+
 
 // convert a bosonic state into its fermionic counterpart
 //

@@ -68,14 +68,16 @@ BosonOnLattice::BosonOnLattice ()
 // ly = length of simulation cell in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // memory = memory that can be allocated for precalculations
-BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory)
+// landauGaugeAxis = direction of Landau-gauge
+BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, char landauGaugeAxis)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
   this->Ly = ly;
   this->NbrSublattices = 1;  
   this->NbrStates = Lx*Ly;
-
+  this->LandauGaugeAxis=landauGaugeAxis;
+  
   this->SetNbrFluxQuanta(nbrFluxQuanta);
 
   this->HardCoreBasis = new HardCoreBoson(nbrBosons, NbrStates + nbrBosons - 1, memory);
@@ -244,10 +246,24 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
 {
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->FluxDensity = ((double)NbrFluxQuanta)/this->NbrStates;
-  //cout << "FluxDensity="<<this->FluxDensity<<endl;
-  this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
-  //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
-  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
+  switch (this->LandauGaugeAxis)
+    {
+    case 'x':
+      //cout << "FluxDensity="<<this->FluxDensity<<endl;
+      this->LxTranslationPhase = 1.0;
+      this->LyTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->Ly);
+      break;
+    case 'y':
+      //cout << "FluxDensity="<<this->FluxDensity<<endl;
+      this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
+      //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
+      this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
+      break;
+    default:
+      cout << "Unknown Quantization axis! Exiting BosonOnLattice..."<<endl;
+      exit(1);
+      break;
+    }
 }
 
 

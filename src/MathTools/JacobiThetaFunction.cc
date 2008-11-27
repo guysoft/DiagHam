@@ -20,6 +20,7 @@ JacobiThetaFunction::JacobiThetaFunction()
   this->ParameterB = 0.5;
   this->Tau = Complex(0.0,1.0);
   this->SumOffset = 1;
+  this->ShiftPhase = 1.0;
 }
 
 // constructor for a general theta function \theta[^a_b](z|tau)
@@ -32,8 +33,20 @@ JacobiThetaFunction::JacobiThetaFunction(double a, double b, Complex tau)
 {
   this->ParameterA=a-floor(a);
   this->ParameterB=b-floor(b);
-  if (a<0) this->ParameterA +=1.0;
-  if (b<0) this->ParameterB +=1.0;
+  cout << "a="<<a<<"->ParameterA="<<ParameterA<<endl;
+  cout << "b="<<b<<"->ParameterB="<<ParameterB<<endl;
+
+  int shift = (int)(b-ParameterB);
+  Complex Phase = Polar(1.0,2.0*M_PI*ParameterA);
+  if (shift<0)
+    {
+      shift=-shift;
+      Phase=Conj(Phase);
+    }     
+  this->ShiftPhase = 1.0;
+  for (int i=0; i<shift; ++i)
+    this->ShiftPhase *= Phase;
+    
   if (this->ParameterA>=0.5) this->SumOffset = 1;
   else this->SumOffset = 0;
   this->Tau = tau;
@@ -77,6 +90,7 @@ JacobiThetaFunction::JacobiThetaFunction(int i, Complex tau)
     }}    
   if (this->ParameterA>=0.5) this->SumOffset = 1;
   else this->SumOffset = 0;
+  this->ShiftPhase = 1.0;
 }
       
 
@@ -89,6 +103,7 @@ JacobiThetaFunction::JacobiThetaFunction (const JacobiThetaFunction& theta)
   this->ParameterB=theta.ParameterB;
   this->Tau=theta.Tau;
   this->SumOffset=theta.SumOffset;
+  this->ShiftPhase=theta.ShiftPhase;
 }
 
 // destructor
@@ -114,6 +129,7 @@ Complex JacobiThetaFunction::GetValue(const Complex &z)
   if (SumOffset^1) // ParameterA < 0.5
     {
       Result=exp(IPiTau*(ParameterA*ParameterA)+TwoPiIZ*ParameterA);
+      //      cout<<"Adding n=0: "<<Result<<", argument of exp: "<<IPiTau*(ParameterA*ParameterA)+TwoPiIZ*ParameterA<<", 1: "<<IPiTau*(ParameterA*ParameterA)<<", 2:"<< TwoPiIZ*ParameterA <<", A:"<< ParameterA <<", (z+b)"<<z+ParameterB<<", 2pi(z+b)="<<TwoPiIZ<<endl;
     }
 
   int Iter=0;
@@ -122,10 +138,12 @@ Complex JacobiThetaFunction::GetValue(const Complex &z)
       NMinus = (-Iter+SumOffset)+this->ParameterA;
       NPlus = Iter+this->ParameterA;
       Convergence = exp(IPiTau*(NMinus*NMinus)+TwoPiIZ*NMinus); // term with negative n
+      //      cout<<"Adding n="<<-Iter+SumOffset<<": "<<Convergence<<endl;
       Convergence+= exp(IPiTau*(NPlus*NPlus)+TwoPiIZ*NPlus); // term with positive n
+      //      cout<<"Adding n="<<Iter<<": "<<exp(IPiTau*(NPlus*NPlus)+TwoPiIZ*NPlus)<<endl;
       Result+=Convergence;
     }
-  return Result;  
+  return Result*this->ShiftPhase;
 }
 
 // get the value of the function for a given coordinate z
@@ -174,5 +192,17 @@ void JacobiThetaFunction::GetManyValues(ComplexVector &values, ComplexVector &ma
 	}
       
     }
+  if (SqrNorm(this->ShiftPhase-1.0)>1e-24)
+    for (int i=0; i<Dim; ++i)
+      values[i]*=this->ShiftPhase;
+}
 
+  // pretty-print a function value
+  // str = stream to print to
+  // z = point where to evaluate
+ostream& JacobiThetaFunction::PrintValue(ostream &str, const Complex &z)
+{
+  str << "theta["<<this->ParameterA<<", "<<this->ParameterB<<"]("<<z.Re<<"+I*"<<z.Im<<"|"
+      <<this->Tau.Re<<"+I*"<<this->Tau.Im<<")="<<this->GetValue(z);
+  return str;
 }

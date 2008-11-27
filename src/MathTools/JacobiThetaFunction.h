@@ -54,6 +54,9 @@ class JacobiThetaFunction
   // modulus of the function
   Complex Tau;
 
+  // overall phase from shifting B into standard interval [0,1]
+  Complex ShiftPhase;
+
   // Offset of the sum over n 
   int SumOffset;
 
@@ -102,6 +105,11 @@ class JacobiThetaFunction
   // manyZ = complex vector of coordinates
   // return = function value at z
   void GetManyValues(ComplexVector &values, ComplexVector &manyZ);
+
+  // pretty-print a function value
+  // str = stream to print to
+  // z = point where to evaluate
+  ostream& PrintValue(ostream &str, const Complex &z);
   
   
 };

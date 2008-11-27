@@ -233,6 +233,15 @@ int HardCoreBosonOnLattice::GetParticleStatistic()
   return AbstractQHEParticle::BosonicStatistic;
 }
 
+// get the quantization axis 
+//
+// return value = particle statistic
+char HardCoreBosonOnLattice::GetLandauGaugeAxis()
+{
+  return 'y';
+}
+
+
 // get information about any additional symmetry of the Hilbert space
 //
 // return value = symmetry id

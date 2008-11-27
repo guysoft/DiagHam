@@ -97,6 +97,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice (-1=all)", -1);
   (*SystemGroup) += new SingleDoubleOption  ('u', "contactU", "prefactor U of the contact interaction (kinetic term ~ 1)", 1.0);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
+  (*SystemGroup) += new SingleStringOption('l',"landau-axis","potential in the Landau gauge along axis","y");
+  
   (*SystemGroup) += new SingleDoubleOption  ('d', "deltaPotential", "Introduce a delta-potential at the origin", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('R', "randomPotential", "Introduce a random potential at all sites", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "positive-hopping", "choose positive sign of hopping terms", false);
@@ -122,6 +124,7 @@ int main(int argc, char** argv)
   int NbrSites = Lx*Ly;  
   bool ReverseHopping = Manager.GetBoolean("positive-hopping");
   bool HardCore = Manager.GetBoolean("hard-core");
+  char LandauQuantization = Manager.GetString("landau-axis")[0];
   double ContactU = Manager.GetDouble("contactU");
   if (HardCore) ContactU=0.0;
   double Delta = Manager.GetDouble("deltaPotential");
@@ -156,9 +159,24 @@ int main(int argc, char** argv)
 	sprintf(deltaString,"d_%g_",Delta);
       if (Random!=0.0)
 	sprintf(deltaString,"R_%g_",Random);
-      if (HardCore)
-	sprintf(interactionStr,"_hardcore");
-      else sprintf(interactionStr,"_u_%g", ContactU);
+      if ((HardCore)&&(LandauQuantization=='x'))
+	{
+	  //sprintf(interactionStr,"_qx_hardcore");
+	  // LandauQuantization not defined yet for hardcore bosons!
+	  sprintf(interactionStr,"_hardcore");
+	}
+      else
+	{
+	  if (HardCore)
+	    sprintf(interactionStr,"_hardcore");
+	  else
+	    {
+	      if (LandauQuantization=='x')
+		sprintf(interactionStr,"_qx_u_%g", ContactU);
+	      else
+		sprintf(interactionStr,"_u_%g", ContactU);
+	    }
+	}
       if (NbrFluxValues == 1)
 	sprintf (OutputName, "bosons_lattice_n_%d_x_%d_y_%d%s_%s%sq_%d.dat", NbrBosons, Lx, Ly, interactionStr, reverseHoppingString, deltaString, NbrFluxQuanta);
       else
@@ -167,7 +185,7 @@ int main(int argc, char** argv)
   ParticleOnLattice* Space;
   if (HardCore)
     Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace, LandauQuantization);
   
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   

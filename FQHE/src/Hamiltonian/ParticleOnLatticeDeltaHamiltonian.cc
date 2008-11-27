@@ -187,52 +187,112 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
   int TmpNumberTerms=0;
   double HoppingSign = (this->ReverseHopping ? 1.0 : -1.0);
   Complex TranslationPhase;
-  for (int i=0; i<Lx; ++i) 
+  switch (this->Particles->GetLandauGaugeAxis())
     {
-      Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
-      for (int j=0; j<Ly; ++j)
+    case 'y': {
+      for (int i=0; i<Lx; ++i)
 	{
-	  KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	  Complex Phase=Polar(1.0,2.0*M_PI*this->FluxDensity*(double)i);
+	  for (int j=0; j<Ly; ++j)
+	    {
+	      KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
 #ifdef DEBUG_OUTPUT
-	  if (TranslationPhase!=1.0)
-	    cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
- 		 <<TranslationPhase<<endl;
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	      if (TranslationPhase!=1.0)
+		cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
 #ifdef DEBUG_OUTPUT
-	  if (TranslationPhase!=1.0)
- 	    cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
- 		 <<TranslationPhase<<endl;
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	      if (TranslationPhase!=1.0)
+		cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
 #ifdef DEBUG_OUTPUT
-	  if (TranslationPhase!=1.0)
- 	    cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
- 		 <<TranslationPhase<<endl;
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	      if (TranslationPhase!=1.0)
+		cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
-	  ++TmpNumberTerms;
-	  KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
-	  KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
-	  HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
 #ifdef DEBUG_OUTPUT
-	  if (TranslationPhase!=1.0)
- 	    cout << "(j="<<j<<"->"<<j-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
- 		 <<TranslationPhase<<endl;
-	  cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+	      if (TranslationPhase!=1.0)
+		cout << "(j="<<j<<"->"<<j-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
 #endif
-	  ++TmpNumberTerms;
+	      ++TmpNumberTerms;
+	    }
 	}
+      break;
+    }
+    case 'x': {
+      for (int j=0; j<Lx; ++j)
+	{
+	  Complex Phase=Polar(1.0,-2.0*M_PI*this->FluxDensity*(double)j);
+	  for (int i=0; i<Ly; ++i)
+	    {
+	      KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*Conj(Phase)*TranslationPhase;
+#ifdef DEBUG_OUTPUT
+	      if (TranslationPhase!=1.0)
+		cout << "(i="<<i<<"->"<<i+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+#endif
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i-1, j, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*Phase*TranslationPhase;
+#ifdef DEBUG_OUTPUT
+	      if (TranslationPhase!=1.0)
+		cout << "(i="<<i<<"->"<<i-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+#endif
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j+1, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+#ifdef DEBUG_OUTPUT
+	      if (TranslationPhase!=1.0)
+		cout << "(j="<<j<<"->"<<j+1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+#endif
+	      ++TmpNumberTerms;
+	      KineticQi[TmpNumberTerms] = KineticQi[TmpNumberTerms-1];
+	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j-1, 0, TranslationPhase);
+	      HoppingTerms[TmpNumberTerms] = HoppingSign*TranslationPhase;
+#ifdef DEBUG_OUTPUT
+	      if (TranslationPhase!=1.0)
+		cout << "(j="<<j<<"->"<<j-1<<") Translation ["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="
+		     <<TranslationPhase<<endl;
+	      cout << "H["<<KineticQi[TmpNumberTerms]<<"->"<<KineticQf[TmpNumberTerms]<<"]="<<HoppingTerms[TmpNumberTerms]<<" tP="<<TranslationPhase<<endl;
+#endif
+	      ++TmpNumberTerms;
+	    }
+	}
+      break;
+    }
+    default:
+      cout << "Invalid Landau quantization axis encountered in ParticleOnLatticeDeltaHamiltonian."<<endl;
+      exit(1);
+      break;
     }
 
   if (this->DeltaPotential != 0.0)

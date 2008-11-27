@@ -135,6 +135,12 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
+  
+  // get the quantization axis 
+  //
+  // return value = particle statistic
+  virtual char GetLandauGaugeAxis();
+
 
   // get information about any additional symmetry of the Hilbert space
   //

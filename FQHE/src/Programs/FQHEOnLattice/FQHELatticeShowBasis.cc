@@ -96,7 +96,8 @@ int main(int argc, char** argv)
       bool tmpB, haveVector=false;
       for (int i=0; i<NbrVectors; ++i)
 	{
-	  tmpB = Vectors[i].ReadVector(VectorFiles[i]);
+	  if ((tmpB=Vectors[i].ReadVector(VectorFiles[i]))==false)
+	    exit(1);
 	  if (!haveVector)
 	    VectorDimension=Vectors[i].GetVectorDimension();
 	  if (haveVector && (Vectors[i].GetVectorDimension()!=VectorDimension))
