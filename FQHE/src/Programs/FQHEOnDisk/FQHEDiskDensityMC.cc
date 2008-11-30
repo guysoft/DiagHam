@@ -92,7 +92,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "load-permutations", "read all the permutations needed to compute the reference wave function from a file");  
   (*SystemGroup) += new SingleStringOption  ('\n', "save-permutations", "file name where all the permutations needed to compute the reference wave function have to be stored");  
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
-  (*SystemGroup) += new BooleanOption ('\n', "quasielectron", "plot quasiparticles instead of quasiholes");  
+  (*SystemGroup) += new BooleanOption ('\n', "quasielectron", "plot quasiparticles instead of the ground state");  
+  (*SystemGroup) += new BooleanOption ('\n', "quasihole", "plot quasiholes instead of the ground state");  
   (*SystemGroup) += new SingleDoubleOption ('\n', "excitation-position", "position of the excitation from the center (in grid length unit)", 0.15);  
   (*SystemGroup) += new BooleanOption ('\n', "force-xsymmetry", "assume the wave function is invariant under the x <->-x symmetry");  
   (*SystemGroup) += new BooleanOption ('\n', "force-ysymmetry", "assume the wave function is invariant under the y <->-y symmetry");  
@@ -139,15 +140,19 @@ int main(int argc, char** argv)
   bool ResumeFlag = Manager.GetBoolean("resume");
   bool StatisticFlag = !(((BooleanOption*) Manager["boson"])->GetBoolean());
   bool QuasielectronFlag = (((BooleanOption*) Manager["quasielectron"])->GetBoolean());
+  bool QuasiholeFlag = (((BooleanOption*) Manager["quasihole"])->GetBoolean());
   bool LaughlinFlag = (((BooleanOption*) Manager["laughlin"])->GetBoolean());
   char* RecordFileName = ((SingleStringOption*) Manager["record-file"])->GetString();
-  if (RecordFileName != 0)
+  long RecordStep = (long) Manager.GetInteger("record-step");
+  if ((RecordFileName != 0) && (RecordStep > 0))
     {
       ofstream RecordFile;
       RecordFile.open(RecordFileName, ios::out | ios::binary);
       RecordFile.close();
     }
-  long RecordStep = (long) Manager.GetInteger("record-step");
+  else
+    if (RecordFileName != 0)
+      RecordFileName = 0;
 
   bool XSymmetryFlag = ((BooleanOption*) Manager["force-xsymmetry"])->GetBoolean();
   bool YSymmetryFlag = ((BooleanOption*) Manager["force-ysymmetry"])->GetBoolean();
@@ -210,15 +215,26 @@ int main(int argc, char** argv)
  	}
     }
   else
-    {
-      if (LaughlinFlag == true)
-	if (StatisticFlag == true)
-	  SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 3);
+    if (QuasiholeFlag == true)
+      {
+	if (LaughlinFlag == true)
+	  if (StatisticFlag == true)
+	    SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 3);
+	  else
+	    SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 2);
 	else
-	  SymmetrizedFunction = new FQHEDiskLaughlinOneQuasiholeWaveFunction(NbrParticles, 0.0, 2);
-      else
-	SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, -ExcitationPosition * GridScale, ExcitationPosition * GridScale, StatisticFlag);
-    }
+	  SymmetrizedFunction = new PfaffianOnDiskTwoQuasiholeWaveFunction(NbrParticles, -ExcitationPosition * GridScale, ExcitationPosition * GridScale, StatisticFlag);
+      }
+    else
+      {
+	if (LaughlinFlag == true)
+	  if (StatisticFlag == true)
+	    SymmetrizedFunction = new LaughlinOnDiskWaveFunction(NbrParticles, 3, 0.5 * GridScale); 
+	  else
+	    SymmetrizedFunction = new LaughlinOnDiskWaveFunction(NbrParticles, 2, 0.5 * GridScale);
+	else
+	  SymmetrizedFunction = new PfaffianOnDiskWaveFunction(NbrParticles);
+      }
 
   AbstractRandomNumberGenerator* RandomNumber = 0;
   if (((SingleStringOption*) Manager["random-file"])->GetString() != 0)
@@ -386,7 +402,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      for (int j = 0; j < NbrParticles; ++j)
-		FunctionBasisDecomposition[0][GridLocations[j]] += 1.0;
+		FunctionBasisDecomposition[0][GridLocations[j]] += sqrt((TmpZ[j << 1] * TmpZ[j << 1]) + (TmpZ[(j << 1) + 1] * TmpZ[(j << 1) + 1]));
 	    }
 	  TotalProbability++;	  
 	  TotalProbabilityError++;
@@ -491,7 +507,7 @@ int main(int argc, char** argv)
 	 for (int i = 0; i < NbrSteps; ++i)
 	   {
 	     FunctionBasisDecomposition[0][i] *= TotalProbability;
-//	     FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
+	     FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
 	   }
        }
      
@@ -536,7 +552,7 @@ int main(int argc, char** argv)
 		{
 		  int TmpCoordinate = GetRadiusCoordinate(sqrt((TmpX * TmpX) + (TmpY * TmpY)), RadiusArray, NbrSteps);
 		  DensityRecordFile << TmpX << " " << TmpY << " " << FunctionBasisDecomposition[0][TmpCoordinate] << endl;
-		  FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
+		  //		  FunctionBasisDecomposition[0][i] /= (M_PI * ((RadiusArray[i + 1] * RadiusArray[i + 1]) - (RadiusArray[i] * RadiusArray[i])));
 //		  Sum += FunctionBasisDecomposition[0][TmpCoordinate] * GridStep * GridStep;
 		  TmpY += GridStep;
 		}

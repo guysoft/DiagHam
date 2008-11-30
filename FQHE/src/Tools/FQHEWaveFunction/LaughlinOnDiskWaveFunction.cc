@@ -38,11 +38,13 @@
 //
 // nbrParticles = number of particles
 // invFillingFactor = inverse value of the filling factor
+// scale = typical sytem size
 
-LaughlinOnDiskWaveFunction::LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor)
+LaughlinOnDiskWaveFunction::LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor, double scale)
 {
   this->InvFillingFactor = invFillingFactor;
   this->NbrParticles = nbrParticles;
+  this->InvScale = 1.0 / scale;
 }
 
 // copy constructor
@@ -53,6 +55,7 @@ LaughlinOnDiskWaveFunction::LaughlinOnDiskWaveFunction(const LaughlinOnDiskWaveF
 {
   this->NbrParticles = function.NbrParticles;
   this->InvFillingFactor = function.InvFillingFactor;
+  this->InvScale = function.InvScale;
 }
 
 // destructor
@@ -90,6 +93,7 @@ Complex LaughlinOnDiskWaveFunction::operator ()(RealVector& x)
 	{
 	  Tmp.Re = ZRe - x[j << 1];
 	  Tmp.Im = ZIm - x[1 + (j << 1)];
+	  Tmp *= this->InvScale;
 	  WaveFunction *= Tmp;
 	}
     }

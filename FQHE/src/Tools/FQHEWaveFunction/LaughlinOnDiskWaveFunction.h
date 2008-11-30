@@ -48,13 +48,17 @@ class LaughlinOnDiskWaveFunction: public Abstract1DComplexFunction
   // inverse value of the filling factor
   int InvFillingFactor;
 
+  // invert of the maximum x value
+  double InvScale;
+
  public:
 
   // constructor
   //
   // nbrParticles = number of particles
   // invFillingFactor = inverse value of the filling factor
-  LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor);
+  // scale = typical sytem size
+  LaughlinOnDiskWaveFunction(int nbrParticles, int invFillingFactor, double scale = 1.0);
 
   // copy constructor
   //
