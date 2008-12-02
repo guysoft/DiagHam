@@ -1262,12 +1262,13 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
       Memory += this->NbrRealInteractionPerComponent[i];
       Memory += this->NbrComplexInteractionPerComponent[i];
     }
-       
-
+  
   cout << "nbr interaction = " << Memory << endl;
+  
   // memory requirement, ignoring the actual storage size of the values of matrix
   // elements, which is assumed small (maybe need to add an estimate, at least)
   long TmpMemory = AllowedMemory - (2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * EffectiveHilbertSpaceDimension;
+  cout << "of which can be stored: "<<(TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short))))<<endl;
   if ((TmpMemory < 0) || ((TmpMemory / ((int) (sizeof (int) + sizeof(unsigned short)))) < Memory))
     {
       this->FastMultiplicationStep = 1;
@@ -1286,16 +1287,18 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 	    {
 	      Memory += this->NbrRealInteractionPerComponent[i];
 	      Memory += this->NbrComplexInteractionPerComponent[i];
-	    }
+	    }	  
 	}
+      
+      Memory = ((2*sizeof (unsigned short) + sizeof (int*) + sizeof(unsigned short*)) * ReducedSpaceDimension) + (Memory * (sizeof (int) + sizeof(unsigned short)));
+      
       if (this->DiskStorageFlag == false)
 	{
 	  int TotalReducedSpaceDimension = ReducedSpaceDimension;
 	  unsigned short* TmpNbrRealInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	  unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];
-	  int i = 0;
+	  unsigned short* TmpNbrComplexInteractionPerComponent = new unsigned short [TotalReducedSpaceDimension];	  
 	  int Pos = 0;
-	  for (; i < ReducedSpaceDimension; ++i)
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
 	    {
 	      TmpNbrRealInteractionPerComponent[i] = this->NbrRealInteractionPerComponent[Pos];
 	      TmpNbrComplexInteractionPerComponent[i] = this->NbrComplexInteractionPerComponent[Pos];
@@ -1305,7 +1308,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
 	  delete[] this->NbrComplexInteractionPerComponent;
 	  this->NbrRealInteractionPerComponent = TmpNbrRealInteractionPerComponent;
 	  this->NbrComplexInteractionPerComponent = TmpNbrComplexInteractionPerComponent;
-	}
+	}      
     }
   else
     {
@@ -1319,6 +1322,7 @@ long AbstractQHEOnLatticeHamiltonian::FastMultiplicationMemory(long allowedMemor
   Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
   cout << "time = " << Dt2 << endl;
+  cout << "final Memory in bytes = " <<Memory<<endl;
   return Memory;    
 }
 

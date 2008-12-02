@@ -248,8 +248,8 @@ int main(int argc, char** argv)
 	  AnalyticRelative[i] = FRel*FRel * exp(-0.5*SumSqY);
 	  AnalyticCM1[i] = ThetaCM1.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
 	  AnalyticCM2[i] = ThetaCM2.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
- 	  ThetaCM1.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
-	  ThetaCM2.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+//  	  ThetaCM1.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+// 	  ThetaCM2.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
 	  Analytic1[i] = AnalyticRelative[i] * AnalyticCM1[i];
 	  Analytic2[i] = AnalyticRelative[i] * AnalyticCM2[i];
 	}
