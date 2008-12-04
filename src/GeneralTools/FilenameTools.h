@@ -48,13 +48,13 @@ using std::ios;
 //                    memory allocation is done by the function itself
 // suffix = optional suffix  to test
 // return value = number of matched files
-int GetAllFilesDirectories(char* pattern, char**& matchedFileArray, char* suffix = 0);
+int GetAllFilesDirectories(const char* pattern, char**& matchedFileArray, const char* suffix = 0);
 
 // test if a file exist and can be opened
 //
 // fileName = name of the file (must include relative/absolute path)
 // return value = true if the file exists
-bool IsFile (char* fileName);
+bool IsFile (const char* fileName);
 
 // concatenate path and file name
 //
@@ -68,7 +68,7 @@ char* ConcatenatePathAndFileName (char* path, char* fileName);
 // fileName = string corresponding to the file name (with optional relative path)
 // extension = extension (without initial dot)
 // return value = corresponding string
-char*  AddExtensionToFileName(char* fileName, char* extension);
+char*  AddExtensionToFileName(char* fileName, const char* extension);
 
 // replace extension to a file name
 //
@@ -76,6 +76,6 @@ char*  AddExtensionToFileName(char* fileName, char* extension);
 // oldExtension = extension to replace (without initial dot)
 // newExtension = new extension (without initial dot)
 // return value = corresponding string (0 if the old extension was not found)
-char* ReplaceExtensionToFileName(char* fileName, char* oldExtension, char* newExtension);
+char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const char* newExtension);
 
 #endif

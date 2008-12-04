@@ -168,25 +168,24 @@ int main(int argc, char** argv)
   for (int i=0; i<NbrBosons; ++i)
     {
       sprintf(TmpC,"%s.Jastrow.%d.vec",OutputName,i);
-      JastrowEigenVecs[i].WriteVector(TmpC);      
+      JastrowEigenVecs[i].WriteVector(TmpC);
     }
 
-  // for calculation of analytic Laughlin state:
-  JacobiThetaFunction ThetaRel(0.5,0.5,Complex(0.0,((double)Ly)/Lx));
-  JacobiThetaFunction ThetaCM1(0.0/2.0+(NbrFluxQuanta-2.0)/4.0,1.0/2.0-(NbrFluxQuanta-2.0)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
-  JacobiThetaFunction ThetaCM2(NbrFluxQuanta/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
 
-  ComplexVector AnalyticJastrow(Space->GetHilbertSpaceDimension(), true);
-  ComplexVector AnalyticRelative(Space->GetHilbertSpaceDimension(), true);
-  ComplexVector AnalyticCM1(Space->GetHilbertSpaceDimension(), true);
-  ComplexVector AnalyticCM2(Space->GetHilbertSpaceDimension(), true);
-  ComplexVector Analytic1(Space->GetHilbertSpaceDimension(), true);
-  ComplexVector Analytic2(Space->GetHilbertSpaceDimension(), true);
-
-  int *PosX = new int[NbrBosons];
-  int *PosY = new int[NbrBosons];
-  int Subl, SumX, SumY, SumSqY;
-  Complex FRel;  
+  // build some product vectors:
+  ComplexVector TmpVector(JastrowHamiltonian->GetHilbertSpaceDimension());
+  for (int i=0; i<NbrBosons; ++i)
+    for (int j=0; j<NbrBosons; ++j)
+      {
+	for (int k=0; k<JastrowHamiltonian->GetHilbertSpaceDimension();++k)
+	  {
+	    TmpVector[k]=JastrowEigenVecs[i][k] * CFEigenVecs[j][k];	    
+	  }
+	TmpVector/=TmpVector.Norm();
+	sprintf(TmpC,"%s.prod_J%d_C%d.vec",OutputName,i,j);
+	TmpVector.WriteVector(TmpC);
+      }
+    
   
   // cycle through all configurations of the Hilbert-space and calculate the corresponding Slater determinants
 
@@ -205,6 +204,38 @@ int main(int argc, char** argv)
 
   ComplexVector CFState(Space->GetHilbertSpaceDimension(), true);
   ComplexVector JastrowState(Space->GetHilbertSpaceDimension(), true);
+
+  ComplexVector AnalyticJastrowX(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticRelativeX(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM1X(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM2X(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector Analytic1X(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector Analytic2X(Space->GetHilbertSpaceDimension(), true);
+
+  ComplexVector AnalyticJastrowY(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticRelativeY(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM1Y(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector AnalyticCM2Y(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector Analytic1Y(Space->GetHilbertSpaceDimension(), true);
+  ComplexVector Analytic2Y(Space->GetHilbertSpaceDimension(), true);
+
+  // for calculation of analytic Laughlin state:
+  // with Landau-gauge along x-axis:
+  JacobiThetaFunction ThetaRelX(0.5,0.5,Complex(0.0,((double)Ly)/Lx));
+  JacobiThetaFunction ThetaCM1X(1.0/2.0+(NbrFluxQuanta-2.0)/4.0,-(NbrFluxQuanta-2.0)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
+  JacobiThetaFunction ThetaCM2X((NbrFluxQuanta-2.0)/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Ly)/Lx));
+
+  // with Landau-gauge along y-axis:
+  JacobiThetaFunction ThetaRelY(0.5,0.5,Complex(0.0,((double)Lx)/Ly));
+  JacobiThetaFunction ThetaCM1Y(1.0/2.0+(NbrFluxQuanta-2.0)/4.0,-(NbrFluxQuanta-2.0)/2.0,Complex(0.0,(2.0*(double)Lx)/Ly));
+  JacobiThetaFunction ThetaCM2Y((NbrFluxQuanta-2.0)/4.0,(2.0-NbrFluxQuanta)/2.0,Complex(0.0,(2.0*(double)Lx)/Ly));
+
+
+  int *PosX = new int[NbrBosons];
+  int *PosY = new int[NbrBosons];
+  int Subl, SumX, SumY, SumSqX, SumSqY;
+  Complex FRelX, FRelY;  
+
   
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     {
@@ -230,29 +261,50 @@ int main(int argc, char** argv)
 	  JastrowState[i] = SlaterJastrow.Determinant();
 	  
 	  // analytic states:
-	  SumX=0; SumY=0, SumSqY=0;
+	  SumX=0;
+	  SumY=0;
+	  SumSqX=0;
+	  SumSqY=0;
 	  for (int q = 0; q < NbrBosons; ++q)
 	    {
 	      Space->DecodeQuantumNumber(QuantumNumbers[q],PosX[q],PosY[q],Subl);
+	      //cout << "q="<<QuantumNumbers[q]<<" => [x="<<PosX[q]<<", y="<<PosY[q]<<"]"<<endl;
 	      SumX+=PosX[q];
 	      SumY+=PosY[q];
+	      SumSqX+=PosX[q]*PosX[q];
 	      SumSqY+=PosY[q]*PosY[q];
 	    }
 
-	  FRel=1.0;
+	  FRelX=1.0;
 	  for (int bi = 1; bi < NbrBosons; ++bi)
 	    for (int bj = 0; bj < bi; ++bj)
-	      FRel*=ThetaRel.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,((double)(PosY[bi]-PosY[bj]))/Lx));
+	      FRelX*=ThetaRelX.GetValue(Complex( ((double)(PosX[bi]-PosX[bj]))/Lx,((double)(PosY[bi]-PosY[bj]))/Lx));
 	  
-	  AnalyticJastrow[i] = FRel * exp(-0.5*SumSqY);
-	  AnalyticRelative[i] = FRel*FRel * exp(-0.5*SumSqY);
-	  AnalyticCM1[i] = ThetaCM1.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
-	  AnalyticCM2[i] = ThetaCM2.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
-//  	  ThetaCM1.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
-// 	  ThetaCM2.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
-	  Analytic1[i] = AnalyticRelative[i] * AnalyticCM1[i];
-	  Analytic2[i] = AnalyticRelative[i] * AnalyticCM2[i];
+	  AnalyticJastrowX[i] = FRelX * exp(-0.5*SumSqY);
+	  AnalyticRelativeX[i] = FRelX*FRelX * exp(-0.5*SumSqY);
+	  AnalyticCM1X[i] = ThetaCM1X.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
+	  AnalyticCM2X[i] = ThetaCM2X.GetValue(Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx));
+//  	  ThetaCM1X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+// 	  ThetaCM2X.PrintValue(cout,Complex((2.0*(double)SumX)/Lx,(2.0*(double)SumY)/Lx))<<endl;
+	  Analytic1X[i] = AnalyticRelativeX[i] * AnalyticCM1X[i];
+	  Analytic2X[i] = AnalyticRelativeX[i] * AnalyticCM2X[i];
+
+	  FRelY=1.0;
+	  for (int bi = 1; bi < NbrBosons; ++bi)
+	    for (int bj = 0; bj < bi; ++bj)
+	      FRelY*=ThetaRelY.GetValue(Complex( ((double)(PosY[bi]-PosY[bj]))/Ly,-((double)(PosX[bi]-PosX[bj]))/Ly));
+	  
+	  AnalyticJastrowY[i] = FRelY * exp(-0.5*SumSqX);
+	  AnalyticRelativeY[i] = FRelY*FRelY * exp(-0.5*SumSqX);
+	  AnalyticCM1Y[i] = ThetaCM1Y.GetValue(Complex((2.0*(double)SumY)/Ly,-(2.0*(double)SumX)/Ly));
+	  AnalyticCM2Y[i] = ThetaCM2Y.GetValue(Complex((2.0*(double)SumY)/Ly,-(2.0*(double)SumX)/Ly));
+//  	  ThetaCM1Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
+// 	  ThetaCM2Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
+	  Analytic1Y[i] = AnalyticRelativeY[i] * AnalyticCM1Y[i];
+	  Analytic2Y[i] = AnalyticRelativeY[i] * AnalyticCM2Y[i];
+
 	}
+      
     }
   CFState /= CFState.Norm();  
   sprintf(TmpC,"%s.CF.vec",OutputName);
@@ -268,29 +320,57 @@ int main(int argc, char** argv)
   CFState /= CFState.Norm();
   CFState.WriteVector(TmpC);
 
-  AnalyticJastrow /= AnalyticJastrow.Norm();
-  sprintf(TmpC,"%s.AJ.vec",OutputName);
-  AnalyticJastrow.WriteVector(TmpC);
+  
+  // writing Laughlin state in Landau gauge along x-direction
+  AnalyticJastrowX /= AnalyticJastrowX.Norm();
+  sprintf(TmpC,"%s.AJX.vec",OutputName);
+  AnalyticJastrowX.WriteVector(TmpC);
 
-  AnalyticRelative /= AnalyticRelative.Norm();
-  sprintf(TmpC,"%s.ACF.vec",OutputName);
-  AnalyticRelative.WriteVector(TmpC);
+  AnalyticRelativeX /= AnalyticRelativeX.Norm();
+  sprintf(TmpC,"%s.ACFX.vec",OutputName);
+  AnalyticRelativeX.WriteVector(TmpC);
 
-  AnalyticCM1 /= AnalyticCM1.Norm();
-  sprintf(TmpC,"%s.CM1.vec",OutputName);
-  AnalyticCM1.WriteVector(TmpC);
+  AnalyticCM1X /= AnalyticCM1X.Norm();
+  sprintf(TmpC,"%s.CM1X.vec",OutputName);
+  AnalyticCM1X.WriteVector(TmpC);
 
-  AnalyticCM2 /= AnalyticCM2.Norm();
-  sprintf(TmpC,"%s.CM2.vec",OutputName);
-  AnalyticCM2.WriteVector(TmpC);
+  AnalyticCM2X /= AnalyticCM2X.Norm();
+  sprintf(TmpC,"%s.CM2X.vec",OutputName);
+  AnalyticCM2X.WriteVector(TmpC);
 
-  Analytic1 /= Analytic1.Norm();
-  sprintf(TmpC,"%s.A1.vec",OutputName);
-  Analytic1.WriteVector(TmpC);
+  Analytic1X /= Analytic1X.Norm();
+  sprintf(TmpC,"%s.A1X.vec",OutputName);
+  Analytic1X.WriteVector(TmpC);
 
-  Analytic2 /= Analytic2.Norm();
-  sprintf(TmpC,"%s.A2.vec",OutputName);
-  Analytic2.WriteVector(TmpC);
+  Analytic2X /= Analytic2X.Norm();
+  sprintf(TmpC,"%s.A2X.vec",OutputName);
+  Analytic2X.WriteVector(TmpC);
+
+
+  // writing Laughlin state in Landau gauge along y-direction
+  AnalyticJastrowY /= AnalyticJastrowY.Norm();
+  sprintf(TmpC,"%s.AJY.vec",OutputName);
+  AnalyticJastrowY.WriteVector(TmpC);
+
+  AnalyticRelativeY /= AnalyticRelativeY.Norm();
+  sprintf(TmpC,"%s.ACFY.vec",OutputName);
+  AnalyticRelativeY.WriteVector(TmpC);
+
+  AnalyticCM1Y /= AnalyticCM1Y.Norm();
+  sprintf(TmpC,"%s.CM1Y.vec",OutputName);
+  AnalyticCM1Y.WriteVector(TmpC);
+
+  AnalyticCM2Y /= AnalyticCM2Y.Norm();
+  sprintf(TmpC,"%s.CM2Y.vec",OutputName);
+  AnalyticCM2Y.WriteVector(TmpC);
+
+  Analytic1Y /= Analytic1Y.Norm();
+  sprintf(TmpC,"%s.A1Y.vec",OutputName);
+  Analytic1Y.WriteVector(TmpC);
+
+  Analytic2Y /= Analytic2Y.Norm();
+  sprintf(TmpC,"%s.A2Y.vec",OutputName);
+  Analytic2Y.WriteVector(TmpC);
 
   
   delete [] TmpC;

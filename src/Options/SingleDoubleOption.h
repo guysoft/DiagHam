@@ -127,7 +127,7 @@ class SingleDoubleOption : public AbstractOption
   // set output format used by GetAsAString()
   // 
   // format = format for a double, using conventions of printf
-  void SetStringFormat(char *format);
+  void SetStringFormat(const char *format);
 
 };
 

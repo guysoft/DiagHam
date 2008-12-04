@@ -168,3 +168,174 @@ double* GetMonomialPseudopotentials(int nbrFlux, int exponentN, bool onlyOdd, bo
   return rst;
 }
 
+
+
+#ifdef HAVE_GSL  
+
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline.h>
+
+namespace DiagPseudoPotentials
+{
+
+  struct paramZ2
+  {
+    double z1;
+    double d;
+    AbstractZDensityProfile *Rho;
+    gsl_spline *Vm;
+    gsl_interp_accel *VmAcc;
+  };
+
+  struct paramZ1
+  {
+    double Z2min;
+    double Z2max;
+    double epsAbs;
+    double epsRel;
+    paramZ2 *innerVar;    
+    gsl_function *innerIntegral;
+    size_t sizeW;
+    gsl_integration_workspace *w;
+  };
+
+  // inner integration of density profile
+  double IntegrandZ2 (double z2, void * params)
+  {
+    paramZ2 *parameters=(paramZ2*)params;
+    double result = gsl_spline_eval (parameters->Vm, fabs(parameters->z1-z2-parameters->d), parameters->VmAcc);
+    result *=parameters->Rho->GetValue(z2);    
+    return result;
+  }
+
+  // outer integration of density profile
+  double IntegrandZ1 (double z1, void * params)
+  {
+    paramZ1 *parameters=(paramZ1*)params;
+    parameters->innerVar->z1=z1;
+    double result, error;
+    // call inner integral over z2, maybe change algorithm by choosing other KEY values
+    gsl_integration_qag (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
+			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
+			 /* KEY */ GSL_INTEG_GAUSS31, parameters->w, &result, &error);        
+    return result*parameters->innerVar->Rho->GetValue(z1);
+  }
+  
+}
+
+#endif
+
+// evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// width = maximum width of profile to be used (shape determined by type)
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// type = flag indicating the type of profile in the z-direction to be used
+// points = number of points where exact pseudopotentials are calculated
+// multiplier = number of integration intervals used per point of discretization
+// return value = array that conatins the pseudopotentials
+
+double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, double layerSeparation, int points, double multiplier)
+{
+#ifdef HAVE_GSL  
+  gsl_interp_accel *VmSplineAcc = gsl_interp_accel_alloc ();
+  // alternative choices
+  const gsl_interp_type *t = gsl_interp_cspline;
+  //const gsl_interp_type *t = gsl_interp_akima;
+  
+  gsl_spline *VmSpline = gsl_spline_alloc (t, points);
+  
+  double Zmin, Zmax, Width;
+  zDensity->GetSupport(Zmin, Zmax);
+  Width = Zmax - Zmin;
+  
+  double TrueMin = 0.0;
+  if (layerSeparation>Width)
+    TrueMin = Width;
+  double TrueMax = layerSeparation + Width;
+
+  double * Distances = new double[points];
+  double **PseudopotentialValues = new double*[points];
+
+  for (int i = 0; i < points; ++i)
+     {
+       Distances[i]=TrueMin+(double)i*(TrueMax-TrueMin)/(points-1);
+       PseudopotentialValues[i] = EvaluatePseudopotentials(nbrFlux, landauLevel, Distances[i], /* quiet */ true);
+     }
+
+  // number of PP coefficients:
+  int MaxMomentum = nbrFlux + (landauLevel << 1);
+  double* TmpPseudopotentials = new double [points];
+  double* FinalPseudopotentials = new double [points];
+
+  // integration workspaces
+  gsl_integration_workspace * IntW1
+    = gsl_integration_workspace_alloc ((int)(multiplier*points));
+  gsl_integration_workspace * IntW2
+    = gsl_integration_workspace_alloc ((int)(multiplier*points));
+
+
+  DiagPseudoPotentials::paramZ2 InnerParameters;
+  
+  InnerParameters.d = layerSeparation;
+  InnerParameters.Rho = zDensity;  
+  InnerParameters.VmAcc = VmSplineAcc;
+
+  DiagPseudoPotentials::paramZ1 OuterParameters;
+  OuterParameters.Z2min = Zmin ;
+  OuterParameters.Z2max = Zmax;
+  OuterParameters.epsAbs = 0;
+  OuterParameters.epsRel = 1e-8;
+  OuterParameters.innerVar = &InnerParameters;
+  gsl_function TheInnerIntegrand;
+  TheInnerIntegrand.function = &DiagPseudoPotentials::IntegrandZ2;
+  TheInnerIntegrand.params = &InnerParameters;
+  OuterParameters.innerIntegral = &TheInnerIntegrand;
+  OuterParameters.sizeW = (int)(multiplier*points);
+  OuterParameters.w=IntW2;
+
+  gsl_function TheOuterIntegrand;
+  TheOuterIntegrand.function = &DiagPseudoPotentials::IntegrandZ1;
+  TheOuterIntegrand.params = &OuterParameters;
+
+  double result, error;
+  
+  for (int l=0; l<=MaxMomentum; ++l)
+    {
+      // create interpolation of pseudopotential
+      for (int p=0; p<points; ++p)
+	TmpPseudopotentials[p]=PseudopotentialValues[p][l];      
+      gsl_spline_init (VmSpline, Distances, TmpPseudopotentials, points);
+      InnerParameters.Vm=VmSpline;
+      
+      // call the outer integration over z1
+      gsl_integration_qag (&TheOuterIntegrand, Zmin, Zmax, OuterParameters.epsAbs, OuterParameters.epsRel,
+			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS31, IntW1, &result, &error);        
+      
+      FinalPseudopotentials[l]=result;
+      cout << "V_"<<l<<"="<<result<<" +/- "<< error<<endl;
+    }
+
+  // clean up
+  
+  gsl_integration_workspace_free (IntW1);
+  gsl_integration_workspace_free (IntW2);
+  
+  gsl_spline_free (VmSpline);
+  gsl_interp_accel_free (VmSplineAcc);
+
+  for (int i = 0; i < points; ++i)
+    delete [] PseudopotentialValues[i];
+  delete [] PseudopotentialValues;
+  delete [] TmpPseudopotentials;
+  delete [] Distances;
+
+  return FinalPseudopotentials;
+
+#else
+   cout << "EvaluateFiniteWidth requires linking to the Gnu Scientific Library!"<<endl;
+   return 0;
+#endif
+}

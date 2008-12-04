@@ -43,7 +43,7 @@
 // suffix = optional suffix  to test
 // return value = number of matched files
 
-int GetAllFilesDirectories(char* pattern, char**& matchedFileArray, char* suffix)
+int GetAllFilesDirectories(const char* pattern, char**& matchedFileArray, const char* suffix)
 {
   char* Path = strrchr(pattern, '/');
   char* TmpPattern;
@@ -142,7 +142,7 @@ int GetAllFilesDirectories(char* pattern, char**& matchedFileArray, char* suffix
 // fileName = name of the file (must include relative/absolute path)
 // return value = true if the file exists
 
-bool IsFile (char* fileName)
+bool IsFile (const char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -188,7 +188,7 @@ char* ConcatenatePathAndFileName (char* path, char* fileName)
 // extension = extension (without initial dot)
 // return value = corresponding string
 
-char*  AddExtensionToFileName(char* fileName, char* extension)
+char*  AddExtensionToFileName(char* fileName, const char* extension)
 {
   long TmpLength = strlen(fileName);
   long TmpLength2 = TmpLength + strlen(extension) + 1;
@@ -217,7 +217,7 @@ char*  AddExtensionToFileName(char* fileName, char* extension)
 // newExtension = new extension (without initial dot)
 // return value = corresponding string (0 if the old extension was not found)
 
-char* ReplaceExtensionToFileName(char* fileName, char* oldExtension, char* newExtension)
+char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const char* newExtension)
 {
   char* ExtensionPosition = strstr(fileName, oldExtension);
   if (ExtensionPosition == 0)

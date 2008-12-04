@@ -3,6 +3,9 @@
 /* use big endian byte ordering */
 #undef HAVE_BIGENDIAN
 
+/* define if we are using GSL libraries */
+#undef HAVE_GSL
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

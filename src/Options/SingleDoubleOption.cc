@@ -237,7 +237,7 @@ char* SingleDoubleOption::GetAsAString()
 // set output format used by GetAsAString()
 // 
 // format = format for a double, using conventions of printf
-void SingleDoubleOption::SetStringFormat(char *format)
+void SingleDoubleOption::SetStringFormat(const char *format)
 {
   delete [] this->OutputFormat;
   this->OutputFormat = new char[strlen(format)+1];

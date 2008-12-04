@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-
+#include "AbstractZDensityProfile.h"
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level
 //
@@ -43,6 +43,19 @@
 // quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
 // return value = array that conatins the pseudopotentials
 double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSeparation=0.0, bool quiet=false);
+
+// evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// width = maximum width of profile to be used (shape determined by type)
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// type = flag indicating the type of profile in the z-direction to be used
+// points = number of points where exact pseudopotentials are calculated
+// multiplier = number of integration intervals used per point of discretization
+// return value = array that conatins the pseudopotentials
+double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity,
+					   double layerSeparation=0.0, int points=200, double multiplier=5.0);
 
 
 // evalute one body potentials for two impurities located at the poles in a given Landau level
