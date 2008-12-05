@@ -107,12 +107,18 @@ int main(int argc, char** argv)
 #endif
 	if ((SymmetrizedBasis == false) || (TotalLz != 0))
 	  {
-	    FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
-	    FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
 	    if (BergholtzFlag == false)
-	      HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	      {
+		FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+		FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+		HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
+	      }
 	    else
-	      HoleState = InputSpace.ParticleHoleSymmetrize2(State, OutputSpace);	      
+	      {
+		FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
+		FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
+		HoleState = InputSpace.ParticleHoleSymmetrize2(State, OutputSpace);
+	      }	      
 	  }
 	else
 	  {
