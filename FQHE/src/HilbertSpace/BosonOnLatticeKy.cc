@@ -1168,7 +1168,7 @@ void print_array(int length, long unsigned int*array)
 // returns: vector in many-body basis of targetSpace
 ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis)
 {
-  this->ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis,0,this->GetHilbertSpaceDimension());
+  return this->ConvertToNbodyBasis(state, nbodyBasis, 0, this->GetHilbertSpaceDimension());
 }
 
 
