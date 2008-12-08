@@ -1,3 +1,4 @@
+#include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "Hamiltonian/ParticleOnSphereNBodyHardCoreHamiltonian.h"
 
@@ -14,6 +15,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 
@@ -42,47 +45,35 @@ int main(int argc, char** argv)
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);
+  ParticleOnSphereManager ParticleManager(false, true, 1);
+  ParticleManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
 
-  Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += LanczosGroup;
+  Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
-  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 2);
   (*SystemGroup) += new  SingleStringOption ('\n', "nbody-file", "file describing which n-body hard-core interactions have to be used");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files, default is nbody)");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
+  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 						"maximum Hilbert space dimension for which full diagonalization is applied", 
 						500, true, 100);
 
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);  
-  (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
-  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
-  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
-  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -90,6 +81,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -136,7 +128,16 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = Manager.GetFormattedString("bosons_hardcore_nbody_%nbr-nbody%_n_%nbr-particles%_2s_%lzmax%_lz.dat");
+  char* OutputNameLz;
+  if (((SingleStringOption*) Manager["interaction-name"])->GetString() == 0)
+    {
+      OutputNameLz = Manager.GetFormattedString("bosons_hardcore_nbody_%nbr-nbody%_n_%nbr-particles%_2s_%lzmax%_lz.dat");
+    }
+  else
+    {
+      OutputNameLz = Manager.GetFormattedString("bosons_%interaction-name%_n_%nbr-particles%_2s_%lzmax%_lz.dat");
+    }
+
   int Max = (LzMax * NbrBosons);
   int  L = 0;
   if ((abs(Max) & 1) != 0)
@@ -158,14 +159,14 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      BosonOnSphere Space (NbrBosons, L, LzMax);
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());
+      ParticleOnSphere* Space = (ParticleOnSphere*) ParticleManager.GetHilbertSpace(L);
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       AbstractQHEOnSphereHamiltonian* Hamiltonian = 0;
       if (NBodyWeightFactors == 0)
 	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, 
+	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrBosons, LzMax, NbrNBody, 
 								     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 								     Architecture.GetArchitecture(), 
 								     Memory, DiskCacheFlag,
@@ -173,7 +174,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(&Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
+	  Hamiltonian = new ParticleOnSphereNBodyHardCoreHamiltonian(Space, NbrBosons, LzMax, NbrNBody, NBodyWeightFactors,
 								     ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), 
 								     Architecture.GetArchitecture(), 
 								     Memory, DiskCacheFlag,
@@ -184,10 +185,18 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
-	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, LzMax, L);
+	  if (((SingleStringOption*) Manager["interaction-name"])->GetString() == 0)
+	    {
+	      EigenvectorName = new char [256];
+	      sprintf (EigenvectorName, "bosons_hardcore_nbody_%d_n_%d_2s_%d_lz_%d", NbrNBody, NbrBosons, LzMax, L);
+	    }
+	  else
+	    {
+	      EigenvectorName = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
+	      sprintf (EigenvectorName, "bosons_%s_n_%d_2s_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax, L);
+	    }
 	}
-      QHEOnSphereMainTask Task (&Manager, &Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
+      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
@@ -197,6 +206,7 @@ int main(int argc, char** argv)
 	}
       if (FirstRun == true)
 	FirstRun = false;
+      delete Space;
     }
 
   return 0;

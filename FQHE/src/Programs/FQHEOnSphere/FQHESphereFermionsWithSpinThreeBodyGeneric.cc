@@ -465,6 +465,7 @@ int main(int argc, char** argv)
       delete Hamiltonian;
       if (FirstRun == true)
 	FirstRun = false;
+      delete Space;
     }
 
   return 0;
