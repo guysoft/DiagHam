@@ -28,53 +28,88 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTZDENSITYPROFILE_H
-#define ABSTRACTZDENSITYPROFILE_H
+#ifndef TABULATEDDENSITYPROFILE_H
+#define TABULATEDDENSITYPROFILE_H
 
 
 #include "config.h"
 
+#include "AbstractZDensityProfile.h"
+
+#ifdef HAVE_GSL
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline.h>
+#endif
 
 
-class AbstractZDensityProfile {
+class TabulatedDensityProfile : public AbstractZDensityProfile
+{
  private:
-  
+
+  // minimum z where function is defined
+  double Zmin;
+
+  // maximum z where function is defined
+  double Zmax;
+
+  // the norm of the (square) wavefunction
+  double SqNorm;
+
+  // number of data-points
+  int NbrDataPoints;
+
+  // abscissa of the data-points
+  double *ZValues;
+
+  // Density according to abscissa
+  double *Density;
+
+  // flag indicating whether interpolation is present
+  bool SplineInterpolate;
+
+#ifdef HAVE_GSL
+  // gsl spline object
+  gsl_spline *Spline;
+  // gsl spline accelerator object
+  gsl_interp_accel *SplineAccelerator;
+#endif
 
  public:
   
-  enum ZDensityProfileTypes
-    {
-      TabulatedProfile = 0x00000,
-      InfiniteWell = 0x00001,
-      FangHoward = 0x00002,
-    };
+  // the standard constructor 
+  TabulatedDensityProfile();
+
+  // constructor
+  // dataFile = file name of text-file to be opened
+  // scale = scale-factor in the z-direction
+  // squareValues = option to square the values of individual points (wavefunction provided)
+  // splineInterpolate = flag indicating whether a spline interpolation should be used  
+  // checkNorm = flag indicating whether the norm should be recalculated
+  TabulatedDensityProfile(char *dataFile, double scale, bool squareValues=false, bool checkNorm=false);
   
   // virtual destructor
-  virtual ~AbstractZDensityProfile();
+  virtual ~TabulatedDensityProfile();
 
   // get minimum and maximum value of density profile where the probability density is larger than precision
   // min = minimum value of z offset
   // max = maximum value of z offset
   // precision = requested precision
-  virtual void GetSupport(double &min, double &max, double precision=1e-10) = 0;
+  virtual void GetSupport(double &min, double &max, double precision=1e-10);
 
   // evaluate the density for a given offset
   // z = offset of distribution
-  virtual double GetValue(double z) = 0;
+  virtual double GetValue(double z);
 
   // get type of the density profile
-  virtual int GetType() = 0;
-
-  // a static class function to return an actual DensityProfile object of some type
-  static AbstractZDensityProfile* CreateZDensityProfile (char *type, double width);
-
-  // a static class function to return the name of a type of DensityProfile
-  // type = a string carrying either the number of the density profile, or a filename (if tabulated)
-  static char *DensityProfileName(char *type);
-  
-
+  virtual int GetType();
 
 };
+
+// get type of the density profile
+inline int TabulatedDensityProfile::GetType()
+{
+  return AbstractZDensityProfile::TabulatedProfile;
+}
 
 
 #endif

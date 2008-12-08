@@ -1160,13 +1160,25 @@ void print_array(int length, long unsigned int*array)
       cout << " (length "<<length<<")"<<endl;
     }
 }
-  
+
 
 // conversion to generic (full) many-body representation in real-space basis
 // state: many-body state in Ky-momentum basis
 // nbodyBasis: full Hilbert-space in real-space representation
 // returns: vector in many-body basis of targetSpace
 ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis)
+{
+  this->ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis,0,this->GetHilbertSpaceDimension());
+}
+
+
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// returns: vector in many-body basis of targetSpace
+ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis, int firstComponent, int nbrComponent)
 {
   this->TargetVector.ResizeAndClean(nbodyBasis.GetHilbertSpaceDimension());
   this->FullSpace = &nbodyBasis;

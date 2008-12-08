@@ -6,4 +6,7 @@ libQHESpectrum_a_SOURCES=QHEOnSphereLzSortedSpectrum.cc \
 MomentumMultipletSet.cc \
 PseudoPotentials.cc \
 AbstractZDensityProfile.cc \
-InfiniteWellDensityProfile.cc
+InfiniteWellDensityProfile.cc \
+FangHowardDensityProfile.cc \
+PseudoPotentialGenerator.cc \
+TabulatedDensityProfile.cc

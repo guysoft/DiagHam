@@ -34,9 +34,10 @@
 
 #include "config.h"
 
+#include "AbstractZDensityProfile.h"
 
-
-class InfiniteWellDensityProfile {
+class InfiniteWellDensityProfile : public AbstractZDensityProfile
+{
  private:
 
   // width of the well
@@ -68,7 +69,16 @@ class InfiniteWellDensityProfile {
   // z = offset of distribution
   virtual double GetValue(double z);
 
+  // get type of the density profile
+  virtual int GetType();
+
 };
+
+// get type of the density profile
+inline int InfiniteWellDensityProfile::GetType()
+{
+  return AbstractZDensityProfile::InfiniteWell;
+}
 
 
 #endif

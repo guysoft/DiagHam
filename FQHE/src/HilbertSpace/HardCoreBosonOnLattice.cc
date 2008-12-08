@@ -591,7 +591,7 @@ void HardCoreBosonOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
   int HighestBit = this->StateHighestBit[index];
   int NbrQ=0;
   for (int q=0; q<=HighestBit; ++q)
-    if (State&(0x1u<<q))
+    if (State&(0x1ul<<q))
       quantumNumbers[NbrQ++]=q;
 }
 

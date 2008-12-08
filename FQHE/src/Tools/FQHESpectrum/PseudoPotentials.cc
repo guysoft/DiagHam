@@ -7,6 +7,8 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
 
+#include "PseudoPotentialGenerator.h"
+
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 
@@ -183,9 +185,11 @@ namespace DiagPseudoPotentials
   {
     double z1;
     double d;
-    AbstractZDensityProfile *Rho;
+    AbstractZDensityProfile *Rho2;
+    PseudoPotentialGenerator *VmGen;
     gsl_spline *Vm;
     gsl_interp_accel *VmAcc;
+    int relativeM;
   };
 
   struct paramZ1
@@ -194,7 +198,8 @@ namespace DiagPseudoPotentials
     double Z2max;
     double epsAbs;
     double epsRel;
-    paramZ2 *innerVar;    
+    paramZ2 *innerVar;
+    AbstractZDensityProfile *Rho1;
     gsl_function *innerIntegral;
     size_t sizeW;
     gsl_integration_workspace *w;
@@ -205,10 +210,21 @@ namespace DiagPseudoPotentials
   {
     paramZ2 *parameters=(paramZ2*)params;
     double result = gsl_spline_eval (parameters->Vm, fabs(parameters->z1-z2-parameters->d), parameters->VmAcc);
-    result *=parameters->Rho->GetValue(z2);    
+    result *=parameters->Rho2->GetValue(z2);    
     return result;
   }
 
+
+  // inner integration of density profile without interpolation
+  double IntegrandZ2NoInterpolation (double z2, void * params)
+  {
+    paramZ2 *parameters=(paramZ2*)params;
+    double result = parameters->VmGen->Evaluate(parameters->relativeM, fabs(parameters->z1-z2-parameters->d));
+    result *=parameters->Rho2->GetValue(z2);    
+    return result;
+  }
+
+  
   // outer integration of density profile
   double IntegrandZ1 (double z1, void * params)
   {
@@ -218,8 +234,8 @@ namespace DiagPseudoPotentials
     // call inner integral over z2, maybe change algorithm by choosing other KEY values
     gsl_integration_qag (parameters->innerIntegral, parameters->Z2min, parameters->Z2max,
 			 parameters->epsAbs, parameters->epsRel, parameters->sizeW,
-			 /* KEY */ GSL_INTEG_GAUSS31, parameters->w, &result, &error);        
-    return result*parameters->innerVar->Rho->GetValue(z1);
+			 /* KEY */ GSL_INTEG_GAUSS41, parameters->w, &result, &error);        
+    return result*parameters->Rho1->GetValue(z1);
   }
   
 }
@@ -230,32 +246,36 @@ namespace DiagPseudoPotentials
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
 // landauLevel = index of the Landau level (0 for the lowest Landau level)
-// width = maximum width of profile to be used (shape determined by type)
-// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
-// type = flag indicating the type of profile in the z-direction to be used
+// zDensity = density distribution of the layer 
 // points = number of points where exact pseudopotentials are calculated
 // multiplier = number of integration intervals used per point of discretization
-// return value = array that conatins the pseudopotentials
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// return value = array that contains the pseudopotentials
 
-double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, double layerSeparation, int points, double multiplier)
+double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2)
 {
-#ifdef HAVE_GSL  
-  gsl_interp_accel *VmSplineAcc = gsl_interp_accel_alloc ();
+#ifdef HAVE_GSL
+  gsl_spline *VmSpline=0;
+  gsl_interp_accel *VmSplineAcc=0;
+  double Z1min, Z1max, Width1, Z2min, Z2max, Width2;
+  zDensity->GetSupport(Z1min, Z1max);
+  if (zDensity2==0) zDensity2 = zDensity;
+  zDensity2->GetSupport(Z2min, Z2max);
+  Width1 = Z1max - Z1min;
+  Width2 = Z2max - Z2min;
+
+  double TrueMin = 0.0;
+  if (layerSeparation>(Width1+Width2)/2.0)
+    TrueMin = layerSeparation-(Width1+Width2)/2.0;
+  double TrueMax = layerSeparation + (Width1+Width2)/2.0;
+  
+  
   // alternative choices
   const gsl_interp_type *t = gsl_interp_cspline;
-  //const gsl_interp_type *t = gsl_interp_akima;
-  
-  gsl_spline *VmSpline = gsl_spline_alloc (t, points);
-  
-  double Zmin, Zmax, Width;
-  zDensity->GetSupport(Zmin, Zmax);
-  Width = Zmax - Zmin;
-  
-  double TrueMin = 0.0;
-  if (layerSeparation>Width)
-    TrueMin = Width;
-  double TrueMax = layerSeparation + Width;
-
+  //const gsl_interp_type *t = gsl_interp_akima;  
+  VmSpline = gsl_spline_alloc (t, points);
+  VmSplineAcc = gsl_interp_accel_alloc ();  
   double * Distances = new double[points];
   double **PseudopotentialValues = new double*[points];
 
@@ -280,12 +300,14 @@ double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, Abstrac
   DiagPseudoPotentials::paramZ2 InnerParameters;
   
   InnerParameters.d = layerSeparation;
-  InnerParameters.Rho = zDensity;  
+  InnerParameters.Rho2 = zDensity2;  
   InnerParameters.VmAcc = VmSplineAcc;
+  InnerParameters.VmGen = NULL;
 
   DiagPseudoPotentials::paramZ1 OuterParameters;
-  OuterParameters.Z2min = Zmin ;
-  OuterParameters.Z2max = Zmax;
+  OuterParameters.Z2min = Z2min ;
+  OuterParameters.Z2max = Z2max;
+  OuterParameters.Rho1 = zDensity;  
   OuterParameters.epsAbs = 0;
   OuterParameters.epsRel = 1e-8;
   OuterParameters.innerVar = &InnerParameters;
@@ -311,8 +333,8 @@ double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, Abstrac
       InnerParameters.Vm=VmSpline;
       
       // call the outer integration over z1
-      gsl_integration_qag (&TheOuterIntegrand, Zmin, Zmax, OuterParameters.epsAbs, OuterParameters.epsRel,
-			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS31, IntW1, &result, &error);        
+      gsl_integration_qag (&TheOuterIntegrand, Z1min, Z1max, OuterParameters.epsAbs, OuterParameters.epsRel,
+			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS41, IntW1, &result, &error);        
       
       FinalPseudopotentials[l]=result;
       cout << "V_"<<l<<"="<<result<<" +/- "<< error<<endl;
@@ -332,6 +354,96 @@ double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, Abstrac
   delete [] TmpPseudopotentials;
   delete [] Distances;
 
+  return FinalPseudopotentials;
+
+#else
+   cout << "EvaluateFiniteWidth requires linking to the Gnu Scientific Library!"<<endl;
+   return 0;
+#endif
+}
+
+
+
+// evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile,
+// but without tabulating and interpolating the pseudopotentials
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// zDensity = density distribution of the layer 
+// points = number of points where exact pseudopotentials are calculated
+// multiplier = number of integration intervals used per point of discretization
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// return value = array that contains the pseudopotentials
+
+double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2)
+{
+#ifdef HAVE_GSL
+  cout.precision(14);
+  double Z1min, Z1max, Width1, Z2min, Z2max, Width2;
+  zDensity->GetSupport(Z1min, Z1max);
+  if (zDensity2==0) zDensity2 = zDensity;
+  zDensity2->GetSupport(Z2min, Z2max);
+  Width1 = Z1max - Z1min;
+  Width2 = Z2max - Z2min;
+
+  PseudoPotentialGenerator VmGenerator(nbrFlux, landauLevel);
+  
+  // number of PP coefficients:
+  int MaxMomentum = nbrFlux + (landauLevel << 1);
+  double* FinalPseudopotentials = new double [points];
+
+  // integration workspaces
+  gsl_integration_workspace * IntW1
+    = gsl_integration_workspace_alloc ((int)(multiplier*points));
+  gsl_integration_workspace * IntW2
+    = gsl_integration_workspace_alloc ((int)(multiplier*points));
+
+
+  DiagPseudoPotentials::paramZ2 InnerParameters;
+  
+  InnerParameters.d = layerSeparation;
+  InnerParameters.Rho2 = zDensity2;  
+  InnerParameters.VmAcc = NULL;
+  InnerParameters.Vm = NULL;
+  InnerParameters.VmGen = &VmGenerator;
+  
+  DiagPseudoPotentials::paramZ1 OuterParameters;
+  OuterParameters.Z2min = Z2min ;
+  OuterParameters.Z2max = Z2max;
+  OuterParameters.Rho1 = zDensity;  
+  OuterParameters.epsAbs = 0;
+  OuterParameters.epsRel = 1e-8;
+  OuterParameters.innerVar = &InnerParameters;
+  gsl_function TheInnerIntegrand;
+  TheInnerIntegrand.function = &DiagPseudoPotentials::IntegrandZ2NoInterpolation;
+  TheInnerIntegrand.params = &InnerParameters;
+  OuterParameters.innerIntegral = &TheInnerIntegrand;
+  OuterParameters.sizeW = (int)(multiplier*points);
+  OuterParameters.w=IntW2;
+
+  gsl_function TheOuterIntegrand;
+  TheOuterIntegrand.function = &DiagPseudoPotentials::IntegrandZ1;
+  TheOuterIntegrand.params = &OuterParameters;
+
+  double result, error;
+  
+  for (int l=0; l<=MaxMomentum; ++l)
+    {
+      InnerParameters.relativeM = MaxMomentum-l;
+      // call the outer integration over z1
+      gsl_integration_qag (&TheOuterIntegrand, Z1min, Z1max, OuterParameters.epsAbs, OuterParameters.epsRel,
+			   OuterParameters.sizeW, /* KEY */ GSL_INTEG_GAUSS31, IntW1, &result, &error);        
+      
+      FinalPseudopotentials[l]=result;
+      cout << "V_"<<l<<"="<<result<<" +/- "<< error<<endl;
+    }
+
+  // clean up
+  
+  gsl_integration_workspace_free (IntW1);
+  gsl_integration_workspace_free (IntW2);
+  
   return FinalPseudopotentials;
 
 #else

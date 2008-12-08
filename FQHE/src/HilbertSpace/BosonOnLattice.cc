@@ -609,7 +609,7 @@ void BosonOnLattice::ListQuantumNumbers(int index, int *quantumNumbers, double &
   for (int q=0; q<=TemporaryStateHighestBit; ++q)
     if (this->TemporaryState[q]>0)
       {		
-	for (unsigned int l=this->TemporaryState[q];l>0; --l)
+	for (unsigned long l=this->TemporaryState[q];l>0; --l)
 	  {
 	    normalization*=l;
 	    quantumNumbers[NbrQ]=q;

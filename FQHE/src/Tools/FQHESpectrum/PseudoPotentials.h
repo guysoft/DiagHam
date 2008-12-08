@@ -48,14 +48,31 @@ double* EvaluatePseudopotentials(int nbrFlux, int landauLevel, double layerSepar
 //
 // nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
 // landauLevel = index of the Landau level (0 for the lowest Landau level)
-// width = maximum width of profile to be used (shape determined by type)
-// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
-// type = flag indicating the type of profile in the z-direction to be used
+// zDensity = density distribution of the layer 
 // points = number of points where exact pseudopotentials are calculated
 // multiplier = number of integration intervals used per point of discretization
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
 // return value = array that conatins the pseudopotentials
-double* EvaluateFiniteWidthPseudoPotential(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity,
-					   double layerSeparation=0.0, int points=200, double multiplier=5.0);
+double* EvaluateFiniteWidthPseudoPotentials(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity,
+					   int points=200, double multiplier=5.0, double layerSeparation=0.0,
+					   AbstractZDensityProfile *zDensity2=0);
+
+
+// evalute pseudopotentials for coulomb interaction in a given Landau level with a given density profile,
+// but without tabulating and interpolating the pseudopotentials
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum for a single particle)
+// landauLevel = index of the Landau level (0 for the lowest Landau level)
+// zDensity = density distribution of the layer 
+// points = number of points where exact pseudopotentials are calculated
+// multiplier = number of integration intervals used per point of discretization
+// layerSeparation = layer separation d in bilayer, or layer thickness d modeled by interaction 1/sqrt(r^2+d^2)
+// zDensity2 = (optional) density distribution of layer 2, if absent, taken to be equal to 1st profile
+// return value = array that contains the pseudopotentials
+
+double* EvaluateFiniteWidthPseudoPotentialsNoInterpolation(int nbrFlux, int landauLevel, AbstractZDensityProfile *zDensity, int points, double multiplier, double layerSeparation, AbstractZDensityProfile *zDensity2);
+
 
 
 // evalute one body potentials for two impurities located at the poles in a given Landau level

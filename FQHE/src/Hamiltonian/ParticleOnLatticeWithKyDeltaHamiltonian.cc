@@ -42,7 +42,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 
 // constructor for contact interactions on a square lattice
@@ -246,7 +246,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
+		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
 		      *Polar(1.0,-2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
 		  }		
 #ifdef DEBUG_OUTPUT
@@ -261,7 +261,7 @@ void ParticleOnLatticeWithKyDeltaHamiltonian::EvaluateInteractionFactors()
 		    KineticQi[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy, 0, TranslationPhase);
 		    compositeKy2 = k*p+p-1;
 		    KineticQf[this->NbrHoppingTerms] = Particles->EncodeQuantumNumber(i, compositeKy2, 0, TranslationPhase);
-		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Phase*TranslationPhase
+		    HoppingTerms[this->NbrHoppingTerms] = HoppingSign*Conj(Phase)*TranslationPhase
 		      *Polar(1.0,2.0*M_PI*((double)k/KyMax-this->FluxDensity*(double)i));
 		  }
 		else

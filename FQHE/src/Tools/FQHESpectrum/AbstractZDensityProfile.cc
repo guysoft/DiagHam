@@ -1,5 +1,7 @@
 #include "AbstractZDensityProfile.h"
 #include "InfiniteWellDensityProfile.h"
+#include "FangHowardDensityProfile.h"
+#include "TabulatedDensityProfile.h"
 
 #include <iostream>
 using std::cout;
@@ -12,12 +14,21 @@ AbstractZDensityProfile::~AbstractZDensityProfile()
 
 
 // a static class function to return an actual DensityProfile object of some type
-AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (unsigned int type, double width)
+AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (char *type, double width)
 {
-  switch(type)
+  int ProfileType=0;
+  if (strlen(type)<3)
+    ProfileType=atoi(type);  
+  switch(ProfileType)
     {
     case AbstractZDensityProfile::InfiniteWell:
-      return (AbstractZDensityProfile*) new InfiniteWellDensityProfile(width);
+      return new InfiniteWellDensityProfile(width);
+      break;
+    case AbstractZDensityProfile::FangHoward:
+      return (AbstractZDensityProfile*) new FangHowardDensityProfile(width);
+      break;
+    case AbstractZDensityProfile::TabulatedProfile:
+      return (AbstractZDensityProfile*) new TabulatedDensityProfile(type, width);
       break;
     default:
       cout << "This type of Density Profile is not defined, yet"<<endl;
@@ -26,13 +37,22 @@ AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (unsigne
     } 
 }
 
-char *AbstractZDensityProfile::DensityProfileName(unsigned int type)
+char *AbstractZDensityProfile::DensityProfileName(char *type)
 {
   char * buffer = new char[1000];
-  switch(type)
+  int ProfileType=0;
+  if (strlen(type)<3)
+    ProfileType=atoi(type);  
+  switch(ProfileType)
     {
     case AbstractZDensityProfile::InfiniteWell:
       sprintf(buffer,"Infinite Well Potential");
+      break;
+    case AbstractZDensityProfile::FangHoward:
+      sprintf(buffer,"Fang Howard Potential");
+      break;
+    case AbstractZDensityProfile::TabulatedProfile:
+      sprintf(buffer,"tabulated file: %s",type);
       break;
     default:
       sprintf(buffer,"Unknown");

@@ -28,53 +28,67 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTZDENSITYPROFILE_H
-#define ABSTRACTZDENSITYPROFILE_H
+#ifndef FANGHOWARDDENSITYPROFILE_H
+#define FANGHOWARDDENSITYPROFILE_H
 
 
 #include "config.h"
 
+#include "AbstractZDensityProfile.h"
 
-
-class AbstractZDensityProfile {
+class FangHowardDensityProfile : public AbstractZDensityProfile
+{
  private:
-  
+
+  // width of the well
+  double Width;
+
+  // the norm of the (square) wavefunction
+  double SqNorm;
+
+  // exponential index
+  double ExpIndex;
+
+  // offset or shift of the potential (activated by flag)
+  double Shift;
+
+  // flag indicating whether to flip around the shape of the potential
+  bool Flip;
 
  public:
-  
-  enum ZDensityProfileTypes
-    {
-      TabulatedProfile = 0x00000,
-      InfiniteWell = 0x00001,
-      FangHoward = 0x00002,
-    };
+
+  // the standard constructor -> well width 1 magnetic length width
+  FangHowardDensityProfile();
+
+  // constructor
+  // width = width of the well
+  // shift = flag indicating whether to shift the potential such that it's centre of mass is at zero
+  // flip = flip direction of z-axis
+  FangHowardDensityProfile(double width, bool shift=false, bool flip=false);
   
   // virtual destructor
-  virtual ~AbstractZDensityProfile();
+  virtual ~FangHowardDensityProfile();
 
   // get minimum and maximum value of density profile where the probability density is larger than precision
   // min = minimum value of z offset
   // max = maximum value of z offset
   // precision = requested precision
-  virtual void GetSupport(double &min, double &max, double precision=1e-10) = 0;
+  virtual void GetSupport(double &min, double &max, double precision=1e-10);
 
   // evaluate the density for a given offset
   // z = offset of distribution
-  virtual double GetValue(double z) = 0;
+  virtual double GetValue(double z);
 
   // get type of the density profile
-  virtual int GetType() = 0;
-
-  // a static class function to return an actual DensityProfile object of some type
-  static AbstractZDensityProfile* CreateZDensityProfile (char *type, double width);
-
-  // a static class function to return the name of a type of DensityProfile
-  // type = a string carrying either the number of the density profile, or a filename (if tabulated)
-  static char *DensityProfileName(char *type);
-  
-
+  virtual int GetType();
 
 };
+
+// get type of the density profile
+inline int FangHowardDensityProfile::GetType()
+{
+  return AbstractZDensityProfile::InfiniteWell;
+}
 
 
 #endif
