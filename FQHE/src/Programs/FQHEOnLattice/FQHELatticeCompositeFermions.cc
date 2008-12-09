@@ -74,7 +74,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
-  (*MiscGroup) += new SingleStringOption  ('a', "analytic", "also generate the analytic wavefunctions",NULL);
+  (*MiscGroup) += new BooleanOption  ('d', "omit-diag", "omit diagonalizing in momentum basis");
+  (*MiscGroup) += new BooleanOption  ('a', "analytic", "also generate the analytic wavefunctions");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -86,6 +87,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int CFFlux = Manager.GetInteger("flux-per-CF");
   bool HardCore = Manager.GetBoolean("hard-core");
+  bool NoMomentumDiagonalize = Manager.GetBoolean("no-k-diag");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   char* OutputName;
@@ -127,7 +129,8 @@ int main(int argc, char** argv)
   RealDiagonalMatrix CFEigenVals(CFHamiltonian->GetHilbertSpaceDimension());
   HCF.Diagonalize(CFEigenVals, CFEigenVecs, /* error */ 1e-10 , /* maxIter */ 250);
   ParticleOnLatticeTranslationOperator *CFTranslationOperator= new ParticleOnLatticeTranslationOperator(CFSpace);
-  DiagonalizeMomentaInSubspace(CFEigenVals, CFEigenVecs,  CFTranslationOperator, NbrFluxQuanta-AttachedFlux, 0, NbrBosons);
+  if (!NoMomentumDiagonalize)
+    DiagonalizeMomentaInSubspace(CFEigenVals, CFEigenVecs,  CFTranslationOperator, NbrFluxQuanta-AttachedFlux, 0, NbrBosons);
   delete CFTranslationOperator;
 
   for (int i=0; i<NbrBosons; ++i)
@@ -159,7 +162,8 @@ int main(int argc, char** argv)
   RealDiagonalMatrix JastrowEigenVals(JastrowHamiltonian->GetHilbertSpaceDimension());
   HJastrow.Diagonalize(JastrowEigenVals, JastrowEigenVecs, /* error */ 1e-10 , /* maxIter */ 250);
   ParticleOnLatticeTranslationOperator *JastrowTranslationOperator= new ParticleOnLatticeTranslationOperator(JastrowSpace);
-  DiagonalizeMomentaInSubspace(JastrowEigenVals, JastrowEigenVecs,  JastrowTranslationOperator, AttachedFlux, 0, NbrBosons);
+  if (!NoMomentumDiagonalize)
+    DiagonalizeMomentaInSubspace(JastrowEigenVals, JastrowEigenVecs,  JastrowTranslationOperator, AttachedFlux, 0, NbrBosons);
   delete JastrowTranslationOperator;
 
   for (int i=0; i<NbrBosons; ++i)
