@@ -72,6 +72,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice ", 6);
   (*SystemGroup) += new SingleIntegerOption  ('f', "flux-per-CF", "number of flux attached to each boson (allowed values: +/-1)", 1);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
+
+  (*SystemGroup) += new SingleStringOption('\n',"CF","externally supply single particle states for CF basis (base)",NULL);
+  (*SystemGroup) += new SingleStringOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL);
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*MiscGroup) += new BooleanOption  ('d', "omit-diag", "omit diagonalizing in momentum basis");
@@ -133,6 +136,16 @@ int main(int argc, char** argv)
     DiagonalizeMomentaInSubspace(CFEigenVals, CFEigenVecs,  CFTranslationOperator, NbrFluxQuanta-AttachedFlux, 0, NbrBosons);
   delete CFTranslationOperator;
 
+  if (Manager.GetString("CF")!=NULL)
+    {
+      char *InputBase=Manager.GetString("CF");
+      for (int i=0; i<NbrBosons; ++i)
+	{
+	  sprintf(TmpC,"%s.%d.vec",InputBase,i);
+	  CFEigenVecs[i].ReadVector(TmpC);
+	}
+    }
+
   for (int i=0; i<NbrBosons; ++i)
     cout << "E_CF["<<i<<"]="<<CFEigenVals[i]<<" norm of EVec: "<<CFEigenVecs[i].Norm()<<endl;
   cout << "E_other["<<NbrBosons<<"]="<<CFEigenVals[NbrBosons]<<endl;
@@ -170,6 +183,16 @@ int main(int argc, char** argv)
     cout << "E_Jastrow["<<i<<"]="<<JastrowEigenVals[i]<<" norm of EVec: "<<JastrowEigenVecs[i].Norm()<<endl;
   cout << "E_other["<<NbrBosons<<"]="<<JastrowEigenVals[NbrBosons]<<endl;
 
+  if (Manager.GetString("J")!=NULL)
+    {
+      char *InputBase=Manager.GetString("J");
+      for (int i=0; i<NbrBosons; ++i)
+	{
+	  sprintf(TmpC,"%s.%d.vec",InputBase,i);
+	  JastrowEigenVecs[i].ReadVector(TmpC);
+	}
+    }
+  
   for (int i=0; i<NbrBosons; ++i)
     {
       sprintf(TmpC,"%s.Jastrow.%d.vec",OutputName,i);
