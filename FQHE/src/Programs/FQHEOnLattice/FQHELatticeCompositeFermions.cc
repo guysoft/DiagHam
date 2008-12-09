@@ -87,7 +87,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int CFFlux = Manager.GetInteger("flux-per-CF");
   bool HardCore = Manager.GetBoolean("hard-core");
-  bool NoMomentumDiagonalize = Manager.GetBoolean("no-k-diag");
+  bool NoMomentumDiagonalize = Manager.GetBoolean("omit-diag");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
   char* OutputName;
