@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
+  (*MiscGroup) += new SingleStringOption  ('a', "analytic", "also generate the analytic wavefunctions",NULL);
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -322,56 +323,58 @@ int main(int argc, char** argv)
 
   
   // writing Laughlin state in Landau gauge along x-direction
-  AnalyticJastrowX /= AnalyticJastrowX.Norm();
-  sprintf(TmpC,"%s.AJX.vec",OutputName);
-  AnalyticJastrowX.WriteVector(TmpC);
+  if (Manager.GetBoolean("analytic"))
+    {
+      AnalyticJastrowX /= AnalyticJastrowX.Norm();
+      sprintf(TmpC,"%s.AJX.vec",OutputName);
+      AnalyticJastrowX.WriteVector(TmpC);
 
-  AnalyticRelativeX /= AnalyticRelativeX.Norm();
-  sprintf(TmpC,"%s.ACFX.vec",OutputName);
-  AnalyticRelativeX.WriteVector(TmpC);
+      AnalyticRelativeX /= AnalyticRelativeX.Norm();
+      sprintf(TmpC,"%s.ACFX.vec",OutputName);
+      AnalyticRelativeX.WriteVector(TmpC);
 
-  AnalyticCM1X /= AnalyticCM1X.Norm();
-  sprintf(TmpC,"%s.CM1X.vec",OutputName);
-  AnalyticCM1X.WriteVector(TmpC);
+      AnalyticCM1X /= AnalyticCM1X.Norm();
+      sprintf(TmpC,"%s.CM1X.vec",OutputName);
+      AnalyticCM1X.WriteVector(TmpC);
 
-  AnalyticCM2X /= AnalyticCM2X.Norm();
-  sprintf(TmpC,"%s.CM2X.vec",OutputName);
-  AnalyticCM2X.WriteVector(TmpC);
+      AnalyticCM2X /= AnalyticCM2X.Norm();
+      sprintf(TmpC,"%s.CM2X.vec",OutputName);
+      AnalyticCM2X.WriteVector(TmpC);
 
-  Analytic1X /= Analytic1X.Norm();
-  sprintf(TmpC,"%s.A1X.vec",OutputName);
-  Analytic1X.WriteVector(TmpC);
+      Analytic1X /= Analytic1X.Norm();
+      sprintf(TmpC,"%s.A1X.vec",OutputName);
+      Analytic1X.WriteVector(TmpC);
 
-  Analytic2X /= Analytic2X.Norm();
-  sprintf(TmpC,"%s.A2X.vec",OutputName);
-  Analytic2X.WriteVector(TmpC);
+      Analytic2X /= Analytic2X.Norm();
+      sprintf(TmpC,"%s.A2X.vec",OutputName);
+      Analytic2X.WriteVector(TmpC);
 
 
-  // writing Laughlin state in Landau gauge along y-direction
-  AnalyticJastrowY /= AnalyticJastrowY.Norm();
-  sprintf(TmpC,"%s.AJY.vec",OutputName);
-  AnalyticJastrowY.WriteVector(TmpC);
+      // writing Laughlin state in Landau gauge along y-direction
+      AnalyticJastrowY /= AnalyticJastrowY.Norm();
+      sprintf(TmpC,"%s.AJY.vec",OutputName);
+      AnalyticJastrowY.WriteVector(TmpC);
 
-  AnalyticRelativeY /= AnalyticRelativeY.Norm();
-  sprintf(TmpC,"%s.ACFY.vec",OutputName);
-  AnalyticRelativeY.WriteVector(TmpC);
+      AnalyticRelativeY /= AnalyticRelativeY.Norm();
+      sprintf(TmpC,"%s.ACFY.vec",OutputName);
+      AnalyticRelativeY.WriteVector(TmpC);
 
-  AnalyticCM1Y /= AnalyticCM1Y.Norm();
-  sprintf(TmpC,"%s.CM1Y.vec",OutputName);
-  AnalyticCM1Y.WriteVector(TmpC);
+      AnalyticCM1Y /= AnalyticCM1Y.Norm();
+      sprintf(TmpC,"%s.CM1Y.vec",OutputName);
+      AnalyticCM1Y.WriteVector(TmpC);
 
-  AnalyticCM2Y /= AnalyticCM2Y.Norm();
-  sprintf(TmpC,"%s.CM2Y.vec",OutputName);
-  AnalyticCM2Y.WriteVector(TmpC);
+      AnalyticCM2Y /= AnalyticCM2Y.Norm();
+      sprintf(TmpC,"%s.CM2Y.vec",OutputName);
+      AnalyticCM2Y.WriteVector(TmpC);
 
-  Analytic1Y /= Analytic1Y.Norm();
-  sprintf(TmpC,"%s.A1Y.vec",OutputName);
-  Analytic1Y.WriteVector(TmpC);
+      Analytic1Y /= Analytic1Y.Norm();
+      sprintf(TmpC,"%s.A1Y.vec",OutputName);
+      Analytic1Y.WriteVector(TmpC);
 
-  Analytic2Y /= Analytic2Y.Norm();
-  sprintf(TmpC,"%s.A2Y.vec",OutputName);
-  Analytic2Y.WriteVector(TmpC);
-
+      Analytic2Y /= Analytic2Y.Norm();
+      sprintf(TmpC,"%s.A2Y.vec",OutputName);
+      Analytic2Y.WriteVector(TmpC);
+    }
   
   delete [] TmpC;
   delete [] QuantumNumbers;

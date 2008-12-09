@@ -1982,8 +1982,26 @@ bool ComplexVector::ReadVector (const char* fileName)
       cout << "Cannot open the file: " << fileName << endl;
       return false;
     }
+
+  unsigned ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+  
+  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
+  File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
+
+  if (Length/sizeof(double)<(unsigned)TmpDimension)
+    {      
+      cout << "Error reading complex vector "<<fileName<<": estimated length "<<Length/(2*sizeof(double))<<" vs dimension "<<TmpDimension<<endl;
+      if ((unsigned)TmpDimension==Length/sizeof(double))
+	cout << "This could be a real vector!"<<endl;
+      exit(1);
+    }
+
   this->Resize(TmpDimension);
   for (int i = 0; i < this->Dimension; ++i)
     {

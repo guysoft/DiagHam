@@ -33,9 +33,8 @@ JacobiThetaFunction::JacobiThetaFunction(double a, double b, Complex tau)
 {
   this->ParameterA=a-floor(a);
   this->ParameterB=b-floor(b);
-  cout << "a="<<a<<"->ParameterA="<<ParameterA<<endl;
-  cout << "b="<<b<<"->ParameterB="<<ParameterB<<endl;
-
+//   cout << "a="<<a<<"->ParameterA="<<ParameterA<<endl;
+//   cout << "b="<<b<<"->ParameterB="<<ParameterB<<endl;
   int shift = (int)(b-ParameterB);
   Complex Phase = Polar(1.0,2.0*M_PI*ParameterA);
   if (shift<0)

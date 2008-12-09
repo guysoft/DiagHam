@@ -192,7 +192,7 @@ Vector* ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetEigenstates(int 
   else
     {
       this->GetGroundState();
-      ComplexVector* TmpVectors = new ComplexVector [1];
+      ComplexVector* TmpVectors = new ComplexVector[1];
       TmpVectors[0] = this->GroundState;
       return TmpVectors;
     }

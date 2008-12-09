@@ -31,6 +31,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of the vector files obtained using exact diagonalization");
   
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
+  (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
@@ -66,8 +67,10 @@ int main(int argc, char** argv)
   Complex sp=0.0;
 
   int MaxVectors=(Manager.GetBoolean("no-cross")?1:NbrVectors);
+
+  bool HaveComplex=Manager.GetBoolean("complex");
   
-  if (Manager.GetBoolean("complex"))
+  if (HaveComplex)
     {      
       ComplexVector State1, State2;
       for (int i=0; i<MaxVectors; ++i)
@@ -94,8 +97,12 @@ int main(int argc, char** argv)
 		for (int i=0; i<State1.GetVectorDimension(); ++i)
 		  sp+=Norm(State1[i]*State2[i]);
 	      else
-		for (int i=0; i<State1.GetVectorDimension(); ++i)
-		  sp+= Conj(State1[i])*State2[i];
+		if (Manager.GetBoolean("conjugate"))
+		  for (int i=0; i<State1.GetVectorDimension(); ++i)
+		    sp+= State1[i]*State2[i];
+		else
+		  for (int i=0; i<State1.GetVectorDimension(); ++i)
+		    sp+= Conj(State1[i])*State2[i];
 	      if (QuietFlag == false)
 		cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
 	      else

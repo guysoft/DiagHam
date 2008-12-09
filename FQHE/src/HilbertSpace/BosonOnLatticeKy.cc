@@ -1190,7 +1190,7 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Boson
       if (Norm(state[i])>1e-15)
 	{
 	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
-	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, state[i]/Normalization);
+	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, Conj(state[i])/Normalization);
 	}
     }
   cout << "Norm was:" << TargetVector.Norm() << endl;
@@ -1219,7 +1219,7 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
   //cout << "Decoded step 1 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", cK="<<cK<<", Subl="<<Subl<<endl;
   this->DecodeCompositeMomentum(cK, K, S);
   //cout << "Decoded step 2 QN "<<quantumNumbers[nbrOperators-1]<<" -> N="<<N<<", K="<<K<<", S="<<S<<", Subl="<<Subl<<endl;
-  double ExpFactor = 2.0*M_PI*(double)K/(double)Kmax;
+  double ExpFactor = -2.0*M_PI*(double)K/(double)Kmax;
   
   if (nbrOperators>1)
     {

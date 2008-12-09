@@ -36,6 +36,7 @@
 
 #include <math.h>
 #include <fstream>
+#include <iostream>
 
 #ifdef __MPI__
 #include <mpi.h>
@@ -2826,8 +2827,26 @@ bool RealVector::ReadVector (const char* fileName)
       cout << "Cannot open the file: " << fileName << endl;
       return false;
     }
+  
+  unsigned ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+
+  unsigned Length = MaxPos-ZeroPos-sizeof(int);  
+  File.seekg (0, ios::beg);
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
+
+  if (Length/sizeof(double)>(unsigned)TmpDimension)
+    {      
+      cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+      if ((unsigned)TmpDimension*2==Length/sizeof(double))
+	cout << "This could be a complex vector!"<<endl;
+      exit(1);
+    }
+   
   this->Resize(TmpDimension);
   for (int i = 0; i < this->Dimension; ++i)
     ReadLittleEndian(File, this->Components[i]);
