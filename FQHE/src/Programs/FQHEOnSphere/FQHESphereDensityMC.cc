@@ -100,6 +100,7 @@ int main(int argc, char** argv)
   (*MonteCarloGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of Monte Carlo iterations", 10000);
   (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "jump", "length of the jump used for the metropolis algorithm", 0.3);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "nbr-warmup", "number of Monte Carlo iterations that have to be done before evaluating the energy (i.e. warm up sequence)", 10000);
+  (*MonteCarloGroup) += new SingleDoubleOption  ('\n', "jump", "length of the jump used for the metropolis algorithm", 0.3);
   (*MonteCarloGroup) += new BooleanOption  ('r', "resume", "resume from a previous run");
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "display-step", "number of iteration between two consecutive result displays", 1000);
   (*MonteCarloGroup) += new SingleIntegerOption  ('\n', "record-step", "number of iteration between two consecutive result recording of energy value (0 if no on-disk recording is needed)", 0);
@@ -157,6 +158,12 @@ int main(int argc, char** argv)
       RecordFile.close();
     }
   int RecordStep = Manager.GetInteger("record-step");
+
+  double GridScale =  M_PI;
+  double InvGridStep = ((double) NbrOrbitals) / GridScale;
+  double GridStep = 1.0 / InvGridStep;
+  double GridShift = -0.5 * GridScale;
+
 
 
 //   int LzMax = 2 * NbrParticles - 2;
@@ -241,6 +248,10 @@ int main(int argc, char** argv)
 	  FunctionBasisDecompositionError[k] = 0.0;
 	}
       double* SinTable = new double [NbrParticles];
+      double* FunctionBasisDecompositionGrid = new double [NbrOrbitals];
+      for (int k = 0; k < NbrOrbitals; ++k)
+	FunctionBasisDecompositionGrid[k] = 0.0;
+      int* GridLocations = new int [NbrParticles];
 
       double TotalProbability = 0.0;
       double TotalProbabilityError = 0.0;
@@ -313,6 +324,8 @@ int main(int argc, char** argv)
 	    Tmp1 +=  SqrNorm(FunctionBasisEvaluation[j][k]);
 	  TmpFunctionBasisDecomposition[k] = Tmp1;
 	}
+      for (int i = 0; i < NbrParticles; ++i)
+	GridLocations[i] = (int) (TmpPositions[i << 1] * InvGridStep);
 
       cout << "starting MC sequence" << endl;
       Acceptance = 0;
@@ -341,6 +354,7 @@ int main(int argc, char** argv)
 		    Tmp1 +=  SqrNorm(FunctionBasisEvaluation[j][k]);
 		  TmpFunctionBasisDecomposition[k] = Tmp1;
 		}
+//	      GridLocations[NextCoordinate] = (int) (TmpPositions[NextCoordinate << 1] * InvGridStep);
 	    }
 	  else
 	    {
@@ -364,6 +378,8 @@ int main(int argc, char** argv)
 		FunctionBasisDecompositionError[k] += 0.25 * ((TmpFunctionBasisDecomposition[k] + TmpFunctionBasisDecomposition[NbrOrbitals - 1 - k])
 							      * (TmpFunctionBasisDecomposition[k] + TmpFunctionBasisDecomposition[NbrOrbitals - 1 - k]));
 	      }
+// 	  for (int j = 0; j < NbrParticles; ++j)
+// 	    FunctionBasisDecompositionGrid[GridLocations[j]] += 1.0 / SinTable[j];
 	  TotalProbability++;	  
 	  TotalProbabilityError++;
 
@@ -407,6 +423,8 @@ int main(int argc, char** argv)
 	  FunctionBasisDecomposition[k] *= TotalProbability;
 	  FunctionBasisDecompositionError[k] *= FunctionBasisDecomposition[k];
 	}
+      for (int k = 0; k < NbrOrbitals; ++k)
+	FunctionBasisDecompositionGrid[k] *= TotalProbability;
 
       ofstream DensityRecordFile;
       DensityRecordFile.precision(14);
@@ -423,6 +441,7 @@ int main(int argc, char** argv)
 	{
 	  DensityRecordFile << "# " << k << " " << FunctionBasisDecomposition[k] << " " <<  FunctionBasisDecompositionError [k] << endl;
 	  cout << k << " " << FunctionBasisDecomposition[k] << " " <<  FunctionBasisDecompositionError [k] << endl;
+//	  cout << k << " " << FunctionBasisDecompositionGrid[k] << endl;
 	}
       DensityRecordFile << "#" << endl << "# density wave function " << endl << "# theta density" << endl;
       for (int i = 0; i <= NbrSteps; ++i)
@@ -440,6 +459,13 @@ int main(int argc, char** argv)
 	  DensityRecordFile << Theta << " " << Tmp << endl;
 	  Theta += ThetaStep;
 	}
+//       for (int i = 0; i < NbrOrbitals; ++i)
+// 	{
+// 	  Sum += sin(Theta) *  FunctionBasisDecompositionGrid[i];
+// 	  DensityRecordFile << Theta << " " <<  FunctionBasisDecompositionGrid[i] << endl;
+// 	  Theta += GridStep;
+// 	}
+//       Sum *= 2.0 * M_PI;
       DensityRecordFile.close();
       cout << "Sum = " << (Sum * ThetaStep * 2.0 * M_PI) << endl;
     }
@@ -465,6 +491,12 @@ int main(int argc, char** argv)
        FlipLzMinusLz(UV);
        cout << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
        FlipLzMinusLz(UV);
+       for (int i = 1; i < NbrParticles; ++i)
+	 {
+	   UV[(i << 1)] = UV[0];
+	   UV[(i << 1) + 1] = UV[1];
+	   cout << (i  + 1) << " body cancellation : " << SymmetrizedFunction->CalculateFromSpinorVariables(UV) << endl;
+	 }
      }
   return 0;
 }
