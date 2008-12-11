@@ -48,6 +48,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereUnnormalizedBasis.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"
@@ -131,6 +132,8 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager)
 	if (this->BosonFlag == false)
 	  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
 	(*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+	if (this->BosonFlag == false)
+	  (*SystemGroup) += new BooleanOption  ('\n', "unnormalize-basis", "do not normalized Fock states"); 
 	if (this->FermionFlag == true)
 	  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);	
 	(*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the haldane or symmetrized bases)",0);
@@ -228,8 +231,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
       int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
       bool HaldaneBasisFlag = ((BooleanOption*) (*(this->Options))["haldane"])->GetBoolean();
       bool SymmetrizedBasis = ((BooleanOption*) (*(this->Options))["symmetrized-basis"])->GetBoolean();
+      bool UnnormalizedBasis = ((BooleanOption*) (*(this->Options))["unnormalized-basis"])->GetBoolean();
       unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) (*(this->Options))["fast-search"])->GetInteger()) << 20;
       ParticleOnSphere* Space = 0;
+      if (UnnormalizedBasis == true)
+	{
+	  Space = new  FermionOnSphereUnnormalizedBasis(NbrParticles, totalLz, LzMax, MemorySpace);
+	  return Space;
+	}
       if (HaldaneBasisFlag == false)
 	{
 #ifdef __64_BITS__
