@@ -47,6 +47,7 @@ class AbstractZDensityProfile {
       TabulatedProfile = 0x00000,
       InfiniteWell = 0x00001,
       FangHoward = 0x00002,
+      InfiniteWellExc = 0x00003,
     };
   
   // virtual destructor

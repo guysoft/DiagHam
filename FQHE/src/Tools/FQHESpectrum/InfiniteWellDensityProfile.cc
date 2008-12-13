@@ -3,22 +3,25 @@
 #include <cmath>
 
 using std::sqrt;
-using std::cos;
+using std::sin;
 
 // the standard constructor -> well with 1 magnetic length width
 InfiniteWellDensityProfile::InfiniteWellDensityProfile()
 {
   this->Width=1.0;
   this->SqNorm=2.0;
+  this->Band=1;
 }
 
 // constructor
 // width = width of the well
+// band = band index (allows for excited states to be obtained)
 // 
-InfiniteWellDensityProfile::InfiniteWellDensityProfile(double width)
+InfiniteWellDensityProfile::InfiniteWellDensityProfile(double width, int band)
 {
   this->Width=width;
   this->SqNorm=2.0/width;
+  this->Band=band+1;
 }
   
 // virtual destructor
@@ -40,6 +43,7 @@ void InfiniteWellDensityProfile::GetSupport(double &min, double &max, double pre
 // z = offset of distribution
 double InfiniteWellDensityProfile::GetValue(double z)
 {
-  double cz=cos(M_PI*z/this->Width);
+  z+=Width/2.0;
+  double cz=sin(Band*M_PI*z/this->Width);
   return this->SqNorm*cz*cz;
 }

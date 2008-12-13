@@ -72,8 +72,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice ", 6);
   (*SystemGroup) += new SingleIntegerOption  ('f', "flux-per-CF", "number of flux attached to each boson (allowed values: +/-1)", 1);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
-
+  
   (*SystemGroup) += new SingleStringOption('\n',"CF","externally supply single particle states for CF basis (base)",NULL);
+  (*SystemGroup) += new SingleStringOption('\n',"all-CF","externally supply single particle states (list of full file-names)",NULL);
   (*SystemGroup) += new SingleStringOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL);
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -144,6 +145,20 @@ int main(int argc, char** argv)
 	  sprintf(TmpC,"%s.%d.vec",InputBase,i);
 	  CFEigenVecs[i].ReadVector(TmpC);
 	}
+      cout << "Read CF basis from vectors "<<InputBase<<".?.vec"<<endl;
+    }
+  else
+    if (Manager.GetString("all-CF")!=NULL)
+    {
+      int NbrF;
+      char **InputFiles=Manager.GetStrings("all-CF", NbrF);
+      if (NbrF!=NbrBosons)
+	{
+	  cout << "Wrong number of states for CF basis!"<<endl;
+	  exit(1);
+	}
+      for (int i=0; i<NbrBosons; ++i)
+	CFEigenVecs[i].ReadVector(InputFiles[i]);
     }
 
   for (int i=0; i<NbrBosons; ++i)

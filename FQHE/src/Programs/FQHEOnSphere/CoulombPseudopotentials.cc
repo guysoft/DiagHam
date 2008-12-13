@@ -41,9 +41,11 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new  SingleDoubleOption ('d', "layer-separation", "assume finite layer separation",0.0);
 
-  (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness (overrides add-XX)",0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness",0.0);
+  
+  (*SystemGroup) += new  SingleStringOption ('\n', "profile-type", "type of density-profile (1=infiniteWell, 2=Fang-Howard, 3=infiniteWellExc)","1");
 
-  (*SystemGroup) += new  SingleStringOption ('\n', "profile-type", "type of density-profile (1=infiniteWell, 2=Fang-Howard)","1");
+  (*SystemGroup) += new  SingleStringOption ('\n', "other-profile", "type of density-profile for second layer (1=infiniteWell, 2=Fang-Howard, 3=infiniteWellExc)",NULL);
 
   (*SystemGroup) += new  SingleIntegerOption ('\n', "profile-points", "number of points where profile is evaluated", 200);
 
@@ -142,16 +144,19 @@ int main(int argc, char** argv)
   if (Manager.GetDouble("layer-thickness")>0.0)
     {      
       AbstractZDensityProfile *Profile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("profile-type"),Manager.GetDouble("layer-thickness"));
+      AbstractZDensityProfile *OtherProfile=NULL;
+      if (Manager.GetString("other-profile")!=NULL)
+	OtherProfile = AbstractZDensityProfile::CreateZDensityProfile(Manager.GetString("other-profile"),Manager.GetDouble("layer-thickness"));
       if (Manager.GetBoolean("no-interpolation"))
 	Pseudopotentials = EvaluateFiniteWidthPseudoPotentialsNoInterpolation(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							    Manager.GetDouble("layer-separation"), NULL );
+							    Manager.GetDouble("layer-separation"), OtherProfile);
       else
 	Pseudopotentials = EvaluateFiniteWidthPseudoPotentials(NbrFlux, LandauLevel, Profile,
 							    /*, points=200 */ Manager.GetInteger("profile-points"),
 							    /*, multiplier=5.0 */ Manager.GetDouble("profile-multiplier"),
-							    Manager.GetDouble("layer-separation"), NULL );
+							    Manager.GetDouble("layer-separation"), OtherProfile);
     }
   else
     {

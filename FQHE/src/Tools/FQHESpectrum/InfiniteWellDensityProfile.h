@@ -46,6 +46,9 @@ class InfiniteWellDensityProfile : public AbstractZDensityProfile
   // the norm of the (square) wavefunction
   double SqNorm;
 
+  // the band index (starting to number at zero)
+  int Band;
+
  public:
 
   // the standard constructor -> well with 1 magnetic length width
@@ -53,8 +56,9 @@ class InfiniteWellDensityProfile : public AbstractZDensityProfile
 
   // constructor
   // width = width of the well
+  // band = band index (allows for excited states to be obtained)
   // 
-  InfiniteWellDensityProfile(double width);
+  InfiniteWellDensityProfile(double width, int band = 0);
   
   // virtual destructor
   virtual ~InfiniteWellDensityProfile();
@@ -68,6 +72,8 @@ class InfiniteWellDensityProfile : public AbstractZDensityProfile
   // evaluate the density for a given offset
   // z = offset of distribution
   virtual double GetValue(double z);
+
+  
 
   // get type of the density profile
   virtual int GetType();

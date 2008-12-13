@@ -289,8 +289,8 @@ unsigned long BosonOnLattice::Ad (unsigned long state, int q, double& coefficien
   if (q>this->TemporaryStateHighestBit)
     {
       for (int i = this->TemporaryStateHighestBit + 1; i < q; ++i)
-	this->TemporaryState[i] = 0ul;
-      this->TemporaryState[q] = 1ul;
+	this->TemporaryState[i] = 0x0ul;
+      this->TemporaryState[q] = 0x1ul;
       this->TemporaryStateHighestBit = q;
       coefficient = 1.0;
     }

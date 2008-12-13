@@ -30,6 +30,9 @@ AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (char *t
     case AbstractZDensityProfile::TabulatedProfile:
       return (AbstractZDensityProfile*) new TabulatedDensityProfile(type, width);
       break;
+    case AbstractZDensityProfile::InfiniteWellExc:
+      return new InfiniteWellDensityProfile(width,1);
+      break;
     default:
       cout << "This type of Density Profile is not defined, yet"<<endl;
       return 0;
@@ -53,6 +56,9 @@ char *AbstractZDensityProfile::DensityProfileName(char *type)
       break;
     case AbstractZDensityProfile::TabulatedProfile:
       sprintf(buffer,"tabulated file: %s",type);
+      break;
+    case AbstractZDensityProfile::InfiniteWellExc:
+      sprintf(buffer,"Infinite Well Potential, 1st excited state");
       break;
     default:
       sprintf(buffer,"Unknown");

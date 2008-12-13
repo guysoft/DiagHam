@@ -1190,7 +1190,7 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Boson
       if (Norm(state[i])>1e-15)
 	{
 	  this->ListQuantumNumbers(i,QuantumNumbers,Normalization);
-	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0l, Conj(state[i])/Normalization);
+	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0ul, Conj(state[i])/Normalization);
 	}
     }
   cout << "Norm was:" << TargetVector.Norm() << endl;
@@ -1229,7 +1229,7 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
 	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;	  
 	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
 	  //cout << "Recursing with state: "<<ResultingState<<endl;
-	  if (ResultingState!=0x0l)
+	  if (ResultingState!=0x0ul)
 	    this->ExpandBasisState(nbrOperators-1, quantumNumbers, ResultingState, prefactor*AdFactor*NewFactor*Polar(1.0,ExpFactor*r));
 	}
     }
@@ -1241,7 +1241,7 @@ void BosonOnLatticeKy::ExpandBasisState (int nbrOperators, int *quantumNumbers, 
 	  //cout << "r="<<r<<": TargetQ="<<TargetQ<< " (x="<<N<<" y="<<TranslationCell*r+S<<"), applying onto state " << state << endl;
 	  ResultingState = this->FullSpace->Ad(state,TargetQ, AdFactor);
 	  //cout << "Finishing with state: "<<ResultingState<<endl;
-	  if (ResultingState!=0x0l)
+	  if (ResultingState!=0x0ul)
 	    {	      
 	      if ((Index=FullSpace->CarefulFindStateIndex(ResultingState,-1))<FullSpace->GetHilbertSpaceDimension())
 		{

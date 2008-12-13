@@ -36,7 +36,7 @@
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
-#include "Matrix/ComplexMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
@@ -206,7 +206,8 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 {
   if (this->GroundStateFlag == false)
     {
-      ComplexMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
+      // changed from ComplexMatrix
+      RealMatrix TmpEigenvector (this->TridiagonalizedMatrix.GetNbrRow(), this->TridiagonalizedMatrix.GetNbrRow(), true);
       for (int i = 0; i < this->TridiagonalizedMatrix.GetNbrRow(); ++i)
 	TmpEigenvector(i, i) = 1.0;
       

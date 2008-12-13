@@ -89,6 +89,9 @@ class FermionOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // Lz maximum value associated to temporary state used when applying ProdA operator
   int ProdALzMax;
 
+  // temporary storage during state generation
+  int **MaxTotalLz;
+
 
  public:
 
@@ -376,9 +379,7 @@ class FermionOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension      
-  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int level=0);
-
-  virtual long ShiftedEvaluateHilbertSpaceDimension2(int nbrFermions, int posMax, int totalLz, int level=0);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
