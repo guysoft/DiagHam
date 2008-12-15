@@ -194,8 +194,10 @@ int main(int argc, char** argv)
 		}
 	    }
 	  RealVector OutputState;
-	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);	  
+	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
+	  cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
 	  FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	  cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
 	  if (SymmetrizeFlag)
 	    {
 	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
