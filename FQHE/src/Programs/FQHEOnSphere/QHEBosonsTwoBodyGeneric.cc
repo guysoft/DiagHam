@@ -1,3 +1,4 @@
+#include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
@@ -8,6 +9,8 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
@@ -39,53 +42,29 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEBosonsTwoBodyGeneric" , "0.01");
-  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
+  OptionManager Manager ("FQHESphereBosonsTwoBodyGeneric" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("Tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);
+  ParticleOnSphereManager ParticleManager(false, true, 1);
+  ParticleManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
 
-  Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += LanczosGroup;
+  Lanczos.AddOptionGroup(&Manager);
   Manager += ToolsGroup;
-  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle", 8);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
-  (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
-  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
-						"maximum Hilbert space dimension for which full diagonalization is applied", 
-						500, true, 100);
-
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  (*LanczosGroup)  += new BooleanOption  ('\n', "block-lanczos", "use block Lanczos algorithm", false);
-  (*LanczosGroup)  += new SingleIntegerOption  ('\n', "block-size", "size of the block used in the block Lanczos algorithm", 2);  
-  (*LanczosGroup)  += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
-  (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
-  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Lanczos iteration", false); 
-  (*LanczosGroup) += new SingleStringOption  ('\n', "initial-vector", "use file as the initial vector for the Lanczos algorithm" , 0);
-  (*LanczosGroup) += new  BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
-  (*LanczosGroup) += new  BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -167,25 +146,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      ParticleOnSphere* Space = 0;
-#ifdef  __64_BITS__
-      if ((LzMax + NbrBosons - 1) < 63)
-#else
-      if ((LzMax + NbrBosons - 1) < 31)	
-#endif
-	{
-	  if ((SymmetrizedBasis == false) || (L != 0))
-	    Space = new BosonOnSphereShort(NbrBosons, L, LzMax);
-	  else
-	    Space = new BosonOnSphereSymmetricBasisShort(NbrBosons, LzMax);
-	}
-      else
-	{
-	  if ((SymmetrizedBasis == false) || (L != 0))
-	    Space = new BosonOnSphere (NbrBosons, L, LzMax);
-	  else
-	    Space = new BosonOnSphereSymmetricBasis(NbrBosons, LzMax);
-	}
+      ParticleOnSphere* Space = ParticleManager.GetHilbertSpace(L);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
