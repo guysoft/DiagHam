@@ -192,7 +192,7 @@ int main(int argc, char** argv)
 	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
 	      return -1;           
 	    }
-	  ComplexVector State;
+	  RealVector State;
 	  if (State.ReadVector(StateFileName) == false)
 	    {
 	      cout << "error while reading " << StateFileName << endl;
@@ -203,10 +203,10 @@ int main(int argc, char** argv)
 	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
 	      return -1;
 	    }
-	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
 	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  Complex EnergyValue = State*TmpState;
+	  double EnergyValue = State*TmpState;
 	  cout << "< Energy > = "<<EnergyValue<<endl;
 	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
 	  return 0;

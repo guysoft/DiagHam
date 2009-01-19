@@ -96,7 +96,6 @@ int main(int argc, char** argv)
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool FirstRun = true;
   double* PseudoPotentials = 0;
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)
