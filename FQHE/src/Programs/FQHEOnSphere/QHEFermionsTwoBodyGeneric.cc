@@ -77,6 +77,8 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -95,6 +97,7 @@ int main(int argc, char** argv)
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   unsigned long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
@@ -180,6 +183,35 @@ int main(int argc, char** argv)
 							     LoadPrecalculationFileName);
 
       double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) LzMax));
+      
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  ComplexVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  Complex EnergyValue = State*TmpState;
+	  cout << "< Energy > = "<<EnergyValue<<endl;
+	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
+	  return 0;
+	}
+      
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	

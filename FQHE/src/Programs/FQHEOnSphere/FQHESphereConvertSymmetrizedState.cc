@@ -106,7 +106,9 @@ int main(int argc, char** argv)
 	{
 	  RealVector OutputState;
 	  FermionOnSphereSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta);
+	  cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
 	  FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+	  cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
 	  if (SymmetrizeFlag)
 	    {
 	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
