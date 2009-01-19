@@ -77,15 +77,24 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["ground-file"])->GetString() == 0)
+  if ((((SingleStringOption*) Manager["ground-file"])->GetString() == 0) && (((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() == 0))
     {
       cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
       return -1;
     }
-  if (IsFile(((SingleStringOption*) Manager["ground-file"])->GetString()) == false)
+  if ((((SingleStringOption*) Manager["ground-file"])->GetString() != 0) && 
+      (IsFile(((SingleStringOption*) Manager["ground-file"])->GetString()) == false))
     {
       cout << "can't open file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
+      return -1;
     }
+  if ((((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() != 0) && 
+      (IsFile(((SingleStringOption*) Manager["degenerated-groundstate"])->GetString()) == false))
+    {
+      cout << "can't open file " << ((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() << endl;
+      return -1;
+    }
+
 
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
@@ -138,7 +147,7 @@ int main(int argc, char** argv)
 	}
       if (Statistics == true)
 	{
-	  cout << GroundStateFiles[0] << " is not a bosonic state" << endl;
+	  cout << GroundStateFiles[i] << " is not a bosonic state" << endl;
 	  return -1;
 	}
       if (((NbrParticles * LzMax) & 1) != (TotalLz[i] & 1))
@@ -151,9 +160,9 @@ int main(int argc, char** argv)
 
   GroundStates = new RealVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
-    if (GroundStates[i].ReadVector (((SingleStringOption*) Manager["ground-file"])->GetString()) == false)
+    if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
       {
-	cout << "can't open vector file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
+	cout << "can't open vector file " << GroundStateFiles[i] << endl;
 	return -1;      
       }
 
