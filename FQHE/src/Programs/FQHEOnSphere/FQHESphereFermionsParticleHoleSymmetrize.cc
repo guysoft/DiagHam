@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new BooleanOption  ('\n', "v2", "use a different scheme to compute particle/hole conjugason");
+//  (*SystemGroup) += new BooleanOption  ('\n', "v2", "use a different scheme to compute particle/hole conjugason");
 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (changing N and 2S)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool Statistics = true;
   int TotalLz = 0;
-  bool BergholtzFlag = Manager.GetBoolean("v2");
+  bool BergholtzFlag = false;//Manager.GetBoolean("v2");
 
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 	      {
 		FermionOnSphere InputSpace (NbrParticles, TotalLz, LzMax, MemorySpace);
 		FermionOnSphere OutputSpace (NbrHoles, TotalLz, LzMax, MemorySpace);
-		HoleState = InputSpace.ParticleHoleSymmetrize2(State, OutputSpace);
+		HoleState = InputSpace.ParticleHoleSymmetrize(State, OutputSpace);
 	      }	      
 	  }
 	else

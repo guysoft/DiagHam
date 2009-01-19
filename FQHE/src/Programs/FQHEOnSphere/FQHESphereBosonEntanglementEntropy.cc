@@ -17,6 +17,7 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "MathTools/BinomialCoefficients.h"
 
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
@@ -93,72 +95,107 @@ int main(int argc, char** argv)
   bool LapackFlag = ((BooleanOption*) Manager["use-lapack"])->GetBoolean();
 #endif
   char* DensityMatrixFileName = ((SingleStringOption*) Manager["density-matrix"])->GetString();
-  int TotalLz = 0;
+  int* TotalLz = 0;
   bool Statistics = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["ground-file"])->GetString(),
-						   NbrParticles, LzMax, TotalLz, Statistics) == false)
-    {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
-      return -1;
-    }
-  if (Statistics == true)
-    {
-      cout << ((SingleStringOption*) Manager["ground-file"])->GetString() << " is not a bosonic state" << endl;
-      return -1;
-    }
-  if (((SingleIntegerOption*) Manager["total-lz"])->GetInteger() >= 0)
-    TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger(); 
+  int NbrSpaces = 1;
+  ParticleOnSphere** Spaces = 0;
+  RealVector* GroundStates = 0;
+  char** GroundStateFiles = 0;
 
-  if (((NbrParticles * LzMax) & 1) != (TotalLz & 1))
+  if (((SingleStringOption*) Manager["degenerated-groundstate"])->GetString() == 0)
     {
-      cout << "incompatible values for nbr-particles, nbr-flux and total-lz" << endl;
-      return -1;
+      GroundStateFiles = new char* [1];
+      TotalLz = new int[1];
+      GroundStateFiles[0] = new char [strlen(((SingleStringOption*) Manager["ground-file"])->GetString()) + 1];
+      strcpy (GroundStateFiles[0], ((SingleStringOption*) Manager["ground-file"])->GetString());      
     }
-
-  RealVector GroundState;
-  if (GroundState.ReadVector (((SingleStringOption*) Manager["ground-file"])->GetString()) == false)
-    {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
-      return -1;      
-    }
-
-
-  ParticleOnSphere* Space = 0;
-#ifdef  __64_BITS__
-  if ((LzMax + NbrParticles - 1) < 63)
-#else
-    if ((LzMax + NbrParticles - 1) < 31)	
-#endif
-      {
-	if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	  Space = new BosonOnSphereShort (NbrParticles, TotalLz, LzMax);
-	else
-	  {
-	    Space = new BosonOnSphereShort (NbrParticles, TotalLz, LzMax);
-	    BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
-	    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphereShort*) Space));
-	    GroundState = OutputState;
-	  }
-      }
   else
     {
-      if ((SymmetrizedBasis == false) || (TotalLz != 0))
-	Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
-      else
+      MultiColumnASCIIFile DegeneratedFile;
+      if (DegeneratedFile.Parse(((SingleStringOption*) Manager["degenerated-groundstate"])->GetString()) == false)
 	{
-	  Space = new BosonOnSphere (NbrParticles, TotalLz, LzMax);
-	  BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
-	  RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundState, *((BosonOnSphere*) Space));
-	  GroundState = OutputState;
+	  DegeneratedFile.DumpErrors(cout);
+	  return -1;
+	}
+       NbrSpaces = DegeneratedFile.GetNbrLines();
+       GroundStateFiles = new char* [NbrSpaces];
+       TotalLz = new int[NbrSpaces];
+       for (int i = 0; i < NbrSpaces; ++i)
+	 {
+	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
+	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	 }
+    }
+
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      TotalLz[i] = 0;
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+						       NbrParticles, LzMax, TotalLz[i], Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+	  return -1;
+	}
+      if (Statistics == true)
+	{
+	  cout << GroundStateFiles[0] << " is not a bosonic state" << endl;
+	  return -1;
+	}
+      if (((NbrParticles * LzMax) & 1) != (TotalLz[i] & 1))
+	{
+	  cout << "incompatible values for nbr-particles, nbr-flux and total-lz for ground state file " << GroundStateFiles[i] << endl;
+	  return -1;
 	}
     }
 
-  if (Space->GetHilbertSpaceDimension() != GroundState.GetVectorDimension())
-    {
-      cout << "dimension mismatch between Hilbert space and ground state" << endl;
-      return 0;
-    }
 
+  GroundStates = new RealVector [NbrSpaces];  
+  for (int i = 0; i < NbrSpaces; ++i)
+    if (GroundStates[i].ReadVector (((SingleStringOption*) Manager["ground-file"])->GetString()) == false)
+      {
+	cout << "can't open vector file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
+	return -1;      
+      }
+
+
+  Spaces = new ParticleOnSphere* [NbrSpaces];
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+#ifdef  __64_BITS__
+      if ((LzMax + NbrParticles - 1) < 63)
+#else
+	if ((LzMax + NbrParticles - 1) < 31)	
+#endif
+	  {
+	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	      Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+	    else
+	      {
+		Spaces[i] = new BosonOnSphereShort (NbrParticles, TotalLz[i], LzMax);
+		BosonOnSphereSymmetricBasisShort TmpSpace(NbrParticles, LzMax);
+		RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
+		GroundStates[i] = OutputState;
+	      }
+	  }
+	else
+	  {
+	    if ((SymmetrizedBasis == false) || (TotalLz != 0))
+	      Spaces[i] = new BosonOnSphere (NbrParticles, TotalLz[i], LzMax);
+	    else
+	      {
+		Spaces[i] = new BosonOnSphere (NbrParticles, TotalLz[i], LzMax);
+		BosonOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax);
+		RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphere*) Spaces[i]));
+		GroundStates[i] = OutputState;
+	      }
+	  }
+      
+      if (Spaces[i]->GetHilbertSpaceDimension() != GroundStates[i].GetVectorDimension())
+	{
+	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	  return 0;
+	}
+    }
 
   if (DensityMatrixFileName != 0)
     {
@@ -173,10 +210,10 @@ int main(int argc, char** argv)
     File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "ent");
+      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
       if (TmpFileName == 0)
 	{
-	  cout << "no vec extension was find in " << ((SingleStringOption*) Manager["ground-file"])->GetString() << " file name" << endl;
+	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
 	  return 0;
 	}
       File.open(TmpFileName, ios::binary | ios::out);
@@ -220,7 +257,14 @@ int main(int argc, char** argv)
 // 						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
 	      {
 		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
-		RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundState);
+		RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
+		for (int i = 1; i < NbrSpaces; ++i)
+		  {
+		    RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+		    PartialDensityMatrix += TmpMatrix;
+		  }
+		if (NbrSpaces > 1)
+		  PartialDensityMatrix /= ((double) NbrSpaces);
 		if (PartialDensityMatrix.GetNbrRow() > 1)
 		  {
 		    RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
