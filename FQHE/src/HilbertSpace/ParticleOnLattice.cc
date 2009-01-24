@@ -157,6 +157,26 @@ void ParticleOnLattice::ListQuantumNumbers(int index, int *quantumNumbers)
 }
 
 
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// returns: vector in many-body basis of targetSpace
+ComplexVector& ParticleOnLattice::ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis)
+{
+  return this->ConvertToNbodyBasis(state, nbodyBasis, 0, this->GetHilbertSpaceDimension());
+}
+
+// conversion to generic (full) many-body representation in real-space basis
+// state: many-body state in Ky-momentum basis
+// nbodyBasis: full Hilbert-space in real-space representation
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// returns: vector in many-body basis of targetSpace
+ComplexVector& ParticleOnLattice::ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent)
+{
+  return state;
+}
+
 
 // evaluate wave function in real space using a given basis
 //

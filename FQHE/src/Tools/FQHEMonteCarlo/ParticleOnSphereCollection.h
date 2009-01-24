@@ -104,8 +104,23 @@ class ParticleOnSphereCollection : public AbstractParticleCollection {
   // randomize particle positions
   void Randomize();
 
+  // get type of collection
+  virtual int GetCollectionType();
   
 };
+
+
+inline RealVector& ParticleOnSphereCollection::GetPositions()
+{
+  return this->ThetaPhi;
+}
+
+// get type of collection
+inline int ParticleOnSphereCollection::GetCollectionType()
+{
+  return AbstractParticleCollection::OnSphereCollection;
+}
+  
 
 
 #endif

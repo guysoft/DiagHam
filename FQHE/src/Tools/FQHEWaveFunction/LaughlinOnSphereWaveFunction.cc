@@ -42,6 +42,8 @@ LaughlinOnSphereWaveFunction::LaughlinOnSphereWaveFunction(int nbrParticles, int
 {
   this->InvFillingFactor = invFillingFactor;
   this->NbrParticles = nbrParticles;
+  this->SpinorUCoordinates = new Complex[NbrParticles];
+  this->SpinorVCoordinates = new Complex[NbrParticles];
 }
 
 // copy constructor
@@ -52,6 +54,9 @@ LaughlinOnSphereWaveFunction::LaughlinOnSphereWaveFunction(const LaughlinOnSpher
 {
   this->NbrParticles = function.NbrParticles;
   this->InvFillingFactor = function.InvFillingFactor;
+  this->SpinorUCoordinates = function.SpinorUCoordinates;
+  this->SpinorVCoordinates = function.SpinorVCoordinates;
+
 }
 
 // destructor
@@ -59,6 +64,11 @@ LaughlinOnSphereWaveFunction::LaughlinOnSphereWaveFunction(const LaughlinOnSpher
 
 LaughlinOnSphereWaveFunction::~LaughlinOnSphereWaveFunction()
 {
+  if (this->NbrParticles!=0)
+    {
+      delete [] SpinorUCoordinates;
+      delete [] SpinorVCoordinates;
+    }
 }
 
 // clone function 
@@ -73,58 +83,118 @@ Abstract1DComplexFunction* LaughlinOnSphereWaveFunction::Clone ()
 // evaluate function at a given point
 //
 // x = point where the function has to be evaluated
-// return value = function value at x  
-
+// return value = function value at x
+//
 Complex LaughlinOnSphereWaveFunction::operator ()(RealVector& x)
 {
-  Complex Tmp;
-  Complex WaveFunction(1.0);
-  double Theta;
-  double Phi;
-  double Factor = M_PI * 0.5;
+  double s,c;
+  // Convert particle positions into spinor form:
   for (int i = 0; i < this->NbrParticles; ++i)
     {
-      Theta = x[i << 1];
-      Phi = x[1 + (i << 1)];
-      for (int j = i + 1; j < this->NbrParticles; ++j)
-	{
-	  Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
-	  Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
-	  WaveFunction *= Tmp;
-	}
+      this->SpinorUCoordinates[i].Re = cos(0.5 * x[i << 1]);
+      this->SpinorUCoordinates[i].Im = this->SpinorUCoordinates[i].Re;
+      this->SpinorUCoordinates[i].Re *= (c=cos(0.5 * x[1 + (i << 1)]));
+      this->SpinorUCoordinates[i].Im *= -(s=sin(0.5 * x[1 + (i << 1)]));
+      this->SpinorVCoordinates[i].Re = sin(0.5 * x[i << 1]);
+      this->SpinorVCoordinates[i].Im = this->SpinorVCoordinates[i].Re;
+      this->SpinorVCoordinates[i].Re *= c;
+      this->SpinorVCoordinates[i].Im *= s;
     }
-  Tmp = WaveFunction;
-  for (int i = 1; i < this->InvFillingFactor; ++i)
+
+  Complex Result(1.0);
+  
+  for (int i=1;i<this->NbrParticles;i++)
+    for (int j=0;j<i;j++)
     {
-      WaveFunction *= Tmp;
+      Result *= (SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
     }
-  return WaveFunction;
+  Complex Base=Result;
+  for (int i=1; i<this->InvFillingFactor; ++i)
+    Result *= Base;
+  return Result;
 }
 
+
 // evaluate function at a given point
-//
+// 
 // uv = ensemble of spinor variables on sphere describing point
 //      where function has to be evaluated
 //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
 // return value = function value at (uv)
 Complex LaughlinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
 {
-  Complex Tmp;
-  Complex WaveFunction(1.0);
-  
-  double Factor = M_PI * 0.5;
+  // Import from spinors
   for (int i = 0; i < this->NbrParticles; ++i)
     {
-      for (int j = i + 1; j < this->NbrParticles; ++j)
-	{	  
-	  Tmp = Factor * ( uv[2*i] * uv[2*j+1] - uv[2*i+1] * uv[2*j] );
-	  WaveFunction *= Tmp;
-	}
+      this->SpinorUCoordinates[i].Re = uv.Re(2*i);
+      this->SpinorUCoordinates[i].Im = uv.Im(2*i);
+      this->SpinorVCoordinates[i].Re = uv.Re(2*i+1);
+      this->SpinorVCoordinates[i].Im = uv.Im(2*i+1);
     }
-  Tmp = WaveFunction;
-  for (int i = 1; i < this->InvFillingFactor; ++i)
+  Complex Result(1.0);
+  
+  for (int i=1;i<this->NbrParticles;i++)
+    for (int j=0;j<i;j++)
     {
-      WaveFunction *= Tmp;
+      Result *= (SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
     }
-  return WaveFunction;
+  Complex Base=Result;
+  for (int i=1; i<this->InvFillingFactor; ++i)
+    Result *= Base;
+  return Result;
+  
 }
+
+// Complex LaughlinOnSphereWaveFunction::operator ()(RealVector& x)
+// {
+//   Complex Tmp;
+//   Complex WaveFunction(1.0);
+//   double Theta;
+//   double Phi;
+//   double Factor = M_PI * 0.5;
+//   for (int i = 0; i < this->NbrParticles; ++i)
+//     {
+//       Theta = x[i << 1];
+//       Phi = x[1 + (i << 1)];
+//       for (int j = i + 1; j < this->NbrParticles; ++j)
+// 	{
+// 	  Tmp.Re = Factor * sin(0.5 * (x[j << 1] - Theta)) * cos(0.5 * (Phi - x[1 + (j << 1)]));
+// 	  Tmp.Im = Factor * sin(0.5 * (Theta + x[j << 1])) * sin(0.5 * (Phi - x[1 + (j << 1)]));
+// 	  WaveFunction *= Tmp;
+// 	}
+//     }
+//   Tmp = WaveFunction;
+//   for (int i = 1; i < this->InvFillingFactor; ++i)
+//     {
+//       WaveFunction *= Tmp;
+//     }
+//   return WaveFunction;
+// }
+
+// // evaluate function at a given point
+// //
+// // uv = ensemble of spinor variables on sphere describing point
+// //      where function has to be evaluated
+// //      ordering: u[i] = uv [2*i], v[i] = uv [2*i+1]
+// // return value = function value at (uv)
+// Complex LaughlinOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector& uv)
+// {
+//   Complex Tmp;
+//   Complex WaveFunction(1.0);
+  
+//   double Factor = M_PI * 0.5;
+//   for (int i = 0; i < this->NbrParticles; ++i)
+//     {
+//       for (int j = i + 1; j < this->NbrParticles; ++j)
+// 	{	  
+// 	  Tmp = Factor * ( uv[2*i] * uv[2*j+1] - uv[2*i+1] * uv[2*j] );
+// 	  WaveFunction *= Tmp;
+// 	}
+//     }
+//   Tmp = WaveFunction;
+//   for (int i = 1; i < this->InvFillingFactor; ++i)
+//     {
+//       WaveFunction *= Tmp;
+//     }
+//   return WaveFunction;
+// }

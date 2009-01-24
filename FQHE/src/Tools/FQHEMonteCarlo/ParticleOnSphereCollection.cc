@@ -163,11 +163,6 @@ void ParticleOnSphereCollection::SetPosition(int nbrParticle, double theta, doub
   this->SpinorVCoordinates[nbrParticle].Im = s*s2;  
 }
 
-RealVector& ParticleOnSphereCollection::GetPositions()
-{
-  return this->ThetaPhi;
-}
-
 double ParticleOnSphereCollection::GetRandomNumber()
 {
   return Generator->GetRealRandomNumber();

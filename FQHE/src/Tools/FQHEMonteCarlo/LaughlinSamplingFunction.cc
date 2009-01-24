@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "LaughlinWithSpinSamplingFunction.h"
+#include "LaughlinSamplingFunction.h"
 #include "ParticleOnSphereCollection.h"
 #include <cmath>
 #include <iostream>
@@ -37,14 +37,9 @@ using std::endl;
 
 
 // constructor
-LaughlinWithSpinSamplingFunction::LaughlinWithSpinSamplingFunction(int nbrParticles, int exponent)
+LaughlinSamplingFunction::LaughlinSamplingFunction(int nbrParticles, int exponent)
 {
-   if (nbrParticles&1)
-     {
-       cout << "LaughlinWithSpinSamplingFunction sampling function requires an even number of particles" << endl;
-       exit(1);
-     }
-  this->NbrPerLayer=nbrParticles/2;
+  this->NbrParticles=nbrParticles;
   this->Exponent=exponent;
   this->System=NULL;
   this->ElementNorm=1.0;
@@ -52,17 +47,17 @@ LaughlinWithSpinSamplingFunction::LaughlinWithSpinSamplingFunction(int nbrPartic
   
 
 // virtual destructor
-LaughlinWithSpinSamplingFunction::~LaughlinWithSpinSamplingFunction()
+LaughlinSamplingFunction::~LaughlinSamplingFunction()
 {
 }
 
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void LaughlinWithSpinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
+void LaughlinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
 {
   this->System=system;
-  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != 2*this->NbrPerLayer)
+  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != this->NbrParticles)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
@@ -75,51 +70,34 @@ void LaughlinWithSpinSamplingFunction::RegisterSystem(AbstractParticleCollection
 
 // method for ratio of probabilities with respect to the last configuration
 // allows for more rapid calculation due to cancellation of factors
-double LaughlinWithSpinSamplingFunction::GetTransitionRatio()
+double LaughlinSamplingFunction::GetTransitionRatio()
 {
   double ratio=1.0;
   int tomove = System->GetMovedNbr();
   ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
-  if (tomove<this->NbrPerLayer)
+  for (int i=0;i<tomove;i++)
     {
-      for (int i=0;i<tomove;i++)
-	{
-	  ratio *= Norm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
-	    Norm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
-	}
-      for (int i=tomove+1;i<this->NbrPerLayer;i++)
-	{
-	  ratio *= Norm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
-	    Norm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
-	}
+      ratio *= SqrNorm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
+	SqrNorm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
     }
-  else
+  for (int i=tomove+1;i<this->NbrParticles;i++)
     {
-      for (int i=this->NbrPerLayer;i<tomove;i++)
-	{
-	  ratio *= Norm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
-	    Norm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
-	}
-      for (int i=tomove+1;i<2*this->NbrPerLayer;i++)
-	{
-	  ratio *= Norm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
-	    Norm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
-	}
+      ratio *= SqrNorm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/
+	SqrNorm(SpinorUCoordinates[i]*LastV-LastU*SpinorVCoordinates[i]);
     }
-  ratio = pow( ratio, 2.0*this->Exponent);
+  double Base=ratio;
+  for (int i=1; i<this->Exponent; ++i)
+    ratio *= Base;
   return ratio;
 }
 
 
 // get the full function value for a system of particles
-Complex LaughlinWithSpinSamplingFunction::GetFunctionValue()
+Complex LaughlinSamplingFunction::GetFunctionValue()
 {
   Complex Result=1.0;
-  for (int j=1; j<this->NbrPerLayer; ++j)
+  for (int j=1; j<this->NbrParticles; ++j)
     for (int i=0;i<j;i++)
-      Result *= this->ElementNorm*(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-  for (int j=this->NbrPerLayer+1; j<2*this->NbrPerLayer; ++j)
-    for (int i=this->NbrPerLayer;i<j;i++)
       Result *= this->ElementNorm*(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
   Complex Base=Result;
   for (int i=1; i<this->Exponent; ++i)
@@ -130,8 +108,8 @@ Complex LaughlinWithSpinSamplingFunction::GetFunctionValue()
 
 // call this method to scale the sampling function (needed to normalize the function)
 // scale = total scaling factor
-void LaughlinWithSpinSamplingFunction::ScaleByFactor(double scale)
+void LaughlinSamplingFunction::ScaleByFactor(double scale)
 {
-  double factors = (double)NbrPerLayer*(NbrPerLayer-1)*this->Exponent;
+  double factors = (double)NbrParticles*(NbrParticles-1)*this->Exponent/2.0;
   this->ElementNorm *= std::pow(scale,1.0/factors);
 }

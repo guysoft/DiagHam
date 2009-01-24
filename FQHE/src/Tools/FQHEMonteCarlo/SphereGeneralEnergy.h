@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-// abstract class for collection of particles used in a Monte Carlo algorithm // 
+//      class for a basic Monte Carlo algorith for particles on a sphere      //
 //                                                                            //
-//                     last modification : 18/02/2008                         //
+//                        last modification : 23/01/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,51 +28,78 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTPARTICLECOLLECTION_H
-#define ABSTRACTPARTICLECOLLECTION_H
+#ifndef SPHEREGENERALENERGY_H
+#define SPHEREGENERALENERGY_H
 
 #include "config.h"
 
-class AbstractParticleCollection
+#include "AbstractObservable.h"
+#include "ParticleOnSphereCollection.h"
+#include "MCObservables/WeightedRealObservable.h"
+
+class SphereGeneralEnergy : public AbstractObservable
 {
- public:
-  enum Types
-    {
-      Other = 0x0,
-      OnSphereCollection = 0x01
-    };
-
  protected:
+  // Radius of the sphere in units of magnetic length
+  double Radius;
+
+  // Number of Flux quanta piercing the sphere
+  int NbrFlux;
   
+  // Number of parameters
+  int NbrParameters;
 
-  // index of last moved particle
-  int LastMoved;
+  // Coefficients of polynomial interaction
+  double *Coefficients;
 
+  // number of observations made
+  int NbrObservations;
+
+  // system that the observable operates on
+  ParticleOnSphereCollection *System;
+
+  // number of particles in System:
+  int NbrParticles;
+
+  // pointers to spinor coordinates (external)
+  Complex *SpinorUCoordinates;
+  Complex *SpinorVCoordinates;
+
+  // core observable
+  WeightedRealObservable *Values;
+  
  public:
+
+  // default constructor
+  SphereGeneralEnergy();
+
+  // constructor
+  // nbrFlux = Number of Flux piercing sphere
+  // parameters = file describing parameters of the interaction
+  SphereGeneralEnergy(int nbrFlux, const char* parameters);
+
+
   // destructor
-  virtual ~AbstractParticleCollection();
-  
-  // randomly moves particle number nbrParticle
-  virtual void Move(int nbrParticle) = 0;
+  virtual ~SphereGeneralEnergy();
 
-  // randomly select a particle and move it
-  // return value = number of particle that was moved
-  virtual int Move() = 0;
+  // call to make an observation
+  virtual void RecordValue(double weight);
 
-  // get number of last particle that was moved
-  int GetMovedNbr() { return LastMoved; }
- 
-  // restore last move
-  virtual void RestoreMove() = 0;
+  // print legend to the given stream
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintLegend(std::ostream &output, bool all = false);
 
-  // allow access to internal Random number generator:
-  virtual double GetRandomNumber() = 0;
+  // print status to the given stream
+  // all = flag indicating whether to print all, or shortened information
+  virtual void PrintStatus(std::ostream &output, bool all = false);
 
-  // randomize particle positions
-  virtual void Randomize() = 0;
+  // print formatted data suitable for plotting
+  // ouput = the target stream
+  virtual void WriteDataFile(std::ostream &output);
 
-  // get type of collection
-  virtual int GetCollectionType() = 0;
+  // set particle collection that the observable operates on
+  // system = particle collection
+  virtual void SetParticleCollection(AbstractParticleCollection *system);
   
 };
 

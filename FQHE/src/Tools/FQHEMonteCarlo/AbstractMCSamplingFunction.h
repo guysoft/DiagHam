@@ -58,6 +58,8 @@ class AbstractMCSamplingFunction
   // set function value to one for present particle positions
   virtual void AdaptNorm();
 
+  // signal that the last move was accepted
+  virtual void AcceptedMove();
   
   // set function value for a typical average of particle positions in MC sampling
   //

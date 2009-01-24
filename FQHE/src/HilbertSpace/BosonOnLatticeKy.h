@@ -331,19 +331,12 @@ class BosonOnLatticeKy : public ParticleOnLattice
   virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
   // conversion to generic (full) many-body representation in real-space basis
-  // inputState: many-body state in Ky-momentum basis
-  // nbodyBasis: full Hilbert-space in real-space representation
-  // returns: vector in many-body basis of targetSpace
-  ComplexVector& ConvertToNbodyBasis(ComplexVector& inputState, BosonOnLattice &nbodyBasis);
-
-  // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
-  // nbodyBasis: full Hilbert-space in real-space representation
+  // nbodyBasis: full Hilbert-space in real-space representation (should be object of type BosonOnLattice)
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // returns: vector in many-body basis of targetSpace
-  ComplexVector& ConvertToNbodyBasis(ComplexVector& state, BosonOnLattice &nbodyBasis, int firstComponent, int nbrComponent);
-
+  virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent);
   
  protected:
 

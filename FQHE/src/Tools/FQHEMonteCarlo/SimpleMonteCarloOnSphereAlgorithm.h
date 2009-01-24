@@ -38,7 +38,7 @@
 #include "ParticleOnSphereCollection.h"
 
 #include <iostream>
-
+using std::ostream;
 
 class OptionManager;
 
@@ -72,6 +72,9 @@ class SimpleMonteCarloOnSphereAlgorithm
 
   // number of observable
   int NbrObservables;
+
+  // flag whether we need to clean up SamplingFunction
+  bool HavePrivateSamplingFct;
   
   
  public:
@@ -119,6 +122,11 @@ class SimpleMonteCarloOnSphereAlgorithm
   //
   // manager = pointer to the option manager
   static void AddOptionGroup(OptionManager* manager);
+
+  // write measurements of all observables to a given stream
+  // str = output stream
+  //
+  void WriteObservations(ostream &str=std::cout);
 
   
   

@@ -9,4 +9,8 @@ SimpleMonteCarloOnSphereAlgorithm.cc \
 AbstractObservable.cc \
 ParticleOnSphereCollection.cc \
 AbstractParticleCollection.cc \
-SphereBilayerCoulombEnergy.cc
+SphereBilayerCoulombEnergy.cc \
+LaughlinSamplingFunction.cc \
+SphereCoulombEnergy.cc \
+TrivialSamplingFunction.cc \
+SphereGeneralEnergy.cc 

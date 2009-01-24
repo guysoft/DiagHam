@@ -189,6 +189,20 @@ class ParticleOnLattice :  public AbstractQHEParticle
   // return value = final state can be reached by translation
   virtual bool IsTranslation(int i, int f, int &shiftX, int &shiftY) = 0;
 
+  // conversion to generic (full) many-body representation in real-space basis
+  // state: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation
+  // returns: vector in many-body basis of targetSpace
+  virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis);
+
+  // conversion to generic (full) many-body representation in real-space basis
+  // state: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // returns: vector in many-body basis of targetSpace
+  virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis, int firstComponent, int nbrComponent);
+
   // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis

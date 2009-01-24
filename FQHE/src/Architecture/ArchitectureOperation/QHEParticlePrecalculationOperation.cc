@@ -103,3 +103,4 @@ bool QHEParticlePrecalculationOperation::RawApplyOperation()
   return true;
 }
 
+

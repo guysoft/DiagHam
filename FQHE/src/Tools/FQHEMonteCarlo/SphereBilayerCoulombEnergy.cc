@@ -23,6 +23,7 @@ SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy()
 // spacing = spacing of further layer separations
 SphereBilayerCoulombEnergy::SphereBilayerCoulombEnergy(int nbrFlux, int nbrSeparations, double lowestSeparation, double spacing)
 {
+  this->Type=AbstractObservable::VectorValued||AbstractObservable::RealObservable;
   if (nbrSeparations <= 0)
     {
       cout << "Number of layer separation must be > 0 in SphereBilayerCoulombEnergy" << endl;
@@ -74,8 +75,8 @@ void SphereBilayerCoulombEnergy::RecordValue(double weight)
   for (int i=0; i<N1; ++i)
     for (int j=N1; j<this->NbrParticles; ++j)
       {
-	dij=Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	dsqr = 4.0*dij*dij;
+	dij=SqrNorm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+	dsqr = 4.0*dij;
 	for (int s=0; s<NbrSeparations; ++s)
 	  {
 	    Energies[s]+=1.0/sqrt( dsqr  + SqrSeparations[s] );

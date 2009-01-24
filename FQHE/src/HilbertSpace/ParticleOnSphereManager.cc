@@ -185,22 +185,22 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager)
 
 ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpace(int totalLz)
 {
-  if ((this->FermionFlag == true) && (this->BosonFlag == true) && (((SingleStringOption*) (*(this->Options))["statistics"])->GetString() != 0))
+  if ((this->FermionFlag == true) && (this->BosonFlag == true) && (this->Options->GetString("statistics") != 0))
     {
-      if ((strcmp ("fermions", ((SingleStringOption*) (*(this->Options))["statistics"])->GetString()) == 0))
+      if ((strcmp ("fermions", this->Options->GetString("statistics")) == 0))
 	{
 	  this->FermionFlag = true;
 	  this->BosonFlag = false;
 	}
       else
-	if ((strcmp ("bosons", ((SingleStringOption*) (*(this->Options))["statistics"])->GetString()) == 0))
+	if ((strcmp ("bosons", this->Options->GetString("statistics")) == 0))
 	  {
 	    this->FermionFlag = false;
 	    this->BosonFlag = true;
 	  }
 	else
 	  {
-	    cout << ((SingleStringOption*) (*(this->Options))["statistics"])->GetString() << " is an undefined statistics" << endl;
+	    cout << this->Options->GetString("statistics") << " is an undefined statistics" << endl;
 	    return 0;
 	}  
     }
@@ -227,12 +227,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 {
   if (this->BosonFlag == false)
     {
-      int NbrParticles = ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-      int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
-      bool HaldaneBasisFlag = ((BooleanOption*) (*(this->Options))["haldane"])->GetBoolean();
-      bool SymmetrizedBasis = ((BooleanOption*) (*(this->Options))["symmetrized-basis"])->GetBoolean();
-      bool UnnormalizedBasis = ((BooleanOption*) (*(this->Options))["unnormalized-basis"])->GetBoolean();
-      unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) (*(this->Options))["fast-search"])->GetInteger()) << 20;
+      int NbrParticles = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
+      bool SymmetrizedBasis = this->Options->GetBoolean("symmetrized-basis");
+      bool UnnormalizedBasis = this->Options->GetBoolean("unnormalized-basis");
+      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       ParticleOnSphere* Space = 0;
       if (UnnormalizedBasis == true)
 	{
@@ -250,13 +250,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	      Space = new FermionOnSphere(NbrParticles, totalLz, LzMax, MemorySpace);
 	    else
 	      {
-		if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereSymmetricBasis(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		if (this->Options->GetString("load-hilbert") != 0)
+		  Space = new FermionOnSphereSymmetricBasis(this->Options->GetString("load-hilbert"), MemorySpace);
 		else
 		  Space = new FermionOnSphereSymmetricBasis(NbrParticles, LzMax, MemorySpace);
-		if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		if (this->Options->GetString("save-hilbert") != 0)
 		  {
-		    ((FermionOnSphereSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+		    ((FermionOnSphereSymmetricBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 		    return 0;
 		  }
 	      }
@@ -271,13 +271,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		    Space = new FermionOnSphereLong(NbrParticles, totalLz, LzMax, MemorySpace);
 		  else
 		    {
-		      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-			Space = new FermionOnSphereSymmetricBasisLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		      if (this->Options->GetString("load-hilbert") != 0)
+			Space = new FermionOnSphereSymmetricBasisLong(this->Options->GetString("load-hilbert"), MemorySpace);
 		      else
 			Space = new FermionOnSphereSymmetricBasisLong(NbrParticles, LzMax, MemorySpace);
-		      if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		      if (this->Options->GetString("save-hilbert") != 0)
 			{
-			  ((FermionOnSphereSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			  ((FermionOnSphereSymmetricBasisLong*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			  return 0;
 			}
 		    }
@@ -288,23 +288,23 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
       else
 	{
 	  int* ReferenceState = 0;
-	  if (((SingleStringOption*) (*(this->Options))["reference-file"])->GetString() == 0)
+	  if (this->Options->GetString("reference-file") == 0)
 	    {
 	      ReferenceState = new int[LzMax + 1];
 	      for (int i = 0; i <= LzMax; ++i)
 		ReferenceState[i] = 0;
-	      if (strcasecmp(((SingleStringOption*) (*(this->Options))["reference-state"])->GetString(), "laughlin") == 0)
+	      if (strcasecmp(this->Options->GetString("reference-state"), "laughlin") == 0)
 		for (int i = 0; i <= LzMax; i += 3)
 		  ReferenceState[i] = 1;
 	      else
-		if (strcasecmp(((SingleStringOption*) (*(this->Options))["reference-state"])->GetString(), "pfaffian") == 0)
+		if (strcasecmp(this->Options->GetString("reference-state"), "pfaffian") == 0)
 		  for (int i = 0; i <= LzMax; i += 4)
 		    {
 		      ReferenceState[i] = 1;
 		      ReferenceState[i + 1] = 1;
 		    }
 		else
-		  if (strcasecmp(((SingleStringOption*) (*(this->Options))["reference-state"])->GetString(), "readrezayi3") == 0)
+		  if (strcasecmp(this->Options->GetString("reference-state"), "readrezayi3") == 0)
 		    for (int i = 0; i <= LzMax; i += 5)
 		      {
 			ReferenceState[i] = 1;
@@ -313,14 +313,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		      }
 		  else
 		    {
-		      cout << "unknown reference state " << ((SingleStringOption*) (*(this->Options))["reference-state"])->GetString() << endl;
+		      cout << "unknown reference state " << this->Options->GetString("reference-state") << endl;
 		      return 0;
 		    }
 	    }
 	  else
 	    {
 	      ConfigurationParser ReferenceStateDefinition;
-	      if (ReferenceStateDefinition.Parse(((SingleStringOption*) (*(this->Options))["reference-file"])->GetString()) == false)
+	      if (ReferenceStateDefinition.Parse(this->Options->GetString("reference-file")) == false)
 		{
 		  ReferenceStateDefinition.DumpErrors(cout) << endl;
 		  return 0;
@@ -338,7 +338,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	      int MaxNbrLz;
 	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 		{
-		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) (*(this->Options))["reference-file"])->GetString() << endl;
+		  cout << "error while parsing ReferenceState in " << this->Options->GetString("reference-file") << endl;
 		  return 0;     
 		}
 	      if (MaxNbrLz != (LzMax + 1))
@@ -355,13 +355,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		 if (LzMax <= 30)
 #endif
 		   {
-		     if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-		       Space = new FermionOnSphereHaldaneBasis(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		     if (this->Options->GetString("load-hilbert") != 0)
+		       Space = new FermionOnSphereHaldaneBasis(this->Options->GetString("load-hilbert"), MemorySpace);
 		     else
 		       Space = new FermionOnSphereHaldaneBasis(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
-		     if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		     if (this->Options->GetString("save-hilbert") != 0)
 		       {
-			 ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			 ((FermionOnSphereHaldaneBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			 return 0;
 		       }
 		   }
@@ -372,13 +372,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		   if (LzMax <= 62)
 #endif
 		     {
-		       if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-			 Space = new FermionOnSphereHaldaneBasisLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		       if (this->Options->GetString("load-hilbert") != 0)
+			 Space = new FermionOnSphereHaldaneBasisLong(this->Options->GetString("load-hilbert"), MemorySpace);
 		       else
 			 Space = new FermionOnSphereHaldaneBasisLong(NbrParticles, totalLz, LzMax, ReferenceState, MemorySpace);
-		       if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		       if (this->Options->GetString("save-hilbert") != 0)
 			 {
-			   ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			   ((FermionOnSphereHaldaneBasisLong*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			   return 0;
 			 }
 		     }	       
@@ -391,13 +391,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		 if (LzMax <= 30)
 #endif
 		   {
-		     if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-		       Space = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		     if (this->Options->GetString("load-hilbert") != 0)
+		       Space = new FermionOnSphereHaldaneSymmetricBasis(this->Options->GetString("load-hilbert"), MemorySpace);
 		     else
 		       Space = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, LzMax, ReferenceState, MemorySpace);
-		     if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		     if (this->Options->GetString("save-hilbert") != 0)
 		       {
-			 ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			 ((FermionOnSphereHaldaneSymmetricBasis*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			 return 0;
 		       }
 		   }
@@ -408,13 +408,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 		     if (LzMax <= 62)
 #endif
 		       {
-			 if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() != 0)
-			   Space = new FermionOnSphereHaldaneSymmetricBasisLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+			 if (this->Options->GetString("load-hilbert") != 0)
+			   Space = new FermionOnSphereHaldaneSymmetricBasisLong(this->Options->GetString("load-hilbert"), MemorySpace);
 			 else
 			   Space = new FermionOnSphereHaldaneSymmetricBasisLong(NbrParticles, LzMax, ReferenceState, MemorySpace);
-			 if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+			 if (this->Options->GetString("save-hilbert") != 0)
 			   {
-			     ((FermionOnSphereHaldaneSymmetricBasisLong*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			     ((FermionOnSphereHaldaneSymmetricBasisLong*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			     return 0;
 			   }
 		       }
@@ -424,13 +424,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
     }
   else
     {
-      int NbrBosons = ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-      int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
-      bool HaldaneBasisFlag = ((BooleanOption*) (*(this->Options))["haldane"])->GetBoolean();
+      int NbrBosons = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      bool HaldaneBasisFlag = this->Options->GetBoolean("haldane");
       ParticleOnSphere* Space = 0;
       if (HaldaneBasisFlag == false)
 	{
-	  bool SymmetrizedBasis = ((BooleanOption*) (*(this->Options))["symmetrized-basis"])->GetBoolean();
+	  bool SymmetrizedBasis = this->Options->GetBoolean("symmetrized-basis");
 #ifdef  __64_BITS__
 	  if ((LzMax + NbrBosons - 1) < 63)
 #else
@@ -453,13 +453,13 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
       else 
 	{
 	  int* ReferenceState = 0;
-	  if (((SingleStringOption*) (*(this->Options))["reference-file"])->GetString() == 0)
+	  if (this->Options->GetString("reference-file") == 0)
 	    {
 	      cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
 	      return 0;
 	    }
 	  ConfigurationParser ReferenceStateDefinition;
-	  if (ReferenceStateDefinition.Parse(((SingleStringOption*) (*(this->Options))["reference-file"])->GetString()) == false)
+	  if (ReferenceStateDefinition.Parse(this->Options->GetString("reference-file")) == false)
 	    {
 	      ReferenceStateDefinition.DumpErrors(cout) << endl;
 	      return 0;
@@ -477,7 +477,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceU1(int totalLz)
 	  int MaxNbrLz;
 	  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
 	    {
-	      cout << "error while parsing ReferenceState in " << ((SingleStringOption*) (*(this->Options))["reference-file"])->GetString() << endl;
+	      cout << "error while parsing ReferenceState in " << this->Options->GetString("reference-file") << endl;
 	      return 0;     
 	    }
 	  if (MaxNbrLz != (LzMax + 1))
@@ -506,12 +506,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
   if (this->BosonFlag == false)
     {
       ParticleOnSphereWithSpin* Space = 0;
-      int NbrFermions = ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-      int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
-      int SzTotal = ((SingleIntegerOption*) (*(this->Options))["total-sz"])->GetInteger();
-      bool LzSymmetrizedBasis = ((BooleanOption*) (*(this->Options))["lzsymmetrized-basis"])->GetBoolean();
-      bool SzSymmetrizedBasis = ((BooleanOption*) (*(this->Options))["szsymmetrized-basis"])->GetBoolean();
-      unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) (*(this->Options))["fast-search"])->GetInteger()) << 20;
+      int NbrFermions = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      int SzTotal = this->Options->GetInteger("total-sz");
+      bool LzSymmetrizedBasis = this->Options->GetBoolean("lzsymmetrized-basis");
+      bool SzSymmetrizedBasis = this->Options->GetBoolean("szsymmetrized-basis");
+      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       if (((SzSymmetrizedBasis == false) || (SzTotal != 0)) && ((LzSymmetrizedBasis == false) || (totalLz != 0)))
 	{
 #ifdef __64_BITS__
@@ -559,17 +559,17 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		  if (LzMax <= 13)
 #endif
 		    {
-		      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
-			Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, totalLz, LzMax, ((BooleanOption*) (*(this->Options))["minus-szparity"])->GetBoolean(), MemorySpace);
+		      if (this->Options->GetString("load-hilbert") == 0)
+			Space = new FermionOnSphereWithSpinSzSymmetry(NbrFermions, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"), MemorySpace);
 		      else
-			Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+			Space = new FermionOnSphereWithSpinSzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);
 		    }
 		  else
 		    {
-		      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
-			Space = new FermionOnSphereWithSpinSzSymmetryLong(NbrFermions, totalLz, LzMax, ((BooleanOption*) (*(this->Options))["minus-szparity"])->GetBoolean(), MemorySpace);
+		      if (this->Options->GetString("load-hilbert") == 0)
+			Space = new FermionOnSphereWithSpinSzSymmetryLong(NbrFermions, totalLz, LzMax, this->Options->GetBoolean("minus-szparity"), MemorySpace);
 		      else
-			Space = new FermionOnSphereWithSpinSzSymmetryLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+			Space = new FermionOnSphereWithSpinSzSymmetryLong(this->Options->GetString("load-hilbert"), MemorySpace);
 		    }
 	      }
 	    else
@@ -579,23 +579,23 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		if (LzMax <= 13)
 #endif
 		  {
-		    if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
+		    if (this->Options->GetString("load-hilbert") == 0)
 		      {
-			Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, ((BooleanOption*) (*(this->Options))["minus-szparity"])->GetBoolean(),
-									((BooleanOption*) (*(this->Options))["minus-lzparity"])->GetBoolean(), MemorySpace);
+			Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"),
+									this->Options->GetBoolean("minus-lzparity"), MemorySpace);
 		      }
 		    else
-		      Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSpinLzSzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);
 		  }
 		else
 		  {
-		    if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
+		    if (this->Options->GetString("load-hilbert") == 0)
 		      {
-			Space = new FermionOnSphereWithSpinLzSzSymmetryLong(NbrFermions, LzMax, ((BooleanOption*) (*(this->Options))["minus-szparity"])->GetBoolean(),
-									    ((BooleanOption*) (*(this->Options))["minus-lzparity"])->GetBoolean(), MemorySpace);
+			Space = new FermionOnSphereWithSpinLzSzSymmetryLong(NbrFermions, LzMax, this->Options->GetBoolean("minus-szparity"),
+									    this->Options->GetBoolean("minus-lzparity"), MemorySpace);
 		      }
 		    else
-		      Space = new FermionOnSphereWithSpinLzSzSymmetryLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSpinLzSzSymmetryLong(this->Options->GetString("load-hilbert"), MemorySpace);
 		    
 		  }
 	      else
@@ -605,21 +605,21 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		  if (LzMax <= 13)
 #endif
 		    {
-		      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
-			Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, ((BooleanOption*) (*(this->Options))["minus-lzparity"])->GetBoolean(), MemorySpace);
+		      if (this->Options->GetString("load-hilbert") == 0)
+			Space = new FermionOnSphereWithSpinLzSymmetry(NbrFermions, LzMax, SzTotal, this->Options->GetBoolean("minus-lzparity"), MemorySpace);
 		      else
-			Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);	      
+			Space = new FermionOnSphereWithSpinLzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);	      
 		    }
 		  else
 		    {
-		      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
-			Space = new FermionOnSphereWithSpinLzSymmetryLong(NbrFermions, LzMax, SzTotal, ((BooleanOption*) (*(this->Options))["minus-lzparity"])->GetBoolean(), MemorySpace);
+		      if (this->Options->GetString("load-hilbert") == 0)
+			Space = new FermionOnSphereWithSpinLzSymmetryLong(NbrFermions, LzMax, SzTotal, this->Options->GetBoolean("minus-lzparity"), MemorySpace);
 		      else
-			Space = new FermionOnSphereWithSpinLzSymmetryLong(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);	      
+			Space = new FermionOnSphereWithSpinLzSymmetryLong(this->Options->GetString("load-hilbert"), MemorySpace);	      
 		    }
-	  if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+	  if (this->Options->GetString("save-hilbert") != 0)
 	    {
-	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 	      return 0;
 	    }
 	}
@@ -640,14 +640,14 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU3(int totalLz)
 {
   if (this->BosonFlag == false)
     {
-      int NbrFermions = ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-      int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
-      int TotalTz = ((SingleIntegerOption*) (*(this->Options))["total-tz"])->GetInteger();
-      int TotalY = ((SingleIntegerOption*) (*(this->Options))["total-y"])->GetInteger();
-//      bool LzSymmetrizedBasis = ((BooleanOption*) (*(this->Options))["lzsymmetrized-basis"])->GetBoolean();
-      bool TzSymmetrizedBasis = ((BooleanOption*) (*(this->Options))["tzsymmetrized-basis"])->GetBoolean();
-      bool Z3SymmetrizedBasis = ((BooleanOption*) (*(this->Options))["z3symmetrized-basis"])->GetBoolean();
-      unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) (*(this->Options))["fast-search"])->GetInteger()) << 20;      
+      int NbrFermions = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      int TotalTz = this->Options->GetInteger("total-tz");
+      int TotalY = this->Options->GetInteger("total-y");
+//      bool LzSymmetrizedBasis = this->Options->GetBoolean("lzsymmetrized-basis");
+      bool TzSymmetrizedBasis = this->Options->GetBoolean("tzsymmetrized-basis");
+      bool Z3SymmetrizedBasis = this->Options->GetBoolean("z3symmetrized-basis");
+      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;      
       ParticleOnSphereWithSU3Spin* Space = 0;
       if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == false))
 	{
@@ -678,52 +678,52 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU3(int totalLz)
 	      }	
 	  if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == false))
 	    {
-	      if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
+	      if (this->Options->GetString("load-hilbert") == 0)
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, totalLz, LzMax, TotalY, ((BooleanOption*) (*(this->Options))["minus-tzparity"])->GetBoolean(), MemorySpace);
-		  if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(NbrFermions, totalLz, LzMax, TotalY, this->Options->GetBoolean("minus-tzparity"), MemorySpace);
+		  if (this->Options->GetString("save-hilbert") != 0)
 		    {
-		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+		      ((FermionOnSphereWithSU3SpinTzSymmetry*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 		      return 0;
 		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		  Space = new FermionOnSphereWithSU3SpinTzSymmetry(this->Options->GetString("load-hilbert"), MemorySpace);
 		}
 	    }
 	  else
 	    if ((TzSymmetrizedBasis == false) && (Z3SymmetrizedBasis == true))
 	      {
-		if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
+		if (this->Options->GetString("load-hilbert") == 0)
 		  {
 		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(NbrFermions, totalLz, LzMax, TotalTz, MemorySpace);
-		    if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		    if (this->Options->GetString("save-hilbert") != 0)
 		      {
-			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			((FermionOnSphereWithSU3SpinZ3Symmetry*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			return 0;
 		      }
 		  }
 		else
 		  {
-		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		    Space = new FermionOnSphereWithSU3SpinZ3Symmetry(this->Options->GetString("load-hilbert"), MemorySpace);
 		  }
 	      }
 	    else
 	      if ((TzSymmetrizedBasis == true) && (Z3SymmetrizedBasis == true))
 		{
-		  if (((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString() == 0)
+		  if (this->Options->GetString("load-hilbert") == 0)
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, totalLz, LzMax, ((BooleanOption*) (*(this->Options))["minus-tzparity"])->GetBoolean(), MemorySpace);
-		      if (((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString() != 0)
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(NbrFermions, totalLz, LzMax, this->Options->GetBoolean("minus-tzparity"), MemorySpace);
+		      if (this->Options->GetString("save-hilbert") != 0)
 			{
-			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) (*(this->Options))["save-hilbert"])->GetString());
+			  ((FermionOnSphereWithSU3SpinTzZ3Symmetry*) Space)->WriteHilbertSpace(this->Options->GetString("save-hilbert"));
 			  return 0;
 			}
 		    }
 		  else
 		    {
-		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(((SingleStringOption*) (*(this->Options))["load-hilbert"])->GetString(), MemorySpace);
+		      Space = new FermionOnSphereWithSU3SpinTzZ3Symmetry(this->Options->GetString("load-hilbert"), MemorySpace);
 		    }
 		}
 	}
@@ -744,12 +744,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
 {
   if (this->BosonFlag == false)
     {
-      int NbrFermions = ((SingleIntegerOption*) (*(this->Options))["nbr-particles"])->GetInteger();
-      int LzMax = ((SingleIntegerOption*) (*(this->Options))["lzmax"])->GetInteger();
-      int SzTotal = ((SingleIntegerOption*) (*(this->Options))["total-sz"])->GetInteger();
-      int IsoSzTotal = ((SingleIntegerOption*) (*(this->Options))["total-isosz"])->GetInteger();
-      int TotalEntanglement = ((SingleIntegerOption*) (*(this->Options))["total-entanglement"])->GetInteger();
-      unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) (*(this->Options))["fast-search"])->GetInteger()) << 20;
+      int NbrFermions = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      int SzTotal = this->Options->GetInteger("total-sz");
+      int IsoSzTotal = this->Options->GetInteger("total-isosz");
+      int TotalEntanglement = this->Options->GetInteger("total-entanglement");
+      unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
       ParticleOnSphereWithSU4Spin* Space;
 #ifdef __64_BITS__
       if (LzMax <= 15)
@@ -757,7 +757,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
       if (LzMax <= 7)
 #endif
         {
-	  if (((BooleanOption*) (*(this->Options))["use-entanglement"])->GetBoolean())
+	  if (this->Options->GetBoolean("use-entanglement"))
 	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, totalLz, LzMax, SzTotal, IsoSzTotal, TotalEntanglement, MemorySpace);
 	  else
 	    Space = new FermionOnSphereWithSU4Spin(NbrFermions, totalLz, LzMax, SzTotal, IsoSzTotal, MemorySpace);
@@ -767,7 +767,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU4(int totalLz)
 	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
 	  return 0;
 	}	
-      if ((((BooleanOption*) (*(this->Options))["use-entanglement"])->GetBoolean()) && (Space->GetHilbertSpaceDimension() == 0))
+      if ((this->Options->GetBoolean("use-entanglement")) && (Space->GetHilbertSpaceDimension() == 0))
 	{
 	  cout << "zero dimension Hilbert space" << endl;
 	  return 0;	  

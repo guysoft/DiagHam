@@ -34,6 +34,7 @@
 #include "QHESamplingFunctionManager.h"
 #include "AbstractMCSamplingFunction.h"
 #include "LaughlinWithSpinSamplingFunction.h"
+#include "LaughlinSamplingFunction.h"
 
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
@@ -73,11 +74,11 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
   (*SamplingFunctionGroup) += new SingleStringOption  ('\n', "sampler", "name of the test wave fuction",0);
   if (this->GeometryID & QHESamplingFunctionManager::SphereGeometry)
     {
+      (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
       //(*SamplingFunctionGroup) += new SingleStringOption  ('\n', "xxx", "description",0);
     }
   else if (this->GeometryID & QHESamplingFunctionManager::SphereWithSpinGeometry)
     {
-      // PairedCF(CB)Options:
       (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
     }
 }
@@ -91,7 +92,7 @@ ostream& QHESamplingFunctionManager::ShowAvalaibleSamplingFunctions (ostream& st
   str << "list of avalaible sampling functions:" << endl;
   if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
     {
-      str << "  no sampling functions, yet" << endl;	
+      str << "  * laughlin : laughlin-type wavefunction" << endl;
     }
   else
     if (this->GeometryID == QHESamplingFunctionManager::DiskGeometry)
@@ -131,7 +132,13 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
     }
   if (this->GeometryID == QHESamplingFunctionManager::SphereGeometry)
     {
-      // none implemented for the moment
+      if ((strcmp (this->Options->GetString("sampler"), "laughlin") == 0))
+	{
+	  int N = this->Options->GetInteger("nbr-particles");	      
+	  int m = this->Options->GetInteger("laughlin-exponent");
+	  AbstractMCSamplingFunction* rst  = new LaughlinSamplingFunction(N,m);
+	  return rst;
+	    }
       return 0;
     }
   else

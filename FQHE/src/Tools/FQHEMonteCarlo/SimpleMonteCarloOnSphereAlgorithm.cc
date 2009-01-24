@@ -29,7 +29,7 @@
 
 
 #include "SimpleMonteCarloOnSphereAlgorithm.h"
-
+#include "TrivialSamplingFunction.h"
 #include "Options/Options.h"
 
 #include <iostream>
@@ -40,6 +40,7 @@ using std::endl;
 SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm()
 {
   this->NbrParticles=0;
+  this->HavePrivateSamplingFct=false;
 }
 
 // set up for basic monte-carlo scheme
@@ -59,12 +60,18 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
     }
   if (samplingFunction==0)
     {
-      cout << "Invalid sampling function" << endl;
-      exit(1);
+      cout << "Attention, using inefficient sampling from wavefunction itself" << endl;
+      this->SamplingFunction=new TrivialSamplingFunction(waveFunction);
+      HavePrivateSamplingFct=true;
+    }
+  else
+    {
+      this->SamplingFunction=samplingFunction;
+      HavePrivateSamplingFct=false;
     }
   this->NbrParticles=nbrParticles;
   this->WaveFunction=waveFunction; // is returned normalized by wavefunction handler...
-  this->SamplingFunction=samplingFunction;
+  
   this->Options=manager;  
   long Seed = Options->GetInteger("randomSeed");
   this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
@@ -84,6 +91,8 @@ SimpleMonteCarloOnSphereAlgorithm::~SimpleMonteCarloOnSphereAlgorithm()
       delete this->System;
       delete [] this->Observables;
       delete [] this->Frequencies;
+      if (this->HavePrivateSamplingFct)
+	delete SamplingFunction;
     }
 }
 
@@ -145,9 +154,10 @@ void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
       Observables[i]->PrintLegend(Output);
     }
   Output << endl;
+  int s=0;
   for (int d=0; d<NbrDisplay; ++d)
     {
-      for (int s=0; s<DisplaySteps; ++s)
+      for (/* s */; s<(d+1)*DisplaySteps; ++s)
 	{
 	  this->PerformMicroSteps(DensityOfSamples);
 	  SamplingFctValue = this->SamplingFunction->GetFunctionValue();
@@ -185,6 +195,10 @@ void SimpleMonteCarloOnSphereAlgorithm::PerformMicroSteps(int nbrSteps)
 	{
 	  System->RestoreMove();
 	}
+      else
+	{
+	  this->SamplingFunction->AcceptedMove();
+	}
     }
 }
 
@@ -204,4 +218,15 @@ void SimpleMonteCarloOnSphereAlgorithm::AddOptionGroup(OptionManager* manager)
 					  "number of intermediate results displayed", 10);
   (*MCGroup) += new SingleIntegerOption  ('\n', "randomSeed", "random seed for internal random number generator", -1);
     
+}
+
+// write measurements of all observables to a given stream
+// str = output stream
+//
+void SimpleMonteCarloOnSphereAlgorithm::WriteObservations(ostream &str)
+{
+  for (int i=0; i<NbrObservables; ++i)
+    {
+      Observables[i]->WriteDataFile(str);
+    }
 }

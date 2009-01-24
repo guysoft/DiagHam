@@ -47,6 +47,12 @@ class LaughlinOnSphereWaveFunction: public Abstract1DComplexFunctionOnSphere
   // inverse value of the filling factor
   int InvFillingFactor;
 
+  // temporary array used to store u spinor coordinates
+  Complex* SpinorUCoordinates;
+  // temporary array used to store v spinor coordinates
+  Complex* SpinorVCoordinates;
+
+
  public:
 
   // constructor
