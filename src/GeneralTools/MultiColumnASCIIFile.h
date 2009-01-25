@@ -113,6 +113,30 @@ class MultiColumnASCIIFile
   // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
   double* GetAsDoubleArray (int column);
 
+  // get a line converting it to integer
+  //
+  // line = line index
+  // firstColumn = index of the first column to store
+  // lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+  int* GetLineAsIntegerArray (int line, int firstColumn = 0, int lastColumn = 0);
+
+  // get a line converting it to long
+  //
+  // line = line index
+  // firstColumn = index of the first column to store
+  // lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
+  long* GetLineAsLongArray (int line, int firstColumn = 0, int lastColumn = 0);
+
+  // get a line converting it to double
+  //
+  // line = line index
+  // firstColumn = index of the first column to store
+  // lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+  // return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+  double* GetLineAsDoubleArray (int line, int firstColumn = 0, int lastColumn = 0);
+
   // print last error encountered during parsing operation
   //
   // str = reference on the output stream

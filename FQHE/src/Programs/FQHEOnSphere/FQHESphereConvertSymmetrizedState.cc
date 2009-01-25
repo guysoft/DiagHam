@@ -4,6 +4,10 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereLong.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasisLong.h"
 
 #include "Options/Options.h"
 
@@ -40,10 +44,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('f', "fermion", "use fermionic statistic (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
-  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
-  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -105,33 +105,73 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["haldane"])->GetBoolean() == false)
 	{
 	  RealVector OutputState;
-	  FermionOnSphereSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta);
-	  cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
-	  FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
-	  cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
-	  if (SymmetrizeFlag)
-	    {
-	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+#ifdef __64_BITS__
+	  if (NbrFluxQuanta <= 63)
+#else
+	    if (NbrFluxQuanta <= 31)
+#endif
+	      {
+		FermionOnSphereSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta);
+                cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
+		FermionOnSphere TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+		cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
+		if (SymmetrizeFlag)
+		  {
+		    if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;
+		      }
+		    OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+		  }
+		else
+		  {
+		    if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;
+		      }
+		    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+		  }
+		if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		  {
+		    cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		    return -1;
+		  }
+	      }
+	    else
+#ifdef __128_BIT_LONGLONG__
+	    if (NbrFluxQuanta <= 126)
+#else
+	      if (NbrFluxQuanta <= 62)
+#endif
 		{
-		  cout << "dimension mismatch between Hilbert space and input state" << endl;
-		  return -1;
- 		}
-	      OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
-	    }
-	  else
-	    {
-	      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
-		{
-		  cout << "dimension mismatch between Hilbert space and input state" << endl;
-		  return -1;
- 		}
-	      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
-	    }
-	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
-	    {
-	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
-	      return -1;
-	    }
+		  FermionOnSphereSymmetricBasisLong InitialSpace(NbrParticles, NbrFluxQuanta);
+		  FermionOnSphereLong TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+		  if (SymmetrizeFlag)
+		    {
+		      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between Hilbert space and input state" << endl;
+			  return -1;
+			}
+		      OutputState = InitialSpace.ConvertToSymmetricNbodyBasis(State, TargetSpace);
+		    }
+		  else
+		    {
+		      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between Hilbert space and input state" << endl;
+			  return -1;
+			}
+		      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+		    }
+		  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		    {
+		      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		      return -1;
+		    }
+		}
 	}
       else
 	{
@@ -196,33 +236,75 @@ int main(int argc, char** argv)
 		}
 	    }
 	  RealVector OutputState;
-	  FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
-	  cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
-	  FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	  cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
-	  if (SymmetrizeFlag)
-	    {
-	      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+#ifdef __64_BITS__
+	  if (NbrFluxQuanta <= 63)
+#else
+	    if (NbrFluxQuanta <= 31)
+#endif
+	      {
+		FermionOnSphereHaldaneSymmetricBasis InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
+		cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
+		FermionOnSphereHaldaneBasis TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+		cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
+		if (SymmetrizeFlag)
+		  {
+		    if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;
+		      }
+		    OutputState = InitialSpace.ConvertToSymmetricHaldaneNbodyBasis(State, TargetSpace);
+		  }
+		else
+		  {
+		    if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+		      {
+			cout << "dimension mismatch between Hilbert space and input state" << endl;
+			return -1;
+		      }
+		    OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
+		  }
+		if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		  {
+		    cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		    return -1;
+		  }
+	      }
+	    else
+#ifdef __128_BIT_LONGLONG__
+	    if (NbrFluxQuanta <= 126)
+#else
+	      if (NbrFluxQuanta <= 62)
+#endif
 		{
-		  cout << "dimension mismatch between Hilbert space and input state" << endl;
-		  return -1;
- 		}
-	      OutputState = InitialSpace.ConvertToSymmetricHaldaneNbodyBasis(State, TargetSpace);
-	    }
-	  else
-	    {
-	      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
-		{
-		  cout << "dimension mismatch between Hilbert space and input state" << endl;
-		  return -1;
- 		}
-	      OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
-	    }
- 	  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
- 	    {
- 	      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
- 	      return -1;
- 	    }
+		  FermionOnSphereHaldaneSymmetricBasisLong InitialSpace(NbrParticles, NbrFluxQuanta, ReferenceState);
+		  cout << "Initial dimension: "<<InitialSpace.GetHilbertSpaceDimension()<<endl;
+		  FermionOnSphereHaldaneBasisLong TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+		  cout << "Target dimension: "<<TargetSpace.GetHilbertSpaceDimension()<<endl;
+		  if (SymmetrizeFlag)
+		    {
+		      if (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between Hilbert space and input state" << endl;
+			  return -1;
+			}
+		      OutputState = InitialSpace.ConvertToSymmetricHaldaneNbodyBasis(State, TargetSpace);
+		    }
+		  else
+		    {
+		      if (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between Hilbert space and input state" << endl;
+			  return -1;
+			}
+		      OutputState = InitialSpace.ConvertToHaldaneNbodyBasis(State, TargetSpace);
+		    }
+		  if (OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString()) == false)
+		    {
+		      cout << "error while writing output state " << ((SingleStringOption*) Manager["output-file"])->GetString() << endl;
+		      return -1;
+		    }
+		}
 	}
     }
 }

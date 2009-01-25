@@ -450,7 +450,7 @@ RealVector FermionOnSphereHaldaneSymmetricBasisLong::ConvertToNbodyBasis(RealVec
       TmpState &= FERMION_SPHERE_LONG_SYMMETRIC_MASK;
       while ((TmpState >> NewLzMax) == ((ULONGLONG) 0x0ul))
 	--NewLzMax;
-      if (Signature != 0x0ul)	
+      if (Signature != ((ULONGLONG) 0x0ul))	
 	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
       else
 	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];

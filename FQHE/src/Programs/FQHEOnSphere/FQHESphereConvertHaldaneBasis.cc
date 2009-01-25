@@ -4,6 +4,8 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -237,5 +239,60 @@ int main(int argc, char** argv)
 	    }	  
 	}
     }
+  else
+    {
+     int* ReferenceState = 0;
+     if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+       {
+	 cout << "error, a reference file is needed for bosons in Haldane basis" << endl;
+	 return 0;
+       }
+     ConfigurationParser ReferenceStateDefinition;
+     if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+       {
+	 ReferenceStateDefinition.DumpErrors(cout) << endl;
+	 return 0;
+       }
+     if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+       {
+	 cout << "NbrParticles is not defined or as a wrong value" << endl;
+	 return 0;
+       }
+     if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", NbrFluxQuanta) == false) || (NbrFluxQuanta <= 0))
+       {
+	 cout << "LzMax is not defined or as a wrong value" << endl;
+	 return 0;
+       }
+     int MaxNbrLz;
+     if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+       {
+	 cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+	 return 0;     
+       }
+     if (MaxNbrLz != (NbrFluxQuanta + 1))
+       {
+	 cout << "wrong LzMax value in ReferenceState" << endl;
+	 return 0;     
+       }
+#ifdef  __64_BITS__
+     if ((NbrFluxQuanta + NbrParticles - 1) < 63)
+#else
+       if ((NbrFluxQuanta + NbrParticles - 1) < 31)	
+#endif
+	 {
+	   BosonOnSphereHaldaneBasisShort InitialSpace (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+	   BosonOnSphereShort TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+	   RealVector OutputState;
+	   if (ReverseFlag == false)
+	     OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+ 	   else
+ 	     OutputState = InitialSpace.ConvertFromNbodyBasis(State, TargetSpace);
+	   if (OutputState.WriteVector(OutputFileName) == false)
+	     {
+	       cout << "error while writing output state " << OutputFileName << endl;
+	       return -1;
+	     }	  
+	 }
+   }
 }
 

@@ -50,11 +50,9 @@ using std::hex;
 class BosonOnSphereShort :  public ParticleOnSphere
 {
 
-  friend class BosonOnSphereShortHaldaneBasis;
-  friend class BosonOnSphereShortSymmetricBasis;
-  friend class BosonOnSphereShortHaldaneSymmetricBasis;
-
+  friend class BosonOnSphereHaldaneBasisShort;
   friend class BosonOnSphereSymmetricBasisShort;
+  friend class BosonOnSphereHaldaneSymmetricBasisShort;
 
  protected:
 

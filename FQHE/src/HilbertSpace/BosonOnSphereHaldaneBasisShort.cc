@@ -164,3 +164,31 @@ BosonOnSphereHaldaneBasisShort& BosonOnSphereHaldaneBasisShort::operator = (cons
   return *this;
 }
 
+// convert a given state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector BosonOnSphereHaldaneBasisShort::ConvertToNbodyBasis(RealVector& state, BosonOnSphereShort& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])] = state[i];
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector BosonOnSphereHaldaneBasisShort::ConvertFromNbodyBasis(RealVector& state, BosonOnSphereShort& nbodyBasis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FermionBasis->FindStateIndex(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}

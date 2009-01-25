@@ -79,6 +79,20 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = reference on current hilbert space
   BosonOnSphereHaldaneBasisShort& operator = (const BosonOnSphereHaldaneBasisShort& bosons);
 
+  // convert a given state from Haldane basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToNbodyBasis(RealVector& state, BosonOnSphereShort& nbodyBasis);
+
+  // convert a given state from the usual n-body basis to the Haldane basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertFromNbodyBasis(RealVector& state, BosonOnSphereShort& nbodyBasis);
+
 };
 
 #endif

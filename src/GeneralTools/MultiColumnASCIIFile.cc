@@ -266,6 +266,92 @@ double* MultiColumnASCIIFile::GetAsDoubleArray (int column)
   return TmpColumn;
 }
 
+// get a line converting it to integer
+//
+// line = line index
+// firstColumn = index of the first column to store
+// lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+
+int* MultiColumnASCIIFile::GetLineAsIntegerArray (int line, int firstColumn, int lastColumn)
+{
+  if (lastColumn <= firstColumn)
+    lastColumn = this->NbrColumns - 1;
+  int* TmpLine = new int [lastColumn - firstColumn + 1];
+  char* TmpError;
+  for (int i = firstColumn; i <= lastColumn; ++i)
+    {
+      long Tmp = strtol(this->Data[i][line], &TmpError, 0);
+      if ((TmpError == this->Data[i][line]) || ((*TmpError) != '\0'))
+	{
+	  char* TmpString = new char [256 + strlen(this->Data[i][line])]; 
+	  sprintf (TmpString, "element in column %d and line %d is an invalid integer value (%s)\n", i, line, this->Data[i][line]);
+	  this->ErrorLog += TmpString;
+	  delete[] TmpLine;
+	  return 0;
+	}
+      else 
+	TmpLine[i - firstColumn] = (int) Tmp;
+    } 
+  return TmpLine;
+}
+
+// get a line converting it to long
+//
+// line = line index
+// firstColumn = index of the first column to store
+// lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
+  
+long* MultiColumnASCIIFile::GetLineAsLongArray (int line, int firstColumn, int lastColumn)
+{
+  if (lastColumn <= firstColumn)
+    lastColumn = this->NbrColumns - 1;
+  long* TmpLine = new long [lastColumn - firstColumn + 1];
+  char* TmpError;
+  for (int i = firstColumn; i <= lastColumn; ++i)
+    {
+      TmpLine[i - firstColumn] = strtol(this->Data[i][line], &TmpError, 0);
+      if ((TmpError == this->Data[i][line]) || ((*TmpError) != '\0'))
+	{
+	  char* TmpString = new char [256 + strlen(this->Data[i][line])]; 
+	  sprintf (TmpString, "element in column %d and line %d is an invalid long integer value (%s)\n", i, line, this->Data[i][line]);
+	  this->ErrorLog += TmpString;
+	  delete[] TmpLine;
+	  return 0;
+	}
+    } 
+  return TmpLine;
+}
+
+// get a line converting it to double
+//
+// line = line index
+// firstColumn = index of the first column to store
+// lastColumn = index of the last column to store (go up to last column if lastColumn <= firstColumn)
+// return value = reference on the array where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
+
+double* MultiColumnASCIIFile::GetLineAsDoubleArray (int line, int firstColumn, int lastColumn)
+{
+  if (lastColumn <= firstColumn)
+    lastColumn = this->NbrColumns - 1;
+  double* TmpLine = new double [lastColumn - firstColumn + 1];
+  char* TmpError;
+  for (int i = firstColumn; i <= lastColumn; ++i)
+    {
+      TmpLine[i - firstColumn] = strtod(this->Data[i][line], &TmpError);
+      if ((TmpError == this->Data[i][line]) || ((*TmpError) != '\0'))
+	{
+	  char* TmpString = new char [256 + strlen(this->Data[i][line])]; 
+	  sprintf (TmpString, "element in column %d and line %d is an invalid double value (%s)\n", i, line, this->Data[i][line]);
+	  this->ErrorLog += TmpString;
+	  delete[] TmpLine;
+	  return 0;
+	}
+    } 
+  return TmpLine;
+}
+
 // print last error encountered during parsing operation
 //
 // str = reference on the output stream

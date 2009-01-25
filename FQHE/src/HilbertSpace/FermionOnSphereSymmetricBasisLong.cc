@@ -383,7 +383,7 @@ RealVector FermionOnSphereSymmetricBasisLong::ConvertToNbodyBasis(RealVector& st
       NewLzMax = this->LzMax;
       Signature = TmpState & FERMION_SPHERE_LONG_SYMMETRIC_BIT;
       TmpState &= FERMION_SPHERE_LONG_SYMMETRIC_MASK;
-      while ((TmpState >> NewLzMax) == 0x0ul)
+      while ((TmpState >> NewLzMax) == ((ULONGLONG) 0x0ul))
 	--NewLzMax;
       if (Signature != ((ULONGLONG) 0x0ul))	
 	TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;

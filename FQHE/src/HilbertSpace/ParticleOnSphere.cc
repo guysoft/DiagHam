@@ -77,13 +77,10 @@ int ParticleOnSphere::GetHilbertSpaceAdditionalSymmetry()
 
 int ParticleOnSphere::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  int TmpM[2];
-  int TmpN[2];
-  TmpM[0] = m1;
-  TmpM[1] = m2;
-  TmpN[0] = n1;
-  TmpN[1] = n2;
-  return ProdAdProdA(index, TmpM, TmpN, 2, coefficient);
+  double Coefficient = this->AA(index, n1, n2);
+  int Index = this->AdAd(m1, m2, coefficient);
+  coefficient *= Coefficient;
+  return Index;
 }
 
 // apply a^+_m1 a^+_m2 a^+_m3 a_n1 a_n2 a_n3 operator to a given state (with m1+m2+m3=n1+n2+n3)

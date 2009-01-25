@@ -47,7 +47,8 @@ FQHEDiskLaughlinOneJainQuasielectronWaveFunction::FQHEDiskLaughlinOneJainQuasiel
   this->NbrParticles = nbrParticles;
   this->InvScale = 2.0 / scale;
   this->ZElectron = zElectron;  
-  this->ElectronWeight = exp (-0.125 * SqrNorm(this->ZElectron));
+  this->ZElectron /= sqrt((double) invFillingFactor);
+  this->ElectronWeight = exp (-0.5 * SqrNorm(this->ZElectron));
   this->TmpElectronWeight = new Complex [this->NbrParticles];
   this->TmpJastrow = new Complex*[this->NbrParticles];
   this->TmpSqrJastrow = new Complex*[this->NbrParticles];
@@ -120,8 +121,8 @@ Complex FQHEDiskLaughlinOneJainQuasielectronWaveFunction::operator ()(RealVector
     {
       ZRe = x[i << 1];
       ZIm = x[1 + (i << 1)];
-      Tmp.Re = 0.25 * (this->ZElectron.Re * ZRe + this->ZElectron.Im * ZIm);
-      Tmp.Im = 0.25 * (this->ZElectron.Re * ZIm - this->ZElectron.Im * ZRe);
+      Tmp.Re = (this->ZElectron.Re * ZRe + this->ZElectron.Im * ZIm);
+      Tmp.Im = (this->ZElectron.Re * ZIm - this->ZElectron.Im * ZRe);
       this->TmpElectronWeight[i] = exp (Tmp);
       for (int j = i + 1; j < this->NbrParticles; ++j)
 	{
