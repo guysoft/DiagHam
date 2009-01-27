@@ -40,6 +40,7 @@ RanluxRandomNumberGenerator::RanluxRandomNumberGenerator(unsigned int& seed)
 {
   if (seed != 0)
     srand (seed);
+  this->iset=0;
   this->NbrGeneratedNumbers = 0ul;
 }
 
@@ -50,6 +51,7 @@ RanluxRandomNumberGenerator::RanluxRandomNumberGenerator(unsigned int& seed)
 RanluxRandomNumberGenerator::RanluxRandomNumberGenerator(const RanluxRandomNumberGenerator& generator)
 {
   this->NbrGeneratedNumbers = generator.NbrGeneratedNumbers;
+  this->iset=generator.iset;
 }
 
 // destructor

@@ -52,7 +52,7 @@ using std::endl;
 // fermionicStatistics = flag indicating whether the pfaffian should be multiplied by a squared Jastrow Factor
 AdvancedReadRezayiOnSphereWaveFunction::AdvancedReadRezayiOnSphereWaveFunction(int nbrParticlesPerCluster, int nbrClusters, bool fermionicStatistics)
 {
-  this->NbrParticles = 2*nbrParticlesPerCluster;
+  this->NbrParticles = nbrClusters*nbrParticlesPerCluster;
   this->ClusterSize = nbrParticlesPerCluster;
   this->NbrClusters = nbrClusters;
   this->FermionicStatistics = fermionicStatistics;

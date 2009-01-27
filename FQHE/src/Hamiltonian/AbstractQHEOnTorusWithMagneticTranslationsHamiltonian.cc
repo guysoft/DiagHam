@@ -526,7 +526,7 @@ long AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::FastMultiplicationMe
 	  for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); i += this->FastMultiplicationStep)
 	    Memory += this->NbrInteractionPerComponent[i];
 	}
-      int* TmpNbrInteractionPerComponent = TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
+      int* TmpNbrInteractionPerComponent = new int [ReducedSpaceDimension];
       for (int i = 0; i < ReducedSpaceDimension; ++i)
 	TmpNbrInteractionPerComponent[i] = this->NbrInteractionPerComponent[i * this->FastMultiplicationStep];
       delete[] this->NbrInteractionPerComponent;

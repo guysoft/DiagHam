@@ -332,6 +332,12 @@ class BosonOnLatticeKy : public ParticleOnLattice
 
   // conversion to generic (full) many-body representation in real-space basis
   // state: many-body state in Ky-momentum basis
+  // nbodyBasis: full Hilbert-space in real-space representation
+  // returns: vector in many-body basis of targetSpace
+  virtual ComplexVector& ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis);
+
+  // conversion to generic (full) many-body representation in real-space basis
+  // state: many-body state in Ky-momentum basis
   // nbodyBasis: full Hilbert-space in real-space representation (should be object of type BosonOnLattice)
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate

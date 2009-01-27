@@ -248,6 +248,7 @@ int main(int argc, char** argv)
   ComplexVector CFState(Space->GetHilbertSpaceDimension(), true);
   ComplexVector JastrowState(Space->GetHilbertSpaceDimension(), true);
 
+  /*
   ComplexVector AnalyticJastrowX(Space->GetHilbertSpaceDimension(), true);
   ComplexVector AnalyticRelativeX(Space->GetHilbertSpaceDimension(), true);
   ComplexVector AnalyticCM1X(Space->GetHilbertSpaceDimension(), true);
@@ -261,6 +262,7 @@ int main(int argc, char** argv)
   ComplexVector AnalyticCM2Y(Space->GetHilbertSpaceDimension(), true);
   ComplexVector Analytic1Y(Space->GetHilbertSpaceDimension(), true);
   ComplexVector Analytic2Y(Space->GetHilbertSpaceDimension(), true);
+  */
 
   // for calculation of analytic Laughlin state:
   // with Landau-gauge along x-axis:
@@ -317,7 +319,7 @@ int main(int argc, char** argv)
 	      SumSqX+=PosX[q]*PosX[q];
 	      SumSqY+=PosY[q]*PosY[q];
 	    }
-
+	  /*
 	  FRelX=1.0;
 	  for (int bi = 1; bi < NbrBosons; ++bi)
 	    for (int bj = 0; bj < bi; ++bj)
@@ -345,7 +347,7 @@ int main(int argc, char** argv)
 // 	  ThetaCM2Y.PrintValue(cout,Complex((2.0*(double)SumY)/Ly,(2.0*(double)SumX)/Ly))<<endl;
 	  Analytic1Y[i] = AnalyticRelativeY[i] * AnalyticCM1Y[i];
 	  Analytic2Y[i] = AnalyticRelativeY[i] * AnalyticCM2Y[i];
-
+	  */
 	}
       
     }
@@ -363,7 +365,8 @@ int main(int argc, char** argv)
   CFState /= CFState.Norm();
   CFState.WriteVector(TmpC);
 
-  
+
+  /*
   // writing Laughlin state in Landau gauge along x-direction
   if (Manager.GetBoolean("analytic"))
     {
@@ -417,6 +420,7 @@ int main(int argc, char** argv)
       sprintf(TmpC,"%s.A2Y.vec",OutputName);
       Analytic2Y.WriteVector(TmpC);
     }
+  */
   
   delete [] TmpC;
   delete [] QuantumNumbers;

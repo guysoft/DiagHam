@@ -41,6 +41,7 @@ StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const unsigned int& see
   this->NbrGeneratedNumbers = 0ul;
   if (seed != 0)
     srand (seed);
+  this->iset=0;
 }
 
 // copy constructor
@@ -50,6 +51,7 @@ StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const unsigned int& see
 StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const StdlibRandomNumberGenerator& generator)
 {
   this->NbrGeneratedNumbers = generator.NbrGeneratedNumbers;
+  this->iset=generator.iset;
 }
 
 // destructor

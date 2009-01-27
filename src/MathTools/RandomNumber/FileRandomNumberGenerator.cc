@@ -53,6 +53,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(char* inputFile, unsigned l
   this->IntegerRandomNumbers = new unsigned long [this->NbrRandomNumbers];  
   this->Flag.Initialize();
   this->Position = 0ul;
+  this->iset=0;
   ifstream File;
   File.open(inputFile, ios::binary | ios::in);
   if (!File.is_open())
@@ -91,6 +92,7 @@ FileRandomNumberGenerator::FileRandomNumberGenerator(AbstractRandomNumberGenerat
   this->IntegerRandomNumbers = new unsigned long [this->NbrRandomNumbers];
   this->MaxInteger = generator->GetMaxInteger();
   double InvMax = 1.0 / ((double) generator->GetMaxInteger());
+  this->iset=0;
   for (unsigned long i = 0; i < this->NbrRandomNumbers; ++i)
     {
       this->IntegerRandomNumbers[i] = generator->GetIntegerRandomNumber();
