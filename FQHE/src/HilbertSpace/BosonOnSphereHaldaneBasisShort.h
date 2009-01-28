@@ -93,6 +93,10 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // return value = converted vector
   RealVector ConvertFromNbodyBasis(RealVector& state, BosonOnSphereShort& nbodyBasis);
 
+  // create the Jack polynomial decomposition corresponding to the root partition
+  //
+  RealVector GenerateJackPolynomial();
+
 };
 
 #endif

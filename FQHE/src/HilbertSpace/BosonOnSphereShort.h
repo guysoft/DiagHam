@@ -208,6 +208,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
   // evaluate wave function in real space using a given basis and only for a given range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -228,6 +235,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
 
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component as to be normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference = 0);
+
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -244,6 +258,26 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial  bosonic state
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  void ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  unsigned long ConvertFromMonomial(unsigned long* initialState);
 
 };
 
@@ -313,6 +347,59 @@ inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int i
     }
   --finalStateLzMax;
 }
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial  bosonic state
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnSphereShort::ConvertToMonomial(unsigned long* initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  for (int i = initialStateLzMax; i >= 0; --i)
+    for (int j = 0; j < initialState[i]; ++j)
+      finalState[Index++] = i;
+}
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void BosonOnSphereShort::ConvertToMonomial(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState)
+{
+  int Index = 0;
+  int TmpLz = initialStateLzMax - this->NbrBosons + 1;
+  while (initialStateLzMax >= 0)
+    {
+      while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) != 0x0ul))
+	{
+	  finalState[Index++] = TmpLz;
+	  --initialStateLzMax;
+	}
+      while ((initialStateLzMax >= 0) && (((initialState >> initialStateLzMax) & 0x1ul) == 0x0ul))
+	{
+	  --TmpLz;
+	  --initialStateLzMax;
+	}
+    }
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long BosonOnSphereShort::ConvertFromMonomial(unsigned long* initialState)
+{
+  unsigned long Tmp = 0x0ul;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
+  return Tmp;
+}
+
 
 #endif
 
