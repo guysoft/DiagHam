@@ -98,6 +98,23 @@ FactorialCoefficient::~FactorialCoefficient()
   delete[] this->Denominator;
 }
 
+// assignement
+//
+// factorial = factorial coefficient to assign
+// return value = reference on current factorial coefficient
+
+FactorialCoefficient& FactorialCoefficient::operator = (FactorialCoefficient& factorial)
+{
+  this->NumeratorPosition = factorial.NumeratorPosition;
+  this->DenominatorPosition = factorial.DenominatorPosition;
+  for (int i = 0; i < MAX_INTEGER_SIZE; ++i)
+    {
+      this->Numerator[i] = factorial.Numerator[i];
+      this->Denominator[i] = factorial.Denominator[i];
+    }
+  return *this;
+}
+
 // set the coefficient to one
 //
 // return value = reference on current coefficient

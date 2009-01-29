@@ -71,6 +71,12 @@ class FactorialCoefficient
   //
   ~FactorialCoefficient();
 
+  // assignement
+  //
+  // factorial = factorial coefficient to assign
+  // return value = reference on current factorial coefficient
+  FactorialCoefficient& operator = (FactorialCoefficient& factorial);
+
   // set the coefficient to one
   //
   // return value = reference on current coefficient
