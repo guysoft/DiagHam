@@ -95,7 +95,9 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
 
   // create the Jack polynomial decomposition corresponding to the root partition
   //
-  RealVector GenerateJackPolynomial();
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  RealVector GenerateJackPolynomial(double alpha);
 
 };
 

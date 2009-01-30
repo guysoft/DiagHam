@@ -13,6 +13,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
@@ -38,10 +39,11 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
+  (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
+  (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
+  (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -59,7 +61,16 @@ int main(int argc, char** argv)
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0; 
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  double Alpha = ((BooleanOption*) Manager["alpha"])->GetBoolean();
   int TotalLz = 0;
+  char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
+  char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
+
+  if ((OutputTxtFileName == 0) && (OutputFileName == 0))
+    {
+      cout << "error, an output file (binary or text) has to be provided" << endl;
+      return 0;
+    }
 
   int* ReferenceState = 0;
   if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
@@ -104,15 +115,25 @@ int main(int argc, char** argv)
 
   BosonOnSphereHaldaneBasisShort InitialSpace (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
 
-  RealVector OutputState = InitialSpace.GenerateJackPolynomial();
+  RealVector OutputState = InitialSpace.GenerateJackPolynomial(Alpha);
 //  InitialSpace.ConvertToUnnormalizedMonomial(InputState);
   OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString());
 
-   for (int i = 0; i < InitialSpace.GetHilbertSpaceDimension(); ++i)
-     {
-       cout << OutputState[i];// << " (" << InputState[i] << ") ";
-       InitialSpace.PrintStateMonomial(cout, i) << endl;
-     }
+  if (OutputTxtFileName != 0)
+    {
+      ofstream File;
+      File.open(OutputTxtFileName, ios::binary | ios::out);
+      for (int i = 0; i < InitialSpace.GetHilbertSpaceDimension(); ++i)
+	{
+	  File << OutputState[i] << " ";
+	  InitialSpace.PrintStateMonomial(File, i) << endl;
+	}
+      File.close();
+    }
+  if (OutputFileName != 0)
+    {
+      OutputState.WriteVector(OutputFileName);
+    }
   return 0;
 }
 
