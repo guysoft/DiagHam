@@ -105,13 +105,14 @@ int main(int argc, char** argv)
   BosonOnSphereHaldaneBasisShort InitialSpace (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
 
   RealVector OutputState = InitialSpace.GenerateJackPolynomial();
-  InitialSpace.ConvertToUnnormalizedMonomial(InputState);
+//  InitialSpace.ConvertToUnnormalizedMonomial(InputState);
+  OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString());
 
-  for (int i = 0; i < InitialSpace.GetHilbertSpaceDimension(); ++i)
-    {
-      cout << OutputState[i] << " (" << InputState[i] << ") ";
-      InitialSpace.PrintStateMonomial(cout, i) << endl;
-    }
+   for (int i = 0; i < InitialSpace.GetHilbertSpaceDimension(); ++i)
+     {
+       cout << OutputState[i];// << " (" << InputState[i] << ") ";
+       InitialSpace.PrintStateMonomial(cout, i) << endl;
+     }
   return 0;
 }
 

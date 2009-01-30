@@ -358,7 +358,7 @@ inline void BosonOnSphereShort::ConvertToMonomial(unsigned long* initialState, i
 {
   int Index = 0;
   for (int i = initialStateLzMax; i >= 0; --i)
-    for (int j = 0; j < initialState[i]; ++j)
+    for (unsigned long j = 0l; j < initialState[i]; ++j)
       finalState[Index++] = i;
 }
 
