@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 
 #include <iostream>
 
@@ -45,6 +46,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
 {
 
   friend class FermionOnSphereHaldaneSymmetricBasis;
+  friend class BosonOnSphereHaldaneBasisShort;
 
  protected:
 
@@ -55,6 +57,11 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   unsigned long* TmpGeneratedStates;
   int* TmpGeneratedStatesLzMax;
   unsigned long* KeepStateFlag;
+
+  // shift to apply to a state before inverting its expression
+  int InvertShift;
+  // shift to apply to a state after inverting its expression
+  int InvertUnshift;
 
  public:
 
@@ -223,7 +230,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // evaluate upper bound for the Haldane basis with shifted values for lzMax and totalLz
   //
@@ -231,7 +238,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
-  virtual int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -244,7 +251,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual int GenerateStates(int lzMax, unsigned long referenceState, int pos, long& memory);
+  virtual long GenerateStates(int lzMax, unsigned long referenceState, long pos, long& memory);
 
   // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
   // 
@@ -254,10 +261,41 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // totalLz = momentum total value
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual int RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int pos);
+  virtual long RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, long pos);
 
+  // get Lz<->-Lz symmetric state of a given state 
+  //
+  // initialState = reference on the state whose symmetric counterpart has to be computed
+  unsigned long GetSymmetricState (unsigned long initialState);
 
 };
+
+// get Lz<->-Lz symmetric state of a given state 
+//
+// initialState = reference on the state whose symmetric counterpart has to be computed
+
+inline unsigned long FermionOnSphereHaldaneBasis::GetSymmetricState (unsigned long initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 56]; 
+#else
+  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
+  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= InvertTable[initialState >> 24];
+#endif	
+  TmpState >>= this->InvertUnshift;
+  return TmpState;
+}
+
 
 #endif
 

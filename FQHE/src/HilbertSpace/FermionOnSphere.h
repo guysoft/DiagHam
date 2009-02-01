@@ -306,12 +306,6 @@ class FermionOnSphere :  public ParticleOnSphere
   // holeBasis = n-body basis on which the symmetrized state has to be expressed
   virtual RealVector ParticleHoleSymmetrize (RealVector& state, FermionOnSphere& holeBasis);
 
-  // compute particule-hole symmetric state from a given state
-  //
-  // state = vector corresponding to the state to symmetrize
-  // holeBasis = n-body basis on which the symmetrized state has to be expressed
-  virtual RealVector ParticleHoleSymmetrize2 (RealVector& state, FermionOnSphere& holeBasis);
-
   // find state index from a string
   //
   // stateDescription = string describing the state
@@ -333,7 +327,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // lzMax = momentum maximum value for a fermion
   // totalLz = momentum total value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
   //
@@ -341,7 +335,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // lzMax = two times momentum maximum value for a fermion plus one 
   // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
   // return value = Hilbert space dimension  
-  int ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
+  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz);
 
   // generate look-up table associated to current Hilbert space
   // 

@@ -54,7 +54,10 @@ class AbstractHilbertSpace
 
    // dimension of the hilbert space
   int HilbertSpaceDimension;
-  
+
+  // dimension of the hilbert space for large Hilbert space
+  long LargeHilbertSpaceDimension;
+
   // garbage flag used to share datas from different copy of the same hilbert space
   GarbageFlag Flag;
 
@@ -73,6 +76,11 @@ class AbstractHilbertSpace
   //
   // return value = Hilbert space dimension
   virtual int GetHilbertSpaceDimension();
+
+  // return Hilbert space dimension for large Hilbert space
+  //
+  // return value = Hilbert space dimension
+  virtual long GetLargeHilbertSpaceDimension();
 
   // return a list of all possible quantum numbers 
   //
@@ -114,6 +122,15 @@ class AbstractHilbertSpace
 inline int AbstractHilbertSpace::GetHilbertSpaceDimension() 
 {
   return this->HilbertSpaceDimension;
+}
+
+// return Hilbert space dimension for large Hilbert space
+//
+// return value = Hilbert space dimension
+
+inline long AbstractHilbertSpace::GetLargeHilbertSpaceDimension()
+{
+  return this->LargeHilbertSpaceDimension;
 }
 
 #endif

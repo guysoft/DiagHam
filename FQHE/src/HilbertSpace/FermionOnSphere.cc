@@ -73,7 +73,11 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateLzMax = new int [this->HilbertSpaceDimension];
@@ -82,7 +86,7 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   this->GenerateLookUpTable(memory);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
-  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
   UsedMemory += this->NbrLzValue * sizeof(int);
   UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
@@ -107,6 +111,7 @@ FermionOnSphere::FermionOnSphere(const FermionOnSphere& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -166,6 +171,7 @@ FermionOnSphere& FermionOnSphere::operator = (const FermionOnSphere& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
@@ -207,13 +213,24 @@ bool FermionOnSphere::WriteHilbertSpace (char* fileName)
       return false;
     }
   WriteLittleEndian(File, this->HilbertSpaceDimension);
+  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);
   WriteLittleEndian(File, this->NbrFermions);
   WriteLittleEndian(File, this->LzMax);
   WriteLittleEndian(File, this->TotalLz);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    WriteLittleEndian(File, this->StateDescription[i]);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    WriteLittleEndian(File, this->StateLzMax[i]);
+  if (this->HilbertSpaceDimension != 0)
+    {
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateLzMax[i]);
+    }
+  else
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateDescription[i]);
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	WriteLittleEndian(File, this->StateLzMax[i]);
+    }
   File.close();
   return true;
 }
@@ -917,7 +934,7 @@ void FermionOnSphere::GenerateLookUpTable(unsigned long memory)
 // totalLz = momentum total value
 // return value = Hilbert space dimension
 
-int FermionOnSphere::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionOnSphere::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   return this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax, (totalLz + nbrFermions * lzMax) >> 1);
 }
@@ -929,17 +946,17 @@ int FermionOnSphere::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, i
 // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
 // return value = Hilbert space dimension
 
-int FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
+long FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz)
 {
   if ((nbrFermions == 0) || (totalLz < 0)  || (lzMax < (nbrFermions - 1)))
-    return 0;
+    return 0l;
   int LzTotalMax = ((2 * lzMax - nbrFermions + 1) * nbrFermions) >> 1;
   if (LzTotalMax < totalLz)
-    return 0;
+    return 0l;
   if ((nbrFermions == 1) && (lzMax >= totalLz))
-    return 1;
+    return 1l;
   if (LzTotalMax == totalLz)
-    return 1;
+    return 1l;
   return  (this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalLz - lzMax)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
@@ -1551,60 +1568,3 @@ RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOn
   return TmpVector;
 }
 
-// compute particule-hole symmetric state from a given state
-//
-// state = vector corresponding to the state to symmetrize
-// holeBasis = n-body basis on which the symmetrized state has to be expressed
-
-RealVector FermionOnSphere::ParticleHoleSymmetrize2 (RealVector& state, FermionOnSphere& holeBasis)
-{
-  int ShiftedTotalLz = (holeBasis.TotalLz + holeBasis.NbrFermions * holeBasis.LzMax) >> 1;
-  RealVector TmpVector(holeBasis.HilbertSpaceDimension, true);
-  unsigned long TmpMask = (0x1ul << (holeBasis.LzMax + 1)) - 1;
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      unsigned long TmpState = this->StateDescription[i] & TmpMask;
-      unsigned long Remainder = TmpState >> holeBasis.LzMax;
-      while ((Remainder != 0x0ul) && ((TmpState ^ Remainder) == (TmpState | Remainder)))
-	{
-	  TmpState |= Remainder;
-	  TmpState &= TmpMask;
-	  Remainder >>= holeBasis.LzMax;
-	}
-      int TmpLzMax = this->StateLzMax[i];
-//       int Pos = 0;
-//       for (int j = holeBasis.LzMax + 1; ((j <= TmpLzMax) && (Remainder != 0x0ul)); ++j)
-// 	{
-// 	  if (((Remainder >> j) & 0x1ul) != 0x0ul)
-// 	    {
-// 	      if ((TmpState & (0x1ul << Pos)) != 0x0ul)
-// 		Remainder = 0x0ul;
-// 	      else
-// 		{
-// 		  TmpState |= 0x1ul;
-// 		}
-// 	    }
-// 	  ++Pos;
-// 	  if (Pos > hole.LzMax)
-// 	    Pos = 0;
-// 	}
-      if (Remainder == 0x0ul)
-	{
-	  int TmpTotaLz = 0;
-	  int TmpNbrParticles = 0;
-	  TmpLzMax = 0;
-	  for (int j = 0; j <= holeBasis.LzMax; ++j)
-	    {
-	      if (((TmpState >> j) & 0x1ul) != 0x0ul)
-		{
-		  ++TmpNbrParticles;
-		  TmpTotaLz += j;
-		  TmpLzMax = j;
-		}
-	    }
-	  if ((TmpTotaLz == ShiftedTotalLz) && (TmpNbrParticles == holeBasis.NbrFermions))
-	    TmpVector[holeBasis.FindStateIndex(TmpState, TmpLzMax)] = state[i];
-	}
-    }
-  return TmpVector;  
-}

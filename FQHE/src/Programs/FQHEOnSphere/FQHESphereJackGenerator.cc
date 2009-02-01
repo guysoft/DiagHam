@@ -36,14 +36,18 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -61,7 +65,7 @@ int main(int argc, char** argv)
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0; 
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  double Alpha = ((BooleanOption*) Manager["alpha"])->GetBoolean();
+  double Alpha = ((SingleDoubleOption*) Manager["alpha"])->GetDouble();
   int TotalLz = 0;
   char* OutputFileName = ((SingleStringOption*) Manager["bin-output"])->GetString();
   char* OutputTxtFileName = ((SingleStringOption*) Manager["txt-output"])->GetString();
@@ -106,27 +110,35 @@ int main(int argc, char** argv)
       return 0;     
     }
 
-  RealVector InputState;
-  if (InputState.ReadVector (((SingleStringOption*) Manager["input-file"])->GetString()) == false)
+
+  BosonOnSphereHaldaneBasisShort* InitialSpace;
+  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+    InitialSpace = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+  else
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
-      return -1;      
+      InitialSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
+      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+	{
+	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	  return 0;
+	}
     }
-
-  BosonOnSphereHaldaneBasisShort InitialSpace (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);	  
-
-  RealVector OutputState = InitialSpace.GenerateJackPolynomial(Alpha);
+  RealVector OutputState;
+  if (SymmetrizedBasis == false)    
+    OutputState = InitialSpace->GenerateJackPolynomial(Alpha);
+  else
+    OutputState = InitialSpace->GenerateSymmetrizedJackPolynomial(Alpha);
 //  InitialSpace.ConvertToUnnormalizedMonomial(InputState);
-  OutputState.WriteVector(((SingleStringOption*) Manager["output-file"])->GetString());
 
   if (OutputTxtFileName != 0)
     {
       ofstream File;
       File.open(OutputTxtFileName, ios::binary | ios::out);
-      for (int i = 0; i < InitialSpace.GetHilbertSpaceDimension(); ++i)
+      File.precision(14);
+      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
 	{
 	  File << OutputState[i] << " ";
-	  InitialSpace.PrintStateMonomial(File, i) << endl;
+	  InitialSpace->PrintStateMonomial(File, i) << endl;
 	}
       File.close();
     }

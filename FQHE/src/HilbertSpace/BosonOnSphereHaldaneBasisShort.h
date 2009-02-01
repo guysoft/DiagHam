@@ -64,6 +64,12 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // referenceState = array that describes the reference state to start from
   BosonOnSphereHaldaneBasisShort (int nbrBosons, int totalLz, int lzMax, int* referenceState);
 
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memory = amount of memory granted for precalculations
+  BosonOnSphereHaldaneBasisShort (char* fileName);
+
   // copy constructor (without duplicating datas)
   //
   // bosons = reference on the hilbert space to copy to copy
@@ -78,6 +84,12 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
   BosonOnSphereHaldaneBasisShort& operator = (const BosonOnSphereHaldaneBasisShort& bosons);
+
+  // save Hilbert space description to disk
+  //
+  // fileName = name of the file where the Hilbert space description has to be saved
+  // return value = true if no error occured
+  virtual bool WriteHilbertSpace (char* fileName);
 
   // convert a given state from Haldane basis to the usual n-body basis
   //
@@ -98,6 +110,12 @@ class BosonOnSphereHaldaneBasisShort :  public BosonOnSphereShort
   // alpha = value of the Jack polynomial alpha coefficient
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   RealVector GenerateJackPolynomial(double alpha);
+
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
+  //
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  RealVector GenerateSymmetrizedJackPolynomial(double alpha);
 
 };
 
