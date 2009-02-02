@@ -70,6 +70,7 @@ BosonOnSphereShort::BosonOnSphereShort (int nbrBosons, int totalLz, int lzMax)
   this->NbrLzValue = this->LzMax + 1;
   this->FermionBasis = new FermionOnSphere(nbrBosons, totalLz, lzMax + nbrBosons - 1);
   this->HilbertSpaceDimension = this->FermionBasis->HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->FermionBasis->LargeHilbertSpaceDimension;
 
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
@@ -100,6 +101,7 @@ BosonOnSphereShort::BosonOnSphereShort(const BosonOnSphereShort& bosons)
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->Minors = bosons.Minors;
@@ -156,6 +158,7 @@ BosonOnSphereShort& BosonOnSphereShort::operator = (const BosonOnSphereShort& bo
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->KeptCoordinates = bosons.KeptCoordinates;
@@ -841,5 +844,142 @@ RealVector& BosonOnSphereShort::ConvertToUnnormalizedMonomial(RealVector& state,
       state[i] *= Coefficient;
     }
   return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& state, unsigned int reference)
+{
+  unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  double Factor = state[reference];
+  state[reference] = 1.0;
+  this->ConvertToMonomial(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], TmpMonomialReference);
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  BinomialCoefficients Binomials(this->LzMax);
+  for (int k = 0; k <= this->LzMax; ++k)
+    {
+      InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+    }
+  FactorialCoefficient ReferenceFactorial;
+  FactorialCoefficient Factorial;
+  this->FermionToBoson(this->FermionBasis->StateDescription[reference], this->FermionBasis->StateLzMax[reference], 
+		       this->TemporaryState, this->TemporaryStateLzMax);
+  for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+    if (this->TemporaryState[k] > 1)
+      ReferenceFactorial.FactorialMultiply(this->TemporaryState[k]);
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+    {
+      this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons))
+	{
+	  while ((Index1 < this->NbrBosons) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrBosons)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrBosons)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	  ++Index2;
+	}
+      Factorial = ReferenceFactorial;
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial.FactorialDivide(this->TemporaryState[k]);
+      Coefficient *= sqrt(Factorial.GetNumericalValue());
+      state[i] *= Coefficient;
+    }
+  state /= state.Norm();
+  return state;
+}
+
+// fuse two states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// leftVector = reference on the vector whose Hilbert space will be fuse to the left
+// rightVector = reference on the vector whose Hilbert space will be fuse to the right
+// padding = number of unoccupied one body states that have to be inserted between the fused left and right spaces
+// leftSpace = point to the Hilbert space that will be fuse to the left
+// rightSpace = point to the Hilbert space that will be fuse to the right
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// return value = reference on the fused state
+
+RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
+					   ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
+					   bool symmetrizedFlag)
+{
+  BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
+  BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
+   int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
+  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+      double Coefficient = leftVector[i];
+      int TmpLzMax = this->FermionBasis->LzMax;
+      while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      double Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient2;
+	    }
+	}
+      else
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      double Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax);
+	      outputVector[TmpIndex] = Coefficient2;
+	      unsigned long TmpState3 = this->FermionBasis->GetSymmetricState(TmpState2);
+	      if (TmpState3 != TmpState2)
+		{
+		  int TmpLzMax2 = this->FermionBasis->LzMax;
+		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+		    --TmpLzMax2;
+		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState3, TmpLzMax2);
+		  outputVector[TmpIndex] = Coefficient2;      
+		}
+	    }
+	}
+    }
+  return outputVector;
 }
 

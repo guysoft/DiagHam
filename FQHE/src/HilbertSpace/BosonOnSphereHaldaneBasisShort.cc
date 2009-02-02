@@ -242,13 +242,13 @@ RealVector BosonOnSphereHaldaneBasisShort::ConvertFromNbodyBasis(RealVector& sta
 
 // create the Jack polynomial decomposition corresponding to the root partition
 //
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(double alpha)
+RealVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RealVector& jack, double alpha)
 {
-  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
-  TmpVector[0] = 1.0;
+  jack[0] = 1.0;
   double InvAlpha =  2.0 / alpha;
 
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -303,26 +303,26 @@ RealVector BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(double alpha)
 		  {
 		    long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
 		    if (TmpIndex < this->HilbertSpaceDimension)
-		      Coefficient += Diff * TmpVector[TmpIndex];
+		      Coefficient += Diff * jack[TmpIndex];
 		  }
 	      }
 	  }
-      TmpVector[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
     }
   delete[] TmpMonomial;
 
-  return TmpVector;
+  return jack;
 }
 
 // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
 //
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
 // alpha = value of the Jack polynomial alpha coefficient
 // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
 
-RealVector BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(double alpha)
+RealVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
 {
-  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
-  TmpVector[0] = 1.0;
+  jack[0] = 1.0;
   double InvAlpha =  2.0 / alpha;
 
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -335,7 +335,7 @@ RealVector BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(dou
     RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
   int ReducedNbrBosons = this->NbrBosons - 1;
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
-    if (TmpVector[i] == 0.0)
+    if (jack[i] == 0.0)
       {
 	double Rho = 0.0;
 	unsigned long CurrentPartition = this->FermionBasis->StateDescription[i];
@@ -377,7 +377,7 @@ RealVector BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(dou
 		    {
 		      long TmpIndex = this->FermionBasis->FindStateIndex(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
 		      if (TmpIndex < this->HilbertSpaceDimension)
-			Coefficient += Diff * TmpVector[TmpIndex];
+			Coefficient += Diff * jack[TmpIndex];
 		    }
 		}
 	    }
@@ -386,9 +386,9 @@ RealVector BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolynomial(dou
 	Coefficient *= InvAlpha;
 	Coefficient /= (RhoRoot - Rho);
 	if (i < TmpIndex)
-	  TmpVector[TmpIndex] = Coefficient;
-	TmpVector[i] = Coefficient;
+	  jack[TmpIndex] = Coefficient;
+	jack[i] = Coefficient;
       }
   delete[] TmpMonomial;
-  return TmpVector;
+  return jack;
 }

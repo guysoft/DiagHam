@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "alpha coefficient of the Jack polynomial", -2.0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
       cout << "NbrParticles is not defined or as a wrong value" << endl;
       return 0;
     }
-  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", NbrFluxQuanta) == false) || (NbrFluxQuanta <= 0))
+  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", NbrFluxQuanta) == false) || (NbrFluxQuanta < 0))
     {
       cout << "LzMax is not defined or as a wrong value" << endl;
       return 0;
@@ -124,11 +125,18 @@ int main(int argc, char** argv)
 	}
     }
   RealVector OutputState;
-  if (SymmetrizedBasis == false)    
-    OutputState = InitialSpace->GenerateJackPolynomial(Alpha);
+  if (Manager.GetString("initial-state") == 0)
+    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
   else
-    OutputState = InitialSpace->GenerateSymmetrizedJackPolynomial(Alpha);
-//  InitialSpace.ConvertToUnnormalizedMonomial(InputState);
+    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+      {
+	cout << "can't open " << Manager.GetString("initial-state") << endl;
+	return -1;
+      }
+  if (SymmetrizedBasis == false)    
+    InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+  else
+    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
 
   if (OutputTxtFileName != 0)
     {

@@ -263,19 +263,19 @@ inline unsigned long FermionOnSphereHaldaneSymmetricBasis::GetCanonicalState (un
 {
   initialState <<= this->InvertShift;
 #ifdef __64_BITS__
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
-  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
-  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 56]; 
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 56]; 
 #else
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 24];
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 24];
 #endif	
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
@@ -293,19 +293,19 @@ inline void FermionOnSphereHaldaneSymmetricBasis::GetStateSymmetry (unsigned lon
 {
   initialState <<= this->InvertShift;
 #ifdef __64_BITS__
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
-  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
-  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 56];  
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 56];  
 #else
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 24];
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 24];
 #endif
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
@@ -322,19 +322,19 @@ inline unsigned long FermionOnSphereHaldaneSymmetricBasis::GetSignedCanonicalSta
 {
   initialState <<= this->InvertShift;
 #ifdef __64_BITS__
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 56;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 48;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 40;
-  TmpState |= InvertTable[(initialState >> 24) & 0xff] << 32;
-  TmpState |= InvertTable[(initialState >> 32) & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 40) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 48) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 56];  
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 56];  
 #else
-  unsigned long TmpState = InvertTable[initialState & 0xff] << 24;
-  TmpState |= InvertTable[(initialState >> 8) & 0xff] << 16;
-  TmpState |= InvertTable[(initialState >> 16) & 0xff] << 8;
-  TmpState |= InvertTable[initialState >> 24];
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 24];
 #endif
   initialState >>= this->InvertShift;
   TmpState >>= this->InvertUnshift;
