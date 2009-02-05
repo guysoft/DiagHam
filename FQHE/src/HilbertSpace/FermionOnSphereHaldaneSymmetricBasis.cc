@@ -93,20 +93,24 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
   this->TotalLz = 0;
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
 
-  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateLzMax = new int [this->HilbertSpaceDimension];
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
 #ifdef  __64_BITS__
-  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 6) + 1;
+  long ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 6) + 1;
 #else
-  int ReducedHilbertSpaceDimension = (this->HilbertSpaceDimension >> 5) + 1;
+  long ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 5) + 1;
 #endif
   this->KeepStateFlag = new unsigned long [ReducedHilbertSpaceDimension];
-  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+  for (long i = 0; i < ReducedHilbertSpaceDimension; ++i)
     this->KeepStateFlag[i] = 0x0l;
-  this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+  this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0l);
   this->GenerateLookUpTable(memory);
 
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
@@ -122,7 +126,7 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
 #endif
   this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1, Memory);  
 
-  int NewHilbertSpaceDimension = 0;
+  long NewHilbertSpaceDimension = 0l;
   unsigned long TmpKeepStateFlag;
   int TmpNbrOne[] = {  
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 
@@ -162,15 +166,15 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   for (int i = 0; i < this->NbrLzValue; ++i)
     delete[] this->LookUpTable[i];
   delete[] this->LookUpTable;
-  NewHilbertSpaceDimension = 0;
+  NewHilbertSpaceDimension = 0l;
 #ifdef  __64_BITS__
-  if ((this->HilbertSpaceDimension & 0x3f) == 0)
+  if ((this->LargeHilbertSpaceDimension & 0x3fl) == 0)
 #else
-  if ((this->HilbertSpaceDimension & 0x1f) == 0)
+  if ((this->LargeHilbertSpaceDimension & 0x1fl) == 0)
 #endif
     --ReducedHilbertSpaceDimension;
-  int TotalIndex = 0;
-  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+  long TotalIndex = 0;
+  for (long i = 0; i < ReducedHilbertSpaceDimension; ++i)
     {
       TmpKeepStateFlag = this->KeepStateFlag[i];
 #ifdef  __64_BITS__
@@ -189,9 +193,9 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
     }
   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
   int* TmpStateLzMax = new int [NewHilbertSpaceDimension];
-  NewHilbertSpaceDimension = 0;
-  TotalIndex = 0;
-  for (int i = 0; i < ReducedHilbertSpaceDimension; ++i)
+  NewHilbertSpaceDimension = 0l;
+  TotalIndex = 0l;
+  for (long i = 0l; i < ReducedHilbertSpaceDimension; ++i)
     {
       TmpKeepStateFlag = this->KeepStateFlag[i];
 #ifdef  __64_BITS__
@@ -210,43 +214,27 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
 	}
     }
 
-// #ifdef  __64_BITS__
-//   this->HilbertSpaceDimension &= 0x3f;
-// #else
-//   this->HilbertSpaceDimension &= 0x1f;
-// #endif
-//   TmpKeepStateFlag = this->KeepStateFlag[ReducedHilbertSpaceDimension];
-//   for (int j = 0; j < this->HilbertSpaceDimension; ++j)
-//     {
-//       if ((TmpKeepStateFlag >> j) & 0x1l)
-// 	{
-// 	  if (this->StateDescription[TotalIndex] == this->GetCanonicalState(this->StateDescription[TotalIndex]))
-// 	    {
-// 	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
-// 	      TmpStateLzMax[NewHilbertSpaceDimension] = this->StateLzMax[TotalIndex];
-// 	      ++NewHilbertSpaceDimension;	  
-// 	    }
-// 	}
-//       ++TotalIndex;
-//     }
-
   
   delete[] this->StateDescription;
   delete[] this->StateLzMax;
   delete[] this->KeepStateFlag;
   this->StateDescription = TmpStateDescription;
   this->StateLzMax = TmpStateLzMax;
-  this->HilbertSpaceDimension = NewHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 
   delete[] this->TmpGeneratedStates;
   delete[] this->TmpGeneratedStatesLzMax;
 
   this->GenerateLookUpTable(memory);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
-  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
   UsedMemory += this->NbrLzValue * sizeof(int);
   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
@@ -277,6 +265,7 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (char
       return;
     }
   ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
   ReadLittleEndian(File, this->NbrFermions);
   ReadLittleEndian(File, this->LzMax);
   ReadLittleEndian(File, this->TotalLz);
@@ -305,14 +294,14 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (char
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();
 
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     this->StateDescription[i] &= FERMION_SPHERE_SYMMETRIC_MASK;
   this->GenerateLookUpTable(memory);
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     this->GetStateSymmetry(this->StateDescription[i]);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
-  UsedMemory += ((unsigned long) this->HilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
   UsedMemory += this->NbrLzValue * sizeof(int);
   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
@@ -338,6 +327,7 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis(const
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
@@ -388,6 +378,7 @@ FermionOnSphereHaldaneSymmetricBasis& FermionOnSphereHaldaneSymmetricBasis::oper
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->LzMax = fermions.LzMax;
