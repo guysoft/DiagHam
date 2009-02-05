@@ -209,6 +209,20 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // create the Jack polynomial decomposition corresponding to the root partition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
+
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+
  protected:
 
   // find state index

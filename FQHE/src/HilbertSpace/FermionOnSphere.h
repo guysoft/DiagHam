@@ -37,6 +37,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
+#include "MathTools/BinomialCoefficients.h"
 
 
 #include <iostream>
@@ -286,6 +287,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -345,6 +353,13 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
 
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component as to be normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference);    
+
  protected:
 
   // find state index
@@ -390,6 +405,19 @@ class FermionOnSphere :  public ParticleOnSphere
   // initialState = reference on the state whose symmetric counterpart has to be computed
   virtual unsigned long GetSymmetricState (unsigned long initialState);
 
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void ConvertToMonomial(unsigned long initialState, int*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(int* initialState);
+
 };
 
 // get the particle statistic 
@@ -426,6 +454,33 @@ inline unsigned long FermionOnSphere::GetSymmetricState (unsigned long initialSt
   TmpState >>= this->InvertUnshift;
   return TmpState;
 }
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, int*& finalState)
+{
+  int Index = 0;
+  for (int j = this->LzMax; j >= 0; --j)
+    if (((initialState >> j) & 1ul) != 0ul)
+      finalState[Index++] = j;
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long FermionOnSphere::ConvertFromMonomial(int* initialState)
+{
+  unsigned long TmpState = 0x0ul;  
+  for (int j = 0; j < this->NbrFermions; ++j)
+    TmpState |= 0x1ul << initialState[j];
+  return TmpState;
+ }
 
 #endif
 

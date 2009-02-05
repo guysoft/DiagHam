@@ -233,6 +233,27 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
 
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has to be normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference = 0);
+
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, unsigned int reference = 0);
+
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
 };
 
 #endif

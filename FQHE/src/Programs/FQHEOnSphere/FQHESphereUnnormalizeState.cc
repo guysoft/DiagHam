@@ -1,5 +1,7 @@
 #include "Vector/RealVector.h"
 
+#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
@@ -72,14 +74,14 @@ int main(int argc, char** argv)
   char* OutputTxtFileName = Manager.GetString("txt-output");
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   
-  bool Statistics = false;
+  bool Statistics = true;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
 						   NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
       cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
       return -1;
     }
-
+  
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
     {
@@ -89,10 +91,20 @@ int main(int argc, char** argv)
   else
     {
       OutputFileName = new char [256];
-      if (Manager.GetBoolean("normalize"))	
-	sprintf (OutputFileName, "bosons_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+      if (Statistics == true)
+	{
+	  if (Manager.GetBoolean("normalize"))	
+	    sprintf (OutputFileName, "fermions_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  else
+	    sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	}
       else
-	sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	{
+	  if (Manager.GetBoolean("normalize"))	
+	    sprintf (OutputFileName, "bosons_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  else
+	    sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	}
     }
 
   RealVector OutputState;
@@ -102,18 +114,36 @@ int main(int argc, char** argv)
       return -1;      
     }
   
-  BosonOnSphereShort* OutputBasis = 0;
-  if (HaldaneBasisFlag == false)
-    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+  ParticleOnSphere* OutputBasis = 0;
+  if (Statistics == true)
+    {
+      if (HaldaneBasisFlag == false)
+	OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	    return -1;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
+	  else
+	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	}
+    }
   else
     {
-      int* ReferenceState = 0;
-      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-	return -1;
-      if (Manager.GetString("load-hilbert") != 0)
-	OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+      if (HaldaneBasisFlag == false)
+	OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
       else
-	OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	{
+	  int* ReferenceState = 0;
+	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	    return -1;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	  else
+	    OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	}
     }
 
   if (Manager.GetBoolean("normalize"))

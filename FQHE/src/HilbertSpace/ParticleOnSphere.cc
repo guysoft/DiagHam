@@ -312,3 +312,36 @@ int ParticleOnSphere::FindStateIndex(char* stateDescription)
   return -1;
 }
 
+// convert a state such that its components are now expressed in the unnormalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has to be normalized to 1
+// return value = converted state
+
+RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference)
+{
+  return state;
+}
+
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, unsigned int reference)
+{
+  return state;
+}
+
+// print a given State using the monomial notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& ParticleOnSphere::PrintStateMonomial (ostream& Str, int state)
+{
+  return Str;
+}
+
