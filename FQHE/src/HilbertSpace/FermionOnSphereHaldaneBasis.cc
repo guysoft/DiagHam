@@ -272,18 +272,55 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (char* fileName, unsign
       this->HilbertSpaceDimension = 0;
       return;
     }
+  File.seekg (0l, ios::end);
+  unsigned long FileSize = File.tellg ();
+  File.close();
+
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+ 
+
   ReadLittleEndian(File, this->HilbertSpaceDimension);
+  FileSize -= sizeof (int);
   ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  FileSize -= sizeof (unsigned long);
+  cout << this->LargeHilbertSpaceDimension << endl;
   ReadLittleEndian(File, this->NbrFermions);
+  FileSize -= sizeof (int);
   ReadLittleEndian(File, this->LzMax);
+  FileSize -= sizeof (int);
   ReadLittleEndian(File, this->TotalLz);
+  FileSize -= sizeof (int);
   ReadLittleEndian(File, this->ReferenceState);
+  FileSize -= sizeof (unsigned long);
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     ReadLittleEndian(File, this->StateDescription[i]);
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-    ReadLittleEndian(File, this->StateLzMax[i]);
+  FileSize -= this->LargeHilbertSpaceDimension * sizeof (unsigned long);
+  if (FileSize == 0ul)
+    {
+
+      int TmpLzMax = this->LzMax;
+      this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long TmpState = this->StateDescription[i];
+	  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  this->StateLzMax[i] = TmpLzMax;
+	}
+   }
+  else
+    {
+      this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	ReadLittleEndian(File, this->StateLzMax[i]);
+    }
   File.close();
 
 #ifdef __64_BITS__

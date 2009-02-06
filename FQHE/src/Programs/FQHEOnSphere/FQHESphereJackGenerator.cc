@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSphereSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
+#include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
@@ -46,6 +47,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "compute the slater decomposition of the Jack polynomial times Vandermonde");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "file-size", "maximum file size (in MBytes) when using huge mode", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
@@ -159,6 +163,12 @@ int main(int argc, char** argv)
     }
   else
     {
+      if (Manager.GetBoolean("huge-basis") != 0)
+	{
+	  FermionOnSphereHaldaneHugeBasis* InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, Manager.GetInteger("memory"));
+	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	  return 0;
+	}
       FermionOnSphereHaldaneBasis* InitialSpace;
       if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
 	InitialSpace = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());

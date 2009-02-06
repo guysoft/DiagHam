@@ -75,6 +75,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->SizeLimit = maxFileSize << 17;
   this->HilbertSpaceDimension = 0;
   this->ReferenceState = 0x0l;
+  this->SymmetricFlag = symmetricFlag;
+  this->MaximumSignLookUp = 16;
   int ReferenceStateLzMax = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
@@ -262,7 +264,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 #endif
    this->GenerateStates(ReferenceStateLzMax, this->ReferenceState, 1l, Memory);
 
-   if ((symmetricFlag == false) || (this->TotalLz != 0))
+   if ((this->SymmetricFlag == false) || (this->TotalLz != 0))
      {
        unsigned long NewHilbertSpaceDimension = 0;
        unsigned long TmpKeepStateFlag;
@@ -298,6 +300,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 #endif
 	 }
        cout << "Haldane space dimension = " << NewHilbertSpaceDimension << endl;
+       this->FullLargeHilbertSpaceDimension =  this->LargeHilbertSpaceDimension;
+       this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
+       if (this->LargeHilbertSpaceDimension >= (1l << 31))
+	 this->HilbertSpaceDimension = 0;
+       else
+	 this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
      }
    else
      {
@@ -363,6 +371,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 	 }
        cout << "total symmetric space dimension = " << NewTotalHilbertSpaceDimension << endl;
        cout << "Haldane symmetric space dimension = " << NewHilbertSpaceDimension << endl;
+       this->FullLargeHilbertSpaceDimension =  this->LargeHilbertSpaceDimension;
+       this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
+       if (this->LargeHilbertSpaceDimension >= (1l << 31))
+	 this->HilbertSpaceDimension = 0;
+       else
+	 this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
      }
 
    this->GenerateLookUpTable(memory);
@@ -488,6 +502,7 @@ bool FermionOnSphereHaldaneHugeBasis::WriteHilbertSpace (char* fileName)
   WriteLittleEndian(File, this->NbrFermions);
   WriteLittleEndian(File, this->LzMax);
   WriteLittleEndian(File, this->TotalLz);
+  WriteLittleEndian(File, this->ReferenceState);
 
   long TotalIndex = 0;
   long LocalIndex = 0;
@@ -498,7 +513,8 @@ bool FermionOnSphereHaldaneHugeBasis::WriteHilbertSpace (char* fileName)
   if (TmpBufferIndex < 0)
     TmpBufferIndex = this->LoadLowestLzBuffer(TmpFileIndex);
   unsigned long* TmpStateDescriptionBuffers = this->StateDescriptionBuffers[TmpBufferIndex];
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+  long Count = 0;;
+  for (long i = 0; i < this->FullLargeHilbertSpaceDimension; ++i)
     {
 #ifdef  __64_BITS__
       unsigned long& TmpKeepStateFlag = this->KeepStateFlag[i >> 6];	   
@@ -507,14 +523,17 @@ bool FermionOnSphereHaldaneHugeBasis::WriteHilbertSpace (char* fileName)
 #endif	   
 #ifdef  __64_BITS__
       if (((TmpKeepStateFlag >> (i & 0x3ful)) & 0x1ul) != 0ul)
-	WriteLittleEndian(File, this->StateDescription[i]);
-      else
-	TmpKeepStateFlag &= ~(0x1ul << (i & 0x3ful));
+	{
+	  unsigned long TmpState = TmpStateHighestLz | TmpStateDescriptionBuffers[LocalIndex];
+	  WriteLittleEndian(File, TmpState);
+	  Count++;
+	}
 #else
       if (((TmpKeepStateFlag >> (i & 0x1ful)) & 0x1ul) != 0ul)
-	WriteLittleEndian(File, this->StateDescription[i]);
-      else
-	TmpKeepStateFlag &= ~(0x1ul << (i & 0x1ful));
+	{
+	  unsigned long TmpState = TmpStateHighestLz | TmpStateDescriptionBuffers[LocalIndex];
+	  WriteLittleEndian(File, TmpState);
+	}
 #endif
       ++LocalIndex;
       if (LocalIndex == TmpLimit)
@@ -534,6 +553,7 @@ bool FermionOnSphereHaldaneHugeBasis::WriteHilbertSpace (char* fileName)
 	}
     }  
   File.close();
+  cout << "Nbr Saved states = " << Count << endl;
   return true;
 }
 

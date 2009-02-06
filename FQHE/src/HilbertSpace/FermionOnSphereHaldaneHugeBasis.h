@@ -128,6 +128,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // shift to apply to a state after inverting its expression (useful only for symmetric case calculation)
   int InvertUnshift;
 
+  // size if the full Hilbert space (i.e. without squeezing)
+  long FullLargeHilbertSpaceDimension;
+
+  // compute the symmetrized basis
+  bool SymmetricFlag;
+
  public:
 
   // basic constructor
@@ -140,7 +146,7 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // referenceState = array that describes the reference state to start from
   // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
   FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState,
-				   unsigned long memory = 10000000, bool symmetricFlag = true);
+				   unsigned long memory = 10000000, bool symmetricFlag = false);
 
   // copy constructor (without duplicating datas)
   //
