@@ -166,7 +166,7 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("huge-basis") != 0)
 	{
-	  FermionOnSphereHaldaneHugeBasis* InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, Manager.GetInteger("memory"), SymmetrizedBasis, Manager.GetInteger("huge-fulldim"));
+	  FermionOnSphereHaldaneHugeBasis* InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, SymmetrizedBasis, Manager.GetInteger("huge-fulldim"));
 	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 	  return 0;
 	}
