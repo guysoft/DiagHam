@@ -131,6 +131,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // size if the full Hilbert space (i.e. without squeezing)
   long FullLargeHilbertSpaceDimension;
 
+  // glag to indicate disk storage is useless, keep everything in memory
+  bool NoDiskFlag;
   // compute the symmetrized basis
   bool SymmetricFlag;
 
@@ -145,8 +147,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // memory = amount of memory granted for precalculations
   // referenceState = array that describes the reference state to start from
   // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
-  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState,
-				   unsigned long memory = 10000000, bool symmetricFlag = false);
+  // fullDimension = provide the full (i.e. without squeezing) Hilbert space dimension (0 if it has to be computed)
+  FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory = 10000000, bool symmetricFlag = false, long fullDimension = 0l);
 
   // copy constructor (without duplicating datas)
   //

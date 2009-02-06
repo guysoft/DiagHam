@@ -62,9 +62,10 @@ using std::ios;
 // memory = amount of memory granted for precalculations
 // referenceState = array that describes the reference state to start from
 // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
+// fullDimension = provide the full (i.e. without squeezing) Hilbert space dimension (0 if it has to be computed)
 
 FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory,
-								  bool symmetricFlag)
+								  bool symmetricFlag, long fullDimension)
 {
   this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
@@ -86,7 +87,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
     }
   this->Flag.Initialize();
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  if (fullDimension == 0l)
+    this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
+  else 
+    this->LargeHilbertSpaceDimension = fullDimension;
   cout << "total dimension = " << this->LargeHilbertSpaceDimension << endl;
   ListIterator<unsigned long> IterFileSizes(this->FileSizes);
   unsigned long* TmpFileSize;
@@ -149,6 +153,13 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   cout << "total dimension = " << this->LargeHilbertSpaceDimension << "  (" << this->PartialHilbertSpaceDimension << ")" << endl;
   cout << "total requested disk space = " << (DiskSpace >> 17) <<  " Mbytes splitted in " << this->NbrFiles << " files " << endl;
   cout << "largest file = " << (LargestFile >> 7) << " KBytes (" << LargestFile<< " elements)" << endl;
+  if (memory > (DiskSpace << 3))
+    {
+      cout << "disk storage is useless, keep everything in memory" << endl;
+      this->NoDiskFlag = true;
+    }
+  else
+    this->NoDiskFlag = false;
   this->StateDescription = new unsigned long [this->PartialHilbertSpaceDimension];
   this->StateDescriptionFileIndex = new int [this->PartialHilbertSpaceDimension];
   this->StateDescriptionIndexShift = new long [this->PartialHilbertSpaceDimension];
