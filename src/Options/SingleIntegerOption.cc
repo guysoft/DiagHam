@@ -49,9 +49,9 @@ using std::endl;
 // maxValueFlag = flag to indicates an integer maximum value
 // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
 
-SingleIntegerOption::SingleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, int defaultValue, 
-					 bool minValueFlag, int minValue, 
-					 bool maxValueFlag, int maxValue)
+SingleIntegerOption::SingleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, long defaultValue, 
+					 bool minValueFlag, long minValue, 
+					 bool maxValueFlag, long maxValue)
 {
   this->OptionCode = optionCode;
   this->OptionType = AbstractOption::OTInteger;
@@ -90,7 +90,7 @@ int SingleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int 
   if (this->OptionCode == 0)
     if (Argument[0] != '-')
       {
-	if (sscanf (Argument, "%d", &(this->Integer)) != 1)
+	if (sscanf (Argument, "%ld", &(this->Integer)) != 1)
 	  {	    
 	    this->ErrorCode = SingleIntegerOption::NotAnInteger;
 	    return -1;
@@ -123,7 +123,7 @@ int SingleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int 
     Pos++;
   if (Pos != Lim)
     {
-      if (sscanf (&(Argument[Pos]), "%d", &(this->Integer)) != 1)
+      if (sscanf (&(Argument[Pos]), "%ld", &(this->Integer)) != 1)
 	{	    
 	  this->ErrorCode = SingleIntegerOption::NotAnInteger;
 	  return -1;
@@ -146,7 +146,7 @@ int SingleIntegerOption::ReadOption(char** argumentValues, int nbrArgument, int 
       return -1;
     }
   Argument = argumentValues[argumentPosition + 1];
-  if (sscanf (Argument, "%d", &(this->Integer)) != 1)
+  if (sscanf (Argument, "%ld", &(this->Integer)) != 1)
     {	    
       this->ErrorCode = SingleIntegerOption::NotAnInteger;
       return -1;
@@ -215,7 +215,7 @@ ostream& SingleIntegerOption::PrintError (ostream& output)
 //
 // return value = integer value
 
-int SingleIntegerOption::GetInteger()
+long SingleIntegerOption::GetInteger()
 {
   return this->Integer;
 }
@@ -227,7 +227,7 @@ int SingleIntegerOption::GetInteger()
 char* SingleIntegerOption::GetAsAString()
 {
   char* TmpString = new char [24];
-  sprintf (TmpString, "%d", this->Integer);
+  sprintf (TmpString, "%ld", this->Integer);
   return TmpString;
 }
 

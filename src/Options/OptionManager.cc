@@ -471,7 +471,7 @@ double* OptionManager::GetDoubles(const char *optionName, int & length)
 }
 
 //accessor routine for Integer value
-int OptionManager::GetInteger(const char *optionName)
+long OptionManager::GetInteger(const char *optionName)
   {
   AbstractOption* OptionPointer = (*this)[optionName];
   if (OptionPointer!=0)

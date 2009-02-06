@@ -41,17 +41,17 @@ class SingleIntegerOption : public AbstractOption
  protected:
   
   // value assigned to the option
-  int Integer;
+  long Integer;
   
   // default value
   double DefaultValue;
 
   // maximum value allowed
-  int MaxValue;
+  long MaxValue;
   // flag indicating there is a maximum value allowed
   bool MaxValueFlag;
   // minimum value allowed
-  int MinValue;
+  long MinValue;
   // flag indicating there is a minimum value allowed
   bool MinValueFlag;
 
@@ -76,9 +76,9 @@ class SingleIntegerOption : public AbstractOption
   // minValue = integer minimum value 
   // maxValueFlag = flag to indicates an integer maximum value
   // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
-  SingleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, int defaultValue = 0, 
-		      bool minValueFlag = false, int minValue = 0, 
-		      bool maxValueFlag = false, int maxValue = 0);
+  SingleIntegerOption(char optionCode, const char* optionName, const char* optionDescription, long defaultValue = 0, 
+		      bool minValueFlag = false, long minValue = 0, 
+		      bool maxValueFlag = false, long maxValue = 0);
 
   // destructor
   //
@@ -114,7 +114,7 @@ class SingleIntegerOption : public AbstractOption
   // Get read integer
   //
   // return value = integer value
-  int GetInteger();
+  long GetInteger();
 
   // get option value as a string
   // 

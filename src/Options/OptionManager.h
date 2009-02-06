@@ -133,7 +133,7 @@ class OptionManager
   // from MultipleDoubleOption: possibility to request the length of the vector, if wanted
   double* GetDoubles(const char *optionName);
   double* GetDoubles(const char *optionName, int &length);
-  int GetInteger(const char *optionName);
+  long GetInteger(const char *optionName);
   // from MultipleIntegerOption: possibility to request the length of the vector, if wanted
   int* GetIntegers(const char *optionName);
   int* GetIntegers(const char *optionName, int &length);

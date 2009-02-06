@@ -169,7 +169,7 @@ char* QHESamplingFunctionManager::GetDescription()
       return 0;
     }
   char * buffer = new char[1000];
-  sprintf(buffer,"%s N=%d",this->Options->GetString("sampler"), this->Options->GetInteger("nbr-particles"));
+  sprintf(buffer,"%s N=%ld",this->Options->GetString("sampler"), this->Options->GetInteger("nbr-particles"));
   char *rst = new char[strlen(buffer)+1];
   strcpy(rst,buffer);
   delete [] buffer;
