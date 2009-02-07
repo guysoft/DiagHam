@@ -58,6 +58,8 @@ RealVector::RealVector()
   this->VectorType = Vector::RealDatas;
   this->Dimension = 0;
   this->TrueDimension = 0;
+  this->LargeDimension = 0;
+  this->LargeTrueDimension = 0;
   this->Components = 0;
   this->VectorId = 0;
 }
@@ -72,11 +74,41 @@ RealVector::RealVector(int size, bool zeroFlag)
   this->VectorType = Vector::RealDatas;
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = (long) size;
+  this->LargeTrueDimension = this->LargeDimension;
   this->Components = new double [this->Dimension + 1]; 
   this->Flag.Initialize();
   this->VectorId = 0;
   if (zeroFlag == true)
     for (int i = 0; i < this->Dimension; i++)
+      {
+	this->Components[i] = 0.0;
+      }
+}
+
+// constructor for an empty real vector bigger than 2^31
+//
+// size = Vector Dimension 
+// zeroFlag = true if all coordinates have to be set to zero
+
+RealVector::RealVector(long size, bool zeroFlag)
+{
+  this->VectorType = Vector::RealDatas;
+  this->LargeDimension = size;
+  this->LargeTrueDimension = this->LargeDimension;
+  if (this->LargeDimension < (1l << 31))
+    this->Dimension = (int) size;
+  else
+    {
+      this->Dimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
+  this->TrueDimension = this->Dimension;
+  this->Components = new double [this->LargeDimension + 1]; 
+  this->Flag.Initialize();
+  this->VectorId = 0;
+  if (zeroFlag == true)
+    for (long i = 0l; i < this->LargeDimension; i++)
       {
 	this->Components[i] = 0.0;
       }
@@ -91,6 +123,8 @@ RealVector::RealVector(double* array, int size)
 {
   this->Dimension = size;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = (long) size;
+  this->LargeTrueDimension = this->LargeDimension;
   this->Components = array;
   this->Flag.Initialize();
   this->VectorId = 0;
@@ -103,10 +137,12 @@ RealVector::RealVector(double* array, int size)
 
 RealVector::RealVector(const RealVector& vector, bool duplicateFlag)
 {
-  this->VectorType = Vector::RealDatas;
+  this->VectorType = vector.VectorType;
   this->VectorId = vector.VectorId;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = vector.LargeTrueDimension;
   if (duplicateFlag == false)
     {
       this->Components = vector.Components;
@@ -123,7 +159,15 @@ RealVector::RealVector(const RealVector& vector, bool duplicateFlag)
 	}
       else
 	{
-	  this->Components = 0;
+	  if (this->LargeDimension > 0l)
+	    {
+	      this->Flag.Initialize();
+	      this->Components = new double [this->LargeTrueDimension + 1]; 
+	      for (long i = 0; i < this->LargeDimension; i++)
+		this->Components[i] = vector.Components[i];
+	    }
+	  else
+	    this->Components = 0;
 	}
     }
 }
@@ -137,6 +181,8 @@ RealVector::RealVector(const ComplexVector& vector)
   this->VectorType = Vector::RealDatas;
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = this->LargeDimension;
   this->VectorId = 0;
   if (this->Dimension > 0)
     {
@@ -160,6 +206,8 @@ RealVector::RealVector(const Vector& vector)
   this->VectorType = Vector::RealDatas;
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = this->LargeDimension;
   this->VectorId = vector.VectorId;
   if (vector.VectorType == Vector::RealDatas)
     {
@@ -206,6 +254,8 @@ RealVector::RealVector(MPI::Intracomm& communicator, int id, bool broadcast)
   else
     communicator.Recv(TmpArray, 3, MPI::INT, id, 1);   
   this->Dimension = TmpArray[0];
+  this->LargeDimension = this->Dimension;
+  this->LargeTrueDimension = this->LargeDimension;
   this->VectorId = TmpArray[1];
   this->Components = new double [this->Dimension + 1];
   if (TmpArray[2] == 1)
@@ -230,7 +280,7 @@ RealVector::RealVector(MPI::Intracomm& communicator, int id, bool broadcast)
 
 RealVector::~RealVector ()
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if (((this->Dimension != 0) || (this->LargeDimension != 0l)) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Components;
     }
@@ -243,7 +293,7 @@ RealVector::~RealVector ()
 
 RealVector& RealVector::operator = (const RealVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if (((this->Dimension != 0) || (this->LargeDimension != 0l)) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Components;
     }
@@ -252,6 +302,8 @@ RealVector& RealVector::operator = (const RealVector& vector)
   this->Components = vector.Components;
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.Dimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = vector.LargeTrueDimension;
   return *this;
 }
 
@@ -262,12 +314,14 @@ RealVector& RealVector::operator = (const RealVector& vector)
 
 RealVector& RealVector::operator = (const ComplexVector& vector)
 {
-  if ((this->Dimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
+  if (((this->Dimension != 0) || (this->LargeDimension != 0l)) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->Components;
     }
   this->Dimension = vector.Dimension;
   this->TrueDimension = this->Dimension;
+  this->LargeDimension = vector.LargeDimension;
+  this->LargeTrueDimension = this->LargeDimension;
   this->Components = new double[this->Dimension + 1];
   this->VectorId = 0;
   for (int i = 0; i < this->Dimension; ++i)
@@ -317,6 +371,51 @@ void RealVector::Resize (int dimension)
     }
   this->Dimension = dimension;
   this->TrueDimension = dimension;
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
+  this->Components = TmpVector;
+  this->Flag = GarbageFlag();
+  this->Flag.Initialize();
+}
+
+// Resize vector
+//
+// dimension = new dimension
+
+void RealVector::Resize (long dimension)
+{
+  if (dimension <= this->LargeTrueDimension)
+    {
+      this->LargeDimension = dimension;
+      if (this->LargeDimension < (1l << 31))
+	this->Dimension = (int) this->LargeDimension;
+      else
+	{
+	  this->Dimension = -1;
+	  this->VectorType |= Vector::LargeData;
+	}
+      return;
+    }
+  double* TmpVector = new double [dimension + 1l];
+  for (long i = 0; i < this->LargeDimension; i++)
+    TmpVector[i] = this->Components[i];
+  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+    {
+      delete[] this->Components;
+    }
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
+  if (this->LargeDimension < (1l << 31))
+    {
+      this->Dimension = (int) this->LargeDimension;
+      this->TrueDimension = (int) this->LargeTrueDimension;
+    }
+  else
+    {
+      this->Dimension = -1;
+      this->TrueDimension = -1;
+      this->VectorType |= Vector::LargeData;
+    }
   this->Components = TmpVector;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
@@ -331,6 +430,7 @@ void RealVector::ResizeAndClean (int dimension)
   if (dimension <= this->TrueDimension)
     {
       this->Dimension = dimension;
+      this->LargeDimension = dimension;
       return;
     }
   double* TmpVector = new double [dimension + 1];
@@ -344,6 +444,8 @@ void RealVector::ResizeAndClean (int dimension)
     }
   this->Dimension = dimension;
   this->TrueDimension = dimension;
+  this->LargeDimension = dimension;
+  this->LargeTrueDimension = dimension;
   this->Components = TmpVector;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();
@@ -2617,7 +2719,7 @@ double RealVector::Norm()
 {
   this->Localize();
   double x = 0.0;
-  if (this->Dimension != 0)
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
       for (int i = 0; i < this->Dimension; ++i)
 	x += this->Components[i] * this->Components[i];
@@ -2634,7 +2736,7 @@ double RealVector::SqrNorm ()
 {
   this->Localize();
   double x = 0.0;
-  if (this->Dimension != 0)
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
       for (int i = 0; i < this->Dimension; i++)
 	x += this->Components[i] * this->Components[i];
@@ -2729,7 +2831,7 @@ RealVector& RealVector::Merge(RealVector& V, int firstCoordinate, int step)
 
 RealVector& RealVector::ReverseVector()
 {
-  if (this->Dimension != 0)
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
       this->Localize();
       int Max = this->Dimension - 1;
@@ -2786,8 +2888,15 @@ bool RealVector::WriteVector (const char* fileName)
   ofstream File;
   File.open(fileName, ios::binary | ios::out);
   WriteLittleEndian(File, this->Dimension);
-  for (int i = 0; i < this->Dimension; ++i)
-    WriteLittleEndian(File, this->Components[i]);
+  if (this->Dimension == -1)
+    {
+      WriteLittleEndian(File, this->LargeDimension);
+      for (long i = 0; i < this->LargeDimension; ++i)
+	WriteLittleEndian(File, this->Components[i]);
+    }
+  else
+    for (int i = 0; i < this->Dimension; ++i)
+      WriteLittleEndian(File, this->Components[i]);
   File.close();
   this->Delocalize();
   return true;
@@ -2804,10 +2913,20 @@ bool RealVector::WriteAsciiVector (const char* fileName)
   ofstream File;
   File.precision(14);
   File.open(fileName, ios::binary | ios::out);
-  int ReducedDimension = this->Dimension - 1;
-  for (int i = 0; i < ReducedDimension; ++i)
-    File << this->Components[i] << " ";
-  File << this->Components[ReducedDimension] << endl;  
+  if (this->Dimension == -1)
+    {
+      long ReducedDimension = this->LargeDimension - 1;
+      for (long i = 0; i < ReducedDimension; ++i)
+	File << this->Components[i] << " ";
+      File << this->Components[ReducedDimension] << endl;  
+    }
+  else
+    {
+      int ReducedDimension = this->LargeDimension - 1;
+      for (int i = 0; i < ReducedDimension; ++i)
+	File << this->Components[i] << " ";
+      File << this->Components[ReducedDimension] << endl;  
+    }
   File.close();
   this->Delocalize();
   return true;
@@ -2839,17 +2958,27 @@ bool RealVector::ReadVector (const char* fileName)
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
 
-  if (Length/sizeof(double)>(unsigned)TmpDimension)
-    {      
-      cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
-      if ((unsigned)TmpDimension*2==Length/sizeof(double))
-	cout << "This could be a complex vector!"<<endl;
-      exit(1);
+  if (TmpDimension > 0)
+    {
+      if (Length/sizeof(double)>(unsigned)TmpDimension)
+	{      
+	  cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
+	    cout << "This could be a complex vector!"<<endl;
+	  exit(1);
+	}
+      this->Resize(TmpDimension);
+      for (int i = 0; i < this->Dimension; ++i)
+	ReadLittleEndian(File, this->Components[i]);
     }
-   
-  this->Resize(TmpDimension);
-  for (int i = 0; i < this->Dimension; ++i)
-    ReadLittleEndian(File, this->Components[i]);
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      this->Resize(TmpLargeDimension);
+      for (long i = 0; i < this->LargeDimension; ++i)
+	ReadLittleEndian(File, this->Components[i]);
+    }
   File.close();
   return true;
 }

@@ -109,6 +109,12 @@ class RealVector : public Vector
   // zeroFlag = true if all coordinates have to be set to zero
   RealVector(int size, bool zeroFlag = false);
 
+  // constructor for an empty real vector bigger than 2^31
+  //
+  // size = Vector Dimension 
+  // zeroFlag = true if all coordinates have to be set to zero
+  RealVector(long size, bool zeroFlag = false);
+
   // constructor from an array of doubles
   //
   // array = array of doubles with real in even position and imaginary part in odd position
@@ -166,6 +172,11 @@ class RealVector : public Vector
   //
   // dimension = new dimension
   virtual void Resize (int dimension);
+
+  // Resize vector
+  //
+  // dimension = new dimension
+  virtual void Resize (long dimension);
 
   // Resize vector and set to zero all components that have been added
   //
@@ -810,6 +821,11 @@ class RealVector : public Vector
   // i = coordinate position
   virtual double& operator [] (int i);
 
+  // return vector i-th coordinate (without testing if position is valid)
+  //
+  // i = coordinate position
+  virtual double& operator [] (long i);
+
   // get vector norm
   //
   // return value = vector norm
@@ -965,6 +981,15 @@ class RealVector : public Vector
 // i = coordinate position
 
 inline double& RealVector::operator [] (int i)
+{
+  return this->Components[i];
+}
+ 
+// return vector i-th coordinate (without testing if position is valid)
+//
+// i = coordinate position
+
+inline double& RealVector::operator [] (long i)
 {
   return this->Components[i];
 }

@@ -60,6 +60,11 @@ class Vector
   // dimension of the allocated array
   int TrueDimension;
 
+  // dimension as it appears to the user for vector bigger than 2^31
+  long LargeDimension;
+  // dimension of the allocated array for vector bigger than 2^31
+  long LargeTrueDimension;
+
   // flag indacting vector type
   int VectorType;
 
@@ -77,7 +82,8 @@ class Vector
       DataTypeMask = 0x0f,
       NonLocalDatas = 0x10,
       DistributedDatas = 0x20,
-      PartialData = 0x100
+      PartialData = 0x100,
+      LargeData = 0x200
     };
 
   // virtual destructor
@@ -98,6 +104,16 @@ class Vector
   //
   // return value = vector dimension
   int GetVectorDimension();
+  
+  // Get Vector dimension for vector bigger than 2^31
+  //
+  // return value = vector dimension
+  long GetLargeVectorDimension();
+  
+  // check if the vector is bigger than 2^31
+  //
+  // return value = true if the vector is bigger than 2^31
+  bool IsLargeVector();
   
   // Get Vector type
   //
@@ -284,6 +300,27 @@ inline int Vector::GetVectorDimension()
   return this->Dimension;
 }
   
+// Get Vector dimension for vector bigger than 2^31
+//
+// return value = vector dimension
+
+inline long Vector::GetLargeVectorDimension()
+{
+  return this->LargeDimension;
+}
+  
+// check if the vector is bigger than 2^31
+//
+// return value = true if the vector is bigger than 2^31
+
+bool Vector::IsLargeVector()
+{
+  if ((this->VectorType & Vector::LargeData) == 0)
+    return false;
+  else
+    return true;
+}
+
 // Get Vector type
 //
 // return value = flag indicating vector type
