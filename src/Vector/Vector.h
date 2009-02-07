@@ -313,7 +313,7 @@ inline long Vector::GetLargeVectorDimension()
 //
 // return value = true if the vector is bigger than 2^31
 
-bool Vector::IsLargeVector()
+inline bool Vector::IsLargeVector()
 {
   if ((this->VectorType & Vector::LargeData) == 0)
     return false;

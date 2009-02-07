@@ -358,7 +358,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // state = reference to the state to convert
   // reference = set which component as to be normalized to 1
   // return value = converted state
-  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference);    
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference);    
 
  protected:
 

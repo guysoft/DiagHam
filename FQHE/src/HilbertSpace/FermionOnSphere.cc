@@ -1596,7 +1596,7 @@ RealVector FermionOnSphere::ParticleHoleSymmetrize (RealVector& state, FermionOn
 // reference = set which component as to be normalized to 1
 // return value = converted state
 
-RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference)
+RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];

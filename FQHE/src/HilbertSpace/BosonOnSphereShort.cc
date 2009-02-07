@@ -778,7 +778,7 @@ RealSymmetricMatrix  BosonOnSphereShort::EvaluatePartialDensityMatrix (int subsy
 // reference = set which component as to be normalized to 1
 // return value = converted state
 
-RealVector& BosonOnSphereShort::ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference)
+RealVector& BosonOnSphereShort::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
@@ -852,7 +852,7 @@ RealVector& BosonOnSphereShort::ConvertToUnnormalizedMonomial(RealVector& state,
 // reference = set which component has been normalized to 1
 // return value = converted state
 
-RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& state, unsigned int reference)
+RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
 {
   unsigned long* TmpMonomialReference = new unsigned long [this->NbrBosons];
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
