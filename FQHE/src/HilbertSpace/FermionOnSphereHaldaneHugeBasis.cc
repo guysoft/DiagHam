@@ -409,6 +409,73 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   cout << "final Hilbert space dimension " << this->LargeHilbertSpaceDimension << endl;
 }
 
+// constructor from a binary file that describes the Hilbert space
+//
+// fileName = name of the binary file
+// memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
+
+FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+
+  ReadLittleEndian(File, this->HilbertSpaceDimension);
+  ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  ReadLittleEndian(File, this->NbrFermions);
+  ReadLittleEndian(File, this->LzMax);
+  ReadLittleEndian(File, this->TotalLz);
+  ReadLittleEndian(File, this->ReferenceState);
+  if ((this->LargeHilbertSpaceDimension << 3) > (memoryHilbert << 20))
+    {
+      this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	ReadLittleEndian(File, this->StateDescription[i]);
+    }
+  File.close();
+
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+
+  this->TargetSpace = this;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->Flag.Initialize();  
+
+//   this->GenerateLookUpTable(memory);
+// #ifdef __DEBUG__
+//   unsigned long UsedMemory = 0l;
+//   UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+//   UsedMemory += this->NbrLzValue * sizeof(int);
+//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+//   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+//   cout << "memory requested for Hilbert space = ";
+//   if (UsedMemory >= 1024)
+//     if (UsedMemory >= 1048576)
+//       cout << (UsedMemory >> 20) << "Mo" << endl;
+//     else
+//       cout << (UsedMemory >> 10) << "ko" <<  endl;
+//   else
+//     cout << UsedMemory << endl;
+// #endif
+
+}
+
+
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
@@ -764,6 +831,38 @@ int FermionOnSphereHaldaneHugeBasis::LoadLowestLzBuffer(int fileIndex)
     ++this->BufferAges[i];
   this->FileToBuffer[this->BufferIndices[Index]] = Index;
   return Index;
+}
+
+// find state index assuming the whole Hilbert space is stored in memory
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDescription, int lzmax)
+{
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    return PosMin;
 }
 
 // print a given State

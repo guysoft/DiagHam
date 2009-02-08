@@ -43,6 +43,8 @@
 class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 {
 
+  friend class BosonOnSphereHaldaneHugeBasisShort;
+
  protected:
 
   // number of fermions
@@ -93,6 +95,15 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   unsigned long* StateDescriptionFileSizes;
   // number of files used to store the lowest Lz part of the full Hilbert space  
   int NbrFiles;
+
+  // maximum shift used for searching a position in the look-up table
+  int MaximumLookUpShift;
+  // memory used for the look-up table in a given lzmax sector
+  unsigned long LookUpTableMemorySize;
+  // shift used in each lzmax sector
+  int* LookUpTableShift;
+  // look-up table with two entries : the first one used lzmax value of the state an the second 
+  long** LookUpTable;
 
   // a table containing ranging from 0 to 2^MaximumSignLookUp - 1
   double* SignLookUpTable;
@@ -149,6 +160,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
   // fullDimension = provide the full (i.e. without squeezing) Hilbert space dimension (0 if it has to be computed)
   FermionOnSphereHaldaneHugeBasis (int nbrFermions, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory = 10000000, bool symmetricFlag = false, long fullDimension = 0l);
+
+  // constructor from a binary file that describes the Hilbert space
+  //
+  // fileName = name of the binary file
+  // memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
+  FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert);
 
   // copy constructor (without duplicating datas)
   //
@@ -294,6 +311,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = corresponding index
   long FindStateIndex(unsigned long stateDescription);
 
+  // find state index assuming the whole Hilbert space is stored in memory
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  long FindStateIndexMemory(unsigned long stateDescription, int lzmax);
+
   // evaluate upper bound for the Haldane basis
   //
   // nbrFermions = number of fermions
@@ -361,6 +385,11 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = true if it is a canonical state
   bool IsCanonicalState (unsigned long initialState);
 
+  // get Lz<->-Lz symmetric state of a given state 
+  //
+  // initialState = reference on the state whose symmetric counterpart has to be computed
+  virtual unsigned long GetSymmetricState (unsigned long initialState);
+
 };
 
 // get the particle statistic 
@@ -401,6 +430,32 @@ inline bool FermionOnSphereHaldaneHugeBasis::IsCanonicalState (unsigned long ini
     return false;
   else
     return true;
+}
+
+// get Lz<->-Lz symmetric state of a given state 
+//
+// initialState = reference on the state whose symmetric counterpart has to be computed
+
+inline unsigned long FermionOnSphereHaldaneHugeBasis::GetSymmetricState (unsigned long initialState)
+{
+  initialState <<= this->InvertShift;
+#ifdef __64_BITS__
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 56]; 
+#else
+  unsigned long TmpState = FermionOnSphereInvertTable[initialState & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(initialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[initialState >> 24];
+#endif	
+  TmpState >>= this->InvertUnshift;
+  return TmpState;
 }
 
 #endif

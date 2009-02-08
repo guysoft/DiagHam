@@ -68,6 +68,11 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  RealVector TmpVector (10l, true);
+  TmpVector[9l] = M_PI;
+  TmpVector.WriteVector("test.vec");
+  return 0;
+  
 
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0; 
