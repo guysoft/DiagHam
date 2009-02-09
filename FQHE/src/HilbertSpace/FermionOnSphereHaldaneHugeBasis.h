@@ -165,7 +165,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   //
   // fileName = name of the binary file
   // memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
-  FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert);
+  // memory = amount of memory allowed for precalculations
+  FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert, long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

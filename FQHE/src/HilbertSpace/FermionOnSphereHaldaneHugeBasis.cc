@@ -390,22 +390,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 	 this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
      }
 
-   this->GenerateLookUpTable(memory);
-// #ifdef __DEBUG__
-//   int UsedMemory = 0;
-//   UsedMemory += this->LargeHilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-//   UsedMemory += this->NbrLzValue * sizeof(int);
-//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-//   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
-//   cout << "memory requested for Hilbert space = ";
-//   if (UsedMemory >= 1024)
-//     if (UsedMemory >= 1048576)
-//       cout << (UsedMemory >> 20) << "Mo" << endl;
-//     else
-//       cout << (UsedMemory >> 10) << "ko" <<  endl;
-//   else
-//     cout << UsedMemory << endl;
-// #endif
   cout << "final Hilbert space dimension " << this->LargeHilbertSpaceDimension << endl;
 }
 
@@ -413,8 +397,9 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 //
 // fileName = name of the binary file
 // memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
+// memory = amount of memory allowed for precalculations
 
-FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert)
+FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName, long memoryHilbert, long memory)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -437,6 +422,8 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	ReadLittleEndian(File, this->StateDescription[i]);
     }
+  else 
+    this->StateDescription = 0;
   File.close();
 
 #ifdef __64_BITS__
@@ -455,23 +442,25 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
   this->IncNbrFermions = this->NbrFermions + 1;
   this->Flag.Initialize();  
 
-//   this->GenerateLookUpTable(memory);
-// #ifdef __DEBUG__
-//   unsigned long UsedMemory = 0l;
-//   UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
-//   UsedMemory += this->NbrLzValue * sizeof(int);
-//   UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-//   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
-//   cout << "memory requested for Hilbert space = ";
-//   if (UsedMemory >= 1024)
-//     if (UsedMemory >= 1048576)
-//       cout << (UsedMemory >> 20) << "Mo" << endl;
-//     else
-//       cout << (UsedMemory >> 10) << "ko" <<  endl;
-//   else
-//     cout << UsedMemory << endl;
-// #endif
-
+  if (this->StateDescription != 0)
+    {
+      this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+      unsigned long UsedMemory = 0l;
+      UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+      UsedMemory += this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
 }
 
 
@@ -1029,6 +1018,94 @@ long FermionOnSphereHaldaneHugeBasis::RawGenerateStates(int nbrFermions, int lzM
 
 void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
 {
+  // evaluate look-up table size
+  memory /= (sizeof(int*) * this->NbrLzValue);
+  this->MaximumLookUpShift = 1;
+  while (memory > 0)
+    {
+      memory >>= 1;
+      ++this->MaximumLookUpShift;
+    }
+  if (this->MaximumLookUpShift > this->NbrLzValue)
+    this->MaximumLookUpShift = this->NbrLzValue;
+  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
+
+  // construct  look-up tables for searching states
+  this->LookUpTable = new long* [this->NbrLzValue];
+  this->LookUpTableShift = new int [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->LookUpTable[i] = new long [this->LookUpTableMemorySize + 1];
+  int CurrentLzMax = this->LzMax;
+  unsigned long CurrentState = this->StateDescription[0];
+  while (((CurrentState >> CurrentLzMax) & 0x1ul) == 0x0ul)
+    --CurrentLzMax;
+  int TmpLzMax = CurrentLzMax;
+  long* TmpLookUpTable = this->LookUpTable[CurrentLzMax];
+  if (CurrentLzMax < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentLzMax] = 0;
+  else
+    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentLzMax];
+  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
+  unsigned long TmpLookUpTableValue = CurrentState >> CurrentShift;
+  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = 0;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[CurrentLookUpTableValue] = 0;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      CurrentState = this->StateDescription[i];
+      while (((CurrentState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      if (CurrentLzMax != TmpLzMax)
+	{
+	  while (CurrentLookUpTableValue > 0)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[0] = i;
+	  /*	  for (unsigned long j = 0; j <= this->LookUpTableMemorySize; ++j)
+	    cout << TmpLookUpTable[j] << " ";
+	    cout << endl << "-------------------------------------------" << endl;*/
+ 	  CurrentLzMax = TmpLzMax;
+	  TmpLookUpTable = this->LookUpTable[CurrentLzMax];
+	  if (CurrentLzMax < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentLzMax] = 0;
+	  else
+	    this->LookUpTableShift[CurrentLzMax] = CurrentLzMax + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentLzMax];
+	  TmpLookUpTableValue = CurrentState >> CurrentShift;
+	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
+	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[CurrentLookUpTableValue] = i;
+	}
+      else
+	{
+	  TmpLookUpTableValue = CurrentState >> CurrentShift;
+	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
+	    {
+	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
+		{
+		  TmpLookUpTable[CurrentLookUpTableValue] = i;
+		  --CurrentLookUpTableValue;
+		}
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	    }
+	}
+    }
+  while (CurrentLookUpTableValue > 0)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = this->LargeHilbertSpaceDimension - 1l;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[0] = this->LargeHilbertSpaceDimension - 1l;
   // look-up tables for evaluating sign when applying creation/annihilation operators
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];

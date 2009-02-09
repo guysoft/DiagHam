@@ -6,6 +6,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneSymmetricBasis.h"
 #include "HilbertSpace/FermionOnSphereHaldaneHugeBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 #include "Options/OptionManager.h"
@@ -124,6 +125,53 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("fermion") == false)
     {
+      if (Manager.GetBoolean("huge-basis") != 0)
+	{
+	  BosonOnSphereHaldaneHugeBasisShort* InitialSpace = 0;
+	  if (Manager.GetString("save-hilbert") != 0)
+	    {
+	      InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, SymmetrizedBasis, Manager.GetInteger("huge-fulldim"));
+	      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      return 0;
+	    }
+	  if (Manager.GetString("load-hilbert") == 0)
+	    {
+	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+	      return -1;
+	    }
+	  InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory") << 20);
+	  RealVector OutputState;
+	  if (Manager.GetString("initial-state") == 0)
+	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	  else
+	    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+	      {
+		cout << "can't open " << Manager.GetString("initial-state") << endl;
+		return -1;
+	      }
+	  if (SymmetrizedBasis == false)    
+	    InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+	  else
+	    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	  
+	  if (OutputTxtFileName != 0)
+	    {
+	      ofstream File;
+	      File.open(OutputTxtFileName, ios::binary | ios::out);
+	      File.precision(14);
+	      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		{
+		  File << OutputState[i] << " ";
+		  InitialSpace->PrintStateMonomial(File, i) << endl;
+		}
+	      File.close();
+	    }
+	  if (OutputFileName != 0)
+	    {
+	      OutputState.WriteVector(OutputFileName);
+	    }
+	  return 0;
+	}
       BosonOnSphereHaldaneBasisShort* InitialSpace;
       if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
 	InitialSpace = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());

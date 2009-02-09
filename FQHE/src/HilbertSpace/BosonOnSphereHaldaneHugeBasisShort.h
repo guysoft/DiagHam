@@ -71,13 +71,15 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // maxFileSize = maximum file size (in MBytes)
   // referenceState = array that describes the reference state to start from
   // memory = amount of memory granted for precalculations
-  BosonOnSphereHaldaneHugeBasisShort (int nbrBosons, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory = 10000000);
+  // symmetricFlag = indicate if a symmetric basis has to be used (only available if totalLz = 0)
+  // fullDimension = provide the full (i.e. without squeezing) Hilbert space dimension (0 if it has to be computed)
+  BosonOnSphereHaldaneHugeBasisShort (int nbrBosons, int totalLz, int lzMax, unsigned long maxFileSize, int* referenceState, unsigned long memory = 10000000, bool symmetricFlag = false, long fullDimension = 0l);
 
   // constructor from a binary file that describes the Hilbert space
   //
   // fileName = name of the binary file
-  // memory = amount of memory granted for precalculations
-  BosonOnSphereHaldaneHugeBasisShort (char* fileName, unsigned long memory);
+  // memoryHilbert = amount of memory granted to store the Hilbert space (in Mbytes)
+  BosonOnSphereHaldaneHugeBasisShort (char* fileName, unsigned long memoryHilbert);
 
   // copy constructor (without duplicating datas)
   //
