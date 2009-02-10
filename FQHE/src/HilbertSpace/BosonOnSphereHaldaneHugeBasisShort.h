@@ -102,6 +102,13 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
 
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
   // create the Jack polynomial decomposition corresponding to the root partition
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized hugebasis will be stored

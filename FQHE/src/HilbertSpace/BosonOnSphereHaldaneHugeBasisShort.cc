@@ -222,6 +222,30 @@ bool BosonOnSphereHaldaneHugeBasisShort::WriteHilbertSpace (char* fileName)
   return this->FermionHugeBasis->WriteHilbertSpace(fileName);
 }
 
+// print a given State using the monomial notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereHaldaneHugeBasisShort::PrintStateMonomial (ostream& Str, int state)
+{
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  unsigned long TmpState = this->FermionHugeBasis->StateDescription[state];
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  this->ConvertToMonomial(TmpState, TmpLzMax, TmpMonomial);
+  Str << "[";
+  if (TmpMonomial[0] != 0)
+    Str << TmpMonomial[0];
+  for (int i = 1; (i < this->NbrBosons) && (TmpMonomial[i] > 0); ++i)
+    Str << "," << TmpMonomial[i];
+  Str << "]";
+  delete[] TmpMonomial;
+  return Str;
+}
+
 // create the Jack polynomial decomposition corresponding to the root partition
 //
 // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored

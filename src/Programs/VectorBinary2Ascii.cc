@@ -36,6 +36,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the binary vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored in ASCII mode");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "write ascii vector in a two-column formatted output (first column for the component index, second for the component value)");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-range", "display vector starting from a given component", 0l);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-range", "display vector up to a given component (0 if up to the end)", 0l);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -70,11 +72,18 @@ int main(int argc, char** argv)
   ofstream File;
   File.open(((SingleStringOption*) Manager["output-vector"])->GetString(), ios::out);
   File.precision(14);
+  long MinValue = 0l;
+  if ((Manager.GetInteger("min-range") > 0l) && (Manager.GetInteger("min-range") < State.GetLargeVectorDimension()))
+    MinValue = Manager.GetInteger("min-range");
+  long MaxValue = State.GetLargeVectorDimension(); 
+  if ((Manager.GetInteger("max-range") < State.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
+    MaxValue = Manager.GetInteger("max-range");
+  
   if (((BooleanOption*) Manager["add-index"])->GetBoolean() == true)
-    for (int i = 0; i < State.GetVectorDimension(); ++i)
+    for (long i = MinValue; i < MaxValue; ++i)
       File << i << " " << State[i] << endl;
   else
-    for (int i = 0; i < State.GetVectorDimension(); ++i)
+    for (long i = MinValue; i < MaxValue; ++i)
       File << State[i] << endl;
   File.close();
   
