@@ -69,12 +69,6 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  RealVector TmpVector (10l, true);
-  TmpVector[9l] = M_PI;
-  TmpVector.WriteVector("test.vec");
-  return 0;
-  
-
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0; 
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
@@ -125,7 +119,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("fermion") == false)
     {
-      if (Manager.GetBoolean("huge-basis") != 0)
+      if (Manager.GetBoolean("huge-basis") == true)
 	{
 	  BosonOnSphereHaldaneHugeBasisShort* InitialSpace = 0;
 	  if (Manager.GetString("save-hilbert") != 0)
@@ -139,7 +133,8 @@ int main(int argc, char** argv)
 	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
 	      return -1;
 	    }
-	  InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory") << 20);
+	  InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	  cout << "dimension = " << InitialSpace->GetLargeHilbertSpaceDimension() << endl;
 	  RealVector OutputState;
 	  if (Manager.GetString("initial-state") == 0)
 	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);

@@ -412,11 +412,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 
   ReadLittleEndian(File, this->HilbertSpaceDimension);
   ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
+  cout << this->HilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
   ReadLittleEndian(File, this->NbrFermions);
   ReadLittleEndian(File, this->LzMax);
   ReadLittleEndian(File, this->TotalLz);
   ReadLittleEndian(File, this->ReferenceState);
-  if ((this->LargeHilbertSpaceDimension << 3) > (memoryHilbert << 20))
+  if ((this->LargeHilbertSpaceDimension << 3) < (memoryHilbert << 20))
     {
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)

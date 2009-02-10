@@ -89,8 +89,8 @@ BosonOnSphereHaldaneHugeBasisShort::BosonOnSphereHaldaneHugeBasisShort (int nbrB
   this->FermionBasis = 0;
   this->FermionHugeBasis = new FermionOnSphereHaldaneHugeBasis(nbrBosons, totalLz, this->LzMax + nbrBosons - 1, maxFileSize, TmpReferenceState, memory);
   delete[] TmpReferenceState;
-  this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
-  this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
+  this->HilbertSpaceDimension = this->FermionHugeBasis->GetHilbertSpaceDimension();
+  this->LargeHilbertSpaceDimension = this->FermionHugeBasis->GetLargeHilbertSpaceDimension();
 
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
