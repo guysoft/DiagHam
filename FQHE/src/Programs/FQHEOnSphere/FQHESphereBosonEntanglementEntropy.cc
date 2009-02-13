@@ -6,6 +6,7 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -49,7 +50,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
@@ -59,7 +59,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -185,6 +184,49 @@ int main(int argc, char** argv)
 		RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((BosonOnSphereShort*) Spaces[i]));
 		GroundStates[i] = OutputState;
 	      }
+	    if (Manager.GetBoolean("haldane") == true)
+	      {
+		int* ReferenceState = 0;
+		if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+		  {
+		    cout << "error, a reference file is needed" << endl;
+		    return 0;
+		  }
+		ConfigurationParser ReferenceStateDefinition;
+		if (ReferenceStateDefinition.Parse(((SingleStringOption*) Manager["reference-file"])->GetString()) == false)
+		  {
+		    ReferenceStateDefinition.DumpErrors(cout) << endl;
+		    return 0;
+		  }
+		if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrParticles) == false) || (NbrParticles <= 0))
+		  {
+		    cout << "NbrParticles is not defined or as a wrong value" << endl;
+		    return 0;
+		  }
+		if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax < 0))
+		  {
+		    cout << "LzMax is not defined or as a wrong value" << endl;
+		    return 0;
+		  }
+		int MaxNbrLz;
+		if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
+		  {
+		    cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
+		    return 0;     
+		  }
+		if (MaxNbrLz != (LzMax + 1))
+		  {
+		    cout << "wrong LzMax value in ReferenceState" << endl;
+		    return 0;     
+		  }
+		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		  Spaces[i] = new BosonOnSphereHaldaneBasisShort(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+		else
+		  {
+		    Spaces[i] = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz[i], LzMax, ReferenceState);	  
+		  }
+	      }
+
 	  }
 	else
 	  {

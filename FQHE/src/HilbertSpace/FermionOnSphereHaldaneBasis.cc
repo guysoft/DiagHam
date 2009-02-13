@@ -91,6 +91,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
 	}
     }
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
+  this->TotalLz *= 2;
   totalLz = this->TotalLz;
 
 #ifdef __64_BITS__
@@ -122,6 +123,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
     this->KeepStateFlag[i] = 0x0l;
   this->RawGenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
   this->GenerateLookUpTable(memory);
+
 
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
@@ -1222,7 +1224,7 @@ long FermionOnSphereHaldaneBasis::ShiftedEvaluateHilbertSpaceDimension(int nbrFe
 RealVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(RealVector& jack, double alpha)
 {
   jack[0] = 1.0;
-  double InvAlpha =  4.0 / alpha;
+  double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
 
   int* TmpMonomial = new int [this->NbrFermions];
   int* TmpMonomial2 = new int [this->NbrFermions];
@@ -1257,7 +1259,7 @@ RealVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(RealVector& jack
 	      {
 		++TmpMonomial2[Tmpj1];
 		--TmpMonomial2[Tmpj2];
-		Diff += 2.0;
+//		Diff += 2.0;
 		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] >= TmpMonomial2[Tmpj1 - 1]))
 		  {
 		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];

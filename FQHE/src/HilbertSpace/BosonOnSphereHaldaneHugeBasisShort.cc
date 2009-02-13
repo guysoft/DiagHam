@@ -274,7 +274,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomial(RealVecto
     {
       double Rho = 0.0;
       unsigned long CurrentPartition = this->FermionHugeBasis->StateDescription[i];
-      while (((MaxRoot >> TmpLzMax) & 0x1ul) == 0ul)
+      while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
 	--TmpLzMax;
       this->ConvertToMonomial(CurrentPartition, TmpLzMax, TmpMonomial);
       for (int j = 0; j < this->NbrBosons; ++j)
@@ -353,7 +353,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
       {
 	double Rho = 0.0;
 	unsigned long CurrentPartition = this->FermionHugeBasis->StateDescription[i];
-	while (((MaxRoot >> TmpLzMax) & 0x1ul) == 0ul)
+	while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
 	  --TmpLzMax;
 	this->ConvertToMonomial(CurrentPartition, TmpLzMax, TmpMonomial);
 	for (int j = 0; j < this->NbrBosons; ++j)
