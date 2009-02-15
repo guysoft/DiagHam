@@ -147,6 +147,22 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // compute the symmetrized basis
   bool SymmetricFlag;
 
+  // number of bytes dedicated to the haeder in the Hilbert space description file
+  long FileHeaderSize;
+
+  // a subset of the complete Hilbert space
+  unsigned long* SparseHilbertSpaceDescription;
+  // size of the Hilbert space subset
+  long SparseHilbertSpaceDimension;
+  // size of the Hilbert space chunck associated to one element of the sparse Hilbert space
+  long SparseHilbertSpaceChunckSize;
+  // size of the Hilbert space chunck associated to the last element of the sparse Hilbert space
+  long SparseHilbertSpaceRemainderChunckSize;
+  // array which associates a part of the Hilbert space to a buffer
+  int* SparseHilbertSpaceBufferIndices;
+  // temporary buffers used to store part of the Hilbert space
+  unsigned long** SparseBuffers;
+
  public:
 
   // basic constructor
@@ -319,6 +335,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = corresponding index
   long FindStateIndexMemory(unsigned long stateDescription, int lzmax);
 
+  // find state index when hilbert space storage is based on sparse algorithm
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = corresponding index
+  long FindStateIndexSparse(unsigned long stateDescription);
+
   // evaluate upper bound for the Haldane basis
   //
   // nbrFermions = number of fermions
@@ -348,6 +370,12 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // memeory = memory size that can be allocated for the look-up table
   virtual void GenerateLookUpTable(unsigned long memory);
 
+  // generate look-up table associated to current Hilbert space assuming a huge basis
+  // 
+  // fileName = name of the binary file
+  // memory = memory size that can be allocated for the look-up table
+  void GenerateLookUpTableHugeBasis(char* fileName, unsigned long memory);
+
   // generate all states corresponding to the constraints
   // 
   // lzMax = momentum maximum value for a fermion
@@ -365,6 +393,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   long  RawGenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, long pos);
+
+  // load a part of the Hilbert space associated to one element of the sparse Hilbert basis
+  //
+  // sparseIndex = index associated to the element of the sparse Hilbert space 
+  // buffer = reference on the pointer to the part of the total space 
+  // bufferSize = reference on the size of the buffer
+  void LoadSparseBuffer(long sparseIndex, unsigned long*& buffer, long& bufferSize);
 
   // load a lowest Lz part file into memory
   //

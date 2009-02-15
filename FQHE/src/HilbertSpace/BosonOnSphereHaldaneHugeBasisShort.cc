@@ -408,3 +408,4 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
   delete[] TmpMonomial;
   return jack;
 }
+

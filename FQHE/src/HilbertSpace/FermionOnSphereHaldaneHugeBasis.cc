@@ -753,13 +753,12 @@ int FermionOnSphereHaldaneHugeBasis::AdA (int index, int m, int n, double& coeff
   return 0;
 }
 
-// find state index
+// find state index when hilbert space storage is based on sparse algorithm
 //
 // stateDescription = unsigned integer describing the state
-// lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stateDescription)
+long FermionOnSphereHaldaneHugeBasis::FindStateIndexSparse(unsigned long stateDescription)
 {
   unsigned long TmpHighestLz = stateDescription >> this->StateHighestLzShift;
   int TmpBufferIndex =  this->StateHighestLzToIndex[TmpHighestLz];
@@ -853,6 +852,78 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDe
     return PosMid;
   else
     return PosMin;
+}
+
+// find state index assuming the Hilbert space is stored using the sparse technique
+//
+// stateDescription = unsigned integer describing the state
+// return value = corresponding index
+
+long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stateDescription)
+{
+  long PosMax = this->SparseHilbertSpaceDimension;
+  long PosMin = 0l;
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->SparseHilbertSpaceDescription[PosMid];
+  while ((PosMax - PosMin) > 1)
+    {
+      if (CurrentState > stateDescription)
+	PosMax = PosMid;
+      else
+	PosMin = PosMid;
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->SparseHilbertSpaceDescription[PosMid];
+    }
+  unsigned long* TmpBuffer;
+  long TmpBufferSize;
+  this->LoadSparseBuffer(PosMin, TmpBuffer, PosMax);
+  PosMin *= this->SparseHilbertSpaceChunckSize;
+  long PosMin2 = 0l;
+  --PosMax;
+  PosMid = (PosMin2 + PosMax) >> 1;
+  CurrentState = TmpBuffer[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	PosMax = PosMid;
+      else
+	PosMin2 = PosMid;
+      PosMid = (PosMin2 + PosMax) >> 1;
+      CurrentState = TmpBuffer[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid + PosMin;
+  else
+    return PosMin2 + PosMin;
+}
+
+// load a part of the Hilbert space associated to one element of the sparse Hilbert basis
+//
+// sparseIndex = index associated to the element of the sparse Hilbert space 
+// buffer = reference on the pointer to the part of the total space 
+// bufferSize = reference on the size of the buffer
+ 
+void FermionOnSphereHaldaneHugeBasis::LoadSparseBuffer(long sparseIndex, unsigned long*& buffer, long& bufferSize)
+{
+  int TmpIndex = this->SparseHilbertSpaceBufferIndices[sparseIndex];
+  if (sparseIndex == (SparseHilbertSpaceDimension - 1))
+    bufferSize = this->SparseHilbertSpaceRemainderChunckSize;
+  else
+    bufferSize = this->SparseHilbertSpaceChunckSize;
+  if (TmpIndex >= 0)
+    {
+      buffer = this->SparseBuffers[TmpIndex];
+      ++this->BufferAges[TmpIndex];
+      return;
+    }
+  int TmpMinAge = this->BufferAges[0];
+  int TmpIndex2 = 0l;
+  for (int i = 1; i < this->NbrBuffers; ++i)
+    if (this->BufferAges[i] < TmpMinAge)
+      {
+	TmpIndex2 = i;
+	TmpMinAge = this->BufferAges[i];
+      }
 }
 
 // print a given State
@@ -1144,6 +1215,46 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
   for (int i = 32; i < 64; ++i)
     this->SignLookUpTableMask[i] = (unsigned long) 0;
 #endif
+}
+
+// generate look-up table associated to current Hilbert space assuming a huge basis
+// 
+// fileName = name of the binary file
+// memory = memory size that can be allocated for the look-up table
+
+void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTableHugeBasis(char* fileName, unsigned long memory)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+  File.seekg (this->FileHeaderSize, ios::beg);
+  this->SparseHilbertSpaceChunckSize = this->LargeHilbertSpaceDimension / this->SparseHilbertSpaceDimension;
+  this->SparseHilbertSpaceDescription = new unsigned long [this->SparseHilbertSpaceDimension + 1l];
+  for (long i = 0; i < this->SparseHilbertSpaceDimension; ++i)
+    {
+      ReadLittleEndian(File, this->SparseHilbertSpaceDescription[i]);
+      File.seekg (this->SparseHilbertSpaceChunckSize << 3, ios::cur);
+    }
+  File.close();
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << fileName << endl;
+      this->HilbertSpaceDimension = 0;
+      return;
+    }
+  File.seekg (this->FileHeaderSize, ios::beg);
+  File.seekg ((this->LargeHilbertSpaceDimension - 1l) << 3, ios::beg);
+  ReadLittleEndian(File, this->SparseHilbertSpaceDescription[this->SparseHilbertSpaceDimension]);
+  --this->SparseHilbertSpaceDescription[this->SparseHilbertSpaceDimension];
+  this->SparseHilbertSpaceBufferIndices = new int [this->SparseHilbertSpaceDimension];
+  for (long i = 0; i < this->SparseHilbertSpaceDimension; ++i)
+    this->SparseHilbertSpaceBufferIndices[i] = -1;
 }
 
 // evaluate Hilbert space dimension
