@@ -218,6 +218,7 @@ int main(int argc, char** argv)
 	  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 	  return 0;
 	}
+      RealVector OutputState;
       FermionOnSphereHaldaneBasis* InitialSpace;
       if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
 	InitialSpace = new FermionOnSphereHaldaneBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
@@ -230,7 +231,6 @@ int main(int argc, char** argv)
 	      return 0;
 	    }
 	}
-      RealVector OutputState;
       if (Manager.GetString("initial-state") == 0)
 	OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
       else
@@ -243,7 +243,30 @@ int main(int argc, char** argv)
 	InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
       else
 	InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
-      
+//       else
+// 	{
+// 	  FermionOnSphereHaldaneSymmetricBasis* InitialSpace;
+// 	  if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+// 	    InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString());
+// 	  else
+// 	    {
+// 	      InitialSpace = new FermionOnSphereHaldaneSymmetricBasis(NbrParticles, NbrFluxQuanta, ReferenceState);	  
+// 	      if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+// 		{
+// 		  InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+// 		  return 0;
+// 		}
+// 	    }
+// 	  if (Manager.GetString("initial-state") == 0)
+// 	    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+// 	  else
+// 	    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+// 	      {
+// 		cout << "can't open " << Manager.GetString("initial-state") << endl;
+// 		return -1;
+// 	      }
+// 	  InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+// 	}
       if (OutputTxtFileName != 0)
 	{
 	  ofstream File;

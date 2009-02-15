@@ -304,16 +304,16 @@ int main(int argc, char** argv)
 	  int SubsystemMaxTotalLz = SubsystemNbrParticles * SubsystemLzMax;
 	  SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	  for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
-// 	    if ((TotalLz - SubsystemTotalLz) <= (((LzMax + 1) * (NbrParticles - 2 *SubsystemNbrParticles)) + (SubsystemSize * SubsystemNbrParticles) - 
-// 						 ((NbrParticles - SubsystemNbrParticles) * (NbrParticles - SubsystemNbrParticles))))
+// 	    if (((TotalLz[0] - (SubsystemTotalLz + ((LzMax - SubsystemSize + 1) * SubsystemNbrParticles))) <= (LzMax * (NbrParticles - SubsystemNbrParticles))) || (NbrSpaces > 1))
 	      {
 		cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
 		RealSymmetricMatrix PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0]);
 		for (int i = 1; i < NbrSpaces; ++i)
-		  {
-		    RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
-		    PartialDensityMatrix += TmpMatrix;
-		  }
+//		  if ((TotalLz[i] - (SubsystemTotalLz + ((LzMax - SubsystemSize + 1) * SubsystemNbrParticles))) <= (LzMax * (NbrParticles - SubsystemNbrParticles)))
+		    {
+		      RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
+		      PartialDensityMatrix += TmpMatrix;
+		    }
 		if (NbrSpaces > 1)
 		  PartialDensityMatrix /= ((double) NbrSpaces);
 		if (PartialDensityMatrix.GetNbrRow() > 1)

@@ -1123,3 +1123,98 @@ void FermionOnSphereHaldaneSymmetricBasis::InitializeWaveFunctionEvaluation (boo
 {
 }
   
+// create the Jack polynomial decomposition corresponding to the root partition
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alpha = value of the Jack polynomial alpha coefficient
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
+{
+  jack[0] = 1.0;
+  double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
+
+  int* TmpMonomial = new int [this->NbrFermions];
+  int* TmpMonomial2 = new int [this->NbrFermions];
+
+  double RhoRoot = 0.0;
+  unsigned long MaxRoot = this->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  for (int j = 0; j < this->NbrFermions; ++j)
+    RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+  int ReducedNbrFermions = this->NbrFermions - 1;
+  double SymSign = 1.0;
+  if ((((this->NbrFermions * ReducedNbrFermions) >> 1) & 1) != 0)
+    SymSign = -1.0;
+  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      double Rho = 0.0;
+      unsigned long CurrentPartition = this->StateDescription[i];
+      this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+      for (int j = 0; j < this->NbrFermions; ++j)
+	Rho += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+      double Coefficient = 0.0;
+      for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+	for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+	  {
+	    double Diff = (double) (TmpMonomial[j1] - TmpMonomial[j2]);
+	    unsigned int Max = TmpMonomial[j2];
+	    unsigned long TmpState = 0x0ul;
+	    int Tmpj1 = j1;
+	    int Tmpj2 = j2;
+	    for (int l = 0; l < this->NbrFermions; ++l)
+	      TmpMonomial2[l] = TmpMonomial[l];	    
+	    double Sign = 1.0;
+	    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+	      {
+		++TmpMonomial2[Tmpj1];
+		--TmpMonomial2[Tmpj2];
+//		Diff += 2.0;
+		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] >= TmpMonomial2[Tmpj1 - 1]))
+		  {
+		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+		    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+		    TmpMonomial2[Tmpj1] = Tmp;
+		    --Tmpj1;
+		    Sign *= -1.0; 
+		  }
+                while ((Tmpj2 < ReducedNbrFermions) && (TmpMonomial2[Tmpj2] <= TmpMonomial2[Tmpj2 + 1]))
+                  {
+                    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+                    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+                    TmpMonomial2[Tmpj2] = Tmp;
+                    ++Tmpj2;
+ 		    Sign *= -1.0; 
+                 }
+// 		cout << i << Tmpj1 << " " << Tmpj2 << " : ";
+// 		for (int x = 0; x < this->NbrFermions; ++x)
+// 		  cout << " " << TmpMonomial2[x];
+// 		cout << endl;
+		if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
+		  {		    
+		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+		    unsigned long TmpSymState = this->GetSymmetricState(TmpState);
+		    if (TmpSymState > TmpState)
+		      if ((TmpSymState <= MaxRoot) && (TmpSymState > CurrentPartition))
+			{			  
+			  long TmpIndex = this->FindStateIndex(TmpSymState, this->LzMax - TmpMonomial2[ReducedNbrFermions]);
+			  if (TmpIndex < this->HilbertSpaceDimension)
+			    Coefficient += SymSign * Sign * Diff * jack[TmpIndex];
+			}
+		      else
+		      if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			{
+			  long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+			  if (TmpIndex < this->HilbertSpaceDimension)
+			    Coefficient += Sign * Diff * jack[TmpIndex];
+			}
+		  }
+	      }
+	  }
+      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+    }
+  delete[] TmpMonomial;
+
+  return jack;
+}
+
