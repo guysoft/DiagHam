@@ -268,13 +268,13 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
-    }
-
+    }  
+  
   if ((onebodyPotentialUpUp == 0) || (onebodyPotentialDownDown == 0))
     {
       this->OneBodyTermFlag = false;
       this->OneBodyInteractionFactorsupup = 0;
-      this->OneBodyInteractionFactorsdowndown = 0;
+      this->OneBodyInteractionFactorsdowndown = 0;      
     }
   else
     {
@@ -287,6 +287,9 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
 	  this->OneBodyInteractionFactorsdowndown[i] = onebodyPotentialDownDown[i];
 	}
     }
+  // don't have tunnelling implemented either way, here!
+  this->OneBodyInteractionFactorsupdown = 0;
+  
   this->FullTwoBodyFlag = true;
 
   this->MaxNBody = 3;

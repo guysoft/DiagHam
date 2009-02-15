@@ -51,7 +51,7 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // number of States
   int NbrStates;
 
-    // length in x-direction
+  // length in x-direction
   int Lx;
   // length in y-direction
   int Ly;
@@ -61,6 +61,10 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   int NbrFluxQuanta;
   // flux density (flux quanta per unit cell)
   double FluxDensity;
+
+  // solenoid flux through torus around periodic boundary conditions (units of pi)
+  double SolenoidX;
+  double SolenoidY;
 
   // phases occurred when translating the system by a full system length (at y=1, or x=1)
   // in the x-direction
@@ -109,7 +113,9 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // ly = length of simulation cell in y-direction
   // nbrFluxQuanta = number of flux quanta piercing the simulation cell
   // memory = memory that can be allocated for precalculations
-  HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000);  
+  // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
+  // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
+  HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory = 10000000, double solenoidX=0.0, double solenoidY=0.0);  
 
   // copy constructor (without duplicating datas)
   //
@@ -180,6 +186,16 @@ class HardCoreBosonOnLattice :  public ParticleOnLattice
   // Attention: this does require the Hamiltonian to be recalculated!!
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
   virtual void SetNbrFluxQuanta(int nbrFluxQuanta);
+
+  // change flux through cell and periodic boundary conditions
+  // Attention: this does require the Hamiltonian to be recalculated!!
+  // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+  // solenoidX = new solenoid flux through torus in x-direction
+  // solenoidY = new solenoid flux through torus in y-direction
+  virtual void SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY);
+
+  // obtain the current setting of the flux piercing this lattice
+  virtual int GetNbrFluxQuanta();
 
   // apply creation operator to a word, using the conventions
   // for state-coding and quantum numbers of this space

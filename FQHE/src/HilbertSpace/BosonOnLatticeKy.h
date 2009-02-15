@@ -199,6 +199,16 @@ class BosonOnLatticeKy : public ParticleOnLattice
   // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
   virtual void SetNbrFluxQuanta(int nbrFluxQuanta);
 
+  // change flux through cell and periodic boundary conditions
+  // Attention: this does require the Hamiltonian to be recalculated!!
+  // nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+  // solenoidX = new solenoid flux through torus in x-direction
+  // solenoidY = new solenoid flux through torus in y-direction
+  virtual void SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY);
+
+  // obtain the current setting of the flux piercing this lattice
+  virtual int GetNbrFluxQuanta();
+
   // get maximum possible momentum for this geometry
   // return = maximum value of Ky
   virtual int GetMaximumKy();

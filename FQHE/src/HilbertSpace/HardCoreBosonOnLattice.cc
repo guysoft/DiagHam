@@ -55,7 +55,9 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice()
 // ly = length of simulation cell in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // memory = memory that can be allocated for precalculations
-HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory)
+// solenoidX = solenoid flux through lattice in x-direction (in units of pi)
+// solenoidY = solenoid flux through lattice in y-direction (in units of pi)
+HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
@@ -73,7 +75,7 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice (int nbrBosons, int lx, int ly, i
       exit(1);
     }
 
-  this->SetNbrFluxQuanta(nbrFluxQuanta);
+  this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
   this->Flag.Initialize();
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrBosons,NbrStates);
@@ -130,6 +132,8 @@ HardCoreBosonOnLattice::HardCoreBosonOnLattice(const HardCoreBosonOnLattice& bos
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;  
   this->NbrStates = bosons.NbrStates;
+  this->SolenoidX = bosons.SolenoidX;
+  this->SolenoidY = bosons.SolenoidY;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateHighestBit = bosons.StateHighestBit;
@@ -187,6 +191,8 @@ HardCoreBosonOnLattice& HardCoreBosonOnLattice::operator = (const HardCoreBosonO
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;  
   this->NbrStates = bosons.NbrStates;
+  this->SolenoidX = bosons.SolenoidX;
+  this->SolenoidY = bosons.SolenoidY;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateHighestBit = bosons.StateHighestBit;
@@ -293,8 +299,28 @@ void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
   //cout << "FluxDensity="<<this->FluxDensity<<endl;
   this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
   //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
-  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
+  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge ...
 }
+
+// change flux through cell and periodic boundary conditions
+// Attention: this does require the Hamiltonian to be recalculated!!
+// nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+void HardCoreBosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+{
+  this->SolenoidX = M_PI*solenoidX;
+  this->SolenoidY = M_PI*solenoidY;
+  this->SetNbrFluxQuanta(nbrFluxQuanta);
+}
+
+
+// obtain the current setting of the flux piercing this lattice
+int HardCoreBosonOnLattice::GetNbrFluxQuanta()
+{
+  return this->NbrFluxQuanta;
+}
+
 
 
 // apply creation operator to a word, using the conventions
@@ -547,6 +573,7 @@ int HardCoreBosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublatti
   //cout<<" tmpPhaseX="<<tmpPhase;
   for (int y=1;y<=posy; ++y)
     translationPhase*=tmpPhase;
+  translationPhase*=Polar(1.0, SolenoidX*numXTranslations);
   tmpPhase=1.0;
   if (numYTranslations>0)
     tmpPhase2=LyTranslationPhase;
@@ -558,6 +585,7 @@ int HardCoreBosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublatti
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
   //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
+  translationPhase*=Polar(1.0, SolenoidY*numYTranslations);
   return rst;
 }
 

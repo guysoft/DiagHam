@@ -159,7 +159,7 @@ int main(int argc, char** argv)
 	sprintf(interactionStr,"_hardcore");
       else sprintf(interactionStr,"_u_%g", ContactU);
       if (Manager.GetInteger("ky")>=0)
-	sprintf(kyString,"_k_%d",Manager.GetInteger("ky"));
+	sprintf(kyString,"_k_%ld",Manager.GetInteger("ky"));
       else
 	sprintf(kyString,"_k");
       if (NbrFluxValues == 1)

@@ -72,7 +72,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice ", 6);
   (*SystemGroup) += new SingleIntegerOption  ('f', "flux-per-CF", "number of flux attached to each boson (allowed values: +/-1)", 1);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
-  
+
+  (*SystemGroup) += new MultipleDoubleOption  ('\n', "solenoid-flux", "twist in periodic boundary conditions for total wavefunction phi_x[,phi_y])",',');
+  (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-CF", "twist in periodic boundary conditions for CF part phi_x[,phi_y])",',');
   (*SystemGroup) += new SingleStringOption('\n',"CF","externally supply single particle states for CF basis (base)",NULL);
   (*SystemGroup) += new SingleStringOption('\n',"all-CF","externally supply single particle states (list of full file-names)",NULL);
   (*SystemGroup) += new SingleStringOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL);
@@ -80,6 +82,10 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*MiscGroup) += new BooleanOption  ('d', "omit-diag", "omit diagonalizing in momentum basis");
   (*MiscGroup) += new BooleanOption  ('a', "analytic", "also generate the analytic wavefunctions");
+  (*MiscGroup) += new BooleanOption  ('a', "write-basis", "write the single particle basis states that were used");
+  (*MiscGroup) += new BooleanOption  ('a', "write-product", "write the product states of pairs of basis states");
+  (*MiscGroup) += new BooleanOption  ('a', "write-slater", "write the slater determinant part of the wavefunction");
+  (*MiscGroup) += new BooleanOption  ('a', "write-jastrow", "write the jastrow factor part of the wavefunction");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -94,6 +100,35 @@ int main(int argc, char** argv)
   bool NoMomentumDiagonalize = Manager.GetBoolean("omit-diag");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
+  char boundaryCdStr[20]="";
+  double SolenoidX=0.0, SolenoidY=0.0;
+  {
+    int tmpI;
+    double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
+    if (tmpI>0) SolenoidX=Fluxes[0];
+    if (tmpI>1) SolenoidY=Fluxes[1];
+    
+    if (tmpI>0)
+      {
+	delete [] Fluxes;
+	sprintf(boundaryCdStr,"_s_%g_%g",SolenoidX,SolenoidY);
+      }
+  }
+
+  double SolenoidCF_X=0.0, SolenoidCF_Y=0.0;
+  {
+    int tmpI;
+    double *Fluxes=Manager.GetDoubles("solenoid-CF", tmpI);
+    if (tmpI>0) SolenoidCF_X=Fluxes[0];
+    if (tmpI>1) SolenoidCF_Y=Fluxes[1];
+    
+    if (tmpI>0)
+      {
+	delete [] Fluxes;
+	sprintf(boundaryCdStr, "%s_sCF_%g_%g", boundaryCdStr, SolenoidCF_X, SolenoidCF_Y);
+      }
+  }
+
   char* OutputName;
   char interactionStr[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
@@ -101,7 +136,7 @@ int main(int argc, char** argv)
       OutputName = new char [256];      
       if (HardCore)
 	sprintf(interactionStr,"_hardcore");      
-      sprintf (OutputName, "bosons_lattice_CF_n_%d_x_%d_y_%d%s_q_%d_p_%d", NbrBosons, Lx, Ly, interactionStr, NbrFluxQuanta, CFFlux);
+      sprintf (OutputName, "bosons_lattice_CF_n_%d_x_%d_y_%d%s_q_%d_p_%d%s", NbrBosons, Lx, Ly, interactionStr, NbrFluxQuanta, CFFlux,boundaryCdStr);
     }
   char *TmpC = new char[strlen(OutputName)+20];
 
@@ -121,7 +156,7 @@ int main(int argc, char** argv)
   cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
   // space in which CF's live (statistics doesn't matter as we consider single particle physics!)
   //BosonOnLattice *CFSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
-  FermionOnLattice *CFSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
+  FermionOnLattice *CFSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace, SolenoidCF_X, SolenoidCF_Y);
   TranslationOperator = new ParticleOnLatticeTranslationOperator(CFSpace);
   
   // corresponding Hamiltonians
@@ -165,10 +200,13 @@ int main(int argc, char** argv)
     cout << "E_CF["<<i<<"]="<<CFEigenVals[i]<<" norm of EVec: "<<CFEigenVecs[i].Norm()<<endl;
   cout << "E_other["<<NbrBosons<<"]="<<CFEigenVals[NbrBosons]<<endl;
 
-  for (int i=0; i<NbrBosons; ++i)
+  if (Manager.GetBoolean("write-basis"))
     {
-      sprintf(TmpC,"%s.CF.%d.vec",OutputName,i);
-      CFEigenVecs[i].WriteVector(TmpC);
+      for (int i=0; i<NbrBosons; ++i)
+	{
+	  sprintf(TmpC,"%s.CF.%d.vec",OutputName,i);
+	  CFEigenVecs[i].WriteVector(TmpC);
+	}
     }
 
 
@@ -177,7 +215,7 @@ int main(int argc, char** argv)
   
   // calculate states required to build Jastrow factor:
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
-  FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
+  FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace, SolenoidX-SolenoidCF_X, SolenoidY-SolenoidCF_Y);
 
   AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
   delete TranslationOperator;
@@ -208,26 +246,32 @@ int main(int argc, char** argv)
 	}
     }
   
-  for (int i=0; i<NbrBosons; ++i)
+  if (Manager.GetBoolean("write-basis"))
     {
-      sprintf(TmpC,"%s.Jastrow.%d.vec",OutputName,i);
-      JastrowEigenVecs[i].WriteVector(TmpC);
+      for (int i=0; i<NbrBosons; ++i)
+	{
+	  sprintf(TmpC,"%s.Jastrow.%d.vec",OutputName,i);
+	  JastrowEigenVecs[i].WriteVector(TmpC);
+	}
     }
 
 
-  // build some product vectors:
-  ComplexVector TmpVector(JastrowHamiltonian->GetHilbertSpaceDimension());
-  for (int i=0; i<NbrBosons; ++i)
-    for (int j=0; j<NbrBosons; ++j)
-      {
-	for (int k=0; k<JastrowHamiltonian->GetHilbertSpaceDimension();++k)
+  if (Manager.GetBoolean("write-product")) 
+    {
+      // build some product vectors, mainly for testing
+      ComplexVector TmpVector(JastrowHamiltonian->GetHilbertSpaceDimension());
+      for (int i=0; i<NbrBosons; ++i)
+	for (int j=0; j<NbrBosons; ++j)
 	  {
-	    TmpVector[k]=JastrowEigenVecs[i][k] * CFEigenVecs[j][k];	    
+	    for (int k=0; k<JastrowHamiltonian->GetHilbertSpaceDimension();++k)
+	      {
+		TmpVector[k]=JastrowEigenVecs[i][k] * CFEigenVecs[j][k];	    
+	      }
+	    TmpVector/=TmpVector.Norm();
+	    sprintf(TmpC,"%s.prod_J%d_C%d.vec",OutputName,i,j);
+	    TmpVector.WriteVector(TmpC);
 	  }
-	TmpVector/=TmpVector.Norm();
-	sprintf(TmpC,"%s.prod_J%d_C%d.vec",OutputName,i,j);
-	TmpVector.WriteVector(TmpC);
-      }
+    }
     
   
   // cycle through all configurations of the Hilbert-space and calculate the corresponding Slater determinants
@@ -351,13 +395,20 @@ int main(int argc, char** argv)
 	}
       
     }
-  CFState /= CFState.Norm();  
-  sprintf(TmpC,"%s.CF.vec",OutputName);
-  CFState.WriteVector(TmpC);
 
-  JastrowState /= JastrowState.Norm();
-  sprintf(TmpC,"%s.J.vec",OutputName);
-  JastrowState.WriteVector(TmpC);
+  if (Manager.GetBoolean("write-slater"))
+    {
+      CFState /= CFState.Norm();  
+      sprintf(TmpC,"%s.CF.vec",OutputName);
+      CFState.WriteVector(TmpC);
+    }
+  
+  if (Manager.GetBoolean("write-jastrow"))
+    {
+      JastrowState /= JastrowState.Norm();
+      sprintf(TmpC,"%s.J.vec",OutputName);
+      JastrowState.WriteVector(TmpC);
+    }
   
   sprintf(TmpC,"%s.vec",OutputName);
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)

@@ -522,7 +522,12 @@ int main(int argc, char** argv)
 
   cout << "#i\tKx\tKy"<<endl;
   for (int i=0; i<NbrVectors; ++i)
-    cout <<i<<"\t"<<Arg(XEV[i])/M_PI<<"\t"<<Arg(YEV[i])/M_PI<<endl;
+    {
+      cout <<i<<"\t"<<Arg(XEV[i])/M_PI<<"\t"<<Arg(YEV[i])/M_PI;
+      if (fabs(Norm(XEV[i])-1.0)>1e-10) cout << "\t!!abs(Tx)="<<Norm(XEV[i]);
+      if (fabs(Norm(YEV[i])-1.0)>1e-10) cout << "\t!!abs(Ty)="<<Norm(YEV[i]);
+      cout << endl;
+    }
 
   if (Manager.GetBoolean("momentum-vectors"))
     {

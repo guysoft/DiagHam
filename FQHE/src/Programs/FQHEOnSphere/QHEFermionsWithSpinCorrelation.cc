@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
+  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('b', "bilayer", "adjust normalization as a bilayer correlation function");
   (*SystemGroup) += new BooleanOption  ('\n', "shift", "calculate 'shift' as defined for bilayer states");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
@@ -83,60 +84,60 @@ int main(int argc, char** argv)
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
   bool Statistics = true;
-  if (((SingleStringOption*) Manager["eigenstate"])->GetString() == 0)
+  if (Manager.GetString("eigenstate") == 0)
     {
       cout << "QHEFermionsWithSpinCorrelation requires a state" << endl;
       return -1;
     }
   if (NbrParticles==0)
-    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["eigenstate"])->GetString(), NbrParticles, LzMax, TotalLz, 
-								SzTotal, Statistics) == false)
+    if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("eigenstate"), NbrParticles, LzMax, TotalLz, 
+							     SzTotal, Statistics) == false)
       {
-	cout << "error while retrieving system informations from file name " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
+	cout << "error while retrieving system informations from file name " << Manager.GetString("eigenstate") << endl;
 	return -1;
       }
   cout << NbrParticles << " " << TotalLz << " " << SzTotal << " " << endl;
 
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["eigenstate"])->GetString()) == false)
+  if (State.ReadVector (Manager.GetString("eigenstate")) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
+      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
       return -1;      
     }
-//  char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-//   if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-//     {
-//       sprintf(OutputNameCorr,"%s",((SingleStringOption*) Manager["eigenstate"])->GetString());
-//       OutputNameCorr[strlen(OutputNameCorr)-4]='\0';
-//       sprintf(OutputNameCorr,"%s.%s.dat",OutputNameCorr,typeStr);
-//     }
-//   else
-//     {
-//       sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_sz_%d_lz_%d_%s.%s.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, SzTotal, TotalLz, 
-// 	       ((SingleStringOption*) Manager["add-filename"])->GetString(), typeStr);
-//     }
+  //  char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
+  //   if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+  //     {
+  //       sprintf(OutputNameCorr,"%s",Manager.GetString("eigenstate"));
+  //       OutputNameCorr[strlen(OutputNameCorr)-4]='\0';
+  //       sprintf(OutputNameCorr,"%s.%s.dat",OutputNameCorr,typeStr);
+  //     }
+  //   else
+  //     {
+  //       sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_sz_%d_lz_%d_%s.%s.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, SzTotal, TotalLz, 
+  // 	       ((SingleStringOption*) Manager["add-filename"])->GetString(), typeStr);
+  //     }
 
-      ParticleOnSphereWithSpin* Space;
+  ParticleOnSphereWithSpin* Space;
 #ifdef __64_BITS__
-      if (LzMax <= 31)
-        {
-          Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, SzTotal, 0);
-        }
-      else
-        {
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-        }
+  if (LzMax <= 31)
+    {
+      Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, SzTotal, 0);
+    }
+  else
+    {
+      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+      return -1;
+    }
 #else
-      if (LzMax <= 15)
-        {
-          Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, SzTotal, 0);
-        }
-      else
-        {
-	  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-	  return -1;
-        }
+  if (LzMax <= 15)
+    {
+      Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, SzTotal, 0);
+    }
+  else
+    {
+      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+      return -1;
+    }
 #endif
   ParticleOnSphereFunctionBasis Basis(LzMax);
 
@@ -172,112 +173,132 @@ int main(int argc, char** argv)
     File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["eigenstate"])->GetString(), "vec", "rhorho");
+      char* TmpFileName;
+      if (Manager.GetBoolean("coefficients-only"))
+	TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+      else
+	TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
       if (TmpFileName == 0)
 	{
-	  cout << "no vec extension was find in " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << " file name" << endl;
+	  cout << "no vec extension was find in " << Manager.GetString("eigenstate") << " file name" << endl;
 	  return 0;
 	}
       File.open(TmpFileName, ios::binary | ios::out);
       delete[] TmpFileName;
     }
-  double Factor1;
-  if (Manager.GetBoolean("bilayer"))
-    Factor1 = (64.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
-  else
-    Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
-  double Factor2 = sqrt (0.5 * LzMax );
-  if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
-    Factor2 = 1.0;
-  File << "# dist (rad) rho_{u,u} rho_{u,d} rho_{d,d}";
-  for (int x = 0; x < NbrPoints; ++x)
+  
+  if (Manager.GetBoolean("coefficients-only"))
     {
-      Value[0] = X;
-      int Pos = 0;
-      for (int j = 0; j < 3; ++j)
-	Sum[j] = 0.0;
+      File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
+      File << "#" << endl << "# (l+S) n_l^{u,u} n_l^{u,d} n_l^{d,d}" << endl;
       for (int i = 0; i <= LzMax; ++i)
 	{
-	  Basis.GetFunctionValue(Value, TmpValue, i);
-	  for (int j = 0; j < 3; ++j)	    
-	    Sum[j] += PrecalculatedValues[j][i] * (Conj(TmpValue) * TmpValue);
+	  File << i;
+	  for (int j=0; j<3; ++j)
+	    File << " " << PrecalculatedValues[j][i].Re;
+	  File << endl;
 	}
-      File << (X * Factor2);
-      for (int j = 0; j < 3; ++j)
-	File << " " << (Norm(Sum[j])  * Factor1);
-      File << endl;
-      X += XInc;
+      File.close();
+      for (int i = 0; i < 3; ++i)
+	delete[] PrecalculatedValues[i];
+      delete[] PrecalculatedValues;      
     }
-  File.close();
-  for (int i = 0; i < 3; ++i)
-    delete[] PrecalculatedValues[i];
-  delete[] PrecalculatedValues;
-  delete[] Sum;
-   
-  // CALCULATION OF "SHIFT OPERATOR":
-  if (Manager.GetBoolean("shift"))
+  else
     {
-      char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-      if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-	{
-	  sprintf(OutputNameCorr,"%s",((SingleStringOption*) Manager["eigenstate"])->GetString());
-	  OutputNameCorr[strlen(OutputNameCorr)-4]='\0';
-	  sprintf(OutputNameCorr,"%s.shift.dat",OutputNameCorr);
-	}
+      double Factor1;
+      if (Manager.GetBoolean("bilayer"))
+	Factor1 = (64.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
       else
-	{
-	  sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_Sz_%d_lz_%d_%s.shift.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, SzTotal, TotalLz, 
-		   ((SingleStringOption*) Manager["add-filename"])->GetString());
-	}
-
-      Complex* PrecalculatedValues2 = new Complex [2*(LzMax + 1)];
-      Complex TmpValue2;      
-      int Pos=0;      
-      for (int m = 0; m <= LzMax; ++m)
-	{	    
-	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, m, 0, LzMax, 1, m, 0, LzMax, 1);
-	  PrecalculatedValues2[Pos] = Operator.MatrixElement(State, State);
-	  ++Pos;
-	  ParticleOnSphereWithSpinDensityDensityOperator Operator2 (Space, LzMax, 0, m, 1, m, 1, LzMax, 0);
-	  PrecalculatedValues2[Pos] = Operator2.MatrixElement(State, State);
-	  ++Pos;
-	}
-
-      ofstream File;
-      File.precision(14);
-      File.open(OutputNameCorr, ios::binary | ios::out);
-      X=0.0;
+	Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      double Factor2 = sqrt (0.5 * LzMax );
+      if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
+	Factor2 = 1.0;
+      File << "# dist (rad) rho_{u,u} rho_{u,d} rho_{d,d}";
       for (int x = 0; x < NbrPoints; ++x)
 	{
 	  Value[0] = X;
-	  Value[1] = 0.0;
-	  Pos = 0;
-	  Complex Sum3 = 0.0;
-	  Sum2 = 0.0;	  
-	  for (int m = 0; m <= LzMax; ++m)
+	  for (int j = 0; j < 3; ++j)
+	    Sum[j] = 0.0;
+	  for (int i = 0; i <= LzMax; ++i)
 	    {
-	      Basis.GetFunctionValue(Value, TmpValue, m);
-	      double CommonFactor=SqrNorm(TmpValue);      
-	      Sum3 += CommonFactor*PrecalculatedValues2[Pos];
-	      ++Pos;
-	      Sum2 += CommonFactor*PrecalculatedValues2[Pos];
-	      ++Pos;
+	      Basis.GetFunctionValue(Value, TmpValue, i);
+	      for (int j = 0; j < 3; ++j)	    
+		Sum[j] += PrecalculatedValues[j][i] * (Conj(TmpValue) * TmpValue);
 	    }
-	  if (Sum2!=0.0)
-	    File << (X * Factor2) << " " << Real(Sum3/Sum2) << " " << Imag(Sum3/Sum2) << endl;
-	  else
-	    File << (X * Factor2) << " nan" << endl;
-	  if (x==NbrPoints-1)
-	    cout << "Shift = " << Real(Sum3/Sum2) << endl; 
+	  File << (X * Factor2);
+	  for (int j = 0; j < 3; ++j)
+	    File << " " << (Norm(Sum[j])  * Factor1);
+	  File << endl;
 	  X += XInc;
 	}
       File.close();
+      for (int i = 0; i < 3; ++i)
+	delete[] PrecalculatedValues[i];
       delete[] PrecalculatedValues;
-      delete [] OutputNameCorr;
-    }
-  
-  
+      delete[] Sum;
 
+      // CALCULATION OF "SHIFT OPERATOR":
+      if (Manager.GetBoolean("shift"))
+	{
+	  char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
+	  if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
+	    {
+	      sprintf(OutputNameCorr,"%s",Manager.GetString("eigenstate"));
+	      OutputNameCorr[strlen(OutputNameCorr)-4]='\0';
+	      sprintf(OutputNameCorr,"%s.shift.dat",OutputNameCorr);
+	    }
+	  else
+	    {
+	      sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_Sz_%d_lz_%d_%s.shift.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, SzTotal, TotalLz, 
+		       ((SingleStringOption*) Manager["add-filename"])->GetString());
+	    }
+
+	  Complex* PrecalculatedValues2 = new Complex [2*(LzMax + 1)];
+	  Complex TmpValue2;      
+	  int Pos=0;      
+	  for (int m = 0; m <= LzMax; ++m)
+	    {	    
+	      ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, m, 0, LzMax, 1, m, 0, LzMax, 1);
+	      PrecalculatedValues2[Pos] = Operator.MatrixElement(State, State);
+	      ++Pos;
+	      ParticleOnSphereWithSpinDensityDensityOperator Operator2 (Space, LzMax, 0, m, 1, m, 1, LzMax, 0);
+	      PrecalculatedValues2[Pos] = Operator2.MatrixElement(State, State);
+	      ++Pos;
+	    }
+
+	  ofstream File;
+	  File.precision(14);
+	  File.open(OutputNameCorr, ios::binary | ios::out);
+	  X=0.0;
+	  for (int x = 0; x < NbrPoints; ++x)
+	    {
+	      Value[0] = X;
+	      Value[1] = 0.0;
+	      Pos = 0;
+	      Complex Sum3 = 0.0;
+	      Sum2 = 0.0;	  
+	      for (int m = 0; m <= LzMax; ++m)
+		{
+		  Basis.GetFunctionValue(Value, TmpValue, m);
+		  double CommonFactor=SqrNorm(TmpValue);      
+		  Sum3 += CommonFactor*PrecalculatedValues2[Pos];
+		  ++Pos;
+		  Sum2 += CommonFactor*PrecalculatedValues2[Pos];
+		  ++Pos;
+		}
+	      if (Sum2!=0.0)
+		File << (X * Factor2) << " " << Real(Sum3/Sum2) << " " << Imag(Sum3/Sum2) << endl;
+	      else
+		File << (X * Factor2) << " nan" << endl;
+	      if (x==NbrPoints-1)
+		cout << "Shift = " << Real(Sum3/Sum2) << endl; 
+	      X += XInc;
+	    }
+	  File.close();
+	  delete[] PrecalculatedValues;
+	  delete [] OutputNameCorr;
+	}
+    }  
   return 0;
 }
 

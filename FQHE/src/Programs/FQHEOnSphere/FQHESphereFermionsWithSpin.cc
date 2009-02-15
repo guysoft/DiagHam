@@ -61,6 +61,9 @@ int main(int argc, char** argv)
   Manager += ToolsGroup;
   Manager += MiscGroup;
 
+  (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
+  
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
   (*LanczosGroup)  += new SingleIntegerOption  ('\n', "full-diag", 
 						"maximum Hilbert space dimension for which full diagonalization is applied", 
@@ -96,6 +99,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "s2-memory", "amount of memory that can be allocated for fast multiplication of s2 term (in Mbytes)", 500);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "l2-memory", "amount of memory that can be allocated for fast multiplication of l2 term (in Mbytes)", 500);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -251,7 +256,20 @@ int main(int argc, char** argv)
     }
 
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+  char* ExtraTerms = new char[50];
+  ExtraTerms[0]='\0';
+  if (Manager.GetDouble("l2-factor") != 0.0)
+    {
+      if (Manager.GetDouble("s2-factor") != 0.0)
+	sprintf(ExtraTerms,"_l2_%g_s2_%g",Manager.GetDouble("l2-factor"), Manager.GetDouble("s2-factor"));
+      else
+	sprintf(ExtraTerms,"_l2_%g",Manager.GetDouble("l2-factor"));
+    }
+  else
+    if (Manager.GetDouble("s2-factor") != 0.0)
+      sprintf(ExtraTerms,"_s2_%g",Manager.GetDouble("s2-factor"));
+  
+  sprintf (OutputNameLz, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
 	   NbrFermions, LzMax, SzTotal);
 
   int Max = (((LzMax - NbrUp + 1) * NbrUp) + ((LzMax - NbrDown + 1) * NbrDown));
@@ -355,10 +373,14 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian;      
+      AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;      
       Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrFermions, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
 								   Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
 
+      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
+	Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+      if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
+	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20); 
       
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
@@ -369,8 +391,8 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d",
-		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), 
+	  sprintf (EigenvectorName, "fermions_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",
+		   ((SingleStringOption*) Manager["interaction-name"])->GetString(), ExtraTerms,
 		   NbrFermions, LzMax, SzTotal, L);
 	}
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
@@ -388,6 +410,7 @@ int main(int argc, char** argv)
       if (HaldaneBasisFlag) return 0; // only one subspace defined...
     }
   delete[] OutputNameLz;
+  delete[] ExtraTerms;
   return 0;
 }
 

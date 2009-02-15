@@ -68,8 +68,10 @@ BosonOnLattice::BosonOnLattice ()
 // ly = length of simulation cell in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // memory = memory that can be allocated for precalculations
+// solenoidX = solenoid flux through lattice in x-direction (in units of pi)
+// solenoidY = solenoid flux through lattice in y-direction (in units of pi)
 // landauGaugeAxis = direction of Landau-gauge
-BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, char landauGaugeAxis)
+BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, char landauGaugeAxis)
 {
   this->NbrBosons = nbrBosons;
   this->Lx = lx;
@@ -78,7 +80,7 @@ BosonOnLattice::BosonOnLattice (int nbrBosons, int lx, int ly, int nbrFluxQuanta
   this->NbrStates = Lx*Ly;
   this->LandauGaugeAxis=landauGaugeAxis;
   
-  this->SetNbrFluxQuanta(nbrFluxQuanta);
+  this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
 
   this->HardCoreBasis = new HardCoreBoson(nbrBosons, NbrStates + nbrBosons - 1, memory);
   this->HilbertSpaceDimension = this->HardCoreBasis->GetHilbertSpaceDimension();
@@ -114,6 +116,8 @@ BosonOnLattice::BosonOnLattice(const BosonOnLattice& bosons)
   this->NbrSublattices = bosons.NbrSublattices;
   this->NbrFluxQuanta = bosons.NbrFluxQuanta;
   this->FluxDensity = bosons.FluxDensity;
+  this->SolenoidX = bosons.SolenoidX;
+  this->SolenoidY = bosons.SolenoidY;
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;
   this->NbrStates = bosons.NbrStates;
@@ -183,6 +187,8 @@ BosonOnLattice& BosonOnLattice::operator = (const BosonOnLattice& bosons)
   this->NbrSublattices = bosons.NbrSublattices;
   this->NbrFluxQuanta = bosons.NbrFluxQuanta;
   this->FluxDensity = bosons.FluxDensity;
+  this->SolenoidX = bosons.SolenoidX;
+  this->SolenoidY = bosons.SolenoidY;
   this->LxTranslationPhase = bosons.LxTranslationPhase;
   this->LyTranslationPhase = bosons.LyTranslationPhase;
   this->NbrStates = bosons.NbrStates;
@@ -250,7 +256,7 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
     {
     case 'x':
       //cout << "FluxDensity="<<this->FluxDensity<<endl;
-      this->LxTranslationPhase = 1.0;
+      this->LxTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
       this->LyTranslationPhase = Polar(1.0, 2.0*M_PI*FluxDensity*this->Ly);
       break;
     case 'y':
@@ -264,6 +270,24 @@ void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
       exit(1);
       break;
     }
+}
+
+// change flux through cell and periodic boundary conditions
+// Attention: this does require the Hamiltonian to be recalculated!!
+// nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+void BosonOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+{
+  this->SolenoidX = M_PI*solenoidX;
+  this->SolenoidY = M_PI*solenoidY;
+  this->SetNbrFluxQuanta(nbrFluxQuanta);
+}
+
+// obtain the current setting of the flux piercing this lattice
+int BosonOnLattice::GetNbrFluxQuanta()
+{
+  return this->NbrFluxQuanta;
 }
 
 
@@ -571,6 +595,7 @@ int BosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Comp
   //cout<<" tmpPhaseX="<<tmpPhase;
   for (int y=1;y<=posy; ++y)
     translationPhase*=tmpPhase;
+  translationPhase*=Polar(1.0, SolenoidX*numXTranslations);
   tmpPhase=1.0;
   if (numYTranslations>0)
     tmpPhase2=LyTranslationPhase;
@@ -581,6 +606,7 @@ int BosonOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Comp
   //cout<<" tmpPhaseY="<<tmpPhase;
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
+  translationPhase*=Polar(1.0, SolenoidY*numYTranslations);
   //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
   return rst;
 }

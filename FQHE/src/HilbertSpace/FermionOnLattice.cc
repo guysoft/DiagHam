@@ -55,7 +55,9 @@ FermionOnLattice::FermionOnLattice()
 // ly = length of simulation cell in y-direction
 // nbrFluxQuanta = number of flux quanta piercing the simulation cell
 // memory = memory that can be allocated for precalculations
-FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory)
+// solenoidX = solenoid flux through lattice in x-direction (in units of pi)
+// solenoidY = solenoid flux through lattice in y-direction (in units of pi)
+FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY)
 {
   this->NbrFermions = nbrFermions;
   this->Lx = lx;
@@ -73,7 +75,7 @@ FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFlux
       exit(1);
     }
 
-  this->SetNbrFluxQuanta(nbrFluxQuanta);
+  this->SetNbrFluxQuanta(nbrFluxQuanta, solenoidX, solenoidY);
   this->Flag.Initialize();
 
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(nbrFermions,NbrStates);
@@ -132,6 +134,8 @@ FermionOnLattice::FermionOnLattice(const FermionOnLattice& fermions)
   this->LxTranslationPhase = fermions.LxTranslationPhase;
   this->LyTranslationPhase = fermions.LyTranslationPhase;  
   this->NbrStates = fermions.NbrStates;
+  this->SolenoidX = fermions.SolenoidX;
+  this->SolenoidY = fermions.SolenoidY;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -195,6 +199,8 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
   this->LxTranslationPhase = fermions.LxTranslationPhase;
   this->LyTranslationPhase = fermions.LyTranslationPhase;  
   this->NbrStates = fermions.NbrStates;
+  this->SolenoidX = fermions.SolenoidX;
+  this->SolenoidY = fermions.SolenoidY;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateHighestBit = fermions.StateHighestBit;
@@ -304,7 +310,26 @@ void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta)
   //cout << "FluxDensity="<<this->FluxDensity<<endl;
   this->LxTranslationPhase = Polar(1.0, -2.0*M_PI*FluxDensity*this->Lx);
   //cout << "LxTranslationPhase= exp(I*"<<2.0*M_PI*FluxDensity*this->Lx<<")="<<LxTranslationPhase<<endl;
-  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge...
+  this->LyTranslationPhase = 1.0;  // no phase for translating in the y-direction in Landau gauge ...
+}
+
+// change flux through cell and periodic boundary conditions
+// Attention: this does require the Hamiltonian to be recalculated!!
+// nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+void FermionOnLattice::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+{
+  this->SolenoidX=M_PI*solenoidX;
+  this->SolenoidY=M_PI*solenoidY;
+  this->SetNbrFluxQuanta(nbrFluxQuanta);
+}
+
+
+// obtain the current setting of the flux piercing this lattice
+int FermionOnLattice::GetNbrFluxQuanta()
+{
+  return this->NbrFluxQuanta;
 }
 
 
@@ -641,6 +666,7 @@ int FermionOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Co
   //cout<<" tmpPhaseX="<<tmpPhase;
   for (int y=1;y<=posy; ++y)
     translationPhase*=tmpPhase;
+  translationPhase*=Polar(1.0, SolenoidX*numXTranslations);
   tmpPhase=1.0;
   if (numYTranslations>0)
     tmpPhase2=LyTranslationPhase;
@@ -652,6 +678,7 @@ int FermionOnLattice::EncodeQuantumNumber(int posx, int posy, int sublattice, Co
   for (int x=1;x<=posx; ++x)
     translationPhase*=tmpPhase;
   //cout << "tX="<<numXTranslations<< ", tY="<<numYTranslations<<", translationPhase= " <<translationPhase<<endl;
+  translationPhase*=Polar(1.0, SolenoidY*numYTranslations);
   return rst;
 }
 

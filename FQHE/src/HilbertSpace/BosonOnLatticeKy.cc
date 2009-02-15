@@ -326,6 +326,24 @@ void BosonOnLatticeKy::SetNbrFluxQuanta(int nbrFluxQuanta)
   exit(-1);
 }
 
+// change flux through cell and periodic boundary conditions
+// Attention: this does require the Hamiltonian to be recalculated!!
+// nbrFluxQuanta = number of quanta of flux piercing the simulation cell
+// solenoidX = new solenoid flux through torus in x-direction
+// solenoidY = new solenoid flux through torus in y-direction
+void BosonOnLatticeKy::SetNbrFluxQuanta(int nbrFluxQuanta, double solenoidX, double solenoidY)
+{
+  cout << "Attention, do not use SetNbrFluxQuanta for Bosons on Lattice with translation symmetry!"<<endl;
+  exit(-1);
+}
+
+// obtain the current setting of the flux piercing this lattice
+int BosonOnLatticeKy::GetNbrFluxQuanta()
+{
+  return this->NbrFluxQuanta;
+}
+
+
 // get maximum possible momentum for this geometry
 // return = maximum value of Ky
 int BosonOnLatticeKy::GetMaximumKy()
