@@ -531,7 +531,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("momentum-vectors"))
     {
-      char *vectorName=new char [strlen(VectorFiles[0])+10];
+      char *vectorName=new char [strlen(VectorFiles[0])+20];
       strcpy(vectorName,VectorFiles[0]);
       int endBase=strlen(vectorName)-1;
       int countDot=0;
@@ -548,9 +548,16 @@ int main(int argc, char** argv)
 	  if (nbrVec<minNbrVec) minNbrVec = nbrVec;
 	  //cout << "Number of vector="<<nbrVec<<" char " <<(char)('A'+nbrVec)<<endl;
 	}
-      VectorFiles[0][endBase]='\0';
+      if ((minNbrVec>=0) && (minNbrVec<26)&&(maxNbrVec<26)&&(maxNbrVec>=0))
+	VectorFiles[0][endBase]='\0';
+      else
+	{
+	  minNbrVec=0;
+	  VectorFiles[0][strlen(VectorFiles[0])-4]='\0';
+	}
       for (int i=0;i<NbrVectors;++i)
 	{
+	  cout <<"char: "<<(char)('a'+minNbrVec+i)<< " numerical: "<<(int)('a'+minNbrVec+i)<<endl;
 	  sprintf(vectorName,"%s.%c.vec",VectorFiles[0],'a'+minNbrVec+i);
 	  TmpState.ClearVector();
 	  for (int j=0; j<NbrVectors;++j)

@@ -121,7 +121,6 @@ int main(int argc, char** argv)
     double *Fluxes=Manager.GetDoubles("solenoid-CF", tmpI);
     if (tmpI>0) SolenoidCF_X=Fluxes[0];
     if (tmpI>1) SolenoidCF_Y=Fluxes[1];
-    
     if (tmpI>0)
       {
 	delete [] Fluxes;
