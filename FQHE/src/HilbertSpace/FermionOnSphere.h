@@ -358,7 +358,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // state = reference to the state to convert
   // reference = set which component as to be normalized to 1
   // return value = converted state
-  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference);    
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0);    
+
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0);
 
   // fuse two states which belong to different Hilbert spaces 
   //

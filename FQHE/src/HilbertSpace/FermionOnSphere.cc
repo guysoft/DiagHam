@@ -1660,6 +1660,77 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
   return state;
 }
 
+// convert a state such that its components are now expressed in the normalized basis
+//
+// state = reference to the state to convert
+// reference = set which component has been normalized to 1
+// return value = converted state
+
+RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
+{
+  int* TmpMonomialReference = new int [this->NbrFermions];
+  int* TmpMonomial = new int [this->NbrFermions];
+  double Factor = state[reference];
+  state[reference] = 1.0;
+  double* SqrtCoefficients = new double [this->LzMax + 1];
+  double* InvSqrtCoefficients = new double [this->LzMax + 1];
+  BinomialCoefficients Binomials(this->LzMax);
+  for (int k = 0; k <= this->LzMax; ++k)
+    {
+      InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
+      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+    }
+  unsigned long TmpState = this->StateDescription[reference];
+  int Index = 0;
+  for (int j = this->LzMax; j >= 0; --j)
+    if (((TmpState >> j) & 1ul) != 0ul)
+      TmpMonomialReference[Index++] = j;
+  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+    {
+      Index = 0;
+      TmpState = this->StateDescription[i];
+      for (int j = this->LzMax; j >= 0; --j)
+	if (((TmpState >> j) & 1ul) != 0ul)
+	  TmpMonomial[Index++] = j;
+      int Index1 = 0;
+      int Index2 = 0;
+      double Coefficient = Factor;
+      while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions))
+	{
+	  while ((Index1 < this->NbrFermions) && (TmpMonomialReference[Index1] > TmpMonomial[Index2]))
+	    {
+	      Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	      ++Index1;
+	    }
+	  while ((Index1 < this->NbrFermions) && (Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
+	    {
+	      ++Index1;
+	      ++Index2;
+	    }
+	  while ((Index2 < this->NbrFermions) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    {
+	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+	      ++Index2;
+	    }	  
+	}
+      while (Index1 < this->NbrFermions)
+	{
+	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
+	  ++Index1;
+	}
+      while (Index2 < this->NbrFermions)
+	{
+	  Coefficient *= SqrtCoefficients[TmpMonomialReference[Index2]];
+	  ++Index2;
+	}
+      state[i] *= Coefficient;
+    }
+  delete[] TmpMonomialReference;
+  delete[] TmpMonomial;
+  state /= state.Norm();
+  return state;
+}
+
 // fuse two states which belong to different Hilbert spaces 
 //
 // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
@@ -1676,7 +1747,7 @@ RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& l
 {
   FermionOnSphere* LeftSpace = (FermionOnSphere*) leftSpace;
   FermionOnSphere* RightSpace = (FermionOnSphere*) rightSpace;
-   int StateShift = RightSpace->LzMax + padding + 2;
+  int StateShift = RightSpace->LzMax + padding + 1;
   for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
     {
       unsigned long TmpState1 = LeftSpace->StateDescription[i] << StateShift;

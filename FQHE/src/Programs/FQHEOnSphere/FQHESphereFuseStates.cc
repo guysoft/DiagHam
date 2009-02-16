@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   int LeftNbrParticles = 0;
   int LeftLzMax = 0;
   int LeftTotalLz = 0;
-  bool Statistics = false;
+  bool Statistics = true;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(0, 0),
 						   LeftNbrParticles, LeftLzMax, LeftTotalLz, Statistics) == false)
     {

@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("load-hilbert") != 0)
 	    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
 	  else
-	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
 	}
     }
   else

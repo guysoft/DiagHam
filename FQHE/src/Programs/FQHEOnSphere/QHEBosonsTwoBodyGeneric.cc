@@ -128,8 +128,6 @@ int main(int argc, char** argv)
   sprintf (OutputNameLz, "bosons_%s_n_%d_2s_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrBosons, LzMax);
   int Max = (LzMax * NbrBosons);
   int  L = InitialLz;
-  if ((abs(Max) & 1) != 0)
-     L = 1;
 
   if ((abs(Max) & 1) != (InitialLz & 1))
     L += 1;

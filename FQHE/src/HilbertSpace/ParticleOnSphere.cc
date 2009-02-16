@@ -31,6 +31,12 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // virtual destructor
 //
@@ -318,7 +324,7 @@ int ParticleOnSphere::FindStateIndex(char* stateDescription)
 // reference = set which component has to be normalized to 1
 // return value = converted state
 
-RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, unsigned int reference)
+RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, long reference)
 {
   return state;
 }
@@ -329,7 +335,7 @@ RealVector& ParticleOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, u
 // reference = set which component has been normalized to 1
 // return value = converted state
 
-RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, unsigned int reference)
+RealVector& ParticleOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, long reference)
 {
   return state;
 }
