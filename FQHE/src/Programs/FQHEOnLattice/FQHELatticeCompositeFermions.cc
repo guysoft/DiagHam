@@ -82,10 +82,10 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*MiscGroup) += new BooleanOption  ('d', "omit-diag", "omit diagonalizing in momentum basis");
   (*MiscGroup) += new BooleanOption  ('a', "analytic", "also generate the analytic wavefunctions");
-  (*MiscGroup) += new BooleanOption  ('a', "write-basis", "write the single particle basis states that were used");
-  (*MiscGroup) += new BooleanOption  ('a', "write-product", "write the product states of pairs of basis states");
-  (*MiscGroup) += new BooleanOption  ('a', "write-slater", "write the slater determinant part of the wavefunction");
-  (*MiscGroup) += new BooleanOption  ('a', "write-jastrow", "write the jastrow factor part of the wavefunction");
+  (*MiscGroup) += new BooleanOption  ('\n', "write-basis", "write the single particle basis states that were used");
+  (*MiscGroup) += new BooleanOption  ('\n', "write-product", "write the product states of pairs of basis states");
+  (*MiscGroup) += new BooleanOption  ('\n', "write-slater", "write the slater determinant part of the wavefunction");
+  (*MiscGroup) += new BooleanOption  ('\n', "write-jastrow", "write the jastrow factor part of the wavefunction");
   (*MiscGroup) += new SingleStringOption  ('o', "output-file", "redirect output to this file",NULL);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
