@@ -2,6 +2,8 @@
 
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
 #include "Options/Options.h"
 
@@ -111,23 +113,43 @@ int main(int argc, char** argv)
   else
     {
       OutputFileName = new char [256];
-      sprintf (OutputFileName, "bosons_fused_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+      if (Statistics == false)
+	sprintf (OutputFileName, "bosons_fused_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+      else
+	sprintf (OutputFileName, "fermions_fused_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
     }
 
-  BosonOnSphereShort* OutputBasis = 0;
-  if (HaldaneBasisFlag == false)
-    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+  ParticleOnSphere* OutputBasis = 0;
+  if (Statistics == false)
+    {
+      if (HaldaneBasisFlag == false)
+	OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+      else
+	{
+	  int* ReferenceState = 0;
+	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	    return -1;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	  else
+	    OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	}
+    }
   else
     {
-      int* ReferenceState = 0;
-      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-	return -1;
-      if (Manager.GetString("load-hilbert") != 0)
-	OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+      if (HaldaneBasisFlag == false)
+	OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
       else
-	OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	{
+	  int* ReferenceState = 0;
+	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	    return -1;
+	  if (Manager.GetString("load-hilbert") != 0)
+	    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
+	  else
+	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+	}
     }
-
   RealVector OutputState(OutputBasis->GetHilbertSpaceDimension(), true);
 
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
@@ -138,40 +160,74 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from left state name " << InputVectors(0, i) << endl;
 	  return -1;
 	}
-      BosonOnSphereShort* LeftBasis = 0;
-      if ((InputVectors(2, i) == 0) || (strcmp("none", InputVectors(2, i)) == 0))
-	LeftBasis = new BosonOnSphereShort(LeftNbrParticles, LeftTotalLz, LeftLzMax);
+      ParticleOnSphere* LeftBasis = 0;
+      if (Statistics == false)
+	{
+	  if ((InputVectors(2, i) == 0) || (strcmp("none", InputVectors(2, i)) == 0))
+	    LeftBasis = new BosonOnSphereShort(LeftNbrParticles, LeftTotalLz, LeftLzMax);
+	  else
+	    {
+	      int* LeftReferenceState = 0;
+	      if (GetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
+		return -1;
+	      if ((InputVectors(4, i) == 0) || (strcmp("none", InputVectors(4, i)) == 0))
+		LeftBasis = new BosonOnSphereHaldaneBasisShort(LeftNbrParticles, LeftTotalLz, LeftLzMax, LeftReferenceState);	  
+	      else
+		LeftBasis = new BosonOnSphereHaldaneBasisShort(InputVectors(4, i));
+	    }
+	}
       else
 	{
-	  int* LeftReferenceState = 0;
-	  if (GetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
-	    return -1;
-	  if ((InputVectors(4, i) == 0) || (strcmp("none", InputVectors(4, i)) == 0))
-	    LeftBasis = new BosonOnSphereHaldaneBasisShort(LeftNbrParticles, LeftTotalLz, LeftLzMax, LeftReferenceState);	  
+	  if ((InputVectors(2, i) == 0) || (strcmp("none", InputVectors(2, i)) == 0))
+	    LeftBasis = new FermionOnSphere(LeftNbrParticles, LeftTotalLz, LeftLzMax);
 	  else
-	    LeftBasis = new BosonOnSphereHaldaneBasisShort(InputVectors(4, i));
+	    {
+	      int* LeftReferenceState = 0;
+	      if (GetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
+		return -1;
+	      if ((InputVectors(4, i) == 0) || (strcmp("none", InputVectors(4, i)) == 0))
+		LeftBasis = new FermionOnSphereHaldaneBasis(LeftNbrParticles, LeftTotalLz, LeftLzMax, LeftReferenceState);	  
+	      else
+		LeftBasis = new FermionOnSphereHaldaneBasis(InputVectors(4, i));
+	    }
 	}
-
       if (FQHEOnSphereFindSystemInfoFromVectorFileName(InputVectors(1, i),
 						       RightNbrParticles, RightLzMax, RightTotalLz, Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from left state name " << InputVectors(1, i) << endl;
 	  return -1;
 	}
-      BosonOnSphereShort* RightBasis = 0;
-      if ((InputVectors(3, i) == 0) || (strcmp("none", InputVectors(3, i)) == 0))
-	RightBasis = new BosonOnSphereShort(RightNbrParticles, RightTotalLz, RightLzMax);
+      ParticleOnSphere* RightBasis = 0;
+      if (Statistics == false)
+	{
+	  if ((InputVectors(3, i) == 0) || (strcmp("none", InputVectors(3, i)) == 0))
+	    RightBasis = new BosonOnSphereShort(RightNbrParticles, RightTotalLz, RightLzMax);
+	  else
+	    {
+	      int* RightReferenceState = 0;
+	      if (GetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
+		return -1;
+	      if ((InputVectors(5, i) == 0) || (strcmp("none", InputVectors(5, i)) == 0))
+		RightBasis = new BosonOnSphereHaldaneBasisShort(RightNbrParticles, RightTotalLz, RightLzMax, RightReferenceState);	  
+	      else
+		RightBasis = new BosonOnSphereHaldaneBasisShort(InputVectors(5, i));
+	    }
+	}
       else
 	{
-	  int* RightReferenceState = 0;
-	  if (GetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
-	    return -1;
-	  if ((InputVectors(5, i) == 0) || (strcmp("none", InputVectors(5, i)) == 0))
-	    RightBasis = new BosonOnSphereHaldaneBasisShort(RightNbrParticles, RightTotalLz, RightLzMax, RightReferenceState);	  
+	  if ((InputVectors(3, i) == 0) || (strcmp("none", InputVectors(3, i)) == 0))
+	    RightBasis = new FermionOnSphere(RightNbrParticles, RightTotalLz, RightLzMax);
 	  else
-	    RightBasis = new BosonOnSphereHaldaneBasisShort(InputVectors(5, i));
+	    {
+	      int* RightReferenceState = 0;
+	      if (GetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
+		return -1;
+	      if ((InputVectors(5, i) == 0) || (strcmp("none", InputVectors(5, i)) == 0))
+		RightBasis = new FermionOnSphereHaldaneBasis(RightNbrParticles, RightTotalLz, RightLzMax, RightReferenceState);	  
+	      else
+		RightBasis = new FermionOnSphereHaldaneBasis(InputVectors(5, i));
+	    }
 	}
-
       RealVector LeftVector;
       if (LeftVector.ReadVector (InputVectors(0, i)) == false)
 	{

@@ -1138,7 +1138,7 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
   int* TmpMonomial2 = new int [this->NbrFermions];
 
   double RhoRoot = 0.0;
-  unsigned long MaxRoot = this->StateDescription[0];
+  unsigned long MaxRoot = this->StateDescription[0] & FERMION_SPHERE_SYMMETRIC_MASK;
   this->ConvertToMonomial(MaxRoot, TmpMonomial);
   for (int j = 0; j < this->NbrFermions; ++j)
     RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
@@ -1149,7 +1149,7 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
       double Rho = 0.0;
-      unsigned long CurrentPartition = this->StateDescription[i];
+      unsigned long CurrentPartition = this->StateDescription[i] & FERMION_SPHERE_SYMMETRIC_MASK;
       this->ConvertToMonomial(CurrentPartition, TmpMonomial);
       for (int j = 0; j < this->NbrFermions; ++j)
 	Rho += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
@@ -1169,7 +1169,6 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
 	      {
 		++TmpMonomial2[Tmpj1];
 		--TmpMonomial2[Tmpj2];
-//		Diff += 2.0;
 		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] >= TmpMonomial2[Tmpj1 - 1]))
 		  {
 		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
@@ -1186,10 +1185,6 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
                     ++Tmpj2;
  		    Sign *= -1.0; 
                  }
-// 		cout << i << Tmpj1 << " " << Tmpj2 << " : ";
-// 		for (int x = 0; x < this->NbrFermions; ++x)
-// 		  cout << " " << TmpMonomial2[x];
-// 		cout << endl;
 		if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
 		  {		    
 		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
