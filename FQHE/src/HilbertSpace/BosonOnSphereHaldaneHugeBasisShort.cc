@@ -319,8 +319,14 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomial(RealVecto
 	      }
 	  }
       jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+      if ((i & 0xffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
     }
   delete[] TmpMonomial;
+  cout << endl;
 
   return jack;
 }
@@ -404,8 +410,15 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 	if (i < TmpIndex)
 	  jack[TmpIndex] = Coefficient;
 	jack[i] = Coefficient;
+	if ((i & 0xffl) == 0l)
+	  {
+	    cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	    cout.flush();
+	  }
       }
   delete[] TmpMonomial;
+  cout << endl;
+
   return jack;
 }
 

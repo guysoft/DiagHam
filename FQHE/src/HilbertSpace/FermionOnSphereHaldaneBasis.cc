@@ -1307,8 +1307,14 @@ RealVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(RealVector& jack
 	      }
 	  }
       jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+      if ((i & 0xffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
     }
   delete[] TmpMonomial;
+  cout << endl;
 
   return jack;
 }
@@ -1397,8 +1403,14 @@ RealVector& FermionOnSphereHaldaneBasis::GenerateSymmetrizedJackPolynomial(RealV
 	  jack[TmpIndex] = SymSign *Coefficient;
 	}
       jack[i] = Coefficient;
+      if ((i & 0xffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
     }
   delete[] TmpMonomial;
+  cout << endl;
 
   return jack;
 }
