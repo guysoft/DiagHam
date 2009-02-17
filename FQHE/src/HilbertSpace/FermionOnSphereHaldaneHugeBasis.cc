@@ -267,7 +267,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
    this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
    long Memory = 0l;
 
-   unsigned long TmpIndex = this->FindStateIndex(this->ReferenceState);
+   long TmpIndex = this->FindStateIndex(this->ReferenceState);
 #ifdef  __64_BITS__
    this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
 #else
@@ -313,7 +313,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
        cout << "Haldane space dimension = " << NewHilbertSpaceDimension << endl;
        this->FullLargeHilbertSpaceDimension =  this->LargeHilbertSpaceDimension;
        this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
-       if (this->LargeHilbertSpaceDimension >= (1l << 31))
+       if (this->LargeHilbertSpaceDimension >= (1l << 30))
 	 this->HilbertSpaceDimension = 0;
        else
 	 this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -384,7 +384,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
        cout << "Haldane symmetric space dimension = " << NewHilbertSpaceDimension << endl;
        this->FullLargeHilbertSpaceDimension =  this->LargeHilbertSpaceDimension;
        this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
-       if (this->LargeHilbertSpaceDimension >= (1l << 31))
+       if (this->LargeHilbertSpaceDimension >= (1l << 30))
 	 this->HilbertSpaceDimension = 0;
        else
 	 this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -601,6 +601,7 @@ bool FermionOnSphereHaldaneHugeBasis::WriteHilbertSpace (char* fileName)
 	{
 	  unsigned long TmpState = TmpStateHighestLz | TmpStateDescriptionBuffers[LocalIndex];
 	  WriteLittleEndian(File, TmpState);
+	  Count++;
 	}
 #endif
       ++LocalIndex;
@@ -753,12 +754,12 @@ int FermionOnSphereHaldaneHugeBasis::AdA (int index, int m, int n, double& coeff
   return 0;
 }
 
-// find state index when hilbert space storage is based on sparse algorithm
+// find state index assuming the Hilbert space is stored using the sparse technique
 //
 // stateDescription = unsigned integer describing the state
 // return value = corresponding index
 
-long FermionOnSphereHaldaneHugeBasis::FindStateIndexSparse(unsigned long stateDescription)
+long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stateDescription)
 {
   unsigned long TmpHighestLz = stateDescription >> this->StateHighestLzShift;
   int TmpBufferIndex =  this->StateHighestLzToIndex[TmpHighestLz];
@@ -854,12 +855,12 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDe
     return PosMin;
 }
 
-// find state index assuming the Hilbert space is stored using the sparse technique
+// find state index when hilbert space storage is based on sparse algorithm
 //
 // stateDescription = unsigned integer describing the state
 // return value = corresponding index
 
-long FermionOnSphereHaldaneHugeBasis::FindStateIndex(unsigned long stateDescription)
+long FermionOnSphereHaldaneHugeBasis::FindStateIndexSparse(unsigned long stateDescription)
 {
   long PosMax = this->SparseHilbertSpaceDimension;
   long PosMin = 0l;
