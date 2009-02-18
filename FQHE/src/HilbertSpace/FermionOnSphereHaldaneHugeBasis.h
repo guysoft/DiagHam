@@ -149,6 +149,8 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
 
   // number of bytes dedicated to the haeder in the Hilbert space description file
   long FileHeaderSize;
+  // name of the file where the Hilbert space is stored
+  char* HilbertSpaceFileName;
 
   // a subset of the complete Hilbert space
   unsigned long* SparseHilbertSpaceDescription;

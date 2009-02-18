@@ -424,7 +424,10 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 	ReadLittleEndian(File, this->StateDescription[i]);
     }
   else 
-    this->StateDescription = 0;
+    {
+      this->StateDescription = 0;
+      this->GenerateLookUpTableHugeBasis(fileName, memoryHilbert);
+    }
   File.close();
 
 #ifdef __64_BITS__
@@ -917,6 +920,8 @@ void FermionOnSphereHaldaneHugeBasis::LoadSparseBuffer(long sparseIndex, unsigne
   if (TmpIndex >= 0)
     {
       buffer = this->SparseBuffers[TmpIndex];
+      for (int i = 0; i < this->NbrBuffers; ++i)
+	--this->BufferAges[i];
       ++this->BufferAges[TmpIndex];
       return;
     }
@@ -928,6 +933,23 @@ void FermionOnSphereHaldaneHugeBasis::LoadSparseBuffer(long sparseIndex, unsigne
 	TmpIndex2 = i;
 	TmpMinAge = this->BufferAges[i];
       }
+  for (int i = 0; i < this->NbrBuffers; ++i)
+    --this->BufferAges[i];
+  this->BufferAges[TmpIndex2] = 0;
+  ifstream File;
+  File.open(this->HilbertSpaceFileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "can't open the file: " << this->HilbertSpaceFileName << endl;
+      return;
+    }
+  File.seekg (this->FileHeaderSize, ios::beg);
+  File.seekg (this->SparseHilbertSpaceChunckSize * sparseIndex, ios::beg);
+  unsigned long* TmpBuffer = this->SparseBuffers[TmpIndex2];;
+  for (long i = 0; i < bufferSize; ++i)
+    ReadLittleEndian(File, TmpBuffer[i]);
+  File.close();
+  
 }
 
 // print a given State
