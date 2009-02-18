@@ -313,7 +313,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomial(RealVecto
 		if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
 		  {
 		    long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
-		    if (TmpIndex < this->HilbertSpaceDimension)
+		    if (TmpIndex < this->LargeHilbertSpaceDimension)
 		      Coefficient += Diff * jack[TmpIndex];
 		  }
 	      }
@@ -362,6 +362,8 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 	while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
 	  --TmpLzMax;
 	this->ConvertToMonomial(CurrentPartition, TmpLzMax, TmpMonomial);
+	if (i != this->FermionHugeBasis->FindStateIndexMemory(CurrentPartition, TmpMonomial[0] + ReducedNbrBosons))
+	  cout << i << " " << this->FermionHugeBasis->FindStateIndexMemory(CurrentPartition, TmpMonomial[0] + ReducedNbrBosons) << endl;
 	for (int j = 0; j < this->NbrBosons; ++j)
 	  Rho += TmpMonomial[j] * (TmpMonomial[j] - 1.0 - InvAlpha * ((double) j));
 	double Coefficient = 0.0;
@@ -398,13 +400,13 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
 		  if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
 		    {
 		      long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState, TmpMonomial2[0] + ReducedNbrBosons);
-		      if (TmpIndex < this->HilbertSpaceDimension)
+		      if (TmpIndex < this->LargeHilbertSpaceDimension)
 			Coefficient += Diff * jack[TmpIndex];
 		    }
 		}
 	    }
 	
-	long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(this->FermionHugeBasis->GetSymmetricState(CurrentPartition), (this->LzMax - TmpMonomial[ReducedNbrBosons]) + ReducedNbrBosons);
+	long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(this->FermionHugeBasis->GetSymmetricState(CurrentPartition), (this->LzMax - TmpMonomial2[ReducedNbrBosons]) + ReducedNbrBosons);
 	Coefficient *= InvAlpha;
 	Coefficient /= (RhoRoot - Rho);
 	if (i < TmpIndex)

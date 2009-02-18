@@ -48,12 +48,6 @@ class FermionOnSphereHaldaneSymmetricBasis :  public FermionOnSphereHaldaneBasis
 
  protected:
 
-  // shift to apply to a state before inverting its expression
-  int InvertShift;
-  // shift to apply to a state after inverting its expression
-  int InvertUnshift;
-
-
   // signature associated to temporary state used when applying ProdA operator
   unsigned long ProdASignature;
 

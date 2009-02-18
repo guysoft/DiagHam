@@ -87,6 +87,16 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
     }
   this->Flag.Initialize();
 
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
+#endif
+  if ((this->LzMax & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
+
   if (fullDimension == 0l)
     this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
   else 
@@ -321,15 +331,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
    else
      {
        cout << "symmetrizing..." << endl;
-#ifdef __64_BITS__
-       this->InvertShift = 32 - ((this->LzMax + 1) >> 1);
-#else
-       this->InvertShift = 16 - ((this->LzMax + 1 ) >> 1);
-#endif
-       if ((this->LzMax & 1) == 0)
-	 this->InvertUnshift = this->InvertShift - 1;
-       else
-	 this->InvertUnshift = this->InvertShift;
        unsigned long NewHilbertSpaceDimension = 0;
        unsigned long NewTotalHilbertSpaceDimension = 0;
        long TotalIndex = 0;
@@ -412,7 +413,6 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
 
   ReadLittleEndian(File, this->HilbertSpaceDimension);
   ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
-  cout << this->HilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
   ReadLittleEndian(File, this->NbrFermions);
   ReadLittleEndian(File, this->LzMax);
   ReadLittleEndian(File, this->TotalLz);
@@ -852,7 +852,10 @@ long FermionOnSphereHaldaneHugeBasis::FindStateIndexMemory(unsigned long stateDe
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->LargeHilbertSpaceDimension;
+    else
+      return PosMin;
 }
 
 // find state index when hilbert space storage is based on sparse algorithm
@@ -1005,7 +1008,8 @@ long FermionOnSphereHaldaneHugeBasis::GenerateStates(int lzMax, unsigned long re
   int NbrNewEntries = 0;
   for (int i = 0; i < NbrEntries; ++i)
     {
-      TmpIndex = this->FindStateIndex(TmpGeneratedStates2[i]);
+      unsigned long& TmpState = TmpGeneratedStates2[i];
+      TmpIndex = this->FindStateIndex(TmpState);
 #ifdef __64_BITS__
       if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l)
 	{
@@ -1015,6 +1019,15 @@ long FermionOnSphereHaldaneHugeBasis::GenerateStates(int lzMax, unsigned long re
 	{
 	  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
 	  ++NbrNewEntries;
+	  if (this->TotalLz == 0)
+	    {
+	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
+	      int TmpSymLzMax = this->LzMax;
+	      while (((TmpSymmetricState >> TmpSymLzMax) & 0x1ul) == 0x0ul)
+		--TmpSymLzMax;
+	      TmpIndex = this->FindStateIndex(TmpSymmetricState);
+	      this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);	      
+	    }
 	}
 #else
       if ((this->KeepStateFlag[TmpIndex >> 5] >> (TmpIndex & 0x1f)) & 0x1l)
@@ -1025,6 +1038,15 @@ long FermionOnSphereHaldaneHugeBasis::GenerateStates(int lzMax, unsigned long re
 	{
 	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 	  ++NbrNewEntries;
+	  if (this->TotalLz == 0)
+	    {
+	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
+	      int TmpSymLzMax = this->LzMax;
+	      while (((TmpSymmetricState >> TmpSymLzMax) & 0x1ul) == 0x0ul)
+		--TmpSymLzMax;
+	      TmpIndex = this->FindStateIndex(TmpSymmetricState);
+	      this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);	      
+	    }
 	}      
 #endif
     }
@@ -1101,7 +1123,7 @@ void FermionOnSphereHaldaneHugeBasis::GenerateLookUpTable(unsigned long memory)
     }
   if (this->MaximumLookUpShift > this->NbrLzValue)
     this->MaximumLookUpShift = this->NbrLzValue;
-  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
+  this->LookUpTableMemorySize = 1l << this->MaximumLookUpShift;
 
   // construct  look-up tables for searching states
   this->LookUpTable = new long* [this->NbrLzValue];

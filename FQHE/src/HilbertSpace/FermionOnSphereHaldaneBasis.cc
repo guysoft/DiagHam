@@ -985,7 +985,7 @@ long FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long refere
 	{
 	  this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
 	  ++NbrNewEntries;
-	  if (TotalLz == 0)
+	  if (this->TotalLz == 0)
 	    {
 	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
 	      int TmpSymLzMax = this->LzMax;
@@ -1004,14 +1004,14 @@ long FermionOnSphereHaldaneBasis::GenerateStates(int lzMax, unsigned long refere
 	{
 	  this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 	  ++NbrNewEntries;
-	  if (TotalLz == 0)
+	  if (this->TotalLz == 0)
 	    {
 	      unsigned long TmpSymmetricState = this->GetSymmetricState (TmpState);
 	      int TmpSymLzMax = this->LzMax;
 	      while (((TmpSymmetricState >> TmpSymLzMax) & 0x1ul) == 0x0ul)
 		--TmpSymLzMax;
 	      TmpIndex = this->FindStateIndex(TmpSymmetricState, TmpSymLzMax);
-	      this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);	      
+	      this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);	      
 	    }
 	}      
 #endif

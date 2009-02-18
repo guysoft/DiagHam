@@ -94,7 +94,7 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   this->TotalLz = 0;
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->LzMax, this->TotalLz);
-  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -221,7 +221,7 @@ FermionOnSphereHaldaneSymmetricBasis::FermionOnSphereHaldaneSymmetricBasis (int 
   this->StateDescription = TmpStateDescription;
   this->StateLzMax = TmpStateLzMax;
   this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
-  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -1197,12 +1197,12 @@ RealVector& FermionOnSphereHaldaneSymmetricBasis::GenerateSymmetrizedJackPolynom
 			    Coefficient += SymSign * Sign * Diff * jack[TmpIndex];
 			}
 		      else
-		      if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-			{
-			  long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
-			  if (TmpIndex < this->HilbertSpaceDimension)
-			    Coefficient += Sign * Diff * jack[TmpIndex];
-			}
+			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			  {
+			    long TmpIndex = this->FindStateIndex(TmpState, TmpMonomial2[0]);
+			    if (TmpIndex < this->HilbertSpaceDimension)
+			      Coefficient += Sign * Diff * jack[TmpIndex];
+			  }
 		  }
 	      }
 	  }
