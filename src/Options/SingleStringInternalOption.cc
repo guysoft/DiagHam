@@ -44,7 +44,7 @@ using std::endl;
 // optionDescription = string describing option (used for -h option)
 // string = default value of the string (null pointer if none)
 // same as SingleStringOption:
-SingleStringInternalOption::SingleStringInternalOption(char optionCode, char* optionName, char* optionDescription, char* string, bool external):SingleStringOption(optionCode, optionName, optionDescription, string)
+SingleStringInternalOption::SingleStringInternalOption(char optionCode, const char* optionName, const char* optionDescription, const char* string, bool external):SingleStringOption(optionCode, optionName, optionDescription, string)
 {
   extFlag=external;
 }

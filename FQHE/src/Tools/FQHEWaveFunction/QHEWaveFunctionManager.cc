@@ -511,7 +511,7 @@ char* QHEWaveFunctionManager::GetDescription()
       return 0;
     }
   char * buffer = new char[1000];
-  sprintf(buffer,"%s N=%d",this->Options->GetString("test-wavefunction"), this->Options->GetInteger("nbr-particles"));
+  sprintf(buffer,"%s N=%ld",this->Options->GetString("test-wavefunction"), this->Options->GetInteger("nbr-particles"));
   if ((strcmp (this->Options->GetString("test-wavefunction"), "pairedcf") == 0))
     {
       int LL;

@@ -57,7 +57,8 @@ FermionOnLattice::FermionOnLattice()
 // memory = memory that can be allocated for precalculations
 // solenoidX = solenoid flux through lattice in x-direction (in units of pi)
 // solenoidY = solenoid flux through lattice in y-direction (in units of pi)
-FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY)
+// verbose = flag indicating if any output is wanted
+FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFluxQuanta, unsigned long memory, double solenoidX, double solenoidY, bool verbose)
 {
   this->NbrFermions = nbrFermions;
   this->Lx = lx;
@@ -107,16 +108,20 @@ FermionOnLattice::FermionOnLattice (int nbrFermions, int lx, int ly, int nbrFlux
   UsedMemory += this->NbrStates * sizeof(int);
   UsedMemory += this->NbrStates * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
   UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
-  cout << "memory requested for Hilbert space = ";
-  if (UsedMemory >= 1024)
-    if (UsedMemory >= 1048576)
-      cout << (UsedMemory >> 20) << "Mo" << endl;
-    else
-      cout << (UsedMemory >> 10) << "ko" <<  endl;
-  else
-    cout << UsedMemory << endl;
+  if (verbose)
+    {
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+    }
 #endif
-  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension<<endl;
+  if (verbose)
+    cout << "Hilbert space dimension = " << this->HilbertSpaceDimension<<endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -166,7 +171,6 @@ FermionOnLattice::~FermionOnLattice ()
       for (int i = 0; i < this->NbrStates; ++i)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
-      
     }
 }
 
@@ -181,6 +185,8 @@ FermionOnLattice& FermionOnLattice::operator = (const FermionOnLattice& fermions
       delete[] this->StateDescription;
       if (this->StateHighestBit != 0)
 	delete[] this->StateHighestBit;
+      delete[] this->SignLookUpTable;
+      delete[] this->SignLookUpTableMask;
       delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrStates; ++i)
 	delete[] this->LookUpTable[i];

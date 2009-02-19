@@ -48,7 +48,7 @@ class SingleStringInternalOption : public SingleStringOption
   // optionDescription = string describing option (used for -h option)
   // string = default value of the string (null pointer if none)
   // external = flag to indicate whether visible to the external world (in help output);
-  SingleStringInternalOption(char optionCode, char* optionName, char* optionDescription, char* string = 0, bool external=false);
+  SingleStringInternalOption(char optionCode, const char* optionName, const char* optionDescription, const char* string = 0, bool external=false);
 
   // destructor
   //

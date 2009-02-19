@@ -35,11 +35,82 @@ using std::endl;
 using std::ofstream;
 
 
+#ifdef HAVE_GSL
+#include "gsl/gsl_multimin.h"
+#endif
+
+
 // some global variables to avoid too many parameters in function calls
 int NbrBosons;
 int Lx;
 int Ly;
 ArchitectureManager Architecture;
+
+// Manager = OptionManager indicating all contents
+// Space = total space to work in
+// solenoidCF_X = solenoid flux for CF in x-direction
+// solenoidCF_y = solenoid flux for CF in y-direction
+// writeState = flag indicating whether final state shall be written to predefined output name
+ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, double solenoidCF_x, double solenoidCF_y, bool verbose=false, bool writeState=false);
+
+double GetTrialStateSqrOverlap(ComplexVector &reference, OptionManager &Manager, ParticleOnLattice* Space, double solenoidCF_x, double solenoidCF_y, bool verbose=false, bool writeState=false)
+{
+  ComplexVector *TmpV = GetTrialState(Manager, Space, solenoidCF_x, solenoidCF_y, verbose, writeState);
+  double Overlap = SqrNorm(reference* (*TmpV));
+  delete TmpV;
+  return Overlap;
+}
+
+struct OptParams
+{
+  ComplexVector *ReferenceVector;
+  OptionManager *Manager;
+  ParticleOnLattice* Space;
+  double Offset;
+  int EvaluationsF;
+  int EvaluationsdF;
+};
+
+#ifdef HAVE_GSL
+
+double TargetFunction_F (const gsl_vector * X, void * PARAMS)
+{
+  OptParams *p=(OptParams*)PARAMS;
+  double rst = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1));
+  ++(p->EvaluationsF);
+  return rst;
+}
+
+void TargetFunction_dF (const gsl_vector * X, void * PARAMS, gsl_vector * G)
+{
+  OptParams *p=(OptParams*)PARAMS;
+  double h = p->Offset;
+  double Oplusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)+h, gsl_vector_get(X,1));
+  double Ominusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)-h, gsl_vector_get(X,1));
+  double Oplusy =  -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)+h);
+  double Ominusy = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)-h);
+  gsl_vector_set (G, 0, (Oplusx-Ominusx)/(2.0*h));
+  gsl_vector_set (G, 1, (Oplusy-Ominusy)/(2.0*h));
+  ++(p->EvaluationsdF);
+}
+
+  
+void TargetFunction_FdF (const gsl_vector * X, void * PARAMS, double * f, gsl_vector * G)
+{
+  OptParams *p=(OptParams*)PARAMS;
+  double h = p->Offset;
+  *f = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1));
+  double Oplusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)+h, gsl_vector_get(X,1));
+  double Ominusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)-h, gsl_vector_get(X,1));
+  double Oplusy =  -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)+h);
+  double Ominusy = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)-h);
+  ++(p->EvaluationsF);
+  ++(p->EvaluationsdF);
+  gsl_vector_set (G, 0, (Oplusx-Ominusx)/(2.0*h));
+  gsl_vector_set (G, 1, (Oplusy-Ominusy)/(2.0*h));
+}
+
+#endif // HAVE_GSL
 
 // values = eigenvalues
 // vectors = complex matrix with many vectors to be analyzed and overwritten with basis diagonal in k
@@ -59,9 +130,11 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHELatticeCompositeFermions" , "0.01");  
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* OptimizationGroup = new OptionGroup ("optimization options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");  
 
   Manager += SystemGroup;
+  Manager += OptimizationGroup;
   Architecture.AddOptionGroup(&Manager);  
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
@@ -75,9 +148,14 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new MultipleDoubleOption  ('\n', "solenoid-flux", "twist in periodic boundary conditions for total wavefunction phi_x[,phi_y])",',');
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-CF", "twist in periodic boundary conditions for CF part phi_x[,phi_y])",',');
-  (*SystemGroup) += new SingleStringOption('\n',"CF","externally supply single particle states for CF basis (base)",NULL);
-  (*SystemGroup) += new SingleStringOption('\n',"all-CF","externally supply single particle states (list of full file-names)",NULL);
-  (*SystemGroup) += new SingleStringOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL);
+  (*SystemGroup) += new SingleStringInternalOption('\n',"CF","externally supply single particle states for CF basis (base)",NULL, true);
+  (*SystemGroup) += new SingleStringInternalOption('\n',"all-CF","externally supply single particle states (list of full file-names)",NULL, true);
+  (*SystemGroup) +=
+    new SingleStringInternalOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL, true);
+#ifdef HAVE_GSL
+  (*OptimizationGroup) += new SingleStringOption  ('\n', "optimize", "vector file to optimize CF solenoid flux against",NULL);
+  (*OptimizationGroup) += new SingleDoubleOption  ('\n', "offset", "offset h to be used for numerical derivatives",0.005);
+#endif
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*MiscGroup) += new BooleanOption  ('d', "omit-diag", "omit diagonalizing in momentum basis");
@@ -90,17 +168,235 @@ int main(int argc, char** argv)
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
-  
+
   NbrBosons = Manager.GetInteger("nbr-particles");
   Lx = Manager.GetInteger("lx");
   Ly = Manager.GetInteger("ly");
+  int NbrFluxQuanta = Manager.GetInteger("flux");  
+  bool HardCore = Manager.GetBoolean("hard-core");
+  unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+
+
+  double SolenoidCF_X=0.0, SolenoidCF_Y=0.0;
+  {
+    int tmpI;
+    double *Fluxes=Manager.GetDoubles("solenoid-CF", tmpI);
+    if (tmpI>0) SolenoidCF_X=Fluxes[0];
+    if (tmpI>1) SolenoidCF_Y=Fluxes[1];
+    if (tmpI>0) delete [] Fluxes;	
+  }
+
+
+  cout << "* Full Hilbert-space: N="<<NbrBosons<<" bosons in "<<Lx<<" x "<<Ly<<" cells at N_phi="<<NbrFluxQuanta<<endl;
+  ParticleOnLattice* Space;
+  if (HardCore)
+    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
+  
+  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+
+
+  if (Manager.GetString("optimize")!=NULL)
+    {
+      if ((Manager.GetString("CF")!=NULL)||(Manager.GetString("all-CF")!=NULL)||(Manager.GetString("J")!=NULL))
+	{
+	  cout << "Cannot optimize with externally supplied basis, ignoring the given basis."<<endl;
+	  ((SingleStringInternalOption*)Manager["CF"])->SetString(NULL);
+	  ((SingleStringInternalOption*)Manager["all-CF"])->SetString(NULL);
+	  ((SingleStringInternalOption*)Manager["J"])->SetString(NULL);
+	}
+      ComplexVector ReferenceState;
+
+      if (ReferenceState.ReadVector(Manager.GetString("optimize"))==false)
+	{
+	  cout << "error reading reference state "<<Manager.GetString("optimize")<<endl;
+	  exit(-1);
+	}
+
+      if (ReferenceState.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+	{
+	  cout << "Reference state "<<Manager.GetString("optimize")<< " does not match the dimension of the given Hilbert-space"<<endl;
+	  exit(-1);
+	}
+
+      double Onod = GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X, SolenoidCF_Y);
+      cout << "Checking initial O="<<Onod<<endl;
+
+#ifdef HAVE_GSL
+      size_t iter = 0;
+      int status;
+
+      const gsl_multimin_fdfminimizer_type *T;
+      gsl_multimin_fdfminimizer *s;
+
+      OptParams MyParameters;
+      MyParameters.ReferenceVector=&ReferenceState;
+      MyParameters.Manager = &Manager;
+      MyParameters.Space = Space;
+      MyParameters.Offset = Manager.GetDouble("offset");
+      MyParameters.EvaluationsF=0;
+      MyParameters.EvaluationsdF=0;
+      
+      gsl_vector *x;
+      gsl_multimin_function_fdf my_func;
+
+      my_func.n = 2;
+      my_func.f = &TargetFunction_F;
+      my_func.df = &TargetFunction_dF;
+      my_func.fdf = &TargetFunction_FdF;
+      my_func.params = &MyParameters;
+
+      /* Starting point, x = (5,7) */
+      x = gsl_vector_alloc (2);
+      gsl_vector_set (x, 0, SolenoidCF_X);
+      gsl_vector_set (x, 1, SolenoidCF_Y);
+      
+      T = gsl_multimin_fdfminimizer_conjugate_fr;
+      s = gsl_multimin_fdfminimizer_alloc (T, 2);
+
+      gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
+
+      do
+	{
+	  iter++;
+	  status = gsl_multimin_fdfminimizer_iterate (s);
+
+	  if (status)
+	    break;
+
+	  status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+
+	  if (status == GSL_SUCCESS)
+	    printf ("Minimum found at:\n");
+
+	  printf ("%5d %.5f %.5f %10.5f\n", iter,
+		  gsl_vector_get (s->x, 0),
+		  gsl_vector_get (s->x, 1),
+		  s->f);
+
+	  SolenoidCF_X = gsl_vector_get(s->x, 0);
+	  SolenoidCF_Y = gsl_vector_get (s->x, 1);
+	}
+      while (status == GSL_CONTINUE && iter < 100);
+
+      SolenoidCF_X = gsl_vector_get(s->x, 0);
+      SolenoidCF_Y = gsl_vector_get (s->x, 1);
+      cout << "Final overlap at theta=( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" ), O="<<-s->f<<endl;
+      cout << "Total number of function evaluations:        "<<MyParameters.EvaluationsF<<endl;
+      cout << "Total number of evaluations for derivative : "<<MyParameters.EvaluationsdF<<endl;
+      cout << "Total points where overlap was calculated :  "<<MyParameters.EvaluationsF+4*MyParameters.EvaluationsdF<<endl;
+      gsl_multimin_fdfminimizer_free (s);
+      gsl_vector_free (x);
+
+#elif
+      
+
+      cout << "Attention, this minimizer still need debugging!"<<endl;
+      double h = Manager.GetDouble("offset");
+      bool Convergence=false;
+      int iteration = 0;
+      while (Convergence==false)
+	{
+	  cout << "Calculating for theta=("<<SolenoidCF_X<<", "<<SolenoidCF_Y<<")"<<endl;
+	  double Onod = GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X, SolenoidCF_Y);
+	  double Oplusx = GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X+h, SolenoidCF_Y);
+	  double Ominusx = GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X-h, SolenoidCF_Y);
+	  double Oplusy =  GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X, SolenoidCF_Y+h);
+	  double Ominusy = GetTrialStateSqrOverlap(ReferenceState, Manager, Space, SolenoidCF_X, SolenoidCF_Y-h);
+
+	  cout << "Iteration "<<iteration++<<": theta=("<<SolenoidCF_X<<", "<<SolenoidCF_Y<<"), O="<<Onod<<endl;
+	  
+	  double dOx = (Oplusx-Ominusx)/(2.0*h);
+	  double dOy = (Oplusy-Ominusy)/(2.0*h);
+	  double d2Ox = (Oplusx+Ominusx-2.0*Onod)/(2.0*h*h);
+	  double d2Oy = (Oplusy+Ominusy-2.0*Onod)/(2.0*h*h);
+	  Complex Direction = Complex(dOx,dOy);
+	  double Angle = Arg(Direction);
+	  double alpha = 0.05; // damping parameter 0<=alpha<1
+	  double Radius=0.0;
+	  double cs = cos(Angle), sn = sin(Angle);	  
+
+	  cout << "O="<<Onod<<" O+x="<<Oplusx<<" O-x="<<Ominusx<<" O+y="<<Oplusy<<" O-y="<<Ominusy<<endl;
+	  cout << "dOx="<<dOx<<" dOy="<<dOy<<" d2Ox="<<d2Ox<<" d2Oy="<<d2Oy<<" Angle="<<Angle<<endl;
+	  Convergence = ((sqrt(dOx*dOx+dOy*dOy)<1e-6)&&(d2Ox<0.0)&&(d2Oy<0.0));
+	  
+	  if (Convergence == false)
+	    {
+	      if ((sqrt(dOx*dOx+dOy*dOy)>1e-6))
+		{
+		  double a = 0.5*(cs*cs*d2Ox+sn*sn*d2Oy);
+		  double b = cs*dOx + sn *dOy;
+		  double c = (1.0-alpha)*(Onod-1.0);
+		  cout << "a="<<a<<" b="<<b<<" c="<<c<<endl;
+		  if (b<0) cout << " wrong assumptions..."<<endl;
+		  if ((fabs(a)>1e-6) && (b*b-4.0*a*c>0)) // can use quadratic relation?
+		    {
+		      if (a>0)
+			Radius = (-b+sqrt(b*b-4.0*a*c))/(2.0*a);
+		      else
+			Radius = (-b-sqrt(b*b-4.0*a*c))/(2.0*a);
+		    }
+		  else // use linear interpolation
+		    { 
+		      Radius = c/b;
+		    }
+		  cout << "Angle=" <<Angle<<" Radius = "<<Radius<<endl;
+		}
+	      else
+		{
+		  if ((d2Ox>0.0)&&(d2Oy>0.0))
+		    {
+		      Direction = Complex(d2Ox,d2Oy);
+		      Angle = Arg(Direction);
+		      cs = cos(Angle);
+		      sn = sin(Angle);
+		      double a = 0.5*(cs*cs*d2Ox+sn*sn*d2Oy);
+		      double c = (1.0-alpha)*(Onod-1.0);		      
+		      Radius = sqrt(-c/a);
+		    }
+		  else if (d2Ox<0.0)
+		    {
+		      cs=0.0; sn=1.0;
+		      Radius = sqrt(-(1.0-alpha)*(Onod-1.0)/d2Oy);
+		    }
+		  else if (d2Oy<0.0)
+		    {
+		      cs=1.0; sn=0.0;
+		      Radius = sqrt(-(1.0-alpha)*(Onod-1.0)/d2Oy);
+		    }
+		  else
+		    {
+		      cout << "This case should not happen!"<<endl;
+		    }
+		}
+	    }
+	  
+	  SolenoidCF_X += Radius * cs;
+	  SolenoidCF_Y += Radius * sn;
+
+	}
+
+#endif
+      
+    }
+  else GetTrialState(Manager, Space, SolenoidCF_X, SolenoidCF_Y, /*verbose*/ true, /*writeState*/ true);
+
+  delete Space;
+  
+  return 0;
+}
+
+
+
+ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, double solenoidCF_X, double solenoidCF_Y, bool verbose, bool writeState)
+{
   int NbrFluxQuanta = Manager.GetInteger("flux");
   int CFFlux = Manager.GetInteger("flux-per-CF");
   bool HardCore = Manager.GetBoolean("hard-core");
   bool NoMomentumDiagonalize = Manager.GetBoolean("omit-diag");
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
 
-  char boundaryCdStr[20]="";
+  char boundaryCdStr[30]="";
   double SolenoidX=0.0, SolenoidY=0.0;
   {
     int tmpI;
@@ -114,48 +410,35 @@ int main(int argc, char** argv)
 	sprintf(boundaryCdStr,"_s_%g_%g",SolenoidX,SolenoidY);
       }
   }
+  
+  double SolenoidCF_X=solenoidCF_X, SolenoidCF_Y=solenoidCF_Y;
+  if ((SolenoidCF_X!=0.0)||(SolenoidCF_Y!=0.0))
+    {
+      sprintf(boundaryCdStr,"%s_s_%g_%g",boundaryCdStr,SolenoidCF_X,SolenoidCF_Y);
+    }
 
-  double SolenoidCF_X=0.0, SolenoidCF_Y=0.0;
-  {
-    int tmpI;
-    double *Fluxes=Manager.GetDoubles("solenoid-CF", tmpI);
-    if (tmpI>0) SolenoidCF_X=Fluxes[0];
-    if (tmpI>1) SolenoidCF_Y=Fluxes[1];
-    if (tmpI>0)
-      {
-	delete [] Fluxes;
-	sprintf(boundaryCdStr, "%s_sCF_%g_%g", boundaryCdStr, SolenoidCF_X, SolenoidCF_Y);
-      }
-  }
 
   char* OutputName;
   char interactionStr[20]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
-      OutputName = new char [256];      
+      OutputName = new char [300];
       if (HardCore)
 	sprintf(interactionStr,"_hardcore");      
       sprintf (OutputName, "bosons_lattice_CF_n_%d_x_%d_y_%d%s_q_%d_p_%d%s", NbrBosons, Lx, Ly, interactionStr, NbrFluxQuanta, CFFlux,boundaryCdStr);
     }
   char *TmpC = new char[strlen(OutputName)+20];
 
-  cout << "* Full Hilbert-space: N="<<NbrBosons<<" bosons in "<<Lx<<" x "<<Ly<<" cells at N_phi="<<NbrFluxQuanta<<endl;
-  ParticleOnLattice* Space;
-  if (HardCore)
-    Space =new HardCoreBosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  else Space = new BosonOnLattice(NbrBosons, Lx, Ly, NbrFluxQuanta, MemorySpace);
-  
-  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   int AttachedFlux = CFFlux * NbrBosons;  
   ParticleOnLatticeTranslationOperator *TranslationOperator;
   
   // constructing 1P states:
   
-  cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
+  if (verbose) cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
   // space in which CF's live (statistics doesn't matter as we consider single particle physics!)
   //BosonOnLattice *CFSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
-  FermionOnLattice *CFSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace, SolenoidCF_X, SolenoidCF_Y);
+  FermionOnLattice *CFSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace, SolenoidCF_X, SolenoidCF_Y, /*silent*/ verbose);
   TranslationOperator = new ParticleOnLatticeTranslationOperator(CFSpace);
   
   // corresponding Hamiltonians
@@ -196,8 +479,8 @@ int main(int argc, char** argv)
     }
 
   for (int i=0; i<NbrBosons; ++i)
-    cout << "E_CF["<<i<<"]="<<CFEigenVals[i]<<" norm of EVec: "<<CFEigenVecs[i].Norm()<<endl;
-  cout << "E_other["<<NbrBosons<<"]="<<CFEigenVals[NbrBosons]<<endl;
+    if (verbose) cout << "E_CF["<<i<<"]="<<CFEigenVals[i]<<" norm of EVec: "<<CFEigenVecs[i].Norm()<<endl;
+  if (verbose) cout << "E_other["<<NbrBosons<<"]="<<CFEigenVals[NbrBosons]<<endl;
 
   if (Manager.GetBoolean("write-basis"))
     {
@@ -209,16 +492,15 @@ int main(int argc, char** argv)
     }
 
 
-  cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;  
+  if (verbose) cout << "* LLL states for Jastrow-factor contribute "<<AttachedFlux<<" flux"<<endl;  
   
   
   // calculate states required to build Jastrow factor:
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace);
-  FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace, SolenoidX-SolenoidCF_X, SolenoidY-SolenoidCF_Y);
+  FermionOnLattice *JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace, SolenoidX-SolenoidCF_X, SolenoidY-SolenoidCF_Y, /*silent*/ verbose);
 
   AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U */ 0.0 , /*ReverseHopping*/ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
   delete TranslationOperator;
-  TranslationOperator = new ParticleOnLatticeTranslationOperator(JastrowSpace);
   
   HermitianMatrix HJastrow(JastrowHamiltonian->GetHilbertSpaceDimension(), true);
   ComplexMatrix JastrowEigenVecs(JastrowHamiltonian->GetHilbertSpaceDimension(),
@@ -232,8 +514,8 @@ int main(int argc, char** argv)
   delete JastrowTranslationOperator;
 
   for (int i=0; i<NbrBosons; ++i)
-    cout << "E_Jastrow["<<i<<"]="<<JastrowEigenVals[i]<<" norm of EVec: "<<JastrowEigenVecs[i].Norm()<<endl;
-  cout << "E_other["<<NbrBosons<<"]="<<JastrowEigenVals[NbrBosons]<<endl;
+    if (verbose) cout << "E_Jastrow["<<i<<"]="<<JastrowEigenVals[i]<<" norm of EVec: "<<JastrowEigenVecs[i].Norm()<<endl;
+  if (verbose) cout << "E_other["<<NbrBosons<<"]="<<JastrowEigenVals[NbrBosons]<<endl;
 
   if (Manager.GetString("J")!=NULL)
     {
@@ -413,7 +695,8 @@ int main(int argc, char** argv)
   for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
     CFState[i] *= JastrowState[i];
   CFState /= CFState.Norm();
-  CFState.WriteVector(TmpC);
+  if (writeState)
+    CFState.WriteVector(TmpC);
 
 
   /*
@@ -474,16 +757,20 @@ int main(int argc, char** argv)
   
   delete [] TmpC;
   delete [] QuantumNumbers;
-  
+
+  delete [] PosX;
+  delete [] PosY;
+
+  delete [] OutputName;
+
   delete CFHamiltonian;
   delete CFSpace;  
 
   delete JastrowHamiltonian;
   delete JastrowSpace;
-  
-  return 0;
-}
 
+  return new ComplexVector(CFState);
+}
 
 
 // values = eigenvalues
@@ -515,8 +802,8 @@ ComplexMatrix& DiagonalizeMomentaAtEnergy(ComplexMatrix &vectors, ParticleOnLatt
 
   while ((r*NbrBosons*n1*n2*Degeneracy)%t != 0) ++Degeneracy;
   
-  cout << "N_phi = "<<r<<"/"<<t<<endl;
-  cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
+//   cout << "N_phi = "<<r<<"/"<<t<<endl;
+//   cout << "n1="<<n1<<", n2="<<n2<<", global degeneracy: "<<Degeneracy<<endl;
 
   ComplexMatrix EVecX(NbrVectors, NbrVectors);
   ComplexMatrix EVecY(NbrVectors, NbrVectors);  
@@ -573,7 +860,7 @@ ComplexMatrix& DiagonalizeMomentaInSubspace(RealDiagonalMatrix &values, ComplexM
 	++endSeg;      
       if (endSeg-startSeg > 1)
 	{
-	  cout << "Multiplet ["<<startSeg<<", "<<endSeg-1<<"]"<<endl;
+	  // cout << "Multiplet ["<<startSeg<<", "<<endSeg-1<<"]"<<endl;
 	  DiagonalizeMomentaAtEnergy(vectors, translationOperator, nbrFlux, startSeg, endSeg);
 	}
       startSeg=endSeg;

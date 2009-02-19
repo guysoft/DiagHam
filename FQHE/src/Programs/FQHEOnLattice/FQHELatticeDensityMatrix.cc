@@ -557,7 +557,6 @@ int main(int argc, char** argv)
 	}
       for (int i=0;i<NbrVectors;++i)
 	{
-	  cout <<"char: "<<(char)('a'+minNbrVec+i)<< " numerical: "<<(int)('a'+minNbrVec+i)<<endl;
 	  sprintf(vectorName,"%s.%c.vec",VectorFiles[0],'a'+minNbrVec+i);
 	  TmpState.ClearVector();
 	  for (int j=0; j<NbrVectors;++j)
