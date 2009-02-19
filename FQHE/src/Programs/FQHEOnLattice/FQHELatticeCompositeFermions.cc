@@ -155,6 +155,8 @@ int main(int argc, char** argv)
 #ifdef HAVE_GSL
   (*OptimizationGroup) += new SingleStringOption  ('\n', "optimize", "vector file to optimize CF solenoid flux against",NULL);
   (*OptimizationGroup) += new SingleDoubleOption  ('\n', "offset", "offset h to be used for numerical derivatives",0.005);
+  (*OptimizationGroup) += new BooleanOption  ('\n', "opt-gradient", "use gradient-method instead of simplex algorithm");
+  
 #endif
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -223,12 +225,7 @@ int main(int argc, char** argv)
       cout << "Checking initial O="<<Onod<<endl;
 
 #ifdef HAVE_GSL
-      size_t iter = 0;
-      int status;
-
-      const gsl_multimin_fdfminimizer_type *T;
-      gsl_multimin_fdfminimizer *s;
-
+      // common assignments
       OptParams MyParameters;
       MyParameters.ReferenceVector=&ReferenceState;
       MyParameters.Manager = &Manager;
@@ -236,58 +233,128 @@ int main(int argc, char** argv)
       MyParameters.Offset = Manager.GetDouble("offset");
       MyParameters.EvaluationsF=0;
       MyParameters.EvaluationsdF=0;
-      
-      gsl_vector *x;
-      gsl_multimin_function_fdf my_func;
 
-      my_func.n = 2;
-      my_func.f = &TargetFunction_F;
-      my_func.df = &TargetFunction_dF;
-      my_func.fdf = &TargetFunction_FdF;
-      my_func.params = &MyParameters;
-
-      /* Starting point, x = (5,7) */
-      x = gsl_vector_alloc (2);
-      gsl_vector_set (x, 0, SolenoidCF_X);
-      gsl_vector_set (x, 1, SolenoidCF_Y);
-      
-      T = gsl_multimin_fdfminimizer_conjugate_fr;
-      s = gsl_multimin_fdfminimizer_alloc (T, 2);
-
-      gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
-
-      do
+      if (Manager.GetBoolean("opt-gradient"))
 	{
-	  iter++;
-	  status = gsl_multimin_fdfminimizer_iterate (s);
+	  size_t iter = 0;
+	  int status;
 
-	  if (status)
-	    break;
+	  const gsl_multimin_fdfminimizer_type *T;
+	  gsl_multimin_fdfminimizer *s;
+      
+	  gsl_vector *x;
+	  gsl_multimin_function_fdf my_func;
 
-	  status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+	  my_func.n = 2;
+	  my_func.f = &TargetFunction_F;
+	  my_func.df = &TargetFunction_dF;
+	  my_func.fdf = &TargetFunction_FdF;
+	  my_func.params = &MyParameters;
 
-	  if (status == GSL_SUCCESS)
-	    printf ("Minimum found at:\n");
+	  /* Starting point, x = (5,7) */
+	  x = gsl_vector_alloc (2);
+	  gsl_vector_set (x, 0, SolenoidCF_X);
+	  gsl_vector_set (x, 1, SolenoidCF_Y);
+      
+	  T = gsl_multimin_fdfminimizer_conjugate_fr;
+	  s = gsl_multimin_fdfminimizer_alloc (T, 2);
 
-	  printf ("%5d %.5f %.5f %10.5f\n", iter,
-		  gsl_vector_get (s->x, 0),
-		  gsl_vector_get (s->x, 1),
-		  s->f);
+	  gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
+
+	  do
+	    {
+	      iter++;
+	      status = gsl_multimin_fdfminimizer_iterate (s);
+
+	      if (status)
+		break;
+
+	      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+
+	      if (status == GSL_SUCCESS)
+		printf ("Minimum found at:\n");
+
+	      printf ("%5d %.5f %.5f %10.5f\n", iter,
+		      gsl_vector_get (s->x, 0),
+		      gsl_vector_get (s->x, 1),
+		      s->f);
+	    }
+	  while (status == GSL_CONTINUE && iter < 100);
 
 	  SolenoidCF_X = gsl_vector_get(s->x, 0);
 	  SolenoidCF_Y = gsl_vector_get (s->x, 1);
+	  cout << "Final overlap at theta=( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" ), O="<<-s->f<<endl;
+	  cout << "Derivatives =( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" ), O="<<-s->f<<endl;
+	  cout << "Total number of function evaluations:        "<<MyParameters.EvaluationsF<<endl;
+	  cout << "Total number of evaluations for derivative : "<<MyParameters.EvaluationsdF<<endl;
+	  cout << "Total points where overlap was calculated :  "<<MyParameters.EvaluationsF+4*MyParameters.EvaluationsdF<<endl;
+	  gsl_multimin_fdfminimizer_free (s);
+	  gsl_vector_free (x);
 	}
-      while (status == GSL_CONTINUE && iter < 100);
+      else // use simplex minimizer
+	{
+	  const gsl_multimin_fminimizer_type *T =
+	    gsl_multimin_fminimizer_nmsimplex;
+	  gsl_multimin_fminimizer *s = NULL;
+	  gsl_vector *ss, *x;
+	  gsl_multimin_function minex_func;
 
-      SolenoidCF_X = gsl_vector_get(s->x, 0);
-      SolenoidCF_Y = gsl_vector_get (s->x, 1);
-      cout << "Final overlap at theta=( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" ), O="<<-s->f<<endl;
-      cout << "Total number of function evaluations:        "<<MyParameters.EvaluationsF<<endl;
-      cout << "Total number of evaluations for derivative : "<<MyParameters.EvaluationsdF<<endl;
-      cout << "Total points where overlap was calculated :  "<<MyParameters.EvaluationsF+4*MyParameters.EvaluationsdF<<endl;
-      gsl_multimin_fdfminimizer_free (s);
-      gsl_vector_free (x);
+	  size_t iter = 0;
+	  int status;
+	  double size;
 
+	  /* Starting point */
+	  x = gsl_vector_alloc (2);
+	  gsl_vector_set (x, 0, SolenoidCF_X);
+	  gsl_vector_set (x, 1, SolenoidCF_Y);
+
+	  /* Set initial step sizes to 1 */
+	  ss = gsl_vector_alloc (2);
+	  gsl_vector_set_all (ss, 1.0);
+
+	  /* Initialize method and iterate */
+	  minex_func.n = 2;
+	  minex_func.f = &TargetFunction_F;
+	  minex_func.params = &MyParameters;
+	  
+	  s = gsl_multimin_fminimizer_alloc (T, 2);
+	  gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
+
+	  do
+	    {
+	      iter++;
+	      status = gsl_multimin_fminimizer_iterate(s);
+
+	      if (status)
+		break;
+
+	      size = gsl_multimin_fminimizer_size (s);
+	      status = gsl_multimin_test_size (size, 5e-3);
+
+	      if (status == GSL_SUCCESS)
+		{
+		  printf ("converged to minimum at\n");
+		}
+
+	      printf ("%5d %10.3e %10.3ef f() = %7.3f size = %.3f\n",
+		      iter,
+		      gsl_vector_get (s->x, 0),
+		      gsl_vector_get (s->x, 1),
+		      s->fval, size);
+	    }
+	  while (status == GSL_CONTINUE && iter < 100);
+	  
+	  SolenoidCF_X = gsl_vector_get(s->x, 0);
+	  SolenoidCF_Y = gsl_vector_get (s->x, 1);
+	  cout << "Final overlap at theta=( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" ), O="<<-s->fval<<endl;
+	  cout << "Total number of function evaluations:        "<<MyParameters.EvaluationsF<<endl;
+	  
+	  gsl_vector_free(x);
+	  gsl_vector_free(ss);
+	  gsl_multimin_fminimizer_free (s);
+
+	}
+      
 #elif
       
 
@@ -377,6 +444,8 @@ int main(int argc, char** argv)
 	}
 
 #endif
+      cout << "Writing final state to disk for : theta = ( "<<SolenoidCF_X<<","<<SolenoidCF_Y<<" )"<<endl;
+      GetTrialState(Manager, Space, SolenoidCF_X, SolenoidCF_Y, /*verbose*/ true, /*writeState*/ true);
       
     }
   else GetTrialState(Manager, Space, SolenoidCF_X, SolenoidCF_Y, /*verbose*/ true, /*writeState*/ true);
