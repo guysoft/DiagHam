@@ -458,7 +458,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVe
 	      TmpState2 |= TmpState1;
 	      double Coefficient2 = Coefficient;
 	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+	      long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
 	      double& TmpCoef = outputVector[TmpIndex];
 	      if (TmpCoef == 0.0)
 		++Count;
@@ -473,7 +473,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVe
 	      TmpState2 |= TmpState1;
 	      double Coefficient2 = Coefficient;
 	      Coefficient2 *= rightVector[j];	  
-	      int TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+	      long TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
 	      double& TmpCoef = outputVector[TmpIndex];
 	      if (TmpCoef == 0.0)
 		++Count;

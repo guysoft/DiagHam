@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
 	}
     }
-  RealVector OutputState(OutputBasis->GetHilbertSpaceDimension(), true);
+  RealVector OutputState(OutputBasis->GetLargeHilbertSpaceDimension(), true);
 
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
