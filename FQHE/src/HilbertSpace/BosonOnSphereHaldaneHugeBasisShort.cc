@@ -424,3 +424,76 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomia
   return jack;
 }
 
+// fuse two states which belong to different Hilbert spaces 
+//
+// outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
+// leftVector = reference on the vector whose Hilbert space will be fuse to the left
+// rightVector = reference on the vector whose Hilbert space will be fuse to the right
+// padding = number of unoccupied one body states that have to be inserted between the fused left and right spaces
+// leftSpace = point to the Hilbert space that will be fuse to the left
+// rightSpace = point to the Hilbert space that will be fuse to the right
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// return value = reference on the fused state
+
+RealVector& BosonOnSphereHaldaneHugeBasisShort::FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
+							    ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
+							    bool symmetrizedFlag)
+{
+  BosonOnSphereShort* LeftSpace = (BosonOnSphereShort*) leftSpace;
+  BosonOnSphereShort* RightSpace = (BosonOnSphereShort*) rightSpace;
+  int StateShift = RightSpace->FermionBasis->LzMax + padding + 2;
+  long Count = 0l;
+  for (long i = 0; i <  LeftSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState1 = LeftSpace->FermionBasis->StateDescription[i] << StateShift;
+      double Coefficient = leftVector[i];
+      int TmpLzMax = this->FermionHugeBasis->LzMax;
+      while ((TmpState1 >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      if (symmetrizedFlag == false)
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      double Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+	      double& TmpCoef = outputVector[TmpIndex];
+	      if (TmpCoef == 0.0)
+		++Count;
+	      TmpCoef = Coefficient2;
+	    }
+	}
+      else
+	{
+	  for (long j = 0; j < RightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      unsigned long TmpState2 = RightSpace->FermionBasis->StateDescription[j];
+	      TmpState2 |= TmpState1;
+	      double Coefficient2 = Coefficient;
+	      Coefficient2 *= rightVector[j];	  
+	      int TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState2, TmpLzMax);
+	      double& TmpCoef = outputVector[TmpIndex];
+	      if (TmpCoef == 0.0)
+		++Count;
+	      TmpCoef = Coefficient2;
+	      unsigned long TmpState3 = this->FermionHugeBasis->GetSymmetricState(TmpState2);
+	      if (TmpState3 != TmpState2)
+		{
+		  int TmpLzMax2 = this->FermionHugeBasis->LzMax;
+		  while ((TmpState3 >> TmpLzMax2) == 0x0ul)
+		    --TmpLzMax2;
+		  TmpIndex = this->FermionHugeBasis->FindStateIndexMemory(TmpState3, TmpLzMax2);
+		  double& TmpCoef2 = outputVector[TmpIndex];
+		  if (TmpCoef2 == 0.0)
+		    ++Count;
+		  TmpCoef2 = Coefficient2;
+		}
+	    }
+	}
+    }
+  cout << "nbr of newly added components : " << Count << endl;
+  return outputVector;
+}
+

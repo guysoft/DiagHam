@@ -53,6 +53,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class BosonOnSphereHaldaneBasisShort;
   friend class BosonOnSphereSymmetricBasisShort;
   friend class BosonOnSphereHaldaneSymmetricBasisShort;
+  friend class BosonOnSphereHaldaneHugeBasisShort;
 
  protected:
 
