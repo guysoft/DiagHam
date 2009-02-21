@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 
 #include "Options/Options.h"
 
@@ -50,6 +51,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state of the output state");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
@@ -132,17 +135,29 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (HaldaneBasisFlag == false)
-	OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+      if (Manager.GetBoolean("huge-basis") == true)
+	{
+	  if (Manager.GetString("load-hilbert") == 0)
+	    {
+	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+	      return -1;
+	    }
+	  OutputBasis = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	}
       else
 	{
-	  int* ReferenceState = 0;
-	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-	    return -1;
-	  if (Manager.GetString("load-hilbert") != 0)
-	    OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	  if (HaldaneBasisFlag == false)
+	    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
 	  else
-	    OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	    {
+	      int* ReferenceState = 0;
+	      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+		return -1;
+	      if (Manager.GetString("load-hilbert") != 0)
+		OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
+	      else
+		OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
+	    }
 	}
     }
 
