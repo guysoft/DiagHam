@@ -309,6 +309,13 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -340,6 +347,20 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // u1Space = reference on the Hilbert space associated to the U(1) state
   // return value = resulting U(1) state
   virtual RealVector ForgeU1FromSU2(RealVector& state, FermionOnSphere& u1Space);
+
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component as to be normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0);    
+
+  // convert a state such that its components are now expressed in the normalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has been normalized to 1
+  // return value = converted state
+  virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0);
 
  protected:
 

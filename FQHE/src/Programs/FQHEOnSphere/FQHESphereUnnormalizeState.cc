@@ -5,6 +5,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 
 #include "Options/Options.h"
 
@@ -53,9 +54,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the test output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -76,15 +79,35 @@ int main(int argc, char** argv)
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   char* OutputTxtFileName = Manager.GetString("txt-output");
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
-  
+  bool SU2Flag = false;
+  int TotalSz = 0;
+  double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
+	   
   bool Statistics = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
-						   NbrParticles, LzMax, TotalLz, Statistics) == false)
+  if (strstr(Manager.GetString("input-state"), "su2") == 0)
     {
-      cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
-      return -1;
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
+						       NbrParticles, LzMax, TotalLz, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
+	  return -1;
+	}
     }
-  
+  else
+    {
+      SU2Flag = true;
+      bool SymFlagLz = false;
+      bool SymFlagSz = false;
+      bool SymFlagLzParity = false;
+      bool SymFlagSzParity = false;
+      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
+							       NbrParticles, LzMax, TotalLz, TotalSz, SymFlagLz, SymFlagSz, SymFlagLzParity, SymFlagSzParity, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
+	  return -1;
+	}
+
+    }
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
     {
@@ -120,17 +143,24 @@ int main(int argc, char** argv)
   ParticleOnSphere* OutputBasis = 0;
   if (Statistics == true)
     {
-      if (HaldaneBasisFlag == false)
-	OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+      if (SU2Flag == false)
+	{
+	  if (HaldaneBasisFlag == false)
+	    OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+	  else
+	    {
+	      int* ReferenceState = 0;
+	      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+		return -1;
+	      if (Manager.GetString("load-hilbert") != 0)
+		OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
+	      else
+		OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+	    }
+	}
       else
 	{
-	  int* ReferenceState = 0;
-	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
-	    return -1;
-	  if (Manager.GetString("load-hilbert") != 0)
-	    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
-	  else
-	    OutputBasis = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, LzMax, ReferenceState);
+	  OutputBasis = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
 	}
     }
   else
@@ -162,20 +192,30 @@ int main(int argc, char** argv)
     }
 
   if (Manager.GetBoolean("normalize"))
-    OutputBasis->ConvertFromUnnormalizedMonomial(OutputState);
+    OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
   else
-    OutputBasis->ConvertToUnnormalizedMonomial(OutputState);
+    OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
   
   if (OutputTxtFileName != 0)
     {
       ofstream File;
       File.open(OutputTxtFileName, ios::binary | ios::out);
       File.precision(14);
-      for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	{
-	  File << OutputState[i] << " ";
-	  OutputBasis->PrintStateMonomial(File, i) << endl;
-	}
+      if (Error == 0.0)
+	for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	  {
+	    File << OutputState[i] << " ";
+	    OutputBasis->PrintStateMonomial(File, i) << endl;
+	  }
+      else
+	for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	  {
+	    if (fabs(OutputState[i]) > Error)
+	      {
+		File << OutputState[i] << " ";
+		OutputBasis->PrintStateMonomial(File, i) << endl;
+	      }
+	  }
       File.close();
     }
   if (OutputFileName != 0)

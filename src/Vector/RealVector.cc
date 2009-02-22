@@ -58,8 +58,8 @@ RealVector::RealVector()
   this->VectorType = Vector::RealDatas;
   this->Dimension = 0;
   this->TrueDimension = 0;
-  this->LargeDimension = 0;
-  this->LargeTrueDimension = 0;
+  this->LargeDimension = 0l;
+  this->LargeTrueDimension = 0l;
   this->Components = 0;
   this->VectorId = 0;
 }
@@ -552,9 +552,13 @@ double operator * (RealVector& V1, RealVector& V2)
 {
   V1.Localize();
   V2.Localize();
-  double x = V1.Components[0] * V2.Components[0];
-  for (int i = 1; i < V1.Dimension; i++)
-    x += V1.Components[i] * V2.Components[i];
+  double x = V1.Components[0l] * V2.Components[0l];
+  if (V1.Dimension == -1)
+    for (long i = 1; i < V1.LargeDimension; ++i)
+      x += V1.Components[i] * V2.Components[i];
+  else
+    for (int i = 1; i < V1.Dimension; i++)
+      x += V1.Components[i] * V2.Components[i];
   V1.Delocalize();
   V2.Delocalize();
   return x;
