@@ -458,7 +458,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
   for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
     if (this->TemporaryState[k] > 1)
       ReferenceFactorial.FactorialDivide(this->TemporaryState[k]);
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
       TmpState = this->FermionHugeBasis->StateDescription[i];
       while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
@@ -539,7 +539,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
   for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
     if (this->TemporaryState[k] > 1)
       ReferenceFactorial.FactorialMultiply(this->TemporaryState[k]);
-  for (int i = 1; i < this->HilbertSpaceDimension; ++i)
+  for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
     {
       TmpState = this->FermionHugeBasis->StateDescription[i];
       while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
