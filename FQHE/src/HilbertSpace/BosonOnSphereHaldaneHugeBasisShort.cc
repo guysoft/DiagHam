@@ -438,7 +438,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertToUnnormalizedMonomial(Re
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
-  int TmpLzMax = this->LzMax;
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
   unsigned long TmpState = this->FermionHugeBasis->StateDescription[reference];
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
@@ -519,7 +519,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   double Factor = state[reference];
   state[reference] = 1.0;
-  int TmpLzMax = this->LzMax;
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
   unsigned long TmpState = this->FermionHugeBasis->StateDescription[reference];
    while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
     --TmpLzMax;
@@ -569,7 +569,7 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ConvertFromUnnormalizedMonomial(
       while (Index1 < this->NbrBosons)
 	{
 	  Coefficient *= InvSqrtCoefficients[TmpMonomialReference[Index1]];
-	  ++Index1;
+ 	  ++Index1;
 	}
       while (Index2 < this->NbrBosons)
 	{
