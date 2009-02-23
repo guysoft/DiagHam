@@ -138,8 +138,7 @@ int main(int argc, char** argv)
 		for (int i=0; i<State1.GetVectorDimension(); ++i)
 		  sp+=fabs(State1[i]*State2[i]);
 	      else
-		for (int i=0; i<State1.GetVectorDimension(); ++i)
-		  sp+= State1[i]*State2[i];
+		sp = State1 *State2 ;
 	      
 	      if (QuietFlag == false)
 		cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;

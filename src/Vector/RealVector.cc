@@ -824,8 +824,12 @@ RealVector operator * (double d, RealVector& V1)
 RealVector& RealVector::operator *= (double d)
 {
   this->Localize();
-  for (int i = 0; i < this->Dimension; i++)
-    this->Components[i] *= d;
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] *= d;
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] *= d;
   this->Delocalize(true);
   return *this;
 }
@@ -839,8 +843,12 @@ RealVector& RealVector::operator /= (double d)
 {
   this->Localize();
   double tmp = 1.0 / d;
-  for (int i = 0; i < this->Dimension; i++)
-    this->Components[i] *= tmp;
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] *= tmp;
+  else	
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] *= tmp;
   this->Delocalize(true);
   return *this;
 }
@@ -2725,8 +2733,12 @@ double RealVector::Norm()
   double x = 0.0;
   if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
-      for (int i = 0; i < this->Dimension; ++i)
-	x += this->Components[i] * this->Components[i];
+      if (this->Dimension == -1)
+	for (long i = 0; i < this->LargeDimension; ++i)
+	  x += this->Components[i] * this->Components[i];
+      else
+	for (int i = 0; i < this->Dimension; i++)
+	  x += this->Components[i] * this->Components[i];
     }
   this->Delocalize();
   return sqrt(x);
@@ -2742,8 +2754,12 @@ double RealVector::SqrNorm ()
   double x = 0.0;
   if ((this->Dimension != 0) || (this->LargeDimension != 0l))
     {
-      for (int i = 0; i < this->Dimension; i++)
-	x += this->Components[i] * this->Components[i];
+      if (this->Dimension == -1)
+        for (long i = 0; i < this->LargeDimension; ++i)
+          x += this->Components[i] * this->Components[i];
+      else
+        for (int i = 0; i < this->Dimension; i++)
+          x += this->Components[i] * this->Components[i];
     }
   this->Delocalize();
   return x;
