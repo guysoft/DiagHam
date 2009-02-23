@@ -263,6 +263,22 @@ class BosonOnSphereShort :  public ParticleOnSphere
   virtual RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 				 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false);
 
+  // use product rule to produce part of the components of a system from a smaller one
+  //
+  // outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)
+  // inputVector = reference on the vector associated to the smaller system
+  // inputSpace = pointer to the Hilbert space of the smaller system
+  // commonPattern = array describing the shared leftmost pattern between the n-body states in both the smaller and larger system sizes
+  // commonPatterSize = number of elements in the commonPattern array
+  // addedPattern = array describing the pattern that has to be inserted to go from the smaller system to the larger one
+  // addedPatterSize = number of elements in the addedPattern array
+  // coefficient = multiplicqtive fqctor to go fron the component of the smaller system to the larger one
+  // symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+  // return value = reference on the product rule state
+  virtual RealVector& ProductRules (RealVector& outputVector, RealVector& inputVector, ParticleOnSphere* inputSpace, 
+				    int* commonPattern, int commonPatterSize, int* addedPattern, int addedPatterSize,
+				    double coefficient, bool symmetrizedFlag);
+
  protected:
 
   // convert a bosonic state into its fermionic counterpart

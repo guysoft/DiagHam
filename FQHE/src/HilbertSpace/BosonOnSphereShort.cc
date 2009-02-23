@@ -983,3 +983,108 @@ RealVector& BosonOnSphereShort::FuseStates (RealVector& outputVector, RealVector
   return outputVector;
 }
 
+// use product rule to produce part of the components of a system from a smaller one
+//
+// outputVector = reference on the vector which will contain the product rule state  (without zeroing components which do not occur in the fusion)
+// inputVector = reference on the vector associated to the smaller system
+// inputSpace = pointer to the Hilbert space of the smaller system
+// commonPattern = array describing the shared leftmost pattern between the n-body states in both the smaller and larger system sizes
+// commonPatterSize = number of elements in the commonPattern array
+// addedPattern = array describing the pattern that has to be inserted to go from the smaller system to the larger one
+// addedPatterSize = number of elements in the addedPattern array
+// coefficient = multiplicqtive fqctor to go fron the component of the smaller system to the larger one
+// symmetrizedFlag = assume that the target state has to be invariant under the Lz<->-Lz symmetry
+// return value = reference on the product rule state
+
+RealVector& BosonOnSphereShort::ProductRules (RealVector& outputVector, RealVector& inputVector, ParticleOnSphere* inputSpace, 
+					      int* commonPattern, int commonPatterSize, int* addedPattern, int addedPatterSize,
+					      double coefficient, bool symmetrizedFlag)
+{
+  BosonOnSphereShort* InputSpace = (BosonOnSphereShort*) inputSpace;
+  int NbrParticlesCommonPattern = 0;
+  unsigned long InputPattern = 0x0ul;
+  int TmpIndex = 0;
+  for (int i = commonPatterSize - 1; i >= 0; --i)
+    {
+      for (int j = 0; j < commonPattern[i]; ++j)
+	{
+	  InputPattern |= 0x1ul << TmpIndex;
+	  ++TmpIndex;
+	}
+      ++TmpIndex;
+      NbrParticlesCommonPattern += commonPattern[i];
+    }
+  int NbrParticlesAddedPattern = 0;
+  unsigned long OutputPattern = 0x0ul;
+  TmpIndex = 0;
+  for (int i = addedPatterSize - 1; i >= 0; --i)
+    {
+      for (int j = 0; j < addedPattern[i]; ++j)
+	{
+	  OutputPattern |= 0x1ul << TmpIndex;
+	  ++TmpIndex;
+	}
+      ++TmpIndex;
+      NbrParticlesAddedPattern += addedPattern[i];
+    }
+  unsigned long InputMask = ((0x1ul << (commonPatterSize + NbrParticlesCommonPattern)) - 1ul) << (InputSpace->FermionBasis->LzMax - (commonPatterSize + NbrParticlesCommonPattern) + 1);
+  unsigned long InputMask2 = ~InputMask;  
+  OutputPattern |= InputPattern << (addedPatterSize + NbrParticlesAddedPattern);
+  OutputPattern <<= (InputSpace->FermionBasis->LzMax - (commonPatterSize + NbrParticlesCommonPattern) + 2);
+  InputPattern <<= (InputSpace->FermionBasis->LzMax - (commonPatterSize + NbrParticlesCommonPattern) + 2); 
+  cout << hex << InputMask << " " << OutputPattern << " " << InputPattern << dec << endl;
+  int OutputLzMax = this->FermionBasis->LzMax;
+  while (((OutputPattern >> OutputLzMax) & 0x1ul) == 0x0ul)
+    --OutputLzMax;
+  long Count = 0l;
+  if (symmetrizedFlag == false)
+    {
+      for (int i = 0; i <  InputSpace->HilbertSpaceDimension; ++i)
+	{
+	  unsigned long TmpState1 = InputSpace->FermionBasis->StateDescription[i];
+	  //	  cout << i << " " << hex << TmpState1 << dec << endl;
+	  if ((TmpState1 & InputMask) == InputPattern)
+	    {
+	      TmpState1 &= InputMask2;
+	      TmpState1 |= OutputPattern;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState1, OutputLzMax);
+	      double& TmpCoef = outputVector[TmpIndex];
+	      if (TmpCoef == 0.0)
+		++Count;
+	      TmpCoef = coefficient * inputVector[i];	  
+	    }
+	}
+    }
+  else
+    {
+      for (int i = 0; i <  InputSpace->HilbertSpaceDimension; ++i)
+	{
+	  unsigned long TmpState1 = InputSpace->FermionBasis->StateDescription[i];
+	  if ((TmpState1 & InputMask) == InputPattern)
+	    {
+	      TmpState1 &= InputMask2;
+	      TmpState1 |= OutputPattern;
+	      int TmpIndex = this->FermionBasis->FindStateIndex(TmpState1, OutputLzMax);
+	      double& TmpCoef = outputVector[TmpIndex];
+	      if (TmpCoef == 0.0)
+		++Count;
+	      double TmpCoef3 = coefficient * inputVector[i];
+	      TmpCoef = TmpCoef3;	  
+	      unsigned long TmpState2 = this->FermionBasis->GetSymmetricState(TmpState1);
+	      if (TmpState2 != TmpState1)
+		{
+		  int TmpLzMax2 = this->FermionBasis->LzMax;
+		  while ((TmpState2 >> TmpLzMax2) == 0x0ul)
+		    --TmpLzMax2;
+		  TmpIndex = this->FermionBasis->FindStateIndex(TmpState2, TmpLzMax2);
+		  double& TmpCoef2 = outputVector[TmpIndex];
+                  if (TmpCoef2 == 0.0)
+                    ++Count;
+                  TmpCoef2 = TmpCoef3;
+		}
+	    }
+	}
+    }
+  cout << "nbr of newly added components : " << Count << endl;
+  return outputVector;
+}
