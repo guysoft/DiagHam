@@ -48,12 +48,12 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "vector file that describes the smaller system");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "padding", "number of empty one-body states to insert between two fused Hilbert spaces", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "input-reference", "use a file as the definition of the reference state of the input state");
   (*SystemGroup) += new SingleStringOption  ('\n', "output-reference", "use a file as the definition of the reference state of the output state");
   (*SystemGroup) += new SingleStringOption  ('\n', "common-pattern", "pattern that has to be shared between the two n-body states");
   (*SystemGroup) += new SingleStringOption  ('\n', "added-pattern", "additional pattern that has inserted to go from the smaller system to the larger one");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "factor", "multiplicative factor to use when going from the smaller system to the larger one", 1.0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -192,7 +192,16 @@ int main(int argc, char** argv)
       else
 	sprintf (OutputFileName, "fermions_productrules_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
     }
-  RealVector OutputState(OutputBasis->GetLargeHilbertSpaceDimension(), true);
+
+  RealVector OutputState;
+  if (Manager.GetString("initial-state") == 0)
+    OutputState = RealVector(OutputBasis->GetLargeHilbertSpaceDimension(), true);
+  else
+    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+      {
+	cout << "can't open " << Manager.GetString("initial-state") << endl;
+	return -1;
+      }
 
   OutputBasis->ProductRules(OutputState, InputVector, InputBasis, CommonPattern, CommonLzMax + 1, AddedPattern, AddedLzMax + 1, 
 			    Manager.GetDouble("factor"), SymmetrizedBasis);
