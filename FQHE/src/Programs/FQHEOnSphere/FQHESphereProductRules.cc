@@ -55,7 +55,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "factor", "multiplicative factor to use when going from the smaller system to the larger one", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-  (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
+  (*SystemGroup) += new BooleanOption  ('\n', "inputhuge-basis", "use huge Hilbert space support for the input state");
+  (*SystemGroup) += new BooleanOption  ('\n', "outputhuge-basis", "use huge Hilbert space support for the output state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the fused vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
   ParticleOnSphere* InputBasis = 0;
   if (Statistics == false)
     {
-      if (Manager.GetBoolean("huge-basis") == true)
+      if (Manager.GetBoolean("inputhuge-basis") == true)
 	{
 	  if (Manager.GetString("inputload-hilbert") == 0)
 	    {
@@ -147,7 +148,7 @@ int main(int argc, char** argv)
   ParticleOnSphere* OutputBasis = 0;
   if (Statistics == false)
     {
-      if (Manager.GetBoolean("huge-basis") == true)
+      if (Manager.GetBoolean("outputhuge-basis") == true)
 	{
 	  if (Manager.GetString("outputload-hilbert") == 0)
 	    {
