@@ -388,3 +388,13 @@ RealVector& ParticleOnSphere::ProductRules (RealVector& outputVector, RealVector
   return outputVector;
 }
 
+// compute the Jack polynomial square normalization 
+//
+// state = reference on the unnormalized Jack polynomial
+// return value = quare normalization 
+
+double ParticleOnSphere::JackSqrNormalization (RealVector& outputVector)
+{
+  return 0.0;
+}
+

@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	  BosonOnSphereHaldaneHugeBasisShort* InitialSpace = 0;
 	  if (Manager.GetString("save-hilbert") != 0)
 	    {
-	      InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")), false);
+	      InitialSpace = new BosonOnSphereHaldaneHugeBasisShort (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false);
 	      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
 	      return 0;
 	    }

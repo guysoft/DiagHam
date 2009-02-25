@@ -91,6 +91,8 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class BosonOnSphereHaldaneHugeBasisShort;
   friend class BosonOnSphereBernevigBasisShort;
 
+  friend class BosonOnDiskShort;
+
  protected:
 
   // number of fermions

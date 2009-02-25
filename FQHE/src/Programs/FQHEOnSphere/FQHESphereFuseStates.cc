@@ -12,6 +12,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
@@ -24,16 +25,6 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
-
-
-// get the root parition from a file
-// 
-// rootFileName = name of the file that contains the root description
-// nbrParticles = reference on the number of particles
-// lzMax = reference on twice the maximum Lz value
-// referenceState = array where the root partition description will be stored
-// return value = true if no error occured
-bool GetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState);
 
 
 int main(int argc, char** argv)
@@ -141,7 +132,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* ReferenceState = 0;
-	      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 		return -1;
 	      if (Manager.GetString("load-hilbert") != 0)
 		OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
@@ -157,7 +148,7 @@ int main(int argc, char** argv)
       else
 	{
 	  int* ReferenceState = 0;
-	  if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 	    return -1;
 	  if (Manager.GetString("load-hilbert") != 0)
 	    OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
@@ -183,7 +174,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* LeftReferenceState = 0;
-	      if (GetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
+	      if (FQHEGetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
 		return -1;
 	      if ((InputVectors(4, i) == 0) || (strcmp("none", InputVectors(4, i)) == 0))
 		LeftBasis = new BosonOnSphereHaldaneBasisShort(LeftNbrParticles, LeftTotalLz, LeftLzMax, LeftReferenceState);	  
@@ -198,7 +189,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* LeftReferenceState = 0;
-	      if (GetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
+	      if (FQHEGetRootPartition(InputVectors(2, i), LeftNbrParticles, LeftLzMax, LeftReferenceState) == false)
 		return -1;
 	      if ((InputVectors(4, i) == 0) || (strcmp("none", InputVectors(4, i)) == 0))
 		LeftBasis = new FermionOnSphereHaldaneBasis(LeftNbrParticles, LeftTotalLz, LeftLzMax, LeftReferenceState);	  
@@ -220,7 +211,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* RightReferenceState = 0;
-	      if (GetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
+	      if (FQHEGetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
 		return -1;
 	      if ((InputVectors(5, i) == 0) || (strcmp("none", InputVectors(5, i)) == 0))
 		RightBasis = new BosonOnSphereHaldaneBasisShort(RightNbrParticles, RightTotalLz, RightLzMax, RightReferenceState);	  
@@ -235,7 +226,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* RightReferenceState = 0;
-	      if (GetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
+	      if (FQHEGetRootPartition(InputVectors(3, i), RightNbrParticles, RightLzMax, RightReferenceState) == false)
 		return -1;
 	      if ((InputVectors(5, i) == 0) || (strcmp("none", InputVectors(5, i)) == 0))
 		RightBasis = new FermionOnSphereHaldaneBasis(RightNbrParticles, RightTotalLz, RightLzMax, RightReferenceState);	  
@@ -284,45 +275,4 @@ int main(int argc, char** argv)
     }
 
   return 0;
-}
-
-
-// get the root parition from a file
-// 
-// rootFileName = name of the file that contains the root description
-// nbrParticles = reference on the number of particles
-// lzMax = reference on twice the maximum Lz value
-// referenceState = array where the root partition description will be stored
-// return value = true if no error occured
-
-bool GetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState)
-{
-  ConfigurationParser ReferenceStateDefinition;
-  if (ReferenceStateDefinition.Parse(rootFileName) == false)
-    {
-      ReferenceStateDefinition.DumpErrors(cout) << endl;
-      return false;
-    }
-  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", nbrParticles) == false) || (nbrParticles <= 0))
-    {
-      cout << "NbrParticles is not defined or as a wrong value" << endl;
-      return false;
-    }
-  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", lzMax) == false) || (lzMax < 0))
-    {
-      cout << "LzMax is not defined or as a wrong value" << endl;
-      return false;
-    }
-  int MaxNbrLz;
-  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', referenceState, MaxNbrLz) == false)
-    {
-      cout << "error while parsing ReferenceState in " << rootFileName << endl;
-      return false;     
-    }
-  if (MaxNbrLz != (lzMax + 1))
-    {
-      cout << "wrong LzMax value in ReferenceState" << endl;
-      return false;     
-    }
-  return true;
 }

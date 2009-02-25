@@ -36,6 +36,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "FunctionBasis/AbstractFunctionBasis.h"
+#include "MathTools/FactorialCoefficient.h" 
 
 #include <math.h>
 #include <iostream>
@@ -65,6 +66,7 @@ BosonOnDiskShort::BosonOnDiskShort (int nbrBosons, int totalLz, int lzMax)
   this->NbrLzValue = this->LzMax + 1;
   this->FermionBasis = new FermionOnSphere(nbrBosons, this->TotalLz, this->LzMax  + nbrBosons - 1);
   this->HilbertSpaceDimension = this->FermionBasis->GetHilbertSpaceDimension();
+  this->LargeHilbertSpaceDimension = this->FermionBasis->GetLargeHilbertSpaceDimension();
 
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
@@ -94,6 +96,7 @@ BosonOnDiskShort::BosonOnDiskShort(const BosonOnDiskShort& bosons)
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->Minors = bosons.Minors;
@@ -135,6 +138,7 @@ BosonOnDiskShort& BosonOnDiskShort::operator = (const BosonOnDiskShort& bosons)
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->Flag = bosons.Flag;
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->KeptCoordinates = bosons.KeptCoordinates;

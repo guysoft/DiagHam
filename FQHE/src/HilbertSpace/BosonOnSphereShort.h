@@ -279,6 +279,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
 				    int* commonPattern, int commonPatterSize, int* addedPattern, int addedPatterSize,
 				    double coefficient, bool symmetrizedFlag);
 
+  // compute the Jack polynomial square normalization 
+  //
+  // state = reference on the unnormalized Jack polynomial
+  // return value = quare normalization 
+  virtual double JackSqrNormalization (RealVector& outputVector);
+
  protected:
 
   // convert a bosonic state into its fermionic counterpart
