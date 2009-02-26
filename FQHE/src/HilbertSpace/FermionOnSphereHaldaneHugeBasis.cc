@@ -79,12 +79,18 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
   this->SymmetricFlag = symmetricFlag;
   this->MaximumSignLookUp = 16;
   int ReferenceStateLzMax = 0;
+  this->TotalLz = 0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
       this->ReferenceState |= ((unsigned long) (referenceState[i] & 1)) << i;
       if (referenceState[i] == 1)
-	ReferenceStateLzMax = i;
+	{
+	  ReferenceStateLzMax = i;
+	  this->TotalLz += i;
+	}
     }
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
+  this->TotalLz *= 2;
   this->Flag.Initialize();
 
 #ifdef __64_BITS__
