@@ -2,6 +2,7 @@
 #include "InfiniteWellDensityProfile.h"
 #include "FangHowardDensityProfile.h"
 #include "TabulatedDensityProfile.h"
+#include "InfiniteWellBilayerDensityProfile.h"
 
 #include <iostream>
 using std::cout;
@@ -34,10 +35,10 @@ AbstractZDensityProfile* AbstractZDensityProfile::CreateZDensityProfile (char *t
       return new InfiniteWellDensityProfile(width,1);
       break;
     case AbstractZDensityProfile::InfiniteWellBilayerLeft:
-      return new InfiniteWellDensityProfile(width,-1);
+      return new InfiniteWellBilayerDensityProfile(width,-1);
       break;
     case AbstractZDensityProfile::InfiniteWellBilayerRight:
-      return new InfiniteWellDensityProfile(width,+1);
+      return new InfiniteWellBilayerDensityProfile(width,+1);
       break;
     default:
       cout << "This type of Density Profile is not defined, yet"<<endl;

@@ -9,4 +9,5 @@ AbstractZDensityProfile.cc \
 InfiniteWellDensityProfile.cc \
 FangHowardDensityProfile.cc \
 PseudoPotentialGenerator.cc \
-TabulatedDensityProfile.cc
+TabulatedDensityProfile.cc \
+InfiniteWellBilayerDensityProfile.cc

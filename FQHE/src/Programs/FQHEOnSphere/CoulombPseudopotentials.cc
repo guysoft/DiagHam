@@ -191,7 +191,11 @@ int main(int argc, char** argv)
       if (Manager.GetDouble("layer-thickness") > 0.0)
 	{
 	  File << "# with finite layer width W=" << Manager.GetDouble("layer-thickness") << endl;
-	  File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
+	  if (Manager.GetString("other-profile")!=NULL)
+	    File << "# for type1 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))
+		 << " and type2 = "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("other-profile"))<< endl;
+	  else
+	    File << "# and type: "<<AbstractZDensityProfile::DensityProfileName(Manager.GetString("profile-type"))<<endl;
 	}
       if (OneBodyPotentials != 0)
 	{
