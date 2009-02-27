@@ -11,6 +11,8 @@ ParticleOnSphereCollection.cc \
 AbstractParticleCollection.cc \
 SphereBilayerCoulombEnergy.cc \
 LaughlinSamplingFunction.cc \
+HalperinSamplingFunction.cc \
 SphereCoulombEnergy.cc \
 TrivialSamplingFunction.cc \
-SphereGeneralEnergy.cc 
+SphereGeneralEnergy.cc \
+SphereWithSpinGeneralEnergy.cc

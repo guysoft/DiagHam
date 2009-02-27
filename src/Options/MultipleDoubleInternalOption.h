@@ -56,7 +56,7 @@ class MultipleDoubleInternalOption : public  MultipleDoubleOption
     // minValue = double minimum value 
     // maxValueFlag = flag to indicates an double maximum value
     // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-    MultipleDoubleInternalOption(char optionCode, char* optionName, char* optionDescription, char separator,
+    MultipleDoubleInternalOption(char optionCode, const char* optionName, const char* optionDescription, char separator,
 		       bool external=false, char altSeparator = 0,
 		       char* defaultValues = NULL, bool minValueFlag = false, double minValue = 0.0, 
 		       bool maxValueFlag = false, double maxValue = 0.0);

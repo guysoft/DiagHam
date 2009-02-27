@@ -50,7 +50,8 @@ using std::endl;
 // minValue = double minimum value 
 // maxValueFlag = flag to indicates an double maximum value
 // maxValue = double maximum value (no maximum value if lower or equal to minValue) 
-MultipleDoubleInternalOption::MultipleDoubleInternalOption(char optionCode, char* optionName, char* optionDescription, char separator,
+MultipleDoubleInternalOption::MultipleDoubleInternalOption(char optionCode, const char* optionName,
+							   const char* optionDescription, char separator,
 		       bool external, char altSeparator ,
 		       char* defaultValues, bool minValueFlag, double minValue, 
 		       bool maxValueFlag, double maxValue):

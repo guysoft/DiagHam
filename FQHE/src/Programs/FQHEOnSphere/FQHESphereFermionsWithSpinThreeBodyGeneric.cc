@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
-  (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  // (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     }
 
 
-  bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
+  // bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();

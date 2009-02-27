@@ -88,11 +88,13 @@ SimpleMonteCarloOnSphereAlgorithm::~SimpleMonteCarloOnSphereAlgorithm()
 {
   if (this->NbrParticles!=0)
     {
-      delete this->System;
-      delete [] this->Observables;
+      delete this->System;      
       delete [] this->Frequencies;
       if (this->HavePrivateSamplingFct)
 	delete SamplingFunction;
+      for (int i=0; i<NbrObservables; ++i)
+	delete this->Observables[i];
+      delete [] this->Observables;
     }
 }
 
@@ -104,7 +106,7 @@ void SimpleMonteCarloOnSphereAlgorithm::AddObservable(AbstractObservable *O, int
   if (this->NbrObservables<this->MaxNbrObservables)
     {
       this->Frequencies[this->NbrObservables]=frequency;
-      this->Observables[this->NbrObservables++]=O;      
+      this->Observables[this->NbrObservables++]=O;
     }
   else
     {

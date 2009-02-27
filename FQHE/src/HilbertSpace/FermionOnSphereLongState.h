@@ -515,7 +515,7 @@ inline void FermionOnSphereLongState::GetPermutationSign(int stateIndex, int red
 #else
   int tmp = (stateIndex >> 5);
 #endif
-  for (reducedNbrState; reducedNbrState > tmp; --reducedNbrState)
+  for (/*reducedNbrState*/ ; reducedNbrState > tmp; --reducedNbrState)
     {
 #ifdef  __64_BITS__
       coefficient *= signLookUpTable[this->StateDescription[reducedNbrState] & ((unsigned long) 0xffff)];

@@ -464,6 +464,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      if (length>4) R = Params[4];
 	      if (length>5) S = Params[5];
 	      if (length>6) T = Params[6];
+	      delete [] Params;
 	      ExtendedHalperinWavefunction* rst = new ExtendedHalperinWavefunction(N, K, L, P, Q, R, S, T);
 	      rst->AdaptAverageMCNorm();
 	      if (Options->GetBoolean("antisymmetrize"))

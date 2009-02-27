@@ -243,7 +243,7 @@ int main(int argc, char** argv)
     {
       OneBodyPotentialUpDown = new double[LzMax + 1];
       for (int i=0; i<=LzMax; ++i)
-	OneBodyPotentialUpDown[i] = DeltaSAS;
+	OneBodyPotentialUpDown[i] = -1.0*DeltaSAS;
     }
 
   char* OutputNameLz = new char [512 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
@@ -315,6 +315,8 @@ int main(int argc, char** argv)
 	FirstRun = false;
     }
   delete[] OutputNameLz;
+  for (int i = 0; i < 3; ++i) delete[] PseudoPotentials[i];
+  delete[] PseudoPotentials;
   return 0;
 }
 

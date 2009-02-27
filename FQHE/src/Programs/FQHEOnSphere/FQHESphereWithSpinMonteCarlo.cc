@@ -6,6 +6,7 @@
 #include "Tools/FQHEMonteCarlo/QHESamplingFunctionManager.h"
 #include "Tools/FQHEMonteCarlo/SimpleMonteCarloOnSphereAlgorithm.h"
 #include "Tools/FQHEMonteCarlo/SphereBilayerCoulombEnergy.h"
+#include "Tools/FQHEMonteCarlo/SphereWithSpinGeneralEnergy.h"
 
 #include "MCObservables/RealObservable.h"
 
@@ -38,10 +39,16 @@ int main(int argc, char** argv)
   SamplingFunctionManager.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);  
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum", 5);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the total spin", 0);
+  
   (*SystemGroup) += new SingleDoubleOption  ('D', "lowest-d", "smallest layer separation d where the energy is evaluated", 0.0, true, /* minimum value */ 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('s', "spacing-d", "spacing of layer separation d where the energy is evaluated", 0.25, true, /* minimum value */ 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "spacing-d", "spacing of layer separation d where the energy is evaluated", 0.25, true, /* minimum value */ 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-d", "number of layer separation d where the energy is evaluated", 13);
+  (*SystemGroup) += new SingleStringOption('\n',"params-inter","File containing parameters of inter-spin interaction");
+  (*SystemGroup) += new SingleStringOption('\n',"params-intra","File containing parameters of intra-spin interaction");
+  (*SystemGroup) += new SingleStringOption('\n',"params-intra2","File containing parameters of second intra-spin interaction for down spins (if different from up channel)");
   
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
@@ -64,6 +71,10 @@ int main(int argc, char** argv)
   double LowestD = Manager.GetDouble("lowest-d");
   double Spacing = Manager.GetDouble("spacing-d");
   int NbrSeparations = Manager.GetInteger("nbr-d");
+  int SzTotal = Manager.GetInteger("total-sz");
+  int NbrFlux = Manager.GetInteger("lzmax");
+  int NbrUp = (NbrParticles + SzTotal)/2;
+  
   
   Abstract1DComplexFunction* TestWaveFunction = WaveFunctionManager.GetWaveFunction();
   
@@ -76,16 +87,34 @@ int main(int argc, char** argv)
 						      &Manager);
 
   // add observables
-  SphereBilayerCoulombEnergy Energy(/*Flux */ NbrParticles-1, NbrSeparations, LowestD, Spacing);
+  if (Manager.GetString("params-inter")==0)
+    {
+      // add Coulomb energy for bilayer      
+      SphereBilayerCoulombEnergy *Energy = new SphereBilayerCoulombEnergy(/*Flux */ NbrParticles-1, NbrSeparations, LowestD, Spacing);
+      MonteCarloRoutine.AddObservable(Energy);
+    }
+  else
+    {
+      // add a general energy function
+      if (Manager.GetString("params-intra")==0)
+	{
+	  cout << "Attention: both inter- and intra-spin interactions are required!"<<endl;
+	  exit(-1);
+	}
+      SphereWithSpinGeneralEnergy *Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux, Manager.GetString("params-inter"),
+									  Manager.GetString("params-intra"),
+									  Manager.GetString("params-intra2"));
+      MonteCarloRoutine.AddObservable(Energy);
+    }
   
-  MonteCarloRoutine.AddObservable(&Energy);  
-
   // run simulation
   MonteCarloRoutine.Simulate();
 
   // print final results:
   cout << "Final results:" << endl;
-  Energy.WriteDataFile(cout);  
-  
+  MonteCarloRoutine.WriteObservations(cout);
+
+  if (TestWaveFunction!=NULL) delete TestWaveFunction;
+  if (SamplingFunction!=NULL) delete SamplingFunction;
 }
 

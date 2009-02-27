@@ -73,6 +73,7 @@ class QHESamplingFunctionManager
     {
       InvalidWaveFunction = 0x00000,
       Laughlin = 0x00103,
+      Halperin = 0x00104,
     };
   
   // constructor

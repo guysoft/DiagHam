@@ -56,8 +56,8 @@ class SingleIntegerInternalOption : public SingleIntegerOption
   // minValue = integer minimum value 
   // maxValueFlag = flag to indicates an integer maximum value
   // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
-  SingleIntegerInternalOption(char optionCode, char* optionName, char* optionDescription, int defaultValue = 0,
-			      bool external=false, 
+  SingleIntegerInternalOption(char optionCode, const char* optionName, const char* optionDescription,
+			      int defaultValue = 0, bool external=false, 
 		      bool minValueFlag = false, int minValue = 0, 
 		      bool maxValueFlag = false, int maxValue = 0);
 

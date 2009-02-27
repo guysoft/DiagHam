@@ -102,7 +102,7 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
   double* PseudoPotentials = 0;
-  double* OneBodyPotentials = 0;
+  // double* OneBodyPotentials = 0;
   double* ThreeBodyPotentials = 0;
   int TmpNbrThreeBodyPseudoPotentials = 0;
   if (((SingleStringOption*) Manager["interaction-file"])->GetString() == 0)

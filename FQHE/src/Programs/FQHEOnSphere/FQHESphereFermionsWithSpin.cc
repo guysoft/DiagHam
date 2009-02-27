@@ -15,12 +15,14 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
 #include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -108,6 +110,8 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -127,6 +131,7 @@ int main(int argc, char** argv)
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
@@ -293,7 +298,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      double Shift = -10.0;
+      double Shift = 0.0;
       ParticleOnSphereWithSpin* Space = 0;
       if (HaldaneBasisFlag == false)
 	{
@@ -380,7 +385,35 @@ int main(int argc, char** argv)
       if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
 	Hamiltonian->AddS2(L, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
       if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
-	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20); 
+	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  RealVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  RealVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  double EnergyValue = State*TmpState;
+	  cout << "< Energy > = "<<EnergyValue<<endl;
+	  cout << "< shifted energy > = "<<EnergyValue + Shift<<endl;
+	  return 0;
+	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)

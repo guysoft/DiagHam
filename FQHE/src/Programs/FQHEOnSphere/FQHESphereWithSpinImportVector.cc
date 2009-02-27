@@ -181,7 +181,7 @@ int main(int argc, char** argv)
 	      Manager.GetString("state"), NbrParticles, LzMax, Sz, Lz);      
     }
   
-  int VIndex, VLastIndex=-1;
+  // int VIndex, VLastIndex=-1;
   char NextLine[256];
   double Value;
   int Index;

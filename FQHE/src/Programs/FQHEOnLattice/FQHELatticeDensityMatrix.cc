@@ -537,6 +537,12 @@ int main(int argc, char** argv)
       int countDot=0;
       for (;(endBase>=0)&&(countDot<2);--endBase)
 	if (vectorName[endBase]=='.') ++countDot;
+      if (countDot<2)
+	{
+	  countDot=0;
+	  for (;(endBase>=0)&&(countDot<1);--endBase)
+	    if (vectorName[endBase]=='.') ++countDot;
+	}
       endBase++;
       int nbrVec;
       int minNbrVec=1000;

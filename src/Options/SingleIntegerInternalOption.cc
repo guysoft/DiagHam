@@ -49,7 +49,8 @@ using std::endl;
 // maxValueFlag = flag to indicates an integer maximum value
 // maxValue = integer maximum value (no maximum value if lower or equal to minValue) 
 
-SingleIntegerInternalOption::SingleIntegerInternalOption(char optionCode, char* optionName, char* optionDescription,
+SingleIntegerInternalOption::SingleIntegerInternalOption(char optionCode, const char* optionName,
+							 const char* optionDescription,
 							 int defaultValue, bool external, 
 							 bool minValueFlag, int minValue, 
 							 bool maxValueFlag, int maxValue):
