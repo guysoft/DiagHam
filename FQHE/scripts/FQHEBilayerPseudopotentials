@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ -z "$2" ]; then
-  echo "usage: FQHEBilayerPseudopotentials #Flux LayerSeparation" 
+  echo "usage: FQHEBilayerPseudopotentials [-1] #Flux LayerSeparation" 
   exit
 fi
 

@@ -50,6 +50,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSpinSzSymmetry;
   friend class FermionOnSphereWithSpinLzSymmetry;
   friend class FermionOnSphereWithSU4Spin;
+  friend class FermionOnSphereWithSpinAllSz;
 
  protected:
 

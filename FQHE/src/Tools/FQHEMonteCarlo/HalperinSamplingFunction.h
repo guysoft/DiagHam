@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2007 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
 //                                                                            //
 //                                                                            //
-//                     class for calculation of Pseudopotential Coefficients  //
+//      class for a basic Monte Carlo algorith for particles on a sphere      //
 //                                                                            //
-//                        last modification : 19/11/2007                      //
+//                        last modification : 23/01/2008                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,56 +28,60 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTZDENSITYPROFILE_H
-#define ABSTRACTZDENSITYPROFILE_H
+#ifndef HALPERINSAMPLINGFUNCTION_H
+#define HALPERINSAMPLINGFUNCTION_H
 
+#include "AbstractMCSamplingFunction.h"
 
-#include "config.h"
+class HalperinSamplingFunction : public AbstractMCSamplingFunction
+{
+ protected:
+  // number of particles: total and with spin up
+  int NbrParticles;  
 
+  int NbrUp;
+  // exponent of Jastrow Factors
+  int Exponent_K;
+  int Exponent_L;
+  int Exponent_M;
 
+  // pointers to spinor coordinates (external)
+  Complex *SpinorUCoordinates;
+  Complex *SpinorVCoordinates;
 
-class AbstractZDensityProfile {
- private:
+  // for access to ParticleCollection
+  Complex LastU;
+  Complex LastV;
+
+  // norm for total function value
+  double ElementNorm;
   
-
  public:
-  
-  enum ZDensityProfileTypes
-    {
-      TabulatedProfile = 0x00000,
-      InfiniteWell = 0x00001,
-      FangHoward = 0x00002,
-      InfiniteWellExc = 0x00003,
-      InfiniteWellBilayerLeft = 0x00004,
-      InfiniteWellBilayerRight = 0x00005,
-    };
-  
+  // constructor
+  // nbrParticles = number of particles in system
+  // exponentK = power raised for up-spins
+  // exponentL = power raised for down-spins
+  // exponentM = power raised for inter-spin factors
+  // nbrUp = number of particles with up spin (negative number -> choose half the particles)
+  HalperinSamplingFunction(int nbrParticles, int exponentK, int exponentL, int exponentM, int nbrUp=-1);
+    
   // virtual destructor
-  virtual ~AbstractZDensityProfile();
+  virtual ~HalperinSamplingFunction();
 
-  // get minimum and maximum value of density profile where the probability density is larger than precision
-  // min = minimum value of z offset
-  // max = maximum value of z offset
-  // precision = requested precision
-  virtual void GetSupport(double &min, double &max, double precision=1e-10) = 0;
+  // register basic system of particles
+  virtual void RegisterSystem(AbstractParticleCollection *system);
 
-  // evaluate the density for a given offset
-  // z = offset of distribution
-  virtual double GetValue(double z) = 0;
+  // method for ratio of probabilities with respect to the last configuration
+  // allows for more rapid calculation due to cancellation of factors
+  virtual double GetTransitionRatio();
 
-  // get type of the density profile
-  virtual int GetType() = 0;
+  // get the full function value for a system of particles
+  virtual Complex GetFunctionValue();
 
-  // a static class function to return an actual DensityProfile object of some type
-  static AbstractZDensityProfile* CreateZDensityProfile (char *type, double width);
-
-  // a static class function to return the name of a type of DensityProfile
-  // type = a string carrying either the number of the density profile, or a filename (if tabulated)
-  static char *DensityProfileName(char *type);
+  // call this method to scale the sampling function (needed to normalize the function)
+  // scale = total scaling factor
+  virtual void ScaleByFactor(double scale);
   
-
-
 };
 
-
-#endif
+#endif 
