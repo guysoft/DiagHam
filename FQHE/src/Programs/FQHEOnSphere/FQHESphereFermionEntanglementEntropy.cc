@@ -89,14 +89,10 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (((SingleStringOption*) Manager["ground-file"])->GetString() == 0)
+  if ((((SingleStringOption*) Manager["ground-file"])->GetString() == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
       cout << "error, a ground state file should be provided. See man page for option syntax or type FQHESphereEntanglementEntropy -h" << endl;
       return -1;
-    }
-  if (IsFile(((SingleStringOption*) Manager["ground-file"])->GetString()) == false)
-    {
-      cout << "can't open file " << ((SingleStringOption*) Manager["ground-file"])->GetString() << endl;
     }
 
   bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
@@ -341,10 +337,10 @@ int main(int argc, char** argv)
   else
     {
       char* TmpFileName;
-      TmpFileName = ReplaceExtensionToFileName(((SingleStringOption*) Manager["ground-file"])->GetString(), "vec", "ent");
+      TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
       if (TmpFileName == 0)
 	{
-	  cout << "no vec extension was find in " << ((SingleStringOption*) Manager["ground-file"])->GetString() << " file name" << endl;
+	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
 	  return 0;
 	}
       File.open(TmpFileName, ios::binary | ios::out);
@@ -404,6 +400,8 @@ int main(int argc, char** argv)
 		    else
 		      PartialDensityMatrix += TmpPartialDensityMatrix;
 		  }
+	      if (NbrSpaces > 1)
+		PartialDensityMatrix /= ((double) NbrSpaces);
 	      if (PartialDensityMatrix.GetNbrRow() > 1)
 		{
 		  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
