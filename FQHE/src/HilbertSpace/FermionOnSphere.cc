@@ -36,6 +36,7 @@
 #include "FunctionBasis/AbstractFunctionBasis.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/StringTools.h"
+#include "MathTools/FactorialCoefficient.h" 
 
 #include <math.h>
 #include <stdlib.h>
@@ -1790,5 +1791,40 @@ RealVector& FermionOnSphere::FuseStates (RealVector& outputVector, RealVector& l
 	}
     }
   return outputVector;
+}
+
+// compute the Jack polynomial square normalization 
+//
+// state = reference on the unnormalized Jack polynomial
+// return value = quare normalization 
+
+double FermionOnSphere::JackSqrNormalization (RealVector& outputVector)
+{
+  double SqrNorm = 0.0;
+  int* TmpMonomial = new int [this->NbrFermions];
+  FactorialCoefficient Factorial;
+  int HalfLzMax = this->LzMax >> 1;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      Factorial.SetToOne();
+      this->ConvertToMonomial(this->StateDescription[i], TmpMonomial);
+      for (int k = 0; k < this->NbrFermions; ++k)
+	{
+	  if (HalfLzMax < TmpMonomial[k])
+	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomial[k]);
+	  else
+	    if (HalfLzMax > TmpMonomial[k])
+	      Factorial.PartialFactorialDivide(TmpMonomial[k] + 1, HalfLzMax);
+	}	      
+      SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  cout << endl;
+  delete[] TmpMonomial;
+  return SqrNorm;
 }
 

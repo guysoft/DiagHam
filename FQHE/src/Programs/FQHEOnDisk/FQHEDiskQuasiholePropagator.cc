@@ -46,6 +46,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "excited-reference", "use a file as the definition of the reference state of the excited state");
   (*SystemGroup) += new BooleanOption  ('\n', "excitedhuge-basis", "use huge Hilbert space support for the excited state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-base", "do not compute the contribution fron the base state");  
+  (*SystemGroup) += new BooleanOption  ('\n', "fermion", "consider fermions instead of bosons");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "baseload-hilbert", "load Hilbert space description from the base state",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "excitedload-hilbert", "load Hilbert space description from the excited file",0);  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  bool Statistics = false;
+  bool Statistics = Manager.GetBoolean("fermion");
   int ExcitedNbrParticles = 0;
   int ExcitedTotalLz = 0;
   int ExcitedLzMax = 0;

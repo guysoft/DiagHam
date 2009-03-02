@@ -89,8 +89,7 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis (int nbrFermion
 	  this->TotalLz += i;
 	}
     }
-  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
-  this->TotalLz *= 2;
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
   this->Flag.Initialize();
 
 #ifdef __64_BITS__

@@ -90,8 +90,7 @@ FermionOnSphereHaldaneBasis::FermionOnSphereHaldaneBasis (int nbrFermions, int& 
 	  this->TotalLz += i;
 	}
     }
-  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions)) >> 1;
-  this->TotalLz *= 2;
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
   totalLz = this->TotalLz;
 
 #ifdef __64_BITS__

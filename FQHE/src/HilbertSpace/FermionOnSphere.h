@@ -383,6 +383,12 @@ class FermionOnSphere :  public ParticleOnSphere
   virtual RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 				 ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace, bool symmetrizedFlag = false);
 
+  // compute the Jack polynomial square normalization 
+  //
+  // state = reference on the unnormalized Jack polynomial
+  // return value = quare normalization 
+  virtual double JackSqrNormalization (RealVector& outputVector);
+
  protected:
 
   // find state index
