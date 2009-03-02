@@ -83,9 +83,9 @@ void SphereGeneralEnergy::RecordValue(double weight)
       for(int j=0;j<i;j++)
 	{
 	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  rst = 1.0/ dij;
+	  rst = this->Coefficients[0]/ dij;
 	  double p = this->Coefficients[this->NbrParameters-1];
-	  for (int k=this->NbrParameters-2; k>-1; --k)
+	  for (int k=this->NbrParameters-2; k>0; --k)
 	    {
 	      p=p*dij + this->Coefficients[k];
 	    }
@@ -95,6 +95,31 @@ void SphereGeneralEnergy::RecordValue(double weight)
     }
   this->Values->Observe(sum/Radius, weight);
 }
+
+// old version:
+// // call to make an observation
+// void SphereGeneralEnergy::RecordValue(double weight)
+// {
+//   int N = this->NbrParticles;
+//   ++NbrObservations;
+//   double rst, dij, sum=0.0;
+//   for (int i=1;i<N;i++)
+//     {
+//       for(int j=0;j<i;j++)
+// 	{
+// 	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+// 	  rst = 1.0/ dij;
+// 	  double p = this->Coefficients[this->NbrParameters-1];
+// 	  for (int k=this->NbrParameters-2; k>-1; --k)
+// 	    {
+// 	      p=p*dij + this->Coefficients[k];
+// 	    }
+// 	  rst+=p;
+// 	  sum+=rst;
+// 	}
+//     }
+//   this->Values->Observe(sum/Radius, weight);
+// }
 
 // print legend to the given stream
 void SphereGeneralEnergy::PrintLegend(std::ostream &output, bool all)

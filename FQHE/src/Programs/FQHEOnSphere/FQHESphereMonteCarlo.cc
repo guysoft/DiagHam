@@ -43,7 +43,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum per particle", 15);
   (*SystemGroup) += new SingleStringOption('\n',"interaction-params","File containing parameters of interaction");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
-  (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -65,8 +64,14 @@ int main(int argc, char** argv)
   
   AbstractMCSamplingFunction* SamplingFunction = SamplingFunctionManager.GetSamplingFunction();
 
+  if (TestWaveFunction==0)
+    {
+      cout << "Invalid wavefunction requested - list available states with --list-wavefunctions"<<endl;
+      exit(-1);
+    }
   cout << "Function: " << WaveFunctionManager.GetDescription()<<endl;
-  cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;
+  if (SamplingFunction!=0)
+    cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;
 
   SimpleMonteCarloOnSphereAlgorithm MonteCarloRoutine(NbrParticles, TestWaveFunction, SamplingFunction,
 						      &Manager);

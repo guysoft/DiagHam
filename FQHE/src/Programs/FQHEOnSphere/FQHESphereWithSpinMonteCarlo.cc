@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum", 5);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum", 9);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the total spin", 0);
   
   (*SystemGroup) += new SingleDoubleOption  ('D', "lowest-d", "smallest layer separation d where the energy is evaluated", 0.0, true, /* minimum value */ 0.0);
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-d", "number of layer separation d where the energy is evaluated", 13);
   (*SystemGroup) += new SingleStringOption('\n',"params-inter","File containing parameters of inter-spin interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-intra","File containing parameters of intra-spin interaction");
-  (*SystemGroup) += new SingleStringOption('\n',"params-intra2","File containing parameters of second intra-spin interaction for down spins (if different from up channel)");
+  (*SystemGroup) += new SingleStringOption('\n',"params-other","File containing parameters of second intra-spin interaction for down spins (if different from up channel)");
   
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
@@ -80,8 +80,15 @@ int main(int argc, char** argv)
   
   AbstractMCSamplingFunction* SamplingFunction = SamplingFunctionManager.GetSamplingFunction();
 
+  if (TestWaveFunction==0)
+    {
+      cout << "Invalid wavefunction requested - list available states with --list-wavefunctions"<<endl;
+      exit(-1);
+    }
+
   cout << "Function: " << WaveFunctionManager.GetDescription()<<endl;
-  cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;
+  if (SamplingFunction!=0)
+    cout << "Sampler:  " << SamplingFunctionManager.GetDescription()<<endl;  
 
   SimpleMonteCarloOnSphereAlgorithm MonteCarloRoutine(NbrParticles, TestWaveFunction, SamplingFunction,
 						      &Manager);
@@ -101,9 +108,10 @@ int main(int argc, char** argv)
 	  cout << "Attention: both inter- and intra-spin interactions are required!"<<endl;
 	  exit(-1);
 	}
-      SphereWithSpinGeneralEnergy *Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux, Manager.GetString("params-inter"),
+      SphereWithSpinGeneralEnergy *Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux,
+									  Manager.GetString("params-inter"),
 									  Manager.GetString("params-intra"),
-									  Manager.GetString("params-intra2"));
+									  Manager.GetString("params-other"));
       MonteCarloRoutine.AddObservable(Energy);
     }
   

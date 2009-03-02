@@ -158,7 +158,7 @@ Complex HalperinSamplingFunction::GetFunctionValue()
   for (int i=0; i<this->Exponent_L; ++i)
     Result *= Term2;
   for (int j=0; j<this->NbrUp; ++j)
-    for (int i=this->NbrUp;i<this->NbrParticles;i++)
+    for (int i=this->NbrUp; i<this->NbrParticles; i++)
       Term3 *= this->ElementNorm*(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
   for (int i=0; i<this->Exponent_M; ++i)
     Result *= Term3;

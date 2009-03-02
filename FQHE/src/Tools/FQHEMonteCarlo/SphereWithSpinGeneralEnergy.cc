@@ -70,17 +70,18 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 
 
   // Intra-spin interactions:
-  if (InteractionDefinition.Parse(parametersIntra) == false)
+  ConfigurationParser InteractionDefinition2;
+  if (InteractionDefinition2.Parse(parametersIntra) == false)
     {
-      InteractionDefinition.DumpErrors(cout) << endl;
+      InteractionDefinition2.DumpErrors(cout) << endl;
       exit(-1);
     }
-  if (InteractionDefinition.GetAsDoubleArray("Parameters", ' ', this->CoefficientsIntra, TmpNbrParameters) == false)
+  if (InteractionDefinition2.GetAsDoubleArray("Parameters", ' ', this->CoefficientsIntra, TmpNbrParameters) == false)
     {
       cout << "Parameters are not defined or has a wrong value in " << parametersIntra << endl;
       exit(-1);
     }
-  if (InteractionDefinition.GetAsSingleInteger("NumCoefficients", this->NbrParametersIntra) == false)
+  if (InteractionDefinition2.GetAsSingleInteger("NumCoefficients", this->NbrParametersIntra) == false)
     {
       cout << "NumCoefficients are not defined or has a wrong value in " << parametersIntra << endl;
       exit(-1);
@@ -90,7 +91,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
       cout << "Values not consistent in " << parametersIntra << endl;
       exit(-1);
     }
-  if (InteractionDefinition.GetAsSingleInteger("Nphi", TmpNphi) == false)
+  if (InteractionDefinition2.GetAsSingleInteger("Nphi", TmpNphi) == false)
     {
       cout << "Nphi is not defined or has a wrong value in " << parametersIntra << endl;
       exit(-1);
@@ -103,20 +104,21 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 
   if (parametersIntra2!=NULL) // have asymmetric interactions?
     {
+      ConfigurationParser InteractionDefinition3;
       this->HaveIntra2=true;
       // Intra-spin interactions:
-      if (InteractionDefinition.Parse(parametersIntra2) == false)
+      if (InteractionDefinition3.Parse(parametersIntra2) == false)
 	{
-	  InteractionDefinition.DumpErrors(cout) << endl;
+	  InteractionDefinition3.DumpErrors(cout) << endl;
 	  exit(-1);
 	}
       int TmpNbrParameters;
-      if (InteractionDefinition.GetAsDoubleArray("Parameters", ' ', this->CoefficientsIntra2, TmpNbrParameters) == false)
+      if (InteractionDefinition3.GetAsDoubleArray("Parameters", ' ', this->CoefficientsIntra2, TmpNbrParameters) == false)
 	{
 	  cout << "Parameters are not defined or has a wrong value in " << parametersIntra2 << endl;
 	  exit(-1);
 	}
-      if (InteractionDefinition.GetAsSingleInteger("NumCoefficients", this->NbrParametersIntra2) == false)
+      if (InteractionDefinition3.GetAsSingleInteger("NumCoefficients", this->NbrParametersIntra2) == false)
 	{
 	  cout << "NumCoefficients are not defined or has a wrong value in " << parametersIntra2 << endl;
 	  exit(-1);
@@ -126,7 +128,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 	  cout << "Values not consistent in " << parametersIntra2 << endl;
 	  exit(-1);
 	}
-      if (InteractionDefinition.GetAsSingleInteger("Nphi", TmpNphi) == false)
+      if (InteractionDefinition3.GetAsSingleInteger("Nphi", TmpNphi) == false)
 	{
 	  cout << "Nphi is not defined or has a wrong value in " << parametersIntra2 << endl;
 	  exit(-1);
@@ -171,9 +173,9 @@ void SphereWithSpinGeneralEnergy::RecordValue(double weight)
       for(int j=0;j<i;j++)
 	{
 	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  rst = 1.0/ dij;
+	  rst = this->CoefficientsIntra[0] / dij;
 	  double p = this->CoefficientsIntra[this->NbrParametersIntra-1];
-	  for (int k=this->NbrParametersIntra-2; k>-1; --k)
+	  for (int k=this->NbrParametersIntra-2; k>0; --k)
 	    {
 	      p=p*dij + this->CoefficientsIntra[k];
 	    }
@@ -186,9 +188,9 @@ void SphereWithSpinGeneralEnergy::RecordValue(double weight)
       for(int j=this->NbrUp;j<i;j++)
 	{
 	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  rst = 1.0/ dij;
+	  rst = this->CoefficientsIntra2[0] / dij;
 	  double p = this->CoefficientsIntra2[this->NbrParametersIntra2-1];
-	  for (int k=this->NbrParametersIntra2-2; k>-1; --k)
+	  for (int k=this->NbrParametersIntra2-2; k>0; --k)
 	    {
 	      p=p*dij + this->CoefficientsIntra2[k];
 	    }
@@ -201,9 +203,9 @@ void SphereWithSpinGeneralEnergy::RecordValue(double weight)
       for(int j=this->NbrUp;j<N;j++)
 	{
 	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  rst = 1.0/ dij;
+	  rst = this->CoefficientsInter[0]/ dij;
 	  double p = this->CoefficientsInter[this->NbrParametersInter-1];
-	  for (int k=this->NbrParametersInter-2; k>-1; --k)
+	  for (int k=this->NbrParametersInter-2; k>0; --k)
 	    {
 	      p=p*dij + this->CoefficientsInter[k];
 	    }

@@ -113,7 +113,7 @@ ostream& QHESamplingFunctionManager::ShowAvalaibleSamplingFunctions (ostream& st
 
 void QHESamplingFunctionManager::TestForShow(ostream& str)
 {
-  if (Options->GetBoolean("list-samplingfunctions") == true)
+  if (Options->GetBoolean("list-sampling-functions") == true)
     {
       this->ShowAvalaibleSamplingFunctions(str);
       exit(0);
@@ -192,6 +192,8 @@ char* QHESamplingFunctionManager::GetDescription()
     {
       return 0;
     }
+  if (this->Options->GetString("sampler") == 0)
+    return 0;
   char * buffer = new char[1000];
   sprintf(buffer,"%s N=%ld",this->Options->GetString("sampler"), this->Options->GetInteger("nbr-particles"));
   char *rst = new char[strlen(buffer)+1];
