@@ -53,6 +53,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
   (*SystemGroup) += new SingleIntegerInternalOption  ('n', "SzTotal", "number of layer separation d where the energy is evaluated", 0);
+
+  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -121,6 +123,13 @@ int main(int argc, char** argv)
   // print final results:
   cout << "Final results:" << endl;
   MonteCarloRoutine.WriteObservations(cout);
+
+  if (Manager.GetString("output")!=NULL)
+    {
+      ofstream LogFile(Manager.GetString("output"),std::ios::out);
+      MonteCarloRoutine.WriteObservations(LogFile);
+      LogFile.close();
+    }
 
   if (TestWaveFunction!=NULL) delete TestWaveFunction;
   if (SamplingFunction!=NULL) delete SamplingFunction;
