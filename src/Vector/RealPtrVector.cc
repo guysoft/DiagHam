@@ -293,9 +293,12 @@ double operator * (RealPtrVector& V1, RealPtrVector& V2)
 {
   V1.Localize();
   V2.Localize();
-  double x = *(V1.Components[0]) * *(V2.Components[0]);
-  for (int i = 1; i < V1.Dimension; i++)
-    x += *(V1.Components[i]) * *(V2.Components[i]);
+  double **MyComponentPtr=V1.Components;
+  double **OtherComponentPtr=V2.Components;
+  double x = **MyComponentPtr++ * **OtherComponentPtr++;
+  int L=V1.Dimension;
+  for (int i = 1; i < L; ++i)
+     x += **MyComponentPtr++ * **OtherComponentPtr++;  
   V1.Delocalize();
   V2.Delocalize();
   return x;
@@ -311,13 +314,17 @@ double operator * (RealPtrVector& V1, RealVector& V2)
 {
   V1.Localize();
   V2.Localize();
-  double x = *(V1.Components[0]) * V2.Components[0];
-  for (int i = 1; i < V1.Dimension; i++)
-    x += *(V1.Components[i]) * V2.Components[i];
+  double **MyComponentPtr=V1.Components;
+  double *OtherComponentPtr=V2.Components;
+  double x = **MyComponentPtr++ * *OtherComponentPtr++;
+  int L=V1.Dimension;
+  for (int i = 1; i < L; ++i)
+     x += **MyComponentPtr++ * *OtherComponentPtr++;     
   V1.Delocalize();
   V2.Delocalize();
   return x;
 }
+
 
 // scalar product between two vectors
 //
@@ -328,12 +335,13 @@ double operator * (RealPtrVector& V1, RealVector& V2)
 double operator * (RealVector& V1, RealPtrVector& V2)
 {
   V1.Localize();
-  V2.Localize();
-  double x = V1.Components[0] * *(V2.Components[0]);
-  for (int i = 1; i < V1.Dimension; i++)
-  {
-	  x += V1.Components[i] * *(V2.Components[i]);
-  }
+  V2.Localize();  
+  double *MyComponentPtr=V1.Components;
+  double **OtherComponentPtr=V2.Components;
+  double x = *MyComponentPtr++ * **OtherComponentPtr++;
+  int L=V1.Dimension;
+  for (int i = 1; i < L; ++i)
+     x += *MyComponentPtr++ * **OtherComponentPtr++;   
   V1.Delocalize();
   V2.Delocalize();
   return x;

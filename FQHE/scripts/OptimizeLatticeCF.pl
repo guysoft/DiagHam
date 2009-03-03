@@ -90,6 +90,16 @@ sub AnalyzeVectors
 	$HardCore=0;
 	$q = -1;
       }
+    my $TotalSolenoid="";
+    my $SolenoidX=0.0;
+    my $SolenoidY=0.0;
+    if ($FileName =~ m/\_s\_/)
+      {	
+	$FileName =~ /\_s\_(-*\d*[\.]*\d*e*-*\d*)\_(-*\d*[\.]*\d*e*-*\d*)/;
+	$SolenoidX = $1;
+	$SolenoidY = $2;
+	$TotalSolenoid="--solenoid-flux $SolenoidX,$SolenoidY";
+      }
     my $BaseName = $FileName;
     if ($FileName =~ /bosons\_lattice.*\_q\_(\d*).dat/)
       {
@@ -159,8 +169,8 @@ sub AnalyzeVectors
 		my $ProtocolName2 = $BaseName."\_$q.$CountEV.ovl$attachStr";		
 		if (! -e $ProtocolName2 )
 		  {
-		    system("$Program -p $N -q $q -x $x -y $y $Interaction $attachCmd --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2");
-		    print("running: $Program -p $N -q $q -x $x -y $y $Interaction $attachCmd --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2\n");
+		    system("$Program -p $N -q $q -x $x -y $y $Interaction $attachCmd $TotalSolenoid --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2");
+		    print("running: $Program -p $N -q $q -x $x -y $y $Interaction $attachCmd $TotalSolenoid --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2\n");
 		  }
 		else
 		  {

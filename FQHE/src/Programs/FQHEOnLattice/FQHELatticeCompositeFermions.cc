@@ -355,7 +355,7 @@ int main(int argc, char** argv)
 
 	}
       
-#elif
+#else
       
 
       cout << "Attention, this minimizer still need debugging!"<<endl;
@@ -915,7 +915,7 @@ ComplexMatrix& DiagonalizeMomentaInSubspace(RealDiagonalMatrix &values, ComplexM
 
 {
   // make sure we get entire multiplets:
-  while ((start > 0)&&(abs(values[start]-values[start-1])<1e-12)) --start;
+  while ((start > 0)&&(fabs(values[start]-values[start-1])<1e-12)) --start;
   while ((end < values.GetNbrRow()-1)&&(fabs(values[end]-values[end-1])<1e-12))
     {
       ++end;
