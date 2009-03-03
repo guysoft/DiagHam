@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             set of functions used to squeezed (aka Haldane) basis          //
+//         set of functions used to handle sphere pseudopotential files       //
 //                                                                            //
-//                        last modification : 24/02/2009                      //
+//                        last modification : 26/02/2009                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FQHESQUEEZEDBASISTOOLS_H
-#define FQHESQUEEZEDBASISTOOLS_H
+#ifndef FQHESPHEREPSEUDOPOTENTIALTOOLS_H
+#define FQHESPHEREPSEUDOPOTENTIALTOOLS_H
 
 #include "config.h"
 
@@ -44,7 +44,7 @@
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // return value = true if no error occured
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
-				       double* oneBodyPotentialUpUp, double* oneBodyPotentialDownDown);
+				       double* oneBodyPseudopotentialUpUp, double* oneBodyPseudopotentialDownDown);
 
 #endif
 

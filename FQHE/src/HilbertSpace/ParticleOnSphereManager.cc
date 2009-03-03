@@ -73,6 +73,8 @@
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 
 
@@ -627,7 +629,12 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
     }
   else
     {
-      return 0;
+      ParticleOnSphereWithSpin* Space = 0;
+      int NbrBosons = this->Options->GetInteger("nbr-particles");
+      int LzMax = this->Options->GetInteger("lzmax");
+      int SzTotal = this->Options->GetInteger("total-sz");
+      Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal);
+      return Space;
     }
 }
 
