@@ -34,17 +34,14 @@
 #include "config.h"
 
 
-// get pseudopototentials for particles on sphere with SU(2) spin from file
+// get the root parition from a file
 // 
-// fileName = name of the file that contains the pseudopotantial description
+// rootFileName = name of the file that contains the root description
+// nbrParticles = reference on the number of particles
 // lzMax = reference on twice the maximum Lz value
-// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
-//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
-// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
-// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// referenceState = array where the root partition description will be stored
 // return value = true if no error occured
-bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
-				       double* oneBodyPotentialUpUp, double* oneBodyPotentialDownDown);
+bool FQHEGetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState);
 
 #endif
 
