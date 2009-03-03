@@ -42,6 +42,9 @@
 #include <mpi.h>
 #endif
 
+// switch defining whether pointers should be used in loops
+//#define USE_POINTERS
+
 
 using std::cout;
 using std::ofstream;
@@ -494,6 +497,10 @@ Vector* RealVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
   return TmpVectors;
 }
 
+
+#ifdef USE_POINTERS
+
+
 // put all vector components to zero
 //
 // return value = reference on current vector
@@ -702,6 +709,198 @@ RealVector operator - (RealVector& V1, RealVector& V2)
     return RealVector();
 }
 
+#else
+
+// put all vector components to zero
+//
+// return value = reference on current vector
+
+Vector& RealVector::ClearVector ()
+{
+  this->Localize();
+  for (int i = 0; i < this->Dimension; i++)
+    this->Components[i] = 0.0;  
+  this->Delocalize(true);
+  return *this;
+}
+
+// change sign of a vector
+//
+// return value = reference on current vector
+
+RealVector& RealVector::operator - ()
+{
+  this->Localize();
+  for (int i = 0; i < this->Dimension; i++)
+    {
+      this->Components[i] *= -1;
+    }
+  this->Delocalize(true);
+  return *this;
+}
+
+// return a new vector with opposite sign form a given source vector
+//
+// V1 = source vector
+// return value = new vector
+
+RealVector operator - (RealVector& V1)
+{
+  if (V1.Dimension != 0)
+    {
+      V1.Localize();
+      double* TmpComponents = new double [V1.Dimension + 1];
+      for (int i = 0; i < V1.Dimension; i++)
+	TmpComponents[i] = -V1.Components[i];
+      V1.Delocalize();
+      return RealVector(TmpComponents, V1.Dimension);
+    }
+  else
+    return RealVector();
+}
+
+// scalar product between two vectors
+//
+// V1 = first vector
+// V2 = second vector
+// return value = result of scalar product
+
+double operator * (RealVector& V1, RealVector& V2)
+{
+  V1.Localize();
+  V2.Localize();
+  double x = V1.Components[0l] * V2.Components[0l];
+  if (V1.Dimension == -1)
+    for (long i = 1; i < V1.LargeDimension; ++i)
+      x += V1.Components[i] * V2.Components[i];
+  else
+    for (int i = 1; i < V1.Dimension; i++)
+      x += V1.Components[i] * V2.Components[i];
+  V1.Delocalize();
+  V2.Delocalize();
+  return x;
+}
+
+// do part of the scalar product between two vectors in a given range of indices
+//
+// vRight = right vector of the scalar product
+// firstComponent = index of the first component to consider
+// nbrComponent = number of components to consider
+// step = increment between to consecutive indices to consider
+// return value = result of the partial scalar product
+
+double RealVector::PartialScalarProduct (RealVector& vRight, int firstComponent, int nbrComponent, int step)
+{
+  this->Localize();
+  vRight.Localize();
+  double x = this->Components[firstComponent] * vRight.Components[firstComponent];
+  nbrComponent *= step;
+  nbrComponent += firstComponent;
+  firstComponent += step;
+  for (; firstComponent < nbrComponent; firstComponent += step)
+    x += this->Components[firstComponent] * vRight.Components[firstComponent];
+  this->Delocalize();
+  vRight.Delocalize();
+  return x;
+}
+
+// sum two vectors
+//
+// V1 = vector to add
+// return value = reference on current vector
+
+RealVector& RealVector::operator += (RealVector& V1)
+{
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+    return *this;
+  this->Localize();
+  V1.Localize();
+  for (int i = 0; i < this->Dimension; i++)
+    this->Components[i] += V1.Components[i];
+  this->Delocalize(true);
+  V1.Delocalize();
+  return *this;
+}
+
+// sum two vectors
+//
+// vector = vector to add
+// return value = reference on current vector
+
+Vector& RealVector::operator += (Vector& vector)
+{
+  if (vector.VectorType == Vector::RealDatas)
+    return (*this += ((RealVector&) vector));
+  return *this;
+}
+
+// substract two vectors
+//
+// V1 = first vector
+// return value = reference on current vector
+
+RealVector& RealVector::operator -= (RealVector& V1)
+{
+  if ((this->Dimension == 0) || (this->Dimension != V1.Dimension))
+    return *this;
+  this->Localize();
+  V1.Localize();
+  for (int i = 0; i < this->Dimension; i++)
+    this->Components[i] -= V1.Components[i];
+  this->Delocalize(true);
+  V1.Delocalize();
+  return *this;
+}
+
+// sum two vectors
+//
+// V1 = first vector
+// V2 = second vector
+// return value = resulting vector
+
+RealVector operator + (RealVector& V1, RealVector& V2)
+{
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+    {
+      V1.Localize();
+      V2.Localize();
+      double* TmpComponents = new double [V1.Dimension + 1];
+      for (int i = 0; i < V1.Dimension; i++)
+	TmpComponents[i] = V1.Components[i] + V2.Components[i];
+      V1.Delocalize();
+      V2.Delocalize();
+      return RealVector(TmpComponents, V1.Dimension);
+    }
+  else
+    return RealVector();
+}
+
+// substract two vectors
+//
+// V1 = first vector
+// V2 = second vector
+// return value = resulting vector
+
+RealVector operator - (RealVector& V1, RealVector& V2)
+{
+  if ((V1.Dimension != 0) && (V2.Dimension == V1.Dimension))
+    {
+      V1.Localize();
+      V2.Localize();
+      double* TmpComponents = new double [V1.Dimension + 1];
+      for (int i = 0; i < V1.Dimension; i++)
+	TmpComponents[i] = V1.Components[i] - V2.Components[i];
+      V1.Delocalize();
+      V2.Delocalize();
+      return RealVector(TmpComponents, V1.Dimension);
+    }
+  else
+    return RealVector();
+}
+
+
+#endif
+
 // add a linear combination to a given vector
 //
 // x = multiplicative coefficient
@@ -795,6 +994,8 @@ RealVector& RealVector::AddLinearCombination (double x1, RealVector& v1, double 
   return *this;
 }
 
+#ifdef USE_POINTERS
+
 // multiply a vector with a real number on the right hand side
 //
 // V1 = vector to multiply
@@ -875,12 +1076,99 @@ RealVector& RealVector::operator /= (double d)
   if (this->Dimension == -1)
     for (long i = 0; i < this->LargeDimension; ++i)
       this->Components[i] *= tmp;
+  else
+    {
+      double *ptr=this->Components;
+      for (int i = 0; i < this->Dimension; i++)
+	*ptr++ *= tmp;
+    }
+  this->Delocalize(true);
+  return *this;
+}
+
+#else
+
+// multiply a vector with a real number on the right hand side
+//
+// V1 = vector to multiply
+// d = real to use
+// return value = resulting vector
+
+RealVector operator * (RealVector& V1, double d)
+{
+  if (V1.Dimension != 0)
+    {
+      V1.Localize();
+      double* TmpComponents = new double [V1.Dimension + 1];
+      for (int i = 0; i < V1.Dimension; i++)
+	TmpComponents[i] = V1.Components[i] * d ;
+      V1.Delocalize();
+      return RealVector(TmpComponents, V1.Dimension);
+    }
+  else
+    return RealVector();
+}
+
+// multiply a vector with a real number on the left hand side
+//
+// V1 = vector to multiply
+// d = real to use
+// return value = resulting vector
+
+RealVector operator * (double d, RealVector& V1)
+{
+  if (V1.Dimension != 0)
+    {
+      V1.Localize();
+      double* TmpComponents = new double [V1.Dimension + 1];
+      for (int i = 0; i < V1.Dimension; i++)
+	TmpComponents[i] = V1.Components[i] * d ;
+      V1.Delocalize();
+      return RealVector(TmpComponents, V1.Dimension);
+    }
+  else
+    return RealVector();
+}
+
+// multiply a vector with a real number on the right hand side
+//
+// d = real to use
+// return value = reference on current vector
+
+RealVector& RealVector::operator *= (double d)
+{
+  this->Localize();
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] *= d;
+  else
+    for (int i = 0; i < this->Dimension; i++)
+      this->Components[i] *= d;
+  this->Delocalize(true);
+  return *this;
+}
+
+// divide a vector with a real number on the right hand side
+//
+// d = real to use
+// return value = reference on current vector
+
+RealVector& RealVector::operator /= (double d)
+{
+  this->Localize();
+  double tmp = 1.0 / d;
+  if (this->Dimension == -1)
+    for (long i = 0; i < this->LargeDimension; ++i)
+      this->Components[i] *= tmp;
   else	
     for (int i = 0; i < this->Dimension; i++)
       this->Components[i] *= tmp;
   this->Delocalize(true);
   return *this;
 }
+
+
+#endif
 
 // left multiply a vector with a real symmetric matrix (without using temporary vector)
 //
@@ -2752,6 +3040,8 @@ RealVector& RealVector::AddMultiply (const Matrix&  M, RealVector& V, int source
     }
 }
 
+#ifdef USE_POINTERS
+
 // get vector norm
 //
 // return value = vector norm
@@ -2768,7 +3058,6 @@ double RealVector::Norm()
       else
 	{
 	  double *ptr=this->Components;
-	  ptr++;
 	  for (int i = 0; i < this->Dimension; ++i,++ptr)
 	    x += *ptr * *ptr;
 	}
@@ -2793,7 +3082,6 @@ double RealVector::SqrNorm ()
       else
 	{
 	  double *ptr=this->Components;
-	  ptr++;
 	  for (int i = 0; i < this->Dimension; ++i,++ptr)
 	    x += *ptr * *ptr;
 	}	 
@@ -2821,6 +3109,71 @@ RealVector& RealVector::Normalize()
   this->Delocalize(true);
   return *this;
 }
+
+#else
+
+// get vector norm
+//
+// return value = vector norm
+
+double RealVector::Norm()
+{
+  this->Localize();
+  double x = 0.0;
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
+    {
+      if (this->Dimension == -1)
+	for (long i = 0; i < this->LargeDimension; ++i)
+	  x += this->Components[i] * this->Components[i];
+      else
+	for (int i = 0; i < this->Dimension; i++)
+	  x += this->Components[i] * this->Components[i];
+    }
+  this->Delocalize();
+  return sqrt(x);
+}
+  
+// get square of vector norm
+//
+// return value = square of vector norm
+
+double RealVector::SqrNorm ()
+{
+  this->Localize();
+  double x = 0.0;
+  if ((this->Dimension != 0) || (this->LargeDimension != 0l))
+    {
+      if (this->Dimension == -1)
+        for (long i = 0; i < this->LargeDimension; ++i)
+          x += this->Components[i] * this->Components[i];
+      else
+        for (int i = 0; i < this->Dimension; i++)
+          x += this->Components[i] * this->Components[i];
+    }
+  this->Delocalize();
+  return x;
+}
+  
+// normalize vector
+//
+// return value = reference on current vector
+
+RealVector& RealVector::Normalize()
+{
+  this->Localize();
+  double tmp = this->Components[0] * this->Components[0];
+  for (int i = 1; i < this->Dimension; i ++)
+    tmp += this->Components[i] * this->Components[i];
+  tmp = 1.0 / sqrt(tmp);
+  for (int i = 0; i < this->Dimension;)
+    {
+      this->Components[i++] *= tmp;
+    }
+  this->Delocalize(true);
+  return *this;
+}
+
+#endif
   
 // orthonormalized a vector with respect to a set of orthonormalized vectors
 //
