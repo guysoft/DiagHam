@@ -765,3 +765,48 @@ RealVector& BosonOnSphereHaldaneHugeBasisShort::ProductRules (RealVector& output
   cout << "nbr of newly added components : " << Count << endl;
   return outputVector;
 }
+
+// compute the Jack polynomial square normalization 
+//
+// state = reference on the unnormalized Jack polynomial
+// return value = quare normalization 
+
+double BosonOnSphereHaldaneHugeBasisShort::JackSqrNormalization (RealVector& outputVector)
+{
+  double SqrNorm = 0.0;
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = ((unsigned long) this->LzMax) >> 1;
+  int TmpLzMax= this->FermionHugeBasis->LzMax;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->FermionHugeBasis->StateDescription[i];
+      while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      Factorial.SetToOne();
+      this->ConvertToMonomial(TmpState, TmpLzMax, TmpMonomial);
+      this->FermionToBoson(TmpState, TmpLzMax, 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = 0; k < this->NbrBosons; ++k)
+	{
+	  if (HalfLzMax < TmpMonomial[k])
+	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomial[k]);
+	  else
+	    if (HalfLzMax > TmpMonomial[k])
+	      Factorial.PartialFactorialDivide(TmpMonomial[k] + 1, HalfLzMax);
+	}	      
+      for (int k = 0; k <= this->TemporaryStateLzMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial.FactorialDivide(this->TemporaryState[k]);
+      SqrNorm += (outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  cout << endl;
+  delete[] TmpMonomial;
+  return SqrNorm;
+}
+
