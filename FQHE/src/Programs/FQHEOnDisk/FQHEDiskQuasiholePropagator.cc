@@ -6,6 +6,10 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/FQHEDiskQuasiholePropagatorOperation.h"
+
 #include "Options/Options.h"
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -34,7 +38,10 @@ int main(int argc, char** argv)
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -125,7 +132,9 @@ int main(int argc, char** argv)
 	    BaseBasis = new FermionOnSphereHaldaneBasis(BaseNbrParticles, BaseTotalLz, BaseLzMax, ReferenceState);
 	}
     
-      Base = BaseBasis ->JackSqrNormalization(BaseVector);
+      FQHEDiskQuasiholePropagatorOperation Operation(BaseBasis, &BaseVector);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      Base = Operation.GetScalar().Re;
       delete BaseBasis;
       BaseVector = RealVector();
     }
@@ -181,8 +190,9 @@ int main(int argc, char** argv)
     }
 
   
-
-  double Excited = ExcitedBasis->JackSqrNormalization(ExcitedVector);
+  FQHEDiskQuasiholePropagatorOperation Operation2(ExcitedBasis, &ExcitedVector);
+  Operation2.ApplyOperation(Architecture.GetArchitecture());
+  double Excited = Operation2.GetScalar().Re;
   if (Manager.GetBoolean("no-base") == false)
     {
       cout << "2^" << DiffLzMax <<  " * " << Excited << " / " << Base << " = " << (pow(2.0, (double) DiffLzMax) * Excited / Base) << endl;

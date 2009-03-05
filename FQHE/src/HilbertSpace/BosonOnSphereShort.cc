@@ -1090,18 +1090,23 @@ RealVector& BosonOnSphereShort::ProductRules (RealVector& outputVector, RealVect
   return outputVector;
 }
 
-// compute the Jack polynomial square normalization 
+// compute part of the Jack polynomial square normalization in a given range of indices
 //
 // state = reference on the unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
 // return value = quare normalization 
 
-double BosonOnSphereShort::JackSqrNormalization (RealVector& outputVector)
+double BosonOnSphereShort::JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents)
 {
   double SqrNorm = 0.0;
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   FactorialCoefficient Factorial;
   unsigned long HalfLzMax = ((unsigned long) this->LzMax) >> 1;
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
     {
       Factorial.SetToOne();
       this->ConvertToMonomial(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], TmpMonomial);

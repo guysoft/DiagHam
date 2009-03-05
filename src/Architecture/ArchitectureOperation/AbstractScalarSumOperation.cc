@@ -49,6 +49,47 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
 {
   this->FirstComponent = firstComponent;
   this->NbrComponent = nbrComponent;
+  this->LargeFirstComponent = (long) firstComponent;
+  this->LargeNbrComponent = (long) nbrComponent;
+}
+
+// set range of indices
+// 
+// firstComponent = index of the first component
+// nbrComponent = number of component
+
+void AbstractScalarSumOperation::SetIndicesRange (const long& firstComponent, const long& nbrComponent)
+{
+  this->FirstComponent = firstComponent;
+  this->NbrComponent = nbrComponent;
+  this->LargeFirstComponent = firstComponent;
+  this->LargeNbrComponent = nbrComponent;
+  if (this->LargeFirstComponent < (1l << 30))
+    this->FirstComponent = (int) this->LargeFirstComponent;    
+  else
+    this->FirstComponent = 0;
+  if (this->LargeNbrComponent < (1l << 30))
+    this->NbrComponent = (int) this->LargeNbrComponent;    
+  else
+    this->NbrComponent = 0;
+}
+
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
+// 
+// return value = dimension  
+
+int AbstractScalarSumOperation::GetDimension ()
+{
+  return 0;
+}
+
+// get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
+// 
+// return value = dimension  
+
+long AbstractScalarSumOperation::GetLargeDimension ()
+{
+  return (long) this->GetDimension();
 }
 
 // apply operation for SMP architecture
@@ -58,19 +99,19 @@ void AbstractScalarSumOperation::SetIndicesRange (const int& firstComponent, con
 
 bool AbstractScalarSumOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->GetDimension() / architecture->GetNbrThreads();
-  int FirstComponent = 0;
+  long Step = this->GetLargeDimension() / ((long) architecture->GetNbrThreads());
+  long TmpFirstComponent = 0l;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
   AbstractScalarSumOperation** TmpOperations = new AbstractScalarSumOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       TmpOperations[i] = (AbstractScalarSumOperation*) this->Clone();
-      TmpOperations[i]->SetIndicesRange(FirstComponent, Step);
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
       architecture->SetThreadOperation(TmpOperations[i], i);
-      FirstComponent += Step;
+      TmpFirstComponent += Step;
     }
   TmpOperations[ReducedNbrThreads] = (AbstractScalarSumOperation*) this->Clone();
-  TmpOperations[ReducedNbrThreads]->SetIndicesRange(FirstComponent, this->GetDimension() - FirstComponent);  
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->GetLargeDimension() - TmpFirstComponent);  
   architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
   if (this->NbrScalars > 1)

@@ -279,11 +279,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
 				    int* commonPattern, int commonPatterSize, int* addedPattern, int addedPatterSize,
 				    double coefficient, bool symmetrizedFlag);
 
-  // compute the Jack polynomial square normalization 
+  // compute part of the Jack polynomial square normalization in a given range of indices
   //
   // state = reference on the unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
   // return value = quare normalization 
-  virtual double JackSqrNormalization (RealVector& outputVector);
+  virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
  protected:
 

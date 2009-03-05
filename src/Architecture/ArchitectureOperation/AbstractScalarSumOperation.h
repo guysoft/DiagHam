@@ -46,6 +46,10 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   int FirstComponent;
   // number of component 
   int NbrComponent;
+  // index of the first component (if long numbers are required)
+  int LargeFirstComponent;
+  // number of component  (if long numbers are required)
+  int LargeNbrComponent;
   // complex scalar used to store the results
   Complex Scalar;
   // array complex scalars used to store the results in case of multiple scalar sum evaluation
@@ -65,10 +69,21 @@ class AbstractScalarSumOperation: public AbstractArchitectureOperation
   // nbrComponent = number of component
   virtual void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
-  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...)
+  // set range of indices
+  // 
+  // firstComponent = index of the first component
+  // nbrComponent = number of component
+  virtual void SetIndicesRange (const long& firstComponent, const long& nbrComponent);
+
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...), return 0 if large number are required
   // 
   // return value = dimension  
-  virtual int GetDimension () = 0;
+  virtual int GetDimension ();
+
+  // get dimension (i.e. Hilbert space dimension, nbr of subdivisions,...) when large number are required
+  // 
+  // return value = dimension  
+  virtual long GetLargeDimension ();
 
   // return scalar corresponding to the result of the operation
   //
