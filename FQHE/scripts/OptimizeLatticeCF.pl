@@ -169,7 +169,7 @@ sub AnalyzeVectors
 		my $ProtocolName2 = $BaseName."\_$q.$CountEV.ovl$attachStr";		
 		if (! -e $ProtocolName2 )
 		  {
-		    system("$Program -p $N -q $q -x $x -y $y $Interaction $attachCmd $TotalSolenoid --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2");
+		    system("$Program -p $N -q $q -x $x -y $y $Interaction $TotalSolenoid --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2");
 		    print("running: $Program -p $N -q $q -x $x -y $y $Interaction $attachCmd $TotalSolenoid --optimize ".$EigenVectors[$CountEV]." > $ProtocolName2\n");
 		  }
 		else
