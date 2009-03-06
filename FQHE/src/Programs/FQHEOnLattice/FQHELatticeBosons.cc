@@ -159,7 +159,7 @@ int main(int argc, char** argv)
   char* OutputName;
   char reverseHoppingString[4]="";
   char deltaString[20]="";
-  char interactionStr[20]="";
+  char interactionStr[100]="";
   if ( (OutputName = Manager.GetString("output-file")) == NULL)
     {
       OutputName = new char [256];      

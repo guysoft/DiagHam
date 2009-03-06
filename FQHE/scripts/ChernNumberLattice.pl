@@ -15,8 +15,11 @@ my $OverlapExe="GenericOverlap";
 my $CalculateVectors=0;
 my $NbrGrid=20;
 my $GridString="";
+my $GridString2="";
 my $ReferenceString="0,0,1,1";
 my $Degeneracy=1;
+my @Multiplet;
+$Multiplet[0]=0;
 my $Memory=1000;
 my $NbrCalculate=1;
 
@@ -34,8 +37,12 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    shift(@ARGV);
 	    $Degeneracy = $ARGV[0];
 	  }
+	for (my $i=1; $i<$Degeneracy; ++$i)
+	  {
+	    $Multiplet[$i]=$i;
+	  }
       }
-      if ( $ARGV[0] =~ /-g/ )
+    if ( $ARGV[0] =~ /-g/ )
       {
 	if (length($ARGV[0])>2)
 	  {
@@ -46,6 +53,19 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	  {
 	    shift(@ARGV);
 	    $GridString = $ARGV[0];
+	  }
+      }
+    if ( $ARGV[0] =~ /-h/ )
+      {
+	if (length($ARGV[0])>2)
+	  {
+	    $GridString2 = $ARGV[0];
+	    $GridString2 =~ s/-h//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $GridString2 = $ARGV[0];
 	  }
       }
     if ( $ARGV[0] =~ /-m/ )
@@ -73,6 +93,30 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    shift(@ARGV);
 	    $NbrGrid = $ARGV[0];
 	  }
+      }
+    if ( $ARGV[0] =~ /-q/ )
+      {
+	my $TmpStr;
+	if (length($ARGV[0])>2)
+	  {
+	    $TmpStr = $ARGV[0];
+	    $TmpStr =~ s/-q//;
+	  }
+	else
+	  {
+	    shift(@ARGV);
+	    $TmpStr = $ARGV[0];
+	  }
+	@Multiplet = split(/,/,$TmpStr);	
+	sort(@Multiplet);
+	$Degeneracy = $#Multiplet+1;
+	print ("Analysing multiplet  [$Multiplet[0]");
+	for (my $i=1; $i<$Degeneracy; ++$i)
+	  {
+	    print (", $Multiplet[$i]");
+	  }
+	print ("]\n");
+	print ("Multiplet degeneracy: ".$Degeneracy."\n");
       }
     if ( $ARGV[0] =~ /-r/ )
       {
@@ -112,30 +156,51 @@ if (!defined($ARGV[0]))
   {
     print("usage ChernNumberLattice.pl [-g GRIDPOINTS] [-n NbrPoints] [-c] [-r s1x,s1y,s2x,s2y] basename_*SX_SY*\n");
     print("option -g: list of discrete points used for both x- and y- directions\n");
-    print("       -n: number of gridpoints to be used\n");    
+    print("       -h: list of discrete points used for both y- directions (if different from x)\n");
+    print("       -d: degeneracy of groundstate multiplet (or indicate states with -q)\n");
+    print("       -n: number of gridpoints to be used\n");
     print("       -r: reference points A,B as theta1A,theta2A,theta1B,theta2B (default 0,0,1,1)\n");
     print("       -c: optionally calculate missing vector files\n");
     print("       -m: memory for precalculations when calculating vectors\n");
+    print("       -q: quantum numbers of states to be considered part of multiplet (-q q1,q2,q3,...)\n");
     print("       -s: number of states to be calculated at each point\n");
     exit(1);
   }
 
 
-my @GridPoints;
+my @GridPointsX;
+my @GridPointsY;
+my $NbrGridY;
 
 if (length($GridString)>0)
   {
-    @GridPoints = split (/,/, $GridString);
-    $NbrGrid = $#GridPoints + 1;
+    @GridPointsX = split (/,/, $GridString);
+    $NbrGrid = $#GridPointsX + 1;
   }
 else
   {
     my $Sep=2.0/$NbrGrid;
     for (my $i=0; $i<$NbrGrid; ++$i)
       {
-	$GridPoints[$i]=-1.0+($i+1)*$Sep;
+	$GridPointsX[$i]=-1.0+($i+1)*$Sep;
       }
   }
+if ( length($GridString2)>0)
+  {
+    @GridPointsY = split (/,/, $GridString2);
+    $NbrGridY = $#GridPointsY + 1;
+  }
+else
+  {
+    @GridPointsY=@GridPointsX;
+    $NbrGridY=$NbrGrid;
+  }
+
+if ($NbrCalculate<$Multiplet[$#Multiplet]+1)
+  {
+    $NbrCalculate=$Multiplet[$#Multiplet]+1;
+  }
+
 if ($NbrCalculate<$Degeneracy)
   {
     $NbrCalculate=$Degeneracy;
@@ -144,7 +209,7 @@ if ($NbrCalculate<$Degeneracy)
 my $Program;
 my $Have64Bits=0;
 my $tmp = "";
-# $tmp = `status`;
+$tmp = `status`;
 if ( $tmp =~ /x86_64/ )
   {
     $Program = $Program_64;
@@ -200,15 +265,6 @@ sub AnalyzeChern
 	$q = $5;
       }
     my $TotalSolenoid="";
-    my $SolenoidX=0.0;
-    my $SolenoidY=0.0;
-#    if ($BaseName =~ m/\_s\_/)
-#      {	
-#	$BaseName =~ /\_s\_(-*\d*[\.]*\d*e*-*\d*)\_(-*\d*[\.]*\d*e*-*\d*)/;
-#	$SolenoidX = $1;
-#	$SolenoidY = $2;
-#	$TotalSolenoid="--solenoid-flux $SolenoidX,$SolenoidY";
-#      }
     my $Interaction;
     if ( $HardCore == 1)
       {
@@ -230,13 +286,22 @@ sub AnalyzeChern
 
     my $CommandLine = "$Program -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory";
 
-    TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine);
-    TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine);
+    TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
+    TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
 
     my $LogFileName = GetVectorName($BaseName, 0, 0, 0);
     $LogFileName =~ s/0\.vec/cn/;
-    open (LOGFILE, ">$LogFileName");
 
+    SavePrevious($LogFileName);
+    open (LOGFILE, ">$LogFileName");
+    
+    my $PlotFileName = GetVectorName($BaseName, 0, 0, 0);
+    $PlotFileName =~ s/0\.vec/cnp1/;
+    open (PLOTFILE1, ">$PlotFileName");
+    
+    $PlotFileName =~ s/cnp1/cnp2/;
+    open (PLOTFILE2, ">$PlotFileName");
+    
     print LOGFILE ("# Evaluation of Chern-Number for state at N = $N, x = $x, y = $y, q = $q  ($Interaction)\n");
     print LOGFILE ("# Theta_x\tTheta_y\tOmega_x\tOmega_y\n");
 
@@ -244,14 +309,16 @@ sub AnalyzeChern
     my $GridY;
     for ($GridX=0; $GridX<$NbrGrid;++$GridX)
       {
-	for ($GridY=0; $GridY<$NbrGrid;++$GridY)
+	my $SolenoidX = $GridPointsX[$GridX];
+	printf ("%8g\t",$SolenoidX);
+	for ($GridY=0; $GridY<$NbrGridY;++$GridY)
 	  {
-	    my $SolenoidX = $GridPoints[$GridX];
-	    my $SolenoidY = $GridPoints[$GridY];
-	    print ("Analysing point $SolenoidX,$SolenoidY \n");
+	    my $SolenoidY = $GridPointsY[$GridY];
+	    #print ("Analysing point $SolenoidX,$SolenoidY \n");
+	    print ("x");
 
 	    # make sure we have all necessary data
-	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine);
+	    TestVectors ($BaseName, $SolenoidX, $SolenoidY, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
 	    my $Alpha;
 	    my $Beta;
 	    my $OvlCommand="GenericOverlap --quiet -s -c ";
@@ -262,19 +329,22 @@ sub AnalyzeChern
 	      {
 		my @Column1;
 		my @Column2;
-		my $VectorA1=GetVectorName($BaseName, $RefS1x, $RefS1y, $Alpha);
-		my $VectorA2=GetVectorName($BaseName, $SolenoidX, $SolenoidY, $Alpha);
+		my $VectorA1=GetVectorName($BaseName, $RefS1x, $RefS1y, $Multiplet[$Alpha]);
+		my $VectorA2=GetVectorName($BaseName, $RefS2x, $RefS2y, $Multiplet[$Alpha]);
 		for ($Beta=0; $Beta<$Degeneracy;++$Beta)
 		  {
-		    my $VectorB1=GetVectorName($BaseName, $SolenoidX, $SolenoidY, $Beta);
-		    my $VectorB2=GetVectorName($BaseName, $RefS2x, $RefS2y, $Beta);
-		    my $TmpCmd = $OvlCommand." ".$VectorA1." ".$VectorB1;
+		    my $VectorB=GetVectorName($BaseName, $SolenoidX, $SolenoidY, $Multiplet[$Beta]);
+		    my $TmpCmd = $OvlCommand." ".$VectorA1." ".$VectorB;
 		    my $OvlString= `$TmpCmd`;
+		    chomp($OvlString);
+		    #print("run $TmpCmd\n$OvlString\n");
 		    @Overlaps = split(/ /,$OvlString);
 		    my $z = cplx($Overlaps[0],$Overlaps[1]);
 		    push(@Column1,$z);
-		    $TmpCmd = $OvlCommand." ".$VectorA2." ".$VectorB2;
+		    $TmpCmd = $OvlCommand." ".$VectorA2." ".$VectorB;
 		    $OvlString= `$TmpCmd`;
+		    chomp($OvlString);
+		    #print("run $TmpCmd\n$OvlString\n");
 		    @Overlaps = split(/ /,$OvlString);
 		    $z = cplx($Overlaps[0],$Overlaps[1]);
 		    push(@Column2,$z);
@@ -286,12 +356,17 @@ sub AnalyzeChern
 	    my $Det2 = det (\@Matrix2);
 	    my $Arg1 = arg($Det1);
 	    my $Arg2 = arg($Det2);
-	    print ("det1 = ".$Det1."\n");
-	    print ("det2 = ".$Det2."\n");
-	    my $TotalX = sin($Arg1+$Arg2);
-	    my $TotalY = cos($Arg1+$Arg2);
-	    print LOGFILE ("$SolenoidX\t$SolenoidY\t$TotalX\t$TotalY\n");
+	    my $Sqr1 = abs($Det1*$Det1);
+	    my $Sqr2 = abs($Det2*$Det2);
+	    my $TotalX = sin($Arg1-$Arg2);
+	    my $TotalY = cos($Arg1-$Arg2);
+	    print LOGFILE ("$SolenoidX\t$SolenoidY\t$TotalX\t$TotalY\t$Sqr1\t$Sqr2\n");
+	    print PLOTFILE1 ("$SolenoidX\t$SolenoidY\t$Sqr1\n");
+	    print PLOTFILE2 ("$SolenoidX\t$SolenoidY\t$Sqr2\n");
 	  }
+	print PLOTFILE1 ("\n");
+	print PLOTFILE2 ("\n");
+	print ("\n");
       }
     close(LOGFILE);
   } # end of AnalyzeChern
@@ -307,28 +382,48 @@ sub TestVectors {
   my $Degeneracy = $_[3];
   my $Calculate = $_[4];
   my $Command = $_[5];
+  my $Multiplet = $_[6];
 
+  while ($SolenoidX<=-1.0)
+    {
+      $SolenoidX+=2.0;
+    }
+  while ($SolenoidX>2.0)
+    {
+      $SolenoidX-=2.0;
+    }
+  while ($SolenoidY<=-1.0)
+    {
+      $SolenoidY+=2.0;
+    }
+  while ($SolenoidY>2.0)
+    {
+      $SolenoidY-=2.0;
+    }
+  
   my $HavePoint=1;
   for (my $i=0; $i<$Degeneracy; ++$i)
     {
-      my $VectorName = GetVectorName($BaseName, $SolenoidX, $SolenoidY, $i);
+      my $VectorName = GetVectorName($BaseName, $SolenoidX, $SolenoidY, $Multiplet->[$i]);
       if ( ! -e $VectorName )
 	{
 	  print ("State $VectorName not found!\n");
 	  $HavePoint=0;
 	}
-      else
-	{
-	  print ("State $VectorName found!\n");
-	}
+#      else
+#	{
+#	  print ("State $VectorName found!\n");
+#	}
     }
   if ( $HavePoint == 0)
     {
       if ( $Calculate == 1 )
 	{
 	  print ("Missing vectors at $SolenoidX,$SolenoidY ... recalculating\n");
-	  print ("Command executed: ".$Command." --eigenstate --show-itertime --solenoid-flux $SolenoidX,$SolenoidY\n");
-	  system($Command." --eigenstate --show-itertime --solenoid-flux $SolenoidX,$SolenoidY");
+	  my $Instruction = sprintf("%s --eigenstate --show-itertime --solenoid-flux %g,%g", $Command, $SolenoidX,$SolenoidY);
+	  print ("Command executed: ".$Instruction."\n");
+
+	  system($Instruction);
 	}
       else
 	{
@@ -346,9 +441,28 @@ sub GetVectorName
     my $SolenoidY = $_[2];
     my $ID = $_[3];
 
+    while ($SolenoidX<=-1.0)
+      {
+	$SolenoidX+=2.0;
+      }
+    while ($SolenoidX>2.0)
+      {
+	$SolenoidX-=2.0;
+      }
+    while ($SolenoidY<=-1.0)
+      {
+	$SolenoidY+=2.0;
+      }
+    while ($SolenoidY>2.0)
+      {
+	$SolenoidY-=2.0;
+      }
+
     my $VectorName = $BaseName.".".$ID.".vec";
-    $VectorName =~ s/XX/$SolenoidX/;
-    $VectorName =~ s/YY/$SolenoidY/;
+    my $XStr = sprintf("%g",$SolenoidX);
+    my $YStr = sprintf("%g",$SolenoidY);
+    $VectorName =~ s/XX/$XStr/;
+    $VectorName =~ s/YY/$YStr/;
     if (($SolenoidX==0)&&($SolenoidY==0))
       {
 	$VectorName =~ s/\_s\_0\_0//;
@@ -356,6 +470,29 @@ sub GetVectorName
     return $VectorName;
   }
 
+#  see if a file with the requested name already exists. If so, rename it to increase a counter
+#
+sub SavePrevious {
+  my $MaxSave = 5;   # parameter that can be adjusted to manage number of files kept on record
+  my $FileName = $_[0];
+  my $EffectiveFileName = $FileName;
+  my $Level = -1;
+  if ( defined($_[1]) )
+    {
+      $Level = $_[1];
+      $EffectiveFileName = $FileName.".".$Level;
+    }
+  print("SavePrevious ($FileName,$Level) -> effective name : $EffectiveFileName \n");
+  if ( -e $EffectiveFileName )
+    {
+      if ( $Level < $MaxSave )
+	{
+	  SavePrevious($FileName,$Level+1);
+	}
+      print("move $EffectiveFileName $FileName".".".($Level+1)."\n");
+      system ("mv $EffectiveFileName $FileName".".".($Level+1));
+    }
+}
 
 # calculate the determinant of a matrix given as a double list
 # call this function by reference: det (\@matrix)

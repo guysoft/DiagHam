@@ -38,8 +38,10 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   Manager += OutputGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleStringOption ('\0', "state", "vector to import in ascii format");
+  (*SystemGroup) += new SingleStringOption ('s', "state", "vector to import in ascii format");
+  (*SystemGroup) += new SingleStringOption ('r', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted (none = standard basis)");
+  (*SystemGroup) += new SingleStringOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22)");
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -151,7 +153,7 @@ int main(int argc, char** argv)
 	  cout << "Attention: dimensions do not match!"<<endl;
 	  exit(1);
 	}
-      else
+      else 
 	{
 	  cout << "Basis read successfully!"<<endl;
 	}
@@ -163,12 +165,17 @@ int main(int argc, char** argv)
 	    exit(-1);
 	  }
     }
-  else
-    for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
-      {
-	Map[i]=i;
-	Signs[i]=1.0;
-      }
+  else if if (Manager.GetInteger("coded-basis")!=0)
+    {
+      
+    }
+    else
+      
+      for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+	{
+	  Map[i]=i;
+	  Signs[i]=1.0;
+	}
 
   RealVector ResultingVector(Space->GetHilbertSpaceDimension());
 
@@ -197,3 +204,69 @@ int main(int argc, char** argv)
 
   delete [] OutputName;
 }
+
+
+/**********************************************************************
+c PARAMETERS
+c     N=12
+c     lT=22
+c     MT=0
+c     numd=198472577
+**********************************************************************/
+
+// one-off basis from Arek
+
+void calcArekN12_2S22(int N=12, int N_phi=22,int Lz_total=0, int Dim=198472577,
+		      long* StateDesc, ParticleOnSphereWithSpin* Space)
+{
+  int kshift=N_phi+1;
+  int i=0;
+
+  double TmpCoeff;
+
+  for (int k06u=0; k06u<=N_phi; ++k06u)
+    for (int k05u=0; k05u<=k06u-1; ++k05u)
+      for (int k04u=0; k04u<=k05u-1; ++k04u)
+	for (int k03u=0; k03u<=k04u-1; ++k03u)
+	  for (int k02u=0;  k02u<=k03u-1; ++k02u)
+	    for (int k01u=0; k01u<=k02u-1; ++k01u)
+	      
+	      for (int k06d=0; k06d<=N_phi; ++k06d)
+		for (int k05d=0; k05d<=k06d-1; ++k05d)
+		  for (int k04d=0; k04d<=k05d-1; ++k04d)
+		    for (int k03d=0; k03d<=k04d-1; ++k03d)
+		      for (int k02d=0;  k02d<=k03d-1; ++k02d)
+			for (int k01d=0; k01d<=k02u-1; ++k01d)
+			  {
+			    int ksum=k01u+k02u+k03u+k04u+k05u+k06u
+			      +k01d+k02d+k03d+k04d+k05d+k06d;
+
+			    if(2*ksum-N*N_phi == Lz_total)
+			      {
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k01u, 1, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k02u, 1, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k03u, 1, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k04u, 1, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k05u, 1, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k06u, 1, TmpCoeff);
+
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k01d, 0, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k02d, 0, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k03d, 0, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k04d, 0, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k05d, 0, TmpCoeff);
+				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k06d, 0, TmpCoeff);
+				  
+				++i;
+			      }
+			  }
+  
+  
+  if(i != Dim)
+    {
+      printf("wrong numd");
+      exit(1);
+    }
+}
+
+/************************************************************************/
