@@ -78,3 +78,51 @@ bool FQHEGetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, in
     }
   return true;
 }
+
+// get the root partition from a file in the SU2 case
+// 
+// rootFileName = name of the file that contains the root description
+// nbrParticles = reference on the number of particles
+// lzMax = reference on twice the maximum Lz value
+// referenceStates = array where the root partition descriptions will be stored
+// nbrReferenceStates = number of root partitions that have been extracted
+// return value = true if no error occured
+
+bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax, 
+			      int**& referenceStates, int& nbrReferenceStates)
+{
+  ConfigurationParser ReferenceStateDefinition;
+  if (ReferenceStateDefinition.Parse(rootFileName) == false)
+    {
+      ReferenceStateDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", nbrParticles) == false) || (nbrParticles <= 0))
+    {
+      cout << "NbrParticles is not defined or as a wrong value" << endl;
+      return false;
+    }
+  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", lzMax) == false) || (lzMax < 0))
+    {
+      cout << "LzMax is not defined or as a wrong value" << endl;
+      return false;
+    }
+  char** TmpReferenceStates;
+  if (ReferenceStateDefinition.GetAsStringArray("ReferenceState", '\n', TmpReferenceStates, nbrReferenceStates) == false)
+    {
+      cout << "error while parsing ReferenceState in " << rootFileName << endl;
+      return false;     
+    }
+  referenceStates = new int*[nbrReferenceStates];
+  for (int i = 0; i < nbrReferenceStates; ++i)
+    {
+      int MaxNbrLz = 0;
+      if (MaxNbrLz != (lzMax + 1))
+	{
+	  cout << "wrong LzMax value in ReferenceState " << i << endl;
+	  return false;     
+	}
+    }
+  return true;
+}
+

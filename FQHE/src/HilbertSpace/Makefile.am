@@ -70,6 +70,6 @@ ParticleOnSphereManager.cc \
 FermionOnLattice.cc \
 FermionOnSphereUnnormalizedBasis.cc \
 BosonOnSphereHaldaneHugeBasisShort.cc \
-BosonOnSphereWithSpin.cc
-
+BosonOnSphereWithSpin.cc \
+FermionOnSphereWithSpinHaldaneBasis.cc
 

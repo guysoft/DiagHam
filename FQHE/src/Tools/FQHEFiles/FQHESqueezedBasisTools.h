@@ -43,5 +43,16 @@
 // return value = true if no error occured
 bool FQHEGetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState);
 
+// get the root partition from a file in the SU2 case
+// 
+// rootFileName = name of the file that contains the root description
+// nbrParticles = reference on the number of particles
+// lzMax = reference on twice the maximum Lz value
+// referenceStates = array where the root partition descriptions will be stored
+// nbrReferenceStates = number of root partitions that have been extracted
+// return value = true if no error occured
+bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax, 
+			      int**& referenceStates, int& nbrReferenceStates);
+
 #endif
 

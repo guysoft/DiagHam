@@ -1,7 +1,5 @@
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
-#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
-#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
-#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
+#include "HilbertSpace/AbstractQHEParticle.h"
+#include "HilbertSpace/ParticleOnSphereManager.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
@@ -43,16 +41,16 @@ int main(int argc, char** argv)
   OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
 
-  Manager += SystemGroup;
+  ParticleOnSphereManager ParticleManager(true, true, 2);
+  ParticleManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
   Architecture.AddOptionGroup(&Manager);
   Manager += LanczosGroup;
   Manager += ToolsGroup;
-  Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 5);
@@ -118,83 +116,15 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int TotalLz  = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int TotalSz = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
-  bool SzSymmetrizedBasis = ((BooleanOption*) Manager["szsymmetrized-basis"])->GetBoolean();
-  bool SzMinusParity = ((BooleanOption*) Manager["minus-szparity"])->GetBoolean();
-  bool LzSymmetrizedBasis = ((BooleanOption*) Manager["lzsymmetrized-basis"])->GetBoolean();
-  bool LzMinusParity = ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean();
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();  
   bool DiskCacheFlag = ((BooleanOption*) Manager["disk-cache"])->GetBoolean();
   bool FirstRun = true;
-//  bool HaldaneBasisFlag = ((BooleanOption*) Manager["haldane"])->GetBoolean();
-//  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   char* OutputNameLz = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
   sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz);
 
 
-  ParticleOnSphereWithSpin* Space;
-  if (((BooleanOption*) Manager["boson"])->GetBoolean() == false)
-    {
-      if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
-	{
-#ifdef __64_BITS__
-	  if (LzMax <= 31)
-#else
-	    if (LzMax <= 15)
-#endif
-	      {
-		Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz, MemorySpace);
-	      }
-	    else
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
-	}
-      else
-	{
-#ifdef __64_BITS__
-	  if (LzMax >= 31)
-#else
-	    if (LzMax >= 15)
-#endif
-	      {
-		cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		return -1;
-	      }	
-	  if (SzSymmetrizedBasis == true) 
-	    if (LzSymmetrizedBasis == false)
-	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		  Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(), MemorySpace);
-		else
-		  Space = new FermionOnSphereWithSpinSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	      }
-	    else
-	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-		{
-		  Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, LzMax, ((BooleanOption*) Manager["minus-szparity"])->GetBoolean(),
-								  ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-		}
-	      else
-		Space = new FermionOnSphereWithSpinLzSzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);
-	  else
-	    if (((SingleStringOption*) Manager["load-hilbert"])->GetString() == 0)
-	      Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, LzMax, TotalSz, ((BooleanOption*) Manager["minus-lzparity"])->GetBoolean(), MemorySpace);
-	    else
-	      Space = new FermionOnSphereWithSpinLzSymmetry(((SingleStringOption*) Manager["load-hilbert"])->GetString(), MemorySpace);	      
-	  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
-	    {
-	      ((FermionOnSphereWithSpinLzSzSymmetry*) Space)->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
-	      return 0;
-	    }
-	}
-    }
-  else
-    {
-    }
-
+  ParticleOnSphereWithSpin* Space =  (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(TotalLz);
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
