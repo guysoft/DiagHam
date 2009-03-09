@@ -298,7 +298,7 @@ int main(int argc, char** argv)
     }
   for (; L <= Max; L += 2)
     {
-      double Shift = 0.0;
+      double Shift = -10.0;
       ParticleOnSphereWithSpin* Space = 0;
       if (HaldaneBasisFlag == false)
 	{
