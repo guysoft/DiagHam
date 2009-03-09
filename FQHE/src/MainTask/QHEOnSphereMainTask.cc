@@ -452,6 +452,11 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 	  else
 	    {
 	      ParticleOnSphereSquareTotalMomentumOperator Oper((ParticleOnSphere*) Space, this->LzMax);
+	      RealVector TmpEigenvector(1);
+	      TmpEigenvector[0] = 1.0;
+	      double TmpMomentum = Oper.MatrixElement(TmpEigenvector, TmpEigenvector).Re;
+	      File << (this->LValue/ 2) << " " << (HRep(0, 0)  - this->EnergyShift);
+	      File << " "  << TmpMomentum << " " << (0.5 * (sqrt ((4.0 * TmpMomentum) + 1.0) - 1.0)) << endl;	      
 	    }
 	}
     }
