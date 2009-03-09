@@ -76,7 +76,7 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(int n
   this->NbrLandauLevels = nbrLandauLevels;
   this->NbrParameters = this->NbrLandauLevels+1; // inherited field
   this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
-  this->HaveBosons = haveBosons;
+  this->HaveBosons = haveBosons;  
   this->Orbitals1 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux, jastrowPower);
   this->Orbitals2 = new JainCFOnSphereOrbitals(NbrParticlesPerLayer, nbrLandauLevels, nbrEffectiveFlux, jastrowPower);
   this->BosonCoefficient=bosonCoefficient;
@@ -131,7 +131,7 @@ PairedCFOnSphereWithSpinWaveFunction::PairedCFOnSphereWithSpinWaveFunction(const
   this->NbrParameters = function.NbrParameters;
   this->AbsEffectiveFlux = function.AbsEffectiveFlux;
   this->HaveBosons = function.HaveBosons;
-  this->Flag = function.Flag;
+  this->Flag = function.Flag;  
   this->Orbitals1 = function.Orbitals1;
   this->Orbitals2 = function.Orbitals2;
   this->BosonCoefficient=function.BosonCoefficient;

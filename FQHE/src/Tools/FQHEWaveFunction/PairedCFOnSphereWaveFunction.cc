@@ -69,6 +69,7 @@ PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction(int nbrParticles, int
   this->NbrLandauLevels = nbrLandauLevels;
   this->NbrParameters = this->NbrLandauLevels+1; // inherited field
   this->AbsEffectiveFlux = abs(nbrEffectiveFlux);
+  this->AddJastrowPower = (jastrowPower>=2?jastrowPower - 2:0);
   this->Orbitals = new JainCFOnSphereOrbitals(nbrParticles, nbrLandauLevels, nbrEffectiveFlux,jastrowPower);
   this->MooreReadCoefficient=MooreReadCoefficient;
   this->TrialParameters= new double [NbrParameters];
@@ -114,6 +115,7 @@ PairedCFOnSphereWaveFunction::PairedCFOnSphereWaveFunction(const PairedCFOnSpher
   this->NbrParameters = function.NbrParameters;
   this->AbsEffectiveFlux = function.AbsEffectiveFlux;
   this->Flag = function.Flag;
+  this->AddJastrowPower = function.AddJastrowPower;
   this->Orbitals = function.Orbitals;
   this->MooreReadCoefficient=function.MooreReadCoefficient;
   this->TrialParameters=function.TrialParameters;
@@ -177,7 +179,7 @@ Complex PairedCFOnSphereWaveFunction::operator ()(RealVector& x)
 	}
     }  
   //cout << *Slater << endl;
-  return Slater->Pfaffian()*Interpolation;
+  return Slater->Pfaffian()*Interpolation*AdditionalJastrow;
 }
 
 
@@ -207,7 +209,7 @@ Complex PairedCFOnSphereWaveFunction::CalculateFromSpinorVariables(ComplexVector
 	}
     }  
   //cout << *Slater << endl;
-  return Slater->Pfaffian()*Interpolation;
+  return Slater->Pfaffian()*Interpolation*AdditionalJastrow;
 } 
 
 
@@ -231,7 +233,7 @@ Complex PairedCFOnSphereWaveFunction::GetForOtherParameters( double *coefficient
 				   *(coefficients[this->NbrLandauLevels]/Orbitals->JastrowFactorElement(i,j) + tmp));
 	}
     }  
-  return Slater->Pfaffian()*Interpolation;
+  return Slater->Pfaffian()*Interpolation*AdditionalJastrow;
 }
 
 // do many evaluations, storing the result in the vector results given in the call
@@ -260,7 +262,7 @@ void PairedCFOnSphereWaveFunction::GetForManyParameters(ComplexVector &results, 
 				       *(tmpCoefficients[this->NbrLandauLevels]/Orbitals->JastrowFactorElement(i,j) + tmp));
 	    }
 	}
-      tmp=Slater->Pfaffian()*this->Interpolation;
+      tmp=Slater->Pfaffian()*this->Interpolation*AdditionalJastrow;
       results.Re(s)=Real(tmp);
       results.Im(s)=Imag(tmp);
     }  
@@ -396,4 +398,13 @@ void PairedCFOnSphereWaveFunction::EvaluateTables()
 	    this->gAlpha[n][i*this->NbrParticles+j] = tmp;
 	  }
       }
+  this->AdditionalJastrow=1.0;
+  if (AddJastrowPower)
+    {
+      Complex Base=1.0;
+      for (int i=0; i<this->NbrParticles;++i)
+	Base *= Ji[i];
+      for (int i=0; i<AddJastrowPower/2; ++i)
+	this->AdditionalJastrow *= Base;
+    }
 }

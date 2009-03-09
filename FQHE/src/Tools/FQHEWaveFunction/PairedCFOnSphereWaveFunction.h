@@ -71,6 +71,11 @@ class PairedCFOnSphereWaveFunction: public Abstract1DComplexTrialFunctionOnSpher
   // if particles are very close to each other, interpolation occurs in JainCFOrbitals
   // this variable is used to pass on this value between the different subroutines
   double Interpolation;
+
+  // variables used to implement additional Jastrow-factor
+  int AddJastrowPower;
+  Complex AdditionalJastrow;
+
   
  public:
 

@@ -26,6 +26,8 @@ using std::ofstream;
 using std::ifstream;
 using std::bitset;
 
+void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N=12, int N_phi=22,int Lz_total=0, int Dim=198472577);
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHESphereWithSpinImportVector" , "0.01");
@@ -55,12 +57,29 @@ int main(int argc, char** argv)
   int Sz = Manager.GetInteger("total-sz");
 
   ifstream InputFile;
-  InputFile.open(Manager.GetString("state"), ios::in);
-  if (!InputFile.is_open())
+  if (Manager.GetString("state")!=0)
     {
-      cout << "Could not open text-file with vector description!"<<endl;
-      exit(-1);	    
-    }  
+      InputFile.open(Manager.GetString("state"), ios::in);
+      if (!InputFile.is_open())
+	{
+	  cout << "Could not open text-file with vector description!"<<endl;
+	  exit(-1);	    
+	}
+    }
+  else if (Manager.GetString("raw-state")!=0)
+    {
+      InputFile.open(Manager.GetString("raw-state"), ios::binary | ios::in);
+      if (!InputFile.is_open())
+	{
+	  cout << "Could not open binary-file with vector description!"<<endl;
+	  exit(-1);	    
+	}
+    }
+  else
+    {
+      cout << "Require a state vector in ascii or raw format!"<<endl;
+      exit(1);
+    }
 
   ParticleOnSphere *Space = ParticleManager.GetHilbertSpace(Lz);
 
@@ -165,17 +184,53 @@ int main(int argc, char** argv)
 	    exit(-1);
 	  }
     }
-  else if if (Manager.GetInteger("coded-basis")!=0)
+  else if (Manager.GetInteger("coded-basis")!=0)
     {
-      
+      switch (Manager.GetInteger("coded-basis"))
+	{
+	case 1:
+	  {
+	    cout << "Using fixed basis for N=12, 2S=22"<<endl;
+	    if (NbrParticles!=12)
+	      {
+		cout << "Need to have N=12 particles for this basis"<<endl;
+		exit(1);
+	      }
+	    if (LzMax!=22)
+	      {
+		cout << "Need to have 2S=22 flux for this basis"<<endl;
+		exit(1);
+	      }
+	    if ((Sz!=0)||(Lz!=0))
+	      {
+		cout << "Need to have Sz=Lz=0 for this basis"<<endl;
+		exit(1);
+	      }
+	    int Dimension = 198472577;
+	    if (Space->GetHilbertSpaceDimension()!=Dimension)
+	      {
+		cout << "Problem with dimension!"<<endl;
+		exit(1);
+	      }
+	    calcArekN12_2S22(Map, Signs, (ParticleOnSphereWithSpin*)Space, NbrParticles, LzMax, Lz, Dimension);
+	    break;
+	  }
+	default:
+	  {
+	    cout << "Undefined basis!"<<endl;
+	    exit(1);
+	    break;
+	  }
+	}
     }
-    else
-      
+  else
+    {
       for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
 	{
 	  Map[i]=i;
 	  Signs[i]=1.0;
 	}
+    }
 
   RealVector ResultingVector(Space->GetHilbertSpaceDimension());
 
@@ -187,17 +242,34 @@ int main(int argc, char** argv)
       sprintf(OutputName,"fermions_sphere_spin_import-%s_n_%d_2S_%d_Sz_%d_lz_%d.vec",
 	      Manager.GetString("state"), NbrParticles, LzMax, Sz, Lz);      
     }
-  
-  // int VIndex, VLastIndex=-1;
-  char NextLine[256];
-  double Value;
-  int Index;
-  while (InputFile.getline(NextLine,256))
+
+  if (Manager.GetString("state")!=0)
     {
-      std::istringstream LineStream(NextLine);
-      LineStream >> Index >> Value;
-      cout << Index << "\t" << Value << endl;
-      ResultingVector[Map[Index-1]]=Signs[Index-1]*Value;
+      // int VIndex, VLastIndex=-1;
+      char NextLine[256];
+      double Value;
+      int Index;
+      while (InputFile.getline(NextLine,256))
+	{
+	  std::istringstream LineStream(NextLine);
+	  LineStream >> Index >> Value;
+	  cout << Index << "\t" << Value << endl;
+	  ResultingVector[Map[Index-1]]=Signs[Index-1]*Value;
+	}
+    }
+  else if (Manager.GetString("raw-state")!=0)
+    {
+      double *InputVector = new double[Space->GetHilbertSpaceDimension()+1];
+      InputFile.read ((char*)InputVector, (Space->GetHilbertSpaceDimension()+1)*sizeof(double));
+      for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
+
+      //for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+      //	ResultingVector[Map[i]]=Signs[i]*InputVector[i];
+    }
+  else
+    {
+      cout << "An error occurred"<<endl;
+      exit(1);
     }
 
   ResultingVector.WriteVector(OutputName);
@@ -216,13 +288,11 @@ c     numd=198472577
 
 // one-off basis from Arek
 
-void calcArekN12_2S22(int N=12, int N_phi=22,int Lz_total=0, int Dim=198472577,
-		      long* StateDesc, ParticleOnSphereWithSpin* Space)
+void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, int N, int N_phi,int Lz_total, int Dim)
 {
-  int kshift=N_phi+1;
   int i=0;
-
-  double TmpCoeff;
+  unsigned long StateDesc;
+  double Coeff,TmpCoeff;
 
   for (int k06u=0; k06u<=N_phi; ++k06u)
     for (int k05u=0; k05u<=k06u-1; ++k05u)
@@ -243,25 +313,39 @@ void calcArekN12_2S22(int N=12, int N_phi=22,int Lz_total=0, int Dim=198472577,
 
 			    if(2*ksum-N*N_phi == Lz_total)
 			      {
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k01u, 1, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k02u, 1, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k03u, 1, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k04u, 1, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k05u, 1, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k06u, 1, TmpCoeff);
+				Coeff=1.0;
+				StateDesc=0x0ul;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k02u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k03u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06u, 1, TmpCoeff);
+				Coeff*=TmpCoeff;
 
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k01d, 0, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k02d, 0, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k03d, 0, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k04d, 0, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k05d, 0, TmpCoeff);
-				StateDesc[i] = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc[i], k06d, 0, TmpCoeff);
-				  
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k01d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k02d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k03d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k04d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06d, 0, TmpCoeff);
+				Coeff*=TmpCoeff;
+				Map[i]=((ParticleOnSphereWithSpin*)Space)->CarefulFindStateIndex(StateDesc,-1);
+				Signs[i]=Coeff;
 				++i;
 			      }
 			  }
-  
-  
+    
   if(i != Dim)
     {
       printf("wrong numd");

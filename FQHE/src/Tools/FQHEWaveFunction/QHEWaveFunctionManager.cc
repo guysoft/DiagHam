@@ -291,7 +291,14 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	    }
 	  double MR =this->Options->GetDouble("MR-coeff");
 	  bool conventions = this->Options->GetBoolean("pair-compatibility");
-	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR, Coefficients, conventions, 2);
+	  int attached = this->Options->GetInteger("nbr-flux");
+	  if (attached % 2 != 0)
+	    {
+	      cout << "Attention, changing number of flux attached to 2 - please indicate the requested value with --nbr-flux"<<endl;
+	      attached = 2;
+	    }
+	  PairedCFOnSphereWaveFunction* rst = new PairedCFOnSphereWaveFunction(N, LL, -1, MR,
+									       Coefficients, conventions, attached);
 	  rst->AdaptAverageMCNorm();
 	  delete [] Coefficients;
 	  return rst;
