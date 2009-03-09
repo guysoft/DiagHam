@@ -73,10 +73,7 @@ int main(int argc, char** argv)
 	{
 	  cout << "Could not open binary-file with vector description!"<<endl;
 	  exit(-1);	    
-	}
-      double *InputVector = new double[50];
-      InputFile.read ((char*)InputVector, (50)*sizeof(double));
-      for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
+	}      
       exit(1);
     }
   else
@@ -263,12 +260,18 @@ int main(int argc, char** argv)
     }
   else if (Manager.GetString("raw-state")!=0)
     {
-      double *InputVector = new double[Space->GetHilbertSpaceDimension()+1];
-      InputFile.read ((char*)InputVector, (Space->GetHilbertSpaceDimension()+1)*sizeof(double));
+      double *InputVector = new double[Space->GetHilbertSpaceDimension()];
+      int header;
+      InputFile.read ((char*)&header, sizeof(int));      
+      if (header!=Space->GetHilbertSpaceDimension())
+	{
+	  cout<<"Apparent problem with reading input vector"<<endl;
+	  exit(1);
+	}	  
+      InputFile.read ((char*)InputVector, Space->GetHilbertSpaceDimension()*sizeof(double));
       for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
-
-      //for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
-      //	ResultingVector[Map[i]]=Signs[i]*InputVector[i];
+      for (int i=0; i<Space->GetHilbertSpaceDimension(); ++i)
+      	ResultingVector[Map[i]]=Signs[i]*InputVector[i];
     }
   else
     {
