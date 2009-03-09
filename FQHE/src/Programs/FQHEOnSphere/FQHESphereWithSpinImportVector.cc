@@ -74,6 +74,10 @@ int main(int argc, char** argv)
 	  cout << "Could not open binary-file with vector description!"<<endl;
 	  exit(-1);	    
 	}
+      double *InputVector = new double[50];
+      InputFile.read ((char*)InputVector, (50)*sizeof(double));
+      for (int i=0; i<10; ++i) cout << "Input["<<i<<"]="<<InputVector[i]<<endl;
+      exit(1);
     }
   else
     {
