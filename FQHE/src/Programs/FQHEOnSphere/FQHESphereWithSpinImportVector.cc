@@ -43,7 +43,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('s', "state", "vector to import in ascii format");
   (*SystemGroup) += new SingleStringOption ('r', "raw-state", "vector to import in FORTRAN binary format");
   (*SystemGroup) += new SingleStringOption ('b', "basis", "description of basis in which vector is formatted (none = standard basis)");
-  (*SystemGroup) += new SingleStringOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22)");
+  (*SystemGroup) += new SingleIntegerOption ('c', "coded-basis", "use internally coded basis (1 = A. Wojs 12@22)");
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*OutputGroup) += new SingleStringOption ('o', "output-state", "use this name for the output vector state instead of standard terminology");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -74,7 +74,6 @@ int main(int argc, char** argv)
 	  cout << "Could not open binary-file with vector description!"<<endl;
 	  exit(-1);	    
 	}      
-      exit(1);
     }
   else
     {
@@ -263,7 +262,7 @@ int main(int argc, char** argv)
       double *InputVector = new double[Space->GetHilbertSpaceDimension()];
       int header;
       InputFile.read ((char*)&header, sizeof(int));      
-      if (header!=Space->GetHilbertSpaceDimension())
+      if (header/sizeof(double)!=Space->GetHilbertSpaceDimension())
 	{
 	  cout<<"Apparent problem with reading input vector"<<endl;
 	  exit(1);
