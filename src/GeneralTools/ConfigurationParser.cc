@@ -31,6 +31,7 @@
 #include "config.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/StringTools.h"
 
 #include <string.h>
 #include <fstream>
@@ -109,10 +110,51 @@ bool ConfigurationParser::Parse(const char* filename)
   File.read(TmpBuffer, Size);
   TmpBuffer[Size] = '\0';
   File.close();
+
   unsigned int Pos = 0;
   char* Start = TmpBuffer;
   int LineNumber = 1;
   bool Flag = true;
+  unsigned int LastEqualPos = 0;
+  while (Pos < Size)
+    {
+      while ((Pos < Size) && (TmpBuffer[Pos] != '\n') && (TmpBuffer[Pos] != '='))
+	{
+	  Pos++;
+	}
+      if (Pos < Size)
+	{
+	  if (TmpBuffer[Pos] == '=')
+	    {
+	      while ((Pos < Size) && (TmpBuffer[Pos] != '\n'))
+		{
+		  Pos++;
+		}
+	      LastEqualPos = Pos;
+	      ++Pos;
+	    }
+	  else
+	    {
+	      if (LastEqualPos != 0)
+		{
+		  TmpBuffer[LastEqualPos] = ' ';
+		  LastEqualPos = Pos;
+		  ++Pos;
+		}
+	      else
+		{
+		  char* TmpString = new char [64]; 
+		  sprintf (TmpString, "syntax error at line %d\n", LineNumber);
+		  this->ErrorLog += TmpString;
+		  Flag = false;
+		}
+	    }
+	}
+    }
+
+  Pos = 0;
+  Start = TmpBuffer;
+  LineNumber = 1;
   while (Pos < Size)
     {
       Start = TmpBuffer + Pos;
@@ -643,5 +685,40 @@ bool ConfigurationParser::GetAsStringArray (const char* parameterName, char sepa
 	  Start = End;
 	}
     }
+  return true;
+}
+
+// get an arrary of lines where each string is splitted into elements
+//
+// parameterName = string corresponding to a parameter name
+// majorSeparator = character which is used as separator between two lines
+//             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+// minorSeparator = character which is used as separator between two elements of one line
+//             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+// array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+// nbrArray = reference on tthe number of strings or lines that have been extracted
+// nbrValues = reference on the array of number of element per extracted line
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsStringMultipleArray (const char* parameterName, char majorSeparator, char minorSeparator, char***& array, int& nbrArrays, int*& nbrValues)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+
+  char** TmpArray = 0;
+  nbrArrays = SplitLine(TmpValue, TmpArray, majorSeparator);
+  if (nbrArrays <= 0)
+    return false;
+  array = new char** [nbrArrays];
+  nbrValues = new int [nbrArrays];
+  for (int i = 0; i < nbrArrays; ++i)
+    {
+      nbrValues[i] = SplitLine(TmpArray[i], array[i], minorSeparator);
+      if (nbrValues[i] <= 0)
+	return false;
+      delete[] TmpArray[i];
+    }
+  delete[] TmpArray;
   return true;
 }

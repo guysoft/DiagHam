@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
   ArchitectureManager Architecture;
 
-  ParticleOnSphereManager ParticleManager(true, true, 2);
+  ParticleOnSphereManager ParticleManager(true, false, 2);
   ParticleManager.AddOptionGroup(&Manager);
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
   OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");

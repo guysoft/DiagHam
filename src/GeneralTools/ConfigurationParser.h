@@ -128,6 +128,19 @@ class ConfigurationParser
   // return value = true if no errro occured
   bool GetAsStringArray (const char* parameterName, char separator, char**& array, int& nbrValues);
 
+  // get an arrary of lines where each string is splitted into elements
+  //
+  // parameterName = string corresponding to a parameter name
+  // majorSeparator = character which is used as separator between two lines
+  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  // minorSeparator = character which is used as separator between two elements of one line
+  //             (if \s is used, then any number of consecutive \s or \t are identify as one separator)
+  // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+  // nbrArray = reference on tthe number of strings or lines that have been extracted
+  // nbrValues = reference on the array of number of element per extracted line
+  // return value = true if no errro occured
+  bool GetAsStringMultipleArray (const char* parameterName, char majorSeparator, char minorSeparator, char***& array, int& nbrArrays, int*& nbrValues);
+
   // dump configuration file
   //
   // str = reference on the output stream

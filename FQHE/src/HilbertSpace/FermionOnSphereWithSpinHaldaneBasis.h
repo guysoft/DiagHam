@@ -103,16 +103,6 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
 
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion in the state
-  // totalLz = momentum total value
-  // totalSpin = number of particles with spin up
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, int totalSpin, long pos);
-
   // generate all squeezed states from a root partition
   // 
   // lzMax = momentum maximum value for a fermion in the state

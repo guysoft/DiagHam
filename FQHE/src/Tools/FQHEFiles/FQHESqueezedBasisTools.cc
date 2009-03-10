@@ -107,20 +107,34 @@ bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax,
       cout << "LzMax is not defined or as a wrong value" << endl;
       return false;
     }
-  char** TmpReferenceStates;
-  if (ReferenceStateDefinition.GetAsStringArray("ReferenceState", '\n', TmpReferenceStates, nbrReferenceStates) == false)
+  char*** TmpReferenceStates;
+  int* NbrLzMaxPerStates;
+  if (ReferenceStateDefinition.GetAsStringMultipleArray("ReferenceStates", '|', ' ', TmpReferenceStates, nbrReferenceStates, NbrLzMaxPerStates) == false)
     {
-      cout << "error while parsing ReferenceState in " << rootFileName << endl;
+      cout << "error while parsing ReferenceStates in " << rootFileName << endl;
       return false;     
     }
   referenceStates = new int*[nbrReferenceStates];
   for (int i = 0; i < nbrReferenceStates; ++i)
     {
-      int MaxNbrLz = 0;
-      if (MaxNbrLz != (lzMax + 1))
+      if (NbrLzMaxPerStates[i] != (lzMax + 1))
 	{
 	  cout << "wrong LzMax value in ReferenceState " << i << endl;
 	  return false;     
+	}
+      for (int j = 0; j <= lzMax; ++j)
+	{
+	  if (TmpReferenceStates[i][j][0] == '0')
+	    referenceStates[i][j] = 0;
+	  else
+	    if ((TmpReferenceStates[i][j][0] == 'x') || (TmpReferenceStates[i][j][0] == 'X'))
+	      referenceStates[i][j] = 3;
+	    else
+	      if ((TmpReferenceStates[i][j][0] == 'u') || (TmpReferenceStates[i][j][0] == 'U'))
+		referenceStates[i][j] = 2;
+	      else
+		if ((TmpReferenceStates[i][j][0] == 'd') || (TmpReferenceStates[i][j][0] == 'U'))
+		  referenceStates[i][j] = 1;
 	}
     }
   return true;

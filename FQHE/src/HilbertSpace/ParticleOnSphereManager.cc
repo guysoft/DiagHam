@@ -75,6 +75,8 @@
 
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 
 
@@ -632,6 +634,19 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	}
       else
 	{
+	  int** ReferenceStates = 0;
+	  int NbrReferenceStates;
+	  if (this->Options->GetString("reference-file") == 0)
+	    {
+	      cout << "error, a reference file is needed for fermions in Haldane basis" << endl;
+	      return 0;
+	    }
+	  if (FQHEGetRootPartitionSU2(this->Options->GetString("reference-file"), NbrFermions, LzMax, ReferenceStates, NbrReferenceStates) == false)
+	    {
+	      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
+	      return 0;
+	    }
+	  new FermionOnSphereWithSpinHaldaneBasis (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
 	}
       return Space;
     }
