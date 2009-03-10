@@ -42,7 +42,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum angular momentum per particle", 15);
   (*SystemGroup) += new SingleStringOption('\n',"interaction-params","File containing parameters of interaction");
-  (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
+  (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");
+
+  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -91,6 +93,13 @@ int main(int argc, char** argv)
 
   // run simulation
   MonteCarloRoutine.Simulate();
+
+  if (Manager.GetString("output")!=NULL)
+    {
+      ofstream LogFile(Manager.GetString("output"),std::ios::out);
+      MonteCarloRoutine.WriteObservations(LogFile);
+      LogFile.close();
+    }
 
   // print final results:
   cout << "Final results:" << endl;

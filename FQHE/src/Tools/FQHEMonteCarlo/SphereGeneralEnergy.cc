@@ -58,6 +58,16 @@ SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
   cout << "Using TmpNphi="<<TmpNphi<<endl;
   this->Radius = sqrt(0.5*(double)TmpNphi); // the radius is also the inverse magnetic length
 
+  if (this->NbrParameters==1)
+    {
+      double *tmpC = new double[2];
+      tmpC[0]= this->Coefficients[0];
+      tmpC[1]= 0.0;
+      this->NbrParameters=2;
+      delete [] this->Coefficients;
+      this->Coefficients=tmpC;
+    }
+
   if (this->NbrFlux==0)
     this->NbrFlux=TmpNphi;
 }
