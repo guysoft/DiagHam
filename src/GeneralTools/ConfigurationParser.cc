@@ -118,36 +118,23 @@ bool ConfigurationParser::Parse(const char* filename)
   unsigned int LastEqualPos = 0;
   while (Pos < Size)
     {
-      while ((Pos < Size) && (TmpBuffer[Pos] != '\n') && (TmpBuffer[Pos] != '='))
+      while ((Pos < Size) && (TmpBuffer[Pos] != '\\'))
 	{
 	  Pos++;
 	}
       if (Pos < Size)
 	{
-	  if (TmpBuffer[Pos] == '=')
+	  LastEqualPos = Pos;
+	  while ((Pos < Size) && (TmpBuffer[Pos] != '\n'))
 	    {
-	      while ((Pos < Size) && (TmpBuffer[Pos] != '\n'))
-		{
-		  Pos++;
-		}
-	      LastEqualPos = Pos;
-	      ++Pos;
+	      Pos++;
 	    }
-	  else
+	  if (Pos < Size)
+	    ++Pos;
+	  while (LastEqualPos < Pos)
 	    {
-	      if (LastEqualPos != 0)
-		{
-		  TmpBuffer[LastEqualPos] = ' ';
-		  LastEqualPos = Pos;
-		  ++Pos;
-		}
-	      else
-		{
-		  char* TmpString = new char [64]; 
-		  sprintf (TmpString, "syntax error at line %d\n", LineNumber);
-		  this->ErrorLog += TmpString;
-		  Flag = false;
-		}
+	      TmpBuffer[LastEqualPos] = ' ';
+	      ++LastEqualPos;
 	    }
 	}
     }
