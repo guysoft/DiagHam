@@ -60,7 +60,7 @@ ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ParticleOnSphereWithSpinGen
 // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
 //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
 //                            first index is the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
-// maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
+// maxRelativeAngularMomentum =  maximum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements

@@ -345,8 +345,13 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
 				Coeff*=TmpCoeff;
 				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06d, 0, TmpCoeff);
-				Coeff*=TmpCoeff;
+				Coeff*=TmpCoeff;				
 				Map[i]=((ParticleOnSphereWithSpin*)Space)->CarefulFindStateIndex(StateDesc,-1);
+				if ((Map[i]<0)||(Map[i]>Space->GetHilbertSpaceDimension()))
+				  {
+				    cout << "Problem with state ["<<i<<"] mapped to "<<Map[i]<<endl;
+				    Map[i]=0;
+				  }
 				Signs[i]=Coeff;
 				++i;
 			      }

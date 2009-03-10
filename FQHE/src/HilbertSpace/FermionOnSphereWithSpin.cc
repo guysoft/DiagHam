@@ -107,8 +107,8 @@ FermionOnSphereWithSpin::FermionOnSphereWithSpin (int nbrFermions, int totalLz, 
   this->GenerateLookUpTable(memory);
   
 #ifdef __DEBUG__
-  int UsedMemory = 0;
-  UsedMemory += this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+  long UsedMemory = 0;
+  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
   cout << "memory requested for Hilbert space = ";
   if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)
