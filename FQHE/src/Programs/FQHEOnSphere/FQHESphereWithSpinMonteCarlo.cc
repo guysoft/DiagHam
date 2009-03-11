@@ -52,6 +52,8 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");  
   (*SystemGroup) += new BooleanOption ('\n', "list-samplingfunctions", "list all available sampling-fuctions");
+
+  (*SystemGroup) += new BooleanOption ('b', "background-only", "print background energy, and exit");  
   (*SystemGroup) += new SingleIntegerInternalOption  ('n', "SzTotal", "number of layer separation d where the energy is evaluated", 0);
 
   (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
@@ -115,6 +117,12 @@ int main(int argc, char** argv)
 									  Manager.GetString("params-intra"),
 									  Manager.GetString("params-other"));
       MonteCarloRoutine.AddObservable(Energy);
+      if (Manager.GetBoolean("background-only"))
+	{
+	  cout << "# Background energy"<<endl;
+	  cout << "bg "<<Energy->GetTotalBackgroundEnergy()<<endl;
+	  exit(0);
+	}
     }
   
   // run simulation

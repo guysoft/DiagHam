@@ -169,7 +169,7 @@ void SphereGeneralEnergy::WriteDataFile(std::ostream &output)
 {
   output << "#  E  \t err  "<<endl;
   output << this->Values->Average()
-	 <<"\t"<<this->Values->ErrorEstimate()<<endl;  
+	 <<"\t"<<this->Values->ErrorEstimate()<<"\t"<<this->GetTotalBackgroundEnergy()<<endl;  
 }
 
 // set particle collection that the observable operates on
@@ -185,3 +185,18 @@ void SphereGeneralEnergy::SetParticleCollection(AbstractParticleCollection *syst
   this->NbrParticles = System->GetNbrParticles();
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
+
+// additional routines for energy observables:
+// returns the total background energy
+double SphereGeneralEnergy::GetTotalBackgroundEnergy()
+{
+  double PowerTwo=1.0;
+  double Result=0.0;
+  for (int i=0; i<this->NbrParameters; ++i)
+    {
+      Result+= this->Coefficients[i]*PowerTwo/(1.0+(double)i);
+      PowerTwo*=2.0;
+    }
+  return Result*this->NbrParticles*this->NbrParticles/(2.0*Radius);
+}
+  

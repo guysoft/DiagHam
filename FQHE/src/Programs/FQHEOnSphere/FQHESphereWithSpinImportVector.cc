@@ -352,6 +352,7 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 				    cout << "Problem with state ["<<i<<"] mapped to "<<Map[i]<<endl;
 				    Map[i]=0;
 				  }
+				if (i%100000==0) cout << "i="<<i/1000<<"k ";
 				Signs[i]=Coeff;
 				++i;
 			      }

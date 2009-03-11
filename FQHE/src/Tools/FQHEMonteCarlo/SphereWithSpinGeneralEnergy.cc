@@ -254,7 +254,7 @@ void SphereWithSpinGeneralEnergy::WriteDataFile(std::ostream &output)
 {
   output << "#  E  \t err  "<<endl;
   output << this->Values->Average()
-	 <<"\t"<<this->Values->ErrorEstimate()<<endl;  
+	 <<"\t"<<this->Values->ErrorEstimate()<<"\t"<<this->GetTotalBackgroundEnergy()<<endl;  
 }
 
 // set particle collection that the observable operates on
@@ -274,4 +274,38 @@ void SphereWithSpinGeneralEnergy::SetParticleCollection(AbstractParticleCollecti
       exit(1);
     }
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+}
+
+// additional routines for energy observables:
+// returns the total background energy
+double SphereWithSpinGeneralEnergy::GetTotalBackgroundEnergy()
+{
+  double PowerTwo=1.0;
+  double ResultUU=0.0;
+  double ResultUD=0.0;
+  double ResultDD=0.0;
+  for (int i=0; i<this->NbrParametersIntra; ++i)
+    {
+      ResultUU+= this->CoefficientsIntra[i]*PowerTwo/(1.0+(double)i);
+      PowerTwo*=2.0;
+    }
+  ResultUU*=this->NbrUp*this->NbrUp/(2.0*Radius);
+  
+  PowerTwo=1.0;
+  for (int i=0; i<this->NbrParametersIntra2; ++i)
+    {
+      ResultDD+= this->CoefficientsIntra2[i]*PowerTwo/(1.0+(double)i);
+      PowerTwo*=2.0;
+    }
+  ResultDD*=(this->NbrParticles-this->NbrUp)*(this->NbrParticles-this->NbrUp)/(2.0*Radius);
+
+  PowerTwo=1.0;
+  for (int i=0; i<this->NbrParametersInter; ++i)
+    {
+      ResultUD+= this->CoefficientsInter[i]*PowerTwo/(1.0+(double)i);
+      PowerTwo*=2.0;
+    }
+  ResultUD*=this->NbrUp*(this->NbrParticles-this->NbrUp)/(2.0*Radius);
+
+  return ResultUU+ResultDD+ResultUD;
 }

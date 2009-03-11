@@ -83,7 +83,7 @@ class SphereGeneralEnergy : public AbstractObservable
   virtual ~SphereGeneralEnergy();
 
   // call to make an observation
-  virtual void RecordValue(double weight);
+  virtual void RecordValue(double weight);  
 
   // print legend to the given stream
   // all = flag indicating whether to print all, or shortened information
@@ -100,6 +100,11 @@ class SphereGeneralEnergy : public AbstractObservable
   // set particle collection that the observable operates on
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);
+
+
+  // additional routines for energy observables:
+  // returns the total background energy
+  double GetTotalBackgroundEnergy();
   
 };
 

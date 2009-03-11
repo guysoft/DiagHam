@@ -44,6 +44,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n',"interaction-params","File containing parameters of interaction");
   (*SystemGroup) += new BooleanOption ('\n', "list-wavefunctions", "list all available test wave fuctions");
 
+  (*SystemGroup) += new BooleanOption ('b', "background-only", "print background energy, and exit");
+  
   (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -89,6 +91,12 @@ int main(int argc, char** argv)
       // add a general energy function 
       SphereGeneralEnergy *Energy=new SphereGeneralEnergy(NbrFlux, Manager.GetString("interaction-params"));
       MonteCarloRoutine.AddObservable(Energy);
+      if (Manager.GetBoolean("background-only"))
+	{
+	  cout << "# Background energy"<<endl;
+	  cout << "bg " << Energy->GetTotalBackgroundEnergy()<<endl;
+	  exit(0);
+	}
     }
 
   // run simulation
