@@ -121,6 +121,13 @@ int main(int argc, char** argv)
 	{
 	  cout << "# Background energy"<<endl;
 	  cout << "bg "<<Energy->GetTotalBackgroundEnergy()<<endl;
+	  if (Manager.GetString("output")!=NULL)
+	    {
+	      ofstream LogFile(Manager.GetString("output"),std::ios::out);
+	      LogFile << "# Background energy"<<endl;
+	      LogFile << Energy->GetTotalBackgroundEnergy()<<endl;
+	      LogFile.close();
+	    }
 	  exit(0);
 	}
     }
