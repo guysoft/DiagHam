@@ -12,12 +12,17 @@ my $SimulateMC=0;
 my $NbrParticles=0;
 my $NbrIterations=10000000;
 my $Exponent=2;
+my $BackgroundStr="";
 
 while( (defined($ARGV[0])) && ( $ARGV[0] =~ /^-/ ))
   {
     if ( $ARGV[0] =~ /-r/ )
       {
 	$SimulateMC=1;
+      }
+    if ( $ARGV[0] =~ /-b/ )
+      {
+	$BackgroundStr="-b";
       }
     if ( $ARGV[0] =~ /-p/ )
       {
@@ -68,6 +73,7 @@ if (!defined($ARGV[1]))
     print("  -p number of particles (required for simulation)\n");
     print("  -i number of MC iterations (default: 10000000)\n");
     print("  -t trial parameters of halperin wavefunction k,l,m \n");
+    print("  -b print background energy only, then exit\n");
     print("  if datafile is given, a line with the state energy will be added, otherwise, write to MCSummary.dat\n");
     exit(1);
   }
@@ -81,6 +87,10 @@ if (($SimulateMC>0)&&($NbrParticles==0))
 my $Flux = $ARGV[0];
 my $PseudoPotFile = $ARGV[1];
 my $Datafile = "MCSummarySL.dat";
+if (length($BackgroundStr)>0)
+  {
+    $Datafile = "MCSummarySL-b.dat";
+  }
 
 if (defined($ARGV[2]))
   {
@@ -100,7 +110,7 @@ print("Options: $Options\n");
 if ($SimulateMC>0)
   {
     my $TmpFileName = "/tmp/tmp".time().".p";
-    system("$MCProgram -p $NbrParticles -l $Flux -i $NbrIterations --test-wavefunction pairedcf --pair-coeff 0 --nbr-flux $Exponent --sampler laughlin --laughlin-exponent $Exponent $Options -o $TmpFileName");
+    system("$MCProgram -p $NbrParticles -l $Flux -i $NbrIterations --test-wavefunction pairedcf --pair-coeff 0 --nbr-flux $Exponent --sampler laughlin --laughlin-exponent $Exponent $Options -o $TmpFileName $BackgroundStr");
     open (INFILE, $TmpFileName);
     open (OUTFILE, ">>$Datafile");
     my $TmpLine;

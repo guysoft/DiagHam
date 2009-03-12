@@ -106,6 +106,10 @@ class SimpleMonteCarloOnSphereAlgorithm
   // startFromRandom = flag indicating if we want to restart from a random configuration
   void Thermalize(int time, bool startFromRandom = false);
 
+  // renormalize wavefunction
+  // time = number of points to average
+  void NormalizePsi(int time=500);
+
   // run simulation
   // all options are included via the AddOptionGroup method
   // Output = stream where to direct output

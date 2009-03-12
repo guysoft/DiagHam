@@ -98,6 +98,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("output")!=NULL)
 	    {
 	      ofstream LogFile(Manager.GetString("output"),std::ios::out);
+	      LogFile.precision(12);
 	      LogFile << "# Background energy"<<endl;
 	      LogFile << Energy->GetTotalBackgroundEnergy()<<endl;
 	      LogFile.close();

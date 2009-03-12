@@ -55,7 +55,7 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
 {
   if (waveFunction==0)
     {
-      cout << "Invalid sampling function" << endl;
+      cout << "Invalid wavefunction" << endl;
       exit(1);
     }
   if (samplingFunction==0)
@@ -71,12 +71,14 @@ SimpleMonteCarloOnSphereAlgorithm::SimpleMonteCarloOnSphereAlgorithm(int nbrPart
     }
   this->NbrParticles=nbrParticles;
   this->WaveFunction=waveFunction; // is returned normalized by wavefunction handler...
-  
+
   this->Options=manager;  
   long Seed = Options->GetInteger("randomSeed");
   this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
   this->SamplingFunction->RegisterSystem(this->System);
   this->SamplingFunction->AdaptAverageMCNorm(Options->GetInteger("thermalize")); // this also relaxes the particle positions in System
+  // renormalize wavefunction, as this has led to problems
+  //this->NormalizePsi();
   this->MaxNbrObservables=maxNbrObservables;
   this->Observables= new AbstractObservable*[MaxNbrObservables];
   this->Frequencies= new int[MaxNbrObservables];
@@ -136,6 +138,19 @@ void SimpleMonteCarloOnSphereAlgorithm::Thermalize(int time, bool startFromRando
   this->PerformMicroSteps(time);
 }
 
+// renormalize wavefunction
+// time = number of points to average
+void SimpleMonteCarloOnSphereAlgorithm::NormalizePsi(int time)
+{
+  double SumSqrPsiValues=0.0;
+  for (int t=0; t<time; ++t)
+    {
+      PerformMicroSteps(1);
+      SumSqrPsiValues+=SqrNorm((*(this->WaveFunction))(System->GetPositions()));
+    }
+  this->WaveFunction->Renormalize(sqrt((double)time/SumSqrPsiValues));  
+}
+
 // run simulation
 // all options are included via the AddOptionGroup method
 void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
@@ -166,7 +181,7 @@ void SimpleMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
 	  SamplingAmplitude = SqrNorm(SamplingFctValue);
 	  //cout << "SamplingFctValue=" <<SamplingFctValue<<endl;
 	  WaveFctValue = (*(this->WaveFunction))(System->GetPositions());
-	  //cout << "WaveFctValue=" <<WaveFctValue<<endl;
+	  //cout << "WaveFctValue=" <<WaveFctValue<<endl;	  
 	  Weight = SqrNorm(WaveFctValue)/SamplingAmplitude;
 	  //cout << "w="<<Weight<<" ratio="<<WaveFctValue/SamplingFctValue<<endl;
 	  for (int i=0; i<NbrObservables; ++i)

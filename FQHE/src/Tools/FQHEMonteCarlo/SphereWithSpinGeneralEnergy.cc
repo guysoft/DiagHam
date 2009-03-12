@@ -305,7 +305,7 @@ double SphereWithSpinGeneralEnergy::GetTotalBackgroundEnergy()
       ResultUD+= this->CoefficientsInter[i]*PowerTwo/(1.0+(double)i);
       PowerTwo*=2.0;
     }
-  ResultUD*=this->NbrUp*(this->NbrParticles-this->NbrUp)/(2.0*Radius);
+  ResultUD*=this->NbrUp*(this->NbrParticles-this->NbrUp)/Radius;
 
   return ResultUU+ResultDD+ResultUD;
 }

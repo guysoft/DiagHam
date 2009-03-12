@@ -59,6 +59,10 @@ class Abstract1DComplexFunction
   // return value = function value at x  
   virtual Complex operator ()(RealVector& x) = 0;
 
+  // change the normalization of the funtion by a multiplicative factor
+  // factor = factor to be multiplied
+  virtual void Renormalize(double factor);
+
 };
 
 #endif

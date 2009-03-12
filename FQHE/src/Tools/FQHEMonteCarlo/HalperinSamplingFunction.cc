@@ -171,8 +171,8 @@ Complex HalperinSamplingFunction::GetFunctionValue()
 void HalperinSamplingFunction::ScaleByFactor(double scale)
 {
   double NbrDown = NbrParticles-NbrUp;
-  double Factors = (double)NbrUp*(NbrUp-1)*this->Exponent_K;
-  Factors += NbrDown*(NbrDown-1)*this->Exponent_L;
+  double Factors = (double)NbrUp*(NbrUp-1)*this->Exponent_K/2.0;
+  Factors += NbrDown*(NbrDown-1)*this->Exponent_L/2.0;
   Factors += (double)NbrUp*NbrDown*this->Exponent_M;
   this->ElementNorm *= std::pow(scale,1.0/Factors);
 }

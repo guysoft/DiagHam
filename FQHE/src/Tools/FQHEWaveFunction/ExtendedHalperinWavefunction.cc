@@ -419,12 +419,21 @@ Complex ExtendedHalperinWavefunction::CalculateFromSpinorVariables(ComplexVector
 }
 
 
+// change the normalization of the funtion by a multiplicative factor
+// factor = factor to be multiplied
+void ExtendedHalperinWavefunction::Renormalize(double factor)
+{
+  int TotalJastrowTerms = NbrParticlesPerLayer*(K_outside*(NbrParticlesPerLayer-1)+M_outside*NbrParticlesPerLayer);
+  this->JastrowNorm*= pow(factor,(double)1.0/TotalJastrowTerms);
+}
+
+
 // normalize the wave-function to one for the given particle positions
 // x = point where the function has to be evaluated
 void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
 {
   double det;
-  int TotalJastrowTerms = NbrParticlesPerLayer*((K_outside+M_outside)*NbrParticlesPerLayer - K_outside);
+  int TotalJastrowTerms = NbrParticlesPerLayer*(K_outside*(NbrParticlesPerLayer-1)+M_outside*NbrParticlesPerLayer);
   bool actualHaveDeterminant = HaveDeterminant;
   int actualS = this->S;
   // switch off Cauchy-determinant and -permanent part
@@ -486,8 +495,9 @@ void ExtendedHalperinWavefunction::AdaptNorm(RealVector& x)
 
 void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int average)
 {
-  int TotalJastrowTerms = NbrParticlesPerLayer*((K_outside+M_outside)*NbrParticlesPerLayer-K_outside);
+  int TotalJastrowTerms = NbrParticlesPerLayer*(K_outside*(NbrParticlesPerLayer-1)+M_outside*NbrParticlesPerLayer);
   ParticleOnSphereCollection * Particles = new ParticleOnSphereCollection(2*this->NbrParticlesPerLayer);
+  cout << "AdaptNorm 1st time:"<<endl;
   this->AdaptNorm(Particles->GetPositions());
   Complex TmpMetropolis, TrialValue = (*this)(Particles->GetPositions());  
   double PreviousSamplingAmplitude = SqrNorm(TrialValue);
@@ -513,6 +523,7 @@ void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int averag
       NextCoordinates = (int) (((double) NbrParticlesPerLayer) * Particles->GetRandomNumber());
       if (NextCoordinates == NbrParticlesPerLayer) --NextCoordinates;      
     }
+  cout << "AdaptNorm 2nd time:"<<endl;
   this->AdaptNorm(Particles->GetPositions());
   double SumTrialValues=0.0;
   for (int i = 0; i < average; ++i)
@@ -541,6 +552,41 @@ void ExtendedHalperinWavefunction::AdaptAverageMCNorm(int thermalize, int averag
     {
       this->DeterminantNorm*= pow(SumTrialValues/average,(double)-1.0/this->NbrParticlesPerLayer);
     }
+  TmpMetropolis = (*this)(Particles->GetPositions());
+  cout << "Final adaptation: fct value = "<<TmpMetropolis<<endl;
+
+  // testing:
+  SumTrialValues=0.0;
+  double SumSqrTrialValues=0.0;
+  for (int i = 0; i < average; ++i)
+    {
+      Particles->Move(NextCoordinates);
+      TmpMetropolis = (*this)(Particles->GetPositions());
+      CurrentSamplingAmplitude = SqrNorm(TmpMetropolis);
+      if ((CurrentSamplingAmplitude > PreviousSamplingAmplitude) ||
+	  ((Particles->GetRandomNumber() * PreviousSamplingAmplitude) < CurrentSamplingAmplitude))
+	{
+	  PreviousSamplingAmplitude = CurrentSamplingAmplitude;
+	  TrialValue = TmpMetropolis;
+	}
+      else
+	{
+	  Particles->RestoreMove();
+	  CurrentSamplingAmplitude = PreviousSamplingAmplitude;
+	}
+      NextCoordinates = (int) (((double) NbrParticlesPerLayer) * Particles->GetRandomNumber());
+      if (NextCoordinates == NbrParticlesPerLayer) --NextCoordinates;            
+      SumTrialValues+=Norm(TmpMetropolis);
+      SumSqrTrialValues+=SqrNorm(TmpMetropolis);
+    }
+
+
+  TmpMetropolis = (*this)(Particles->GetPositions());
+  cout << "Final adaptation: fct value = "<<TmpMetropolis<<endl;
+  cout << "Final adaptation: ave value = "<<SumTrialValues/average<<endl;
+  cout << "                  sqr value = "<<SumSqrTrialValues/average<<endl;
+
+  
   delete Particles;
 }
 

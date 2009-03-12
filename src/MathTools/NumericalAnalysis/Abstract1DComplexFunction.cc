@@ -38,4 +38,9 @@
 Abstract1DComplexFunction::~Abstract1DComplexFunction()
 {
 }
+// change the normalization of the funtion by a multiplicative factor
+// factor = factor to be multiplied
+void Abstract1DComplexFunction::Renormalize(double factor)
+{
+}
 

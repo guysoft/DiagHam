@@ -140,6 +140,11 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
   // return value = clone of the function 
   virtual Abstract1DComplexFunction* Clone ();
 
+  // change the normalization of the funtion by a multiplicative factor
+  // factor = factor to be multiplied
+  virtual void Renormalize(double factor);
+
+
   // evaluate function at a given point
   //
   // x = point where the function has to be evaluated
@@ -162,7 +167,7 @@ class ExtendedHalperinWavefunction: public Abstract1DComplexFunctionOnSphere
   void AdaptNorm(RealVector& x);
 
   // normalize the wave-function over an average number of MC positions
-  void AdaptAverageMCNorm(int thermalize=100, int average=250);
+  void AdaptAverageMCNorm(int thermalize=250, int average=500);
 
  private:
   
