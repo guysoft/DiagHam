@@ -646,7 +646,9 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
 	      return 0;
 	    }
-	  new FermionOnSphereWithSpinHaldaneBasis (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+	  Space = new FermionOnSphereWithSpinHaldaneBasis (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	    Space->PrintState(cout, i) << endl;
 	}
       return Space;
     }

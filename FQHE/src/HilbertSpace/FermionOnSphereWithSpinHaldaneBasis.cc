@@ -163,18 +163,18 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
   int MaxSweeps = (this->NbrFermions * (this->NbrFermions - 1)) >> 1;  
   this->TmpGeneratedStates =  new unsigned long [MaxSweeps * 1000];
   this->TmpGeneratedStatesLzMax = new int [MaxSweeps * 1000];
-  long Memory = 0l;
 
   for (int j = 0; j < this->NbrRootPartitions; ++j)
     {
+      long Memory = 0l;
       int TmpLzMax = 2 * this->LzMax + 1;
       while (((this->RootPartitions[j] >> TmpLzMax) & 0x1ul) == 0x0ul)
 	--TmpLzMax;
       int TmpIndex = this->FindStateIndex(this->RootPartitions[j], TmpLzMax);
 #ifdef  __64_BITS__
-      this->KeepStateFlag[TmpIndex >> 6] = 0x1l << (TmpIndex & 0x3f);
+      this->KeepStateFlag[TmpIndex >> 6] |= 0x1l << (TmpIndex & 0x3f);
 #else
-      this->KeepStateFlag[TmpIndex >> 5] = 0x1l << (TmpIndex & 0x1f);
+      this->KeepStateFlag[TmpIndex >> 5] |= 0x1l << (TmpIndex & 0x1f);
 #endif
       this->GenerateSqueezedStates(TmpLzMax, this->RootPartitions[j], 1, Memory);  
     }
@@ -404,6 +404,7 @@ AbstractHilbertSpace* FermionOnSphereWithSpinHaldaneBasis::Clone()
 
 int FermionOnSphereWithSpinHaldaneBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
+  cout << hex << stateDescription << " " << dec << lzmax << endl;
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
@@ -425,7 +426,10 @@ int FermionOnSphereWithSpinHaldaneBasis::FindStateIndex(unsigned long stateDescr
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }
 
 
@@ -442,7 +446,7 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
   unsigned long* TmpGeneratedStates2 = this->TmpGeneratedStates + (MaxSweeps * memory);
   int* TmpLzMax = this->TmpGeneratedStatesLzMax  + (MaxSweeps  * memory);  
   memory += 1;
-  int TmpCurrentLzMax = 3;
+  int TmpCurrentLzMax = 1;
   int TmpCurrentLzMax2;
   int TmpMax = lzMax - 1;
   int NbrEntries = 0;
@@ -454,8 +458,8 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
 	++TmpCurrentLzMax;
       if (TmpCurrentLzMax < TmpMax)
 	{
-	  TmpReferenceState = (referenceState & ~(0x5l << TmpCurrentLzMax)) | (0x4l << TmpCurrentLzMax);
-	  TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+	  TmpReferenceState = (referenceState & ~(0x5l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
+	  TmpCurrentLzMax2 = TmpCurrentLzMax - 1;
 	  while (TmpCurrentLzMax2 >= 0)
 	    {
 	      while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x5l) != 0x1l))
@@ -474,7 +478,7 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
   if (((referenceState >> TmpCurrentLzMax) & 0x5l) == 0x4l)
     {
       TmpReferenceState = (referenceState & ~(0x5l << TmpCurrentLzMax)) | (0x1l << TmpCurrentLzMax);
-      TmpCurrentLzMax2 = TmpCurrentLzMax - 2;
+      TmpCurrentLzMax2 = TmpCurrentLzMax - 3;
       while (TmpCurrentLzMax2 >= 0)
 	{
 	  while ((TmpCurrentLzMax2 >= 0) && (((referenceState >> TmpCurrentLzMax2) & 0x5l) != 0x1l))
@@ -482,7 +486,10 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
 	  if (TmpCurrentLzMax2 >= 0)
 	    {
 	      TmpGeneratedStates2[NbrEntries] = (TmpReferenceState & ~(0x5l << TmpCurrentLzMax2)) | (0x4l << TmpCurrentLzMax2);
-	      TmpLzMax[NbrEntries] = lzMax - 1;
+	      if ((referenceState & (0x1ul << (lzMax - 1))) == 0x0ul)
+		TmpLzMax[NbrEntries] = lzMax - 2;
+	      else
+		TmpLzMax[NbrEntries] = lzMax - 1;
 	      ++NbrEntries;
 	      --TmpCurrentLzMax2;
 	    }

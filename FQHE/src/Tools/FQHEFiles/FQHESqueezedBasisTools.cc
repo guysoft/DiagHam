@@ -122,6 +122,7 @@ bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax,
 	  cout << "wrong LzMax value in ReferenceState " << i << endl;
 	  return false;     
 	}
+      referenceStates[i] = new int [lzMax + 1];
       for (int j = 0; j <= lzMax; ++j)
 	{
 	  if (TmpReferenceStates[i][j][0] == '0')
@@ -133,7 +134,7 @@ bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax,
 	      if ((TmpReferenceStates[i][j][0] == 'u') || (TmpReferenceStates[i][j][0] == 'U'))
 		referenceStates[i][j] = 2;
 	      else
-		if ((TmpReferenceStates[i][j][0] == 'd') || (TmpReferenceStates[i][j][0] == 'U'))
+		if ((TmpReferenceStates[i][j][0] == 'd') || (TmpReferenceStates[i][j][0] == 'D'))
 		  referenceStates[i][j] = 1;
 	}
     }
