@@ -324,6 +324,13 @@ class FermionOnSphereWithSpinLong :  public ParticleOnSphereWithSpin
   // return value = resulting U(1) state
   virtual RealVector ForgeU1FromSU2(RealVector& state, FermionOnSphere& u1Space);
 
+  // Evaluate the Density Matrix of the spin up fermions in a sector with a fixed lzUp 
+  //
+  // lzUp = twice total momentum of up fermions.
+  // groundstate = reference on the total system groundstate
+  // return value = density matrix of the subsystem of spins up fermions.
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixSpinSeparation (int lzUp, RealVector & groundstate);
+
  protected:
 
   // find state index

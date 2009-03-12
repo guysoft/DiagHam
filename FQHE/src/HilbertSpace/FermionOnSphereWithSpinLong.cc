@@ -1209,3 +1209,98 @@ RealVector FermionOnSphereWithSpinLong::ForgeU1FromSU2(RealVector& state, Fermio
   return FinalState;  
 }
 
+
+//Evaluate the Density Matrix of the spin up fermions in a sector with a fixed lzUp 
+//
+//lzUp twice total momentum of up fermions.
+//groundstate = reference on the total system groundstate
+//return value = density matrix of the subsystem of spins up fermions.
+
+
+RealSymmetricMatrix FermionOnSphereWithSpinLong::EvaluatePartialDensityMatrixSpinSeparation (int lzUp,RealVector & groundstate)
+{
+  if ((NbrFermionsUp==0)&&(lzUp==0))
+    {
+      RealSymmetricMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0,0,1.0);
+      return TmpDensityMatrix;
+    }
+  if ((NbrFermionsUp==0)&&(lzUp!=0))
+    {
+      RealSymmetricMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0,0,0.0);
+      return TmpDensityMatrix;
+    }
+  int Complementarylz=TotalLz-lzUp;
+  int nbrFermionDown=NbrFermions-NbrFermionsUp;
+  FermionOnSphereWithSpinLong TmpHilbertSpaceDown (nbrFermionDown,Complementarylz,LzMax,-nbrFermionDown);
+  FermionOnSphereWithSpinLong TmpHilbertSpaceUp (NbrFermionsUp,lzUp,LzMax,NbrFermionsUp);
+  if ((TmpHilbertSpaceUp.HilbertSpaceDimension==0)||(TmpHilbertSpaceDown.HilbertSpaceDimension==0))
+    {
+      RealSymmetricMatrix TmpDensityMatrix(1);
+      TmpDensityMatrix.SetMatrixElement(0,0,0.0);
+      return TmpDensityMatrix;
+    }
+  RealSymmetricMatrix TmpDensityMatrix(TmpHilbertSpaceUp.HilbertSpaceDimension);
+  
+  
+  unsigned int perm[TmpHilbertSpaceUp.HilbertSpaceDimension][TmpHilbertSpaceDown.HilbertSpaceDimension];
+  
+  for(int i =0;i< TmpHilbertSpaceUp.HilbertSpaceDimension;i++)
+    {
+      for (int k=0;k < TmpHilbertSpaceDown.HilbertSpaceDimension;k++)
+	{
+	  int nbrpermutations=0;
+	  int tmpnbr=NbrFermionsUp;
+	  for (int p=2*LzMax+1;p>=0;p--)
+	    {
+	      if (((TmpHilbertSpaceUp.StateDescription[i]>>p)&1)==1)
+		{
+					tmpnbr--;
+		}
+	      nbrpermutations+=(((TmpHilbertSpaceDown.StateDescription[k])>>p)&1)*tmpnbr;
+	    }
+	  perm[i][k]=nbrpermutations;
+	}
+    }
+  
+  for( int i =0;i< TmpHilbertSpaceUp.HilbertSpaceDimension;i++)
+    {
+      for (int j=0;j< i+1; j++)
+	{ 
+	  double Coefficient=0.0;
+	  for (int k=0;k < TmpHilbertSpaceDown.HilbertSpaceDimension;k++)
+	    {
+	      ULONGLONG TmpStateDescriptionRow=((TmpHilbertSpaceUp.StateDescription[i])|(TmpHilbertSpaceDown.StateDescription[k]));
+	      ULONGLONG TmpStateDescriptionColomn=((TmpHilbertSpaceUp.StateDescription[j])|(TmpHilbertSpaceDown.StateDescription[k]));
+	      
+	      
+	      int sign;
+	      if(((perm[i][k]+perm[j][k])%2==1))
+		{
+		  sign=-1;
+		}
+	      else
+		{
+		  sign=1;
+		}
+	      
+	      int NewLzMax=2*LzMax+1;
+	      while ((TmpStateDescriptionRow >> NewLzMax) == ((ULONGLONG) 0x0ul))
+		--NewLzMax;
+	      int l=this->FindStateIndex(TmpStateDescriptionRow,NewLzMax);
+	      NewLzMax=2*LzMax+1;
+	      while ((TmpStateDescriptionColomn >> NewLzMax) == ((ULONGLONG) 0x0ul))
+		--NewLzMax;
+	      
+	      int r=this->FindStateIndex(TmpStateDescriptionColomn,NewLzMax);
+	      
+	      Coefficient+=groundstate[l]*groundstate[r]*sign;
+	    }
+	  
+	  TmpDensityMatrix.SetMatrixElement(i,j,Coefficient);
+	}
+    }
+  return TmpDensityMatrix;
+}
+
