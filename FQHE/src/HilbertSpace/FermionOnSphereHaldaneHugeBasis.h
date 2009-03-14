@@ -306,6 +306,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // print a given State using the monomial notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis

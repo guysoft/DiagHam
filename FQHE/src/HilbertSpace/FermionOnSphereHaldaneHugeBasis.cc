@@ -971,6 +971,28 @@ ostream& FermionOnSphereHaldaneHugeBasis::PrintState (ostream& Str, int state)
   return Str;
 }
 
+// print a given State using the monomial notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& FermionOnSphereHaldaneHugeBasis::PrintStateMonomial (ostream& Str, int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  Str << "[";
+  int i = this->LzMax;
+  while (((TmpState >> i) & 0x1ul) == 0x0ul)
+    --i;
+  Str << i;
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> i) & 0x1ul) != 0x0ul)
+      Str << "," << i;
+  Str << "]";
+  return Str;
+}
+
 // generate all states corresponding to the constraints
 // 
 // lzMax = momentum maximum value for a fermion in the state

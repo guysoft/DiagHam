@@ -217,8 +217,47 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("huge-basis") == true)
 	    {
-	      FermionOnSphereHaldaneHugeBasis* InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false, Manager.GetInteger("huge-fulldim"));
-	      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+	      FermionOnSphereHaldaneHugeBasis* InitialSpace;
+	      if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
+		InitialSpace = new FermionOnSphereHaldaneHugeBasis(((SingleStringOption*) Manager["load-hilbert"])->GetString(), Manager.GetInteger("memory"));
+	      else
+		{
+		  InitialSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("file-size"), ReferenceState, ((unsigned long) Manager.GetInteger("memory")) << 20, false, Manager.GetInteger("huge-fulldim"));
+		  if (((SingleStringOption*) Manager["save-hilbert"])->GetString() != 0)
+		    {		      
+		      InitialSpace->WriteHilbertSpace(((SingleStringOption*) Manager["save-hilbert"])->GetString());
+		      return 0;
+		    }
+		}
+	      RealVector OutputState;
+	      if (Manager.GetString("initial-state") == 0)
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+	      else
+		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		  {
+		    cout << "can't open " << Manager.GetString("initial-state") << endl;
+		    return -1;
+		  }
+	      if (SymmetrizedBasis == false)    
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+	      else
+		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha);
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);
+		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      File << OutputState[i] << " ";
+		      InitialSpace->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  OutputState.WriteVector(OutputFileName);
+		}
 	      return 0;
 	    }
 	  FermionOnSphereHaldaneBasis* InitialSpace;
