@@ -322,6 +322,20 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
+  // create the Jack polynomial decomposition corresponding to the root partition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
+
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+
  protected:
 
   // find state index
@@ -428,6 +442,19 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // initialState = reference on the state whose symmetric counterpart has to be computed
   virtual unsigned long GetSymmetricState (unsigned long initialState);
 
+  // convert a bosonic state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // initialStateLzMax = initial bosonic state maximum Lz value
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void ConvertToMonomial(unsigned long initialState, int*& finalState);
+
+  // convert a bosonic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = bosonic state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(int* initialState);
+
 };
 
 // get the particle statistic 
@@ -495,6 +522,33 @@ inline unsigned long FermionOnSphereHaldaneHugeBasis::GetSymmetricState (unsigne
   TmpState >>= this->InvertUnshift;
   return TmpState;
 }
+
+// convert a bosonic state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// initialStateLzMax = initial bosonic state maximum Lz value
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnSphereHaldaneHugeBasis::ConvertToMonomial(unsigned long initialState, int*& finalState)
+{
+  int Index = 0;
+  for (int j = this->LzMax; j >= 0; --j)
+    if (((initialState >> j) & 1ul) != 0ul)
+      finalState[Index++] = j;
+}
+
+// convert a bosonic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = bosonic state in its fermionic representation
+
+inline unsigned long FermionOnSphereHaldaneHugeBasis::ConvertFromMonomial(int* initialState)
+{
+  unsigned long TmpState = 0x0ul;  
+  for (int j = 0; j < this->NbrFermions; ++j)
+    TmpState |= 0x1ul << initialState[j];
+  return TmpState;
+ }
 
 #endif
 
