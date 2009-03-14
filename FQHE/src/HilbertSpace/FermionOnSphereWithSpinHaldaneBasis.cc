@@ -217,7 +217,7 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
   delete[] this->SignLookUpTable;
   delete[] this->SignLookUpTableMask;
   delete[] this->LookUpTableShift;
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < (2 * this->NbrLzValue); ++i)
     delete[] this->LookUpTable[i];
   delete[] this->LookUpTable;
   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
@@ -404,7 +404,6 @@ AbstractHilbertSpace* FermionOnSphereWithSpinHaldaneBasis::Clone()
 
 int FermionOnSphereWithSpinHaldaneBasis::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-  cout << hex << stateDescription << " " << dec << lzmax << endl;
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
@@ -448,10 +447,9 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
   memory += 1;
   int TmpCurrentLzMax = 1;
   int TmpCurrentLzMax2;
-  int TmpMax = lzMax - 1;
+  int TmpMax = lzMax - 2;
   int NbrEntries = 0;
-  unsigned long TmpReferenceState;
-  
+  unsigned long TmpReferenceState;  
   while (TmpCurrentLzMax < TmpMax)
     {
       while ((TmpCurrentLzMax < TmpMax) && (((referenceState >> TmpCurrentLzMax) & 0x5l) != 0x4l))
@@ -532,5 +530,34 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
 
   memory -= 1;
   return pos;
+}
+
+// convert a gien state from Haldane basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereWithSpinHaldaneBasis::ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateHighestBit[i])] = state[i];
+  return TmpVector;
+}
+
+// convert a given state from the usual n-body basis to the Haldane basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphereWithSpinHaldaneBasis::ConvertFromNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateHighestBit[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
 }
 

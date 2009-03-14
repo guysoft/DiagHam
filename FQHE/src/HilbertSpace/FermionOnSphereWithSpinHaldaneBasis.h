@@ -111,6 +111,20 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
   // return value = position from which new states have to be stored
   virtual long GenerateSqueezedStates(int lzMax, unsigned long referenceState, long pos, long& memory);
 
+  // convert a gien state from Haldane basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis);
+
+ // convert a given state from the usual n-body basis to the Haldane basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  virtual RealVector ConvertFromNbodyBasis(RealVector& state, FermionOnSphereWithSpin& nbodyBasis);
+
 };
 
 
