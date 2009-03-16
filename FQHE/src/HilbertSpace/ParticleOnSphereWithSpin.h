@@ -287,6 +287,12 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
+  // Evaluate the Density Matrix of the spin up fermions in a sector with a fixed lzUp 
+  //
+  // lzUp = twice total momentum of up fermions.
+  // groundstate = reference on the total system groundstate
+  // return value = density matrix of the subsystem of spins up fermions.
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixSpinSeparation (int lzUp, RealVector & groundstate);
 
 };
 

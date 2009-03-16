@@ -321,3 +321,14 @@ void ParticleOnSphereWithSpin::InitializeWaveFunctionEvaluation (bool timeCohere
 {
 }
                                     
+// Evaluate the Density Matrix of the spin up fermions in a sector with a fixed lzUp 
+//
+// lzUp = twice total momentum of up fermions.
+// groundstate = reference on the total system groundstate
+// return value = density matrix of the subsystem of spins up fermions.
+
+RealSymmetricMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrixSpinSeparation (int lzUp, RealVector & groundstate)
+{
+  RealSymmetricMatrix TmpMatrix;
+  return TmpMatrix;
+}

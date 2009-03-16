@@ -14,6 +14,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -39,6 +40,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new BooleanOption  ('r', "reverse", "convert a state from the n-body basis to the Haldane basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -66,7 +68,8 @@ int main(int argc, char** argv)
 
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger(); 
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
-  int TotalLz = 0;
+  int TotalLz = Manager.GetInteger("total-lz");
+  int TotalSz = Manager.GetInteger("total-sz");
   bool ReverseFlag = ((BooleanOption*) Manager["reverse"])->GetBoolean();
   bool Statistics = true;
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
@@ -113,22 +116,22 @@ int main(int argc, char** argv)
 
   int** ReferenceStates = 0;
   int NbrReferenceStates;
-  if (this->Options->GetString("reference-file") == 0)
+  if (Manager.GetString("reference-file") == 0)
     {
       cout << "error, a reference file is needed for fermions in Haldane basis" << endl;
       return 0;
     }
-  if (FQHEGetRootPartitionSU2(this->Options->GetString("reference-file"), NbrFermions, LzMax, ReferenceStates, NbrReferenceStates) == false)
+  if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceStates, NbrReferenceStates) == false)
     {
-      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
+      cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
       return 0;
-      
-      FermionOnSphereWithSpinHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceStates, NbrReferenceStates);
+    }      
+  FermionOnSphereWithSpinHaldaneBasis InitialSpace(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz, ReferenceStates, NbrReferenceStates);
   if ((ReverseFlag == false) && (InitialSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
     {
       cout << "dimension mismatch between Hilbert space and input state" << endl;
     }
-  FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta);
+  FermionOnSphereWithSpin TargetSpace(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
   if ((ReverseFlag == true) && (TargetSpace.GetHilbertSpaceDimension() != State.GetVectorDimension()))
     {
       cout << "dimension mismatch between Hilbert space and input state" << endl;

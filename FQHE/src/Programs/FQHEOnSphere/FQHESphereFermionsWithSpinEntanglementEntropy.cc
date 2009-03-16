@@ -37,19 +37,21 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHESphereFermionsWithSpinEntanglementEntropy" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   Manager += SystemGroup;
+  Manager += OutputGroup;
   Manager += MiscGroup;
 
   int nbrFermions=0;
   int LzMax=0;
   int TotalLz=0;
   int Sz=0;
-  bool grand;
   bool Statistics = true;
   ParticleOnSphereWithSpin* Space = 0;
   
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "name of the file describing the system ground state");
+  (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the reduced density matrices in the a given file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -63,6 +65,7 @@ int main(int argc, char** argv)
       return 0;
     }
   
+  char* DensityMatrixFileName = Manager.GetString("density-matrix");
   char* FileName = Manager.GetString("input-file");
   if (FileName == 0)
     {
@@ -83,7 +86,6 @@ int main(int argc, char** argv)
 #endif
       {
 	Space=new FermionOnSphereWithSpin  (nbrFermions, TotalLz, LzMax, Sz);
-	grand=false;
       }
     else
       {
@@ -94,7 +96,6 @@ int main(int argc, char** argv)
 #endif
 	    {
 	      Space =new FermionOnSphereWithSpinLong (nbrFermions, TotalLz, LzMax, Sz);
-	      grand=true;
 	    }
 	  else
 	    {
@@ -118,19 +119,22 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if (DensityMatrixFileName != 0)
+    {
+      ofstream DensityMatrixFile;
+      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
+      DensityMatrixFile << "# Lz    lambda" << endl;
+      DensityMatrixFile.close();
+    }
+
   double EntanglementEntropy = 0.0;
   double DensitySum =0.0;
-  for(int lzUp=(-LzMax*nbrFermionsUp+nbrFermionsUp*(nbrFermionsUp-1));lzUp<(LzMax*nbrFermionsUp-nbrFermionsUp*(nbrFermionsUp-1))+1;lzUp+=2)
+  int MaxLzUp = (LzMax*nbrFermionsUp-nbrFermionsUp*(nbrFermionsUp-1)) + 1;
+  for(int lzUp= (-LzMax*nbrFermionsUp+nbrFermionsUp*(nbrFermionsUp-1)); lzUp < MaxLzUp; lzUp+=2)
     {
       RealSymmetricMatrix PartialDensityMatrix;
-      if (grand)
-	{
-	  PartialDensityMatrix=((FermionOnSphereWithSpinLong*)Space)->EvaluatePartialDensityMatrixSpinSeparation(lzUp,GroundState);
-	}
-      else
-	{
-	  PartialDensityMatrix=((FermionOnSphereWithSpin*)Space)->EvaluatePartialDensityMatrixSpinSeparation(lzUp,GroundState);
-	}
+      PartialDensityMatrix= Space->EvaluatePartialDensityMatrixSpinSeparation(lzUp,GroundState);
+
       if (PartialDensityMatrix.GetNbrRow() > 1)
 	{
 	  RealDiagonalMatrix TmpDiag(PartialDensityMatrix.GetNbrRow());
@@ -138,12 +142,20 @@ int main(int argc, char** argv)
 	  TmpDiag.SortMatrixDownOrder();
 	  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 	    {
-	      
 	      if (TmpDiag[i] > 1e-14)
 		{
 		  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
 		  DensitySum += TmpDiag[i];
 		}
+	    }
+	  if (DensityMatrixFileName != 0)
+	    {
+	      ofstream DensityMatrixFile;
+	      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+	      DensityMatrixFile.precision(14);
+	      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		DensityMatrixFile << (0.5 * ((double) lzUp)) << " " << TmpDiag[i] << endl;
+	      DensityMatrixFile.close();
 	    }
 	}
       else 
@@ -152,9 +164,18 @@ int main(int argc, char** argv)
 	    {
 	      EntanglementEntropy += PartialDensityMatrix(0,0) * log(PartialDensityMatrix(0,0));
 	      DensitySum += PartialDensityMatrix(0,0);
+	      if (DensityMatrixFileName != 0)
+		{
+		  ofstream DensityMatrixFile;
+		  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		  DensityMatrixFile.precision(14);
+		  DensityMatrixFile << (0.5 * ((double) lzUp)) << " " << PartialDensityMatrix(0,0) << endl;
+		  DensityMatrixFile.close();
+	    }
 	    }
 	}
     }
-  cout << (-EntanglementEntropy)<<" "<<DensitySum;
+
+  cout << (-EntanglementEntropy) << " " << DensitySum;
   return 0;
 }
