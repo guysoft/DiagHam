@@ -49,6 +49,7 @@ class FermionOnSphereWithSpinLong :  public ParticleOnSphereWithSpin
   friend class FermionOnSphereWithSpinLzSzSymmetryLong;
   friend class FermionOnSphereWithSpinSzSymmetryLong;
   friend class FermionOnSphereWithSpinLzSymmetryLong;
+  friend class FermionOnSphereWithSpinHaldaneBasisLong;
 
  protected:
 

@@ -96,10 +96,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
-  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "start the Haldane algorithm from Laughlin state with exponent m)", -1);
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "s2-memory", "amount of memory that can be allocated for fast multiplication of s2 term (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "l2-memory", "amount of memory that can be allocated for fast multiplication of l2 term (in Mbytes)", 500);
@@ -299,81 +295,9 @@ int main(int argc, char** argv)
   for (; L <= Max; L += 2)
     {
       double Shift = -10.0;
-      ParticleOnSphereWithSpin* Space = 0;
-      if (HaldaneBasisFlag == false)
-	{
-	  Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L);
-	}
-      else // using Squeezed Haldane Basis!
-	{
-	  int* ReferenceState = 0;
-	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
-	    {
-	      ReferenceState = new int[LzMax + 1];
-	      for (int i = 0; i <= LzMax; ++i)
-		ReferenceState[i] = 0;
-	      int tmpNbrParticles=0;
-	      if (Manager.GetInteger("laughlin-exponent")>0)		
-		for (int i = 0; i <= LzMax; i += Manager.GetInteger("laughlin-exponent"))
-		  {
-		    ReferenceState[i] = 3;
-		    tmpNbrParticles+=2;
-		  }
-	      if (tmpNbrParticles != NbrFermions)
-		{
-		  cout << "Wrong shift for this laughlin seed state"<< endl;
-		  exit(1);
-		}
-	    }
-	  else
-	    {
-	      ConfigurationParser ReferenceStateDefinition;
-	      if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
-		{
-		  ReferenceStateDefinition.DumpErrors(cout) << endl;
-		  return -1;
-		}
-	      if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrFermions) == false) || (NbrFermions <= 0))
-		{
-		  cout << "NbrParticles is not defined or as a wrong value" << endl;
-		  return -1;
-		}
-	      if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
-		{
-		  cout << "LzMax is not defined or as a wrong value" << endl;
-		  return -1;
-		}
-	      int MaxNbrLz;
-	      if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-		{
-		  cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-		  return -1;     
-		}
-	      if (MaxNbrLz != (LzMax + 1))
-		{
-		  cout << "wrong LzMax value in ReferenceState" << endl;
-		  return -1;     
-		}
-	    }
-	  // assign Hilbert space here - no further symmetries implemented, yet...
-#ifdef __64_BITS__
-	  if (LzMax <= 31)
-#else
-	    if (LzMax <= 15)
-#endif
-	      {
-		if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-		  Space = new FermionOnSphereWithSpinSqueezedBasis(Manager.GetString("load-hilbert"), MemorySpace);
-		else
-		  Space = new FermionOnSphereWithSpinSqueezedBasis(NbrFermions, L, LzMax, SzTotal, ReferenceState, MemorySpace);
-		if (Manager.GetString("save-hilbert") != 0)
-		  {
-		    ((FermionOnSphereWithSpinSqueezedBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-			 return 0;
-		  }
-	      }
-	  
-	}
+      cout << "l=" <<  L << endl; 
+      ParticleOnSphereWithSpin* Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L);
+
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
         Memory = Architecture.GetArchitecture()->GetLocalMemory();

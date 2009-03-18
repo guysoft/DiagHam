@@ -53,6 +53,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetryLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
@@ -646,11 +647,32 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 	      cout << "error while parsing " << this->Options->GetString("reference-file") << endl;	      
 	      return 0;
 	    }
-	  Space = new FermionOnSphereWithSpinHaldaneBasis (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
-	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	    Space->PrintState(cout, i) << endl;
-	}
-      return Space;
+#ifdef __64_BITS__
+	  if (LzMax <= 31)
+#else
+	    if (LzMax <= 15)
+#endif
+	      {
+		Space = new FermionOnSphereWithSpinHaldaneBasis(NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+	      }
+	    else
+	      {
+#ifdef __128_BIT_LONGLONG__
+		if (LzMax <= 63)
+#else
+		  if (LzMax <= 31)
+#endif
+		    {
+		      Space = new FermionOnSphereWithSpinHaldaneBasisLong (NbrFermions, totalLz, LzMax, SzTotal, ReferenceStates, NbrReferenceStates);
+		    }
+		  else
+		    {
+		      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		      return 0;
+		    }	
+	      }
+	  return Space;
+	}	
     }
   else
     {

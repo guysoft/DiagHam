@@ -1520,7 +1520,7 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& 
 		  }
 	      }
 	  }
-      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+      jack[i] = Coefficient;
       if ((i & 0x3fffl) == 0l)
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
@@ -1627,4 +1627,169 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateSymmetrizedJackPolynomial(R
   cout << endl;
 
   return jack;
+}
+
+// create the Jack polynomial decomposition corresponding to the root partition, using an optimized version of the code
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alpha = value of the Jack polynomial alpha coefficient
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateJackPolynomial(RealVector& jack, double alpha)
+{
+  jack[0] = 1.0;
+  double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
+
+  int* TmpMonomial = new int [this->NbrFermions];
+
+  double RhoRoot = 0.0;
+  unsigned long MaxRoot = this->StateDescription[0];
+  this->ConvertToMonomial(MaxRoot, TmpMonomial);
+  for (int j = 0; j < this->NbrFermions; ++j)
+    RhoRoot += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+
+  long ConnectedPartitionsBufferSize = 400;
+  int* ConnectedPartitionsBufferIndices = new int [ConnectedPartitionsBufferSize];
+  int* NbrConnectedPartitions = new int [ConnectedPartitionsBufferSize];
+  long** ConnectedPartitionIndices = new long* [ConnectedPartitionsBufferSize];
+  double** Factors = new double* [ConnectedPartitionsBufferSize];
+  int MaxConnected = (((this->NbrFermions - 1) * this->NbrFermions) / 2) * this->LzMax;
+  for (long i = 0; i < ConnectedPartitionsBufferSize; ++i)
+    {
+      ConnectedPartitionIndices[i] = new long[MaxConnected];
+      Factors[i] = new double[MaxConnected];
+    }
+
+  for (long i = 1; i < this->LargeHilbertSpaceDimension;)
+    {
+      double Rho = 0.0;
+      long Limit = i;
+      long NbrIndices = 0;
+      while ((NbrIndices < ConnectedPartitionsBufferSize) && (Limit < this->LargeHilbertSpaceDimension) && (jack[Limit]))
+	{
+	  if (jack[Limit] == 0.0)
+	    {
+	      ConnectedPartitionsBufferIndices[NbrIndices] = Limit;
+	      ++NbrIndices;
+	    }
+	  ++Limit;
+	}
+      if (NbrIndices > 0)
+	{
+	  int CurrentIndex = 0;	  
+	  for (long k = i; k < Limit; ++k)
+	    {
+	      double& Coefficient = jack[k];
+	      if (Coefficient == 0.0)
+		{
+		  unsigned long CurrentPartition = this->StateDescription[k];
+		  this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+		  for (int j = 0; j < this->NbrFermions; ++j)
+		    Rho += TmpMonomial[j] * (TmpMonomial[j] - InvAlpha * ((double) j));
+		  double Coefficient2 = 0.0;
+		  int TmpNbrConnectedPartitions = NbrConnectedPartitions[CurrentIndex];
+		  long* TmpConnectedPartitionIndices = ConnectedPartitionIndices[CurrentIndex];
+		  double* TmpFactors = Factors[CurrentIndex];
+		  for (int j = 0; j < TmpNbrConnectedPartitions; ++j)
+		    Coefficient2 += TmpFactors[j] * jack[TmpConnectedPartitionIndices[j]];
+		  Coefficient = Coefficient2;
+		  ++CurrentIndex;
+		}
+	    }
+	}
+      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+      cout.flush();
+      i = Limit;
+    }
+  delete[] TmpMonomial;
+  cout << endl;
+
+  return jack;
+}
+
+// create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry, using an optimized version of the code
+//
+// jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+// alpha = value of the Jack polynomial alpha coefficient
+// return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+
+RealVector& FermionOnSphereHaldaneHugeBasis::OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
+{
+  return jack;
+}
+
+// find squeezed partitions that are connected throught the Jack calculation algorithm
+//
+// nbrPartitions = number of partitions whose connection has to be computed
+// partitionIndices = indices of the partitions whose connection has to be computed
+// nbrConnectedPartitions = array where the number of partitions connected to a given one will be stored
+// connectedPartitionIndices = array where the index of the partitions connected to a given one will be stored
+// factors = numerical factor that relates two connected partitions
+// rootPartition = Jack root partition
+
+void FermionOnSphereHaldaneHugeBasis::GetConnectedSqueezedPartitions(long nbrPartitions, long* partitionIndices, int* nbrConnectedPartitions, 
+								     long** connectedPartitionIndices, double** factors, unsigned long rootPartition)
+{
+  int* TmpMonomial = new int [this->NbrFermions];
+  int* TmpMonomial2 = new int [this->NbrFermions];
+  int ReducedNbrFermions = this->NbrFermions - 1;  
+
+  for (long i = 0; i < nbrPartitions; ++i)
+    {
+      long* TmpConnectedPartitionIndices = connectedPartitionIndices[i];
+      double* TmpFactors = factors[i];
+      int CurrentIndex = 0;
+      unsigned long CurrentPartition = this->StateDescription[partitionIndices[i]];
+      this->ConvertToMonomial(CurrentPartition, TmpMonomial);
+      for (int j1 = 0; j1 < ReducedNbrFermions; ++j1)
+	for (int j2 = j1 + 1; j2 < this->NbrFermions; ++j2)
+	  {
+	    double Diff = (double) (TmpMonomial[j1] - TmpMonomial[j2]);
+	    unsigned int Max = TmpMonomial[j2];
+	    unsigned long TmpState = 0x0ul;
+	    int Tmpj1 = j1;
+	    int Tmpj2 = j2;
+	    for (int l = 0; l < this->NbrFermions; ++l)
+	      TmpMonomial2[l] = TmpMonomial[l];	    
+	    double Sign = 1.0;
+	    for (unsigned int k = 1; (k <= Max) && (TmpState < rootPartition); ++k)
+	      {
+		++TmpMonomial2[Tmpj1];
+		--TmpMonomial2[Tmpj2];
+		while ((Tmpj1 > 0) && (TmpMonomial2[Tmpj1] >= TmpMonomial2[Tmpj1 - 1]))
+		  {
+		    unsigned long Tmp = TmpMonomial2[Tmpj1 - 1];
+		    TmpMonomial2[Tmpj1 - 1] = TmpMonomial2[Tmpj1];
+		    TmpMonomial2[Tmpj1] = Tmp;
+		    --Tmpj1;
+		    Sign *= -1.0; 
+		  }
+                while ((Tmpj2 < ReducedNbrFermions) && (TmpMonomial2[Tmpj2] <= TmpMonomial2[Tmpj2 + 1]))
+                  {
+                    unsigned long Tmp = TmpMonomial2[Tmpj2 + 1];
+                    TmpMonomial2[Tmpj2 + 1] = TmpMonomial2[Tmpj2];
+                    TmpMonomial2[Tmpj2] = Tmp;
+                    ++Tmpj2;
+ 		    Sign *= -1.0; 
+                 }
+		if ((TmpMonomial2[Tmpj1] != TmpMonomial2[Tmpj1 + 1]) && (TmpMonomial2[Tmpj2] != TmpMonomial2[Tmpj2 - 1]))
+		  {
+		    TmpState = this->ConvertFromMonomial(TmpMonomial2);
+		    if ((TmpState <= rootPartition) && (TmpState > CurrentPartition))
+		      {
+			long TmpIndex = this->FindStateIndexMemory(TmpState, TmpMonomial2[0]);
+			if (TmpIndex < this->LargeHilbertSpaceDimension)
+			  {
+			    TmpConnectedPartitionIndices[CurrentIndex] = TmpIndex;
+			    TmpFactors[CurrentIndex] = Sign * Diff;
+			    ++CurrentIndex;
+			  }
+		      }
+		  }
+	      }
+	  }
+      nbrConnectedPartitions[i] = CurrentIndex;
+    }
+  delete[] TmpMonomial;
+  delete[] TmpMonomial2;
 }

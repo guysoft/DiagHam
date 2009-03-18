@@ -343,6 +343,20 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
   virtual RealVector& GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
 
+  // create the Jack polynomial decomposition corresponding to the root partition, using an optimized version of the code
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RealVector& OptimizedGenerateJackPolynomial(RealVector& jack, double alpha);
+
+  // create the Jack polynomial decomposition corresponding to the root partition assuming the resulting state is invariant under the Lz<->-Lz symmetry, using an optimized version of the code
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RealVector& OptimizedGenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha);
+
  protected:
 
   // find state index
@@ -461,6 +475,17 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // initialState = array where the monomial representation is stored
   // return value = bosonic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(int* initialState);
+
+  // find squeezed partitions that are connected throught the Jack calculation algorithm
+  //
+  // nbrPartitions = number of partitions whose connection has to be computed
+  // partitionIndices = indices of the partitions whose connection has to be computed
+  // nbrConnectedPartitions = array where the number of partitions connected to a given one will be stored
+  // connectedPartitionIndices = array where the index of the partitions connected to a given one will be stored
+  // factors = numerical factor that relates two connected partitions
+  // rootPartition = Jack root partition
+  virtual void GetConnectedSqueezedPartitions(long nbrPartitions, long* partitionIndices, int* nbrConnectedPartitions, 
+					      long** connectedPartitionIndices, double** factors, unsigned long rootPartition);
 
 };
 

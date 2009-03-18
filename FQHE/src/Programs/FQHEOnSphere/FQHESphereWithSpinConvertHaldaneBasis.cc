@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new BooleanOption  ('r', "reverse", "convert a state from the n-body basis to the Haldane basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (removing any occurence of haldane_)");
@@ -70,10 +70,15 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = ((SingleIntegerOption*) Manager["nbr-flux"])->GetInteger(); 
   int TotalLz = Manager.GetInteger("total-lz");
   int TotalSz = Manager.GetInteger("total-sz");
+  bool SzSymmetrizedBasis = false;
+  bool SzMinusParity = false;
+  bool LzSymmetrizedBasis = false;
+  bool LzMinusParity = false;
   bool ReverseFlag = ((BooleanOption*) Manager["reverse"])->GetBoolean();
   bool Statistics = true;
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
-						   NbrParticles, NbrFluxQuanta, TotalLz, Statistics) == false)
+  if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["input-file"])->GetString(),
+							   NbrParticles, NbrFluxQuanta, TotalLz, TotalSz, SzSymmetrizedBasis, SzMinusParity, 
+							   LzSymmetrizedBasis, LzMinusParity, Statistics) == false)
     {
       cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["input-file"])->GetString() << endl;
       return -1;
