@@ -6,6 +6,8 @@
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
 
 #include "Options/Options.h"
 
@@ -16,6 +18,8 @@
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -25,16 +29,6 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
-
-
-// get the root parition from a file
-// 
-// rootFileName = name of the file that contains the root description
-// nbrParticles = reference on the number of particles
-// lzMax = reference on twice the maximum Lz value
-// referenceState = array where the root partition description will be stored
-// return value = true if no error occured
-bool GetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState);
 
 
 int main(int argc, char** argv)
@@ -150,7 +144,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* ReferenceState = 0;
-	      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 		return -1;
 	      if (Manager.GetString("load-hilbert") != 0)
 		OutputBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));	  
@@ -160,7 +154,47 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  OutputBasis = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+	  if (HaldaneBasisFlag == false)
+	    OutputBasis = new FermionOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
+	  else
+	    {
+	      int** ReferenceStates = 0;
+	      int NbrReferenceStates;
+	      if (Manager.GetString("reference-file") == 0)
+		{
+		  cout << "error, a reference file is needed for fermions in Haldane basis" << endl;
+		  return 0;
+		}
+	      if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates) == false)
+		{
+		  cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
+		  return 0;
+		}
+#ifdef __64_BITS__
+	      if (LzMax <= 31)
+#else
+		if (LzMax <= 15)
+#endif
+		  {
+		    OutputBasis = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+		  }
+		else
+		  {
+#ifdef __128_BIT_LONGLONG__
+		    if (LzMax <= 63)
+#else
+		      if (LzMax <= 31)
+#endif
+			{
+			  OutputBasis = new FermionOnSphereWithSpinHaldaneBasisLong (NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates);
+			}
+		      else
+			{
+			  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+			  return 0;
+		    }	
+		  }
+	    }
 	}
     }
   else
@@ -181,7 +215,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      int* ReferenceState = 0;
-	      if (GetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+	      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 		return -1;
 	      if (Manager.GetString("load-hilbert") != 0)
 		OutputBasis = new BosonOnSphereHaldaneBasisShort(Manager.GetString("load-hilbert"));	  
@@ -230,43 +264,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-
-// get the root parition from a file
-// 
-// rootFileName = name of the file that contains the root description
-// nbrParticles = reference on the number of particles
-// lzMax = reference on twice the maximum Lz value
-// referenceState = array where the root partition description will be stored
-// return value = true if no error occured
-
-bool GetRootPartition (char* rootFileName, int& nbrParticles, int& lzMax, int*& referenceState)
-{
-  ConfigurationParser ReferenceStateDefinition;
-  if (ReferenceStateDefinition.Parse(rootFileName) == false)
-    {
-      ReferenceStateDefinition.DumpErrors(cout) << endl;
-      return false;
-    }
-  if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", nbrParticles) == false) || (nbrParticles <= 0))
-    {
-      cout << "NbrParticles is not defined or as a wrong value" << endl;
-      return false;
-    }
-  if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", lzMax) == false) || (lzMax < 0))
-    {
-      cout << "LzMax is not defined or as a wrong value" << endl;
-      return false;
-    }
-  int MaxNbrLz;
-  if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', referenceState, MaxNbrLz) == false)
-    {
-      cout << "error while parsing ReferenceState in " << rootFileName << endl;
-      return false;     
-    }
-  if (MaxNbrLz != (lzMax + 1))
-    {
-      cout << "wrong LzMax value in ReferenceState" << endl;
-      return false;     
-    }
-  return true;
-}

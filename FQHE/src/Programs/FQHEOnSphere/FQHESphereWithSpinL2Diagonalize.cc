@@ -131,7 +131,7 @@ int main(int argc, char** argv)
   char* EigenvectorName = 0;
   if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
     {
-      EigenvectorName = new char [64];
+      EigenvectorName = new char [256 + strlen(((SingleStringOption*) Manager["interaction-name"])->GetString())];
       sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax, TotalSz, TotalLz);
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
