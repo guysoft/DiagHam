@@ -46,7 +46,9 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption ('b', "background-only", "print background energy, and exit");
   
-  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");
+  (*SystemGroup) += new SingleStringOption('o',"output","file to write a log of results");  
+  (*SystemGroup) += new SingleStringOption('\n',"plot","plot effective interaction to file and exit",NULL);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-points", "number points in plot", 250);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -90,6 +92,15 @@ int main(int argc, char** argv)
     {
       // add a general energy function 
       SphereGeneralEnergy *Energy=new SphereGeneralEnergy(NbrFlux, Manager.GetString("interaction-params"));
+      if (Manager.GetString("plot")!=NULL)
+	{
+	  ofstream MyFile(Manager.GetString("plot"),std::ios::out);
+	  Energy->PlotPotential(MyFile,Manager.GetInteger("nbr-points"));
+	  MyFile.close();
+	  cout << "Interaction plotted in file "<<Manager.GetString("plot")<<endl;
+	  exit(0);
+	}
+      
       MonteCarloRoutine.AddObservable(Energy);
       if (Manager.GetBoolean("background-only"))
 	{

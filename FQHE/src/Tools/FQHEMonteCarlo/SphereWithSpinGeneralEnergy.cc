@@ -43,6 +43,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
   this->InteractionType=0;
   if (InteractionDefinition.GetAsStringArray("Type", ' ', TmpType, TmpLength) == false)
     {
+      cout << "Assuming polynomial effective interaction!"<<endl;
       this->InteractionType=SphereWithSpinGeneralEnergy::Polynomial;
     }
   else
@@ -353,7 +354,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 	  exit(-1);
 	}
       this->AsymptoticsInter=this->CoefficientsInter+this->NbrParametersInter;
-      this->AsymptoticsInterReg = this->CoefficientsInter+2*this->NbrParametersInter;
+      this->AsymptoticsInterReg = this->CoefficientsInter+this->NbrParametersInter+this->NbrAsymptoticsInter;
 
       // UpUp/Intra Interactions
       if ((InteractionDefinition.GetAsDoubleArray("ParametersUpUp", ' ', this->CoefficientsIntra, TmpNbrParameters) == false)&&
@@ -382,7 +383,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 	  exit(-1);
 	}
       this->AsymptoticsIntra=this->CoefficientsIntra+this->NbrParametersIntra;
-      this->AsymptoticsIntraReg = this->CoefficientsIntra+2*this->NbrParametersIntra;
+      this->AsymptoticsIntraReg = this->CoefficientsIntra+this->NbrParametersIntra+this->NbrAsymptoticsIntra;
       // DownDown interactions:
       if (InteractionDefinition.GetAsDoubleArray("ParametersDownDown", ' ', this->CoefficientsIntra2, TmpNbrParameters) == false)
 	{
@@ -413,7 +414,7 @@ SphereWithSpinGeneralEnergy::SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux,
 	    }
 	  if (MaxNbrAsymptotics < NbrAsymptoticsIntra2) MaxNbrAsymptotics = NbrAsymptoticsIntra2;
 	  this->AsymptoticsIntra2=this->CoefficientsIntra2+this->NbrParametersIntra2;
-	  this->AsymptoticsIntra2Reg = this->CoefficientsIntra2+2*this->NbrParametersIntra2;
+	  this->AsymptoticsIntra2Reg = this->CoefficientsIntra2+this->NbrParametersIntra2+this->NbrAsymptoticsIntra2;
 	}
       this->RijSq=NULL;
       MaxNbrAsymptotics = 2*MaxNbrAsymptotics+1;

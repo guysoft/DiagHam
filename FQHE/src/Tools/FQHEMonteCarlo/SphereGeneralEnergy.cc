@@ -34,12 +34,12 @@ SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
       exit(-1);
     }
     char **TmpType;
-  int TmpLength;
+  int TmpLength=0;
   this->InteractionType=0;
   if (InteractionDefinition.GetAsStringArray("Type", ' ', TmpType, TmpLength) == false)
     {
-      cout<<"Please indicate an interaction type in parameter file "<<parameters<<endl;
-      exit(1);
+      cout << "Assuming polynomial effective interaction!"<<endl;
+      this->InteractionType=SphereGeneralEnergy::Polynomial;
     }
   else
     {
@@ -56,8 +56,9 @@ SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
 	  exit(1);
 	}
     }
-  delete [] TmpType[0];
-  delete [] TmpType;
+  for (int i=0; i<TmpLength; ++i)
+    delete [] TmpType[0];
+  if (TmpLength>0) delete [] TmpType;
   
   if (this->InteractionType==0)
     {
@@ -139,10 +140,15 @@ SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
 	  exit(-1);
 	}
       this->Asymptotics=this->Coefficients+this->NbrParameters;
-      this->AsymptoticsReg = this->Coefficients+2*this->NbrParameters;
+      this->AsymptoticsReg = this->Coefficients+this->NbrParameters+this->NbrAsymptotics;
       this->RijSq=NULL;
       int MaxNbrAsymptotics = 2*NbrAsymptotics+1;
       int MaxNbrParameters = NbrParameters - 1;
+//       cout << "Parameters used in interaction:"<<endl;
+//       for (int i=0; i<NbrParameters; ++i)
+// 	cout << "C["<<i<<"]="<<this->Coefficients[i]<<endl;
+//       for (int i=0; i<NbrAsymptotics; ++i)
+// 	cout << "B["<<i<<"]="<<this->Asymptotics[i]<<", A["<<i<<"]="<<AsymptoticsReg[i]<<endl;
       this->NumSqPowers = (MaxNbrAsymptotics>MaxNbrParameters ? MaxNbrAsymptotics : MaxNbrParameters);
     }
 }
@@ -347,18 +353,59 @@ void SphereGeneralEnergy::SetParticleCollection(AbstractParticleCollection *syst
 
 }
 
+
+#ifdef HAVE_GSL  
+
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline.h>
+
+namespace SphereGeneralEnergyBG
+{
+  // inner integration of density profile
+  double Integrand (double theta, void * params)
+  {
+    SphereGeneralEnergy *Energy=(SphereGeneralEnergy *)params;
+    return sin(theta)*Energy->GetPotentialValue(2.0*Energy->GetRadius()*sin(theta/2.0));
+  }
+}
+
+#endif
+
+
 // additional routines for energy observables:
 // returns the total background energy
 double SphereGeneralEnergy::GetTotalBackgroundEnergy()
 {
-  double PowerTwo=1.0;
-  double Result=0.0;
-  for (int i=0; i<this->NbrParameters; ++i)
+  if (this->InteractionType == SphereGeneralEnergy::Polynomial)
     {
-      Result+= this->Coefficients[i]*PowerTwo/(1.0+(double)i);
-      PowerTwo*=2.0;
+      double PowerTwo=1.0;
+      double Result=0.0;
+      for (int i=0; i<this->NbrParameters; ++i)
+	{
+	  Result+= this->Coefficients[i]*PowerTwo/(1.0+(double)i);
+	  PowerTwo*=2.0;
+	}
+      return Result*this->NbrParticles*this->NbrParticles/(2.0*Radius);
     }
-  return Result*this->NbrParticles*this->NbrParticles/(2.0*Radius);
+  else if (this->InteractionType == SphereGeneralEnergy::AsymptoticExp)
+    {
+      double rst=0.0;
+#ifdef HAVE_GSL  
+      // integration workspaces
+      int numInt=1000;
+      gsl_integration_workspace * IntW= gsl_integration_workspace_alloc (numInt);
+      gsl_function TheIntegrand;
+      TheIntegrand.function = &SphereGeneralEnergyBG::Integrand;
+      TheIntegrand.params = this;
+      double error;
+      gsl_integration_qag (&TheIntegrand, 1e-8, M_PI, 0.0, 1e-8, numInt, /* KEY */ GSL_INTEG_GAUSS41,
+			   IntW, &rst, &error);
+#endif
+      return rst*this->NbrParticles*this->NbrParticles/2.0;
+    }
+  else
+    return 0.0;
 }
   
 // evaluate exponentials and powers of r^2
@@ -376,4 +423,59 @@ void SphereGeneralEnergy::EvaluateGaussianTables()
 	  GaussianIJ[i][j]=exp(-RijSq[i][j]);
 	}
     }
+}
+
+// plot effective interaction
+// str = stream to write to
+ostream & SphereGeneralEnergy::PlotPotential(ostream &str, int numpoints)
+{
+  str << "# R\tValue\n";
+  double Rmax = 2.0*this->Radius;
+  double delta = Rmax/(double)numpoints;
+  for (int i=1; i<=numpoints; ++i)
+    {
+      double R=i*delta;
+      str << R << "\t" << this->GetPotentialValue(R)<<endl;
+    }
+  return str;
+}
+
+// obtain value of the interaction for a given separation theta between particles
+// theta = separation
+double SphereGeneralEnergy::GetPotentialValue(double R)
+{
+  if (this->InteractionType==SphereGeneralEnergy::Polynomial)
+    {
+      double rst, dij=R/this->Radius;
+      rst = this->Coefficients[0]/ dij;
+      double p = this->Coefficients[this->NbrParameters-1];
+      for (int k=this->NbrParameters-2; k>0; --k)
+	{
+	  p=p*dij + this->Coefficients[k];
+	}
+      rst+=p;
+      return rst/Radius;
+    }
+  else if (this->InteractionType==SphereGeneralEnergy::AsymptoticExp)
+    {      
+      double *RijSqPowers = new double[NumSqPowers];
+      double *RijSq = RijSqPowers;
+      *RijSq = R*R;
+      for (int k=1; k<NumSqPowers; ++k)
+	RijSqPowers[k]=RijSqPowers[k-1]* *RijSq;
+      double GaussianIJ=std::exp(-*RijSq);
+      double rst = Asymptotics[0]/sqrt(*RijSq+AsymptoticsReg[0]);  // B1/sqrt(r^2+d^2)
+      rst += Coefficients[0] * GaussianIJ; // gaussian term C0 exp(-r^2)
+      // gaussian terms Ck r^2k exp(-r^2)
+      for (int k=1; k<NbrParameters; ++k)
+	{
+	  rst += Coefficients[k] * RijSqPowers[k-1] * GaussianIJ;
+	}
+      for (int k=1; k<NbrAsymptotics; ++k)
+	{
+	  rst += Asymptotics[k] / sqrt(RijSqPowers[k<<1]+AsymptoticsReg[k]);
+	}
+      return rst;
+    }
+  else return 0.0;
 }

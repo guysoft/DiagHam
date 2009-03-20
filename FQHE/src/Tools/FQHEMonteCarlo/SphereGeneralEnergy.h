@@ -37,6 +37,9 @@
 #include "ParticleOnSphereCollection.h"
 #include "MCObservables/WeightedRealObservable.h"
 
+#include <iostream>
+using std::ostream;
+
 class SphereGeneralEnergy : public AbstractObservable
 {
   enum InteractionTypes
@@ -126,15 +129,28 @@ class SphereGeneralEnergy : public AbstractObservable
   // system = particle collection
   virtual void SetParticleCollection(AbstractParticleCollection *system);
 
+  // get radius of sphere
+  // returns: radius
+  double GetRadius() {return Radius;}
 
   // additional routines for energy observables:
   // returns the total background energy
   double GetTotalBackgroundEnergy();
 
+  // obtain value of the interaction for a given separation theta between particles
+  // theta = separation [as 2*R*(u_i v_j - u_j v_i)]
+  double GetPotentialValue(double R);
+
+  // plot effective interaction
+  // str = stream to write to
+  // numpoints = number of points to evaluate
+  ostream & PlotPotential(ostream &str, int numpoints=100);
+
  private:
 
   // evaluate exponentials and powers of r^2
   void EvaluateGaussianTables();
+
 
   
 };
