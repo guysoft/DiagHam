@@ -14,7 +14,7 @@ double dsqrarg1;   // shift declaration to nrutil.cc to suppress warnings if unu
 // default constructor
 SphereGeneralEnergy::SphereGeneralEnergy()
 {
-  this->NbrFlux=0;
+  this->InteractionType=SphereGeneralEnergy::Unknown;
 }
 
 // constructor
@@ -33,77 +33,198 @@ SphereGeneralEnergy::SphereGeneralEnergy(int nbrFlux, const char* parameters)
       InteractionDefinition.DumpErrors(cout) << endl;
       exit(-1);
     }
-  int TmpNbrParameters;
-  if (InteractionDefinition.GetAsDoubleArray("Parameters", ' ', this->Coefficients, TmpNbrParameters) == false)
+    char **TmpType;
+  int TmpLength;
+  this->InteractionType=0;
+  if (InteractionDefinition.GetAsStringArray("Type", ' ', TmpType, TmpLength) == false)
     {
-      cout << "Parameters are not defined or has a wrong value in " << parameters << endl;
-      exit(-1);
+      cout<<"Please indicate an interaction type in parameter file "<<parameters<<endl;
+      exit(1);
     }
-  if (InteractionDefinition.GetAsSingleInteger("NumCoefficients", this->NbrParameters) == false)
+  else
     {
-      cout << "NumCoefficients are not defined or has a wrong value in " << parameters << endl;
-      exit(-1);
-    }  
-  if (NbrParameters!=TmpNbrParameters)
-    {
-      cout << "Values not consistent in " << parameters << endl;
-      exit(-1);
+      if (TmpLength == 1)
+	{
+	  if (strcmp(TmpType[0], "Polynomial") == 0)
+	    this->InteractionType=SphereGeneralEnergy::Polynomial;	      
+	  if (strcmp(TmpType[0], "AsymptoticExp") == 0)
+	    this->InteractionType=SphereGeneralEnergy::AsymptoticExp;
+	}
+      else
+	{
+	  cout<<"Interaction name must be a single word."<<endl;
+	  exit(1);
+	}
     }
-  int TmpNphi;
-  if (InteractionDefinition.GetAsSingleInteger("Nphi", TmpNphi) == false)
+  delete [] TmpType[0];
+  delete [] TmpType;
+  
+  if (this->InteractionType==0)
     {
-      cout << "Nphi is not defined or has a wrong value in " << parameters << endl;
-      exit(-1);
+      cout << "Attention, the interaction requested in "<<parameters<<" is not defined, yet."<<endl;
+      exit(1);
     }
-  cout << "Using TmpNphi="<<TmpNphi<<endl;
-  this->Radius = sqrt(0.5*(double)TmpNphi); // the radius is also the inverse magnetic length
+  if (this->InteractionType==SphereGeneralEnergy::Polynomial)
+    {
+      int TmpNbrParameters;
+      if (InteractionDefinition.GetAsDoubleArray("Parameters", ' ', this->Coefficients, TmpNbrParameters) == false)
+	{
+	  cout << "Parameters are not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition.GetAsSingleInteger("NumCoefficients", this->NbrParameters) == false)
+	{
+	  cout << "NumCoefficients are not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}  
+      if (NbrParameters!=TmpNbrParameters)
+	{
+	  cout << "Values not consistent in " << parameters << endl;
+	  exit(-1);
+	}
+      int TmpNphi;
+      if (InteractionDefinition.GetAsSingleInteger("Nphi", TmpNphi) == false)
+	{
+	  cout << "Nphi is not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}
+      cout << "Using TmpNphi="<<TmpNphi<<endl;
+      this->Radius = sqrt(0.5*(double)TmpNphi); // the radius is also the inverse magnetic length
 
-  if (this->NbrParameters==1)
-    {
-      double *tmpC = new double[2];
-      tmpC[0]= this->Coefficients[0];
-      tmpC[1]= 0.0;
-      this->NbrParameters=2;
-      delete [] this->Coefficients;
-      this->Coefficients=tmpC;
-    }
+      if (this->NbrParameters==1)
+	{
+	  double *tmpC = new double[2];
+	  tmpC[0]= this->Coefficients[0];
+	  tmpC[1]= 0.0;
+	  this->NbrParameters=2;
+	  delete [] this->Coefficients;
+	  this->Coefficients=tmpC;
+	}
 
-  if (this->NbrFlux==0)
-    this->NbrFlux=TmpNphi;
+      if (this->NbrFlux==0)
+	this->NbrFlux=TmpNphi;
+    }
+  else if (this->InteractionType==SphereGeneralEnergy::AsymptoticExp)
+    {
+      if (this->NbrFlux<=0)
+	{
+	  cout << "Please indicate the appropriate flux with AsymptoticExp interactions!"<<endl;
+	  exit(-1);
+	}
+      this->Radius = sqrt(0.5*(double)NbrFlux); // the radius is also the inverse magnetic length
+      
+      /* Coding format for Asymptotic expansion:
+	 ParametersUpDown = C0 C1 [...] C_NumCoefficientsUpDown | B1 B3 ... B_(2*NumAsymptoticsUpDown+1) | A1 A3 ... A_(2*NumAsymptoticsUpDown+1)
+	 with A0 === d^2 for double layer form of interaction
+      */
+      int TmpNbrParameters;
+      if (InteractionDefinition.GetAsDoubleArray("Parameters", ' ', this->Coefficients, TmpNbrParameters) == false)
+	{
+	  cout << "Parameters are not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition.GetAsSingleInteger("NumCoefficients", this->NbrParameters) == false)
+	{
+	  cout << "NumCoefficients is not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition.GetAsSingleInteger("NumAsymptotics", this->NbrAsymptotics) == false)
+	{
+	  cout << "NumAsymptotics is not defined or has a wrong value in " << parameters << endl;
+	  exit(-1);
+	}
+      if (NbrParameters+2*NbrAsymptotics!=TmpNbrParameters)
+	{
+	  cout << "Total number of parameters not consistent in " << parameters << endl;
+	  exit(-1);
+	}
+      this->Asymptotics=this->Coefficients+this->NbrParameters;
+      this->AsymptoticsReg = this->Coefficients+2*this->NbrParameters;
+      this->RijSq=NULL;
+      int MaxNbrAsymptotics = 2*NbrAsymptotics+1;
+      int MaxNbrParameters = NbrParameters - 1;
+      this->NumSqPowers = (MaxNbrAsymptotics>MaxNbrParameters ? MaxNbrAsymptotics : MaxNbrParameters);
+    }
 }
 
 
 // destructor
 SphereGeneralEnergy::~SphereGeneralEnergy()
 {
-  if (NbrFlux>0)
+  if (this->InteractionType!=SphereGeneralEnergy::Unknown)
     {
       delete Values;
+      delete [] Coefficients;
+      if (this->InteractionType==SphereGeneralEnergy::AsymptoticExp)
+	{
+	  for (int j=0; j<this->NbrParticles; ++j)
+	    {
+	      delete [] this->RijSq[j];
+	      delete [] this->GaussianIJ[j];
+	    }
+	  delete [] this->RijSq;
+	  delete [] this->GaussianIJ;
+	  
+	  for (int i=1; i<this->NumSqPowers; ++i)
+	    {	      
+	      for (int j=0; j<this->NbrParticles; ++j)	
+		delete [] this->RijSqPowers[i][j];
+	      delete [] this->RijSqPowers[i];
+	    }
+	  delete [] this->RijSqPowers;
+	}
     }
 }
 
 // call to make an observation
 void SphereGeneralEnergy::RecordValue(double weight)
 {
-  int N = this->NbrParticles;
-  ++NbrObservations;
-  double rst, dij, sum=0.0;
-  for (int i=1;i<N;i++)
+  if (this->InteractionType==SphereGeneralEnergy::Polynomial)
     {
-      for(int j=0;j<i;j++)
+      int N = this->NbrParticles;
+      ++NbrObservations;
+      double rst, dij, sum=0.0;
+      for (int i=1;i<N;i++)
 	{
-	  dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
-	  rst = this->Coefficients[0]/ dij;
-	  double p = this->Coefficients[this->NbrParameters-1];
-	  for (int k=this->NbrParameters-2; k>0; --k)
+	  for(int j=0;j<i;j++)
 	    {
-	      p=p*dij + this->Coefficients[k];
+	      dij = 2.0*Norm(SpinorUCoordinates[i]*SpinorVCoordinates[j]-SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+	      rst = this->Coefficients[0]/ dij;
+	      double p = this->Coefficients[this->NbrParameters-1];
+	      for (int k=this->NbrParameters-2; k>0; --k)
+		{
+		  p=p*dij + this->Coefficients[k];
+		}
+	      rst+=p;
+	      sum+=rst;
 	    }
-	  rst+=p;
-	  sum+=rst;
 	}
+      this->Values->Observe(sum/Radius, weight);
     }
-  this->Values->Observe(sum/Radius, weight);
+  else if (this->InteractionType==SphereGeneralEnergy::AsymptoticExp)
+    {
+      this->EvaluateGaussianTables();
+      int N = this->NbrParticles;
+      ++NbrObservations;
+      double rst, sum=0.0;
+      for (int i=0;i<N;++i)
+	for(int j=i+1;j<N;++j)
+	  {
+	    rst = Asymptotics[0]/sqrt(RijSq[i][j]+AsymptoticsReg[0]);  // B1/sqrt(r^2+d^2)
+	    rst += Coefficients[0] * GaussianIJ[i][j]; // gaussian term C0 exp(-r^2)
+	    // gaussian terms Ck r^2k exp(-r^2)
+	    for (int k=1; k<NbrParameters; ++k)
+	      {
+		rst += Coefficients[k] * RijSqPowers[k-1][i][j] * GaussianIJ[i][j];
+	      }
+	    for (int k=1; k<NbrAsymptotics; ++k)
+	      {
+		  rst += Asymptotics[k] / sqrt(RijSqPowers[k<<1][i][j]+AsymptoticsReg[k]);
+	      }
+	    sum+=rst;
+	  }
+      this->Values->Observe(sum, weight);
+    }
 }
 
 // old version:
@@ -182,8 +303,48 @@ void SphereGeneralEnergy::SetParticleCollection(AbstractParticleCollection *syst
       exit(1);
     }
   this->System = (ParticleOnSphereCollection*) system;
+  // take care of internal tables which depend on particle number
+  if ((this->InteractionType == SphereGeneralEnergy::AsymptoticExp)
+      &&(this->RijSq!=NULL))
+    {
+      for (int j=0; j<this->NbrParticles; ++j)
+	{
+	  delete [] this->RijSq[j];
+	  delete [] this->GaussianIJ[j];
+	}
+      delete [] this->RijSq;
+      delete [] this->GaussianIJ;
+      
+      for (int i=1; i<this->NumSqPowers; ++i)
+	{	      
+	  for (int j=0; j<this->NbrParticles; ++j)	
+	    delete [] this->RijSqPowers[i][j];
+	  delete [] this->RijSqPowers[i];
+	}
+      delete [] this->RijSqPowers;
+    }
   this->NbrParticles = System->GetNbrParticles();
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+
+  if (this->InteractionType == SphereGeneralEnergy::AsymptoticExp)
+    {
+      this->RijSq=new double*[NbrParticles];
+      this->GaussianIJ=new double*[NbrParticles];
+      this->RijSqPowers=new double**[this->NumSqPowers];
+      for (int i=1; i<this->NumSqPowers; ++i)
+	{
+	  this->RijSqPowers[i]=new double*[NbrParticles];
+	  for (int j=0; j<this->NbrParticles; ++j)	
+	    this->RijSqPowers[i][j]=new double[NbrParticles];
+	}
+      for (int j=0; j<this->NbrParticles; ++j)
+	{
+	  this->RijSq[j]=new double[NbrParticles];
+	  this->GaussianIJ[j]=new double[NbrParticles];
+	}
+      this->RijSqPowers[0]=this->RijSq;
+    }
+
 }
 
 // additional routines for energy observables:
@@ -200,3 +361,19 @@ double SphereGeneralEnergy::GetTotalBackgroundEnergy()
   return Result*this->NbrParticles*this->NbrParticles/(2.0*Radius);
 }
   
+// evaluate exponentials and powers of r^2
+void SphereGeneralEnergy::EvaluateGaussianTables()
+{
+  double factor=DSQR(2.0*Radius);
+  for (int i=0; i<NbrParticles; ++i)
+    {
+      for (int j=i+1; j<NbrParticles; ++j)
+	{
+	  RijSq[i][j] = factor*SqrNorm(SpinorUCoordinates[i]*SpinorVCoordinates[j]
+				    -SpinorUCoordinates[j]*SpinorVCoordinates[i]);
+	  for (int k=1; k<NumSqPowers; ++k)
+	    RijSqPowers[k][i][j]=RijSqPowers[k-1][i][j]*RijSq[i][j];
+	  GaussianIJ[i][j]=exp(-RijSq[i][j]);
+	}
+    }
+}

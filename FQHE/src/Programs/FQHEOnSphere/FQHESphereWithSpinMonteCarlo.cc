@@ -46,6 +46,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('D', "lowest-d", "smallest layer separation d where the energy is evaluated", 0.0, true, /* minimum value */ 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "spacing-d", "spacing of layer separation d where the energy is evaluated", 0.25, true, /* minimum value */ 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-d", "number of layer separation d where the energy is evaluated", 13);
+  (*SystemGroup) += new SingleStringOption('\n',"all-params","File containing all parameters of the interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-inter","File containing parameters of inter-spin interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-intra","File containing parameters of intra-spin interaction");
   (*SystemGroup) += new SingleStringOption('\n',"params-other","File containing parameters of second intra-spin interaction for down spins (if different from up channel)");
@@ -98,7 +99,7 @@ int main(int argc, char** argv)
 						      &Manager);
 
   // add observables
-  if (Manager.GetString("params-inter")==0)
+  if ((Manager.GetString("params-inter")==0)&&(Manager.GetString("all-params")==0))
     {
       // add Coulomb energy for bilayer      
       SphereBilayerCoulombEnergy *Energy = new SphereBilayerCoulombEnergy(/*Flux */ NbrParticles-1, NbrSeparations, LowestD, Spacing);
@@ -107,15 +108,23 @@ int main(int argc, char** argv)
   else
     {
       // add a general energy function
-      if (Manager.GetString("params-intra")==0)
+      SphereWithSpinGeneralEnergy *Energy;
+      if (Manager.GetString("all-params")!=0)
 	{
-	  cout << "Attention: both inter- and intra-spin interactions are required!"<<endl;
-	  exit(-1);
+	  Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux, Manager.GetString("all-params"));
 	}
-      SphereWithSpinGeneralEnergy *Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux,
-									  Manager.GetString("params-inter"),
-									  Manager.GetString("params-intra"),
-									  Manager.GetString("params-other"));
+      else
+	{
+	  if (Manager.GetString("params-intra")==0)
+	    {
+	      cout << "Attention: both inter- and intra-spin interactions are required!"<<endl;
+	      exit(-1);
+	    }
+	  Energy=new SphereWithSpinGeneralEnergy(NbrUp, NbrFlux,
+						 Manager.GetString("params-inter"),
+						 Manager.GetString("params-intra"),
+						 Manager.GetString("params-other"));
+	}
       MonteCarloRoutine.AddObservable(Energy);
       if (Manager.GetBoolean("background-only"))
 	{

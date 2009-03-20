@@ -141,7 +141,7 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
 	  int m = this->Options->GetInteger("laughlin-exponent");
 	  AbstractMCSamplingFunction* rst  = new LaughlinSamplingFunction(N,m);
 	  return rst;
-	    }
+	}
       return 0;
     }
   else

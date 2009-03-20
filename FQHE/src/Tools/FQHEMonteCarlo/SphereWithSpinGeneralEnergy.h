@@ -39,7 +39,18 @@
 
 class SphereWithSpinGeneralEnergy : public AbstractObservable
 {
+ public:
+  enum InteractionTypes
+    {
+      Unknown = 0x0000,
+      Polynomial = 0x0001,
+      AsymptoticExp = 0x0002
+    };
+  
  protected:
+  // Type of interaction
+  int InteractionType;
+  
   // Radius of the sphere in units of magnetic length
   double Radius;
 
@@ -59,6 +70,20 @@ class SphereWithSpinGeneralEnergy : public AbstractObservable
   double *CoefficientsIntra;
   double *CoefficientsIntra2;
 
+  // Parameters for asymptotic form of interaction
+  // (number of values)
+  int NbrAsymptoticsInter;
+  int NbrAsymptoticsIntra;
+  int NbrAsymptoticsIntra2;
+  // (values for prefactors of asymptotic terms)
+  double *AsymptoticsInter;
+  double *AsymptoticsIntra;
+  double *AsymptoticsIntra2;
+  // (values for regularization of asymptotic terms)
+  double *AsymptoticsInterReg;
+  double *AsymptoticsIntraReg;
+  double *AsymptoticsIntra2Reg;
+
   // number of observations made
   int NbrObservations;
 
@@ -76,13 +101,20 @@ class SphereWithSpinGeneralEnergy : public AbstractObservable
 
   // core observable
   WeightedRealObservable *Values;
+
+  // tables for storage of distances and their powers
+  double **RijSq;
+  double ***RijSqPowers;
+  int NumSqPowers;
+  double **GaussianIJ;
+  
   
  public:
 
   // default constructor
   SphereWithSpinGeneralEnergy();
 
-  // constructor
+  // constructor (old style, multiple parameter files)
   // nbrUp = Number of particles with up spin
   // nbrFlux = Number of Flux piercing sphere
   // parametersInter = file describing parameters of the interaction (inter-spin)
@@ -90,6 +122,11 @@ class SphereWithSpinGeneralEnergy : public AbstractObservable
   // parametersIntra2 = file describing parameters of the interaction (intra-spin, other spin-channel)
   SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux, const char* parametersInter, const char* parametersIntra, const char* parametersIntra2=NULL);
 
+  // constructor (new style, single parameter file)
+  // nbrUp = Number of particles with up spin
+  // nbrFlux = Number of Flux piercing sphere
+  // parameters = file describing parameters of the interaction (all spin channels UpUp, UpDown, DownDown)
+  SphereWithSpinGeneralEnergy(int nbrUp, int nbrFlux, const char* parameters);
 
   // destructor
   virtual ~SphereWithSpinGeneralEnergy();
@@ -117,6 +154,11 @@ class SphereWithSpinGeneralEnergy : public AbstractObservable
   
   // returns the total background energy
   double GetTotalBackgroundEnergy();
+
+ private:
+
+  // evaluate exponentials and powers of r^2
+  void EvaluateGaussianTables();
   
 };
 

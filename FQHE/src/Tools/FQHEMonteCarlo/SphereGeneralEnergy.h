@@ -39,7 +39,17 @@
 
 class SphereGeneralEnergy : public AbstractObservable
 {
+  enum InteractionTypes
+    {
+      Unknown = 0x0000,
+      Polynomial = 0x0001,
+      AsymptoticExp = 0x0002
+    };
+  
  protected:
+  // Type of interaction
+  int InteractionType;
+
   // Radius of the sphere in units of magnetic length
   double Radius;
 
@@ -51,6 +61,14 @@ class SphereGeneralEnergy : public AbstractObservable
 
   // Coefficients of polynomial interaction
   double *Coefficients;
+
+  // Parameters for asymptotic form of interaction
+  // (number of values)
+  int NbrAsymptotics;
+  // (values for prefactors of asymptotic terms)
+  double *Asymptotics;
+  // (values for regularization of asymptotic terms)
+  double *AsymptoticsReg;
 
   // number of observations made
   int NbrObservations;
@@ -67,6 +85,13 @@ class SphereGeneralEnergy : public AbstractObservable
 
   // core observable
   WeightedRealObservable *Values;
+
+  // tables for storage of distances and their powers
+  double **RijSq;
+  double ***RijSqPowers;
+  int NumSqPowers;
+  double **GaussianIJ;
+
   
  public:
 
@@ -105,6 +130,12 @@ class SphereGeneralEnergy : public AbstractObservable
   // additional routines for energy observables:
   // returns the total background energy
   double GetTotalBackgroundEnergy();
+
+ private:
+
+  // evaluate exponentials and powers of r^2
+  void EvaluateGaussianTables();
+
   
 };
 

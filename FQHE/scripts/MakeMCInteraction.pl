@@ -13,9 +13,17 @@ my $NbrParticles=0;
 my $NbrIterations=10000000;
 my $Exponent=2;
 my $BackgroundStr="";
+my $RefineFlag="";
 
 while( (defined($ARGV[0])) && ( $ARGV[0] =~ /^-/ ))
   {
+    if ( $ARGV[0] =~ /^--/ )
+      {
+	if ( $ARGV[0] =~ /--refine/ )
+	  {
+	    $RefineFlag="-r";
+	  }
+      }
     if ( $ARGV[0] =~ /-r/ )
       {
 	$SimulateMC=1;
@@ -72,7 +80,7 @@ if (!defined($ARGV[1]))
     print("options\n  -r: run Monte-Carlo simulation using the generated potentials\n");
     print("  -p number of particles (required for simulation)\n");
     print("  -i number of MC iterations (default: 10000000)\n");
-    print("  -t trial parameters of halperin wavefunction k,l,m \n");
+    print("  -e exponent of the Jastrow-factor in the Pfaffian state \n");
     print("  -b print background energy only, then exit\n");
     print("  if datafile is given, a line with the state energy will be added, otherwise, write to MCSummary.dat\n");
     exit(1);
@@ -102,7 +110,7 @@ $PseudoPotBase =~ s/.dat//;
 
 print("Using BaseName = $PseudoPotBase\n");
 
-system("$Program -s $Flux -i $PseudoPotFile -o $PseudoPotBase.int");
+system("$Program -s $Flux -i $PseudoPotFile -o $PseudoPotBase.int $RefineFlag");
 
 my $Options="--interaction-params $PseudoPotBase.int";
 print("Options: $Options\n");
