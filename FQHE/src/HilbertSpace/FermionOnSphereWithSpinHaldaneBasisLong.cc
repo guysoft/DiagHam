@@ -503,7 +503,7 @@ long FermionOnSphereWithSpinHaldaneBasisLong::GenerateSqueezedStates(int lzMax, 
       ULONGLONG& TmpState = TmpGeneratedStates2[i];
       TmpIndex = this->FindStateIndex(TmpState, TmpLzMax[i]);
 #ifdef __64_BITS__
-      if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex &  0x3f) & 0x1l)
+      if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex &  0x3f)) & 0x1l)
 	{
 	  TmpState = ((ULONGLONG) 0x0l);
 	}
