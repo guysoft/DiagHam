@@ -38,6 +38,7 @@
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/ListIterator.h"
 #include "GeneralTools/Endian.h"
+#include "MathTools/FactorialCoefficient.h" 
 
 
 #include <math.h>
@@ -1520,7 +1521,7 @@ RealVector& FermionOnSphereHaldaneHugeBasis::GenerateJackPolynomial(RealVector& 
 		  }
 	      }
 	  }
-      jack[i] = Coefficient;
+      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
       if ((i & 0x3fffl) == 0l)
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
@@ -1793,3 +1794,44 @@ void FermionOnSphereHaldaneHugeBasis::GetConnectedSqueezedPartitions(long nbrPar
   delete[] TmpMonomial;
   delete[] TmpMonomial2;
 }
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state = reference on the unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+double FermionOnSphereHaldaneHugeBasis::JackSqrNormalization (RealVector& outputVector, long minIndex, long nbrComponents)
+{
+  double SqrNorm = 0.0;
+  int* TmpMonomial = new int [this->NbrFermions];
+  FactorialCoefficient Factorial;
+  int HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
+    {
+      Factorial.SetToOne();
+      this->ConvertToMonomial(this->StateDescription[i], TmpMonomial);
+      for (int k = 0; k < this->NbrFermions; ++k)
+	{
+	  if (HalfLzMax < TmpMonomial[k])
+	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomial[k]);
+	  else
+	    if (HalfLzMax > TmpMonomial[k])
+	      Factorial.PartialFactorialDivide(TmpMonomial[k] + 1, HalfLzMax);
+	}	      
+      SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  cout << endl;
+  delete[] TmpMonomial;
+  return SqrNorm;
+}
+
