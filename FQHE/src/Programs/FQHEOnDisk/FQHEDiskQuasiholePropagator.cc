@@ -121,15 +121,32 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  int* ReferenceState = 0;
-	  if (FQHEGetRootPartition(Manager.GetString("base-reference"), BaseNbrParticles, BaseLzMax, ReferenceState) == false)
-	    return -1;
-	  for (int i = 0; i <= BaseLzMax; ++i)
-	    DiffLzMax -= i * ReferenceState[i];
-	  if (Manager.GetString("baseload-hilbert") != 0)
-	    BaseBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("baseload-hilbert"));	  
+	  if (Manager.GetBoolean("basehuge-basis") == true)
+	    {
+	      if (Manager.GetString("baseload-hilbert") == 0)
+		{
+		  cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+		  return -1;
+		}
+	      int* ReferenceState = 0;
+	      if (FQHEGetRootPartition(Manager.GetString("base-reference"), BaseNbrParticles, BaseLzMax, ReferenceState) == false)
+		return -1;
+	      for (int i = 0; i <= BaseLzMax; ++i)
+		DiffLzMax -= i * ReferenceState[i];
+	      BaseBasis = new FermionOnSphereHaldaneHugeBasis (Manager.GetString("baseload-hilbert"), Manager.GetInteger("memory"));
+	    }
 	  else
-	    BaseBasis = new FermionOnSphereHaldaneBasis(BaseNbrParticles, BaseTotalLz, BaseLzMax, ReferenceState);
+	    {
+	      int* ReferenceState = 0;
+	      if (FQHEGetRootPartition(Manager.GetString("base-reference"), BaseNbrParticles, BaseLzMax, ReferenceState) == false)
+		return -1;
+	      for (int i = 0; i <= BaseLzMax; ++i)
+		DiffLzMax -= i * ReferenceState[i];
+	      if (Manager.GetString("baseload-hilbert") != 0)
+		BaseBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("baseload-hilbert"));	  
+	      else
+		BaseBasis = new FermionOnSphereHaldaneBasis(BaseNbrParticles, BaseTotalLz, BaseLzMax, ReferenceState);
+	    }
 	}
     
       FQHEDiskQuasiholePropagatorOperation Operation(BaseBasis, &BaseVector);
@@ -178,15 +195,32 @@ int main(int argc, char** argv)
     }
   else
     {
-      int* ReferenceState = 0;
-      if (FQHEGetRootPartition(Manager.GetString("excited-reference"), ExcitedNbrParticles, ExcitedLzMax, ReferenceState) == false)
-	return -1;
-      for (int i = 0; i <= ExcitedLzMax; ++i)
-	DiffLzMax += i * ReferenceState[i];
-      if (Manager.GetString("excitedload-hilbert") != 0)
-	ExcitedBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("excitedload-hilbert"));	  
+      if (Manager.GetBoolean("excitedhuge-basis") == true)
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("excited-reference"), ExcitedNbrParticles, ExcitedLzMax, ReferenceState) == false)
+	    return -1;
+	  for (int i = 0; i <= ExcitedLzMax; ++i)
+	    DiffLzMax += i * ReferenceState[i];
+	  if (Manager.GetString("excitedload-hilbert") == 0)
+	    {
+	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+	      return -1;
+	    }
+	  ExcitedBasis = new FermionOnSphereHaldaneHugeBasis (Manager.GetString("excitedload-hilbert"), Manager.GetInteger("memory"));
+	}
       else
-	ExcitedBasis = new FermionOnSphereHaldaneBasis(ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, ReferenceState);
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("excited-reference"), ExcitedNbrParticles, ExcitedLzMax, ReferenceState) == false)
+	    return -1;
+	  for (int i = 0; i <= ExcitedLzMax; ++i)
+	    DiffLzMax += i * ReferenceState[i];
+	  if (Manager.GetString("excitedload-hilbert") != 0)
+	    ExcitedBasis = new FermionOnSphereHaldaneBasis(Manager.GetString("excitedload-hilbert"));	  
+	  else
+	    ExcitedBasis = new FermionOnSphereHaldaneBasis(ExcitedNbrParticles, ExcitedTotalLz, ExcitedLzMax, ReferenceState);
+	}
     }
 
   
