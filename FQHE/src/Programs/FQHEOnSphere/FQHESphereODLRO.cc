@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "vector file that describes the smaller system");
   (*SystemGroup) += new SingleStringOption  ('o', "output-state", "vector file that describes the smaller system");
+  (*SystemGroup) += new BooleanOption  ('\n', "input-unnormalized", "indicates that the input state is written in the unnormalized basis");
   (*SystemGroup) += new BooleanOption  ('\n', "input-haldane", "use the squeezed basis or the input state");
   (*SystemGroup) += new BooleanOption  ('\n', "output-haldane", "use the squeezed basis or the output state");  
   (*SystemGroup) += new SingleStringOption  ('\n', "input-reference", "use a file as the definition of the reference state of the input state");
@@ -194,6 +195,11 @@ int main(int argc, char** argv)
 	}
     }
 
+
+  if (Manager.GetBoolean("input-unnormalized") == false)
+    {
+      InputBasis->ConvertToUnnormalizedMonomial(InputState);
+    }
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
   
 //   for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
