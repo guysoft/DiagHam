@@ -291,6 +291,16 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = quare normalization 
   virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
+  // remove part of each Fock state, discarding component if the Fock state does not a given pattern
+  //
+  // inputVector = state to truncate
+  // reducedSpace = Hilbert space where the truncated state will lie
+  // pattern = array describing the pattern 
+  // patternSize = pattern size
+  // patternShift = indicate where the pattern has to be applied
+  // return value = trucated state
+  virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnSphere* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
+
 };
 
 #endif

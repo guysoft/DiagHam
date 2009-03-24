@@ -1833,3 +1833,45 @@ double FermionOnSphere::JackSqrNormalization (RealVector& outputVector, long min
   return SqrNorm;
 }
 
+// remove part of each Fock state, discarding component if the Fock state does not a given pattern
+//
+// inputVector = state to truncate
+// reducedSpace = Hilbert space where the truncated state will lie
+// pattern = array describing the pattern 
+// patternSize = pattern size
+// patternShift = indicate where the pattern has to be applied
+// return value = trucated state
+
+RealVector FermionOnSphere::TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnSphere* reducedSpace, int* pattern, int patternSize, int patternShift)
+{
+  FermionOnSphere* TmpSpace = (FermionOnSphere*) reducedSpace; 
+  unsigned long PatternMask =  (0x1ul << patternSize) - 0x1ul;
+  PatternMask <<= patternShift;
+  unsigned long Pattern = 0x0ul;
+  for (int i = 0; i < patternSize; ++i)
+    {
+      if (pattern[i] == 1)
+	Pattern |= 0x1ul << i;
+    }
+  Pattern <<= patternShift;
+  unsigned long Mask = (0x1ul << patternShift) - 0x1ul;
+  RealVector TmpVector (TmpSpace->LargeHilbertSpaceDimension, true);
+  unsigned long Tmp;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {      
+      Tmp = this->StateDescription[i]; 
+      if ((Tmp & PatternMask) == Pattern)
+	{	  
+	  Tmp = ((Tmp >> patternSize) & (~Mask)) | (Tmp & Mask);
+	  int TmpLzMax = TmpSpace->LzMax;
+	  //	  cout << hex << Tmp << " " << this->StateDescription[i] << " " << ((Tmp >> patternSize)) << " " << (Tmp & Mask) << " " << Mask << dec << endl;
+	  while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpIndex = TmpSpace->FindStateIndex(Tmp, TmpLzMax);
+	  if (TmpIndex < TmpSpace->HilbertSpaceDimension)
+	    TmpVector[TmpIndex] = inputVector[i];
+	}
+    }
+  return TmpVector;
+}
+ 
