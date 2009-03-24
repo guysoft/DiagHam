@@ -195,6 +195,12 @@ int main(int argc, char** argv)
     }
 
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
+  
+//   for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+//     {
+//       cout << TruncatedState[i] << " ";
+//       OutputBasis->PrintStateMonomial(cout, i) << endl;
+//     }
   if (TruncatedState.Norm() > 1e-6)
     {
       OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState);

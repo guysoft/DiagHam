@@ -1671,7 +1671,7 @@ RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, 
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
-  double Factor = state[reference];
+  double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
