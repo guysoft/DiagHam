@@ -1601,7 +1601,15 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
-  double Factor = 1.0 / state[reference];
+  double Factor = 1.0;
+  bool NegativeReferenceFlag = false;
+  if (reference >= 0l)
+    Factor /= state[reference];
+  else
+    {
+      reference = 0l;
+      NegativeReferenceFlag = true;
+    }
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
   BinomialCoefficients Binomials(this->LzMax);
@@ -1655,7 +1663,8 @@ RealVector& FermionOnSphere::ConvertToUnnormalizedMonomial(RealVector& state, lo
 	}
       state[i] *= Coefficient;
     }
-  state[reference] = 1.0;
+  if (NegativeReferenceFlag == false)
+    state[reference] = 1.0;
   delete[] TmpMonomialReference;
   delete[] TmpMonomial;
   return state;
@@ -1671,8 +1680,14 @@ RealVector& FermionOnSphere::ConvertFromUnnormalizedMonomial(RealVector& state, 
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
-  double Factor = 1.0 / state[reference];
-  state[reference] = 1.0;
+  double Factor = 1.0;
+  if (reference >= 0l)
+    {
+      Factor /= state[reference];
+      state[reference] = 1.0;
+    }
+  else
+    reference = 0l;
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
   BinomialCoefficients Binomials(this->LzMax);

@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("input-unnormalized") == false)
     {
-      InputBasis->ConvertToUnnormalizedMonomial(InputState);
+      InputBasis->ConvertToUnnormalizedMonomial(InputState, -1);
     }
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
   
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
 //     }
   if (TruncatedState.Norm() > 1e-6)
     {
-      OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState);
+      OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1);
       TruncatedState /= TruncatedState.Norm();
     }
 
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
     }
 
   cout.precision(14); 
-  cout << "ODLRO=" << (OutputState * TruncatedState) << endl;
+  cout << "ODLRO=" << fabs(OutputState * TruncatedState) << endl;
 
 
 
