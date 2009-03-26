@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      OutputFileName = new char [256];
+      OutputFileName = new char [512];
       if (Statistics == true)
 	{
 	  if (Manager.GetBoolean("normalize"))	
@@ -225,11 +225,13 @@ int main(int argc, char** argv)
 	}
     }
 
-  if (Manager.GetBoolean("normalize"))
-    OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
-  else
-    OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
+   if (Manager.GetBoolean("normalize"))
+     OutputBasis->ConvertFromUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
+   else
+     OutputBasis->ConvertToUnnormalizedMonomial(OutputState, Manager.GetInteger("normalization"));
   
+
+  cout << OutputBasis->GetHilbertSpaceDimension() << " " << OutputState.GetVectorDimension() << endl;
   if (OutputTxtFileName != 0)
     {
       ofstream File;

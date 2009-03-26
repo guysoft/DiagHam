@@ -1876,10 +1876,9 @@ RealVector FermionOnSphere::TruncateStateWithPatternConstraint(RealVector& input
     {      
       Tmp = this->StateDescription[i]; 
       if ((Tmp & PatternMask) == Pattern)
-	{	  
+	{	  	  
 	  Tmp = ((Tmp >> patternSize) & (~Mask)) | (Tmp & Mask);
 	  int TmpLzMax = TmpSpace->LzMax;
-	  //	  cout << hex << Tmp << " " << this->StateDescription[i] << " " << ((Tmp >> patternSize)) << " " << (Tmp & Mask) << " " << Mask << dec << endl;
 	  while (((Tmp >> TmpLzMax) & 0x1ul) == 0x0ul)
 	    --TmpLzMax;
 	  int TmpIndex = TmpSpace->FindStateIndex(Tmp, TmpLzMax);

@@ -446,17 +446,16 @@ class FermionOnSphere :  public ParticleOnSphere
   // initialState = reference on the state whose symmetric counterpart has to be computed
   virtual unsigned long GetSymmetricState (unsigned long initialState);
 
-  // convert a bosonic state to its monomial representation
+  // convert a fermionic state to its monomial representation
   //
-  // initialState = initial bosonic state in its fermionic representation
-  // initialStateLzMax = initial bosonic state maximum Lz value
+  // initialState = initial fermionic state in its fermionic representation
   // finalState = reference on the array where the monomial representation has to be stored
   virtual void ConvertToMonomial(unsigned long initialState, int*& finalState);
 
-  // convert a bosonic state from its monomial representation
+  // convert a fermionic state from its monomial representation
   //
   // initialState = array where the monomial representation is stored
-  // return value = bosonic state in its fermionic representation
+  // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(int* initialState);
 
 };
@@ -496,10 +495,9 @@ inline unsigned long FermionOnSphere::GetSymmetricState (unsigned long initialSt
   return TmpState;
 }
 
-// convert a bosonic state to its monomial representation
+// convert a fermionic state to its monomial representation
 //
-// initialState = initial bosonic state in its fermionic representation
-// initialStateLzMax = initial bosonic state maximum Lz value
+// initialState = initial fermionic state in its fermionic representation
 // finalState = reference on the array where the monomial representation has to be stored
 
 inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, int*& finalState)
@@ -510,10 +508,10 @@ inline void FermionOnSphere::ConvertToMonomial(unsigned long initialState, int*&
       finalState[Index++] = j;
 }
 
-// convert a bosonic state from its monomial representation
+// convert a fermionic state from its monomial representation
 //
 // initialState = array where the monomial representation is stored
-// return value = bosonic state in its fermionic representation
+// return value = fermionic state in its fermionic representation
 
 inline unsigned long FermionOnSphere::ConvertFromMonomial(int* initialState)
 {

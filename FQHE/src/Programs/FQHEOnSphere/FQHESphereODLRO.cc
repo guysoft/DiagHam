@@ -207,7 +207,8 @@ int main(int argc, char** argv)
 //       cout << TruncatedState[i] << " ";
 //       OutputBasis->PrintStateMonomial(cout, i) << endl;
 //     }
-  if (TruncatedState.Norm() > 1e-6)
+  double truc = TruncatedState.Norm();
+  if (TruncatedState.Norm() > 1e-10)
     {
       OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1);
       TruncatedState /= TruncatedState.Norm();
@@ -221,7 +222,7 @@ int main(int argc, char** argv)
     }
 
   cout.precision(14); 
-  cout << "ODLRO=" << fabs(OutputState * TruncatedState) << endl;
+  cout << "ODLRO=" << fabs(OutputState * TruncatedState) << " " << truc << endl;
 
 
 

@@ -1882,7 +1882,7 @@ RealVector& FermionOnSphereWithSpin::ConvertFromUnnormalizedMonomial(RealVector&
 {
   int* TmpMonomialReference = new int [this->NbrFermions];
   int* TmpMonomial = new int [this->NbrFermions];
-  double Factor = state[reference];
+  double Factor = 1.0 / state[reference];
   state[reference] = 1.0;
   double* SqrtCoefficients = new double [this->LzMax + 1];
   double* InvSqrtCoefficients = new double [this->LzMax + 1];
@@ -1890,20 +1890,50 @@ RealVector& FermionOnSphereWithSpin::ConvertFromUnnormalizedMonomial(RealVector&
   for (int k = 0; k <= this->LzMax; ++k)
     {
       InvSqrtCoefficients[k] = sqrt(Binomials.GetNumericalCoefficient(this->LzMax, k));
-      SqrtCoefficients[k] = 1.0 / InvSqrtCoefficients[k];
+      SqrtCoefficients[k] =  1.0 / InvSqrtCoefficients[k];
     }
   unsigned long TmpState = this->StateDescription[reference];
   int Index = 0;
   for (int j = this->LzMax; j >= 0; --j)
-    if (((TmpState >> j) & 1ul) != 0ul)
-      TmpMonomialReference[Index++] = j;
+    {
+      switch ((TmpState >> (2 * j)) & 3ul)
+	{
+	case 0x1ul:
+	  TmpMonomialReference[Index++] = j;
+	  break;
+	case 0x2ul:
+	  TmpMonomialReference[Index++] = j;
+	  break;
+	case 0x3ul:
+	  {
+	    TmpMonomialReference[Index++] = j;
+	    TmpMonomialReference[Index++] = j;
+	  }
+	  break;
+	}
+    }
   for (int i = 1; i < this->HilbertSpaceDimension; ++i)
     {
       Index = 0;
       TmpState = this->StateDescription[i];
       for (int j = this->LzMax; j >= 0; --j)
-	if (((TmpState >> j) & 1ul) != 0ul)
-	  TmpMonomial[Index++] = j;
+	{
+	  switch ((TmpState >> (2 * j)) & 3ul)
+	    {
+	    case 0x1ul:
+	      TmpMonomial[Index++] = j;
+	      break;
+	    case 0x2ul:
+	      TmpMonomial[Index++] = j;
+	      break;
+	    case 0x3ul:
+	      {
+		TmpMonomial[Index++] = j;
+		TmpMonomial[Index++] = j;
+	      }
+	      break;
+	    }
+	}
       int Index1 = 0;
       int Index2 = 0;
       double Coefficient = Factor;

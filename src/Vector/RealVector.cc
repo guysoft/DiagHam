@@ -99,6 +99,7 @@ RealVector::RealVector(long size, bool zeroFlag)
   this->VectorType = Vector::RealDatas;
   this->LargeDimension = size;
   this->LargeTrueDimension = this->LargeDimension;
+#ifdef  __64_BITS__
   if (this->LargeDimension < (1l << 31))
     this->Dimension = (int) size;
   else
@@ -106,6 +107,9 @@ RealVector::RealVector(long size, bool zeroFlag)
       this->Dimension = -1;
       this->VectorType |= Vector::LargeData;
     }
+#else
+  this->Dimension = (int) size;
+#endif
   this->TrueDimension = this->Dimension;
   this->Components = new double [this->LargeDimension + 1]; 
   this->Flag.Initialize();
@@ -390,6 +394,7 @@ void RealVector::Resize (long dimension)
   if (dimension <= this->LargeTrueDimension)
     {
       this->LargeDimension = dimension;
+#ifdef  __64_BITS__
       if (this->LargeDimension < (1l << 31))
 	this->Dimension = (int) this->LargeDimension;
       else
@@ -397,6 +402,9 @@ void RealVector::Resize (long dimension)
 	  this->Dimension = -1;
 	  this->VectorType |= Vector::LargeData;
 	}
+#else
+      this->Dimension = (int) this->LargeDimension;
+#endif
       return;
     }
   double* TmpVector = new double [dimension + 1l];
@@ -408,6 +416,7 @@ void RealVector::Resize (long dimension)
     }
   this->LargeDimension = dimension;
   this->LargeTrueDimension = dimension;
+#ifdef  __64_BITS__
   if (this->LargeDimension < (1l << 31))
     {
       this->Dimension = (int) this->LargeDimension;
@@ -419,6 +428,10 @@ void RealVector::Resize (long dimension)
       this->TrueDimension = -1;
       this->VectorType |= Vector::LargeData;
     }
+#else
+  this->Dimension = (int) this->LargeDimension;
+  this->TrueDimension = (int) this->LargeTrueDimension;
+#endif
   this->Components = TmpVector;
   this->Flag = GarbageFlag();
   this->Flag.Initialize();

@@ -439,6 +439,26 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = sign value (+1.0 or -1.0)
   double GetStateSign(int index, int *IndicesDown);
 
+  // compute the sign when moving all the up spin to the right
+  //
+  // state = state whose spin splitting sign has to be computed
+  // return = splitting sign
+  virtual double GetSpinSeparationSign(unsigned long state);
+
+  // convert a state to its monomial representation
+  //
+  // initialState = initial bosonic state in its fermionic representation
+  // finalStateUp = reference on the array where the monomial spin up representation has to be stored
+  // finalStateDown = reference on the array where the monomial spin down representation has to be stored
+  virtual void ConvertToMonomial(unsigned long initialState, int*& finalStateUp, int*& finalStateDown);
+
+  // convert a  state from its monomial representation
+  //
+  // initialStateUp = array where the monomial spin up representation is stored
+  // initialStateDown = array where the monomial spin down representation is stored
+  // return value = state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(int* initialStateUp, int* initialStateDown);
+
 };
 
 // get the particle statistic 
@@ -448,6 +468,74 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 inline int FermionOnSphereWithSpin::GetParticleStatistic()
 {
   return ParticleOnSphereWithSpin::FermionicStatistic;
+}
+
+// convert a state to its monomial representation
+//
+// initialState = initial bosonic state in its fermionic representation
+// finalStateUp = reference on the array where the monomial spin up representation has to be stored
+// finalStateDown = reference on the array where the monomial spin down representation has to be stored
+
+inline void FermionOnSphereWithSpin::ConvertToMonomial(unsigned long initialState, int*& finalStateUp, int*& finalStateDown)
+{
+  int IndexUp = 0;
+  int IndexDown = 0;
+  unsigned long Tmp;
+  for (int j = this->LzMax; j >= 0; --j)
+    {
+      Tmp = initialState >> (j * 2);
+      if ((Tmp & 2ul) != 0ul)
+	finalStateUp[IndexUp++] = j;
+      if ((Tmp & 1ul) != 0ul)
+	finalStateDown[IndexDown++] = j;      
+    }
+}
+
+// convert a  state from its monomial representation
+//
+// initialStateUp = array where the monomial spin up representation is stored
+// initialStateDown = array where the monomial spin down representation is stored
+// return value = state in its fermionic representation
+
+inline unsigned long FermionOnSphereWithSpin::ConvertFromMonomial(int* initialStateUp, int* initialStateDown)
+{
+  unsigned long TmpState = 0x0ul;  
+  for (int j = 0; j < this->NbrFermionsUp; ++j)
+    TmpState |= 0x2ul << (initialStateUp[j] << 1);
+  for (int j = 0; j < this->NbrFermionsDown; ++j)
+    TmpState |= 0x1ul << (initialStateDown[j] << 1);
+  return TmpState;
+}
+
+// compute the sign when moving all the up spin to the right
+//
+// state = state whose spin splitting sign has to be computed
+// return = splitting sign
+
+inline double FermionOnSphereWithSpin::GetSpinSeparationSign(unsigned long state)
+{
+  double Sign = 1.0;
+  for (int j = 0; j <= this->LzMax; ++j)
+    {
+      unsigned long TmpState = state;
+      if ((TmpState & (0x1ul << ((2 * j) + 1))) != 0x0ul)
+	{
+	  TmpState &= (0x1ul << ((2 * j) + 1)) - 0x1ul;
+#ifdef __64_BITS__
+	  TmpState &= 0x5555555555555555ul;	  
+	  TmpState ^= TmpState >> 32;
+#else
+	  TmpState &= 0x55555555ul;
+#endif	  
+	  TmpState ^= TmpState >> 16;
+	  TmpState ^= TmpState >> 8;
+	  TmpState ^= TmpState >> 4;
+	  TmpState ^= TmpState >> 2;
+	  if ((TmpState & 0x1ul) != 0x0ul)
+	    Sign *= -1.0;
+	}
+    }
+  return Sign;
 }
 
 #endif
