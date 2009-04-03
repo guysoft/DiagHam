@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
@@ -67,6 +68,7 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
+  Manager += OutputGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "filenames of state vectors to be processed");
@@ -81,16 +83,16 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
-  (*MiscGroup) += new SingleStringOption ('o', "output-file", "redirect output to this file",NULL);
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "redirect output to this file",NULL);
+  (*OutputGroup) += new BooleanOption ('\n', "plot-density", "plot the density matrix eigenstates");
+  (*OutputGroup) += new BooleanOption ('\n', "save-vectors", "write vectors, which yield maximum density matrix EV");  
+  (*OutputGroup) += new BooleanOption  ('v', "momentum-vectors", "writes the basis of momentum eigenstates");  
+  (*OutputGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
+  (*OutputGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
+  (*OutputGroup) += new BooleanOption  ('\n', "show-basis", "show elements of vector in basis and exit");
   (*MiscGroup) += new SingleIntegerOption ('\n', "nbr-density", "number of density matrix eigenstates to be written out",1);
-  (*MiscGroup) += new BooleanOption ('\n', "plot-density", "plot the density matrix eigenstates");
-  (*MiscGroup) += new BooleanOption ('\n', "save-vectors", "write vectors, which yield maximum density matrix EV");  
-  (*MiscGroup) += new BooleanOption  ('v', "momentum-vectors", "writes the basis of momentum eigenstates");
   (*MiscGroup) += new SingleIntegerOption ('s',"superpositions","in case of two input vectors, number of values for phase in superpositions",12);
-  (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");
-  (*MiscGroup) += new SingleDoubleOption  ('r',"dynamic-range","range of density operator eigenvalues to be displayed",1e-5);
-  (*MiscGroup) += new BooleanOption  ('\n', "show-translation", "display the matrix defining the translation operator");
-  (*MiscGroup) += new BooleanOption  ('\n', "show-basis", "show elements of vector in basis and exit");
+  (*MiscGroup) += new BooleanOption  ('V', "verbose", "give additional output");  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   Manager.StandardProceedings(argv, argc, cout);

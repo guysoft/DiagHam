@@ -402,7 +402,7 @@ double SphereGeneralEnergy::GetTotalBackgroundEnergy()
       gsl_integration_qag (&TheIntegrand, 1e-8, M_PI, 0.0, 1e-8, numInt, /* KEY */ GSL_INTEG_GAUSS41,
 			   IntW, &rst, &error);
 #endif
-      return rst*this->NbrParticles*this->NbrParticles/2.0;
+      return rst*this->NbrParticles*this->NbrParticles/4.0;
     }
   else
     return 0.0;

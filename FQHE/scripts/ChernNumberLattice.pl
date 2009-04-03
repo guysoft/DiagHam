@@ -21,6 +21,7 @@ my $Degeneracy=1;
 my @Multiplet;
 $Multiplet[0]=0;
 my $Memory=1000;
+my $Options="";
 my $NbrCalculate=1;
 
 while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
@@ -94,6 +95,20 @@ while( (defined($ARGV[0])&&$ARGV[0] =~ /^-/ ))
 	    $NbrGrid = $ARGV[0];
 	  }
       }
+    if ( $ARGV[0] =~ /-o/ )
+      {
+        if (length($ARGV[0])>2)
+          {
+            $Options = $ARGV[0];
+            $Options =~ s/-o//;
+          }
+        else
+          {
+            shift(@ARGV);
+            $Options = $ARGV[0];
+          }
+      }
+
     if ( $ARGV[0] =~ /-q/ )
       {
 	my $TmpStr;
@@ -284,7 +299,7 @@ sub AnalyzeChern
     my $RefS2x = $ReferenceVals[2];
     my $RefS2y = $ReferenceVals[3];
 
-    my $CommandLine = "$Program -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory";
+    my $CommandLine = "$Program -p $N -x $x -y $y $Interaction -q $q -n $NbrCalculate -m $Memory $Options";
 
     TestVectors ($BaseName, $RefS1x, $RefS1y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);
     TestVectors ($BaseName, $RefS2x, $RefS2y, $Degeneracy, $CalculateVectors, $CommandLine, \@Multiplet);

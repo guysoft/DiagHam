@@ -277,6 +277,10 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
+  // get the variance of the state
+  // index = index of state to consider
+  virtual int StateVariance (int index);
+
   // save Hilbert space description to disk
   //
   // fileName = name of the file where the Hilbert space description has to be saved

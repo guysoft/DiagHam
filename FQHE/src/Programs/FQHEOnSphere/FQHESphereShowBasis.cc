@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
+  (*OutputGroup) += new BooleanOption  ('\n', "variance", "show state variance");
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_sphere_suN_n_nbrparticles_q_nbrfluxquanta_z_totallz.basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -250,13 +251,25 @@ int main(int argc, char** argv)
 	   cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
 	 }
        else
-	 {
-	   if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
-	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	       Space->PrintState(File, i) << " : " << State[i] << endl;	   
+	 {             
+	   if (Manager.GetBoolean("variance"))
+	     {
+	       if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		   Space->PrintState(File, i) << " : " << Space->StateVariance(i) << " " << State[i] << " " << i <<endl;	   
+	       else
+		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		   Space->PrintState(cout, i) << " : " << Space->StateVariance(i) << " " << State[i] << " " << i <<endl;	   
+	     }
 	   else
-	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	       Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	     {
+	       if (((BooleanOption*) Manager["save-disk"])->GetBoolean() == true)
+		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		   Space->PrintState(File, i) << " : " << State[i] << endl;	   
+	       else
+		 for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		   Space->PrintState(cout, i) << " : " << State[i] << endl;	   
+	     }
 	 }
      }
 

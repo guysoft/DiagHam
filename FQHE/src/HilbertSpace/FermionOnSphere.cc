@@ -622,6 +622,21 @@ double FermionOnSphere::AdA (int index, int m)
     return 0.0;
 }
 
+
+// get the variance of the state
+// index = index of state to consider
+int FermionOnSphere::StateVariance (int index)
+{
+  int MyStateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  int var=0;
+  for (int m=0; m<=MyStateLzMax; ++m)
+    if  ( (State & (0x1ul << m)) != 0x0ul)
+      var += ((m<<1)-LzMax)*((m<<1)-LzMax);
+  return var;
+}
+
+
 // apply a^+_m a_n operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

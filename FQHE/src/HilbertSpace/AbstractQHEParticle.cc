@@ -145,6 +145,7 @@ Complex AbstractQHEParticle::EvaluateWaveFunctionWithTimeCoherence (RealVector& 
 void AbstractQHEParticle::InitializeWaveFunctionEvaluation (bool timeCoherence)
 {
 }
+
                                     
 // forge an eigenstate from a description given by a file
 //
@@ -167,6 +168,15 @@ bool AbstractQHEParticle::ForgeEigenstate(char* filename, ComplexVector& state)
 {
   return false;
 }
+
+// get the variance of the state
+// index = index of state to consider
+int AbstractQHEParticle::StateVariance (int index)
+{
+  cout << "Variance requested - needs to be defined in derived class"<<endl;
+  return 0.0;
+}
+
 
 // forge an eigenstate from a description given by a file
 //

@@ -225,7 +225,6 @@ int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient)
     }
 }
 
-
 // evaluate wave function in real space using a given basis
 //
 // state = vector corresponding to the state in the Fock basis

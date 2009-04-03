@@ -76,6 +76,10 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   // return value = true if no error occured
   virtual bool ForgeEigenstate(char* filename, ComplexVector& state);
 
+  // get the variance of the state
+  // index = index of state to consider
+  virtual int StateVariance (int index);
+
   // evaluate wave function in real space using a given basis
   //
   // state = vector corresponding to the state in the Fock basis
