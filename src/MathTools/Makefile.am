@@ -9,4 +9,5 @@ BinomialCoefficients.cc \
 GroupedPermutations.cc \
 ClebschGordanDiskCoefficients.cc \
 ArithmeticGeometricMean.cc \
-JacobiThetaFunction.cc
+JacobiThetaFunction.cc \
+WignerSmallDMatrix.cc
