@@ -37,6 +37,13 @@
 
 #include <math.h>
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 
 
 class WignerSmallDMatrix
@@ -92,40 +99,43 @@ class WignerSmallDMatrix
 inline double WignerSmallDMatrix::operator () (int m1, int m2, double angle)
 {
   double Sign = 1.0;
-  if (m2 < m1)
-    {
-      int Tmp = m1;
-      m1 = m2;
-      m2 = Tmp;
-      Sign = -1.0;
-    }
-  angle *= 0.5;
-  double CosValue = cos(angle);
-  double SinValue = sin(angle);
   m1 += this->JValue;
   m1 >>= 1;
   m2 += this->JValue;
   m2 >>= 1;
-  int Diff = m2 - m1;;
+  if (m2 > m1)
+    {
+      int Tmp = m1;
+      m1 = m2;
+      m2 = Tmp;
+      if (((m1 - m2) & 1) != 0)
+	Sign = -1.0;
+    }
+  angle *= 0.5;
+  double CosValue = cos(angle);
+  double SinValue = sin(angle);
+  int Diff = m1 - m2;;
   double Coefficient = 0.0;
   double* TmpCoefficients = this->Coefficients[m1][m2];
   double CurrentSin = 1.0;
   double CurrentCos = 1.0;  
   for (int i = 0; i < Diff; ++i)
     CurrentSin *= SinValue;
-  int TmpMinCos = Diff;
+  int TmpMinCos = -Diff;
   TmpMinCos += this->JValue;
-  TmpMinCos -= JMin[m1][m2];
+  TmpMinCos -= 2 * JMin[m1][m2];
   for (int i = 0; i < TmpMinCos; ++i)
     CurrentCos *= CosValue;
   CosValue *= CosValue;
   SinValue *= SinValue;
-  int Max = JMin[m2][m1];
-  for (int i = 0; i < 1; ++i)
+  int Max = JMin[m1][m2];
+//  cout << CurrentSin << " " << CurrentCos << " " << CosValue << " " << SinValue << " " << Max << endl;
+  for (int i = 0; i <= Max; ++i)
     {
       double TmpCos = CurrentCos;
       for (int j = Max; j > i; --j)
 	TmpCos *= CosValue;
+//      Coefficient += CurrentSin * TmpCos;
       Coefficient += TmpCoefficients[i] * CurrentSin * TmpCos;
       CurrentSin *= SinValue;
     }

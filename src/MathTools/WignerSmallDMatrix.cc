@@ -34,7 +34,6 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
 
-
 // constructor 
 //
 // jValue =  twice the angular momentum of the sector the matrix is acting on
@@ -67,22 +66,22 @@ void WignerSmallDMatrix::EvaluateWignerSmallDMatrix()
       this->Coefficients[i] = new double*[i + 1];
       for (int j = 0; j <= i; ++j)
 	{
-	  if (i <= (this->JValue - j))
-	    this->JMin[i][j] = i;
+	  if (j <= (this->JValue - i))
+	    this->JMin[i][j] = j;
 	  else
-	    this->JMin[i][j] = this->JValue - j;
+	    this->JMin[i][j] = this->JValue - i;
 	  this->Coefficients[i][j] = new double[this->JMin[i][j] + 1];
 	  TmpFactorial.SetToOne();
-	  TmpFactorial.FactorialMultiply(j);
-	  TmpFactorial.FactorialDivide(i);
-	  TmpFactorial.FactorialMultiply(this->JValue - j);
-	  TmpFactorial.FactorialDivide(this->JValue - i);
+	  TmpFactorial.FactorialMultiply(i);
+	  TmpFactorial.FactorialDivide(j);
+	  TmpFactorial.FactorialMultiply(this->JValue - i);
+	  TmpFactorial.FactorialDivide(this->JValue - j);
 	  double GlobalCoefficient = sqrt(TmpFactorial.GetNumericalValue());
 	  if (((i -j) & 1) != 0)
 	    GlobalCoefficient *= -1.0;
 	  for (int k = 0; k <= this->JMin[i][j]; ++k)
 	    {
-	      this->Coefficients[i][j][k] = GlobalCoefficient * TmpBinomial(i, k)  * TmpBinomial(this->JValue - i, (j - i) + k) ;
+	      this->Coefficients[i][j][k] = GlobalCoefficient * TmpBinomial(j, k)  * TmpBinomial(this->JValue - j, (i - j) + k) ;
 	      GlobalCoefficient *= -1.0;
 	    }
 	}

@@ -632,6 +632,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
 		  return 0;
 		}
 	    }
+	  return Space;
 	}
       else
 	{

@@ -67,15 +67,101 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int J= 1;
+  int J= 4;
   WignerSmallDMatrix Wigner(J);
   double Theta = 0;
   double ThetaInc = M_PI / 10.0;
+  cout.precision(14);
   for (int i = 0; i < 10; ++i)
     {
       for (int m1 = -J; m1 <= J; m1 += 2)
 	for (int m2 = -J; m2 <= J; m2 += 2)
-	  cout << "theta=" << Theta << "  m1=" << m1 << "  m2=" << m2 << "  " << Wigner(m1, m2, Theta) << " " << cos (0.5 * Theta) << endl;
+	  {
+	    double TmpW = Wigner(m1, m2, Theta);
+	    cout << "theta=" << Theta << "  m1=" << m1 << "  m2=" << m2 << "  " << TmpW << " ";
+	    double Exact = 0.0;
+	    double Sign = 1.0;
+	    int TmpM1 = m1;
+	    int TmpM2 = m2;
+	    if (abs(TmpM1) < abs(TmpM2))
+	      {
+		int Tmp = TmpM1;		
+		TmpM1 = TmpM2;
+		TmpM2 = Tmp;
+		if ((((TmpM1 - TmpM2) >> 1) & 1) != 0)
+		  Sign *= -1.0;		  
+	      }
+	    if (TmpM1 < 0)
+	      {
+		TmpM1 *= -1;
+		TmpM2 *= -1;
+		if ((((TmpM1 - TmpM2) >> 1) & 1) != 0)
+		  Sign *= -1.0;		  
+	      }
+
+// 	    if ((TmpM1 == 2) && (TmpM2 == 2))
+// 	      Exact = 0.5 * (1.0 + cos (Theta));
+// 	    else
+// 	      if ((TmpM1 == 2) && (TmpM2 == 0))
+// 		Exact = - sin (Theta) / M_SQRT2;
+// 	      else
+// 		if ((TmpM1 == 2) && (TmpM2 == -2))
+// 		  Exact = 0.5 * (1.0 - cos (Theta));
+// 		else
+// 		  if ((TmpM1 == 0) && (TmpM2 == 0))
+// 		    Exact = cos (Theta);
+
+// 	    if ((TmpM1 == 3) && (TmpM2 == 3))
+// 	      Exact = 0.5 * (1.0 + cos (Theta)) * cos (Theta * 0.5);
+// 	    else
+// 	      if ((TmpM1 == 3) && (TmpM2 == 1))
+// 		Exact = -sqrt(3.0) * 0.5 * (1.0 + cos (Theta)) * sin (Theta * 0.5);
+// 	      else
+// 		if ((TmpM1 == 3) && (TmpM2 == -1))
+// 		  Exact = sqrt(3.0) * 0.5 * (1.0 - cos (Theta)) * cos (Theta * 0.5);
+// 		else
+// 		  if ((TmpM1 == 3) && (TmpM2 == -3))
+// 		    Exact = -0.5 * (1.0 - cos (Theta)) * sin (Theta * 0.5);
+// 		  else
+// 		    if ((TmpM1 == 1) && (TmpM2 == 1))
+// 		      Exact = 0.5 * ((3.0 * cos (Theta)) - 1.0) * cos (Theta * 0.5);
+// 		    else
+// 		      if ((TmpM1 == 1) && (TmpM2 == -1))
+// 			Exact = -0.5 * ((3.0 * cos (Theta)) + 1.0) * sin (Theta * 0.5);
+
+	    if ((TmpM1 == 4) && (TmpM2 == 4))
+	      Exact = 0.25 * (1.0 + cos (Theta)) * (1.0 + cos (Theta));
+	    else
+	      if ((TmpM1 == 4) && (TmpM2 == 2))
+		Exact = -0.5 * (1.0 + cos (Theta)) * sin (Theta);
+	      else
+		if ((TmpM1 == 4) && (TmpM2 == 0))
+		  Exact = 0.25 * sqrt(6.0) * sin (Theta) * sin (Theta);
+		else
+		  if ((TmpM1 == 4) && (TmpM2 == -2))
+		    Exact = -0.5 * (1.0 - cos (Theta)) * sin (Theta);
+		  else
+		    if ((TmpM1 == 4) && (TmpM2 == -4))
+		      Exact = 0.25 * (1.0 - cos (Theta)) * (1.0 - cos (Theta));
+		    else
+		      if ((TmpM1 == 2) && (TmpM2 == 2))
+			Exact = 0.5 * (1.0 + cos (Theta)) * ((2.0 * cos (Theta)) - 1.0);
+		      else
+			if ((TmpM1 == 2) && (TmpM2 == 0))
+			  Exact = -sqrt(1.5) * cos (Theta) * sin (Theta);
+			else
+			  if ((TmpM1 == 2) && (TmpM2 == -2))
+			    Exact = 0.5 * (1.0 - cos (Theta)) * ((2.0 * cos (Theta)) + 1.0);
+			  else
+			    if ((TmpM1 == 0) && (TmpM2 == 0))
+			      Exact = 0.5 * ((3.0 * cos (Theta) * cos (Theta)) - 1.0);
+
+	    Exact *= Sign;
+	    cout << Exact;
+	    if (fabs(Exact - TmpW) > (1e-12 * fabs(TmpW)))
+	      cout << " error";
+	    ; cout  << endl;
+	  }
       Theta += ThetaInc;
     }
   return 0;

@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 #endif
 	      {
 		Spaces[i] = new FermionOnSphere(NbrParticles, TotalLz[i], LzMax, MemorySpace);
-		if ((SymmetrizedBasis == true) && (TotalLz == 0))
+		if ((SymmetrizedBasis == true) && (TotalLz[i] == 0))
 		  {
 		    FermionOnSphereSymmetricBasis TmpSpace(NbrParticles, LzMax, MemorySpace);
 		    RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphere*) Spaces[i]));
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
 #endif
 		  {
 		    Spaces[i] = new FermionOnSphereLong(NbrParticles, TotalLz[i], LzMax, MemorySpace);
-		    if ((SymmetrizedBasis == true) && (TotalLz == 0))
+		    if ((SymmetrizedBasis == true) && (TotalLz[i] == 0))
 		      {
 			FermionOnSphereSymmetricBasisLong TmpSpace(NbrParticles, LzMax, MemorySpace);
 			RealVector OutputState = TmpSpace.ConvertToNbodyBasis(GroundStates[i], *((FermionOnSphereLong*) Spaces[i]));
