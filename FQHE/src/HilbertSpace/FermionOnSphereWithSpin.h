@@ -298,6 +298,10 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int spinIndices, int nbrIndices, double& coefficient);
 
+  // get the variance of the state
+  // index = index of state to consider
+  virtual int StateVariance (int index);
+
   // carefully test whether state is in Hilbert-space and find corresponding state index
   //
   // stateDescription = unsigned integer describing the state

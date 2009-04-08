@@ -210,6 +210,38 @@ char*  AddExtensionToFileName(char* fileName, const char* extension)
   return TmpFileName;
 }
 
+// get the existing extension of a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// maxL = maximum length of the extension to be searched for
+// return value = corresponding string
+char*  GetExtensionFromFileName(char* fileName, int maxL)
+{
+  int MaxL;  
+  if (maxL>0)
+    MaxL=maxL;
+  else
+    MaxL=strlen(fileName);
+  char* Extension = fileName+strlen(fileName)-1;
+  int Length=1;
+  while ((*Extension != '.')&&(Length<MaxL))
+    {
+      Extension--;
+      Length++;
+    }
+  if (*Extension == '.')
+    {
+      char *rst = new char[strlen(Extension)];
+      strcpy(rst,Extension);
+      return rst;
+    }
+  else
+    return 0;
+}
+
+  
+
+
 // replace extension to a file name
 //
 // fileName = string corresponding to the file name (with optional relative path)

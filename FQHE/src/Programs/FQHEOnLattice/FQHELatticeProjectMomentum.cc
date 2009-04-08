@@ -110,6 +110,12 @@ int main(int argc, char** argv)
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
 
+  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+  if (OldExtension!=NULL)
+    cout << "Old extension: "<<OldExtension<<endl;
+  else
+    cout << "No extension found: "<<endl;
+  
   if (NbrVectors==0)
     {
       cout << "At least one vector file is required!"<<endl;
@@ -230,6 +236,8 @@ int main(int argc, char** argv)
     {
       char *NewExtension=new char[20];
       sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
+      char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+      cout << "Old extension: "<<OldExtension<<endl;
       for (int i=0; i<NbrVectors; ++i)
 	{
 	  char *OutputName = ReplaceExtensionToFileName(VectorFiles[i], ".vec", NewExtension);
@@ -247,6 +255,8 @@ int main(int argc, char** argv)
 	{
 	  char *NewExtension=new char[20];
 	  sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
+	  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
+	  cout << "Old extension: "<<OldExtension<<endl;
 	  OutputName = ReplaceExtensionToFileName(VectorFiles[0], ".vec", NewExtension);
 	  if (OutputName==NULL)
 	    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);

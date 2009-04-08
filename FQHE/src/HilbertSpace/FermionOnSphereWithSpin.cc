@@ -928,6 +928,20 @@ int FermionOnSphereWithSpin::ProdAd (int* m, int spinIndices, int nbrIndices, do
   return this->FindStateIndex(TmpState, NewLzMax);
 }
 
+// get the variance of the state
+// index = index of state to consider
+int FermionOnSphereWithSpin::StateVariance (int index)
+{
+  int MyStateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  int var=0;
+  for (int b=0; b<=MyStateHighestBit; ++b)
+    if  ( (State & (0x1ul << b)) != 0x0ul)
+      var += (((b>>1)<<1)-LzMax)*(((b>>1)<<1)-LzMax);
+  return var;
+}
+
+
 
 // carefully test whether state is in Hilbert-space and find corresponding state index
 //

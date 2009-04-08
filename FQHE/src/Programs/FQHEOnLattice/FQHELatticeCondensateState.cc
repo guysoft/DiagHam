@@ -129,12 +129,12 @@ ComplexVector & GutzwillerWaveFunction::GetGutzwillerWaveFunction()
   if (this->UnoccupiedTerms.Norm()<1e-6)
     {
       cout << "Using b^+^N|0>"<<endl;
-      this->Product(NbrParticles, 0x0l, 1.0);
+      this->Product(NbrParticles, 0x0ul, 1.0);
     }
   else
     {
       cout << "Using prod_i (a_o + b^+_i) |0>"<<endl;
-      this->Product2(NbrStates-1, 0, 0x0l, 1.0);
+      this->Product2(NbrStates-1, 0, 0x0ul, 1.0);
     }
   this->TargetVector/=this->TargetVector.Norm();
 //   cout <<"Test norm: "<<TargetVector.Norm()<<endl;
@@ -156,7 +156,7 @@ void GutzwillerWaveFunction::Product (int exponent, unsigned long state, Complex
       for (int q=0; q<this->NbrStates; ++q)
 	{
 	  ResultingState = Space->Ad(state, q, AdFactor);
-	  if (ResultingState!=0x0l)
+	  if (ResultingState!=0x0ul)
 	    Product(exponent-1, ResultingState, prefactor*AdFactor*CondensateState[q]);
 	}
     }
@@ -165,7 +165,7 @@ void GutzwillerWaveFunction::Product (int exponent, unsigned long state, Complex
       for (int q=0; q<this->NbrStates; ++q)
 	{
 	  ResultingState = Space->Ad(state, q, AdFactor);
-	  if (ResultingState!=0x0l)
+	  if (ResultingState!=0x0ul)
 	    {	      
 	      if ((Index=Space->CarefulFindStateIndex(ResultingState,-1))<Dim)
 		{

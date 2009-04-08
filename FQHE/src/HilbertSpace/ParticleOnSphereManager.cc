@@ -684,6 +684,7 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
       Space = new BosonOnSphereWithSpin(NbrBosons, totalLz, LzMax, SzTotal);
       return Space;
     }
+  return 0;
 }
 
 // get the Hilbert space defined by the running options and a given Total Lz value and for the SU(3) case

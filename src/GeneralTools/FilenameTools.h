@@ -70,6 +70,13 @@ char* ConcatenatePathAndFileName (char* path, char* fileName);
 // return value = corresponding string
 char*  AddExtensionToFileName(char* fileName, const char* extension);
 
+// get the existing extension of a file name
+//
+// fileName = string corresponding to the file name (with optional relative path)
+// maxL = maximum length of the extension to be searched for
+// return value = corresponding string
+char*  GetExtensionFromFileName(char* fileName, int maxL=0);
+
 // replace extension to a file name
 //
 // fileName = string corresponding to the file name (with optional relative path)
