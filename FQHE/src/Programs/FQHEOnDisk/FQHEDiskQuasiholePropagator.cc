@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "excitedhuge-basis", "use huge Hilbert space support for the excited state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-base", "do not compute the contribution fron the base state");  
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "consider fermions instead of bosons");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "baseload-hilbert", "load Hilbert space description from the base state",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "excitedload-hilbert", "load Hilbert space description from the excited file",0);  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");

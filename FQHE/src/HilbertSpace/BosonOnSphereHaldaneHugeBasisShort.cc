@@ -214,6 +214,15 @@ BosonOnSphereHaldaneHugeBasisShort& BosonOnSphereHaldaneHugeBasisShort::operator
   return *this;
 }
 
+// clone Hilbert space (without duplicating datas)
+//
+// return value = pointer to cloned Hilbert space
+
+AbstractHilbertSpace* BosonOnSphereHaldaneHugeBasisShort::Clone()
+{
+  return new BosonOnSphereHaldaneHugeBasisShort(*this);
+}
+
 // save Hilbert space description to disk
 //
 // fileName = name of the file where the Hilbert space description has to be saved

@@ -96,6 +96,11 @@ class BosonOnSphereHaldaneHugeBasisShort :  public BosonOnSphereShort
   // return value = reference on current hilbert space
   BosonOnSphereHaldaneHugeBasisShort& operator = (const BosonOnSphereHaldaneHugeBasisShort& bosons);
 
+  // clone Hilbert space (without duplicating datas)
+  //
+  // return value = pointer to cloned Hilbert space
+  AbstractHilbertSpace* Clone();
+
   // save Hilbert space description to disk
   //
   // fileName = name of the file where the Hilbert space description has to be saved

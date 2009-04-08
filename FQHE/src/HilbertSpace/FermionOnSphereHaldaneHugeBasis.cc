@@ -416,7 +416,12 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(char* fileName,
       this->HilbertSpaceDimension = 0;
       return;
     }
-
+  this->NbrBuffers = 0;
+  this->NbrFiles = 0;
+  this->StateDescriptionBuffers = 0;
+  this->StateDescriptionFileNames = 0;
+  this->StateDescriptionFileSizes = 0;
+  this->KeepStateFlag = 0;
   ReadLittleEndian(File, this->HilbertSpaceDimension);
   ReadLittleEndian(File, this->LargeHilbertSpaceDimension);
   ReadLittleEndian(File, this->NbrFermions);
@@ -495,6 +500,11 @@ FermionOnSphereHaldaneHugeBasis::FermionOnSphereHaldaneHugeBasis(const FermionOn
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->KeepStateFlag = fermions.KeepStateFlag;
+  this->NbrBuffers = fermions.NbrBuffers;
+  this->NbrFiles = fermions.NbrFiles;
+  this->StateDescriptionBuffers = fermions.StateDescriptionBuffers;
+  this->StateDescriptionFileNames = fermions.StateDescriptionFileNames;
+  this->StateDescriptionFileSizes = fermions.StateDescriptionFileSizes;
 }
 
 // destructor
@@ -507,14 +517,21 @@ FermionOnSphereHaldaneHugeBasis::~FermionOnSphereHaldaneHugeBasis ()
       delete[] this->StateDescription;
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      for (int i = 0; i < this->NbrBuffers; ++i)
-	delete[] this->StateDescriptionBuffers[i];
-      delete[] this->StateDescriptionBuffers;
-      for (int i = 0; i < this->NbrFiles; ++i)
-	delete[] this->StateDescriptionFileNames[i];
-      delete[] this->StateDescriptionFileNames;
-      delete[] this->StateDescriptionFileSizes;
-      delete[] this->KeepStateFlag;
+      if (NbrBuffers > 0)
+	{
+	  for (int i = 0; i < this->NbrBuffers; ++i)
+	    delete[] this->StateDescriptionBuffers[i];
+	  delete[] this->StateDescriptionBuffers;
+	}
+      if  (this->NbrFiles > 0)
+	{
+	  for (int i = 0; i < this->NbrFiles; ++i)
+	    delete[] this->StateDescriptionFileNames[i];
+	  delete[] this->StateDescriptionFileNames;
+	  delete[] this->StateDescriptionFileSizes;
+	}
+      if (this->KeepStateFlag != 0)
+	delete[] this->KeepStateFlag;
     }
 }
 
