@@ -234,7 +234,7 @@ int main(int argc, char** argv)
       for (int i=0; i<NbrVectors; ++i)
 	{
 	  char *OutputName=0;
-	  if (OldExtension==0)
+	  if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
 	    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
 	  else
 	    {
@@ -256,7 +256,7 @@ int main(int argc, char** argv)
 	  char *NewExtension=new char[20];
 	  sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
 	  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-	  if (OldExtension==0)
+	  if ((OldExtension==0) || (strcmp(OldExtension,".vec")!=0))
 	    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
 	  else
 	    {
