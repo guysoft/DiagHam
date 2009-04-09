@@ -109,12 +109,6 @@ int main(int argc, char** argv)
 
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states",NbrVectors);
-
-  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-  if (OldExtension!=NULL)
-    cout << "Old extension: "<<OldExtension<<endl;
-  else
-    cout << "No extension found: "<<endl;
   
   if (NbrVectors==0)
     {
@@ -237,16 +231,22 @@ int main(int argc, char** argv)
       char *NewExtension=new char[20];
       sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
       char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-      cout << "Old extension: "<<OldExtension<<endl;
       for (int i=0; i<NbrVectors; ++i)
 	{
-	  char *OutputName = ReplaceExtensionToFileName(VectorFiles[i], ".vec", NewExtension);
-	  if (OutputName==NULL)
+	  char *OutputName=0;
+	  if (OldExtension==0)
 	    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+	  else
+	    {
+	      OutputName = ReplaceExtensionToFileName(VectorFiles[i], OldExtension, NewExtension);
+	      if (OutputName==NULL)
+		OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
+	    }
 	  Vectors[i].WriteVector(OutputName);
 	  delete [] OutputName;
 	}
       delete [] NewExtension;
+      delete [] OldExtension;
     }
   else
     {
@@ -256,11 +256,16 @@ int main(int argc, char** argv)
 	  char *NewExtension=new char[20];
 	  sprintf(NewExtension,"kx_%d_ky_%d.vec",kx,ky);
 	  char *OldExtension=GetExtensionFromFileName(VectorFiles[0]);
-	  cout << "Old extension: "<<OldExtension<<endl;
-	  OutputName = ReplaceExtensionToFileName(VectorFiles[0], ".vec", NewExtension);
-	  if (OutputName==NULL)
+	  if (OldExtension==0)
 	    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+	  else
+	    {
+	      OutputName = ReplaceExtensionToFileName(VectorFiles[0], OldExtension, NewExtension);
+	      if (OutputName==NULL)
+		OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
+	    }
 	  delete [] NewExtension;
+	  delete [] OldExtension;
 	}
       Vectors[0].WriteVector(OutputName);
       delete [] OutputName;
