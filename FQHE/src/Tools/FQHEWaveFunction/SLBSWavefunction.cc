@@ -85,6 +85,44 @@ SLBSWavefunction::SLBSWavefunction(int nbrParticles, bool negFluxFlag)
   this->SpinorVCoordinates = new Complex[NbrParticles];
 }
 
+
+// constructor
+//
+// nbrParticles = number of particles
+// levels = number of LL's in CF part
+//
+SLBSWavefunction::SLBSWavefunction(int nbrParticles, int levels)
+{
+  int Levels = abs(levels);
+  if (((nbrParticles % Levels)!=0)||(nbrParticles < 2*Levels))
+    {
+      cout << "This state requires an multiple of "<<Levels<<" fermions >= "<<2*Levels << endl;
+      exit(1);
+    }
+  this->NbrParticles = nbrParticles;
+  // discard "bad" state with positive flux:
+  if (levels<0)
+    this->NegativeFieldFlag = true;
+  else
+    this->NegativeFieldFlag = false;
+  this->EffectiveFlux = ((NbrParticles -Levels*(Levels-1))/Levels - 1)*(1-2*NegativeFieldFlag);
+  cout << "EffectiveFlux="<<EffectiveFlux<<endl;
+  this->OrbitalFactory = new JainCFOnSphereOrbitals(NbrParticles, /*NbrLandauLevels*/ Levels, EffectiveFlux, /*JastrowPower*/ 2);
+  
+  this->Flag.Initialize();
+  this->Interpolation=1.0;
+  this->Slater = new ComplexMatrix(this->NbrParticles,this->NbrParticles);
+  this->Pfaffian = new ComplexSkewSymmetricMatrix(this->NbrParticles);
+  this->SlaterElementNorm = 1.0;
+
+  this->Jij = new Complex*[this->NbrParticles];
+  for (int i=0; i<NbrParticles; ++i)
+    this->Jij[i] = new Complex[this->NbrParticles];
+
+  this->SpinorUCoordinates = new Complex[NbrParticles];
+  this->SpinorVCoordinates = new Complex[NbrParticles];
+}
+
 // copy constructor
 //
 // function = reference on the wave function to copy

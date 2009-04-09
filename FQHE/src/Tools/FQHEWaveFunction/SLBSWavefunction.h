@@ -95,6 +95,13 @@ class SLBSWavefunction: public Abstract1DComplexFunctionOnSphere
   // negFluxFlag = indicating sign of Jain wavefunction component
   SLBSWavefunction(int nbrParticles, bool negFluxFlag);
 
+  // constructor
+  //
+  // nbrParticles = number of particles
+  // levels = number of LL's in CF part
+  //
+  SLBSWavefunction(int nbrParticles, int levels);
+
   // copy constructor
   //
   // function = reference on the wave function to copy

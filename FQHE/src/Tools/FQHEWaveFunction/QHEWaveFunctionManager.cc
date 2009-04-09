@@ -252,7 +252,15 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	  SLBSWavefunction *rst = new SLBSWavefunction(N, Flag);
 	  rst->AdaptAverageMCNorm();
 	  return rst;
-	}      
+	}
+      if (strcmp (this->Options->GetString("test-wavefunction"), "BS38") == 0)
+	{
+	  int N=this->Options->GetInteger("nbr-particles");
+	  bool Flag=this->Options->GetBoolean("negflux");
+	  SLBSWavefunction *rst = new SLBSWavefunction(N, 3);
+	  rst->AdaptAverageMCNorm();
+	  return rst;
+	}
       if (strcmp (this->Options->GetString("test-wavefunction"), "ExplicitMR") == 0)
 	{
 	  int N=this->Options->GetInteger("nbr-particles");

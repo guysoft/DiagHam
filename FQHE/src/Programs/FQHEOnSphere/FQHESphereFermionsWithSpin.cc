@@ -93,9 +93,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
-  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "start the Haldane algorithm from Laughlin state with exponent m)", -1);
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
@@ -131,7 +128,6 @@ int main(int argc, char** argv)
 
   long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
-  unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
   char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
@@ -299,83 +295,7 @@ int main(int argc, char** argv)
     {
       double Shift = -10.0;
 
-
-
-       ParticleOnSphereWithSpin* Space = 0;
-       if (HaldaneBasisFlag == false)
-       {
-         Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L);
-       }
-       else // using Squeezed Haldane Basis!
-       {
-         int* ReferenceState = 0;
-         if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
-           {
-             ReferenceState = new int[LzMax + 1];
-             for (int i = 0; i <= LzMax; ++i)
-               ReferenceState[i] = 0;
-             int tmpNbrParticles=0;
-             if (Manager.GetInteger("laughlin-exponent")>0)            
-               for (int i = 0; i <= LzMax; i += Manager.GetInteger("laughlin-exponent"))
-                 {
-                   ReferenceState[i] = 3;
-                   tmpNbrParticles+=2;
-                 }
-             if (tmpNbrParticles != NbrFermions)
-               {
-                 cout << "Wrong shift for this laughlin seed state"<< endl;
-                 exit(1);
-               }
-           }
-         else
-           {
-             ConfigurationParser ReferenceStateDefinition;
-             if (ReferenceStateDefinition.Parse(Manager.GetString("reference-file")) == false)
-               {
-                 ReferenceStateDefinition.DumpErrors(cout) << endl;
-                 return -1;
-               }
-             if ((ReferenceStateDefinition.GetAsSingleInteger("NbrParticles", NbrFermions) == false) || (NbrFermions <= 0))
-               {
-                 cout << "NbrParticles is not defined or as a wrong value" << endl;
-                 return -1;
-               }
-             if ((ReferenceStateDefinition.GetAsSingleInteger("LzMax", LzMax) == false) || (LzMax <= 0))
-               {
-                 cout << "LzMax is not defined or as a wrong value" << endl;
-                 return -1;
-               }
-             int MaxNbrLz;
-             if (ReferenceStateDefinition.GetAsIntegerArray("ReferenceState", ' ', ReferenceState, MaxNbrLz) == false)
-               {
-                 cout << "error while parsing ReferenceState in " << ((SingleStringOption*) Manager["reference-file"])->GetString() << endl;
-                 return -1;     
-               }
-             if (MaxNbrLz != (LzMax + 1))
-               {
-                 cout << "wrong LzMax value in ReferenceState" << endl;
-                 return -1;     
-               }
-           }
-         // assign Hilbert space here - no further symmetries implemented, yet...
- #ifdef __64_BITS__
-         if (LzMax <= 31)
- #else
-           if (LzMax <= 15)
- #endif
-             {
-               if (((SingleStringOption*) Manager["load-hilbert"])->GetString() != 0)
-                 Space = new FermionOnSphereWithSpinSqueezedBasis(Manager.GetString("load-hilbert"), MemorySpace);
-               else
-                 Space = new FermionOnSphereWithSpinSqueezedBasis(NbrFermions, L, LzMax, SzTotal, ReferenceState, MemorySpace);
-               if (Manager.GetString("save-hilbert") != 0)
-                 {
-                   ((FermionOnSphereWithSpinSqueezedBasis*) Space)->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-                        return 0;
-                 }
-             }
-         
-       }
+      ParticleOnSphereWithSpin* Space = (ParticleOnSphereWithSpin*)ParticleManager.GetHilbertSpace(L);
       
       cout << "l=" <<  L << endl;
 

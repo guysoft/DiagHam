@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 	    OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
 	  else
 	    {
-	      OutputName = ReplaceExtensionToFileName(VectorFiles[i], OldExtension, NewExtension);
+	      OutputName = ReplaceExtensionToFileName(VectorFiles[i], "vec", NewExtension);
 	      if (OutputName==NULL)
 		OutputName = AddExtensionToFileName(VectorFiles[i], NewExtension);
 	    }
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
 	    OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
 	  else
 	    {
-	      OutputName = ReplaceExtensionToFileName(VectorFiles[0], OldExtension, NewExtension);
+	      OutputName = ReplaceExtensionToFileName(VectorFiles[0], "vec", NewExtension);
 	      if (OutputName==NULL)
 		OutputName = AddExtensionToFileName(VectorFiles[0], NewExtension);
 	    }
