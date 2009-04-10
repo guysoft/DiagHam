@@ -569,7 +569,15 @@ RealVector FermionOnSphereWithSpinHaldaneBasis::ConvertFromNbodyBasis(RealVector
 
 RealVector& FermionOnSphereWithSpinHaldaneBasis::GenerateJackPolynomial(RealVector& jack, double alpha)
 {
-  jack[0] = 1.0;
+  for (int i = 0; i < this->NbrRootPartitions; ++i)
+    {
+      int TmpLzMax = 2 * this->LzMax + 1;
+      while (((this->RootPartitions[i] >> TmpLzMax) & 0x1ul) == 0x0ul)
+	--TmpLzMax;
+      long TmpIndex = this->FindStateIndex(this->RootPartitions[i], TmpLzMax);
+      if (TmpIndex < this->LargeHilbertSpaceDimension)
+	jack[TmpIndex] = 1.0;
+    }
   double InvAlpha= -2.0;
   int ReducedNbrFermionsUp = this->NbrFermionsUp - 1;
   int ReducedNbrFermionsDown = this->NbrFermionsDown - 1;
@@ -600,259 +608,59 @@ RealVector& FermionOnSphereWithSpinHaldaneBasis::GenerateJackPolynomial(RealVect
     }
 
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
-    {
-      unsigned long CurrentPartition = this->StateDescription[i];
-      this->ConvertToMonomial(CurrentPartition, TmpMonomialUp, TmpMonomialDown);
-      double Rho = 0.0;
-      for (int j = 0; j < this->NbrFermionsUp; ++j)
-	{
-	  double Tmp = TmpMonomialUp[j];
-	  Rho += Tmp * (Tmp - InvAlpha * ((double) (j + 1)));
- 	  for (int k = 0; k < this->NbrFermionsDown; ++k)
-	    if (Tmp > TmpMonomialDown[k])
- 	      Rho -= (double) (Tmp - TmpMonomialDown[k]);
-	}
-      for (int j = 0; j < this->NbrFermionsDown; ++j)
-	{
-	  double Tmp = TmpMonomialDown[j];
-	  Rho += Tmp * (Tmp - InvAlpha * ((double) (j + 1)));
- 	  for (int k = 0; k < this->NbrFermionsUp; ++k)
- 	    if (Tmp > TmpMonomialUp[k])
- 	      Rho -= (double) (Tmp - TmpMonomialUp[k]);
-	}
-
-      double Factor = 1.0;
+    if (jack[i] == 0.0)
+      {      
+	unsigned long CurrentPartition = this->StateDescription[i];
+	this->ConvertToMonomial(CurrentPartition, TmpMonomialUp, TmpMonomialDown);
+	double Rho = 0.0;
+	for (int j = 0; j < this->NbrFermionsUp; ++j)
+	  {
+	    double Tmp = TmpMonomialUp[j];
+	    Rho += Tmp * (Tmp - InvAlpha * ((double) (j + 1)));
+	    for (int k = 0; k < this->NbrFermionsDown; ++k)
+	      if (Tmp > TmpMonomialDown[k])
+		Rho -= (double) (Tmp - TmpMonomialDown[k]);
+	  }
+	for (int j = 0; j < this->NbrFermionsDown; ++j)
+	  {
+	    double Tmp = TmpMonomialDown[j];
+	    Rho += Tmp * (Tmp - InvAlpha * ((double) (j + 1)));
+	    for (int k = 0; k < this->NbrFermionsUp; ++k)
+	      if (Tmp > TmpMonomialUp[k])
+		Rho -= (double) (Tmp - TmpMonomialUp[k]);
+	  }
+	
+	double Factor = 1.0;
 #ifdef __64_BITS__
-      if (((CurrentPartition >> 1) & 0x5555555555555555ul) == ((CurrentPartition & 0x5555555555555555ul)))
+	if (((CurrentPartition >> 1) & 0x5555555555555555ul) == ((CurrentPartition & 0x5555555555555555ul)))
 #else
-      if (((CurrentPartition >> 1) & 0x55555555ul) == ((CurrentPartition & 0x55555555ul)))
+	  if (((CurrentPartition >> 1) & 0x55555555ul) == ((CurrentPartition & 0x55555555ul)))
 #endif
-	Factor = 0.5;
-
-      double Coefficient = 0.0;
-
-      for (int j1 = 0; j1 < ReducedNbrFermionsUp; ++j1)
-	for (int j2 = j1 + 1; j2 < this->NbrFermionsUp; ++j2)
-	  {
-	    double Diff = (double) (TmpMonomialUp[j1] - TmpMonomialUp[j2]);
-	    unsigned int Max = TmpMonomialUp[j2];
-	    unsigned long TmpState = CurrentPartition;
-	    int Tmpj1 = j1;
-	    int Tmpj2 = j2;
-	    for (int l = 0; l < this->NbrFermionsUp; ++l)
-	      TmpMonomialUp2[l] = TmpMonomialUp[l];	    
-	    double Sign = 1.0;
-	    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
-	      {
-		++TmpMonomialUp2[Tmpj1];
-		--TmpMonomialUp2[Tmpj2];
-		Diff += 2.0;
-		while ((Tmpj1 > 0) && (TmpMonomialUp2[Tmpj1] >= TmpMonomialUp2[Tmpj1 - 1]))
-		  {
-		    unsigned long Tmp = TmpMonomialUp2[Tmpj1 - 1];
-		    TmpMonomialUp2[Tmpj1 - 1] = TmpMonomialUp2[Tmpj1];
-		    TmpMonomialUp2[Tmpj1] = Tmp;
-		    --Tmpj1;
-		    Sign *= -1.0; 
-		  }
-                while ((Tmpj2 < ReducedNbrFermionsUp) && (TmpMonomialUp2[Tmpj2] <= TmpMonomialUp2[Tmpj2 + 1]))
-                  {
-                    unsigned long Tmp = TmpMonomialUp2[Tmpj2 + 1];
-                    TmpMonomialUp2[Tmpj2 + 1] = TmpMonomialUp2[Tmpj2];
-                    TmpMonomialUp2[Tmpj2] = Tmp;
-                    ++Tmpj2;
- 		    Sign *= -1.0; 
-                 }
-		if ((TmpMonomialUp2[Tmpj1] != TmpMonomialUp2[Tmpj1 + 1]) && (TmpMonomialUp2[Tmpj2] != TmpMonomialUp2[Tmpj2 - 1]))
-		  {
-		    TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown);
-		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-		      {
-			int TmpLzMax = TmpMonomialUp2[0];
-			if (TmpLzMax < TmpMonomialDown[0])
-			  TmpLzMax = TmpMonomialDown[0] << 1;
-			else
-			  {
-			    TmpLzMax <<= 1;
-			    ++TmpLzMax;
-			  }
-			long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
-// 			cout << "[";
-// 			for (int u = 0; u < this->NbrFermionsUp; ++u)
-// 			  cout << TmpMonomialUp2[u] << " ";
-// 			cout << "][";
-// 			for (int u = 0; u < this->NbrFermionsDown; ++u)
-// 			  cout << TmpMonomialDown[u] << " ";
-// 			cout << "] " << hex << TmpState << dec << " " << TmpIndex << endl; 
-			if (TmpIndex < this->LargeHilbertSpaceDimension)
-			  {
-			    Coefficient += Sign * Diff * jack[TmpIndex];
-// 			    cout << i << " = ";
-// 			    this->PrintStateMonomial(cout, i) << " <->";
-// 			    this->PrintStateMonomial(cout, TmpIndex) << " : " << (Sign * Diff * jack[TmpIndex]) << " upup" << endl;			    
-			  }
-		      }
-		  }
-	      }
-	  }
-
-      for (int j1 = 0; j1 < ReducedNbrFermionsDown; ++j1)
-	for (int j2 = j1 + 1; j2 < this->NbrFermionsDown; ++j2)
-	  {
-	    double Diff = (double) (TmpMonomialDown[j1] - TmpMonomialDown[j2]);
-	    unsigned int Max = TmpMonomialDown[j2];
-	    unsigned long TmpState = CurrentPartition;
-	    int Tmpj1 = j1;
-	    int Tmpj2 = j2;
-	    for (int l = 0; l < this->NbrFermionsDown; ++l)
-	      TmpMonomialDown2[l] = TmpMonomialDown[l];	    
-	    double Sign = 1.0;
-	    for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
-	      {
-		++TmpMonomialDown2[Tmpj1];
-		--TmpMonomialDown2[Tmpj2];
-		Diff += 2.0;
-		while ((Tmpj1 > 0) && (TmpMonomialDown2[Tmpj1] >= TmpMonomialDown2[Tmpj1 - 1]))
-		  {
-		    unsigned long Tmp = TmpMonomialDown2[Tmpj1 - 1];
-		    TmpMonomialDown2[Tmpj1 - 1] = TmpMonomialDown2[Tmpj1];
-		    TmpMonomialDown2[Tmpj1] = Tmp;
-		    --Tmpj1;
-		    Sign *= -1.0; 
-		  }
-                while ((Tmpj2 < ReducedNbrFermionsDown) && (TmpMonomialDown2[Tmpj2] <= TmpMonomialDown2[Tmpj2 + 1]))
-                  {
-                    unsigned long Tmp = TmpMonomialDown2[Tmpj2 + 1];
-                    TmpMonomialDown2[Tmpj2 + 1] = TmpMonomialDown2[Tmpj2];
-                    TmpMonomialDown2[Tmpj2] = Tmp;
-                    ++Tmpj2;
- 		    Sign *= -1.0; 
-                 }
-		if ((TmpMonomialDown2[Tmpj1] != TmpMonomialDown2[Tmpj1 + 1]) && (TmpMonomialDown2[Tmpj2] != TmpMonomialDown2[Tmpj2 - 1]))
-		  {
-		    TmpState = this->ConvertFromMonomial(TmpMonomialUp, TmpMonomialDown2);
-		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-		      {
-			int TmpLzMax = TmpMonomialUp[0];
-			if (TmpLzMax < TmpMonomialDown2[0])
-			  TmpLzMax = TmpMonomialDown2[0] << 1;
-			else
-			  {
-			    TmpLzMax <<= 1;
-			    ++TmpLzMax;
-			  }
-			long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
-			if (TmpIndex < this->LargeHilbertSpaceDimension)
-			  {
-			    Coefficient += Sign * Diff * jack[TmpIndex];
-// 			    cout << i << " = ";
-// 			    this->PrintStateMonomial(cout, i) << " <->";
-// 			    this->PrintStateMonomial(cout, TmpIndex) << " : " << (Sign * Diff * jack[TmpIndex]) << " downdown" << endl;			    
-			  }
-		      }
-		  }
-	      }
-	  }
-
-      for (int j1 = 0; j1 < this->NbrFermionsUp; ++j1)
-	{
-	  int j2 = 0;
-	  while ((j2 < this->NbrFermionsDown) && (TmpMonomialDown[j2] > TmpMonomialUp[j1]))
-	    ++j2;
-	  for (; j2 < this->NbrFermionsDown; ++j2)
+	    Factor = 0.5;
+	
+	double Coefficient = 0.0;
+	
+	for (int j1 = 0; j1 < ReducedNbrFermionsUp; ++j1)
+	  for (int j2 = j1 + 1; j2 < this->NbrFermionsUp; ++j2)
 	    {
-	      double Diff = (double) (TmpMonomialUp[j1] - TmpMonomialDown[j2]);
-	      unsigned int Max = TmpMonomialDown[j2];
+	      double Diff = (double) (TmpMonomialUp[j1] - TmpMonomialUp[j2]);
+	      unsigned int Max = TmpMonomialUp[j2];
 	      unsigned long TmpState = CurrentPartition;
 	      int Tmpj1 = j1;
 	      int Tmpj2 = j2;
 	      for (int l = 0; l < this->NbrFermionsUp; ++l)
 		TmpMonomialUp2[l] = TmpMonomialUp[l];	    
-	      for (int l = 0; l < this->NbrFermionsDown; ++l)
-		TmpMonomialDown2[l] = TmpMonomialDown[l];	    
 	      double Sign = 1.0;
 	      for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
 		{
 		  ++TmpMonomialUp2[Tmpj1];
-		  --TmpMonomialDown2[Tmpj2];
+		  --TmpMonomialUp2[Tmpj2];
 		  Diff += 2.0;
 		  while ((Tmpj1 > 0) && (TmpMonomialUp2[Tmpj1] >= TmpMonomialUp2[Tmpj1 - 1]))
 		    {
 		      unsigned long Tmp = TmpMonomialUp2[Tmpj1 - 1];
 		      TmpMonomialUp2[Tmpj1 - 1] = TmpMonomialUp2[Tmpj1];
 		      TmpMonomialUp2[Tmpj1] = Tmp;
-		      --Tmpj1;
-		      Sign *= -1.0; 
-		    }
-		  while ((Tmpj2 < ReducedNbrFermionsDown) && (TmpMonomialDown2[Tmpj2] <= TmpMonomialDown2[Tmpj2 + 1]))
-		    {
-		      unsigned long Tmp = TmpMonomialDown2[Tmpj2 + 1];
-		      TmpMonomialDown2[Tmpj2 + 1] = TmpMonomialDown2[Tmpj2];
-		      TmpMonomialDown2[Tmpj2] = Tmp;
-		      ++Tmpj2;
-		      Sign *= -1.0; 
-		    }
-		  if (((Tmpj1 == ReducedNbrFermionsUp) || (TmpMonomialUp2[Tmpj1] != TmpMonomialUp2[Tmpj1 + 1])) &&
-		      ((Tmpj2 == 0) || (TmpMonomialDown2[Tmpj2] != TmpMonomialDown2[Tmpj2 - 1])))
-		    {
-		      TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown2);
-		      if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
-			{
-			  int TmpLzMax = TmpMonomialUp2[0];
-			  if (TmpLzMax < TmpMonomialDown2[0])
-			    TmpLzMax = TmpMonomialDown2[0] << 1;
-			  else
-			    {
-			      TmpLzMax <<= 1;
-			      ++TmpLzMax;
-			    }
-			  long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
-			  if (TmpIndex < this->LargeHilbertSpaceDimension)
-			    {
-// 			      if (TmpMonomialUp2[Tmpj1] == TmpMonomialDown2[Tmpj2])
-// 				Coefficient += Factor * Sign * Diff * jack[TmpIndex];			    
-// 			      else
-				Coefficient += Sign * Diff * jack[TmpIndex];
-			      if (i == 75)
-				{
-// 			      cout << i << " = ";
-// 			      this->PrintStateMonomial(cout, i) << " <->";
-// 			      this->PrintStateMonomial(cout, TmpIndex) << " : " << (Sign * Diff * jack[TmpIndex]) << " updown" << endl;	
-				}		    
-			    }
-			}
-		    }
-		}
-	    }
-	}
-
-      for (int j1 = 0; j1 < this->NbrFermionsDown; ++j1)
-	{
-	  int j2 = 0;
-	  while ((j2 < this->NbrFermionsUp) && (TmpMonomialUp[j2] >= TmpMonomialDown[j1]))
-	    ++j2;
-	  for (; j2 < this->NbrFermionsUp; ++j2)
-	    {
-	      double Diff = (double) (TmpMonomialDown[j1] - TmpMonomialUp[j2]);
-	      unsigned int Max = TmpMonomialUp[j2];
-	      unsigned long TmpState = CurrentPartition;
-	      int Tmpj1 = j1;
-	      int Tmpj2 = j2;
-	      for (int l = 0; l < this->NbrFermionsDown; ++l)
-		TmpMonomialDown2[l] = TmpMonomialDown[l];	    
-	      for (int l = 0; l < this->NbrFermionsUp; ++l)
-		TmpMonomialUp2[l] = TmpMonomialUp[l];	    
-	      double Sign = 1.0;
-	      for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
-		{
-		  ++TmpMonomialDown2[Tmpj1];
-		  --TmpMonomialUp2[Tmpj2];
-		  Diff += 2.0;
-		  while ((Tmpj1 > 0) && (TmpMonomialDown2[Tmpj1] >= TmpMonomialDown2[Tmpj1 - 1]))
-		    {
-		      unsigned long Tmp = TmpMonomialDown2[Tmpj1 - 1];
-		      TmpMonomialDown2[Tmpj1 - 1] = TmpMonomialDown2[Tmpj1];
-		      TmpMonomialDown2[Tmpj1] = Tmp;
 		      --Tmpj1;
 		      Sign *= -1.0; 
 		    }
@@ -864,23 +672,67 @@ RealVector& FermionOnSphereWithSpinHaldaneBasis::GenerateJackPolynomial(RealVect
 		      ++Tmpj2;
 		      Sign *= -1.0; 
 		    }
-// 		  if (i == 75)
-// 		    {
-// 		      //		      cout << "downup [";
-// 		      for (int u = 0; u < this->NbrFermionsUp; ++u)
-// 			cout << TmpMonomialUp2[u] << " ";
-// 		      cout << "][";
-// 		      for (int u = 0; u < this->NbrFermionsDown; ++u)
-// 			cout << TmpMonomialDown2[u] << " ";
-// 		      cout << "] " << endl; 
-// 		    }
-		  if (((Tmpj1 == ReducedNbrFermionsDown) || (TmpMonomialDown2[Tmpj1] != TmpMonomialDown2[Tmpj1 + 1]))
-		      && ((Tmpj2 == 0) || (TmpMonomialUp2[Tmpj2] != TmpMonomialUp2[Tmpj2 - 1])))
+		  if ((TmpMonomialUp2[Tmpj1] != TmpMonomialUp2[Tmpj1 + 1]) && (TmpMonomialUp2[Tmpj2] != TmpMonomialUp2[Tmpj2 - 1]))
 		    {
-		      TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown2);
+		      TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown);
 		      if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
 			{
 			  int TmpLzMax = TmpMonomialUp2[0];
+			  if (TmpLzMax < TmpMonomialDown[0])
+			    TmpLzMax = TmpMonomialDown[0] << 1;
+			  else
+			    {
+			      TmpLzMax <<= 1;
+			      ++TmpLzMax;
+			  }
+			  long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
+			  if (TmpIndex < this->LargeHilbertSpaceDimension)
+			    {
+			      Coefficient += Sign * Diff * jack[TmpIndex];
+			    }
+			}
+		    }
+		}
+	    }
+	
+	for (int j1 = 0; j1 < ReducedNbrFermionsDown; ++j1)
+	  for (int j2 = j1 + 1; j2 < this->NbrFermionsDown; ++j2)
+	    {
+	      double Diff = (double) (TmpMonomialDown[j1] - TmpMonomialDown[j2]);
+	      unsigned int Max = TmpMonomialDown[j2];
+	      unsigned long TmpState = CurrentPartition;
+	      int Tmpj1 = j1;
+	      int Tmpj2 = j2;
+	      for (int l = 0; l < this->NbrFermionsDown; ++l)
+		TmpMonomialDown2[l] = TmpMonomialDown[l];	    
+	      double Sign = 1.0;
+	      for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		{
+		  ++TmpMonomialDown2[Tmpj1];
+		  --TmpMonomialDown2[Tmpj2];
+		  Diff += 2.0;
+		  while ((Tmpj1 > 0) && (TmpMonomialDown2[Tmpj1] >= TmpMonomialDown2[Tmpj1 - 1]))
+		    {
+		      unsigned long Tmp = TmpMonomialDown2[Tmpj1 - 1];
+		      TmpMonomialDown2[Tmpj1 - 1] = TmpMonomialDown2[Tmpj1];
+		      TmpMonomialDown2[Tmpj1] = Tmp;
+		      --Tmpj1;
+		      Sign *= -1.0; 
+		    }
+		  while ((Tmpj2 < ReducedNbrFermionsDown) && (TmpMonomialDown2[Tmpj2] <= TmpMonomialDown2[Tmpj2 + 1]))
+		    {
+		      unsigned long Tmp = TmpMonomialDown2[Tmpj2 + 1];
+		      TmpMonomialDown2[Tmpj2 + 1] = TmpMonomialDown2[Tmpj2];
+		      TmpMonomialDown2[Tmpj2] = Tmp;
+		      ++Tmpj2;
+		      Sign *= -1.0; 
+		    }
+		  if ((TmpMonomialDown2[Tmpj1] != TmpMonomialDown2[Tmpj1 + 1]) && (TmpMonomialDown2[Tmpj2] != TmpMonomialDown2[Tmpj2 - 1]))
+		    {
+		      TmpState = this->ConvertFromMonomial(TmpMonomialUp, TmpMonomialDown2);
+		      if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			{
+			  int TmpLzMax = TmpMonomialUp[0];
 			  if (TmpLzMax < TmpMonomialDown2[0])
 			    TmpLzMax = TmpMonomialDown2[0] << 1;
 			  else
@@ -891,37 +743,152 @@ RealVector& FermionOnSphereWithSpinHaldaneBasis::GenerateJackPolynomial(RealVect
 			  long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
 			  if (TmpIndex < this->LargeHilbertSpaceDimension)
 			    {
-// 			      if (TmpMonomialDown2[Tmpj1] == TmpMonomialUp2[Tmpj2])
-// 				Coefficient += Factor * Sign * Diff * jack[TmpIndex];			    
-// 			      else
-				Coefficient += Sign * Diff * jack[TmpIndex];
-// 			      if (i == 75)
-// 				{
-// 				  // 			      cout << i << " = ";
-// 				  this->PrintStateMonomial(cout, i) << " <->";
-// 				  this->PrintStateMonomial(cout, TmpIndex) << " : " << (Sign * Diff * jack[TmpIndex])  << " downup " << (InvAlpha / (RhoRoot - Rho)) << " " << Coefficient << " " << RhoRoot << " " << Rho << endl;			    
-// 				}
+			      Coefficient += Sign * Diff * jack[TmpIndex];
 			    }
 			}
 		    }
 		}
 	    }
-	}
-
-      jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
-      if ((i & 0xffl) == 0l)
-	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	
+	for (int j1 = 0; j1 < this->NbrFermionsUp; ++j1)
+	  {
+	    int j2 = 0;
+	    while ((j2 < this->NbrFermionsDown) && (TmpMonomialDown[j2] > TmpMonomialUp[j1]))
+	      ++j2;
+	    for (; j2 < this->NbrFermionsDown; ++j2)
+	      {
+		double Diff = (double) (TmpMonomialUp[j1] - TmpMonomialDown[j2]);
+		unsigned int Max = TmpMonomialDown[j2];
+		unsigned long TmpState = CurrentPartition;
+		int Tmpj1 = j1;
+		int Tmpj2 = j2;
+		for (int l = 0; l < this->NbrFermionsUp; ++l)
+		  TmpMonomialUp2[l] = TmpMonomialUp[l];	    
+		for (int l = 0; l < this->NbrFermionsDown; ++l)
+		  TmpMonomialDown2[l] = TmpMonomialDown[l];	    
+		double Sign = 1.0;
+		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		  {
+		    ++TmpMonomialUp2[Tmpj1];
+		    --TmpMonomialDown2[Tmpj2];
+		    Diff += 2.0;
+		    while ((Tmpj1 > 0) && (TmpMonomialUp2[Tmpj1] >= TmpMonomialUp2[Tmpj1 - 1]))
+		      {
+			unsigned long Tmp = TmpMonomialUp2[Tmpj1 - 1];
+			TmpMonomialUp2[Tmpj1 - 1] = TmpMonomialUp2[Tmpj1];
+			TmpMonomialUp2[Tmpj1] = Tmp;
+			--Tmpj1;
+			Sign *= -1.0; 
+		      }
+		    while ((Tmpj2 < ReducedNbrFermionsDown) && (TmpMonomialDown2[Tmpj2] <= TmpMonomialDown2[Tmpj2 + 1]))
+		      {
+			unsigned long Tmp = TmpMonomialDown2[Tmpj2 + 1];
+			TmpMonomialDown2[Tmpj2 + 1] = TmpMonomialDown2[Tmpj2];
+			TmpMonomialDown2[Tmpj2] = Tmp;
+			++Tmpj2;
+			Sign *= -1.0; 
+		      }
+		    if (((Tmpj1 == ReducedNbrFermionsUp) || (TmpMonomialUp2[Tmpj1] != TmpMonomialUp2[Tmpj1 + 1])) &&
+			((Tmpj2 == 0) || (TmpMonomialDown2[Tmpj2] != TmpMonomialDown2[Tmpj2 - 1])))
+		      {
+			TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown2);
+			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			  {
+			    int TmpLzMax = TmpMonomialUp2[0];
+			    if (TmpLzMax < TmpMonomialDown2[0])
+			      TmpLzMax = TmpMonomialDown2[0] << 1;
+			    else
+			      {
+				TmpLzMax <<= 1;
+				++TmpLzMax;
+			      }
+			    long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
+			    if (TmpIndex < this->LargeHilbertSpaceDimension)
+			      {
+				Coefficient += Sign * Diff * jack[TmpIndex];
+			      }
+			  }
+		      }
+		  }
+	      }
+	  }
+	
+	for (int j1 = 0; j1 < this->NbrFermionsDown; ++j1)
+	  {
+	    int j2 = 0;
+	    while ((j2 < this->NbrFermionsUp) && (TmpMonomialUp[j2] >= TmpMonomialDown[j1]))
+	      ++j2;
+	    for (; j2 < this->NbrFermionsUp; ++j2)
+	      {
+		double Diff = (double) (TmpMonomialDown[j1] - TmpMonomialUp[j2]);
+		unsigned int Max = TmpMonomialUp[j2];
+		unsigned long TmpState = CurrentPartition;
+		int Tmpj1 = j1;
+		int Tmpj2 = j2;
+		for (int l = 0; l < this->NbrFermionsDown; ++l)
+		  TmpMonomialDown2[l] = TmpMonomialDown[l];	    
+		for (int l = 0; l < this->NbrFermionsUp; ++l)
+		  TmpMonomialUp2[l] = TmpMonomialUp[l];	    
+		double Sign = 1.0;
+		for (unsigned int k = 1; (k <= Max) && (TmpState < MaxRoot); ++k)
+		  {
+		    ++TmpMonomialDown2[Tmpj1];
+		    --TmpMonomialUp2[Tmpj2];
+		    Diff += 2.0;
+		    while ((Tmpj1 > 0) && (TmpMonomialDown2[Tmpj1] >= TmpMonomialDown2[Tmpj1 - 1]))
+		      {
+			unsigned long Tmp = TmpMonomialDown2[Tmpj1 - 1];
+			TmpMonomialDown2[Tmpj1 - 1] = TmpMonomialDown2[Tmpj1];
+			TmpMonomialDown2[Tmpj1] = Tmp;
+			--Tmpj1;
+			Sign *= -1.0; 
+		      }
+		    while ((Tmpj2 < ReducedNbrFermionsUp) && (TmpMonomialUp2[Tmpj2] <= TmpMonomialUp2[Tmpj2 + 1]))
+		      {
+			unsigned long Tmp = TmpMonomialUp2[Tmpj2 + 1];
+			TmpMonomialUp2[Tmpj2 + 1] = TmpMonomialUp2[Tmpj2];
+			TmpMonomialUp2[Tmpj2] = Tmp;
+			++Tmpj2;
+			Sign *= -1.0; 
+		      }
+		    if (((Tmpj1 == ReducedNbrFermionsDown) || (TmpMonomialDown2[Tmpj1] != TmpMonomialDown2[Tmpj1 + 1]))
+			&& ((Tmpj2 == 0) || (TmpMonomialUp2[Tmpj2] != TmpMonomialUp2[Tmpj2 - 1])))
+		      {
+			TmpState = this->ConvertFromMonomial(TmpMonomialUp2, TmpMonomialDown2);
+			if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
+			  {
+			    int TmpLzMax = TmpMonomialUp2[0];
+			    if (TmpLzMax < TmpMonomialDown2[0])
+			      TmpLzMax = TmpMonomialDown2[0] << 1;
+			    else
+			      {
+				TmpLzMax <<= 1;
+				++TmpLzMax;
+			      }
+			    long TmpIndex = this->FindStateIndex(TmpState, TmpLzMax);
+			    if (TmpIndex < this->LargeHilbertSpaceDimension)
+			      {
+				Coefficient += Sign * Diff * jack[TmpIndex];
+			      }
+			  }
+		      }
+		  }
+	      }
+	  }
+	
+	jack[i] = Coefficient * InvAlpha / (RhoRoot - Rho);
+	if ((i & 0xffl) == 0l)
+	  {
+	    cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
 	  cout.flush();
-	}
-    }
-
+	  }
+      }
+  
 
   double GlobalSign = this->GetSpinSeparationSign(this->StateDescription[0]);  
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
       jack[i] *= GlobalSign * this->GetSpinSeparationSign(this->StateDescription[i]);
-      //      this->PrintStateMonomial(cout, i) << " : " << (jack[i] / Sign) << " " << Sign << endl;
     }
   return jack;
 }
