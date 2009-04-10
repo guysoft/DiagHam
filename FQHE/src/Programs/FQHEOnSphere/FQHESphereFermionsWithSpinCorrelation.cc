@@ -1,6 +1,6 @@
 #include "Vector/RealVector.h"
 
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/ParticleOnSphereManager.h"
 
 #include "Operator/ParticleOnSphereWithSpinDensityDensityOperator.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
@@ -38,14 +38,16 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("QHEFermionsWithSpinCorrelation" , "0.01");
+  OptionManager Manager ("FQHESphereFermionsWithSpinCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   ArchitectureManager Architecture;
 
-  Manager += SystemGroup;
+  ParticleOnSphereManager ParticleManager(true, false, 2);
+  ParticleManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
   Manager += OutputGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
@@ -68,7 +70,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type QHEFermionsWithSpinCorrelation -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereFermionsWithSpinCorrelation -h" << endl;
       return -1;
     }
   
@@ -86,7 +88,7 @@ int main(int argc, char** argv)
   bool Statistics = true;
   if (Manager.GetString("eigenstate") == 0)
     {
-      cout << "QHEFermionsWithSpinCorrelation requires a state" << endl;
+      cout << "FQHESphereFermionsWithSpinCorrelation requires a state" << endl;
       return -1;
     }
   if (NbrParticles==0)
