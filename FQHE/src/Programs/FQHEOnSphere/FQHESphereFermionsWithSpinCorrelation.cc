@@ -3,6 +3,7 @@
 #include "HilbertSpace/ParticleOnSphereManager.h"
 
 #include "Operator/ParticleOnSphereWithSpinDensityDensityOperator.h"
+#include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -52,10 +53,7 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the lz value corresponding to the eigenvector (override autodetection from input file name if greater or equal to zero)", 0, true, 0);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the total z-component of the spin (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "sphere_spin");
   (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
@@ -64,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "shift", "calculate 'shift' as defined for bilayer states");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -85,7 +84,9 @@ int main(int argc, char** argv)
   int TotalLz = ((SingleIntegerOption*) Manager["total-lz"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   int NbrPoints = ((SingleIntegerOption*) Manager["nbr-points"])->GetInteger();
+  bool DensityFlag = Manager.GetBoolean("density");
   bool Statistics = true;
+
   if (Manager.GetString("eigenstate") == 0)
     {
       cout << "FQHESphereFermionsWithSpinCorrelation requires a state" << endl;
@@ -153,33 +154,57 @@ int main(int argc, char** argv)
   for (int i = 0; i < 3; ++i)
     PrecalculatedValues[i] = new Complex [LzMax + 1];
    
-  Basis.GetFunctionValue(Value, TmpValue, LzMax);
-  for (int i = 0; i <= LzMax; ++i)
+  if (DensityFlag == true)
     {
-      ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 0, LzMax, 0, i, 0, LzMax, 0);
-      PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 0, i, 0);
+	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State);
+	}
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  ParticleOnSphereWithSpinDensityOperator Operator (Space, i, 1, i, 1);
+	  PrecalculatedValues[1][i] =   Operator.MatrixElement(State, State);
+	}
     }
-  for (int i = 0; i <= LzMax; ++i)
+  else
     {
-      ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 1, LzMax, 1, i, 1, LzMax, 1);
-      PrecalculatedValues[2][i] =  Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+      Basis.GetFunctionValue(Value, TmpValue, LzMax);
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 0, LzMax, 0, i, 0, LzMax, 0);
+	  PrecalculatedValues[0][i] =   Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	}
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator (Space, i, 1, LzMax, 1, i, 1, LzMax, 1);
+	  PrecalculatedValues[2][i] =  Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	}
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  ParticleOnSphereWithSpinDensityDensityOperator Operator1 (Space, i, 0, LzMax, 1, i, 0, LzMax, 1);
+	  PrecalculatedValues[1][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+	}
     }
-  for (int i = 0; i <= LzMax; ++i)
-    {
-      ParticleOnSphereWithSpinDensityDensityOperator Operator1 (Space, i, 0, LzMax, 1, i, 0, LzMax, 1);
-      PrecalculatedValues[1][i] =  Operator1.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-    }
+
   ofstream File;
   File.precision(14);
   if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
     File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
   else
     {
-      char* TmpFileName;
-      if (Manager.GetBoolean("coefficients-only"))
-	TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+      char* TmpFileName = 0;
+      if (DensityFlag == true)
+	{
+	  if (Manager.GetBoolean("coefficients-only"))
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+	  else
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
+	}
       else
-	TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
+	{
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rho");
+	}
       if (TmpFileName == 0)
 	{
 	  cout << "no vec extension was find in " << Manager.GetString("eigenstate") << " file name" << endl;
@@ -189,6 +214,40 @@ int main(int argc, char** argv)
       delete[] TmpFileName;
     }
   
+  double Factor2 = sqrt (0.5 * LzMax );
+  if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
+    Factor2 = 1.0;
+  if (DensityFlag == true)
+    {
+      double Factor1 = 1.0;
+      File << "# density coefficients for " << Manager.GetString("eigenstate") << endl;
+      File << "#" << endl << "# (l+S) n_l^{u} n_l^{d}" << endl;
+      for (int i = 0; i <= LzMax; ++i)
+	{
+	  File << "# " << i;
+	  for (int j = 0; j < 2; ++j)
+	    File << " " << PrecalculatedValues[j][i].Re;
+	  File << endl;
+	}
+      File << "# dist (rad) rho_{u} rho_{d} rho_{u}+rho_{d}";
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  for (int j = 0; j < 3; ++j)
+	    Sum[j] = 0.0;
+	  for (int i = 0; i <= LzMax; ++i)
+	    {
+	      Basis.GetFunctionValue(Value, TmpValue, i);
+	      Sum[0] += PrecalculatedValues[0][i] * (Conj(TmpValue) * TmpValue);
+	      Sum[1] += PrecalculatedValues[1][i] * (Conj(TmpValue) * TmpValue);
+	    }
+	  File << (X * Factor2);
+	  File << " " << (Sum[0].Re  * Factor1) << " " << (Sum[1].Re  * Factor1) << " " << ((Sum[0].Re + Sum[1].Re) * Factor1) << endl;
+	  X += XInc;
+	}
+      File.close();     
+      return 0;
+    }
   if (Manager.GetBoolean("coefficients-only"))
     {
       File << "# density-density correlation coefficients for " << Manager.GetString("eigenstate") << endl;
@@ -212,9 +271,6 @@ int main(int argc, char** argv)
 	Factor1 = (64.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
       else
 	Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
-      double Factor2 = sqrt (0.5 * LzMax );
-      if (((BooleanOption*) Manager["radians"])->GetBoolean() == true) 
-	Factor2 = 1.0;
       File << "# dist (rad) rho_{u,u} rho_{u,d} rho_{d,d}";
       for (int x = 0; x < NbrPoints; ++x)
 	{
