@@ -137,6 +137,11 @@ int ParticleOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
 
 int ParticleOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
 {
+  if (m == n)
+    {
+      coefficient = this->AduAu(index, m);
+      return index;
+    }
   return this->HilbertSpaceDimension;
 }
 
@@ -150,6 +155,11 @@ int ParticleOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficien
 
 int ParticleOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient)
 {
+  if (m == n)
+    {
+      coefficient = this->AddAd(index, m);
+      return index;
+    }
   return this->HilbertSpaceDimension;
 }
 

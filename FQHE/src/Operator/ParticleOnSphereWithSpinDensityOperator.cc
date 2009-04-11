@@ -114,7 +114,7 @@ Complex ParticleOnSphereWithSpinDensityOperator::MatrixElement (RealVector& V1, 
   int SymmetryIndex = (this->CreationSymmetryIndex << 1) | this->AnnihilationSymmetryIndex;
   switch (SymmetryIndex)
     {
-    case 0x0 :
+    case 0 :
       {
 	for (int i = 0; i < Dim; ++i)
 	  {
@@ -122,9 +122,9 @@ Complex ParticleOnSphereWithSpinDensityOperator::MatrixElement (RealVector& V1, 
 	    if (Index != Dim)
 	      Element += V1[Index] * V2[i] * Coefficient;      
 	  }
-	break;
       }
-    case 0x11 :
+      break;
+    case 3 :
       {
 	for (int i = 0; i < Dim; ++i)
 	  {
@@ -132,9 +132,9 @@ Complex ParticleOnSphereWithSpinDensityOperator::MatrixElement (RealVector& V1, 
 	    if (Index != Dim)
 	      Element += V1[Index] * V2[i] * Coefficient;      
 	  }
-	break;
       }
-    case 0x01 :
+      break;
+    case 1 :
       {
 	for (int i = 0; i < Dim; ++i)
 	  {
@@ -142,9 +142,9 @@ Complex ParticleOnSphereWithSpinDensityOperator::MatrixElement (RealVector& V1, 
 	    if (Index != Dim)
 	      Element += V1[Index] * V2[i] * Coefficient;      
 	  }
-	break;
       }
-    case 0x10 :
+      break;
+    case 2 :
       {
 	for (int i = 0; i < Dim; ++i)
 	  {
@@ -152,9 +152,9 @@ Complex ParticleOnSphereWithSpinDensityOperator::MatrixElement (RealVector& V1, 
 	    if (Index != Dim)
 	      Element += V1[Index] * V2[i] * Coefficient;      
 	  }
-	break;
       }
-    }
+      break;
+   }
   return Complex(Element);
 }
   
@@ -187,7 +187,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
   int SymmetryIndex = (this->CreationSymmetryIndex << 1) | this->AnnihilationSymmetryIndex;
   switch (SymmetryIndex)
     {
-    case 0x0 :
+    case 0 :
       {
 	for (int i = firstComponent; i < Last; ++i)
 	  {
@@ -195,9 +195,9 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	    if (Index != Dim)
 	      vDestination[Index] = vSource[i] * Coefficient;      
 	  }
-	break;
       }
-    case 0x11 :
+      break;
+    case 3 :
       {
 	for (int i = firstComponent; i < Last; ++i)
 	  {
@@ -207,7 +207,7 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	  }
 	break;
       }
-    case 0x01 :
+    case 1 :
       {
 	for (int i = firstComponent; i < Last; ++i)
 	  {
@@ -215,9 +215,9 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelMultiply(RealVector
 	    if (Index != Dim)
 	      vDestination[Index] = vSource[i] * Coefficient;      
 	  }
-	break;
-      }
-    case 0x10 :
+ 	break;
+     }
+    case 2 :
       {
 	for (int i = firstComponent; i < Last; ++i)
 	  {

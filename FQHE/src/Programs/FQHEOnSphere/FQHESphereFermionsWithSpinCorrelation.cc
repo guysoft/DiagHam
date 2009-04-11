@@ -142,6 +142,9 @@ int main(int argc, char** argv)
       return -1;
     }
 #endif
+
+  cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
+
   ParticleOnSphereFunctionBasis Basis(LzMax);
 
   Complex* Sum = new Complex [3];
@@ -194,7 +197,7 @@ int main(int argc, char** argv)
   else
     {
       char* TmpFileName = 0;
-      if (DensityFlag == true)
+      if (DensityFlag == false)
 	{
 	  if (Manager.GetBoolean("coefficients-only"))
 	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
@@ -222,14 +225,19 @@ int main(int argc, char** argv)
       double Factor1 = 1.0;
       File << "# density coefficients for " << Manager.GetString("eigenstate") << endl;
       File << "#" << endl << "# (l+S) n_l^{u} n_l^{d}" << endl;
+      double Sum2 = 0.0;
       for (int i = 0; i <= LzMax; ++i)
 	{
 	  File << "# " << i;
 	  for (int j = 0; j < 2; ++j)
-	    File << " " << PrecalculatedValues[j][i].Re;
+	    {
+	      File << " " << PrecalculatedValues[j][i].Re;
+	      Sum2 += PrecalculatedValues[j][i].Re;
+	    }
 	  File << endl;
 	}
-      File << "# dist (rad) rho_{u} rho_{d} rho_{u}+rho_{d}";
+      File << "# sum = " << Sum2 << endl;
+      File << "# dist (rad) rho_{u} rho_{d} rho_{u}+rho_{d}" << endl;
       for (int x = 0; x < NbrPoints; ++x)
 	{
 	  Value[0] = X;
