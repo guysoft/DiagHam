@@ -100,7 +100,6 @@ SLBSWavefunction::SLBSWavefunction(int nbrParticles, int levels)
       exit(1);
     }
   this->NbrParticles = nbrParticles;
-  // discard "bad" state with positive flux:
   if (levels<0)
     this->NegativeFieldFlag = true;
   else

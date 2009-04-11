@@ -130,9 +130,9 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
       else
 	{
 	  if (this->TotalLz != TmpTotalLz)
-	    cout << "warning : root partition " << j << "does not have the TotalLz than root partition 0" << endl;
+	    cout << "warning : root partition " << j << "does not have the same TotalLz as root partition 0" << endl;
 	  if (this->TotalSpin != TmpTotalSpin)
-	    cout << "warning : root partition " << j << "does not have the TotalSpin than root partition 0" << endl;
+	    cout << "warning : root partition " << j << "does not have the same TotalSpin as root partition 0" << endl;
 	}
     }
   this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
