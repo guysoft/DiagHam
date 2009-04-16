@@ -56,8 +56,6 @@ class FermionOnSphereWithSpinHaldaneBasis :  public FermionOnSphereWithSpin
 
  public:
 
-  int* NbrParents;
-
   // default constructor
   //
   FermionOnSphereWithSpinHaldaneBasis();
