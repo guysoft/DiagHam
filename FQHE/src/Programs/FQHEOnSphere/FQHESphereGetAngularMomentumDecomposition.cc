@@ -194,7 +194,8 @@ int main(int argc, char** argv)
     {
       TotalMaxLz = (LzMax - NbrParticles + 1) * NbrParticles;
     }
-
+  cout << LzMax << " " << NbrParticles << " " << TotalMaxLz << endl;
+  cout << "dim = " << Space->GetHilbertSpaceDimension() << endl;
   ParticleOnSphereL2Hamiltonian Hamiltonian (Space, NbrParticles, LzMax, TotalLz, Architecture.GetArchitecture(), 1.0, 0, true);
 
   RealVector TmpState(Space->GetHilbertSpaceDimension());
@@ -202,34 +203,61 @@ int main(int argc, char** argv)
   int l = 0;
   if (((NbrParticles * LzMax) & 1) != 0)
     l = 1;
-  for (; l <= TotalMaxLz; l += 2)
+  int* LValues = new int [TotalMaxLz + 1];
+  double* Components = new double [TotalMaxLz + 1];
+  char**  VectorFileNames = new char* [TotalMaxLz + 1];
+  int NbrLValues = 0;
+  //  RealVector InitialState;
+  //  InitialState.Copy(State);
+  double Sum = 0.0;
+  cout.precision(14);
+
+  for (; (l <= TotalMaxLz) && (fabs(1.0 - Sum) > Accuracy); l += 2)
     {
       TmpState.Copy(State);
       double TmpNorm = TmpState.Norm();
       for (int CurrentL = l + 2; (CurrentL <= TotalMaxLz) && (TmpNorm > Accuracy); CurrentL +=2)
 	{
+	  TmpState /= TmpNorm;
 	  Hamiltonian.ShiftHamiltonian(- 0.25 * (CurrentL * (CurrentL + 2)));
 	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &TmpState, &TmpState2);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
+	  TmpNorm = TmpState2.Norm();
+	  //	  TmpState2 /=  TmpNorm;
+	  cout << CurrentL << " " << TmpNorm << endl;
+	  //TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
 	  RealVector TmpVector = TmpState2;
 	  TmpState2 = TmpState;
 	  TmpState = TmpVector;
 	  TmpNorm = TmpState.Norm();
+	  //	  cout << CurrentL << " " << TmpNorm << endl;
 	}
       if (TmpNorm > Accuracy)
 	{
+	  cout << "norm = " << TmpNorm << endl;
 	  cout << Manager.GetString("state") << " has a non-zero projection on the L=" << (0.5 * ((double) l)) << " subspace" << endl;
+	  TmpState /= TmpNorm;
+	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &TmpState, &TmpState2);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  cout << (TmpState * TmpState) << " " << (TmpState * TmpState2) << endl;
 	  char* Extension = new char[32];
 	  sprintf (Extension, "l_%d.vec", l);
-	  char* OutputFile = AddExtensionToFileName(Manager.GetString("output-prefix"), Extension);
-	  TmpState /= TmpNorm;
-	  TmpState.WriteVector(OutputFile);	  
-	  delete[] OutputFile;
+	  VectorFileNames[NbrLValues] = AddExtensionToFileName(Manager.GetString("output-prefix"), Extension);
+	  LValues[NbrLValues] = l;
+	  Components[NbrLValues] = (TmpState * State);
+	  Sum += Components[NbrLValues] * Components[NbrLValues];
+	  cout << Components[NbrLValues] << " " << (1.0 - Sum) << endl;
+	  TmpState.WriteVector(VectorFileNames[NbrLValues]);	  
 	  delete[] Extension;
 	  double Tmp = TmpState * State;	  
 	  TmpState *= Tmp;
 	  State -= TmpState;
+	  ++NbrLValues;
 	}
     }
+  for (int i = 0; i < NbrLValues; ++i)
+    {
+      cout << LValues[i] << " " << Components[i] << " " << VectorFileNames[i] << endl;
+    }
+  cout << "sum = " << Sum << endl;
 }

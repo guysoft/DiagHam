@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <string.h>
+
 
 using std::cout;
 using std::endl;
@@ -38,7 +40,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleStringOption  ('i', "input-state", "vector file that describes the smaller system");
+  (*SystemGroup) += new SingleStringOption  ('i', "input-state", "vector file that describes the state that hasd to be truncated");
   (*SystemGroup) += new SingleStringOption  ('o', "output-state", "vector file that describes the smaller system");
   (*SystemGroup) += new BooleanOption  ('\n', "input-unnormalized", "indicates that the input state is written in the unnormalized basis");
   (*SystemGroup) += new BooleanOption  ('\n', "input-haldane", "use the squeezed basis or the input state");
@@ -49,6 +51,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "outputhuge-basis", "use huge Hilbert space support for the output state");
   (*SystemGroup) += new SingleStringOption  ('\n', "pattern", "pattern that has to be shared between the two n-body states");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-pattern", "shift the pattern away from the pole from a given number of orbitals", 0);
+
+  (*OutputGroup) += new BooleanOption ('\n', "save-truncated", "save the truncated state");
+  (*OutputGroup) += new SingleStringOption ('\n', "truncated-name", "output file name used to store the truncated state (default name uses input-state and add odlro_pattern to the interaction name)");
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "inputload-hilbert", "load Hilbert space description from the input file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "outputload-hilbert", "load Hilbert space description from the output file",0);
@@ -79,19 +84,33 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from input state name " << Manager.GetString("input-state") << endl;
       return -1;
     }
-  if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("output-state"),
-						   OutputNbrParticles, OutputLzMax, OutputTotalLz, Statistics) == false)
+  if ((Manager.GetBoolean("save-truncated") == false) && 
+      (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("output-state"),
+						    OutputNbrParticles, OutputLzMax, OutputTotalLz, Statistics) == false))
     {
       cout << "error while retrieving system parameters from input state name " << Manager.GetString("input-state") << endl;
       return -1;
     }
-
+  
   int PatternNbrParticles = 0;
   int PatternLzMax = 0;
   int* Pattern = 0;
   if (FQHEGetRootPartition(Manager.GetString("pattern"), PatternNbrParticles, PatternLzMax, Pattern) == false)
     return -1;
+  
+  if (Manager.GetBoolean("save-truncated") == true)
+    {
+      OutputNbrParticles = InputNbrParticles - PatternNbrParticles;
+      OutputLzMax = InputLzMax - PatternLzMax - 1;
+      OutputTotalLz = 0;
+      for (int i = 0; i <= PatternLzMax; ++i)
+	OutputTotalLz -= Pattern[i] * (2 * i);
+      OutputTotalLz += InputTotalLz + (InputNbrParticles * InputLzMax);
+      OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
+      OutputTotalLz -= OutputNbrParticles * OutputLzMax;
+    }
 
+  cout << OutputNbrParticles << " " << OutputLzMax << " " << OutputTotalLz << endl;
   RealVector InputState;
   if (InputState.ReadVector (Manager.GetString("input-state")) == false)
     {
@@ -202,11 +221,6 @@ int main(int argc, char** argv)
     }
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
   
-//   for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-//     {
-//       cout << TruncatedState[i] << " ";
-//       OutputBasis->PrintStateMonomial(cout, i) << endl;
-//     }
   double truc = TruncatedState.Norm();
   if (TruncatedState.Norm() > 1e-10)
     {
@@ -214,6 +228,41 @@ int main(int argc, char** argv)
       TruncatedState /= TruncatedState.Norm();
     }
 
+  if (Manager.GetBoolean("save-truncated") == true)
+    {
+      if (Manager.GetString("truncated-name") != 0)
+	{
+	  if (TruncatedState.WriteVector(Manager.GetString("truncated-name")) == false)
+	    {
+	      cout << "can't write vector " << Manager.GetString("truncated-name") << endl;
+	      return -1;
+	    }
+	}
+      else
+	{
+	  char* OutputName = new char [strlen(Manager.GetString("input-state")) + 8 + ((PatternLzMax + 1) * 2)];
+	  long Size = strstr (Manager.GetString("input-state"), "_n_") - Manager.GetString("input-state");
+	  strncpy (OutputName, Manager.GetString("input-state"), Size);
+	  sprintf (OutputName + Size, "_odlro_");
+	  Size += 7;
+	  for (int i = 0; i <= PatternLzMax; ++i)
+	    {
+	      sprintf (OutputName + Size, "%d", Pattern[i]);
+	      if (Pattern[i] > 9)
+		Size += 2;
+	      else
+		++Size;
+	    }
+	  sprintf (OutputName + Size, "_n_%d_2s_%d_lz_%d.0.vec", OutputNbrParticles, OutputLzMax, OutputTotalLz);
+	  if (TruncatedState.WriteVector(OutputName) == false)
+	    {
+	      cout << "can't write vector " << OutputName << endl;
+	      return -1;
+	    }
+	  delete[] OutputName;
+	}
+      return 0;
+    }
   RealVector OutputState;
   if (OutputState.ReadVector(Manager.GetString("output-state")) == false)
     {

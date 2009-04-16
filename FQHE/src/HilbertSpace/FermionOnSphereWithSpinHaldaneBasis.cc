@@ -151,7 +151,9 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->LzMax, (this->TotalLz + (this->NbrFermions * this->LzMax)) >> 1, 
 						     (this->TotalSpin + this->NbrFermions) >> 1, 0l);
   this->GenerateLookUpTable(memory);
-
+  this->NbrParents = new int [this->HilbertSpaceDimension];
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    this->NbrParents[i] = 0;
 #ifdef  __64_BITS__
   long ReducedHilbertSpaceDimension = (this->LargeHilbertSpaceDimension >> 6) + 1;
 #else
@@ -222,6 +224,7 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
   delete[] this->LookUpTable;
   unsigned long* TmpStateDescription = new unsigned long [NewHilbertSpaceDimension];
   int* TmpStateHighestBit = new int [NewHilbertSpaceDimension];
+  int* TmpNbrParents = new int [NewHilbertSpaceDimension];
   NewHilbertSpaceDimension = 0l;
   int TotalIndex = 0;
 #ifdef  __64_BITS__
@@ -243,6 +246,7 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
 	    {
 	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
 	      TmpStateHighestBit[NewHilbertSpaceDimension] = this->StateHighestBit[TotalIndex];
+	      TmpNbrParents[NewHilbertSpaceDimension]  = this->NbrParents[TotalIndex];
 	      ++NewHilbertSpaceDimension;
 	    }
 	  ++TotalIndex;
@@ -262,6 +266,7 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
 	    {
 	      TmpStateDescription[NewHilbertSpaceDimension] =  this->StateDescription[TotalIndex];
 	      TmpStateHighestBit[NewHilbertSpaceDimension] = this->StateHighestBit[TotalIndex];
+	      TmpNbrParents[NewHilbertSpaceDimension]  = this->NbrParents[TotalIndex];
 	      ++NewHilbertSpaceDimension;
 	    }
 	  ++TotalIndex;
@@ -271,6 +276,8 @@ FermionOnSphereWithSpinHaldaneBasis::FermionOnSphereWithSpinHaldaneBasis (int nb
   delete[] this->StateDescription;
   delete[] this->StateHighestBit;
   delete[] this->KeepStateFlag;
+  delete[] this->NbrParents;
+  this->NbrParents = TmpNbrParents;
   this->StateDescription = TmpStateDescription;
   this->StateHighestBit = TmpStateHighestBit;
   this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
@@ -500,6 +507,9 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
     {
       unsigned long& TmpState = TmpGeneratedStates2[i];
       TmpIndex = this->FindStateIndex(TmpState, TmpLzMax[i]);
+      if (TmpIndex >= this->HilbertSpaceDimension)
+	cout << "error " << TmpIndex << " " << hex  << TmpState << dec << " " << TmpLzMax[i] << endl;
+      this->NbrParents[TmpIndex]++;
 #ifdef __64_BITS__
       if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l)
 	{

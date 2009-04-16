@@ -117,7 +117,7 @@ int main(int argc, char** argv)
       for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
 	{
 	  File << OutputState[i] << " ";
-	  InitialSpace->PrintStateMonomial(File, i) << endl;
+	  InitialSpace->PrintStateMonomial(File, i) << " " << InitialSpace->NbrParents[i] << endl;
 	}
       File.close();
     }
