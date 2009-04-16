@@ -1185,7 +1185,11 @@ void print_array(int length, long unsigned int*array)
 // returns: vector in many-body basis of targetSpace
 ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, ParticleOnLattice &nbodyBasis)
 {
-  return this->ConvertToNbodyBasis(state, nbodyBasis, 0, this->GetHilbertSpaceDimension());
+  ComplexVector *TmpV=new ComplexVector();
+  *TmpV=this->ConvertToNbodyBasis(state, nbodyBasis, 0, this->GetHilbertSpaceDimension());
+  cout << "Norm was:" << TmpV->Norm() << endl;
+  *TmpV/=TmpV->Norm();
+  return *TmpV;
 }
 
 
@@ -1202,7 +1206,8 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Parti
   int *QuantumNumbers = new int[this->NbrBosons];
   double Normalization;
   // bitset <32> b;
-  for (int i = 0; i < this->GetHilbertSpaceDimension(); ++i)
+  int LastComponent=firstComponent+nbrComponent;
+  for (int i = firstComponent; i < LastComponent; ++i)
     {
       if (Norm(state[i])>1e-15)
 	{
@@ -1210,8 +1215,6 @@ ComplexVector& BosonOnLatticeKy::ConvertToNbodyBasis(ComplexVector& state, Parti
 	  this->ExpandBasisState(this->NbrBosons, QuantumNumbers, 0x0ul, Conj(state[i])/Normalization);
 	}
     }
-  cout << "Norm was:" << TargetVector.Norm() << endl;
-  TargetVector/=TargetVector.Norm();
   return TargetVector;
 }
 

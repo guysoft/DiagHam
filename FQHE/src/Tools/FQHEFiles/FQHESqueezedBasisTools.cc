@@ -276,7 +276,7 @@ bool FQHEGetRootPartitionSU2 (char* rootFileName, int& nbrParticles, int& lzMax,
       else
 	++TotalReferenceStates;
     }
-  
+  cout << "total: "<<TotalReferenceStates<<" root states"<<endl;
   referenceStates = new int*[TotalReferenceStates];
   int pos=0;
   for (int i = 0; i < nbrReferenceStates; ++i)

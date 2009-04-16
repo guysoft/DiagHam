@@ -25,8 +25,10 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHELatticeConvertSymmetrizedState" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
+  OptionGroup* ProcessGroup = new OptionGroup ("process options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   Manager += SystemGroup;
+  Manager += ProcessGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
@@ -41,6 +43,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('b', "boson", "use bosonic statistics (override autodetection from input file name)");
   (*SystemGroup) += new BooleanOption  ('r', "symmetrize", "symmetrize state (instead of unsymmetrizing it)");
 
+  (*ProcessGroup) += new SingleIntegerOption  ('s', "split", "split vector in multiple segments", 0);
+  (*ProcessGroup) += new SingleIntegerOption  ('i', "segment-index", "number of segment to be calculated by this process", 0);
+  
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the default name un-symmetrized.vec");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -55,7 +60,11 @@ int main(int argc, char** argv)
     {
       cout << "can't open file " << Manager.GetString("input-file") << endl;
     }
-
+  if ((Manager.GetInteger("split")!=0)&&(Manager.GetInteger("segment-index")>Manager.GetInteger("split")-1))
+    {
+      cout << "Segment index has to be chosen in interval [0,nbr-split]"<<endl;
+      exit(1);
+    }
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int Lx = Manager.GetInteger("lx");
   int Ly = Manager.GetInteger("ly");
@@ -98,8 +107,11 @@ int main(int argc, char** argv)
   char *OutputName = Manager.GetString("output-file");
   if (OutputName==NULL)
     {
-      OutputName = new char[strlen(Manager.GetString("input-file"))+10];
-      sprintf(OutputName,"%s.full",Manager.GetString("input-file"));
+      OutputName = new char[strlen(Manager.GetString("input-file"))+20];
+      if (Manager.GetInteger("split")!=0)	
+	sprintf(OutputName,"%s.seg_%ld-%ld",Manager.GetString("input-file"),Manager.GetInteger("segment-index"),
+		Manager.GetInteger("split"));
+      else sprintf(OutputName,"%s.full",Manager.GetString("input-file"));
     }
 
   if (Statistics == true)
@@ -130,7 +142,18 @@ int main(int argc, char** argv)
 	      cout << "dimension mismatch between Hilbert space and input state" << endl;
 	      return -1;
 	    }
-	  OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
+	  if (Manager.GetInteger("split")>0)
+	    {
+	      int SegSize=InitialSpace.GetHilbertSpaceDimension()/Manager.GetInteger("split");
+	      int StartD=Manager.GetInteger("segment-index")*SegSize;
+	      int StopD=(Manager.GetInteger("segment-index")+1)*SegSize;
+	      if (Manager.GetInteger("segment-index")==Manager.GetInteger("split")-1)
+		StopD=InitialSpace.GetHilbertSpaceDimension();
+	      cout<<"Converting segment ["<<StartD<<", "<<StopD<<"]"<<endl;
+	      OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace, StartD, StopD-StartD);
+	    }
+	  else
+	    OutputState = InitialSpace.ConvertToNbodyBasis(State, TargetSpace);
 	}
       if (OutputState.WriteVector(OutputName) == false)
 	{

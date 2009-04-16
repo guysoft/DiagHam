@@ -32,7 +32,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "names of all vector files that should be superposed");
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
-  (*SystemGroup) += new SingleDoubleOption  ('r', "random-component", "amplitude of a random component to be added",0.5);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "random-component", "amplitude of a random component to be added",0.0);
+  (*SystemGroup) += new BooleanOption  ('n', "no-normalize", "do NOT normalize the final vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "names of output filename","superposition.vec");
   (*SystemGroup) += new SingleStringOption  ('f', "description-file", "build the superposition for a linear combination of a vector set described in a text file");
   
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
       char** VectorFiles = Manager.GetStrings("states",NbrVectors);
       
       
-      Vector **Vectors = new Vector*[NbrVectors], *Result, *Random;
+      Vector **Vectors = new Vector*[NbrVectors], *Result, *Random=NULL;
       
       bool tmpB, haveVector=false;
       
@@ -72,13 +73,16 @@ int main(int argc, char** argv)
 	      cout <<"At least one valid vector is required!"<<endl;
 	      exit(1);
 	    }
-	  Random = new ComplexVector(VectorDimension);
-	  for (int i = 0; i < VectorDimension; ++i)
+	  if (Manager.GetDouble("random-component")!=0.0)
 	    {
-	      ((ComplexVector*)Random)->Re(i) = (rand() - 32767) * 0.5;
-	      ((ComplexVector*)Random)->Im(i) = (rand() - 32767) * 0.5;
+	      Random = new ComplexVector(VectorDimension);
+	      for (int i = 0; i < VectorDimension; ++i)
+		{
+		  ((ComplexVector*)Random)->Re(i) = (rand() - 32767) * 0.5;
+		  ((ComplexVector*)Random)->Im(i) = (rand() - 32767) * 0.5;
+		}
+	      *((ComplexVector*)(Random)) /= Random->Norm();
 	    }
-	  *((ComplexVector*)(Random)) /= Random->Norm();
 	}
       else
 	{
@@ -102,10 +106,13 @@ int main(int argc, char** argv)
 	      cout <<"At least one valid vector is required!"<<endl;
 	      exit(1);
 	    }
-	  Random = new RealVector(VectorDimension);
-	  for (int i = 0; i < VectorDimension; ++i)
-	    (*(RealVector*)(Random))[i] = (rand() - 32767) * 0.5;
-	  *((RealVector*)(Random)) /= Random->Norm();
+	  if (Manager.GetDouble("random-component")!=0.0)
+	    {
+	      Random = new RealVector(VectorDimension);
+	      for (int i = 0; i < VectorDimension; ++i)
+		(*(RealVector*)(Random))[i] = (rand() - 32767) * 0.5;
+	      *((RealVector*)(Random)) /= Random->Norm();
+	    }
 	}	
       
       double RandomComponent = Manager.GetDouble("random-component");  
@@ -119,19 +126,21 @@ int main(int argc, char** argv)
 	  cout<<"Adding Vector "<<i<<endl;
 	  Result->AddLinearCombination(GivenComponent,*(Vectors[i]));
 	}
-      
-      Result->AddLinearCombination(RandomComponent,*Random);
+      if (RandomComponent!=0.0)
+	Result->AddLinearCombination(RandomComponent,*Random);
       
       char *OutputName = Manager.GetString("output");
       
       if (Manager.GetBoolean("complex"))
 	{
-	  *((ComplexVector*)(Result)) /= Result->Norm();
+	  if (!Manager.GetBoolean("no-normalize"))
+	    *((ComplexVector*)(Result)) /= Result->Norm();
 	  ((ComplexVector*)Result)->WriteVector(OutputName);
 	}
       else
 	{
-	  *((RealVector*)(Result)) /= Result->Norm();
+	  if (!Manager.GetBoolean("no-normalize"))
+	    *((RealVector*)(Result)) /= Result->Norm();
 	  ((RealVector*)Result)->WriteVector(OutputName);
 	}
     }
@@ -196,7 +205,8 @@ int main(int argc, char** argv)
 		}	      
 	      Result.AddLinearCombination(Coefficients[i], TmpVector);
 	    }
-	  Result /= Result.Norm();
+	  if (!Manager.GetBoolean("no-normalize"))
+	    Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));
 	}
     }
