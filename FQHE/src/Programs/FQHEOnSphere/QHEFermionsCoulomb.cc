@@ -83,7 +83,9 @@ int main(int argc, char** argv)
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  if (LONG_MAX>>20 < Manager.GetInteger("memory"))
+    cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
+  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;  
   unsigned long MemorySpace = ((unsigned long) ((SingleIntegerOption*) Manager["fast-search"])->GetInteger()) << 20;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();

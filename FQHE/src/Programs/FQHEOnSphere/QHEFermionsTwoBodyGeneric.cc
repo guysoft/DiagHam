@@ -96,6 +96,8 @@ int main(int argc, char** argv)
   bool GroundFlag = ((BooleanOption*) Manager["ground"])->GetBoolean();
   int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
+  if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
+    cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
   unsigned long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();

@@ -127,7 +127,9 @@ int main(int argc, char** argv)
   double ContactU = Manager.GetDouble("contactU");
   if (HardCore) ContactU=0.0;
   double Random = Manager.GetDouble("randomPotential");
-  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  if (ULONG_MAX>>20 < (unsigned long)Manager.GetInteger("memory"))
+    cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
+  unsigned long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
 

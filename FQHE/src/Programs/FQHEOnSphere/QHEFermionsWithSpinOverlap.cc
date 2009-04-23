@@ -495,7 +495,7 @@ int main(int argc, char** argv)
 	{
 	  QHEParticleWaveFunctionOperation Operation(Space, &State, &(Particles->GetPositions()), &Basis);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());      
-	  Complex ValueExact (Operation.GetScalar());
+	  ValueExact = Operation.GetScalar();
 	}
       Complex ValueTrial, ValueTrial2;
       ValueTrial = (*TestWaveFunction)(Particles->GetPositions());      

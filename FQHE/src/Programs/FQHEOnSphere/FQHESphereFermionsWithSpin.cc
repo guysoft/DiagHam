@@ -125,8 +125,9 @@ int main(int argc, char** argv)
   int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
   int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
-
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  if (LONG_MAX>>20 < Manager.GetInteger("memory"))
+    cout << "Warning: integer overflow in memory request - you might want to use 64 bit code."<<endl;
+  long Memory = (Manager.GetInteger("memory")) << 20;  
   if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
   int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
   int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
