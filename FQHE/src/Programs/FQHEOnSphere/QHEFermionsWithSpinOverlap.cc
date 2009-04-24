@@ -523,10 +523,10 @@ int main(int argc, char** argv)
 	  ValueExact2 = (Operation2.GetScalar());
 	}
       
-      cout << "Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
-      cout << "Parity: " << ValueExact/ValueExact2 << endl;
-      cout << "Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
-      cout << "Parity: " << ValueTrial/ValueTrial2 << endl;
+      cout << "Ex Before exchange: "<< ValueExact << endl << "After exchange:  " << ValueExact2 << endl;
+      cout << "Ex Parity: " << ValueExact/ValueExact2 << endl;
+      cout << "Tr Before exchange: "<< ValueTrial << endl << "After exchange:  " << ValueTrial2 << endl;
+      cout << "Tr Parity: " << ValueTrial/ValueTrial2 << endl;
     }
 
 

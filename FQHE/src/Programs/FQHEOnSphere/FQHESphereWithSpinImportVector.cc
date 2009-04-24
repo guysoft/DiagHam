@@ -301,18 +301,18 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
   double Coeff,TmpCoeff;
 
   for (int k06u=0; k06u<=N_phi; ++k06u)
-    for (int k05u=0; k05u<=k06u-1; ++k05u)
-      for (int k04u=0; k04u<=k05u-1; ++k04u)
-	for (int k03u=0; k03u<=k04u-1; ++k03u)
-	  for (int k02u=0;  k02u<=k03u-1; ++k02u)
-	    for (int k01u=0; k01u<=k02u-1; ++k01u)
+    for (int k05u=0; k05u<k06u; ++k05u)
+      for (int k04u=0; k04u<k05u; ++k04u)
+	for (int k03u=0; k03u<k04u; ++k03u)
+	  for (int k02u=0; k02u<k03u; ++k02u)
+	    for (int k01u=0; k01u<k02u; ++k01u)
 	      
 	      for (int k06d=0; k06d<=N_phi; ++k06d)
-		for (int k05d=0; k05d<=k06d-1; ++k05d)
-		  for (int k04d=0; k04d<=k05d-1; ++k04d)
-		    for (int k03d=0; k03d<=k04d-1; ++k03d)
-		      for (int k02d=0;  k02d<=k03d-1; ++k02d)
-			for (int k01d=0; k01d<=k02u-1; ++k01d)
+		for (int k05d=0; k05d<k06d; ++k05d)
+		  for (int k04d=0; k04d<k05d; ++k04d)
+		    for (int k03d=0; k03d<k04d; ++k03d)
+		      for (int k02d=0;  k02d<k03d; ++k02d)
+			for (int k01d=0; k01d<k02d; ++k01d)
 			  {
 			    int ksum=k01u+k02u+k03u+k04u+k05u+k06u
 			      +k01d+k02d+k03d+k04d+k05d+k06d;
@@ -345,7 +345,12 @@ void calcArekN12_2S22(int*Map, double *Signs, ParticleOnSphereWithSpin* Space, i
 				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k05d, 0, TmpCoeff);
 				Coeff*=TmpCoeff;
 				StateDesc = ((ParticleOnSphereWithSpin*)Space)->Ad(StateDesc, k06d, 0, TmpCoeff);
-				Coeff*=TmpCoeff;				
+				Coeff*=TmpCoeff;
+				if(i >= Dim)
+				  {
+				    cout << "Error generating Map: size overflow!"<<endl;
+				    exit(1);
+				  }
 				Map[i]=((ParticleOnSphereWithSpin*)Space)->CarefulFindStateIndex(StateDesc,-1);
 				if ((Map[i]<0)||(Map[i]>Space->GetHilbertSpaceDimension()))
 				  {
