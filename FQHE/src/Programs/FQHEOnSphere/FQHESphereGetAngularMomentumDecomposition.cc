@@ -218,19 +218,20 @@ int main(int argc, char** argv)
       double TmpNorm = TmpState.Norm();
       for (int CurrentL = l + 2; (CurrentL <= TotalMaxLz) && (TmpNorm > Accuracy); CurrentL +=2)
 	{
-	  TmpState /= TmpNorm;
-	  Hamiltonian.ShiftHamiltonian(- 0.25 * (CurrentL * (CurrentL + 2)));
+//	  TmpState /= TmpNorm;
+//	  Hamiltonian.ShiftHamiltonian(- 0.25 * (CurrentL * (CurrentL + 2)));
 	  VectorHamiltonianMultiplyOperation Operation (&Hamiltonian, &TmpState, &TmpState2);
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-	  TmpNorm = TmpState2.Norm();
+//	  TmpNorm = TmpState2.Norm();
 	  //	  TmpState2 /=  TmpNorm;
-	  cout << CurrentL << " " << TmpNorm << endl;
-	  //TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
+//	  cout << CurrentL << " " << TmpNorm << endl;
+	  TmpState2 /= -0.25 * ((double) (CurrentL * (CurrentL + 2)));
+//	  TmpState2 += TmpState;
 	  RealVector TmpVector = TmpState2;
 	  TmpState2 = TmpState;
 	  TmpState = TmpVector;
 	  TmpNorm = TmpState.Norm();
-	  //	  cout << CurrentL << " " << TmpNorm << endl;
+	  cout << CurrentL << " " << TmpNorm << endl;
 	}
       if (TmpNorm > Accuracy)
 	{
@@ -242,7 +243,14 @@ int main(int argc, char** argv)
 	  cout << (TmpState * TmpState) << " " << (TmpState * TmpState2) << endl;
 	  char* Extension = new char[32];
 	  sprintf (Extension, "l_%d.vec", l);
-	  VectorFileNames[NbrLValues] = AddExtensionToFileName(Manager.GetString("output-prefix"), Extension);
+	  if (Manager.GetString("output-prefix") != 0)
+	    {
+	      VectorFileNames[NbrLValues] = AddExtensionToFileName(Manager.GetString("output-prefix"), Extension);
+	    }
+	  else
+	    {
+	      VectorFileNames[NbrLValues] = ReplaceExtensionToFileName(Manager.GetString("state"), "vec", Extension);
+	    }
 	  LValues[NbrLValues] = l;
 	  Components[NbrLValues] = (TmpState * State);
 	  Sum += Components[NbrLValues] * Components[NbrLValues];

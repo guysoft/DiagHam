@@ -35,6 +35,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
+  (*SystemGroup) += new BooleanOption  ('x', "no-square", "calculate only the scalar products");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -152,10 +153,21 @@ int main(int argc, char** argv)
 	      else
 		sp = State1 *State2 ;
 	      
-	      if (QuietFlag == false)
-		cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+	      if (Scalar==false)
+		{
+		  if (QuietFlag == false)
+		    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+		  else
+		    cout << SqrNorm(sp) << endl;
+		}
 	      else
-		cout << SqrNorm(sp) << endl;
+		{
+		  if (QuietFlag == false)
+		    cout << "<"<<i<<"|"<<j<<"> = " << sp.Re << endl;
+		  else
+		    cout << sp.Re << endl;
+		}
+
 	    }
 	}
     }
