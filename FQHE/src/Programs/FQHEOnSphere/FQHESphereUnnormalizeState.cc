@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
+  (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
   (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the test output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -237,21 +238,42 @@ int main(int argc, char** argv)
       ofstream File;
       File.open(OutputTxtFileName, ios::binary | ios::out);
       File.precision(14);
-      if (Error == 0.0)
-	for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	  {
-	    File << OutputState[i] << " ";
-	    OutputBasis->PrintStateMonomial(File, i) << endl;
-	  }
-      else
-	for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	  {
-	    if (fabs(OutputState[i]) > Error)
+      if (Manager.GetBoolean("txt-separatespin") == false)
+	{
+	  if (Error == 0.0)
+	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
 	      {
 		File << OutputState[i] << " ";
 		OutputBasis->PrintStateMonomial(File, i) << endl;
 	      }
-	  }
+	  else
+	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+	      {
+		if (fabs(OutputState[i]) > Error)
+		  {
+		    File << OutputState[i] << " ";
+		    OutputBasis->PrintStateMonomial(File, i) << endl;
+		  }
+	      }
+	}
+      else
+	{
+// 	  if (Error == 0.0)
+// 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+// 	      {
+// 		File << (OutputState[i] * InitialSpace->GetSpinSeparationSignFromIndex(i)) << " ";
+// 		OutputBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
+// 	      }
+// 	  else
+// 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+// 	      {
+// 		if (fabs(OutputState[i]) > Error)
+// 		  {
+// 		    File << (OutputState[i] * OutputBasis->GetSpinSeparationSignFromIndex(i)) << " ";
+// 		    OutputBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
+// 		  }
+// 	      }
+	}
       File.close();
     }
   if (OutputFileName != 0)

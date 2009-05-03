@@ -323,6 +323,13 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintStateMonomial (ostream& Str, int state);
 
+  // print a given State using the monomial notation, separating spin up from spin down
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintStateMonomialSeparatedSpin (ostream& Str, int state);
+
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -375,6 +382,12 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // groundstate = reference on the total system groundstate
   // return value = density matrix of the subsystem of spins up fermions.
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixSpinSeparation (int lzUp, RealVector & groundstate);
+
+  // compute the sign when moving all the up spin to the right from state index
+  //
+  // state = state whose spin splitting sign has to be computed
+  // return = splitting sign
+  virtual double GetSpinSeparationSignFromIndex(unsigned long index);
 
  protected:
 
@@ -509,6 +522,16 @@ inline unsigned long FermionOnSphereWithSpin::ConvertFromMonomial(int* initialSt
   for (int j = 0; j < this->NbrFermionsDown; ++j)
     TmpState |= 0x1ul << (initialStateDown[j] << 1);
   return TmpState;
+}
+
+// compute the sign when moving all the up spin to the right from state index
+//
+// state = state whose spin splitting sign has to be computed
+// return = splitting sign
+
+inline double FermionOnSphereWithSpin::GetSpinSeparationSignFromIndex(unsigned long index)
+{
+  return this->GetSpinSeparationSign(this->StateDescription[index]);
 }
 
 // compute the sign when moving all the up spin to the right

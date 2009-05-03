@@ -217,15 +217,17 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("input-unnormalized") == false)
     {
-      InputBasis->ConvertToUnnormalizedMonomial(InputState, -1);
+      InputBasis->ConvertToUnnormalizedMonomial(InputState, -1l);
     }
   RealVector TruncatedState = InputBasis->TruncateStateWithPatternConstraint(InputState, OutputBasis, Pattern, PatternLzMax + 1, Manager.GetInteger("shift-pattern"));
   
   double truc = TruncatedState.Norm();
   if (TruncatedState.Norm() > 1e-10)
     {
-      OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1);
-      TruncatedState /= TruncatedState.Norm();
+      OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1l);
+      cout << "truc=" <<  TruncatedState.Norm() << endl;
+      if (Manager.GetBoolean("save-truncated") == false)
+	TruncatedState /= TruncatedState.Norm();
     }
 
   if (Manager.GetBoolean("save-truncated") == true)

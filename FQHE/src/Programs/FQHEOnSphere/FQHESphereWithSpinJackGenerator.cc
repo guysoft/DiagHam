@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "initial-state", "use an optional state where some of the components have already been computed, improving computation time");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
+  (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -114,9 +115,21 @@ int main(int argc, char** argv)
       ofstream File;
       File.open(OutputTxtFileName, ios::binary | ios::out);
       File.precision(14);
-      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+      if (Manager.GetBoolean("txt-separatespin") == false)
 	{
-	  File << OutputState[i] << " ";
+	  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << OutputState[i] << " ";
+	      InitialSpace->PrintStateMonomial(File, i) << endl;
+	    }
+	}
+      else
+	{
+	  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      File << (OutputState[i] * InitialSpace->GetSpinSeparationSignFromIndex(i)) << " ";
+	      InitialSpace->PrintStateMonomialSeparatedSpin(File, i) << endl;
+	    }
 	}
       File.close();
     }

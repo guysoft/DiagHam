@@ -73,8 +73,10 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  int* LeftStateLValues = LeftStateDecomposition.GetAsIntegerArray(0);
-  int* RightStateLValues = RightStateDecomposition.GetAsIntegerArray(0);
+  double* LeftStateComponents = LeftStateDecomposition.GetAsDoubleArray(1);
+  double* RightStateComponents = RightStateDecomposition.GetAsDoubleArray(1);
+  int* LeftStateLValues = LeftStateDecomposition.GetAsIntegerArray(2);
+  int* RightStateLValues = RightStateDecomposition.GetAsIntegerArray(2);
   int NbrLValues = 0;
   for (int i = 0; i < LeftStateDecomposition.GetNbrLines(); ++i)
     {
@@ -99,22 +101,23 @@ int main(int argc, char** argv)
 	  LValues[NbrLValues] = CurrentLValue;
 	  WignerCoefficients[NbrLValues] = new WignerSmallDMatrix(CurrentLValue);
 	  RealVector LeftVector;
-	  if (LeftVector.ReadVector(LeftStateDecomposition(2, i)) == false)
+	  if (LeftVector.ReadVector(LeftStateDecomposition(0, i)) == false)
 	    {
-	      cout << "can't open vector file " << LeftStateDecomposition(2, i) << endl;
+	      cout << "can't open vector file " << LeftStateDecomposition(0, i) << endl;
 	      return -1;      	      
 	    }
 	  RealVector RightVector;
-	  if (RightVector.ReadVector(RightStateDecomposition(2, i)) == false)
+	  if (RightVector.ReadVector(RightStateDecomposition(0, i)) == false)
 	    {
-	      cout << "can't open vector file " << RightStateDecomposition(2, i) << endl;
+	      cout << "can't open vector file " << RightStateDecomposition(0, i) << endl;
 	      return -1;      	      
 	    }
-	  Coefficients[NbrLValues] = (LeftVector * RightVector);
+	  Coefficients[NbrLValues] = (LeftVector * RightVector) * (LeftStateComponents[i] * (RightStateComponents[i]));
 	  ++NbrLValues;	
 	}
     }
 
+  cout.precision(14);
   int NbrPoints = Manager.GetInteger("nbr-points");
   double Theta = 0.0;
   double ThetaInc = M_PI / ((double) NbrPoints);
@@ -123,10 +126,10 @@ int main(int argc, char** argv)
       double Tmp = 0.0;
       for (int j = 0; j < NbrLValues; ++j)
 	{
-	  double Tmp2 = Coefficients[LValues[j]] * (*(WignerCoefficients[j]))(LzValue, LzValue, Theta) * (*(WignerCoefficients[j]))(LzValue, LzValue, Theta);
+	  double Tmp2 = Coefficients[j] * (*(WignerCoefficients[j]))(LzValue, LzValue, Theta);// * (*(WignerCoefficients[j]))(LzValue, LzValue, Theta);
 	  Tmp += Tmp2;
 	}      
-      cout << Theta << " " << Tmp;
+      cout << Theta << " " << Tmp << endl;
       Theta += ThetaInc;
     }
 

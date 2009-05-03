@@ -1080,6 +1080,40 @@ ostream& FermionOnSphereWithSpin::PrintStateMonomial (ostream& Str, int state)
   Str << "]";
   return Str;
 }
+
+// print a given State using the monomial notation, separating spin up from spin down
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& FermionOnSphereWithSpin::PrintStateMonomialSeparatedSpin (ostream& Str, int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  Str << "[";
+  int i = this->LzMax;
+  while (((TmpState >> (i << 1)) & 0x3ul) == 0x0ul)
+    --i;
+  if (((TmpState >> (i << 1)) & 0x3ul) == 0x1ul)
+    Str << i << "d";
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> (i << 1)) & 0x3ul) == 0x1ul)
+      Str << "," << i << "d";
+  i = this->LzMax;
+  while (((TmpState >> (i << 1)) & 0x3ul) == 0x0ul)
+    --i;
+  if (((TmpState >> (i << 1)) & 0x3ul) == 0x2ul)
+    Str << i << "u";
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> (i << 1)) & 0x3ul) == 0x2ul)
+      Str << "," << i << "u";
+  Str << "]";
+  return Str;
+}
+
+
 // generate all states corresponding to the constraints
 // 
 // nbrFermions = number of fermions

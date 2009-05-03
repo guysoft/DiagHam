@@ -30,6 +30,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "GeneralTools/FilenameTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -52,25 +54,25 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
+  OptionGroup* OutputGroup = new OptionGroup ("output options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += MiscGroup;
   Manager += PrecalculationGroup;
-  
+  Manager += OutputGroup;
+  Manager += MiscGroup;
+
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
-  (*SystemGroup) += new SingleStringOption  ('s', "state", "name of the file containing the eigenstate");
+  (*SystemGroup) += new SingleStringOption  ('e', "eigenstate", "name of the file containing the eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "reference state to start the Haldane algorithm from (can be laughlin, pfaffian or readrezayi3)", "laughlin");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
-  (*SystemGroup) += new SingleStringOption  ('i', "interaction-name", "name of the interaction (used for output file name)", "laplaciandelta");
-  (*SystemGroup) += new SingleStringOption ('a', "add-filename", "add a string with additional informations to the output file name(just before the .dat extension)");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
@@ -79,6 +81,7 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -106,45 +109,24 @@ int main(int argc, char** argv)
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool CoefficientOnlyFlag = ((BooleanOption*) Manager["coefficients-only"])->GetBoolean();
   bool Statistics = true;
- if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["state"])->GetString(),
+ if (FQHEOnSphereFindSystemInfoFromVectorFileName(((SingleStringOption*) Manager["eigenstate"])->GetString(),
 						  NbrParticles, LzMax, TotalLz, Statistics) == false)
     {
-      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      cout << "error while retrieving system parameters from file name " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
       return -1;
     }
 
-  if (((SingleStringOption*) Manager["state"])->GetString() == 0)
+  if (((SingleStringOption*) Manager["eigenstate"])->GetString() == 0)
     {
       cout << "FQHESphereFermionsCorrelation requires a state" << endl;
       return -1;
     }
   RealVector State;
-  if (State.ReadVector (((SingleStringOption*) Manager["state"])->GetString()) == false)
+  if (State.ReadVector (((SingleStringOption*) Manager["eigenstate"])->GetString()) == false)
     {
-      cout << "can't open vector file " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+      cout << "can't open vector file " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
       return -1;      
     }
-  char* OutputNameCorr = new char [256 + strlen (((SingleStringOption*) Manager["interaction-name"])->GetString())];
-  if (DensityFlag == false)
-    if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-      {
-	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
-      }
-    else
-      {
-	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_%s.rho_rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax,
-		 ((SingleStringOption*) Manager["add-filename"])->GetString());
-      }
-  else
-    if (((SingleStringOption*) Manager["add-filename"])->GetString() == 0)
-      {
-	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d.rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax);
-      }
-    else
-      {
-	sprintf (OutputNameCorr, "fermions_%s_n_%d_2s_%d_%s.rho.dat", ((SingleStringOption*) Manager["interaction-name"])->GetString(), NbrParticles, LzMax,
-		 ((SingleStringOption*) Manager["add-filename"])->GetString());
-      }
 
   ParticleOnSphere* Space = 0;
   if (HaldaneBasisFlag == false)
@@ -331,6 +313,8 @@ int main(int argc, char** argv)
 	}
     }
 
+  cout << Space->GetHilbertSpaceDimension() << endl;
+
   AbstractFunctionBasis* Basis;
   if (LandauLevel == 0)
     Basis = new ParticleOnSphereFunctionBasis(LzMax);
@@ -360,13 +344,36 @@ int main(int argc, char** argv)
       }
   ofstream File;
   File.precision(14);
-  File.open(OutputNameCorr, ios::binary | ios::out);
+  if (((SingleStringOption*) Manager["output-file"])->GetString() != 0)
+    File.open(((SingleStringOption*) Manager["output-file"])->GetString(), ios::binary | ios::out);
+  else
+    {
+      char* TmpFileName = 0;
+      if (DensityFlag == false)
+	{
+	  if (Manager.GetBoolean("coefficients-only"))
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho-c");
+	  else
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rhorho");
+	}
+      else
+	{
+	    TmpFileName = ReplaceExtensionToFileName(Manager.GetString("eigenstate"), "vec", "rho");
+	}
+      if (TmpFileName == 0)
+	{
+	  cout << "no vec extension was find in " << Manager.GetString("eigenstate") << " file name" << endl;
+	  return 0;
+	}
+      File.open(TmpFileName, ios::binary | ios::out);
+      delete[] TmpFileName;
+    }
   if (CoefficientOnlyFlag == true)
     {
       if (DensityFlag == true)      
-	File << "# density correlation coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	File << "# density correlation coefficients for " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
       else
-	File << "# density-density correlation coefficients for " << ((SingleStringOption*) Manager["state"])->GetString() << endl;
+	File << "# density-density correlation coefficients for " << ((SingleStringOption*) Manager["eigenstate"])->GetString() << endl;
       File << "#" << endl << "# (l+S)    n_l" << endl;
       for (int i = 0; i <= LzMax; ++i)
 	File << i << " " << PrecalculatedValues[i]<< endl;
@@ -399,7 +406,6 @@ int main(int argc, char** argv)
     }
   File.close();
  
-  delete[] OutputNameCorr;	  
   delete[] PrecalculatedValues;
 
   return 0;
