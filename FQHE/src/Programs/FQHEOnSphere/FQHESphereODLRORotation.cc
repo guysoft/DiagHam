@@ -120,7 +120,7 @@ int main(int argc, char** argv)
   cout.precision(14);
   int NbrPoints = Manager.GetInteger("nbr-points");
   double Theta = 0.0;
-  double ThetaInc = M_PI / ((double) NbrPoints);
+  double ThetaInc = 2.0 * M_PI / ((double) NbrPoints);
   for (int i = 0; i <= NbrPoints; ++i)
     {
       double Tmp = 0.0;

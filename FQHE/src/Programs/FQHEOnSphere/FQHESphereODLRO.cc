@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "outputhuge-basis", "use huge Hilbert space support for the output state");
   (*SystemGroup) += new SingleStringOption  ('\n', "pattern", "pattern that has to be shared between the two n-body states");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-pattern", "shift the pattern away from the pole from a given number of orbitals", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "no-unnormalized", "do not use the unnormalized basis as an intermediate step");
 
   (*OutputGroup) += new BooleanOption ('\n', "save-truncated", "save the truncated state");
   (*OutputGroup) += new SingleStringOption ('\n', "truncated-name", "output file name used to store the truncated state (default name uses input-state and add odlro_pattern to the interaction name)");
@@ -78,6 +79,8 @@ int main(int argc, char** argv)
   int InputLzMax = 0;
   int InputTotalLz = 0;
   bool Statistics = true;
+  bool NoUnnormalization = Manager.GetBoolean("no-unnormalized");
+
   if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
 						   InputNbrParticles, InputLzMax, InputTotalLz, Statistics) == false)
     {
@@ -215,7 +218,7 @@ int main(int argc, char** argv)
     }
 
 
-  if (Manager.GetBoolean("input-unnormalized") == false)
+  if ((Manager.GetBoolean("input-unnormalized") == false) && (NoUnnormalization == false))
     {
       InputBasis->ConvertToUnnormalizedMonomial(InputState, -1l);
     }
@@ -224,7 +227,8 @@ int main(int argc, char** argv)
   double truc = TruncatedState.Norm();
   if (TruncatedState.Norm() > 1e-10)
     {
-      OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1l);
+      if ((NoUnnormalization == false))
+	OutputBasis->ConvertFromUnnormalizedMonomial(TruncatedState, -1l);
       cout << "truc=" <<  TruncatedState.Norm() << endl;
       if (Manager.GetBoolean("save-truncated") == false)
 	TruncatedState /= TruncatedState.Norm();
