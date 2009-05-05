@@ -238,7 +238,7 @@ int main(int argc, char** argv)
       ofstream File;
       File.open(OutputTxtFileName, ios::binary | ios::out);
       File.precision(14);
-      if (Manager.GetBoolean("txt-separatespin") == false)
+      if ((SU2Flag == false) || (Manager.GetBoolean("txt-separatespin") == false))
 	{
 	  if (Error == 0.0)
 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
@@ -258,21 +258,23 @@ int main(int argc, char** argv)
 	}
       else
 	{
-// 	  if (Error == 0.0)
-// 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-// 	      {
-// 		File << (OutputState[i] * InitialSpace->GetSpinSeparationSignFromIndex(i)) << " ";
-// 		OutputBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
-// 	      }
-// 	  else
-// 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-// 	      {
-// 		if (fabs(OutputState[i]) > Error)
-// 		  {
-// 		    File << (OutputState[i] * OutputBasis->GetSpinSeparationSignFromIndex(i)) << " ";
-// 		    OutputBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
-// 		  }
-// 	      }
+	  FermionOnSphereWithSpin* TmpBasis = (FermionOnSphereWithSpin*)  OutputBasis;
+	  double GlobalSign = TmpBasis->GetSpinSeparationSignFromIndex(0);
+ 	  if (Error == 0.0)
+ 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+ 	      {
+ 		File << (OutputState[i] * GlobalSign * TmpBasis->GetSpinSeparationSignFromIndex(i)) << " ";
+ 		TmpBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
+ 	      }
+ 	  else
+ 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+ 	      {
+ 		if (fabs(OutputState[i]) > Error)
+ 		  {
+ 		    File << (OutputState[i] * GlobalSign * TmpBasis->GetSpinSeparationSignFromIndex(i)) << " ";
+ 		    TmpBasis->PrintStateMonomialSeparatedSpin(File, i) << endl;
+ 		  }
+ 	      }
 	}
       File.close();
     }

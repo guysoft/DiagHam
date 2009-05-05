@@ -1092,22 +1092,23 @@ ostream& FermionOnSphereWithSpin::PrintStateMonomialSeparatedSpin (ostream& Str,
   unsigned long TmpState = this->StateDescription[state];
   Str << "[";
   int i = this->LzMax;
-  while (((TmpState >> (i << 1)) & 0x3ul) == 0x0ul)
+  while (((TmpState >> (i << 1)) & 0x1ul) == 0x0ul)
     --i;
-  if (((TmpState >> (i << 1)) & 0x3ul) == 0x1ul)
+  if (((TmpState >> (i << 1)) & 0x1ul) == 0x1ul)
     Str << i << "d";
   --i;
   for (; i >=0; --i)
-    if (((TmpState >> (i << 1)) & 0x3ul) == 0x1ul)
+    if (((TmpState >> (i << 1)) & 0x1ul) == 0x1ul)
       Str << "," << i << "d";
   i = this->LzMax;
-  while (((TmpState >> (i << 1)) & 0x3ul) == 0x0ul)
+  Str << ",";
+  while (((TmpState >> (i << 1)) & 0x2ul) == 0x0ul)
     --i;
-  if (((TmpState >> (i << 1)) & 0x3ul) == 0x2ul)
+  if (((TmpState >> (i << 1)) & 0x2ul) == 0x2ul)
     Str << i << "u";
   --i;
   for (; i >=0; --i)
-    if (((TmpState >> (i << 1)) & 0x3ul) == 0x2ul)
+    if (((TmpState >> (i << 1)) & 0x2ul) == 0x2ul)
       Str << "," << i << "u";
   Str << "]";
   return Str;
