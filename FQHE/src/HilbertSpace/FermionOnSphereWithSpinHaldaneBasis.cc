@@ -499,8 +499,8 @@ long FermionOnSphereWithSpinHaldaneBasis::GenerateSqueezedStates(int lzMax, unsi
     {
       unsigned long& TmpState = TmpGeneratedStates2[i];
       TmpIndex = this->FindStateIndex(TmpState, TmpLzMax[i]);
-      if (TmpIndex >= this->HilbertSpaceDimension)
-	cout << "error " << TmpIndex << " " << hex  << TmpState << dec << " " << TmpLzMax[i] << endl;
+      //      if (TmpIndex >= this->HilbertSpaceDimension)
+	//	cout << "error " << TmpIndex << " " << hex  << TmpState << dec << " " << TmpLzMax[i] << endl;
 #ifdef __64_BITS__
       if ((this->KeepStateFlag[TmpIndex >> 6] >> (TmpIndex & 0x3f)) & 0x1l)
 	{
